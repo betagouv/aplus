@@ -1,4 +1,4 @@
-@(title: String)(header: Html)(content: Html)(implicit webJarAssets: WebJarAssets, flash: Flash)
+@(user: User)(title: String)(header: Html)(content: Html)(implicit webJarAssets: WebJarAssets, flash: Flash)
 
 <!doctype html>
 <html lang="fr">
@@ -68,18 +68,20 @@
                 display: -ms-flexbox;
                 display: flex;">
             <p style="line-height: 1.2;">
-            <span style="font-weight: bold;">Sabine</span><br/>
-            Assistante sociale de la ville d'Argenteuil
+            <span style="font-weight: bold;">@user.name</span><br/>
+            @user.qualite
             </p>
             <div class="demo-avatar-dropdown">
-                <span style="font-size: 11px;">sabine@@example.com</span>
+                <span style="font-size: 11px;">@user.email</span>
                 <div class="mdl-layout-spacer"></div>
                 <button id="accbtn" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                     <i class="material-icons" role="presentation">arrow_drop_down</i>
                     <span class="visuallyhidden">Accounts</span>
                 </button>
                 <ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect" for="accbtn">
-                    <span onclick="document.location='';"><li class="mdl-menu__item"><i class="material-icons">power_settings_new</i>Déconnexion</li></span>
+                    @for(user <- User.all) {
+                        <span onclick="document.location='/?user=@user.id';"><li class="mdl-menu__item"><i class="material-icons">person</i>@user.name</li></span>
+                    }
                 </ul>
             </div>
         </header>

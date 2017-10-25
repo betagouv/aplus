@@ -1,6 +1,6 @@
-@()(implicit webJarAssets: WebJarAssets, flash: Flash)
+@(user: User)(implicit webJarAssets: WebJarAssets, flash: Flash)
 
-@main(s"Nouvelle demande")  {
+@main(user)(s"Nouvelle demande")  {
 
 }{
 <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">

@@ -2,6 +2,7 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
+import actions.LoginAction
 import play.api.mvc._
 
 /**
@@ -9,9 +10,9 @@ import play.api.mvc._
  * application's home page.
  */
 @Singleton
-class HomeController @Inject()(implicit val webJarAssets: WebJarAssets) extends Controller {
+class HomeController @Inject()(loginAction: LoginAction, implicit val webJarAssets: WebJarAssets) extends Controller {
 
-  def index = Action { implicit request =>
-    Redirect(routes.ApplicationController.create())
+  def index = loginAction { implicit request =>
+    Redirect(routes.ApplicationController.all())
   }
 }

@@ -1,7 +1,7 @@
-@(applications: Seq[Application])(implicit webJarAssets: WebJarAssets, flash: Flash)
+@(user: User)(applications: Seq[Application])(implicit webJarAssets: WebJarAssets, flash: Flash)
 @import java.util.Locale
 
-@main(s"Toutes les demande")  {
+@main(user)(s"Toutes les demande")  {
 <style>
     .pem-table {
         width: 100%;

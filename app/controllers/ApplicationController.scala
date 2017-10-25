@@ -6,6 +6,7 @@ import play.api.mvc._
 import play.api.data._
 import play.api.data.Forms._
 import models._
+import actions._
 
 import org.joda.time.DateTime
 
@@ -14,7 +15,7 @@ import org.joda.time.DateTime
  * application's home page.
  */
 @Singleton
-class ApplicationController @Inject()(implicit val webJarAssets: WebJarAssets) extends Controller {
+class ApplicationController @Inject()(loginAction: LoginAction)(implicit val webJarAssets: WebJarAssets) extends Controller {
   val sabineAuthor = "Sabine, Assistante Sociale de la ville d'Argenteuil"
 
   var applications = List(
@@ -36,9 +37,8 @@ class ApplicationController @Inject()(implicit val webJarAssets: WebJarAssets) e
       "Moyenne")
   )
 
-
-  def create = Action { implicit request =>
-    Ok(views.html.createApplication())
+  def create = loginAction { implicit request =>
+    Ok(views.html.createApplication(request.currentUser))
   }
 
   case class ApplicatonData(subject: String, description: String, priority: String)
@@ -51,31 +51,31 @@ class ApplicationController @Inject()(implicit val webJarAssets: WebJarAssets) e
   )
 
 
-  def createPost = Action { implicit request =>
+  def createPost = loginAction { implicit request =>
     val applicationData = applicationForm.bindFromRequest.get
     val application = Application(applications.length.toString, "En cours", DateTime.now(), sabineAuthor, applicationData.subject, applicationData.description, applicationData.priority)
     applications = application :: applications
     Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyé")
   }
 
-  def all = Action { implicit request =>
-    Ok(views.html.allApplication(applications))
+  def all = loginAction { implicit request =>
+    Ok(views.html.allApplication(request.currentUser)(applications))
   }
 
-  def show(id: String) = Action { implicit request =>
+  def show(id: String) = loginAction { implicit request =>
     applications.find(_.id == id) match {
       case None =>
         NotFound("")
       case Some(application) =>
-        Ok(views.html.showApplication(application))
+        Ok(views.html.showApplication(request.currentUser)(application))
     }
   }
 
-  def answer = Action { implicit request =>
+  def answer = loginAction { implicit request =>
     Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre commentaire a bien été envoyé")
   }
 
-  def invite = Action { implicit request =>
+  def invite = loginAction { implicit request =>
     Redirect(routes.ApplicationController.all()).flashing("success" -> "Les agents A+ ont été invité sur la demande")
   }
 }

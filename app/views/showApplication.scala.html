@@ -1,7 +1,7 @@
-@(application: Application)(implicit webJarAssets: WebJarAssets, flash: Flash)
+@(user: User)(application: Application)(implicit webJarAssets: WebJarAssets, flash: Flash)
 @import java.util.Locale
 
-@main(s"Demande @application.id: Etat dossier CAF de Mr MARTIN John")  {
+@main(user)(s"Demande ${application.id}: ${application.subject} ")  {
 <style>
 .mdl-list__item-primary-content {
     font-weight: bold;
@@ -68,6 +68,7 @@ div hr:last-child {
 </tr>
 </tbody>
 </table>
+@if(user.instructor) {
 <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--6-col mdl-grid">
     <h3 class="mdl-cell mdl-cell--12-col">Je peux répondre à la demande</h3>
     <form action="@routes.ApplicationController.answer()" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" onsubmit="">
@@ -133,4 +134,5 @@ div hr:last-child {
         <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset mdl-cell--12-col--phone mdl-cell--0-offset--phone">Inviter les A+ sélectionnés</button>
     </form>
 </div>
+}
 }
