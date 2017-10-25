@@ -1,6 +1,7 @@
-@()(implicit webJarAssets: WebJarAssets, flash: Flash)
+@(application: Application)(implicit webJarAssets: WebJarAssets, flash: Flash)
+@import java.util.Locale
 
-@main(s"Demande 542: Etat dossier CAF de Mr MARTIN John")  {
+@main(s"Demande @application.id: Etat dossier CAF de Mr MARTIN John")  {
 <style>
 .mdl-list__item-primary-content {
     font-weight: bold;
@@ -42,28 +43,28 @@ div hr:last-child {
 <table class="application mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col mdl-cell--12-col-phone mdl-cell--8-col-print mdl-shadow--2dp" style="table-layout: fixed; ">
 <tbody>
 <tr>
-    <td class="mdl-data-table__cell--non-numeric application__key" >Date</td>
-    <td class="mdl-data-table__cell--non-numeric application__value">25 octobre 2017</td>
+    <td class="mdl-data-table__cell--non-numeric application__key">Date</td>
+    <td class="mdl-data-table__cell--non-numeric application__value">@application.creationDate.toString("dd MMM YYYY", new Locale("fr"))</td>
 </tr>
 <tr>
     <td class="mdl-data-table__cell--non-numeric application__key">Etat</td>
-    <td class="mdl-data-table__cell--non-numeric application__value">En cours</td>
+    <td class="mdl-data-table__cell--non-numeric application__value">@application.status</td>
 </tr>
 <tr>
     <td class="mdl-data-table__cell--non-numeric application__key">Priorité</td>
-    <td class="mdl-data-table__cell--non-numeric application__value">Moyenne</td>
+    <td class="mdl-data-table__cell--non-numeric application__value">@application.priority</td>
 </tr>
 <tr>
-    <td class="mdl-data-table__cell--non-numeric application__key" >Titre</td>
-    <td class="mdl-data-table__cell--non-numeric application__value">Etat dossier CAF de Mr MARTIN John</td>
+    <td class="mdl-data-table__cell--non-numeric application__key" >Sujet</td>
+    <td class="mdl-data-table__cell--non-numeric application__value">@application.subject</td>
 </tr>
 <tr>
     <td class="mdl-data-table__cell--non-numeric application__key" >Détails</td>
-    <td class="mdl-data-table__cell--non-numeric application__value">Bonjour, Mr MARTIN John a fait transférer son dossier de la CAF de Marseille à la CAF d'Argenteuil, il ne sait pas où en est sa demande et voudrait savoir à qui envoyer ces documents de suivie. Son numéro à la CAF de Marseille est le 98767687, il est né le 16 juin 1985. Merci de votre aide</td>
+    <td class="mdl-data-table__cell--non-numeric application__value">@application.description</td>
 </tr>
 <tr>
     <td class="mdl-data-table__cell--non-numeric application__key">De</td>
-    <td class="mdl-data-table__cell--non-numeric application__value">Sabine, Assistante Sociale de la ville d'Argenteuil</td>
+    <td class="mdl-data-table__cell--non-numeric application__value">@application.author</td>
 </tr>
 </tbody>
 </table>

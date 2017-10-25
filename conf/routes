@@ -8,7 +8,7 @@ GET     /                           controllers.HomeController.index
 GET     /nouvelle-demande          controllers.ApplicationController.create
 POST     /nouvelle-demande          controllers.ApplicationController.createPost
 GET     /toutes-les-demandes        controllers.ApplicationController.all
-GET     /toutes-les-demandes/546    controllers.ApplicationController.show
+GET     /toutes-les-demandes/:id    controllers.ApplicationController.show(id: String)
 POST     /toutes-les-demandes/546/invite    controllers.ApplicationController.invite
 POST     /toutes-les-demandes/546/answer    controllers.ApplicationController.answer
 
