@@ -27,4 +27,12 @@ class ApplicationController @Inject()(implicit val webJarAssets: WebJarAssets) e
   def show = Action { implicit request =>
     Ok(views.html.showApplication())
   }
+
+  def answer = Action { implicit request =>
+    Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre commentaire a bien été envoyé")
+  }
+
+  def invite = Action { implicit request =>
+    Redirect(routes.ApplicationController.all()).flashing("success" -> "Les agents A+ ont été invité sur la demande")
+  }
 }

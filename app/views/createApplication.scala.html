@@ -4,21 +4,23 @@
 
 }{
 <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+    <h3 class="mdl-cell mdl-cell--12-col">Nouvelle demande</h3>
     <form action="@routes.ApplicationController.createPost()" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post">
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
-            <h4 class="mdl-cell mdl-cell--12-col">Titre</h4>
+            <h5 class="mdl-cell mdl-cell--12-col">Sujet</h5>
             <form action="#">
                 <div class="mdl-textfield mdl-js-textfield">
                     <input class="mdl-textfield__input" type="text" id="sample1">
-                    <label class="mdl-textfield__label" for="sample1">Titre...</label>
+                    <label class="mdl-textfield__label" for="sample1">Saisir le sujet de votre demande...</label>
                 </div>
             </form>
-            <h4 class="mdl-cell mdl-cell--12-col">Description</h4>
+            <h5 class="mdl-cell mdl-cell--12-col">Description</h5>
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                 <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="comment"></textarea>
                 <label class="mdl-textfield__label" for="sample5">Détailer votre demande ici...</label>
             </div>
-            <h4 class="mdl-cell mdl-cell--12-col">Priorité</h4>
+            <b>Incluer dans la description tous les éléments permetant d'identifier le dossier des personnes (Numéro de dossier, Numéro d'identification, nom, prénom, date de naissance, ...).</b>
+            <h5 class="mdl-cell mdl-cell--12-col">Priorité</h5>
             <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect mdl-cell mdl-cell--2-col" for="option-1">
                 <input type="radio" id="option-1" class="mdl-radio__button" name="1" value="priority">
                 <span class="mdl-radio__label" style="font-size: 24px;">Faible</span>
