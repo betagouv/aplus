@@ -80,7 +80,7 @@
                 </button>
                 <ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect" for="accbtn">
                     @for(user <- User.all) {
-                        <span onclick="document.location='/?user=@user.id';"><li class="mdl-menu__item"><i class="material-icons">person</i>@user.name</li></span>
+                        <span onclick="document.location=window.location.href+'?user=@user.id';"><li class="mdl-menu__item"><i class="material-icons">person</i>@user.name</li></span>
                     }
                 </ul>
             </div>

@@ -68,6 +68,18 @@ div hr:last-child {
 </tr>
 </tbody>
 </table>
+@for(answer <- Answer.forApplicationId(application.id)){
+<div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+    <h4 class="mdl-cell mdl-cell--12-col">Message de @answer.author.name (@answer.author.qualite) le @answer.creationDate.toString("dd MMM YYYY", new Locale("fr"))</h4>
+    <span class="mdl-cell mdl-cell--12-col">@answer.message</span><br>
+    <ul class="mdl-cell mdl-cell--12-col">
+    @for(invited <- answer.users) {
+        <li>@invited.name (@invited.qualite) a été invité sur la demande</li>
+    }
+    </ul>
+</div>
+}
+
 @if(user.instructor) {
 <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--6-col mdl-grid">
     <h3 class="mdl-cell mdl-cell--12-col">Je peux répondre à la demande</h3>
@@ -96,33 +108,17 @@ div hr:last-child {
             </tr>
             </thead>
             <tbody>
-            <tr onclick="this.">
-                <td>
-                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                        <input type="checkbox" class="mdl-checkbox__input" name="agents[]" value="jean">
-                    </label>
-                </td>
-                <td class="mdl-data-table__cell--non-numeric">Jean DUPOND</td>
-                <td class="mdl-data-table__cell--non-numeric">CAF</td>
-            </tr>
-            <tr>
-                <td>
-                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                        <input type="checkbox" class="mdl-checkbox__input" name="agents[]" value="paul">
-                    </label>
-                </td>
-                <td class="mdl-data-table__cell--non-numeric">Paul DURAND</td>
-                <td class="mdl-data-table__cell--non-numeric">URSSAF</td>
-            </tr>
-            <tr>
-                <td>
-                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                        <input type="checkbox" class="mdl-checkbox__input" name="agents[]" value="ameli">
-                    </label>
-                </td>
-                <td class="mdl-data-table__cell--non-numeric">Amelie LASANTE</td>
-                <td class="mdl-data-table__cell--non-numeric">CPAM</td>
-            </tr>
+            @for(user <- User.all.filter(_.instructor)) {
+                <tr>
+                    <td>
+                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                            <input type="checkbox" class="mdl-checkbox__input" name="agents[]" value="@user.id">
+                        </label>
+                    </td>
+                    <td class="mdl-data-table__cell--non-numeric">@user.name</td>
+                    <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
+                </tr>
+            }
             </tbody>
         </table>
         <h5>Ajouter un commentaire</h5>
