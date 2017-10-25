@@ -1,10 +1,10 @@
-@(implicit webJarAssets: WebJarAssets)
+@()(implicit webJarAssets: WebJarAssets, flash: Flash)
 
 @main(s"Nouvelle demande")  {
 
 }{
 <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
-    <form action="" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" onsubmit="">
+    <form action="@routes.ApplicationController.createPost()" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post">
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
             <h4 class="mdl-cell mdl-cell--12-col">Titre</h4>
             <form action="#">

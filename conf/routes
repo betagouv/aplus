@@ -5,7 +5,8 @@
 
 # An example controller showing a sample home page
 GET     /                           controllers.HomeController.index
-GET     /nouvelles-demande          controllers.ApplicationController.create
+GET     /nouvelle-demande          controllers.ApplicationController.create
+POST     /nouvelle-demande          controllers.ApplicationController.createPost
 GET     /toutes-les-demandes        controllers.ApplicationController.all
 GET     /toutes-les-demandes/546    controllers.ApplicationController.show
 

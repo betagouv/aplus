@@ -1,4 +1,4 @@
-@(implicit webJarAssets: WebJarAssets)
+@()(implicit webJarAssets: WebJarAssets, flash: Flash)
 
 @main(s"Demande 542: Etat dossier CAF de Mr MARTIN John")  {
 <style>
@@ -120,7 +120,7 @@ div hr:last-child {
         </table>
         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
             <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="comment"></textarea>
-            <label class="mdl-textfield__label" for="sample5">Commentaire pour l'invitation...</label>
+            <label class="mdl-textfield__label" for="sample5">Laisser ici un commentaire pour l'invitation...</label>
         </div>
         <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset mdl-cell--12-col--phone mdl-cell--0-offset--phone">Inviter les A+ sélectionnés</button>
     </form>

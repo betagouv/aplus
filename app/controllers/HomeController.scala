@@ -12,6 +12,6 @@ import play.api.mvc._
 class HomeController @Inject()(implicit val webJarAssets: WebJarAssets) extends Controller {
 
   def index = Action { implicit request =>
-    Ok(views.html.home(webJarAssets))
+    Redirect(routes.ApplicationController.create())
   }
 }

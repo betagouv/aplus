@@ -11,15 +11,20 @@ import play.api.mvc._
 @Singleton
 class ApplicationController @Inject()(implicit val webJarAssets: WebJarAssets) extends Controller {
 
+
   def create = Action { implicit request =>
-    Ok(views.html.createApplication(webJarAssets))
+    Ok(views.html.createApplication())
+  }
+
+  def createPost = Action { implicit request =>
+    Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyé")
   }
 
   def all = Action { implicit request =>
-    Ok(views.html.allApplication(webJarAssets))
+    Ok(views.html.allApplication())
   }
 
   def show = Action { implicit request =>
-    Ok(views.html.showApplication(webJarAssets))
+    Ok(views.html.showApplication())
   }
 }
