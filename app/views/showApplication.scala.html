@@ -55,10 +55,10 @@ div hr:last-child {
 </tr>
 <tr>
     <td class="mdl-data-table__cell--non-numeric application__key" >Détails</td>
-    <td class="mdl-data-table__cell--non-numeric application__value">Bonjour, Mr MARTIN John a fait transféré son dossier de la CAF de Marseille à la CAF d'Argenteuil, il ne sait pas où en ai sa demande et voudrait savoir à qui envoyer ces documents de suivant. Son numéro de CAF à la CAF de Marseille est le 98767687, il est né le 16 juin 1985. Merci de votre aide</td>
+    <td class="mdl-data-table__cell--non-numeric application__value">Bonjour, Mr MARTIN John a fait transférer son dossier de la CAF de Marseille à la CAF d'Argenteuil, il ne sait pas où en est sa demande et voudrait savoir à qui envoyer ces documents de suivie. Son numéro à la CAF de Marseille est le 98767687, il est né le 16 juin 1985. Merci de votre aide</td>
 </tr>
 <tr>
-    <td class="mdl-data-table__cell--non-numeric application__key">Auteur</td>
+    <td class="mdl-data-table__cell--non-numeric application__key">De</td>
     <td class="mdl-data-table__cell--non-numeric application__value">Sabine, Assistante Sociale de la ville d'Argenteuil</td>
 </tr>
 </tbody>
@@ -92,7 +92,7 @@ div hr:last-child {
             <tr>
                 <td>
                     <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                        <input type="checkbox" class="mdl-checkbox__input" name="agents[]" value="jean" checked>
+                        <input type="checkbox" class="mdl-checkbox__input" name="agents[]" value="jean">
                     </label>
                 </td>
                 <td class="mdl-data-table__cell--non-numeric">Jean DUPOND</td>
@@ -101,7 +101,7 @@ div hr:last-child {
             <tr>
                 <td>
                     <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                        <input type="checkbox" class="mdl-checkbox__input" name="agents[]" value="paul" checked>
+                        <input type="checkbox" class="mdl-checkbox__input" name="agents[]" value="paul">
                     </label>
                 </td>
                 <td class="mdl-data-table__cell--non-numeric">Paul DURAND</td>
@@ -110,7 +110,7 @@ div hr:last-child {
             <tr>
                 <td>
                     <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                        <input type="checkbox" class="mdl-checkbox__input" name="agents[]" value="ameli" checked>
+                        <input type="checkbox" class="mdl-checkbox__input" name="agents[]" value="ameli">
                     </label>
                 </td>
                 <td class="mdl-data-table__cell--non-numeric">Amelie LASANTE</td>
@@ -118,6 +118,10 @@ div hr:last-child {
             </tr>
             </tbody>
         </table>
+        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
+            <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="comment"></textarea>
+            <label class="mdl-textfield__label" for="sample5">Commentaire pour l'invitation...</label>
+        </div>
         <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset mdl-cell--12-col--phone mdl-cell--0-offset--phone">Inviter les A+ sélectionnés</button>
     </form>
 </div>
