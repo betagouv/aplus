@@ -1,0 +1,101 @@
+@(title: String)(header: Html)(content: Html)(implicit webJarAssets: WebJarAssets)
+
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <title>A+</title>
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.green-blue.min.css"/>
+    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/main.css")'>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    @header
+    <script src="@routes.WebJarAssets.at(webJarAssets.locate("material.min.js"))"></script>
+    <style>
+        html, body {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        .header__ribbon {
+            text-align: center;
+            text-transform: uppercase;
+            position: absolute;
+            top: 10px;
+            right: -25px;
+            -webkit-transform: rotate(45deg);
+            transform: rotate(45deg);
+            width: 90px;
+            background-color: red;
+            color: #fff;
+            padding: 5px;
+            font-size: 10px;
+            font-weight: 700;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+<div class="header__ribbon do-not-print" id="header__ribbon" style="display: none">
+    DEMO
+</div>
+<script>
+    if(/localhost|demo/.test(window.location.hostname)) {
+        document.getElementById("header__ribbon").style.display = "initial";
+    }
+</script>
+<div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header">
+    <header class="demo-header mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 do-not-print">
+        <div class="mdl-layout__header-row">
+            <span class="mdl-layout-title">@title</span>
+            <div class="mdl-layout-spacer"></div>
+            <!--
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable">
+                <label class="mdl-button mdl-js-button mdl-button--icon" for="search">
+                    <i class="material-icons">search</i>
+                </label>
+                <div class="mdl-textfield__expandable-holder">
+                    <input class="mdl-textfield__input" type="text" id="search">
+                    <label class="mdl-textfield__label" for="search">Rechercher une demande...</label>
+                </div>
+            </div>
+            -->
+        </div>
+    </header>
+    <div class="demo-drawer mdl-layout__drawer mdl-color--blue-grey-900 mdl-color-text--blue-grey-50 do-not-print">
+        <header class="demo-drawer-header" style="display: -webkit-flex;
+                display: -ms-flexbox;
+                display: flex;">
+            <p style="line-height: 1.2;">
+            <span style="font-weight: bold;">Sabine</span><br/>
+            Assistante sociale de la ville d'Argenteuil
+            </p>
+            <div class="demo-avatar-dropdown">
+                <span style="font-size: 11px;">sabine@@example.com</span>
+                <div class="mdl-layout-spacer"></div>
+                <button id="accbtn" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                    <i class="material-icons" role="presentation">arrow_drop_down</i>
+                    <span class="visuallyhidden">Accounts</span>
+                </button>
+                <ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect" for="accbtn">
+                    <span onclick="document.location='';"><li class="mdl-menu__item"><i class="material-icons">power_settings_new</i>Déconnexion</li></span>
+                </ul>
+            </div>
+        </header>
+        <nav class="demo-navigation mdl-navigation mdl-color--blue-grey-800">
+            <a class="mdl-navigation__link" href="@routes.ApplicationController.create()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">create_new_folder</i>Nouvelle demande</a>
+            <a class="mdl-navigation__link" href="@routes.ApplicationController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">folder</i>Toutes les demandes</a>
+            <div class="mdl-layout-spacer"></div>
+            <a class="mdl-navigation__link" href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aide%20A+"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">help_outline</i><span>Aide</span></a>
+        </nav>
+    </div>
+    <main class="mdl-layout__content mdl-color--grey-100" style="height: calc(100% - 16px)">
+        <div class="mdl-grid main__grid">
+            @content
+        </div>
+    </main>
+</div>
+</body>
+</html>
+

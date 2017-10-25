@@ -1,0 +1,126 @@
+html, body {
+  font-family: 'Roboto', 'Helvetica', sans-serif;
+}
+.logo {
+  width: 48px;
+  height: 48px;
+}
+.demo-layout .mdl-layout__header .mdl-layout__drawer-button {
+  color: rgba(0, 0, 0, 0.54);
+}
+.mdl-layout__drawer .avatar {
+  margin-bottom: 16px;
+}
+.demo-drawer {
+  border: none;
+}
+/* iOS Safari specific workaround */
+.demo-drawer .mdl-menu__container {
+  z-index: -1;
+}
+.demo-drawer .demo-navigation {
+  z-index: -2;
+}
+/* END iOS Safari specific workaround */
+.demo-drawer .mdl-menu .mdl-menu__item {
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+.demo-drawer-header {
+  box-sizing: border-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-justify-content: flex-end;
+      -ms-flex-pack: end;
+          justify-content: flex-end;
+  padding: 16px;
+  height: 171px;
+}
+.demo-avatar-dropdown {
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  position: relative;
+  -webkit-flex-direction: row;
+      -ms-flex-direction: row;
+          flex-direction: row;
+  -webkit-align-items: center;
+      -ms-flex-align: center;
+          align-items: center;
+  width: 100%;
+}
+
+.demo-navigation {
+  -webkit-flex-grow: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
+}
+.demo-layout .demo-navigation .mdl-navigation__link {
+  display: -webkit-flex !important;
+  display: -ms-flexbox !important;
+  display: flex !important;
+  -webkit-flex-direction: row;
+      -ms-flex-direction: row;
+          flex-direction: row;
+  -webkit-align-items: center;
+      -ms-flex-align: center;
+          align-items: center;
+  color: rgba(255, 255, 255, 0.56);
+  font-weight: 500;
+}
+.demo-layout .demo-navigation .mdl-navigation__link:hover {
+  background-color: #00BCD4;
+  color: #37474F;
+}
+.demo-navigation .mdl-navigation__link .material-icons {
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.56);
+  margin-right: 32px;
+}
+
+.demo-content {
+  max-width: 1080px;
+}
+
+@media print {
+    .mdl-layout--fixed-drawer > .mdl-layout__content {
+        margin-left: 0px !important;
+    }
+    .do-not-print {
+        display:none !important;
+    }
+    .mdl-data-table tbody tr {
+        height: 15px;
+        padding: 2px;
+    }
+    .mdl-data-table td {
+        height: 15px;
+        padding: 2px;
+    }
+    .mdl-cell--6-col-print {
+        width: calc(50% - 16px) !important;
+    }
+    .mdl-cell--8-col-print {
+         width: calc(66.6666666% - 16px) !important;
+    }
+    .mdl-cell--4-col-print {
+         width: calc(33.3333333% - 16px) !important;
+    }
+    .mdl-layout {
+        height: initial;
+    }
+    .mdl-data-table td:first-of-type, .mdl-data-table th:first-of-type {
+        padding-left: 2px;
+    }
+}
+.mdl-button--raised.mdl-button--colored {
+    color: white;
+}

@@ -1,0 +1,40 @@
+@(implicit webJarAssets: WebJarAssets)
+
+@main(s"Nouvelle demande")  {
+
+}{
+<div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+    <form action="" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" onsubmit="">
+        <div class="mdl-cell mdl-cell--12-col mdl-grid">
+            <h3 class="mdl-cell mdl-cell--12-col">Titre</h3>
+            <form action="#">
+                <div class="mdl-textfield mdl-js-textfield">
+                    <input class="mdl-textfield__input" type="text" id="sample1">
+                    <label class="mdl-textfield__label" for="sample1">Titre...</label>
+                </div>
+            </form>
+            <h3 class="mdl-cell mdl-cell--12-col">Description</h3>
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
+                <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="comment"></textarea>
+                <label class="mdl-textfield__label" for="sample5">Détailer votre demande ici...</label>
+            </div>
+            <h3 class="mdl-cell mdl-cell--12-col">Priorité</h3>
+            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect mdl-cell mdl-cell--2-col" for="option-1">
+                <input type="radio" id="option-1" class="mdl-radio__button" name="1" value="priority">
+                <span class="mdl-radio__label" style="font-size: 24px;">Faible</span>
+            </label>
+            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect mdl-cell mdl-cell--2-col" for="option-2">
+                <input type="radio" id="option-2" class="mdl-radio__button" name="5" value="priority">
+                <span class="mdl-radio__label" style="font-size: 24px;">Moyenne</span>
+            </label>
+            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect mdl-cell mdl-cell--2-col" for="option-3">
+                <input type="radio" id="option-3" class="mdl-radio__button" name="10" value="priority">
+                <span class="mdl-radio__label" style="font-size: 24px;">Forte</span>
+            </label>
+            <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset">
+                Envoyer ma demande
+            </button>
+        </div>
+    </form>
+</div>
+}

@@ -1,0 +1,36 @@
+@(implicit webJarAssets: WebJarAssets)
+
+@main(s"Toutes les demande")  {
+<style>
+    .pem-table {
+        width: 100%;
+    }
+    td {
+        cursor: pointer;
+    }
+</style>
+}{
+<div class="mdl-cell mdl-cell--12-col pem-container">
+    <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
+        <thead>
+        <tr>
+            <th class="mdl-data-table__cell--non-numeric">Date de la demande</th>
+            <th class="mdl-data-table__cell--non-numeric">Titre</th>
+            <th class="mdl-data-table__cell--non-numeric">Avancement</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr onclick="window.document.location='@routes.ApplicationController.show()';">
+        <td class="mdl-data-table__cell--non-numeric">25 octobre 2017</td>
+        <td class="mdl-data-table__cell--non-numeric">Etat dossier CAF de Mr MARTIN John</td>
+        <td class="mdl-data-table__cell--non-numeric">En cours</td>
+        </tr>
+        <tr onclick="window.document.location='@routes.ApplicationController.show()';">
+            <td class="mdl-data-table__cell--non-numeric">23 octobre 2017</td>
+            <td class="mdl-data-table__cell--non-numeric">Demande d'APL de Mme DUPOND Martine</td>
+            <td class="mdl-data-table__cell--non-numeric">Terminé</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+}
