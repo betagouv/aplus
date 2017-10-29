@@ -83,10 +83,10 @@ div hr:last-child {
 @if(user.instructor) {
 <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--6-col mdl-grid">
     <h3 class="mdl-cell mdl-cell--12-col">Je peux répondre à la demande</h3>
-    <form action="@routes.ApplicationController.answer()" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" onsubmit="">
+    <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" onsubmit="">
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
-                <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="comment"></textarea>
+                <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
                 <label class="mdl-textfield__label" for="sample5">Détaillez votre réponse ici...</label>
             </div>
             <b>Votre réponse permet d'indiquer le statut des démarches et procédures en cours. Merci d'utiliser vos outils habituels pour continuer l'instruction.</b>
@@ -98,7 +98,7 @@ div hr:last-child {
 </div>
 <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--6-col mdl-grid">
     <h3 class="mdl-cell mdl-cell--12-col">Inviter un A+</h3>
-    <form action='@routes.ApplicationController.invite()' class="mdl-cell mdl-cell--10-col mdl-cell--1-offset-desktop mdl-grid do-not-print" method="post">
+    <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--10-col mdl-cell--1-offset-desktop mdl-grid do-not-print" method="post">
         <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp mdl-cell mdl-cell--10-col mdl-cell--1-offset mdl-cell--12-col--phone mdl-cell--0-offset--phone">
             <thead>
             <tr>
@@ -112,7 +112,7 @@ div hr:last-child {
                 <tr>
                     <td>
                         <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                            <input type="checkbox" class="mdl-checkbox__input" name="agents[]" value="@user.id">
+                            <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id">
                         </label>
                     </td>
                     <td class="mdl-data-table__cell--non-numeric">@user.name</td>
@@ -123,7 +123,7 @@ div hr:last-child {
         </table>
         <h5>Ajouter un commentaire</h5>
         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
-            <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="comment"></textarea>
+            <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
             <label class="mdl-textfield__label" for="sample5">Laisser ici le commentaire pour l'invitation...</label>
         </div>
         <b>Note : Ce commentaire sera visible de tous, incluant @application.author.</b>

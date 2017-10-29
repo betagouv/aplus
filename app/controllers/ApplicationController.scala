@@ -71,11 +71,33 @@ class ApplicationController @Inject()(loginAction: LoginAction)(implicit val web
     }
   }
 
-  def answer = loginAction { implicit request =>
+  case class AnwserData(message: String)
+  val answerForm = Form(
+    mapping(
+      "message" -> text
+    )(AnwserData.apply)(AnwserData.unapply)
+  )
+
+  def answer(applicationId: String) = loginAction { implicit request =>
+    val answerData = answerForm.bindFromRequest.get
+    val anwser = Answer(applicationId, DateTime.now(), answerData.message, request.currentUser, List(), true)
+    Answer.add(anwser)
     Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre commentaire a bien été envoyé")
   }
 
-  def invite = loginAction { implicit request =>
+  case class InviteData(message: String, invitedUsers: List[String])
+  val inviteForm = Form(
+    mapping(
+      "message" -> text,
+      "users" -> list(text)
+    )(InviteData.apply)(InviteData.unapply)
+  )
+
+  def invite(applicationId: String) = loginAction { implicit request =>
+    val inviteData = inviteForm.bindFromRequest.get
+    val invitedUsers = inviteData.invitedUsers.flatMap { User.get }
+    val anwser = Answer(applicationId, DateTime.now(), inviteData.message, request.currentUser, invitedUsers, false)
+    Answer.add(anwser)
     Redirect(routes.ApplicationController.all()).flashing("success" -> "Les agents A+ ont été invité sur la demande")
   }
 }

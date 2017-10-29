@@ -9,8 +9,8 @@ GET     /nouvelle-demande          controllers.ApplicationController.create
 POST     /nouvelle-demande          controllers.ApplicationController.createPost
 GET     /toutes-les-demandes        controllers.ApplicationController.all
 GET     /toutes-les-demandes/:id    controllers.ApplicationController.show(id: String)
-POST     /toutes-les-demandes/546/invite    controllers.ApplicationController.invite
-POST     /toutes-les-demandes/546/answer    controllers.ApplicationController.answer
+POST     /toutes-les-demandes/:applicationId/invite    controllers.ApplicationController.invite(applicationId: String)
+POST     /toutes-les-demandes/:applicationId/answer    controllers.ApplicationController.answer(applicationId: String)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
