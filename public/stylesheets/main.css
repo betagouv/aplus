@@ -2,8 +2,8 @@ html, body {
   font-family: 'Roboto', 'Helvetica', sans-serif;
 }
 .logo {
-  width: 48px;
-  height: 48px;
+  width: 100px;
+  height: 100px;
 }
 .demo-layout .mdl-layout__header .mdl-layout__drawer-button {
   color: rgba(0, 0, 0, 0.54);
@@ -30,7 +30,7 @@ html, body {
       -ms-flex-align: center;
           align-items: center;
 }
-.demo-drawer-header {
+.drawer-header {
   box-sizing: border-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -42,7 +42,7 @@ html, body {
       -ms-flex-pack: end;
           justify-content: flex-end;
   padding: 16px;
-  height: 171px;
+  height: 200px;
 }
 .demo-avatar-dropdown {
   display: -webkit-flex;
