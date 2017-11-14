@@ -7,5 +7,4 @@ case class Application(id: String,
                        creationDate: DateTime,
                        author: String,
                        subject: String,
-                       description: String,
-                       priority: String)
+                       description: String)

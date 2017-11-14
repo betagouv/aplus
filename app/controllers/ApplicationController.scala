@@ -25,35 +25,34 @@ class ApplicationController @Inject()(loginAction: LoginAction)(implicit val web
       DateTime.now(),
       sabineAuthor,
       "Etat dossier CAF de Mr MARTIN John",
-      "Bonjour,\nMr MARTIN John a fait transférer son dossier de la CAF de Marseille à la CAF d'Argenteuil, il ne sait pas où en est sa demande et voudrait savoir à qui envoyer ces documents de suivie.\nSon numéro à la CAF de Marseille est le 98767687, il est né le 16 juin 1985.\n\nMerci de votre aide",
-      "Forte"),
+      "Bonjour,\nMr MARTIN John a fait transférer son dossier de la CAF de Marseille à la CAF d'Argenteuil, il ne sait pas où en est sa demande et voudrait savoir à qui envoyer ces documents de suivie.\nSon numéro à la CAF de Marseille est le 98767687, il est né le 16 juin 1985.\n\nMerci de votre aide"
+    ),
     Application(
       "0",
       "Terminé",
       DateTime.now(),
       sabineAuthor,
       "Demande d'APL de Mme DUPOND Martine",
-      "Bonjour,\nMme DUPOND Martine né le 12 juin 1978 a déposé une demande d'APL le 1 octobre.\nPouvez-vous m'indiquez l'état de sa demande ?\n\nMerci de votre réponse",
-      "Moyenne")
+      "Bonjour,\nMme DUPOND Martine né le 12 juin 1978 a déposé une demande d'APL le 1 octobre.\nPouvez-vous m'indiquez l'état de sa demande ?\n\nMerci de votre réponse"
+    )
   )
 
   def create = loginAction { implicit request =>
     Ok(views.html.createApplication(request.currentUser))
   }
 
-  case class ApplicatonData(subject: String, description: String, priority: String)
+  case class ApplicatonData(subject: String, description: String)
   val applicationForm = Form(
     mapping(
       "subject" -> text,
-      "description" -> text,
-      "priority" -> text
+      "description" -> text
     )(ApplicatonData.apply)(ApplicatonData.unapply)
   )
 
 
   def createPost = loginAction { implicit request =>
     val applicationData = applicationForm.bindFromRequest.get
-    val application = Application(applications.length.toString, "En cours", DateTime.now(), sabineAuthor, applicationData.subject, applicationData.description, applicationData.priority)
+    val application = Application(applications.length.toString, "En cours", DateTime.now(), sabineAuthor, applicationData.subject, applicationData.description)
     applications = application :: applications
     Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyé")
   }
