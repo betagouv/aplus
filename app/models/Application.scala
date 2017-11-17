@@ -7,4 +7,5 @@ case class Application(id: String,
                        creationDate: DateTime,
                        author: String,
                        subject: String,
-                       description: String)
+                       description: String,
+                       userInfos: Map[String, String])
