@@ -26,39 +26,30 @@
             <h5 class="mdl-cell mdl-cell--12-col">Informations du demandeur</h5>
             <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp" id="form__infos">
                 <tbody>
-                    <tr style="display: none;">
-                        <td class="mdl-data-table__cell--non-numeric"><button class="mdl-button mdl-js-button mdl-button--fab" type="button" onclick="removeInfo(this);">
-                            <i class="material-icons">remove</i>
-                        </button></td>
-                        <td class="mdl-data-table__cell--non-numeric info__name"></td>
-                        <td class="mdl-data-table__cell--non-numeric"><div class="mdl-textfield mdl-js-textfield">
-                            <input class="mdl-textfield__input" type="text" id="sample1">
-                            <label class="mdl-textfield__label info__label" for="sample1"></label>
-                        </div></td>
-                    </tr>
                     @for(info <- List("Prénom", "Nom de famille")) {
                         <tr>
-                            <td></td>
                             <td class="mdl-data-table__cell--non-numeric">@info.capitalize</td>
                             <td class="mdl-data-table__cell--non-numeric"><div class="mdl-textfield mdl-js-textfield">
                                 <input class="mdl-textfield__input" type="text" id="sample1" name="infos[@info]">
                                 <label class="mdl-textfield__label" for="sample1">Saisir @info ici</label>
                             </div></td>
+                            <td></td>
                         </tr>
                     }
                     <tr>
-                        <td></td>
                         <td class="mdl-data-table__cell--non-numeric">
                             <select id="types" onchange="newTypeSelected()">
-                                @for(info <- List("Date de naissance", "Numéro de sécurité sociale", "Identifiant CAF", "Numéro de dossier", "Nom de Naissance", "Autre")) {
-                                    <option value="@info">@info</option>
-                                }
+                                <option disabled selected value>Selectionnez une nouvelle information</option>
+                                    @for(info <- List("Date de naissance", "Numéro de sécurité sociale", "Identifiant CAF", "Numéro de dossier", "Nom de Naissance", "Autre")) {
+                                        <option value="@info">@info</option>
+                                    }
                             </select><br>
                             <div class="mdl-textfield mdl-js-textfield invisible">
                                 <label class="mdl-textfield__label" for="sample1">Saisissez le type d'information</label>
                                 <input class="mdl-textfield__input"  type="text" id="other-type" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
                             </div>
                         </td>
+                        <td></td>
                         <td class="mdl-data-table__cell--non-numeric"><button class="mdl-button mdl-js-button mdl-button--fab" type="button" onclick="addInfo();">
                             <i class="material-icons">add</i>
                         </button></td>
@@ -80,12 +71,15 @@
 <script>
     function newTypeSelected() {
         var select = document.getElementById("types");
+        var otherTypeElement = document.getElementById("other-type");
         if(select.value == "Autre") {
-            document.getElementById("other-type").value = "";
-            document.getElementById("other-type").parentNode.classList.remove("invisible");
+            otherTypeElement.value = "";
+            otherTypeElement.parentNode.classList.remove("invisible");
+            //componentHandler.upgradeElements(otherTypeElem.parentNode.parentNode.getElementsByTagName("*"));
+            componentHandler.upgradeDom();
         } else {
-            document.getElementById("other-type").parentNode.classList.add("invisible");
-            document.getElementById("other-type").value = select.value;
+            otherTypeElement.parentNode.classList.add("invisible");
+            otherTypeElement.value = select.value;
         }
     }
     newTypeSelected();
@@ -98,15 +92,22 @@
     function addInfo() {
         var inputInfoName = document.getElementById("other-type");
         var infoName = inputInfoName.value;
-        var newNode = document.getElementById("form__infos").querySelectorAll("tbody tr")[0].cloneNode(true);
-        newNode.style = '';
-        newNode.getElementsByClassName("info__name")[0].name = "infos["+infoName+"]";
-        newNode.getElementsByClassName("info__name")[0].innerText = infoName;
-        newNode.getElementsByClassName("info__label")[0].innerText = "Saisir "+infoName;
+        if(infoName == "") { return; }
+        var newNode = document.createElement('tr');
+        newNode.innerHTML = '<td class="mdl-data-table__cell--non-numeric">'+infoName+'</td> \
+                        <td class="mdl-data-table__cell--non-numeric"><div class="mdl-textfield mdl-js-textfield"> \
+                            <input class="mdl-textfield__input" type="text" id="sample1" name="infos['+infoName+']"> \
+                            <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+'</label> \
+                        </div></td> \
+                        <td class="mdl-data-table__cell--non-numeric"> \
+                        <button class="mdl-button mdl-js-button mdl-button--fab" type="button" onclick="removeInfo(this);"> \
+                            <i class="material-icons">remove</i> \
+                        </button></td>';
 
         inputInfoName.parentNode.parentNode.parentNode.parentNode.insertBefore(newNode, inputInfoName.parentNode.parentNode.parentNode);
         inputInfoName.value = "";
         inputInfoName.parentNode.classList.remove("is-dirty");
+        componentHandler.upgradeElements(newNode);
     }
 </script>
 }
