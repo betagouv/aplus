@@ -8,4 +8,5 @@ case class Application(id: String,
                        author: String,
                        subject: String,
                        description: String,
-                       userInfos: Map[String, String])
+                       userInfos: Map[String, String],
+                       area: String)

@@ -27,7 +27,8 @@ class ApplicationController @Inject()(loginAction: LoginAction)(implicit val web
       sabineAuthor,
       "Etat dossier CAF de Mr MARTIN John",
       "Bonjour,\nMr MARTIN John a fait transférer son dossier de la CAF de Marseille à la CAF d'Argenteuil, il ne sait pas où en est sa demande et voudrait savoir à qui envoyer ces documents de suivie.\nSon numéro à la CAF de Marseille est le 98767687, il est né le 16 juin 1985.\n\nMerci de votre aide",
-      Map("Numéro de CAF" -> "98767687", "Nom de famille" -> "MARTIN", "Prénom" -> "John", "Date de naissance" -> "16 juin 1985")
+      Map("Numéro de CAF" -> "98767687", "Nom de famille" -> "MARTIN", "Prénom" -> "John", "Date de naissance" -> "16 juin 1985"),
+      "argenteuil"
     ),
     Application(
       "0",
@@ -36,7 +37,8 @@ class ApplicationController @Inject()(loginAction: LoginAction)(implicit val web
       sabineAuthor,
       "Demande d'APL de Mme DUPOND Martine",
       "Bonjour,\nMme DUPOND Martine né le 12 juin 1978 a déposé une demande d'APL le 1 octobre.\nPouvez-vous m'indiquez l'état de sa demande ?\n\nMerci de votre réponse",
-      Map("Numéro de CAF" -> "38767687", "Nom de famille" -> "DUPOND", "Prénom" -> "Martine", "Date de naissance" -> "12 juin 1978")
+      Map("Numéro de CAF" -> "38767687", "Nom de famille" -> "DUPOND", "Prénom" -> "Martine", "Date de naissance" -> "12 juin 1978"),
+      "argenteuil"
     )
   )
 
@@ -56,7 +58,7 @@ class ApplicationController @Inject()(loginAction: LoginAction)(implicit val web
 
   def createPost = loginAction { implicit request =>
     val applicationData = applicationForm.bindFromRequest.get
-    val application = Application(applications.length.toString, "En cours", DateTime.now(), request.currentUser.name, applicationData.subject, applicationData.description, applicationData.infos)
+    val application = Application(applications.length.toString, "En cours", DateTime.now(), request.currentUser.name, applicationData.subject, applicationData.description, applicationData.infos, "argenteuilh")
     applications = application :: applications
     Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyé")
   }
@@ -83,7 +85,7 @@ class ApplicationController @Inject()(loginAction: LoginAction)(implicit val web
 
   def answer(applicationId: String) = loginAction { implicit request =>
     val answerData = answerForm.bindFromRequest.get
-    val anwser = Answer(applicationId, DateTime.now(), answerData.message, request.currentUser, List(), true)
+    val anwser = Answer(applicationId, DateTime.now(), answerData.message, request.currentUser, List(), true, "argenteuil")
     Answer.add(anwser)
     Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre commentaire a bien été envoyé")
   }
@@ -99,7 +101,7 @@ class ApplicationController @Inject()(loginAction: LoginAction)(implicit val web
   def invite(applicationId: String) = loginAction { implicit request =>
     val inviteData = inviteForm.bindFromRequest.get
     val invitedUsers = inviteData.invitedUsers.flatMap { User.get }
-    val anwser = Answer(applicationId, DateTime.now(), inviteData.message, request.currentUser, invitedUsers, false)
+    val anwser = Answer(applicationId, DateTime.now(), inviteData.message, request.currentUser, invitedUsers, false, "argenteuil")
     Answer.add(anwser)
     Redirect(routes.ApplicationController.all()).flashing("success" -> "Les agents A+ ont été invité sur la demande")
   }
