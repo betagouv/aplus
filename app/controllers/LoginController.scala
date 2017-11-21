@@ -30,9 +30,11 @@ class LoginController @Inject()(userService: UserService,
       val bodyHtml = s"""Bonjour ${user.name},<br>
                         |<br>
                         |Vous pouvez vous connecter au service A+ en ouvrant l'adresse suivante :<br>
-                        |<a href="${url}">${url}</a><br>
+                        |<a href="${url}">${url}</a>
+                        |<br>
                         |<br>
                         |<b>Ce mail est personnel, ne le transférez pas, il permettrait à quelqu'un d'autre d'utiliser votre identité sur le réseau A+.</b>
+                        |<br>
                         |<br>
                         |Merci de votre aide,<br>
                         |Si vous avez des questions, n'hésitez pas à nous contacter sur contact@aplus.beta.gouv.fr<br>
