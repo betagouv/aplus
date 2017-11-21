@@ -1,0 +1,80 @@
+@(user: Option[User])(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil)
+
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <title>A+</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.green-blue.min.css" />
+    <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/main.css")'>
+    <style>
+        .login-ribbon {
+            width: 100%;
+            height: 40vh;
+            background-color: #263238;
+            -webkit-flex-shrink: 0;
+            -ms-flex-negative: 0;
+            flex-shrink: 0;
+        }
+        .login-main {
+            margin-top: -35vh;
+            -webkit-flex-shrink: 0;
+            -ms-flex-negative: 0;
+            flex-shrink: 0;
+        }
+        .login-content {
+            border-radius: 2px;
+            padding: 80px 56px;
+            margin-bottom: 80px;
+        }
+        .login-container {
+            max-width: 1600px;
+            width: calc(100% - 16px);
+            margin: 0 auto;
+        }
+        .login-layout.is-small-screen .demo-content {
+  padding: 40px 28px;
+}
+
+    </style>
+</head>
+<body>
+<div class="login-layout mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--grey-100">
+    <div class="login-ribbon"></div>
+    <main class="login-main mdl-layout__content">
+        <div class="login-container mdl-grid">
+            <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
+            <div class="login-content mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
+                <h3>Connexion à A+</h3>
+                @user match {
+                    case None => {
+                    <form action="@routes.LoginController.login()" method="post">
+                        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                            <input class="mdl-textfield__input" type="text" id="sample1" name="email">
+                            <label class="mdl-textfield__label" for="sample1">Saisir votre adresse email</label>
+                        </div><br>
+                        @flash.get("error").map { message =>
+                            <p style="color: red;"><b>@message</b></p>
+                        }
+                        <button type="submit" class="mdl-button mdl-js-button mdl-button--raised" name="id">Connexion</button>
+                    </form>
+                    }
+                    case Some(user) => {
+                         <p>Vous allez recevoir un email à l'adresse @user.email. Cliquez sur le lien contenu dans l'email pour vous connecter.</p>
+                    }
+                }
+
+                <br>
+                <p><a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Problème%20A+%20Connexion">Vous rencontrez des difficultés à vous connecter ? cliquez-ici pour nous contacter.</a><p></p>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+</body>
+</html>
+
