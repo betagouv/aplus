@@ -1,4 +1,4 @@
-@(user: User)(implicit webJarAssets: WebJarAssets, flash: Flash)
+@(user: User)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 
 @main(user)(s"Nouvelle demande")  {
 <link rel="stylesheet" href="https://cdn.rawgit.com/Pixabay/JavaScript-autoComplete/1.0.4/auto-complete.css" />

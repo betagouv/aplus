@@ -1,4 +1,4 @@
-@(user: User)(applications: Seq[Application])(implicit webJarAssets: WebJarAssets, flash: Flash)
+@(user: User)(applications: Seq[Application])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 @import java.util.Locale
 
 @main(user)(s"Toutes les demande")  {

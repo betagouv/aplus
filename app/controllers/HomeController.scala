@@ -10,7 +10,7 @@ import play.api.mvc._
  * application's home page.
  */
 @Singleton
-class HomeController @Inject()(loginAction: LoginAction, implicit val webJarAssets: WebJarAssets) extends Controller {
+class HomeController @Inject()(loginAction: LoginAction) extends InjectedController {
 
   def index = loginAction { implicit request =>
     Redirect(routes.ApplicationController.all())

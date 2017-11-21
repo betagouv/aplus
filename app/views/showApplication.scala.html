@@ -1,4 +1,4 @@
-@(user: User)(application: Application)(implicit webJarAssets: WebJarAssets, flash: Flash)
+@(user: User)(application: Application)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 @import java.util.Locale
 
 @main(user)(s"Demande ${application.id}: ${application.subject} ")  {

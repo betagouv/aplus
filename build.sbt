@@ -5,7 +5,7 @@ version := "1.0-SNAPSHOT"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.4"
 
 //libraryDependencies += filters
 
@@ -13,14 +13,16 @@ libraryDependencies ++= Seq(
   ws
 )
 
-libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test
+libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test
+libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.webjars" %% "webjars-play" % "2.5.0",
+  "org.webjars" %% "webjars-play" % "2.6.1",
   "org.webjars.bower" % "material-design-lite" % "1.3.0",
   "org.webjars.bower" % "material-design-icons" % "3.0.1",
   "org.postgresql" % "postgresql" % "9.4.1210",
-  "com.typesafe.play" %% "anorm" % "2.5.2"
+  "com.typesafe.play" %% "anorm" % "2.5.3",
+  "com.typesafe.play" %% "play-mailer" % "6.0.1"
 )
 
 // Adds additional packages into Twirl

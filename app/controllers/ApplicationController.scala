@@ -10,13 +10,14 @@ import models._
 import actions._
 import forms.FormsPlusMap
 import org.joda.time.DateTime
+import org.webjars.play.WebJarsUtil
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
  * application's home page.
  */
 @Singleton
-class ApplicationController @Inject()(loginAction: LoginAction)(implicit val webJarAssets: WebJarAssets) extends Controller {
+class ApplicationController @Inject()(loginAction: LoginAction)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController {
   val sabineAuthor = "Sabine, Assistante Sociale de la ville d'Argenteuil"
 
   var applications = List(
