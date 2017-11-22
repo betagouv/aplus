@@ -1,4 +1,4 @@
-@(user: User)(application: Application)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User)(users: List[User], application: Application)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 @import java.util.Locale
 
 @main(user)(s"Demande ${application.id}: ${application.subject} ")  {
@@ -120,7 +120,7 @@ div hr:last-child {
             </tr>
             </thead>
             <tbody>
-            @for(user <- User.all.filter(_.instructor)) {
+            @for(user <- users) {
                 <tr>
                     <td>
                         <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">

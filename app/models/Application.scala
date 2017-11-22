@@ -9,4 +9,5 @@ case class Application(id: String,
                        subject: String,
                        description: String,
                        userInfos: Map[String, String],
+                       invitedUsers: List[String],
                        area: String)
