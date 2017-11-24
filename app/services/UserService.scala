@@ -12,12 +12,12 @@ class UserService @Inject()(configuration: play.api.Configuration) {
   private var users = List(
     User("sabine", Hash.sha256(s"sabine$cryptoSecret"), "Sabine", "Assistante Sociale de la ville d'Argenteuil", "sabine@assistante-sociale.fr", true, false, List("argenteuil")),
     User("dila", Hash.sha256(s"dila$cryptoSecret"), "Zohra", "DILA", "zohra@dila.gouv.fr", true, true, List()),
-    User("jean", Hash.sha256(s"jean$cryptoSecret"), "Jean DUCAFE", "CAF", "jean@caf.fr", true, true, List("argenteuil")),
-    User("paul", Hash.sha256(s"paul$cryptoSecret"), "Paul MURSSAF", "URSSAF", "paul@ursaff.fr", true, true, List("argenteuil")),
-    User("amelie", Hash.sha256(s"amelie$cryptoSecret"), "Amelie LASANTE", "CPAM", "sabine@cpam.fr", true, true, List("argenteuil")),
-    User("hugo", Hash.sha256(s"jean$cryptoSecret"), "Hugo DECAFE", "CAF", "hugo@caf.fr", true, true, List("argenteuil")),
-    User("marine", Hash.sha256(s"paul$cryptoSecret"), "Marine DURSSAF", "URSSAF", "marine@ursaff.fr", true, true, List("argenteuil")),
-    User("jeanne", Hash.sha256(s"amelie$cryptoSecret"), "Jeanne de SANTE", "CPAM", "jeanne@cpam.fr", true, true, List("argenteuil"))
+    User("jean", Hash.sha256(s"jean$cryptoSecret"), "Jean DUCAFE", "CAF", "jean@caf.fr", false, true, List("argenteuil")),
+    User("paul", Hash.sha256(s"paul$cryptoSecret"), "Paul MURSSAF", "URSSAF", "paul@ursaff.fr", false, true, List("argenteuil")),
+    User("amelie", Hash.sha256(s"amelie$cryptoSecret"), "Amelie LASANTE", "CPAM", "sabine@cpam.fr", false, true, List("argenteuil")),
+    User("hugo", Hash.sha256(s"hugo$cryptoSecret"), "Hugo DECAFE", "CAF", "hugo@caf.fr", false, true, List("argenteuil")),
+    User("marine", Hash.sha256(s"marine$cryptoSecret"), "Marine DURSSAF", "URSSAF", "marine@ursaff.fr", false, true, List("argenteuil")),
+    User("jeanne", Hash.sha256(s"jeanne$cryptoSecret"), "Jeanne de SANTE", "CPAM", "jeanne@cpam.fr", false, true, List("argenteuil"))
   )
 
   def all() = users

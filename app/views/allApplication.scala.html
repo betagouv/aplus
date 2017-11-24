@@ -1,4 +1,4 @@
-@(user: User)(applications: Seq[Application])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User)(applicationsCreatedByMe: Seq[Application], applicationsIGotInvited: Seq[Application])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 @import java.util.Locale
 
 @main(user)(s"Toutes les demande")  {
@@ -11,24 +11,56 @@
     }
 </style>
 }{
-<div class="mdl-cell mdl-cell--12-col pem-container">
-    <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
-        <thead>
-        <tr>
-            <th class="mdl-data-table__cell--non-numeric">Date de la demande</th>
-            <th class="mdl-data-table__cell--non-numeric">Sujet</th>
-            <th class="mdl-data-table__cell--non-numeric">Avancement</th>
-        </tr>
-        </thead>
-        <tbody>
-        @for((application) <- applications) {
-            <tr onclick="window.document.location='@routes.ApplicationController.show(application.id)';">
-            <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY", new Locale("fr"))</td>
-            <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
-            <td class="mdl-data-table__cell--non-numeric">@application.status</td>
-            </tr>
-        }
-        </tbody>
-    </table>
-</div>
+    @if(!applicationsCreatedByMe.isEmpty) {
+        <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
+            <h4 class="mdl-cell mdl-cell--12-col">Les demandes que j'ai créé</h4>
+            <div class="mdl-cell mdl-cell--12-col pem-container">
+                <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
+                    <thead>
+                    <tr>
+                        <th class="mdl-data-table__cell--non-numeric">Date de la demande</th>
+                        <th class="mdl-data-table__cell--non-numeric">Sujet</th>
+                        <th class="mdl-data-table__cell--non-numeric">Avancement</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @for((application) <- applicationsCreatedByMe) {
+                        <tr onclick="window.document.location='@routes.ApplicationController.show(application.id)';">
+                        <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY", new Locale("fr"))</td>
+                        <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
+                        <td class="mdl-data-table__cell--non-numeric">@application.status</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    @if(!applicationsIGotInvited.isEmpty) {
+        <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
+            <h4 class="mdl-cell mdl-cell--12-col">Demandes sur lequel j'ai été invité</h4>
+            <div class="mdl-cell mdl-cell--12-col pem-container">
+                <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
+                    <thead>
+                        <tr>
+                            <th class="mdl-data-table__cell--non-numeric">Date de la demande</th>
+                            <th class="mdl-data-table__cell--non-numeric">Sujet</th>
+                            <th class="mdl-data-table__cell--non-numeric">Avancement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @for((application) <- applicationsIGotInvited) {
+                        <tr onclick="window.document.location='@routes.ApplicationController.show(application.id)';">
+                            <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY", new Locale("fr"))</td>
+                            <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
+                            <td class="mdl-data-table__cell--non-numeric">@application.status</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
 }

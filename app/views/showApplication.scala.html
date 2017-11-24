@@ -60,7 +60,7 @@ div hr:last-child {
 </tr>
 <tr>
     <td class="mdl-data-table__cell--non-numeric application__key">De</td>
-    <td class="mdl-data-table__cell--non-numeric application__value">@application.author</td>
+    <td class="mdl-data-table__cell--non-numeric application__value">@application.helperName</td>
 </tr>
 </tbody>
 </table>
@@ -78,18 +78,18 @@ div hr:last-child {
 }
 </tbody>
 </table>
-@for(answer <- Answer.forApplicationId(application.id)){
-@if(user.instructor || answer.last) {
-<div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
-    <h4 class="mdl-cell mdl-cell--12-col">Message de @answer.author.name (@answer.author.qualite) le @answer.creationDate.toString("dd MMM YYYY", new Locale("fr"))</h4>
-    <span class="mdl-cell mdl-cell--12-col">@answer.message</span><br>
-    <ul class="mdl-cell mdl-cell--12-col">
-    @for(invited <- answer.users) {
-        <li>@invited.name (@invited.qualite) a été invité sur la demande</li>
+@for(answer <- application.answers){
+    @if(user.instructor || answer.visibleByTheCreator) {
+    <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+        <h4 class="mdl-cell mdl-cell--12-col">Message de @answer.createBy.name (@answer.createBy.qualite) le @answer.creationDate.toString("dd MMM YYYY", new Locale("fr"))</h4>
+        <span class="mdl-cell mdl-cell--12-col">@answer.message</span><br>
+        <ul class="mdl-cell mdl-cell--12-col">
+        @for(invited <- answer.invitedUsers) {
+            <li>@invited.name (@invited.qualite) a été invité sur la demande</li>
+        }
+        </ul>
+    </div>
     }
-    </ul>
-</div>
-}
 }
 
 @if(user.instructor) {
@@ -138,7 +138,7 @@ div hr:last-child {
             <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
             <label class="mdl-textfield__label" for="sample5">Laisser ici le commentaire pour l'invitation...</label>
         </div>
-        <b>Note : Ce commentaire sera visible par tous les agents A+. L'auteur de la demande (@application.author) ne pourra pas le voir.</b>
+        <b>Note : Ce commentaire sera visible par tous les agents A+. L'auteur de la demande (@application.helperName) ne pourra pas le voir.</b>
         <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Inviter les A+ sélectionnés</button>
     </form>
 </div>

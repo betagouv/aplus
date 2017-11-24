@@ -5,9 +5,11 @@ import org.joda.time.DateTime
 case class Application(id: String,
                        status: String,
                        creationDate: DateTime,
-                       author: String,
+                       helperName: String,
+                       helperUserId: String,
                        subject: String,
                        description: String,
                        userInfos: Map[String, String],
-                       invitedUsers: List[String],
-                       area: String)
+                       invitedUserIDs: List[String],
+                       area: String,
+                       answers: List[Answer] = List())
