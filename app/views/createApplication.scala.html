@@ -1,4 +1,6 @@
-@(user: User)(users: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User)(users: List[User], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+
+@import utils.MDLForms._
 
 @main(user)(s"Nouvelle demande")  {
 <link rel="stylesheet" href="https://cdn.rawgit.com/Pixabay/JavaScript-autoComplete/1.0.4/auto-complete.css" />
@@ -14,25 +16,25 @@
 }{
 <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
     <h3 class="mdl-cell mdl-cell--12-col">Nouvelle demande</h3>
-    <form action="@routes.ApplicationController.createPost()" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post">
+    @helper.form(action = routes.ApplicationController.createPost(), args = 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
             <h5 class="mdl-cell mdl-cell--12-col">Sujet</h5>
-            <form action="#">
-                <div class="mdl-textfield mdl-js-textfield">
-                    <input class="mdl-textfield__input" type="text" id="sample1" name="subject">
-                    <label class="mdl-textfield__label" for="sample1">Saisir le sujet de votre demande...</label>
-                </div>
-            </form>
+
+            @helper.input(applicationForm("subject"), 'label -> "Saisir le sujet de votre demande...") { (id, name, value, args) =>
+                <input class="mdl-textfield__input" type="text" name="@name" id="@id" @toHtmlArgs(args)>
+            }
+
             <h5 class="mdl-cell mdl-cell--12-col">Informations de l'usager</h5>
             <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp" id="form__infos">
                 <tbody>
-                    @for(info <- List("Prénom", "Nom de famille")) {
+                    @repeatMap(applicationForm("infos"), applicationForm, List("Prénom", "Nom de famille")) {  (infoField, info) =>
                         <tr>
                             <td class="mdl-data-table__cell--non-numeric">@info.capitalize</td>
-                            <td class="mdl-data-table__cell--non-numeric"><div class="mdl-textfield mdl-js-textfield">
-                                <input class="mdl-textfield__input" type="text" id="sample1" name="infos[@info]">
-                                <label class="mdl-textfield__label" for="sample1">Saisir @info ici</label>
-                            </div></td>
+                            <td class="mdl-data-table__cell--non-numeric">
+                                @helper.input(infoField, 'label -> s"Saisir $info ici") { (id, name, value, args) =>
+                                    <input class="mdl-textfield__input" type="text" name="@name" id="@id" @toHtmlArgs(args)>
+                                }
+                            </td>
                             <td></td>
                         </tr>
                     }
@@ -58,10 +60,9 @@
             </table>
             <br>
             <h5 class="mdl-cell mdl-cell--12-col">Description</h5>
-            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
-                <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="description"></textarea>
-                <label class="mdl-textfield__label" for="sample5">Détaillez votre demande ...</label>
-            </div>
+            @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
+                <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)></textarea>
+            }
             <br>
             <h5 class="mdl-cell mdl-cell--12-col">Envoyer la demande à</h5>
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
@@ -97,7 +98,7 @@
                 Envoyer ma demande
             </button>
         </div>
-    </form>
+    }
 </div>
 <script type="text/javascript">
     function filterUsers() {

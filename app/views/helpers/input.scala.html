@@ -1,0 +1,9 @@
+@(elements: helper.FieldElements)
+
+<div class="mdl-textfield mdl-js-textfield @if(elements.hasErrors) {is-invalid} @elements.args.getOrElse('class, "")">
+  @elements.input
+  <label class="mdl-textfield__label" for="@elements.field.id">@elements.args('label)</label>
+  @if(elements.hasErrors){
+    <span class="mdl-textfield__error">@elements.errors.mkString(", ")</span>
+  }
+</div>

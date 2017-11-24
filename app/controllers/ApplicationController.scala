@@ -11,6 +11,7 @@ import actions._
 import forms.FormsPlusMap
 import org.joda.time.DateTime
 import org.webjars.play.WebJarsUtil
+import play.api.i18n.MessagesProvider
 import services.{ApplicationService, UserService}
 
 /**
@@ -18,28 +19,34 @@ import services.{ApplicationService, UserService}
  * application's home page.
  */
 @Singleton
-class ApplicationController @Inject()(loginAction: LoginAction, userService: UserService, applicationService: ApplicationService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController {
+class ApplicationController @Inject()(loginAction: LoginAction, userService: UserService, applicationService: ApplicationService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
+  import forms.Models._
 
-  def create = loginAction { implicit request =>
-    Ok(views.html.createApplication(request.currentUser)(userService.all().filter(_.instructor)))
-  }
-
-  case class ApplicatonData(subject: String, description: String, infos: Map[String, String], users: List[String])
   val applicationForm = Form(
     mapping(
       "subject" -> nonEmptyText,
       "description" -> nonEmptyText,
       "infos" -> FormsPlusMap.map(nonEmptyText),
       "users" -> list(nonEmptyText)
-    )(ApplicatonData.apply)(ApplicatonData.unapply)
+    )(ApplicationData.apply)(ApplicationData.unapply)
   )
 
+  def create = loginAction { implicit request =>
+    Ok(views.html.createApplication(request.currentUser)(userService.all().filter(_.instructor), applicationForm))
+  }
 
   def createPost = loginAction { implicit request =>
-    val applicationData = applicationForm.bindFromRequest.get
-    val application = Application(applicationService.all().length.toString, "En cours", DateTime.now(), request.currentUser.name, request.currentUser.id, applicationData.subject, applicationData.description, applicationData.infos, applicationData.users, "argenteuil")
-    applicationService.createApplication(application)
-    Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyé")
+    applicationForm.bindFromRequest.fold(
+      formWithErrors => {
+        // binding failure, you retrieve the form containing errors:
+        BadRequest(views.html.createApplication(request.currentUser)(userService.all().filter(_.instructor), formWithErrors))
+      },
+      applicationData => {
+        val application = Application(applicationService.all().length.toString, "En cours", DateTime.now(), request.currentUser.name, request.currentUser.id, applicationData.subject, applicationData.description, applicationData.infos, applicationData.users, "argenteuil")
+        applicationService.createApplication(application)
+        Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyé")
+      }
+    )
   }
 
   def all = loginAction { implicit request =>
@@ -57,7 +64,6 @@ class ApplicationController @Inject()(loginAction: LoginAction, userService: Use
     }
   }
 
-  case class AnwserData(message: String)
   val answerForm = Form(
     mapping(
       "message" -> nonEmptyText
@@ -71,7 +77,6 @@ class ApplicationController @Inject()(loginAction: LoginAction, userService: Use
     Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre commentaire a bien été envoyé")
   }
 
-  case class InviteData(message: String, invitedUsers: List[String])
   val inviteForm = Form(
     mapping(
       "message" -> text,
