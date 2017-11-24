@@ -23,7 +23,7 @@
                     <label class="mdl-textfield__label" for="sample1">Saisir le sujet de votre demande...</label>
                 </div>
             </form>
-            <h5 class="mdl-cell mdl-cell--12-col">Informations du demandeur</h5>
+            <h5 class="mdl-cell mdl-cell--12-col">Informations de l'usager</h5>
             <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp" id="form__infos">
                 <tbody>
                     @for(info <- List("Prénom", "Nom de famille")) {
@@ -99,7 +99,7 @@
         </div>
     </form>
 </div>
-<script>
+<script type="text/javascript">
     function filterUsers() {
           var filter = document.getElementById("search").value.toUpperCase();
           Array.from(document.querySelectorAll("#users tbody tr")).forEach(function(tr){
