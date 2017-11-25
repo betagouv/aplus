@@ -1,56 +1,76 @@
 package services
 
+import java.util.UUID
 import javax.inject.Inject
 
-import models.{Answer, Application, User}
-import org.joda.time.DateTime
+import anorm.Column.nonNull
+import models.{Answer, Application}
+import play.api.db.Database
+import play.api.libs.json.Json
+import utils.DemoData
+import anorm._
+import anorm.JodaParameterMetaData._
 
 @javax.inject.Singleton
-class ApplicationService @Inject()() {
+class ApplicationService @Inject()(db: Database) {
+  
+  import utils.Anorm._
 
-  private val sabineAuthor = "Sabine, Assistante Sociale de la ville d'Argenteuil"
+  private implicit val answerListParser: anorm.Column[List[Answer]] =
+    nonNull { (value, meta) =>
+      Left(UnexpectedNullableFound(s"This should not append"))
+    }
 
-  private var applications = List(
-    Application(
-      "1",
-      "En cours",
-      DateTime.now(),
-      sabineAuthor,
-      "sabine",
-      "Etat dossier CAF de Mr MARTIN John",
-      "Bonjour,\nMr MARTIN John a fait transférer son dossier de la CAF de Marseille à la CAF d'Argenteuil, il ne sait pas où en est sa demande et voudrait savoir à qui envoyer ces documents de suivie.\nSon numéro à la CAF de Marseille est le 98767687, il est né le 16 juin 1985.\n\nMerci de votre aide",
-      Map("Numéro de CAF" -> "98767687", "Nom de famille" -> "MARTIN", "Prénom" -> "John", "Date de naissance" -> "16 juin 1985"),
-      List("jean"),
-      "argenteuil"
-    ),
-    Application(
-      "0",
-      "Terminé",
-      DateTime.now(),
-      sabineAuthor,
-      "sabine",
-      "Demande d'APL de Mme DUPOND Martine",
-      "Bonjour,\nMme DUPOND Martine né le 12 juin 1978 a déposé une demande d'APL le 1 octobre.\nPouvez-vous m'indiquez l'état de sa demande ?\n\nMerci de votre réponse",
-      Map("Numéro de CAF" -> "38767687", "Nom de famille" -> "DUPOND", "Prénom" -> "Martine", "Date de naissance" -> "12 juin 1978"),
-      List("jean"),
-      "argenteuil",
-      List(
-        Answer("0", DateTime.now(), "Je transmets pour info à la CAF", User.all.filter(_.qualite == "DILA").head, User.all.filter(_.qualite == "CAF"), false, "argenteuil"),
-        Answer("0", DateTime.now(), "Le dossier de Mme DUPOND a été accepté, elle devrait recevoir une réponse par courrier bientôt.", User.all.filter(_.qualite == "CAF").head, List(), true, "argenteuil")
-      )
-    )
+  private val simple: RowParser[Application] = Macro.parser[Application](
+    "id",
+    "status",
+    "creation_date",
+    "helper_name",
+    "helper_user_id",
+    "subject", "description", "user_infos", "invited_user_ids", "area"
   )
 
-  def all() = applications
+  private var applications = DemoData.applications
 
-  def byId(id: String) = applications.find(_.id == id)
+  def byId(id: UUID): Option[Application] = db.withConnection { implicit connection =>
+    SQL("SELECT * FROM application WHERE id = CAST({id} AS UUID) ").on('id -> id).as(simple.singleOpt)
+  }.orElse(applications.find(_.id == id))
 
-  def allForHelperUserId(helperUserId: String) = applications.filter(_.helperUserId == helperUserId)
+  def allForHelperUserId(helperUserId: UUID) = applications.filter(_.helperUserId == helperUserId) ++ db.withConnection { implicit connection =>
+    SQL("SELECT * FROM application WHERE helper_user_id = {helperUserId}::uuid").on('helperUserId -> helperUserId).as(simple.*)
+  }
 
-  def allForInvitedUserId(invitedUserId: String) = applications.filter(_.invitedUserIDs.contains(invitedUserId))
+  def allForInvitedUserId(invitedUserId: UUID) = applications.filter(_.invitedUserIDs.contains(invitedUserId)) ++ db.withConnection { implicit connection =>
+    SQL("SELECT * FROM application WHERE invited_user_ids @> ARRAY[{invitedUserId}::uuid]::uuid[]").on('invitedUserId -> invitedUserId).as(simple.*)
+  }
 
-  def createApplication(newApplication: Application): Unit = {
-    applications = newApplication :: applications
+  def createApplication(newApplication: Application) = db.withTransaction { implicit connection =>
+    SQL(
+      s"""
+          INSERT INTO application VALUES (
+            {id}::uuid,
+            {status},
+            {creation_date},
+            {helper_name},
+            {helper_user_id}::uuid,
+            {subject},
+            {description},
+            {user_infos},
+            ARRAY[{invited_user_ids}]::uuid[],
+            {area}::uuid
+          )
+      """).on(
+      'id ->   newApplication.id,
+      'status -> newApplication.status,
+      'creation_date -> newApplication.creationDate,
+      'helper_name -> newApplication.helperName,
+      'helper_user_id -> newApplication.helperUserId,
+      'subject -> newApplication.subject,
+      'description -> newApplication.description,
+      'user_infos -> Json.toJson(newApplication.userInfos),
+      'invited_user_ids -> newApplication.invitedUserIDs,
+      'area -> newApplication.area
+    ).executeUpdate()
   }
 
   def add(answer: Answer): Unit = {
@@ -58,7 +78,7 @@ class ApplicationService @Inject()() {
       if (application.id != answer.applicationId) {
         application
       } else {
-        application.copy(invitedUserIDs = answer.invitedUsers.map(_.id), answers = application.answers ++ List(answer))
+        application //.copy(invitedUserIDs = answer.invitedUsers.map(_.id), answers = application.answers ++ List(answer))
       }
     }
   }

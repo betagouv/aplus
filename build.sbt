@@ -10,7 +10,9 @@ scalaVersion := "2.12.4"
 //libraryDependencies += filters
 
 libraryDependencies ++= Seq(
-  ws
+  ws,
+  jdbc,
+  evolutions
 )
 
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test
@@ -20,7 +22,7 @@ libraryDependencies ++= Seq(
   "org.webjars" %% "webjars-play" % "2.6.1",
   "org.webjars.bower" % "material-design-lite" % "1.3.0",
   "org.webjars.bower" % "material-design-icons" % "3.0.1",
-  "org.postgresql" % "postgresql" % "9.4.1210",
+  "org.postgresql" % "postgresql" % "42.1.4",
   "com.typesafe.play" %% "anorm" % "2.5.3",
   "com.typesafe.play" %% "play-mailer" % "6.0.1",
   "com.typesafe.play" %% "play-mailer-guice" % "6.0.1"

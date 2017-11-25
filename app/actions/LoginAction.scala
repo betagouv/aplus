@@ -7,9 +7,9 @@ import models._
 import play.api.mvc._
 import play.api.mvc.Results.{Redirect, _}
 import services.UserService
+import utils.UUIDHelper
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class RequestWithUser[A](val currentUser: User, request: Request[A]) extends WrappedRequest[A](request)
 
@@ -28,7 +28,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default, userService: UserSe
       (loginByKeyVerification, loginBySession) match {
         case (Some(user), _)  =>
             val url = request.path + queryToString(request.queryString - "key" - "city")
-            Left(Redirect(Call(request.method, url)).withSession(request.session - "userId" + ("userId" -> user.id)))
+            Left(Redirect(Call(request.method, url)).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
         case (None, Some(user)) =>
            val url = request.path + queryToString(request.queryString - "userId")
             Right(new RequestWithUser(user, request))
@@ -39,6 +39,6 @@ class LoginAction @Inject()(val parser: BodyParsers.Default, userService: UserSe
     }
 
   private def loginByKeyVerification[A](implicit request: Request[A]) = request.getQueryString("key").flatMap(userService.byKey)
-  private def loginBySession[A](implicit request: Request[A]) = request.session.get("userId").flatMap(userService.byId)
+  private def loginBySession[A](implicit request: Request[A]) = request.session.get("userId").flatMap(UUIDHelper.fromString).flatMap(userService.byId)
 }
 

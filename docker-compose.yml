@@ -1,0 +1,9 @@
+version: '2'
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: aplus
+      POSTGRES_PASSWORD: mysecretpassword
+    ports:
+      - "5432:5432"
