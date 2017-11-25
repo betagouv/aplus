@@ -18,6 +18,36 @@
     <h3 class="mdl-cell mdl-cell--12-col">Nouvelle demande</h3>
     @helper.form(action = routes.ApplicationController.createPost(), args = 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
+            <h5 class="mdl-cell mdl-cell--12-col">Envoyer la demande à</h5>
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
+                <input class="mdl-textfield__input" type="text" id="search" onkeyup="filterUsers()">
+                <label class="mdl-textfield__label" for="search">Rechercher une personne, un organisme...</label>
+            </div>
+            <div class="mdl-cell mdl-cell--12-col mdl-grid" style="max-height: 500px; overflow-y: auto;">
+                <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp mdl-cell mdl-cell--12-col" id="users">
+                    <thead>
+                        <tr>
+                            <th class="mdl-data-table__cell--non-numeric"></th>
+                            <th class="mdl-data-table__cell--non-numeric">Nom</th>
+                            <th class="mdl-data-table__cell--non-numeric">Qualité</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @for(user <- users) {
+                        <tr>
+                            <td>
+                                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                    <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id">
+                                </label>
+                            </td>
+                            <td class="mdl-data-table__cell--non-numeric">@user.name</td>
+                            <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <br>
             <h5 class="mdl-cell mdl-cell--12-col">Sujet</h5>
 
             @helper.input(applicationForm("subject"), 'label -> "Saisir le sujet de votre demande...") { (id, name, value, args) =>
@@ -40,8 +70,9 @@
                     }
                     <tr>
                         <td class="mdl-data-table__cell--non-numeric">
+                            <b>Ajouter une autre information :</b><br>
                             <select id="types" onchange="newTypeSelected()">
-                                <option disabled selected value>Selectionnez une nouvelle information</option>
+                                <option disabled selected value>Selectionnez une information à ajouter</option>
                                     @for(info <- List("Date de naissance", "Numéro de sécurité sociale", "Identifiant CAF", "Numéro de dossier", "Nom de Naissance", "Autre")) {
                                         <option value="@info">@info</option>
                                     }
@@ -63,36 +94,6 @@
             @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
                 <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
             }
-            <br>
-            <h5 class="mdl-cell mdl-cell--12-col">Envoyer la demande à</h5>
-            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
-                <input class="mdl-textfield__input" type="text" id="search" onkeyup="filterUsers()">
-                <label class="mdl-textfield__label" for="search">Rechercher une personne, un organisme...</label>
-            </div>
-            <div class="mdl-cell mdl-cell--12-col mdl-grid" style="max-height: 500px; overflow-y: auto;">
-                <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp mdl-cell mdl-cell--12-col" id="users">
-                    <thead>
-                    <tr>
-                        <th class="mdl-data-table__cell--non-numeric"></th>
-                        <th class="mdl-data-table__cell--non-numeric">Nom</th>
-                        <th class="mdl-data-table__cell--non-numeric">Qualité</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @for(user <- users) {
-                        <tr>
-                            <td>
-                                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                    <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id">
-                                </label>
-                            </td>
-                            <td class="mdl-data-table__cell--non-numeric">@user.name</td>
-                            <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-            </div>
             <br>
             <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset">
                 Envoyer ma demande
