@@ -1,7 +1,5 @@
 package utils
 
-import java.util.UUID
-
 import models.{Answer, Application, User}
 import org.joda.time.DateTime
 
