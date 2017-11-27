@@ -8,14 +8,16 @@ import org.joda.time.DateTime
 object DemoData {
   var argenteuilAreaId = UUIDHelper.namedFrom("argenteuil")
   var users = List(
-    User(UUIDHelper.namedFrom("sabine"), Hash.sha256(s"sabine"), "Sabine", "Assistante Sociale de la ville d'Argenteuil", "sabine@assistante-sociale.fr", true, false, List(argenteuilAreaId)),
-    User(UUIDHelper.namedFrom("dila"), Hash.sha256(s"dila"), "Zohra", "DILA", "zohra@dila.gouv.fr", true, true, List()),
-    User(UUIDHelper.namedFrom("jean"), Hash.sha256(s"jean"), "Jean DUCAFE", "CAF", "jean@caf.fr", false, true, List(argenteuilAreaId)),
-    User(UUIDHelper.namedFrom("paul"), Hash.sha256(s"paul"), "Paul MURSSAF", "URSSAF", "paul@ursaff.fr", false, true, List(argenteuilAreaId)),
-    User(UUIDHelper.namedFrom("amelie"), Hash.sha256(s"amelie"), "Amelie LASANTE", "CPAM", "sabine@cpam.fr", false, true, List(argenteuilAreaId)),
-    User(UUIDHelper.namedFrom("hugo"), Hash.sha256(s"hugo"), "Hugo DECAFE", "CAF", "hugo@caf.fr", false, true, List(argenteuilAreaId)),
-    User(UUIDHelper.namedFrom("marine"), Hash.sha256(s"marine"), "Marine DURSSAF", "URSSAF", "marine@ursaff.fr", false, true, List(argenteuilAreaId)),
-    User(UUIDHelper.namedFrom("jeanne"), Hash.sha256(s"jeanne"), "Jeanne de SANTE", "CPAM", "jeanne@cpam.fr", false, true, List(argenteuilAreaId))
+    User(UUIDHelper.namedFrom("sabine"), Hash.sha256(s"sabine"), "Sabine", "Assistante Sociale de la ville d'Argenteuil", "sabine@assistante-sociale.example.com", true, false, List(argenteuilAreaId)),
+    User(UUIDHelper.namedFrom("zohra"), Hash.sha256(s"zohra"), "Zohra LEBEL", "DILA", "zohra.lebel@dila.gouv.fr", true, true, List()),
+    User(UUIDHelper.namedFrom("yan"), Hash.sha256(s"yan"), "Yan TANGUY", "DILA", "yan.tanguy@dila.gouv.fr", true, true, List()),
+    User(UUIDHelper.namedFrom("julien"), Hash.sha256(s"julien"), "Julien DAUPHANT", "DILA", "julien.dauphant@beta.gouv.fr", true, true, List()),
+    User(UUIDHelper.namedFrom("jean"), Hash.sha256(s"jean"), "Jean DUCAFE", "CAF", "jean@caf.example.com", false, true, List(argenteuilAreaId)),
+    User(UUIDHelper.namedFrom("paul"), Hash.sha256(s"paul"), "Paul MURSSAF", "URSSAF", "paul@ursaff.example.com", false, true, List(argenteuilAreaId)),
+    User(UUIDHelper.namedFrom("amelie"), Hash.sha256(s"amelie"), "Amelie LASANTE", "CPAM", "sabine@cpam.example.com", false, true, List(argenteuilAreaId)),
+    User(UUIDHelper.namedFrom("hugo"), Hash.sha256(s"hugo"), "Hugo DECAFE", "CAF", "hugo@caf.example.com", false, true, List(argenteuilAreaId)),
+    User(UUIDHelper.namedFrom("marine"), Hash.sha256(s"marine"), "Marine DURSSAF", "URSSAF", "marine@ursaff.example.com", false, true, List(argenteuilAreaId)),
+    User(UUIDHelper.namedFrom("jeanne"), Hash.sha256(s"jeanne"), "Jeanne de SANTE", "CPAM", "jeanne@cpam.example.com", false, true, List(argenteuilAreaId))
   )
   private val sabineAuthor = "Sabine, Assistante Sociale de la ville d'Argenteuil"
 
