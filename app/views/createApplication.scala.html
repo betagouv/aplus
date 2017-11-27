@@ -3,8 +3,6 @@
 @import utils.MDLForms._
 
 @main(user)(s"Nouvelle demande")  {
-<link rel="stylesheet" href="https://cdn.rawgit.com/Pixabay/JavaScript-autoComplete/1.0.4/auto-complete.css" />
-<script src="https://cdn.rawgit.com/Pixabay/JavaScript-autoComplete/1.0.4/auto-complete.min.js"></script>
 <style>
     .mdl-data-table td {
         padding: 0px 18px;
@@ -61,7 +59,7 @@
                         <tr>
                             <td class="mdl-data-table__cell--non-numeric">@info.capitalize</td>
                             <td class="mdl-data-table__cell--non-numeric">
-                                @helper.input(infoField, 'label -> s"Saisir $info ici") { (id, name, value, args) =>
+                                @helper.input(infoField, 'label -> s"Saisir $info de l'usager ici") { (id, name, value, args) =>
                                     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
                                 }
                             </td>
@@ -136,12 +134,12 @@
     function addInfo() {
         var inputInfoName = document.getElementById("other-type");
         var infoName = inputInfoName.value;
-        if(infoName == "") { return; }
+        if(infoName === "") { return; }
         var newNode = document.createElement('tr');
         newNode.innerHTML = '<td class="mdl-data-table__cell--non-numeric">'+infoName+'</td> \
                         <td class="mdl-data-table__cell--non-numeric"><div class="mdl-textfield mdl-js-textfield"> \
                             <input class="mdl-textfield__input" type="text" id="sample1" name="infos['+infoName+']"> \
-                            <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+'</label> \
+                            <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+' de l\'usager ici</label> \
                         </div></td> \
                         <td class="mdl-data-table__cell--non-numeric"> \
                         <button class="mdl-button mdl-js-button mdl-button--fab" type="button" onclick="removeInfo(this);"> \

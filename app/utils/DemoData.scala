@@ -1,5 +1,7 @@
 package utils
 
+import java.util.UUID
+
 import models.{Answer, Application, User}
 import org.joda.time.DateTime
 
@@ -27,7 +29,7 @@ object DemoData {
       "Etat dossier CAF de Mr MARTIN John",
       "Bonjour,\nMr MARTIN John a fait transférer son dossier de la CAF de Marseille à la CAF d'Argenteuil, il ne sait pas où en est sa demande et voudrait savoir à qui envoyer ces documents de suivie.\nSon numéro à la CAF de Marseille est le 98767687, il est né le 16 juin 1985.\n\nMerci de votre aide",
       Map("Numéro de CAF" -> "98767687", "Nom de famille" -> "MARTIN", "Prénom" -> "John", "Date de naissance" -> "16 juin 1985"),
-      List(UUIDHelper.namedFrom("jean")),
+      Map(UUIDHelper.namedFrom("jean") -> "Jean (CAF)"),
       argenteuilAreaId
     ),
     Application(
@@ -39,12 +41,27 @@ object DemoData {
       "Demande d'APL de Mme DUPOND Martine",
       "Bonjour,\nMme DUPOND Martine né le 12 juin 1978 a déposé une demande d'APL le 1 octobre.\nPouvez-vous m'indiquez l'état de sa demande ?\n\nMerci de votre réponse",
       Map("Numéro de CAF" -> "38767687", "Nom de famille" -> "DUPOND", "Prénom" -> "Martine", "Date de naissance" -> "12 juin 1978"),
-      List(UUIDHelper.namedFrom("jean")),
-      argenteuilAreaId /*,
-      List(
-        Answer(UUIDHelper.namedFrom("application0"), DateTime.now(), "Je transmets pour info à la CAF", users.filter(_.qualite == "DILA").head, users.filter(_.qualite == "CAF"), false, argenteuilAreaId),
-        Answer(UUIDHelper.namedFrom("application0"), DateTime.now(), "Le dossier de Mme DUPOND a été accepté, elle devrait recevoir une réponse par courrier bientôt.", users.filter(_.qualite == "CAF").head, List(), true, argenteuilAreaId)
-      )      */
+      Map(UUIDHelper.namedFrom("jean") -> "Jean (CAF)"),
+      argenteuilAreaId
     )
+  )
+  var answers = List(
+      Answer(UUIDHelper.namedFrom("answer0"),
+        UUIDHelper.namedFrom("application0"),
+        DateTime.now(),
+        "Je transmets pour info à la CAF",
+        users.filter(_.qualite == "DILA").head.id,
+        users.filter(_.qualite == "DILA").head.nameWithQualite,
+        users.filter(_.qualite == "CAF").map(user => user.id -> user.nameWithQualite).toMap, false,
+        argenteuilAreaId),
+      Answer(UUIDHelper.namedFrom("answer1"),
+        UUIDHelper.namedFrom("application0"),
+        DateTime.now(),
+        "Le dossier de Mme DUPOND a été accepté, elle devrait recevoir une réponse par courrier bientôt.",
+        users.filter(_.qualite == "CAF").head.id,
+        users.filter(_.qualite == "DILA").head.nameWithQualite,
+        Map(),
+        true,
+        argenteuilAreaId)
   )
 }

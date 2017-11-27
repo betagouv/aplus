@@ -8,9 +8,9 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.data.validation._
 import play.api.data.validation.Constraints._
-import models._
 import actions._
 import forms.FormsPlusMap
+import models._
 import org.joda.time.DateTime
 import org.webjars.play.WebJarsUtil
 import services.{ApplicationService, UserService}
@@ -44,7 +44,19 @@ class ApplicationController @Inject()(loginAction: LoginAction, userService: Use
         BadRequest(views.html.createApplication(request.currentUser)(userService.all().filter(_.instructor), formWithErrors))
       },
       applicationData => {
-        val application = Application(UUIDHelper.randomUUID, "En cours", DateTime.now(), request.currentUser.name, request.currentUser.id, applicationData.subject, applicationData.description, applicationData.infos, applicationData.users, DemoData.argenteuilAreaId)
+        val invitedUsers: Map[UUID, String] = applicationData.users.flatMap {  id =>
+            userService.byId(id).map(id -> _.nameWithQualite)
+        }.toMap
+        val application = Application(UUIDHelper.randomUUID,
+          "En cours",
+          DateTime.now(),
+          request.currentUser.nameWithQualite,
+          request.currentUser.id,
+          applicationData.subject,
+          applicationData.description,
+          applicationData.infos,
+          invitedUsers,
+          DemoData.argenteuilAreaId)
         applicationService.createApplication(application)
         Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyé")
       }
@@ -53,7 +65,7 @@ class ApplicationController @Inject()(loginAction: LoginAction, userService: Use
 
   def all = loginAction { implicit request =>
     val currentUserId = request.currentUser.id
-    Ok(views.html.allApplication(request.currentUser)(applicationService.allForHelperUserId(currentUserId), applicationService.allForInvitedUserId(currentUserId)))
+    Ok(views.html.allApplication(request.currentUser)(applicationService.allForCreatorUserId(currentUserId), applicationService.allForInvitedUserId(currentUserId)))
   }
 
   def show(id: UUID) = loginAction { implicit request =>
@@ -62,7 +74,8 @@ class ApplicationController @Inject()(loginAction: LoginAction, userService: Use
       case None =>
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
-        Ok(views.html.showApplication(request.currentUser)(userService.all().filter(_.instructor), application))
+        var answers = applicationService.answersByApplicationId(id)
+        Ok(views.html.showApplication(request.currentUser)(userService.all().filter(_.instructor), application, answers))
     }
   }
 
@@ -74,7 +87,14 @@ class ApplicationController @Inject()(loginAction: LoginAction, userService: Use
 
   def answer(applicationId: UUID) = loginAction { implicit request =>
     val answerData = answerForm.bindFromRequest.get
-    val answer = Answer(applicationId, DateTime.now(), answerData.message, request.currentUser, List(), true, DemoData.argenteuilAreaId)
+    val answer = Answer(UUID.randomUUID(),
+      applicationId, DateTime.now(),
+      answerData.message,
+      request.currentUser.id,
+      request.currentUser.nameWithQualite,
+      Map(),
+      true,
+      DemoData.argenteuilAreaId)
     applicationService.add(answer)
     Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre commentaire a bien été envoyé")
   }
@@ -88,8 +108,17 @@ class ApplicationController @Inject()(loginAction: LoginAction, userService: Use
 
   def invite(applicationId: UUID) = loginAction { implicit request =>
     val inviteData = inviteForm.bindFromRequest.get
-    val invitedUsers = inviteData.invitedUsers.flatMap { userService.byId }
-    val answer = Answer(applicationId, DateTime.now(), inviteData.message, request.currentUser, invitedUsers, false, DemoData.argenteuilAreaId)
+    val invitedUsers: Map[UUID, String] = inviteData.invitedUsers.flatMap {  id =>
+      userService.byId(id).map(id -> _.nameWithQualite)
+    }.toMap
+    val answer = Answer(UUID.randomUUID(),
+      applicationId, DateTime.now(),
+      inviteData.message,
+      request.currentUser.id,
+      request.currentUser.nameWithQualite,
+      invitedUsers,
+      false,
+      DemoData.argenteuilAreaId)
     applicationService.add(answer)
     Redirect(routes.ApplicationController.all()).flashing("success" -> "Les agents A+ ont été invité sur la demande")
   }

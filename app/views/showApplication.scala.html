@@ -1,4 +1,4 @@
-@(user: User)(users: List[User], application: Application)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User)(users: List[User], application: Application, answers: List[Answer])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 @import java.util.Locale
 
 @main(user)(s"Demande ${application.id}: ${application.subject} ")  {
@@ -60,8 +60,13 @@ div hr:last-child {
 </tr>
 <tr>
     <td class="mdl-data-table__cell--non-numeric application__key">De</td>
-    <td class="mdl-data-table__cell--non-numeric application__value">@application.helperName</td>
+    <td class="mdl-data-table__cell--non-numeric application__value">@application.creatorUserName</td>
 </tr>
+
+    <tr>
+        <td class="mdl-data-table__cell--non-numeric application__key">Invités</td>
+        <td class="mdl-data-table__cell--non-numeric application__value">@application.invitedUsers.values.mkString(", "))</td>
+    </tr>
 </tbody>
 </table>
 
@@ -78,14 +83,14 @@ div hr:last-child {
 }
 </tbody>
 </table>
-@for(answer <- application.answers){
-    @if(user.instructor || answer.visibleByTheCreator) {
+@for(answer <- answers){
+    @if(user.instructor || answer.visibleByHelpers) {
     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
-        <h4 class="mdl-cell mdl-cell--12-col">Message de @answer.createBy.name (@answer.createBy.qualite) le @answer.creationDate.toString("dd MMM YYYY", new Locale("fr"))</h4>
+        <h4 class="mdl-cell mdl-cell--12-col">Message de @answer.creatorUserName le @answer.creationDate.toString("dd MMM YYYY", new Locale("fr"))</h4>
         <span class="mdl-cell mdl-cell--12-col">@answer.message</span><br>
         <ul class="mdl-cell mdl-cell--12-col">
-        @for(invited <- answer.invitedUsers) {
-            <li>@invited.name (@invited.qualite) a été invité sur la demande</li>
+        @for((id, name) <- answer.invitedUsers) {
+            <li>@name a été invité sur la demande</li>
         }
         </ul>
     </div>
@@ -138,7 +143,7 @@ div hr:last-child {
             <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
             <label class="mdl-textfield__label" for="sample5">Laisser ici le commentaire pour l'invitation...</label>
         </div>
-        <b>Note : Ce commentaire sera visible par tous les agents A+. L'auteur de la demande (@application.helperName) ne pourra pas le voir.</b>
+        <b>Note : Ce commentaire sera visible par tous les agents A+. L'auteur de la demande (@application.creatorUserName) ne pourra pas le voir.</b>
         <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Inviter les A+ sélectionnés</button>
     </form>
 </div>

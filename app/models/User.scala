@@ -11,8 +11,10 @@ case class User(id: UUID,
                 email: String,
                 helper: Boolean,
                 instructor: Boolean,
-                areas: List[UUID])
+                areas: List[UUID]) {
+  def nameWithQualite = s"$name ( $qualite )"
+}
 
 object User {
-  def get(id: String): Option[User] = DemoData.users.find(_.id == id)
+  def get(id: String): Option[User] = DemoData.users.find(_.id == id)           //TODO: Remove
 }

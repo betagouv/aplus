@@ -8,8 +8,6 @@ import utils.{DemoData, Hash}
 
 @javax.inject.Singleton
 class UserService @Inject()(configuration: play.api.Configuration) {
-  private lazy val cryptoSecret = configuration.underlying.getString("play.http.secret.key")
-
   def all() = DemoData.users
 
   def byId(id: UUID): Option[User] = all.find(_.id == id)
