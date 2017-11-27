@@ -13,7 +13,7 @@ import forms.FormsPlusMap
 import models._
 import org.joda.time.DateTime
 import org.webjars.play.WebJarsUtil
-import services.{ApplicationService, UserService}
+import services.{ApplicationService, NotificationsService, UserService}
 import utils.{DemoData, UUIDHelper}
 
 /**
@@ -21,7 +21,10 @@ import utils.{DemoData, UUIDHelper}
  * application's home page.
  */
 @Singleton
-class ApplicationController @Inject()(loginAction: LoginAction, userService: UserService, applicationService: ApplicationService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
+class ApplicationController @Inject()(loginAction: LoginAction,
+                                      userService: UserService,
+                                      applicationService: ApplicationService,
+                                      notificationsService: NotificationsService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
   import forms.Models._
 
   val applicationForm = Form(
@@ -57,8 +60,12 @@ class ApplicationController @Inject()(loginAction: LoginAction, userService: Use
           applicationData.infos,
           invitedUsers,
           DemoData.argenteuilAreaId)
-        applicationService.createApplication(application)
-        Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyé")
+        if(applicationService.createApplication(application) == 1) {
+          notificationsService.newApplication(application)
+          Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyé")
+        }  else {
+          Redirect(routes.ApplicationController.all()).flashing("error" -> "Votre demande n'a pas pu être envoyé")
+        }
       }
     )
   }
@@ -87,16 +94,26 @@ class ApplicationController @Inject()(loginAction: LoginAction, userService: Use
 
   def answer(applicationId: UUID) = loginAction { implicit request =>
     val answerData = answerForm.bindFromRequest.get
-    val answer = Answer(UUID.randomUUID(),
-      applicationId, DateTime.now(),
-      answerData.message,
-      request.currentUser.id,
-      request.currentUser.nameWithQualite,
-      Map(),
-      true,
-      DemoData.argenteuilAreaId)
-    applicationService.add(answer)
-    Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre commentaire a bien été envoyé")
+
+    applicationService.byId(applicationId) match {
+      case None =>
+        NotFound("Nous n'avons pas trouvé cette demande")
+      case Some(application) =>
+        val answer = Answer(UUID.randomUUID(),
+          applicationId, DateTime.now(),
+          answerData.message,
+          request.currentUser.id,
+          request.currentUser.nameWithQualite,
+          Map(),
+          true,
+          DemoData.argenteuilAreaId)
+        if (applicationService.add(answer) == 1) {
+          notificationsService.newAnswer(application, answer)
+          Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre commentaire a bien été envoyé")
+        } else {
+          InternalServerError("Votre commentaire n'a pas pu être envoyé")
+        }
+    }
   }
 
   val inviteForm = Form(
@@ -108,18 +125,27 @@ class ApplicationController @Inject()(loginAction: LoginAction, userService: Use
 
   def invite(applicationId: UUID) = loginAction { implicit request =>
     val inviteData = inviteForm.bindFromRequest.get
-    val invitedUsers: Map[UUID, String] = inviteData.invitedUsers.flatMap {  id =>
-      userService.byId(id).map(id -> _.nameWithQualite)
-    }.toMap
-    val answer = Answer(UUID.randomUUID(),
-      applicationId, DateTime.now(),
-      inviteData.message,
-      request.currentUser.id,
-      request.currentUser.nameWithQualite,
-      invitedUsers,
-      false,
-      DemoData.argenteuilAreaId)
-    applicationService.add(answer)
-    Redirect(routes.ApplicationController.all()).flashing("success" -> "Les agents A+ ont été invité sur la demande")
+    applicationService.byId(applicationId) match {
+      case None =>
+        NotFound("Nous n'avons pas trouvé cette demande")
+      case Some(application) =>
+        val invitedUsers: Map[UUID, String] = inviteData.invitedUsers.flatMap { id =>
+          userService.byId(id).map(id -> _.nameWithQualite)
+        }.toMap
+        val answer = Answer(UUID.randomUUID(),
+          applicationId, DateTime.now(),
+          inviteData.message,
+          request.currentUser.id,
+          request.currentUser.nameWithQualite,
+          invitedUsers,
+          false,
+          DemoData.argenteuilAreaId)
+        if (applicationService.add(answer)  == 1) {
+          notificationsService.newAnswer(application, answer)
+          Redirect (routes.ApplicationController.all () ).flashing ("success" -> "Les agents A+ ont été invité sur la demande")
+        } else {
+          InternalServerError("Les agents A+ n'ont pas pu être invité")
+        }
+    }
   }
 }

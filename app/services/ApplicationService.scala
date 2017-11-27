@@ -107,6 +107,15 @@ class ApplicationService @Inject()(db: Database) {
     })
     SQL(
       """
+          UPDATE application SET invited_users = invited_users || {invited_users}::jsonb
+          WHERE id = {id}::uuid
+       """
+    ).on(
+      'id -> answer.applicationId,
+      'invited_users -> invitedUserJson
+    ).executeUpdate()
+    SQL(
+      """
           INSERT INTO answer VALUES (
             {id}::uuid,
             {application_id}::uuid,
@@ -128,15 +137,6 @@ class ApplicationService @Inject()(db: Database) {
       'invited_users -> invitedUserJson,
       'visible_by_helpers -> answer.visibleByHelpers,
       'area -> answer.area
-    ).executeUpdate()
-    SQL(
-       """
-          UPDATE application SET invited_users = invited_users || {invited_users}::jsonb
-          WHERE id = {id}::uuid
-       """
-    ).on(
-      'id -> answer.applicationId,
-      'invited_users -> invitedUserJson
     ).executeUpdate()
   }
 }
