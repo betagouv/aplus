@@ -14,7 +14,3 @@ case class User(id: UUID,
                 areas: List[UUID]) {
   def nameWithQualite = s"$name ( $qualite )"
 }
-
-object User {
-  def get(id: String): Option[User] = DemoData.users.find(_.id == id)           //TODO: Remove
-}
