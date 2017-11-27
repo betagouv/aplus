@@ -19,21 +19,8 @@
             max-width: 100%;
             overflow-x: hidden;
         }
-        .header__ribbon {
-            text-align: center;
-            text-transform: uppercase;
-            position: absolute;
-            top: 10px;
-            right: -25px;
-            -webkit-transform: rotate(45deg);
-            transform: rotate(45deg);
-            width: 90px;
-            background-color: red;
-            color: #fff;
-            padding: 5px;
-            font-size: 10px;
-            font-weight: 700;
-            z-index: 10;
+        #accbtn ~ div {
+            z-index: 999 !important
         }
     </style>
 </head>
@@ -41,11 +28,6 @@
 <div class="header__ribbon do-not-print" id="header__ribbon" style="display: none">
     DEMO
 </div>
-<script>
-    if(/localhost|demo/.test(window.location.hostname)) {
-        document.getElementById("header__ribbon").style.display = "initial";
-    }
-</script>
 <div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header">
     <header class="demo-header mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 do-not-print">
         <div class="mdl-layout__header-row">
@@ -87,7 +69,7 @@
                 </ul>
             </div>
         </header>
-        <nav class="demo-navigation mdl-navigation mdl-color--blue-grey-800">
+        <nav class="navigation mdl-navigation mdl-color--blue-grey-800">
             @if(user.helper) {
                 <a class="mdl-navigation__link" href="@routes.ApplicationController.create()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">
                     create_new_folder</i>Nouvelle demande</a>
@@ -124,6 +106,15 @@
         </script>
     }
 </div>
+
+    <script>
+            if(/localhost|demo/.test(window.location.hostname)) {
+                document.getElementById("header__ribbon").style.display = "initial";
+                var nav = document.getElementsByClassName("navigation")[0]
+                nav.classList.add("mdl-color--deep-purple")
+                nav.classList.remove("mdl-color--blue-grey-800")
+            }
+    </script>
 </body>
 </html>
 
