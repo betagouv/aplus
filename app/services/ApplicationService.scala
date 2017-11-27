@@ -45,7 +45,7 @@ class ApplicationService @Inject()(db: Database) {
     "area"
   )
 
-  private var applications = DemoData.applications    //TODO : remove
+  private val applications = DemoData.applications    //TODO : remove
 
   def byId(id: UUID): Option[Application] = db.withConnection { implicit connection =>
     SQL("SELECT * FROM application WHERE id = CAST({id} AS UUID) ").on('id -> id).as(simpleApplication.singleOpt)

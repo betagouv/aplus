@@ -2,8 +2,6 @@ package models
 
 import java.util.UUID
 
-import utils.DemoData
-
 case class User(id: UUID,
                 key: String,
                 name: String,
