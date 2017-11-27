@@ -81,8 +81,10 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       case None =>
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
-        var answers = applicationService.answersByApplicationId(id)
-        Ok(views.html.showApplication(request.currentUser)(userService.all().filter(_.instructor), application, answers))
+        val answers = applicationService.answersByApplicationId(id)
+        val users = userService.all()
+          .filter(_.instructor)
+        Ok(views.html.showApplication(request.currentUser)(users, application, answers))
     }
   }
 
@@ -142,7 +144,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           DemoData.argenteuilAreaId)
         if (applicationService.add(answer)  == 1) {
           notificationsService.newAnswer(application, answer)
-          Redirect (routes.ApplicationController.all () ).flashing ("success" -> "Les agents A+ ont été invité sur la demande")
+          Redirect (routes.ApplicationController.all()).flashing ("success" -> "Les agents A+ ont été invité sur la demande")
         } else {
           InternalServerError("Les agents A+ n'ont pas pu être invité")
         }
