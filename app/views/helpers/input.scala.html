@@ -1,9 +1,19 @@
 @(elements: helper.FieldElements)
 
-<div class="mdl-textfield mdl-js-textfield @if(elements.hasErrors) {is-invalid} @elements.args.getOrElse('class, "")">
-  @elements.input
-  <label class="mdl-textfield__label" for="@elements.field.id">@elements.args('label)</label>
-  @if(elements.hasErrors){
-    <span class="mdl-textfield__error">@elements.errors.mkString(", ")</span>
-  }
-</div>
+@defining(elements.args.getOrElse('type, "textfield")) {
+     case "checkbox" => {
+       <label class="mdl-checkbox mdl-js-checkbox">
+          @elements.input
+          <span class="mdl-checkbox__label">@elements.args.getOrElse('label, "")</span>
+       </label>
+     }
+     case fieldType: String => {
+       <div class="mdl-@fieldType mdl-js-@fieldType @if(fieldType == "textfield") { mdl-textfield--floating-label } @if(elements.hasErrors) {is-invalid} @elements.args.getOrElse('class, "")">
+         @elements.input
+         <label class="mdl-@{fieldType}__label" for="@elements.field.id">@elements.args('label)</label>
+         @if(elements.hasErrors) {
+           <span class="mdl-@{fieldType}__error">@elements.errors.mkString(", ")</span>
+         }
+       </div>
+     }
+}

@@ -21,6 +21,8 @@ GET    /login/disconnect             controllers.LoginController.disconnect
 
 # Users
 GET    /users                        controllers.UserController.all
+GET    /users/edit                   controllers.UserController.edit
+POST    /users/edit                       controllers.UserController.editPost
 
 
 # Map static resources from the /public folder to the /assets URL path

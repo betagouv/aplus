@@ -1,0 +1,79 @@
+@import models._
+@import utils.MDLForms._
+@(user: User)(form: Form[(List[User], Option[Int])], min: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider)
+
+
+@main(user)("Gestion des utilisateurs") {
+  <style>
+          .pem-table {
+            width: 100%;
+          }
+          .hidden {
+            display: none;
+          }
+  </style>
+} {
+  <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
+  @helper.form(action = routes.UserController.editPost(), args = 'class -> "mdl-cell mdl-cell--12-col mdl-grid") {
+    <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table" style="white-space: normal;">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="mdl-data-table__cell--non-numeric">Nom</th>
+          <th class="mdl-data-table__cell--non-numeric">Administration/Qualité</th>
+          <th class="mdl-data-table__cell--non-numeric">Email</th>
+          <th class="mdl-data-table__cell--non-numeric">Admin</th>
+          <th class="mdl-data-table__cell--non-numeric">Instructeur</th>
+          <th class="mdl-data-table__cell--non-numeric">Aidant</th>
+        </tr>
+      </thead>
+      <tbody>
+      @helper.repeatWithIndex(form("users"), min = min) { (userField, index) =>
+        <tr>
+          <td>@index
+            @helper.input(userField("id"), 'label -> "Id", 'class -> "hidden") { (id, name, value, args) =>
+              <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+            }
+          </td>
+          <td class="mdl-data-table__cell--non-numeric">
+            @helper.input(userField("name"), 'label -> "Nom de l'utilisateur") { (id, name, value, args) =>
+              <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+            }
+          </td>
+          <td class="mdl-data-table__cell--non-numeric">
+            @helper.input(userField("qualite"), 'label -> "Qualité de l'utilisateur") { (id, name, value, args) =>
+              <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+            }
+          </td>
+          <td class="mdl-data-table__cell--non-numeric">
+            @helper.input(userField("email"), 'label -> "Email de l'utilisateur") { (id, name, value, args) =>
+              <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+            }
+          </td>
+          <td>
+            @helper.checkbox(userField("admin"), 'type -> "checkbox", 'class -> "mdl-checkbox__input")
+          </td>
+          <td>
+            @helper.checkbox(userField("instructor"), 'type -> "checkbox", 'class -> "mdl-checkbox__input")
+          </td>
+          <td>
+            @helper.checkbox(userField("helper"), 'type -> "checkbox", 'class -> "mdl-checkbox__input")
+          </td>
+        </tr>
+      }
+      </tbody>
+    </table>
+    <div class="mdl-textfield mdl-js-textfield mdl-cell mdl-cell--6-col">
+      <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="add-rows" name="add-rows">
+      <label class="mdl-textfield__label" for="add-rows">Nombre d'utilisateur à ajouter</label>
+      <span class="mdl-textfield__error">Ce n'est pas un nombre</span>
+    </div>
+    <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--6-col">
+      Ajouter des utilisateurs
+    </button>
+    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
+      Sauvegarder les modifications
+    </button>
+  }
+  </div>
+}

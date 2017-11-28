@@ -29,9 +29,9 @@ error.max=Must be less or equal to {0}
 error.max.strict=Must be strictly less than {0}
 error.minLength=Minimum length is {0}
 error.maxLength=Maximum length is {0}
-error.email=Valid email required
+error.email=Email incorrect
 error.pattern=Must satisfy {0}
-error.date=Valid date required
+error.date=La date est incorrect
 error.uuid=Valid UUID required
 
 error.expected.date=Date value expected
