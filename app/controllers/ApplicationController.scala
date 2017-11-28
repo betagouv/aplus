@@ -82,7 +82,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
         val answers = applicationService.answersByApplicationId(id)
-        val users = userService.all()
+        val users = userService.all().filterNot(_.id == request.currentUser.id)
           .filter(_.instructor)
         Ok(views.html.showApplication(request.currentUser)(users, application, answers))
     }

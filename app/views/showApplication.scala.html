@@ -99,22 +99,22 @@ div hr:last-child {
 
 @if(user.instructor) {
 <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--6-col mdl-grid">
-    <h3 class="mdl-cell mdl-cell--12-col">Je peux répondre à la demande</h3>
+    <h3 class="mdl-cell mdl-cell--12-col">Je peux répondre à l'aidant</h3>
     <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" onsubmit="">
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
+            <b>Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant ( @application.creatorUserName ). Merci d'utiliser vos outils habituels pour continuer l'instruction.</b>
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                 <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
                 <label class="mdl-textfield__label" for="sample5">Détaillez votre réponse ici...</label>
             </div>
-            <b>Votre réponse permet d'indiquer le statut des démarches et procédures en cours. Merci d'utiliser vos outils habituels pour continuer l'instruction.</b>
             <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">
-                 Répondre à la demande
+                 Répondre à l'aidant
             </button>
         </div>
     </form>
 </div>
 <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--6-col mdl-grid do-not-print">
-    <h3 class="mdl-cell mdl-cell--12-col">Inviter un A+</h3>
+    <h3 class="mdl-cell mdl-cell--12-col">Répondre ou inviter un A+</h3>
     <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col" method="post">
         <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp mdl-cell mdl-cell--12-col">
             <thead>
@@ -138,12 +138,12 @@ div hr:last-child {
             }
             </tbody>
         </table>
-        <h5>Ajouter un commentaire</h5>
+        <h5>Ajouter un message</h5>
+        <b>Note : Ce commentaire sera visible par tous les agents A+. L'auteur de la demande (@application.creatorUserName) ne pourra pas le voir.</b>
         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
             <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
             <label class="mdl-textfield__label" for="sample5">Laisser ici le commentaire pour l'invitation...</label>
         </div>
-        <b>Note : Ce commentaire sera visible par tous les agents A+. L'auteur de la demande (@application.creatorUserName) ne pourra pas le voir.</b>
         <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Inviter les A+ sélectionnés</button>
     </form>
 </div>
