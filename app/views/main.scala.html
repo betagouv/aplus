@@ -75,6 +75,9 @@
                     create_new_folder</i>Nouvelle demande</a>
             }
             <a class="mdl-navigation__link" href="@routes.ApplicationController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">folder</i>Toutes les demandes</a>
+            @if(user.admin) {
+                <a class="mdl-navigation__link" href="@routes.UserController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">people</i>Utilisateurs</a>
+            }
             <div class="mdl-layout-spacer"></div>
             <a class="mdl-navigation__link" href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aide%20A+"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">help_outline</i><span>Support</span></a>
         </nav>

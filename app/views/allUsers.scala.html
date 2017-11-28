@@ -1,0 +1,75 @@
+@import models._
+@(user: User)(users: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+
+
+@main(user)("Gestion des utilisateurs") {
+  <style>
+          .pem-table {
+            width: 100%;
+          }
+  </style>
+} {
+  <div class="mdl-cell mdl-cell--12-col">
+    <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table" style="white-space: normal;">
+      <thead>
+        <tr>
+          <th class="mdl-data-table__cell--non-numeric">Nom</th>
+          <th class="mdl-data-table__cell--non-numeric">Administration/Qualité</th>
+          <th class="mdl-data-table__cell--non-numeric">Email</th>
+          <th class="mdl-data-table__cell--non-numeric">Admin</th>
+          <th class="mdl-data-table__cell--non-numeric">Instructeur</th>
+          <th class="mdl-data-table__cell--non-numeric">Aidant</th>
+        </tr>
+      </thead>
+      <tbody>
+      @for(user <- users) {
+        <tr>
+          <td class="mdl-data-table__cell--non-numeric">@user.name</td>
+          <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
+          <td class="mdl-data-table__cell--non-numeric">@user.email</td>
+          <td>
+            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+              <input type="checkbox" class="mdl-checkbox__input" @if(user.admin){ checked } disabled>
+            </label>
+          </td>
+          <td>
+            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+              <input type="checkbox" class="mdl-checkbox__input" @if(user.instructor){ checked } disabled>
+            </label>
+          </td>
+          <td>
+            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+              <input type="checkbox" class="mdl-checkbox__input" @if(user.helper){ checked } disabled>
+            </label>
+          </td>
+        </tr>
+      }
+      </tbody>
+    </table>
+  </div>
+  <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+    <h4>Admin</h4>
+    <ul>
+      <li>Peut ajouter et supprimer des utilisateurs</li>
+      <li>Peut changer les permissions des utilisateurs</li>
+      <li>Peut voir les adresses emails des agents</li>
+    </ul>
+  </div>
+  <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+    <h4>Instructeur</h4>
+    <ul>
+      <li>Peut répondre à la demande</li>
+      <li>Peut inviter des personnes à la demande</li>
+      <li>Reçoit une notification par email à chaque nouvelle demande sur lequelle il est invité</li>
+      <li>Peut voir l'ensemble des messages sur lequelle il est invité</li>
+    </ul>
+  </div>
+  <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+    <h4>Aidant</h4>
+    <ul>
+      <li>Peut déposer une demande</li>
+      <li>Peut inviter un instructeur sur une demande</li>
+      <li>Peut voir uniquement les messages de réponse à la demande</li>
+    </ul>
+  </div>
+}

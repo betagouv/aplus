@@ -9,6 +9,7 @@ case class User(id: UUID,
                 email: String,
                 helper: Boolean,
                 instructor: Boolean,
+                admin: Boolean,
                 areas: List[UUID]) {
   def nameWithQualite = s"$name ( $qualite )"
 }
