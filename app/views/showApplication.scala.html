@@ -102,7 +102,7 @@ div hr:last-child {
     <h3 class="mdl-cell mdl-cell--12-col">Je peux répondre à l'aidant</h3>
     <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" onsubmit="">
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
-            <b>Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant ( @application.creatorUserName ). Merci d'utiliser vos outils habituels pour continuer l'instruction.</b>
+            <b>Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName. Merci d'utiliser vos outils habituels pour continuer l'instruction.</b>
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                 <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
                 <label class="mdl-textfield__label" for="sample5">Détaillez votre réponse ici...</label>
@@ -139,7 +139,7 @@ div hr:last-child {
             </tbody>
         </table>
         <h5>Ajouter un message</h5>
-        <b>Note : Ce commentaire sera visible par tous les agents A+. L'auteur de la demande (@application.creatorUserName) ne pourra pas le voir.</b>
+        <b>Note : Ce message sera visible par tous les agents A+. L'auteur de la demande @application.creatorUserName ne pourra pas le voir.</b>
         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
             <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
             <label class="mdl-textfield__label" for="sample5">Laisser ici le commentaire pour l'invitation...</label>
