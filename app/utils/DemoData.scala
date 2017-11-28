@@ -6,7 +6,7 @@ import org.joda.time.DateTime
 object DemoData {
   var argenteuilAreaId = UUIDHelper.namedFrom("argenteuil")
   var users = List(
-      User(UUIDHelper.namedFrom("dominique"), Hash.sha256(s"dominique"), "Dominique", "Accueil association Liberto", "dom@liberto.example.com", true, false, false, gList(argenteuilAreaId)),
+    User(UUIDHelper.namedFrom("dominique"), Hash.sha256(s"dominique"), "Dominique", "Accueil association Liberto", "dom@liberto.example.com", true, false, false, List(argenteuilAreaId)),
     User(UUIDHelper.namedFrom("sabine"), Hash.sha256(s"sabine"), "Sabine", "Assistante Sociale de la ville d'Argenteuil", "sabine@assistante-sociale.example.com", true, false, false, List(argenteuilAreaId)),
     User(UUIDHelper.namedFrom("zohra"), Hash.sha256(s"zohra"), "Zohra LEBEL", "DILA", "zohra.lebel@dila.gouv.fr", true, true, true, List()),
     User(UUIDHelper.namedFrom("yan"), Hash.sha256(s"yan"), "Yan TANGUY", "DILA", "yan.tanguy@dila.gouv.fr", true, true, true, List()),
