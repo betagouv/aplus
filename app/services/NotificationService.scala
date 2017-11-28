@@ -43,11 +43,12 @@ class NotificationsService @Inject()(configuration: play.api.Configuration,
 
   private val footer =
     s"""<br>
-       |<b>Ce mail est personnel, ne le transférez pas, il permettrait à quelqu'un d'autre d'utiliser votre identité sur le réseau A+.</b>
+       |<b>Ne transférez pas cette email, il vous ait personnelement destiné, il permettrait à quelqu'un d'autre d'utiliser votre identité sur le réseau A+.
+       | Si vous souhaitez transférer la demande à quelqu'un d'autre vous avez la possibilité de le faire en ouvrant le lien ci dessus.</b>
        |<br>
        |<br>
        |Merci de votre aide,<br>
-       |Si vous avez des questions, n'hésitez pas à nous contacter sur contact@aplus.beta.gouv.fr<br>
+       |Si vous avez des questions à propos de l'outil A+, n'hésitez pas à contacter l'équipe A+ sur contact@aplus.beta.gouv.fr<br>
        |Equipe A+
      """.stripMargin
 
