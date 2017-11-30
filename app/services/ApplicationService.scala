@@ -48,7 +48,7 @@ class ApplicationService @Inject()(db: Database) {
   private val applications = DemoData.applications    //TODO : remove
 
   def byId(id: UUID): Option[Application] = db.withConnection { implicit connection =>
-    SQL("SELECT * FROM application WHERE id = CAST({id} AS UUID) ").on('id -> id).as(simpleApplication.singleOpt)
+    SQL("SELECT * FROM application WHERE id = {id}::uuid").on('id -> id).as(simpleApplication.singleOpt)
   }.orElse(applications.find(_.id == id))
 
   def allForCreatorUserId(creatorUserId: UUID) = db.withConnection { implicit connection =>
@@ -91,7 +91,7 @@ class ApplicationService @Inject()(db: Database) {
       'user_infos -> Json.toJson(newApplication.userInfos),
       'invited_users -> invitedUserJson,
       'area -> newApplication.area
-    ).executeUpdate()
+    ).execute()
   }
 
   def answersByApplicationId(applicationId: UUID) = db.withConnection { implicit connection =>

@@ -11,7 +11,6 @@ import play.api.mvc._
  */
 @Singleton
 class HomeController @Inject()(loginAction: LoginAction) extends InjectedController {
-
   def index = loginAction { implicit request =>
     Redirect(routes.ApplicationController.all())
   }

@@ -13,7 +13,7 @@ import forms.FormsPlusMap
 import models._
 import org.joda.time.DateTime
 import org.webjars.play.WebJarsUtil
-import services.{ApplicationService, NotificationsService, UserService}
+import services.{ApplicationService, NotificationService, UserService}
 import utils.{DemoData, UUIDHelper}
 
 /**
@@ -24,7 +24,7 @@ import utils.{DemoData, UUIDHelper}
 class ApplicationController @Inject()(loginAction: LoginAction,
                                       userService: UserService,
                                       applicationService: ApplicationService,
-                                      notificationsService: NotificationsService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
+                                      notificationsService: NotificationService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
   import forms.Models._
 
   val applicationForm = Form(
@@ -60,7 +60,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           applicationData.infos,
           invitedUsers,
           DemoData.argenteuilAreaId)
-        if(applicationService.createApplication(application) == 1) {
+        if(applicationService.createApplication(application)) {
           notificationsService.newApplication(application)
           Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyé")
         }  else {

@@ -10,19 +10,19 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
 import play.api.mvc.InjectedController
-import services.{NotificationsService, UserService}
+import services.{NotificationService, UserService}
 
 @Singleton
 class UserController @Inject()(loginAction: LoginAction,
                                userService: UserService,
-                               notificationsService: NotificationsService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
+                               notificationsService: NotificationService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
 
   def all = loginAction { implicit request =>
     Ok(views.html.allUsers(request.currentUser)(userService.all()))
   }
 
   val usersForm = Form(
-    tuple(
+    single(
       "users" -> list(mapping(
         "id" -> default(uuid, UUID.randomUUID()),
         "key" -> ignored("key"),  //TODO refactoring security
@@ -33,28 +33,49 @@ class UserController @Inject()(loginAction: LoginAction,
         "instructor" -> boolean,
         "admin" -> boolean,
         "areas" -> list(uuid)
-      )(User.apply)(User.unapply)),
-      "add-rows" -> optional(number)
+      )(User.apply)(User.unapply))
     )
   )
 
   def edit = loginAction { implicit request =>
-    val users = userService.all()
-    val form = usersForm.fill((users, None))
-    Ok(views.html.editUsers(request.currentUser)(form, users.length))
+    val users = userService.allDBOnly()
+    val form = usersForm.fill(users)
+    Ok(views.html.editUsers(request.currentUser)(form, users.length, routes.UserController.editPost()))
   }
 
   def editPost = loginAction { implicit request =>
     usersForm.bindFromRequest.fold(
       formWithErrors => {
-        BadRequest(views.html.editUsers(request.currentUser)(formWithErrors, 0))
+        BadRequest(views.html.editUsers(request.currentUser)(formWithErrors, 0, routes.UserController.editPost()))
       },
-      {
-        case (users, Some(newRow)) =>
-          val form = usersForm.fill((users, None))
-          Ok(views.html.editUsers(request.currentUser)(form, newRow + users.length))
-        case (users, _) =>
-        Redirect(routes.UserController.all()).flashing("success" -> "Modification sauvegardé")
+      users => {
+        if(users.foldRight(true)({ (user, result) => userService.update(user) && result})) {
+          Redirect(routes.UserController.all()).flashing("success" -> "Modification sauvegardé")
+        } else {
+          val form = usersForm.fill(users).withGlobalError("Impossible de mettre à jour certains utilisateurs (Erreur interne)")
+          InternalServerError(views.html.editUsers(request.currentUser)(form, users.length, routes.UserController.editPost()))
+        }
+      }
+    )
+  }
+
+  def add = loginAction { implicit request =>
+    val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
+    Ok(views.html.editUsers(request.currentUser)(usersForm, rows, routes.UserController.addPost()))
+  }
+
+  def addPost = loginAction { implicit request =>
+    usersForm.bindFromRequest.fold(
+      formWithErrors => {
+        BadRequest(views.html.editUsers(request.currentUser)(formWithErrors, 0, routes.UserController.addPost()))
+      },
+      users => {
+          if(userService.add(users)) {
+            Redirect(routes.UserController.all()).flashing("success" -> "Utilisateurs ajouté")
+          } else {
+            val form = usersForm.fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne)")
+            InternalServerError(views.html.editUsers(request.currentUser)(form, users.length, routes.UserController.addPost()))
+          }
       }
     )
   }

@@ -1,6 +1,6 @@
 @import models._
 @import utils.MDLForms._
-@(user: User)(form: Form[(List[User], Option[Int])], min: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider)
+@(user: User)(form: Form[(List[User])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider)
 
 
 @main(user)("Gestion des utilisateurs") {
@@ -14,7 +14,11 @@
   </style>
 } {
   <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
-  @helper.form(action = routes.UserController.editPost(), args = 'class -> "mdl-cell mdl-cell--12-col mdl-grid") {
+  @helper.form(action = action, args = 'class -> "mdl-cell mdl-cell--12-col mdl-grid") {
+    @if(form.hasGlobalErrors) {
+      <div style="color: red; font-weight: bold;">@form.globalErrors.mkString(", ")</div>
+    }
+
     <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table" style="white-space: normal;">
       <thead>
         <tr>
@@ -63,14 +67,6 @@
       }
       </tbody>
     </table>
-    <div class="mdl-textfield mdl-js-textfield mdl-cell mdl-cell--6-col">
-      <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="add-rows" name="add-rows">
-      <label class="mdl-textfield__label" for="add-rows">Nombre d'utilisateur à ajouter</label>
-      <span class="mdl-textfield__error">Ce n'est pas un nombre</span>
-    </div>
-    <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--6-col">
-      Ajouter des utilisateurs
-    </button>
     <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
       Sauvegarder les modifications
     </button>

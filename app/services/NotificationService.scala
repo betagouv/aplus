@@ -9,9 +9,9 @@ import play.api.libs.mailer.MailerClient
 import play.api.libs.mailer.Email
 
 @Singleton
-class NotificationsService @Inject()(configuration: play.api.Configuration,
-                                     mailerClient: MailerClient,
-                                     userService: UserService) {
+class NotificationService @Inject()(configuration: play.api.Configuration,
+                                    mailerClient: MailerClient,
+                                    userService: UserService) {
 
   private val host = configuration.underlying.getString("app.host")
   private val https = configuration.underlying.getString("app.https") == "true"
