@@ -30,7 +30,6 @@ libraryDependencies ++= Seq(
 )
 
 // Adds additional packages into Twirl
-TwirlKeys.templateImports += "fr.gouv.beta.utils._"
 
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "fr.gouv.beta.binders._"
