@@ -64,7 +64,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           notificationsService.newApplication(application)
           Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyé")
         }  else {
-          InternalServerError("Votre demande n'a pas pu être envoyé")
+          InternalServerError("Error Interne: Votre demande n'a pas pu être envoyé. Merci de rééssayer ou contacter l'administrateur")
         }
       }
     )

@@ -91,7 +91,7 @@ class ApplicationService @Inject()(db: Database) {
       'user_infos -> Json.toJson(newApplication.userInfos),
       'invited_users -> invitedUserJson,
       'area -> newApplication.area
-    ).execute()
+    ).executeUpdate() == 1
   }
 
   def answersByApplicationId(applicationId: UUID) = db.withConnection { implicit connection =>
