@@ -1,7 +1,7 @@
 @(user: User)(applicationsCreatedByMe: Seq[Application], applicationsIGotInvited: Seq[Application])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 @import java.util.Locale
 
-@main(user)(s"Toutes les demande")  {
+@main(user)(s"Toutes les demandes")  {
 <style>
     .pem-table {
         width: 100%;
@@ -13,7 +13,7 @@
 }{
     @if(!applicationsCreatedByMe.isEmpty) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
-            <h4 class="mdl-cell mdl-cell--12-col">Les demandes que j'ai créé</h4>
+            <h4 class="mdl-cell mdl-cell--12-col">Les demandes que j'ai créées</h4>
             <div class="mdl-cell mdl-cell--12-col pem-container">
                 <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
                     <thead>
@@ -39,7 +39,7 @@
 
     @if(!applicationsIGotInvited.isEmpty) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
-            <h4 class="mdl-cell mdl-cell--12-col">Demandes sur lequels j'ai été invité</h4>
+            <h4 class="mdl-cell mdl-cell--12-col">Demandes sur lequelles j'ai été invité</h4>
             <div class="mdl-cell mdl-cell--12-col pem-container">
                 <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
                     <thead>
