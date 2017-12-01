@@ -76,7 +76,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                    @for((application) <- applicationsIGotInvited) {
+                    @for((application) <- applicationsFromTheArea) {
                         <tr onclick="window.document.location='@routes.ApplicationController.show(application.id)';">
                             <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY", new Locale("fr"))</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
