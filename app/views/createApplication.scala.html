@@ -40,7 +40,7 @@
                         <td class="mdl-data-table__cell--non-numeric">
                             <b>Ajouter une autre information :</b><br>
                             <select id="types" onchange="newTypeSelected()">
-                                <option disabled selected value>Selectionnez une information à ajouter</option>
+                                <option disabled selected value="">Selectionnez une information à ajouter</option>
                                     @for(info <- List("Date de naissance", "Numéro de sécurité sociale", "Identifiant CAF", "Numéro de dossier", "Nom de Naissance", "Autre")) {
                                         <option value="@info">@info</option>
                                     }
@@ -52,7 +52,7 @@
                         </td>
                         <td></td>
                         <td class="mdl-data-table__cell--non-numeric"><button class="mdl-button mdl-js-button mdl-button--fab" type="button" onclick="addInfo();">
-                            <i class="material-icons">add</i>
+                            Ok
                         </button></td>
                     </tr>
                 </tbody>
@@ -73,8 +73,8 @@
                     <thead>
                         <tr>
                             <th class="mdl-data-table__cell--non-numeric"></th>
-                            <th class="mdl-data-table__cell--non-numeric">Nom</th>
                             <th class="mdl-data-table__cell--non-numeric">Qualité</th>
+                            <th class="mdl-data-table__cell--non-numeric">Nom</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -85,8 +85,8 @@
                                     <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id">
                                 </label>
                             </td>
-                            <td class="mdl-data-table__cell--non-numeric">@user.name</td>
                             <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
+                            <td class="mdl-data-table__cell--non-numeric">@user.name</td>
                         </tr>
                     }
                     </tbody>
@@ -114,7 +114,7 @@
     function newTypeSelected() {
         var select = document.getElementById("types");
         var otherTypeElement = document.getElementById("other-type");
-        if(select.value == "Autre") {
+        if(select.value === "Autre") {
             otherTypeElement.value = "";
             otherTypeElement.parentNode.classList.remove("invisible");
             //componentHandler.upgradeElements(otherTypeElem.parentNode.parentNode.getElementsByTagName("*"));
@@ -150,6 +150,8 @@
         inputInfoName.value = "";
         inputInfoName.parentNode.classList.remove("is-dirty");
         componentHandler.upgradeElements(newNode);
+        var select = document.getElementById("types");
+        select.value = "";
     }
 </script>
 }
