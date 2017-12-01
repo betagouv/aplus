@@ -14,7 +14,7 @@ import models._
 import org.joda.time.DateTime
 import org.webjars.play.WebJarsUtil
 import services.{ApplicationService, NotificationService, UserService}
-import utils.{DemoData, UUIDHelper}
+import utils.UUIDHelper
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -37,14 +37,14 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   )
 
   def create = loginAction { implicit request =>
-    Ok(views.html.createApplication(request.currentUser)(userService.all().filter(_.instructor), applicationForm))
+    Ok(views.html.createApplication(request.currentUser, request.currentArea)(userService.all().filter(_.instructor), applicationForm))
   }
 
   def createPost = loginAction { implicit request =>
     applicationForm.bindFromRequest.fold(
       formWithErrors => {
         // binding failure, you retrieve the form containing errors:
-        BadRequest(views.html.createApplication(request.currentUser)(userService.all().filter(_.instructor), formWithErrors))
+        BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(userService.all().filter(_.instructor), formWithErrors))
       },
       applicationData => {
         val invitedUsers: Map[UUID, String] = applicationData.users.flatMap {  id =>
@@ -59,7 +59,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           applicationData.description,
           applicationData.infos,
           invitedUsers,
-          DemoData.argenteuilAreaId)
+          request.currentArea.id)
         if(applicationService.createApplication(application)) {
           notificationsService.newApplication(application)
           Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyé")
@@ -72,7 +72,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
   def all = loginAction { implicit request =>
     val currentUserId = request.currentUser.id
-    Ok(views.html.allApplication(request.currentUser)(applicationService.allForCreatorUserId(currentUserId), applicationService.allForInvitedUserId(currentUserId)))
+    val applicationsFromTheArea = if(request.currentUser.admin) { applicationService.allByArea(request.currentArea.id) } else { List[Application]() }
+    Ok(views.html.allApplication(request.currentUser, request.currentArea)(applicationService.allForCreatorUserId(currentUserId), applicationService.allForInvitedUserId(currentUserId), applicationsFromTheArea))
   }
 
   def show(id: UUID) = loginAction { implicit request =>
@@ -84,7 +85,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         val answers = applicationService.answersByApplicationId(id)
         val users = userService.all().filterNot(_.id == request.currentUser.id)
           .filter(_.instructor)
-        Ok(views.html.showApplication(request.currentUser)(users, application, answers))
+        Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, application, answers))
     }
   }
 
@@ -108,7 +109,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           request.currentUser.nameWithQualite,
           Map(),
           true,
-          DemoData.argenteuilAreaId)
+          request.currentArea.id)
         if (applicationService.add(answer) == 1) {
           notificationsService.newAnswer(application, answer)
           Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre commentaire a bien été envoyé")
@@ -141,13 +142,17 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           request.currentUser.nameWithQualite,
           invitedUsers,
           false,
-          DemoData.argenteuilAreaId)
+          request.currentArea.id)
         if (applicationService.add(answer)  == 1) {
           notificationsService.newAnswer(application, answer)
-          Redirect (routes.ApplicationController.all()).flashing ("success" -> "Les agents A+ ont été invité sur la demande")
+          Redirect(routes.ApplicationController.all()).flashing ("success" -> "Les agents A+ ont été invité sur la demande")
         } else {
           InternalServerError("Les agents A+ n'ont pas pu être invité")
         }
     }
+  }
+
+  def changeArea(areaId: UUID) = loginAction {  implicit request =>
+    Redirect(routes.ApplicationController.all()).withSession(request.session - "areaId" + ("areaId" -> areaId.toString))
   }
 }

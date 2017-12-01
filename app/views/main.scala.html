@@ -1,4 +1,4 @@
-@(user: User)(title: String)(header: Html)(content: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User, area: Area)(title: String)(header: Html)(content: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 
 <!doctype html>
 <html lang="fr">
@@ -57,6 +57,10 @@
             <span style="font-weight: bold;">@user.name</span><br/>
             @user.qualite
             </p>
+            <p style="line-height: 1.2; font-size: 11px;">
+                <span style="font-weight: bold;">Territoire : </span>
+                @area.name
+            </p>
             <div class="demo-avatar-dropdown">
                 <span style="font-size: 11px;">@user.email</span>
                 <div class="mdl-layout-spacer"></div>
@@ -65,6 +69,11 @@
                     <span class="visuallyhidden">Accounts</span>
                 </button>
                 <ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect" for="accbtn">
+                    @if(user.admin) {
+                        @for(area <- utils.Data.areas) {
+                            <span onclick="document.location='@routes.ApplicationController.changeArea(area.id)';"><li class="mdl-menu__item">@area.name</li></span>
+                        }
+                    }
                     <span onclick="document.location='@routes.LoginController.disconnect()';"><li class="mdl-menu__item"><i class="material-icons">power_settings_new</i>Déconnexion</li></span>
                 </ul>
             </div>

@@ -7,7 +7,7 @@ import anorm.Column.nonNull
 import models.{Answer, Application}
 import play.api.db.Database
 import play.api.libs.json.Json
-import utils.DemoData
+import utils.Data
 import anorm._
 import anorm.JodaParameterMetaData._
 
@@ -45,21 +45,24 @@ class ApplicationService @Inject()(db: Database) {
     "area"
   )
 
-  private val applications = DemoData.applications    //TODO : remove
-
   def byId(id: UUID): Option[Application] = db.withConnection { implicit connection =>
     SQL("SELECT * FROM application WHERE id = {id}::uuid").on('id -> id).as(simpleApplication.singleOpt)
-  }.orElse(applications.find(_.id == id))
+  }
 
   def allForCreatorUserId(creatorUserId: UUID) = db.withConnection { implicit connection =>
     SQL("SELECT * FROM application WHERE creator_user_id = {creatorUserId}::uuid")
       .on('creatorUserId -> creatorUserId).as(simpleApplication.*)
-  } ++ applications.filter(_.creatorUserId == creatorUserId)
+  }
 
   def allForInvitedUserId(invitedUserId: UUID) = db.withConnection { implicit connection =>
     SQL("SELECT * FROM application WHERE invited_users ?? {invitedUserId}")
       .on('invitedUserId -> invitedUserId).as(simpleApplication.*)
-  } ++ applications.filter(_.invitedUsers.contains(invitedUserId))
+  }
+
+  def allByArea(areaId: UUID) = db.withConnection { implicit connection =>
+    SQL("SELECT * FROM application WHERE area = {areaId}::uuid")
+      .on('areaId -> areaId).as(simpleApplication.*)
+  }
 
   def createApplication(newApplication: Application) = db.withConnection { implicit connection =>
     val invitedUserJson = Json.toJson(newApplication.invitedUsers.map {
@@ -97,7 +100,7 @@ class ApplicationService @Inject()(db: Database) {
   def answersByApplicationId(applicationId: UUID) = db.withConnection { implicit connection =>
     SQL("SELECT * FROM answer WHERE application_id = {applicationId}::uuid")
     .on('applicationId -> applicationId).as(simpleAnswer.*)
-  } ++ DemoData.answers.filter(_.applicationId == applicationId)
+  }
 
 
   def add(answer: Answer) = db.withTransaction { implicit connection =>

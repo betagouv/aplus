@@ -7,14 +7,14 @@ import models._
 import play.api.mvc._
 import play.api.mvc.Results.{Redirect, _}
 import services.UserService
-import utils.UUIDHelper
+import utils.{Data, UUIDHelper}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class RequestWithUser[A](val currentUser: User, request: Request[A]) extends WrappedRequest[A](request)
+class RequestWithUserData[A](val currentUser: User, val currentArea: Area, request: Request[A]) extends WrappedRequest[A](request)
 
 @Singleton
-class LoginAction @Inject()(val parser: BodyParsers.Default, userService: UserService)(implicit ec: ExecutionContext) extends ActionBuilder[RequestWithUser, AnyContent] with ActionRefiner[Request, RequestWithUser] {
+class LoginAction @Inject()(val parser: BodyParsers.Default, userService: UserService)(implicit ec: ExecutionContext) extends ActionBuilder[RequestWithUserData, AnyContent] with ActionRefiner[Request, RequestWithUserData] {
   def executionContext = ec
 
   private def queryToString(qs: Map[String, Seq[String]]) = {
@@ -27,11 +27,11 @@ class LoginAction @Inject()(val parser: BodyParsers.Default, userService: UserSe
       implicit val req = request
       (loginByKeyVerification, loginBySession) match {
         case (Some(user), _)  =>
-            val url = request.path + queryToString(request.queryString - "key" - "city")
+            val url = request.path + queryToString(request.queryString - "key")
             Left(Redirect(Call(request.method, url)).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
         case (None, Some(user)) =>
-           val url = request.path + queryToString(request.queryString - "userId")
-            Right(new RequestWithUser(user, request))
+            val area = request.session.get("areaId").flatMap(UUIDHelper.fromString).orElse(user.areas.headOption).flatMap(id => Data.areas.find(_.id == id)).getOrElse(Data.areas.head)
+            Right(new RequestWithUserData(user, area, request))
         case _ =>
             Left(Redirect(routes.LoginController.home())
               .withSession(request.session - "userId").flashing("error" -> "Vous devez vous identifier pour accèder à cette page."))

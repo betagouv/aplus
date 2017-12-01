@@ -1,7 +1,7 @@
-@(user: User)(users: List[User], application: Application, answers: List[Answer])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User, area: Area)(users: List[User], application: Application, answers: List[Answer])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 @import java.util.Locale
 
-@main(user)(s"Demande : ${application.subject} ")  {
+@main(user, area)(s"Demande : ${application.subject} ")  {
 <style>
 .mdl-list__item-primary-content {
     font-weight: bold;
@@ -62,10 +62,13 @@ div hr:last-child {
     <td class="mdl-data-table__cell--non-numeric application__key">De</td>
     <td class="mdl-data-table__cell--non-numeric application__value">@application.creatorUserName</td>
 </tr>
-
+    <tr>
+        <td class="mdl-data-table__cell--non-numeric application__key">Territoire</td>
+        <td class="mdl-data-table__cell--non-numeric application__value">@utils.Data.areas.find(_.id == application.area).get.name</td>
+    </tr>
     <tr>
         <td class="mdl-data-table__cell--non-numeric application__key">Invités</td>
-        <td class="mdl-data-table__cell--non-numeric application__value">@application.invitedUsers.values.mkString(", "))</td>
+        <td class="mdl-data-table__cell--non-numeric application__value">@application.invitedUsers.values.mkString(", ")</td>
     </tr>
 </tbody>
 </table>

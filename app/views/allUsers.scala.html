@@ -1,8 +1,8 @@
 @import models._
-@(user: User)(users: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User, area: Area)(users: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 
 
-@main(user)("Gestion des utilisateurs") {
+@main(user, area)("Gestion des utilisateurs") {
   <style>
           .pem-table {
             width: 100%;
@@ -19,6 +19,7 @@
           <th class="mdl-data-table__cell--non-numeric">Admin</th>
           <th class="mdl-data-table__cell--non-numeric">Instructeur</th>
           <th class="mdl-data-table__cell--non-numeric">Aidant</th>
+          <th class="mdl-data-table__cell--non-numeric">Territoires</th>
         </tr>
       </thead>
       <tbody>
@@ -42,6 +43,7 @@
               <input type="checkbox" class="mdl-checkbox__input" @if(user.helper){ checked } disabled>
             </label>
           </td>
+          <td class="mdl-data-table__cell--non-numeric">@user.areas.flatMap(area => utils.Data.areas.find(_.id == area).map(_.name)).mkString(", ")</td>
         </tr>
       }
       </tbody>

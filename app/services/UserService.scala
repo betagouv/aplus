@@ -6,7 +6,7 @@ import javax.inject.Inject
 import anorm.{Macro, RowParser, SQL}
 import models.User
 import play.api.db.Database
-import utils.{DemoData, Hash}
+import utils.{Data, Hash}
 
 @javax.inject.Singleton
 class UserService @Inject()(configuration: play.api.Configuration, db: Database) {
@@ -28,20 +28,20 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     SQL("""SELECT * FROM "user"""").as(simpleUser.*)
   }
 
-  def all() = DemoData.users ++ allDBOnly()
+  def all() = Data.users ++ allDBOnly()
   
 
   def byId(id: UUID): Option[User] = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user" WHERE id = {id}::uuid""").on('id -> id).as(simpleUser.singleOpt)
-  }.orElse(DemoData.users.find(_.id == id))
+  }.orElse(Data.users.find(_.id == id))
 
   def byKey(key: String): Option[User] = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user" WHERE key = {key}""").on('key -> key).as(simpleUser.singleOpt)
-  }.orElse(DemoData.users.find(_.key == key))
+  }.orElse(Data.users.find(_.key == key))
 
   def byEmail(email: String): Option[User] = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user" WHERE lower(email) = {email}""").on('email -> email.toLowerCase()).as(simpleUser.singleOpt)
-  }.orElse(DemoData.users.find(_.email.toLowerCase() == email.toLowerCase()))
+  }.orElse(Data.users.find(_.email.toLowerCase() == email.toLowerCase()))
 
   def add(users: List[User]) = db.withTransaction { implicit connection =>
     users.foldRight(true) { (user, success)  =>
