@@ -46,12 +46,17 @@
                                     }
                             </select><br>
                             <div class="mdl-textfield mdl-js-textfield invisible">
-                                <label class="mdl-textfield__label" for="sample1">Saisissez le type d'information</label>
-                                <input class="mdl-textfield__input"  type="text" id="other-type" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
+                                <label class="mdl-textfield__label" for="other-type">Saisissez le type d'information</label>
+                                <input class="mdl-textfield__input" name="other-type" type="text" id="other-type" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
                             </div>
                         </td>
-                        <td></td>
-                        <td class="mdl-data-table__cell--non-numeric"><button class="mdl-button mdl-js-button mdl-button--fab" type="button" onclick="addInfo();">
+                        <td class="mdl-data-table__cell--non-numeric">
+                            <div class="mdl-textfield mdl-js-textfield invisible">
+                                <label class="mdl-textfield__label" for="other-type-value">Saisissez l'information </label>
+                                <input class="mdl-textfield__input" type="text" name="other-type-value" id="other-type-value" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
+                            </div>
+                        </td>
+                        <td class="mdl-data-table__cell--non-numeric"><button class="mdl-button mdl-js-button mdl-button--fab" type="button" id="add-infos__ok-button" onclick="addInfo();" disabled="disabled">
                             Ok
                         </button></td>
                     </tr>
@@ -118,11 +123,15 @@
             otherTypeElement.value = "";
             otherTypeElement.parentNode.classList.remove("invisible");
             //componentHandler.upgradeElements(otherTypeElem.parentNode.parentNode.getElementsByTagName("*"));
-            componentHandler.upgradeDom();
         } else {
             otherTypeElement.parentNode.classList.add("invisible");
             otherTypeElement.value = select.value;
         }
+        if(select.value !== "") {
+            document.getElementById("other-type-value").parentNode.classList.remove("invisible");
+            document.getElementById("add-infos__ok-button").disabled = false;
+        }
+        componentHandler.upgradeDom();
     }
     newTypeSelected();
 
@@ -137,8 +146,8 @@
         if(infoName === "") { return; }
         var newNode = document.createElement('tr');
         newNode.innerHTML = '<td class="mdl-data-table__cell--non-numeric">'+infoName+'</td> \
-                        <td class="mdl-data-table__cell--non-numeric"><div class="mdl-textfield mdl-js-textfield"> \
-                            <input class="mdl-textfield__input" type="text" id="sample1" name="infos['+infoName+']"> \
+                        <td class="mdl-data-table__cell--non-numeric"><div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label"> \
+                            <input class="mdl-textfield__input" type="text" id="sample1" name="infos['+infoName+']" value="'+document.getElementById("other-type-value").value+'"> \
                             <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+' de l\'usager ici</label> \
                         </div></td> \
                         <td class="mdl-data-table__cell--non-numeric"> \
@@ -149,9 +158,17 @@
         inputInfoName.parentNode.parentNode.parentNode.parentNode.insertBefore(newNode, inputInfoName.parentNode.parentNode.parentNode);
         inputInfoName.value = "";
         inputInfoName.parentNode.classList.remove("is-dirty");
+        inputInfoName.parentNode.classList.add("invisible");
         componentHandler.upgradeElements(newNode);
         var select = document.getElementById("types");
+        if(select.value !== "Autre") {
+            select.removeChild(select[select.selectedIndex]);
+        }
         select.value = "";
+        document.getElementById("other-type-value").value = "";
+        document.getElementById("other-type-value").parentNode.classList.remove("is-dirty");
+        document.getElementById("other-type-value").parentNode.classList.add("invisible");
+        document.getElementById("add-infos__ok-button").disabled = true;
     }
 </script>
 }
