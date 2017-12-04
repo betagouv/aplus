@@ -3,7 +3,7 @@
 @(user: User, area: Area)(form: Form[(List[User])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider)
 
 
-@main(user, area)("Gestion des utilisateurs") {
+@main(user, area)(s"Gestion des utilisateurs ${area.name}") {
   <style>
           .pem-table {
             width: 100%;
@@ -29,6 +29,7 @@
           <th class="mdl-data-table__cell--non-numeric">Admin</th>
           <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
           <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
+          <th class="mdl-data-table__cell--non-numeric">Territoires</th>
         </tr>
       </thead>
       <tbody>
@@ -62,6 +63,8 @@
           </td>
           <td>
             @helper.checkbox(userField("helper"), 'type -> "checkbox", 'class -> "mdl-checkbox__input")
+          </td>
+          <td>@area.name
           </td>
         </tr>
       }
