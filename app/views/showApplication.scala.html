@@ -64,7 +64,7 @@ div hr:last-child {
 </tr>
     <tr>
         <td class="mdl-data-table__cell--non-numeric application__key">Territoire</td>
-        <td class="mdl-data-table__cell--non-numeric application__value">@utils.Data.areas.find(_.id == application.area).get.name</td>
+        <td class="mdl-data-table__cell--non-numeric application__value">@Area.all.find(_.id == application.area).get.name</td>
     </tr>
     <tr>
         <td class="mdl-data-table__cell--non-numeric application__key">Invités</td>

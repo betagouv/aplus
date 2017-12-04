@@ -14,7 +14,7 @@ import models._
 import org.joda.time.DateTime
 import org.webjars.play.WebJarsUtil
 import services.{ApplicationService, NotificationService, UserService}
-import utils.UUIDHelper
+import extentions.UUIDHelper
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the

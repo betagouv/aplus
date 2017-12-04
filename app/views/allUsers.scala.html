@@ -1,7 +1,6 @@
 @import models._
 @(user: User, area: Area)(users: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 
-
 @main(user, area)("Gestion des utilisateurs") {
   <style>
           .pem-table {
@@ -43,7 +42,7 @@
               <input type="checkbox" class="mdl-checkbox__input" @if(user.helper){ checked } disabled>
             </label>
           </td>
-          <td class="mdl-data-table__cell--non-numeric">@user.areas.flatMap(area => utils.Data.areas.find(_.id == area).map(_.name)).mkString(", ")</td>
+          <td class="mdl-data-table__cell--non-numeric">@user.areas.flatMap(area => Area.all.find(_.id == area).map(_.name)).mkString(", ")</td>
         </tr>
       }
       </tbody>

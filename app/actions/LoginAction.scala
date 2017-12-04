@@ -7,7 +7,7 @@ import models._
 import play.api.mvc._
 import play.api.mvc.Results.{Redirect, _}
 import services.UserService
-import utils.{Data, UUIDHelper}
+import extentions.UUIDHelper
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -30,7 +30,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default, userService: UserSe
             val url = request.path + queryToString(request.queryString - "key")
             Left(Redirect(Call(request.method, url)).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
         case (None, Some(user)) =>
-            val area = request.session.get("areaId").flatMap(UUIDHelper.fromString).orElse(user.areas.headOption).flatMap(id => Data.areas.find(_.id == id)).getOrElse(Data.areas.head)
+            val area = request.session.get("areaId").flatMap(UUIDHelper.fromString).orElse(user.areas.headOption).flatMap(id => Area.all.find(_.id == id)).getOrElse(Area.all.head)
             Right(new RequestWithUserData(user, area, request))
         case _ =>
             Left(Redirect(routes.LoginController.home())

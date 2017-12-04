@@ -7,13 +7,12 @@ import anorm.Column.nonNull
 import models.{Answer, Application}
 import play.api.db.Database
 import play.api.libs.json.Json
-import utils.Data
 import anorm._
 import anorm.JodaParameterMetaData._
 
 @javax.inject.Singleton
 class ApplicationService @Inject()(db: Database) {
-  import utils.Anorm._
+  import extentions.Anorm._
 
   private implicit val answerListParser: anorm.Column[List[Answer]] =
     nonNull { (value, meta) =>

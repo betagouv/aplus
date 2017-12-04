@@ -1,6 +1,6 @@
 @(user: User, area: Area)(users: List[User], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
-@import utils.MDLForms._
+@import extentions.MDLForms._
 
 @main(user, area)(s"Nouvelle demande")  {
 <style>
