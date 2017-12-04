@@ -42,7 +42,7 @@ html, body {
       -ms-flex-pack: end;
           justify-content: flex-end;
   padding: 16px;
-  height: 240px;
+  height: 250px;
 }
 .demo-avatar-dropdown {
   display: -webkit-flex;
