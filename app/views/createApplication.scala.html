@@ -1,6 +1,6 @@
-@(user: User, area: Area)(users: List[User], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
-
+@import models._
 @import extentions.MDLForms._
+@(user: User, area: Area)(users: List[User], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
 @main(user, area)(s"Nouvelle demande")  {
 <style>
@@ -90,7 +90,7 @@
                         <tr>
                             <td>
                                 <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                    <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked }>
+                                    <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked="checked" }>
                                 </label>
                             </td>
                             <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>

@@ -49,17 +49,17 @@ class ApplicationService @Inject()(db: Database) {
   }
 
   def allForCreatorUserId(creatorUserId: UUID) = db.withConnection { implicit connection =>
-    SQL("SELECT * FROM application WHERE creator_user_id = {creatorUserId}::uuid")
+    SQL("SELECT * FROM application WHERE creator_user_id = {creatorUserId}::uuid ORDER BY creation_date DESC")
       .on('creatorUserId -> creatorUserId).as(simpleApplication.*)
   }
 
   def allForInvitedUserId(invitedUserId: UUID) = db.withConnection { implicit connection =>
-    SQL("SELECT * FROM application WHERE invited_users ?? {invitedUserId}")
+    SQL("SELECT * FROM application WHERE invited_users ?? {invitedUserId} ORDER BY creation_date DESC")
       .on('invitedUserId -> invitedUserId).as(simpleApplication.*)
   }
 
   def allByArea(areaId: UUID) = db.withConnection { implicit connection =>
-    SQL("SELECT * FROM application WHERE area = {areaId}::uuid")
+    SQL("SELECT * FROM application WHERE area = {areaId}::uuid ORDER BY creation_date DESC")
       .on('areaId -> areaId).as(simpleApplication.*)
   }
 
