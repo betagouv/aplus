@@ -74,6 +74,9 @@
                 <label class="mdl-textfield__label" for="search">Rechercher une personne, un organisme...</label>
             </div>
             <div class="mdl-cell mdl-cell--12-col mdl-grid" style="max-height: 500px; overflow-y: auto;">
+                @if(applicationForm("users").hasErrors) {
+                    <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
+                }
                 <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp mdl-cell mdl-cell--12-col" id="users">
                     <thead>
                         <tr>
@@ -87,7 +90,7 @@
                         <tr>
                             <td>
                                 <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                    <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id">
+                                    <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked }>
                                 </label>
                             </td>
                             <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>

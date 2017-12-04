@@ -32,7 +32,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       "subject" -> nonEmptyText,
       "description" -> nonEmptyText,
       "infos" -> FormsPlusMap.map(nonEmptyText),
-      "users" -> list(uuid)
+      "users" -> list(uuid).verifying("Vous devez sélectionnez au moins un agent", _.nonEmpty)
     )(ApplicationData.apply)(ApplicationData.unapply)
   )
 
