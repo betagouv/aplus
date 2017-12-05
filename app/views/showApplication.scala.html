@@ -40,72 +40,83 @@ div hr:last-child {
 
 </style>
 }{
-<table class="application mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col mdl-cell--12-col-phone mdl-cell--8-col-print mdl-shadow--2dp" style="table-layout: fixed; ">
-<tbody>
-<tr>
-    <td class="mdl-data-table__cell--non-numeric application__key">Date</td>
-    <td class="mdl-data-table__cell--non-numeric application__value">@application.creationDate.toString("E dd MMM YYYY - HH:mm", new Locale("fr"))</td>
-</tr>
-<tr>
-    <td class="mdl-data-table__cell--non-numeric application__key">Etat</td>
-    <td class="mdl-data-table__cell--non-numeric application__value">@application.status</td>
-</tr>
-<tr>
-    <td class="mdl-data-table__cell--non-numeric application__key" >Sujet</td>
-    <td class="mdl-data-table__cell--non-numeric application__value">@application.subject</td>
-</tr>
-<tr>
-    <td class="mdl-data-table__cell--non-numeric application__key" >Détails</td>
-    <td class="mdl-data-table__cell--non-numeric application__value">@application.description</td>
-</tr>
-<tr>
-    <td class="mdl-data-table__cell--non-numeric application__key">De</td>
-    <td class="mdl-data-table__cell--non-numeric application__value">@application.creatorUserName</td>
-</tr>
-    <tr>
-        <td class="mdl-data-table__cell--non-numeric application__key">Territoire</td>
-        <td class="mdl-data-table__cell--non-numeric application__value">@Area.all.find(_.id == application.area).get.name</td>
-    </tr>
-    <tr>
-        <td class="mdl-data-table__cell--non-numeric application__key">Invités</td>
-        <td class="mdl-data-table__cell--non-numeric application__value">@application.invitedUsers.values.mkString(", ")</td>
-    </tr>
-</tbody>
-</table>
+        <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col">
+            <div class="mdl-card__title mdl-card--border">
+                <h2 class="mdl-card__title-text">@application.subject</h2>
+            </div>
+            <div class="mdl-card__supporting-text mdl-card--border">
+                <b>Etat:</b> @application.status | <b>Invités:</b> @application.invitedUsers.values.mkString(", ") | <b>Territoire:</b> @Area.all.find(_.id == application.area).get.name
+            </div>
+            <div class="mdl-card__supporting-text mdl-card--border">
+                <ul class="mdl-list">
+                    <li class="mdl-list__item mdl-list__item--two-line">
+                        <span class="mdl-list__item-primary-content">
+                            <i class="material-icons mdl-list__item-avatar">person</i>
+                            <span>@application.creatorUserName</span>
+                            <span class="mdl-list__item-sub-title"><!-- Assistante sociale de la mairie  d'Argenteuil --></span>
+                        </span>
+                        <span class="mdl-list__item-secondary-content">
+                            <span>@application.creationDate.toString("E dd MMM YYYY - HH:mm", new Locale("fr"))</span>
+                        </span>
+                    </li>
+                </ul>
+                <p>@application.description</p>
+                <p><h4>Informations de l'usager</h4>
+                <ul>
+                    @for((key, value) <- application.userInfos) {
+                        <li><b>@key:</b> @value</li>
 
-<table class="application mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col mdl-cell--12-col-phone mdl-cell--8-col-print mdl-shadow--2dp" style="table-layout: fixed; ">
-    <thead>
-    <tr><td rowspan="2"><b>Information du l'usager</b></td></tr>
-    </thead>
-    <tbody>
-@for((key, value) <- application.userInfos) {
-<tr>
-    <td class="mdl-data-table__cell--non-numeric application__key">@key</td>
-    <td class="mdl-data-table__cell--non-numeric application__value">@value</td>
-</tr>
-}
-</tbody>
-</table>
-@for(answer <- answers){
-    @if(user.instructor || answer.visibleByHelpers) {
-    <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
-        <h4 class="mdl-cell mdl-cell--12-col">Message de @answer.creatorUserName le @answer.creationDate.toString("dd MMM YYYY", new Locale("fr"))</h4>
-        <span class="mdl-cell mdl-cell--12-col">@answer.message</span><br>
-        <ul class="mdl-cell mdl-cell--12-col">
-        @for((id, name) <- answer.invitedUsers) {
-            <li>@name a été invité sur la demande</li>
-        }
-        </ul>
-    </div>
-    }
-}
-
+                    }
+                </ul>
+                </p>
+            </div>
+            @for(answer <- answers){
+                @if(user.instructor || answer.visibleByHelpers) {
+                    <div class="mdl-card__supporting-text mdl-card--border">
+                        <ul class="mdl-list">
+                            <li class="mdl-list__item mdl-list__item--two-line">
+                                <span class="mdl-list__item-primary-content">
+                                    <i class="material-icons mdl-list__item-avatar">person</i>
+                                    <span>@answer.creatorUserName</span>
+                                    <span class="mdl-list__item-sub-title"></span>
+                                </span>
+                                <span class="mdl-list__item-secondary-content">
+                                    <span>@answer.creationDate.toString("E dd MMM YYYY  - HH:mm", new Locale("fr"))</span>
+                                </span>
+                            </li>
+                        </ul>
+                        <p>@answer.message</p>
+                        <b>Invités:</b> @answer.invitedUsers.map(_._2).mkString(", ")
+                    </div>
+                }
+            }
+            <!--
+            <div class="mdl-card__actions">
+            @if(user.instructor) {
+                <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"><i class="material-icons">
+                    reply</i> Répondre directement à l'aidant
+                </a>
+               <!-- <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"><i class="material-icons">
+                    reply_all</i> Répondre aux agents invités à cette demande
+                </a>  -->   <!--
+                <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"><i class="material-icons">
+                    person_add</i> Inviter un agent A+ sur cette demande
+                </a>
+            } else {
+                <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"><i class="material-icons">
+                    reply_all</i> Répondre aux agents invités à cette demande
+                </a>
+            }
+            </div>
+    -->
+        </div>
+    
 @if(user.instructor) {
 <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--6-col mdl-grid">
-    <h3 class="mdl-cell mdl-cell--12-col">Je peux répondre à l'aidant</h3>
+    <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply</i> Répondre directement à l'aidant @application.creatorUserName</h3>
     <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" onsubmit="">
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
-            <b>Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName. Merci d'utiliser vos outils habituels pour continuer l'instruction.</b>
+            <b>Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. Merci d'utiliser vos outils habituels pour continuer l'instruction.</b>
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                 <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
                 <label class="mdl-textfield__label" for="sample5">Détaillez votre réponse ici...</label>
@@ -117,7 +128,8 @@ div hr:last-child {
     </form>
 </div>
 <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--6-col mdl-grid do-not-print">
-    <h3 class="mdl-cell mdl-cell--12-col">Répondre ou inviter un A+</h3>
+    <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">
+        person_add</i> Inviter un agent A+ sur cette demande</h3>
     <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col" method="post">
         <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp mdl-cell mdl-cell--12-col">
             <thead>
