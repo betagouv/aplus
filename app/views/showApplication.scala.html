@@ -49,11 +49,10 @@ div hr:last-child {
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
                 <ul class="mdl-list">
-                    <li class="mdl-list__item mdl-list__item--two-line">
+                    <li class="mdl-list__item">
                         <span class="mdl-list__item-primary-content">
                             <i class="material-icons mdl-list__item-avatar">person</i>
                             <span>@application.creatorUserName</span>
-                            <span class="mdl-list__item-sub-title"><!-- Assistante sociale de la mairie  d'Argenteuil --></span>
                         </span>
                         <span class="mdl-list__item-secondary-content">
                             <span>@application.creationDate.toString("E dd MMM YYYY - HH:mm", new Locale("fr"))</span>
@@ -74,7 +73,7 @@ div hr:last-child {
                 @if(user.instructor || answer.visibleByHelpers) {
                     <div class="mdl-card__supporting-text mdl-card--border">
                         <ul class="mdl-list">
-                            <li class="mdl-list__item mdl-list__item--two-line">
+                            <li class="mdl-list__item">
                                 <span class="mdl-list__item-primary-content">
                                     <i class="material-icons mdl-list__item-avatar">person</i>
                                     <span>@answer.creatorUserName</span>
@@ -159,7 +158,7 @@ div hr:last-child {
             <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
             <label class="mdl-textfield__label" for="sample5">Laisser ici le commentaire pour l'invitation...</label>
         </div>
-        <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Inviter les A+ sélectionnés</button>
+        <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Inviter les agents A+ sélectionnés</button>
     </form>
 </div>
 }
