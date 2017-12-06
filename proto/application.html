@@ -45,6 +45,9 @@ div hr {
 div hr:last-child {
     display: none;
 }
+    .mdl-tabs__tab-bar {
+        border-bottom: 0px;
+    }
 
 </style>
 
@@ -178,13 +181,24 @@ div hr:last-child {
                                 </ul>
                                 Le dossier de Mr Dupond est à la CAF de marseille. Il doit continuer d'envoyer ces documents justificatifs au 12 rue du port, Marseille.
                         </div>
-                        <div class="mdl-card__actions">
-                          <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"><i class="material-icons">reply</i> Répondre directement à l'aidant Sabine MAIDE
-                          </a>
-                          <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"><i class="material-icons">reply_all</i> Répondre aux agents invité à cette demande
-                          </a>
-                          <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"><i class="material-icons">person_add</i> Inviter un agent A+ sur cette demande
-                          </a>
+                        <div class="mdl-card__actions mdl-grid">
+                            <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
+                                <div class="mdl-tabs__tab-bar">
+                                    <a href="#answer-helper" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">reply</i> Répondre directement à l'aidant</a>
+                                    <a href="#answer-agents" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">reply_all</i> Répondre aux agents invité à cette demande</a>
+                                    <a href="#invite-agents" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">person_add</i> Inviter un agent A+ sur cette demande</a>
+                                </div>
+
+                                <div class="mdl-tabs__panel" id="answer-helper">
+
+                                </div>
+                                <div class="mdl-tabs__panel" id="answer-agents">
+
+                                </div>
+                                <div class="mdl-tabs__panel" id="invite-agents">
+
+                                </div>
+                            </div>
                         </div>
                       </div>
 
