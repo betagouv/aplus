@@ -3,16 +3,17 @@
 # https://www.playframework.com/documentation/latest/ScalaRouting
 # ~~~~
 
-GET     /                           controllers.HomeController.index
+GET      /                           controllers.HomeController.index
 
 
 # Application
-GET     /nouvelle-demande          controllers.ApplicationController.create
+GET      /nouvelle-demande          controllers.ApplicationController.create
 POST     /nouvelle-demande          controllers.ApplicationController.createPost
-GET     /toutes-les-demandes        controllers.ApplicationController.all
-GET     /toutes-les-demandes/:id    controllers.ApplicationController.show(id: java.util.UUID)
+GET      /toutes-les-demandes        controllers.ApplicationController.all
+GET      /toutes-les-demandes/:id    controllers.ApplicationController.show(id: java.util.UUID)
 POST     /toutes-les-demandes/:applicationId/invite    controllers.ApplicationController.invite(applicationId: java.util.UUID)
-POST     /toutes-les-demandes/:applicationId/answer    controllers.ApplicationController.answer(applicationId: java.util.UUID)
+POST     /toutes-les-demandes/:applicationId/answerHelper    controllers.ApplicationController.answerHelper(applicationId: java.util.UUID)
+POST     /toutes-les-demandes/:applicationId/answerAgents     controllers.ApplicationController.answerAgents(applicationId: java.util.UUID)
 
 # Login
 GET    /login                        controllers.LoginController.home

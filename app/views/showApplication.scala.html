@@ -86,7 +86,7 @@ div hr:last-child {
                         </ul>
                         <p>@answer.message</p>
                         @if(answer.invitedUsers.nonEmpty) {
-                            <b>Invités:</b>
+                            <b>Notifiés:</b>
                             @answer.invitedUsers.values.mkString(", ")
                         }
                     </div>
@@ -114,9 +114,9 @@ div hr:last-child {
         </div>
     
 @if(user.instructor) {
-<div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--6-col mdl-grid">
+<div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid do-not-print">
     <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply</i> Répondre directement à l'aidant @application.creatorUserName</h3>
-    <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" onsubmit="">
+    <form action="@routes.ApplicationController.answerHelper(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" onsubmit="">
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
             <b>Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. Merci d'utiliser vos outils habituels pour continuer l'instruction.</b>
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
@@ -128,8 +128,42 @@ div hr:last-child {
             </button>
         </div>
     </form>
-</div>
-<div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--6-col mdl-grid do-not-print">
+</div>  }
+
+    <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid do-not-print">
+        <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply_all</i> Répondre aux agents invités à cette demande</h3>
+        <form action='@routes.ApplicationController.answerAgents(application.id)' class="mdl-cell mdl-cell--12-col" method="post">
+            <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp mdl-cell mdl-cell--12-col">
+                <tr>
+                    <th class="mdl-data-table__cell--non-numeric"></th>
+                    <th class="mdl-data-table__cell--non-numeric">Répondre à</th>
+                </tr>
+                <tbody>
+                    @for((userId, userName) <- application.invitedUsers) {
+                    <tr>
+                        <td>
+                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@userId" checked>
+                            </label>
+                        </td>
+                        <td class="mdl-data-table__cell--non-numeric">@userName</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+            @if(user.id == application.id) {
+                <b>Note : Les échanges entre les agents A+ ne seront pas visible par les aidants.</b>
+            }
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
+                <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
+                <label class="mdl-textfield__label" for="sample5">Laisser votre réponse ici...</label>
+            </div>
+            <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Répondre aux agents A+ sélectionnés</button>
+        </form>
+    </div>
+
+@if(user.instructor) {
+<div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid do-not-print">
     <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">
         person_add</i> Inviter un agent A+ sur cette demande</h3>
     <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col" method="post">

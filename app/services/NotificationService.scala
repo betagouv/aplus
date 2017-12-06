@@ -32,7 +32,13 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   def newAnswer(application: Application, answer: Answer) = {
     answer.invitedUsers.keys
       .flatMap(userService.byId)
-        .map(generateInvitationEmail(application, Some(answer)))
+        .map {  user =>
+          if(application.invitedUsers.contains(user.id)) {
+            generateAnswerEmail(application, answer)(user)
+          } else {
+            generateInvitationEmail(application, Some(answer))(user)
+          }
+        }
           .foreach(sendMail)
     if(answer.visibleByHelpers) {
       userService.byId(application.creatorUserId)
@@ -57,8 +63,10 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
 
     val bodyHtml = s"""Bonjour ${invitedUser.name},<br>
                       |<br>
-                      |${answer.map(_.creatorUserName).getOrElse(application.creatorUserName)} a besoin de vous.<br>
+                      |<p>${answer.map(_.creatorUserName).getOrElse(application.creatorUserName)} a besoin de vous.<br>
                       |Cette personne vous a invité sur la demande suivante: "${application.subject}"<br>
+                      |<q>${application.description}</q><p><br>
+                      |<br>
                       |Vous pouvez accéder à la demande en suivant ce lien: <br>
                       |<a href="${url}">${url}</a><br>
                       |<br>
@@ -76,8 +84,9 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
 
     val bodyHtml = s"""Bonjour ${user.name},<br>
                       |<br>
-                      |<p>${answer.creatorUserName} a répondu à votre demande: "${application.subject}"<br>
+                      |<p>${answer.creatorUserName} a donné une réponse sur la demande: "${application.subject}"<br>
                       |<q>${answer.message}</q></p>
+                      |<br>
                       |Vous pouvez accéder à l'ensemble de la demande en suivant ce lien: <br>
                       |<a href="${url}">${url}</a>
                       |<br>

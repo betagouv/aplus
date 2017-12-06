@@ -91,11 +91,12 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
   val answerForm = Form(
     mapping(
-      "message" -> nonEmptyText
-    )(AnwserData.apply)(AnwserData.unapply)
+      "message" -> nonEmptyText,
+      "users" -> list(uuid)
+    )(AnswerData.apply)(AnswerData.unapply)
   )
 
-  def answer(applicationId: UUID) = loginAction { implicit request =>
+  def answerHelper(applicationId: UUID) = loginAction { implicit request =>
     val answerData = answerForm.bindFromRequest.get
 
     applicationService.byId(applicationId) match {
@@ -112,27 +113,47 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           request.currentArea.id)
         if (applicationService.add(answer) == 1) {
           notificationsService.newAnswer(application, answer)
-          Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre commentaire a bien été envoyé")
+          Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyé")
         } else {
-          InternalServerError("Votre commentaire n'a pas pu être envoyé")
+          InternalServerError("Votre réponse n'a pas pu être envoyé")
         }
     }
   }
 
-  val inviteForm = Form(
-    mapping(
-      "message" -> text,
-      "users" -> list(uuid)
-    )(InviteData.apply)(InviteData.unapply)
-  )
+  def answerAgents(applicationId: UUID) = loginAction { implicit request =>
+    val answerData = answerForm.bindFromRequest.get
 
-  def invite(applicationId: UUID) = loginAction { implicit request =>
-    val inviteData = inviteForm.bindFromRequest.get
     applicationService.byId(applicationId) match {
       case None =>
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
-        val invitedUsers: Map[UUID, String] = inviteData.invitedUsers.flatMap { id =>
+        val notifiedUsers: Map[UUID, String] = answerData.notifiedUsers.flatMap { id =>
+          userService.byId(id).map(id -> _.nameWithQualite)
+        }.toMap
+        val answer = Answer(UUID.randomUUID(),
+          applicationId, DateTime.now(),
+          answerData.message,
+          request.currentUser.id,
+          request.currentUser.nameWithQualite,
+          notifiedUsers,
+          request.currentUser.id != application.creatorUserId,
+          request.currentArea.id)
+        if (applicationService.add(answer) == 1) {
+          notificationsService.newAnswer(application, answer)
+          Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyé")
+        } else {
+          InternalServerError("Votre réponse n'a pas pu être envoyé")
+        }
+    }
+  }
+
+  def invite(applicationId: UUID) = loginAction { implicit request =>
+    val inviteData = answerForm.bindFromRequest.get
+    applicationService.byId(applicationId) match {
+      case None =>
+        NotFound("Nous n'avons pas trouvé cette demande")
+      case Some(application) =>
+        val invitedUsers: Map[UUID, String] = inviteData.notifiedUsers.flatMap { id =>
           userService.byId(id).map(id -> _.nameWithQualite)
         }.toMap
         val answer = Answer(UUID.randomUUID(),
