@@ -85,7 +85,10 @@ div hr:last-child {
                             </li>
                         </ul>
                         <p>@answer.message</p>
-                        <b>Invités:</b> @answer.invitedUsers.map(_._2).mkString(", ")
+                        @if(answer.invitedUsers.nonEmpty) {
+                            <b>Invités:</b>
+                            @answer.invitedUsers.values.mkString(", ")
+                        }
                     </div>
                 }
             }
@@ -153,7 +156,7 @@ div hr:last-child {
             </tbody>
         </table>
         <h5>Ajouter un message</h5>
-        <b>Note : Ce message sera visible par tous les agents A+. L'auteur de la demande @application.creatorUserName ne pourra pas le voir.</b>
+        <b>Note : Les échanges entre les agents A+ ne seront pas visible par les aidants.</b>
         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
             <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
             <label class="mdl-textfield__label" for="sample5">Laisser ici le commentaire pour l'invitation...</label>
