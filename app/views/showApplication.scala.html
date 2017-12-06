@@ -38,6 +38,11 @@ div hr:last-child {
     display: none;
 }
 
+
+.mdl-tabs__tab-bar {
+    border-bottom: 0px;
+}
+
 </style>
 }{
         <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col">
@@ -92,111 +97,111 @@ div hr:last-child {
                     </div>
                 }
             }
-            <!--
-            <div class="mdl-card__actions">
-            @if(user.instructor) {
-                <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"><i class="material-icons">
-                    reply</i> Répondre directement à l'aidant
-                </a>
-               <!-- <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"><i class="material-icons">
-                    reply_all</i> Répondre aux agents invités à cette demande
-                </a>  -->   <!--
-                <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"><i class="material-icons">
-                    person_add</i> Inviter un agent A+ sur cette demande
-                </a>
-            } else {
-                <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"><i class="material-icons">
-                    reply_all</i> Répondre aux agents invités à cette demande
-                </a>
-            }
-            </div>
-    -->
-        </div>
-    
-@if(user.instructor) {
-<div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid do-not-print">
-    <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply</i> Répondre directement à l'aidant @application.creatorUserName</h3>
-    <form action="@routes.ApplicationController.answerHelper(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" onsubmit="">
-        <div class="mdl-cell mdl-cell--12-col mdl-grid">
-            <b>Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. Merci d'utiliser vos outils habituels pour continuer l'instruction.</b>
-            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
-                <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
-                <label class="mdl-textfield__label" for="sample5">Détaillez votre réponse ici...</label>
-            </div>
-            <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">
-                 Répondre à l'aidant
-            </button>
-        </div>
-    </form>
-</div>  }
 
-    <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid do-not-print">
-        <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply_all</i> Répondre aux agents invités à cette demande</h3>
-        <form action='@routes.ApplicationController.answerAgents(application.id)' class="mdl-cell mdl-cell--12-col" method="post">
-            <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp mdl-cell mdl-cell--12-col">
-                <tr>
-                    <th class="mdl-data-table__cell--non-numeric"></th>
-                    <th class="mdl-data-table__cell--non-numeric">Répondre à</th>
-                </tr>
-                <tbody>
-                    @for((userId, userName) <- application.invitedUsers) {
-                    <tr>
-                        <td>
-                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@userId" checked>
-                            </label>
-                        </td>
-                        <td class="mdl-data-table__cell--non-numeric">@userName</td>
-                    </tr>
+
+            <div class="mdl-card__actions mdl-grid">
+                <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
+                    <div class="mdl-tabs__tab-bar">
+
+                    @if(user.instructor) {
+                        <a href="#answer-helper" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
+                            reply</i> Répondre directement à l'aidant</a>
                     }
-                </tbody>
-            </table>
-            @if(user.id == application.id) {
-                <b>Note : Les échanges entre les agents A+ ne seront pas visible par les aidants.</b>
-            }
-            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
-                <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
-                <label class="mdl-textfield__label" for="sample5">Laisser votre réponse ici...</label>
-            </div>
-            <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Répondre aux agents A+ sélectionnés</button>
-        </form>
-    </div>
+                        <a href="#answer-agents" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">reply_all</i> Répondre aux agents invités à cette demande</a>
 
-@if(user.instructor) {
-<div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid do-not-print">
-    <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">
-        person_add</i> Inviter un agent A+ sur cette demande</h3>
-    <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col" method="post">
-        <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp mdl-cell mdl-cell--12-col">
-            <thead>
-            <tr>
-                <th class="mdl-data-table__cell--non-numeric"></th>
-                <th class="mdl-data-table__cell--non-numeric">Qualité</th>
-                <th class="mdl-data-table__cell--non-numeric">Nom</th>
-            </tr>
-            </thead>
-            <tbody>
-            @for(user <- users) {
-                <tr>
-                    <td>
-                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                            <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id">
-                        </label>
-                    </td>
-                    <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
-                    <td class="mdl-data-table__cell--non-numeric">@user.name</td>
-                </tr>
-            }
-            </tbody>
-        </table>
-        <h5>Ajouter un message</h5>
-        <b>Note : Les échanges entre les agents A+ ne seront pas visible par les aidants.</b>
-        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
-            <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
-            <label class="mdl-textfield__label" for="sample5">Laisser ici le commentaire pour l'invitation...</label>
+                        @if(user.instructor) {
+                            <a href="#invite-agents" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
+                                person_add</i> Inviter un agent A+ sur cette demande</a>
+                        }
+                    </div>
+
+                    @if(user.instructor) {
+                        <div class="mdl-tabs__panel" id="answer-helper">
+                            <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply</i> Répondre directement à l'aidant @application.creatorUserName</h3>
+                            <form action="@routes.ApplicationController.answerHelper(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" onsubmit="">
+                                <div class="mdl-cell mdl-cell--12-col mdl-grid">
+                                    <b>Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. Merci d'utiliser vos outils habituels pour continuer l'instruction.</b>
+                                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
+                                        <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
+                                        <label class="mdl-textfield__label" for="sample5">Détaillez votre réponse ici...</label>
+                                    </div>
+                                    <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">
+                                        Répondre à l'aidant
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    }
+                    <div class="mdl-tabs__panel" id="answer-agents">
+                        <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply_all</i> Répondre aux agents invités à cette demande</h3>
+                        <form action='@routes.ApplicationController.answerAgents(application.id)' class="mdl-cell mdl-cell--12-col" method="post">
+                            <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp mdl-cell mdl-cell--12-col">
+                                <tr>
+                                    <th class="mdl-data-table__cell--non-numeric"></th>
+                                    <th class="mdl-data-table__cell--non-numeric">Répondre à</th>
+                                </tr>
+                                <tbody>
+                                @for((userId, userName) <- application.invitedUsers) {
+                                    <tr>
+                                        <td>
+                                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                                <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@userId" checked>
+                                            </label>
+                                        </td>
+                                        <td class="mdl-data-table__cell--non-numeric">@userName</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                            @if(user.id == application.id) {
+                                <b>Note : Les échanges entre les agents A+ ne seront pas visible par les aidants.</b>
+                            }
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
+                                <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
+                                <label class="mdl-textfield__label" for="sample5">Laisser votre réponse ici...</label>
+                            </div>
+                            <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Répondre aux agents A+ sélectionnés</button>
+                        </form>
+                    </div>
+
+                    @if(user.instructor) {
+                        <div class="mdl-tabs__panel" id="invite-agents">
+                            <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">
+                                person_add</i> Inviter un agent A+ sur cette demande</h3>
+                            <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col" method="post">
+                                <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp mdl-cell mdl-cell--12-col">
+                                    <thead>
+                                        <tr>
+                                            <th class="mdl-data-table__cell--non-numeric"></th>
+                                            <th class="mdl-data-table__cell--non-numeric">Qualité</th>
+                                            <th class="mdl-data-table__cell--non-numeric">Nom</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    @for(user <- users) {
+                                        <tr>
+                                            <td>
+                                                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                                    <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id">
+                                                </label>
+                                            </td>
+                                            <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
+                                            <td class="mdl-data-table__cell--non-numeric">@user.name</td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </table>
+                                <h5>Ajouter un message</h5>
+                                <b>Note : Les échanges entre les agents A+ ne seront pas visible par les aidants.</b>
+                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
+                                    <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
+                                    <label class="mdl-textfield__label" for="sample5">Laisser ici le commentaire pour l'invitation...</label>
+                                </div>
+                                <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Inviter les agents A+ sélectionnés</button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
-        <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Inviter les agents A+ sélectionnés</button>
-    </form>
-</div>
-}
 }
