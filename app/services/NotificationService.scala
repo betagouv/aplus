@@ -60,7 +60,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
                       |${answer.map(_.creatorUserName).getOrElse(application.creatorUserName)} a besoin de vous.<br>
                       |Cette personne vous a invité sur la demande suivante: "${application.subject}"<br>
                       |Vous pouvez accéder à la demande en suivant ce lien: <br>
-                      |<a href="${url}">${url}</a>
+                      |<a href="${url}">${url}</a><br>
                       |<br>
                       |$footer
                       """.stripMargin
