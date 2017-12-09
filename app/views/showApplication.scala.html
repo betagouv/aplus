@@ -102,13 +102,14 @@ div hr:last-child {
             <div class="mdl-card__actions mdl-grid">
                 <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
                     <div class="mdl-tabs__tab-bar">
-
-                    @if(user.instructor) {
-                        <a href="#answer-helper" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
-                            reply</i> Répondre à l'aidant</a>
-                    }
-                        <a href="#answer-agents" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">reply_all</i> Répondre aux agents</a>
-
+                        @if(user.instructor) {
+                            <a href="#answer-helper" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
+                                reply</i> Répondre à l'aidant</a>
+                        }
+                        @if(application.invitedUsers.filterNot(_._1 == user.id).nonEmpty) {
+                            <a href="#answer-agents" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
+                                reply_all</i> Répondre aux agents</a>
+                        }
                         @if(user.instructor) {
                             <a href="#invite-agents" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
                                 person_add</i> Inviter un agent A+</a>
@@ -132,6 +133,7 @@ div hr:last-child {
                             </form>
                         </div>
                     }
+                    @if(application.invitedUsers.filterNot(_._1 == user.id).nonEmpty) {
                     <div class="mdl-tabs__panel" id="answer-agents">
                         <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply_all</i> Répondre aux agents invités à cette demande</h3>
                         <form action='@routes.ApplicationController.answerAgents(application.id)' class="mdl-cell mdl-cell--12-col" method="post">
@@ -141,7 +143,7 @@ div hr:last-child {
                                     <th class="mdl-data-table__cell--non-numeric">Répondre à</th>
                                 </tr>
                                 <tbody>
-                                @for((userId, userName) <- application.invitedUsers) {
+                                @for((userId, userName) <- application.invitedUsers.filterNot(_._1 == user.id)) {
                                     <tr>
                                         <td>
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
@@ -163,6 +165,7 @@ div hr:last-child {
                             <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Répondre aux agents A+ sélectionnés</button>
                         </form>
                     </div>
+                    }
 
                     @if(user.instructor) {
                         <div class="mdl-tabs__panel" id="invite-agents">
