@@ -24,7 +24,10 @@ class UserController @Inject()(loginAction: LoginAction,
   def usersForm(implicit area: Area) = Form(
     single(
       "users" -> list(mapping(
-        "id" -> default(uuid, UUID.randomUUID()),
+        "id" -> optional(uuid).transform[UUID]({
+          case None => UUID.randomUUID()
+          case Some(id) => id
+        }, { Some(_) }),
         "key" -> ignored("key"),  //TODO refactoring security
         "name" -> nonEmptyText,
         "qualite" -> nonEmptyText,
