@@ -26,8 +26,10 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.1.4",
   "com.typesafe.play" %% "anorm" % "2.5.3",
   "com.typesafe.play" %% "play-mailer" % "6.0.1",
-  "com.typesafe.play" %% "play-mailer-guice" % "6.0.1"
+  "com.typesafe.play" %% "play-mailer-guice" % "6.0.1",
 )
+
+libraryDependencies += "io.sentry" % "sentry-logback" % "1.6.3"
 
 // Adds additional packages into Twirl
 
