@@ -37,14 +37,14 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   )
 
   def create = loginAction { implicit request =>
-    Ok(views.html.createApplication(request.currentUser, request.currentArea)(userService.all().filter(_.instructor), applicationForm))
+    Ok(views.html.createApplication(request.currentUser, request.currentArea)(userService.byArea(request.currentArea.id).filter(_.instructor), applicationForm))
   }
 
   def createPost = loginAction { implicit request =>
     applicationForm.bindFromRequest.fold(
       formWithErrors => {
         // binding failure, you retrieve the form containing errors:
-        BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(userService.all().filter(_.instructor), formWithErrors))
+        BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(userService.byArea(request.currentArea.id).filter(_.instructor), formWithErrors))
       },
       applicationData => {
         val invitedUsers: Map[UUID, String] = applicationData.users.flatMap {  id =>
@@ -83,7 +83,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
         val answers = applicationService.answersByApplicationId(id)
-        val users = userService.all().filterNot(_.id == request.currentUser.id)
+        val users = userService.byArea(request.currentArea.id).filterNot(_.id == request.currentUser.id)
           .filter(_.instructor)
         Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, application, answers))
     }

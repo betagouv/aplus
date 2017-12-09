@@ -28,8 +28,11 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     SQL("""SELECT * FROM "user"""").as(simpleUser.*)
   }
 
-  def all() = User.admins ++ allDBOnly()
-  
+  def all() = allDBOnly() ++ User.admins
+
+  def byArea(areaId: UUID): List[User] = db.withConnection { implicit connection =>
+    SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""").on('areaId -> areaId).as(simpleUser.*)
+  } ++ User.admins.filter(_.areas == areaId)
 
   def byId(id: UUID): Option[User] = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user" WHERE id = {id}::uuid""").on('id -> id).as(simpleUser.singleOpt)

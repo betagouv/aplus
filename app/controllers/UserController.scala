@@ -18,7 +18,7 @@ class UserController @Inject()(loginAction: LoginAction,
                                notificationsService: NotificationService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
 
   def all = loginAction { implicit request =>
-    Ok(views.html.allUsers(request.currentUser, request.currentArea)(userService.all()))
+    Ok(views.html.allUsers(request.currentUser, request.currentArea)(userService.byArea(request.currentArea.id)))
   }
 
   def usersForm(implicit area: Area) = Form(
