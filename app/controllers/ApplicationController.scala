@@ -11,7 +11,7 @@ import play.api.data.validation.Constraints._
 import actions._
 import forms.FormsPlusMap
 import models._
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
 import services.{ApplicationService, NotificationService, UserService}
 import extentions.UUIDHelper
@@ -26,6 +26,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                                       applicationService: ApplicationService,
                                       notificationsService: NotificationService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
   import forms.Models._
+
+  private val timeZone = DateTimeZone.forID("Europe/Paris")
 
   val applicationForm = Form(
     mapping(
@@ -52,7 +54,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         }.toMap
         val application = Application(UUIDHelper.randomUUID,
           "En cours",
-          DateTime.now(),
+          DateTime.now(timeZone),
           request.currentUser.nameWithQualite,
           request.currentUser.id,
           applicationData.subject,
@@ -104,7 +106,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
         val answer = Answer(UUID.randomUUID(),
-          applicationId, DateTime.now(),
+          applicationId, DateTime.now(timeZone),
           answerData.message,
           request.currentUser.id,
           request.currentUser.nameWithQualite,
@@ -131,7 +133,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           userService.byId(id).map(id -> _.nameWithQualite)
         }.toMap
         val answer = Answer(UUID.randomUUID(),
-          applicationId, DateTime.now(),
+          applicationId, DateTime.now(timeZone),
           answerData.message,
           request.currentUser.id,
           request.currentUser.nameWithQualite,
@@ -157,7 +159,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           userService.byId(id).map(id -> _.nameWithQualite)
         }.toMap
         val answer = Answer(UUID.randomUUID(),
-          applicationId, DateTime.now(),
+          applicationId, DateTime.now(timeZone),
           inviteData.message,
           request.currentUser.id,
           request.currentUser.nameWithQualite,
