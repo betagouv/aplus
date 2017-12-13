@@ -176,4 +176,21 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   def changeArea(areaId: UUID) = loginAction {  implicit request =>
     Redirect(routes.ApplicationController.all()).withSession(request.session - "areaId" + ("areaId" -> areaId.toString))
   }
+
+  def terminate(applicationId: UUID) = loginAction {  implicit request =>
+    applicationService.byId(applicationId) match {
+      case None =>
+        NotFound("Nous n'avons pas trouvé cette demande")
+      case Some(application) =>
+        if(application.creatorUserId == request.currentUser.id) {
+          if(applicationService.changeStatus(applicationId, "Terminé")) {
+            Redirect(routes.ApplicationController.all()).flashing("success" -> "L'application a été indiqué comme terminé")
+          } else {
+            InternalServerError("Erreur interne: l'application n'a pas pu être indiqué comme terminé")
+          }
+        } else {
+          Unauthorized("Seul le créateur de la demande peut terminé la demande")
+        }
+    }
+  }
 }

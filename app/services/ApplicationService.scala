@@ -141,5 +141,17 @@ class ApplicationService @Inject()(db: Database) {
       'area -> answer.area
     ).executeUpdate()
   }
+
+  def changeStatus(applicationId: UUID, newStatus: String) = db.withTransaction { implicit connection =>
+    SQL(
+      """
+          UPDATE application SET status = {status}
+          WHERE id = {id}::uuid
+       """
+    ).on(
+      'id -> applicationId,
+      'status -> newStatus
+    ).executeUpdate() == 1
+  }
 }
 
