@@ -49,7 +49,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
 
   private val footer =
     s"""<br>
-       |<b>Ne transférez pas cet email, il vous ait personnellement destiné, il permettrait à quelqu'un d'autre d'utiliser votre identité sur le réseau A+.
+       |<b>Ne transférez pas cet email, il vous est personnellement destiné, il permettrait à quelqu'un d'autre d'utiliser votre identité sur le réseau A+.
        | Si vous souhaitez transférer la demande à quelqu'un d'autre vous avez la possibilité de le faire en ouvrant le lien ci-dessus.</b>
        |<br>
        |<br>
