@@ -52,7 +52,7 @@ div hr:last-child {
             @if(application.creatorUserId == user.id && application.status != "Terminé") {
                 <div class="mdl-card__menu">
                     <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="document.location='@routes.ApplicationController.terminate(application.id)';">
-                        Indiquer comme terminé
+                        Clore la demande
                     </button>
                 </div>
             }
@@ -138,7 +138,7 @@ div hr:last-child {
                                     </button>
                                 </div>
                             </form>
-                        </div>
+                        </div>diquer
                     }
                     @if(application.invitedUsers.filterNot(_._1 == user.id).nonEmpty) {
                     <div class="mdl-tabs__panel" id="answer-agents">
@@ -171,7 +171,7 @@ div hr:last-child {
                             </div>
                             <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Répondre aux agents A+ sélectionnés</button>
                         </form>
-                    </div>
+                    </div>diquer
                     }
 
                     @if(user.instructor) {
