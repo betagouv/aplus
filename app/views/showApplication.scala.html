@@ -82,7 +82,7 @@ div hr:last-child {
                 </p>
             </div>
             @for(answer <- answers){
-                @if(user.instructor || answer.visibleByHelpers) {
+                @if(user.instructor || answer.visibleByHelpers || answer.creatorUserID == user.id) {
                     <div class="mdl-card__supporting-text mdl-card--border">
                         <ul class="mdl-list">
                             <li class="mdl-list__item">
