@@ -1,0 +1,50 @@
+{
+  "name": "aplus",
+  "scripts": {
+  },
+  "env": {
+    "APP_DOMAIN": {
+      "required": true
+    },
+    "APP_HOST": {
+      "required": true
+    },
+    "APP_HTTPS": {
+      "required": true
+    },
+    "APPLICATION_SECRET": {
+      "required": true
+    },
+    "EVOLUTIONS_AUTOAPPLY": {
+      "required": true
+    },
+    "MAIL_HOST": {
+      "required": true
+    },
+    "MAIL_PASSWORD": {
+      "required": true
+    },
+    "MAIL_PORT": {
+      "required": true
+    },
+    "MAIL_USER": {
+      "required": true
+    },
+    "SENTRY_DSN": {
+      "required": true
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1
+    }
+  },
+  "addons": [
+    "heroku-postgresql"
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/scala"
+    }
+  ]
+}
