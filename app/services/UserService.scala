@@ -7,9 +7,13 @@ import anorm.{Macro, RowParser, SQL}
 import models.User
 import play.api.db.Database
 import extentions.Hash
+import play.api.libs.json.Json
+import anorm.JodaParameterMetaData._
 
 @javax.inject.Singleton
 class UserService @Inject()(configuration: play.api.Configuration, db: Database) {
+  import extentions.Anorm._
+  
   private lazy val cryptoSecret = configuration.underlying.getString("play.http.secret.key ")
 
   private val simpleUser: RowParser[User] = Macro.parser[User](
@@ -21,14 +25,14 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     "helper",
     "instructor",
     "admin",
-    "areas"
+    "areas",
+    "creation_date",
+    "delegations"
   )
 
-  def allDBOnly() = db.withConnection { implicit connection =>
-    SQL("""SELECT * FROM "user"""").as(simpleUser.*)
+  def allDBOnlybyArea(areaId: UUID) = db.withConnection { implicit connection =>
+    SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""").on('areaId -> areaId).as(simpleUser.*)
   }
-
-  def all() = allDBOnly() ++ User.admins
 
   def byArea(areaId: UUID): List[User] = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""").on('areaId -> areaId).as(simpleUser.*)
@@ -59,7 +63,9 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
          {helper},
          {instructor},
          {admin},
-         array[{areas}]::uuid[]
+         array[{areas}]::uuid[],
+         {delegations},
+         {creation_date}
       )
       """)
       .on(
@@ -71,7 +77,9 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
         'helper -> user.helper,
         'instructor -> user.instructor,
         'admin -> user.admin,
-        'areas -> user.areas.map(_.toString)
+        'areas -> user.areas.map(_.toString),
+        'delegations -> Json.toJson(user.delegations),
+        'creation_date -> user.creationDate
       ).executeUpdate() == 1
     }
   }
@@ -84,7 +92,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
           email = {email},
           helper = {helper},
           instructor = {instructor},
-          admin = {admin}
+          admin = {admin},
+          delegations = {delegations}
           WHERE id = {id}::uuid
        """
     ).on(
@@ -94,7 +103,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
       'email -> user.email,
       'helper -> user.helper,
       'instructor -> user.instructor,
-      'admin -> user.admin
+      'admin -> user.admin,
+      'delegations -> Json.toJson(user.delegations)
     ).executeUpdate() == 1
   }
 }

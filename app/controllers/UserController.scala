@@ -4,7 +4,9 @@ import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import actions.LoginAction
+import forms.FormsPlusMap
 import models.{Area, User}
+import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.data.Forms._
@@ -21,6 +23,8 @@ class UserController @Inject()(loginAction: LoginAction,
     Ok(views.html.allUsers(request.currentUser, request.currentArea)(userService.byArea(request.currentArea.id)))
   }
 
+  private val timeZone = DateTimeZone.forID("Europe/Paris")
+
   def usersForm(implicit area: Area) = Form(
     single(
       "users" -> list(mapping(
@@ -35,14 +39,20 @@ class UserController @Inject()(loginAction: LoginAction,
         "helper" -> boolean,
         "instructor" -> boolean,
         "admin" -> boolean,
-        "areas" -> ignored(List(area.id))
+        "areas" -> ignored(List(area.id)),
+        "creationDate" -> ignored(DateTime.now(timeZone)),
+        "delegations" -> seq(tuple(
+            "name" -> nonEmptyText,
+            "email" -> email
+          )
+        ).transform[Map[String,String]]({ _.toMap }, { _.toSeq })
       )(User.apply)(User.unapply))
     )
   )
 
   def edit = loginAction { implicit request =>
     implicit val area = request.currentArea
-    val users = userService.allDBOnly()
+    val users = userService.allDBOnlybyArea(area.id)
     val form = usersForm.fill(users)
     Ok(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.editPost()))
   }
