@@ -93,7 +93,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
   val answerForm = Form(
     mapping(
-      "message" -> nonEmptyText,
+      "message" -> text,
       "users" -> list(uuid)
     )(AnswerData.apply)(AnswerData.unapply)
   )
