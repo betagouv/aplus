@@ -59,9 +59,8 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
        | $delegates
        |<br>
        |<br>
-       |Merci de votre aide.<br>
-       |Si vous avez des questions à propos de l'outil A+, n'hésitez pas à contacter l'équipe A+ sur contact@aplus.beta.gouv.fr<br>
-       |Equipe A+
+       |<b>Ne pas répondre à ce mail.</b><br>
+       |<i>Si vous avez des questions à propos de l'outil A+, contactez-nous sur contact@aplus.beta.gouv.fr</i><br>
      """.stripMargin
   }
 
