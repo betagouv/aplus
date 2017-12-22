@@ -49,19 +49,18 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
 
   private def generateFooter(user: User): String = {
     val delegates = if(user.delegations.nonEmpty) {
-      s"Les personnes suivantes ont une délégations sur votre compte agent : ${user.delegations.map { case (name, email) => s"$name <$email>" }.mkString(", ")}. Elles reçoivent une copie de ce mail et peuvent agir en votre nom sur le réseau A+.<br>"
+      s"<br><br>Les personnes suivantes ont une délégations sur votre compte agent : <b>${user.delegations.map { case (name, email) => s"$name <$email>" }.mkString(", ")}</b>. Elles reçoivent une copie de ce mail et peuvent agir en votre nom sur le réseau A+.<br>"
     } else {
       ""
     }
     return s"""<br>
-       |<b>Ne transférez pas cet email, il vous est personnellement destiné, il permettrait à quelqu'un d'autre d'utiliser votre identité sur le réseau A+.
-       | Si vous souhaitez transférer la demande à quelqu'un d'autre vous avez la possibilité de le faire en ouvrant le lien ci-dessus.</b>
+       |<b>Ne transférez pas cet email, il vous est personnellement destiné, il permettrait à quelqu'un d'autre d'utiliser votre identité sur le réseau A+.</b>
+       | Si vous souhaitez transférer la demande à quelqu'un d'autre vous avez la possibilité de le faire en ouvrant le lien ci-dessus.
        | $delegates
        |<br>
        |<br>
-       |Merci de votre aide.<br>
-       |Si vous avez des questions à propos de l'outil A+, n'hésitez pas à contacter l'équipe A+ sur contact@aplus.beta.gouv.fr<br>
-       |Equipe A+
+       |<b>Ne pas répondre à ce mail.</b><br>
+       |<i>Si vous avez des questions à propos de l'outil A+, contactez-nous sur contact@aplus.beta.gouv.fr</i><br>
      """.stripMargin
   }
 
