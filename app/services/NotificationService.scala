@@ -49,13 +49,13 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
 
   private def generateFooter(user: User): String = {
     val delegates = if(user.delegations.nonEmpty) {
-      s"Les personnes suivantes ont une délégations sur votre compte agent : ${user.delegations.map { case (name, email) => s"$name <$email>" }.mkString(", ")}. Elles reçoivent une copie de ce mail et peuvent agir en votre nom sur le réseau A+.<br>"
+      s"<br><br>Les personnes suivantes ont une délégations sur votre compte agent : <b>${user.delegations.map { case (name, email) => s"$name <$email>" }.mkString(", ")}</b>. Elles reçoivent une copie de ce mail et peuvent agir en votre nom sur le réseau A+.<br>"
     } else {
       ""
     }
     return s"""<br>
-       |<b>Ne transférez pas cet email, il vous est personnellement destiné, il permettrait à quelqu'un d'autre d'utiliser votre identité sur le réseau A+.
-       | Si vous souhaitez transférer la demande à quelqu'un d'autre vous avez la possibilité de le faire en ouvrant le lien ci-dessus.</b>
+       |<b>Ne transférez pas cet email, il vous est personnellement destiné, il permettrait à quelqu'un d'autre d'utiliser votre identité sur le réseau A+.</b>
+       | Si vous souhaitez transférer la demande à quelqu'un d'autre vous avez la possibilité de le faire en ouvrant le lien ci-dessus.
        | $delegates
        |<br>
        |<br>
