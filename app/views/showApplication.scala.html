@@ -49,7 +49,7 @@ div hr:last-child {
             <div class="mdl-card__title mdl-card--border">
                 <h2 class="mdl-card__title-text">@application.subject</h2>
             </div>
-            @if(application.creatorUserId == user.id && application.status != "Terminé") {
+            @if((application.creatorUserId == user.id || user.admin) && application.status != "Terminé") {
                 <div class="mdl-card__menu">
                     <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="document.location='@routes.ApplicationController.terminate(application.id)';">
                         Clore la demande
