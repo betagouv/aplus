@@ -27,6 +27,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     "admin",
     "areas",
     "creation_date",
+    "has_accepted_charte",
     "delegations"
   )
 
@@ -65,8 +66,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
          {admin},
          array[{areas}]::uuid[],
          {delegations},
-         {creation_date}
-      )
+         {creation_date},
+         {has_accepted_charte}
       """)
       .on(
         'id -> user.id,
@@ -79,7 +80,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
         'admin -> user.admin,
         'areas -> user.areas.map(_.toString),
         'delegations -> Json.toJson(user.delegations),
-        'creation_date -> user.creationDate
+        'creation_date -> user.creationDate,
+        'has_accepted_charte -> user.hasAcceptedCharte
       ).executeUpdate() == 1
     }
   }
@@ -93,6 +95,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
           helper = {helper},
           instructor = {instructor},
           admin = {admin},
+          has_accepted_charte = {has_accepted_charte},
           delegations = {delegations}
           WHERE id = {id}::uuid
        """
@@ -104,7 +107,21 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
       'helper -> user.helper,
       'instructor -> user.instructor,
       'admin -> user.admin,
+      'has_accepted_charte -> user.hasAcceptedCharte,
       'delegations -> Json.toJson(user.delegations)
+    ).executeUpdate() == 1
+  }
+
+  def acceptCharte(userId: UUID) = db.withConnection {  implicit connection =>
+    SQL(
+      """
+          UPDATE "user" SET
+          has_accepted_charte = {has_accepted_charte}
+          WHERE id = {id}::uuid
+       """
+    ).on(
+      'id -> userId,
+      'has_accepted_charte -> true
     ).executeUpdate() == 1
   }
 }

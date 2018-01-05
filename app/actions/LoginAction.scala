@@ -31,7 +31,11 @@ class LoginAction @Inject()(val parser: BodyParsers.Default, userService: UserSe
             Left(Redirect(Call(request.method, url)).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
         case (None, Some(user)) =>
             val area = request.session.get("areaId").flatMap(UUIDHelper.fromString).orElse(user.areas.headOption).flatMap(id => Area.all.find(_.id == id)).getOrElse(Area.all.head)
-            Right(new RequestWithUserData(user, area, request))
+            if(user.hasAcceptedCharte == false && request.path.contains("charte") == false) {
+              Left(Redirect(routes.UserController.showCharte()).flashing("redirect" -> request.path))
+            } else {
+              Right(new RequestWithUserData(user, area, request))
+            }
         case _ =>
             Left(Redirect(routes.LoginController.home())
               .withSession(request.session - "userId").flashing("error" -> "Vous devez vous identifier pour accèder à cette page."))

@@ -41,6 +41,7 @@ class UserController @Inject()(loginAction: LoginAction,
         "admin" -> boolean,
         "areas" -> ignored(List(area.id)),
         "creationDate" -> ignored(DateTime.now(timeZone)),
+        "hasAcceptedCharte" -> boolean,
         "delegations" -> seq(tuple(
             "name" -> nonEmptyText,
             "email" -> email
@@ -95,5 +96,14 @@ class UserController @Inject()(loginAction: LoginAction,
           }
       }
     )
+  }
+
+  def showCharte() = loginAction { implicit request =>
+    Ok(views.html.showCharte(request.currentUser, request.currentArea))
+  }
+
+  def validateCharte() = loginAction { implicit request =>
+    userService.acceptCharte(request.currentUser.id)
+    Redirect(routes.ApplicationController.all()).flashing("success" -> "Merci d'avoir accepté la charte")
   }
 }
