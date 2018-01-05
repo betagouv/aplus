@@ -11,7 +11,8 @@ import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
-import play.api.mvc.InjectedController
+import play.api.mvc.Results.Redirect
+import play.api.mvc.{Call, InjectedController}
 import services.{NotificationService, UserService}
 
 @Singleton
@@ -103,7 +104,27 @@ class UserController @Inject()(loginAction: LoginAction,
   }
 
   def validateCharte() = loginAction { implicit request =>
-    userService.acceptCharte(request.currentUser.id)
-    Redirect(routes.ApplicationController.all()).flashing("success" -> "Merci d'avoir accepté la charte")
+    Form(
+      tuple(
+        "redirect" -> optional(text),
+        "validate" -> boolean
+      )
+    ).bindFromRequest.fold(
+      formWithErrors => {
+        BadRequest(s"Formulaire invalide, prévenez l'administrateur du service. ${formWithErrors.errors.mkString(", ")}")
+      },
+      form => {
+        if(form._2) {
+          userService.acceptCharte(request.currentUser.id)
+        }
+        form._1 match {
+          case Some(redirect) =>
+            Redirect(Call("GET", redirect)).flashing("success" -> "Merci d\'avoir accepté la charte")
+          case _ =>
+            Redirect(routes.ApplicationController.all()).flashing("success" -> "Merci d\'avoir accepté la charte")
+        }
+      }
+    )
+
   }
 }
