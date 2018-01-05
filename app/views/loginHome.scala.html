@@ -60,9 +60,9 @@
 
 </head>
 <body>
-<div class="header__ribbon do-not-print" id="header__ribbon" style="display: none">
-   DEMO
-</div>
+    <div class="header__ribbon do-not-print" id="header__ribbon">
+    BETA
+    </div>
 <div class="login-layout mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--grey-100">
     <div class="login-ribbon"></div>
     <main class="login-main mdl-layout__content">
@@ -97,9 +97,9 @@
 
 <script>
     if(/localhost|demo/.test(window.location.hostname)) {
-        document.getElementById("header__ribbon").style.display = "initial";
+        document.getElementById("header__ribbon").innerText = "DEMO";
         var nav = document.getElementsByClassName("login-layout")[0]
-        nav.classList.add("mdl-color--deep-purple")
+        nav.classList.add("mdl-color--deep-purple-900")
         nav.classList.remove("mdl-color--grey-100")
     }
 </script>
