@@ -41,8 +41,8 @@
         <!-- End Piwik Code -->
     </head>
 <body>
-<div class="header__ribbon do-not-print" id="header__ribbon" style="display: none">
-    DEMO
+<div class="header__ribbon do-not-print" id="header__ribbon">
+    BETA
 </div>
 <div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header">
     <header class="demo-header mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 do-not-print">
@@ -62,11 +62,11 @@
             -->
         </div>
     </header>
-    <div class="demo-drawer mdl-layout__drawer mdl-color--blue-grey-900 mdl-color-text--blue-grey-50 do-not-print">
+    <div class="demo-drawer mdl-layout__drawer mdl-color--white mdl-color-text--blue-grey-800 do-not-print">
         <header class="drawer-header" style="display: -webkit-flex;
                 display: -ms-flexbox;
                 display: flex;">
-            <p style="line-height: 1.2;">
+            <p style="line-height: 1.2; text-align: center;">
                 <img src='@routes.Assets.versioned("images/logo_120.png")' class="logo">
             </p>
             <p style="line-height: 1.2;">
@@ -137,9 +137,9 @@
 
     <script>
             if(/localhost|demo/.test(window.location.hostname)) {
-                document.getElementById("header__ribbon").style.display = "initial";
+                document.getElementById("header__ribbon").innerText = "DEMO";
                 var nav = document.getElementsByClassName("navigation")[0]
-                nav.classList.add("mdl-color--deep-purple")
+                nav.classList.add("mdl-color--deep-purple-900")
                 nav.classList.remove("mdl-color--blue-grey-800")
             }
     </script>
