@@ -71,7 +71,7 @@ div hr:last-child {
                         </span>
                     </li>
                 </ul>
-                <p>@application.description</p>
+                <p style="white-space: pre;">@application.description</p>
                 <p><h4>Informations de l'usager</h4>
                 <ul>
                     @for((key, value) <- application.userInfos) {
@@ -96,7 +96,7 @@ div hr:last-child {
                                 </span>
                             </li>
                         </ul>
-                        <p>@answer.message</p>
+                        <p style="white-space: pre;">@answer.message</p>
                         @if(answer.invitedUsers.nonEmpty) {
                             <b>Notifiés:</b>
                             @answer.invitedUsers.values.mkString(", ")
