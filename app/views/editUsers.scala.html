@@ -44,6 +44,7 @@
           <th class="mdl-data-table__cell--non-numeric">Admin</th>
           <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
           <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
+            <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
           <th class="mdl-data-table__cell--non-numeric"></th>
         </tr>
       </thead>
@@ -79,6 +80,9 @@
           <td>
             @helper.checkbox(userField("helper"), 'type -> "checkbox", 'class -> "mdl-checkbox__input")
           </td>
+            <td>
+             @helper.checkbox(userField("hasAcceptedCharte"), 'type -> "checkbox", 'class -> "mdl-checkbox__input")
+        </td>
           <td>
               <button id="show-dialog-@index" type="button" class="mdl-button mdl-js-button mdl-button--raised" @if(userField("delegations").hasErrors){ style="color: #d50000"}>Options</button>
               <dialog class="mdl-dialog" id="dialog-@index">
