@@ -23,7 +23,7 @@
         </tr>
       </thead>
       <tbody>
-      @for(user <- users) {
+      @for((user, index) <- users.zipWithIndex) {
         <tr>
           <td class="mdl-data-table__cell--non-numeric">@user.name</td>
           <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
@@ -50,6 +50,18 @@
           </td>
           <td class="mdl-data-table__cell--non-numeric">@user.areas.flatMap(area => Area.all.find(_.id == area).map(_.name)).mkString(", ")</td>
         </tr>
+        @if(index % 10 == 9) {
+          <tr>
+            <th class="mdl-data-table__cell--non-numeric">Nom</th>
+            <th class="mdl-data-table__cell--non-numeric">Administration/Qualité</th>
+            <th class="mdl-data-table__cell--non-numeric">Email</th>
+            <th class="mdl-data-table__cell--non-numeric">Admin</th>
+            <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
+            <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
+            <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
+            <th class="mdl-data-table__cell--non-numeric">Territoires</th>
+          </tr>
+        }
       }
       </tbody>
     </table>
