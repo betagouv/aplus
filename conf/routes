@@ -28,6 +28,10 @@ POST    /users/edit                  controllers.UserController.editPost
 GET     /users/add                    controllers.UserController.add
 POST    /users/add                   controllers.UserController.addPost
 
+
+GET     /charte                  controllers.UserController.showCharte
+POST    /charte                  controllers.UserController.validateCharte
+
 # Areas
 GET     /areas/:areaId               controllers.ApplicationController.changeArea(areaId: java.util.UUID)
 

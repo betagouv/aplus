@@ -18,6 +18,7 @@
           <th class="mdl-data-table__cell--non-numeric">Admin</th>
           <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
           <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
+          <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
           <th class="mdl-data-table__cell--non-numeric">Territoires</th>
         </tr>
       </thead>
@@ -40,6 +41,11 @@
           <td>
             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
               <input type="checkbox" class="mdl-checkbox__input" @if(user.helper){ checked } disabled>
+            </label>
+          </td>
+          <td>
+            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+              <input type="checkbox" class="mdl-checkbox__input" @if(user.hasAcceptedCharte){ checked } disabled>
             </label>
           </td>
           <td class="mdl-data-table__cell--non-numeric">@user.areas.flatMap(area => Area.all.find(_.id == area).map(_.name)).mkString(", ")</td>
