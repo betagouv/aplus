@@ -67,7 +67,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
          array[{areas}]::uuid[],
          {delegations},
          {creation_date},
-         {has_accepted_charte}
+         {has_accepted_charte})
       """)
       .on(
         'id -> user.id,
