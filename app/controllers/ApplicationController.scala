@@ -184,7 +184,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       case None =>
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
-        if(application.creatorUserId == request.currentUser.id) {
+        if(application.creatorUserId == request.currentUser.id || request.currentUser.admin) {
           if(applicationService.changeStatus(applicationId, "Terminé")) {
             Redirect(routes.ApplicationController.all()).flashing("success" -> "L'application a été indiqué comme terminé")
           } else {
