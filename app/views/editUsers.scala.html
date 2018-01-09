@@ -119,6 +119,19 @@
             </script>
           </td>
         </tr>
+          @if(index % 10 == 9) {
+              <tr>
+                  <th></th>
+                  <th class="mdl-data-table__cell--non-numeric">Nom</th>
+                  <th class="mdl-data-table__cell--non-numeric">Administration/Qualité</th>
+                  <th class="mdl-data-table__cell--non-numeric">Email</th>
+                  <th class="mdl-data-table__cell--non-numeric">Admin</th>
+                  <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
+                  <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
+                  <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
+                  <th class="mdl-data-table__cell--non-numeric"></th>
+              </tr>
+          }
       }
       </tbody>
     </table>
