@@ -2,8 +2,8 @@
 constraint.required=Obligatoire
 constraint.min=Minimum value: {0}
 constraint.max=Maximum value: {0}
-constraint.minLength=Minimum length: {0}
-constraint.maxLength=Maximum length: {0}
+constraint.minLength=Longueur minimum: {0}
+constraint.maxLength=Longueur maximum: {0}
 constraint.email=Email
 constraint.pattern=Required pattern: {0}
 
@@ -27,8 +27,8 @@ error.min=Must be greater or equal to {0}
 error.min.strict=Must be strictly greater than {0}
 error.max=Must be less or equal to {0}
 error.max.strict=Must be strictly less than {0}
-error.minLength=Minimum length is {0}
-error.maxLength=Maximum length is {0}
+error.minLength=La longueur minimum est de {0}
+error.maxLength=La longueur maximum est de {0}
 error.email=Email incorrect
 error.pattern=Must satisfy {0}
 error.date=La date est incorrect
