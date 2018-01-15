@@ -79,7 +79,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
       ""
     }
     return s"""<br>
-       |<b>Ne transférez pas cet email et ne pas répondre à cet email</b><br><i>
+       |<b>Ne transférez pas cet email et n'y répondez pas directement.</b><br><i>
        |$delegates
        |- Vous pouvez transférer la demande à un autre agent en ouvrant le lien ci-dessus<br>
        |- Si vous avez un problème ou besoins d'aide à propos de l'outil A+, contactez-nous sur contact@aplus.beta.gouv.fr</i>
