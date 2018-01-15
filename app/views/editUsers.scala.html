@@ -4,6 +4,7 @@
 
 
 @main(user, area)(s"Gestion des utilisateurs ${area.name}") {
+    @Html(webJarsUtil.css("dialog-polyfill.css"))
   <style>
           .pem-table {
             width: 100%;
@@ -11,7 +12,13 @@
           .hidden {
             display: none;
           }
+          dialog {
+              position: fixed;
+              top: 50%;
+              transform: translate(0, -50%);
+          }
   </style>
+    @Html(webJarsUtil.script("dialog-polyfill.js"))
     <script type='text/javascript'>
         function registerDialog(index) {
             var dialog = document.querySelector('#dialog-'+index);
@@ -27,7 +34,7 @@
                     });
         }
     </script>
-} {
+} {                           ></script>
   <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
   @helper.form(action = action, args = 'class -> "mdl-cell mdl-cell--12-col mdl-grid") {
     @if(form.hasGlobalErrors) {
@@ -72,16 +79,16 @@
             }
           </td>
           <td>
-            @helper.checkbox(userField("admin"), 'type -> "checkbox", 'class -> "mdl-checkbox__input")
+            @helper.checkbox(userField("admin"), 'type -> "checkbox", 'label -> "Admin", 'class -> "mdl-checkbox__input")
           </td>
           <td>
-            @helper.checkbox(userField("instructor"), 'type -> "checkbox", 'class -> "mdl-checkbox__input")
+            @helper.checkbox(userField("instructor"), 'type -> "checkbox", 'label -> "Agent", 'class -> "mdl-checkbox__input")
           </td>
           <td>
-            @helper.checkbox(userField("helper"), 'type -> "checkbox", 'class -> "mdl-checkbox__input")
+            @helper.checkbox(userField("helper"), 'type -> "checkbox", 'label -> "Aidant", 'class -> "mdl-checkbox__input")
           </td>
             <td>
-             @helper.checkbox(userField("hasAcceptedCharte"), 'type -> "checkbox", 'class -> "mdl-checkbox__input")
+             @helper.checkbox(userField("hasAcceptedCharte"), 'label -> "Charte", 'type -> "checkbox", 'class -> "mdl-checkbox__input")
         </td>
           <td>
               <button id="show-dialog-@index" type="button" class="mdl-button mdl-js-button mdl-button--raised" @if(userField("delegations").hasErrors){ style="color: #d50000"}>Options</button>
