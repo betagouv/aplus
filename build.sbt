@@ -27,6 +27,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "anorm" % "2.5.3",
   "com.typesafe.play" %% "play-mailer" % "6.0.1",
   "com.typesafe.play" %% "play-mailer-guice" % "6.0.1",
+  "org.webjars.npm" % "dialog-polyfill" % "0.4.9"
 )
 
 libraryDependencies += "io.sentry" % "sentry-logback" % "1.6.3"
