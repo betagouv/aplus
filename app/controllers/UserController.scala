@@ -38,9 +38,9 @@ class UserController @Inject()(loginAction: LoginAction,
           case Some(id) => id
         }, { Some(_) }),
         "key" -> ignored("key"),  //TODO refactoring security
-        "name" -> nonEmptyText,
-        "qualite" -> nonEmptyText,
-        "email" -> email.verifying(nonEmpty),
+        "name" -> nonEmptyText.verifying(maxLength(100)),
+        "qualite" -> nonEmptyText.verifying(maxLength(100)),
+        "email" -> email.verifying(maxLength(200), nonEmpty),
         "helper" -> boolean,
         "instructor" -> boolean,
         "admin" -> boolean,

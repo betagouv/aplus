@@ -31,10 +31,10 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
   val applicationForm = Form(
     mapping(
-      "subject" -> nonEmptyText,
+      "subject" -> nonEmptyText.verifying(maxLength(150)),
       "description" -> nonEmptyText,
-      "infos" -> FormsPlusMap.map(nonEmptyText),
-      "users" -> list(uuid).verifying("Vous devez sélectionnez au moins un agent", _.nonEmpty)
+      "infos" -> FormsPlusMap.map(nonEmptyText.verifying(maxLength(30))),
+      "users" -> list(uuid).verifying("Vous devez sélectionner au moins un agent", _.nonEmpty)
     )(ApplicationData.apply)(ApplicationData.unapply)
   )
 
