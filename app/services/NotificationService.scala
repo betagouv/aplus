@@ -74,7 +74,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
 
   private def generateFooter(user: User): String = {
     val delegates = if(user.delegations.nonEmpty) {
-      s"- Les personnes suivantes ont une délégations sur votre compte agent : <b>${user.delegations.map { case (name, email) => s"$name &#x3C;$email&#x3E;" }.mkString(", ")}</b>. (Elles peuvent agir en votre nom sur le réseau A+)<br>"
+      s"- Les personnes suivantes ont une délégation sur votre compte agent : <b>${user.delegations.map { case (name, email) => s"$name &#x3C;$email&#x3E;" }.mkString(", ")}</b>. (Elles peuvent agir en votre nom sur le réseau A+)<br>"
     } else {
       ""
     }
