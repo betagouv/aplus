@@ -99,7 +99,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
                       |$footer
                       """.stripMargin
     Email(subject = s"[A+] Nouvelle demande d'aide : ${application.subject}",
-      from = "A+ Notification: ne pas répondre <ne-pas-repondre-aplus@beta.gouv.fr>",
+      from = "A+ Ne pas répondre <ne-pas-repondre-aplus@beta.gouv.fr>",
       to = List(s"${invitedUser.name} <${invitedUser.email}>"),
       cc = invitedUser.delegations.map { case (name, email) => s"$name <$email>" }.toSeq,
       bodyHtml = Some(bodyHtml)
@@ -118,7 +118,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
                       |$footer
                       """.stripMargin
     Email(subject = s"[A+] Nouvelle réponse pour: ${application.subject}",
-      from = "A+ Notification: ne pas répondre <ne-pas-repondre-aplus@beta.gouv.fr>",
+      from = "A+ Ne pas répondre <ne-pas-repondre-aplus@beta.gouv.fr>",
       to = List(s"${user.name} <${user.email}>"),
       cc = user.delegations.map { case (name, email) => s"$name <$email>" }.toSeq,
       bodyHtml = Some(bodyHtml)
