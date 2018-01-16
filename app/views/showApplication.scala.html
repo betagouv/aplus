@@ -51,7 +51,7 @@ div hr:last-child {
             </div>
             @if((application.creatorUserId == user.id || user.admin) && application.status != "Terminé") {
                 <div class="mdl-card__menu">
-                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="confirmTerminate()">
+                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect do-not-print" onclick="confirmTerminate()">
                         Clore la demande
                     </button>
                 </div>
@@ -106,7 +106,7 @@ div hr:last-child {
             }
 
 
-            <div class="mdl-card__actions mdl-grid">
+            <div class="mdl-card__actions mdl-grid do-not-print">
                 <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
                     <div class="mdl-tabs__tab-bar">
                         @if(user.instructor) {

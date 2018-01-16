@@ -141,3 +141,16 @@ html, body {
     font-weight: 700;
     z-index: 10;
 }
+
+
+@media print {
+    .mdl-layout__content {
+        background-color: white !important;
+    }
+    .mdl-card__supporting-text {
+        width: 100% !important;
+    }
+    .mdl-list__item-avatar {
+        display: none !important;
+    }
+}
