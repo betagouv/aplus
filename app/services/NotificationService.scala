@@ -78,7 +78,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     } else {
       ""
     }
-    return s"""<br>
+    return s"""<br><br>
        |<b>Ne transférez pas cet email et n'y répondez pas directement.</b><br><i>
        |$delegates
        |- Vous pouvez transférer la demande à un autre agent en ouvrant le lien ci-dessus<br>
@@ -112,7 +112,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     val bodyHtml = s"""Bonjour ${user.name},<br>
                       |<br>
                       |<p>${answer.creatorUserName} a donné une réponse sur la demande: "${application.subject}"
-                      |<br><q><i>${answer.message}</q></p>
+                      |<br><q><i>${answer.message}</i></q></p>
                       |Vous pouvez voir la demande et y répondre en suivant ce lien: <br>
                       |<a href="${url}">${url}</a>
                       |$footer

@@ -138,7 +138,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           request.currentUser.id,
           request.currentUser.nameWithQualite,
           notifiedUsers,
-          request.currentUser.id != application.creatorUserId,
+          request.currentUser.id == application.creatorUserId,
           request.currentArea.id)
         if (applicationService.add(answer) == 1) {
           notificationsService.newAnswer(application, answer)
