@@ -83,6 +83,8 @@
                             <th class="mdl-data-table__cell--non-numeric">Date de la demande</th>
                             <th class="mdl-data-table__cell--non-numeric">Sujet</th>
                             <th class="mdl-data-table__cell--non-numeric">Avancement</th>
+                            <th class="mdl-data-table__cell--non-numeric">Créateur</th>
+                            <th class="mdl-data-table__cell--non-numeric">Total invités</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -91,6 +93,8 @@
                             <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.status</td>
+                            <td class="mdl-data-table__cell--non-numeric">@application.creatorUserName</td>
+                            <td class="mdl-data-table__cell--non-numeric">@application.invitedUsers.size</td>
                         </tr>
                     }
                     </tbody>
