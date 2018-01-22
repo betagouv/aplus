@@ -80,7 +80,7 @@
                     <br>
                     <h5 class="mdl-cell mdl-cell--12-col">Envoyer la demande à (Territoire @area.name)</h5>
 
-                    <div class="mdl-cell mdl-cell--12-col mdl-grid">
+                    <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
                         @if(applicationForm("users").hasErrors) {
                             <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
                         }
