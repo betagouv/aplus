@@ -13,7 +13,7 @@
     @Html(webJarsUtil.css("material-icons.css"))
     @header
     @Html(webJarsUtil.script("material.min.js"))
-    <script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script>
+    <script src="@routes.Assets.versioned("polyfills.js")"></script>
     <style>
         html, body {
             max-width: 100%;

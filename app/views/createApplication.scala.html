@@ -2,154 +2,168 @@
 @import extentions.MDLForms._
 @(user: User, area: Area)(users: List[User], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
-@main(user, area)(s"Nouvelle demande")  {
-<style>
-    .mdl-data-table td {
-        padding: 0px 18px;
-    }
-    .invisible {
-        display: none;
-    }
-</style>
-}{
-<div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
-    <h3 class="mdl-cell mdl-cell--12-col">Nouvelle demande</h3>
-    <span><a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20A+"><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous</a> ( contact&commat;aplus.beta.gouv.fr )</span>
-    @helper.form(action = routes.ApplicationController.createPost(), args = 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
-        <div class="mdl-cell mdl-cell--12-col mdl-grid">
-            <h5 class="mdl-cell mdl-cell--12-col">Sujet</h5>
-
-            @helper.input(applicationForm("subject"), 'label -> "Saisir le sujet de votre demande...") { (id, name, value, args) =>
-                <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-            }
-
-            <h5 class="mdl-cell mdl-cell--12-col">Informations de l'usager</h5>
-            <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp" id="form__infos">
-                <tbody>
-                    @repeatMap(applicationForm("infos"), applicationForm, List("Prénom", "Nom de famille")) {  (infoField, info) =>
-                        <tr>
-                            <td class="mdl-data-table__cell--non-numeric">@info.capitalize</td>
-                            <td class="mdl-data-table__cell--non-numeric">
-                                @helper.input(infoField, 'label -> s"Saisir $info de l'usager ici") { (id, name, value, args) =>
-                                    <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-                                }
-                            </td>
-                            <td></td>
-                        </tr>
-                    }
-                    <tr>
-                        <td class="mdl-data-table__cell--non-numeric">
-                            <b>Ajouter une autre information :</b><br>
-                            <select id="types" onchange="newTypeSelected()">
-                                <option disabled selected value="">Selectionnez une information à ajouter</option>
-                                    @for(info <- List("Date de naissance", "Numéro de sécurité sociale", "Identifiant CAF", "Numéro de dossier", "Nom de Naissance", "Autre")) {
-                                        <option value="@info">@info</option>
-                                    }
-                            </select><br>
-                            <div class="mdl-textfield mdl-js-textfield invisible">
-                                <label class="mdl-textfield__label" for="other-type">Saisissez le type d'information</label>
-                                <input class="mdl-textfield__input" name="other-type" type="text" id="other-type" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
-                            </div>
-                        </td>
-                        <td class="mdl-data-table__cell--non-numeric">
-                            <div class="mdl-textfield mdl-js-textfield invisible">
-                                <label class="mdl-textfield__label" for="other-type-value">Saisissez l'information </label>
-                                <input class="mdl-textfield__input" type="text" name="other-type-value" id="other-type-value" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
-                            </div>
-                        </td>
-                        <td class="mdl-data-table__cell--non-numeric"><button class="mdl-button mdl-js-button mdl-button--fab" type="button" id="add-infos__ok-button" onclick="addInfo();" disabled="disabled">
-                            Ok
-                        </button></td>
-                    </tr>
-                </tbody>
-            </table>
-            <br>
-            <h5 class="mdl-cell mdl-cell--12-col">Description</h5>
-            @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
-                <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
-            }
-            <br>
-            <h5 class="mdl-cell mdl-cell--12-col">Envoyer la demande à</h5>
-            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
-                <input class="mdl-textfield__input" type="text" id="search" onkeyup="filterUsers()">
-                <label class="mdl-textfield__label" for="search">Rechercher une personne, un organisme...</label>
-            </div>
-            <div class="mdl-cell mdl-cell--12-col mdl-grid" style="max-height: 500px; overflow-y: auto;">
-                @if(applicationForm("users").hasErrors) {
-                    <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
+    @main(user, area)(s"Nouvelle demande")  {
+        <style>
+                .mdl-data-table td {
+                    padding: 0px 18px;
                 }
-                <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp mdl-cell mdl-cell--12-col" id="users">
-                    <thead>
-                        <tr>
-                            <th class="mdl-data-table__cell--non-numeric"></th>
-                            <th class="mdl-data-table__cell--non-numeric">Qualité</th>
-                            <th class="mdl-data-table__cell--non-numeric">Nom</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @for(user <- users) {
-                        <tr>
-                            <td>
-                                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                    <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked="checked" }>
-                                </label>
-                            </td>
-                            <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
-                            <td class="mdl-data-table__cell--non-numeric">@user.name</td>
-                        </tr>
+                .invisible {
+                    display: none;
+                }
+        </style>
+    }{
+        <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+            <h3 class="mdl-cell mdl-cell--12-col">Nouvelle demande</h3>
+            <span><a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20A+"><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous</a> ( contact&commat;aplus.beta.gouv.fr )</span>
+            @helper.form(action = routes.ApplicationController.createPost(), args = 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
+                <div class="mdl-cell mdl-cell--12-col mdl-grid">
+                    <h5 class="mdl-cell mdl-cell--12-col">Sujet</h5>
+
+                    @helper.input(applicationForm("subject"), 'label -> "Saisir le sujet de votre demande...") { (id, name, value, args) =>
+                        <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
                     }
-                    </tbody>
-                </table>
-            </div>
-            <br>
-            <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset">
-                Envoyer ma demande
-            </button>
-        </div>
-    }
-</div>
-<script type="text/javascript">
-    function filterUsers() {
-          var filter = document.getElementById("search").value.toUpperCase();
-          Array.from(document.querySelectorAll("#users tbody tr")).forEach(function(tr){
-            if (tr.innerText.toUpperCase().indexOf(filter) > -1) {
-                tr.style.display = "";
-            } else {
-                tr.style.display = "none";
+
+                    <h5 class="mdl-cell mdl-cell--12-col">Informations de l'usager</h5>
+                    <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp" id="form__infos">
+                        <tbody>
+                            @repeatMap(applicationForm("infos"), applicationForm, List("Prénom", "Nom de famille")) {  (infoField, info) =>
+                                <tr>
+                                    <td class="mdl-data-table__cell--non-numeric">@info.capitalize</td>
+                                    <td class="mdl-data-table__cell--non-numeric">
+                                    @helper.input(infoField, 'label -> s"Saisir $info de l'usager ici") { (id, name, value, args) =>
+                                        <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+                                    }
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            }
+                            <tr>
+                                <td class="mdl-data-table__cell--non-numeric">
+                                    <b>Ajouter une autre information :</b><br>
+                                    <select id="types" onchange="newTypeSelected()">
+                                        <option disabled selected value="">Selectionnez une information à ajouter</option>
+                                        @for(info <- List("Date de naissance", "Numéro de sécurité sociale", "Identifiant CAF", "Numéro de dossier", "Nom de Naissance", "Autre")) {
+                                            <option value="@info">@info</option>
+                                        }
+                                    </select><br>
+                                    <div class="mdl-textfield mdl-js-textfield invisible">
+                                        <label class="mdl-textfield__label" for="other-type">Saisissez le type d'information</label>
+                                        <input class="mdl-textfield__input" name="other-type" type="text" id="other-type" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
+                                    </div>
+                                </td>
+                                <td class="mdl-data-table__cell--non-numeric">
+                                    <div class="mdl-textfield mdl-js-textfield invisible">
+                                        <label class="mdl-textfield__label" for="other-type-value">Saisissez l'information </label>
+                                        <input class="mdl-textfield__input" type="text" name="other-type-value" id="other-type-value" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
+                                    </div>
+                                </td>
+                                <td class="mdl-data-table__cell--non-numeric"><button class="mdl-button mdl-js-button mdl-button--fab" type="button" id="add-infos__ok-button" onclick="addInfo();" disabled="disabled">
+                                    Ok
+                                </button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br>
+                    <h5 class="mdl-cell mdl-cell--12-col">Description</h5>
+                    @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
+                        <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
+                    }
+                    <br>
+                    <h5 class="mdl-cell mdl-cell--12-col">Envoyer la demande à (Territoire @area.name)</h5>
+
+                    <div class="mdl-cell mdl-cell--12-col mdl-grid">
+                        @if(applicationForm("users").hasErrors) {
+                            <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
+                        }
+
+                        <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp mdl-cell mdl-cell--12-col" id="users">
+                        @for((organisme, orgUsers) <- users.groupBy(_.qualite).toList.sortBy(_._1).sortBy(_._1 == "Aide A+ / Je ne sais pas")) {
+                            <thead>
+                                <tr>
+                                    <th class="mdl-data-table__cell--non-numeric" colspan="3">
+                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                            <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);">
+                                            <span class="mdl-checkbox__label">@organisme</span>
+                                        </label></th>
+                                </tr>
+                            </thead>
+                            <tbody class="invisible">
+                            @for(user <- orgUsers) {
+                                <tr>
+                                    <td style="width: 95px">
+                                        <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
+                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                            <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked="checked" }>
+                                        </label>
+                                    </td>
+                                    <td class="mdl-data-table__cell--non-numeric">@user.name</td>
+                                    <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
+                                </tr>
+                            }
+                            </tbody>
+                        }
+                        </table>
+                    </div>
+                    <br>
+                    <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset">
+                        Envoyer ma demande
+                    </button>
+                </div>
             }
-          });
-    }
+        </div>
+        <script type="text/javascript">
 
-    function newTypeSelected() {
-        var select = document.getElementById("types");
-        var otherTypeElement = document.getElementById("other-type");
-        if(select.value === "Autre") {
-            otherTypeElement.value = "";
-            otherTypeElement.parentNode.classList.remove("invisible");
-            //componentHandler.upgradeElements(otherTypeElem.parentNode.parentNode.getElementsByTagName("*"));
-        } else {
-            otherTypeElement.parentNode.classList.add("invisible");
-            otherTypeElement.value = select.value;
-        }
-        if(select.value !== "") {
-            document.getElementById("other-type-value").parentNode.classList.remove("invisible");
-            document.getElementById("add-infos__ok-button").disabled = false;
-        }
-        componentHandler.upgradeDom();
-    }
-    newTypeSelected();
+                function showHideUsers(sender) {
+                    var thead = sender.parentNode.parentNode.parentNode.parentNode;
+                    var tbody = thead.nextElementSibling;
+                    if(sender.checked) {
+                        Array.from(tbody.querySelectorAll("[type=checkbox]")).forEach(function(input){
+                            input.checked = true;
+                            input.parentNode.classList.add("is-checked");
+                            componentHandler.upgradeElements(input);
+                        });
+                        tbody.classList.remove("invisible");
+                    } else {
+                        Array.from(tbody.querySelectorAll("[type=checkbox]")).forEach(function(input){
+                            input.checked = false;
+                            input.parentNode.classList.remove("is-checked");
+                            componentHandler.upgradeElements(input);
+                        });
+                        tbody.classList.add("invisible");
+                    }
 
-    function removeInfo(elem) {
-        var row = elem.parentNode.parentNode;
-        row.parentNode.removeChild(row);
-    }
+                }
 
-    function addInfo() {
-        var inputInfoName = document.getElementById("other-type");
-        var infoName = inputInfoName.value;
-        if(infoName === "") { return; }
-        var newNode = document.createElement('tr');
-        newNode.innerHTML = '<td class="mdl-data-table__cell--non-numeric">'+infoName+'</td> \
+                function newTypeSelected() {
+                    var select = document.getElementById("types");
+                    var otherTypeElement = document.getElementById("other-type");
+                    if(select.value === "Autre") {
+                        otherTypeElement.value = "";
+                        otherTypeElement.parentNode.classList.remove("invisible");
+                        //componentHandler.upgradeElements(otherTypeElem.parentNode.parentNode.getElementsByTagName("*"));
+                    } else {
+                        otherTypeElement.parentNode.classList.add("invisible");
+                        otherTypeElement.value = select.value;
+                    }
+                    if(select.value !== "") {
+                        document.getElementById("other-type-value").parentNode.classList.remove("invisible");
+                        document.getElementById("add-infos__ok-button").disabled = false;
+                    }
+                    componentHandler.upgradeDom();
+                }
+                newTypeSelected();
+
+                function removeInfo(elem) {
+                    var row = elem.parentNode.parentNode;
+                    row.parentNode.removeChild(row);
+                }
+
+                function addInfo() {
+                    var inputInfoName = document.getElementById("other-type");
+                    var infoName = inputInfoName.value;
+                    if(infoName === "") { return; }
+                    var newNode = document.createElement('tr');
+                    newNode.innerHTML = '<td class="mdl-data-table__cell--non-numeric">'+infoName+'</td> \
                         <td class="mdl-data-table__cell--non-numeric"><div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label"> \
                             <input class="mdl-textfield__input" type="text" id="sample1" name="infos['+infoName+']" value="'+document.getElementById("other-type-value").value+'"> \
                             <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+' de l\'usager ici</label> \
@@ -159,20 +173,20 @@
                             <i class="material-icons">remove</i> \
                         </button></td>';
 
-        inputInfoName.parentNode.parentNode.parentNode.parentNode.insertBefore(newNode, inputInfoName.parentNode.parentNode.parentNode);
-        inputInfoName.value = "";
-        inputInfoName.parentNode.classList.remove("is-dirty");
-        inputInfoName.parentNode.classList.add("invisible");
-        componentHandler.upgradeElements(newNode);
-        var select = document.getElementById("types");
-        if(select.value !== "Autre") {
-            select.removeChild(select[select.selectedIndex]);
-        }
-        select.value = "";
-        document.getElementById("other-type-value").value = "";
-        document.getElementById("other-type-value").parentNode.classList.remove("is-dirty");
-        document.getElementById("other-type-value").parentNode.classList.add("invisible");
-        document.getElementById("add-infos__ok-button").disabled = true;
+                    inputInfoName.parentNode.parentNode.parentNode.parentNode.insertBefore(newNode, inputInfoName.parentNode.parentNode.parentNode);
+                    inputInfoName.value = "";
+                    inputInfoName.parentNode.classList.remove("is-dirty");
+                    inputInfoName.parentNode.classList.add("invisible");
+                    componentHandler.upgradeElements(newNode);
+                    var select = document.getElementById("types");
+                    if(select.value !== "Autre") {
+                        select.removeChild(select[select.selectedIndex]);
+                    }
+                    select.value = "";
+                    document.getElementById("other-type-value").value = "";
+                    document.getElementById("other-type-value").parentNode.classList.remove("is-dirty");
+                    document.getElementById("other-type-value").parentNode.classList.add("invisible");
+                    document.getElementById("add-infos__ok-button").disabled = true;
+                }
+        </script>
     }
-</script>
-}
