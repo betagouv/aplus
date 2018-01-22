@@ -4,7 +4,9 @@ import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import actions.LoginAction
+import extentions.{Hash, UUIDHelper}
 import forms.FormsPlusMap
+import models.User.date
 import models.{Area, User}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
@@ -95,6 +97,18 @@ class UserController @Inject()(loginAction: LoginAction,
       implicit val area = request.currentArea
       val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
       Ok(views.html.editUsers(request.currentUser, request.currentArea)(usersForm, rows, routes.UserController.addPost()))
+    }
+  }
+
+
+  def addDemo = loginAction { implicit request =>
+    if(request.currentUser.admin != true) {
+      Unauthorized("Vous n'avez pas le droit de faire ça")
+    } else {
+        implicit val area = request.currentArea
+        val users = User.demo
+        var form = usersForm.fill(users)
+        Ok(views.html.editUsers(request.currentUser, request.currentArea)(form, 0, routes.UserController.addPost()))
     }
   }
 

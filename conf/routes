@@ -22,11 +22,12 @@ POST   /login                        controllers.LoginController.login
 GET    /login/disconnect             controllers.LoginController.disconnect
 
 # Users
-GET     /users                        controllers.UserController.all
-GET     /users/edit                   controllers.UserController.edit
+GET     /users                       controllers.UserController.all
+GET     /users/edit                  controllers.UserController.edit
 POST    /users/edit                  controllers.UserController.editPost
-GET     /users/add                    controllers.UserController.add
+GET     /users/add                   controllers.UserController.add
 POST    /users/add                   controllers.UserController.addPost
+GET    /users/addDemo               controllers.UserController.addDemo
 
 
 GET     /charte                  controllers.UserController.showCharte
