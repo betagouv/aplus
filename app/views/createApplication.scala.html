@@ -80,7 +80,7 @@
                         @for((organisme, orgUsers) <- users.groupBy(_.qualite).toList.sortBy(_._1).sortBy(_._1 == "Aide A+ / Je ne sais pas")) {
                             <thead>
                                 <tr>
-                                    <th class="mdl-data-table__cell--non-numeric" colspan="3">
+                                    <th class="mdl-data-table__cell--non-numeric" colspan="2">
                                         <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
                                             <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);">
                                             <span class="mdl-checkbox__label">@organisme</span>
@@ -88,7 +88,17 @@
                                 </tr>
                             </thead>
                             <tbody class="invisible">
-                            @for(user <- orgUsers) {
+                                @if(organisme.contains("CAF")) {
+                                    <tr><td colspan="2" style="text-align: left">
+                                        La CAF aura besoin du numéro identifiant CAF. Si vous l'avez, vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.
+                                    </td></tr>
+                                } else if(organisme.contains("CPAM")) {
+                                   <tr><td colspan="2" style="text-align: left">
+                                        La CPAM aura besoin du numéro de sécurité sociale. Si vous l'avez, vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.
+                                    </td></tr>
+                                }
+
+                                @for(user <- orgUsers) {
                                 <tr>
                                     <td style="width: 95px">
                                         <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
@@ -97,7 +107,6 @@
                                         </label>
                                     </td>
                                     <td class="mdl-data-table__cell--non-numeric">@user.name</td>
-                                    <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
                                 </tr>
                             }
                             </tbody>
