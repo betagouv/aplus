@@ -10,6 +10,15 @@
                 .invisible {
                     display: none;
                 }
+
+                @@media screen and (max-width: 750px) {
+                    .mdl-data-table__cell--split-in-mobile {
+                        display: block;
+                        float: left;
+                        width: 100%;
+                        height: initial !important;
+                    }
+                }
         </style>
     }{
         <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
@@ -28,8 +37,8 @@
                         <tbody>
                             @repeatMap(applicationForm("infos"), applicationForm, List("Prénom", "Nom de famille")) {  (infoField, info) =>
                                 <tr>
-                                    <td class="mdl-data-table__cell--non-numeric">@info.capitalize</td>
-                                    <td class="mdl-data-table__cell--non-numeric">
+                                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile">@info.capitalize</td>
+                                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile">
                                     @helper.input(infoField, 'label -> s"Saisir $info de l'usager ici") { (id, name, value, args) =>
                                         <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
                                     }
@@ -38,7 +47,7 @@
                                 </tr>
                             }
                             <tr>
-                                <td class="mdl-data-table__cell--non-numeric">
+                                <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile">
                                     <b>Ajouter une autre information :</b><br>
                                     <select id="types" onchange="newTypeSelected()">
                                         <option disabled selected value="">Selectionnez une information à ajouter</option>
@@ -51,7 +60,7 @@
                                         <input class="mdl-textfield__input" name="other-type" type="text" id="other-type" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
                                     </div>
                                 </td>
-                                <td class="mdl-data-table__cell--non-numeric">
+                                <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile">
                                     <div class="mdl-textfield mdl-js-textfield invisible">
                                         <label class="mdl-textfield__label" for="other-type-value">Saisissez l'information </label>
                                         <input class="mdl-textfield__input" type="text" name="other-type-value" id="other-type-value" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
@@ -89,11 +98,11 @@
                             </thead>
                             <tbody class="invisible">
                                 @if(organisme.contains("CAF")) {
-                                    <tr><td colspan="2" style="text-align: left">
+                                    <tr><td colspan="2" style="text-align: left; white-space: normal">
                                         La CAF aura besoin du numéro identifiant CAF. Si vous l'avez, vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.
                                     </td></tr>
                                 } else if(organisme.contains("CPAM")) {
-                                   <tr><td colspan="2" style="text-align: left">
+                                   <tr><td colspan="2" style="text-align: left; white-space: normal">
                                         La CPAM aura besoin du numéro de sécurité sociale. Si vous l'avez, vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.
                                     </td></tr>
                                 }
@@ -172,8 +181,8 @@
                     var infoName = inputInfoName.value;
                     if(infoName === "") { return; }
                     var newNode = document.createElement('tr');
-                    newNode.innerHTML = '<td class="mdl-data-table__cell--non-numeric">'+infoName+'</td> \
-                        <td class="mdl-data-table__cell--non-numeric"><div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label"> \
+                    newNode.innerHTML = '<td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile">'+infoName+'</td> \
+                        <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile"><div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label"> \
                             <input class="mdl-textfield__input" type="text" id="sample1" name="infos['+infoName+']" value="'+document.getElementById("other-type-value").value+'"> \
                             <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+' de l\'usager ici</label> \
                         </div></td> \
