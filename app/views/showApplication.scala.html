@@ -74,15 +74,15 @@ div hr:last-child {
                         </span>
                     </li>
                 </ul>
-                <p style="white-space: pre-line;">@application.description</p>
-                <p><h4>Informations de l'usager</h4>
+                <h4>Informations de l'usager</h4>
                 <ul>
-                    @for((key, value) <- application.userInfos) {
-                        <li><b>@key:</b> @value</li>
+                @for((key, value) <- application.userInfos) {
+                    <li><b>@key:</b> @value</li>
 
-                    }
+                }
                 </ul>
-                </p>
+                <h4>Détail</h4>
+                <p style="white-space: pre-line;">@application.description</p>
             </div>
             @for(answer <- answers){
                 @if(user.instructor || answer.visibleByHelpers || answer.creatorUserID == user.id) {
