@@ -60,7 +60,16 @@ div hr:last-child {
                 <span><a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20A+"><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous</a> ( contact&commat;aplus.beta.gouv.fr )</span>
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
-                <b>Etat:</b> @application.status | <b>Invités:</b> @application.invitedUsers.values.mkString(", ") | <b>Territoire:</b> @Area.all.find(_.id == application.area).get.name
+                Etat: <b>@application.status</b> | Invités: <b>@application.invitedUsers.values.mkString(", ")</b> | Territoire: <b>@Area.all.find(_.id == application.area).get.name</b>
+            </div>
+            <div class="mdl-card__supporting-text mdl-card--border">
+                Informations de l'usager:
+                <ul>
+                @for((key, value) <- application.userInfos) {
+                    <li>@key: <b>@value</b></li>
+
+                }
+                </ul>
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
                 <ul class="mdl-list">
@@ -74,14 +83,6 @@ div hr:last-child {
                         </span>
                     </li>
                 </ul>
-                <h4>Informations de l'usager</h4>
-                <ul>
-                @for((key, value) <- application.userInfos) {
-                    <li><b>@key:</b> @value</li>
-
-                }
-                </ul>
-                <h4>Détail</h4>
                 <p style="white-space: pre-line;">@application.description</p>
             </div>
             @for(answer <- answers){
