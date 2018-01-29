@@ -13,7 +13,7 @@ object Area {
     Area(UUIDHelper.namedFrom("lons-le-saunoer"), "Lons-le-Saunier"),
     Area(UUIDHelper.namedFrom("perigueux"), "Périgueux"),
     Area(UUIDHelper.namedFrom("angers"), "Angers"),
-    Area(UUIDHelper.namedFrom("nice"), "Nice"),
+    Area(UUIDHelper.namedFrom("nice"), "Alpes-Maritimes"),
     Area(UUIDHelper.namedFrom("exemple"), "Demo")
   )
 }
