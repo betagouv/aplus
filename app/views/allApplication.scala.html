@@ -34,11 +34,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                        @for((application) <- applicationsCreatedByMe) {
+                        @for((application) <- applicationsCreatedByMe.sortBy(_.status)) {
                             <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';">
-                                <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))</td>
+                                <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.status == "En cours") { (@application.ageString) }</td>
                                 <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
-                                <td class="mdl-data-table__cell--non-numeric">@application.status</td>
+                                <td class="mdl-data-table__cell--non-numeric" @if(application.status == "En cours") { style="font-weight: bold" }>@application.status</td>
                             </tr>
                         }
                         </tbody>
@@ -60,11 +60,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                        @for((application) <- applicationsIGotInvited) {
+                        @for((application) <- applicationsIGotInvited.sortBy(_.status)) {
                             <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';">
-                                <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))</td>
+                                <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.status == "En cours") { (@application.ageString) }</td>
                                 <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
-                                <td class="mdl-data-table__cell--non-numeric">@application.status</td>
+                                <td class="mdl-data-table__cell--non-numeric" @if(application.status == "En cours") { style="font-weight: bold" }>@application.status</td>
                             </tr>
                         }
                         </tbody>
@@ -92,7 +92,7 @@
                         <tr onclick="window.document.location='@routes.ApplicationController.show(application.id)';">
                             <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
-                            <td class="mdl-data-table__cell--non-numeric">@application.status</td>
+                            <td class="mdl-data-table__cell--non-numeric" @if(application.status == "En cours") { style="font-weight: bold" }>@application.status</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.creatorUserName</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.invitedUsers.size</td>
                         </tr>
