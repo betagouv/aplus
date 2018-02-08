@@ -99,25 +99,25 @@
                             <tbody class="invisible">
                                 @if(organisme.contains("CAF")) {
                                     <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                        La CAF aura besoin du numéro identifiant CAF. Si vous l'avez, vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.
+                                        <div class="info-box">La CAF aura besoin du numéro identifiant CAF. Si vous l'avez, vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.</div>
                                     </td></tr>
                                 } else if(organisme.contains("CPAM")) {
                                    <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                        La CPAM aura besoin du numéro de sécurité sociale. Si vous l'avez, vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.
+                                       <div class="info-box">La CPAM aura besoin du numéro de sécurité sociale. Si vous l'avez, vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.</div>
                                     </td></tr>
                                 }
 
                                 @for(user <- orgUsers) {
-                                <tr>
-                                    <td style="width: 95px">
-                                        <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
-                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                            <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked="checked" }>
-                                        </label>
-                                    </td>
-                                    <td class="mdl-data-table__cell--non-numeric">@user.name</td>
-                                </tr>
-                            }
+                                    <tr>
+                                        <td style="width: 95px">
+                                            <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
+                                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                                <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked="checked" }>
+                                            </label>
+                                        </td>
+                                        <td class="mdl-data-table__cell--non-numeric">@user.name</td>
+                                    </tr>
+                                }
                             </tbody>
                         }
                         </table>
