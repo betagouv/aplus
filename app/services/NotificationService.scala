@@ -107,13 +107,12 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   }
 
   private def generateAnswerEmail(application: Application, answer: Answer)(user: User): Email = {
-    val url = s"${routes.ApplicationController.show(application.id).absoluteURL(https, host)}?key=${user.key}"
+    val url = s"${routes.ApplicationController.show(application.id).absoluteURL(https, host)}?key=${user.key}#answer-${answer.id}"
     val footer = generateFooter(user)
     val bodyHtml = s"""Bonjour ${user.name},<br>
                       |<br>
                       |<p>${answer.creatorUserName} a donné une réponse sur la demande: "${application.subject}"
-                      |<br><q><i>${answer.message}</i></q></p>
-                      |Vous pouvez voir la demande et y répondre en suivant ce lien: <br>
+                      |Vous consultez la réponse, y répondre ou la clôturer en suivant le lien suivant: <br>
                       |<a href="${url}">${url}</a>
                       |$footer
                       """.stripMargin
