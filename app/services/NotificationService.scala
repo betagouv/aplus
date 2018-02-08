@@ -82,7 +82,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
        |<b>Ne transférez pas cet email et n'y répondez pas directement.</b><br><i>
        |$delegates
        |- Vous pouvez transférer la demande à un autre agent en ouvrant le lien ci-dessus<br>
-       |- Si vous avez un problème ou besoins d'aide à propos de l'outil A+, contactez-nous sur contact@aplus.beta.gouv.fr</i>
+       |- Si vous avez un problème ou besoin d'aide à propos de l'outil A+, contactez-nous sur contact@aplus.beta.gouv.fr</i>
      """.stripMargin
   }
 
@@ -112,7 +112,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     val bodyHtml = s"""Bonjour ${user.name},<br>
                       |<br>
                       |<p>${answer.creatorUserName} a donné une réponse sur la demande: "${application.subject}"
-                      |Vous consultez la réponse, y répondre ou la clôturer en suivant le lien suivant: <br>
+                      |Vous pouvez consulter la réponse, y répondre ou la clôturer en suivant le lien suivant: <br>
                       |<a href="${url}">${url}</a>
                       |$footer
                       """.stripMargin
