@@ -86,27 +86,38 @@ div hr:last-child {
                 <p style="white-space: pre-line;">@application.description</p>
             </div>
             @for(answer <- answers){
-                @if(user.instructor || answer.visibleByHelpers || answer.creatorUserID == user.id) {
-                    <div class="mdl-card__supporting-text mdl-card--border">
-                        <ul class="mdl-list">
-                            <li class="mdl-list__item">
-                                <span class="mdl-list__item-primary-content">
-                                    <i class="material-icons mdl-list__item-avatar">person</i>
-                                    <span>@answer.creatorUserName</span>
-                                    <span class="mdl-list__item-sub-title"></span>
-                                </span>
-                                <span class="mdl-list__item-secondary-content">
-                                    <span>@answer.creationDate.toString("E dd MMM YYYY  - HH:mm", new Locale("fr"))</span>
-                                </span>
-                            </li>
-                        </ul>
+                <div class="mdl-card__supporting-text mdl-card--border" id="answer-@answer.id">
+                    <ul class="mdl-list">
+                        <li class="mdl-list__item">
+                            <span class="mdl-list__item-primary-content">
+                                <i class="material-icons mdl-list__item-avatar">person</i>
+                                <span>@answer.creatorUserName</span>
+                                <span class="mdl-list__item-sub-title"></span>
+                            </span>
+                            <span class="mdl-list__item-secondary-content">
+                                <span>@answer.creationDate.toString("E dd MMM YYYY  - HH:mm", new Locale("fr"))</span>
+                            </span>
+                        </li>
+                    </ul>
+                    @if(user.instructor || answer.visibleByHelpers || answer.creatorUserID == user.id) {
                         <p style="white-space: pre-line;">@answer.message</p>
-                        @if(answer.invitedUsers.nonEmpty) {
-                            <b>Notifiés:</b>
-                            @answer.invitedUsers.values.mkString(", ")
-                        }
-                    </div>
-                }
+                    } else {
+                        <b>Echange entre </b>
+                    }
+                    @if(answer.invitedUsers.nonEmpty) {
+                        <b>Notifiés:</b>
+                        @answer.invitedUsers.values.mkString(", ")
+                    }
+                    @if(answers.last == answer && ((application.creatorUserId == user.id || user.admin) && application.status != "Terminé")) {
+                        <div class="info-box">
+                        Si l'agent a répondu à votre demande, vous pouvez clore la demande:<br><br>
+                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect do-not-print" onclick="confirmTerminate()" >
+                                Clore la demande
+                        </button> <br><br>
+                        Sinon n'hésitez à le recontacter en utilisant </i><b>Répondre aux agents</b> si dessous.
+                        </div>
+                    }
+                </div>
             }
 
 
