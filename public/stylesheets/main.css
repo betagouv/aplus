@@ -90,37 +90,6 @@ html, body {
   max-width: 1080px;
 }
 
-@media print {
-    .mdl-layout--fixed-drawer > .mdl-layout__content {
-        margin-left: 0px !important;
-    }
-    .do-not-print {
-        display:none !important;
-    }
-    .mdl-data-table tbody tr {
-        height: 15px;
-        padding: 2px;
-    }
-    .mdl-data-table td {
-        height: 15px;
-        padding: 2px;
-    }
-    .mdl-cell--6-col-print {
-        width: calc(50% - 16px) !important;
-    }
-    .mdl-cell--8-col-print {
-         width: calc(66.6666666% - 16px) !important;
-    }
-    .mdl-cell--4-col-print {
-         width: calc(33.3333333% - 16px) !important;
-    }
-    .mdl-layout {
-        height: initial;
-    }
-    .mdl-data-table td:first-of-type, .mdl-data-table th:first-of-type {
-        padding-left: 2px;
-    }
-}
 .mdl-button--raised.mdl-button--colored {
     color: white;
 }
@@ -144,14 +113,74 @@ html, body {
 
 
 @media print {
+    .mdl-layout--fixed-drawer > .mdl-layout__content {
+        margin-left: 0px !important;
+    }
+    .mdl-data-table tbody tr {
+        height: 15px;
+        padding: 2px;
+    }
+    .mdl-data-table td {
+        height: 15px;
+        padding: 2px;
+    }
+    .mdl-cell--6-col-print {
+        width: calc(50% - 16px) !important;
+    }
+    .mdl-cell--8-col-print {
+        width: calc(66.6666666% - 16px) !important;
+    }
+    .mdl-cell--4-col-print {
+        width: calc(33.3333333% - 16px) !important;
+    }
+    .mdl-layout {
+        height: initial;
+    }
+    .mdl-data-table td:first-of-type, .mdl-data-table th:first-of-type {
+        padding-left: 2px;
+    }
     .mdl-layout__content {
         background-color: white !important;
+        height: initial !important;
+        overflow: visible !important;
+        display: block !important;
     }
+
     .mdl-card__supporting-text {
         width: 100% !important;
     }
+
     .mdl-list__item-avatar {
         display: none !important;
+    }
+
+    body, html {
+        overflow: visible !important;
+        min-height: initial !important;
+        height: initial !important;
+    }
+
+    *:first-line {
+        text-shadow: none !important;
+    }
+
+    .mdl-layout__container {
+        height: initial !important;
+        overflow: visible !important;
+    }
+
+    .mdl-layout {
+        display: block !important;
+        overflow: visible !important;
+    }
+
+    .mdl-grid, .mdl-card, .mdl-card__title {
+        display: block !important;
+
+    }
+
+    .do-not-print {
+        display:none !important;
     }
 }
 
