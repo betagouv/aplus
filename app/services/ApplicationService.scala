@@ -97,7 +97,7 @@ class ApplicationService @Inject()(db: Database) {
   }
 
   def answersByApplicationId(applicationId: UUID) = db.withConnection { implicit connection =>
-    SQL("SELECT * FROM answer WHERE application_id = {applicationId}::uuid")
+    SQL("SELECT * FROM answer WHERE application_id = {applicationId}::uuid ORDER BY creation_date ASC")
     .on('applicationId -> applicationId).as(simpleAnswer.*)
   }
 
