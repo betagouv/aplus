@@ -24,7 +24,7 @@ case class Application(id: UUID,
      } else if(period.getDays > 1) {
        s"il y a ${period.getDays} jours"
      } else if(period.getHours > 1) {
-       s"il y a ${period.getDays} heures"
+       s"il y a ${period.getHours} heures"
      } else if(period.getMinutes > 1) {
        s"il y a ${period.getMinutes} minutes"
      } else {
