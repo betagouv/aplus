@@ -99,11 +99,11 @@
                             <tbody @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisme})){ class="invisible" }>
                                 @if(organisme.contains("CAF")) {
                                     <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                        <div class="info-box">La CAF aura besoin du numéro identifiant CAF. Si vous l'avez, vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.</div>
+                                        <div class="info-box">La CAF aura besoin du numéro identifiant CAF et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.</div>
                                     </td></tr>
                                 } else if(organisme.contains("CPAM")) {
                                    <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                       <div class="info-box">La CPAM aura besoin du numéro de sécurité sociale. Si vous l'avez, vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.</div>
+                                       <div class="info-box">La CPAM aura besoin du numéro de sécurité sociale et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.</div>
                                     </td></tr>
                                 }
 
