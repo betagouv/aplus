@@ -18,7 +18,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   private val https = configuration.underlying.getString("app.https") == "true"
 
   private def sendMail(email: Email) {
-    val emailWithText = email.copy(bodyText = email.bodyHtml.map(_.replaceAll("<[^>]*>", "")))
+    val emailWithText = email.copy(bodyText = email.bodyHtml.map(_.replaceAll("<[^>]*>", "")), headers = email.headers ++ Set("X-MJ-MonitoringCategory" -> "aplus") )
     mailerClient.send(emailWithText)
     Logger.info(s"Email sent to ${email.to.mkString(", ")}")
   }
