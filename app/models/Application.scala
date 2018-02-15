@@ -14,7 +14,8 @@ case class Application(id: UUID,
                        description: String,
                        userInfos: Map[String, String],
                        invitedUsers: Map[UUID, String],
-                       area: UUID) {
+                       area: UUID,
+                       irrelevant: Boolean) {
    lazy val ageString = {
      val period = new Period(creationDate, DateTime.now(Time.timeZone))
      if(period.getMonths > 1) {

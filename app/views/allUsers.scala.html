@@ -1,11 +1,11 @@
 @import models._
 @(user: User, area: Area)(users: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 
-@main(user, area)(s"Gestion des utilisateurs ${area.name}") {
+@main(user, area)(s"Gestion des utilisateurs ${area.name} (${users.size} utilisateurs)") {
   <style>
-          .pem-table {
-            width: 100%;
-          }
+      .pem-table {
+        width: 100%;
+      }
   </style>
 } {
   <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">

@@ -143,7 +143,13 @@ div hr:last-child {
                             <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply</i> Répondre directement à l'aidant @application.creatorUserName</h3>
                             <form action="@routes.ApplicationController.answerHelper(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post">
                                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
-                                    <b>Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. Merci d'utiliser vos outils habituels pour continuer l'instruction.</b>
+                                    <div class="info-box">Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. <b>Merci d'utiliser vos outils habituels pour continuer une instruction.</b></div>
+                                    <p>
+                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                            <input type="checkbox" class="mdl-checkbox__input" name="irrelevant" value="true">
+                                            <span class="mdl-checkbox__label">Cette demande dispose d'une procédure standard que l'aidant aurait pu utiliser (précisez-le dans le message de réponse)</span>
+                                        </label>
+                                    </p>
                                     <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                         <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
                                         <label class="mdl-textfield__label" for="sample5">Détaillez votre réponse ici...</label>
