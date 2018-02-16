@@ -109,9 +109,9 @@ div hr:last-child {
                         @answer.invitedUsers.values.mkString(", ")
                     }
                     @if(answers.last == answer && ((application.creatorUserId == user.id || user.admin) && application.status != "Terminé")) {
-                        <div class="info-box">
+                        <div class="info-box do-not-print">
                         Si l'agent a répondu à votre demande, vous pouvez clore la demande:<br><br>
-                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect do-not-print" onclick="confirmTerminate()" >
+                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="confirmTerminate()" >
                                 Clore la demande
                         </button> <br><br>
                         Sinon n'hésitez à le recontacter en utilisant </i><b>Répondre aux agents</b> si dessous.
@@ -121,7 +121,7 @@ div hr:last-child {
             }
 
 
-            <div class="mdl-card__actions mdl-grid do-not-print">
+            <div class="mdl-card__actions do-not-print mdl-grid">
                 <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
                     <div class="mdl-tabs__tab-bar">
                         @if(user.instructor) {
@@ -184,7 +184,7 @@ div hr:last-child {
                                 </tbody>
                             </table>
                             @if(user.id == application.id) {
-                                <b>Note : Les échanges entre les agents A+ ne seront pas visible par les aidants.</b>
+                                <div class="info-box">Les échanges entre les agents A+ ne seront pas visible par les aidants.</div>
                             }
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                 <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
@@ -223,7 +223,7 @@ div hr:last-child {
                                     </tbody>
                                 </table>
                                 <h5>Ajouter un message</h5>
-                                <b>Note : Les échanges entre les agents A+ ne seront pas visible par les aidants.</b>
+                                <div class="info-box">Les échanges entre les agents A+ ne seront pas visible par les aidants.</div>
                                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                     <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
                                     <label class="mdl-textfield__label" for="sample5">Laisser ici le commentaire pour l'invitation...</label>

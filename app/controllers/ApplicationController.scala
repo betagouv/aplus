@@ -34,7 +34,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       "subject" -> nonEmptyText.verifying(maxLength(150)),
       "description" -> nonEmptyText,
       "infos" -> FormsPlusMap.map(nonEmptyText.verifying(maxLength(30))),
-      "users" -> list(uuid).verifying("Vous devez sélectionner au moins un agent", _.nonEmpty)
+      "users" -> list(uuid).verifying("Vous devez sélectionner au moins un agent", _.nonEmpty),
+      "organismes" -> list(text)
     )(ApplicationData.apply)(ApplicationData.unapply)
   )
 
@@ -46,7 +47,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     applicationForm.bindFromRequest.fold(
       formWithErrors => {
         // binding failure, you retrieve the form containing errors:
-        BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(userService.byArea(request.currentArea.id).filter(_.instructor), formWithErrors))
+        val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
+        BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, formWithErrors))
       },
       applicationData => {
         val invitedUsers: Map[UUID, String] = applicationData.users.flatMap {  id =>

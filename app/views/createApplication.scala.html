@@ -91,19 +91,19 @@
                                 <tr>
                                     <th class="mdl-data-table__cell--non-numeric" colspan="2">
                                         <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                            <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);">
+                                            <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);" value="@organisme" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisme})){ checked="checked" }>
                                             <span class="mdl-checkbox__label">@organisme</span>
                                         </label></th>
                                 </tr>
                             </thead>
-                            <tbody class="invisible">
+                            <tbody @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisme})){ class="invisible" }>
                                 @if(organisme.contains("CAF")) {
                                     <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                        <div class="info-box">La CAF aura besoin du numéro identifiant CAF. Si vous l'avez, vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.</div>
+                                        <div class="info-box">La CAF aura besoin du numéro identifiant CAF et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.</div>
                                     </td></tr>
                                 } else if(organisme.contains("CPAM")) {
                                    <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                       <div class="info-box">La CPAM aura besoin du numéro de sécurité sociale. Si vous l'avez, vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.</div>
+                                       <div class="info-box">La CPAM aura besoin du numéro de sécurité sociale et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.</div>
                                     </td></tr>
                                 }
 
