@@ -194,3 +194,8 @@ html, body {
     border-left-color: #5bc0de;
     font-style: italic;
 }
+
+.info-box--orange {
+    border-left-color: #FF7E47;
+
+}
