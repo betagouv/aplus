@@ -7,6 +7,26 @@
         width: 100%;
       }
   </style>
+  <script>
+          function sendLoginMail(sender, email) {
+            var request = new XMLHttpRequest();
+            var parent = sender.parentNode;
+            parent.innerHTML = "<span style='font-weight: bold;'>En cours</span> <img src='@routes.Assets.versioned("images/spin.gif")'>";
+            request.open('POST', '@routes.LoginController.login()', true);
+            request.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
+            request.onload = function() {
+              if (request.status === 200) {
+                parent.innerHTML = "<span style='color: green; font-weight: bold;'>Ok !</span>";
+              } else {
+                parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
+              }
+            };
+            request.onerror = function() {
+              parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
+            };
+            request.send("email="+email);
+          }
+  </script>
 } {
   <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
     <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table mdl-cell mdl-cell--12-col" style="white-space: normal;">
@@ -20,6 +40,7 @@
           <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
           <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
           <th class="mdl-data-table__cell--non-numeric">Territoires</th>
+          <th class="mdl-data-table__cell--non-numeric">Email de login</th>
         </tr>
       </thead>
       <tbody>
@@ -28,31 +49,35 @@
           <td class="mdl-data-table__cell--non-numeric">@user.name</td>
           <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
           <td class="mdl-data-table__cell--non-numeric">@user.email</td>
-          <td>
+          <td class="mdl-data-table__cell--non-numeric">
             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
               <input type="checkbox" class="mdl-checkbox__input" @if(user.admin){ checked } disabled>
               <span class="mdl-checkbox__label">Admin</span>
             </label>
           </td>
-          <td>
+          <td class="mdl-data-table__cell--non-numeric">
             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
               <input type="checkbox" class="mdl-checkbox__input" @if(user.instructor){ checked } disabled>
               <span class="mdl-checkbox__label">Agent</span>
             </label>
           </td>
-          <td>
+          <td class="mdl-data-table__cell--non-numeric">
             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
               <input type="checkbox" class="mdl-checkbox__input" @if(user.helper){ checked } disabled>
               <span class="mdl-checkbox__label">Aidant</span>
             </label>
           </td>
-          <td>
+          <td class="mdl-data-table__cell--non-numeric">
             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
               <input type="checkbox" class="mdl-checkbox__input" @if(user.hasAcceptedCharte){ checked } disabled>
               <span class="mdl-checkbox__label">Charte</span>
             </label>
           </td>
-          <td class="mdl-data-table__cell--non-numeric">@user.areas.flatMap(area => Area.all.find(_.id == area).map(_.name)).mkString(", ")</td>
+        <td class="mdl-data-table__cell--non-numeric">@user.areas.flatMap(area => Area.all.find(_.id == area).map(_.name)).mkString(", ")</td>
+
+          <td class="mdl-data-table__cell--non-numeric">
+            <button type="button" class="mdl-button mdl-js-button mdl-button--raised" onclick="sendLoginMail(this,'@user.email');">Envoyer email</button>
+          </td>
         </tr>
         @if(index % 10 == 9) {
           <tr>
@@ -64,6 +89,7 @@
             <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
             <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
             <th class="mdl-data-table__cell--non-numeric">Territoires</th>
+            <th class="mdl-data-table__cell--non-numeric">Email de login</th>
           </tr>
         }
       }
