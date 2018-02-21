@@ -1,6 +1,6 @@
 package controllers
 
-import java.util.UUID
+import java.util.{Locale, UUID}
 import javax.inject.{Inject, Singleton}
 
 import play.api.mvc._
@@ -78,6 +78,18 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     val currentUserId = request.currentUser.id
     val applicationsFromTheArea = if(request.currentUser.admin) { applicationService.allByArea(request.currentArea.id) } else { List[Application]() }
     Ok(views.html.allApplication(request.currentUser, request.currentArea)(applicationService.allForCreatorUserId(currentUserId), applicationService.allForInvitedUserId(currentUserId), applicationsFromTheArea))
+  }
+
+  def allCSV = loginAction { implicit request =>
+    val currentUserId = request.currentUser.id
+    val exportedApplications = if(request.currentUser.admin) {
+      applicationService.allByArea(request.currentArea.id)
+    } else {
+      (applicationService.allForCreatorUserId(currentUserId) ++
+        applicationService.allForInvitedUserId(currentUserId)).groupBy(_.id).map(_._2.head)
+    }
+    val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
+    Ok(views.html.allApplicationCSV(exportedApplications.toSeq)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}.csv"""" )
   }
 
   def show(id: UUID) = loginAction { implicit request =>
