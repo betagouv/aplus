@@ -111,6 +111,10 @@ html, body {
     z-index: 10;
 }
 
+.mdl-card__supporting-text {
+    width: 100% !important;
+    box-sizing: border-box;
+}
 
 @media print {
     .mdl-layout--fixed-drawer > .mdl-layout__content {
@@ -144,10 +148,6 @@ html, body {
         height: initial !important;
         overflow: visible !important;
         display: block !important;
-    }
-
-    .mdl-card__supporting-text {
-        width: 100% !important;
     }
 
     .mdl-list__item-avatar {
@@ -197,5 +197,8 @@ html, body {
 
 .info-box--orange {
     border-left-color: #FF7E47;
+}
 
+.mdl-card__title-text {
+    margin-right: 120px;
 }
