@@ -160,7 +160,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           notificationsService.newAnswer(application, answer)
           Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
         } else {
-          InternalServerError("Votre réponse n'a pas pu être envoyé")
+          InternalServerError("Votre réponse n'a pas pu être envoyée")
         }
     }
   }
@@ -187,7 +187,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           notificationsService.newAnswer(application, answer)
           Redirect(routes.ApplicationController.all()).flashing ("success" -> "Les agents ont été invités sur la demande")
         } else {
-          InternalServerError("Les agents n'ont pas pu être invité")
+          InternalServerError("Les agents n'ont pas pu être invités")
         }
     }
   }

@@ -110,7 +110,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     val url = s"${routes.ApplicationController.show(application.id).absoluteURL(https, host)}?key=${user.key}#answer-${answer.id}"
     val footer = generateFooter(user)
     val defaultProcessText = if(answer.declareApplicationHasIrrelevant) {
-      s"<br>${answer.creatorUserName.split('(').headOption.getOrElse("L'agent")} a indiqué qu'<b>il existe une procédure standard que vous pouvez utiliser pour cette demande</b>, vous aurez plus de détail dans sa réponse.<br><br>"
+      s"<br>${answer.creatorUserName.split('(').headOption.getOrElse("L'agent")} a indiqué qu'<b>il existe une procédure standard que vous pouvez utiliser pour cette demande</b>, vous aurez plus de détails dans sa réponse.<br><br>"
     } else { "" }
     val bodyHtml = s"""Bonjour ${user.name},<br>
                       |<br>
