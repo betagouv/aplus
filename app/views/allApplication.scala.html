@@ -10,6 +10,41 @@
         cursor: pointer;
     }
 </style>
+<script>
+    var extract = 9;
+    function onSearch() {
+        var searchTerm = document.getElementById("search-input").value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+        if(searchTerm.length > 2) {
+            Array.from(document.querySelectorAll("tfoot")).forEach(function (app) { app.classList.remove("invisible") });
+            Array.from(document.querySelectorAll(".application-row")).forEach(function (app) {
+                if (searchTerm.length > 2) {
+                    var searchData = app.getAttribute("data-search");
+                    var searchResult = searchData.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").indexOf(searchTerm);
+                    if(searchResult !== -1) {
+                        app.classList.remove("invisible");
+                        var minIndex = Math.max(searchResult - extract, 0);
+                        var maxIndex = Math.min(searchResult + searchTerm.length + extract, searchData.length);
+                        app.querySelector(".search-cell").innerHTML = searchData.substring(minIndex, searchResult) +
+                                '<span style="font-weight: bold">'+searchData.substring(searchResult, searchResult + searchTerm.length)+
+                                "</span>"+searchData.substring(searchResult + searchTerm.length, maxIndex);
+                    } else {
+                        app.classList.add("invisible");
+                        app.querySelector(".search-cell").innerHTML = "";
+                    }
+                }
+            });
+        } else {
+            Array.from(document.querySelectorAll(".application-row")).forEach(function (app) { app.classList.remove("invisible"); });
+            Array.from(document.querySelectorAll(".search-cell")).forEach(function (cell) { cell.innerHTML=""; });
+            Array.from(document.querySelectorAll("tfoot")).forEach(function (app) { app.classList.add("invisible") });
+        }
+    }
+
+    function clearSearch() {
+        document.getElementById("search-input").value = "";
+        onSearch();
+    }
+</script>
 }{
     @if(applicationsCreatedByMe.isEmpty && applicationsIGotInvited.isEmpty) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
@@ -21,6 +56,7 @@
         </div>
 
     } else {
+        <input class="mdl-cell mdl-cell--12-col" type="search" placeholder="Filtrer les demandes (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
         @if(applicationsCreatedByMe.nonEmpty) {
             <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
                 <h4 class="mdl-cell mdl-cell--12-col">Les demandes que j'ai créées</h4>
@@ -31,14 +67,21 @@
                                 <th class="mdl-data-table__cell--non-numeric">Date</th>
                                 <th class="mdl-data-table__cell--non-numeric">Sujet</th>
                                 <th class="mdl-data-table__cell--non-numeric">Avancement</th>
+                                <th class="mdl-data-table__cell--non-numeric"></th>
                             </tr>
                         </thead>
+                        <tfoot class="invisible">
+                            <tr>
+                                <td class="mdl-data-table__cell--non-numeric" colspan="4" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+                            </tr>
+                        </tfoot>
                         <tbody>
                         @for((application) <- applicationsCreatedByMe.sortBy(_.status)) {
-                            <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';">
+                            <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row">
                                 <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.status == "En cours") { (@application.ageString) }</td>
                                 <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
                                 <td class="mdl-data-table__cell--non-numeric" @if(application.status == "En cours") { style="font-weight: bold" }>@application.status</td>
+                                <td class="mdl-data-table__cell--non-numeric search-cell"></td>
                             </tr>
                         }
                         </tbody>
@@ -57,14 +100,21 @@
                                 <th class="mdl-data-table__cell--non-numeric">Date</th>
                                 <th class="mdl-data-table__cell--non-numeric">Sujet</th>
                                 <th class="mdl-data-table__cell--non-numeric">Avancement</th>
+                                <th class="mdl-data-table__cell--non-numeric"></th>
                             </tr>
                         </thead>
+                        <tfoot class="invisible">
+                            <tr>
+                                <td class="mdl-data-table__cell--non-numeric" colspan="4" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+                            </tr>
+                        </tfoot>
                         <tbody>
                         @for((application) <- applicationsIGotInvited.sortBy(_.status)) {
-                            <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';">
+                            <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row">
                                 <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.status == "En cours") { (@application.ageString) }</td>
                                 <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
                                 <td class="mdl-data-table__cell--non-numeric" @if(application.status == "En cours") { style="font-weight: bold" }>@application.status</td>
+                                <td class="mdl-data-table__cell--non-numeric search-cell"></td>
                             </tr>
                         }
                         </tbody>
@@ -86,17 +136,24 @@
                             <th class="mdl-data-table__cell--non-numeric">Créateur</th>
                             <th class="mdl-data-table__cell--non-numeric">Total invités</th>
                             <th class="mdl-data-table__cell--non-numeric">Non Pertinant</th>
+                            <th class="mdl-data-table__cell--non-numeric"></th>
                         </tr>
                     </thead>
+                    <tfoot class="invisible">
+                        <tr>
+                            <td class="mdl-data-table__cell--non-numeric" colspan="7" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+                        </tr>
+                    </tfoot>
                     <tbody>
                     @for((application) <- applicationsFromTheArea) {
-                        <tr onclick="window.document.location='@routes.ApplicationController.show(application.id)';">
+                        <tr onclick="window.document.location='@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row">
                             <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
                             <td class="mdl-data-table__cell--non-numeric" @if(application.status == "En cours") { style="font-weight: bold" }>@application.status</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.creatorUserName</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.invitedUsers.size</td>
-                            <th class="mdl-data-table__cell--non-numeric">@if(application.irrelevant) { <span style="color: red; font-weight: bold;">Oui</span> } else { Non } </th>
+                            <td class="mdl-data-table__cell--non-numeric">@if(application.irrelevant) { <span style="color: red; font-weight: bold;">Oui</span> } else { Non } </td>
+                            <td class="mdl-data-table__cell--non-numeric search-cell"></td>
                         </tr>
                     }
                     </tbody>

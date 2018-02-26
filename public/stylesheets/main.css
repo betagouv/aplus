@@ -202,3 +202,7 @@ html, body {
 .mdl-card__title-text {
     margin-right: 120px;
 }
+
+.invisible {
+    display: none;
+}

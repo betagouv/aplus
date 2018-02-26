@@ -32,4 +32,8 @@ case class Application(id: UUID,
        s"à l'instant"
      }
    }
+
+   lazy val searchData = {
+     s"$id $creatorUserName ${userInfos.values.mkString(" ")} $subject $description ${invitedUsers.values.mkString(" ")}"
+   }
 }
