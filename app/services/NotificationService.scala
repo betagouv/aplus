@@ -109,9 +109,13 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   private def generateAnswerEmail(application: Application, answer: Answer)(user: User): Email = {
     val url = s"${routes.ApplicationController.show(application.id).absoluteURL(https, host)}?key=${user.key}#answer-${answer.id}"
     val footer = generateFooter(user)
+    val defaultProcessText = if(answer.declareApplicationHasIrrelevant) {
+      s"<br>${answer.creatorUserName.split('(').headOption.getOrElse("L'agent")} a indiqué qu'<b>il existe une procédure standard que vous pouvez utiliser pour cette demande</b>, vous aurez plus de détails dans sa réponse.<br><br>"
+    } else { "" }
     val bodyHtml = s"""Bonjour ${user.name},<br>
                       |<br>
                       |<p>${answer.creatorUserName} a donné une réponse sur la demande: "${application.subject}"
+                      |${defaultProcessText}
                       |Vous pouvez consulter la réponse, y répondre ou la clôturer en suivant le lien suivant: <br>
                       |<a href="${url}">${url}</a>
                       |$footer

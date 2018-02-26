@@ -63,10 +63,11 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           applicationData.description,
           applicationData.infos,
           invitedUsers,
-          request.currentArea.id)
+          request.currentArea.id,
+          false)
         if(applicationService.createApplication(application)) {
           notificationsService.newApplication(application)
-          Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyé")
+          Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyée")
         }  else {
           InternalServerError("Error Interne: Votre demande n'a pas pu être envoyé. Merci de rééssayer ou contacter l'administrateur")
         }
@@ -105,39 +106,51 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     }
   }
 
-  val answerForm = Form(
+  val answerToHelperForm = Form(
     mapping(
       "message" -> text,
-      "users" -> list(uuid)
-    )(AnswerData.apply)(AnswerData.unapply)
+      "irrelevant" -> boolean
+    )(AnswerToHelperData.apply)(AnswerToHelperData.unapply)
   )
 
   def answerHelper(applicationId: UUID) = loginAction { implicit request =>
-    val answerData = answerForm.bindFromRequest.get
-
-    applicationService.byId(applicationId) match {
-      case None =>
-        NotFound("Nous n'avons pas trouvé cette demande")
-      case Some(application) =>
-        val answer = Answer(UUID.randomUUID(),
-          applicationId, DateTime.now(timeZone),
-          answerData.message,
-          request.currentUser.id,
-          request.currentUser.nameWithQualite,
-          Map(),
-          true,
-          request.currentArea.id)
-        if (applicationService.add(answer) == 1) {
-          notificationsService.newAnswer(application, answer)
-          Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyé")
-        } else {
-          InternalServerError("Votre réponse n'a pas pu être envoyé")
+    answerToHelperForm.bindFromRequest.fold(
+      formWithErrors => {
+        BadRequest("Erreur interne, contacter l'administrateur A+ : contact@aplus.beta.gouv.fr")
+      },
+      answerData => {
+        applicationService.byId(applicationId) match {
+          case None =>
+            NotFound("Nous n'avons pas trouvé cette demande")
+          case Some(application) =>
+            val answer = Answer(UUID.randomUUID(),
+              applicationId, DateTime.now(timeZone),
+              answerData.message,
+              request.currentUser.id,
+              request.currentUser.nameWithQualite,
+              Map(),
+              true,
+              request.currentArea.id,
+              answerData.applicationIsDeclaredIrrelevant)
+            if (applicationService.add(answer) == 1) {
+              notificationsService.newAnswer(application, answer)
+              Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
+            } else {
+              InternalServerError("Votre réponse n'a pas pu être envoyé")
+            }
         }
-    }
+      })
   }
 
+  val answerToAgentsForm = Form(
+    mapping(
+      "message" -> text,
+      "users" -> list(uuid)
+    )(AnswerToAgentsData.apply)(AnswerToAgentsData.unapply)
+  )
+
   def answerAgents(applicationId: UUID) = loginAction { implicit request =>
-    val answerData = answerForm.bindFromRequest.get
+    val answerData = answerToAgentsForm.bindFromRequest.get
 
     applicationService.byId(applicationId) match {
       case None =>
@@ -153,18 +166,19 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           request.currentUser.nameWithQualite,
           notifiedUsers,
           request.currentUser.id == application.creatorUserId,
-          request.currentArea.id)
+          request.currentArea.id,
+          false)
         if (applicationService.add(answer) == 1) {
           notificationsService.newAnswer(application, answer)
-          Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyé")
+          Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
         } else {
-          InternalServerError("Votre réponse n'a pas pu être envoyé")
+          InternalServerError("Votre réponse n'a pas pu être envoyée")
         }
     }
   }
 
   def invite(applicationId: UUID) = loginAction { implicit request =>
-    val inviteData = answerForm.bindFromRequest.get
+    val inviteData = answerToAgentsForm.bindFromRequest.get
     applicationService.byId(applicationId) match {
       case None =>
         NotFound("Nous n'avons pas trouvé cette demande")
@@ -179,12 +193,13 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           request.currentUser.nameWithQualite,
           invitedUsers,
           false,
-          request.currentArea.id)
+          request.currentArea.id,
+          false)
         if (applicationService.add(answer)  == 1) {
           notificationsService.newAnswer(application, answer)
-          Redirect(routes.ApplicationController.all()).flashing ("success" -> "Les agents A+ ont été invité sur la demande")
+          Redirect(routes.ApplicationController.all()).flashing ("success" -> "Les agents ont été invités sur la demande")
         } else {
-          InternalServerError("Les agents A+ n'ont pas pu être invité")
+          InternalServerError("Les agents n'ont pas pu être invités")
         }
     }
   }

@@ -85,6 +85,7 @@
                             <th class="mdl-data-table__cell--non-numeric">Avancement</th>
                             <th class="mdl-data-table__cell--non-numeric">Créateur</th>
                             <th class="mdl-data-table__cell--non-numeric">Total invités</th>
+                            <th class="mdl-data-table__cell--non-numeric">Non Pertinant</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -95,6 +96,7 @@
                             <td class="mdl-data-table__cell--non-numeric" @if(application.status == "En cours") { style="font-weight: bold" }>@application.status</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.creatorUserName</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.invitedUsers.size</td>
+                            <th class="mdl-data-table__cell--non-numeric">@if(application.irrelevant) { <span style="color: red; font-weight: bold;">Oui</span> } else { Non } </th>
                         </tr>
                     }
                     </tbody>

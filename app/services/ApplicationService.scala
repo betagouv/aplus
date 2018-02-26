@@ -29,7 +29,8 @@ class ApplicationService @Inject()(db: Database) {
     "description",
     "user_infos",
     "invited_users",
-    "area"
+    "area",
+    "irrelevant"
   )
 
   private val simpleAnswer: RowParser[Answer] = Macro.parser[Answer](
@@ -41,7 +42,8 @@ class ApplicationService @Inject()(db: Database) {
     "creator_user_name",
     "invited_users",
     "visible_by_helpers",
-    "area"
+    "area",
+    "application_is_declared_irrelevant"
   )
 
   def byId(id: UUID): Option[Application] = db.withConnection { implicit connection =>
@@ -107,9 +109,12 @@ class ApplicationService @Inject()(db: Database) {
       case (key, value) =>
         key.toString -> value
     })
+    val irrelevantSQL = if(answer.declareApplicationHasIrrelevant) {
+       ", irrelevant = true "
+    } else { "" }
     SQL(
-      """
-          UPDATE application SET invited_users = invited_users || {invited_users}::jsonb
+      s"""
+          UPDATE application SET invited_users = invited_users || {invited_users}::jsonb $irrelevantSQL
           WHERE id = {id}::uuid
        """
     ).on(
@@ -127,7 +132,8 @@ class ApplicationService @Inject()(db: Database) {
             {creator_user_name},
             {invited_users},
             {visible_by_helpers},
-            {area}::uuid
+            {area}::uuid,
+            {application_is_declared_irrelevant}
           )
       """).on(
       'id ->   answer.id,
@@ -138,7 +144,8 @@ class ApplicationService @Inject()(db: Database) {
       'creator_user_name -> answer.creatorUserName,
       'invited_users -> invitedUserJson,
       'visible_by_helpers -> answer.visibleByHelpers,
-      'area -> answer.area
+      'area -> answer.area,
+      'application_is_declared_irrelevant -> answer.declareApplicationHasIrrelevant
     ).executeUpdate()
   }
 

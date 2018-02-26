@@ -48,14 +48,17 @@ div hr:last-child {
         <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col">
             <div class="mdl-card__title mdl-card--border">
                 <h2 class="mdl-card__title-text">@application.subject</h2>
-            </div>
-            @if((application.creatorUserId == user.id || user.admin) && application.status != "Terminé") {
-                <div class="mdl-card__menu">
-                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect do-not-print" onclick="confirmTerminate()">
-                        Clore la demande
+                <div class="mdl-card__menu do-not-print">
+                    @if((application.creatorUserId == user.id || user.admin) && application.status != "Terminé") {
+                        <button class="mdl-button mdl-button--raised mdl-js-button do-not-print" onclick="confirmTerminate()" style="margin-right: 10px;">
+                            Clore
+                        </button>
+                    }
+                    <button class="mdl-button mdl-button--raised mdl-js-button mdl-button--icon mdl-button--fab" onclick="window.print();">
+                        <i class="material-icons">print</i>
                     </button>
                 </div>
-            }
+            </div>
             <div class="mdl-card__supporting-text mdl-card--border do-not-print">
                 <span><a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20A+"><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous</a> ( contact&commat;aplus.beta.gouv.fr )</span>
             </div>
@@ -99,16 +102,20 @@ div hr:last-child {
                             </span>
                         </li>
                     </ul>
+
+                    @if(answer.declareApplicationHasIrrelevant) {
+                        <div class="info-box info-box--orange do-not-print">@answer.creatorUserName a indiqué qu'<b>il existe une procédure standard que vous pouvez utiliser pour cette demande</b>, vous aurez plus de détails dans sa réponse.</div>
+                    }
                     @if(user.instructor || answer.visibleByHelpers || answer.creatorUserID == user.id) {
                         <p style="white-space: pre-line;">@answer.message</p>
                     } else {
-                        <b>Echange entre </b>
+                        <b>Echange entre agents</b>
                     }
                     @if(answer.invitedUsers.nonEmpty) {
                         <b>Notifiés:</b>
                         @answer.invitedUsers.values.mkString(", ")
                     }
-                    @if(answers.last == answer && ((application.creatorUserId == user.id || user.admin) && application.status != "Terminé")) {
+                    @if(answers.last == answer && ((application.creatorUserId == user.id) && application.status != "Terminé")) {
                         <div class="info-box do-not-print">
                         Si l'agent a répondu à votre demande, vous pouvez clore la demande:<br><br>
                         <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="confirmTerminate()" >
@@ -143,7 +150,13 @@ div hr:last-child {
                             <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply</i> Répondre directement à l'aidant @application.creatorUserName</h3>
                             <form action="@routes.ApplicationController.answerHelper(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post">
                                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
-                                    <b>Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. Merci d'utiliser vos outils habituels pour continuer l'instruction.</b>
+                                    <div class="info-box">Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. <b>Merci d'utiliser vos outils habituels pour continuer une instruction.</b></div>
+                                    <p>
+                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                            <input type="checkbox" class="mdl-checkbox__input" name="irrelevant" value="true">
+                                            <span class="mdl-checkbox__label">Cette demande dispose d'une procédure standard que l'aidant aurait pu utiliser (Précisez-la dans le message de réponse)</span>
+                                        </label>
+                                    </p>
                                     <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                         <textarea class="mdl-textfield__input" type="text" rows= "5" id="sample5" style="width: 100%;" name="message"></textarea>
                                         <label class="mdl-textfield__label" for="sample5">Détaillez votre réponse ici...</label>
