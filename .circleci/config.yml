@@ -35,6 +35,7 @@ jobs:
 
       - save_cache:
           paths:
+            - ~/.ivy2
             - ~/.m2
             - ~/.sbt
             - target/resolution-cache
