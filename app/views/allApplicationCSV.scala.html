@@ -1,0 +1,3 @@
+@(applications: Seq[Application])"Id";"Etat";"Date";"Créateur";"Id Créateur";"Sujet";"Utilisateurs invités";"Territoire"
+@for(a <- applications) {"@a.id";"@a.status";"@a.creationDate";"@a.creatorUserName";"@a.creatorUserId";"@a.subject.filterNot(List(';','\n').contains)";"@a.invitedUsers.map(_._2).mkString(",")";"@Area.all.find(_.id == a.area).map(_.name).head"
+}
