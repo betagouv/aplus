@@ -34,6 +34,7 @@ case class Application(id: UUID,
    }
 
    lazy val searchData = {
-     s"$id $creatorUserName ${userInfos.values.mkString(" ")} $subject $description ${invitedUsers.values.mkString(" ")}"
+     val stripChars = "\"<>'"
+     s"${creatorUserName.filterNot(stripChars contains _)} ${userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")} ${subject.filterNot(stripChars contains _)} ${description.filterNot(stripChars contains _)} ${invitedUsers.values.map(_.filterNot(stripChars contains _)).mkString(" ")}"
    }
 }
