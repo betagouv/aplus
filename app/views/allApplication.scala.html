@@ -29,7 +29,7 @@
                         var minIndex = Math.max(searchResult - extract, 0);
                         var maxIndex = Math.min(searchResult + searchTerm.length + extract, searchData.length);
                         app.querySelector(".search-cell").innerHTML = searchData.substring(minIndex, searchResult) +
-                                '<span style="font-weight: bold">'+searchData.substring(searchResult, searchResult + searchTerm.length)+
+                                '<span style="font-weight: bold; background-color: #FFFF00;">'+searchData.substring(searchResult, searchResult + searchTerm.length)+
                                 "</span>"+searchData.substring(searchResult + searchTerm.length, maxIndex);
                     } else {
                         app.classList.add("invisible");
