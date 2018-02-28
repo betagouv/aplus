@@ -32,4 +32,9 @@ case class Application(id: UUID,
        s"à l'instant"
      }
    }
+
+   lazy val searchData = {
+     val stripChars = "\"<>'"
+     s"${creatorUserName.filterNot(stripChars contains _)} ${userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")} ${subject.filterNot(stripChars contains _)} ${description.filterNot(stripChars contains _)} ${invitedUsers.values.map(_.filterNot(stripChars contains _)).mkString(" ")}"
+   }
 }
