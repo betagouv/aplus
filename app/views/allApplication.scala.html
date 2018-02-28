@@ -50,7 +50,7 @@
     }
 </script>
 }{
-    @if(applicationsCreatedByMe.isEmpty && applicationsIGotInvited.isEmpty) {
+    @if(applicationsCreatedByMe.isEmpty && applicationsIGotInvited.isEmpty && applicationsFromTheArea.isEmpty) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
             <p>Vous n'avez pas de demande en cours.
             @if(user.helper) {
@@ -139,7 +139,7 @@
                             <th class="mdl-data-table__cell--non-numeric">Avancement</th>
                             <th class="mdl-data-table__cell--non-numeric">Créateur</th>
                             <th class="mdl-data-table__cell--non-numeric">Total invités</th>
-                            <th class="mdl-data-table__cell--non-numeric">Non Pertinant</th>
+                            <th class="mdl-data-table__cell--non-numeric">Non pertinante</th>
                             <th class="mdl-data-table__cell--non-numeric"></th>
                         </tr>
                     </thead>
