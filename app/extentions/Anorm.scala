@@ -10,7 +10,7 @@ import anorm.SqlParser.get
 import scala.collection.GenTraversableOnce
 
 object Anorm {
-  @inline private def className(that: Any): String =
+  @inline def className(that: Any): String =
     if (that == null) "<null>" else that.getClass.getName
 
   //LinkedHashMap

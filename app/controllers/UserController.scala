@@ -15,18 +15,21 @@ import play.api.data.Forms._
 import play.api.data.validation.Constraints._
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{Call, InjectedController}
-import services.{NotificationService, UserService}
+import services.{ApplicationService, NotificationService, UserService}
 
 @Singleton
 class UserController @Inject()(loginAction: LoginAction,
                                userService: UserService,
+                               applicationService: ApplicationService,
                                notificationsService: NotificationService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
 
   def all = loginAction { implicit request =>
     if(request.currentUser.admin != true) {
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
-      Ok(views.html.allUsers(request.currentUser, request.currentArea)(userService.byArea(request.currentArea.id)))
+      val users = userService.byArea(request.currentArea.id)
+      val applications = applicationService.allByArea(request.currentArea.id)
+      Ok(views.html.allUsers(request.currentUser, request.currentArea)(users, applications))
     }
   }
 

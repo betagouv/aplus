@@ -44,35 +44,41 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def createPost = loginAction { implicit request =>
-    applicationForm.bindFromRequest.fold(
-      formWithErrors => {
-        // binding failure, you retrieve the form containing errors:
-        val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
-        BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, formWithErrors))
-      },
-      applicationData => {
-        val invitedUsers: Map[UUID, String] = applicationData.users.flatMap {  id =>
-            userService.byId(id).map(id -> _.nameWithQualite)
-        }.toMap
-        val application = Application(UUIDHelper.randomUUID,
-          "En cours",
-          DateTime.now(timeZone),
-          request.currentUser.nameWithQualite,
-          request.currentUser.id,
-          applicationData.subject,
-          applicationData.description,
-          applicationData.infos,
-          invitedUsers,
-          request.currentArea.id,
-          false)
-        if(applicationService.createApplication(application)) {
-          notificationsService.newApplication(application)
-          Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyée")
-        }  else {
-          InternalServerError("Error Interne: Votre demande n'a pas pu être envoyé. Merci de rééssayer ou contacter l'administrateur")
-        }
-      }
-    )
+    request.currentUser.helper match {
+       case false => {
+         Unauthorized("Vous n'avez pas les droits suffisants pour créer une demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+       }
+       case true => {
+         applicationForm.bindFromRequest.fold(
+           formWithErrors => {
+             // binding failure, you retrieve the form containing errors:
+             val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
+             BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, formWithErrors))
+           },
+           applicationData => {
+             val invitedUsers: Map[UUID, String] = applicationData.users.flatMap {  id =>
+               userService.byId(id).map(id -> _.nameWithQualite)
+             }.toMap
+             val application = Application(UUIDHelper.randomUUID,
+               DateTime.now(timeZone),
+               request.currentUser.nameWithQualite,
+               request.currentUser.id,
+               applicationData.subject,
+               applicationData.description,
+               applicationData.infos,
+               invitedUsers,
+               request.currentArea.id,
+               false)
+             if(applicationService.createApplication(application)) {
+               notificationsService.newApplication(application)
+               Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyée")
+             }  else {
+               InternalServerError("Error Interne: Votre demande n'a pas pu être envoyé. Merci de rééssayer ou contacter l'administrateur")
+             }
+           }
+         )
+       }
+    }
   }
 
   def all = loginAction { implicit request =>
@@ -90,7 +96,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         applicationService.allForInvitedUserId(currentUserId)).groupBy(_.id).map(_._2.head)
     }
     val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
-    Ok(views.html.allApplicationCSV(exportedApplications.toSeq)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}.csv"""" )
+    Ok(views.html.allApplicationCSV(exportedApplications.toSeq, request.currentUser)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}.csv"""" )
   }
 
   def show(id: UUID) = loginAction { implicit request =>
@@ -99,10 +105,9 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       case None =>
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
-        val answers = applicationService.answersByApplicationId(id)
         val users = userService.byArea(request.currentArea.id).filterNot(_.id == request.currentUser.id)
           .filter(_.instructor)
-        Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, application, answers))
+        Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, application))
     }
   }
 
@@ -132,7 +137,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
               true,
               request.currentArea.id,
               answerData.applicationIsDeclaredIrrelevant)
-            if (applicationService.add(answer) == 1) {
+            if (applicationService.add(applicationId, answer) == 1) {
               notificationsService.newAnswer(application, answer)
               Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
             } else {
@@ -168,7 +173,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           request.currentUser.id == application.creatorUserId,
           request.currentArea.id,
           false)
-        if (applicationService.add(answer) == 1) {
+        if (applicationService.add(applicationId,answer) == 1) {
           notificationsService.newAnswer(application, answer)
           Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
         } else {
@@ -195,7 +200,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           false,
           request.currentArea.id,
           false)
-        if (applicationService.add(answer)  == 1) {
+        if (applicationService.add(applicationId, answer)  == 1) {
           notificationsService.newAnswer(application, answer)
           Redirect(routes.ApplicationController.all()).flashing ("success" -> "Les agents ont été invités sur la demande")
         } else {
@@ -214,7 +219,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
         if(application.creatorUserId == request.currentUser.id || request.currentUser.admin) {
-          if(applicationService.changeStatus(applicationId, "Terminé")) {
+          if(applicationService.close(applicationId)) {
             Redirect(routes.ApplicationController.all()).flashing("success" -> "L'application a été indiqué comme terminé")
           } else {
             InternalServerError("Erreur interne: l'application n'a pas pu être indiqué comme terminé")

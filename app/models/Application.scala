@@ -6,7 +6,6 @@ import org.joda.time.DateTime
 import org.joda.time.Period
 
 case class Application(id: UUID,
-                       status: String,
                        creationDate: DateTime,
                        creatorUserName: String,
                        creatorUserId: UUID,
@@ -16,7 +15,9 @@ case class Application(id: UUID,
                        invitedUsers: Map[UUID, String],
                        area: UUID,
                        irrelevant: Boolean,
-                       internalId: Int = -1) {
+                       answers: List[Answer] = List(),
+                       internalId: Int = -1,
+                       closed: Boolean = false) {
    lazy val ageString = {
      val period = new Period(creationDate, DateTime.now(Time.timeZone))
      if(period.getMonths > 1) {
@@ -37,5 +38,13 @@ case class Application(id: UUID,
    lazy val searchData = {
      val stripChars = "\"<>'"
      s"${creatorUserName.filterNot(stripChars contains _)} ${userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")} ${subject.filterNot(stripChars contains _)} ${description.filterNot(stripChars contains _)} ${invitedUsers.values.map(_.filterNot(stripChars contains _)).mkString(" ")}"
+   }
+
+   def status(user: User) = closed match {
+     case true => "Clôturé"
+     case _ if user.id == creatorUserId && answers.exists(_.creatorUserID != user.id) => "Répondu"
+     case _ if user.id == creatorUserId => "Envoyé"
+     case _ if answers.exists(_.creatorUserID == user.id) => "Répondu"
+     case _ => "Nouvelle"
    }
 }

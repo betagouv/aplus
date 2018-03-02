@@ -128,3 +128,4 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     )
   }
 }
+

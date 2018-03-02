@@ -1,5 +1,5 @@
 @import models._
-@(user: User, area: Area)(users: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User, area: Area)(users: List[User], applications: List[Application])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 
 @main(user, area)(s"Gestion des utilisateurs ${area.name} (${users.size} utilisateurs)") {
   <style>
@@ -40,6 +40,7 @@
           <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
           <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
           <th class="mdl-data-table__cell--non-numeric">Territoires</th>
+          <th class="mdl-data-table__cell--non-numeric">Demandes</th>
           <th class="mdl-data-table__cell--non-numeric">Email de login</th>
         </tr>
       </thead>
@@ -74,7 +75,7 @@
             </label>
           </td>
         <td class="mdl-data-table__cell--non-numeric">@user.areas.flatMap(area => Area.all.find(_.id == area).map(_.name)).mkString(", ")</td>
-
+          <td class="mdl-data-table__cell--non-numeric">@applications.count(_.creatorUserId == user.id)</td>
           <td class="mdl-data-table__cell--non-numeric">
             <button type="button" class="mdl-button mdl-js-button mdl-button--raised" onclick="sendLoginMail(this,'@user.email');">Envoyer email</button>
           </td>

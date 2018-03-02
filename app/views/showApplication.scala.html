@@ -1,4 +1,4 @@
-@(user: User, area: Area)(users: List[User], application: Application, answers: List[Answer])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User, area: Area)(users: List[User], application: Application)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 @import java.util.Locale
 
 @main(user, area)(s"Demande : ${application.subject} ")  {
@@ -49,7 +49,7 @@ div hr:last-child {
             <div class="mdl-card__title mdl-card--border">
                 <h2 class="mdl-card__title-text">@application.subject</h2>
                 <div class="mdl-card__menu do-not-print">
-                    @if((application.creatorUserId == user.id || user.admin) && application.status != "Terminé") {
+                    @if((application.creatorUserId == user.id || user.admin) && application.closed == false) {
                         <button class="mdl-button mdl-button--raised mdl-js-button do-not-print" onclick="confirmTerminate()" style="margin-right: 10px;">
                             Clore
                         </button>
@@ -68,7 +68,7 @@ div hr:last-child {
                 }
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
-                Etat: <b>@application.status</b> | Invités: <b>@application.invitedUsers.values.mkString(", ")</b> | Territoire: <b>@Area.all.find(_.id == application.area).get.name</b>
+                Etat: <b>@application.status(user)</b> | Invités: <b>@application.invitedUsers.values.mkString(", ")</b> | Territoire: <b>@Area.all.find(_.id == application.area).get.name</b>
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
                 <h4>Informations de l'usager:</h4>
@@ -93,7 +93,7 @@ div hr:last-child {
                 </ul>
                 <p style="white-space: pre-line;">@application.description</p>
             </div>
-            @for(answer <- answers){
+            @for(answer <- application.answers){
                 <div class="mdl-card__supporting-text mdl-card--border" id="answer-@answer.id">
                     <ul class="mdl-list">
                         <li class="mdl-list__item">
@@ -120,7 +120,7 @@ div hr:last-child {
                         <b>Notifiés:</b>
                         @answer.invitedUsers.values.mkString(", ")
                     }
-                    @if(answers.last == answer && ((application.creatorUserId == user.id) && application.status != "Terminé")) {
+                    @if(application.answers.last == answer && ((application.creatorUserId == user.id) && application.closed == false)) {
                         <div class="info-box do-not-print">
                         Si l'agent a répondu à votre demande, vous pouvez clore la demande:<br><br>
                         <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="confirmTerminate()" >
