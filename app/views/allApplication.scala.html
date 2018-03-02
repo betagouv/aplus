@@ -134,6 +134,7 @@
                 <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
                     <thead>
                         <tr>
+                            <th class="mdl-data-table__cell--non-numeric"></th>
                             <th class="mdl-data-table__cell--non-numeric">Date</th>
                             <th class="mdl-data-table__cell--non-numeric">Sujet</th>
                             <th class="mdl-data-table__cell--non-numeric">Avancement</th>
@@ -151,6 +152,7 @@
                     <tbody>
                     @for((application) <- applicationsFromTheArea) {
                         <tr onclick="window.document.location='@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row">
+                            <td class="mdl-data-table__cell--non-numeric" style="font-weight: bold; color: red;">@application.internalId</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
                             <td class="mdl-data-table__cell--non-numeric" @if(application.status == "En cours") { style="font-weight: bold" }>@application.status</td>
