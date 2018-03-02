@@ -30,7 +30,8 @@ class ApplicationService @Inject()(db: Database) {
     "user_infos",
     "invited_users",
     "area",
-    "irrelevant"
+    "irrelevant",
+    "internal_id"
   )
 
   private val simpleAnswer: RowParser[Answer] = Macro.parser[Answer](

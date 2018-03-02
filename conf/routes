@@ -29,7 +29,6 @@ GET     /users/edit                  controllers.UserController.edit
 POST    /users/edit                  controllers.UserController.editPost
 GET     /users/add                   controllers.UserController.add
 POST    /users/add                   controllers.UserController.addPost
-GET    /users/addDemo               controllers.UserController.addDemo
 
 
 GET     /charte                  controllers.UserController.showCharte

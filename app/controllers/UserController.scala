@@ -100,18 +100,6 @@ class UserController @Inject()(loginAction: LoginAction,
     }
   }
 
-
-  def addDemo = loginAction { implicit request =>
-    if(request.currentUser.admin != true) {
-      Unauthorized("Vous n'avez pas le droit de faire ça")
-    } else {
-        implicit val area = request.currentArea
-        val users = User.demo
-        var form = usersForm.fill(users)
-        Ok(views.html.editUsers(request.currentUser, request.currentArea)(form, 0, routes.UserController.addPost()))
-    }
-  }
-
   def addPost = loginAction { implicit request =>
     if(request.currentUser.admin != true) {
       Unauthorized("Vous n'avez pas le droit de faire ça")
