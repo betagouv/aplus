@@ -1,8 +1,12 @@
 {
   "name": "aplus",
   "scripts": {
+    "postdeploy": "pg_dump $STAGING_DATABASE_URL | psql $DATABASE_URL"
   },
   "env": {
+    "STAGING_DATABASE_URL": {
+      "required": true
+    },
     "APP_DOMAIN": {
       "required": true
     },
