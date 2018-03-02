@@ -139,7 +139,8 @@
                             <th class="mdl-data-table__cell--non-numeric">Sujet</th>
                             <th class="mdl-data-table__cell--non-numeric">Avancement</th>
                             <th class="mdl-data-table__cell--non-numeric">Créateur</th>
-                            <th class="mdl-data-table__cell--non-numeric">Total invités</th>
+                            <th class="mdl-data-table__cell--non-numeric">Invités</th>
+                            <th class="mdl-data-table__cell--non-numeric">Réponses</th>
                             <th class="mdl-data-table__cell--non-numeric">Non pertinante</th>
                             <th class="mdl-data-table__cell--non-numeric"></th>
                         </tr>
@@ -158,6 +159,7 @@
                             <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status(user)</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.creatorUserName</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.invitedUsers.size</td>
+                            <td class="mdl-data-table__cell--non-numeric">@application.answers.length</td>
                             <td class="mdl-data-table__cell--non-numeric">@if(application.irrelevant) { <span style="color: red; font-weight: bold;">Oui</span> } else { Non } </td>
                             <td class="mdl-data-table__cell--non-numeric search-cell"></td>
                         </tr>
