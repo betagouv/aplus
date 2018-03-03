@@ -20,15 +20,15 @@ case class Application(id: UUID,
                        closed: Boolean = false) {
    lazy val ageString = {
      val period = new Period(creationDate, DateTime.now(Time.timeZone))
-     if(period.getMonths > 1) {
+     if(period.getMonths > 0) {
        s"il y a ${period.getMonths} mois"
-     } else if(period.getWeeks > 1) {
+     } else if(period.getWeeks > 0) {
        s"il y a ${period.getWeeks} semaines"
-     } else if(period.getDays > 1) {
+     } else if(period.getDays > 0) {
        s"il y a ${period.getDays} jours"
-     } else if(period.getHours > 1) {
+     } else if(period.getHours > 0) {
        s"il y a ${period.getHours} heures"
-     } else if(period.getMinutes > 1) {
+     } else if(period.getMinutes > 0) {
        s"il y a ${period.getMinutes} minutes"
      } else {
        s"à l'instant"
