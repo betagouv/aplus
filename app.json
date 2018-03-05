@@ -1,9 +1,15 @@
 {
   "name": "aplus",
   "scripts": {
-    "postdeploy": "dropdb $DATABASE_URL; pg_dump -x -O --if-exists --clean $STAGING_DATABASE_URL | psql $DATABASE_URL"
+    "postdeploy": "bin/init_database.sh"
   },
   "env": {
+    "HEROKU_APP_NAME": {
+      "required": true
+    },
+    "HEROKU_PARENT_APP_NAME": {
+      "required": true
+    },
     "STAGING_DATABASE_URL": {
       "required": true
     },
