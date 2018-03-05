@@ -47,4 +47,6 @@ case class Application(id: UUID,
      case _ if answers.exists(_.creatorUserID == user.id) => "Répondu"
      case _ => "Nouvelle"
    }
+
+   def qualities(users: List[User]): Set[String] = invitedUsers.keys.flatMap(userId => users.find(_.id == userId)).map(_.qualite).toSet
 }

@@ -43,6 +43,11 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     SQL("""SELECT * FROM "user" WHERE id = {id}::uuid""").on('id -> id).as(simpleUser.singleOpt)
   }.orElse(User.admins.find(_.id == id))
 
+  def byIds(ids: List[UUID]): List[User] = db.withConnection { implicit connection =>
+    SQL("""SELECT * FROM "user" WHERE ARRAY[{ids}]::uuid[] @> ARRAY[id]::uuid[]""").on('ids -> ids).as(simpleUser.*)
+  } ++ User.admins.filter(user => ids.contains(user.id))
+
+
   def byKey(key: String): Option[User] = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user" WHERE key = {key}""").on('key -> key).as(simpleUser.singleOpt)
   }.orElse(User.admins.find(_.key == key))

@@ -95,8 +95,10 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       (applicationService.allForCreatorUserId(currentUserId) ++
         applicationService.allForInvitedUserId(currentUserId)).groupBy(_.id).map(_._2.head)
     }
+    val userIds = exportedApplications.flatMap(_.invitedUsers.keys).toSet.toList
+    val users = userService.byIds(userIds)
     val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
-    Ok(views.html.allApplicationCSV(exportedApplications.toSeq, request.currentUser)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}.csv"""" )
+    Ok(views.html.allApplicationCSV(exportedApplications.toSeq, request.currentUser, users)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}.csv"""" )
   }
 
   def show(id: UUID) = loginAction { implicit request =>
