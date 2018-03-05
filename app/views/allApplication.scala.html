@@ -114,7 +114,7 @@
                         </tfoot>
                         <tbody>
                         @for((application) <- applicationsIGotInvited.sortBy(_.closed)) {
-                            <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row">
+                            <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row @if(application.isLateForUser(user)){ application-row--late } else { @if(application.isNearlyLateForUser(user)){ application-row--nearly-late }  }">
                                 <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.closed == false) { (@application.ageString) }</td>
                                 <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
                                 <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status(user)</td>

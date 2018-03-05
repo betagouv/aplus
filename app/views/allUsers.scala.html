@@ -41,6 +41,7 @@
           <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
           <th class="mdl-data-table__cell--non-numeric">Territoires</th>
           <th class="mdl-data-table__cell--non-numeric">Demandes</th>
+          <th class="mdl-data-table__cell--non-numeric">Solicitations</th>
           <th class="mdl-data-table__cell--non-numeric">Email de login</th>
         </tr>
       </thead>
@@ -76,6 +77,7 @@
           </td>
         <td class="mdl-data-table__cell--non-numeric">@user.areas.flatMap(area => Area.all.find(_.id == area).map(_.name)).mkString(", ")</td>
           <td class="mdl-data-table__cell--non-numeric">@applications.count(_.creatorUserId == user.id)</td>
+          <td class="mdl-data-table__cell--non-numeric">@applications.count(_.invitedUsers.contains(user.id))</td>
           <td class="mdl-data-table__cell--non-numeric">
             <button type="button" class="mdl-button mdl-js-button mdl-button--raised" onclick="sendLoginMail(this,'@user.email');">Envoyer email</button>
           </td>

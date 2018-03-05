@@ -4,6 +4,7 @@ import java.util.UUID
 
 import org.joda.time.DateTime
 import org.joda.time.Period
+import org.joda.time.Days
 
 case class Application(id: UUID,
                        creationDate: DateTime,
@@ -18,18 +19,18 @@ case class Application(id: UUID,
                        answers: List[Answer] = List(),
                        internalId: Int = -1,
                        closed: Boolean = false) {
+   lazy val age = new Period(creationDate, DateTime.now(Time.timeZone))
    lazy val ageString = {
-     val period = new Period(creationDate, DateTime.now(Time.timeZone))
-     if(period.getMonths > 0) {
-       s"il y a ${period.getMonths} mois"
-     } else if(period.getWeeks > 0) {
-       s"il y a ${period.getWeeks} semaines"
-     } else if(period.getDays > 0) {
-       s"il y a ${period.getDays} jours"
-     } else if(period.getHours > 0) {
-       s"il y a ${period.getHours} heures"
-     } else if(period.getMinutes > 0) {
-       s"il y a ${period.getMinutes} minutes"
+     if(age.getMonths > 0) {
+       s"il y a ${age.getMonths} mois"
+     } else if(age.getWeeks > 0) {
+       s"il y a ${age.getWeeks} semaines"
+     } else if(age.getDays > 0) {
+       s"il y a ${age.getDays} jours"
+     } else if(age.getHours > 0) {
+       s"il y a ${age.getHours} heures"
+     } else if(age.getMinutes > 0) {
+       s"il y a ${age.getMinutes} minutes"
      } else {
        s"à l'instant"
      }
@@ -49,4 +50,10 @@ case class Application(id: UUID,
    }
 
    def invitedUsers(users: List[User]): List[User] = invitedUsers.keys.flatMap(userId => users.find(_.id == userId)).toList
+
+   def isLateForUser(user: User): Boolean = !closed && invitedUsers.contains(user.id) &&
+     answers.forall(_.creatorUserID != user.id) && ( age.getMonths > 0 || age.toStandardDays.getDays > 5 )
+
+   def isNearlyLateForUser(user: User): Boolean = !closed && invitedUsers.contains(user.id) &&
+    answers.forall(_.creatorUserID != user.id) && ( age.getMonths > 0 || age.toStandardDays.getDays > 3 )
 }
