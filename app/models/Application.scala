@@ -48,5 +48,5 @@ case class Application(id: UUID,
      case _ => "Nouvelle"
    }
 
-   def qualities(users: List[User]): Set[String] = invitedUsers.keys.flatMap(userId => users.find(_.id == userId)).map(_.qualite).toSet
+   def invitedUsers(users: List[User]): List[User] = invitedUsers.keys.flatMap(userId => users.find(_.id == userId)).toList
 }
