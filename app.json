@@ -1,7 +1,7 @@
 {
   "name": "aplus",
   "scripts": {
-    "postdeploy": "pg_dump -x -O --if-exists --clean $STAGING_DATABASE_URL | psql $DATABASE_URL"
+    "postdeploy": "dropdb $DATABASE_URL; pg_dump -x -O --if-exists --clean $STAGING_DATABASE_URL | psql $DATABASE_URL"
   },
   "env": {
     "STAGING_DATABASE_URL": {
