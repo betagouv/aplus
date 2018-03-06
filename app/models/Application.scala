@@ -44,7 +44,7 @@ case class Application(id: UUID,
    def status(user: User) = closed match {
      case true => "Clôturé"
      case _ if user.id == creatorUserId && answers.exists(_.creatorUserID != user.id) => "Répondu"
-     case _ if user.id == creatorUserId => "Envoyé"
+     case _ if user.id == creatorUserId => "Envoyée"
      case _ if answers.exists(_.creatorUserID == user.id) => "Répondu"
      case _ => "Nouvelle"
    }
