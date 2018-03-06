@@ -41,7 +41,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
           }
         }
           .foreach(sendMail)
-    if(answer.visibleByHelpers) {
+    if(answer.visibleByHelpers && answer.creatorUserID != application.creatorUserId) {
       userService.byId(application.creatorUserId)
        .map(generateAnswerEmail(application, answer))
         .foreach(sendMail)
@@ -92,9 +92,9 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     val bodyHtml = s"""Bonjour ${invitedUser.name},<br>
                       |<br>
                       |<p>${answer.map(_.creatorUserName).getOrElse(application.creatorUserName)} a besoin de vous.<br>
-                      |Cette personne vous a invité sur la demande suivante: "${application.subject}"
+                      |Cette personne vous a invité sur la demande suivante : "${application.subject}"
                       |<br><q><i>${application.description}</i></q></p>
-                      |Vous pouvez voir la demande et y répondre en suivant ce lien: <br>
+                      |Vous pouvez voir la demande et y répondre en suivant ce lien : <br>
                       |<a href="${url}">${url}</a><br>
                       |$footer
                       """.stripMargin
@@ -120,7 +120,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
                       |<a href="${url}">${url}</a>
                       |$footer
                       """.stripMargin
-    Email(subject = s"[A+] Nouvelle réponse pour: ${application.subject}",
+    Email(subject = s"[A+] Nouvelle réponse pour : ${application.subject}",
       from = "A+ Ne pas répondre <ne-pas-repondre-aplus@beta.gouv.fr>",
       to = List(s"${user.name} <${user.email}>"),
       cc = user.delegations.map { case (name, email) => s"$name <$email>" }.toSeq,
@@ -128,3 +128,4 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     )
   }
 }
+

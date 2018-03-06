@@ -6,22 +6,34 @@ import javax.inject.Inject
 import anorm.Column.nonNull
 import models.{Answer, Application}
 import play.api.db.Database
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, JsonConfiguration, JsonNaming}
 import anorm._
 import anorm.JodaParameterMetaData._
+import play.api.libs.json.JodaReads._
+import play.api.libs.json.JodaWrites._
 
 @javax.inject.Singleton
 class ApplicationService @Inject()(db: Database) {
   import extentions.Anorm._
+  import extentions.JsonFormats._
 
-  private implicit val answerListParser: anorm.Column[List[Answer]] =
+  private implicit val answerReads = Json.reads[Answer]
+  private implicit val answerWrite = Json.writes[Answer]
+
+  implicit val answerListParser: anorm.Column[List[Answer]] =
     nonNull { (value, meta) =>
-      Left(UnexpectedNullableFound(s"This should not append"))
+      val MetaDataItem(qualified, nullable, clazz) = meta
+      value match {
+        case json: org.postgresql.util.PGobject =>
+          Right(Json.parse(json.getValue).as[List[Answer]])
+        case json: String =>
+          Right(Json.parse(json).as[List[Answer]])
+        case _ => Left(TypeDoesNotMatch(s"Cannot convert $value: ${className(value)} to List[Answer] for column $qualified"))
+      }
     }
 
   private val simpleApplication: RowParser[Application] = Macro.parser[Application](
     "id",
-    "status",
     "creation_date",
     "creator_user_name",
     "creator_user_id",
@@ -31,20 +43,9 @@ class ApplicationService @Inject()(db: Database) {
     "invited_users",
     "area",
     "irrelevant",
-    "internal_id"
-  )
-
-  private val simpleAnswer: RowParser[Answer] = Macro.parser[Answer](
-    "id",
-    "application_id",
-    "creation_date",
-    "message",
-    "creator_user_id",
-    "creator_user_name",
-    "invited_users",
-    "visible_by_helpers",
-    "area",
-    "application_is_declared_irrelevant"
+    "answers",
+    "internal_id",
+    "closed"
   )
 
   def byId(id: UUID): Option[Application] = db.withConnection { implicit connection =>
@@ -75,7 +76,6 @@ class ApplicationService @Inject()(db: Database) {
       """
           INSERT INTO application VALUES (
             {id}::uuid,
-            {status},
             {creation_date},
             {creator_user_name},
             {creator_user_id}::uuid,
@@ -87,7 +87,6 @@ class ApplicationService @Inject()(db: Database) {
           )
       """).on(
       'id ->   newApplication.id,
-      'status -> newApplication.status,
       'creation_date -> newApplication.creationDate,
       'creator_user_name -> newApplication.creatorUserName,
       'creator_user_id -> newApplication.creatorUserId,
@@ -98,14 +97,8 @@ class ApplicationService @Inject()(db: Database) {
       'area -> newApplication.area
     ).executeUpdate() == 1
   }
-
-  def answersByApplicationId(applicationId: UUID) = db.withConnection { implicit connection =>
-    SQL("SELECT * FROM answer WHERE application_id = {applicationId}::uuid ORDER BY creation_date ASC")
-    .on('applicationId -> applicationId).as(simpleAnswer.*)
-  }
-
-
-  def add(answer: Answer) = db.withTransaction { implicit connection =>
+  
+  def add(applicationId: UUID, answer: Answer) = db.withTransaction { implicit connection =>
     val invitedUserJson = Json.toJson(answer.invitedUsers.map {
       case (key, value) =>
         key.toString -> value
@@ -114,51 +107,25 @@ class ApplicationService @Inject()(db: Database) {
        ", irrelevant = true "
     } else { "" }
     SQL(
-      s"""
-          UPDATE application SET invited_users = invited_users || {invited_users}::jsonb $irrelevantSQL
-          WHERE id = {id}::uuid
-       """
-    ).on(
-      'id -> answer.applicationId,
-      'invited_users -> invitedUserJson
-    ).executeUpdate()
-    SQL(
-      """
-          INSERT INTO answer VALUES (
-            {id}::uuid,
-            {application_id}::uuid,
-            {creation_date},
-            {message},
-            {creator_user_id}::uuid,
-            {creator_user_name},
-            {invited_users},
-            {visible_by_helpers},
-            {area}::uuid,
-            {application_is_declared_irrelevant}
-          )
-      """).on(
-      'id ->   answer.id,
-      'application_id -> answer.applicationId,
-      'creation_date -> answer.creationDate,
-      'message -> answer.message,
-      'creator_user_id -> answer.creatorUserID,
-      'creator_user_name -> answer.creatorUserName,
-      'invited_users -> invitedUserJson,
-      'visible_by_helpers -> answer.visibleByHelpers,
-      'area -> answer.area,
-      'application_is_declared_irrelevant -> answer.declareApplicationHasIrrelevant
-    ).executeUpdate()
-  }
-
-  def changeStatus(applicationId: UUID, newStatus: String) = db.withTransaction { implicit connection =>
-    SQL(
-      """
-          UPDATE application SET status = {status}
+      s"""UPDATE application SET answers = answers || {answer}::jsonb,
+          invited_users = invited_users || {invited_users}::jsonb $irrelevantSQL
           WHERE id = {id}::uuid
        """
     ).on(
       'id -> applicationId,
-      'status -> newStatus
+      'answer -> Json.toJson(answer),
+      'invited_users -> invitedUserJson
+    ).executeUpdate()
+  }
+
+  def close(applicationId: UUID) = db.withTransaction { implicit connection =>
+    SQL(
+      """
+          UPDATE application SET closed = true
+          WHERE id = {id}::uuid
+       """
+    ).on(
+      'id -> applicationId
     ).executeUpdate() == 1
   }
 }

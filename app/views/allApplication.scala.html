@@ -80,11 +80,11 @@
                             </tr>
                         </tfoot>
                         <tbody>
-                        @for((application) <- applicationsCreatedByMe.sortBy(_.status)) {
+                        @for((application) <- applicationsCreatedByMe.sortBy(_.closed)) {
                             <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row">
-                                <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.status == "En cours") { (@application.ageString) }</td>
+                                <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.closed == false) { (@application.ageString) }</td>
                                 <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
-                                <td class="mdl-data-table__cell--non-numeric" @if(application.status == "En cours") { style="font-weight: bold" }>@application.status</td>
+                                <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status(user)</td>
                                 <td class="mdl-data-table__cell--non-numeric search-cell"></td>
                             </tr>
                         }
@@ -113,11 +113,11 @@
                             </tr>
                         </tfoot>
                         <tbody>
-                        @for((application) <- applicationsIGotInvited.sortBy(_.status)) {
-                            <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row">
-                                <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.status == "En cours") { (@application.ageString) }</td>
+                        @for((application) <- applicationsIGotInvited.sortBy(_.closed)) {
+                            <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row @if(application.isLateForUser(user)){ application-row--late } else { @if(application.isNearlyLateForUser(user)){ application-row--nearly-late }  }">
+                                <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.closed == false) { (@application.ageString) }</td>
                                 <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
-                                <td class="mdl-data-table__cell--non-numeric" @if(application.status == "En cours") { style="font-weight: bold" }>@application.status</td>
+                                <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status(user)</td>
                                 <td class="mdl-data-table__cell--non-numeric search-cell"></td>
                             </tr>
                         }
@@ -139,8 +139,9 @@
                             <th class="mdl-data-table__cell--non-numeric">Sujet</th>
                             <th class="mdl-data-table__cell--non-numeric">Avancement</th>
                             <th class="mdl-data-table__cell--non-numeric">Créateur</th>
-                            <th class="mdl-data-table__cell--non-numeric">Total invités</th>
-                            <th class="mdl-data-table__cell--non-numeric">Non pertinante</th>
+                            <th class="mdl-data-table__cell--non-numeric">Invités</th>
+                            <th class="mdl-data-table__cell--non-numeric">Réponses</th>
+                            <th class="mdl-data-table__cell--non-numeric">Non pertinente</th>
                             <th class="mdl-data-table__cell--non-numeric"></th>
                         </tr>
                     </thead>
@@ -155,9 +156,10 @@
                             <td class="mdl-data-table__cell--non-numeric" style="font-weight: bold; color: red;">@application.internalId</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
-                            <td class="mdl-data-table__cell--non-numeric" @if(application.status == "En cours") { style="font-weight: bold" }>@application.status</td>
+                            <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status(user)</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.creatorUserName</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.invitedUsers.size</td>
+                            <td class="mdl-data-table__cell--non-numeric">@application.answers.length</td>
                             <td class="mdl-data-table__cell--non-numeric">@if(application.irrelevant) { <span style="color: red; font-weight: bold;">Oui</span> } else { Non } </td>
                             <td class="mdl-data-table__cell--non-numeric search-cell"></td>
                         </tr>
