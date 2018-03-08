@@ -45,11 +45,14 @@ class ApplicationService @Inject()(db: Database) {
     "irrelevant",
     "answers",
     "internal_id",
-    "closed"
+    "closed",
+    "seen_by_user_ids"
   )
 
-  def byId(id: UUID): Option[Application] = db.withConnection { implicit connection =>
-    SQL("SELECT * FROM application WHERE id = {id}::uuid").on('id -> id).as(simpleApplication.singleOpt)
+  def byId(id: UUID, fromUserId: UUID): Option[Application] = db.withConnection { implicit connection =>
+    SQL("UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *")
+      .on('id -> id,
+          'seen_by_user_id -> fromUserId).as(simpleApplication.singleOpt)
   }
 
   def allForCreatorUserId(creatorUserId: UUID) = db.withConnection { implicit connection =>
