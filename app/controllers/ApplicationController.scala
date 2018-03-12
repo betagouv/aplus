@@ -103,7 +103,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
   def show(id: UUID) = loginAction { implicit request =>
     //TODO : check access right
-    applicationService.byId(id) match {
+    applicationService.byId(id, request.currentUser.id) match {
       case None =>
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
@@ -126,7 +126,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         BadRequest("Erreur interne, contacter l'administrateur A+ : contact@aplus.beta.gouv.fr")
       },
       answerData => {
-        applicationService.byId(applicationId) match {
+        applicationService.byId(applicationId, request.currentUser.id) match {
           case None =>
             NotFound("Nous n'avons pas trouvé cette demande")
           case Some(application) =>
@@ -159,7 +159,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   def answerAgents(applicationId: UUID) = loginAction { implicit request =>
     val answerData = answerToAgentsForm.bindFromRequest.get
 
-    applicationService.byId(applicationId) match {
+    applicationService.byId(applicationId, request.currentUser.id) match {
       case None =>
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
@@ -186,7 +186,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
   def invite(applicationId: UUID) = loginAction { implicit request =>
     val inviteData = answerToAgentsForm.bindFromRequest.get
-    applicationService.byId(applicationId) match {
+    applicationService.byId(applicationId, request.currentUser.id) match {
       case None =>
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
@@ -216,7 +216,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def terminate(applicationId: UUID) = loginAction {  implicit request =>
-    applicationService.byId(applicationId) match {
+    applicationService.byId(applicationId, request.currentUser.id) match {
       case None =>
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>

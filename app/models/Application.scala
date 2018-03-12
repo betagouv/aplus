@@ -18,7 +18,9 @@ case class Application(id: UUID,
                        irrelevant: Boolean,
                        answers: List[Answer] = List(),
                        internalId: Int = -1,
-                       closed: Boolean = false) {
+                       closed: Boolean = false,
+                       seenByUserIds: List[UUID] = List()) {
+
    lazy val age = new Period(creationDate, DateTime.now(Time.timeZone))
    lazy val ageString = {
      if(age.getMonths > 0) {
@@ -42,10 +44,12 @@ case class Application(id: UUID,
    }
 
    def status(user: User) = closed match {
-     case true => "Clôturé"
+     case true => "Clôturée"
      case _ if user.id == creatorUserId && answers.exists(_.creatorUserID != user.id) => "Répondu"
+     case _ if user.id == creatorUserId && seenByUserIds.intersect(invitedUsers.keys.toList).isEmpty == false => "Consultée"
      case _ if user.id == creatorUserId => "Envoyée"
      case _ if answers.exists(_.creatorUserID == user.id) => "Répondu"
+     case _ if seenByUserIds.contains(user.id) => "Consultée"
      case _ => "Nouvelle"
    }
 
