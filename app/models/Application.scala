@@ -64,8 +64,8 @@ case class Application(id: UUID,
    def invitedUsers(users: List[User]): List[User] = invitedUsers.keys.flatMap(userId => users.find(_.id == userId)).toList
 
    def isLateForUser(user: User): Boolean = !closed && invitedUsers.contains(user.id) &&
-     answers.forall(_.creatorUserID != user.id) && ( age.getMonths > 0 || age.toStandardDays.getDays > 5 )
+     answers.forall(_.creatorUserID != user.id) && answers.exists(_.creatorUserName.contains(user.qualite)) == false && ( age.getMonths > 0 || age.toStandardDays.getDays > 5 )
 
    def isNearlyLateForUser(user: User): Boolean = !closed && invitedUsers.contains(user.id) &&
-    answers.forall(_.creatorUserID != user.id) && ( age.getMonths > 0 || age.toStandardDays.getDays > 3 )
+    answers.forall(_.creatorUserID != user.id) && answers.exists(_.creatorUserName.contains(user.qualite)) == false && ( age.getMonths > 0 || age.toStandardDays.getDays > 3 )
 }
