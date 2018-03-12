@@ -49,6 +49,14 @@ case class Application(id: UUID,
      case _ if user.id == creatorUserId && seenByUserIds.intersect(invitedUsers.keys.toList).isEmpty == false => "Consultée"
      case _ if user.id == creatorUserId => "Envoyée"
      case _ if answers.exists(_.creatorUserID == user.id) => "Répondu"
+     case _ if answers.exists(_.creatorUserName.contains(user.qualite)) => {
+       val username = answers.find(_.creatorUserName.contains(user.qualite))
+         .map(_.creatorUserName)
+         .getOrElse("un collègue")
+         .replaceAll("\\(.*\\)","")
+         .trim
+       s"Répondu par ${username}"
+     }
      case _ if seenByUserIds.contains(user.id) => "Consultée"
      case _ => "Nouvelle"
    }
