@@ -42,6 +42,9 @@ div hr:last-child {
 .mdl-tabs__tab-bar {
     border-bottom: 0px;
 }
+.mdl-list__item-avatar {
+    background-color: #e7e7e7;
+}
 
 </style>
 }{
@@ -83,7 +86,10 @@ div hr:last-child {
                 <ul class="mdl-list">
                     <li class="mdl-list__item">
                         <span class="mdl-list__item-primary-content">
-                            <i class="material-icons mdl-list__item-avatar">person</i>
+                            @Map("Aide A+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => application.creatorUserName.contains(a._1)) match {
+                                case Some((_,icon)) => { <img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
+                                case None => { <i class="material-icons mdl-list__item-avatar">person</i> }
+                            }
                             <span>@application.creatorUserName</span>
                         </span>
                         <span class="mdl-list__item-secondary-content">
@@ -98,7 +104,10 @@ div hr:last-child {
                     <ul class="mdl-list">
                         <li class="mdl-list__item">
                             <span class="mdl-list__item-primary-content">
-                                <i class="material-icons mdl-list__item-avatar">person</i>
+                                @Map("Aide A+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => answer.creatorUserName.contains(a._1)) match {
+                                    case Some((_,icon)) => { <img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
+                                    case None => { <i class="material-icons mdl-list__item-avatar">person</i> }
+                                }
                                 <span>@answer.creatorUserName</span>
                                 <span class="mdl-list__item-sub-title"></span>
                             </span>
