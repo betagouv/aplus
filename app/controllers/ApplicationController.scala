@@ -216,18 +216,20 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def terminate(applicationId: UUID) = loginAction {  implicit request =>
-    applicationService.byId(applicationId, request.currentUser.id) match {
-      case None =>
-        NotFound("Nous n'avons pas trouvé cette demande")
-      case Some(application) =>
+    (request.getQueryString("usefulness"), applicationService.byId(applicationId, request.currentUser.id)) match {
+      case (_, None) =>
+        NotFound("Nous n'avons pas trouvé cette demande.")
+      case (None, _) =>
+        BadGateway("L'utilité de la demande n'est pas présente, il s'agit surement d'une erreur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+      case (Some(usefulness), Some(application)) =>
         if(application.creatorUserId == request.currentUser.id || request.currentUser.admin) {
-          if(applicationService.close(applicationId)) {
+          if(applicationService.close(applicationId, usefulness)) {
             Redirect(routes.ApplicationController.all()).flashing("success" -> "L'application a été indiqué comme terminé")
           } else {
             InternalServerError("Erreur interne: l'application n'a pas pu être indiqué comme terminé")
           }
         } else {
-          Unauthorized("Seul le créateur de la demande peut terminé la demande")
+          Unauthorized("Seul le créateur de la demande ou un administrateur peut terminer la demande")
         }
     }
   }
