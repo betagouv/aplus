@@ -19,7 +19,8 @@ case class Application(id: UUID,
                        answers: List[Answer] = List(),
                        internalId: Int = -1,
                        closed: Boolean = false,
-                       seenByUserIds: List[UUID] = List()) {
+                       seenByUserIds: List[UUID] = List(),
+                       usefulness: Option[String] = None) {
 
    lazy val age = new Period(creationDate, DateTime.now(Time.timeZone))
    lazy val ageString = {
