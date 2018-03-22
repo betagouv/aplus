@@ -13,6 +13,11 @@
         font-size: 17px;
         padding: 5px;
     }
+    .usefulness__icon {
+        width: 20px;
+        height: 20px;
+        vertical-align: middle;
+    }
 </style>
 <script>
     var extract = 9;
@@ -141,6 +146,7 @@
                             <th class="mdl-data-table__cell--non-numeric">Créateur</th>
                             <th class="mdl-data-table__cell--non-numeric">Invités</th>
                             <th class="mdl-data-table__cell--non-numeric">Réponses</th>
+                            <th class="mdl-data-table__cell--non-numeric">Utile</th>
                             <th class="mdl-data-table__cell--non-numeric">Non pertinente</th>
                             <th class="mdl-data-table__cell--non-numeric"></th>
                         </tr>
@@ -160,6 +166,12 @@
                             <td class="mdl-data-table__cell--non-numeric">@application.creatorUserName</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.invitedUsers.size</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.answers.length</td>
+                            <td class="mdl-data-table__cell--non-numeric"><b>@application.usefulness match {
+                                case Some("Oui") => {<img class="usefulness__icon" src="@webJarsUtil.url("1f600.svg").get"> Oui}
+                                case Some("Je ne sais pas") => {<img class="usefulness__icon" src="@webJarsUtil.url("1f610.svg").get"> Je ne sais pas}
+                                case Some("Non") => {<img class="usefulness__icon" src="@webJarsUtil.url("1f61e.svg").get"> Non}
+                                case None => { ? }
+                            }</b></td>
                             <td class="mdl-data-table__cell--non-numeric">@if(application.irrelevant) { <span style="color: red; font-weight: bold;">Oui</span> } else { Non } </td>
                             <td class="mdl-data-table__cell--non-numeric search-cell"></td>
                         </tr>

@@ -46,7 +46,8 @@ class ApplicationService @Inject()(db: Database) {
     "answers",
     "internal_id",
     "closed",
-    "seen_by_user_ids"
+    "seen_by_user_ids",
+    "usefulness"
   )
 
   def byId(id: UUID, fromUserId: UUID): Option[Application] = db.withConnection { implicit connection =>
@@ -121,14 +122,15 @@ class ApplicationService @Inject()(db: Database) {
     ).executeUpdate()
   }
 
-  def close(applicationId: UUID) = db.withTransaction { implicit connection =>
+  def close(applicationId: UUID, usefulness: String) = db.withTransaction { implicit connection =>
     SQL(
       """
-          UPDATE application SET closed = true
+          UPDATE application SET closed = true, usefulness = {usefulness}
           WHERE id = {id}::uuid
        """
     ).on(
-      'id -> applicationId
+      'id -> applicationId,
+      'usefulness -> usefulness
     ).executeUpdate() == 1
   }
 }

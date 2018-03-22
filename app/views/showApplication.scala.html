@@ -42,15 +42,102 @@ div hr:last-child {
 .mdl-tabs__tab-bar {
     border-bottom: 0px;
 }
+.mdl-list__item-avatar {
+    background-color: #e7e7e7;
+}
+
+dialog {
+    position: fixed;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+
+.input--sweet {
+    display: none;
+}
+.input--sweet + label {
+    position: relative;
+    padding: 6px;
+    border-radius: 2px;
+    font-weight: bold;
+    -ms-user-select: none;
+    user-select: none;
+    background-color: grey;
+    color: white;
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);
+    height: 85px;
+    width: 70px;
+    box-sizing: border-box;
+    display: flex;
+    line-height: 1.2;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    align-content: space-between;
+    border: grey solid;
+}
+
+
+.input--sweet:checked + label {
+    background-color: #fdfdfd;
+    color: #555;
+}
+
+.input--sweet + label:hover {
+    background-color: #ececec;
+    color: #555;
+}
+
+.input--sweet:not(checked) + label > img {
+    -webkit-filter: grayscale(10);
+    filter: grayscale(10);
+}
+.input--sweet:checked + label > img, .input--sweet + label:hover > img {
+    -webkit-filter: initial;
+    filter: initial;
+}
+.input__icon {
+    width: 36px;
+    height: 36px;
+}
+
+
+.inputs--row {
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+    width: 100%;
+}
 
 </style>
+@Html(webJarsUtil.css("dialog-polyfill.css"))
+@Html(webJarsUtil.script("dialog-polyfill.js"))
 }{
+    <dialog class="mdl-dialog" id="dialog-terminate">
+        <h4 class="mdl-dialog__title">Est-ce que la réponse vous semble utile pour l'usager ?</h4>
+        <div class="mdl-dialog__content">
+            <div class="inputs--row">
+            <input id="yes" class="input--sweet" type="radio" name="usefulness" value="Oui" onchange="enableYes()">
+            <label for="yes"><img class="input__icon" src="@webJarsUtil.url("1f600.svg").get">Oui</label>
+            <input id="neutral" class="input--sweet" type="radio" name="usefulness" value="Je ne sais pas" onchange="enableYes()">
+            <label for="neutral"><img class="input__icon" src="@webJarsUtil.url("1f610.svg").get">Je ne sais pas</label>
+            <input id="no" class="input--sweet" type="radio" name="usefulness" value="Non" onchange="enableYes()">
+            <label for="no"><img class="input__icon" src="@webJarsUtil.url("1f61e.svg").get">Non</label>
+            </div><br>
+            <b>Vous devez sélectionnez une réponse pour clore la demande.</b>
+        </div>
+        <div class="mdl-dialog__actions">
+            <button type="button" class="mdl-button mdl-button--raised" onclick="closeDialog()">Quitter</button>
+            <button type="button" disabled="disabled" class="mdl-button mdl-button--raised mdl-button--colored" id="close-dialog-terminate" onclick="confirmTerminate()">Clore</button>
+        </div>
+    </dialog>
+
         <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col">
             <div class="mdl-card__title mdl-card--border">
                 <h2 class="mdl-card__title-text">@application.subject</h2>
                 <div class="mdl-card__menu do-not-print">
                     @if((application.creatorUserId == user.id || user.admin) && application.closed == false) {
-                        <button class="mdl-button mdl-button--raised mdl-js-button do-not-print" onclick="confirmTerminate()" style="margin-right: 10px;">
+                        <button class="mdl-button mdl-button--raised mdl-js-button do-not-print" onclick="showDialog()" style="margin-right: 10px;">
                             Clore
                         </button>
                     }
@@ -83,7 +170,10 @@ div hr:last-child {
                 <ul class="mdl-list">
                     <li class="mdl-list__item">
                         <span class="mdl-list__item-primary-content">
-                            <i class="material-icons mdl-list__item-avatar">person</i>
+                            @Map("Aide A+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => application.creatorUserName.contains(a._1)) match {
+                                case Some((_,icon)) => { <img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
+                                case None => { <i class="material-icons mdl-list__item-avatar">person</i> }
+                            }
                             <span>@application.creatorUserName</span>
                         </span>
                         <span class="mdl-list__item-secondary-content">
@@ -98,7 +188,10 @@ div hr:last-child {
                     <ul class="mdl-list">
                         <li class="mdl-list__item">
                             <span class="mdl-list__item-primary-content">
-                                <i class="material-icons mdl-list__item-avatar">person</i>
+                                @Map("Aide A+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => answer.creatorUserName.contains(a._1)) match {
+                                    case Some((_,icon)) => { <img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
+                                    case None => { <i class="material-icons mdl-list__item-avatar">person</i> }
+                                }
                                 <span>@answer.creatorUserName</span>
                                 <span class="mdl-list__item-sub-title"></span>
                             </span>
@@ -123,7 +216,7 @@ div hr:last-child {
                     @if(application.answers.last == answer && ((application.creatorUserId == user.id) && application.closed == false)) {
                         <div class="info-box do-not-print">
                         Si l'agent a répondu à votre demande, vous pouvez clore la demande:<br><br>
-                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="confirmTerminate()" >
+                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="showDialog()" >
                                 Clore la demande
                         </button> <br><br>
                         Sinon n'hésitez à le recontacter en utilisant </i><b>Répondre aux agents</b> ci-dessous.
@@ -248,13 +341,32 @@ div hr:last-child {
             </div>
         </div>
     <script>
+            var dialog = document.querySelector('#dialog-terminate');
+            if (! dialog.showModal) {
+                dialogPolyfill.registerDialog(dialog);
+            }
+
+            function enableYes() {
+                document.getElementById("close-dialog-terminate").disabled = false;
+            }
+            
+            function closeDialog() {
+                dialog.close();
+            }
+
+            function showDialog() {
+                Array.from(document.querySelectorAll("#dialog-terminate input")).forEach(function(input) {
+                    input.checked = false;
+                })
+                dialog.showModal();
+            }
 
             function confirmTerminate() {
-                var ret = confirm("L'action suivante est définitive: êtes-vous sûr de vouloir clôre la demande ?");
-                if(ret) {
-                    document.location = '@routes.ApplicationController.terminate(application.id)';
-                }
-                return ret;
+                var usefulness = document.querySelector('input[name="usefulness"]:checked').value;
+                document.location = '@routes.ApplicationController.terminate(application.id)?usefulness='+usefulness;
             }
     </script>
+    <!--
+    We use twemoji for emoji : https://github.com/twitter/twemoji
+    -->
 }
