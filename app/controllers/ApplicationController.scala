@@ -224,12 +224,12 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       case (Some(usefulness), Some(application)) =>
         if(application.creatorUserId == request.currentUser.id || request.currentUser.admin) {
           if(applicationService.close(applicationId, usefulness)) {
-            Redirect(routes.ApplicationController.all()).flashing("success" -> "L'application a été indiqué comme terminé")
+            Redirect(routes.ApplicationController.all()).flashing("success" -> "L'application a été indiqué comme clôturée")
           } else {
-            InternalServerError("Erreur interne: l'application n'a pas pu être indiqué comme terminé")
+            InternalServerError("Erreur interne: l'application n'a pas pu être indiqué comme clôturée")
           }
         } else {
-          Unauthorized("Seul le créateur de la demande ou un administrateur peut terminer la demande")
+          Unauthorized("Seul le créateur de la demande ou un administrateur peut clore la demande")
         }
     }
   }
