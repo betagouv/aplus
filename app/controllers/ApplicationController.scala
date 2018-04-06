@@ -102,14 +102,21 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def show(id: UUID) = loginAction { implicit request =>
-    //TODO : check access right
     applicationService.byId(id, request.currentUser.id) match {
       case None =>
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
-        val users = userService.byArea(request.currentArea.id).filterNot(_.id == request.currentUser.id)
-          .filter(_.instructor)
-        Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, application))
+        val currentUser = request.currentUser
+        if(currentUser.admin||
+          application.invitedUsers.keys.toList.contains(request.currentUser.id)||
+          application.creatorUserId==request.currentUser.id) {
+            val users = userService.byArea(request.currentArea.id).filterNot(_.id == request.currentUser.id)
+              .filter(_.instructor)
+            Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, application))
+        }
+        else {
+          Unauthorized("Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+        }
     }
   }
 
