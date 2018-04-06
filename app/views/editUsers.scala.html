@@ -35,8 +35,8 @@
         }
     </script>
 } {                           
-  <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
-  @helper.form(action = action, args = 'class -> "mdl-cell mdl-cell--12-col mdl-grid") {
+  <div>
+  @helper.form(action = action) {
     @if(form.hasGlobalErrors) {
       <div style="color: red; font-weight: bold;">@form.globalErrors.mkString(", ")</div>
     }

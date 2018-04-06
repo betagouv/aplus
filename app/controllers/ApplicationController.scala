@@ -87,6 +87,22 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     Ok(views.html.allApplication(request.currentUser, request.currentArea)(applicationService.allForCreatorUserId(currentUserId), applicationService.allForInvitedUserId(currentUserId), applicationsFromTheArea))
   }
 
+
+  def allAs(userId: UUID) = loginAction { implicit request =>
+    (request.currentUser.admin, userService.byId(userId))  match {
+      case (false, _) =>
+        Unauthorized("Vous n'avez pas le droits de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+      case (true, Some(user)) if user.admin =>
+        Unauthorized("Vous n'avez pas le droits de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+      case (true, Some(user)) if user.areas.contains(request.currentArea.id) =>
+        val currentUserId = user.id
+        val applicationsFromTheArea = List[Application]()
+        Ok(views.html.allApplication(user, request.currentArea)(applicationService.allForCreatorUserId(currentUserId), applicationService.allForInvitedUserId(currentUserId), applicationsFromTheArea))
+      case  _ =>
+        BadRequest("L'utilisateur n'existe pas ou vous n'étes pas dans sa zone. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+    }
+  }
+
   def allCSV = loginAction { implicit request =>
     val currentUserId = request.currentUser.id
     val exportedApplications = if(request.currentUser.admin) {
@@ -102,14 +118,21 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def show(id: UUID) = loginAction { implicit request =>
-    //TODO : check access right
     applicationService.byId(id, request.currentUser.id) match {
       case None =>
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
-        val users = userService.byArea(request.currentArea.id).filterNot(_.id == request.currentUser.id)
-          .filter(_.instructor)
-        Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, application))
+        val currentUser = request.currentUser
+        if(currentUser.admin||
+          application.invitedUsers.keys.toList.contains(request.currentUser.id)||
+          application.creatorUserId==request.currentUser.id) {
+            val users = userService.byArea(request.currentArea.id).filterNot(_.id == request.currentUser.id)
+              .filter(_.instructor)
+            Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, application))
+        }
+        else {
+          Unauthorized("Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+        }
     }
   }
 
