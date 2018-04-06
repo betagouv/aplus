@@ -87,6 +87,22 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     Ok(views.html.allApplication(request.currentUser, request.currentArea)(applicationService.allForCreatorUserId(currentUserId), applicationService.allForInvitedUserId(currentUserId), applicationsFromTheArea))
   }
 
+
+  def allAs(userId: UUID) = loginAction { implicit request =>
+    (request.currentUser.admin, userService.byId(userId))  match {
+      case (false, _) =>
+        Unauthorized("Vous n'avez pas le droits de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+      case (true, Some(user)) if user.admin =>
+        Unauthorized("Vous n'avez pas le droits de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+      case (true, Some(user)) if user.areas.contains(request.currentArea.id) =>
+        val currentUserId = user.id
+        val applicationsFromTheArea = List[Application]()
+        Ok(views.html.allApplication(user, request.currentArea)(applicationService.allForCreatorUserId(currentUserId), applicationService.allForInvitedUserId(currentUserId), applicationsFromTheArea))
+      case  _ =>
+        BadRequest("L'utilisateur n'existe pas ou vous n'étes pas dans sa zone. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+    }
+  }
+
   def allCSV = loginAction { implicit request =>
     val currentUserId = request.currentUser.id
     val exportedApplications = if(request.currentUser.admin) {

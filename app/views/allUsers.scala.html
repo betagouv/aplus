@@ -28,8 +28,8 @@
           }
   </script>
 } {
-  <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
-    <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table mdl-cell mdl-cell--12-col" style="white-space: normal;">
+  <div>
+    <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table" style="white-space: normal;">
       <thead>
         <tr>
           <th class="mdl-data-table__cell--non-numeric">Nom</th>
@@ -43,6 +43,7 @@
           <th class="mdl-data-table__cell--non-numeric">Demandes</th>
           <th class="mdl-data-table__cell--non-numeric">Solicitations</th>
           <th class="mdl-data-table__cell--non-numeric">Email de login</th>
+          <th class="mdl-data-table__cell--non-numeric">Id</th>
         </tr>
       </thead>
       <tbody>
@@ -81,6 +82,8 @@
           <td class="mdl-data-table__cell--non-numeric">
             <button type="button" class="mdl-button mdl-js-button mdl-button--raised" onclick="sendLoginMail(this,'@user.email');">Envoyer email</button>
           </td>
+
+          <td class="mdl-data-table__cell--non-numeric" style="width: 100px">@user.id</td>
         </tr>
         @if(index % 10 == 9) {
           <tr>
@@ -95,25 +98,25 @@
             <th class="mdl-data-table__cell--non-numeric">Demandes</th>
             <th class="mdl-data-table__cell--non-numeric">Solicitations</th>
             <th class="mdl-data-table__cell--non-numeric">Email de login</th>
+            <th class="mdl-data-table__cell--non-numeric">Id</th>
           </tr>
         }
       }
       </tbody>
     </table>
-    @helper.form(routes.UserController.add(), 'method -> "get", 'class -> "mdl-cell mdl-cell--12-col mdl-grid") {
-      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--6-col">
+    @helper.form(routes.UserController.add(), 'method -> "get") {
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
         <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="rows" name="rows" value="1">
         <label class="mdl-textfield__label" for="rows">Nombre d'utilisateur à ajouter</label>
         <span class="mdl-textfield__error">Ce n'est pas un nombre</span>
       </div>
-      <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--6-col" type="submit">
+      <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
         Ajouter des utilisateurs
       </button>
     }
     <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--6-col mdl-cell--12-col-phone" onclick="document.location='@routes.UserController.edit()'">
     Modifier les utilisateurs
     </button>
-
   </div>
   <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
     <h4>Admin</h4>
