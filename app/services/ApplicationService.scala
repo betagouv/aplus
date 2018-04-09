@@ -9,6 +9,7 @@ import play.api.db.Database
 import play.api.libs.json.{Json, JsonConfiguration, JsonNaming}
 import anorm._
 import anorm.JodaParameterMetaData._
+import org.joda.time.DateTime
 import play.api.libs.json.JodaReads._
 import play.api.libs.json.JodaWrites._
 
@@ -49,11 +50,32 @@ class ApplicationService @Inject()(db: Database) {
     "seen_by_user_ids",
     "usefulness"
   )
+  
+  private val simpleAnswer: RowParser[Answer] = Macro.parser[Answer](
+    "id",
+    "application_id",
+    "creation_date",
+    "message",
+    "creator_user_id",
+    "creator_user_name",
+    "invited_users",
+    "visible_by_helpers",
+    "area",
+    "declare_application_has_irrelevant"
+  )
+
 
   def byId(id: UUID, fromUserId: UUID): Option[Application] = db.withConnection { implicit connection =>
+    val answers = SQL("SELECT * FROM answer_unused WHERE application_id = {applicationId}::uuid ORDER BY creation_date ASC")
+      .on('applicationId -> id).as(simpleAnswer.*)
     SQL("UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *")
       .on('id -> id,
           'seen_by_user_id -> fromUserId).as(simpleApplication.singleOpt)
+       .map { application =>
+         implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
+         val newAnswers = (answers ++ application.answers).groupBy(_.id).map(_._2.head).toList.sortBy(_.creationDate)
+         application.copy(answers = newAnswers)
+    }
   }
 
   def allForCreatorUserId(creatorUserId: UUID) = db.withConnection { implicit connection =>
