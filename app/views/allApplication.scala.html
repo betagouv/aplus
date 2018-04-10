@@ -19,6 +19,8 @@
         vertical-align: middle;
     }
 </style>
+<link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("sortable/sortable.css")'>
+<script src="@routes.Assets.versioned("sortable/sortable.jsgi")"></script>
 <script>
     var extract = 9;
     function onSearch() {
@@ -148,10 +150,10 @@
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
             <h4 class="mdl-cell mdl-cell--12-col">Toutes les demandes du territoire: @area.name</h4>
             <div class="mdl-cell mdl-cell--12-col pem-container">
-                <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
+                <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp sortable" style="white-space: normal;">
                     <thead>
                         <tr>
-                            <th class="mdl-data-table__cell--non-numeric"></th>
+                            <th class="mdl-data-table__cell--non-numeric">#</th>
                             <th class="mdl-data-table__cell--non-numeric">Date</th>
                             <th class="mdl-data-table__cell--non-numeric">Sujet</th>
                             <th class="mdl-data-table__cell--non-numeric">Avancement</th>
