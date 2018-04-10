@@ -75,14 +75,15 @@
                             <tr>
                                 <th class="mdl-data-table__cell--non-numeric">Date</th>
                                 <th class="mdl-data-table__cell--non-numeric">Usager</th>
-                                <th class="mdl-data-table__cell--non-numeric">Sujet</th>
+                                <th class="mdl-data-table__cell--non-numeric mdl-cell--hide-phone">Sujet</th>
                                 <th class="mdl-data-table__cell--non-numeric">Avancement</th>
                                 <th class="mdl-data-table__cell--non-numeric"></th>
+                                <th class="mdl-data-table__cell--non-numeric" style="width: 20px">Détails</th>
                             </tr>
                         </thead>
                         <tfoot class="invisible">
                             <tr>
-                                <td class="mdl-data-table__cell--non-numeric" colspan="4" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+                                <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
                             </tr>
                         </tfoot>
                         <tbody>
@@ -90,9 +91,12 @@
                             <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row">
                                 <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.closed == false) { (@application.ageString) }</td>
                                 <td class="mdl-data-table__cell--non-numeric">@application.userInfos.get(Application.USER_LAST_NAME_KEY) @application.userInfos.get(Application.USER_FIRST_NAME_KEY)</td>
-                                <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
+                                <td class="mdl-data-table__cell--non-numeric mdl-cell--hide-phone">@application.subject</td>
                                 <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status(user)</td>
                                 <td class="mdl-data-table__cell--non-numeric search-cell"></td>
+                                <td class="mdl-data-table__cell--non-numeric" style="width: 20px"><a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                                    <i class="material-icons">info_outline</i>
+                                </a></td>
                             </tr>
                         }
                         </tbody>
@@ -110,14 +114,15 @@
                             <tr>
                                 <th class="mdl-data-table__cell--non-numeric">Date</th>
                                 <th class="mdl-data-table__cell--non-numeric">Usager</th>
-                                <th class="mdl-data-table__cell--non-numeric">Sujet</th>
+                                <th class="mdl-data-table__cell--non-numeric mdl-cell--hide-phone">Sujet</th>
                                 <th class="mdl-data-table__cell--non-numeric">Avancement</th>
                                 <th class="mdl-data-table__cell--non-numeric"></th>
+                                <th class="mdl-data-table__cell--non-numeric" style="width: 20px">Détails</th>
                             </tr>
                         </thead>
                         <tfoot class="invisible">
                             <tr>
-                                <td class="mdl-data-table__cell--non-numeric" colspan="4" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+                                <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
                             </tr>
                         </tfoot>
                         <tbody>
@@ -125,9 +130,12 @@
                             <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row @if(application.isLateForUser(user)){ application-row--late } else { @if(application.isNearlyLateForUser(user)){ application-row--nearly-late }  }">
                                 <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.closed == false) { (@application.ageString) }</td>
                                 <td class="mdl-data-table__cell--non-numeric">@application.userInfos.get(Application.USER_LAST_NAME_KEY) @application.userInfos.get(Application.USER_FIRST_NAME_KEY)</td>
-                                <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
+                                <td class="mdl-data-table__cell--non-numeric mdl-cell--hide-phone">@application.subject</td>
                                 <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status(user)</td>
                                 <td class="mdl-data-table__cell--non-numeric search-cell"></td>
+                                <td class="mdl-data-table__cell--non-numeric"><a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect  mdl-button--icon">
+                                    <i class="material-icons">info_outline</i>
+                                </a></td>
                             </tr>
                         }
                         </tbody>
@@ -153,11 +161,12 @@
                             <th class="mdl-data-table__cell--non-numeric">Utile</th>
                             <th class="mdl-data-table__cell--non-numeric">Non pertinente</th>
                             <th class="mdl-data-table__cell--non-numeric"></th>
+                            <th class="mdl-data-table__cell--non-numeric" style="width: 20px">Détails</th>
                         </tr>
                     </thead>
                     <tfoot class="invisible">
                         <tr>
-                            <td class="mdl-data-table__cell--non-numeric" colspan="7" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+                            <td class="mdl-data-table__cell--non-numeric" colspan="8" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
                         </tr>
                     </tfoot>
                     <tbody>
@@ -178,6 +187,9 @@
                             }</b></td>
                             <td class="mdl-data-table__cell--non-numeric">@if(application.irrelevant) { <span style="color: red; font-weight: bold;">Oui</span> } else { Non } </td>
                             <td class="mdl-data-table__cell--non-numeric search-cell"></td>
+                            <td class="mdl-data-table__cell--non-numeric"><a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                                <i class="material-icons">info_outline</i>
+                            </a></td>
                         </tr>
                     }
                     </tbody>
