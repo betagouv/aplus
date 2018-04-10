@@ -74,6 +74,7 @@
                         <thead>
                             <tr>
                                 <th class="mdl-data-table__cell--non-numeric">Date</th>
+                                <th class="mdl-data-table__cell--non-numeric">Usager</th>
                                 <th class="mdl-data-table__cell--non-numeric">Sujet</th>
                                 <th class="mdl-data-table__cell--non-numeric">Avancement</th>
                                 <th class="mdl-data-table__cell--non-numeric"></th>
@@ -88,6 +89,7 @@
                         @for((application) <- applicationsCreatedByMe.sortBy(_.closed)) {
                             <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row">
                                 <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.closed == false) { (@application.ageString) }</td>
+                                <td class="mdl-data-table__cell--non-numeric">@application.userInfos.get(Application.USER_LAST_NAME_KEY) @application.userInfos.get(Application.USER_FIRST_NAME_KEY)</td>
                                 <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
                                 <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status(user)</td>
                                 <td class="mdl-data-table__cell--non-numeric search-cell"></td>
@@ -107,6 +109,7 @@
                         <thead>
                             <tr>
                                 <th class="mdl-data-table__cell--non-numeric">Date</th>
+                                <th class="mdl-data-table__cell--non-numeric">Usager</th>
                                 <th class="mdl-data-table__cell--non-numeric">Sujet</th>
                                 <th class="mdl-data-table__cell--non-numeric">Avancement</th>
                                 <th class="mdl-data-table__cell--non-numeric"></th>
@@ -121,6 +124,7 @@
                         @for((application) <- applicationsIGotInvited.sortBy(_.closed)) {
                             <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row @if(application.isLateForUser(user)){ application-row--late } else { @if(application.isNearlyLateForUser(user)){ application-row--nearly-late }  }">
                                 <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.closed == false) { (@application.ageString) }</td>
+                                <td class="mdl-data-table__cell--non-numeric">@application.userInfos.get(Application.USER_LAST_NAME_KEY) @application.userInfos.get(Application.USER_FIRST_NAME_KEY)</td>
                                 <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
                                 <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status(user)</td>
                                 <td class="mdl-data-table__cell--non-numeric search-cell"></td>
