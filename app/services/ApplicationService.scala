@@ -44,7 +44,7 @@ class ApplicationService @Inject()(db: Database) {
     "invited_users",
     "area",
     "irrelevant",
-    "answers",
+    "answers",  // Data have been left bad migrated from answser_unsed
     "internal_id",
     "closed",
     "seen_by_user_ids",
@@ -73,6 +73,7 @@ class ApplicationService @Inject()(db: Database) {
           'seen_by_user_id -> fromUserId).as(simpleApplication.singleOpt)
        .map { application =>
          implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
+         // Hack to reintegrate answers that haven't been migrated (error in the migration SQL). Counting are wrong in general view.
          val newAnswers = (answers ++ application.answers).groupBy(_.id).map(_._2.head).toList.sortBy(_.creationDate)
          application.copy(answers = newAnswers)
     }
