@@ -30,7 +30,7 @@
                     }
 
                     <h5 class="mdl-cell mdl-cell--12-col">Informations de l'usager</h5>
-                    <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp" id="form__infos">
+                    <table class="mdl-data-table mdl-js-data-table" id="form__infos">
                         <tbody>
                             @repeatMap(applicationForm("infos"), applicationForm, List("Prénom", "Nom de famille")) {  (infoField, info) =>
                                 <tr>
@@ -82,7 +82,7 @@
                             <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
                         }
 
-                        <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp mdl-cell mdl-cell--12-col" id="users">
+                        <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
                         @for((organisme, orgUsers) <- users.groupBy(_.qualite).toList.sortBy(_._1).sortBy(_._1 == "Aide A+ / Je ne sais pas")) {
                             <thead>
                                 <tr>
