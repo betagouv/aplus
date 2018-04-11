@@ -41,7 +41,7 @@ case class Application(id: UUID,
 
    lazy val searchData = {
      val stripChars = "\"<>'"
-     s"${creatorUserName.filterNot(stripChars contains _)} ${userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")} ${subject.filterNot(stripChars contains _)} ${description.filterNot(stripChars contains _)} ${invitedUsers.values.map(_.filterNot(stripChars contains _)).mkString(" ")}"
+     s"${creatorUserName.filterNot(stripChars contains _)} ${userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")} ${subject.filterNot(stripChars contains _)} ${description.filterNot(stripChars contains _)} ${invitedUsers.values.map(_.filterNot(stripChars contains _)).mkString(" ")} ${answers.map(_.message.filterNot(stripChars contains _)).mkString(" ")}"
    }
 
    def status(user: User) = closed match {
@@ -69,4 +69,14 @@ case class Application(id: UUID,
 
    def isNearlyLateForUser(user: User): Boolean = !closed && invitedUsers.contains(user.id) &&
     answers.forall(_.creatorUserID != user.id) && answers.exists(_.creatorUserName.contains(user.qualite)) == false && ( age.getMonths > 0 || age.toStandardDays.getDays > 3 )
+}
+
+object Application {
+  val USER_FIRST_NAME_KEY = "Prénom"
+  val USER_LAST_NAME_KEY = "Nom de famille"
+  val USER_BIRTHDAY_KEY = "Date de naissance"
+  val USER_SOCIAL_SECURITY_NUMBER_KEY = "Numéro de sécurité sociale"
+  val USER_CAF_NUMBER_KEY = "Identifiant CAF"
+  val USER_APPLICATION_NUMBER_KEY = "Numéro de dossier"
+  val USER_BIRTHNAME_KEY = "Nom de Naissance"
 }
