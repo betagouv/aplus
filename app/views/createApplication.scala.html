@@ -21,8 +21,53 @@
         <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
             <h3 class="mdl-cell mdl-cell--12-col">Nouvelle demande</h3>
             <span><a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20A+"><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous</a> ( contact&commat;aplus.beta.gouv.fr )</span>
-            @helper.form(action = routes.ApplicationController.createPost(), args = 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
+            @helper.form(action = routes.ApplicationController.createPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();") {
                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
+                    <h5 class="mdl-cell mdl-cell--12-col">Sélectionnez les organismes concernés sur le territoire @area.name</h5>
+
+                    <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
+                        @if(applicationForm("users").hasErrors) {
+                            <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
+                        }
+
+                        <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
+                        @for((organisme, orgUsers) <- users.groupBy(_.qualite).toList.sortBy(_._1).sortBy(_._1 == "Aide A+ / Je ne sais pas")) {
+                            <thead>
+                                <tr>
+                                    <th class="mdl-data-table__cell--non-numeric" colspan="2">
+                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                            <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);" value="@organisme" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisme})){ checked="checked" }>
+                                            <span class="mdl-checkbox__label">@organisme</span>
+                                        </label></th>
+                                </tr>
+                            </thead>
+                            <tbody @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisme})){ class="invisible" }>
+                                @if(organisme.contains("CAF")) {
+                                    <tr><td colspan="2" style="text-align: left; white-space: normal">
+                                        <div class="info-box">La CAF aura besoin du <b>numéro identifiant CAF</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessous.</div>
+                                    </td></tr>
+                                } else if(organisme.contains("CPAM")) {
+                            <tr><td colspan="2" style="text-align: left; white-space: normal">
+                                <div class="info-box">La CPAM aura besoin du <b>numéro de sécurité sociale</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessous.</div>
+                            </td></tr>
+                                }
+
+                                @for(user <- orgUsers) {
+                                    <tr>
+                                        <td style="width: 95px">
+                                            <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
+                                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                                <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked="checked" }>
+                                            </label>
+                                        </td>
+                                        <td class="mdl-data-table__cell--non-numeric">@user.name</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        }
+                        </table>
+                    </div>
+                    <br>
                     <h5 class="mdl-cell mdl-cell--12-col">Sujet</h5>
 
                     @helper.input(applicationForm("subject"), 'label -> "Saisir le sujet de votre demande...") { (id, name, value, args) =>
@@ -30,6 +75,7 @@
                     }
 
                     <h5 class="mdl-cell mdl-cell--12-col">Informations de l'usager</h5>
+                    <div class="info-box">Vous pouvez utiliser plusieurs fois "Autre" pour ajouter des informations supplémentaires (comme un deuxième numéro de sécurité sociale).</div>
                     <table class="mdl-data-table mdl-js-data-table" id="form__infos">
                         <tbody>
                             @repeatMap(applicationForm("infos"), applicationForm, List("Prénom", "Nom de famille")) {  (infoField, info) =>
@@ -64,61 +110,18 @@
                                     </div>
                                 </td>
                                 <td class="mdl-data-table__cell--non-numeric"><button class="mdl-button mdl-js-button mdl-button--fab" type="button" id="add-infos__ok-button" onclick="addInfo();" disabled="disabled">
-                                    Ok
+                                    OK
                                 </button></td>
                             </tr>
                         </tbody>
                     </table>
                     <br>
+                    <br>
                     <h5 class="mdl-cell mdl-cell--12-col">Description</h5>
+                    <div class="info-box">Faite une description rapide du problème. <b>N'incluez pas de données permettant d'identifier l'usager</b> (comme son nom, prénom, numéro de sécurité social), vous pouvez les indiquer dans la section ci-dessus <b>Informations de l'usager</b>.</div>
                     @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
                         <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
                     }
-                    <br>
-                    <h5 class="mdl-cell mdl-cell--12-col">Envoyer la demande à (Territoire @area.name)</h5>
-
-                    <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
-                        @if(applicationForm("users").hasErrors) {
-                            <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
-                        }
-
-                        <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
-                        @for((organisme, orgUsers) <- users.groupBy(_.qualite).toList.sortBy(_._1).sortBy(_._1 == "Aide A+ / Je ne sais pas")) {
-                            <thead>
-                                <tr>
-                                    <th class="mdl-data-table__cell--non-numeric" colspan="2">
-                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                            <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);" value="@organisme" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisme})){ checked="checked" }>
-                                            <span class="mdl-checkbox__label">@organisme</span>
-                                        </label></th>
-                                </tr>
-                            </thead>
-                            <tbody @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisme})){ class="invisible" }>
-                                @if(organisme.contains("CAF")) {
-                                    <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                        <div class="info-box">La CAF aura besoin du numéro identifiant CAF et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.</div>
-                                    </td></tr>
-                                } else if(organisme.contains("CPAM")) {
-                                   <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                       <div class="info-box">La CPAM aura besoin du numéro de sécurité sociale et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessus.</div>
-                                    </td></tr>
-                                }
-
-                                @for(user <- orgUsers) {
-                                    <tr>
-                                        <td style="width: 95px">
-                                            <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
-                                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked="checked" }>
-                                            </label>
-                                        </td>
-                                        <td class="mdl-data-table__cell--non-numeric">@user.name</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        }
-                        </table>
-                    </div>
                     <br>
                     <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset">
                         Envoyer ma demande
@@ -175,12 +178,13 @@
 
                 function addInfo() {
                     var inputInfoName = document.getElementById("other-type");
+                    var valueInput = document.getElementById("other-type-value");
                     var infoName = inputInfoName.value;
-                    if(infoName === "") { return; }
+                    if(infoName === "" || valueInput.value === "") { return; }
                     var newNode = document.createElement('tr');
                     newNode.innerHTML = '<td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile">'+infoName+'</td> \
                         <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile"><div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label"> \
-                            <input class="mdl-textfield__input" type="text" id="sample1" name="infos['+infoName+']" value="'+document.getElementById("other-type-value").value+'"> \
+                            <input class="mdl-textfield__input" type="text" id="sample1" name="infos['+infoName+']" value="'+valueInput.value+'"> \
                             <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+' de l\'usager ici</label> \
                         </div></td> \
                         <td class="mdl-data-table__cell--non-numeric"> \
@@ -198,9 +202,9 @@
                         select.removeChild(select[select.selectedIndex]);
                     }
                     select.value = "";
-                    document.getElementById("other-type-value").value = "";
-                    document.getElementById("other-type-value").parentNode.classList.remove("is-dirty");
-                    document.getElementById("other-type-value").parentNode.classList.add("invisible");
+                    valueInput.value = "";
+                    valueInput.parentNode.classList.remove("is-dirty");
+                    valueInput.parentNode.classList.add("invisible");
                     document.getElementById("add-infos__ok-button").disabled = true;
                 }
         </script>
