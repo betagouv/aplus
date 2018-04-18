@@ -19,7 +19,7 @@ formats.date=yyyy-MM-dd
 # --- Errors
 error.invalid=Invalid value
 error.invalid.java.util.Date=Invalid date value
-error.required=Ce champs est obligatoire
+error.required=Ce champ est obligatoire
 error.number=Numeric value expected
 error.real=Real number value expected
 error.real.precision=Real number value with no more than {0} digit(s) including {1} decimal(s) expected
