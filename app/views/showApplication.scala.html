@@ -158,7 +158,7 @@ dialog {
                 Etat: <b>@application.status(user)</b> | Invités: <b>@application.invitedUsers.values.mkString(", ")</b> | Territoire: <b>@Area.all.find(_.id == application.area).get.name</b>
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
-                <h4>Informations de l'usager:</h4>
+                <h4>Informations concernant l'usager:</h4>
                 <ul>
                 @for((key, value) <- application.userInfos) {
                     <li>@key: <b>@value</b></li>

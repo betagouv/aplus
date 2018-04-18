@@ -23,7 +23,7 @@
             <span><a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20A+"><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous</a> ( contact&commat;aplus.beta.gouv.fr )</span>
             @helper.form(action = routes.ApplicationController.createPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();") {
                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
-                    <h5 class="mdl-cell mdl-cell--12-col">Sélectionnez les organismes concernés sur le territoire @area.name</h5>
+                    <h5 class="mdl-cell mdl-cell--12-col">Sélectionnez les organismes concernés sur la zone @area.name</h5>
 
                     <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
                         @if(applicationForm("users").hasErrors) {
@@ -44,11 +44,11 @@
                             <tbody @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisme})){ class="invisible" }>
                                 @if(organisme.contains("CAF")) {
                                     <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                        <div class="info-box">La CAF aura besoin du <b>numéro identifiant CAF</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessous.</div>
+                                        <div class="info-box">La CAF aura besoin du <b>numéro identifiant CAF</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
                                     </td></tr>
                                 } else if(organisme.contains("CPAM")) {
                             <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                <div class="info-box">La CPAM aura besoin du <b>numéro de sécurité sociale</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations de l'usager</b> ci-dessous.</div>
+                                <div class="info-box">La CPAM aura besoin du <b>numéro de sécurité sociale</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
                             </td></tr>
                                 }
 
@@ -74,7 +74,7 @@
                         <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
                     }
 
-                    <h5 class="mdl-cell mdl-cell--12-col">Informations de l'usager</h5>
+                    <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
                     <div class="info-box">Vous pouvez utiliser plusieurs fois "Autre" pour ajouter des informations supplémentaires (comme un deuxième numéro de sécurité sociale).</div>
                     <table class="mdl-data-table mdl-js-data-table" id="form__infos">
                         <tbody>
@@ -118,7 +118,7 @@
                     <br>
                     <br>
                     <h5 class="mdl-cell mdl-cell--12-col">Description</h5>
-                    <div class="info-box">Faite une description rapide du problème. <b>N'incluez pas de données permettant d'identifier l'usager</b> (comme son nom, prénom, numéro de sécurité social), vous pouvez les indiquer dans la section ci-dessus <b>Informations de l'usager</b>.</div>
+                    <div class="info-box">Rédigez une description rapide du problème. <b>N'incluez pas de données permettant d'identifier l'usager</b> (comme son nom, prénom, numéro de sécurité sociale), vous pouvez les indiquer dans la section ci-dessus <b>Informations concernant l'usager</b>.</div>
                     @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
                         <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
                     }
