@@ -1,6 +1,43 @@
 @(user: User, area: Area)(applicationsCreatedByMe: Seq[Application], applicationsIGotInvited: Seq[Application], applicationsFromTheArea: Seq[Application] = List())(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 @import java.util.Locale
 
+@display(applications: Seq[Application]) = {
+    <div class="mdl-cell mdl-cell--12-col pem-container">
+        Total : @applications.size ( @applications.groupBy(_.status(user)).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
+        <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
+            <thead>
+                <tr>
+                    <th class="mdl-data-table__cell--non-numeric">Date</th>
+                    <th class="mdl-data-table__cell--non-numeric">Usager</th>
+                    <th class="mdl-data-table__cell--non-numeric mdl-cell--hide-phone">Sujet</th>
+                    <th class="mdl-data-table__cell--non-numeric">Avancement</th>
+                    <th class="mdl-data-table__cell--non-numeric"></th>
+                    <th class="mdl-data-table__cell--non-numeric" style="width: 20px">Détails</th>
+                </tr>
+            </thead>
+            <tfoot class="invisible">
+                <tr>
+                    <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+                </tr>
+            </tfoot>
+            <tbody>
+            @for((application) <- applications.sortBy(_.closed)) {
+                <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row">
+                    <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.closed == false) { (@application.ageString) }</td>
+                    <td class="mdl-data-table__cell--non-numeric">@application.userInfos.get(Application.USER_LAST_NAME_KEY) @application.userInfos.get(Application.USER_FIRST_NAME_KEY)</td>
+                    <td class="mdl-data-table__cell--non-numeric mdl-cell--hide-phone">@application.subject</td>
+                    <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status(user)</td>
+                    <td class="mdl-data-table__cell--non-numeric search-cell"></td>
+                    <td class="mdl-data-table__cell--non-numeric" style="width: 20px"><a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                        <i class="material-icons">info_outline</i>
+                    </a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
 @main(user, area)(s"Toutes les demandes")  {
 <style>
     .pem-table {
@@ -71,78 +108,14 @@
         @if(applicationsCreatedByMe.nonEmpty) {
             <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
                 <h4 class="mdl-cell mdl-cell--12-col">Les demandes que j'ai créées</h4>
-                <div class="mdl-cell mdl-cell--12-col pem-container">
-                    <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
-                        <thead>
-                            <tr>
-                                <th class="mdl-data-table__cell--non-numeric">Date</th>
-                                <th class="mdl-data-table__cell--non-numeric">Usager</th>
-                                <th class="mdl-data-table__cell--non-numeric mdl-cell--hide-phone">Sujet</th>
-                                <th class="mdl-data-table__cell--non-numeric">Avancement</th>
-                                <th class="mdl-data-table__cell--non-numeric"></th>
-                                <th class="mdl-data-table__cell--non-numeric" style="width: 20px">Détails</th>
-                            </tr>
-                        </thead>
-                        <tfoot class="invisible">
-                            <tr>
-                                <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
-                            </tr>
-                        </tfoot>
-                        <tbody>
-                        @for((application) <- applicationsCreatedByMe.sortBy(_.closed)) {
-                            <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row">
-                                <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.closed == false) { (@application.ageString) }</td>
-                                <td class="mdl-data-table__cell--non-numeric">@application.userInfos.get(Application.USER_LAST_NAME_KEY) @application.userInfos.get(Application.USER_FIRST_NAME_KEY)</td>
-                                <td class="mdl-data-table__cell--non-numeric mdl-cell--hide-phone">@application.subject</td>
-                                <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status(user)</td>
-                                <td class="mdl-data-table__cell--non-numeric search-cell"></td>
-                                <td class="mdl-data-table__cell--non-numeric" style="width: 20px"><a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
-                                    <i class="material-icons">info_outline</i>
-                                </a></td>
-                            </tr>
-                        }
-                        </tbody>
-                    </table>
-                </div>
+                @display(applicationsCreatedByMe)
             </div>
         }
 
         @if(applicationsIGotInvited.nonEmpty) {
             <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
                 <h4 class="mdl-cell mdl-cell--12-col">Demandes sur lesquelles j'ai été invité</h4>
-                <div class="mdl-cell mdl-cell--12-col pem-container">
-                    <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
-                        <thead>
-                            <tr>
-                                <th class="mdl-data-table__cell--non-numeric">Date</th>
-                                <th class="mdl-data-table__cell--non-numeric">Usager</th>
-                                <th class="mdl-data-table__cell--non-numeric mdl-cell--hide-phone">Sujet</th>
-                                <th class="mdl-data-table__cell--non-numeric">Avancement</th>
-                                <th class="mdl-data-table__cell--non-numeric"></th>
-                                <th class="mdl-data-table__cell--non-numeric" style="width: 20px">Détails</th>
-                            </tr>
-                        </thead>
-                        <tfoot class="invisible">
-                            <tr>
-                                <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
-                            </tr>
-                        </tfoot>
-                        <tbody>
-                        @for((application) <- applicationsIGotInvited.sortBy(_.closed)) {
-                            <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row @if(application.isLateForUser(user)){ application-row--late } else { @if(application.isNearlyLateForUser(user)){ application-row--nearly-late }  }">
-                                <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")) @if(application.closed == false) { (@application.ageString) }</td>
-                                <td class="mdl-data-table__cell--non-numeric">@application.userInfos.get(Application.USER_LAST_NAME_KEY) @application.userInfos.get(Application.USER_FIRST_NAME_KEY)</td>
-                                <td class="mdl-data-table__cell--non-numeric mdl-cell--hide-phone">@application.subject</td>
-                                <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status(user)</td>
-                                <td class="mdl-data-table__cell--non-numeric search-cell"></td>
-                                <td class="mdl-data-table__cell--non-numeric"><a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect  mdl-button--icon">
-                                    <i class="material-icons">info_outline</i>
-                                </a></td>
-                            </tr>
-                        }
-                        </tbody>
-                    </table>
-                </div>
+                @display(applicationsIGotInvited)
             </div>
         }
     }
@@ -150,6 +123,7 @@
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
             <h4 class="mdl-cell mdl-cell--12-col">Toutes les demandes du territoire: @area.name</h4>
             <div class="mdl-cell mdl-cell--12-col pem-container">
+                Total : @applicationsFromTheArea.size ( @applicationsFromTheArea.groupBy(_.status(user)).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
                 <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp sortable" style="white-space: normal;">
                     <thead>
                         <tr>
