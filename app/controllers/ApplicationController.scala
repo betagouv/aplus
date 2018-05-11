@@ -87,6 +87,14 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     Ok(views.html.allApplication(request.currentUser, request.currentArea)(applicationService.allForCreatorUserId(currentUserId), applicationService.allForInvitedUserId(currentUserId), applicationsFromTheArea))
   }
 
+  def stats = loginAction { implicit request =>
+    val applicationsByArea = if(request.currentUser.admin) {
+      applicationService.all.groupBy(_.area).map{ case (areaId: UUID, applications: Seq[Application]) => (Area.all.find(_.id == areaId).get, applications) }
+    } else {
+      Map[Area,Seq[Application]]()
+    }
+    Ok(views.html.stats(request.currentUser, request.currentArea)(applicationsByArea))
+  }
 
   def allAs(userId: UUID) = loginAction { implicit request =>
     (request.currentUser.admin, userService.byId(userId))  match {

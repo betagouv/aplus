@@ -94,6 +94,10 @@ class ApplicationService @Inject()(db: Database) {
       .on('areaId -> areaId).as(simpleApplication.*)
   }
 
+  def all = db.withConnection { implicit connection =>
+    SQL("SELECT * FROM application ORDER BY creation_date DESC").as(simpleApplication.*)
+  }
+
   def createApplication(newApplication: Application) = db.withConnection { implicit connection =>
     val invitedUserJson = Json.toJson(newApplication.invitedUsers.map {
       case (key, value) =>

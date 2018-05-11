@@ -1,0 +1,102 @@
+@(user: User, area: Area)(allApplications: Map[Area, Seq[Application]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@import java.util.Locale
+
+@main(user, area)(s"Stats")  {
+    <style>
+        td {
+            cursor: pointer;
+        }
+        #search-input {
+            font-size: 17px;
+            padding: 5px;
+        }
+        .usefulness__icon {
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+        }
+    </style>
+    @Html(webJarsUtil.script("Chart.bundle.min.js"))
+}{
+    <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
+        <h4 class="mdl-cell mdl-cell--12-col">Demande par territoire</h4>
+        <div class="mdl-cell mdl-cell--12-col pem-container">
+            <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
+                <thead>
+                    <tr>
+                        <th class="mdl-data-table__cell--non-numeric">Territoire</th>
+                        <th class="mdl-data-table__cell--non-numeric">Total</th>
+                    </tr>
+                </thead>
+                <tfoot class="invisible">
+                    <tr>
+                        <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+                    </tr>
+                </tfoot>
+                <tbody>
+                @for((area, applications) <- allApplications) {
+                    <tr class="application-row">
+                        <td class="mdl-data-table__cell--non-numeric">@area.name</td>
+                        <td class="mdl-data-table__cell--non-numeric">@applications.length</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        @for((area, applications) <- allApplications) {
+            @defining(applications.groupBy(a => f"${a.creationDate.getYear}/${a.creationDate.getWeekOfWeekyear}%02d").toSeq.sortWith(_._1 > _._1)) { applicationsPerWeek: Seq[(String, Seq[Application])] =>
+                <h4 class="mdl-cell mdl-cell--12-col">@area.name</h4>
+                <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white mdl-grid">
+                    <canvas class="mdl-cell mdl-cell--12-col" id="new-application-chart-@area.name" style="height: 200px"></canvas>
+                    <script>
+                        new Chart(document.getElementById('new-application-chart-@area.name'), {
+                            // The type of chart we want to create
+                            type: 'bar',
+
+                            // The data for our dataset
+                            data: {
+                                labels: [@Html(applicationsPerWeek.map(_._1).map(week => s"'$week'").mkString(", "))],
+                                datasets: [{
+                                    label: "Nouvelle demande",
+                                    backgroundColor: '#3f51b5',
+                                    borderColor: '#3f51b5',
+                                    data: [@Html(applicationsPerWeek.map(_._2.length).mkString(", "))],
+                                }]
+                            },
+
+                            // Configuration options go here
+                            options: {
+                                "scales":{
+                                    "yAxes": [{
+                                        "ticks": {"beginAtZero":true}
+                                    }]
+                                }
+                            }
+                        });
+                    </script>
+                    <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col">
+                        <thead>
+                            <tr>
+                                <th class="mdl-data-table__cell--non-numeric">Semaine</th>
+                                <th class="mdl-data-table__cell--non-numeric">Nouvelle</th>
+                            </tr>
+                        </thead>
+                        <tfoot class="invisible">
+                            <tr>
+                                <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+                            </tr>
+                        </tfoot>
+                        <tbody>
+                        @for((week, applications) <- applicationsPerWeek) {
+                            <tr class="application-row">
+                                <td class="mdl-data-table__cell--non-numeric">@week</td>
+                                <td class="mdl-data-table__cell--non-numeric">@applications.length</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        }
+    </div>
+}
