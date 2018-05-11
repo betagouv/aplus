@@ -53,8 +53,8 @@
         }
         </div>
         @for((area, applications) <- allApplications) {
-            @defining(applications.groupBy(a => f"${a.creationDate.getYear}/${a.creationDate.getWeekOfWeekyear}%02d").toSeq.sortWith(_._1 > _._1)) { applicationsPerWeek: Seq[(String, Seq[Application])] =>
-                <h4 class="mdl-cell mdl-cell--12-col">@area.name</h4>
+            <h4 class="mdl-cell mdl-cell--12-col">@area.name</h4>
+            @defining(applications.groupBy(a => f"${a.creationDate.getYear}/${a.creationDate.getWeekOfWeekyear}%02d").toSeq.sortWith(_._1 < _._1)) { applicationsPerWeek: Seq[(String, Seq[Application])] =>
                 <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white mdl-grid">
                     <canvas class="mdl-cell mdl-cell--12-col" id="new-application-chart-@area.name" style="height: 200px"></canvas>
                     <script>
@@ -64,7 +64,7 @@
 
                             // The data for our dataset
                             data: {
-                                labels: [@Html(applicationsPerWeek.map(_._1).map(week => s"'$week'").mkString(", "))],
+                                labels: [@Html(applicationsPerWeek.map(_._2).map(applications => s"'${applications.headOption.map(_.creationDate.weekOfWeekyear().roundFloorCopy().toString("E dd MMM YYYY", new Locale("fr"))).getOrElse("")}'").mkString(", "))],
                                 datasets: [{
                                     label: "Nouvelle demande",
                                     backgroundColor: '#3f51b5',
@@ -113,6 +113,78 @@
                                 }
                                 </tbody>
                         }
+                    </table>
+            }
+            @defining(applications.filter(_.closedDate != None).groupBy(a => f"${a.closedDate.get.getYear}/${a.closedDate.get.getWeekOfWeekyear}%02d").toSeq.sortWith(_._1 < _._1)) { applicationsPerWeek: Seq[(String, Seq[Application])] =>
+                    <canvas class="mdl-cell mdl-cell--12-col" id="closed-chart-@area.name" style="height: 200px"></canvas>
+                    <script>
+                        new Chart(document.getElementById('closed-chart-@area.name'), {
+                            // The type of chart we want to create
+                            type: 'bar',
+
+                            // The data for our dataset
+                            data: {
+                                labels: [@Html(applicationsPerWeek.map(_._2).map(applications => s"'${applications.headOption.map(_.closedDate.get.weekOfWeekyear().roundFloorCopy().toString("E dd MMM YYYY", new Locale("fr"))).getOrElse("")}'").mkString(", "))],
+                                datasets: [{
+                                    label: "Demande clôturé",
+                                    backgroundColor: '#3f51b5',
+                                    borderColor: '#3f51b5',
+                                    data: [@Html(applicationsPerWeek.map(_._2.length).mkString(", "))],
+                                },{
+                                    label: "Demande clôturé non pertinante",
+                                    backgroundColor: 'red',
+                                    borderColor: 'red',
+                                    data: [@Html(applicationsPerWeek.map(_._2.count(_.irrelevant)).mkString(", "))],
+                                }, {
+                                    label: "Utile: Oui",
+                                    backgroundColor: 'yellow',
+                                    borderColor: 'yellow',
+                                    data: [@Html(applicationsPerWeek.map(_._2.count(_.usefulness.contains("Oui"))).mkString(", "))],
+                                }]
+                            },
+
+                            // Configuration options go here
+                            options: {
+                                "scales":{
+                                    "yAxes": [{
+                                        "ticks": {"beginAtZero":true}
+                                    }]
+                                }
+                            }
+                        });
+                    </script>
+                    <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col">
+                    <thead>
+                        <tr>
+                            <th class="mdl-data-table__cell--non-numeric">Semaine</th>
+                            <th>Clôturé</th>
+                            <th>Non Pertinante</th>
+                            <th><img class="usefulness__icon" src="@webJarsUtil.url("1f600.svg").get"> Oui</th>
+                            <th><img class="usefulness__icon" src="@webJarsUtil.url("1f610.svg").get"> Je ne sais pas</th>
+                            <th><img class="usefulness__icon" src="@webJarsUtil.url("1f61e.svg").get"> Non</th>
+                            <th>?</th>
+                            </tr>
+                    </thead>
+                    <tfoot class="invisible">
+                        <tr>
+                            <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">
+                                Supprimer le filtre et afficher toutes les demandes</button></td>
+                        </tr>
+                    </tfoot>
+                    <tbody>
+                    @for((week, applications) <- applicationsPerWeek) {
+                        <tr class="application-row">
+                            <td class="mdl-data-table__cell--non-numeric">@applications.headOption.map(_.closedDate.get.weekOfWeekyear().roundFloorCopy().toString("E dd MMM YYYY", new Locale("fr")))
+                                (@week)</td>
+                            <td>@applications.length</td>
+                            <td style="color: red; font-weight: bold">@applications.count(_.irrelevant)</td>
+                            <td>@applications.count(_.usefulness.contains("Oui")) <img class="usefulness__icon" src="@webJarsUtil.url("1f600.svg").get"></td>
+                            <td>@applications.count(_.usefulness.contains("Je ne sais pas")) <img class="usefulness__icon" src="@webJarsUtil.url("1f610.svg").get"></td>
+                            <td>@applications.count(_.usefulness.contains("Non")) <img class="usefulness__icon" src="@webJarsUtil.url("1f61e.svg").get"></td>
+                            <td>@applications.count(_.usefulness.isEmpty) ?</td>
+                        </tr>
+                    }
+                    </tbody>
                     </table>
                 </div>
             }

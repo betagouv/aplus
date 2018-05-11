@@ -70,7 +70,12 @@ case class Application(id: UUID,
    def isNearlyLateForUser(user: User): Boolean = !closed && invitedUsers.contains(user.id) &&
     answers.forall(_.creatorUserID != user.id) && answers.exists(_.creatorUserName.contains(user.qualite)) == false && ( age.getMonths > 0 || age.toStandardDays.getDays > 3 )
 
-   def administrations(users: List[User]): List[String] = invitedUsers(users).map(_.qualite).toSet.toList
+   def administrations(users: List[User]): List[String] = invitedUsers(users).map(_.qualite).distinct
+
+   lazy val closedDate = closed match {
+        case true => Some(answers.lastOption.map(_.creationDate).getOrElse(creationDate))
+        case _ => None
+      }
 }
 
 object Application {
