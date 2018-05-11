@@ -1,4 +1,4 @@
-@(user: User, area: Area)(allApplications: Map[Area, Seq[Application]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User, area: Area)(allApplications: Map[Area, Seq[Application]], users: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 @import java.util.Locale
 
 @main(user, area)(s"Stats")  {
@@ -20,28 +20,37 @@
 }{
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         <h4 class="mdl-cell mdl-cell--12-col">Demande par territoire</h4>
-        <div class="mdl-cell mdl-cell--12-col pem-container">
-            <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
+        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing pem-container">
+        @defining(allApplications.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
+            <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-cell mdl-cell--12-col " style="white-space: normal;">
                 <thead>
                     <tr>
                         <th class="mdl-data-table__cell--non-numeric">Territoire</th>
-                        <th class="mdl-data-table__cell--non-numeric">Total</th>
+                        <th>Total</th>
+                        @for(admin: String <- admins) {
+                            <th class="">@admin</th>
+                        }
                     </tr>
                 </thead>
                 <tfoot class="invisible">
                     <tr>
-                        <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+                        <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">
+                            Supprimer le filtre et afficher toutes les demandes</button></td>
                     </tr>
                 </tfoot>
                 <tbody>
-                @for((area, applications) <- allApplications) {
-                    <tr class="application-row">
-                        <td class="mdl-data-table__cell--non-numeric">@area.name</td>
-                        <td class="mdl-data-table__cell--non-numeric">@applications.length</td>
-                    </tr>
-                }
+                    @for((area, applications) <- allApplications) {
+                        <tr class="application-row">
+                            <td class="mdl-data-table__cell--non-numeric">@area.name</td>
+                            <td>@applications.length</td>
+                            @for(admin: String <- admins) {
+                                <td class="">@applications.count(_.administrations(users).contains(admin))</td>
+                            }
+                        </tr>
+                    }
                 </tbody>
             </table>
+        }
         </div>
         @for((area, applications) <- allApplications) {
             @defining(applications.groupBy(a => f"${a.creationDate.getYear}/${a.creationDate.getWeekOfWeekyear}%02d").toSeq.sortWith(_._1 > _._1)) { applicationsPerWeek: Seq[(String, Seq[Application])] =>
@@ -75,25 +84,35 @@
                         });
                     </script>
                     <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col">
-                        <thead>
-                            <tr>
-                                <th class="mdl-data-table__cell--non-numeric">Semaine</th>
-                                <th class="mdl-data-table__cell--non-numeric">Nouvelle</th>
-                            </tr>
-                        </thead>
-                        <tfoot class="invisible">
-                            <tr>
-                                <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
-                            </tr>
-                        </tfoot>
-                        <tbody>
-                        @for((week, applications) <- applicationsPerWeek) {
-                            <tr class="application-row">
-                                <td class="mdl-data-table__cell--non-numeric">@week</td>
-                                <td class="mdl-data-table__cell--non-numeric">@applications.length</td>
-                            </tr>
+                        @defining(applicationsPerWeek.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
+                                <thead>
+                                    <tr>
+                                        <th class="mdl-data-table__cell--non-numeric">Semaine</th>
+                                        <th>Nouvelle</th>
+                                        @for(admin: String <- admins) {
+                                            <th>@admin</th>
+                                        }
+                                        </tr>
+                                </thead>
+                                <tfoot class="invisible">
+                                    <tr>
+                                        <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">
+                                            Supprimer le filtre et afficher toutes les demandes</button></td>
+                                    </tr>
+                                </tfoot>
+                                <tbody>
+                                @for((week, applications) <- applicationsPerWeek) {
+                                    <tr class="application-row">
+                                        <td class="mdl-data-table__cell--non-numeric">@applications.headOption.map(_.creationDate.weekOfWeekyear().roundFloorCopy().toString("dd MMM YYYY", new Locale("fr")))
+                                            (@week)</td>
+                                        <td>@applications.length</td>
+                                        @for(admin: String <- admins) {
+                                            <td>@applications.count(_.administrations(users).contains(admin))</td>
+                                        }
+                                    </tr>
+                                }
+                                </tbody>
                         }
-                        </tbody>
                     </table>
                 </div>
             }

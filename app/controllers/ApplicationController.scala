@@ -93,7 +93,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     } else {
       Map[Area,Seq[Application]]()
     }
-    Ok(views.html.stats(request.currentUser, request.currentArea)(applicationsByArea))
+    var users = userService.all
+    Ok(views.html.stats(request.currentUser, request.currentArea)(applicationsByArea, users))
   }
 
   def allAs(userId: UUID) = loginAction { implicit request =>
