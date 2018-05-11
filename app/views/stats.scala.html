@@ -1,4 +1,5 @@
-@(user: User, area: Area)(allApplications: Map[Area, Seq[Application]], users: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@import scala.collection.immutable.ListMap
+@(user: User, area: Area)(weeks: ListMap[String, String], allApplications: Map[Area, Seq[Application]], users: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 @import java.util.Locale
 
 @main(user, area)(s"Stats")  {
@@ -54,9 +55,9 @@
         </div>
         @for((area, applications) <- allApplications) {
             <h4 class="mdl-cell mdl-cell--12-col">@area.name</h4>
-            @defining(applications.groupBy(a => f"${a.creationDate.getYear}/${a.creationDate.getWeekOfWeekyear}%02d").toSeq.sortWith(_._1 < _._1)) { applicationsPerWeek: Seq[(String, Seq[Application])] =>
+            @defining(weeks.keys.toSeq.map{ week:String => week -> applications.filter(a => f"${a.creationDate.getYear}/${a.creationDate.getWeekOfWeekyear}%02d" == week) } ) { applicationsPerWeek: Seq[(String, Seq[Application])] =>
                 <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white mdl-grid">
-                    <canvas class="mdl-cell mdl-cell--12-col" id="new-application-chart-@area.name" style="height: 200px"></canvas>
+                    <canvas class="mdl-cell mdl-cell--12-col" id="new-application-chart-@area.name" style="height: 300px"></canvas>
                     <script>
                         new Chart(document.getElementById('new-application-chart-@area.name'), {
                             // The type of chart we want to create
@@ -64,7 +65,7 @@
 
                             // The data for our dataset
                             data: {
-                                labels: [@Html(applicationsPerWeek.map(_._2).map(applications => s"'${applications.headOption.map(_.creationDate.weekOfWeekyear().roundFloorCopy().toString("E dd MMM YYYY", new Locale("fr"))).getOrElse("")}'").mkString(", "))],
+                                labels: [@Html(applicationsPerWeek.map(_._1).flatMap(weeks.get).map(day => s"'$day'").mkString(", "))],
                                 datasets: [{
                                     label: "Nouvelle demande",
                                     backgroundColor: '#3f51b5',
@@ -101,10 +102,9 @@
                                     </tr>
                                 </tfoot>
                                 <tbody>
-                                @for((week, applications) <- applicationsPerWeek) {
+                                @for((week, applications) <- applicationsPerWeek.reverse) {
                                     <tr class="application-row">
-                                        <td class="mdl-data-table__cell--non-numeric">@applications.headOption.map(_.creationDate.weekOfWeekyear().roundFloorCopy().toString("dd MMM YYYY", new Locale("fr")))
-                                            (@week)</td>
+                                        <td class="mdl-data-table__cell--non-numeric">@weeks(week) (@week)</td>
                                         <td>@applications.length</td>
                                         @for(admin: String <- admins) {
                                             <td>@applications.count(_.administrations(users).contains(admin))</td>
@@ -115,8 +115,8 @@
                         }
                     </table>
             }
-            @defining(applications.filter(_.closedDate != None).groupBy(a => f"${a.closedDate.get.getYear}/${a.closedDate.get.getWeekOfWeekyear}%02d").toSeq.sortWith(_._1 < _._1)) { applicationsPerWeek: Seq[(String, Seq[Application])] =>
-                    <canvas class="mdl-cell mdl-cell--12-col" id="closed-chart-@area.name" style="height: 200px"></canvas>
+            @defining(weeks.keys.toSeq.map{ week:String => week -> applications.filter(a => a.closedDate.isDefined && f"${a.closedDate.get.getYear}/${a.closedDate.get.getWeekOfWeekyear}%02d" == week) }) { applicationsPerWeek: Seq[(String, Seq[Application])] =>
+                    <canvas class="mdl-cell mdl-cell--12-col" id="closed-chart-@area.name" style="height: 300px"></canvas>
                     <script>
                         new Chart(document.getElementById('closed-chart-@area.name'), {
                             // The type of chart we want to create
@@ -124,7 +124,7 @@
 
                             // The data for our dataset
                             data: {
-                                labels: [@Html(applicationsPerWeek.map(_._2).map(applications => s"'${applications.headOption.map(_.closedDate.get.weekOfWeekyear().roundFloorCopy().toString("E dd MMM YYYY", new Locale("fr"))).getOrElse("")}'").mkString(", "))],
+                                labels: [@Html(applicationsPerWeek.map(_._1).flatMap(weeks.get).map(day => s"'$day'").mkString(", "))],
                                 datasets: [{
                                     label: "Demande clôturé",
                                     backgroundColor: '#3f51b5',
@@ -172,10 +172,9 @@
                         </tr>
                     </tfoot>
                     <tbody>
-                    @for((week, applications) <- applicationsPerWeek) {
+                    @for((week, applications) <- applicationsPerWeek.reverse) {
                         <tr class="application-row">
-                            <td class="mdl-data-table__cell--non-numeric">@applications.headOption.map(_.closedDate.get.weekOfWeekyear().roundFloorCopy().toString("E dd MMM YYYY", new Locale("fr")))
-                                (@week)</td>
+                            <td class="mdl-data-table__cell--non-numeric">@weeks(week) (@week)</td>
                             <td>@applications.length</td>
                             <td style="color: red; font-weight: bold">@applications.count(_.irrelevant)</td>
                             <td>@applications.count(_.usefulness.contains("Oui")) <img class="usefulness__icon" src="@webJarsUtil.url("1f600.svg").get"></td>
