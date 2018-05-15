@@ -19,19 +19,23 @@ libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.webjars" %% "webjars-play" % "2.6.1",
-  "org.webjars.bower" % "material-design-lite" % "1.3.0",
-  "org.webjars" % "material-design-icons" % "3.0.1",
-  "org.webjars.npm" % "roboto-fontface" % "0.8.0",
   "org.postgresql" % "postgresql" % "42.1.4",
   "com.typesafe.play" %% "anorm" % "2.5.3",
   "com.typesafe.play" %% "play-mailer" % "6.0.1",
   "com.typesafe.play" %% "play-mailer-guice" % "6.0.1",
-  "org.webjars.npm" % "dialog-polyfill" % "0.4.9",
-  "com.typesafe.play" %% "play-json-joda" % "2.6.0",
-  "org.webjars.npm" % "twemoji" % "2.2.0"
+  "com.typesafe.play" %% "play-json-joda" % "2.6.0"
 )
-
+// UI
+libraryDependencies ++= Seq(
+  "org.webjars" %% "webjars-play" % "2.6.1",
+  "org.webjars.bower" % "material-design-lite" % "1.3.0",
+  "org.webjars" % "material-design-icons" % "3.0.1",
+  "org.webjars.npm" % "roboto-fontface" % "0.8.0",
+  "org.webjars.npm" % "dialog-polyfill" % "0.4.9",
+  "org.webjars.npm" % "twemoji" % "2.2.0",
+  "org.webjars" % "chartjs" % "2.7.2"
+)
+// Crash
 libraryDependencies += "io.sentry" % "sentry-logback" % "1.6.3"
 
 // Adds additional packages into Twirl

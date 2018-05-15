@@ -16,6 +16,8 @@ import org.webjars.play.WebJarsUtil
 import services.{ApplicationService, NotificationService, UserService}
 import extentions.UUIDHelper
 
+import scala.collection.immutable.ListMap
+
 /**
  * This controller creates an `Action` to handle HTTP requests to the
  * application's home page.
@@ -87,6 +89,29 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     Ok(views.html.allApplication(request.currentUser, request.currentArea)(applicationService.allForCreatorUserId(currentUserId), applicationService.allForInvitedUserId(currentUserId), applicationsFromTheArea))
   }
 
+  def stats = loginAction { implicit request =>
+    request.currentUser.admin match {
+      case false =>
+        Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+      case true =>
+        val allApplications = applicationService.all
+        val applicationsByArea = allApplications.groupBy(_.area).map{ case (areaId: UUID, applications: Seq[Application]) => (Area.all.find(_.id == areaId).get, applications) }
+
+        val users = userService.all
+        import Time.dateTimeOrdering
+        val firstDate = allApplications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
+        val today = DateTime.now(timeZone).weekOfWeekyear().roundFloorCopy()
+        def recursion(date: DateTime): ListMap[String, String] = {
+          if(date.isBefore(firstDate)) {
+            ListMap()
+          } else {
+            recursion(date.minusWeeks(1)) + (f"${date.getYear}/${date.getWeekOfWeekyear}%02d" -> date.toString("E dd MMM YYYY", new Locale("fr")))
+          }
+        }
+        val weeks = recursion(today)
+        Ok(views.html.stats(request.currentUser, request.currentArea)(weeks, applicationsByArea, users))
+    }
+  }
 
   def allAs(userId: UUID) = loginAction { implicit request =>
     (request.currentUser.admin, userService.byId(userId))  match {

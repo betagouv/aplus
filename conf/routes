@@ -18,6 +18,8 @@ POST     /toutes-les-demandes/:applicationId/reponse_a_l_aidant     controllers.
 POST     /toutes-les-demandes/:applicationId/reponse_aux_agents     controllers.ApplicationController.answerAgents(applicationId: java.util.UUID)
 GET      /toutes-les-demandes/:applicationId/terminer               controllers.ApplicationController.terminate(applicationId: java.util.UUID)
 
+# Stats
+GET     /stats                       controllers.ApplicationController.stats
 
 # Login
 GET    /login                        controllers.LoginController.home

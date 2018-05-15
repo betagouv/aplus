@@ -31,6 +31,10 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     "delegations"
   )
 
+  def all = db.withConnection { implicit connection =>
+    SQL("""SELECT * FROM "user"""").as(simpleUser.*)
+  }
+
   def allDBOnlybyArea(areaId: UUID) = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""").on('areaId -> areaId).as(simpleUser.*)
   }
