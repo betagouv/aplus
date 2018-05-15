@@ -1,0 +1,192 @@
+@import scala.collection.immutable.ListMap
+@(user: User, area: Area)(weeks: ListMap[String, String], allApplications: Map[Area, Seq[Application]], users: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@import java.util.Locale
+
+@main(user, area)(s"Stats")  {
+    <style>
+        td {
+            cursor: pointer;
+        }
+        #search-input {
+            font-size: 17px;
+            padding: 5px;
+        }
+        .usefulness__icon {
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+        }
+    </style>
+    @Html(webJarsUtil.script("Chart.bundle.min.js"))
+}{
+    <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
+        <h4 class="mdl-cell mdl-cell--12-col">Demande par territoire</h4>
+        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing pem-container">
+        @defining(allApplications.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
+            <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-cell mdl-cell--12-col " style="white-space: normal;">
+                <thead>
+                    <tr>
+                        <th class="mdl-data-table__cell--non-numeric">Territoire</th>
+                        <th>Total</th>
+                        @for(admin: String <- admins) {
+                            <th class="">@admin</th>
+                        }
+                    </tr>
+                </thead>
+                <tfoot class="invisible">
+                    <tr>
+                        <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">
+                            Supprimer le filtre et afficher toutes les demandes</button></td>
+                    </tr>
+                </tfoot>
+                <tbody>
+                    @for((area, applications) <- allApplications) {
+                        <tr class="application-row">
+                            <td class="mdl-data-table__cell--non-numeric">@area.name</td>
+                            <td>@applications.length</td>
+                            @for(admin: String <- admins) {
+                                <td class="">@applications.count(_.administrations(users).contains(admin))</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        </div>
+        @for((area, applications) <- allApplications) {
+            <h4 class="mdl-cell mdl-cell--12-col">@area.name</h4>
+            @defining(weeks.keys.toSeq.map{ week:String => week -> applications.filter(a => f"${a.creationDate.getYear}/${a.creationDate.getWeekOfWeekyear}%02d" == week) } ) { applicationsPerWeek: Seq[(String, Seq[Application])] =>
+                <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white mdl-grid">
+                    <canvas class="mdl-cell mdl-cell--12-col" id="new-application-chart-@area.name" style="height: 300px"></canvas>
+                    <script>
+                        new Chart(document.getElementById('new-application-chart-@area.name'), {
+                            // The type of chart we want to create
+                            type: 'bar',
+
+                            // The data for our dataset
+                            data: {
+                                labels: [@Html(applicationsPerWeek.map(_._1).flatMap(weeks.get).map(day => s"'$day'").mkString(", "))],
+                                datasets: [{
+                                    label: "Nouvelle demande",
+                                    backgroundColor: '#3f51b5',
+                                    borderColor: '#3f51b5',
+                                    data: [@Html(applicationsPerWeek.map(_._2.length).mkString(", "))],
+                                }]
+                            },
+
+                            // Configuration options go here
+                            options: {
+                                "scales":{
+                                    "yAxes": [{
+                                        "ticks": {"beginAtZero":true}
+                                    }]
+                                }
+                            }
+                        });
+                    </script>
+                    <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col">
+                        @defining(applicationsPerWeek.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
+                                <thead>
+                                    <tr>
+                                        <th class="mdl-data-table__cell--non-numeric">Semaine</th>
+                                        <th>Nouvelle</th>
+                                        @for(admin: String <- admins) {
+                                            <th>@admin</th>
+                                        }
+                                        </tr>
+                                </thead>
+                                <tfoot class="invisible">
+                                    <tr>
+                                        <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">
+                                            Supprimer le filtre et afficher toutes les demandes</button></td>
+                                    </tr>
+                                </tfoot>
+                                <tbody>
+                                @for((week, applications) <- applicationsPerWeek.reverse) {
+                                    <tr class="application-row">
+                                        <td class="mdl-data-table__cell--non-numeric">@weeks(week) (@week)</td>
+                                        <td>@applications.length</td>
+                                        @for(admin: String <- admins) {
+                                            <td>@applications.count(_.administrations(users).contains(admin))</td>
+                                        }
+                                    </tr>
+                                }
+                                </tbody>
+                        }
+                    </table>
+            }
+            @defining(weeks.keys.toSeq.map{ week:String => week -> applications.filter(a => a.closedDate.isDefined && f"${a.closedDate.get.getYear}/${a.closedDate.get.getWeekOfWeekyear}%02d" == week) }) { applicationsPerWeek: Seq[(String, Seq[Application])] =>
+                    <canvas class="mdl-cell mdl-cell--12-col" id="closed-chart-@area.name" style="height: 300px"></canvas>
+                    <script>
+                        new Chart(document.getElementById('closed-chart-@area.name'), {
+                            // The type of chart we want to create
+                            type: 'bar',
+
+                            // The data for our dataset
+                            data: {
+                                labels: [@Html(applicationsPerWeek.map(_._1).flatMap(weeks.get).map(day => s"'$day'").mkString(", "))],
+                                datasets: [{
+                                    label: "Demande clôturé",
+                                    backgroundColor: '#3f51b5',
+                                    borderColor: '#3f51b5',
+                                    data: [@Html(applicationsPerWeek.map(_._2.length).mkString(", "))],
+                                },{
+                                    label: "Demande clôturé non pertinante",
+                                    backgroundColor: 'red',
+                                    borderColor: 'red',
+                                    data: [@Html(applicationsPerWeek.map(_._2.count(_.irrelevant)).mkString(", "))],
+                                }, {
+                                    label: "Utile: Oui",
+                                    backgroundColor: 'yellow',
+                                    borderColor: 'yellow',
+                                    data: [@Html(applicationsPerWeek.map(_._2.count(_.usefulness.contains("Oui"))).mkString(", "))],
+                                }]
+                            },
+
+                            // Configuration options go here
+                            options: {
+                                "scales":{
+                                    "yAxes": [{
+                                        "ticks": {"beginAtZero":true}
+                                    }]
+                                }
+                            }
+                        });
+                    </script>
+                    <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col">
+                    <thead>
+                        <tr>
+                            <th class="mdl-data-table__cell--non-numeric">Semaine</th>
+                            <th>Clôturé</th>
+                            <th>Non Pertinante</th>
+                            <th><img class="usefulness__icon" src="@webJarsUtil.url("1f600.svg").get"> Oui</th>
+                            <th><img class="usefulness__icon" src="@webJarsUtil.url("1f610.svg").get"> Je ne sais pas</th>
+                            <th><img class="usefulness__icon" src="@webJarsUtil.url("1f61e.svg").get"> Non</th>
+                            <th>?</th>
+                            </tr>
+                    </thead>
+                    <tfoot class="invisible">
+                        <tr>
+                            <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">
+                                Supprimer le filtre et afficher toutes les demandes</button></td>
+                        </tr>
+                    </tfoot>
+                    <tbody>
+                    @for((week, applications) <- applicationsPerWeek.reverse) {
+                        <tr class="application-row">
+                            <td class="mdl-data-table__cell--non-numeric">@weeks(week) (@week)</td>
+                            <td>@applications.length</td>
+                            <td style="color: red; font-weight: bold">@applications.count(_.irrelevant)</td>
+                            <td>@applications.count(_.usefulness.contains("Oui")) <img class="usefulness__icon" src="@webJarsUtil.url("1f600.svg").get"></td>
+                            <td>@applications.count(_.usefulness.contains("Je ne sais pas")) <img class="usefulness__icon" src="@webJarsUtil.url("1f610.svg").get"></td>
+                            <td>@applications.count(_.usefulness.contains("Non")) <img class="usefulness__icon" src="@webJarsUtil.url("1f61e.svg").get"></td>
+                            <td>@applications.count(_.usefulness.isEmpty) ?</td>
+                        </tr>
+                    }
+                    </tbody>
+                    </table>
+                </div>
+            }
+        }
+    </div>
+}
