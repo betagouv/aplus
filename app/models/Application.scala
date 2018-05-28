@@ -72,6 +72,8 @@ case class Application(id: UUID,
 
    def administrations(users: List[User]): List[String] = invitedUsers(users).map(_.qualite).distinct
 
+   def creatorUserQualite(users: List[User]): Option[String] = users.find(_.id == creatorUserId).map(_.qualite)
+
    lazy val closedDate = closed match {
         case true => Some(answers.lastOption.map(_.creationDate).getOrElse(creationDate))
         case _ => None
