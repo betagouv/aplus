@@ -208,6 +208,7 @@ dialog {
                         @if(!answer.visibleByHelpers) {
                             <div class="info-box info-box--orange do-not-print">Ce message n'est pas visible par l'aidant.</div>
                         }
+                        <p style="white-space: pre-line;">@answer.message</p>
                         @if(answer.invitedUsers.nonEmpty) {
                             <b>Notifiés:</b>
                             @answer.invitedUsers.values.mkString(", ")
