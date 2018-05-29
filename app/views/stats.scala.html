@@ -71,12 +71,12 @@
                                     borderColor: '#3f51b5',
                                     data: [@Html(newApplicationsPerWeek.map(_._2.length).mkString(", "))]
                                 },{
-                                    label: "Demandes clôturés",
+                                    label: "Demandes clôturées",
                                     backgroundColor: 'black',
                                     borderColor: 'black',
                                     data: [@Html(closedApplicationsPerWeek.map(_._2.length).mkString(", "))]
                                 },{
-                                    label: "Demandes clôturés non pertinente",
+                                    label: "Demandes clôturées non pertinente",
                                     backgroundColor: 'red',
                                     borderColor: 'red',
                                     data: [@Html(closedApplicationsPerWeek.map(_._2.count(_.irrelevant)).mkString(", "))]
@@ -109,7 +109,7 @@
                         });
                     </script>
                     <details class="mdl-cell mdl-cell--12-col">
-                        <summary>Détail des demandes reçu par les agents d'administrations </summary>
+                        <summary>Détail des demandes reçues par les agents d'administrations </summary>
 
                         @defining(newApplicationsPerWeek.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
                             <canvas class="mdl-cell mdl-cell--12-col" id="admin-received-chart-@area.name" style="height: 300px"></canvas>
@@ -230,7 +230,7 @@
                         }
                     </details>
                    <details class="mdl-cell mdl-cell--12-col">
-                    <summary>Détail des demandes clôturés</summary>
+                    <summary>Détail des demandes clôturées</summary>
                     <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col">
                     <thead>
                         <tr>
