@@ -188,7 +188,7 @@
                                                 fill: false,
                                                 borderColor: adminReceivedColors.pop(),
                                                 backgroundColor: adminReceivedColors.pop(),
-                                                data: [@Html(newApplicationsPerWeek.map(_._2.count(_.administrations(users).contains(admin))).mkString(", "))]
+                                                data: [@Html(newApplicationsPerWeek.map(_._2.count(_.creatorUserQualite(users).contains(admin))).mkString(", "))]
                                             },
                                             }
                                         ]
@@ -221,7 +221,7 @@
                                     <td class="mdl-data-table__cell--non-numeric">@weeks(week) (@week)</td>
                                     <td>@applications.length</td>
                                     @for(admin: String <- admins) {
-                                        <td>@applications.count(_.administrations(users).contains(admin))</td>
+                                        <td>@applications.count(_.creatorUserQualite(users).contains(admin))</td>
                                     }
                                 </tr>
                             }
