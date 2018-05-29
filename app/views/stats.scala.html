@@ -76,7 +76,7 @@
                                     borderColor: 'black',
                                     data: [@Html(closedApplicationsPerWeek.map(_._2.length).mkString(", "))]
                                 },{
-                                    label: "Demandes clôturées non pertinente",
+                                    label: "Demandes clôturées non pertinentes",
                                     backgroundColor: 'red',
                                     borderColor: 'red',
                                     data: [@Html(closedApplicationsPerWeek.map(_._2.count(_.irrelevant)).mkString(", "))]
