@@ -66,22 +66,22 @@
                             data: {
                                 labels: [@Html(newApplicationsPerWeek.map(_._1).flatMap(weeks.get).map(day => s"'$day'").mkString(", "))],
                                 datasets: [{
-                                    label: "Nouvelle demande",
+                                    label: "Nouvelles demandes",
                                     backgroundColor: '#3f51b5',
                                     borderColor: '#3f51b5',
                                     data: [@Html(newApplicationsPerWeek.map(_._2.length).mkString(", "))]
                                 },{
-                                    label: "Demande clôturé",
+                                    label: "Demandes clôturés",
                                     backgroundColor: 'black',
                                     borderColor: 'black',
                                     data: [@Html(closedApplicationsPerWeek.map(_._2.length).mkString(", "))]
                                 },{
-                                    label: "Demande clôturé non pertinante",
+                                    label: "Demandes clôturés non pertinente",
                                     backgroundColor: 'red',
                                     borderColor: 'red',
                                     data: [@Html(closedApplicationsPerWeek.map(_._2.count(_.irrelevant)).mkString(", "))]
                                 }, {
-                                    label: "Utile: Oui",
+                                    label: "Demandes utiles",
                                     backgroundColor: 'green',
                                     borderColor: 'green',
                                     data: [@Html(closedApplicationsPerWeek.map(_._2.count(_.usefulness.contains("Oui"))).mkString(", "))]
@@ -102,47 +102,135 @@
                             options: {
                                 "scales":{
                                     yAxes: [{
-                                        ticks: {"beginAtZero":true}
+                                        ticks: {"beginAtZero":true, fixedStepSize: 1}
                                     }]
                                 }
                             }
                         });
                     </script>
                     <details class="mdl-cell mdl-cell--12-col">
-                        <summary>Demandes par administrations destinatrices</summary>
-                        <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col">
-                            @defining(newApplicationsPerWeek.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
-                                    <thead>
-                                        <tr>
-                                            <th class="mdl-data-table__cell--non-numeric">Semaine</th>
-                                            <th>Nouvelle</th>
-                                            @for(admin: String <- admins) {
-                                                <th>@admin</th>
+                        <summary>Détail des demandes reçu par les agents d'administrations </summary>
+
+                        @defining(newApplicationsPerWeek.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
+                            <canvas class="mdl-cell mdl-cell--12-col" id="admin-received-chart-@area.name" style="height: 300px"></canvas>
+                            <script>
+                                    var adminReceivedColors = ["#caff70","#caff70","#8b8970","#8b8970","#a2cd5a","#a2cd5a","#eea2ad","#eea2ad","#666666","#666666","#7a7a7a","#7a7a7a","#87ceff","#87ceff","#6ca6cd","#6ca6cd","#eedd82","#eedd82","#ee6a50","#ee6a50","#ee7942","#ee7942","#ff83fa","#ff83fa","#c9c9c9","#c9c9c9","#919191","#919191","#cd5c5c","#cd5c5c","#454545","#454545","#eee9bf","#eee9bf",];
+                                    new Chart(document.getElementById('admin-received-chart-@area.name'), {
+                                        // The type of chart we want to create
+                                        type: 'line',
+                                        // The data for our dataset
+                                        data: {
+                                            labels: [@Html(newApplicationsPerWeek.map(_._1).flatMap(weeks.get).map(day => s"'$day'").mkString(", "))],
+                                            datasets: [
+                                                @for(admin: String <- admins) {
+                                                {
+                                                    label: "@Html(admin)",
+                                                    fill: false,
+                                                    borderColor: adminReceivedColors.pop(),
+                                                    backgroundColor: adminReceivedColors.pop(),
+                                                    data: [@Html(newApplicationsPerWeek.map(_._2.count(_.administrations(users).contains(admin))).mkString(", "))]
+                                                },
+                                                }
+                                            ]
+                                        },
+
+                                        // Configuration options go here
+                                        options: {
+                                            "scales":{
+                                                yAxes: [{
+                                                    ticks: {"beginAtZero":true,fixedStepSize: 1}
+                                                }]
                                             }
+                                        }
+                                    });
+                            </script>
+                            <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col">
+                                        <thead>
+                                            <tr>
+                                                <th class="mdl-data-table__cell--non-numeric">Semaine</th>
+                                                <th>Nouvelle</th>
+                                                @for(admin: String <- admins) {
+                                                    <th>@admin</th>
+                                                }
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+                                        @for((week, applications) <- newApplicationsPerWeek.reverse) {
+                                            <tr class="application-row">
+                                                <td class="mdl-data-table__cell--non-numeric">@weeks(week) (@week)</td>
+                                                <td>@applications.length</td>
+                                                @for(admin: String <- admins) {
+                                                    <td>@applications.count(_.administrations(users).contains(admin))</td>
+                                                }
                                             </tr>
-                                    </thead>
-                                    <tfoot class="invisible">
-                                        <tr>
-                                            <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">
-                                                Supprimer le filtre et afficher toutes les demandes</button></td>
-                                        </tr>
-                                    </tfoot>
-                                    <tbody>
-                                    @for((week, applications) <- newApplicationsPerWeek.reverse) {
-                                        <tr class="application-row">
-                                            <td class="mdl-data-table__cell--non-numeric">@weeks(week) (@week)</td>
-                                            <td>@applications.length</td>
+                                        }
+                                        </tbody>
+
+                            </table>
+                        }
+                    </details>
+                    <details class="mdl-cell mdl-cell--12-col">
+                        <summary>Détail des demandes faites par des structures aidantes</summary>
+                        @defining(newApplicationsPerWeek.flatMap(_._2).flatMap(_.creatorUserQualite(users)).toSet.toList) { admins =>
+                        <canvas class="mdl-cell mdl-cell--12-col" id="helper-admin-chart-@area.name" height="300px"></canvas>
+                        <script>
+                                var adminReceivedColors = ["#caff70","#caff70","#8b8970","#8b8970","#a2cd5a","#a2cd5a","#eea2ad","#eea2ad","#666666","#666666","#7a7a7a","#7a7a7a","#87ceff","#87ceff","#6ca6cd","#6ca6cd","#eedd82","#eedd82","#ee6a50","#ee6a50","#ee7942","#ee7942","#ff83fa","#ff83fa","#c9c9c9","#c9c9c9","#919191","#919191","#cd5c5c","#cd5c5c","#454545","#454545","#eee9bf","#eee9bf",];
+                                new Chart(document.getElementById('helper-admin-chart-@area.name'), {
+                                    // The type of chart we want to create
+                                    type: 'line',
+                                    // The data for our dataset
+                                    data: {
+                                        labels: [@Html(newApplicationsPerWeek.map(_._1).flatMap(weeks.get).map(day => s"'$day'").mkString(", "))],
+                                        datasets: [
                                             @for(admin: String <- admins) {
-                                                <td>@applications.count(_.administrations(users).contains(admin))</td>
+                                            {
+                                                label: "@Html(admin)",
+                                                fill: false,
+                                                borderColor: adminReceivedColors.pop(),
+                                                backgroundColor: adminReceivedColors.pop(),
+                                                data: [@Html(newApplicationsPerWeek.map(_._2.count(_.administrations(users).contains(admin))).mkString(", "))]
+                                            },
                                             }
-                                        </tr>
+                                        ]
+                                    },
+
+                                    // Configuration options go here
+                                    options: {
+                                        responsive: true,
+                                        "scales":{
+                                            yAxes: [{
+                                                ticks: {"beginAtZero":true, fixedStepSize: 1}
+                                            }]
+                                        }
                                     }
-                                    </tbody>
+                                });
+                        </script>
+                        <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col">
+                            <thead>
+                                <tr>
+                                    <th class="mdl-data-table__cell--non-numeric">Semaine</th>
+                                    <th>Nouvelle</th>
+                                    @for(admin: String <- admins) {
+                                        <th>@admin</th>
+                                    }
+                                    </tr>
+                            </thead>
+                            <tbody>
+                            @for((week, applications) <- newApplicationsPerWeek.reverse) {
+                                <tr class="application-row">
+                                    <td class="mdl-data-table__cell--non-numeric">@weeks(week) (@week)</td>
+                                    <td>@applications.length</td>
+                                    @for(admin: String <- admins) {
+                                        <td>@applications.count(_.administrations(users).contains(admin))</td>
+                                    }
+                                </tr>
                             }
+                            </tbody>
                         </table>
+                        }
                     </details>
                    <details class="mdl-cell mdl-cell--12-col">
-                    <summary>Demandes clôturé détails</summary>
+                    <summary>Détail des demandes clôturés</summary>
                     <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col">
                     <thead>
                         <tr>
@@ -155,12 +243,6 @@
                             <th>?</th>
                             </tr>
                     </thead>
-                    <tfoot class="invisible">
-                        <tr>
-                            <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">
-                                Supprimer le filtre et afficher toutes les demandes</button></td>
-                        </tr>
-                    </tfoot>
                     <tbody>
                     @for((week, applications) <- closedApplicationsPerWeek.reverse) {
                         <tr class="application-row">
