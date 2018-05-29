@@ -22,7 +22,7 @@ case class Application(id: UUID,
                        seenByUserIds: List[UUID] = List(),
                        usefulness: Option[String] = None) {
 
-   lazy val age = new Period(creationDate, DateTime.now(Time.timeZone))
+   lazy val age = new Period(creationDate, DateTime.now(Time.dateTimeZone))
    lazy val ageString = {
      if(age.getMonths > 0) {
        s"il y a ${age.getMonths} mois"

@@ -29,7 +29,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                                       notificationsService: NotificationService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
   import forms.Models._
 
-  private val timeZone = Time.timeZone
+  private val timeZone = Time.dateTimeZone
 
   val applicationForm = Form(
     mapping(
