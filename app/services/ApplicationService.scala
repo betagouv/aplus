@@ -49,8 +49,8 @@ class ApplicationService @Inject()(db: Database) {
     "closed",
     "seen_by_user_ids",
     "usefulness"
-  ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone), 
-                    answers = a.answers.map(_.copy(creationDate = creationDate.withZone(Time.dateTimeZone)))))
+  ).map(application => application.copy(creationDate = application.creationDate.withZone(Time.dateTimeZone), 
+                    answers = a.answers.map(answer => answer.copy(creationDate = answer.creationDate.withZone(Time.dateTimeZone)))))
   
   private val simpleAnswer: RowParser[Answer] = Macro.parser[Answer](
     "id",
@@ -63,7 +63,7 @@ class ApplicationService @Inject()(db: Database) {
     "visible_by_helpers",
     "area",
     "declare_application_has_irrelevant"
-  ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
+  ).map(answer => answer.copy(creationDate = answer.creationDate.withZone(Time.dateTimeZone)))
 
 
   def byId(id: UUID, fromUserId: UUID): Option[Application] = db.withConnection { implicit connection =>
