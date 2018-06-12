@@ -50,7 +50,7 @@ class ApplicationService @Inject()(db: Database) {
     "seen_by_user_ids",
     "usefulness"
   ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone), 
-                    answers = a.answers.map(_.creationDate.withZone(Time.dateTimeZone))))
+                    answers = a.answers.map(_.copy(creationDate = creationDate.withZone(Time.dateTimeZone)))))
   
   private val simpleAnswer: RowParser[Answer] = Macro.parser[Answer](
     "id",
