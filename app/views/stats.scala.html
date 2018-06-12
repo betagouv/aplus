@@ -15,6 +15,15 @@
             height: 20px;
             vertical-align: middle;
         }
+        .mdl-data-table th {
+            white-space: initial !important;
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 50vh;
+            width: 100%;
+        }
     </style>
     @Html(webJarsUtil.script("Chart.bundle.min.js"))
 }{
@@ -69,39 +78,54 @@
                                     label: "Nouvelles demandes",
                                     backgroundColor: '#3f51b5',
                                     borderColor: '#3f51b5',
+                                    stack: 'new',
                                     data: [@Html(newApplicationsPerWeek.map(_._2.length).mkString(", "))]
+                                }, {
+                                    label: "Demandes clôturées non évalué",
+                                    backgroundColor: 'gray',
+                                    borderColor: 'gray',
+                                    stack: 'useful',
+                                    data: [@Html(closedApplicationsPerWeek.map(_._2.count(_.usefulness.isEmpty)).mkString(", "))],
                                 },{
-                                    label: "Demandes clôturées",
-                                    backgroundColor: 'black',
-                                    borderColor: 'black',
-                                    data: [@Html(closedApplicationsPerWeek.map(_._2.length).mkString(", "))]
+                                    label: "Demandes clôturées non utiles",
+                                    backgroundColor: 'orange',
+                                    borderColor: 'orange',
+                                    stack: 'useful',
+                                    data: [@Html(closedApplicationsPerWeek.map(_._2.count(_.usefulness.contains("Non"))).mkString(", "))],
+                                }, {
+                                    label: "Demandes clôturées utilité inconnue",
+                                    backgroundColor: 'yellow',
+                                    borderColor: 'yellow',
+                                    stack: 'useful',
+                                    data: [@Html(closedApplicationsPerWeek.map(_._2.count(_.usefulness.contains("Je ne sais pas"))).mkString(", "))],
                                 },{
+                                    label: "Demandes clôturées utiles",
+                                    backgroundColor: 'green',
+                                    borderColor: 'green',
+                                    stack: 'useful',
+                                    data: [@Html(closedApplicationsPerWeek.map(_._2.count(_.usefulness.contains("Oui"))).mkString(", "))]
+                                }, {
                                     label: "Demandes clôturées non pertinentes",
                                     backgroundColor: 'red',
                                     borderColor: 'red',
+                                    stack: 'irrelevant',
                                     data: [@Html(closedApplicationsPerWeek.map(_._2.count(_.irrelevant)).mkString(", "))]
-                                }, {
-                                    label: "Demandes utiles",
-                                    backgroundColor: 'green',
-                                    borderColor: 'green',
-                                    data: [@Html(closedApplicationsPerWeek.map(_._2.count(_.usefulness.contains("Oui"))).mkString(", "))]
-                                }/*, {
-                                    label: "Utile: Je ne sais pas",
-                                    backgroundColor: 'yellow',
-                                    borderColor: 'yellow',
-                                    data: [@Html(closedApplicationsPerWeek.map(_._2.count(_.usefulness.contains("Je ne sais pas"))).mkString(", "))],
-                                }, {
-                                    label: "Utile: Non",
-                                    backgroundColor: 'orange',
-                                    borderColor: 'orange',
-                                    data: [@Html(closedApplicationsPerWeek.map(_._2.count(_.usefulness.contains("Non"))).mkString(", "))],
-                                }*/]
+                                }]
                             },
 
                             // Configuration options go here
                             options: {
-                                "scales":{
+                                tooltips: {
+                                    mode: 'index',
+                                    intersect: false
+                                },
+                                responsive: true,
+                                scales: {
+                                    xAxes: [{
+                                        stacked: true,
+                                    }],
                                     yAxes: [{
+                                        stacked: true,
                                         ticks: {"beginAtZero":true, fixedStepSize: 1}
                                     }]
                                 }
@@ -112,7 +136,9 @@
                         <summary>Détail des demandes reçues par les agents d'administrations </summary>
 
                         @defining(newApplicationsPerWeek.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
-                            <canvas class="mdl-cell mdl-cell--12-col" id="admin-received-chart-@area.name" style="height: 300px"></canvas>
+                            <div class="chart-container">
+                                <canvas id="admin-received-chart-@area.name"></canvas>
+                            </div>
                             <script>
                                     var adminReceivedColors = ["#caff70","#caff70","#8b8970","#8b8970","#a2cd5a","#a2cd5a","#eea2ad","#eea2ad","#666666","#666666","#7a7a7a","#7a7a7a","#87ceff","#87ceff","#6ca6cd","#6ca6cd","#eedd82","#eedd82","#ee6a50","#ee6a50","#ee7942","#ee7942","#ff83fa","#ff83fa","#c9c9c9","#c9c9c9","#919191","#919191","#cd5c5c","#cd5c5c","#454545","#454545","#eee9bf","#eee9bf",];
                                     new Chart(document.getElementById('admin-received-chart-@area.name'), {
@@ -128,6 +154,7 @@
                                                     fill: false,
                                                     borderColor: adminReceivedColors.pop(),
                                                     backgroundColor: adminReceivedColors.pop(),
+                                                    lineTension: 0,
                                                     data: [@Html(newApplicationsPerWeek.map(_._2.count(_.administrations(users).contains(admin))).mkString(", "))]
                                                 },
                                                 }
@@ -136,6 +163,7 @@
 
                                         // Configuration options go here
                                         options: {
+                                            maintainAspectRatio: false,
                                             "scales":{
                                                 yAxes: [{
                                                     ticks: {"beginAtZero":true,fixedStepSize: 1}
@@ -172,7 +200,9 @@
                     <details class="mdl-cell mdl-cell--12-col">
                         <summary>Détail des demandes faites par des structures aidantes</summary>
                         @defining(newApplicationsPerWeek.flatMap(_._2).flatMap(_.creatorUserQualite(users)).toSet.toList) { admins =>
-                        <canvas class="mdl-cell mdl-cell--12-col" id="helper-admin-chart-@area.name" height="300px"></canvas>
+                        <div class="chart-container">
+                            <canvas id="helper-admin-chart-@area.name"></canvas>
+                        </div>
                         <script>
                                 var adminReceivedColors = ["#caff70","#caff70","#8b8970","#8b8970","#a2cd5a","#a2cd5a","#eea2ad","#eea2ad","#666666","#666666","#7a7a7a","#7a7a7a","#87ceff","#87ceff","#6ca6cd","#6ca6cd","#eedd82","#eedd82","#ee6a50","#ee6a50","#ee7942","#ee7942","#ff83fa","#ff83fa","#c9c9c9","#c9c9c9","#919191","#919191","#cd5c5c","#cd5c5c","#454545","#454545","#eee9bf","#eee9bf",];
                                 new Chart(document.getElementById('helper-admin-chart-@area.name'), {
@@ -186,6 +216,7 @@
                                             {
                                                 label: "@Html(admin)",
                                                 fill: false,
+                                                lineTension: 0,
                                                 borderColor: adminReceivedColors.pop(),
                                                 backgroundColor: adminReceivedColors.pop(),
                                                 data: [@Html(newApplicationsPerWeek.map(_._2.count(_.creatorUserQualite(users).contains(admin))).mkString(", "))]
@@ -196,6 +227,7 @@
 
                                     // Configuration options go here
                                     options: {
+                                        maintainAspectRatio: false,
                                         responsive: true,
                                         "scales":{
                                             yAxes: [{
