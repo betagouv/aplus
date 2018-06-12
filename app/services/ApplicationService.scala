@@ -49,7 +49,8 @@ class ApplicationService @Inject()(db: Database) {
     "closed",
     "seen_by_user_ids",
     "usefulness"
-  ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
+  ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone), 
+                    answers = a.answer.map(_.creationDate.withZone(Time.dateTimeZone))))
   
   private val simpleAnswer: RowParser[Answer] = Macro.parser[Answer](
     "id",
