@@ -85,7 +85,7 @@
                                     backgroundColor: 'gray',
                                     borderColor: 'gray',
                                     stack: 'useful',
-                                    data: [@Html(closedApplicationsPerWeek.map(_._2.count(_.usefulness.contains("?"))).mkString(", "))],
+                                    data: [@Html(closedApplicationsPerWeek.map(_._2.count(_.usefulness.isEmpty)).mkString(", "))],
                                 },{
                                     label: "Demandes clôturées non utiles",
                                     backgroundColor: 'orange',
