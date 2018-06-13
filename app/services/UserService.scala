@@ -1,10 +1,10 @@
 package services
 
 import java.util.UUID
-import javax.inject.Inject
 
+import javax.inject.Inject
 import anorm.{Macro, RowParser, SQL}
-import models.User
+import models.{Time, User}
 import play.api.db.Database
 import extentions.Hash
 import play.api.libs.json.Json
@@ -29,7 +29,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     "creation_date",
     "has_accepted_charte",
     "delegations"
-  )
+  ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
 
   def all = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user"""").as(simpleUser.*)

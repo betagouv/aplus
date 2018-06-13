@@ -1,10 +1,10 @@
 package services
 
 import java.util.UUID
-import javax.inject.Inject
 
+import javax.inject.Inject
 import anorm.Column.nonNull
-import models.{Answer, Application}
+import models.{Answer, Application, Time}
 import play.api.db.Database
 import play.api.libs.json.{Json, JsonConfiguration, JsonNaming}
 import anorm._
@@ -49,7 +49,8 @@ class ApplicationService @Inject()(db: Database) {
     "closed",
     "seen_by_user_ids",
     "usefulness"
-  )
+  ).map(application => application.copy(creationDate = application.creationDate.withZone(Time.dateTimeZone), 
+                    answers = application.answers.map(answer => answer.copy(creationDate = answer.creationDate.withZone(Time.dateTimeZone)))))
   
   private val simpleAnswer: RowParser[Answer] = Macro.parser[Answer](
     "id",
@@ -62,7 +63,7 @@ class ApplicationService @Inject()(db: Database) {
     "visible_by_helpers",
     "area",
     "declare_application_has_irrelevant"
-  )
+  ).map(answer => answer.copy(creationDate = answer.creationDate.withZone(Time.dateTimeZone)))
 
 
   def byId(id: UUID, fromUserId: UUID): Option[Application] = db.withConnection { implicit connection =>

@@ -3,6 +3,7 @@ package models
 import org.joda.time.{DateTime, DateTimeZone}
 
 object Time {
-  val timeZone = DateTimeZone.forID("Europe/Paris")
+  val timeZone = "Europe/Paris"
+  val dateTimeZone = DateTimeZone.forID(timeZone)
   implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
 }
