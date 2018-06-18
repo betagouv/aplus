@@ -7,9 +7,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
     <title>A+</title>
-    @Html(webJarsUtil.css("roboto-fontface.css"))
-    @Html(webJarsUtil.css("material-icons.css"))
-    @Html(webJarsUtil.css("material.min.css"))
+    @webJarsUtil.locate("roboto-fontface.css").css()
+    @webJarsUtil.locate("material-icons.css").css()
+    @webJarsUtil.locate("material.min.css").css()
     <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/main.css")'>
     <style>
         .login-ribbon {
@@ -103,7 +103,7 @@
         nav.classList.remove("mdl-color--grey-100")
     }
 </script>
-    @Html(webJarsUtil.script("material.min.js"))
+    @webJarsUtil.locate("material.min.js").script()
 </body>
 </html>
 

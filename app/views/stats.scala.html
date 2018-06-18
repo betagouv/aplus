@@ -25,7 +25,7 @@
             width: 100%;
         }
     </style>
-    @Html(webJarsUtil.script("Chart.bundle.min.js"))
+    @webJarsUtil.locate("Chart.bundle.min.js").script()
 }{
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         <h4 class="mdl-cell mdl-cell--12-col">Demandes par territoire</h4>
@@ -269,9 +269,9 @@
                             <th class="mdl-data-table__cell--non-numeric">Semaine</th>
                             <th>Clôturé</th>
                             <th>Non Pertinante</th>
-                            <th><img class="usefulness__icon" src="@webJarsUtil.url("1f600.svg").get"> Oui</th>
-                            <th><img class="usefulness__icon" src="@webJarsUtil.url("1f610.svg").get"> Je ne sais pas</th>
-                            <th><img class="usefulness__icon" src="@webJarsUtil.url("1f61e.svg").get"> Non</th>
+                            <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"> Oui</th>
+                            <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"> Je ne sais pas</th>
+                            <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f61e.svg").url.get"> Non</th>
                             <th>?</th>
                             </tr>
                     </thead>
@@ -281,9 +281,9 @@
                             <td class="mdl-data-table__cell--non-numeric">@weeks(week) (@week)</td>
                             <td>@applications.length</td>
                             <td style="color: red; font-weight: bold">@applications.count(_.irrelevant)</td>
-                            <td>@applications.count(_.usefulness.contains("Oui")) <img class="usefulness__icon" src="@webJarsUtil.url("1f600.svg").get"></td>
-                            <td>@applications.count(_.usefulness.contains("Je ne sais pas")) <img class="usefulness__icon" src="@webJarsUtil.url("1f610.svg").get"></td>
-                            <td>@applications.count(_.usefulness.contains("Non")) <img class="usefulness__icon" src="@webJarsUtil.url("1f61e.svg").get"></td>
+                            <td>@applications.count(_.usefulness.contains("Oui")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"></td>
+                            <td>@applications.count(_.usefulness.contains("Je ne sais pas")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"></td>
+                            <td>@applications.count(_.usefulness.contains("Non")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f61e.svg").url.get"></td>
                             <td>@applications.count(_.usefulness.isEmpty) ?</td>
                         </tr>
                     }

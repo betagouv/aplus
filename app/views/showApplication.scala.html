@@ -110,19 +110,19 @@ dialog {
 }
 
 </style>
-@Html(webJarsUtil.css("dialog-polyfill.css"))
-@Html(webJarsUtil.script("dialog-polyfill.js"))
+@webJarsUtil.locate("dialog-polyfill.css").css()
+@webJarsUtil.locate("dialog-polyfill.js").script()
 }{
     <dialog class="mdl-dialog" id="dialog-terminate">
         <h4 class="mdl-dialog__title">Est-ce que la réponse vous semble utile pour l'usager ?</h4>
         <div class="mdl-dialog__content">
             <div class="inputs--row">
             <input id="yes" class="input--sweet" type="radio" name="usefulness" value="Oui" onchange="enableYes()">
-            <label for="yes"><img class="input__icon" src="@webJarsUtil.url("1f600.svg").get">Oui</label>
+            <label for="yes"><img class="input__icon" src="@webJarsUtil.locate("1f600.svg").url.get">Oui</label>
             <input id="neutral" class="input--sweet" type="radio" name="usefulness" value="Je ne sais pas" onchange="enableYes()">
-                <label for="neutral"><img class="input__icon" src="@webJarsUtil.url("1f610.svg").get"><span style="width: 100%">Je ne sais pas</span></label>
+                <label for="neutral"><img class="input__icon" src="@webJarsUtil.locate("1f610.svg").url.get"><span style="width: 100%">Je ne sais pas</span></label>
             <input id="no" class="input--sweet" type="radio" name="usefulness" value="Non" onchange="enableYes()">
-            <label for="no"><img class="input__icon" src="@webJarsUtil.url("1f61e.svg").get">Non</label>
+            <label for="no"><img class="input__icon" src="@webJarsUtil.locate("1f61e.svg").url.get">Non</label>
             </div><br>
             <b>Vous devez sélectionnez une réponse pour clore la demande.</b>
         </div>
