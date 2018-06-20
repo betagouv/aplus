@@ -4,7 +4,7 @@
 
 
 @main(user, area)(s"Gestion des utilisateurs ${area.name}") {
-    @Html(webJarsUtil.css("dialog-polyfill.css"))
+    @webJarsUtil.locate("dialog-polyfill.css").css()
   <style>
           .pem-table {
             width: 100%;
@@ -18,7 +18,7 @@
               transform: translate(0, -50%);
           }
   </style>
-    @Html(webJarsUtil.script("dialog-polyfill.js"))
+    @webJarsUtil.locate("dialog-polyfill.js").script()
     <script type='text/javascript'>
         function registerDialog(index) {
             var dialog = document.querySelector('#dialog-'+index);
