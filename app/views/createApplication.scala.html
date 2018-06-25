@@ -69,7 +69,7 @@
                     </div>
                     <br>
                     <h5 class="mdl-cell mdl-cell--12-col">Sujet</h5>
-
+                    <div class="info-box"><b>N'incluez pas de données permettant d'identifier l'usager</b> dans le sujet (comme son nom, prénom, numéro de sécurité sociale)</div>
                     @helper.input(applicationForm("subject"), 'label -> "Saisir le sujet de votre demande...") { (id, name, value, args) =>
                         <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
                     }

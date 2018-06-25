@@ -161,8 +161,7 @@ dialog {
                 <h4>Informations concernant l'usager:</h4>
                 <ul>
                 @for((key, value) <- application.userInfos) {
-                    <li>@key: <b>@value</b></li>
-
+                    <li>@key: <b>@if(user.admin){ @value.length caractères renseignés } else { @value }</b></li>
                 }
                 </ul>
             </div>
@@ -256,6 +255,7 @@ dialog {
                                             <span class="mdl-checkbox__label">Cette demande dispose d'une procédure standard que l'aidant aurait pu utiliser (Précisez-la dans le message de réponse)</span>
                                         </label>
                                     </p>
+                                    <div class="info-box"><b>N'incluez pas d'informations permettant d'identifier l'usager</b> dans votre message (comme son nom, prénom, numéro de sécurité sociale)</div>
                                     <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                         <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message"></textarea>
                                         <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Détaillez votre réponse ici...</label>
@@ -289,9 +289,8 @@ dialog {
                                 </tbody>
                             </table>
                             <h5 class="mdl-cell mdl-cell--12-col">Votre réponse</h5>
-                            @if(user.id != application.creatorUserId) {
-                                <div class="info-box">Les échanges entre les agents A+ ne seront pas visibles par les aidants.</div>
-                            }
+                            <div class="info-box"><b>N'incluez pas d'informations permettant d'identifier l'usager</b> dans votre message (comme son nom, prénom, numéro de sécurité sociale)<br>
+                                @if(user.id != application.creatorUserId) { Les échanges entre les agents A+ ne seront pas visibles par les aidants. }</div>
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                 <textarea class="mdl-textfield__input" type="text" rows= "5" id="agents-answer-message" style="width: 100%;" name="message"></textarea>
                                 <label class="mdl-textfield__label" for="agent-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Laisser votre réponse ici...</label>
@@ -329,7 +328,7 @@ dialog {
                                     </tbody>
                                 </table>
                                 <h5 class="mdl-cell mdl-cell--12-col">Ajouter un message</h5>
-                                <div class="info-box">Les échanges entre les agents A+ ne seront pas visible par les aidants.</div>
+                                <div class="info-box"><b>N'incluez pas d'informations permettant d'identifier l'usager</b> dans votre message (comme son nom, prénom, numéro de sécurité sociale).<br>Les échanges entre les agents A+ ne seront pas visible par les aidants.</div>
                                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                     <textarea class="mdl-textfield__input" type="text" rows= "5" id="agents-invitation-message" style="width: 100%;" name="message"></textarea>
                                     <label class="mdl-textfield__label" for="agents-invitation-message"><i class="material-icons" style="vertical-align: middle;">message</i> Laisser ici un message pour l'invitation...</label>
