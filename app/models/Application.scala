@@ -78,6 +78,20 @@ case class Application(id: UUID,
         case true => Some(answers.lastOption.map(_.creationDate).getOrElse(creationDate))
         case _ => None
       }
+
+   def allUserInfos = userInfos ++ answers.flatMap(_.userInfos.getOrElse(Map()))
+
+   lazy val anonymousApplication = {
+       val newUsersInfo = userInfos.map{ case (key,value) => key -> s"**$key (${value.length})**" }
+       val newDescription = allUserInfos.foldLeft(description) { case (buffer,(key, value)) => buffer.replaceAll(value, s"**$key**") }
+       val newAnswers = answers.map{
+         answer =>
+           answer.copy(userInfos = answer.userInfos.map(_.map{ case (key,value) => key -> s"**$key (${value.length})**" }),
+             message = allUserInfos.foldLeft(answer.message) { case (buffer,(key, value)) => buffer.replaceAll(value, s"**$key**") })
+       }
+       //TODO : Remove social security number
+       copy(userInfos = newUsersInfo, description = newDescription, answers = newAnswers)
+   }
 }
 
 object Application {

@@ -28,7 +28,7 @@ class UserController @Inject()(loginAction: LoginAction,
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
       val users = userService.byArea(request.currentArea.id)
-      val applications = applicationService.allByArea(request.currentArea.id)
+      val applications = applicationService.allByArea(request.currentArea.id, true)
       Ok(views.html.allUsers(request.currentUser, request.currentArea)(users, applications))
     }
   }

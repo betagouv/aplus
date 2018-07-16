@@ -85,8 +85,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
   def all = loginAction { implicit request =>
     val currentUserId = request.currentUser.id
-    val applicationsFromTheArea = if(request.currentUser.admin) { applicationService.allByArea(request.currentArea.id) } else { List[Application]() }
-    Ok(views.html.allApplication(request.currentUser, request.currentArea)(applicationService.allForCreatorUserId(currentUserId), applicationService.allForInvitedUserId(currentUserId), applicationsFromTheArea))
+    val applicationsFromTheArea = if(request.currentUser.admin) { applicationService.allByArea(request.currentArea.id, request.currentUser.admin) } else { List[Application]() }
+    Ok(views.html.allApplication(request.currentUser, request.currentArea)(applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin), applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin), applicationsFromTheArea))
   }
 
   def stats = loginAction { implicit request =>
@@ -94,7 +94,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       case false =>
         Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
       case true =>
-        val allApplications = applicationService.all
+        val allApplications = applicationService.all(request.currentUser.admin)
         val applicationsByArea = allApplications.groupBy(_.area).map{ case (areaId: UUID, applications: Seq[Application]) => (Area.all.find(_.id == areaId).get, applications) }
 
         val users = userService.all
@@ -122,7 +122,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       case (true, Some(user)) if user.areas.contains(request.currentArea.id) =>
         val currentUserId = user.id
         val applicationsFromTheArea = List[Application]()
-        Ok(views.html.allApplication(user, request.currentArea)(applicationService.allForCreatorUserId(currentUserId), applicationService.allForInvitedUserId(currentUserId), applicationsFromTheArea))
+        Ok(views.html.allApplication(user, request.currentArea)(applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin), applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin), applicationsFromTheArea))
       case  _ =>
         BadRequest("L'utilisateur n'existe pas ou vous n'étes pas dans sa zone. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
     }
@@ -131,10 +131,10 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   def allCSV = loginAction { implicit request =>
     val currentUserId = request.currentUser.id
     val exportedApplications = if(request.currentUser.admin) {
-      applicationService.allByArea(request.currentArea.id)
+      applicationService.allByArea(request.currentArea.id, request.currentUser.admin)
     } else {
-      (applicationService.allForCreatorUserId(currentUserId) ++
-        applicationService.allForInvitedUserId(currentUserId)).groupBy(_.id).map(_._2.head)
+      (applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin) ++
+        applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin)).groupBy(_.id).map(_._2.head)
     }
     val userIds = exportedApplications.flatMap(_.invitedUsers.keys).toSet.toList
     val users = userService.byIds(userIds)
@@ -143,7 +143,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def show(id: UUID) = loginAction { implicit request =>
-    applicationService.byId(id, request.currentUser.id) match {
+    applicationService.byId(id, request.currentUser.id, request.currentUser.admin) match {
       case None =>
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
@@ -153,7 +153,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           application.creatorUserId==request.currentUser.id) {
             val users = userService.byArea(request.currentArea.id).filterNot(_.id == request.currentUser.id)
               .filter(_.instructor)
-            Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, application))
+            Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, application, answerToAgentsForm))
         }
         else {
           Unauthorized("Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
@@ -174,7 +174,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         BadRequest("Erreur interne, contacter l'administrateur A+ : contact@aplus.beta.gouv.fr")
       },
       answerData => {
-        applicationService.byId(applicationId, request.currentUser.id) match {
+        applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
           case None =>
             NotFound("Nous n'avons pas trouvé cette demande")
           case Some(application) =>
@@ -186,7 +186,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
               Map(),
               true,
               request.currentArea.id,
-              answerData.applicationIsDeclaredIrrelevant)
+              answerData.applicationIsDeclaredIrrelevant,
+              Some(Map()))
             if (applicationService.add(applicationId, answer) == 1) {
               notificationsService.newAnswer(application, answer)
               Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
@@ -200,14 +201,15 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   val answerToAgentsForm = Form(
     mapping(
       "message" -> text,
-      "users" -> list(uuid)
+      "users" -> list(uuid),
+      "infos" -> FormsPlusMap.map(nonEmptyText.verifying(maxLength(30))),
     )(AnswerToAgentsData.apply)(AnswerToAgentsData.unapply)
   )
 
   def answerAgents(applicationId: UUID) = loginAction { implicit request =>
     val answerData = answerToAgentsForm.bindFromRequest.get
 
-    applicationService.byId(applicationId, request.currentUser.id) match {
+    applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
       case None =>
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
@@ -222,7 +224,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           notifiedUsers,
           request.currentUser.id == application.creatorUserId,
           request.currentArea.id,
-          false)
+          false,
+          Some(answerData.infos))
         if (applicationService.add(applicationId,answer) == 1) {
           notificationsService.newAnswer(application, answer)
           Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
@@ -234,7 +237,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
   def invite(applicationId: UUID) = loginAction { implicit request =>
     val inviteData = answerToAgentsForm.bindFromRequest.get
-    applicationService.byId(applicationId, request.currentUser.id) match {
+    applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
       case None =>
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
@@ -249,7 +252,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           invitedUsers,
           false,
           request.currentArea.id,
-          false)
+          false,
+          Some(Map()))
         if (applicationService.add(applicationId, answer)  == 1) {
           notificationsService.newAnswer(application, answer)
           Redirect(routes.ApplicationController.all()).flashing ("success" -> "Les agents ont été invités sur la demande")
@@ -264,7 +268,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def terminate(applicationId: UUID) = loginAction {  implicit request =>
-    (request.getQueryString("usefulness"), applicationService.byId(applicationId, request.currentUser.id)) match {
+    (request.getQueryString("usefulness"), applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin)) match {
       case (_, None) =>
         NotFound("Nous n'avons pas trouvé cette demande.")
       case (None, _) =>
