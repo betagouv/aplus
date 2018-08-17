@@ -26,7 +26,8 @@ object User {
     User(UUIDHelper.namedFrom("zohra"), Hash.sha256(s"zohra"), "Zohra LEBEL", "Aide A+", "zohra.lebel@beta.gouv.fr", true, true, true, List(), date, true),
     User(UUIDHelper.namedFrom("yan"), Hash.sha256(s"yan"), "Yan TANGUY (disabled)", "Aide A+", "yan.tanguy@dila.gouv.fr - disabled", false, false, false, List(), date, false),
     User(UUIDHelper.namedFrom("julien"), Hash.sha256(s"julien"), "Julien DAUPHANT", "Aide A+", "julien.dauphant@beta.gouv.fr", true, true, true, List(), date, true),
-    User(UUIDHelper.namedFrom("pierre"), Hash.sha256(s"pierre"), "Pierre MOMBOISSE", "Aide A+", "pierre.momboisse@beta.gouv.fr", true, true, true, List(), date, true),
+    User(UUIDHelper.namedFrom("pierre"), Hash.sha256(s"pierre"), "Pierre MOMBOISSE", "Aide A+", "pierre.momboisse@beta.gouv.fr", false, false, false, List(), date, false),
+    User(UUIDHelper.namedFrom("simon"), Hash.sha256(s"simon"), "Simon PINEAU", "Aide A+", "simon.pineau@beta.gouv.fr", true, true, true, List(), date, true),
     User(UUIDHelper.namedFrom("dominique"), Hash.sha256(s"dominique"), "Dominique LEQUEPEYS", "Aide A+", "dominique.lequepeys@beta.gouv.fr", true, true, true, List(), date, true),
   )
 }
