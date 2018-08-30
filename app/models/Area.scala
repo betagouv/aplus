@@ -9,6 +9,7 @@ case class Area(id: UUID, name: String)
 object Area {
   val all = List(
     Area(UUIDHelper.namedFrom("argenteuil"), "Argenteuil"),
+    Area(UUIDHelper.namedFrom("cahors"), "Bassin de Cahors"),
     Area(UUIDHelper.namedFrom("besancon"), "Besançon"),
     Area(UUIDHelper.namedFrom("lons-le-saunoer"), "Lons-le-Saunier"),
     Area(UUIDHelper.namedFrom("perigueux"), "Périgueux"),
