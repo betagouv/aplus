@@ -93,7 +93,6 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
                       |<br>
                       |<p>${answer.map(_.creatorUserName).getOrElse(application.creatorUserName)} a besoin de vous.<br>
                       |Cette personne vous a invité sur la demande suivante : "${application.subject}"
-                      |<br><q><i>${application.description}</i></q></p>
                       |Vous pouvez voir la demande et y répondre en suivant ce lien : <br>
                       |<a href="${url}">${url}</a><br>
                       |$footer
