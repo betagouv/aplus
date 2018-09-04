@@ -69,8 +69,7 @@
                     </div>
                     <br>
                     <h5 class="mdl-cell mdl-cell--12-col">Sujet</h5>
-                    <div class="info-box mdl-cell--12-col"><b>N'incluez pas de données permettant d'identifier l'usager</b> dans le sujet (comme son nom, prénom, numéro de sécurité sociale)</div>
-                    @helper.input(applicationForm("subject"), 'label -> "Saisir le sujet de votre demande...") { (id, name, value, args) =>
+                     @helper.input(applicationForm("subject"), 'label -> "Saisir le sujet de votre demande...") { (id, name, value, args) =>
                         <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
                     }
                     <br>
@@ -80,7 +79,7 @@
                     <br>
                     <br>
                     <h5 class="mdl-cell mdl-cell--12-col">Description</h5>
-                    <div class="info-box">Rédigez une description rapide du problème. <b>N'incluez pas de données permettant d'identifier l'usager</b> (comme son nom, prénom, numéro de sécurité sociale), vous pouvez les indiquer dans la section ci-dessus <b>Informations concernant l'usager</b>.</div>
+                    <div class="info-box">Rédigez une description rapide du problème.</div>
                     @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
                         <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
                     }

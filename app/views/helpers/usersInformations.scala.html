@@ -1,7 +1,6 @@
 @import extentions.MDLForms._
 @(form: Form[_], mandatoryFields: List[String] = List())(implicit messagesProvider: MessagesProvider)
 
-<div class="info-box mdl-cell--12-col">Vous pouvez utiliser plusieurs fois "Autre" pour ajouter des informations supplémentaires (comme un deuxième numéro de sécurité sociale).</div>
 <table class="mdl-data-table mdl-js-data-table" id="form__infos">
     <tbody>
         @repeatMap(form("infos"), form, mandatoryFields) {  (infoField, info) =>

@@ -83,14 +83,15 @@ case class Application(id: UUID,
 
    lazy val anonymousApplication = {
        val newUsersInfo = userInfos.map{ case (key,value) => key -> s"**$key (${value.length})**" }
-       val newDescription = allUserInfos.foldLeft(description) { case (buffer,(key, value)) => buffer.replaceAll(value, s"**$key**") }
        val newAnswers = answers.map{
          answer =>
            answer.copy(userInfos = answer.userInfos.map(_.map{ case (key,value) => key -> s"**$key (${value.length})**" }),
-             message = allUserInfos.foldLeft(answer.message) { case (buffer,(key, value)) => buffer.replaceAll(value, s"**$key**") })
+             message = s"** Message de ${description.length} caractères **")
        }
-       //TODO : Remove social security number
-       copy(userInfos = newUsersInfo, description = newDescription, answers = newAnswers)
+       copy(userInfos = newUsersInfo,
+         subject = s"** Sujet de ${subject.length} caractères **",
+         description = s"** Description de ${description.length} caractères **",
+         answers = newAnswers)
    }
 }
 
