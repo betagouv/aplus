@@ -280,7 +280,7 @@ dialog {
                     }
                     @if(application.invitedUsers.filterNot(_._1 == user.id).nonEmpty) {
                     <div class="mdl-tabs__panel" id="answer-agents">
-                        <form action='@routes.ApplicationController.answerAgents(application.id)' class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
+                        <form action='@routes.ApplicationController.answerAgents(application.id)' class="mdl-cell mdl-cell--12-col mdl-grid" method="post" onsubmit="addInfo();">
                             <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply_all</i> Répondre aux agents invités à cette demande</h3>
                             <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" style="border: none;">
                                 <tr>
