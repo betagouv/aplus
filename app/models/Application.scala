@@ -86,7 +86,7 @@ case class Application(id: UUID,
        val newAnswers = answers.map{
          answer =>
            answer.copy(userInfos = answer.userInfos.map(_.map{ case (key,value) => key -> s"**$key (${value.length})**" }),
-             message = s"** Message de ${description.length} caractères **")
+             message = s"** Message de ${answer.message.length} caractères **")
        }
        copy(userInfos = newUsersInfo,
          subject = s"** Sujet de ${subject.length} caractères **",
