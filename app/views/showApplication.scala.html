@@ -188,7 +188,7 @@ dialog {
                 <p style="white-space: pre-line;">@application.description</p>
             </div>
             @for(answer <- application.answers){
-                @if(user.instructor || answer.visibleByHelpers || answer.creatorUserID == user.id) {
+                @if(user.instructor || user.admin || answer.visibleByHelpers || answer.creatorUserID == user.id) {
                     <div class="mdl-card__supporting-text mdl-card--border" id="answer-@answer.id">
                         <ul class="mdl-list">
                             <li class="mdl-list__item">
@@ -241,7 +241,7 @@ dialog {
             <div class="mdl-card__actions do-not-print mdl-grid">
                 <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
                     <div class="mdl-tabs__tab-bar">
-                        @if(user.instructor) {
+                        @if(user.instructor || user.admin) {
                             <a href="#answer-helper" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
                                 reply</i> Répondre à l'aidant</a>
                         }
@@ -255,7 +255,7 @@ dialog {
                         }
                     </div>
 
-                    @if(user.instructor) {
+                    @if(user.instructor || user.admin) {
                         <div class="mdl-tabs__panel" id="answer-helper">
                             <form action="@routes.ApplicationController.answerHelper(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
                                 <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply</i> Répondre directement à l'aidant @application.creatorUserName</h3>
@@ -267,7 +267,6 @@ dialog {
                                             <span class="mdl-checkbox__label">Cette demande dispose d'une procédure standard que l'aidant aurait pu utiliser (Précisez-la dans le message de réponse)</span>
                                         </label>
                                     </p>
-                                    <div class="info-box mdl-cell--12-col"><b>N'incluez pas d'informations permettant d'identifier l'usager</b> dans votre message (comme son nom, prénom, numéro de sécurité sociale)</div>
                                     <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                         <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message"></textarea>
                                         <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Détaillez votre réponse ici...</label>
@@ -307,8 +306,9 @@ dialog {
                                 @helpers.usersInformations(answerToAgentsForm)
                             }
                             <h5 class="mdl-cell mdl-cell--12-col">Votre réponse</h5>
-                            <div class="info-box mdl-cell--12-col"><b>N'incluez pas d'informations permettant d'identifier l'usager dans votre message</b> (comme son nom, prénom, numéro de sécurité sociale)<br>
-                                @if(user.id != application.creatorUserId) { Les échanges entre les agents A+ ne seront pas visibles par les aidants. }</div>
+                            @if(user.id != application.creatorUserId) {
+                                <div class="info-box mdl-cell--12-col">Les échanges entre les agents A+ ne seront pas visibles par les aidants.</div>
+                            }
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                 <textarea class="mdl-textfield__input" type="text" rows= "5" id="agents-answer-message" style="width: 100%;" name="message"></textarea>
                                 <label class="mdl-textfield__label" for="agent-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Laisser votre réponse ici...</label>
@@ -346,7 +346,7 @@ dialog {
                                     </tbody>
                                 </table>
                                 <h5 class="mdl-cell mdl-cell--12-col">Ajouter un message</h5>
-                                <div class="info-box mdl-cell--12-col"><b>N'incluez pas d'informations permettant d'identifier l'usager</b> dans votre message (comme son nom, prénom, numéro de sécurité sociale).<br>Les échanges entre les agents A+ ne seront pas visible par les aidants.</div>
+                                <div class="info-box mdl-cell--12-col">Les échanges entre les agents A+ ne seront pas visible par les aidants.</div>
                                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                     <textarea class="mdl-textfield__input" type="text" rows= "5" id="agents-invitation-message" style="width: 100%;" name="message"></textarea>
                                     <label class="mdl-textfield__label" for="agents-invitation-message"><i class="material-icons" style="vertical-align: middle;">message</i> Laisser ici un message pour l'invitation...</label>
