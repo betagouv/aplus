@@ -1,4 +1,4 @@
-@(user: User, area: Area)(users: List[User], application: Application)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User, area: Area)(users: List[User], application: Application, answerToAgentsForm: Form[_])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider)
 @import java.util.Locale
 
 @main(user, area)(s"Demande : ${application.subject} ")  {
@@ -158,11 +158,15 @@ dialog {
                 Etat: <b>@application.status(user)</b> | Invités: <b>@application.invitedUsers.values.mkString(", ")</b> | Territoire: <b>@Area.all.find(_.id == application.area).get.name</b>
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
-                <h4>Informations concernant l'usager:</h4>
+                <h4>Informations concernant l'usager :</h4>
                 <ul>
                 @for((key, value) <- application.userInfos) {
                     <li>@key: <b>@value</b></li>
-
+                }
+                @for(answer <- application.answers) {
+                    @for((key, value) <- answer.userInfos.getOrElse(Map())) {
+                        <li>@key: <b>@value</b> (ajouté le @answer.creationDate.toString("E dd MMM YYYY", new Locale("fr")))</li>
+                    }
                 }
                 </ul>
             </div>
@@ -174,7 +178,7 @@ dialog {
                                 case Some((_,icon)) => { <img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
                                 case None => { <i class="material-icons mdl-list__item-avatar">person</i> }
                             }
-                            <span>@application.creatorUserName</span>
+                            <span>@application.creatorUserName</span>@if(user.admin){ <span style="font-weight: bold; color:red"> @users.find(_.id == application.creatorUserId).map(_.email).getOrElse("")</span>}
                         </span>
                         <span class="mdl-list__item-secondary-content">
                             <span>@application.creationDate.toString("E dd MMM YYYY - HH:mm", new Locale("fr"))</span>
@@ -184,7 +188,7 @@ dialog {
                 <p style="white-space: pre-line;">@application.description</p>
             </div>
             @for(answer <- application.answers){
-                @if(user.instructor || answer.visibleByHelpers || answer.creatorUserID == user.id) {
+                @if(user.instructor || user.admin || answer.visibleByHelpers || answer.creatorUserID == user.id) {
                     <div class="mdl-card__supporting-text mdl-card--border" id="answer-@answer.id">
                         <ul class="mdl-list">
                             <li class="mdl-list__item">
@@ -193,7 +197,7 @@ dialog {
                                         case Some((_,icon)) => { <img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
                                         case None => { <i class="material-icons mdl-list__item-avatar">person</i> }
                                     }
-                                    <span>@answer.creatorUserName</span>
+                                    <span>@answer.creatorUserName</span>@if(user.admin){ <span style="font-weight: bold; color:red"> @users.find(_.id == answer.creatorUserID).map(_.email).getOrElse("")</span>}
                                     <span class="mdl-list__item-sub-title"></span>
                                 </span>
                                 <span class="mdl-list__item-secondary-content">
@@ -207,6 +211,13 @@ dialog {
                         }
                         @if(!answer.visibleByHelpers) {
                             <div class="info-box info-box--orange do-not-print">Ce message n'est pas visible par l'aidant.</div>
+                        }
+                        @if(answer.userInfos.nonEmpty) {
+                            <ul>
+                                @for((key, value) <- answer.userInfos.getOrElse(Map())) {
+                                    <li>@key: <b>@value</b></li>
+                                }
+                            </ul>
                         }
                         <p style="white-space: pre-line;">@answer.message</p>
                         @if(answer.invitedUsers.nonEmpty) {
@@ -230,7 +241,7 @@ dialog {
             <div class="mdl-card__actions do-not-print mdl-grid">
                 <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
                     <div class="mdl-tabs__tab-bar">
-                        @if(user.instructor) {
+                        @if(user.instructor || user.admin) {
                             <a href="#answer-helper" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
                                 reply</i> Répondre à l'aidant</a>
                         }
@@ -244,7 +255,7 @@ dialog {
                         }
                     </div>
 
-                    @if(user.instructor) {
+                    @if(user.instructor || user.admin) {
                         <div class="mdl-tabs__panel" id="answer-helper">
                             <form action="@routes.ApplicationController.answerHelper(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
                                 <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply</i> Répondre directement à l'aidant @application.creatorUserName</h3>
@@ -288,9 +299,15 @@ dialog {
                                 }
                                 </tbody>
                             </table>
+                            <br>
+                            <br>
+                            @if(user.id == application.creatorUserId) {
+                                <h5 class="mdl-cell mdl-cell--12-col">Ajouter informations concernant l'usager</h5>
+                                @helpers.usersInformations(answerToAgentsForm)
+                            }
                             <h5 class="mdl-cell mdl-cell--12-col">Votre réponse</h5>
                             @if(user.id != application.creatorUserId) {
-                                <div class="info-box">Les échanges entre les agents A+ ne seront pas visibles par les aidants.</div>
+                                <div class="info-box mdl-cell--12-col">Les échanges entre les agents A+ ne seront pas visibles par les aidants.</div>
                             }
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                 <textarea class="mdl-textfield__input" type="text" rows= "5" id="agents-answer-message" style="width: 100%;" name="message"></textarea>
@@ -329,7 +346,7 @@ dialog {
                                     </tbody>
                                 </table>
                                 <h5 class="mdl-cell mdl-cell--12-col">Ajouter un message</h5>
-                                <div class="info-box">Les échanges entre les agents A+ ne seront pas visible par les aidants.</div>
+                                <div class="info-box mdl-cell--12-col">Les échanges entre les agents A+ ne seront pas visible par les aidants.</div>
                                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                     <textarea class="mdl-textfield__input" type="text" rows= "5" id="agents-invitation-message" style="width: 100%;" name="message"></textarea>
                                     <label class="mdl-textfield__label" for="agents-invitation-message"><i class="material-icons" style="vertical-align: middle;">message</i> Laisser ici un message pour l'invitation...</label>

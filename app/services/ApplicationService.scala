@@ -62,14 +62,16 @@ class ApplicationService @Inject()(db: Database) {
     "invited_users",
     "visible_by_helpers",
     "area",
-    "declare_application_has_irrelevant"
+    "declare_application_has_irrelevant",
+    "user_infos"
   ).map(answer => answer.copy(creationDate = answer.creationDate.withZone(Time.dateTimeZone)))
 
 
-  def byId(id: UUID, fromUserId: UUID): Option[Application] = db.withConnection { implicit connection =>
+  def byId(id: UUID, fromUserId: UUID, anonymous: Boolean): Option[Application] = db.withConnection { implicit connection =>
     val answers = SQL("SELECT * FROM answer_unused WHERE application_id = {applicationId}::uuid ORDER BY creation_date ASC")
+      // Hack to reintegrate answers that haven't been migrated (error in the migration SQL). Counting are wrong in general view.
       .on('applicationId -> id).as(simpleAnswer.*)
-    SQL("UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *")
+    val result = SQL("UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *")
       .on('id -> id,
           'seen_by_user_id -> fromUserId).as(simpleApplication.singleOpt)
        .map { application =>
@@ -78,25 +80,50 @@ class ApplicationService @Inject()(db: Database) {
          val newAnswers = (answers ++ application.answers).groupBy(_.id).map(_._2.head).toList.sortBy(_.creationDate)
          application.copy(answers = newAnswers)
     }
+    if(anonymous){
+      result.map(_.anonymousApplication)
+    } else {
+      result
+    }
   }
 
-  def allForCreatorUserId(creatorUserId: UUID) = db.withConnection { implicit connection =>
-    SQL("SELECT * FROM application WHERE creator_user_id = {creatorUserId}::uuid ORDER BY creation_date DESC")
+  def allForCreatorUserId(creatorUserId: UUID, anonymous: Boolean) = db.withConnection { implicit connection =>
+    val result = SQL("SELECT * FROM application WHERE creator_user_id = {creatorUserId}::uuid ORDER BY creation_date DESC")
       .on('creatorUserId -> creatorUserId).as(simpleApplication.*)
+    if(anonymous){
+      result.map(_.anonymousApplication)
+    } else {
+      result
+    }
   }
 
-  def allForInvitedUserId(invitedUserId: UUID) = db.withConnection { implicit connection =>
-    SQL("SELECT * FROM application WHERE invited_users ?? {invitedUserId} ORDER BY creation_date DESC")
+  def allForInvitedUserId(invitedUserId: UUID, anonymous: Boolean) = db.withConnection { implicit connection =>
+    val result = SQL("SELECT * FROM application WHERE invited_users ?? {invitedUserId} ORDER BY creation_date DESC")
       .on('invitedUserId -> invitedUserId).as(simpleApplication.*)
+    if(anonymous){
+      result.map(_.anonymousApplication)
+    } else {
+      result
+    }
   }
 
-  def allByArea(areaId: UUID) = db.withConnection { implicit connection =>
-    SQL("SELECT * FROM application WHERE area = {areaId}::uuid ORDER BY creation_date DESC")
+  def allByArea(areaId: UUID, anonymous: Boolean) = db.withConnection { implicit connection =>
+    val result = SQL("SELECT * FROM application WHERE area = {areaId}::uuid ORDER BY creation_date DESC")
       .on('areaId -> areaId).as(simpleApplication.*)
+    if(anonymous){
+      result.map(_.anonymousApplication)
+    } else {
+      result
+    }
   }
 
-  def all = db.withConnection { implicit connection =>
-    SQL("SELECT * FROM application ORDER BY creation_date DESC").as(simpleApplication.*)
+  def all(anonymous: Boolean) = db.withConnection { implicit connection =>
+    val result = SQL("SELECT * FROM application ORDER BY creation_date DESC").as(simpleApplication.*)
+    if(anonymous){
+      result.map(_.anonymousApplication)
+    } else {
+      result
+    }
   }
 
   def createApplication(newApplication: Application) = db.withConnection { implicit connection =>

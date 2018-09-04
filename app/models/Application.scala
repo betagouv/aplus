@@ -78,6 +78,21 @@ case class Application(id: UUID,
         case true => Some(answers.lastOption.map(_.creationDate).getOrElse(creationDate))
         case _ => None
       }
+
+   def allUserInfos = userInfos ++ answers.flatMap(_.userInfos.getOrElse(Map()))
+
+   lazy val anonymousApplication = {
+       val newUsersInfo = userInfos.map{ case (key,value) => key -> s"**$key (${value.length})**" }
+       val newAnswers = answers.map{
+         answer =>
+           answer.copy(userInfos = answer.userInfos.map(_.map{ case (key,value) => key -> s"**$key (${value.length})**" }),
+             message = s"** Message de ${answer.message.length} caractères **")
+       }
+       copy(userInfos = newUsersInfo,
+         subject = s"** Sujet de ${subject.length} caractères **",
+         description = s"** Description de ${description.length} caractères **",
+         answers = newAnswers)
+   }
 }
 
 object Application {
