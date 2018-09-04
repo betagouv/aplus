@@ -13,4 +13,5 @@ case class Answer(id: UUID,
                   invitedUsers: Map[UUID, String],
                   visibleByHelpers: Boolean,
                   area: UUID,
-                  declareApplicationHasIrrelevant: Boolean)
+                  declareApplicationHasIrrelevant: Boolean,
+                  userInfos: Option[Map[String, String]])
