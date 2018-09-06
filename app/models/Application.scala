@@ -20,7 +20,8 @@ case class Application(id: UUID,
                        internalId: Int = -1,
                        closed: Boolean = false,
                        seenByUserIds: List[UUID] = List(),
-                       usefulness: Option[String] = None) {
+                       usefulness: Option[String] = None,
+                       closedDate: Option[DateTime] = None) {
 
    lazy val age = new Period(creationDate, DateTime.now(Time.dateTimeZone))
    lazy val ageString = {
@@ -74,8 +75,9 @@ case class Application(id: UUID,
 
    def creatorUserQualite(users: List[User]): Option[String] = users.find(_.id == creatorUserId).map(_.qualite)
 
-   lazy val closedDate = closed match {
-        case true => Some(answers.lastOption.map(_.creationDate).getOrElse(creationDate))
+   lazy val estimatedClosedDate = (closedDate,closed) match {
+        case (Some(date), _)  => Some(date)
+        case (_,true) => Some(answers.lastOption.map(_.creationDate).getOrElse(creationDate))
         case _ => None
       }
 

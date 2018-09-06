@@ -217,7 +217,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           userService.byId(id).map(id -> _.nameWithQualite)
         }.toMap
         val answer = Answer(UUID.randomUUID(),
-          applicationId, DateTime.now(timeZone),
+          applicationId,
+          DateTime.now(timeZone),
           answerData.message,
           request.currentUser.id,
           request.currentUser.nameWithQualite,
@@ -245,7 +246,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           userService.byId(id).map(id -> _.nameWithQualite)
         }.toMap
         val answer = Answer(UUID.randomUUID(),
-          applicationId, DateTime.now(timeZone),
+          applicationId,
+          DateTime.now(timeZone),
           inviteData.message,
           request.currentUser.id,
           request.currentUser.nameWithQualite,
@@ -275,7 +277,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         BadGateway("L'utilité de la demande n'est pas présente, il s'agit surement d'une erreur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
       case (Some(usefulness), Some(application)) =>
         if(application.creatorUserId == request.currentUser.id || request.currentUser.admin) {
-          if(applicationService.close(applicationId, usefulness)) {
+          if(applicationService.close(applicationId, usefulness, DateTime.now(timeZone))) {
             Redirect(routes.ApplicationController.all()).flashing("success" -> "L'application a été indiqué comme clôturée")
           } else {
             InternalServerError("Erreur interne: l'application n'a pas pu être indiqué comme clôturée")
