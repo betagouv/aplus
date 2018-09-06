@@ -18,7 +18,10 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   private val https = configuration.underlying.getString("app.https") == "true"
 
   private def sendMail(email: Email) {
-    val emailWithText = email.copy(bodyText = email.bodyHtml.map(_.replaceAll("<[^>]*>", "")), headers = email.headers ++ Set("X-MJ-MonitoringCategory" -> "aplus") )
+    val emailWithText = email.copy(
+      bodyText = email.bodyHtml.map(_.replaceAll("<[^>]*>", "")),
+      headers = email.headers ++ Set("X-MJ-MonitoringCategory" -> "aplus", "X-Mailjet-TrackClick" -> "0")
+    )
     mailerClient.send(emailWithText)
     Logger.info(s"Email sent to ${email.to.mkString(", ")}")
   }
@@ -93,7 +96,6 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
                       |<br>
                       |<p>${answer.map(_.creatorUserName).getOrElse(application.creatorUserName)} a besoin de vous.<br>
                       |Cette personne vous a invité sur la demande suivante : "${application.subject}"
-                      |<br><q><i>${application.description}</i></q></p>
                       |Vous pouvez voir la demande et y répondre en suivant ce lien : <br>
                       |<a href="${url}">${url}</a><br>
                       |$footer
