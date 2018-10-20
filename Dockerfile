@@ -37,11 +37,11 @@ COPY app $PLAY_APP_DIR/app/
 COPY conf $PLAY_APP_DIR/conf/
 COPY public $PLAY_APP_DIR/public/
 COPY project/*.properties project/*.sbt project/*.scala $PLAY_APP_DIR/project/
-RUN adduser play_app
-RUN chown -R play_app:play_app $PLAY_APP_DIR
+#RUN adduser play_app
+#RUN chown -R play_app:play_app $PLAY_APP_DIR
 
 WORKDIR $PLAY_APP_DIR
-USER play_app
+#USER play_app
 ENV HOME $PLAY_APP_DIR
 RUN sbt clean stage
 
