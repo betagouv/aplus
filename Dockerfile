@@ -37,14 +37,16 @@ COPY app $PLAY_APP_DIR/app/
 COPY conf $PLAY_APP_DIR/conf/
 COPY public $PLAY_APP_DIR/public/
 COPY project/*.properties project/*.sbt project/*.scala $PLAY_APP_DIR/project/
-#RUN adduser play_app
-#RUN chown -R play_app:play_app $PLAY_APP_DIR
+RUN useradd -u 1001 -r -g 0 -d ${HOME} -s /sbin/nologin \
+        -c "Default Application User" default
+RUN chown -R 1001:0 $PLAY_APP_DIR
 
 WORKDIR $PLAY_APP_DIR
-#USER play_app
 ENV HOME $PLAY_APP_DIR
 RUN sbt clean stage
-RUN chmod 550 $PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME
+RUN chmod 554 $PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME
+RUN chmod 774 $PLAY_APP_DIR/target/universal/stage/
 
+USER 1001
 EXPOSE 9000
 CMD ["sh", "-c", "$PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME"]
