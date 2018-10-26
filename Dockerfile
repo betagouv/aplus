@@ -44,7 +44,7 @@ WORKDIR $PLAY_APP_DIR
 #USER play_app
 ENV HOME $PLAY_APP_DIR
 RUN sbt clean stage
-run chmod 550 $PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME
+RUN chmod 550 $PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME
 
 EXPOSE 9000
 CMD ["sh", "-c", "$PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME"]
