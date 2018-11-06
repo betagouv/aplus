@@ -43,7 +43,6 @@ ENV HOME $PLAY_APP_DIR
 RUN sbt clean stage
 RUN chmod 554 $PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME
 RUN chmod 774 $PLAY_APP_DIR/target/universal/stage/
-RUN rmdir $PLAY_APP_DIR/target/universal/stage/logs/
 
 EXPOSE 9000
 CMD ["sh", "-c", "$PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME"]
