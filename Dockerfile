@@ -47,7 +47,7 @@ RUN sbt clean stage
 RUN chmod 554 $PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME
 RUN chmod 774 $PLAY_APP_DIR/target/universal/stage/
 RUN mkdir -p $PLAY_APP_DIR/target/universal/stage/logs/
-RUN chmod 774 $PLAY_APP_DIR/target/universal/stage/logs/
+RUN chmod -R 774 $PLAY_APP_DIR/target/universal/stage/logs/
 
 USER 1001
 EXPOSE 9000
