@@ -9,7 +9,7 @@ FROM openjdk:8u181
 # Env variables
 ENV SCALA_VERSION 2.12.7
 ENV SBT_VERSION 1.2.4
-
+https://jelastic.com/blog/play-framework-for-java-and-scala-apps-in-the-cloud/
 # Scala expects this file
 RUN touch /usr/lib/jvm/java-8-openjdk-amd64/release
 
@@ -45,4 +45,4 @@ RUN chmod 554 $PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME
 RUN chmod 774 $PLAY_APP_DIR/target/universal/stage/
 
 EXPOSE 9000
-CMD ["sh", "-c", "$PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME -Dlogger.resource=stdout-only-logback.xml"]
+CMD ["$PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME", "-Dlogger.resource=stdout-only-logback.xml"]
