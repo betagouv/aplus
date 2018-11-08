@@ -9,7 +9,7 @@ FROM openjdk:8u181
 # Env variables
 ENV SCALA_VERSION 2.12.7
 ENV SBT_VERSION 1.2.4
-https://jelastic.com/blog/play-framework-for-java-and-scala-apps-in-the-cloud/
+
 # Scala expects this file
 RUN touch /usr/lib/jvm/java-8-openjdk-amd64/release
 
