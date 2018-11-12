@@ -45,4 +45,4 @@ RUN chmod 554 $PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME
 RUN chmod 774 $PLAY_APP_DIR/target/universal/stage/
 
 EXPOSE 9000
-CMD ["$PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME", "-Dlogger.resource=stdout-only-logback.xml"]
+CMD ["sh", "-c", "$PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME"]
