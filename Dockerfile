@@ -38,6 +38,7 @@ COPY conf $PLAY_APP_DIR/conf/
 COPY public $PLAY_APP_DIR/public/
 COPY project/*.properties project/*.sbt project/*.scala $PLAY_APP_DIR/project/
 
+
 WORKDIR $PLAY_APP_DIR
 ENV HOME $PLAY_APP_DIR
 RUN sbt clean stage
