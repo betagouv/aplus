@@ -36,6 +36,7 @@ COPY build.sbt $PLAY_APP_DIR/
 COPY app $PLAY_APP_DIR/app/
 COPY conf $PLAY_APP_DIR/conf/
 COPY public $PLAY_APP_DIR/public/
+COPY local-ivy $PLAY_APP_DIR/local-ivy/
 COPY project/*.properties project/*.sbt project/*.scala $PLAY_APP_DIR/project/
 
 WORKDIR $PLAY_APP_DIR
