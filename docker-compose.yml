@@ -14,3 +14,17 @@ services:
       - db
     environment:
       DATABASE_URL: postgres://aplus:mysecretpassword@db/aplus
+      APP_HOST: localhost:9000
+      MAIL_MOCK: "true"
+      APPLICATION_SECRET: secret
+    ports:
+      - "9000:9000"
+  admin-db:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user@domain.com
+      PGADMIN_DEFAULT_PASSWORD: SuperSecret
+    links:
+      - db
+    ports:
+      - "8080:80"
