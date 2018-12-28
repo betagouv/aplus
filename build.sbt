@@ -7,6 +7,8 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.12.6"
 
+resolvers += Resolver.file("local-embed", file(baseDirectory.value + "/local-ivy"))(Resolver.ivyStylePatterns)
+
 //libraryDependencies += filters
 
 libraryDependencies ++= Seq(
@@ -21,8 +23,9 @@ libraryDependencies += guice
 libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.2.2",
   "org.playframework.anorm" %% "anorm" % "2.6.2",
-  "com.typesafe.play" %% "play-mailer" % "6.0.1",
-  "com.typesafe.play" %% "play-mailer-guice" % "6.0.1",
+  "com.typesafe.play" %% "play-mailer" % "7.0.0-SNAPSHOT",
+  "com.sun.mail" % "javax.mail" % "1.6.1",
+  "com.typesafe.play" %% "play-mailer-guice" % "7.0.0-SNAPSHOT",
   "com.typesafe.play" %% "play-json-joda" % "2.6.9"
 )
 // UI

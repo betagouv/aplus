@@ -7,3 +7,10 @@ services:
       POSTGRES_PASSWORD: mysecretpassword
     ports:
       - "5432:5432"
+  web:
+    build: .
+    command: sbt run
+    links:
+      - db
+    environment:
+      DATABASE_URL: postgres://aplus:mysecretpassword@db/aplus
