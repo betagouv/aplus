@@ -17,6 +17,9 @@
               top: 50%;
               transform: translate(0, -50%);
           }
+          .smaller-textfield > .mdl-textfield {
+              width: 130px;
+          }
   </style>
     @webJarsUtil.locate("dialog-polyfill.js").script()
     <script type='text/javascript'>
@@ -47,6 +50,7 @@
           <th></th>
           <th class="mdl-data-table__cell--non-numeric">Nom</th>
           <th class="mdl-data-table__cell--non-numeric">Administration/Qualité</th>
+          <th class="mdl-data-table__cell--non-numeric">Code commune</th>
           <th class="mdl-data-table__cell--non-numeric">Email</th>
           <th class="mdl-data-table__cell--non-numeric">Admin</th>
           <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
@@ -63,7 +67,7 @@
               <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
             }
           </td>
-          <td class="mdl-data-table__cell--non-numeric">
+          <td class="mdl-data-table__cell--non-numeric smaller-textfield">
             @helper.input(userField("name"), 'label -> "Nom de l'utilisateur") { (id, name, value, args) =>
               <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
             }
@@ -71,6 +75,11 @@
           <td class="mdl-data-table__cell--non-numeric">
             @helper.input(userField("qualite"), 'label -> "Qualité de l'utilisateur") { (id, name, value, args) =>
               <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+            }
+          </td>
+          <td class="mdl-data-table__cell--non-numeric smaller-textfield">
+            @helper.input(userField("communeCode"), 'label -> "Code commune") { (id, name, value, args) =>
+                <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) minlength="0" maxlength="5" pattern="[0-9AB]*">
             }
           </td>
           <td class="mdl-data-table__cell--non-numeric">
