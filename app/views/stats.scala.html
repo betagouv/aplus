@@ -61,7 +61,7 @@
         </div>
         @for((area, applications) <- allApplications) {
             <h4 class="mdl-cell mdl-cell--12-col">@area.name</h4>
-            @defining(weeks.keys.toSeq.map{ week:String => week -> applications.filter(a => a.closedDate.isDefined && f"${a.closedDate.get.getYear}/${a.closedDate.get.getWeekOfWeekyear}%02d" == week) }) { closedApplicationsPerWeek: Seq[(String, Seq[Application])] =>
+            @defining(weeks.keys.toSeq.map{ week:String => week -> applications.filter(a => a.estimatedClosedDate.isDefined && f"${a.estimatedClosedDate.get.getYear}/${a.estimatedClosedDate.get.getWeekOfWeekyear}%02d" == week) }) { closedApplicationsPerWeek: Seq[(String, Seq[Application])] =>
 
             @defining(weeks.keys.toSeq.map{ week:String => week -> applications.filter(a => f"${a.creationDate.getYear}/${a.creationDate.getWeekOfWeekyear}%02d" == week) } ) { newApplicationsPerWeek: Seq[(String, Seq[Application])] =>
                 <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white mdl-grid">

@@ -48,7 +48,8 @@ class ApplicationService @Inject()(db: Database) {
     "internal_id",
     "closed",
     "seen_by_user_ids",
-    "usefulness"
+    "usefulness",
+    "closed_date"
   ).map(application => application.copy(creationDate = application.creationDate.withZone(Time.dateTimeZone), 
                     answers = application.answers.map(answer => answer.copy(creationDate = answer.creationDate.withZone(Time.dateTimeZone)))))
   
@@ -177,15 +178,16 @@ class ApplicationService @Inject()(db: Database) {
     ).executeUpdate()
   }
 
-  def close(applicationId: UUID, usefulness: String) = db.withTransaction { implicit connection =>
+  def close(applicationId: UUID, usefulness: String, closedDate: DateTime) = db.withTransaction { implicit connection =>
     SQL(
       """
-          UPDATE application SET closed = true, usefulness = {usefulness}
+          UPDATE application SET closed = true, usefulness = {usefulness}, closed_date = {closed_date}
           WHERE id = {id}::uuid
        """
     ).on(
       'id -> applicationId,
-      'usefulness -> usefulness
+      'usefulness -> usefulness,
+      'closed_date -> closedDate
     ).executeUpdate() == 1
   }
 }

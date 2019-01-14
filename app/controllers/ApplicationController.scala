@@ -1,8 +1,8 @@
 package controllers
 
 import java.util.{Locale, UUID}
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import play.api.mvc._
 import play.api.data._
 import play.api.data.Forms._
@@ -13,7 +13,7 @@ import forms.FormsPlusMap
 import models._
 import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
-import services.{ApplicationService, NotificationService, UserService}
+import services.{ApplicationService, EventService, NotificationService, UserService}
 import extentions.UUIDHelper
 
 import scala.collection.immutable.ListMap
@@ -26,7 +26,8 @@ import scala.collection.immutable.ListMap
 class ApplicationController @Inject()(loginAction: LoginAction,
                                       userService: UserService,
                                       applicationService: ApplicationService,
-                                      notificationsService: NotificationService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
+                                      notificationsService: NotificationService,
+                                      eventService: EventService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
   import forms.Models._
 
   private val timeZone = Time.dateTimeZone
@@ -42,12 +43,14 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   )
 
   def create = loginAction { implicit request =>
+    eventService.info("APPLICATION_FORM_SHOWED", s"Visualise le formulaire de création de demande")
     Ok(views.html.createApplication(request.currentUser, request.currentArea)(userService.byArea(request.currentArea.id).filter(_.instructor), applicationForm))
   }
 
   def createPost = loginAction { implicit request =>
     request.currentUser.helper match {
        case false => {
+         eventService.warn("APPLICATION_CREATION_UNAUTHORIZED", s"L'utilisateur n'a pas de droit de créer une demande")
          Unauthorized("Vous n'avez pas les droits suffisants pour créer une demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
        }
        case true => {
@@ -55,6 +58,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
            formWithErrors => {
              // binding failure, you retrieve the form containing errors:
              val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
+             eventService.info("APPLICATION_CREATION_INVALID", s"L'utilisateur essai de créé une demande invalide")
              BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, formWithErrors))
            },
            applicationData => {
@@ -73,8 +77,10 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                false)
              if(applicationService.createApplication(application)) {
                notificationsService.newApplication(application)
+               eventService.info("APPLICATION_CREATED", s"La demande ${application.id} a été créé", Some(application))
                Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyée")
              }  else {
+               eventService.error("APPLICATION_CREATION_ERROR", s"La demande ${application.id} n'a pas pu être créé", Some(application))
                InternalServerError("Error Interne: Votre demande n'a pas pu être envoyé. Merci de rééssayer ou contacter l'administrateur")
              }
            }
@@ -85,13 +91,18 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
   def all = loginAction { implicit request =>
     val currentUserId = request.currentUser.id
+    val applicationsCreatedByUser = applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin)
+    val applicationsWhereUserIsInvited = applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin)
     val applicationsFromTheArea = if(request.currentUser.admin) { applicationService.allByArea(request.currentArea.id, request.currentUser.admin) } else { List[Application]() }
-    Ok(views.html.allApplication(request.currentUser, request.currentArea)(applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin), applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin), applicationsFromTheArea))
+    eventService.info("ALL_APPLICATIONS_SHOWED",
+      s"Visualise la liste des applications : créé=${applicationsCreatedByUser.size}/invité=${applicationsWhereUserIsInvited.size}/zone=${applicationsFromTheArea.size}")
+    Ok(views.html.allApplication(request.currentUser, request.currentArea)(applicationsCreatedByUser, applicationsWhereUserIsInvited, applicationsFromTheArea))
   }
 
   def stats = loginAction { implicit request =>
     request.currentUser.admin match {
       case false =>
+        eventService.warn("STATS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher les stats")
         Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
       case true =>
         val allApplications = applicationService.all(request.currentUser.admin)
@@ -109,21 +120,26 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           }
         }
         val weeks = recursion(today)
+        eventService.info("STATS_SHOWED", s"Visualise les stats")
         Ok(views.html.stats(request.currentUser, request.currentArea)(weeks, applicationsByArea, users))
     }
   }
 
   def allAs(userId: UUID) = loginAction { implicit request =>
     (request.currentUser.admin, userService.byId(userId))  match {
-      case (false, _) =>
+      case (false, Some(user)) =>
+        eventService.warn("ALL_AS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur $userId", user=Some(user))
         Unauthorized("Vous n'avez pas le droits de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
       case (true, Some(user)) if user.admin =>
+        eventService.warn("ALL_AS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur admin $userId", user=Some(user))
         Unauthorized("Vous n'avez pas le droits de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
       case (true, Some(user)) if user.areas.contains(request.currentArea.id) =>
         val currentUserId = user.id
         val applicationsFromTheArea = List[Application]()
+        eventService.info("ALL_AS_SHOWED", s"Visualise la vue de l'utilisateur $userId", user= Some(user))
         Ok(views.html.allApplication(user, request.currentArea)(applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin), applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin), applicationsFromTheArea))
       case  _ =>
+        eventService.error("ALL_AS_NOT_FOUND", s"L'utilisateur $userId n'existe pas")
         BadRequest("L'utilisateur n'existe pas ou vous n'étes pas dans sa zone. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
     }
   }
@@ -139,12 +155,14 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     val userIds = exportedApplications.flatMap(_.invitedUsers.keys).toSet.toList
     val users = userService.byIds(userIds)
     val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
+    eventService.info("CSV_SHOWED", s"Visualise un CSV")
     Ok(views.html.allApplicationCSV(exportedApplications.toSeq, request.currentUser, users)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}.csv"""" )
   }
 
   def show(id: UUID) = loginAction { implicit request =>
     applicationService.byId(id, request.currentUser.id, request.currentUser.admin) match {
       case None =>
+        eventService.error("APPLICATION_NOT_FOUND", s"La demande $id n'existe pas")
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
         val currentUser = request.currentUser
@@ -153,9 +171,11 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           application.creatorUserId==request.currentUser.id) {
             val users = userService.byArea(request.currentArea.id).filterNot(_.id == request.currentUser.id)
               .filter(_.instructor)
+            eventService.info("APPLICATION_SHOWED", s"Demande $id consulté", Some(application))
             Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, application, answerToAgentsForm))
         }
         else {
+          eventService.warn("APPLICATION_UNAUTHORIZED", s"L'accès à la demande $id n'est pas autorisé", Some(application))
           Unauthorized("Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
         }
     }
@@ -171,11 +191,13 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   def answerHelper(applicationId: UUID) = loginAction { implicit request =>
     answerToHelperForm.bindFromRequest.fold(
       formWithErrors => {
+        eventService.error("ANSWER_NOT_CREATED", s"Impossible d'ajouter une réponse sur la demande $applicationId : problème formulaire")
         BadRequest("Erreur interne, contacter l'administrateur A+ : contact@aplus.beta.gouv.fr")
       },
       answerData => {
         applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
           case None =>
+            eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter une réponse")
             NotFound("Nous n'avons pas trouvé cette demande")
           case Some(application) =>
             val answer = Answer(UUID.randomUUID(),
@@ -189,9 +211,11 @@ class ApplicationController @Inject()(loginAction: LoginAction,
               answerData.applicationIsDeclaredIrrelevant,
               Some(Map()))
             if (applicationService.add(applicationId, answer) == 1) {
+              eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
               notificationsService.newAnswer(application, answer)
               Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
             } else {
+              eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
               InternalServerError("Votre réponse n'a pas pu être envoyé")
             }
         }
@@ -211,13 +235,15 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
     applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
       case None =>
+        eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter une réponse")
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
         val notifiedUsers: Map[UUID, String] = answerData.notifiedUsers.flatMap { id =>
           userService.byId(id).map(id -> _.nameWithQualite)
         }.toMap
         val answer = Answer(UUID.randomUUID(),
-          applicationId, DateTime.now(timeZone),
+          applicationId,
+          DateTime.now(timeZone),
           answerData.message,
           request.currentUser.id,
           request.currentUser.nameWithQualite,
@@ -228,8 +254,10 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           Some(answerData.infos))
         if (applicationService.add(applicationId,answer) == 1) {
           notificationsService.newAnswer(application, answer)
+          eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
           Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
         } else {
+          eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
           InternalServerError("Votre réponse n'a pas pu être envoyée")
         }
     }
@@ -239,13 +267,15 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     val inviteData = answerToAgentsForm.bindFromRequest.get
     applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
       case None =>
+        eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter une réponse")
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
         val invitedUsers: Map[UUID, String] = inviteData.notifiedUsers.flatMap { id =>
           userService.byId(id).map(id -> _.nameWithQualite)
         }.toMap
         val answer = Answer(UUID.randomUUID(),
-          applicationId, DateTime.now(timeZone),
+          applicationId,
+          DateTime.now(timeZone),
           inviteData.message,
           request.currentUser.id,
           request.currentUser.nameWithQualite,
@@ -256,31 +286,39 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           Some(Map()))
         if (applicationService.add(applicationId, answer)  == 1) {
           notificationsService.newAnswer(application, answer)
+          eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
           Redirect(routes.ApplicationController.all()).flashing ("success" -> "Les agents ont été invités sur la demande")
         } else {
+          eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
           InternalServerError("Les agents n'ont pas pu être invités")
         }
     }
   }
 
   def changeArea(areaId: UUID) = loginAction {  implicit request =>
+    eventService.info("AREA_CHANGE", s"Changement vers la zone $areaId")
     Redirect(routes.ApplicationController.all()).withSession(request.session - "areaId" + ("areaId" -> areaId.toString))
   }
 
   def terminate(applicationId: UUID) = loginAction {  implicit request =>
     (request.getQueryString("usefulness"), applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin)) match {
       case (_, None) =>
+        eventService.error("TERMINATE_NOT_FOUND", s"La demande $applicationId n'existe pas pour la clôturer")
         NotFound("Nous n'avons pas trouvé cette demande.")
       case (None, _) =>
+        eventService.error("TERMINATE_INCOMPLETED", s"La demande de clôture pour $applicationId est incompléte")
         BadGateway("L'utilité de la demande n'est pas présente, il s'agit surement d'une erreur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
       case (Some(usefulness), Some(application)) =>
         if(application.creatorUserId == request.currentUser.id || request.currentUser.admin) {
-          if(applicationService.close(applicationId, usefulness)) {
+          if(applicationService.close(applicationId, usefulness, DateTime.now(timeZone))) {
+            eventService.info("TERMINATE_COMPLETED", s"La demande $applicationId est clôturé", Some(application))
             Redirect(routes.ApplicationController.all()).flashing("success" -> "L'application a été indiqué comme clôturée")
           } else {
+            eventService.error("TERMINATE_ERROR", s"La demande $applicationId n'a pas pu être clôturé en BDD", Some(application))
             InternalServerError("Erreur interne: l'application n'a pas pu être indiqué comme clôturée")
           }
         } else {
+          eventService.warn("TERMINATE_UNAUTHORIZED", s"L'utilisateur n'a pas le droit de clôturer la demande $applicationId", Some(application))
           Unauthorized("Seul le créateur de la demande ou un administrateur peut clore la demande")
         }
     }
