@@ -20,6 +20,9 @@
           .smaller-textfield > .mdl-textfield {
               width: 130px;
           }
+          .mdl-dialog__content {
+              text-align: left;
+          }
   </style>
     @webJarsUtil.locate("dialog-polyfill.js").script()
     <script type='text/javascript'>
@@ -52,10 +55,8 @@
           <th class="mdl-data-table__cell--non-numeric">Administration/Qualité</th>
           <th class="mdl-data-table__cell--non-numeric">Code commune</th>
           <th class="mdl-data-table__cell--non-numeric">Email</th>
-          <th class="mdl-data-table__cell--non-numeric">Admin</th>
           <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
           <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
-            <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
           <th class="mdl-data-table__cell--non-numeric"></th>
         </tr>
       </thead>
@@ -88,23 +89,20 @@
             }
           </td>
           <td>
-            @helper.checkbox(userField("admin"), 'type -> "checkbox", 'label -> "Admin", 'class -> "mdl-checkbox__input")
-          </td>
-          <td>
             @helper.checkbox(userField("instructor"), 'type -> "checkbox", 'label -> "Agent", 'class -> "mdl-checkbox__input")
           </td>
           <td>
             @helper.checkbox(userField("helper"), 'type -> "checkbox", 'label -> "Aidant", 'class -> "mdl-checkbox__input")
           </td>
-            <td>
-             @helper.checkbox(userField("hasAcceptedCharte"), 'label -> "Charte", 'type -> "checkbox", 'class -> "mdl-checkbox__input")
-        </td>
           <td>
               <button id="show-dialog-@index" type="button" class="mdl-button mdl-js-button mdl-button--raised" @if(userField("delegations").hasErrors){ style="color: #d50000"}>Options</button>
               <dialog class="mdl-dialog" id="dialog-@index">
               <h4 class="mdl-dialog__title">Options</h4>
               <div class="mdl-dialog__content">
-                  Délégations
+                @helper.checkbox(userField("admin"), 'type -> "checkbox", 'label -> "Admin de la zone", 'class -> "mdl-checkbox__input")
+                @helper.checkbox(userField("hasAcceptedCharte"), 'label -> "Charte validé", 'type -> "checkbox", 'class -> "mdl-checkbox__input")
+
+                  <b>Délégations</b>
                   <div class="mdl-grid mdl-grid--no-spacing user-delegations" >
                   @helper.repeatWithIndex(userField("delegations"), min = 0) { (field, indexDelegations) =>
                      <fieldset class="mdl-grid mdl-cell mdl-cell--12-col" style="border: 2px groove threedface;">
@@ -141,10 +139,8 @@
                   <th class="mdl-data-table__cell--non-numeric">Nom</th>
                   <th class="mdl-data-table__cell--non-numeric">Administration/Qualité</th>
                   <th class="mdl-data-table__cell--non-numeric">Email</th>
-                  <th class="mdl-data-table__cell--non-numeric">Admin</th>
                   <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
                   <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
-                  <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
                   <th class="mdl-data-table__cell--non-numeric"></th>
               </tr>
           }
