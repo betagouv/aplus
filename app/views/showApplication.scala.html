@@ -109,7 +109,7 @@ dialog {
     width: 100%;
 }
 .mdl-button--nowrap {
-    height: initial;
+     height: initial;
 }
 
 </style>
@@ -189,6 +189,31 @@ dialog {
                     </li>
                 </ul>
                 <p style="white-space: pre-line;">@application.description</p>
+                @if(application.answers.isEmpty && user.instructor){
+                    <form class="info-box do-not-print" action="@routes.ApplicationController.answerHelper(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
+                                <b>Réponse immédiate à l'aidant :</b>                 <br>
+                            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-1">
+                                <input type="radio" id="option-1" class="mdl-radio__button" name="message" value="Je m'en occupe" checked>
+                                <span class="mdl-radio__label">Je m'en occupe</span>
+                            </label>            <br>
+                            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-2">
+                                <input type="radio" id="option-2" class="mdl-radio__button" name="message" value="Je ne suis pas le bon interlocuteur">
+                                <span class="mdl-radio__label">Je ne suis pas le bon interlocuteur</span>
+                            </label>         <br>
+                            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-3">
+                                <input type="radio" id="option-3" class="mdl-radio__button" name="message" value="Je ne suis pas disponible">
+                                <span class="mdl-radio__label">Je ne suis pas disponible</span>
+                            </label>      <br>
+                            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-4">
+                                <input type="radio" id="option-4" class="mdl-radio__button" name="message" value="Ceci n'est pas un cas géré dans le dispositif A+">
+                                <span class="mdl-radio__label">Ceci n'est pas un cas géré dans le dispositif A+</span>
+                            </label>        <br>
+
+                                <button id="review-validation" class="mdl-button mdl-button--primary mdl-button--raised mdl-js-button mdl-button--nowrap">
+                                    Envoyer
+                                </button>
+                    </form>
+                }
             </div>
             @for(answer <- application.answers){
                 @if(user.instructor || user.admin || answer.visibleByHelpers || answer.creatorUserID == user.id) {
@@ -274,19 +299,7 @@ dialog {
                                         <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Détaillez votre réponse ici...</label>
                                     </div>
                                     <br>
-                                    <button id="review-validation" class="mdl-button mdl-js-button mdl-button--nowrap">
-                                        Je m'en occupe
-                                    </button>
-                                    <button id="review-validation" class="mdl-button mdl-js-button mdl-button--nowrap">
-                                        Je ne suis pas le bon interlocuteur pour cette demande
-                                    </button>
-                                    <button id="review-validation" class="mdl-button mdl-js-button mdl-button--nowrap">
-                                        Je ne suis pas disponible pour traiter cette demande
-                                    </button>
-                                    <button id="review-validation" class="mdl-button mdl-js-button mdl-button--nowrap">
-                                        Ceci n'est pas un cas géré dans le dispositif A+, vous disposez d'une procédure standard que vous pouvez utiliser pour obtenir votre réponse
-                                    </button><br>
-                                    <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">
+                                    <button id="review-validation" class="mdl-button mdl-button--primary mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">
                                         Répondre à l'aidant
                                     </button>
                                 </div>
