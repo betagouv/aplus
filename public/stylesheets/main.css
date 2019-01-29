@@ -222,3 +222,48 @@ html, body {
         background-color: rgba(255, 165, 0, 0.70) !important;
     }
 }
+
+.tag {
+    height: 18px;
+    width: 80px;
+    color: #666666;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 12px;
+    text-align: center;
+    background-color: #ECECEC;
+    padding: 7px;
+}
+
+.tag--important {
+    color: #FFFFFF;
+    background-color: #666666;
+}
+
+.tag--closed {
+    color: #FFFFFF;
+    background-color: #BABABA;
+}
+
+.td--clear-border {
+    border-left: 4px solid;
+    border-color: #ECECEC;
+}
+
+.td--important-border {
+    border-left: 4px solid;
+    border-color: #666666;
+}
+
+.icon--light {
+    color: #D8D8D8;
+}
+
+.vertical-align--middle > * {
+    vertical-align: middle;
+}
+
+.mdl-data-table__cell--content-size {
+    white-space: nowrap;
+    width: 1%;
+}

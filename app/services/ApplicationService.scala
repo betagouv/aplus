@@ -88,6 +88,16 @@ class ApplicationService @Inject()(db: Database) {
     }
   }
 
+  def allForUserId(userId: UUID, anonymous: Boolean) = db.withConnection { implicit connection =>
+    val result = SQL("SELECT * FROM application WHERE creator_user_id = {userId}::uuid OR invited_users ?? {userId} ORDER BY creation_date DESC")
+      .on('userId -> userId).as(simpleApplication.*)
+    if(anonymous){
+      result.map(_.anonymousApplication)
+    } else {
+      result
+    }
+  }
+
   def allForCreatorUserId(creatorUserId: UUID, anonymous: Boolean) = db.withConnection { implicit connection =>
     val result = SQL("SELECT * FROM application WHERE creator_user_id = {creatorUserId}::uuid ORDER BY creation_date DESC")
       .on('creatorUserId -> creatorUserId).as(simpleApplication.*)
