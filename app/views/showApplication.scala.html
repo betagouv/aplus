@@ -108,6 +108,9 @@ dialog {
     text-align: center;
     width: 100%;
 }
+.mdl-button--nowrap {
+     height: initial;
+}
 
 </style>
 @webJarsUtil.locate("dialog-polyfill.css").css()
@@ -192,6 +195,31 @@ dialog {
                     </li>
                 </ul>
                 <p style="white-space: pre-line;">@application.description</p>
+                @if(application.answers.isEmpty && user.instructor){
+                    <form class="info-box do-not-print" action="@routes.ApplicationController.answerHelper(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
+                                <b>Réponse immédiate à l'aidant :</b>                 <br>
+                            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-1">
+                                <input type="radio" id="option-1" class="mdl-radio__button" name="message" value="Je m'en occupe" checked>
+                                <span class="mdl-radio__label">Je m'en occupe</span>
+                            </label>            <br>
+                            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-2">
+                                <input type="radio" id="option-2" class="mdl-radio__button" name="message" value="Je ne suis pas le bon interlocuteur">
+                                <span class="mdl-radio__label">Je ne suis pas le bon interlocuteur</span>
+                            </label>         <br>
+                            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-3">
+                                <input type="radio" id="option-3" class="mdl-radio__button" name="message" value="Je ne suis pas disponible">
+                                <span class="mdl-radio__label">Je ne suis pas disponible</span>
+                            </label>      <br>
+                            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-4">
+                                <input type="radio" id="option-4" class="mdl-radio__button" name="message" value="Ceci n'est pas un cas géré dans le dispositif A+">
+                                <span class="mdl-radio__label">Ceci n'est pas un cas géré dans le dispositif A+</span>
+                            </label>        <br>
+
+                                <button id="review-validation" class="mdl-button mdl-button--primary mdl-button--raised mdl-js-button mdl-button--nowrap">
+                                    Envoyer
+                                </button>
+                    </form>
+                }
             </div>
             @for(answer <- application.answers){
                 @if(user.instructor || user.admin || answer.visibleByHelpers || answer.creatorUserID == user.id) {
@@ -254,7 +282,7 @@ dialog {
                 <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
                     <div class="mdl-tabs__tab-bar">
                         @if(user.instructor || user.admin) {
-                            <a href="#answer-helper" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
+                            <a href="#answer-helper" class="mdl-tabs__tab is-active mdl-color-text--primary"><i class="material-icons">
                                 reply</i> Répondre à l'aidant</a>
                         }
                         @if(application.invitedUsers.filterNot(_._1 == user.id).nonEmpty) {
@@ -266,11 +294,10 @@ dialog {
                                 person_add</i> Inviter un agent A+</a>
                         }
                     </div>
-
                     @if(user.instructor || user.admin) {
-                        <div class="mdl-tabs__panel" id="answer-helper">
+                        <div class="mdl-tabs__panel is-active" id="answer-helper">
                             <form action="@routes.ApplicationController.answerHelper(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
-                                <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply</i> Répondre directement à l'aidant @application.creatorUserName</h3>
+                                <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply</i> Répondre à l'aidant @application.creatorUserName</h3>
                                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
                                     <div class="info-box">Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. <b>Merci d'utiliser vos outils habituels pour continuer une instruction.</b></div>
                                     <p>
@@ -283,7 +310,8 @@ dialog {
                                         <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message"></textarea>
                                         <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Détaillez votre réponse ici...</label>
                                     </div>
-                                    <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">
+                                    <br>
+                                    <button id="review-validation" class="mdl-button mdl-button--primary mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">
                                         Répondre à l'aidant
                                     </button>
                                 </div>
