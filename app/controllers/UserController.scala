@@ -55,6 +55,7 @@ class UserController @Inject()(loginAction: LoginAction,
         "areas" -> ignored(List(area.id)),
         "creationDate" -> ignored(DateTime.now(timeZone)),
         "hasAcceptedCharte" -> boolean,
+        "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
         "delegations" -> seq(tuple(
             "name" -> nonEmptyText,
             "email" -> email
