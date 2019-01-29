@@ -90,13 +90,14 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def all = loginAction { implicit request =>
-    val currentUserId = request.currentUser.id
-    val applicationsCreatedByUser = applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin)
-    val applicationsWhereUserIsInvited = applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin)
+    val myApplications = applicationService.allForUserId(request.currentUser.id, request.currentUser.admin)
+    val myOpenApplications = myApplications.filter(!_.closed)
+    val myClosedApplications = myApplications.filter(_.closed)
+    
     val applicationsFromTheArea = if(request.currentUser.admin) { applicationService.allByArea(request.currentArea.id, request.currentUser.admin) } else { List[Application]() }
     eventService.info("ALL_APPLICATIONS_SHOWED",
-      s"Visualise la liste des applications : créé=${applicationsCreatedByUser.size}/invité=${applicationsWhereUserIsInvited.size}/zone=${applicationsFromTheArea.size}")
-    Ok(views.html.allApplication(request.currentUser, request.currentArea)(applicationsCreatedByUser, applicationsWhereUserIsInvited, applicationsFromTheArea))
+      s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}/sone=${applicationsFromTheArea.size}")
+    Ok(views.html.allApplication(request.currentUser, request.currentArea)(myOpenApplications, myClosedApplications, applicationsFromTheArea))
   }
 
   def stats = loginAction { implicit request =>

@@ -181,7 +181,13 @@ dialog {
                             <span>@application.creatorUserName</span>@if(user.admin){ <span style="font-weight: bold; color:red"> @users.find(_.id == application.creatorUserId).map(_.email).getOrElse("")</span>}
                         </span>
                         <span class="mdl-list__item-secondary-content">
-                            <span>@application.creationDate.toString("E dd MMM YYYY - HH:mm", new Locale("fr"))</span>
+                            <div id="date-@application.id" class="vertical-align--middle">
+                                <span>Il y a <b>@application.ageString</b></span>
+                                <i class="icon material-icons icon--light">info</i>
+                            </div>
+                            <div class="mdl-tooltip" data-mdl-for="date-@application.id">
+                            @application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))
+                            </div>
                         </span>
                     </li>
                 </ul>
@@ -201,7 +207,13 @@ dialog {
                                     <span class="mdl-list__item-sub-title"></span>
                                 </span>
                                 <span class="mdl-list__item-secondary-content">
-                                    <span>@answer.creationDate.toString("E dd MMM YYYY  - HH:mm", new Locale("fr"))</span>
+                                    <div id="date-@answer.id" class="vertical-align--middle">
+                                        <span>Il y a <b>@answer.ageString</b></span>
+                                        <i class="icon material-icons icon--light">info</i>
+                                    </div>
+                                    <div class="mdl-tooltip" data-mdl-for="date-@answer.id">
+                                    @answer.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))
+                                    </div>
                                 </span>
                             </li>
                         </ul>
