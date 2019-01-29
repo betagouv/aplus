@@ -23,11 +23,12 @@ case class User(id: UUID,
 object User {
   private val date = DateTime.parse("2017-11-01T00:00+01:00")
   val admins =  List(
-    User(UUIDHelper.namedFrom("zohra"), Hash.sha256(s"zohra"), "Zohra LEBEL", "Aide A+", "zohra.lebel@beta.gouv.fr", true, false, true, List(), date, true),
+    User(UUIDHelper.namedFrom("zohra"), Hash.sha256(s"zohra"), "Zohra LEBEL", "Admin A+", "zohra.lebel@beta.gouv.fr", true, false, true, List(), date, true),
     User(UUIDHelper.namedFrom("yan"), Hash.sha256(s"yan - disabled"), "Yan TANGUY (disabled)", "Aide A+", "yan.tanguy@dila.gouv.fr - disabled", false, false, false, List(), date, false),
-    User(UUIDHelper.namedFrom("julien"), Hash.sha256(s"julien"), "Julien DAUPHANT", "Aide A+", "julien.dauphant@beta.gouv.fr", true, false, true, List(), date, true),
-    User(UUIDHelper.namedFrom("pierre"), Hash.sha256(s"pierre"), "Pierre MOMBOISSE", "Aide A+", "pierre.momboisse@beta.gouv.fr", false, false, false, List(), date, false),
-    User(UUIDHelper.namedFrom("simon"), Hash.sha256(s"simon"), "Simon PINEAU", "Aide A+", "simon.pineau@beta.gouv.fr", true, false, true, List(), date, true),
+    User(UUIDHelper.namedFrom("julien"), Hash.sha256(s"julien"), "Julien DAUPHANT", "Admin A+", "julien.dauphant@beta.gouv.fr", true, false, true, List(), date, true),
+    User(UUIDHelper.namedFrom("louis"), Hash.sha256(s"louis"), "Louis MOSCAROLA", "Admin A+", "louis.moscarola@beta.gouv.fr", true, false, true, List(), date, true),
+    User(UUIDHelper.namedFrom("pierre"), Hash.sha256(s"pierre -disabled"), "Pierre MOMBOISSE", "Aide A+", "pierre.momboisse@beta.gouv.fr", false, false, false, List(), date, false),
+    User(UUIDHelper.namedFrom("simon"), Hash.sha256(s"simon - disabled"), "Simon PINEAU", "Aide A+", "simon.pineau@beta.gouv.fr", true, false, true, List(), date, true),
     User(UUIDHelper.namedFrom("dominique"), Hash.sha256(s"dominique - disabled"), "Dominique LEQUEPEYS (disabled)", "Aide A+", "dominique.lequepeys@beta.gouv.fr - disabled", false, false, false, List(), date, true),
   )
 }
