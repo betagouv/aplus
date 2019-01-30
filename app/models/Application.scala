@@ -23,6 +23,7 @@ case class Application(id: UUID,
                        usefulness: Option[String] = None,
                        closedDate: Option[DateTime] = None) {
 
+   lazy val ageInDays = Days.daysBetween(creationDate, DateTime.now(Time.dateTimeZone)).getDays
    lazy val age = new Period(creationDate, DateTime.now(Time.dateTimeZone))
    lazy val ageString = {
      if(age.getMonths > 0) {
@@ -45,7 +46,7 @@ case class Application(id: UUID,
      s"${creatorUserName.filterNot(stripChars contains _)} ${userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")} ${subject.filterNot(stripChars contains _)} ${description.filterNot(stripChars contains _)} ${invitedUsers.values.map(_.filterNot(stripChars contains _)).mkString(" ")} ${answers.map(_.message.filterNot(stripChars contains _)).mkString(" ")}"
    }
 
-   def status(user: User) = closed match {
+   def longStatus(user: User) = closed match {
      case true => "Clôturée"
      case _ if user.id == creatorUserId && answers.exists(_.creatorUserID != user.id) => "Répondu"
      case _ if user.id == creatorUserId && seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty => "Consultée"
@@ -62,6 +63,13 @@ case class Application(id: UUID,
      case _ if seenByUserIds.contains(user.id) => "Consultée"
      case _ => "Nouvelle"
    }
+
+  def status = closed match {
+    case true => "Clôturée"
+    case _ if answers.filterNot(_.creatorUserID != creatorUserId).nonEmpty => "Répondu"
+    case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty => "Consultée"
+    case _ => "Nouvelle"
+  }
 
    def invitedUsers(users: List[User]): List[User] = invitedUsers.keys.flatMap(userId => users.find(_.id == userId)).toList
 

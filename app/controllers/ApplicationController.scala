@@ -99,6 +99,32 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}/sone=${applicationsFromTheArea.size}")
     Ok(views.html.allApplication(request.currentUser, request.currentArea)(myOpenApplications, myClosedApplications, applicationsFromTheArea))
   }
+  
+  import Time.dateTimeOrdering
+  
+  private def weeksMap(fromDate: DateTime, toDate: DateTime): ListMap[String, String] = {
+    val weekDay = toDate.weekOfWeekyear().roundFloorCopy()
+    def recursion(date: DateTime): ListMap[String, String] = {
+      if(date.isBefore(fromDate)) {
+        ListMap()
+      } else {
+        recursion(date.minusWeeks(1)) + (f"${date.getYear}/${date.getWeekOfWeekyear}%02d" -> date.toString("E dd MMM YYYY", new Locale("fr")))
+      }
+    }
+    recursion(weekDay)
+  }
+
+  private def monthsMap(fromDate: DateTime, toDate: DateTime): ListMap[String, String] = {
+    def recursion(date: DateTime): ListMap[String, String] = {
+      if(date.isBefore(fromDate)) {
+        ListMap()
+      } else {
+        recursion(date.minusMonths(1)) + (f"${date.getYear}/${date.getMonthOfYear}%02d" -> date.toString("MMMM YYYY", new Locale("fr")))
+      }
+    }
+    recursion(toDate)
+  }
+
 
   def stats = loginAction { implicit request =>
     request.currentUser.admin match {
@@ -110,19 +136,12 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         val applicationsByArea = allApplications.groupBy(_.area).map{ case (areaId: UUID, applications: Seq[Application]) => (Area.all.find(_.id == areaId).get, applications) }
 
         val users = userService.all
-        import Time.dateTimeOrdering
         val firstDate = allApplications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
-        val today = DateTime.now(timeZone).weekOfWeekyear().roundFloorCopy()
-        def recursion(date: DateTime): ListMap[String, String] = {
-          if(date.isBefore(firstDate)) {
-            ListMap()
-          } else {
-            recursion(date.minusWeeks(1)) + (f"${date.getYear}/${date.getWeekOfWeekyear}%02d" -> date.toString("E dd MMM YYYY", new Locale("fr")))
-          }
-        }
-        val weeks = recursion(today)
+        val today = DateTime.now(timeZone)
+        val weeks = weeksMap(firstDate, today)
+        val months = monthsMap(firstDate, today)
         eventService.info("STATS_SHOWED", s"Visualise les stats")
-        Ok(views.html.stats(request.currentUser, request.currentArea)(weeks, applicationsByArea, users))
+        Ok(views.html.stats(request.currentUser, request.currentArea)(months, applicationsByArea, users))
     }
   }
 
