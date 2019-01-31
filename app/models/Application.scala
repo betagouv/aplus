@@ -26,17 +26,17 @@ case class Application(id: UUID,
    lazy val age = new Period(creationDate, DateTime.now(Time.dateTimeZone))
    lazy val ageString = {
      if(age.getMonths > 0) {
-       s"il y a ${age.getMonths} mois"
+       s"${age.getMonths} mois"
      } else if(age.getWeeks > 0) {
-       s"il y a ${age.getWeeks} semaines"
+       s"${age.getWeeks} semaines"
      } else if(age.getDays > 0) {
-       s"il y a ${age.getDays} jours"
+       s"${age.getDays} jours"
      } else if(age.getHours > 0) {
-       s"il y a ${age.getHours} heures"
+       s"${age.getHours} heures"
      } else if(age.getMinutes > 0) {
-       s"il y a ${age.getMinutes} minutes"
+       s"${age.getMinutes} minutes"
      } else {
-       s"à l'instant"
+       s"quelques secondes"
      }
    }
 
@@ -48,7 +48,7 @@ case class Application(id: UUID,
    def status(user: User) = closed match {
      case true => "Clôturée"
      case _ if user.id == creatorUserId && answers.exists(_.creatorUserID != user.id) => "Répondu"
-     case _ if user.id == creatorUserId && seenByUserIds.intersect(invitedUsers.keys.toList).isEmpty == false => "Consultée"
+     case _ if user.id == creatorUserId && seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty => "Consultée"
      case _ if user.id == creatorUserId => "Envoyée"
      case _ if answers.exists(_.creatorUserID == user.id) => "Répondu"
      case _ if answers.exists(_.creatorUserName.contains(user.qualite)) => {
@@ -64,12 +64,6 @@ case class Application(id: UUID,
    }
 
    def invitedUsers(users: List[User]): List[User] = invitedUsers.keys.flatMap(userId => users.find(_.id == userId)).toList
-
-   def isLateForUser(user: User): Boolean = !closed && invitedUsers.contains(user.id) &&
-     answers.forall(_.creatorUserID != user.id) && answers.exists(_.creatorUserName.contains(user.qualite)) == false && ( age.getMonths > 0 || age.toStandardDays.getDays > 5 )
-
-   def isNearlyLateForUser(user: User): Boolean = !closed && invitedUsers.contains(user.id) &&
-    answers.forall(_.creatorUserID != user.id) && answers.exists(_.creatorUserName.contains(user.qualite)) == false && ( age.getMonths > 0 || age.toStandardDays.getDays > 3 )
 
    def administrations(users: List[User]): List[String] = invitedUsers(users).map(_.qualite).distinct
 

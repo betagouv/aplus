@@ -28,6 +28,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     "areas",
     "creation_date",
     "has_accepted_charte",
+    "commune_code",
     "delegations"
   ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
 
@@ -76,7 +77,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
          array[{areas}]::uuid[],
          {delegations},
          {creation_date},
-         {has_accepted_charte})
+         {has_accepted_charte},
+         {commune_code})
       """)
       .on(
         'id -> user.id,
@@ -90,7 +92,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
         'areas -> user.areas.map(_.toString),
         'delegations -> Json.toJson(user.delegations),
         'creation_date -> user.creationDate,
-        'has_accepted_charte -> user.hasAcceptedCharte
+        'has_accepted_charte -> user.hasAcceptedCharte,
+        'commune_code -> user.communeCode
       ).executeUpdate() == 1
     }
   }
@@ -105,6 +108,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
           instructor = {instructor},
           admin = {admin},
           has_accepted_charte = {has_accepted_charte},
+          commune_code = {commune_code},
           delegations = {delegations}
           WHERE id = {id}::uuid
        """
@@ -117,6 +121,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
       'instructor -> user.instructor,
       'admin -> user.admin,
       'has_accepted_charte -> user.hasAcceptedCharte,
+      'commune_code -> user.communeCode,
       'delegations -> Json.toJson(user.delegations)
     ).executeUpdate() == 1
   }
