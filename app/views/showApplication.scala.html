@@ -158,7 +158,7 @@ dialog {
                 }
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
-                Etat: <b>@application.status(user)</b> | Invités: <b>@application.invitedUsers.values.mkString(", ")</b> | Territoire: <b>@Area.all.find(_.id == application.area).get.name</b>
+                Etat: <b>@application.longStatus(user)</b> | Invités: <b>@application.invitedUsers.values.mkString(", ")</b> | Territoire: <b>@Area.all.find(_.id == application.area).get.name</b>
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
                 <h4>Informations concernant l'usager :</h4>

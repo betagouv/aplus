@@ -3,7 +3,7 @@
 
 @display(applications: Seq[Application]) = {
     <div class="mdl-cell mdl-cell--12-col pem-container">
-        Total : @applications.size ( @applications.groupBy(_.status(user)).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
+        Total : @applications.size ( @applications.groupBy(_.longStatus(user)).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
         <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
             <tfoot class="invisible">
                 <tr>
@@ -12,8 +12,8 @@
             </tfoot>
             <tbody>
             @for((application) <- applications.sortBy(_.closed)) {
-                <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row @if(application.status(user) == "Nouvelle") {td--important-border} else {td--clear-border}">
-                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size"><span class="tag @if(application.status(user) == "Nouvelle") { tag--important } @if(application.closed){ tag--closed } ">@application.status(user)</span></td>
+                <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row @if(application.longStatus(user) == "Nouvelle") {td--important-border} else {td--clear-border}">
+                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size"><span class="tag @if(application.longStatus(user) == "Nouvelle") { tag--important } @if(application.closed){ tag--closed } ">@application.longStatus(user)</span></td>
                     <td class="mdl-data-table__cell--non-numeric"><span class="application__name">@application.userInfos.get(Application.USER_LAST_NAME_KEY) @application.userInfos.get(Application.USER_FIRST_NAME_KEY)</span><i>@application.userInfos.get(Application.USER_CAF_NUMBER_KEY).map(caf => s" (Num. CAF: $caf)")@application.userInfos.get(Application.USER_SOCIAL_SECURITY_NUMBER_KEY).map(nir => s" (NIR: $nir)")</i>
                     <br><span class="application__subject">@application.subject</span></td>
                     <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
@@ -163,7 +163,7 @@
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
             <h4 class="mdl-cell mdl-cell--12-col">Toutes les demandes du territoire: @area.name</h4>
             <div class="mdl-cell mdl-cell--12-col pem-container">
-                Total : @applicationsFromTheArea.size ( @applicationsFromTheArea.groupBy(_.status(user)).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
+                Total : @applicationsFromTheArea.size ( @applicationsFromTheArea.groupBy(_.longStatus(user)).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
                 <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp sortable" style="white-space: normal;">
                     <thead>
                         <tr>
@@ -191,7 +191,7 @@
                             <td class="mdl-data-table__cell--non-numeric" style="font-weight: bold; color: red;">@application.internalId</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
-                            <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status(user)</td>
+                            <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.longStatus(user)</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.creatorUserName</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.invitedUsers.size</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.answers.length</td>

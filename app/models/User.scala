@@ -3,7 +3,7 @@ package models
 import java.util.UUID
 
 import extentions.{Hash, UUIDHelper}
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, Days, Period}
 
 case class User(id: UUID,
                 key: String,
@@ -19,6 +19,7 @@ case class User(id: UUID,
                 communeCode: String,
                 delegations: Map[String, String] = Map()) {
   def nameWithQualite = s"$name ( $qualite )"
+  lazy val ageInDays = Days.daysBetween(creationDate, DateTime.now(Time.dateTimeZone)).getDays
 }
 
 object User {
