@@ -151,7 +151,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     "insee_code",
     "creation_date",
     "create_by_user_id",
-    "area"
+    "area"         //TODO rename to area_id
   ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
 
 
@@ -169,8 +169,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
       .executeUpdate() == 1
   }
 
-  def allGroupByArea(areaId: UUID) = db.withConnection { implicit connection =>
-    SQL"SELECT * FROM user_group WHERE area = $areaId::uuid".as(simpleUserGroup.*)
+  def allGroupByAreas(areaIds: List[UUID]) = db.withConnection { implicit connection =>
+    SQL"SELECT * FROM user_group WHERE ARRAY[$areaIds]::uuid[] @> ARRAY[area]::uuid[]".as(simpleUserGroup.*)
   }
 
   def addUserToGroup(user: User, inGroupId: UUID) = db.withConnection { implicit connection =>

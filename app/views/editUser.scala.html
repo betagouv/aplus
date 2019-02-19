@@ -1,10 +1,10 @@
 @import models._
 @import extentions.MDLForms._
 @import java.util.UUID
-@(user: User, area: Area)(form: Form[User], userId: UUID)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider)
+@(currentUser: User, area: Area)(form: Form[User], userId: UUID, userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider)
 
 
-@main(user, area)(s"Utilisateur ${userId}") {
+@main(currentUser, area)(s"Utilisateur ${userId}") {
     <script>
             function sendLoginMail(sender, email) {
                 var request = new XMLHttpRequest();
@@ -47,16 +47,21 @@
     @helper.input(form("email"), 'label -> "Email de l'utilisateur") { (id, name, value, args) =>
     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
     }
-      <button type="button" class="mdl-button mdl-js-button mdl-button--raised" onclick="sendLoginMail(this,'@user.email');">Envoyer un email de connexion</button>
+      <button type="button" class="mdl-button mdl-js-button mdl-button--raised" onclick="sendLoginMail(this,'@form.value.map(_.areas).getOrElse("")');">Envoyer un email de connexion</button>
     @helper.checkbox(form("instructor"), 'type -> "checkbox", 'label -> "Agent", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("helper"), 'type -> "checkbox", 'label -> "Aidant", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("admin"), 'type -> "checkbox", 'label -> "Admin de la zone", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("hasAcceptedCharte"), 'label -> "Charte validé", 'type -> "checkbox", 'class -> "mdl-checkbox__input")
 
-    <b>Territoires</b>
     <ul>
-    @for(area <- user.areas.flatMap(area => Area.all.find(_.id == area))) {
-        <li>@area.name</li>
+    @for(area <- form.value.map(_.areas).getOrElse(List()).flatMap(area => Area.all.find(_.id == area))) {
+        <li>Territoire : @area.name</li>
+        @for(userGroup <- userGroups.filter(_.area == area.id)) {
+            <li style="list-style-type:none"><label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events is-disabled">
+                <input type="checkbox" class="mdl-checkbox__input" disabled="" @if(userGroup.userIds.contains(userId)){ checked }>
+                <span class="mdl-checkbox__label">Groupe : @userGroup.name</span>
+            </label></li>
+        }
     }
     </ul>
 

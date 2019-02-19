@@ -31,7 +31,7 @@ class UserController @Inject()(loginAction: LoginAction,
     } else {
       val users = userService.byArea(request.currentArea.id)
       val applications = applicationService.allByArea(request.currentArea.id, true)
-      val groups = userService.allGroupByArea(request.currentArea.id)
+      val groups = userService.allGroupByAreas(List[UUID](request.currentArea.id))
       eventService.info("ALL_USER_SHOWED", s"Visualise la vue des utilisateurs")
       Ok(views.html.allUsers(request.currentUser, request.currentArea)(groups, users, applications))
     }
@@ -135,10 +135,11 @@ class UserController @Inject()(loginAction: LoginAction,
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
       implicit val area = request.currentArea
-      val user = userService.byId(userId).get
+      val user = userService.byId(userId).get    //TODO remove .get
       val form = userForm.fill(user)
+      val groups = userService.allGroupByAreas(user.areas)
       eventService.info("USER_SHOWED", s"Visualise la vue de modification l'utilisateur ", user = Some(user))
-      Ok(views.html.editUser(request.currentUser, request.currentArea)(form, userId))
+      Ok(views.html.editUser(request.currentUser, request.currentArea)(form, userId, groups))
     }
   }
 
@@ -150,8 +151,9 @@ class UserController @Inject()(loginAction: LoginAction,
       implicit val area = request.currentArea
       userForm.bindFromRequest.fold(
         formWithErrors => {
+          val groups = userService.allGroupByAreas(formWithErrors.value.map(_.areas).getOrElse(List()))
           eventService.error("ADD_USER_ERROR", s"Essai de modification de l'tilisateur $userId avec des erreurs de validation")
-          BadRequest(views.html.editUser(request.currentUser, request.currentArea)(formWithErrors, userId))
+          BadRequest(views.html.editUser(request.currentUser, request.currentArea)(formWithErrors, userId, groups))
         },
         user => {
           if(userService.update(user)) {
@@ -159,8 +161,9 @@ class UserController @Inject()(loginAction: LoginAction,
             Redirect(routes.UserController.editUser(userId)).flashing("success" -> "Utilisateur modifié")
           } else {
             val form = userForm.fill(user).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
+            val groups = userService.allGroupByAreas(user.areas)
             eventService.error("EDIT_USER_ERROR", s"Impossible de modifier l'utilisateur dans la BDD", user = Some(user))
-            InternalServerError(views.html.editUser(request.currentUser, request.currentArea)(form, userId))
+            InternalServerError(views.html.editUser(request.currentUser, request.currentArea)(form, userId, groups))
           }
         }
       )
