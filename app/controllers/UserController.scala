@@ -3,11 +3,11 @@ package controllers
 import java.util.UUID
 
 import javax.inject.{Inject, Singleton}
-import actions.LoginAction
+import actions.{LoginAction, RequestWithUserData}
 import extentions.{Hash, UUIDHelper}
 import forms.FormsPlusMap
 import models.User.date
-import models.{Area, User}
+import models.{Area, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
@@ -25,18 +25,44 @@ class UserController @Inject()(loginAction: LoginAction,
                                eventService: EventService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
 
   def all = loginAction { implicit request =>
-    if(request.currentUser.admin != true) {
+    if(request.currentUser.admin == false) {
       eventService.warn("ALL_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs")
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
       val users = userService.byArea(request.currentArea.id)
       val applications = applicationService.allByArea(request.currentArea.id, true)
+      val groups = userService.allGroupByArea(request.currentArea.id)
       eventService.info("ALL_USER_SHOWED", s"Visualise la vue des utilisateurs")
-      Ok(views.html.allUsers(request.currentUser, request.currentArea)(users, applications))
+      Ok(views.html.allUsers(request.currentUser, request.currentArea)(groups, users, applications))
     }
   }
 
   private val timeZone = DateTimeZone.forID("Europe/Paris")
+
+  def userForm(implicit area: Area) = Form(
+    mapping(
+      "id" -> optional(uuid).transform[UUID]({
+        case None => UUID.randomUUID()
+        case Some(id) => id
+      }, { Some(_) }),
+      "key" -> ignored("key"),  //TODO refactoring security
+      "name" -> nonEmptyText.verifying(maxLength(100)),
+      "qualite" -> nonEmptyText.verifying(maxLength(100)),
+      "email" -> email.verifying(maxLength(200), nonEmpty),
+      "helper" -> boolean,
+      "instructor" -> boolean,
+      "admin" -> boolean,
+      "areas" -> ignored(List(area.id)),
+      "creationDate" -> ignored(DateTime.now(timeZone)),
+      "hasAcceptedCharte" -> boolean,
+      "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
+      "delegations" -> seq(tuple(
+        "name" -> nonEmptyText,
+        "email" -> email
+      )
+      ).transform[Map[String,String]]({ _.toMap }, { _.toSeq })
+    )(User.apply)(User.unapply)
+  )
 
   def usersForm(implicit area: Area) = Form(
     single(
@@ -103,7 +129,45 @@ class UserController @Inject()(loginAction: LoginAction,
     }
   }
 
-  def add = loginAction { implicit request =>
+  def editUser(userId: UUID) = loginAction { implicit request =>
+    if(request.currentUser.admin != true) {
+      eventService.warn("VIEW_USER_UNAUTHORIZED", s"Accès non autorisé pour voir $userId")
+      Unauthorized("Vous n'avez pas le droit de faire ça")
+    } else {
+      implicit val area = request.currentArea
+      val user = userService.byId(userId).get
+      val form = userForm.fill(user)
+      eventService.info("USER_SHOWED", s"Visualise la vue de modification l'utilisateur ", user = Some(user))
+      Ok(views.html.editUser(request.currentUser, request.currentArea)(form, userId))
+    }
+  }
+
+  def editUserPost(userId: UUID) = loginAction { implicit request =>
+    if(request.currentUser.admin != true) {
+      eventService.warn("POST_EDIT_USER_UNAUTHORIZED", s"Accès non autorisé à modifier $userId")
+      Unauthorized("Vous n'avez pas le droit de faire ça")
+    } else {
+      implicit val area = request.currentArea
+      userForm.bindFromRequest.fold(
+        formWithErrors => {
+          eventService.error("ADD_USER_ERROR", s"Essai de modification de l'tilisateur $userId avec des erreurs de validation")
+          BadRequest(views.html.editUser(request.currentUser, request.currentArea)(formWithErrors, userId))
+        },
+        user => {
+          if(userService.update(user)) {
+            eventService.info("EDIT_USER_DONE", s"Utilisateur $userId modifié", user = Some(user))
+            Redirect(routes.UserController.editUser(userId)).flashing("success" -> "Utilisateur modifié")
+          } else {
+            val form = userForm.fill(user).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
+            eventService.error("EDIT_USER_ERROR", s"Impossible de modifier l'utilisateur dans la BDD", user = Some(user))
+            InternalServerError(views.html.editUser(request.currentUser, request.currentArea)(form, userId))
+          }
+        }
+      )
+    }
+  }
+
+  def add(groupId: UUID) = loginAction { implicit request =>
     if(request.currentUser.admin != true) {
       eventService.warn("SHOW_ADD_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs")
       Unauthorized("Vous n'avez pas le droit de faire ça")
@@ -111,11 +175,11 @@ class UserController @Inject()(loginAction: LoginAction,
       implicit val area = request.currentArea
       val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
       eventService.info("EDIT_USER_SHOWED", s"Visualise la vue d'ajouts des utilisateurs")
-      Ok(views.html.editUsers(request.currentUser, request.currentArea)(usersForm, rows, routes.UserController.addPost()))
+      Ok(views.html.editUsers(request.currentUser, request.currentArea)(usersForm, rows, routes.UserController.addPost(groupId)))
     }
   }
 
-  def addPost = loginAction { implicit request =>
+  def addPost(groupId: UUID) = loginAction { implicit request =>
     if(request.currentUser.admin != true) {
       eventService.warn("POST_ADD_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs")
       Unauthorized("Vous n'avez pas le droit de faire ça")
@@ -124,16 +188,16 @@ class UserController @Inject()(loginAction: LoginAction,
       usersForm.bindFromRequest.fold(
         formWithErrors => {
           eventService.error("ADD_USER_ERROR", s"Essai d'ajout d'utilisateurs avec des erreurs de validation")
-          BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost()))
+          BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost(groupId)))
         },
         users => {
-          if (userService.add(users)) {
+          if (userService.add(users, groupId)) {
             eventService.info("ADD_USER_DONE", s"Utilisateurs ajouté")
             Redirect(routes.UserController.all()).flashing("success" -> "Utilisateurs ajouté")
           } else {
             val form = usersForm.fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne)")
             eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD")
-            InternalServerError(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost()))
+            InternalServerError(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
           }
         }
       )
@@ -170,5 +234,39 @@ class UserController @Inject()(loginAction: LoginAction,
       }
     )
 
+  }
+
+  def addGroupForm[A](implicit request: RequestWithUserData[A]) = Form(
+    mapping(
+      "id" -> ignored(UUID.randomUUID()),
+      "name" -> text,
+      "userIds" -> ignored(List[UUID]()),
+      "insee-code" -> text,
+      "creationDate" -> ignored(DateTime.now(timeZone)),
+      "create-by-user-id" -> ignored(request.currentUser.id),
+      "area" -> ignored(request.currentArea.id),
+    )(UserGroup.apply)(UserGroup.unapply)
+  )
+
+  def addGroup = loginAction { implicit request =>
+    if(request.currentUser.admin == false) {
+      eventService.warn("ADD_GROUP_UNAUTHORIZED", s"Accès non autorisé pour ajouter un groupe")
+      Unauthorized("Vous n'avez pas le droit de faire ça")
+    } else {
+      addGroupForm.bindFromRequest.fold(
+        formWithErrors => {
+          eventService.error("ADD_USER_GROUP_ERROR", s"Essai d'ajout d'un groupe avec des erreurs de validation")
+          BadRequest("Impossible d'ajouter le groupe")//BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost()))
+        },
+        group => {
+          if (userService.add(group)) {
+            eventService.info("ADD_USER_GROUP_DONE", s"Groupe ajouté")
+            Redirect(routes.UserController.all()).flashing("success" -> "Groupe ajouté")
+          } else {eventService.error("ADD_USER_GROUP_ERROR", s"Impossible d'ajouter le groupe dans la BDD")
+            Redirect(routes.UserController.all()).flashing("success" -> "Impossible d'ajouter le groupe")
+          }
+        }
+      )
+    }
   }
 }

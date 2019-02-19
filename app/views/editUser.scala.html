@@ -1,0 +1,115 @@
+@import models._
+@import extentions.MDLForms._
+@import java.util.UUID
+@(user: User, area: Area)(form: Form[User], userId: UUID)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider)
+
+
+@main(user, area)(s"Utilisateur ${userId}") {
+    <script>
+            function sendLoginMail(sender, email) {
+                var request = new XMLHttpRequest();
+                var parent = sender.parentNode;
+                parent.innerHTML = "<span style='font-weight: bold;'>En cours</span> <img src='@routes.Assets.versioned("images/spin.gif")'>";
+                request.open('POST', '@routes.LoginController.login()', true);
+                request.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
+                request.onload = function() {
+                    if (request.status === 200) {
+                        parent.innerHTML = "<span style='color: green; font-weight: bold;'>Ok !</span>";
+                    } else {
+                        parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
+                    }
+                };
+                request.onerror = function() {
+                    parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
+                };
+                request.send("email="+email);
+            }
+    </script>
+} {
+
+    <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+  @helper.form(action = routes.UserController.editUserPost(userId)) {
+    @if(form.hasGlobalErrors) {
+      <div style="color: red; font-weight: bold;">@form.globalErrors.mkString(", ")</div>
+    }
+    @helper.input(form("id"), 'label -> "Id", 'class -> "hidden") { (id, name, value, args) =>
+        <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+    }
+    @helper.input(form("name"), 'label -> "Nom de l'utilisateur") { (id, name, value, args) =>
+    <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+    } <br>
+    @helper.input(form("qualite"), 'label -> "Qualité de l'utilisateur") { (id, name, value, args) =>
+    <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+    } <br>
+    @helper.input(form("communeCode"), 'label -> "Code commune") { (id, name, value, args) =>
+    <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) minlength="0" maxlength="5" pattern="[0-9AB]*">
+    } <br>
+    @helper.input(form("email"), 'label -> "Email de l'utilisateur") { (id, name, value, args) =>
+    <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+    }
+      <button type="button" class="mdl-button mdl-js-button mdl-button--raised" onclick="sendLoginMail(this,'@user.email');">Envoyer un email de connexion</button>
+    @helper.checkbox(form("instructor"), 'type -> "checkbox", 'label -> "Agent", 'class -> "mdl-checkbox__input")
+    @helper.checkbox(form("helper"), 'type -> "checkbox", 'label -> "Aidant", 'class -> "mdl-checkbox__input")
+    @helper.checkbox(form("admin"), 'type -> "checkbox", 'label -> "Admin de la zone", 'class -> "mdl-checkbox__input")
+    @helper.checkbox(form("hasAcceptedCharte"), 'label -> "Charte validé", 'type -> "checkbox", 'class -> "mdl-checkbox__input")
+
+    <b>Territoires</b>
+    <ul>
+    @for(area <- user.areas.flatMap(area => Area.all.find(_.id == area))) {
+        <li>@area.name</li>
+    }
+    </ul>
+
+    <b>Délégations</b>
+    <div class="mdl-grid mdl-grid--no-spacing user-delegations" >
+    @helper.repeatWithIndex(form("delegations"), min = 0) { (field, indexDelegations) =>
+     <fieldset class="mdl-grid mdl-cell mdl-cell--12-col" style="border: 2px groove threedface;">
+      @helper.input(field("name"), 'label -> "Nom", 'class -> "mdl-cell mdl-cell--12-col") { (id, name, value, args) =>
+          <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+      }
+      @helper.input(field("email"), 'label -> "Email", 'class -> "mdl-cell mdl-cell--12-col") { (id, name, value, args) =>
+          <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+      } <br>
+        <p>Pourra agir au nom de l'agent</p>
+       <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--12-col" type="button" onclick="deleteDelegation(this);">
+          Supprimer
+       </button>
+     </fieldset>
+    }
+      </div><br>
+        <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="addDelegation(0, this)">
+              Ajouter délégation
+        </button> <br>
+      <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
+      Sauvegarder les modifications
+    </button>
+  }
+  </div>
+    <script type='text/javascript'>
+        function deleteDelegation(button){
+          button.parentNode.parentNode.removeChild(button.parentNode);
+        }
+
+        function addDelegation(userIndex, button) {
+          var dialog = button.parentNode.parentNode;
+          var countDelegation =  dialog.querySelectorAll(".user-delegations fieldset").length;
+          var newNode = document.createElement('fieldset');
+          newNode.className = "mdl-grid mdl-cell mdl-cell--12-col";
+          newNode.style = "border: 2px groove threedface;";
+          newNode.innerHTML = '<div class="mdl-textfield mdl-js-textfield  mdl-textfield--floating-label mdl-cell mdl-cell--12-col">   \
+                        <input class="mdl-textfield__input" type="text" name="users['+userIndex+'].delegations['+countDelegation+'].name" id="users_'+userIndex+'_delegations_0_name" value="" label="Nom" class="mdl-cell mdl-cell--12-col">  \
+                        <label class="mdl-textfield__label" for="users_'+userIndex+'_delegations_'+countDelegation+'_name">Nom</label>  \
+                    </div>                                                                                 \
+                    <div class="mdl-textfield mdl-js-textfield  mdl-textfield--floating-label mdl-cell mdl-cell--12-col">  \
+                        <input class="mdl-textfield__input" type="text" name="users['+userIndex+'].delegations['+countDelegation+'].email" id="users_'+userIndex+'_delegations_0_email" value="" label="Email" class="mdl-cell mdl-cell--12-col"> \
+                        <label class="mdl-textfield__label" for="users_'+userIndex+'_delegations_'+countDelegation+'_email">Email</label> \
+                    </div><br>  \
+                    <p>Pourra agir au nom de l\'agent</p>  \
+                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--12-col" type="button" onclick="deleteDelegation(this);">  \
+                    Supprimer  \
+                    </button>';
+          dialog.querySelector(".user-delegations").appendChild(newNode);
+          componentHandler.upgradeElements(newNode);
+        }
+    </script>
+}

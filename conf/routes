@@ -30,8 +30,15 @@ GET    /login/disconnect             controllers.LoginController.disconnect
 GET     /users                       controllers.UserController.all
 GET     /users/edit                  controllers.UserController.edit
 POST    /users/edit                  controllers.UserController.editPost
-GET     /users/add                   controllers.UserController.add
-POST    /users/add                   controllers.UserController.addPost
+GET     /users/:userId               controllers.UserController.editUser(userId: java.util.UUID)
+POST    /users/:userId               controllers.UserController.editUserPost(userId: java.util.UUID)
+
+
+GET     /groups/:groupId/users/add   controllers.UserController.add(groupId: java.util.UUID)
+POST    /groups/:groupId/users/add   controllers.UserController.addPost(groupId: java.util.UUID)
+
+# Group
+POST    /groups/add                  controllers.UserController.addGroup
 
 
 GET     /charte                  controllers.UserController.showCharte
