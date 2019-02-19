@@ -104,9 +104,6 @@
             Ajouter des utilisateurs dans le groupe
           </button>
         }
-        <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--6-col mdl-cell--12-col-phone" onclick="document.location='@routes.UserController.edit()'">
-      Modifier les utilisateurs du groupe
-        </button>
       }
 
         @defining(allUsers.filterNot(user => userGroups.flatMap(_.userIds).contains(user.id))) { users =>
@@ -114,6 +111,9 @@
             @display(users)
         }
 
+      <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--6-col mdl-cell--12-col-phone" onclick="document.location='@routes.UserController.edit()'">
+        Modifier les utilisateurs du territoire
+      </button>
     </div>
     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col  mdl-grid">
       <h4>Ajouter un groupe</h4> <br>
