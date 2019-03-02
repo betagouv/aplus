@@ -29,6 +29,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     "creation_date",
     "has_accepted_charte",
     "commune_code",
+    "group_admin",
+    "group_ids",
     "delegations"
   ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
 
@@ -61,73 +63,44 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     SQL("""SELECT * FROM "user" WHERE lower(email) = {email}""").on('email -> email.toLowerCase()).as(simpleUser.singleOpt)
   }.orElse(User.admins.find(_.email.toLowerCase() == email.toLowerCase()))
 
-  def add(users: List[User], inGroupId: UUID) = db.withTransaction { implicit connection =>
+  def add(users: List[User]) = db.withTransaction { implicit connection =>
     users.foldRight(true) { (user, success)  =>
-      success && SQL(
-        """
+      success && SQL"""
       INSERT INTO "user" VALUES (
-         {id}::uuid,
-         {key},
-         {name},
-         {qualite},
-         {email},
-         {helper},
-         {instructor},
-         {admin},
-         array[{areas}]::uuid[],
-         {delegations},
-         {creation_date},
-         {has_accepted_charte},
-         {commune_code})
-      """)
-      .on(
-        'id -> user.id,
-        'key -> Hash.sha256(s"${user.id}$cryptoSecret"),
-        'name -> user.name,
-        'qualite -> user.qualite,
-        'email -> user.email,
-        'helper -> user.helper,
-        'instructor -> user.instructor,
-        'admin -> user.admin,
-        'areas -> user.areas.map(_.toString),
-        'delegations -> Json.toJson(user.delegations),
-        'creation_date -> user.creationDate,
-        'has_accepted_charte -> user.hasAcceptedCharte,
-        'commune_code -> user.communeCode
-      ).executeUpdate() == 1 &&
-          SQL""" UPDATE  user_group SET
-                  user_ids = ARRAY(select distinct unnest(array_append(user_ids, ${user.id}::uuid)))
-                  WHERE id = $inGroupId::uuid
-             """.executeUpdate() == 1
+         ${user.id}::uuid,
+         ${Hash.sha256(s"${user.id}$cryptoSecret")},
+         ${user.name},
+         ${user.qualite},
+         ${user.email},
+         ${user.helper},
+         ${user.instructor},
+         ${user.admin},
+         array[${user.areas}]::uuid[],
+         ${Json.toJson(user.delegations)},
+         ${user.creationDate},
+         ${user.hasAcceptedCharte},
+         ${user.communeCode},
+         ${user.groupAdmin},
+         array[${user.groupIds}]::uuid[])
+      """.executeUpdate() == 1
     }
   }
   def update(user: User) = db.withConnection {  implicit connection =>
-    SQL(
-      """
+    SQL"""
           UPDATE "user" SET
-          name = {name},
-          qualite = {qualite},
-          email = {email},
-          helper = {helper},
-          instructor = {instructor},
-          admin = {admin},
-          has_accepted_charte = {has_accepted_charte},
-          commune_code = {commune_code},
-          delegations = {delegations}
-          WHERE id = {id}::uuid
-       """
-    ).on(
-      'id -> user.id,
-      'name -> user.name,
-      'qualite -> user.qualite,
-      'email -> user.email,
-      'helper -> user.helper,
-      'instructor -> user.instructor,
-      'admin -> user.admin,
-      'has_accepted_charte -> user.hasAcceptedCharte,
-      'commune_code -> user.communeCode,
-      'delegations -> Json.toJson(user.delegations)
-    ).executeUpdate() == 1
+          name = ${user.name},
+          qualite = ${user.qualite},
+          email = ${user.email},
+          helper = ${user.helper},
+          instructor = ${user.instructor},
+          admin = ${user.admin},
+          has_accepted_charte = ${user.hasAcceptedCharte},
+          commune_code = ${user.communeCode},
+          delegations = ${Json.toJson(user.delegations)},
+          group_admin = ${user.groupAdmin},
+          group_ids = array[${user.groupIds}]::uuid[]
+          WHERE id = ${user.id}::uuid
+       """.executeUpdate() == 1
   }
 
   def acceptCharte(userId: UUID) = db.withConnection {  implicit connection =>
@@ -147,7 +120,6 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
   private val simpleUserGroup: RowParser[UserGroup] = Macro.parser[UserGroup](
     "id",
     "name",
-    "user_ids",
     "insee_code",
     "creation_date",
     "create_by_user_id",
@@ -160,7 +132,6 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
       INSERT INTO user_group VALUES (
          ${group.id}::uuid,
          ${group.name},
-         ARRAY[${group.userIds}]::uuid[],
          ${group.inseeCode},
          ${group.creationDate},
          ${group.createByUserId}::uuid,
@@ -172,12 +143,4 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
   def allGroupByAreas(areaIds: List[UUID]) = db.withConnection { implicit connection =>
     SQL"SELECT * FROM user_group WHERE ARRAY[$areaIds]::uuid[] @> ARRAY[area]::uuid[]".as(simpleUserGroup.*)
   }
-
-  def addUserToGroup(user: User, inGroupId: UUID) = db.withConnection { implicit connection =>
-    SQL""" UPDATE user_group SET
-                  user_ids = ARRAY(select distinct unnest(array_append(user_ids, ${user.id}::uuid)))
-                  WHERE id = $inGroupId::uuid
-             """.executeUpdate() == 1
-  }
-
 }

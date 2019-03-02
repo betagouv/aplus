@@ -92,8 +92,8 @@
   } {
     <div>
       @for(userGroup <- userGroups) {
-        <h4>Groupe : @userGroup.name (@userGroup.userIds.length utilisateurs)</h4>
-        @display(allUsers.filter(user => userGroup.userIds.contains(user.id)))
+        <h4>Groupe : @userGroup.name (@allUsers.count(_.groupIds.contains(userGroup.id)) utilisateurs)</h4>
+        @display(allUsers.filter(_.groupIds.contains(userGroup.id)))
         @helper.form(routes.UserController.add(userGroup.id), 'method -> "get") {
           <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
             <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="rows" name="rows" value="1">
@@ -106,7 +106,7 @@
         }
       }
 
-        @defining(allUsers.filterNot(user => userGroups.flatMap(_.userIds).contains(user.id))) { users =>
+        @defining(allUsers.filter(_.groupIds.isEmpty)) { users =>
             <h4>Sans groupe (@users.length utilisateurs)</h4>
             @display(users)
         }

@@ -39,55 +39,36 @@ class UserController @Inject()(loginAction: LoginAction,
 
   private val timeZone = DateTimeZone.forID("Europe/Paris")
 
-  def userForm(implicit area: Area) = Form(
-    mapping(
-      "id" -> optional(uuid).transform[UUID]({
-        case None => UUID.randomUUID()
-        case Some(id) => id
-      }, { Some(_) }),
-      "key" -> ignored("key"),  //TODO refactoring security
-      "name" -> nonEmptyText.verifying(maxLength(100)),
-      "qualite" -> nonEmptyText.verifying(maxLength(100)),
-      "email" -> email.verifying(maxLength(200), nonEmpty),
-      "helper" -> boolean,
-      "instructor" -> boolean,
-      "admin" -> boolean,
-      "areas" -> ignored(List(area.id)),
-      "creationDate" -> ignored(DateTime.now(timeZone)),
-      "hasAcceptedCharte" -> boolean,
-      "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
-      "delegations" -> seq(tuple(
-        "name" -> nonEmptyText,
-        "email" -> email
-      )
-      ).transform[Map[String,String]]({ _.toMap }, { _.toSeq })
-    )(User.apply)(User.unapply)
-  )
+  def userMapping(implicit area: Area) = mapping(
+    "id" -> optional(uuid).transform[UUID]({
+      case None => UUID.randomUUID()
+      case Some(id) => id
+    }, { Some(_) }),
+    "key" -> ignored("key"),  //TODO refactoring security
+    "name" -> nonEmptyText.verifying(maxLength(100)),
+    "qualite" -> nonEmptyText.verifying(maxLength(100)),
+    "email" -> email.verifying(maxLength(200), nonEmpty),
+    "helper" -> boolean,
+    "instructor" -> boolean,
+    "admin" -> boolean,
+    "areas" -> ignored(List(area.id)), //TODO manage area
+    "creationDate" -> ignored(DateTime.now(timeZone)),
+    "hasAcceptedCharte" -> boolean,
+    "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
+    "adminGroup" -> boolean,
+    "groupIds" -> default(list(uuid), List()),
+    "delegations" -> seq(tuple(
+      "name" -> nonEmptyText,
+      "email" -> email
+    )
+    ).transform[Map[String,String]]({ _.toMap }, { _.toSeq })
+  )(User.apply)(User.unapply)
+
+  def userForm(implicit area: Area) = Form(userMapping)
 
   def usersForm(implicit area: Area) = Form(
     single(
-      "users" -> list(mapping(
-        "id" -> optional(uuid).transform[UUID]({
-          case None => UUID.randomUUID()
-          case Some(id) => id
-        }, { Some(_) }),
-        "key" -> ignored("key"),  //TODO refactoring security
-        "name" -> nonEmptyText.verifying(maxLength(100)),
-        "qualite" -> nonEmptyText.verifying(maxLength(100)),
-        "email" -> email.verifying(maxLength(200), nonEmpty),
-        "helper" -> boolean,
-        "instructor" -> boolean,
-        "admin" -> boolean,
-        "areas" -> ignored(List(area.id)),
-        "creationDate" -> ignored(DateTime.now(timeZone)),
-        "hasAcceptedCharte" -> boolean,
-        "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
-        "delegations" -> seq(tuple(
-            "name" -> nonEmptyText,
-            "email" -> email
-          )
-        ).transform[Map[String,String]]({ _.toMap }, { _.toSeq })
-      )(User.apply)(User.unapply))
+      "users" -> list(userMapping)
     )
   )
 
@@ -194,7 +175,7 @@ class UserController @Inject()(loginAction: LoginAction,
           BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost(groupId)))
         },
         users => {
-          if (userService.add(users, groupId)) {
+          if (userService.add(users.map(_.copy(groupIds = List(groupId))))) {
             eventService.info("ADD_USER_DONE", s"Utilisateurs ajouté")
             Redirect(routes.UserController.all()).flashing("success" -> "Utilisateurs ajouté")
           } else {
@@ -243,7 +224,6 @@ class UserController @Inject()(loginAction: LoginAction,
     mapping(
       "id" -> ignored(UUID.randomUUID()),
       "name" -> text,
-      "userIds" -> ignored(List[UUID]()),
       "insee-code" -> text,
       "creationDate" -> ignored(DateTime.now(timeZone)),
       "create-by-user-id" -> ignored(request.currentUser.id),

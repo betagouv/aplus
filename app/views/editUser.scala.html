@@ -51,6 +51,7 @@
     @helper.checkbox(form("instructor"), 'type -> "checkbox", 'label -> "Agent", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("helper"), 'type -> "checkbox", 'label -> "Aidant", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("admin"), 'type -> "checkbox", 'label -> "Admin de la zone", 'class -> "mdl-checkbox__input")
+    @helper.checkbox(form("adminGroup"), 'type -> "checkbox", 'label -> "Admin du groupe (de tous ces groupes)", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("hasAcceptedCharte"), 'label -> "Charte validé", 'type -> "checkbox", 'class -> "mdl-checkbox__input")
 
     <ul>
@@ -58,7 +59,7 @@
         <li>Territoire : @area.name</li>
         @for(userGroup <- userGroups.filter(_.area == area.id)) {
             <li style="list-style-type:none"><label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events is-disabled">
-                <input type="checkbox" class="mdl-checkbox__input" disabled="" @if(userGroup.userIds.contains(userId)){ checked }>
+                <input type="checkbox" class="mdl-checkbox__input" name="groupIds[]" value="@userGroup.id" @if(form.data.find({case (k, v) => k.startsWith("groupIds[") && v == userGroup.id.toString})){ checked="checked" }>
                 <span class="mdl-checkbox__label">Groupe : @userGroup.name</span>
             </label></li>
         }

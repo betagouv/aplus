@@ -97,8 +97,8 @@
               <h4 class="mdl-dialog__title">Options</h4>
               <div class="mdl-dialog__content">
                 @helper.checkbox(userField("admin"), 'type -> "checkbox", 'label -> "Admin de la zone", 'class -> "mdl-checkbox__input")
+                @helper.checkbox(userField("adminGroup"), 'type -> "checkbox", 'label -> "Admin de tous ces groupes", 'class -> "mdl-checkbox__input")
                 @helper.checkbox(userField("hasAcceptedCharte"), 'label -> "Charte validé", 'type -> "checkbox", 'class -> "mdl-checkbox__input")
-
                   <b>Délégations</b>
                   <div class="mdl-grid mdl-grid--no-spacing user-delegations" >
                   @helper.repeatWithIndex(userField("delegations"), min = 0) { (field, indexDelegations) =>
