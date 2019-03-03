@@ -127,16 +127,35 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
 
   def stats = loginAction { implicit request =>
-    request.currentUser.admin match {
+    (request.currentUser.admin || request.currentUser.groupAdmin) match {
       case false =>
         eventService.warn("STATS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher les stats")
         Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
       case true =>
-        val allApplications = applicationService.all(request.currentUser.admin)
+        val users = if(request.currentUser.admin) {
+          userService.all
+        } else if(request.currentUser.groupAdmin) {
+          userService.byGroupIds(request.currentUser.groupIds)
+        } else {
+          eventService.warn("STATS_INCORRECT_SETUP", s"Erreur d'accès aux utilisateurs pour les stats")
+          List()
+        }
+
+        val allApplications = if(request.currentUser.admin) {
+          applicationService.all(true)
+        } else if(request.currentUser.groupAdmin) {
+          applicationService.allForUserIds(users.map(_.id), true)
+        } else {
+          eventService.warn("STATS_INCORRECT_SETUP", s"Erreur d'accès aux demandes pour les stats")
+          List()
+        }
         val applicationsByArea = allApplications.groupBy(_.area).map{ case (areaId: UUID, applications: Seq[Application]) => (Area.all.find(_.id == areaId).get, applications) }
 
-        val users = userService.all
-        val firstDate = allApplications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
+        val firstDate = if(allApplications.isEmpty) {
+          DateTime.now()
+        } else {
+          allApplications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
+        }
         val today = DateTime.now(timeZone)
         val weeks = weeksMap(firstDate, today)
         val months = monthsMap(firstDate, today)
