@@ -5,13 +5,17 @@
     <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table" style="white-space: normal;">
       <thead>
         <tr>
-          <th class="mdl-data-table__cell--non-numeric"></th>
+          @if(currentUser.admin) {
+            <th class="mdl-data-table__cell--non-numeric"></th>
+          }
           <th class="mdl-data-table__cell--non-numeric">Nom</th>
           <th class="mdl-data-table__cell--non-numeric">Administration/Qualité</th>
           <th class="mdl-data-table__cell--non-numeric">Commune</th>
           <th class="mdl-data-table__cell--non-numeric">Email</th>
-          <th class="mdl-data-table__cell--non-numeric">Admin de zone</th>
-          <th class="mdl-data-table__cell--non-numeric">Admin de groupe</th>
+          @if(currentUser.admin) {
+            <th class="mdl-data-table__cell--non-numeric">Admin de zone</th>
+          }
+          <th class="mdl-data-table__cell--non-numeric">Admin du groupe</th>
           <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
           <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
           <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
@@ -23,22 +27,24 @@
       <tbody>
       @for((user, index) <- users.zipWithIndex) {
         <tr>
-          <td class="mdl-data-table__cell--non-numeric">
-            @if(currentUser.admin) {
-              <a href="@routes.UserController.editUser(user.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
-                <i class="material-icons">edit</i>
-              </a>
-            }
-          </td>
+          @if(currentUser.admin) {
+            <td class="mdl-data-table__cell--non-numeric">
+                <a href="@routes.UserController.editUser(user.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                  <i class="material-icons">edit</i>
+                </a>
+            </td>
+          }
           <td class="mdl-data-table__cell--non-numeric">@user.name</td>
           <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
           <td class="mdl-data-table__cell--non-numeric">@user.communeCode</td>
           <td class="mdl-data-table__cell--non-numeric">@user.email</td>
-          <td class="mdl-data-table__cell--non-numeric">
-            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-              <input type="checkbox" class="mdl-checkbox__input" @if(user.admin){ checked } disabled>
-            </label>
-          </td>
+          @if(currentUser.admin) {
+            <td class="mdl-data-table__cell--non-numeric">
+              <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                <input type="checkbox" class="mdl-checkbox__input" @if(user.admin){ checked } disabled>
+              </label>
+            </td>
+          }
           <td class="mdl-data-table__cell--non-numeric">
             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
               <input type="checkbox" class="mdl-checkbox__input" @if(user.groupAdmin){ checked } disabled>
