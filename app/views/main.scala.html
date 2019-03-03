@@ -100,7 +100,7 @@
                 create_new_folder</i>Nouvelle demande</a>
         }
         <a class="mdl-navigation__link" href="@routes.ApplicationController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">folder</i>Toutes les demandes</a>
-        @if(user.admin) {
+        @if(user.admin || user.groupAdmin) {
             <a class="mdl-navigation__link" href="@routes.UserController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">people</i>Utilisateurs</a>
         }
         @if(user.admin && user.areas.isEmpty) {

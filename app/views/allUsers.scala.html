@@ -10,7 +10,8 @@
           <th class="mdl-data-table__cell--non-numeric">Administration/Qualité</th>
           <th class="mdl-data-table__cell--non-numeric">Commune</th>
           <th class="mdl-data-table__cell--non-numeric">Email</th>
-          <th class="mdl-data-table__cell--non-numeric">Admin</th>
+          <th class="mdl-data-table__cell--non-numeric">Admin de zone</th>
+          <th class="mdl-data-table__cell--non-numeric">Admin de groupe</th>
           <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
           <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
           <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
@@ -22,9 +23,13 @@
       <tbody>
       @for((user, index) <- users.zipWithIndex) {
         <tr>
-          <td class="mdl-data-table__cell--non-numeric"><a href="@routes.UserController.editUser(user.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
-              <i class="material-icons">edit</i>
-          </a></td>
+          <td class="mdl-data-table__cell--non-numeric">
+            @if(currentUser.admin) {
+              <a href="@routes.UserController.editUser(user.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                <i class="material-icons">edit</i>
+              </a>
+            }
+          </td>
           <td class="mdl-data-table__cell--non-numeric">@user.name</td>
           <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
           <td class="mdl-data-table__cell--non-numeric">@user.communeCode</td>
@@ -32,7 +37,11 @@
           <td class="mdl-data-table__cell--non-numeric">
             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
               <input type="checkbox" class="mdl-checkbox__input" @if(user.admin){ checked } disabled>
-              <span class="mdl-checkbox__label">Admin</span>
+            </label>
+          </td>
+          <td class="mdl-data-table__cell--non-numeric">
+            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+              <input type="checkbox" class="mdl-checkbox__input" @if(user.groupAdmin){ checked } disabled>
             </label>
           </td>
           <td class="mdl-data-table__cell--non-numeric">
@@ -105,40 +114,46 @@
           </button>
         }
       }
-
+      @if(currentUser.admin) {
         @defining(allUsers.filter(_.groupIds.isEmpty)) { users =>
-            <h4>Sans groupe (@users.length utilisateurs)</h4>
-            @display(users)
+          <h4>Sans groupe (@users.length utilisateurs)</h4>
+        @display(users)
         }
-
-      <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--6-col mdl-cell--12-col-phone" onclick="document.location='@routes.UserController.edit()'">
-        Modifier les utilisateurs du territoire
-      </button>
-    </div>
-    <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col  mdl-grid">
-      <h4>Ajouter un groupe</h4> <br>
-      @helper.form(routes.UserController.addGroup(), 'method -> "post") {
-        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-          <input class="mdl-textfield__input" type="text" id="name" name="name">
-          <label class="mdl-textfield__label" for="name">Nom du groupe</label>
-        </div>
-        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-          <input class="mdl-textfield__input" type="text" pattern="[0-9AB]{3,5}" id="insee-code" name="insee-code">
-          <label class="mdl-textfield__label" for="insee-code">Code INSEE (département ou commune)</label>
-          <span class="mdl-textfield__error">Ce n'est pas un code INSEE valide (code département ou commune)</span>
-        </div>
-        <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
-          Ajouter le groupe
-        </button>
       }
     </div>
+    @if(currentUser.admin) {
+      <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col  mdl-grid">
+        <h4>Ajouter un groupe</h4> <br>
+        @helper.form(routes.UserController.addGroup(), 'method -> "post") {
+          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <input class="mdl-textfield__input" type="text" id="name" name="name">
+            <label class="mdl-textfield__label" for="name">Nom du groupe</label>
+          </div>
+          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <input class="mdl-textfield__input" type="text" pattern="[0-9AB]{3,5}" id="insee-code" name="insee-code">
+            <label class="mdl-textfield__label" for="insee-code">Code INSEE (département ou commune)</label>
+            <span class="mdl-textfield__error">Ce n'est pas un code INSEE valide (code département ou commune)</span>
+          </div>
+          <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
+            Ajouter le groupe
+          </button>
+        }
+      </div>
+    }
 
     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
-      <h4>Admin</h4>
+      <h4>Admin de zone</h4>
       <ul>
-        <li>Peut ajouter et supprimer des utilisateurs</li>
+        <li>Peut ajouter des utilisateurs</li>
         <li>Peut changer les permissions des utilisateurs</li>
         <li>Peut voir les adresses emails des agents</li>
+      </ul>
+    </div>
+    <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+      <h4>Admin de groupe</h4>
+      <ul>
+        <li>Peut ajouter des utilisateurs dans son groupe</li>
+        <li>Peut voir les adresses emails des agents du groupe</li>
       </ul>
     </div>
     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">

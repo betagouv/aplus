@@ -46,6 +46,10 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""").on('areaId -> areaId).as(simpleUser.*)
   } ++ User.admins.filter( user => user.areas.contains(areaId) || user.areas.isEmpty )
 
+  def byGroupIds(ids: List[UUID]): List[User] = db.withConnection { implicit connection =>
+    SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
+  }
+
   def byId(id: UUID): Option[User] = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user" WHERE id = {id}::uuid""").on('id -> id).as(simpleUser.singleOpt)
   }.orElse(User.admins.find(_.id == id))
@@ -142,5 +146,9 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
 
   def allGroupByAreas(areaIds: List[UUID]) = db.withConnection { implicit connection =>
     SQL"SELECT * FROM user_group WHERE ARRAY[$areaIds]::uuid[] @> ARRAY[area]::uuid[]".as(simpleUserGroup.*)
+  }
+
+  def groupByIds(groupIds: List[UUID]) = db.withConnection { implicit connection =>
+    SQL"SELECT * FROM user_group WHERE ARRAY[$groupIds]::uuid[] @> ARRAY[id]::uuid[]".as(simpleUserGroup.*)
   }
 }

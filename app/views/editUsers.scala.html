@@ -91,44 +91,6 @@
           <td>
             @helper.checkbox(userField("helper"), 'type -> "checkbox", 'label -> "Aidant", 'class -> "mdl-checkbox__input")
           </td>
-          <td>
-              <button id="show-dialog-@index" type="button" class="mdl-button mdl-js-button mdl-button--raised" @if(userField("delegations").hasErrors){ style="color: #d50000"}>Options</button>
-              <dialog class="mdl-dialog" id="dialog-@index">
-              <h4 class="mdl-dialog__title">Options</h4>
-              <div class="mdl-dialog__content">
-                @helper.checkbox(userField("admin"), 'type -> "checkbox", 'label -> "Admin de la zone", 'class -> "mdl-checkbox__input")
-                @helper.checkbox(userField("adminGroup"), 'type -> "checkbox", 'label -> "Admin de tous ces groupes", 'class -> "mdl-checkbox__input")
-                @helper.checkbox(userField("hasAcceptedCharte"), 'label -> "Charte validé", 'type -> "checkbox", 'class -> "mdl-checkbox__input")
-                  <b>Délégations</b>
-                  <div class="mdl-grid mdl-grid--no-spacing user-delegations" >
-                  @helper.repeatWithIndex(userField("delegations"), min = 0) { (field, indexDelegations) =>
-                     <fieldset class="mdl-grid mdl-cell mdl-cell--12-col" style="border: 2px groove threedface;">
-                      @helper.input(field("name"), 'label -> "Nom", 'class -> "mdl-cell mdl-cell--12-col") { (id, name, value, args) =>
-                          <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-                      }
-                      @helper.input(field("email"), 'label -> "Email", 'class -> "mdl-cell mdl-cell--12-col") { (id, name, value, args) =>
-                          <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-                      } <br>
-                        <p>Pourra agir au nom de l'agent</p>
-                       <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--12-col" type="button" onclick="deleteDelegation(this);">
-                          Supprimer
-                       </button>
-                     </fieldset>
-                  }
-                  </div><br>
-                    <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="addDelegation(@index, this)">
-                          Ajouter délégation
-                    </button> <br>
-                <b>Les options sont sauvegardé à la validation du formulaire</b>
-              </div>
-              <div class="mdl-dialog__actions">
-                <button type="button" class="mdl-button" id="close-dialog-@index">Fermer</button>
-              </div>
-            </dialog>
-            <script type='text/javascript'>
-                    registerDialog(@index)
-            </script>
-          </td>
         </tr>
           @if(index % 10 == 9) {
               <tr>
@@ -174,31 +136,4 @@
       <li>Peut voir uniquement les messages de réponse à la demande</li>
     </ul>
   </div>
-    <script type='text/javascript'>
-        function deleteDelegation(button){
-          button.parentNode.parentNode.removeChild(button.parentNode);
-        }
-
-        function addDelegation(userIndex, button) {
-          var dialog = button.parentNode.parentNode;
-          var countDelegation =  dialog.querySelectorAll(".user-delegations fieldset").length;
-          var newNode = document.createElement('fieldset');
-          newNode.className = "mdl-grid mdl-cell mdl-cell--12-col";
-          newNode.style = "border: 2px groove threedface;";
-          newNode.innerHTML = '<div class="mdl-textfield mdl-js-textfield  mdl-textfield--floating-label mdl-cell mdl-cell--12-col">   \
-                        <input class="mdl-textfield__input" type="text" name="users['+userIndex+'].delegations['+countDelegation+'].name" id="users_'+userIndex+'_delegations_0_name" value="" label="Nom" class="mdl-cell mdl-cell--12-col">  \
-                        <label class="mdl-textfield__label" for="users_'+userIndex+'_delegations_'+countDelegation+'_name">Nom</label>  \
-                    </div>                                                                                 \
-                    <div class="mdl-textfield mdl-js-textfield  mdl-textfield--floating-label mdl-cell mdl-cell--12-col">  \
-                        <input class="mdl-textfield__input" type="text" name="users['+userIndex+'].delegations['+countDelegation+'].email" id="users_'+userIndex+'_delegations_0_email" value="" label="Email" class="mdl-cell mdl-cell--12-col"> \
-                        <label class="mdl-textfield__label" for="users_'+userIndex+'_delegations_'+countDelegation+'_email">Email</label> \
-                    </div><br>  \
-                    <p>Pourra agir au nom de l\'agent</p>  \
-                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--12-col" type="button" onclick="deleteDelegation(this);">  \
-                    Supprimer  \
-                    </button>';
-          dialog.querySelector(".user-delegations").appendChild(newNode);
-          componentHandler.upgradeElements(newNode);
-        }
-    </script>
 }
