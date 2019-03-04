@@ -5,26 +5,7 @@
 
 
 @main(currentUser, area)(s"Utilisateur ${userId}") {
-    <script>
-            function sendLoginMail(sender, email) {
-                var request = new XMLHttpRequest();
-                var parent = sender.parentNode;
-                parent.innerHTML = "<span style='font-weight: bold;'>En cours</span> <img src='@routes.Assets.versioned("images/spin.gif")'>";
-                request.open('POST', '@routes.LoginController.login()', true);
-                request.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
-                request.onload = function() {
-                    if (request.status === 200) {
-                        parent.innerHTML = "<span style='color: green; font-weight: bold;'>Ok !</span>";
-                    } else {
-                        parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
-                    }
-                };
-                request.onerror = function() {
-                    parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
-                };
-                request.send("email="+email);
-            }
-    </script>
+    
 } {
 
     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
@@ -47,7 +28,6 @@
     @helper.input(form("email"), 'label -> "Email de l'utilisateur") { (id, name, value, args) =>
     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
     }
-      <button type="button" class="mdl-button mdl-js-button mdl-button--raised" onclick="sendLoginMail(this,'@form.value.map(_.areas).getOrElse("")');">Envoyer un email de connexion</button>
     @helper.checkbox(form("instructor"), 'type -> "checkbox", 'label -> "Agent", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("helper"), 'type -> "checkbox", 'label -> "Aidant", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("admin"), 'type -> "checkbox", 'label -> "Admin de la zone", 'class -> "mdl-checkbox__input")
