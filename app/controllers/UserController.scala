@@ -138,7 +138,7 @@ class UserController @Inject()(loginAction: LoginAction,
         user => {
           if(userService.update(user)) {
             eventService.info("EDIT_USER_DONE", s"Utilisateur $userId modifié", user = Some(user))
-            Redirect(routes.UserController.editUser(userId)).flashing("success" -> "Utilisateur modifié")
+            Redirect(routes.UserController.all()).flashing("success" -> "Utilisateur modifié")
           } else {
             val form = userForm.fill(user).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
             val groups = userService.allGroupByAreas(user.areas)
