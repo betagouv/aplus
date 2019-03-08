@@ -15,7 +15,7 @@
           @if(currentUser.admin) {
             <th class="mdl-data-table__cell--non-numeric">Admin de zone</th>
           }
-          <th class="mdl-data-table__cell--non-numeric">Admin du groupe</th>
+          <th class="mdl-data-table__cell--non-numeric">Responsable groupe</th>
           <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
           <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
           <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
@@ -42,12 +42,14 @@
             <td class="mdl-data-table__cell--non-numeric">
               <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
                 <input type="checkbox" class="mdl-checkbox__input" @if(user.admin){ checked } disabled>
+                <span class="mdl-checkbox__label">Admin</span>
               </label>
             </td>
           }
           <td class="mdl-data-table__cell--non-numeric">
             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
               <input type="checkbox" class="mdl-checkbox__input" @if(user.groupAdmin){ checked } disabled>
+              <span class="mdl-checkbox__label">Responsable</span>
             </label>
           </td>
           <td class="mdl-data-table__cell--non-numeric">
