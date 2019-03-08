@@ -94,7 +94,14 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     val myOpenApplications = myApplications.filter(!_.closed)
     val myClosedApplications = myApplications.filter(_.closed)
     
-    val applicationsFromTheArea = if(request.currentUser.admin) { applicationService.allByArea(request.currentArea.id, request.currentUser.admin) } else { List[Application]() }
+    val applicationsFromTheArea = if(request.currentUser.admin) {
+      applicationService.allByArea(request.currentArea.id, true)
+    } else if(request.currentUser.groupAdmin) {
+      val users = userService.byArea(request.currentArea.id)
+      val groupUserIds = users.filter(_.groupIds.intersect(request.currentUser.groupIds).nonEmpty).map(_.id)
+      applicationService.allForUserIds(groupUserIds, true)
+    } else { List[Application]() }
+
     eventService.info("ALL_APPLICATIONS_SHOWED",
       s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}/sone=${applicationsFromTheArea.size}")
     Ok(views.html.allApplication(request.currentUser, request.currentArea)(myOpenApplications, myClosedApplications, applicationsFromTheArea))
