@@ -159,15 +159,18 @@
             </div>
         }
     }
-    @if(applicationsFromTheArea.nonEmpty && user.admin) {
+    @if(applicationsFromTheArea.nonEmpty && (user.admin || user.groupAdmin)) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
+        @if(user.admin) {
             <h4 class="mdl-cell mdl-cell--12-col">Toutes les demandes du territoire: @area.name</h4>
+        }
+            <h4 class="mdl-cell mdl-cell--12-col">Demandes de mes groupes</h4>
             <div class="mdl-cell mdl-cell--12-col pem-container">
                 Total : @applicationsFromTheArea.size ( @applicationsFromTheArea.groupBy(_.longStatus(user)).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
                 <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp sortable" style="white-space: normal;">
                     <thead>
                         <tr>
-                            <th class="mdl-data-table__cell--non-numeric">#</th>
+                            @if(user.admin){ <th class="mdl-data-table__cell--non-numeric">#</th> }
                             <th class="mdl-data-table__cell--non-numeric">Date</th>
                             <th class="mdl-data-table__cell--non-numeric">Sujet</th>
                             <th class="mdl-data-table__cell--non-numeric">Avancement</th>
@@ -177,7 +180,7 @@
                             <th class="mdl-data-table__cell--non-numeric">Utile</th>
                             <th class="mdl-data-table__cell--non-numeric">Non pertinente</th>
                             <th class="mdl-data-table__cell--non-numeric"></th>
-                            <th class="mdl-data-table__cell--non-numeric" style="width: 20px">Détails</th>
+                            @if(user.admin){  <th class="mdl-data-table__cell--non-numeric" style="width: 20px">Détails</th> }
                         </tr>
                     </thead>
                     <tfoot class="invisible">
@@ -187,8 +190,8 @@
                     </tfoot>
                     <tbody>
                     @for((application) <- applicationsFromTheArea) {
-                        <tr onclick="window.document.location='@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row">
-                            <td class="mdl-data-table__cell--non-numeric" style="font-weight: bold; color: red;">@application.internalId</td>
+                        <tr @if(user.admin){ onclick="window.document.location='@routes.ApplicationController.show(application.id)';" class="application-row" } else { style="cursor: none" } data-search="@application.searchData" >
+                        @if(user.admin){ <td class="mdl-data-table__cell--non-numeric" style="font-weight: bold; color: red;">@application.internalId</td>}
                             <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
                             <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.longStatus(user)</td>
@@ -203,9 +206,9 @@
                             }</b></td>
                             <td class="mdl-data-table__cell--non-numeric">@if(application.irrelevant) { <span style="color: red; font-weight: bold;">Oui</span> } else { Non } </td>
                             <td class="mdl-data-table__cell--non-numeric search-cell"></td>
-                            <td class="mdl-data-table__cell--non-numeric"><a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                            @if(user.admin){ <td class="mdl-data-table__cell--non-numeric"> <a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                                 <i class="material-icons">info_outline</i>
-                            </a></td>
+                            </a></td>}
                         </tr>
                     }
                     </tbody>
