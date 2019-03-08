@@ -127,16 +127,35 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
 
   def stats = loginAction { implicit request =>
-    request.currentUser.admin match {
+    (request.currentUser.admin || request.currentUser.groupAdmin) match {
       case false =>
         eventService.warn("STATS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher les stats")
         Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
       case true =>
-        val allApplications = applicationService.all(request.currentUser.admin)
+        val users = if(request.currentUser.admin) {
+          userService.all
+        } else if(request.currentUser.groupAdmin) {
+          userService.byGroupIds(request.currentUser.groupIds)
+        } else {
+          eventService.warn("STATS_INCORRECT_SETUP", s"Erreur d'accès aux utilisateurs pour les stats")
+          List()
+        }
+
+        val allApplications = if(request.currentUser.admin) {
+          applicationService.all(true)
+        } else if(request.currentUser.groupAdmin) {
+          applicationService.allForUserIds(users.map(_.id), true)
+        } else {
+          eventService.warn("STATS_INCORRECT_SETUP", s"Erreur d'accès aux demandes pour les stats")
+          List()
+        }
         val applicationsByArea = allApplications.groupBy(_.area).map{ case (areaId: UUID, applications: Seq[Application]) => (Area.all.find(_.id == areaId).get, applications) }
 
-        val users = userService.all
-        val firstDate = allApplications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
+        val firstDate = if(allApplications.isEmpty) {
+          DateTime.now()
+        } else {
+          allApplications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
+        }
         val today = DateTime.now(timeZone)
         val weeks = weeksMap(firstDate, today)
         val months = monthsMap(firstDate, today)
@@ -166,14 +185,15 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
   def allCSV = loginAction { implicit request =>
     val currentUserId = request.currentUser.id
+    val users = userService.byArea(request.currentArea.id)
     val exportedApplications = if(request.currentUser.admin) {
-      applicationService.allByArea(request.currentArea.id, request.currentUser.admin)
-    } else {
-      (applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin) ++
-        applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin)).groupBy(_.id).map(_._2.head)
+      applicationService.allByArea(request.currentArea.id, true)
+    } else if(request.currentUser.groupAdmin) {
+      val groupUserIds = users.filter(_.groupIds.intersect(request.currentUser.groupIds).nonEmpty).map(_.id)
+      applicationService.allForUserIds(groupUserIds, true)
+    } else  {
+      applicationService.allForUserId(currentUserId, request.currentUser.admin)
     }
-    val userIds = exportedApplications.flatMap(_.invitedUsers.keys).toSet.toList
-    val users = userService.byIds(userIds)
     val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
     eventService.info("CSV_SHOWED", s"Visualise un CSV")
     Ok(views.html.allApplicationCSV(exportedApplications.toSeq, request.currentUser, users)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}.csv"""" )

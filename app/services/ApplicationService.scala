@@ -98,6 +98,15 @@ class ApplicationService @Inject()(db: Database) {
     }
   }
 
+  def allForUserIds(userIds: List[UUID], anonymous: Boolean) = db.withConnection { implicit connection =>
+    val result = SQL"SELECT * FROM application WHERE ARRAY[$userIds]::uuid[] @> ARRAY[creator_user_id]::uuid[] OR ARRAY(select jsonb_object_keys(invited_users))::uuid[] && ARRAY[$userIds]::uuid[] ORDER BY creation_date DESC".as(simpleApplication.*)
+    if(anonymous){
+      result.map(_.anonymousApplication)
+    } else {
+      result
+    }
+  }
+
   def allForCreatorUserId(creatorUserId: UUID, anonymous: Boolean) = db.withConnection { implicit connection =>
     val result = SQL("SELECT * FROM application WHERE creator_user_id = {creatorUserId}::uuid ORDER BY creation_date DESC")
       .on('creatorUserId -> creatorUserId).as(simpleApplication.*)

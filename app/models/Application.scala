@@ -26,7 +26,9 @@ case class Application(id: UUID,
    lazy val ageInDays = Days.daysBetween(creationDate, DateTime.now(Time.dateTimeZone)).getDays
    lazy val age = new Period(creationDate, DateTime.now(Time.dateTimeZone))
    lazy val ageString = {
-     if(age.getMonths > 0) {
+     if(age.getYears > 0) {
+       s"${age.getYears} années"
+     } else if(age.getMonths > 0) {
        s"${age.getMonths} mois"
      } else if(age.getWeeks > 0) {
        s"${age.getWeeks} semaines"

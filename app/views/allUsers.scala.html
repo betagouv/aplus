@@ -1,63 +1,55 @@
 @import models._
-@(user: User, area: Area)(users: List[User], applications: List[Application])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(currentUser: User, area: Area)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 
-@main(user, area)(s"Gestion des utilisateurs ${area.name} (${users.size} utilisateurs)") {
-  <style>
-      .pem-table {
-        width: 100%;
-      }
-  </style>
-  <script>
-          function sendLoginMail(sender, email) {
-            var request = new XMLHttpRequest();
-            var parent = sender.parentNode;
-            parent.innerHTML = "<span style='font-weight: bold;'>En cours</span> <img src='@routes.Assets.versioned("images/spin.gif")'>";
-            request.open('POST', '@routes.LoginController.login()', true);
-            request.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
-            request.onload = function() {
-              if (request.status === 200) {
-                parent.innerHTML = "<span style='color: green; font-weight: bold;'>Ok !</span>";
-              } else {
-                parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
-              }
-            };
-            request.onerror = function() {
-              parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
-            };
-            request.send("email="+email);
-          }
-  </script>
-} {
-  <div>
+  @display(users: Seq[User]) = {
     <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table" style="white-space: normal;">
       <thead>
         <tr>
+          @if(currentUser.admin) {
+            <th class="mdl-data-table__cell--non-numeric"></th>
+          }
           <th class="mdl-data-table__cell--non-numeric">Nom</th>
           <th class="mdl-data-table__cell--non-numeric">Administration/Qualité</th>
           <th class="mdl-data-table__cell--non-numeric">Commune</th>
           <th class="mdl-data-table__cell--non-numeric">Email</th>
-          <th class="mdl-data-table__cell--non-numeric">Admin</th>
+          @if(currentUser.admin) {
+            <th class="mdl-data-table__cell--non-numeric">Admin de zone</th>
+          }
+          <th class="mdl-data-table__cell--non-numeric">Responsable groupe</th>
           <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
           <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
           <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
-          <th class="mdl-data-table__cell--non-numeric">Territoires</th>
           <th class="mdl-data-table__cell--non-numeric">Demandes</th>
           <th class="mdl-data-table__cell--non-numeric">Solicitations</th>
           <th class="mdl-data-table__cell--non-numeric">Email de login</th>
-          <th class="mdl-data-table__cell--non-numeric">Id</th>
         </tr>
       </thead>
       <tbody>
       @for((user, index) <- users.zipWithIndex) {
         <tr>
+          @if(currentUser.admin) {
+            <td class="mdl-data-table__cell--non-numeric">
+                <a href="@routes.UserController.editUser(user.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                  <i class="material-icons">edit</i>
+                </a>
+            </td>
+          }
           <td class="mdl-data-table__cell--non-numeric">@user.name</td>
           <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
           <td class="mdl-data-table__cell--non-numeric">@user.communeCode</td>
           <td class="mdl-data-table__cell--non-numeric">@user.email</td>
+          @if(currentUser.admin) {
+            <td class="mdl-data-table__cell--non-numeric">
+              <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                <input type="checkbox" class="mdl-checkbox__input" @if(user.admin){ checked } disabled>
+                <span class="mdl-checkbox__label">Admin</span>
+              </label>
+            </td>
+          }
           <td class="mdl-data-table__cell--non-numeric">
             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-              <input type="checkbox" class="mdl-checkbox__input" @if(user.admin){ checked } disabled>
-              <span class="mdl-checkbox__label">Admin</span>
+              <input type="checkbox" class="mdl-checkbox__input" @if(user.groupAdmin){ checked } disabled>
+              <span class="mdl-checkbox__label">Responsable</span>
             </label>
           </td>
           <td class="mdl-data-table__cell--non-numeric">
@@ -78,71 +70,82 @@
               <span class="mdl-checkbox__label">Charte</span>
             </label>
           </td>
-        <td class="mdl-data-table__cell--non-numeric">@user.areas.flatMap(area => Area.all.find(_.id == area).map(_.name)).mkString(", ")</td>
           <td class="mdl-data-table__cell--non-numeric">@applications.count(_.creatorUserId == user.id)</td>
           <td class="mdl-data-table__cell--non-numeric">@applications.count(_.invitedUsers.contains(user.id))</td>
           <td class="mdl-data-table__cell--non-numeric">
             <button type="button" class="mdl-button mdl-js-button mdl-button--raised" onclick="sendLoginMail(this,'@user.email');">Envoyer email</button>
           </td>
-
-          <td class="mdl-data-table__cell--non-numeric" style="width: 100px">@user.id</td>
         </tr>
-        @if(index % 10 == 9) {
-          <tr>
-            <th class="mdl-data-table__cell--non-numeric">Nom</th>
-            <th class="mdl-data-table__cell--non-numeric">Administration/Qualité</th>
-            <th class="mdl-data-table__cell--non-numeric">Email</th>
-            <th class="mdl-data-table__cell--non-numeric">Admin</th>
-            <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
-            <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
-            <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
-            <th class="mdl-data-table__cell--non-numeric">Territoires</th>
-            <th class="mdl-data-table__cell--non-numeric">Demandes</th>
-            <th class="mdl-data-table__cell--non-numeric">Solicitations</th>
-            <th class="mdl-data-table__cell--non-numeric">Email de login</th>
-            <th class="mdl-data-table__cell--non-numeric">Id</th>
-          </tr>
-        }
       }
       </tbody>
     </table>
-    @helper.form(routes.UserController.add(), 'method -> "get") {
-      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-        <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="rows" name="rows" value="1">
-        <label class="mdl-textfield__label" for="rows">Nombre d'utilisateur à ajouter</label>
-        <span class="mdl-textfield__error">Ce n'est pas un nombre</span>
+  }
+  @main(currentUser, area)(s"Gestion des groupes utilisateurs ${area.name}") {
+    <style>
+            .pem-table {
+              width: 100%;
+            }
+    </style>
+    <script>
+            function sendLoginMail(sender, email) {
+                var request = new XMLHttpRequest();
+                var parent = sender.parentNode;
+                parent.innerHTML = "<span style='font-weight: bold;'>En cours</span> <img src='@routes.Assets.versioned("images/spin.gif")'>";
+                request.open('POST', '@routes.LoginController.login()', true);
+                request.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
+                request.onload = function() {
+                    if (request.status === 200) {
+                        parent.innerHTML = "<span style='color: green; font-weight: bold;'>Ok !</span>";
+                    } else {
+                        parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
+                    }
+                };
+                request.onerror = function() {
+                    parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
+                };
+                request.send("email="+email);
+            }
+    </script>
+  } {
+    <div>
+      @for(userGroup <- userGroups) {
+        <h4>Groupe : @userGroup.name (@allUsers.count(_.groupIds.contains(userGroup.id)) utilisateurs)</h4>
+        @display(allUsers.filter(_.groupIds.contains(userGroup.id)))
+        @helper.form(routes.UserController.add(userGroup.id), 'method -> "get") {
+          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="rows" name="rows" value="1">
+            <label class="mdl-textfield__label" for="rows">Nombre d'utilisateur à ajouter</label>
+            <span class="mdl-textfield__error">Ce n'est pas un nombre</span>
+          </div>
+          <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
+            Ajouter des utilisateurs dans le groupe
+          </button>
+        }
+      }
+      @if(currentUser.admin) {
+        @defining(allUsers.filter(_.groupIds.isEmpty)) { users =>
+          <h4>Sans groupe (@users.length utilisateurs)</h4>
+        @display(users)
+        }
+      }
+    </div>
+    @if(currentUser.admin) {
+      <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col  mdl-grid">
+        <h4>Ajouter un groupe</h4> <br>
+        @helper.form(routes.UserController.addGroup(), 'method -> "post") {
+          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <input class="mdl-textfield__input" type="text" id="name" name="name">
+            <label class="mdl-textfield__label" for="name">Nom du groupe</label>
+          </div>
+          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <input class="mdl-textfield__input" type="text" pattern="[0-9AB]{3,5}" id="insee-code" name="insee-code">
+            <label class="mdl-textfield__label" for="insee-code">Code INSEE (département ou commune)</label>
+            <span class="mdl-textfield__error">Ce n'est pas un code INSEE valide (code département ou commune)</span>
+          </div>
+          <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
+            Ajouter le groupe
+          </button>
+        }
       </div>
-      <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
-        Ajouter des utilisateurs
-      </button>
     }
-    <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--6-col mdl-cell--12-col-phone" onclick="document.location='@routes.UserController.edit()'">
-    Modifier les utilisateurs
-    </button>
-  </div>
-  <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
-    <h4>Admin</h4>
-    <ul>
-      <li>Peut ajouter et supprimer des utilisateurs</li>
-      <li>Peut changer les permissions des utilisateurs</li>
-      <li>Peut voir les adresses emails des agents</li>
-    </ul>
-  </div>
-  <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
-    <h4>Agent A+</h4>
-    <ul>
-      <li>Peut répondre à la demande</li>
-      <li>Peut inviter des personnes à la demande</li>
-      <li>Reçoit une notification par email à chaque nouvelle demande sur lequel il est invité</li>
-      <li>Peut voir l'ensemble des messages sur lequel il est invité</li>
-    </ul>
-  </div>
-  <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
-    <h4>Aidant A+</h4>
-    <ul>
-      <li>Peut déposer une demande</li>
-      <li>Peut inviter un instructeur sur une demande</li>
-      <li>Peut voir uniquement les messages de réponse à la demande</li>
-    </ul>
-  </div>
-}
+  }
