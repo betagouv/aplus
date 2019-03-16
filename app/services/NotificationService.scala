@@ -51,8 +51,8 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     }
   }
 
-  def newLoginRequest(request: Request[AnyContent], user: User) = {
-    val url = s"${routes.HomeController.index().absoluteURL()(request)}?key=${user.key}"
+  def newLoginRequest(request: Request[AnyContent], user: User, loginToken: LoginToken) = {
+    val url = s"${routes.HomeController.index().absoluteURL()(request)}?token=${loginToken.token}"
     val bodyHtml = s"""Bonjour ${user.name},<br>
                       |<br>
                       |Vous pouvez vous connecter au service A+ en ouvrant l'adresse suivante :<br>
