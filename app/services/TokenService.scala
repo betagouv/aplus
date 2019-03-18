@@ -16,7 +16,8 @@ class TokenService @Inject()(configuration: play.api.Configuration, db: Database
     "token",
     "user_id",
     "creation_date",
-    "expiration_date"
+    "expiration_date",
+    "ip_address"
   )
 
   def create(loginToken: LoginToken) = db.withConnection { implicit connection =>
@@ -25,7 +26,8 @@ class TokenService @Inject()(configuration: play.api.Configuration, db: Database
          ${loginToken.token},
          ${loginToken.userId}::uuid,
          ${loginToken.creationDate},
-         ${loginToken.expirationDate})
+         ${loginToken.expirationDate},
+         ${loginToken.ipAddress}::inet)
       """.executeUpdate() == 1
   }
 

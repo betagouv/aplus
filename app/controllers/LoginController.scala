@@ -19,7 +19,7 @@ class LoginController @Inject()(userService: UserService,
      request.body.asFormUrlEncoded.get.get("email").flatMap(_.headOption).flatMap(email => userService.byEmail(email)).fold {
        Redirect(routes.LoginController.home()).flashing("error" -> "Il n'y a pas d'utilisateur avec cette adresse email")
      } { user =>
-       val loginToken = LoginToken.forUserId(user.id, 15)
+       val loginToken = LoginToken.forUserId(user.id, 15, request.remoteAddress)
        tokenService.create(loginToken)
        notificationService.newLoginRequest(request, user, loginToken)
        Ok(views.html.loginHome(Some(user)))
