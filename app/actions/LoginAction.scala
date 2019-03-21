@@ -29,7 +29,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
       implicit val req = request
       (loginByTokenVerification.orElse(loginByKeyVerification), loginBySession) match {
         case (Some(user), _)  =>
-          val url = request.path + queryToString(request.queryString - "key")
+          val url = request.path + queryToString(request.queryString - "key" - "token")
           val area = request.session.get("areaId").flatMap(UUIDHelper.fromString).orElse(user.areas.headOption).flatMap(id => Area.all.find(_.id == id)).getOrElse(Area.all.head)
           implicit val requestWithUserData = new RequestWithUserData(user, area, request)
           eventService.info("AUTH_BY_KEY", s"Identification par clé")
@@ -49,6 +49,9 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
 
   private def loginByTokenVerification[A](implicit request: Request[A]) = request.getQueryString("token").flatMap(tokenService.byToken).flatMap { token =>
     if(token.isActive){
+      if(token.ipAddress != request.remoteAddress) {
+        eventService.info("AUTH_WITH_DIFFERENT_IP",s"Utilisateur ${token.userId} connecté avec une adresse ip différente de l'email")
+      }
       userService.byId(token.userId)
     } else {
       None
