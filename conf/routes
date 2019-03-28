@@ -22,7 +22,7 @@ GET      /toutes-les-demandes/:applicationId/terminer               controllers.
 GET     /stats                       controllers.ApplicationController.stats
 
 # Login
-GET    /login                        controllers.LoginController.home
+GET    /login                        controllers.LoginController.login
 POST   /login                        controllers.LoginController.login
 GET    /login/disconnect             controllers.LoginController.disconnect
 

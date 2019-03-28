@@ -51,23 +51,19 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     }
   }
 
-  def newLoginRequest(request: Request[AnyContent], user: User, loginToken: LoginToken) = {
-    val url = s"${routes.HomeController.index().absoluteURL()(request)}?token=${loginToken.token}"
+  def newLoginRequest(absoluteUrl: String, user: User, loginToken: LoginToken) = {
+    val url = s"${absoluteUrl}?token=${loginToken.token}"
     val bodyHtml = s"""Bonjour ${user.name},<br>
                       |<br>
-                      |Vous pouvez vous connecter au service A+ en ouvrant l'adresse suivante :<br>
+                      |Vous pouvez vous maintenant accèder au service A+ en ouvrant l'adresse suivante :<br>
                       |<a href="${url}">${url}</a>
                       |<br>
                       |<br>
-                      |<b>Ce mail est personnel, ne le transférez pas, il permettrait à quelqu'un d'autre d'utiliser votre identité sur le réseau A+.</b>
-                      |<br>
-                      |<br>
-                      |Merci de votre aide,<br>
                       |Si vous avez des questions, n'hésitez pas à nous contacter sur contact@aplus.beta.gouv.fr<br>
                       |Equipe A+""".stripMargin
     val email = play.api.libs.mailer.Email(
       s"Connexion à A+",
-      from = "A+ Ne pas répondre <ne-pas-repondre-aplus@beta.gouv.fr>",
+      from = "Equipe A+ <contact@beta.gouv.fr>",
       Seq(s"${user.name} <${user.email}>"),
       bodyHtml = Some(bodyHtml)
     )

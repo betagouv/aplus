@@ -32,7 +32,7 @@ class TokenService @Inject()(configuration: play.api.Configuration, db: Database
   }
 
   def byToken(token: String) = db.withTransaction { implicit connection =>
-    val result = SQL"""SELECT * FROM login_token WHERE token = $token""".as(simpleLoginToken.singleOpt)
+    val result = SQL"""SELECT token, user_id, creation_date, expiration_date, host(ip_address) AS ip_address FROM login_token WHERE token = $token""".as(simpleLoginToken.singleOpt)
     // To be sure the token is used only once, we remove it from the database
     if(result.nonEmpty && SQL"""DELETE FROM login_token WHERE token = $token""".executeUpdate() != 1) {
       throw UnexpectedException(Some(s"loginToken $token can't be removed on byToken"))
