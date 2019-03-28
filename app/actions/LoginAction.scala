@@ -7,6 +7,7 @@ import play.api.mvc._
 import play.api.mvc.Results.{Redirect, _}
 import services.{EventService, TokenService, UserService}
 import extentions.UUIDHelper
+import play.api.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -30,8 +31,11 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
       (loginByTokenVerification.orElse(loginByKeyVerification), loginBySession) match {
         case (Some(user), _)  =>
           val url = request.path + queryToString(request.queryString - "key" - "token")
+
+          //hack: we need RequestWithUserData to call the logger
           val area = request.session.get("areaId").flatMap(UUIDHelper.fromString).orElse(user.areas.headOption).flatMap(id => Area.all.find(_.id == id)).getOrElse(Area.all.head)
           implicit val requestWithUserData = new RequestWithUserData(user, area, request)
+
           eventService.info("AUTH_BY_KEY", s"Identification par clé")
           Left(Redirect(Call(request.method, url)).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
         case (None, Some(user)) =>
@@ -49,11 +53,21 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
 
   private def loginByTokenVerification[A](implicit request: Request[A]) = request.getQueryString("token").flatMap(tokenService.byToken).flatMap { token =>
     if(token.isActive){
+      val userOption = userService.byId(token.userId)
       if(token.ipAddress != request.remoteAddress) {
-        eventService.info("AUTH_WITH_DIFFERENT_IP",s"Utilisateur ${token.userId} connecté avec une adresse ip différente de l'email")
+        //hack: we need RequestWithUserData to call the logger
+        userOption match {
+          case Some(user) =>
+            val area = request.session.get("areaId").flatMap(UUIDHelper.fromString).orElse(user.areas.headOption).flatMap(id => Area.all.find(_.id == id)).getOrElse(Area.all.head)
+            implicit val requestWithUserData = new RequestWithUserData(user, area, request)
+            eventService.info("AUTH_WITH_DIFFERENT_IP", s"Utilisateur ${token.userId} connecté avec une adresse ip différente de l'email")
+          case None =>
+            Logger.error(s"Try to login by token for an unknown user : ${token.userId}")
+        }
       }
-      userService.byId(token.userId)
+      userOption
     } else {
+      Logger.error(s"Expired token for ${token.userId}")
       None
     }
   }
