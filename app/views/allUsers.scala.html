@@ -21,7 +21,6 @@
           <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
           <th class="mdl-data-table__cell--non-numeric">Demandes</th>
           <th class="mdl-data-table__cell--non-numeric">Solicitations</th>
-          <th class="mdl-data-table__cell--non-numeric">Email de login</th>
         </tr>
       </thead>
       <tbody>
@@ -72,9 +71,6 @@
           </td>
           <td class="mdl-data-table__cell--non-numeric">@applications.count(_.creatorUserId == user.id)</td>
           <td class="mdl-data-table__cell--non-numeric">@applications.count(_.invitedUsers.contains(user.id))</td>
-          <td class="mdl-data-table__cell--non-numeric">
-            <button type="button" class="mdl-button mdl-js-button mdl-button--raised" onclick="sendLoginMail(this,'@user.email');">Envoyer email</button>
-          </td>
         </tr>
       }
       </tbody>
@@ -86,26 +82,6 @@
               width: 100%;
             }
     </style>
-    <script>
-            function sendLoginMail(sender, email) {
-                var request = new XMLHttpRequest();
-                var parent = sender.parentNode;
-                parent.innerHTML = "<span style='font-weight: bold;'>En cours</span> <img src='@routes.Assets.versioned("images/spin.gif")'>";
-                request.open('POST', '@routes.LoginController.login()', true);
-                request.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
-                request.onload = function() {
-                    if (request.status === 200) {
-                        parent.innerHTML = "<span style='color: green; font-weight: bold;'>Ok !</span>";
-                    } else {
-                        parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
-                    }
-                };
-                request.onerror = function() {
-                    parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
-                };
-                request.send("email="+email);
-            }
-    </script>
   } {
     <div>
       @for(userGroup <- userGroups) {
