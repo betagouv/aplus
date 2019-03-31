@@ -110,17 +110,22 @@ case class Application(id: UUID,
      (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
      creatorUserId==user.id
 
+   def canHaveExpertsInvitedBy(user: User) =
+     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+     creatorUserId==user.id
+
    def canBeAnsweredToAgentsBy(user: User) =
       (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
       (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)
 
-   def canAddInvitedUserBy(user: User) =
-     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
-       creatorUserId==user.id
+   def canHaveAgentsInvitedBy(user: User) =
+     (user.instructor && invitedUsers.keys.toList.contains(user.id))
 
    def canBeClosedBy(user: User) =
     (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
       creatorUserId==user.id
+
+   def haveUserInvitedOn(user: User) = invitedUsers.keys.toList.contains(user.id)
 }
 
 object Application {

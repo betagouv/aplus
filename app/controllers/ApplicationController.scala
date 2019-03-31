@@ -215,8 +215,15 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         if(application.canBeShowedBy(request.currentUser)) {
             val users = userService.byArea(request.currentArea.id).filterNot(_.id == request.currentUser.id)
               .filter(_.instructor)
+            val renderedApplication = if(application.haveUserInvitedOn(request.currentUser) && request.currentUser.expert && request.currentUser.admin) {
+              // If user is expert, admin and invited to the application we desanonymate
+              applicationService.byId(id, request.currentUser.id, false).get
+            } else {
+              application
+            }
+
             eventService.info("APPLICATION_SHOWED", s"Demande $id consulté", Some(application))
-            Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, application, answerToAgentsForm))
+            Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, renderedApplication, answerToAgentsForm))
         }
         else {
           eventService.warn("APPLICATION_UNAUTHORIZED", s"L'accès à la demande $id n'est pas autorisé", Some(application))
@@ -321,10 +328,10 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     val inviteData = answerToAgentsForm.bindFromRequest.get
     applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
       case None =>
-        eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter une réponse")
+        eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter des experts")
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
-        if(application.canAddInvitedUserBy(request.currentUser)) {
+        if(application.canHaveAgentsInvitedBy(request.currentUser)) {
           val invitedUsers: Map[UUID, String] = inviteData.notifiedUsers.flatMap { id =>
             userService.byId(id).map(id -> _.nameWithQualite)
           }.toMap
@@ -341,11 +348,46 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             Some(Map()))
           if (applicationService.add(applicationId, answer)  == 1) {
             notificationsService.newAnswer(application, answer)
-            eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
+            eventService.info("AGENTS_ADDED", s"L'ajout d'agent ${answer.id} a été créé sur la demande $applicationId", Some(application))
             Redirect(routes.ApplicationController.all()).flashing ("success" -> "Les agents ont été invités sur la demande")
           } else {
-            eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
+            eventService.error("AGENTS_NOT_ADDED", s"L'ajout d'agent ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
             InternalServerError("Les agents n'ont pas pu être invités")
+          }
+        } else {
+          eventService.warn("ADD_AGENTS_UNAUTHORIZED", s"L'invitation d'agents pour la demande $applicationId n'est pas autorisé", Some(application))
+          Unauthorized("Vous n'avez pas les droits suffisants pour inviter des agents à cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+        }
+    }
+  }
+
+
+  def inviteExpert(applicationId: UUID) = loginAction { implicit request =>
+    applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
+      case None =>
+        eventService.error("ADD_EXPERT_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter un expert")
+        NotFound("Nous n'avons pas trouvé cette demande")
+      case Some(application) =>
+        if(application.canHaveExpertsInvitedBy(request.currentUser)) {
+          val experts: Map[UUID, String] = User.admins.filter(_.expert).map(user => user.id -> user.nameWithQualite).toMap
+          val answer = Answer(UUID.randomUUID(),
+            applicationId,
+            DateTime.now(timeZone),
+            "J'ajoute un expert",
+            request.currentUser.id,
+            request.currentUser.nameWithQualite,
+            experts,
+            false,
+            request.currentArea.id,
+            false,
+            Some(Map()))
+          if (applicationService.add(applicationId, answer)  == 1) {
+            notificationsService.newAnswer(application, answer)
+            eventService.info("ADD_EXPERT_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
+            Redirect(routes.ApplicationController.all()).flashing ("success" -> "Un expert a été invité sur la demande")
+          } else {
+            eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
+            InternalServerError("L'expert n'a pas pu être invité")
           }
         } else {
           eventService.warn("ADD_ANSWER_UNAUTHORIZED", s"L'invitation d'agents pour la demande $applicationId n'est pas autorisé", Some(application))
