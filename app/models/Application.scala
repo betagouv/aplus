@@ -99,6 +99,24 @@ case class Application(id: UUID,
          description = s"** Description de ${description.length} caractères **",
          answers = newAnswers)
    }
+
+   def canBeShowedBy(user: User) =  user.admin ||
+     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+     (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
+     creatorUserId==user.id
+
+   def canBeAnsweredBy(user: User) =
+     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+     (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
+     creatorUserId==user.id
+
+   def canAddInvitedUserBy(user: User) =
+     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+       creatorUserId==user.id
+
+   def canBeClosedBy(user: User) =
+    (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
+      creatorUserId==user.id
 }
 
 object Application {

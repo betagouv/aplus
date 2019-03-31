@@ -212,10 +212,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         eventService.error("APPLICATION_NOT_FOUND", s"La demande $id n'existe pas")
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
-        val currentUser = request.currentUser
-        if(currentUser.admin||
-          application.invitedUsers.keys.toList.contains(request.currentUser.id)||
-          application.creatorUserId==request.currentUser.id) {
+        if(application.canBeShowedBy(request.currentUser)) {
             val users = userService.byArea(request.currentArea.id).filterNot(_.id == request.currentUser.id)
               .filter(_.instructor)
             eventService.info("APPLICATION_SHOWED", s"Demande $id consulté", Some(application))
@@ -247,23 +244,28 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter une réponse")
             NotFound("Nous n'avons pas trouvé cette demande")
           case Some(application) =>
-            val answer = Answer(UUID.randomUUID(),
-              applicationId, DateTime.now(timeZone),
-              answerData.message,
-              request.currentUser.id,
-              request.currentUser.nameWithQualite,
-              Map(),
-              true,
-              request.currentArea.id,
-              answerData.applicationIsDeclaredIrrelevant,
-              Some(Map()))
-            if (applicationService.add(applicationId, answer) == 1) {
-              eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
-              notificationsService.newAnswer(application, answer)
-              Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
+            if(application.canBeAnsweredBy(request.currentUser)) {
+              val answer = Answer(UUID.randomUUID(),
+                applicationId, DateTime.now(timeZone),
+                answerData.message,
+                request.currentUser.id,
+                request.currentUser.nameWithQualite,
+                Map(),
+                true,
+                request.currentArea.id,
+                answerData.applicationIsDeclaredIrrelevant,
+                Some(Map()))
+              if (applicationService.add(applicationId, answer) == 1) {
+                eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
+                notificationsService.newAnswer(application, answer)
+                Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
+              } else {
+                eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
+                InternalServerError("Votre réponse n'a pas pu être envoyé")
+              }
             } else {
-              eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
-              InternalServerError("Votre réponse n'a pas pu être envoyé")
+              eventService.warn("ADD_ANSWER_UNAUTHORIZED", s"La réponse à l'aidant pour la demande $applicationId n'est pas autorisé", Some(application))
+              Unauthorized("Vous n'avez pas les droits suffisants pour répondre à cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
             }
         }
       })
@@ -285,27 +287,32 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter une réponse")
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
-        val notifiedUsers: Map[UUID, String] = answerData.notifiedUsers.flatMap { id =>
-          userService.byId(id).map(id -> _.nameWithQualite)
-        }.toMap
-        val answer = Answer(UUID.randomUUID(),
-          applicationId,
-          DateTime.now(timeZone),
-          answerData.message,
-          request.currentUser.id,
-          request.currentUser.nameWithQualite,
-          notifiedUsers,
-          request.currentUser.id == application.creatorUserId,
-          request.currentArea.id,
-          false,
-          Some(answerData.infos))
-        if (applicationService.add(applicationId,answer) == 1) {
-          notificationsService.newAnswer(application, answer)
-          eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
-          Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
+        if(application.canBeAnsweredBy(request.currentUser)) {
+          val notifiedUsers: Map[UUID, String] = answerData.notifiedUsers.flatMap { id =>
+            userService.byId(id).map(id -> _.nameWithQualite)
+          }.toMap
+          val answer = Answer(UUID.randomUUID(),
+            applicationId,
+            DateTime.now(timeZone),
+            answerData.message,
+            request.currentUser.id,
+            request.currentUser.nameWithQualite,
+            notifiedUsers,
+            request.currentUser.id == application.creatorUserId,
+            request.currentArea.id,
+            false,
+            Some(answerData.infos))
+          if (applicationService.add(applicationId, answer) == 1) {
+            notificationsService.newAnswer(application, answer)
+            eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
+            Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
+          } else {
+            eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
+            InternalServerError("Votre réponse n'a pas pu être envoyée")
+          }
         } else {
-          eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
-          InternalServerError("Votre réponse n'a pas pu être envoyée")
+          eventService.warn("ADD_ANSWER_UNAUTHORIZED", s"La réponse entre agents pour la demande $applicationId n'est pas autorisé", Some(application))
+          Unauthorized("Vous n'avez pas les droits suffisants pour répondre à cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
         }
     }
   }
@@ -317,27 +324,32 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter une réponse")
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
-        val invitedUsers: Map[UUID, String] = inviteData.notifiedUsers.flatMap { id =>
-          userService.byId(id).map(id -> _.nameWithQualite)
-        }.toMap
-        val answer = Answer(UUID.randomUUID(),
-          applicationId,
-          DateTime.now(timeZone),
-          inviteData.message,
-          request.currentUser.id,
-          request.currentUser.nameWithQualite,
-          invitedUsers,
-          false,
-          request.currentArea.id,
-          false,
-          Some(Map()))
-        if (applicationService.add(applicationId, answer)  == 1) {
-          notificationsService.newAnswer(application, answer)
-          eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
-          Redirect(routes.ApplicationController.all()).flashing ("success" -> "Les agents ont été invités sur la demande")
+        if(application.canAddInvitedUserBy(request.currentUser)) {
+          val invitedUsers: Map[UUID, String] = inviteData.notifiedUsers.flatMap { id =>
+            userService.byId(id).map(id -> _.nameWithQualite)
+          }.toMap
+          val answer = Answer(UUID.randomUUID(),
+            applicationId,
+            DateTime.now(timeZone),
+            inviteData.message,
+            request.currentUser.id,
+            request.currentUser.nameWithQualite,
+            invitedUsers,
+            false,
+            request.currentArea.id,
+            false,
+            Some(Map()))
+          if (applicationService.add(applicationId, answer)  == 1) {
+            notificationsService.newAnswer(application, answer)
+            eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
+            Redirect(routes.ApplicationController.all()).flashing ("success" -> "Les agents ont été invités sur la demande")
+          } else {
+            eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
+            InternalServerError("Les agents n'ont pas pu être invités")
+          }
         } else {
-          eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
-          InternalServerError("Les agents n'ont pas pu être invités")
+          eventService.warn("ADD_ANSWER_UNAUTHORIZED", s"L'invitation d'agents pour la demande $applicationId n'est pas autorisé", Some(application))
+          Unauthorized("Vous n'avez pas les droits suffisants pour inviter des agents à cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
         }
     }
   }
@@ -356,7 +368,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         eventService.error("TERMINATE_INCOMPLETED", s"La demande de clôture pour $applicationId est incompléte")
         BadGateway("L'utilité de la demande n'est pas présente, il s'agit surement d'une erreur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
       case (Some(usefulness), Some(application)) =>
-        if(application.creatorUserId == request.currentUser.id || request.currentUser.admin) {
+        if(application.canBeClosedBy(request.currentUser)) {
           if(applicationService.close(applicationId, usefulness, DateTime.now(timeZone))) {
             eventService.info("TERMINATE_COMPLETED", s"La demande $applicationId est clôturé", Some(application))
             Redirect(routes.ApplicationController.all()).flashing("success" -> "L'application a été indiqué comme clôturée")
@@ -366,7 +378,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           }
         } else {
           eventService.warn("TERMINATE_UNAUTHORIZED", s"L'utilisateur n'a pas le droit de clôturer la demande $applicationId", Some(application))
-          Unauthorized("Seul le créateur de la demande ou un administrateur peut clore la demande")
+          Unauthorized("Seul le créateur de la demande ou un expert peut clôre la demande")
         }
     }
   }

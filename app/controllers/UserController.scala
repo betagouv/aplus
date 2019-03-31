@@ -69,6 +69,7 @@ class UserController @Inject()(loginAction: LoginAction,
     "hasAcceptedCharte" -> boolean,
     "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
     "adminGroup" -> boolean,
+    "expert" -> ignored(false),
     "groupIds" -> default(list(uuid), List()),
     "delegations" -> seq(tuple(
       "name" -> nonEmptyText,
@@ -98,6 +99,7 @@ class UserController @Inject()(loginAction: LoginAction,
         "hasAcceptedCharte" -> ignored(false),
         "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
         "adminGroup" -> ignored(false),
+        "expert" -> ignored(false),
         "groupIds" -> default(list(uuid), List()),
         "delegations" -> ignored(Map[String,String]())
       )(User.apply)(User.unapply))
