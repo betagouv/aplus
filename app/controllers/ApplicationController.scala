@@ -244,7 +244,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter une réponse")
             NotFound("Nous n'avons pas trouvé cette demande")
           case Some(application) =>
-            if(application.canBeAnsweredBy(request.currentUser)) {
+            if(application.canBeAnsweredToHelperBy(request.currentUser)) {
               val answer = Answer(UUID.randomUUID(),
                 applicationId, DateTime.now(timeZone),
                 answerData.message,
@@ -287,7 +287,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter une réponse")
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
-        if(application.canBeAnsweredBy(request.currentUser)) {
+        if(application.canBeAnsweredToAgentsBy(request.currentUser)) {
           val notifiedUsers: Map[UUID, String] = answerData.notifiedUsers.flatMap { id =>
             userService.byId(id).map(id -> _.nameWithQualite)
           }.toMap
