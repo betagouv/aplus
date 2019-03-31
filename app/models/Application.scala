@@ -123,7 +123,7 @@ case class Application(id: UUID,
 
    def canBeClosedBy(user: User) =
     (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
-      creatorUserId==user.id
+      creatorUserId==user.id || user.admin
 
    def haveUserInvitedOn(user: User) = invitedUsers.keys.toList.contains(user.id)
 }
