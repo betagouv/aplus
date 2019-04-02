@@ -11,6 +11,7 @@ object Area {
     Area(UUIDHelper.namedFrom("argenteuil"), "Argenteuil"),
     Area(UUIDHelper.namedFrom("cahors"), "Bassin de Cahors"),
     Area(UUIDHelper.namedFrom("besancon"), "Besançon"),
+    Area(UUIDHelper.namedFrom("coeur-du-perche"), "Cœur du Perche"),
     Area(UUIDHelper.namedFrom("lons-le-saunoer"), "Lons-le-Saunier"),
     Area(UUIDHelper.namedFrom("perigueux"), "Périgueux"),
     Area(UUIDHelper.namedFrom("angers"), "Angers"),
