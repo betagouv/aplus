@@ -215,7 +215,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         if(application.canBeShowedBy(request.currentUser)) {
             val users = userService.byArea(request.currentArea.id).filterNot(_.id == request.currentUser.id)
               .filter(_.instructor)
-            val renderedApplication = if(application.haveUserInvitedOn(request.currentUser) && request.currentUser.expert && request.currentUser.admin) {
+            val renderedApplication = if(application.haveUserInvitedOn(request.currentUser) && request.currentUser.expert && request.currentUser.admin && !application.closed) {
               // If user is expert, admin and invited to the application we desanonymate
               applicationService.byId(id, request.currentUser.id, false).get
             } else {

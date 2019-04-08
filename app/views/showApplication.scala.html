@@ -139,6 +139,11 @@ dialog {
             <div class="mdl-card__title mdl-card--border">
                 <h2 class="mdl-card__title-text">@application.subject</h2>
                 <div class="mdl-card__menu do-not-print">
+                    @if(application.canBeClosedBy(user) && application.closed == false) {
+                        <button class="mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()" style="margin-right: 10px;">
+                            Clore
+                        </button>
+                    }
                     <button class="mdl-button mdl-button--raised mdl-js-button mdl-button--icon mdl-button--fab" onclick="window.print();">
                         <i class="material-icons">print</i>
                     </button>
@@ -169,11 +174,11 @@ dialog {
                 </ul>
                 @if(application.canHaveExpertsInvitedBy(user) && application.closed == false) {
                     <button class="mdl-button mdl-button--raised mdl-js-button do-not-print" onclick="document.location='@routes.ApplicationController.inviteExpert(application.id)'" style="margin-right: 10px;">
-                        Demande compliqué ? Inviter un expert
+                        Inviter un expert de l'équipe A+
                     </button>
                 }
                 @if(application.canBeClosedBy(user) && application.closed == false) {
-                    <button class="mdl-button mdl-button--raised mdl-js-button do-not-print" onclick="showDialog()" style="margin-right: 10px;">
+                    <button class="mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()" style="margin-right: 10px;">
                         Clore
                     </button>
                 }
