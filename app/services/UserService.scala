@@ -86,8 +86,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
          ${user.hasAcceptedCharte},
          ${user.communeCode},
          ${user.groupAdmin},
-         ${user.expert},
-         array[${user.groupIds}]::uuid[])
+         array[${user.groupIds}]::uuid[],
+         ${user.expert})
       """.executeUpdate() == 1
     }
   }

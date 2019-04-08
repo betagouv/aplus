@@ -411,9 +411,9 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         BadGateway("L'utilité de la demande n'est pas présente, il s'agit surement d'une erreur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
       case (Some(usefulness), Some(application)) =>
         val finalUsefulness = if(request.currentUser.id == application.creatorUserId) {
-          usefulness
+          Some(usefulness)
         } else {
-          "?"
+          None
         }
         if(application.canBeClosedBy(request.currentUser)) {
           if(applicationService.close(applicationId, finalUsefulness, DateTime.now(timeZone))) {
