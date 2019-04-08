@@ -410,8 +410,13 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         eventService.error("TERMINATE_INCOMPLETED", s"La demande de clôture pour $applicationId est incompléte")
         BadGateway("L'utilité de la demande n'est pas présente, il s'agit surement d'une erreur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
       case (Some(usefulness), Some(application)) =>
+        val finalUsefulness = if(request.currentUser.id == application.creatorUserId) {
+          usefulness
+        } else {
+          "?"
+        }
         if(application.canBeClosedBy(request.currentUser)) {
-          if(applicationService.close(applicationId, usefulness, DateTime.now(timeZone))) {
+          if(applicationService.close(applicationId, finalUsefulness, DateTime.now(timeZone))) {
             eventService.info("TERMINATE_COMPLETED", s"La demande $applicationId est clôturé", Some(application))
             Redirect(routes.ApplicationController.all()).flashing("success" -> "L'application a été indiqué comme clôturée")
           } else {
