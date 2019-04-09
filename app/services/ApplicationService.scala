@@ -197,7 +197,7 @@ class ApplicationService @Inject()(db: Database) {
     ).executeUpdate()
   }
 
-  def close(applicationId: UUID, usefulness: String, closedDate: DateTime) = db.withTransaction { implicit connection =>
+  def close(applicationId: UUID, usefulness: Option[String], closedDate: DateTime) = db.withTransaction { implicit connection =>
     SQL(
       """
           UPDATE application SET closed = true, usefulness = {usefulness}, closed_date = {closed_date}

@@ -30,6 +30,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     "has_accepted_charte",
     "commune_code",
     "group_admin",
+    "expert",
     "group_ids",
     "delegations"
   ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
@@ -85,7 +86,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
          ${user.hasAcceptedCharte},
          ${user.communeCode},
          ${user.groupAdmin},
-         array[${user.groupIds}]::uuid[])
+         array[${user.groupIds}]::uuid[],
+         ${user.expert})
       """.executeUpdate() == 1
     }
   }
@@ -102,7 +104,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
           commune_code = ${user.communeCode},
           delegations = ${Json.toJson(user.delegations)},
           group_admin = ${user.groupAdmin},
-          group_ids = array[${user.groupIds}]::uuid[]
+          group_ids = array[${user.groupIds}]::uuid[],
+          expert = ${user.expert}
           WHERE id = ${user.id}::uuid
        """.executeUpdate() == 1
   }

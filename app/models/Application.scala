@@ -99,6 +99,33 @@ case class Application(id: UUID,
          description = s"** Description de ${description.length} caractères **",
          answers = newAnswers)
    }
+
+   def canBeShowedBy(user: User) =  user.admin ||
+     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+     (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
+     creatorUserId==user.id
+
+   def canBeAnsweredToHelperBy(user: User) =
+     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+     (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
+     creatorUserId==user.id
+
+   def canHaveExpertsInvitedBy(user: User) =
+     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+     creatorUserId==user.id
+
+   def canBeAnsweredToAgentsBy(user: User) =
+      (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+      (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)
+
+   def canHaveAgentsInvitedBy(user: User) =
+     (user.instructor && invitedUsers.keys.toList.contains(user.id))
+
+   def canBeClosedBy(user: User) =
+    (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
+      creatorUserId==user.id || user.admin
+
+   def haveUserInvitedOn(user: User) = invitedUsers.keys.toList.contains(user.id)
 }
 
 object Application {

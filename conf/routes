@@ -14,6 +14,7 @@ GET      /as/:userId/toutes-les-demandes        controllers.ApplicationControlle
 GET      /toutes-les-demandes.csv               controllers.ApplicationController.allCSV
 GET      /toutes-les-demandes/:id    controllers.ApplicationController.show(id: java.util.UUID)
 POST     /toutes-les-demandes/:applicationId/inviter_des_agents     controllers.ApplicationController.invite(applicationId: java.util.UUID)
+GET      /toutes-les-demandes/:applicationId/inviter_un_expert      controllers.ApplicationController.inviteExpert(applicationId: java.util.UUID)
 POST     /toutes-les-demandes/:applicationId/reponse_a_l_aidant     controllers.ApplicationController.answerHelper(applicationId: java.util.UUID)
 POST     /toutes-les-demandes/:applicationId/reponse_aux_agents     controllers.ApplicationController.answerAgents(applicationId: java.util.UUID)
 GET      /toutes-les-demandes/:applicationId/terminer               controllers.ApplicationController.terminate(applicationId: java.util.UUID)
