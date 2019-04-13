@@ -5,6 +5,7 @@ import java.util.UUID
 import org.joda.time.DateTime
 import org.joda.time.Period
 import org.joda.time.Days
+import org.joda.time.Hours
 
 case class Application(id: UUID,
                        creationDate: DateTime,
@@ -126,6 +127,13 @@ case class Application(id: UUID,
       creatorUserId==user.id || user.admin
 
    def haveUserInvitedOn(user: User) = invitedUsers.keys.toList.contains(user.id)
+
+   lazy val resolutionTimeInHours: Option[Int] = if(closed) {
+     val lastDate = answers.lastOption.map(_.creationDate).orElse(closedDate).getOrElse(creationDate)
+     Some(Hours.hoursBetween(creationDate, lastDate).getHours)
+   } else {
+     None
+   }
 }
 
 object Application {
