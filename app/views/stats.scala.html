@@ -180,10 +180,10 @@
                                            0D
                                         } else {
                                            val resolutionTimes = apps._2.flatMap(_.resolutionTimeInHours).map(_.toDouble)
-                                           Math.median(resolutionTimes)
+                                           Math.median(resolutionTimes)/24D
                                         }
                                     }.mkString(", "))],
-                                    label: "Temps de résolution median (Heures)",
+                                    label: "Temps de résolution median (Jour)",
                                     backgroundColor: "black",
                                     type: 'line',
                                     borderColor: "black",
@@ -194,10 +194,10 @@
                                            0D
                                         } else {
                                            val resolutionTimes = apps._2.flatMap(_.resolutionTimeInHours)
-                                           resolutionTimes.sum.toDouble / resolutionTimes.size.toDouble
+                                           resolutionTimes.sum.toDouble / resolutionTimes.size.toDouble / 24D
                                         }
                                     }.mkString(", "))],
-                                    label: "Temps de résolution moyen (Heures)",
+                                    label: "Temps de résolution moyen (Jour)",
                                     backgroundColor: "rgba(113, 176, 239, 1)"
                                 }]
                             },
