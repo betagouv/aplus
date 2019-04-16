@@ -107,8 +107,7 @@ case class Application(id: UUID,
 
    def canBeAnsweredToHelperBy(user: User) =
      (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
-     (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
-     creatorUserId==user.id
+     (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)
 
    def canHaveExpertsInvitedBy(user: User) =
      (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
@@ -116,7 +115,8 @@ case class Application(id: UUID,
 
    def canBeAnsweredToAgentsBy(user: User) =
       (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
-      (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)
+      (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
+        creatorUserId==user.id
 
    def canHaveAgentsInvitedBy(user: User) =
      (user.instructor && invitedUsers.keys.toList.contains(user.id))
