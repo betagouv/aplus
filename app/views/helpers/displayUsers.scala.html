@@ -16,8 +16,10 @@
                 <th class="mdl-data-table__cell--non-numeric">Responsable groupe</th>
                 <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
                 <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
-                <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
-                <th class="mdl-data-table__cell--non-numeric">Email de login</th>
+                <th class="mdl-data-table__cell--non-numeric">Charte validé</th>
+                @if(currentUser.admin) {
+                    <th class="mdl-data-table__cell--non-numeric">Email de login</th>
+                }
             </tr>
         </thead>
         <tbody>
@@ -66,9 +68,11 @@
                     <span class="mdl-checkbox__label">Charte</span>
                 </label>
             </td>
+                @if(currentUser.admin) {
             <td class="mdl-data-table__cell--non-numeric">
                 <button type="button" class="mdl-button mdl-js-button mdl-button--raised" onclick="sendLoginMail(this,'@user.email');">Envoyer email (Valable 15mins)</button>
             </td>
+                }
             </tr>
         }
         </tbody>
