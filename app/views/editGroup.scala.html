@@ -14,19 +14,21 @@
     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
         @helper.form(routes.UserController.editGroupPost(userGroup.id), 'method -> "post") {
             <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" id="name" name="name" value="@userGroup.name">
+                <input class="mdl-textfield__input" type="text" id="name" name="name" value="@userGroup.name" @if(!currentUser.admin) { disabled }>
                 <label class="mdl-textfield__label" for="name">Nom du groupe</label>
             </div>
             <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" pattern="[0-9AB]{3,5}" id="insee-code" name="insee-code" value="@userGroup.inseeCode">
+                <input class="mdl-textfield__input" type="text" pattern="[0-9AB]{3,5}" id="insee-code" name="insee-code" value="@userGroup.inseeCode" @if(!currentUser.admin) { disabled }>
                 <label class="mdl-textfield__label" for="insee-code">Code INSEE (département ou commune)</label>
                 <span class="mdl-textfield__error">Ce n'est pas un code INSEE valide (code département ou commune)</span>
             </div>
-            <div class="mdl-cell mdl-cell--12-col">
-                <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
-                    Editer le groupe
-                </button>
-            </div>
+            @if(currentUser.admin) {
+                <div class="mdl-cell mdl-cell--12-col">
+                    <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
+                        Editer le groupe
+                    </button>
+                </div>
+            }
         }
     </div>
     <div>

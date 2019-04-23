@@ -153,6 +153,7 @@ class UserController @Inject()(loginAction: LoginAction,
   }
 
   def add(groupId: UUID) = loginAction { implicit request =>
+    //TODO : We can add in inexistant group
     if(request.currentUser.admin == false && (request.currentUser.groupAdmin == false || !request.currentUser.groupIds.contains(groupId))) {   //TODO : check with test
       eventService.warn("SHOW_ADD_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs du groupe $groupId")
       Unauthorized("Vous n'avez pas le droit de faire ça")
@@ -227,7 +228,7 @@ class UserController @Inject()(loginAction: LoginAction,
         eventService.error("EDIT_GROUPE_NOT_FOUND", s"La demande $id n'existe pas")
         NotFound("Nous n'avons pas trouvé ce groupe")
       case Some(group) =>
-        if(request.currentUser.admin == false || group.area != request.currentArea.id) {
+        if(!group.canHaveUsersAddedBy(request.currentUser) || group.area != request.currentArea.id) {
           eventService.warn("EDIT_GROUPE_UNAUTHORIZED", s"Accès non autorisé à l'edition de ce groupe")
           Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?")
         } else {

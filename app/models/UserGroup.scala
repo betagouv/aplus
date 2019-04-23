@@ -9,4 +9,10 @@ case class UserGroup(id: UUID,
                 inseeCode: String,
                 creationDate: DateTime,
                 createByUserId: UUID,
-                area: UUID)
+                area: UUID)   {
+
+  def canHaveUsersAddedBy(user: User) =
+    (user.groupAdmin && user.groupIds.contains(id)) ||
+      user.admin
+
+}
