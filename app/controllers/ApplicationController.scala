@@ -397,8 +397,13 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def changeArea(areaId: UUID) = loginAction {  implicit request =>
-    eventService.info("AREA_CHANGE", s"Changement vers la zone $areaId")
-    Redirect(routes.ApplicationController.all()).withSession(request.session - "areaId" + ("areaId" -> areaId.toString))
+    if(request.currentUser.areas.nonEmpty && !request.currentUser.areas.contains(areaId)) {
+      eventService.warn("CHANGE_AREA_UNAUTHORIZED", s"Accès à la zone $areaId non autorisé")
+      Unauthorized("Vous n'avez pas les droits suffisants pour accèder à cette zone. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+    } else {
+      eventService.info("AREA_CHANGE", s"Changement vers la zone $areaId")
+      Redirect(routes.ApplicationController.all()).withSession(request.session - "areaId" + ("areaId" -> areaId.toString))
+    }
   }
 
   def terminate(applicationId: UUID) = loginAction {  implicit request =>

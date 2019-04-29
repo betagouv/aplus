@@ -33,11 +33,14 @@ GET     /users/:userId               controllers.UserController.editUser(userId:
 POST    /users/:userId               controllers.UserController.editUserPost(userId: java.util.UUID)
 
 
-GET     /groups/:groupId/users/add   controllers.UserController.add(groupId: java.util.UUID)
-POST    /groups/:groupId/users/add   controllers.UserController.addPost(groupId: java.util.UUID)
+
+GET     /groups/:groupId             controllers.UserController.editGroup(groupId: java.util.UUID)
+POST     /groups/:groupId            controllers.UserController.editGroupPost(groupId: java.util.UUID)
+GET     /groups/:groupId/users       controllers.UserController.add(groupId: java.util.UUID)
+POST    /groups/:groupId/users       controllers.UserController.addPost(groupId: java.util.UUID)
 
 # Group
-POST    /groups/add                  controllers.UserController.addGroup
+POST    /groups                  controllers.UserController.addGroup
 
 
 GET     /charte                  controllers.UserController.showCharte
