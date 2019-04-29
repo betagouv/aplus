@@ -316,7 +316,7 @@
                                 type: 'pie',
                                 // The data for our dataset
                                 data: {
-                                    labels: [@Html(admins.map(a => s"\"$a\"").mkString(", "))],
+                                    labels: [@Html(admins.map(a => s"'${a.replaceAll("'", "`")}'").mkString(", "))],
                                     datasets: [@for(admin: String <- admins) {
                                             {
                                                 label: "@Html(admin)",
