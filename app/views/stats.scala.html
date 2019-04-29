@@ -241,7 +241,7 @@
                                             borderColor: adminReceivedColors.pop(),
                                             backgroundColor: adminReceivedColors.pop(),
                                             data: [@Html(applicationsGroupByMonths.map(_._2.count(_.area == area.id)).mkString(", "))]
-                                        }
+                                        },
                                     }]
                             },
 
@@ -316,7 +316,7 @@
                                 type: 'pie',
                                 // The data for our dataset
                                 data: {
-                                    labels: [@Html(admins.map(a => s"'$a'").mkString(", "))],
+                                    labels: [@Html(admins.map(a => s"""" "$a" """).mkString(", "))],
                                     datasets: [@for(admin: String <- admins) {
                                             {
                                                 label: "@Html(admin)",
