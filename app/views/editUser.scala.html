@@ -35,6 +35,9 @@
 
 
       <b>Territoires</b>
+      @if(form("areas").hasErrors) {
+          <p style="color: red; font-weight: bold;">@form("areas").errors.map(_.format).mkString(", ")</p>
+      }
     <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
     @for(area <- Area.all) {
         <thead>
