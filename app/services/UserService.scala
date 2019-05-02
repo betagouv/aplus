@@ -100,6 +100,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
           helper = ${user.helper},
           instructor = ${user.instructor},
           admin = ${user.admin},
+          areas = array[${user.areas}]::uuid[],
           has_accepted_charte = ${user.hasAcceptedCharte},
           commune_code = ${user.communeCode},
           delegations = ${Json.toJson(user.delegations)},
