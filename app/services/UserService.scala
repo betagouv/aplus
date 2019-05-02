@@ -45,7 +45,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
 
   def byArea(areaId: UUID): List[User] = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""").on('areaId -> areaId).as(simpleUser.*)
-  } ++ User.admins.filter( user => user.areas.contains(areaId) || user.areas.isEmpty )
+  } ++ User.admins.filter( user => user.areas.contains(areaId))
 
   def byGroupIds(ids: List[UUID]): List[User] = db.withConnection { implicit connection =>
     SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)

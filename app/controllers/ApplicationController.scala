@@ -397,7 +397,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def changeArea(areaId: UUID) = loginAction {  implicit request =>
-    if(request.currentUser.areas.nonEmpty && !request.currentUser.areas.contains(areaId)) {
+    if(!request.currentUser.areas.contains(areaId)) {
       eventService.warn("CHANGE_AREA_UNAUTHORIZED", s"Accès à la zone $areaId non autorisé")
       Unauthorized("Vous n'avez pas les droits suffisants pour accèder à cette zone. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
     } else {
