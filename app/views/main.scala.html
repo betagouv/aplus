@@ -108,7 +108,7 @@
                 <ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect" for="accbtn">
                     @if(user.admin) {
                         @for(area <- Area.all) {
-                            <span onclick="document.location='@routes.ApplicationController.changeArea(area.id)';"><li class="mdl-menu__item">@area.name</li></span>
+                            <span onclick="document.location='@routes.AreaController.changeArea(area.id)';"><li class="mdl-menu__item">@area.name</li></span>
                         }
                     }
                     <span onclick="document.location='@routes.LoginController.disconnect()';"><li class="mdl-menu__item"><i class="material-icons">power_settings_new</i>Déconnexion</li></span>

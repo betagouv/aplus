@@ -8,6 +8,7 @@ import play.api.mvc.Results.{Redirect, _}
 import services.{EventService, TokenService, UserService}
 import extentions.UUIDHelper
 import play.api.Logger
+import scala.collection.JavaConverters._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -21,8 +22,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
                             configuration: play.api.Configuration)(implicit ec: ExecutionContext) extends ActionBuilder[RequestWithUserData, AnyContent] with ActionRefiner[Request, RequestWithUserData] {
   def executionContext = ec
 
-  private lazy val loginByKeyActive = configuration.underlying.getString("app.loginByKey") == "true"
-
+  private lazy val loginByKeyForAreas = configuration.underlying.getStringList("app.loginByKeyForAreas").asScala.flatMap(UUIDHelper.fromString).toList
 
   private def queryToString(qs: Map[String, Seq[String]]) = {
     val queryString = qs.map { case (key, value) => key + "=" + value.sorted.mkString("|,|") }.mkString("&")
@@ -36,12 +36,12 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
       (userBySession,userByKey,tokenById) match {
         case (Some(userSession), Some(userKey), None) if userSession.id == userKey.id =>
           Left(Redirect(Call(request.method, url)))
-        case (_, Some(userKey), None) =>
-          if(loginByKeyActive) {
-            // Insecure setting for demo usage only
-            Left(Redirect(Call(request.method, url)).withSession(request.session - "userId" + ("userId" -> userKey.id.toString)))
+        case (_, Some(user), None) =>
+          if(loginByKeyForAreas.contains(areaFromContext(user)) && !user.admin) {
+            // loginByKeyForAreas is an insecure setting for demo usage and transition only
+            Left(Redirect(Call(request.method, url)).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
           } else {
-            Left(Redirect(routes.LoginController.login()).flashing("email" -> userKey.email, "url" -> url))
+            Left(Redirect(routes.LoginController.login()).flashing("email" -> user.email, "url" -> url))
           }
         case (_, None, Some(token)) =>
           manageToken(token)
@@ -53,13 +53,15 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
     }
 
   private def manageUserLogged[A](user: User)(implicit request: Request[A]) = {
-    val area = request.session.get("areaId").flatMap(UUIDHelper.fromString).orElse(user.areas.headOption).flatMap(id => Area.all.find(_.id == id)).getOrElse(Area.all.head)
+    val area = areaFromContext(user)
     if(user.hasAcceptedCharte || request.path.contains("charte")) {
       Right(new RequestWithUserData(user, area, request))
     } else {
       Left(Redirect(routes.UserController.showCharte()).flashing("redirect" -> request.path))
     }
   }
+
+  private def areaFromContext[A](user: User)(implicit request: Request[A]) = request.session.get("areaId").flatMap(UUIDHelper.fromString).orElse(user.areas.headOption).flatMap(id => Area.all.find(_.id == id)).getOrElse(Area.all.head)
 
   private def manageToken[A](token: LoginToken)(implicit request: Request[A]) = {
     if(token.isActive){
@@ -68,7 +70,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
         //hack: we need RequestWithUserData to call the logger
         userOption match {
           case Some(user) =>
-            val area = request.session.get("areaId").flatMap(UUIDHelper.fromString).orElse(user.areas.headOption).flatMap(id => Area.all.find(_.id == id)).getOrElse(Area.all.head)
+            val area = areaFromContext(user)
             implicit val requestWithUserData = new RequestWithUserData(user, area, request)
             eventService.info("AUTH_WITH_DIFFERENT_IP", s"Utilisateur ${token.userId} connecté avec une adresse ip différente de l'email")
           case None =>
@@ -80,7 +82,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
           val url = request.path + queryToString(request.queryString - "key" - "token")
 
           //hack: we need RequestWithUserData to call the logger
-          val area = request.session.get("areaId").flatMap(UUIDHelper.fromString).orElse(user.areas.headOption).flatMap(id => Area.all.find(_.id == id)).getOrElse(Area.all.head)
+          val area = areaFromContext(user)
           implicit val requestWithUserData = new RequestWithUserData(user, area, request)
 
           eventService.info("AUTH_BY_KEY", s"Identification par token")
