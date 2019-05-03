@@ -55,7 +55,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     val url = s"${absoluteUrl}?token=${loginToken.token}"
     val bodyHtml = s"""Bonjour ${user.name},<br>
                       |<br>
-                      |Vous pouvez vous maintenant accèder au service A+ en ouvrant l'adresse suivante :<br>
+                      |Vous pouvez maintenant accèder au service A+ en cliquant sur le lien suivant :<br>
                       |<a href="${url}">${url}</a>
                       |<br>
                       |<br>

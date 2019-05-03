@@ -87,11 +87,11 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
           Left(Redirect(Call(request.method, url)).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
         case _ =>
           Logger.error(s"Try to login by token for an unknown user : ${token.userId}")
-          userNotLogged("Une erreur c'est produite, votre utilisateur n'existe plus")
+          userNotLogged("Une erreur s'est produite, votre utilisateur n'existe plus")
       }
     } else {
       Logger.error(s"Expired token for ${token.userId}")
-      userNotLogged("Le lien que vous avez utilisez a expiré, saisissez votre email pour vous reconnectez")
+      userNotLogged("Le lien que vous avez utilisez a expiré, saisissez votre email pour vous reconnecter")
     }
   }
 
