@@ -22,7 +22,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
                             configuration: play.api.Configuration)(implicit ec: ExecutionContext) extends ActionBuilder[RequestWithUserData, AnyContent] with ActionRefiner[Request, RequestWithUserData] {
   def executionContext = ec
 
-  private lazy val loginByKeyForAreas = configuration.underlying.getStringList("app.loginByKeyForAreas").asScala.flatMap(UUIDHelper.fromString).toList
+  private lazy val areasWithLoginByKey = configuration.underlying.getString("app.areasWithLoginByKey").split(",").flatMap(UUIDHelper.fromString)
 
   private def queryToString(qs: Map[String, Seq[String]]) = {
     val queryString = qs.map { case (key, value) => key + "=" + value.sorted.mkString("|,|") }.mkString("&")
@@ -37,8 +37,9 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
         case (Some(userSession), Some(userKey), None) if userSession.id == userKey.id =>
           Left(Redirect(Call(request.method, url)))
         case (_, Some(user), None) =>
-          if(loginByKeyForAreas.contains(areaFromContext(user)) && !user.admin) {
-            // loginByKeyForAreas is an insecure setting for demo usage and transition only
+          val area = areaFromContext(user)
+          if(areasWithLoginByKey.contains(area.id) && !user.admin) {
+            // areasWithLoginByKey is an insecure setting for demo usage and transition only
             Left(Redirect(Call(request.method, url)).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
           } else {
             Left(Redirect(routes.LoginController.login()).flashing("email" -> user.email, "url" -> url))
