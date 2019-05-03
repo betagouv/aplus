@@ -23,7 +23,7 @@ GET      /toutes-les-demandes/:applicationId/terminer               controllers.
 GET     /stats                       controllers.ApplicationController.stats
 
 # Login
-GET    /login                        controllers.LoginController.home
+GET    /login                        controllers.LoginController.login
 POST   /login                        controllers.LoginController.login
 GET    /login/disconnect             controllers.LoginController.disconnect
 
@@ -35,21 +35,22 @@ POST    /users/:userId               controllers.UserController.editUserPost(use
 
 
 GET     /groups/:groupId             controllers.UserController.editGroup(groupId: java.util.UUID)
-POST     /groups/:groupId            controllers.UserController.editGroupPost(groupId: java.util.UUID)
+POST    /groups/:groupId             controllers.UserController.editGroupPost(groupId: java.util.UUID)
 GET     /groups/:groupId/users       controllers.UserController.add(groupId: java.util.UUID)
 POST    /groups/:groupId/users       controllers.UserController.addPost(groupId: java.util.UUID)
 
 # Group
-POST    /groups                  controllers.UserController.addGroup
+POST    /groups                      controllers.UserController.addGroup
 
 
-GET     /charte                  controllers.UserController.showCharte
-POST    /charte                  controllers.UserController.validateCharte
+GET     /charte                      controllers.UserController.showCharte
+POST    /charte                      controllers.UserController.validateCharte
 
 # Areas
-GET     /areas/:areaId               controllers.ApplicationController.changeArea(areaId: java.util.UUID)
+GET     /areas                       controllers.AreaController.all
+GET     /areas/:areaId               controllers.AreaController.change(areaId: java.util.UUID)
 
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
-->      /webjars                webjars.Routes
+->      /webjars                    webjars.Routes

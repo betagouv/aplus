@@ -1,0 +1,44 @@
+@import models._
+@import java.util.UUID
+@(user: User, currentArea: Area)(areas: Seq[Area], areasWithLoginByKey: Seq[UUID])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+
+
+@main(user, currentArea)(s"Gestion des territoires"){
+<style>
+    .cell-selected {
+        font-weight: bold;
+    }
+</style>
+}{
+    <div class="mdl-cell mdl-cell--12-col pem-container">
+        <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
+            <thead>
+                <tr>
+                    <th>Territoire</th>
+                    @if(user.admin){ <th>Identifiant</th>
+                        <th>Login par Clé</th>
+                    }
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for(area <- Area.all.filter(area => user.areas.contains(area.id))) {
+                    <tr>
+                        <td class="mdl-data-table__cell--non-numeric@if(area.id == currentArea.id){ cell-selected }">@area.name</td>
+                        @if(user.admin){
+                            <td class="mdl-data-table__cell--non-numeric@if(area.id == currentArea.id){ cell-selected }">@area.id</td>
+                            <td class="mdl-data-table__cell--non-numeric">@if(areasWithLoginByKey.contains(area.id)) { <i class="material-icons">warning</i> Possible } else { Impossible }</td>
+                        }
+                        <td class="mdl-data-table__cell--non-numeric@if(area.id == currentArea.id){ cell-selected }">
+                        @if(area.id != currentArea.id) {
+                            <a href="@routes.AreaController.change(area.id)" class="mdl-button mdl-button--primary mdl-js-button mdl-js-ripple-effect">
+                                Changer
+                            </a>
+                        }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

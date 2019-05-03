@@ -23,7 +23,8 @@ class EventService @Inject()(db: Database) {
     "description",
     "area",
     "to_application_id",
-    "to_user_id"
+    "to_user_id",
+    "ip_address"
   )
 
   def info[A](code: String, description: String, application: Option[Application] = None, user: Option[User] = None)(implicit request: RequestWithUserData[A])
@@ -46,38 +47,28 @@ class EventService @Inject()(db: Database) {
       description,
       request.currentArea.id,
       application.map(_.id),
-      user.map(_.id))
+      user.map(_.id),
+      request.remoteAddress)
     addEvent(event)
   }
 
   def addEvent(event: Event): Unit = {
     db.withConnection { implicit connection =>
-      SQL(
-        """
+      SQL"""
           INSERT INTO event VALUES (
-            {id}::uuid,
-            {level},
-            {code},
-            {from_user_name},
-            {from_user_id}::uuid,
-            {creation_date},
-            {description},
-            {area}::uuid,
-            {to_application_id}::uuid,
-            {to_user_id}::uuid
+            ${event.id}::uuid,
+            ${event.level},
+            ${event.code},
+            ${event.fromUserName},
+            ${event.fromUserId}::uuid,
+            ${event.creationDate},
+            ${event.description},
+            ${event.area}::uuid,
+            ${event.toApplicationId}::uuid,
+            ${event.toUserId}::uuid,
+            ${event.ipAddress}::inet
           )
-      """).on(
-        'id -> event.id,
-        'level -> event.level,
-        'code -> event.code,
-        'from_user_name -> event.fromUserName,
-        'from_user_id -> event.fromUserId,
-        'creation_date -> event.creationDate,
-        'description -> event.description,
-        'area -> event.area,
-        'to_application_id -> event.toApplicationId,
-        'to_user_id -> event.toUserId
-      ).executeUpdate() == 1
+      """.executeUpdate() == 1
     }
   }
 }

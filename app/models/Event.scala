@@ -13,4 +13,5 @@ case class Event(id: UUID,
                  description: String,
                  area: UUID,
                  toApplicationId: Option[UUID],
-                 toUserId: Option[UUID])
+                 toUserId: Option[UUID],
+                 ipAddress: String)
