@@ -48,7 +48,7 @@ POST    /charte                      controllers.UserController.validateCharte
 
 # Areas
 GET     /areas                       controllers.AreaController.all
-GET     /areas/:areaId               controllers.AreaController.changeArea(areaId: java.util.UUID)
+GET     /areas/:areaId               controllers.AreaController.change(areaId: java.util.UUID)
 
 
 # Map static resources from the /public folder to the /assets URL path
