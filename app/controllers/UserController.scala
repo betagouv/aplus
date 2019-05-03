@@ -153,6 +153,7 @@ class UserController @Inject()(loginAction: LoginAction,
   }
 
   def add(groupId: UUID) = loginAction { implicit request =>
+    //TODO : We can add in inexistant group
     if(request.currentUser.admin == false && (request.currentUser.groupAdmin == false || !request.currentUser.groupIds.contains(groupId))) {   //TODO : check with test
       eventService.warn("SHOW_ADD_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs du groupe $groupId")
       Unauthorized("Vous n'avez pas le droit de faire ça")
@@ -178,7 +179,7 @@ class UserController @Inject()(loginAction: LoginAction,
         users => {
           if (userService.add(users.map(_.copy(groupIds = List(groupId))))) {
             eventService.info("ADD_USER_DONE", s"Utilisateurs ajouté")
-            Redirect(routes.UserController.all()).flashing("success" -> "Utilisateurs ajouté")
+            Redirect(routes.UserController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
           } else {
             val form = usersForm.fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne)")
             eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD")
@@ -221,6 +222,51 @@ class UserController @Inject()(loginAction: LoginAction,
 
   }
 
+  def editGroup(id: UUID) = loginAction { implicit request =>
+    userService.groupById(id) match {
+      case None =>
+        eventService.error("EDIT_GROUPE_NOT_FOUND", s"La demande $id n'existe pas")
+        NotFound("Nous n'avons pas trouvé ce groupe")
+      case Some(group) =>
+        if(!group.canHaveUsersAddedBy(request.currentUser) || group.area != request.currentArea.id) {
+          eventService.warn("EDIT_GROUPE_UNAUTHORIZED", s"Accès non autorisé à l'edition de ce groupe")
+          Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?")
+        } else {
+          val groupUsers = userService.byGroupIds(List(id))
+          eventService.info("EDIT_GROUP_SHOWED", s"Visualise la vue de modification du groupe")
+          Ok(views.html.editGroup(request.currentUser, request.currentArea)(group, groupUsers))
+        }
+    }
+  }
+
+  def editGroupPost(id: UUID) = loginAction { implicit request =>
+    userService.groupById(id) match {
+      case None =>
+        eventService.error("EDIT_GROUPE_NOT_FOUND", s"La demande $id n'existe pas")
+        NotFound("Nous n'avons pas trouvé ce groupe")
+      case Some(group) =>
+        if(request.currentUser.admin == false || group.area != request.currentArea.id) {
+          eventService.warn("EDIT_GROUPE_UNAUTHORIZED", s"Accès non autorisé à l'edition de ce groupe")
+          Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?")
+        } else {
+          addGroupForm.bindFromRequest.fold(
+            formWithErrors => {
+              eventService.error("EDIT_USER_GROUP_ERROR", s"Essai d'edition d'un groupe avec des erreurs de validation")
+              BadRequest("Impossible de modifier le groupe (erreur de formulaire")
+            },
+            group => {
+              if (userService.edit(group.copy(id = id))) {
+                eventService.info("EDIT_USER_GROUP_DONE", s"Groupe édité")
+                Redirect(routes.UserController.editGroup(id)).flashing("success" -> "Groupe modifié")
+              } else {eventService.error("EDIT_USER_GROUP_ERROR", s"Impossible de modifier le groupe dans la BDD")
+                Redirect(routes.UserController.editGroup(id)).flashing("success" -> "Impossible de modifier le groupe")
+              }
+            }
+          )
+        }
+    }
+  }
+
   def addGroupForm[A](implicit request: RequestWithUserData[A]) = Form(
     mapping(
       "id" -> ignored(UUID.randomUUID()),
@@ -245,7 +291,7 @@ class UserController @Inject()(loginAction: LoginAction,
         group => {
           if (userService.add(group)) {
             eventService.info("ADD_USER_GROUP_DONE", s"Groupe ajouté")
-            Redirect(routes.UserController.all()).flashing("success" -> "Groupe ajouté")
+            Redirect(routes.UserController.editGroup(group.id)).flashing("success" -> "Groupe ajouté")
           } else {eventService.error("ADD_USER_GROUP_ERROR", s"Impossible d'ajouter le groupe dans la BDD")
             Redirect(routes.UserController.all()).flashing("success" -> "Impossible d'ajouter le groupe")
           }

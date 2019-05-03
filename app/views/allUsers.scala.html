@@ -85,7 +85,13 @@
   } {
     <div>
       @for(userGroup <- userGroups) {
-        <h4>Groupe : @userGroup.name (@allUsers.count(_.groupIds.contains(userGroup.id)) utilisateurs)</h4>
+        <h4>Groupe : @userGroup.name (@allUsers.count(_.groupIds.contains(userGroup.id)) utilisateurs / INSEE : @userGroup.inseeCode)@if(currentUser.admin) {
+          <td class="mdl-data-table__cell--non-numeric">
+            <a href="@routes.UserController.editGroup(userGroup.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+              <i class="material-icons">edit</i>
+            </a>
+          </td>
+        }</h4>
         @display(allUsers.filter(_.groupIds.contains(userGroup.id)))
         @helper.form(routes.UserController.add(userGroup.id), 'method -> "get") {
           <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">

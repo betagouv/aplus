@@ -147,11 +147,24 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
       .executeUpdate() == 1
   }
 
+  def edit(group: UserGroup) = db.withConnection {  implicit connection =>
+    SQL"""
+          UPDATE user_group SET
+          name = ${group.name},
+          insee_code = ${group.inseeCode}
+          WHERE id = ${group.id}::uuid
+       """.executeUpdate() == 1
+  }
+
   def allGroupByAreas(areaIds: List[UUID]) = db.withConnection { implicit connection =>
     SQL"SELECT * FROM user_group WHERE ARRAY[$areaIds]::uuid[] @> ARRAY[area]::uuid[]".as(simpleUserGroup.*)
   }
 
   def groupByIds(groupIds: List[UUID]) = db.withConnection { implicit connection =>
     SQL"SELECT * FROM user_group WHERE ARRAY[$groupIds]::uuid[] @> ARRAY[id]::uuid[]".as(simpleUserGroup.*)
+  }
+
+  def groupById(groupId: UUID) = db.withConnection { implicit connection =>
+    SQL"SELECT * FROM user_group WHERE id = $groupId::uuid".as(simpleUserGroup.singleOpt)
   }
 }
