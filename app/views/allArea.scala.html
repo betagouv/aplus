@@ -1,0 +1,40 @@
+@import models._
+@(user: User, currentArea: Area)(areas: Seq[Area])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+
+
+@main(user, currentArea)(s"Gestion des territoires"){
+<style>
+    .cell-selected {
+        font-weight: bold;
+    }
+</style>
+}{
+    <div class="mdl-cell mdl-cell--12-col pem-container">
+        <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
+            <thead>
+                <tr>
+                    <th>Territoire</th>
+                    <th>ID</th>
+                    <th>Changer</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for(area <- areas) {
+                    <tr>
+                        <td class="mdl-data-table__cell--non-numeric@if(area.id == currentArea.id){ cell-selected }">@area.name</td>
+                        <td class="mdl-data-table__cell--non-numeric@if(area.id == currentArea.id){ cell-selected }"">@area.id</td>
+                        <td class="mdl-data-table__cell--non-numeric@if(area.id == currentArea.id){ cell-selected }"">
+                        @if(area.id == currentArea.id) {
+                            Courante
+                        } else {
+                            <a href="@routes.AreaController.changeArea(area.id)" class="mdl-button mdl-button--primary mdl-js-button mdl-js-ripple-effect">
+                                Changer
+                            </a>
+                        }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

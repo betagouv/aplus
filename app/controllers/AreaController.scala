@@ -13,9 +13,9 @@ import services.EventService
 @Singleton
 class AreaController @Inject()(loginAction: LoginAction,
                                eventService: EventService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController {
-
+  
   def changeArea(areaId: UUID) = loginAction {  implicit request =>
-    if(request.currentUser.areas.nonEmpty && !request.currentUser.areas.contains(areaId)) {
+    if(!request.currentUser.areas.contains(areaId)) {
       eventService.warn("CHANGE_AREA_UNAUTHORIZED", s"Accès à la zone $areaId non autorisé")
       Unauthorized("Vous n'avez pas les droits suffisants pour accèder à cette zone. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
     } else {
@@ -23,6 +23,7 @@ class AreaController @Inject()(loginAction: LoginAction,
       Redirect(routes.ApplicationController.all()).withSession(request.session - "areaId" + ("areaId" -> areaId.toString))
     }
   }
+
 
   def all = loginAction { implicit request =>
     val show = Area.all.map(area => s"<li>${area.name} : ${area.id}</li>").mkString

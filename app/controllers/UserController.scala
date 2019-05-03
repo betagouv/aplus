@@ -52,7 +52,7 @@ class UserController @Inject()(loginAction: LoginAction,
 
   private val timeZone = DateTimeZone.forID("Europe/Paris")
 
-  def userMapping(implicit area: Area) = mapping(
+  def userMapping = mapping(
     "id" -> optional(uuid).transform[UUID]({
       case None => UUID.randomUUID()
       case Some(id) => id
@@ -64,7 +64,7 @@ class UserController @Inject()(loginAction: LoginAction,
     "helper" -> boolean,
     "instructor" -> boolean,
     "admin" -> boolean,
-    "areas" -> ignored(List(area.id)),
+    "areas" -> list(uuid).verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
     "creationDate" -> ignored(DateTime.now(timeZone)),
     "hasAcceptedCharte" -> boolean,
     "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
@@ -78,7 +78,7 @@ class UserController @Inject()(loginAction: LoginAction,
     ).transform[Map[String,String]]({ _.toMap }, { _.toSeq })
   )(User.apply)(User.unapply)
 
-  def userForm(implicit area: Area) = Form(userMapping)
+  val userForm = Form(userMapping)
 
   def usersForm(implicit area: Area) = Form(
     single(
