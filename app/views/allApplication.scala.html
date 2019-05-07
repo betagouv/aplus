@@ -176,6 +176,7 @@
                             <th class="mdl-data-table__cell--non-numeric">Avancement</th>
                             <th class="mdl-data-table__cell--non-numeric">Créateur</th>
                             <th class="mdl-data-table__cell--non-numeric">Invités</th>
+                            <th class="mdl-data-table__cell--non-numeric">Messages</th>
                             <th class="mdl-data-table__cell--non-numeric">Réponses</th>
                             <th class="mdl-data-table__cell--non-numeric">Utile</th>
                             <th class="mdl-data-table__cell--non-numeric">Non pertinente</th>
@@ -197,7 +198,8 @@
                             <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.longStatus(user)</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.creatorUserName</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.invitedUsers.size</td>
-                            <td class="mdl-data-table__cell--non-numeric">@application.answers.length</td>
+                            <td class="mdl-data-table__cell--non-numeric">@(application.answers.length + 1)</td>
+                            <td class="mdl-data-table__cell--non-numeric">@application.answers.count(_.creatorUserID != application.creatorUserId)</td>
                             <td class="mdl-data-table__cell--non-numeric"><b>@application.usefulness match {
                                 case Some("Oui") => {<img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"> Oui}
                                 case Some("Je ne sais pas") => {<img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"> Je ne sais pas}
