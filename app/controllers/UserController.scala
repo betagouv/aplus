@@ -118,7 +118,7 @@ class UserController @Inject()(loginAction: LoginAction,
           NotFound("Nous n'avons pas trouvé cet utilisateur")
         case Some(user) =>
           val form = userForm.fill(user)
-          val groups = userService.allGroupByAreas(user.areas)
+          val groups = userService.allGroups
           eventService.info("USER_SHOWED", s"Visualise la vue de modification l'utilisateur ", user = Some(user))
           Ok(views.html.editUser(request.currentUser, request.currentArea)(form, userId, groups))
       }
@@ -133,7 +133,7 @@ class UserController @Inject()(loginAction: LoginAction,
       implicit val area = request.currentArea
       userForm.bindFromRequest.fold(
         formWithErrors => {
-          val groups = userService.allGroupByAreas(formWithErrors.value.map(_.areas).getOrElse(List()))
+          val groups = userService.allGroups
           eventService.error("ADD_USER_ERROR", s"Essai de modification de l'tilisateur $userId avec des erreurs de validation")
           BadRequest(views.html.editUser(request.currentUser, request.currentArea)(formWithErrors, userId, groups))
         },
@@ -143,7 +143,7 @@ class UserController @Inject()(loginAction: LoginAction,
             Redirect(routes.UserController.all()).flashing("success" -> "Utilisateur modifié")
           } else {
             val form = userForm.fill(user).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
-            val groups = userService.allGroupByAreas(user.areas)
+            val groups = userService.allGroups
             eventService.error("EDIT_USER_ERROR", s"Impossible de modifier l'utilisateur dans la BDD", user = Some(user))
             InternalServerError(views.html.editUser(request.currentUser, request.currentArea)(form, userId, groups))
           }

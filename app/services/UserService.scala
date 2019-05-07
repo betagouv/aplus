@@ -156,9 +156,13 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
           WHERE id = ${group.id}::uuid
        """.executeUpdate() == 1
   }
-
+  
   def allGroupByAreas(areaIds: List[UUID]) = db.withConnection { implicit connection =>
     SQL"SELECT * FROM user_group WHERE ARRAY[$areaIds]::uuid[] @> ARRAY[area]::uuid[]".as(simpleUserGroup.*)
+  }
+
+  def allGroups = db.withConnection { implicit connection =>
+    SQL"SELECT * FROM user_group".as(simpleUserGroup.*)
   }
 
   def groupByIds(groupIds: List[UUID]) = db.withConnection { implicit connection =>
