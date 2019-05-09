@@ -23,6 +23,8 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
   def executionContext = ec
 
   private lazy val areasWithLoginByKey = configuration.underlying.getString("app.areasWithLoginByKey").split(",").flatMap(UUIDHelper.fromString)
+  private lazy val tokenExpirationInMinutes = configuration.underlying.getInt("app.tokenExpirationInMinutes")
+
 
   private def queryToString(qs: Map[String, Seq[String]]) = {
     val queryString = qs.map { case (key, value) => key + "=" + value.sorted.mkString("|,|") }.mkString("&")
@@ -94,7 +96,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
       }
     } else {
       Logger.error(s"Expired token for ${token.userId}")
-      userNotLogged("Le lien que vous avez utilisez a expiré, saisissez votre email pour vous reconnecter")
+      userNotLogged(s"Le lien que vous avez utilisez a expiré (il expire après $tokenExpirationInMinutes minutes), saisissez votre email pour vous reconnecter")
     }
   }
 
