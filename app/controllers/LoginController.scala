@@ -13,7 +13,6 @@ class LoginController @Inject()(userService: UserService,
                                 configuration: play.api.Configuration)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController {
   private lazy val tokenExpirationInMinutes = configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
-
   def login() = Action { implicit request =>
      val emailFromRequest: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("email")).flatMap(_.headOption).orElse(request.flash.get("email"))
      if(emailFromRequest.isEmpty) {
