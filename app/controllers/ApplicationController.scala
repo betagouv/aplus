@@ -27,7 +27,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                                       userService: UserService,
                                       applicationService: ApplicationService,
                                       notificationsService: NotificationService,
-                                      eventService: EventService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
+                                      eventService: EventService)(implicit webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
   import forms.Models._
 
   private val timeZone = Time.dateTimeZone
