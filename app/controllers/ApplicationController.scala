@@ -95,7 +95,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     val myClosedApplications = myApplications.filter(_.closed)
     
     val applicationsFromTheArea = if(request.currentUser.admin) {
-      applicationService.allByArea(request.currentArea.id, true)
+      applicationService.allForAreas(request.currentUser.areas, true)
     } else if(request.currentUser.groupAdmin) {
       val users = userService.byArea(request.currentArea.id)
       val groupUserIds = users.filter(_.groupIds.intersect(request.currentUser.groupIds).nonEmpty).map(_.id)
@@ -103,7 +103,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     } else { List[Application]() }
 
     eventService.info("ALL_APPLICATIONS_SHOWED",
-      s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}/sone=${applicationsFromTheArea.size}")
+      s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}/zone=${applicationsFromTheArea.size}")
     Ok(views.html.allApplication(request.currentUser, request.currentArea)(myOpenApplications, myClosedApplications, applicationsFromTheArea))
   }
   
@@ -149,7 +149,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         }
 
         val allApplications = if(request.currentUser.admin) {
-          applicationService.all(true)
+          applicationService.allForAreas(request.currentUser.areas, true)
         } else if(request.currentUser.groupAdmin) {
           applicationService.allForUserIds(users.map(_.id), true)
         } else {
@@ -377,11 +377,11 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             request.currentUser.id,
             request.currentUser.nameWithQualite,
             experts,
-            false,
+            true,
             request.currentArea.id,
             false,
             Some(Map()))
-          if (applicationService.add(applicationId, answer)  == 1) {
+          if (applicationService.add(applicationId, answer, true)  == 1) {
             notificationsService.newAnswer(application, answer)
             eventService.info("ADD_EXPERT_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
             Redirect(routes.ApplicationController.all()).flashing ("success" -> "Un expert a été invité sur la demande")

@@ -3,8 +3,6 @@ package models
 import java.util.UUID
 
 import org.joda.time.DateTime
-import org.joda.time.Period
-import org.joda.time.Days
 import org.joda.time.Hours
 
 case class Application(id: UUID,
@@ -22,27 +20,8 @@ case class Application(id: UUID,
                        closed: Boolean = false,
                        seenByUserIds: List[UUID] = List(),
                        usefulness: Option[String] = None,
-                       closedDate: Option[DateTime] = None) {
-
-   lazy val ageInDays = Days.daysBetween(creationDate, DateTime.now(Time.dateTimeZone)).getDays
-   lazy val age = new Period(creationDate, DateTime.now(Time.dateTimeZone))
-   lazy val ageString = {
-     if(age.getYears > 0) {
-       s"${age.getYears} années"
-     } else if(age.getMonths > 0) {
-       s"${age.getMonths} mois"
-     } else if(age.getWeeks > 0) {
-       s"${age.getWeeks} semaines"
-     } else if(age.getDays > 0) {
-       s"${age.getDays} jours"
-     } else if(age.getHours > 0) {
-       s"${age.getHours} heures"
-     } else if(age.getMinutes > 0) {
-       s"${age.getMinutes} minutes"
-     } else {
-       s"quelques secondes"
-     }
-   }
+                       closedDate: Option[DateTime] = None,
+                       expertInvited: Boolean = false) extends AgeModel {
 
    lazy val searchData = {
      val stripChars = "\"<>'"

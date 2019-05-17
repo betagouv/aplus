@@ -162,9 +162,10 @@
     @if(applicationsFromTheArea.nonEmpty && (user.admin || user.groupAdmin)) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         @if(user.admin) {
-            <h4 class="mdl-cell mdl-cell--12-col">Toutes les demandes du territoire: @area.name</h4>
-        }
+            <h4 class="mdl-cell mdl-cell--12-col">Toutes les demandes</h4>
+        } else {
             <h4 class="mdl-cell mdl-cell--12-col">Demandes de mes groupes</h4>
+        }
             <div class="mdl-cell mdl-cell--12-col pem-container">
                 Total : @applicationsFromTheArea.size ( @applicationsFromTheArea.groupBy(_.longStatus(user)).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
                 <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp sortable" style="white-space: normal;">
@@ -172,7 +173,9 @@
                         <tr>
                             @if(user.admin){ <th class="mdl-data-table__cell--non-numeric">#</th> }
                             <th class="mdl-data-table__cell--non-numeric">Date</th>
-                            <th class="mdl-data-table__cell--non-numeric">Sujet</th>
+                            @if(user.admin) {
+                                <th class="mdl-data-table__cell--non-numeric">Territoires</th>
+                            }
                             <th class="mdl-data-table__cell--non-numeric">Avancement</th>
                             <th class="mdl-data-table__cell--non-numeric">Créateur</th>
                             <th class="mdl-data-table__cell--non-numeric">Invités</th>
@@ -180,6 +183,7 @@
                             <th class="mdl-data-table__cell--non-numeric">Réponses</th>
                             <th class="mdl-data-table__cell--non-numeric">Utile</th>
                             <th class="mdl-data-table__cell--non-numeric">Non pertinente</th>
+                            <th class="mdl-data-table__cell--non-numeric">Sujet</th>
                             <th class="mdl-data-table__cell--non-numeric"></th>
                             @if(user.admin){  <th class="mdl-data-table__cell--non-numeric" style="width: 20px">Détails</th> }
                         </tr>
@@ -194,8 +198,10 @@
                         <tr @if(user.admin){ onclick="window.document.location='@routes.ApplicationController.show(application.id)';" class="application-row" } else { style="cursor: none" } data-search="@application.searchData" >
                         @if(user.admin){ <td class="mdl-data-table__cell--non-numeric" style="font-weight: bold; color: red;">@application.internalId</td>}
                             <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))</td>
-                            <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
-                            <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.longStatus(user)</td>
+                            @if(user.admin) {
+                                <td class="mdl-data-table__cell--non-numeric">@Area.fromId(application.area).get.name</td>
+                            }
+                            <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.creatorUserName</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.invitedUsers.size</td>
                             <td class="mdl-data-table__cell--non-numeric">@(application.answers.length + 1)</td>
@@ -207,6 +213,7 @@
                                 case None => { ? }
                             }</b></td>
                             <td class="mdl-data-table__cell--non-numeric">@if(application.irrelevant) { <span style="color: red; font-weight: bold;">Oui</span> } else { Non } </td>
+                            <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
                             <td class="mdl-data-table__cell--non-numeric search-cell"></td>
                             @if(user.admin){ <td class="mdl-data-table__cell--non-numeric"> <a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                                 <i class="material-icons">info_outline</i>

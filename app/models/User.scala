@@ -20,13 +20,14 @@ case class User(id: UUID,
                 groupAdmin: Boolean,
                 expert: Boolean = false,
                 groupIds: List[UUID] = List(),
-                delegations: Map[String, String] = Map()) {
+                delegations: Map[String, String] = Map()) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"
-  lazy val ageInDays = Days.daysBetween(creationDate, DateTime.now(Time.dateTimeZone)).getDays
 }
 
 object User {
   private val date = DateTime.parse("2017-11-01T00:00+01:00")
+  val systemUser = User(UUIDHelper.namedFrom("system"), Hash.sha256(s"system"), "Système A+", "System A+", "contact@beta.gouv.fr", false, false, false, List(), date, false, "75056", false)
+
   val admins =  List(
     // Enabled
     User(UUIDHelper.namedFrom("zohra"), Hash.sha256(s"zohra"), "Zohra LEBEL", "Experte A+", "zohra.lebel@beta.gouv.fr", true, false, true, Area.all.map(_.id), date, true, "75056", true, expert = true),
