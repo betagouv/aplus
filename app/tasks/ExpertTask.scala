@@ -5,9 +5,10 @@ import java.util.UUID
 import akka.actor._
 import javax.inject.{Inject, Named}
 import models._
+import org.joda.time.{DateTime, Period}
 import services.{ApplicationService, EventService, NotificationService}
-import scala.concurrent.duration._
 
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 
 
@@ -16,7 +17,11 @@ class ExpertTask @Inject()(actorSystem: ActorSystem,
                            eventService: EventService,
                            notificationService: NotificationService)(implicit executionContext: ExecutionContext) {
 
-  actorSystem.scheduler.schedule(initialDelay = 5.seconds, interval = 24.hours) {
+  val startAtHour = 8
+  val startDate = Time.now().withTimeAtStartOfDay().plusDays(1).withHourOfDay(startAtHour)
+  val initialDelay = (new Period(Time.now(), startDate).toStandardSeconds.getSeconds).seconds
+
+  actorSystem.scheduler.schedule(initialDelay = initialDelay, interval = 24.hours) {
     inviteExpertsInApplication
   }
 
