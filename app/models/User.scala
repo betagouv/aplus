@@ -26,7 +26,7 @@ case class User(id: UUID,
 
 object User {
   private val date = DateTime.parse("2017-11-01T00:00+01:00")
-  val systemUser = User(UUIDHelper.namedFrom("system"), Hash.sha256(s"system"), "Système A+", "System A+", "contact@beta.gouv.fr", false, false, false, List(), date, false, "75056", false)
+  val systemUser = User(UUIDHelper.namedFrom("system"), Hash.sha256(s"system"), "Système A+", "System A+", "contact@aplus.beta.gouv.fr", false, false, false, List(), date, false, "75056", false)
 
   val admins =  List(
     // Enabled

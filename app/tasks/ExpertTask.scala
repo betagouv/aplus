@@ -54,9 +54,9 @@ class ExpertTask @Inject()(actorSystem: ActorSystem,
       Some(Map()))
     if (applicationService.add(application.id, answer, true)  == 1) {
       notificationService.newAnswer(application, answer)
-      eventService.info(User.systemUser, Area.fromId(application.area).get, "0.0.0.0", "ADD_EXPERT_CREATED", s"Les experts ont été automatiquement ajouté ${answer.id} sur la demande ${application.id}", Some(application), None)
+      eventService.info(User.systemUser, Area.fromId(application.area).get, "0.0.0.0", "ADD_EXPERT_CREATED", s"Les experts ont été automatiquement ajoutés ${answer.id} sur la demande ${application.id}", Some(application), None)
     } else {
-      eventService.error(User.systemUser, Area.fromId(application.area).get, "0.0.0.0", "ANSWER_NOT_CREATED", s"Les experts n'ont pas pu être automatiquement ajouté ${answer.id} sur la demande ${application.id} : problème BDD", Some(application), None)
+      eventService.error(User.systemUser, Area.fromId(application.area).get, "0.0.0.0", "ANSWER_NOT_CREATED", s"Les experts n'ont pas pu être automatiquement ajoutés ${answer.id} sur la demande ${application.id} : problème BDD", Some(application), None)
     }
   }
 }
