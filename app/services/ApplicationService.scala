@@ -49,7 +49,8 @@ class ApplicationService @Inject()(db: Database) {
     "closed",
     "seen_by_user_ids",
     "usefulness",
-    "closed_date"
+    "closed_date",
+    "expert_invited"
   ).map(application => application.copy(creationDate = application.creationDate.withZone(Time.dateTimeZone), 
                     answers = application.answers.map(answer => answer.copy(creationDate = answer.creationDate.withZone(Time.dateTimeZone)))))
   
@@ -86,6 +87,10 @@ class ApplicationService @Inject()(db: Database) {
     } else {
       result
     }
+  }
+
+  def openAndOlderThan(day: Int) =  db.withConnection { implicit connection =>
+     SQL(s"SELECT * FROM application WHERE closed = false AND age(creation_date) > '$day days' AND expert_invited = false").as(simpleApplication.*)
   }
 
   def allForUserId(userId: UUID, anonymous: Boolean) = db.withConnection { implicit connection =>
@@ -137,8 +142,8 @@ class ApplicationService @Inject()(db: Database) {
     }
   }
 
-  def all(anonymous: Boolean) = db.withConnection { implicit connection =>
-    val result = SQL("SELECT * FROM application ORDER BY creation_date DESC").as(simpleApplication.*)
+  def allForAreas(areaIds: List[UUID] , anonymous: Boolean) = db.withConnection { implicit connection =>
+    val result = SQL"""SELECT * FROM application WHERE ARRAY[$areaIds]::uuid[] @> ARRAY[area]::uuid[] ORDER BY creation_date DESC""".as(simpleApplication.*)
     if(anonymous){
       result.map(_.anonymousApplication)
     } else {
@@ -177,17 +182,17 @@ class ApplicationService @Inject()(db: Database) {
     ).executeUpdate() == 1
   }
   
-  def add(applicationId: UUID, answer: Answer) = db.withTransaction { implicit connection =>
+  def add(applicationId: UUID, answer: Answer, expertInvited: Boolean = false) = db.withTransaction { implicit connection =>
     val invitedUserJson = Json.toJson(answer.invitedUsers.map {
       case (key, value) =>
         key.toString -> value
     })
-    val irrelevantSQL = if(answer.declareApplicationHasIrrelevant) {
-       ", irrelevant = true "
-    } else { "" }
+    val sql = (if(answer.declareApplicationHasIrrelevant) { ", irrelevant = true " } else { "" }) +
+      (if(expertInvited) { ", expert_invited = true"  } else { "" })
+
     SQL(
       s"""UPDATE application SET answers = answers || {answer}::jsonb,
-          invited_users = invited_users || {invited_users}::jsonb $irrelevantSQL
+          invited_users = invited_users || {invited_users}::jsonb $sql
           WHERE id = {id}::uuid
        """
     ).on(

@@ -3,12 +3,14 @@ package services
 import java.util.UUID
 
 import actions.RequestWithUserData
+import akka.http.scaladsl.model.RemoteAddress
 import javax.inject.Inject
 import models._
 import play.api.db.Database
 import anorm._
 import anorm.JodaParameterMetaData._
 import org.joda.time.DateTime
+import play.api.Logger
 
 @javax.inject.Singleton
 class EventService @Inject()(db: Database) {
@@ -28,28 +30,43 @@ class EventService @Inject()(db: Database) {
   )
 
   def info[A](code: String, description: String, application: Option[Application] = None, user: Option[User] = None)(implicit request: RequestWithUserData[A])
-     = register[A]("INFO", request)(code, description, application, user)
+     = register[A]("INFO")(request.currentUser, request.currentArea, request.remoteAddress, code, description, application, user)
 
   def warn[A](code: String, description: String, application: Option[Application] = None, user: Option[User] = None)(implicit request: RequestWithUserData[A])
-  = register[A]("WARN", request)(code, description, application, user)
+  = register[A]("WARN")(request.currentUser, request.currentArea, request.remoteAddress, code, description, application, user)
 
   def error[A](code: String, description: String, application: Option[Application] = None, user: Option[User] = None)(implicit request: RequestWithUserData[A])
-  = register[A]("ERROR", request)(code, description, application, user)
+  = register[A]("ERROR")(request.currentUser, request.currentArea, request.remoteAddress, code, description, application, user)
 
-  private def register[A](level: String, request: RequestWithUserData[A])(code: String, description: String, application: Option[Application] = None, user: Option[User] = None): Unit = {
+  val info = register("INFO") _
+  val warn = register("WARN") _
+  val error = register("ERROR") _
+
+  private def register[A](level: String)(currentUser: User, currentArea: Area, remoteAddress: String, code: String, description: String, application: Option[Application] = None, user: Option[User] = None): Unit = {
     val event = Event(
       UUID.randomUUID(),
       level,
       code,
-      request.currentUser.nameWithQualite,
-      request.currentUser.id,
+      currentUser.nameWithQualite,
+      currentUser.id,
       DateTime.now(Time.dateTimeZone),
       description,
-      request.currentArea.id,
+      currentArea.id,
       application.map(_.id),
       user.map(_.id),
-      request.remoteAddress)
+      remoteAddress)
     addEvent(event)
+
+    val message = s"${currentUser.name}/${currentArea.name}/${description}"
+    level match {
+      case "INFO" =>
+        Logger.info(message)
+      case "WARN" =>
+        Logger.warn(message)
+      case "ERROR" =>
+        Logger.error(message)
+      case _ =>
+    }
   }
 
   def addEvent(event: Event): Unit = {

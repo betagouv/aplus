@@ -172,7 +172,7 @@ dialog {
                     }
                 }
                 </ul>
-                @if(application.canHaveExpertsInvitedBy(user) && application.closed == false) {
+                @if(application.canHaveExpertsInvitedBy(user) && application.closed == false && application.expertInvited == false) {
                     <button class="mdl-button mdl-button--raised mdl-js-button do-not-print" onclick="document.location='@routes.ApplicationController.inviteExpert(application.id)'" style="margin-right: 10px;">
                         Inviter un expert de l'équipe A+
                     </button>

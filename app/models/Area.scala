@@ -7,6 +7,8 @@ import extentions.UUIDHelper
 case class Area(id: UUID, name: String)
 
 object Area {
+  def fromId(id: UUID) = all.find(_.id == id)
+
   val all = List(
     Area(UUIDHelper.namedFrom("nice"), "Alpes-Maritimes"),
     Area(UUIDHelper.namedFrom("argenteuil"), "Argenteuil"),
