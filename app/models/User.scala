@@ -15,12 +15,15 @@ case class User(id: UUID,
                 admin: Boolean,
                 areas: List[UUID],
                 creationDate: DateTime,
+                @deprecated
                 hasAcceptedCharte: Boolean,
                 communeCode: String,
                 groupAdmin: Boolean,
                 expert: Boolean = false,
                 groupIds: List[UUID] = List(),
-                delegations: Map[String, String] = Map()) extends AgeModel {
+                delegations: Map[String, String] = Map(),
+                cguAcceptationDate: Option[DateTime] = None,
+                newsletterAcceptationDate: Option[DateTime] = None) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"
 }
 

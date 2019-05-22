@@ -13,17 +13,20 @@
 </style>
 }{
 <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
-    <h3 class="mdl-cell mdl-cell--12-col">@if(user.hasAcceptedCharte) {CGU} else {Validation des CGU pour continuer}</h3>
-    @if(user.hasAcceptedCharte == false) { <p>Pour accéder au service A+, vous devez valider les CGU suivante : (si elles n'affichent pas, vous pouvez les télécharger plus bas dans la page)</p>}
+    <h3 class="mdl-cell mdl-cell--12-col">@if(user.cguAcceptationDate.isDefined) {CGU} else {Validation des CGU pour continuer}</h3>
+    @if(user.cguAcceptationDate.isEmpty) { <p>Pour accéder au service A+, vous devez valider les CGU suivante : (si elles n'affichent pas, vous pouvez les télécharger plus bas dans la page)</p>}
     <embed src="@routes.Assets.versioned("pdf/CGU_13_mai_2019.pdf")" width="100%" height="600" alt="pdf" pluginspage="http://www.adobe.com/products/acrobat/readstep2.html">
     <p><a href="@routes.Assets.versioned("pdf/CGU_13_mai_2019.pdf")" target="_blank" download="charte_3_octobre_2018.pdf">Si vous ne voyez pas les CGU cliquez-ici pour les télécharger.</a></p>
-        @if(user.hasAcceptedCharte == false) {
+        @if(user.cguAcceptationDate.isEmpty) {
             @helper.form(action = routes.UserController.validateCharte(), args = 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
                 @flash.get("redirect").map { redirect =>
                     <input name="redirect" value="@redirect"  style="display: none">
                 }
             <div>
-                <p>
+                <p><label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-newsletter" style="height: unset;">
+                    <input type="checkbox" id="checkbox-newsletter" name="newsletter" class="mdl-checkbox__input" value="true">
+                    <span class="mdl-checkbox__label">J’accepte de recevoir la newsletter mensuelle de la startup pour être informé de l’évolution de l’outil et de l’élargissement de la communauté.</span>
+                </label><br>
 
                     <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-charte" style="height: unset;">
                     <input type="checkbox" id="checkbox-charte" name="validate" class="mdl-checkbox__input" value="true">

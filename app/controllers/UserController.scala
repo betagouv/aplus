@@ -7,7 +7,7 @@ import actions.{LoginAction, RequestWithUserData}
 import extentions.{Hash, UUIDHelper}
 import forms.FormsPlusMap
 import models.User.date
-import models.{Area, User, UserGroup}
+import models.{Area, Time, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
@@ -54,9 +54,9 @@ class UserController @Inject()(loginAction: LoginAction,
 
   def userMapping = mapping(
     "id" -> optional(uuid).transform[UUID]({
-      case None => UUID.randomUUID()
-      case Some(id) => id
-    }, { Some(_) }),
+        case None => UUID.randomUUID()
+        case Some(id) => id
+      }, { Some(_) }),
     "key" -> ignored("key"),
     "name" -> nonEmptyText.verifying(maxLength(100)),
     "qualite" -> nonEmptyText.verifying(maxLength(100)),
@@ -74,8 +74,9 @@ class UserController @Inject()(loginAction: LoginAction,
     "delegations" -> seq(tuple(
       "name" -> nonEmptyText,
       "email" -> email
-    )
-    ).transform[Map[String,String]]({ _.toMap }, { _.toSeq })
+    )).transform[Map[String,String]]({ _.toMap }, { _.toSeq }),
+    "cguAcceptationDate" -> optional(ignored(Time.now())),
+    "newsletterAcceptationDate" -> optional(ignored(Time.now()))
   )(User.apply)(User.unapply)
 
   val userForm = Form(userMapping)
@@ -101,7 +102,9 @@ class UserController @Inject()(loginAction: LoginAction,
         "adminGroup" -> ignored(false),
         "expert" -> ignored(false),
         "groupIds" -> default(list(uuid), List()),
-        "delegations" -> ignored(Map[String,String]())
+        "delegations" -> ignored(Map[String,String]()),
+        "cguAcceptationDate" -> optional(ignored(Time.now())),
+        "newsletterAcceptationDate" -> optional(ignored(Time.now()))
       )(User.apply)(User.unapply))
     )
   )
@@ -112,7 +115,7 @@ class UserController @Inject()(loginAction: LoginAction,
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
       implicit val area = request.currentArea
-      userService.byId(userId)match {
+      userService.byId(userId) match {
         case None =>
           eventService.error("USER_NOT_FOUND", s"L'utilisateur $userId n'existe pas")
           NotFound("Nous n'avons pas trouvé cet utilisateur")
@@ -199,23 +202,24 @@ class UserController @Inject()(loginAction: LoginAction,
     Form(
       tuple(
         "redirect" -> optional(text),
+        "newsletter" -> boolean,
         "validate" -> boolean
       )
     ).bindFromRequest.fold(
       formWithErrors => {
-        eventService.error("CHARTE_VALIDATION_ERROR", s"Erreur de formulaire dans la validation de la charte")
+        eventService.error("CGU_VALIDATION_ERROR", s"Erreur de formulaire dans la validation des CGU")
         BadRequest(s"Formulaire invalide, prévenez l'administrateur du service. ${formWithErrors.errors.mkString(", ")}")
       },
       form => {
-        if(form._2) {
-          userService.acceptCharte(request.currentUser.id)
+        if(form._3) {
+          userService.acceptCGU(request.currentUser.id, form._2)
         }
-        eventService.info("CHARTE_VALIDATED", s"Charte validé")
+        eventService.info("CGU_VALIDATED", s"CGU validé")
         form._1 match {
           case Some(redirect) =>
-            Redirect(Call("GET", redirect)).flashing("success" -> "Merci d\'avoir accepté la charte")
+            Redirect(Call("GET", redirect)).flashing("success" -> "Merci d\'avoir accepté les CGU")
           case _ =>
-            Redirect(routes.ApplicationController.all()).flashing("success" -> "Merci d\'avoir accepté la charte")
+            Redirect(routes.ApplicationController.all()).flashing("success" -> "Merci d\'avoir accepté les CGU")
         }
       }
     )

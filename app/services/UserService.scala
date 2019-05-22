@@ -32,7 +32,9 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     "group_admin",
     "expert",
     "group_ids",
-    "delegations"
+    "delegations",
+    "cgu_acceptation_date",
+    "newsletter_acceptation_date"
   ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
 
   def all = db.withConnection { implicit connection =>
@@ -111,17 +113,21 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
        """.executeUpdate() == 1
   }
 
-  def acceptCharte(userId: UUID) = db.withConnection {  implicit connection =>
-    SQL(
-      """
-          UPDATE "user" SET
-          has_accepted_charte = {has_accepted_charte}
-          WHERE id = {id}::uuid
-       """
-    ).on(
-      'id -> userId,
-      'has_accepted_charte -> true
-    ).executeUpdate() == 1
+  def acceptCGU(userId: UUID, acceptNewsletter: Boolean) = db.withConnection { implicit connection =>
+    val now = Time.now()
+    val resultCGUAcceptation = SQL"""
+        UPDATE "user" SET
+        cgu_acceptation_date = ${now}
+        WHERE id = ${userId}::uuid
+     """.executeUpdate() == 1
+    val resultNewsletterAcceptation = if (acceptNewsletter) {
+      SQL"""
+        UPDATE "user" SET
+        newsletter_acceptation_date = ${now}
+        WHERE id = ${userId}::uuid
+     """.executeUpdate() == 1
+    } else { true }
+    resultCGUAcceptation && resultNewsletterAcceptation
   }
 
 
