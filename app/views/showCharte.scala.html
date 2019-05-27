@@ -14,7 +14,7 @@
 }{
 <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
     <h3 class="mdl-cell mdl-cell--12-col">@if(user.cguAcceptationDate.isDefined) {CGU} else {Validation des CGU pour continuer}</h3>
-    @if(user.cguAcceptationDate.isEmpty) { <p>Pour accéder au service A+, vous devez valider les CGU suivante : (si elles n'affichent pas, vous pouvez les télécharger plus bas dans la page)</p>}
+    @if(user.cguAcceptationDate.isEmpty) { <p>Pour accéder à la plateforme Administration+, vous devez valider les CGU suivantes : (si elles ne s'affichent pas, vous pouvez les télécharger plus bas sur cette page)</p>}
     <embed src="@routes.Assets.versioned("pdf/CGU_13_mai_2019.pdf")" width="100%" height="600" alt="pdf" pluginspage="http://www.adobe.com/products/acrobat/readstep2.html">
     <p><a href="@routes.Assets.versioned("pdf/CGU_13_mai_2019.pdf")" target="_blank" download="charte_3_octobre_2018.pdf">Si vous ne voyez pas les CGU cliquez-ici pour les télécharger.</a></p>
         @if(user.cguAcceptationDate.isEmpty) {
@@ -25,12 +25,12 @@
             <div>
                 <p><label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-newsletter" style="height: unset;">
                     <input type="checkbox" id="checkbox-newsletter" name="newsletter" class="mdl-checkbox__input" value="true">
-                    <span class="mdl-checkbox__label">J’accepte de recevoir la newsletter mensuelle de la startup pour être informé de l’évolution de l’outil et de l’élargissement de la communauté.</span>
+                    <span class="mdl-checkbox__label">J’accepte de recevoir la newsletter mensuelle d'Administration+ sur l’évolution de l’outil et de l’élargissement de la communauté.</span>
                 </label><br>
 
                     <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-charte" style="height: unset;">
                     <input type="checkbox" id="checkbox-charte" name="validate" class="mdl-checkbox__input" value="true">
-                    <span class="mdl-checkbox__label">J’atteste avoir pris connaissance des conditions générales d’utilisation et je m’engage à les respecter..</span>
+                    <span class="mdl-checkbox__label">J’atteste avoir pris connaissance des conditions générales d’utilisation et je m’engage à les respecter.</span>
                 </label> </p>
                 <button id="validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset" disabled>
                     Valider les CGU
