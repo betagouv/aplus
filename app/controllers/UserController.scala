@@ -214,7 +214,7 @@ class UserController @Inject()(loginAction: LoginAction,
         if(form._3) {
           userService.acceptCGU(request.currentUser.id, form._2)
         }
-        eventService.info("CGU_VALIDATED", s"CGU validé")
+        eventService.info("CGU_VALIDATED", s"CGU validées")
         form._1 match {
           case Some(redirect) =>
             Redirect(Call("GET", redirect)).flashing("success" -> "Merci d\'avoir accepté les CGU")
