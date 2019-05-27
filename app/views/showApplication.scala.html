@@ -111,6 +111,9 @@ dialog {
 .mdl-button--nowrap {
      height: initial;
 }
+.mdl-card {
+    min-height: 150px;
+}
 
 </style>
 @webJarsUtil.locate("dialog-polyfill.css").css()
@@ -135,7 +138,9 @@ dialog {
         </div>
     </dialog>
 
-        <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col">
+
+
+        <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">
             <div class="mdl-card__title mdl-card--border">
                 <h2 class="mdl-card__title-text">@application.subject</h2>
                 <div class="mdl-card__menu do-not-print">
@@ -157,56 +162,78 @@ dialog {
                         help_outline</i> Besoin d'aide ? Contactez-nous</a> ( contact&commat;aplus.beta.gouv.fr )</span>
                 }
             </div>
-            <div class="mdl-card__supporting-text mdl-card--border">
-                Etat: <b>@application.longStatus(user)</b> | Invités: <b>@application.invitedUsers.values.mkString(", ")</b> | Territoire: <b>@Area.all.find(_.id == application.area).get.name</b>
+            <div class="mdl-card__supporting-text mdl-card--border vertical-align--middle">
+                <i class="material-icons icon--light">chat_bubble</i> <span class="application__anwsers"><b>@application.answers.length</b> messages </span> | <span class="application__age">Créé il y a <b>@application.ageString</b></span>
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
-                <h4>Informations concernant l'usager :</h4>
-                <ul>
-                @for((key, value) <- application.userInfos) {
-                    <li>@key: <b>@value</b></li>
-                }
-                @for(answer <- application.answers) {
-                    @for((key, value) <- answer.userInfos.getOrElse(Map())) {
-                        <li>@key: <b>@value</b> (ajouté le @answer.creationDate.toString("E dd MMM YYYY", new Locale("fr")))</li>
+                <div class="info-box">
+                    @for((key, value) <- application.userInfos) {
+                        @key: <b>@value</b><br>
                     }
-                }
-                </ul>
-                @if(application.canHaveExpertsInvitedBy(user) && application.closed == false && application.expertInvited == false) {
-                    <button class="mdl-button mdl-button--raised mdl-js-button do-not-print" onclick="document.location='@routes.ApplicationController.inviteExpert(application.id)'" style="margin-right: 10px;">
-                        Inviter un expert de l'équipe A+
-                    </button>
-                }
+                    @for(answer <- application.answers) {
+                        @for((key, value) <- answer.userInfos.getOrElse(Map())) {
+                            @key: <b>@value</b> (ajouté le @answer.creationDate.toString("E dd MMM YYYY", new Locale("fr")))</br>
+                        }
+                    }
+                </div>
+
+                <p style="white-space: pre-line;">@application.description</p>
                 @if(application.canBeClosedBy(user) && application.closed == false) {
                     <button class="mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()" style="margin-right: 10px;">
-                        Clore
+                        Clôturer la demande
                     </button>
                 }
             </div>
-            <div class="mdl-card__supporting-text mdl-card--border">
-                <ul class="mdl-list">
-                    <li class="mdl-list__item">
-                        <span class="mdl-list__item-primary-content">
-                            @Map("Aide A+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => application.creatorUserName.contains(a._1)) match {
-                                case Some((_,icon)) => { <img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
-                                case None => { <i class="material-icons mdl-list__item-avatar">person</i> }
-                            }
-                            <span>@application.creatorUserName</span>@if(user.admin){ <span style="font-weight: bold; color:red"> @users.find(_.id == application.creatorUserId).map(_.email).getOrElse("")</span>}
-                        </span>
+        </div>
+        <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--4-col mdl-cell--12-col-phone mdl-grid">
+            <div class="mdl-list mdl-cell mdl-cell--12-col">
+                <b>Créé par</b>
+                <div class="mdl-list__item">
+                    <span class="mdl-list__item-primary-content">@Map("Aide A+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => application.creatorUserName.contains(a._1)) match {
+                        case Some((_,icon)) => {<img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
+                        case None => {<i class="material-icons mdl-list__item-avatar">person</i> }
+                    }
+                        <span>@application.creatorUserName</span>
+                    </span>
+                </div>
+                <b>Participants à la discussion</b>
+                @for((userId, userName) <- application.invitedUsers) {
+                    <div class="mdl-list__item">
+                        <span class="mdl-list__item-primary-content">@Map("Aide A+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => userName.contains(a._1)) match {
+                            case Some((_,icon)) => {<img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
+                            case None => {<i class="material-icons mdl-list__item-avatar">person</i> }
+                        }
+                        <span>@userName</span>
                         <span class="mdl-list__item-secondary-content">
-                            <div id="date-@application.id" class="vertical-align--middle">
-                                <span>Il y a <b>@application.ageString</b></span>
-                                <i class="icon material-icons icon--light">info</i>
+                        @if(application.seenByUserIds.contains(userId)){
+                            <div id="seen-@userId" class="vertical-align--middle">
+                                <i class="material-icons icon--light">remove_red_eye</i>
                             </div>
-                            <div class="mdl-tooltip" data-mdl-for="date-@application.id">
-                            @application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))
+                            <div class="mdl-tooltip" for="seen-@userId">
+                                Consulté par l'utilisateur
                             </div>
+                        }
                         </span>
-                    </li>
-                </ul>
-                <p style="white-space: pre-line;">@application.description</p>
-                @if(application.answers.isEmpty && user.instructor){
-                    <form class="info-box do-not-print" action="@routes.ApplicationController.answerHelper(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
+                        </span>
+                    </div>
+                }
+                @if(application.canHaveExpertsInvitedBy(user) && application.closed == false && application.expertInvited == false) {
+                    <div class="mdl-list__item">
+                        <span class="mdl-list__item-primary-content">
+                            <button class="mdl-button mdl-button--raised mdl-js-button do-not-print" onclick="document.location = '@routes.ApplicationController.inviteExpert(application.id)'" style="margin-right: 10px;">
+                                Inviter un expert de l'équipe A+
+                            </button>
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+
+       @if(application.answers.isEmpty && user.instructor){
+           <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--11-col">
+                <div class="mdl-card__supporting-text mdl-card--border">
+
+                    <form class="do-not-print" action="@routes.ApplicationController.answerHelper(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
                                 <b>Réponse immédiate à l'aidant :</b>                 <br>
                             <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-1">
                                 <input type="radio" id="option-1" class="mdl-radio__button" name="message" value="Je m'en occupe" checked>
@@ -224,15 +251,32 @@ dialog {
                                     Envoyer
                                 </button>
                     </form>
+
+                </div>
+           </div>
+       }
+
+        @for(answer <- application.answers){
+            @if(user.instructor || user.admin || user.groupAdmin || answer.visibleByHelpers || answer.creatorUserID == user.id) {
+                @if(answer.invitedUsers.nonEmpty) {
+                    <div class="mdl-cell mdl-cell--12-col vertical-align--middle" style="text-align: center; color: #888888;	font-family: Raleway;	font-size: 14px;	font-weight: 600;	line-height: 16px;">
+                        <i class="icon material-icons icon--light">people</i> @answer.creatorUserName a invité @answer.invitedUsers.values.mkString(", ")
+                    </div>
                 }
-            </div>
-            @for(answer <- application.answers){
-                @if(user.instructor || user.admin || answer.visibleByHelpers || answer.creatorUserID == user.id) {
-                    <div class="mdl-card__supporting-text mdl-card--border" id="answer-@answer.id">
-                        <ul class="mdl-list">
-                            <li class="mdl-list__item">
+                <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--10-col mdl-cell--12-col-phone @if(answer.creatorUserID != user.id){ mdl-cell--2-offset mdl-cell--0-offset-phone }" id="answer-@answer.id">
+                    <div class="mdl-card__supporting-text mdl-card--border" >
+                        @if(!answer.visibleByHelpers) {
+                            <div id="reserved-@answer.id" class="vertical-align--middle"><b>Réponse réservée aux agents</b>
+                                <i class="icon material-icons icon--light">info</i>
+                            </div>
+                            <div class="mdl-tooltip" for="reserved-@answer.id">
+                                 L'aidant ne voit pas ce message
+                             </div>
+                        }
+                        <div class="mdl-list">
+                            <div class="mdl-list__item">
                                 <span class="mdl-list__item-primary-content">
-                                    @Map("Aide A+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => answer.creatorUserName.contains(a._1)) match {
+                                    @Map("A\\+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => answer.creatorUserName.contains(a._1)) match {
                                         case Some((_,icon)) => { <img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
                                         case None => { <i class="material-icons mdl-list__item-avatar">person</i> }
                                     }
@@ -248,16 +292,13 @@ dialog {
                                     @answer.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))
                                     </div>
                                 </span>
-                            </li>
-                        </ul>
+                            </div>
+                        </div>
 
                         @if(answer.declareApplicationHasIrrelevant) {
                             <div class="info-box info-box--orange do-not-print">@answer.creatorUserName a indiqué qu'<b>il existe une procédure standard que vous pouvez utiliser pour cette demande</b>, vous aurez plus de détails dans sa réponse.</div>
                         }
-                        @if(!answer.visibleByHelpers) {
-                            <div class="info-box info-box--orange do-not-print">Ce message n'est pas visible par l'aidant.</div>
-                        }
-                        @if(answer.userInfos.nonEmpty) {
+                        @if(answer.userInfos.getOrElse(Map()).nonEmpty) {
                             <ul>
                                 @for((key, value) <- answer.userInfos.getOrElse(Map())) {
                                     <li>@key: <b>@value</b></li>
@@ -265,10 +306,6 @@ dialog {
                             </ul>
                         }
                         <p style="white-space: pre-line;">@answer.message</p>
-                        @if(answer.invitedUsers.nonEmpty) {
-                            <b>Notifiés:</b>
-                            @answer.invitedUsers.values.mkString(", ")
-                        }
                         @if(application.answers.last == answer && application.creatorUserId == user.id && !application.closed && answer.creatorUserID != user.id) {
                             <div class="info-box do-not-print">
                             Si l'agent a répondu à votre demande, vous pouvez clore la demande:<br><br>
@@ -279,16 +316,18 @@ dialog {
                             </div>
                         }
                     </div>
-                }
+                </div>
             }
+        }
 
-
-            <div class="mdl-card__actions do-not-print mdl-grid">
+    <h4 class="mdl-cell mdl-cell--12-col">Ajouter une réponse</h4>
+    <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--10-col">
+            <div class="mdl-card__supporting-text do-not-print mdl-grid">
                 <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
                     <div class="mdl-tabs__tab-bar">
                         @if(application.canBeAnsweredToHelperBy(user)) {
                             <a href="#answer-helper" class="mdl-tabs__tab is-active mdl-color-text--primary"><i class="material-icons">
-                                reply</i> Répondre à l'aidant</a>
+                                reply</i> Ajouter une réponse</a>
                         }
                         @if(application.canBeAnsweredToAgentsBy(user) && application.invitedUsers.filterNot(_._1 == user.id).nonEmpty) {
                             <a href="#answer-agents" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
@@ -296,7 +335,7 @@ dialog {
                         }
                         @if(application.canHaveAgentsInvitedBy(user)) {
                             <a href="#invite-agents" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
-                                person_add</i> Inviter un agent A+</a>
+                                person_add</i> Inviter un agent</a>
                         }
                     </div>
                     @if(application.canBeAnsweredToHelperBy(user)) {
@@ -403,6 +442,8 @@ dialog {
                 </div>
             </div>
         </div>
+
+
     <script>
             var dialog = document.querySelector('#dialog-terminate');
             if (! dialog.showModal) {

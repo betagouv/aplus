@@ -227,7 +227,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         }
         else {
           eventService.warn("APPLICATION_UNAUTHORIZED", s"L'accès à la demande $id n'est pas autorisé", Some(application))
-          Unauthorized("Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+          Unauthorized("Vous n'avez pas les droits suffisancd ts pour voir cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
         }
     }
   }

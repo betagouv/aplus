@@ -28,7 +28,7 @@
                     <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
                         <div id="answers-@application.id" class="vertical-align--middle">
                             <i class="material-icons icon--light">chat_bubble</i>
-                            <span class="application__anwsers">@application.answers.length réponses</span>
+                            <span class="application__anwsers">@application.answers.length messages</span>
                         </div>
                         <div class="mdl-tooltip" for="answers-@application.id">
                         @for(answer <- application.answers) {
@@ -66,26 +66,6 @@
     }
     .mdl-data-table__cell--non-numeric > * {
         vertical-align: middle;
-    }
-    .application__subject {
-        color: #888888;
-        font-size: 12px;
-        font-weight: 600;
-        line-height: 14px;
-    }
-    .application__name {
-        color: #555555;;
-        font-size: 14px;
-        font-weight: bold;
-        line-height: 16px;
-    }
-    .application__age {
-        font-style: italic;
-    }
-    .application__anwsers {
-        font-size: 12px;
-        font-weight: bold;
-        line-height: 14px;
     }
 </style>
 <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("sortable/sortable.css")'>
