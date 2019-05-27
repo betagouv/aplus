@@ -57,7 +57,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
 
   private def manageUserLogged[A](user: User)(implicit request: Request[A]) = {
     val area = areaFromContext(user)
-    if(user.hasAcceptedCharte || request.path.contains("charte")) {
+    if(user.cguAcceptationDate.isDefined || request.path.contains("cgu")) {
       Right(new RequestWithUserData(user, area, request))
     } else {
       Left(Redirect(routes.UserController.showCharte()).flashing("redirect" -> request.path))
