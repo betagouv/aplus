@@ -15,4 +15,6 @@ case class Answer(id: UUID,
                   area: UUID,
                   declareApplicationHasIrrelevant: Boolean,
                   userInfos: Option[Map[String, String]],
-                  files: Option[Map[String, Long]] = Some(Map())) extends AgeModel
+                  files: Option[Map[String, Long]] = Some(Map())) extends AgeModel {
+  lazy val filesAvailabilityLeftInDays: Option[Int] = if(ageInDays > 8 ) { None } else { Some(7 - ageInDays) }
+}
