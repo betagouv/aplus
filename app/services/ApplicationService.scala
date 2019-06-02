@@ -65,7 +65,8 @@ class ApplicationService @Inject()(db: Database) {
     "visible_by_helpers",
     "area",
     "declare_application_has_irrelevant",
-    "user_infos"
+    "user_infos",
+    "files"
   ).map(answer => answer.copy(creationDate = answer.creationDate.withZone(Time.dateTimeZone)))
 
 

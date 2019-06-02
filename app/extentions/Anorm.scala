@@ -27,6 +27,18 @@ object Anorm {
       }
     }
 
+  implicit val fieldsMapLongParser: anorm.Column[Map[String,Long]] =
+    nonNull { (value, meta) =>
+      val MetaDataItem(qualified, nullable, clazz) = meta
+      value match {
+        case json: org.postgresql.util.PGobject =>
+          Right(Json.parse(json.getValue).as[Map[String,Long]])
+        case json: String =>
+          Right(Json.parse(json).as[Map[String,Long]])
+        case _ => Left(TypeDoesNotMatch(s"Cannot convert $value: ${className(value)} to Map[String,Long] for column $qualified"))
+      }
+    }
+
   private def convertStringMapToUUIDMap(map: Map[String, String]) =
     map.flatMap { case (key, value) =>
       UUIDHelper.fromString(key).map(_ -> value)

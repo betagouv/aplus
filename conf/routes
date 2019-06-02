@@ -18,6 +18,9 @@ GET      /toutes-les-demandes/:applicationId/inviter_un_expert      controllers.
 POST     /toutes-les-demandes/:applicationId/messages               controllers.ApplicationController.answer(applicationId: java.util.UUID)
 GET      /toutes-les-demandes/:applicationId/terminer               controllers.ApplicationController.terminate(applicationId: java.util.UUID)
 
+GET      /toutes-les-demandes/:applicationId/messages/:answerId/fichiers/:filename    controllers.ApplicationController.file(applicationId: java.util.UUID, answerId: java.util.UUID, filename: String)
+
+
 # Stats
 GET     /stats                       controllers.ApplicationController.stats
 

@@ -35,6 +35,7 @@ class ExpertTask @Inject()(actorSystem: ActorSystem,
                 inviteExpert(application, dayWithoutAgentAnswer)
               case Some(answer) if answer.ageInDays > daySinceLastAgentAnswer  => // The last answer is older than X days
                 inviteExpert(application, daySinceLastAgentAnswer)
+              case _ => 
             }
         }
 

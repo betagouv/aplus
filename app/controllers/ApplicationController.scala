@@ -1,5 +1,6 @@
 package controllers
 
+import java.nio.file.{Files, Path, Paths}
 import java.util.{Locale, UUID}
 
 import javax.inject.{Inject, Singleton}
@@ -17,6 +18,7 @@ import services.{ApplicationService, EventService, NotificationService, UserServ
 import extentions.UUIDHelper
 
 import scala.collection.immutable.ListMap
+import scala.concurrent.ExecutionContext
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -27,10 +29,12 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                                       userService: UserService,
                                       applicationService: ApplicationService,
                                       notificationsService: NotificationService,
-                                      eventService: EventService)(implicit webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
+                                      eventService: EventService)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
   import forms.Models._
 
   private val timeZone = Time.dateTimeZone
+
+  val filesPath = "files"
 
   val applicationForm = Form(
     mapping(
@@ -206,6 +210,15 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     Ok(views.html.allApplicationCSV(exportedApplications.toSeq, request.currentUser, users)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}.csv"""" )
   }
 
+  val answerForm = Form(
+    mapping(
+      "message" -> nonEmptyText,
+      "irrelevant" -> boolean,
+      "infos" -> FormsPlusMap.map(nonEmptyText.verifying(maxLength(30))),
+      "privateToHelpers" -> boolean
+    )(AnswerData.apply)(AnswerData.unapply)
+  )
+
   def show(id: UUID) = loginAction { implicit request =>
     applicationService.byId(id, request.currentUser.id, request.currentUser.admin) match {
       case None =>
@@ -227,19 +240,30 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         }
         else {
           eventService.warn("APPLICATION_UNAUTHORIZED", s"L'accès à la demande $id n'est pas autorisé", Some(application))
-          Unauthorized("Vous n'avez pas les droits suffisancd ts pour voir cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+          Unauthorized("Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
         }
     }
   }
 
-  val answerForm = Form(
-    mapping(
-      "message" -> nonEmptyText,
-      "irrelevant" -> boolean,
-      "infos" -> FormsPlusMap.map(nonEmptyText.verifying(maxLength(30))),
-      "privateToHelpers" -> boolean
-    )(AnswerData.apply)(AnswerData.unapply)
-  )
+  def file(applicationId: UUID, answerId: UUID, filename: String) = loginAction { implicit request =>
+    applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
+      case None =>
+        eventService.error("FILE_NOT_FOUND", s"La demande $applicationId n'existe pas")
+        NotFound("Nous n'avons pas trouvé ce fichier")
+      case Some(application) if application.fileCanBeShowed(request.currentUser) =>
+          application.answers.find(_.id == answerId) match {
+            case Some(answer) if answer.files.getOrElse(Map()).contains(filename) =>
+              Ok.sendPath(Paths.get(s"$filesPath/$applicationId/$answerId-$filename"))
+            case _ =>
+              eventService.error("FILE_NOT_FOUND", s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas")
+              NotFound("Nous n'avons pas trouvé ce fichier")
+          }
+      case Some(application) =>
+          eventService.warn("FILE_UNAUTHORIZED", s"L'accès aux fichiers sur la demande $applicationId n'est pas autorisé", Some(application))
+          Unauthorized("Vous n'avez pas les droits suffisants pour voir les fichiers sur cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+
+    }
+  }
 
   def answer(applicationId: UUID) = loginAction { implicit request =>
     answerForm.bindFromRequest.fold(
@@ -254,7 +278,22 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             NotFound("Nous n'avons pas trouvé cette demande")
           case Some(application) =>
             if(application.canBeAnsweredBy(request.currentUser)) {
-              val answer = Answer(UUID.randomUUID(),
+              val answerId = UUID.randomUUID()
+              val file = request.body.asMultipartFormData.flatMap(_.file("file")).flatMap { uploadedFile =>
+                if(!uploadedFile.filename.isEmpty) {
+                  val filename = Paths.get(uploadedFile.filename).getFileName
+                  val dir = Paths.get(s"$filesPath/$applicationId")
+                  if(Files.isDirectory(dir)) {
+                    Files.createDirectories(dir)
+                  }
+                  val fileDestination = Paths.get(s"$filesPath/$applicationId/$answerId-$filename")
+                  Files.copy(uploadedFile.ref, fileDestination)
+                  Some(filename.toString -> 0L)  // ToDo filesize
+                } else {
+                  None
+                }
+              }
+              val answer = Answer(answerId,
                 applicationId, DateTime.now(timeZone),
                 answerData.message,
                 request.currentUser.id,
@@ -263,7 +302,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                 answerData.privateToHelpers == false,
                 request.currentArea.id,
                 answerData.applicationIsDeclaredIrrelevant,
-                Some(answerData.infos))
+                Some(answerData.infos),
+                files = Some(file.toMap))
               if (applicationService.add(applicationId, answer) == 1) {
                 eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
                 notificationsService.newAnswer(application, answer)

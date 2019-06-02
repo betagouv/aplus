@@ -85,6 +85,8 @@ case class Application(id: UUID,
      (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
      creatorUserId==user.id
 
+  def fileCanBeShowed(user: User) = user.instructor && invitedUsers.keys.toList.contains(user.id)
+
   def canBeAnsweredBy(user: User) =
     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
       (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||

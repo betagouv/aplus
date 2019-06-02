@@ -238,12 +238,25 @@ dialog {
         </div>
 
         @for(answer <- application.answers){
-            @if(answer.invitedUsers.nonEmpty) {
+            @if(answer.invitedUsers) {
                 <div class="mdl-cell mdl-cell--12-col vertical-align--middle" style="text-align: center; color: #888888;	font-family: Raleway;	font-size: 14px;	font-weight: 600;	line-height: 16px;">
                     <i class="icon material-icons icon--light">people</i> @answer.creatorUserName a invité @answer.invitedUsers.values.mkString(", ")
                 </div>
             }
             @if(user.instructor || user.admin || user.groupAdmin || answer.visibleByHelpers || answer.creatorUserID == user.id) {
+                @if(answer.files.getOrElse(Map()).nonEmpty) {
+                    @for((filename, fileSize) <- answer.files.getOrElse(Map())) {
+                        <div class="mdl-cell mdl-cell--12-col vertical-align--middle" style="text-align: center;
+                            color: #888888;
+                            font-family: Raleway;
+                            font-size: 14px;
+                            font-weight: 600;
+                            line-height: 16px;">
+                            <i class="icon material-icons icon--light">attach_file</i>
+                            @answer.creatorUserName a ajouté le fichier @if(application.fileCanBeShowed(user)) { <a href="@routes.ApplicationController.file(application.id, answer.id, filename)" target="_blank">@filename</a> } else { @filename }
+                        </div>
+                    }
+                }
                 <div class="mdl-card mdl-cell mdl-cell--10-col mdl-cell--12-col-phone @if(answer.creatorUserID != user.id){ mdl-cell--2-offset mdl-cell--0-offset-phone } answer" id="answer-@answer.id">
                     <div class="mdl-card__supporting-text mdl-card--border" >
                         @if(!answer.visibleByHelpers) {
@@ -344,7 +357,7 @@ dialog {
                     </div>
                     @if(application.canBeAnsweredBy(user)) {
                         <div class="mdl-tabs__panel is-active" id="answer-helper">
-                            <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" onsubmit="document.getElementById('review-validation').disabled=true">
+                            <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('review-validation').disabled=true">
                                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
                                     @if(user.instructor) {
                                         <div class="info-box">Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName et les personnes invités sur la demande. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. <b>Merci d'utiliser vos outils habituels pour continuer une instruction.</b></div>
@@ -357,6 +370,11 @@ dialog {
                                         <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
                                         <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Votre réponse</label>
                                     </div>
+                                    @if(user.helper) {
+                                        <div class="mdl-cell mdl-cell--12-col">
+                                             <b>Ajouter un ficher ( 5Mo maximum ) : <input type="file" name="file"></b>
+                                        </div>
+                                    }
                                     @if(user.instructor) {
                                         <div id="invalide-choice" class="mdl-cell mdl-cell--12-col">
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
