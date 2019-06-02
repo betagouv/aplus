@@ -223,7 +223,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             }
 
             eventService.info("APPLICATION_SHOWED", s"Demande $id consulté", Some(application))
-            Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, renderedApplication, answerToAgentsForm))
+            Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, renderedApplication, answerForm))
         }
         else {
           eventService.warn("APPLICATION_UNAUTHORIZED", s"L'accès à la demande $id n'est pas autorisé", Some(application))
@@ -232,15 +232,17 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     }
   }
 
-  val answerToHelperForm = Form(
+  val answerForm = Form(
     mapping(
-      "message" -> text,
-      "irrelevant" -> boolean
-    )(AnswerToHelperData.apply)(AnswerToHelperData.unapply)
+      "message" -> nonEmptyText,
+      "irrelevant" -> boolean,
+      "infos" -> FormsPlusMap.map(nonEmptyText.verifying(maxLength(30))),
+      "privateToHelpers" -> boolean
+    )(AnswerData.apply)(AnswerData.unapply)
   )
 
-  def answerHelper(applicationId: UUID) = loginAction { implicit request =>
-    answerToHelperForm.bindFromRequest.fold(
+  def answer(applicationId: UUID) = loginAction { implicit request =>
+    answerForm.bindFromRequest.fold(
       formWithErrors => {
         eventService.error("ANSWER_NOT_CREATED", s"Impossible d'ajouter une réponse sur la demande $applicationId : problème formulaire")
         BadRequest("Erreur interne, contacter l'administrateur A+ : contact@aplus.beta.gouv.fr")
@@ -251,21 +253,21 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter une réponse")
             NotFound("Nous n'avons pas trouvé cette demande")
           case Some(application) =>
-            if(application.canBeAnsweredToHelperBy(request.currentUser)) {
+            if(application.canBeAnsweredBy(request.currentUser)) {
               val answer = Answer(UUID.randomUUID(),
                 applicationId, DateTime.now(timeZone),
                 answerData.message,
                 request.currentUser.id,
                 request.currentUser.nameWithQualite,
                 Map(),
-                true,
+                answerData.privateToHelpers == false,
                 request.currentArea.id,
                 answerData.applicationIsDeclaredIrrelevant,
-                Some(Map()))
+                Some(answerData.infos))
               if (applicationService.add(applicationId, answer) == 1) {
                 eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
                 notificationsService.newAnswer(application, answer)
-                Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
+                Redirect(s"${routes.ApplicationController.show(applicationId)}#answer-${answer.id}").flashing("success" -> "Votre réponse a bien été envoyée")
               } else {
                 eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
                 InternalServerError("Votre réponse n'a pas pu être envoyé")
@@ -278,61 +280,23 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       })
   }
 
-  val answerToAgentsForm = Form(
+  val inviteForm = Form(
     mapping(
       "message" -> text,
-      "users" -> list(uuid),
-      "infos" -> FormsPlusMap.map(nonEmptyText.verifying(maxLength(30))),
-    )(AnswerToAgentsData.apply)(AnswerToAgentsData.unapply)
+      "users" -> list(uuid)   ,
+      "privateToHelpers" -> boolean
+    )(InvitationData.apply)(InvitationData.unapply)
   )
 
-  def answerAgents(applicationId: UUID) = loginAction { implicit request =>
-    val answerData = answerToAgentsForm.bindFromRequest.get
-
-    applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
-      case None =>
-        eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter une réponse")
-        NotFound("Nous n'avons pas trouvé cette demande")
-      case Some(application) =>
-        if(application.canBeAnsweredToAgentsBy(request.currentUser)) {
-          val notifiedUsers: Map[UUID, String] = answerData.notifiedUsers.flatMap { id =>
-            userService.byId(id).map(id -> _.nameWithQualite)
-          }.toMap
-          val answer = Answer(UUID.randomUUID(),
-            applicationId,
-            DateTime.now(timeZone),
-            answerData.message,
-            request.currentUser.id,
-            request.currentUser.nameWithQualite,
-            notifiedUsers,
-            request.currentUser.id == application.creatorUserId,
-            request.currentArea.id,
-            false,
-            Some(answerData.infos))
-          if (applicationService.add(applicationId, answer) == 1) {
-            notificationsService.newAnswer(application, answer)
-            eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
-            Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
-          } else {
-            eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
-            InternalServerError("Votre réponse n'a pas pu être envoyée")
-          }
-        } else {
-          eventService.warn("ADD_ANSWER_UNAUTHORIZED", s"La réponse entre agents pour la demande $applicationId n'est pas autorisé", Some(application))
-          Unauthorized("Vous n'avez pas les droits suffisants pour répondre à cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
-        }
-    }
-  }
-
   def invite(applicationId: UUID) = loginAction { implicit request =>
-    val inviteData = answerToAgentsForm.bindFromRequest.get
+    val inviteData = inviteForm.bindFromRequest.get
     applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
       case None =>
         eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter des experts")
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
         if(application.canHaveAgentsInvitedBy(request.currentUser)) {
-          val invitedUsers: Map[UUID, String] = inviteData.notifiedUsers.flatMap { id =>
+          val invitedUsers: Map[UUID, String] = inviteData.invitedUsers.flatMap { id =>
             userService.byId(id).map(id -> _.nameWithQualite)
           }.toMap
           val answer = Answer(UUID.randomUUID(),
@@ -342,7 +306,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             request.currentUser.id,
             request.currentUser.nameWithQualite,
             invitedUsers,
-            false,
+            inviteData.privateToHelpers == false,
             request.currentArea.id,
             false,
             Some(Map()))

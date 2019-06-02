@@ -115,6 +115,14 @@ dialog {
     min-height: 150px;
 }
 
+.mdl-textfield__input {
+    border: 1px solid rgba(0,0,0,.12);
+}
+
+.answer:target {
+    border: 2px solid black;
+}
+
 </style>
 @webJarsUtil.locate("dialog-polyfill.css").css()
 @webJarsUtil.locate("dialog-polyfill.js").script()
@@ -140,7 +148,7 @@ dialog {
 
 
 
-        <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">
+        <div class="mdl-card mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">
             <div class="mdl-card__title mdl-card--border">
                 <h2 class="mdl-card__title-text">@application.subject</h2>
                 <div class="mdl-card__menu do-not-print">
@@ -185,7 +193,7 @@ dialog {
                 }
             </div>
         </div>
-        <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--4-col mdl-cell--12-col-phone mdl-grid">
+        <div class="mdl-card mdl-cell mdl-cell--4-col mdl-cell--12-col-phone mdl-grid">
             <div class="mdl-list mdl-cell mdl-cell--12-col">
                 <b>Créé par</b>
                 <div class="mdl-list__item">
@@ -229,41 +237,14 @@ dialog {
             </div>
         </div>
 
-       @if(application.answers.isEmpty && user.instructor){
-           <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--11-col">
-                <div class="mdl-card__supporting-text mdl-card--border">
-
-                    <form class="do-not-print" action="@routes.ApplicationController.answerHelper(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
-                                <b>Réponse immédiate à l'aidant :</b>                 <br>
-                            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-1">
-                                <input type="radio" id="option-1" class="mdl-radio__button" name="message" value="Je m'en occupe" checked>
-                                <span class="mdl-radio__label">Je m'en occupe</span>
-                            </label>            <br>
-                            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-2">
-                                <input type="radio" id="option-2" class="mdl-radio__button" name="message" value="Je ne suis pas le bon interlocuteur">
-                                <span class="mdl-radio__label">Je ne suis pas le bon interlocuteur</span>
-                            </label>         <br>
-                            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-3">
-                                <input type="radio" id="option-3" class="mdl-radio__button" name="message" value="Je ne suis pas disponible">
-                                <span class="mdl-radio__label">Je ne suis pas disponible</span>
-                            </label>      <br>
-                                <button id="review-validation" class="mdl-button mdl-button--primary mdl-button--raised mdl-js-button mdl-button--nowrap">
-                                    Envoyer
-                                </button>
-                    </form>
-
-                </div>
-           </div>
-       }
-
         @for(answer <- application.answers){
+            @if(answer.invitedUsers.nonEmpty) {
+                <div class="mdl-cell mdl-cell--12-col vertical-align--middle" style="text-align: center; color: #888888;	font-family: Raleway;	font-size: 14px;	font-weight: 600;	line-height: 16px;">
+                    <i class="icon material-icons icon--light">people</i> @answer.creatorUserName a invité @answer.invitedUsers.values.mkString(", ")
+                </div>
+            }
             @if(user.instructor || user.admin || user.groupAdmin || answer.visibleByHelpers || answer.creatorUserID == user.id) {
-                @if(answer.invitedUsers.nonEmpty) {
-                    <div class="mdl-cell mdl-cell--12-col vertical-align--middle" style="text-align: center; color: #888888;	font-family: Raleway;	font-size: 14px;	font-weight: 600;	line-height: 16px;">
-                        <i class="icon material-icons icon--light">people</i> @answer.creatorUserName a invité @answer.invitedUsers.values.mkString(", ")
-                    </div>
-                }
-                <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--10-col mdl-cell--12-col-phone @if(answer.creatorUserID != user.id){ mdl-cell--2-offset mdl-cell--0-offset-phone }" id="answer-@answer.id">
+                <div class="mdl-card mdl-cell mdl-cell--10-col mdl-cell--12-col-phone @if(answer.creatorUserID != user.id){ mdl-cell--2-offset mdl-cell--0-offset-phone } answer" id="answer-@answer.id">
                     <div class="mdl-card__supporting-text mdl-card--border" >
                         @if(!answer.visibleByHelpers) {
                             <div id="reserved-@answer.id" class="vertical-align--middle"><b>Réponse réservée aux agents</b>
@@ -312,7 +293,7 @@ dialog {
                             <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="showDialog()" >
                                     Clore la demande
                             </button> <br><br>
-                            Sinon n'hésitez à le recontacter en utilisant </i><b>Répondre aux agents</b> ci-dessous.
+                            Sinon n'hésitez à le recontacter en utilisant </i><b>Ajouter une réponse</b> ci-dessous.
                             </div>
                         }
                     </div>
@@ -320,93 +301,93 @@ dialog {
             }
         }
 
-    <h4 class="mdl-cell mdl-cell--12-col">Ajouter une réponse</h4>
-    <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--10-col">
+    <h4 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply_all</i> Ajouter une réponse</h4>
+
+    @if(application.answers.isEmpty && user.instructor){
+        <div class="mdl-card mdl-cell mdl-cell--10-col">
+            <div class="mdl-card__supporting-text mdl-card--border">
+
+                <form class="do-not-print" action="@routes.ApplicationController.answer(application.id)" method="post">
+                    <b>Réponse rapide à l'aidant :</b>                 <br>
+                    <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-1">
+                        <input type="radio" id="option-1" class="mdl-radio__button" name="message" value="Je m'en occupe" checked>
+                        <span class="mdl-radio__label">Je m'en occupe</span>
+                    </label>            <br>
+                    <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-2">
+                        <input type="radio" id="option-2" class="mdl-radio__button" name="message" value="Je ne suis pas le bon interlocuteur">
+                        <span class="mdl-radio__label">Je ne suis pas le bon interlocuteur</span>
+                    </label>         <br>
+                    <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-3">
+                        <input type="radio" id="option-3" class="mdl-radio__button" name="message" value="Je ne suis pas disponible">
+                        <span class="mdl-radio__label">Je ne suis pas disponible</span>
+                    </label>      <br>
+                    <button id="review-validation" class="mdl-button mdl-button--primary mdl-button--raised mdl-js-button mdl-button--nowrap">
+                        Envoyer
+                    </button>
+                </form>
+
+            </div>
+        </div>
+    }
+    <div class="mdl-card mdl-cell mdl-cell--10-col">
             <div class="mdl-card__supporting-text do-not-print mdl-grid">
                 <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
                     <div class="mdl-tabs__tab-bar">
-                        @if(application.canBeAnsweredToHelperBy(user)) {
+                        @if(application.canBeAnsweredBy(user)) {
                             <a href="#answer-helper" class="mdl-tabs__tab is-active mdl-color-text--primary"><i class="material-icons">
-                                reply</i> Ajouter une réponse</a>
-                        }
-                        @if(application.canBeAnsweredToAgentsBy(user) && application.invitedUsers.filterNot(_._1 == user.id).nonEmpty) {
-                            <a href="#answer-agents" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
-                                reply_all</i> Répondre aux agents</a>
+                                reply_all</i> Ajouter une réponse</a>
                         }
                         @if(application.canHaveAgentsInvitedBy(user)) {
                             <a href="#invite-agents" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
                                 person_add</i> Inviter un agent</a>
                         }
                     </div>
-                    @if(application.canBeAnsweredToHelperBy(user)) {
+                    @if(application.canBeAnsweredBy(user)) {
                         <div class="mdl-tabs__panel is-active" id="answer-helper">
-                            <form action="@routes.ApplicationController.answerHelper(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
-                                <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply</i> Répondre à l'aidant @application.creatorUserName</h3>
+                            <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" onsubmit="document.getElementById('review-validation').disabled=true">
                                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
-                                    <div class="info-box">Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. <b>Merci d'utiliser vos outils habituels pour continuer une instruction.</b></div>
-                                    <p>
+                                    @if(user.instructor) {
+                                        <div class="info-box">Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName et les personnes invités sur la demande. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. <b>Merci d'utiliser vos outils habituels pour continuer une instruction.</b></div>
                                         <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                            <input type="checkbox" class="mdl-checkbox__input" name="irrelevant" value="true">
-                                            <span class="mdl-checkbox__label">Cette demande dispose d'une procédure standard que l'aidant aurait pu utiliser (Précisez-la dans le message de réponse)</span>
-                                        </label>
-                                    </p>
+                                                <input type="checkbox" class="mdl-checkbox__input" name="irrelevant" value="true">
+                                                <span class="mdl-checkbox__label">Cette demande dispose d'une procédure standard que l'aidant aurait pu utiliser (Précisez-la dans le message de réponse)</span>
+                                            </label>
+                                    }
+                                    @if(user.id == application.creatorUserId) {
+                                        <h5 class="mdl-cell mdl-cell--12-col">Ajouter informations concernant l'usager</h5>
+                                        @helpers.usersInformations(answerToAgentsForm)
+                                    }
                                     <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
-                                        <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message"></textarea>
+                                        <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
                                         <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Détaillez votre réponse ici...</label>
                                     </div>
-                                    <br>
-                                    <button id="review-validation" class="mdl-button mdl-button--primary mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">
-                                        Répondre à l'aidant
-                                    </button>
+                                    @if(user.instructor || user.expert) {
+                                        <div id="private-answer">
+                                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
+                                                <input type="checkbox" class="mdl-checkbox__input" name="privateToHelpers" value="true">
+                                                <span class="mdl-checkbox__label">Répondre uniquement aux agents A+ </span> <i class="icon material-icons icon--light">info</i>
+                                            </label>
+                                        </div>
+                                        <div class="mdl-tooltip" for="private-answer">
+                                            Le message ne sera pas visible par l'aidant.
+                                        </div>
+
+                                    } else {
+                                        <br>
+                                    }
+                                    <div class=" mdl-cell mdl-cell--12-col">
+                                        <button id="review-validation" class="mdl-button mdl-button--primary mdl-js-button mdl-button--raised mdl-button--colored" disabled>
+                                            Répondre
+                                        </button>
+                                    </div>
                                 </div>
                             </form>
                         </div>
-                    }
-                    @if(application.canBeAnsweredToAgentsBy(user) && application.invitedUsers.filterNot(_._1 == user.id).nonEmpty) {
-                    <div class="mdl-tabs__panel" id="answer-agents">
-                        <form action='@routes.ApplicationController.answerAgents(application.id)' class="mdl-cell mdl-cell--12-col mdl-grid" method="post" onsubmit="addInfo();">
-                            <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply_all</i> Répondre aux agents invités à cette demande</h3>
-                            <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" style="border: none;">
-                                <tr>
-                                    <th class="mdl-data-table__cell--non-numeric" colspan="2">Répondre à</th>
-                                </tr>
-                                <tbody>
-                                @for((userId, userName) <- application.invitedUsers.filterNot(_._1 == user.id)) {
-                                    <tr>
-                                        <td>
-                                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@userId" checked>
-                                            </label>
-                                        </td>
-                                        <td class="mdl-data-table__cell--non-numeric">@userName</td>
-                                    </tr>
-                                }
-                                </tbody>
-                            </table>
-                            <br>
-                            <br>
-                            @if(user.id == application.creatorUserId) {
-                                <h5 class="mdl-cell mdl-cell--12-col">Ajouter informations concernant l'usager</h5>
-                                @helpers.usersInformations(answerToAgentsForm)
-                            }
-                            <h5 class="mdl-cell mdl-cell--12-col">Votre réponse</h5>
-                            @if(user.id != application.creatorUserId) {
-                                <div class="info-box mdl-cell--12-col">Les échanges entre les agents A+ ne seront pas visibles par les aidants.</div>
-                            }
-                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
-                                <textarea class="mdl-textfield__input" type="text" rows= "5" id="agents-answer-message" style="width: 100%;" name="message"></textarea>
-                                <label class="mdl-textfield__label" for="agent-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Laisser votre réponse ici...</label>
-                            </div>
-                            <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Répondre aux agents A+ sélectionnés</button>
-                        </form>
-                    </div>
                     }
 
                     @if(application.canHaveAgentsInvitedBy(user)) {
                         <div class="mdl-tabs__panel" id="invite-agents">
                             <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
-                                <h3 class="mdl-cell mdl-cell--12-col"><i class="material-icons">
-                                    person_add</i> Inviter un agent A+ sur cette demande</h3>
                                 <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" style="border: none;">
                                     <thead>
                                         <tr>
@@ -429,12 +410,23 @@ dialog {
                                     }
                                     </tbody>
                                 </table>
-                                <h5 class="mdl-cell mdl-cell--12-col">Ajouter un message</h5>
-                                <div class="info-box mdl-cell--12-col">Les échanges entre les agents A+ ne seront pas visible par les aidants.</div>
                                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                     <textarea class="mdl-textfield__input" type="text" rows= "5" id="agents-invitation-message" style="width: 100%;" name="message"></textarea>
                                     <label class="mdl-textfield__label" for="agents-invitation-message"><i class="material-icons" style="vertical-align: middle;">message</i> Laisser ici un message pour l'invitation...</label>
                                 </div>
+                                @if(user.instructor || user.expert) {
+                                    <div id="private-invitation">
+                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
+                                            <input type="checkbox" class="mdl-checkbox__input" name="privateToHelpers" value="true">
+                                            <span class="mdl-checkbox__label">Répondre uniquement aux agents A+ </span> <i class="icon material-icons icon--light">info</i>
+                                        </label>
+                                    </div>
+                                    <div class="mdl-tooltip" for="private-invitation">
+                                        Le message ne sera pas visible par l'aidant.
+                                    </div>
+                                } else {
+                                    <br>
+                                }
                                 <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Inviter les agents A+ sélectionnés</button>
                             </form>
                         </div>

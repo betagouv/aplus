@@ -34,16 +34,15 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   }
 
   def newAnswer(application: Application, answer: Answer) = {
-    answer.invitedUsers.keys
+    application.invitedUsers.keys
       .flatMap(userService.byId)
         .map {  user =>
-          if(application.invitedUsers.contains(user.id)) {
-            generateAnswerEmail(application, answer)(user)
-          } else {
+          if(answer.invitedUsers.contains(user.id)) {
             generateInvitationEmail(application, Some(answer))(user)
+          } else {
+            generateAnswerEmail(application, answer)(user)
           }
-        }
-          .foreach(sendMail)
+        }.foreach(sendMail)
     if(answer.visibleByHelpers && answer.creatorUserID != application.creatorUserId) {
       userService.byId(application.creatorUserId)
        .map(generateAnswerEmail(application, answer))
