@@ -29,12 +29,18 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                                       userService: UserService,
                                       applicationService: ApplicationService,
                                       notificationsService: NotificationService,
-                                      eventService: EventService)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
+                                      eventService: EventService,
+                                      configuration: play.api.Configuration)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
   import forms.Models._
 
   private val timeZone = Time.dateTimeZone
 
-  val filesPath = "files"
+  private val filesPath = configuration.underlying.getString("app.filesPath")
+
+  private val dir = Paths.get(s"$filesPath")
+  if(Files.isDirectory(dir)) {
+    Files.createDirectories(dir)
+  }
 
   val applicationForm = Form(
     mapping(
@@ -253,7 +259,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       case Some(application) if application.fileCanBeShowed(request.currentUser) =>
           application.answers.find(_.id == answerId) match {
             case Some(answer) if answer.files.getOrElse(Map()).contains(filename) =>
-              Ok.sendPath(Paths.get(s"$filesPath/$applicationId/$answerId-$filename"))
+              Ok.sendPath(Paths.get(s"$filesPath/ans_$answerId-$filename"))
             case _ =>
               eventService.error("FILE_NOT_FOUND", s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas")
               NotFound("Nous n'avons pas trouvé ce fichier")
@@ -282,11 +288,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
               val file = request.body.asMultipartFormData.flatMap(_.file("file")).flatMap { uploadedFile =>
                 if(!uploadedFile.filename.isEmpty) {
                   val filename = Paths.get(uploadedFile.filename).getFileName
-                  val dir = Paths.get(s"$filesPath/$applicationId")
-                  if(Files.isDirectory(dir)) {
-                    Files.createDirectories(dir)
-                  }
-                  val fileDestination = Paths.get(s"$filesPath/$applicationId/$answerId-$filename")
+                  val fileDestination = Paths.get(s"$filesPath/ans_$answerId-$filename")
                   Files.copy(uploadedFile.ref, fileDestination)
                   Some(filename.toString -> 0L)  // ToDo filesize
                 } else {
