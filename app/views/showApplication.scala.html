@@ -348,10 +348,6 @@ dialog {
                                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
                                     @if(user.instructor) {
                                         <div class="info-box">Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName et les personnes invités sur la demande. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. <b>Merci d'utiliser vos outils habituels pour continuer une instruction.</b></div>
-                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                <input type="checkbox" class="mdl-checkbox__input" name="irrelevant" value="true">
-                                                <span class="mdl-checkbox__label">Cette demande dispose d'une procédure standard que l'aidant aurait pu utiliser (Précisez-la dans le message de réponse)</span>
-                                            </label>
                                     }
                                     @if(user.id == application.creatorUserId) {
                                         <h5 class="mdl-cell mdl-cell--12-col">Ajouter informations concernant l'usager</h5>
@@ -359,10 +355,21 @@ dialog {
                                     }
                                     <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                         <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
-                                        <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Détaillez votre réponse ici...</label>
+                                        <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Votre réponse</label>
                                     </div>
+                                    @if(user.instructor) {
+                                        <div id="invalide-choice" class="mdl-cell mdl-cell--12-col">
+                                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
+                                                <input type="checkbox" class="mdl-checkbox__input" name="irrelevant" value="true">
+                                                <span class="mdl-checkbox__label">Cette demande dispose d'une procédure standard que l'aidant aurait pu utiliser</span> <i class="icon material-icons icon--light">info</i>
+                                            </label>
+                                        </div>
+                                        <div class="mdl-tooltip" for="invalide-choice">
+                                            La demande sera classé comme non-pertinente dans les statistiques d'usages, l'équipe recontactera l'aidant pour aider à la création des demandes.
+                                        </div>
+                                    }
                                     @if(user.instructor || user.expert) {
-                                        <div id="private-answer">
+                                        <div id="private-answer" class="mdl-cell mdl-cell--12-col">
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
                                                 <input type="checkbox" class="mdl-checkbox__input" name="privateToHelpers" value="true">
                                                 <span class="mdl-checkbox__label">Répondre uniquement aux agents A+ </span> <i class="icon material-icons icon--light">info</i>
@@ -372,10 +379,8 @@ dialog {
                                             Le message ne sera pas visible par l'aidant.
                                         </div>
 
-                                    } else {
-                                        <br>
                                     }
-                                    <div class=" mdl-cell mdl-cell--12-col">
+                                    <div class="mdl-cell mdl-cell--12-col">
                                         <button id="review-validation" class="mdl-button mdl-button--primary mdl-js-button mdl-button--raised mdl-button--colored" disabled>
                                             Répondre
                                         </button>
