@@ -261,7 +261,7 @@ dialog {
                         </div>
                     }
                 }
-                <div class="mdl-card mdl-cell mdl-cell--10-col mdl-cell--12-col-phone @if(answer.creatorUserID != user.id){ mdl-cell--2-offset mdl-cell--0-offset-phone } answer" id="answer-@answer.id">
+                <div class="mdl-card mdl-cell mdl-cell--10-col mdl-cell--12-col-phone @if(answer.creatorUserID == user.id){ mdl-cell--2-offset mdl-cell--0-offset-phone } answer" id="answer-@answer.id">
                     <div class="mdl-card__supporting-text mdl-card--border" >
                         @if(!answer.visibleByHelpers) {
                             <div id="reserved-@answer.id" class="vertical-align--middle"><b>Réponse réservée aux agents</b>
@@ -318,10 +318,8 @@ dialog {
             }
         }
 
-    <h4 class="mdl-cell mdl-cell--12-col"><i class="material-icons">reply_all</i> Ajouter une réponse</h4>
-
     @if(application.answers.isEmpty && user.instructor){
-        <div class="mdl-card mdl-cell mdl-cell--10-col">
+        <div class="mdl-card mdl-cell mdl-cell--10-col mdl-cell--2-offset mdl-cell--0-offset-phone">
             <div class="mdl-card__supporting-text mdl-card--border">
 
                 <form class="do-not-print" action="@routes.ApplicationController.answer(application.id)" method="post">
