@@ -268,9 +268,9 @@ dialog {
                     }
                 }
                 <div class="mdl-card mdl-cell mdl-cell--10-col mdl-cell--12-col-phone @if(answer.creatorUserID == user.id){ mdl-cell--2-offset mdl-cell--0-offset-phone } answer" id="answer-@answer.id">
-                    <div class="mdl-card__supporting-text mdl-card--border" >
+                    <div class="mdl-card__supporting-text mdl-card--border @if(!answer.visibleByHelpers){ mdl-color--blue-grey-50 }" >
                         @if(!answer.visibleByHelpers) {
-                            <div id="reserved-@answer.id" class="vertical-align--middle"><b>Réponse réservée aux agents</b>
+                            <div id="reserved-@answer.id" class="vertical-align--middle">Réponse réservée aux agents
                                 <i class="icon material-icons icon--light">info</i>
                             </div>
                             <div class="mdl-tooltip" for="reserved-@answer.id">
