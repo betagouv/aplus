@@ -4,7 +4,7 @@ import java.util.UUID
 
 import javax.inject.{Inject, Singleton}
 import actions.{LoginAction, RequestWithUserData}
-import extentions.{Hash, UUIDHelper}
+import extentions.{Hash, Time, UUIDHelper}
 import forms.FormsPlusMap
 import models.User.date
 import models.{Area, Time, User, UserGroup}

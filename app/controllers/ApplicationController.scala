@@ -12,12 +12,12 @@ import play.api.data.validation.Constraints._
 import actions._
 import forms.FormsPlusMap
 import models._
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.{DateTime}
 import org.webjars.play.WebJarsUtil
 import services.{ApplicationService, EventService, NotificationService, UserService}
-import extentions.UUIDHelper
+import extentions.{Time, UUIDHelper}
+import extentions.Time.dateTimeOrdering
 
-import scala.collection.immutable.ListMap
 import scala.concurrent.ExecutionContext
 
 /**
@@ -33,9 +33,10 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                                       configuration: play.api.Configuration)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
   import forms.Models._
 
-  private val timeZone = Time.dateTimeZone
+  private implicit val timeZone = Time.dateTimeZone
 
   private val filesPath = configuration.underlying.getString("app.filesPath")
+  private lazy val areasWithAttachments = configuration.underlying.getString("app.areasWithAttachments").split(",").flatMap(UUIDHelper.fromString)
 
   private val dir = Paths.get(s"$filesPath")
   if(!Files.isDirectory(dir)) {
@@ -116,32 +117,6 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}/zone=${applicationsFromTheArea.size}")
     Ok(views.html.allApplication(request.currentUser, request.currentArea)(myOpenApplications, myClosedApplications, applicationsFromTheArea))
   }
-  
-  import Time.dateTimeOrdering
-  
-  private def weeksMap(fromDate: DateTime, toDate: DateTime): ListMap[String, String] = {
-    val weekDay = toDate.weekOfWeekyear().roundFloorCopy()
-    def recursion(date: DateTime): ListMap[String, String] = {
-      if(date.isBefore(fromDate)) {
-        ListMap()
-      } else {
-        recursion(date.minusWeeks(1)) + (f"${date.getYear}/${date.getWeekOfWeekyear}%02d" -> date.toString("E dd MMM YYYY", new Locale("fr")))
-      }
-    }
-    recursion(weekDay)
-  }
-
-  private def monthsMap(fromDate: DateTime, toDate: DateTime): ListMap[String, String] = {
-    def recursion(date: DateTime): ListMap[String, String] = {
-      if(date.isBefore(fromDate)) {
-        ListMap()
-      } else {
-        recursion(date.minusMonths(1)) + (f"${date.getYear}/${date.getMonthOfYear}%02d" -> date.toString("MMMM YYYY", new Locale("fr")))
-      }
-    }
-    recursion(toDate)
-  }
-
 
   def stats = loginAction { implicit request =>
     (request.currentUser.admin || request.currentUser.groupAdmin) match {
@@ -174,8 +149,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           allApplications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
         }
         val today = DateTime.now(timeZone)
-        val weeks = weeksMap(firstDate, today)
-        val months = monthsMap(firstDate, today)
+        val weeks = Time.weeksMap(firstDate, today)
+        val months = Time.monthsMap(firstDate, today)
         eventService.info("STATS_SHOWED", s"Visualise les stats")
         Ok(views.html.stats(request.currentUser, request.currentArea)(months, applicationsByArea, users))
     }
@@ -242,7 +217,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             }
 
             eventService.info("APPLICATION_SHOWED", s"Demande $id consulté", Some(application))
-            Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, renderedApplication, answerForm))
+            val attachmentsActivated = areasWithAttachments.contains(request.currentArea.id)
+            Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, renderedApplication, answerForm, attachmentsActivated))
         }
         else {
           eventService.warn("APPLICATION_UNAUTHORIZED", s"L'accès à la demande $id n'est pas autorisé", Some(application))
@@ -256,7 +232,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       case None =>
         eventService.error("FILE_NOT_FOUND", s"La demande $applicationId n'existe pas")
         NotFound("Nous n'avons pas trouvé ce fichier")
-      case Some(application) if application.fileCanBeShowed(request.currentUser) =>
+      case Some(application) if application.fileCanBeShowed(request.currentUser, answerId) =>
           application.answers.find(_.id == answerId) match {
             case Some(answer) if answer.files.getOrElse(Map()).contains(filename) =>
               Ok.sendPath(Paths.get(s"$filesPath/ans_$answerId-$filename"))
