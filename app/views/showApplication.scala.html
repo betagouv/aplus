@@ -123,6 +123,13 @@ dialog {
     border: 2px solid black;
 }
 
+.application__message {
+    white-space: pre-line;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 25px;
+}
+
 </style>
 @webJarsUtil.locate("dialog-polyfill.css").css()
 @webJarsUtil.locate("dialog-polyfill.js").script()
@@ -171,7 +178,7 @@ dialog {
                 }
             </div>
             <div class="mdl-card__supporting-text mdl-card--border vertical-align--middle">
-                <i class="material-icons icon--light">chat_bubble</i> <span class="application__anwsers"><b>@application.answers.length</b> messages </span> | <span class="application__age">Créée il y a <b>@application.ageString</b></span>
+                <i class="material-icons icon--light">chat_bubble</i> <span class="application__anwsers"><b>@application.answers.length</b> messages </span> | <span class="application__age">Créée il y a @application.ageString</span>
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
                 <div class="info-box">
@@ -185,7 +192,7 @@ dialog {
                     }
                 </div>
 
-                <p style="white-space: pre-line;">@application.description</p>
+                <p class="application__message">@application.description</p>
                 @if(application.canBeClosedBy(user) && application.closed == false) {
                     <button class="mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()" style="margin-right: 10px;">
                         Clôturer la demande
@@ -195,7 +202,7 @@ dialog {
         </div>
         <div class="mdl-card mdl-cell mdl-cell--4-col mdl-cell--12-col-phone mdl-grid">
             <div class="mdl-list mdl-cell mdl-cell--12-col">
-                <b>Créée par</b>
+                Créée par
                 <div class="mdl-list__item">
                     <span class="mdl-list__item-primary-content">@Map("Aide A+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => application.creatorUserName.contains(a._1)) match {
                         case Some((_,icon)) => {<img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
@@ -204,7 +211,7 @@ dialog {
                         <span>@application.creatorUserName</span>
                     </span>
                 </div>
-                <b>Participants à la discussion</b>
+                Participants à la discussion
                 @for((userId, userName) <- application.invitedUsers) {
                     <div class="mdl-list__item">
                         <span class="mdl-list__item-primary-content">@Map("Aide A+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => userName.contains(a._1)) match {
@@ -282,7 +289,7 @@ dialog {
                                 </span>
                                 <span class="mdl-list__item-secondary-content">
                                     <div id="date-@answer.id" class="vertical-align--middle">
-                                        <span>Il y a <b>@answer.ageString</b></span>
+                                        <span class="application__age">Il y a @answer.ageString</span>
                                         <i class="icon material-icons icon--light">info</i>
                                     </div>
                                     <div class="mdl-tooltip" data-mdl-for="date-@answer.id">
@@ -302,7 +309,7 @@ dialog {
                                 }
                             </ul>
                         }
-                        <p style="white-space: pre-line;">@answer.message</p>
+                        <p class="application__message">@answer.message</p>
                         @if(application.answers.last == answer && application.creatorUserId == user.id && !application.closed && answer.creatorUserID != user.id) {
                             <div class="info-box do-not-print">
                             Si l'agent a répondu à votre demande, vous pouvez clore la demande:<br><br>
@@ -318,22 +325,22 @@ dialog {
         }
 
     @if(application.answers.isEmpty && user.instructor){
-        <div class="mdl-card mdl-cell mdl-cell--10-col mdl-cell--2-offset mdl-cell--0-offset-phone">
+        <div class="mdl-card mdl-cell mdl-cell--12-col">
             <div class="mdl-card__supporting-text mdl-card--border">
 
                 <form class="do-not-print" action="@routes.ApplicationController.answer(application.id)" method="post">
-                    <b>Réponse rapide à l'aidant :</b>                 <br>
+                    Réponse rapide à l'aidant :                 <br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-1">
                         <input type="radio" id="option-1" class="mdl-radio__button" name="message" value="Je m'en occupe" checked>
-                        <span class="mdl-radio__label">Je m'en occupe</span>
+                        <span class="mdl-radio__label" style="font-weight: bold;">Je m'en occupe</span>
                     </label>            <br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-2">
                         <input type="radio" id="option-2" class="mdl-radio__button" name="message" value="Je ne suis pas le bon interlocuteur">
-                        <span class="mdl-radio__label">Je ne suis pas le bon interlocuteur</span>
+                        <span class="mdl-radio__label" style="font-weight: bold;">Je ne suis pas le bon interlocuteur</span>
                     </label>         <br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-3">
                         <input type="radio" id="option-3" class="mdl-radio__button" name="message" value="Je ne suis pas disponible">
-                        <span class="mdl-radio__label">Je ne suis pas disponible</span>
+                        <span class="mdl-radio__label" style="font-weight: bold;">Je ne suis pas disponible</span>
                     </label>      <br>
                     <button id="review-validation" class="mdl-button mdl-button--primary mdl-button--raised mdl-js-button mdl-button--nowrap">
                         Envoyer
