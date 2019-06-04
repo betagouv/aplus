@@ -38,7 +38,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   private val filesPath = configuration.underlying.getString("app.filesPath")
 
   private val dir = Paths.get(s"$filesPath")
-  if(Files.isDirectory(dir)) {
+  if(!Files.isDirectory(dir)) {
     Files.createDirectories(dir)
   }
 
