@@ -171,7 +171,7 @@ dialog {
                 }
             </div>
             <div class="mdl-card__supporting-text mdl-card--border vertical-align--middle">
-                <i class="material-icons icon--light">chat_bubble</i> <span class="application__anwsers"><b>@application.answers.length</b> messages </span> | <span class="application__age">Créé il y a <b>@application.ageString</b></span>
+                <i class="material-icons icon--light">chat_bubble</i> <span class="application__anwsers"><b>@application.answers.length</b> messages </span> | <span class="application__age">Créée il y a <b>@application.ageString</b></span>
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
                 <div class="info-box">
@@ -195,7 +195,7 @@ dialog {
         </div>
         <div class="mdl-card mdl-cell mdl-cell--4-col mdl-cell--12-col-phone mdl-grid">
             <div class="mdl-list mdl-cell mdl-cell--12-col">
-                <b>Créé par</b>
+                <b>Créée par</b>
                 <div class="mdl-list__item">
                     <span class="mdl-list__item-primary-content">@Map("Aide A+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => application.creatorUserName.contains(a._1)) match {
                         case Some((_,icon)) => {<img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
@@ -218,7 +218,7 @@ dialog {
                                 <i class="material-icons icon--light">remove_red_eye</i>
                             </div>
                             <div class="mdl-tooltip" for="seen-@userId">
-                                Consulté par l'utilisateur
+                                Consultée par l'utilisateur
                             </div>
                         }
                         </span>
@@ -239,7 +239,7 @@ dialog {
 
         @for(answer <- application.answers){
             @if(answer.invitedUsers) {
-                <div class="mdl-cell mdl-cell--12-col vertical-align--middle" style="text-align: center; color: #888888;	font-family: Raleway;	font-size: 14px;	font-weight: 600;	line-height: 16px;">
+                <div class="mdl-cell mdl-cell--12-col vertical-align--middle" style="text-align: center; color: #888888;	font-size: 14px;	font-weight: 600;	line-height: 16px;">
                     <i class="icon material-icons icon--light">people</i> @answer.creatorUserName a invité @answer.invitedUsers.values.mkString(", ")
                 </div>
             }
@@ -248,7 +248,6 @@ dialog {
                     @for((filename, fileSize) <- answer.files.getOrElse(Map())) {
                         <div class="mdl-cell mdl-cell--12-col vertical-align--middle" style="text-align: center;
                             color: #888888;
-                            font-family: Raleway;
                             font-size: 14px;
                             font-weight: 600;
                             line-height: 16px;">
@@ -362,7 +361,7 @@ dialog {
                             <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('review-validation').disabled=true">
                                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
                                     @if(user.instructor) {
-                                        <div class="info-box">Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName et les personnes invités sur la demande. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. <b>Merci d'utiliser vos outils habituels pour continuer une instruction.</b></div>
+                                        <div class="info-box">Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName et les personnes invitées sur la demande. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. <b>Merci d'utiliser vos outils habituels pour continuer une instruction.</b></div>
                                     }
                                     @if(user.id == application.creatorUserId) {
                                         <h5 class="mdl-cell mdl-cell--12-col">Ajouter informations concernant l'usager</h5>
@@ -385,14 +384,14 @@ dialog {
                                             </label>
                                         </div>
                                         <div class="mdl-tooltip" for="invalide-choice">
-                                            La demande sera classé comme non-pertinente dans les statistiques d'usages, l'équipe recontactera l'aidant pour aider à la création des demandes.
+                                            La demande sera classée comme non-pertinente dans les statistiques d'usage. L'équipe recontactera l'aidant pour l'aider à la création des demandes.
                                         </div>
                                     }
                                     @if(user.instructor || user.expert) {
                                         <div id="private-answer" class="mdl-cell mdl-cell--12-col">
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
                                                 <input type="checkbox" class="mdl-checkbox__input" name="privateToHelpers" value="true">
-                                                <span class="mdl-checkbox__label">Répondre uniquement aux agents A+ </span> <i class="icon material-icons icon--light">info</i>
+                                                <span class="mdl-checkbox__label">Répondre uniquement aux agents Administration+ </span> <i class="icon material-icons icon--light">info</i>
                                             </label>
                                         </div>
                                         <div class="mdl-tooltip" for="private-answer">
@@ -452,7 +451,7 @@ dialog {
                                 } else {
                                     <br>
                                 }
-                                <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Inviter les agents A+ sélectionnés</button>
+                                <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Inviter les agents Administration+ sélectionnés</button>
                             </form>
                         </div>
                     }
