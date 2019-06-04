@@ -42,6 +42,9 @@
     },
     "SENTRY_DSN": {
       "required": true
+    },
+    "AREAS_WITH_LOGIN_BY_KEY": {
+      "required": true
     }
   },
   "formation": {
