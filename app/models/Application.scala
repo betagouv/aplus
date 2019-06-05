@@ -88,7 +88,7 @@ case class Application(id: UUID,
   def fileCanBeShowed(user: User, answer: UUID) =
     answers.find(_.id == answer) match {
       case None => false
-      case Some(answer) if answer.filesAvailabilityLeftInDays != None => false // You can't download expired file
+      case Some(answer) if answer.filesAvailabilityLeftInDays == None => false // You can't download expired file
       case Some(answer) if answer.creatorUserID == user.id => false   // You can't download your own file
       case _ =>
         (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
