@@ -7,7 +7,7 @@ import actions.{LoginAction, RequestWithUserData}
 import extentions.{Hash, Time, UUIDHelper}
 import forms.FormsPlusMap
 import models.User.date
-import models.{Area, Time, User, UserGroup}
+import models.{Area, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
