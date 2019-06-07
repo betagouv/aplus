@@ -1,7 +1,7 @@
 @(user: User, area: Area)(users: List[User], application: Application, answerToAgentsForm: Form[_], attachmentsActivated: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider)
 @import java.util.Locale
 
-@main(user, area)(s"Demande : ${application.subject} ")  {
+@main(user, area)(s"Demande : ${application.id} - ${area.name} ")  {
 <style>
 .mdl-list__item-primary-content {
     font-weight: bold;
@@ -272,7 +272,7 @@ dialog {
                     }
                 }
                 <div class="mdl-card mdl-cell mdl-cell--10-col mdl-cell--12-col-phone @if(answer.creatorUserID == user.id){ mdl-cell--2-offset mdl-cell--0-offset-phone } answer" id="answer-@answer.id">
-                    <div class="mdl-card__supporting-text mdl-card--border @if(!answer.visibleByHelpers){ mdl-color--blue-grey-50 }" >
+                    <div class="mdl-card__supporting-text mdl-card--border @if(!answer.visibleByHelpers){ mdl-color--grey-50 }" >
                         @if(!answer.visibleByHelpers) {
                             <div id="reserved-@answer.id" class="vertical-align--middle">Réponse réservée aux agents
                                 <i class="icon material-icons icon--light">info</i>
@@ -402,7 +402,7 @@ dialog {
                                         <div id="private-answer" class="mdl-cell mdl-cell--12-col">
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
                                                 <input type="checkbox" class="mdl-checkbox__input" name="privateToHelpers" value="true">
-                                                <span class="mdl-checkbox__label">Répondre uniquement aux agents Administration+ </span> <i class="icon material-icons icon--light">info</i>
+                                                <span class="mdl-checkbox__label">Restreindre le message d'invitation aux Agents Administration+ </span> <i class="icon material-icons icon--light">info</i>
                                             </label>
                                         </div>
                                         <div class="mdl-tooltip" for="private-answer">
@@ -453,7 +453,7 @@ dialog {
                                     <div id="private-invitation">
                                         <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
                                             <input type="checkbox" class="mdl-checkbox__input" name="privateToHelpers" value="true">
-                                            <span class="mdl-checkbox__label">Répondre uniquement aux agents A+ </span> <i class="icon material-icons icon--light">info</i>
+                                            <span class="mdl-checkbox__label"></span> <i class="icon material-icons icon--light">info</i>
                                         </label>
                                     </div>
                                     <div class="mdl-tooltip" for="private-invitation">
