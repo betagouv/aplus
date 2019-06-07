@@ -72,7 +72,7 @@ class ApplicationService @Inject()(db: Database) {
 
 
   def byId(id: UUID, fromUserId: UUID, anonymous: Boolean): Option[Application] = db.withConnection { implicit connection =>
-    val answers = SQL("SELECT * FROM answer_unused WHERE application_id = {applicationId}::uuid ORDER BY creation_date ASC")
+    val answers = SQL("SELECT *, NULL as files FROM answer_unused WHERE application_id = {applicationId}::uuid ORDER BY creation_date ASC")
       // Hack to reintegrate answers that haven't been migrated (error in the migration SQL). Counting are wrong in general view.
       .on('applicationId -> id).as(simpleAnswer.*)
     val result = SQL("UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *")
