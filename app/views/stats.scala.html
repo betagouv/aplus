@@ -311,23 +311,25 @@
                 <canvas id="applications-per-admin-chart" style="height: 500px; with: 95%"></canvas>
                 <script>
 
-                        var adminReceivedColors = ["#caff70","#caff70","#8b8970","#8b8970","#a2cd5a","#a2cd5a","#eea2ad","#eea2ad","#666666","#666666","#7a7a7a","#7a7a7a","#87ceff","#87ceff","#6ca6cd","#6ca6cd","#eedd82","#eedd82","#ee6a50","#ee6a50","#ee7942","#ee7942","#ff83fa","#ff83fa","#c9c9c9","#c9c9c9","#919191","#919191","#cd5c5c","#cd5c5c","#454545","#454545","#eee9bf","#eee9bf",];
+                        var adminReceivedColors = ["#caff70","#8b8970","#a2cd5a","#eea2ad","#666666","#7a7a7a","#87ceff","#6ca6cd","#eedd82","#ee6a50","#ee7942","#ff83fa","#c9c9c9","#919191","#cd5c5c","#454545","#eee9bf",];
                         @defining(applicationsGroupByMonths.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
                             new Chart(document.getElementById('applications-per-admin-chart'), {
                                 type: 'pie',
                                 // The data for our dataset
                                 data: {
                                     labels: [@Html(admins.map(a => s"'${a.replaceAll("'", "`")}'").mkString(", "))],
-                                    datasets: [@for(admin: String <- admins) {
+                                    datasets: [
                                             {
-                                                label: "@Html(admin)",
+                                                label: "Demandes",
                                                 fill: false,
-                                                borderColor: adminReceivedColors.pop(),
-                                                backgroundColor: adminReceivedColors.pop(),
+                                                backgroundColor: [
+                                                    @for(admin: String <- admins) {
+                                                         adminReceivedColors.pop(),
+                                                    }
+                                                ],
                                                 lineTension: 0,
-                                                data: [@all.count(_.administrations(users).contains(admin))]
+                                                data: [@admins.map(admin => all.count(_.administrations(users).contains(admin))).mkString(",")]
                                             },
-                                        }
                                     ]
                                 },
 
