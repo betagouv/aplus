@@ -4,11 +4,12 @@ import java.util.UUID
 
 import javax.inject.Inject
 import anorm.Column.nonNull
-import models.{Answer, Application, Time}
+import models.{Answer, Application}
 import play.api.db.Database
 import play.api.libs.json.{Json, JsonConfiguration, JsonNaming}
 import anorm._
 import anorm.JodaParameterMetaData._
+import extentions.Time
 import org.joda.time.DateTime
 import play.api.libs.json.JodaReads._
 import play.api.libs.json.JodaWrites._
@@ -65,7 +66,8 @@ class ApplicationService @Inject()(db: Database) {
     "visible_by_helpers",
     "area",
     "declare_application_has_irrelevant",
-    "user_infos"
+    "user_infos",
+    "files"
   ).map(answer => answer.copy(creationDate = answer.creationDate.withZone(Time.dateTimeZone)))
 
 

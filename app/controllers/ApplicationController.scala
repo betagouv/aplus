@@ -1,5 +1,6 @@
 package controllers
 
+import java.nio.file.{Files, Path, Paths}
 import java.util.{Locale, UUID}
 
 import javax.inject.{Inject, Singleton}
@@ -11,12 +12,13 @@ import play.api.data.validation.Constraints._
 import actions._
 import forms.FormsPlusMap
 import models._
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.{DateTime}
 import org.webjars.play.WebJarsUtil
 import services.{ApplicationService, EventService, NotificationService, UserService}
-import extentions.UUIDHelper
+import extentions.{Time, UUIDHelper}
+import extentions.Time.dateTimeOrdering
 
-import scala.collection.immutable.ListMap
+import scala.concurrent.ExecutionContext
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -27,10 +29,19 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                                       userService: UserService,
                                       applicationService: ApplicationService,
                                       notificationsService: NotificationService,
-                                      eventService: EventService)(implicit webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
+                                      eventService: EventService,
+                                      configuration: play.api.Configuration)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
   import forms.Models._
 
-  private val timeZone = Time.dateTimeZone
+  private implicit val timeZone = Time.dateTimeZone
+
+  private val filesPath = configuration.underlying.getString("app.filesPath")
+  private lazy val areasWithAttachments = configuration.underlying.getString("app.areasWithAttachments").split(",").flatMap(UUIDHelper.fromString)
+
+  private val dir = Paths.get(s"$filesPath")
+  if(!Files.isDirectory(dir)) {
+    Files.createDirectories(dir)
+  }
 
   val applicationForm = Form(
     mapping(
@@ -106,32 +117,6 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}/zone=${applicationsFromTheArea.size}")
     Ok(views.html.allApplication(request.currentUser, request.currentArea)(myOpenApplications, myClosedApplications, applicationsFromTheArea))
   }
-  
-  import Time.dateTimeOrdering
-  
-  private def weeksMap(fromDate: DateTime, toDate: DateTime): ListMap[String, String] = {
-    val weekDay = toDate.weekOfWeekyear().roundFloorCopy()
-    def recursion(date: DateTime): ListMap[String, String] = {
-      if(date.isBefore(fromDate)) {
-        ListMap()
-      } else {
-        recursion(date.minusWeeks(1)) + (f"${date.getYear}/${date.getWeekOfWeekyear}%02d" -> date.toString("E dd MMM YYYY", new Locale("fr")))
-      }
-    }
-    recursion(weekDay)
-  }
-
-  private def monthsMap(fromDate: DateTime, toDate: DateTime): ListMap[String, String] = {
-    def recursion(date: DateTime): ListMap[String, String] = {
-      if(date.isBefore(fromDate)) {
-        ListMap()
-      } else {
-        recursion(date.minusMonths(1)) + (f"${date.getYear}/${date.getMonthOfYear}%02d" -> date.toString("MMMM YYYY", new Locale("fr")))
-      }
-    }
-    recursion(toDate)
-  }
-
 
   def stats = loginAction { implicit request =>
     (request.currentUser.admin || request.currentUser.groupAdmin) match {
@@ -164,8 +149,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           allApplications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
         }
         val today = DateTime.now(timeZone)
-        val weeks = weeksMap(firstDate, today)
-        val months = monthsMap(firstDate, today)
+        val weeks = Time.weeksMap(firstDate, today)
+        val months = Time.monthsMap(firstDate, today)
         eventService.info("STATS_SHOWED", s"Visualise les stats")
         Ok(views.html.stats(request.currentUser, request.currentArea)(months, applicationsByArea, users))
     }
@@ -206,6 +191,15 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     Ok(views.html.allApplicationCSV(exportedApplications.toSeq, request.currentUser, users)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}.csv"""" )
   }
 
+  val answerForm = Form(
+    mapping(
+      "message" -> nonEmptyText,
+      "irrelevant" -> boolean,
+      "infos" -> FormsPlusMap.map(nonEmptyText.verifying(maxLength(30))),
+      "privateToHelpers" -> boolean
+    )(AnswerData.apply)(AnswerData.unapply)
+  )
+
   def show(id: UUID) = loginAction { implicit request =>
     applicationService.byId(id, request.currentUser.id, request.currentUser.admin) match {
       case None =>
@@ -223,7 +217,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             }
 
             eventService.info("APPLICATION_SHOWED", s"Demande $id consulté", Some(application))
-            Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, renderedApplication, answerToAgentsForm))
+            val attachmentsActivated = areasWithAttachments.contains(request.currentArea.id)
+            Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, renderedApplication, answerForm, attachmentsActivated))
         }
         else {
           eventService.warn("APPLICATION_UNAUTHORIZED", s"L'accès à la demande $id n'est pas autorisé", Some(application))
@@ -232,15 +227,28 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     }
   }
 
-  val answerToHelperForm = Form(
-    mapping(
-      "message" -> text,
-      "irrelevant" -> boolean
-    )(AnswerToHelperData.apply)(AnswerToHelperData.unapply)
-  )
+  def file(applicationId: UUID, answerId: UUID, filename: String) = loginAction { implicit request =>
+    applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
+      case None =>
+        eventService.error("FILE_NOT_FOUND", s"La demande $applicationId n'existe pas")
+        NotFound("Nous n'avons pas trouvé ce fichier")
+      case Some(application) if application.fileCanBeShowed(request.currentUser, answerId) =>
+          application.answers.find(_.id == answerId) match {
+            case Some(answer) if answer.files.getOrElse(Map()).contains(filename) =>
+              Ok.sendPath(Paths.get(s"$filesPath/ans_$answerId-$filename"))
+            case _ =>
+              eventService.error("FILE_NOT_FOUND", s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas")
+              NotFound("Nous n'avons pas trouvé ce fichier")
+          }
+      case Some(application) =>
+          eventService.warn("FILE_UNAUTHORIZED", s"L'accès aux fichiers sur la demande $applicationId n'est pas autorisé", Some(application))
+          Unauthorized("Vous n'avez pas les droits suffisants pour voir les fichiers sur cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
 
-  def answerHelper(applicationId: UUID) = loginAction { implicit request =>
-    answerToHelperForm.bindFromRequest.fold(
+    }
+  }
+
+  def answer(applicationId: UUID) = loginAction { implicit request =>
+    answerForm.bindFromRequest.fold(
       formWithErrors => {
         eventService.error("ANSWER_NOT_CREATED", s"Impossible d'ajouter une réponse sur la demande $applicationId : problème formulaire")
         BadRequest("Erreur interne, contacter l'administrateur A+ : contact@aplus.beta.gouv.fr")
@@ -251,21 +259,33 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter une réponse")
             NotFound("Nous n'avons pas trouvé cette demande")
           case Some(application) =>
-            if(application.canBeAnsweredToHelperBy(request.currentUser)) {
-              val answer = Answer(UUID.randomUUID(),
+            if(application.canBeAnsweredBy(request.currentUser)) {
+              val answerId = UUID.randomUUID()
+              val file = request.body.asMultipartFormData.flatMap(_.file("file")).flatMap { uploadedFile =>
+                if(!uploadedFile.filename.isEmpty) {
+                  val filename = Paths.get(uploadedFile.filename).getFileName
+                  val fileDestination = Paths.get(s"$filesPath/ans_$answerId-$filename")
+                  Files.copy(uploadedFile.ref, fileDestination)
+                  Some(filename.toString -> 0L)  // ToDo filesize
+                } else {
+                  None
+                }
+              }
+              val answer = Answer(answerId,
                 applicationId, DateTime.now(timeZone),
                 answerData.message,
                 request.currentUser.id,
                 request.currentUser.nameWithQualite,
                 Map(),
-                true,
+                answerData.privateToHelpers == false,
                 request.currentArea.id,
                 answerData.applicationIsDeclaredIrrelevant,
-                Some(Map()))
+                Some(answerData.infos),
+                files = Some(file.toMap))
               if (applicationService.add(applicationId, answer) == 1) {
                 eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
                 notificationsService.newAnswer(application, answer)
-                Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
+                Redirect(s"${routes.ApplicationController.show(applicationId)}#answer-${answer.id}").flashing("success" -> "Votre réponse a bien été envoyée")
               } else {
                 eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
                 InternalServerError("Votre réponse n'a pas pu être envoyé")
@@ -278,61 +298,23 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       })
   }
 
-  val answerToAgentsForm = Form(
+  val inviteForm = Form(
     mapping(
       "message" -> text,
-      "users" -> list(uuid),
-      "infos" -> FormsPlusMap.map(nonEmptyText.verifying(maxLength(30))),
-    )(AnswerToAgentsData.apply)(AnswerToAgentsData.unapply)
+      "users" -> list(uuid)   ,
+      "privateToHelpers" -> boolean
+    )(InvitationData.apply)(InvitationData.unapply)
   )
 
-  def answerAgents(applicationId: UUID) = loginAction { implicit request =>
-    val answerData = answerToAgentsForm.bindFromRequest.get
-
-    applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
-      case None =>
-        eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter une réponse")
-        NotFound("Nous n'avons pas trouvé cette demande")
-      case Some(application) =>
-        if(application.canBeAnsweredToAgentsBy(request.currentUser)) {
-          val notifiedUsers: Map[UUID, String] = answerData.notifiedUsers.flatMap { id =>
-            userService.byId(id).map(id -> _.nameWithQualite)
-          }.toMap
-          val answer = Answer(UUID.randomUUID(),
-            applicationId,
-            DateTime.now(timeZone),
-            answerData.message,
-            request.currentUser.id,
-            request.currentUser.nameWithQualite,
-            notifiedUsers,
-            request.currentUser.id == application.creatorUserId,
-            request.currentArea.id,
-            false,
-            Some(answerData.infos))
-          if (applicationService.add(applicationId, answer) == 1) {
-            notificationsService.newAnswer(application, answer)
-            eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
-            Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre réponse a bien été envoyée")
-          } else {
-            eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
-            InternalServerError("Votre réponse n'a pas pu être envoyée")
-          }
-        } else {
-          eventService.warn("ADD_ANSWER_UNAUTHORIZED", s"La réponse entre agents pour la demande $applicationId n'est pas autorisé", Some(application))
-          Unauthorized("Vous n'avez pas les droits suffisants pour répondre à cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
-        }
-    }
-  }
-
   def invite(applicationId: UUID) = loginAction { implicit request =>
-    val inviteData = answerToAgentsForm.bindFromRequest.get
+    val inviteData = inviteForm.bindFromRequest.get
     applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
       case None =>
         eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter des experts")
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
         if(application.canHaveAgentsInvitedBy(request.currentUser)) {
-          val invitedUsers: Map[UUID, String] = inviteData.notifiedUsers.flatMap { id =>
+          val invitedUsers: Map[UUID, String] = inviteData.invitedUsers.flatMap { id =>
             userService.byId(id).map(id -> _.nameWithQualite)
           }.toMap
           val answer = Answer(UUID.randomUUID(),
@@ -342,7 +324,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             request.currentUser.id,
             request.currentUser.nameWithQualite,
             invitedUsers,
-            false,
+            inviteData.privateToHelpers == false,
             request.currentArea.id,
             false,
             Some(Map()))

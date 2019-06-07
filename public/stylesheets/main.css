@@ -271,3 +271,24 @@ html, body {
 .hidden {
     display: none;
 }
+
+.application__subject {
+    color: #888888;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 14px;
+}
+.application__name {
+    color: #555555;;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 16px;
+}
+.application__age {
+    font-style: italic;
+}
+.application__anwsers {
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 14px;
+}

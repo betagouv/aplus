@@ -9,6 +9,7 @@ import models._
 import play.api.db.Database
 import anorm._
 import anorm.JodaParameterMetaData._
+import extentions.Time
 import org.joda.time.DateTime
 import play.api.Logger
 

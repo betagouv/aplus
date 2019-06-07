@@ -1,5 +1,6 @@
 package models
 
+import extentions.Time
 import org.joda.time.{DateTime, Days, Period}
 
 trait AgeModel {

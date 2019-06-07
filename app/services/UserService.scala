@@ -4,9 +4,9 @@ import java.util.UUID
 
 import javax.inject.Inject
 import anorm._
-import models.{Time, User, UserGroup}
+import models.{User, UserGroup}
 import play.api.db.Database
-import extentions.Hash
+import extentions.{Hash, Time}
 import play.api.libs.json.Json
 import anorm.JodaParameterMetaData._
 

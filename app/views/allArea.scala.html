@@ -1,6 +1,6 @@
 @import models._
 @import java.util.UUID
-@(user: User, currentArea: Area)(areas: Seq[Area], areasWithLoginByKey: Seq[UUID])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User, currentArea: Area)(areas: Seq[Area], areasWithLoginByKey: Seq[UUID], areasWithAttachments: Seq[UUID])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 
 
 @main(user, currentArea)(s"Gestion des territoires"){
@@ -15,8 +15,10 @@
             <thead>
                 <tr>
                     <th>Territoire</th>
-                    @if(user.admin){ <th>Identifiant</th>
+                    @if(user.admin){
+                        <th>Identifiant</th>
                         <th>Login par Clé</th>
+                        <th>Pièces Jointes</th>
                     }
                     <th></th>
                 </tr>
@@ -28,6 +30,7 @@
                         @if(user.admin){
                             <td class="mdl-data-table__cell--non-numeric@if(area.id == currentArea.id){ cell-selected }">@area.id</td>
                             <td class="mdl-data-table__cell--non-numeric">@if(areasWithLoginByKey.contains(area.id)) { <i class="material-icons">warning</i> Possible } else { Impossible }</td>
+                            <td class="mdl-data-table__cell--non-numeric">@if(areasWithAttachments.contains(area.id)) { <i class="material-icons">check</i> Possible } else { Impossible }</td>
                         }
                         <td class="mdl-data-table__cell--non-numeric@if(area.id == currentArea.id){ cell-selected }">
                         @if(area.id != currentArea.id) {

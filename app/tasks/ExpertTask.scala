@@ -3,6 +3,7 @@ package tasks
 import java.util.UUID
 
 import akka.actor._
+import extentions.Time
 import javax.inject.{Inject, Named}
 import models._
 import org.joda.time.{DateTime, Period}
@@ -35,6 +36,7 @@ class ExpertTask @Inject()(actorSystem: ActorSystem,
                 inviteExpert(application, dayWithoutAgentAnswer)
               case Some(answer) if answer.ageInDays > daySinceLastAgentAnswer  => // The last answer is older than X days
                 inviteExpert(application, daySinceLastAgentAnswer)
+              case _ => 
             }
         }
 

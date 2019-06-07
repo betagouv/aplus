@@ -1,6 +1,6 @@
 @import scala.collection.immutable.ListMap
 @import java.util.Locale
-@import Time.dateTimeOrdering
+@import extentions.Time.dateTimeOrdering
 @import extentions.Math
 @(user: User, area: Area)(months: ListMap[String, String], allApplications: Map[Area, Seq[Application]], users: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 
@@ -236,7 +236,7 @@
                                 labels: [@Html(applicationsGroupByMonths.map(s => s"'${s._1}'").mkString(", "))],
                                 datasets: [@for((area, apps) <- allApplications) {
                                         {
-                                            label: "@if(user.admin){ @area.name } else { Mes agents }",
+                                            label: "@if(user.areas.length > 1){ @area.name } else { Mes agents }",
                                             lineTension: 0,
                                             borderColor: adminReceivedColors.pop(),
                                             backgroundColor: adminReceivedColors.pop(),
@@ -348,7 +348,7 @@
         }
     }
 
-    @if(user.admin) {
+    @if(user.areas.length > 1) {
     <!-- all -->
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing mdl-shadow--2dp mdl-color--white">
         <h6 style="text-align: center">Demandes par territoire</h6>

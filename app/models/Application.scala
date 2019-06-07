@@ -85,18 +85,25 @@ case class Application(id: UUID,
      (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
      creatorUserId==user.id
 
-   def canBeAnsweredToHelperBy(user: User) =
-     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
-     (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)
+  def fileCanBeShowed(user: User, answer: UUID) =
+    answers.find(_.id == answer) match {
+      case None => false
+      case Some(answer) if answer.filesAvailabilityLeftInDays == None => false // You can't download expired file
+      case Some(answer) if answer.creatorUserID == user.id => false   // You can't download your own file
+      case _ =>
+        (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+          (user.helper && user.id == creatorUserId)
+    }
+
+
+  def canBeAnsweredBy(user: User) =
+    (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+      (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
+      creatorUserId==user.id
 
    def canHaveExpertsInvitedBy(user: User) =
      (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
      creatorUserId==user.id
-
-   def canBeAnsweredToAgentsBy(user: User) =
-      (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
-      (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
-        creatorUserId==user.id
 
    def canHaveAgentsInvitedBy(user: User) =
      (user.instructor && invitedUsers.keys.toList.contains(user.id))
