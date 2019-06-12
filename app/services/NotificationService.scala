@@ -62,7 +62,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
                       |Equipe A+""".stripMargin
     val email = play.api.libs.mailer.Email(
       s"Connexion à A+",
-      from = "Equipe A+ <contact@beta.gouv.fr>",
+      from = "Equipe A+ <contact@aplus.beta.gouv.fr>",
       Seq(s"${user.name} <${user.email}>"),
       bodyHtml = Some(bodyHtml)
     )
