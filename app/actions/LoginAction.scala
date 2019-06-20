@@ -60,7 +60,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
     if(user.cguAcceptationDate.isDefined || request.path.contains("cgu")) {
       Right(new RequestWithUserData(user, area, request))
     } else {
-      Left(Redirect(routes.UserController.showCharte()).flashing("redirect" -> request.path))
+      Left(Redirect(routes.UserController.showCGU()).flashing("redirect" -> request.path))
     }
   }
 
