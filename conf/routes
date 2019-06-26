@@ -45,8 +45,8 @@ POST    /groups/:groupId/users       controllers.UserController.addPost(groupId:
 POST    /groups                      controllers.UserController.addGroup
 
 
-GET     /cgu                      controllers.UserController.showCharte
-POST    /cgu                      controllers.UserController.validateCharte
+GET     /cgu                      controllers.UserController.showCGU
+POST    /cgu                      controllers.UserController.validateCGU
 
 # Areas
 GET     /areas                       controllers.AreaController.all

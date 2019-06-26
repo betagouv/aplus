@@ -193,12 +193,12 @@ class UserController @Inject()(loginAction: LoginAction,
     }
   }
 
-  def showCharte() = loginAction { implicit request =>
-    eventService.info("CHARTE_SHOWED", s"Charte visualisé")
-    Ok(views.html.showCharte(request.currentUser, request.currentArea))
+  def showCGU() = loginAction { implicit request =>
+    eventService.info("CGU_SHOWED", s"CGU visualisé")
+    Ok(views.html.showCGU(request.currentUser, request.currentArea))
   }
 
-  def validateCharte() = loginAction { implicit request =>
+  def validateCGU() = loginAction { implicit request =>
     Form(
       tuple(
         "redirect" -> optional(text),
