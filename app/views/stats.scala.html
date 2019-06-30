@@ -179,8 +179,8 @@
                                         if(apps._2.isEmpty) {
                                            0D
                                         } else {
-                                           val resolutionTimes = apps._2.flatMap(_.resolutionTimeInHours).map(_.toDouble)
-                                           Math.median(resolutionTimes)/24D
+                                           val resolutionTimes = apps._2.flatMap(_.resolutionTimeInMinutes).map(_.toDouble)
+                                           Math.median(resolutionTimes)/24D / 60D
                                         }
                                     }.mkString(", "))],
                                     label: "Temps de résolution median (Jour)",
@@ -193,13 +193,25 @@
                                         if(apps._2.isEmpty) {
                                            0D
                                         } else {
-                                           val resolutionTimes = apps._2.flatMap(_.resolutionTimeInHours)
-                                           resolutionTimes.sum.toDouble / resolutionTimes.size.toDouble / 24D
+                                           val resolutionTimes = apps._2.flatMap(_.resolutionTimeInMinutes)
+                                           resolutionTimes.sum.toDouble / resolutionTimes.size.toDouble / 24D / 60D
                                         }
                                     }.mkString(", "))],
                                     label: "Temps de résolution moyen (Jour)",
                                     backgroundColor: "rgba(113, 176, 239, 1)"
-                                }]
+                                }, {
+                                    data: [@Html(applicationsGroupByMonthsClosed.map{ apps =>
+                                        if(apps._2.isEmpty) {
+                                           0D
+                                        } else {
+                                           val resolutionTimes = apps._2.flatMap(_.firstAnswerTimeInMinutes)
+                                           resolutionTimes.sum.toDouble / resolutionTimes.size.toDouble / 24D / 60D
+                                        }
+                                    }.mkString(", "))],
+                                    label: "Temps pour la première réponse moyen (Jour)",
+                                    backgroundColor: "Blue"
+                                },
+                                ]
                             },
 
                             // Configuration options go here

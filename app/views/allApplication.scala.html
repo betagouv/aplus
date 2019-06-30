@@ -140,12 +140,15 @@
         }
     }
     @if(applicationsFromTheArea.nonEmpty && (user.admin || user.groupAdmin)) {
-        <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
+              <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         @if(user.admin) {
             <h4 class="mdl-cell mdl-cell--12-col">Toutes les demandes</h4>
         } else {
             <h4 class="mdl-cell mdl-cell--12-col">Demandes de mes groupes</h4>
         }
+            <button class="mdl-button mdl-js-button mdl-button--raised" onclick="document.location='@routes.ApplicationController.allCSV()'">
+                Télécharger export CSV
+            </button>
             <div class="mdl-cell mdl-cell--12-col pem-container">
                 Total : @applicationsFromTheArea.size ( @applicationsFromTheArea.groupBy(_.longStatus(user)).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
                 <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp sortable" style="white-space: normal;">
@@ -205,7 +208,8 @@
             </div>
         </div>
     }
+    <h4>Export des demandes en CSV (importé en ut8)</h4>
     <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--8-col mdl-cell--2-offset" onclick="document.location='@routes.ApplicationController.allCSV()'">
-        Télécharger CSV
+        Télécharger export CSV
     </button>
 }
