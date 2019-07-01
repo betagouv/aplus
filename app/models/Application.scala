@@ -101,7 +101,8 @@ case class Application(id: UUID,
      creatorUserId==user.id
 
    def canHaveAgentsInvitedBy(user: User) =
-     (user.instructor && invitedUsers.keys.toList.contains(user.id))
+     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+       (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)
 
    def canBeClosedBy(user: User) =
     (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
