@@ -2,8 +2,7 @@ package models
 
 import java.util.UUID
 
-import org.joda.time.DateTime
-import org.joda.time.Hours
+import org.joda.time.{DateTime, Hours, Minutes}
 
 case class Application(id: UUID,
                        creationDate: DateTime,
@@ -59,12 +58,6 @@ case class Application(id: UUID,
 
    def creatorUserQualite(users: List[User]): Option[String] = users.find(_.id == creatorUserId).map(_.qualite)
 
-   lazy val estimatedClosedDate = (closedDate,closed) match {
-        case (Some(date), _)  => Some(date)
-        case (_,true) => Some(answers.lastOption.map(_.creationDate).getOrElse(creationDate))
-        case _ => None
-      }
-
    def allUserInfos = userInfos ++ answers.flatMap(_.userInfos.getOrElse(Map()))
 
    lazy val anonymousApplication = {
@@ -80,26 +73,28 @@ case class Application(id: UUID,
          answers = newAnswers)
    }
 
+   // Security
+
    def canBeShowedBy(user: User) =  user.admin ||
      (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
      (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
      creatorUserId==user.id
 
-  def fileCanBeShowed(user: User, answer: UUID) =
-    answers.find(_.id == answer) match {
-      case None => false
-      case Some(answer) if answer.filesAvailabilityLeftInDays == None => false // You can't download expired file
-      case Some(answer) if answer.creatorUserID == user.id => false   // You can't download your own file
-      case _ =>
-        (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
-          (user.helper && user.id == creatorUserId)
-    }
+    def fileCanBeShowed(user: User, answer: UUID) =
+      answers.find(_.id == answer) match {
+        case None => false
+        case Some(answer) if answer.filesAvailabilityLeftInDays == None => false // You can't download expired file
+        case Some(answer) if answer.creatorUserID == user.id => false   // You can't download your own file
+        case _ =>
+          (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+            (user.helper && user.id == creatorUserId)
+      }
 
 
-  def canBeAnsweredBy(user: User) =
-    (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
-      (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
-      creatorUserId==user.id
+    def canBeAnsweredBy(user: User) =
+      (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+        (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
+        creatorUserId==user.id
 
    def canHaveExpertsInvitedBy(user: User) =
      (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
@@ -114,12 +109,24 @@ case class Application(id: UUID,
 
    def haveUserInvitedOn(user: User) = invitedUsers.keys.toList.contains(user.id)
 
-   lazy val resolutionTimeInHours: Option[Int] = if(closed) {
+
+   // Stats
+   lazy val estimatedClosedDate = (closedDate,closed) match {
+     case (Some(date), _)  => Some(date)
+     case (_,true) => Some(answers.lastOption.map(_.creationDate).getOrElse(creationDate))
+     case _ => None
+   }
+
+   lazy val resolutionTimeInMinutes: Option[Int] = if(closed) {
      val lastDate = answers.lastOption.map(_.creationDate).orElse(closedDate).getOrElse(creationDate)
-     Some(Hours.hoursBetween(creationDate, lastDate).getHours)
+     Some(Minutes.minutesBetween(creationDate, lastDate).getMinutes())
    } else {
      None
    }
+
+   lazy val firstAgentAnswerDate = answers.find(_.id != creatorUserId).map(_.creationDate)
+
+   lazy val firstAnswerTimeInMinutes = firstAgentAnswerDate.map{ firstAnswerDate => Minutes.minutesBetween(creationDate, firstAnswerDate).getMinutes }
 }
 
 object Application {

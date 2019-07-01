@@ -100,23 +100,28 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     }
   }
 
+
+  def allApplicationVisibleByUserAdmin(user: User) = if(user.admin) {
+    applicationService.allForAreas(user.areas, true)
+  } else if(user.groupAdmin) {
+    val users = userService.byArea(user.id)
+    val groupUserIds = users.filter(_.groupIds.intersect(user.groupIds).nonEmpty).map(_.id)
+    applicationService.allForUserIds(groupUserIds, true)
+  } else { List[Application]() }
+
+
   def all = loginAction { implicit request =>
     val myApplications = applicationService.allForUserId(request.currentUser.id, request.currentUser.admin)
     val myOpenApplications = myApplications.filter(!_.closed)
     val myClosedApplications = myApplications.filter(_.closed)
     
-    val applicationsFromTheArea = if(request.currentUser.admin) {
-      applicationService.allForAreas(request.currentUser.areas, true)
-    } else if(request.currentUser.groupAdmin) {
-      val users = userService.byArea(request.currentArea.id)
-      val groupUserIds = users.filter(_.groupIds.intersect(request.currentUser.groupIds).nonEmpty).map(_.id)
-      applicationService.allForUserIds(groupUserIds, true)
-    } else { List[Application]() }
+    val applicationsFromTheArea = allApplicationVisibleByUserAdmin(request.currentUser)
 
     eventService.info("ALL_APPLICATIONS_SHOWED",
       s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}/zone=${applicationsFromTheArea.size}")
     Ok(views.html.allApplication(request.currentUser, request.currentArea)(myOpenApplications, myClosedApplications, applicationsFromTheArea))
   }
+  
 
   def stats = loginAction { implicit request =>
     (request.currentUser.admin || request.currentUser.groupAdmin) match {
@@ -178,15 +183,13 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   def allCSV = loginAction { implicit request =>
     val currentUserId = request.currentUser.id
     val users = userService.byArea(request.currentArea.id)
-    val exportedApplications = if(request.currentUser.admin) {
-      applicationService.allByArea(request.currentArea.id, true)
-    } else if(request.currentUser.groupAdmin) {
-      val groupUserIds = users.filter(_.groupIds.intersect(request.currentUser.groupIds).nonEmpty).map(_.id)
-      applicationService.allForUserIds(groupUserIds, true)
+    val exportedApplications = if(request.currentUser.admin || request.currentUser.groupAdmin) {
+      allApplicationVisibleByUserAdmin(request.currentUser)
     } else  {
       applicationService.allForUserId(currentUserId, request.currentUser.admin)
     }
     val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
+
     eventService.info("CSV_SHOWED", s"Visualise un CSV")
     Ok(views.html.allApplicationCSV(exportedApplications.toSeq, request.currentUser, users)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}.csv"""" )
   }
