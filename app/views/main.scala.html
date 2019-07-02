@@ -1,4 +1,4 @@
-@(user: User, area: Area)(title: String)(header: Html)(content: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(currentUser: User, currentArea: Area)(title: String)(header: Html)(content: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 
 <!doctype html>
 <html lang="fr">
@@ -56,6 +56,13 @@
                 };
                 request.send("email="+email);
             }
+
+            function changeArea() {
+                var areaSelected = document.getElementById("area").value;
+                if(areaSelected != "@currentArea.id") {
+                    document.location = "@routes.AreaController.all()/"+areaSelected;
+                }
+            }
     </script>
     <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border:0;" alt="" /></p></noscript>
         <!-- End Piwik Code -->
@@ -90,15 +97,23 @@
                 <img src='@routes.Assets.versioned("images/logo_120.png")' class="logo">
             </p>
             <p style="line-height: 1.2;">
-            <span style="font-weight: bold;">@user.name</span><br/>
-            @user.qualite
+            <span style="font-weight: bold;">@currentUser.name</span><br/>
+            @currentUser.qualite
             </p>
             <p style="line-height: 1.2; font-size: 11px;">
                 <span style="font-weight: bold;">Territoire : </span>
-                @area.name
+                @if(currentUser.areas.length > 1) {
+                    <select id="area" name="area" onchange="changeArea()">
+                        @for(area <- Area.all) {
+                            <option value="@area.id" @if(area.id == currentArea.id) { selected }>@area.name</option>
+                        }
+                    </select>
+                } else {
+                    @currentArea.name
+                }
             </p>
             <div class="demo-avatar-dropdown">
-                <span style="font-size: 11px;">@user.email</span>
+                <span style="font-size: 11px;">@currentUser.email</span>
                 <div class="mdl-layout-spacer"></div>
                 <button id="accbtn" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                     <i class="material-icons" role="presentation">arrow_drop_down</i>
@@ -110,18 +125,18 @@
             </div>
         </header>
         <nav class="navigation mdl-navigation mdl-color--blue-grey-800">
-        @if(user.helper) {
+        @if(currentUser.helper) {
             <a class="mdl-navigation__link" href="@routes.ApplicationController.create()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">
                 create_new_folder</i>Nouvelle demande</a>
         }
         <a class="mdl-navigation__link" href="@routes.ApplicationController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">folder</i>Toutes les demandes</a>
-        @if(user.areas.size > 1) {
+        @if(currentUser.areas.size > 1) {
             <a class="mdl-navigation__link" href="@routes.AreaController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">place</i>Territoires</a>
         }
-        @if(user.admin || user.groupAdmin) {
+        @if(currentUser.admin || currentUser.groupAdmin) {
             <a class="mdl-navigation__link" href="@routes.UserController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">people</i>Utilisateurs</a>
         }
-        @if(user.admin || user.groupAdmin) {
+        @if(currentUser.admin || currentUser.groupAdmin) {
             <a class="mdl-navigation__link" href="@routes.ApplicationController.stats()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">show_chart</i>Stats</a>
         }
             <a class="mdl-navigation__link" href="@routes.UserController.showCGU()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">content_paste</i>CGU</a>
