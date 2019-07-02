@@ -60,7 +60,7 @@
             function changeArea() {
                 var areaSelected = document.getElementById("area").value;
                 if(areaSelected != "@currentArea.id") {
-                    document.location = "@routes.AreaController.all()/"+areaSelected;
+                    document.location = "@routes.AreaController.all()/"+areaSelected+"?redirect="+window.location.href;
                 }
             }
     </script>

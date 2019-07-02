@@ -25,7 +25,9 @@ class AreaController @Inject()(loginAction: LoginAction,
       Unauthorized("Vous n'avez pas les droits suffisants pour accèder à cette zone. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
     } else {
       eventService.info("AREA_CHANGE", s"Changement vers la zone $areaId")
-      Redirect(routes.ApplicationController.all()).withSession(request.session - "areaId" + ("areaId" -> areaId.toString))
+      val redirect = request.getQueryString("redirect").map(url => Redirect(url))
+        .getOrElse(Redirect(routes.ApplicationController.all()))
+      redirect.withSession(request.session - "areaId" + ("areaId" -> areaId.toString))
     }
   }
 
