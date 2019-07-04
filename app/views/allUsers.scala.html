@@ -18,7 +18,7 @@
           <th class="mdl-data-table__cell--non-numeric">Responsable groupe</th>
           <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
           <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
-          <th class="mdl-data-table__cell--non-numeric">Charte A+</th>
+          <th class="mdl-data-table__cell--non-numeric">CGU</th>
           <th class="mdl-data-table__cell--non-numeric">Demandes</th>
           <th class="mdl-data-table__cell--non-numeric">Solicitations</th>
           @if(currentUser.admin) {
@@ -68,8 +68,8 @@
           </td>
           <td class="mdl-data-table__cell--non-numeric">
             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-              <input type="checkbox" class="mdl-checkbox__input" @if(user.hasAcceptedCharte){ checked } disabled>
-              <span class="mdl-checkbox__label">Charte</span>
+              <input type="checkbox" class="mdl-checkbox__input" @if(user.cguAcceptationDate.nonEmpty){ checked } disabled>
+              <span class="mdl-checkbox__label">CGU</span>
             </label>
           </td>
           <td class="mdl-data-table__cell--non-numeric">@applications.count(_.creatorUserId == user.id)</td>
