@@ -31,8 +31,6 @@
     @helper.checkbox(form("instructor"), 'type -> "checkbox", 'label -> "Agent", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("helper"), 'type -> "checkbox", 'label -> "Aidant", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("adminGroup"), 'type -> "checkbox", 'label -> "Responsable(s) du groupe", 'class -> "mdl-checkbox__input")
-    @helper.checkbox(form("hasAcceptedCharte"), 'label -> "Charte validé", 'type -> "checkbox", 'class -> "mdl-checkbox__input")
-
 
       <b>Territoires</b>
       @if(form("areas").hasErrors) {

@@ -122,6 +122,7 @@
 
     } else {
         <input class="mdl-cell mdl-cell--12-col" type="search" placeholder="Filtrer les demandes (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
+        <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20A+">contact&commat;aplus.beta.gouv.fr</a></span>
         @if(myOpenApplications.nonEmpty) {
             <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
                 <h4 class="mdl-cell mdl-cell--12-col">Mes demandes</h4>
@@ -208,7 +209,8 @@
             </div>
         </div>
     }
-    <h4>Export des demandes en CSV (importé en ut8)</h4>
+    <h4>Export des demandes en CSV</h4>
+    <b>Il faut importer le fichier dans Excel (ou autre tableur) en ut8 pour avoir les accents correctement.</b>
     <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--8-col mdl-cell--2-offset" onclick="document.location='@routes.ApplicationController.allCSV()'">
         Télécharger export CSV
     </button>

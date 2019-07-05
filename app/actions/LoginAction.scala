@@ -51,7 +51,12 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
         case (Some(user), None, None) =>
           manageUserLogged(user)
         case _ =>
-          userNotLogged("Vous devez vous identifier pour accèder à cette page.")
+          val message = if(request.getQueryString("token").nonEmpty) {
+             "Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé. Si cette erreur se répète, contactez l'équipe Administration+"
+          } else {
+             "Vous devez vous identifier pour accèder à cette page."
+          }
+          userNotLogged(message)
       }
     }
 
