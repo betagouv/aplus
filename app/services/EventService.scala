@@ -89,4 +89,8 @@ class EventService @Inject()(db: Database) {
       """.executeUpdate() == 1
     }
   }
+
+  def all(limit: Int = 1000) = db.withConnection { implicit connection =>
+    SQL"""SELECT *, ip_address::TEXT as ip_address FROM "event" ORDER BY creation_date DESC LIMIT $limit""".as(simpleEvent.*)
+  }
 }

@@ -29,4 +29,6 @@ object Area {
     Area(UUIDHelper.namedFrom("var"), "Var"),
     Area(UUIDHelper.namedFrom("exemple"), "Demo")
   )
+
+  val notApplicable = Area(UUIDHelper.namedFrom("notApplicable"), "NotApplicable")
 }

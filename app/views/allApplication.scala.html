@@ -12,7 +12,7 @@
             </tfoot>
             <tbody>
             @for((application) <- applications.sortBy(_.closed)) {
-                <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="application-row @if(application.longStatus(user) == "Nouvelle") {td--important-border} else {td--clear-border}">
+                <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="searchable-row @if(application.longStatus(user) == "Nouvelle") {td--important-border} else {td--clear-border}">
                     <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size"><span class="tag @if(application.longStatus(user) == "Nouvelle") { tag--important } @if(application.closed){ tag--closed } ">@application.longStatus(user)</span></td>
                     <td class="mdl-data-table__cell--non-numeric"><span class="application__name">@application.userInfos.get(Application.USER_LAST_NAME_KEY) @application.userInfos.get(Application.USER_FIRST_NAME_KEY)</span><i>@application.userInfos.get(Application.USER_CAF_NUMBER_KEY).map(caf => s" (Num. CAF: $caf)")@application.userInfos.get(Application.USER_SOCIAL_SECURITY_NUMBER_KEY).map(nir => s" (NIR: $nir)")</i>
                     <br><span class="application__subject">@application.subject</span></td>
@@ -71,40 +71,6 @@
 <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("sortable/sortable.css")'>
 <script src="@routes.Assets.versioned("sortable/sortable.js")"></script>
 <script>
-    var extract = 9;
-    function onSearch() {
-        var searchTerm = document.getElementById("search-input").value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
-        if(searchTerm.length > 2) {
-            Array.from(document.querySelectorAll("tfoot")).forEach(function (app) { app.classList.remove("invisible") });
-            Array.from(document.querySelectorAll(".application-row")).forEach(function (app) {
-                if (searchTerm.length > 2) {
-                    var searchData = app.getAttribute("data-search");
-                    var searchResult = searchData.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").indexOf(searchTerm);
-                    if(searchResult !== -1) {
-                        app.classList.remove("invisible");
-                        var minIndex = Math.max(searchResult - extract, 0);
-                        var maxIndex = Math.min(searchResult + searchTerm.length + extract, searchData.length);
-                        app.querySelector(".search-cell").innerHTML = searchData.substring(minIndex, searchResult) +
-                                '<span style="font-weight: bold; background-color: #FFFF00;">'+searchData.substring(searchResult, searchResult + searchTerm.length)+
-                                "</span>"+searchData.substring(searchResult + searchTerm.length, maxIndex);
-                    } else {
-                        app.classList.add("invisible");
-                        app.querySelector(".search-cell").innerHTML = "";
-                    }
-                }
-            });
-        } else {
-            Array.from(document.querySelectorAll(".application-row")).forEach(function (app) { app.classList.remove("invisible"); });
-            Array.from(document.querySelectorAll(".search-cell")).forEach(function (cell) { cell.innerHTML=""; });
-            Array.from(document.querySelectorAll("tfoot")).forEach(function (app) { app.classList.add("invisible") });
-        }
-    }
-
-    function clearSearch() {
-        document.getElementById("search-input").value = "";
-        onSearch();
-    }
-
     function showClosedApplications() {
         document.getElementById("show-closed-applications").classList.add("invisible");
         document.getElementById("closed-applications").classList.remove("invisible");
@@ -141,7 +107,7 @@
         }
     }
     @if(applicationsFromTheArea.nonEmpty && (user.admin || user.groupAdmin)) {
-              <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
+        <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         @if(user.admin) {
             <h4 class="mdl-cell mdl-cell--12-col">Toutes les demandes</h4>
         } else {
@@ -179,7 +145,7 @@
                     </tfoot>
                     <tbody>
                     @for((application) <- applicationsFromTheArea) {
-                        <tr @if(user.admin){ onclick="window.document.location='@routes.ApplicationController.show(application.id)';" class="application-row" } else { style="cursor: none" } data-search="@application.searchData" >
+                        <tr @if(user.admin){ onclick="window.document.location='@routes.ApplicationController.show(application.id)';" class="searchable-row" } else { style="cursor: none" } data-search="@application.searchData" >
                         @if(user.admin){ <td class="mdl-data-table__cell--non-numeric" style="font-weight: bold; color: red;">@application.internalId</td>}
                             <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))</td>
                             @if(user.admin) {

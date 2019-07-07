@@ -303,4 +303,16 @@ class UserController @Inject()(loginAction: LoginAction,
       )
     }
   }
+
+  def allEvents = loginAction { implicit request =>
+    if (request.currentUser.admin == false) {
+      eventService.warn("EVENTS_UNAUTHORIZED", s"Accès non autorisé pour voir les événements")
+      Unauthorized("Vous n'avez pas le droit de faire ça")
+    } else {
+      val limit = request.getQueryString("limit").map(_.toInt).getOrElse(500)
+      val events = eventService.all(limit)
+      eventService.info("EVENTS_SHOWED", s"Affiche les événements")
+      Ok(views.html.allEvents(request.currentUser, request.currentArea)(events, limit))
+    }
+  }
 }

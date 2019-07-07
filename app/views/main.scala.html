@@ -14,6 +14,7 @@
     @header
     @webJarsUtil.locate("material.min.js").script()
     <script src="@routes.Assets.versioned("javascripts/polyfills.js")"></script>
+    <script src="@routes.Assets.versioned("javascripts/main.js")"></script>
     <style>
         html, body {
             max-width: 100%;
@@ -135,6 +136,9 @@
         }
         @if(currentUser.admin || currentUser.groupAdmin) {
             <a class="mdl-navigation__link" href="@routes.UserController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">people</i>Utilisateurs</a>
+        }
+        @if(currentUser.admin) {
+            <a class="mdl-navigation__link" href="@routes.UserController.allEvents()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">event</i>Événements</a>
         }
         @if(currentUser.admin || currentUser.groupAdmin) {
             <a class="mdl-navigation__link" href="@routes.ApplicationController.stats()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">show_chart</i>Stats</a>

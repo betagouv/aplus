@@ -1,0 +1,69 @@
+@(user: User, area: Area)(events: Seq[Event], limit: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@import java.util.Locale
+
+
+@main(user, area)(s"Evénements ($limit derniers)")  {
+    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("sortable/sortable.css")'>
+    <script src="@routes.Assets.versioned("sortable/sortable.js")"></script>
+}{
+    <input class="mdl-cell mdl-cell--12-col" type="search" placeholder="Filtrer les événements (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
+    <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
+        <div class="mdl-cell mdl-cell--12-col pem-container">
+            <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp sortable" style="white-space: normal;">
+                <thead>
+                    <tr>
+                        <th class="mdl-data-table__cell--non-numeric">Date</th>
+                        <th class="mdl-data-table__cell--non-numeric">Territoire</th>
+                        <th class="mdl-data-table__cell--non-numeric">Niveau</th>
+                        <th class="mdl-data-table__cell--non-numeric">Créateur</th>
+                        <th class="mdl-data-table__cell--non-numeric">Code</th>
+                        <th class="mdl-data-table__cell--non-numeric">Description</th>
+                        <th class="mdl-data-table__cell--non-numeric">Demande</th>
+                        <th class="mdl-data-table__cell--non-numeric">Pour l'utilisateur</th>
+                        <th class="mdl-data-table__cell--non-numeric">IP</th>
+                        <th class="mdl-data-table__cell--non-numeric">#</th>
+                        <th class="mdl-data-table__cell--non-numeric"></th>
+                    </tr>
+                </thead>
+                <tfoot class="invisible">
+                    <tr>
+                        <td class="mdl-data-table__cell--non-numeric" colspan="8" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les éléments</button></td>
+                    </tr>
+                </tfoot>
+                <tbody>
+                @for(event <- events) {
+                    <tr data-search="@event.searchData" class="searchable-row">
+                        <td class="mdl-data-table__cell--non-numeric">@event.creationDate.toString("dd/MM/YY-HH:mm", new Locale("fr"))</td>
+                        <td class="mdl-data-table__cell--non-numeric">@Area.fromId(event.area).get.name</td>
+                        <td class="mdl-data-table__cell--non-numeric">@event.level</td>
+                        <td class="mdl-data-table__cell--non-numeric">
+                            <a href="@routes.UserController.editUser(event.fromUserId)">@event.fromUserName</a>
+                        </td>
+                        <td class="mdl-data-table__cell--non-numeric">@event.code</td>
+                        <td class="mdl-data-table__cell--non-numeric">@event.description</td>
+                        <td class="mdl-data-table__cell--non-numeric">
+                            @event.toApplicationId match {
+                                case Some(applicationId) => {
+                                     <a href="@routes.ApplicationController.show(applicationId)">@applicationId</a>
+                                }
+                                case None => {}
+                             }
+                        </td>
+                        <td class="mdl-data-table__cell--non-numeric">
+                            @event.toUserId match {
+                                case Some(userId) => {
+                                    <a href="@routes.UserController.editUser(userId)">@userId</a>
+                                }
+                                case None => {}
+                            }
+                        </td>
+                        <td class="mdl-data-table__cell--non-numeric">@event.ipAddress</td>
+                        <td class="mdl-data-table__cell--non-numeric">@event.id</td>
+                        <td class="mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size"></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

@@ -207,22 +207,6 @@ html, body {
     display: none;
 }
 
-@media screen {
-    .application-row--late {
-        background-color: rgba(255, 34, 34, 0.90);
-    }
-    .application-row--late:hover {
-        background-color: rgba(255, 34, 34, 0.70) !important;
-    }
-
-    .application-row--nearly-late {
-        background-color: rgba(255, 165, 0, 0.90);
-    }
-    .application-row--nearly-late:hover {
-        background-color: rgba(255, 165, 0, 0.70) !important;
-    }
-}
-
 .tag {
     height: 18px;
     width: 80px;
