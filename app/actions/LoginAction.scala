@@ -51,10 +51,12 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
         case (Some(user), None, None) =>
           manageUserLogged(user)
         case _ =>
-          val message = if(request.getQueryString("token").nonEmpty) {
-             "Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé. Si cette erreur se répète, contactez l'équipe Administration+"
-          } else {
-             "Vous devez vous identifier pour accèder à cette page."
+          val message = request.getQueryString("token") match {
+            case Some(token) =>
+              eventService.info(User.systemUser, Area.notApplicable, request.remoteAddress, "UNKNOWN_TOKEN", s"Token $token est inconnue", None, None)
+              "Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé. Si cette erreur se répète, contactez l'équipe Administration+"
+            case None =>
+              "Vous devez vous identifier pour accèder à cette page."
           }
           userNotLogged(message)
       }
