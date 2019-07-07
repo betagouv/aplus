@@ -34,7 +34,7 @@
                 @for(event <- events) {
                     <tr data-search="@event.searchData" class="searchable-row">
                         <td class="mdl-data-table__cell--non-numeric">@event.creationDate.toString("dd/MM/YY-HH:mm", new Locale("fr"))</td>
-                        <td class="mdl-data-table__cell--non-numeric">@Area.fromId(event.area).get.name</td>
+                        <td class="mdl-data-table__cell--non-numeric">@Area.fromId(event.area).map(_.name).getOrElse("N/A")</td>
                         <td class="mdl-data-table__cell--non-numeric">@event.level</td>
                         <td class="mdl-data-table__cell--non-numeric">
                             <a href="@routes.UserController.editUser(event.fromUserId)">@event.fromUserName</a>

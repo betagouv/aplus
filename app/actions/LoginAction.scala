@@ -82,7 +82,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
           case Some(user) =>
             val area = areaFromContext(user)
             implicit val requestWithUserData = new RequestWithUserData(user, area, request)
-            eventService.info("AUTH_WITH_DIFFERENT_IP", s"Utilisateur ${token.userId} connecté avec une adresse ip différente de l'email")
+            eventService.warn("AUTH_WITH_DIFFERENT_IP", s"Utilisateur ${token.userId} connecté avec une adresse ip différente de l'email")
           case None =>
             Logger.error(s"Try to login by token for an unknown user : ${token.userId}")
         }
