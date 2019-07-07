@@ -19,7 +19,7 @@ class LoginController @Inject()(userService: UserService,
   def login() = Action { implicit request =>
      val emailFromRequest: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("email")).flatMap(_.headOption).orElse(request.flash.get("email"))
      if(emailFromRequest.isEmpty) {
-       Ok(views.html.loginHome(None))
+       Ok(views.html.loginHome(Left(None)))
      } else {
        emailFromRequest.flatMap(email => userService.byEmail(email)).fold {
          implicit val requestWithUserData = new RequestWithUserData(User.systemUser, Area.notApplicable, request)
@@ -28,16 +28,26 @@ class LoginController @Inject()(userService: UserService,
        } { user =>
          val loginToken = LoginToken.forUserId(user.id, tokenExpirationInMinutes, request.remoteAddress)
          tokenService.create(loginToken)
-         val url = request.flash.get("url").getOrElse(routes.HomeController.index().absoluteURL())
-         notificationService.newLoginRequest(url, user, loginToken)
+         val path = request.flash.get("path").getOrElse(routes.HomeController.index().url)
+         val url = routes.LoginController.redirect().absoluteURL()
+         notificationService.newLoginRequest(url, path, user, loginToken)
 
          implicit val requestWithUserData = new RequestWithUserData(user, Area.notApplicable, request)
          eventService.info("GENERATE_TOKEN", s"Génére un token pour une connexion par email")
 
-         Ok(views.html.loginHome(Some(user)))
+         Ok(views.html.loginHome(Left(Some(user))))
        }
      }
    }
+
+  def redirect() = Action { implicit request =>
+    (request.getQueryString("token"),request.getQueryString("path")) match {
+      case (Some(token), Some(path)) =>
+        Ok(views.html.loginHome(Right((token,path))))
+      case _ =>
+        Redirect(routes.LoginController.login()).flashing("error" -> "Il y a une erreur dans votre lien de connexion. Merci de contacter l'équipe Administration+")
+    }
+  }
 
   def disconnect() = Action { implicit request =>
       Redirect(routes.LoginController.login()).withNewSession

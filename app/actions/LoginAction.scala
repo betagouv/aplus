@@ -34,7 +34,8 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
   override def refine[A](request: Request[A]) =
     Future.successful {
       implicit val req = request
-      val url = "http" + (if (request.secure) "s" else "") + "://" + request.host + request.path + queryToString(request.queryString - "key" - "token")
+      val path = request.path + queryToString(request.queryString - "key" - "token")
+      val url = "http" + (if (request.secure) "s" else "") + "://" + request.host + path
       (userBySession,userByKey,tokenById) match {
         case (Some(userSession), Some(userKey), None) if userSession.id == userKey.id =>
           Left(Redirect(Call(request.method, url)))
@@ -44,7 +45,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
             // areasWithLoginByKey is an insecure setting for demo usage and transition only
             Left(Redirect(Call(request.method, url)).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
           } else {
-            Left(Redirect(routes.LoginController.login()).flashing("email" -> user.email, "url" -> url))
+            Left(Redirect(routes.LoginController.login()).flashing("email" -> user.email, "path" -> path))
           }
         case (_, None, Some(token)) =>
           manageToken(token)

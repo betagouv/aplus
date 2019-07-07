@@ -1,4 +1,4 @@
-@(user: Option[User])(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil)
+@(userOrToken: Either[Option[User],(String,String)])(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil)
 
 <!doctype html>
 <html lang="fr">
@@ -69,8 +69,8 @@
         <div class="login-container mdl-grid">
             <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
             <div class="login-content mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
-                @user match {
-                    case None => {
+                @userOrToken match {
+                    case Left(None) => {
                     <h3>Connexion à A+</h3>
                     <form action="@routes.LoginController.login()" method="post">
                         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
@@ -83,9 +83,20 @@
                         <button type="submit" class="mdl-button mdl-js-button mdl-button--raised" name="id">Connexion</button>
                     </form>
                     }
-                    case Some(user) => {
+                    case Left(Some(user)) => {
                         <h3><i class="material-icons">mail_outline</i> Regardez vos emails <i class="material-icons">mail_outline</i></h3>
                          <p>Vous allez recevoir un email à l'adresse <b>@user.email</b>. Cliquez sur le lien contenu dans l'email pour accéder à A+.</p>
+                    }
+                    case Right((token,path)) => {
+                        <h3>Vous allez accèder automatiquement à Administration+</h3>
+                        <p>Si la page suivante ne se charge pas automatiquement, cliquez sur le bouton suivant :</p>
+                        <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary" onclick="window.location='@path?token=@token'">Accèder à Administration+</button>
+                        <br>
+                        <script>
+                            window.setTimeout(function(){
+                                 window.location='@path?token=@token';
+                            }, 2000);
+                        </script>
                     }
                 }
                 <br>
