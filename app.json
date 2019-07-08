@@ -45,7 +45,13 @@
     },
     "AREAS_WITH_LOGIN_BY_KEY": {
       "required": true
-    }
+    },
+    "AREAS_WITH_ATTACHEMENTS": {
+      "required": true
+    },
+    "FILES_PATH": {
+      "required": true
+    },
   },
   "formation": {
     "web": {
