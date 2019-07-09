@@ -91,6 +91,6 @@ class EventService @Inject()(db: Database) {
   }
 
   def all(limit: Int = 1000) = db.withConnection { implicit connection =>
-    SQL"""SELECT *, host(ip_address) AS ip_addressg FROM "event" ORDER BY creation_date DESC LIMIT $limit""".as(simpleEvent.*)
+    SQL"""SELECT *, host(ip_address)::TEXT AS ip_address FROM "event" ORDER BY creation_date DESC LIMIT $limit""".as(simpleEvent.*)
   }
 }
