@@ -193,6 +193,7 @@ html, body {
     border-radius: .25rem;
     border-left-color: #5bc0de;
     font-style: italic;
+    background-color: white;
 }
 
 .info-box--orange {

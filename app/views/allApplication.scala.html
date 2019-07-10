@@ -97,6 +97,9 @@
         }
 
         @if(myClosedApplications.nonEmpty) {
+            <div class="mdl-cell mdl-cell--12-col info-box"><b>Vous ne voyez pas vos anciennes demandes ?</b> Cliquez-sur "Afficher les demandes clôturées" pour voir vos demandes clôturés.<br>
+                (Elles seront supprimé 1 mois après la clôture.)</div>
+
             <div class="mdl-cell mdl-cell--12-col" style="text-align: center" id="show-closed-applications">
                 <a href="#" onclick="showClosedApplications()">Afficher les demandes clôturées</a>
             </div>
@@ -175,8 +178,8 @@
             </div>
         </div>
     }
-    <h4>Export des demandes en CSV</h4>
-    <b>Il faut importer le fichier dans Excel (ou autre tableur) en ut8 pour avoir les accents correctement.</b>
+    <h4 class="mdl-cell mdl-cell--12-col">Export des demandes en CSV</h4>
+    <b class="mdl-cell mdl-cell--12-col">Il faut importer le fichier dans Excel (ou autre tableur) en ut8 pour avoir les accents correctement.</b>
     <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--8-col mdl-cell--2-offset" onclick="document.location='@routes.ApplicationController.allCSV()'">
         Télécharger export CSV
     </button>
