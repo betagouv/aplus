@@ -92,16 +92,18 @@
         @if(myOpenApplications.nonEmpty) {
             <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing mdl-grid">
                 <h4 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Mes demandes</h4>
-                <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" onclick="document.location='@routes.ApplicationController.create()'">
-                  Créer une demande
-                </button>
+                @if(user.helper) {
+                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" onclick="document.location = '@routes.ApplicationController.create()'">
+                        Créer une demande
+                    </button>
+                }
                 @display(myOpenApplications)
             </div>
         }
 
         @if(myClosedApplications.nonEmpty) {
-            <div class="mdl-cell mdl-cell--12-col info-box"><b>Vous ne voyez pas vos anciennes demandes ?</b> Cliquez-sur "Afficher les demandes clôturées" pour voir vos demandes clôturés.<br>
-                (Elles seront supprimé 1 mois après la clôture.)</div>
+            <div class="mdl-cell mdl-cell--12-col info-box"><b>Vous ne voyez pas vos anciennes demandes ?</b> Cliquez-sur "Afficher les demandes clôturées" pour voir vos demandes clôturéees.<br>
+                (Elles seront supprimées 1 mois après la clôture.)</div>
 
             <div class="mdl-cell mdl-cell--12-col" style="text-align: center" id="show-closed-applications">
                 <a href="#" onclick="showClosedApplications()">Afficher les demandes clôturées</a>
