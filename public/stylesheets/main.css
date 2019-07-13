@@ -193,6 +193,7 @@ html, body {
     border-radius: .25rem;
     border-left-color: #5bc0de;
     font-style: italic;
+    background-color: white;
 }
 
 .info-box--orange {
@@ -275,4 +276,11 @@ html, body {
     font-size: 12px;
     font-weight: bold;
     line-height: 14px;
+}
+
+/* Remove Icons for IE10 and IE11 */
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+    .material-icons {
+        display: none;
+    }
 }

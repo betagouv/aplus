@@ -77,7 +77,7 @@
     }
 </script>
 }{
-    @if(myOpenApplications.isEmpty && myClosedApplications.isEmpty && applicationsFromTheArea.isEmpty) {
+    @if(myOpenApplications.isEmpty && applicationsFromTheArea.isEmpty) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
             <p>Vous n'avez pas de demande en cours.
             @if(user.helper) {
@@ -90,13 +90,21 @@
         <input class="mdl-cell mdl-cell--12-col" type="search" placeholder="Filtrer les demandes (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
         <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20A+">contact&commat;aplus.beta.gouv.fr</a></span>
         @if(myOpenApplications.nonEmpty) {
-            <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
-                <h4 class="mdl-cell mdl-cell--12-col">Mes demandes</h4>
+            <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing mdl-grid">
+                <h4 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Mes demandes</h4>
+                @if(user.helper) {
+                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" onclick="document.location = '@routes.ApplicationController.create()'">
+                        Créer une demande
+                    </button>
+                }
                 @display(myOpenApplications)
             </div>
         }
 
         @if(myClosedApplications.nonEmpty) {
+            <div class="mdl-cell mdl-cell--12-col info-box"><b>Vous ne voyez pas vos anciennes demandes ?</b> Cliquez-sur "Afficher les demandes clôturées" pour voir vos demandes clôturéees.<br>
+                (Elles seront supprimées 1 mois après la clôture.)</div>
+
             <div class="mdl-cell mdl-cell--12-col" style="text-align: center" id="show-closed-applications">
                 <a href="#" onclick="showClosedApplications()">Afficher les demandes clôturées</a>
             </div>
@@ -175,8 +183,8 @@
             </div>
         </div>
     }
-    <h4>Export des demandes en CSV</h4>
-    <b>Il faut importer le fichier dans Excel (ou autre tableur) en ut8 pour avoir les accents correctement.</b>
+    <h4 class="mdl-cell mdl-cell--12-col">Export des demandes en CSV</h4>
+    <b class="mdl-cell mdl-cell--12-col">Il faut importer le fichier dans Excel (ou autre tableur) en ut8 pour avoir les accents correctement.</b>
     <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--8-col mdl-cell--2-offset" onclick="document.location='@routes.ApplicationController.allCSV()'">
         Télécharger export CSV
     </button>
