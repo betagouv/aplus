@@ -77,7 +77,7 @@
     }
 </script>
 }{
-    @if(myOpenApplications.isEmpty && applicationsFromTheArea.isEmpty) {
+    @if(myOpenApplications.isEmpty) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
             <p>Vous n'avez pas de demande en cours.
             @if(user.helper) {
@@ -100,19 +100,18 @@
                 @display(myOpenApplications)
             </div>
         }
+    }
+    @if(myClosedApplications.nonEmpty) {
+        <div class="mdl-cell mdl-cell--12-col info-box"><b>Vous ne voyez pas vos anciennes demandes ?</b> Cliquez-sur "Afficher les demandes clôturées" pour voir vos demandes clôturéees.<br>
+            (Elles seront supprimées 1 mois après la clôture.)</div>
 
-        @if(myClosedApplications.nonEmpty) {
-            <div class="mdl-cell mdl-cell--12-col info-box"><b>Vous ne voyez pas vos anciennes demandes ?</b> Cliquez-sur "Afficher les demandes clôturées" pour voir vos demandes clôturéees.<br>
-                (Elles seront supprimées 1 mois après la clôture.)</div>
-
-            <div class="mdl-cell mdl-cell--12-col" style="text-align: center" id="show-closed-applications">
-                <a href="#" onclick="showClosedApplications()">Afficher les demandes clôturées</a>
-            </div>
-            <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing invisible" id="closed-applications">
-                <h4 class="mdl-cell mdl-cell--12-col">Demandes clôturées</h4>
-                @display(myClosedApplications)
-            </div>
-        }
+        <div class="mdl-cell mdl-cell--12-col" style="text-align: center" id="show-closed-applications">
+            <a href="#" onclick="showClosedApplications()">Afficher les demandes clôturées</a>
+        </div>
+        <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing invisible" id="closed-applications">
+            <h4 class="mdl-cell mdl-cell--12-col">Demandes clôturées</h4>
+            @display(myClosedApplications)
+        </div>
     }
     @if(applicationsFromTheArea.nonEmpty && (user.admin || user.groupAdmin)) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
