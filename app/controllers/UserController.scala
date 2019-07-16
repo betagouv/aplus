@@ -7,7 +7,7 @@ import actions.{LoginAction, RequestWithUserData}
 import extentions.{Hash, Time, UUIDHelper}
 import forms.FormsPlusMap
 import models.User.date
-import models.{Area, User, UserGroup}
+import models.{Area, Organisation, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
@@ -256,7 +256,7 @@ class UserController @Inject()(loginAction: LoginAction,
           addGroupForm.bindFromRequest.fold(
             formWithErrors => {
               eventService.error("EDIT_USER_GROUP_ERROR", s"Essai d'edition d'un groupe avec des erreurs de validation")
-              BadRequest("Impossible de modifier le groupe (erreur de formulaire")
+              BadRequest("Impossible de modifier le groupe (erreur de formulaire)")
             },
             group => {
               if (userService.edit(group.copy(id = id))) {
@@ -279,6 +279,7 @@ class UserController @Inject()(loginAction: LoginAction,
       "creationDate" -> ignored(DateTime.now(timeZone)),
       "create-by-user-id" -> ignored(request.currentUser.id),
       "area" -> ignored(request.currentArea.id),
+      "organisation" -> optional(text)
     )(UserGroup.apply)(UserGroup.unapply)
   )
 

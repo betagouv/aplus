@@ -1,0 +1,119 @@
+@import models._
+@import extentions.MDLForms._
+@(user: User, area: Area)(users: List[User], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+
+    @main(user, area)(s"Nouvelle demande")  {
+        <style>
+                .mdl-data-table td {
+                    padding: 0px 18px;
+                }
+
+                @@media screen and (max-width: 750px) {
+                    .mdl-data-table__cell--split-in-mobile {
+                        display: block;
+                        float: left;
+                        width: 100%;
+                        height: initial !important;
+                    }
+                }
+        </style>
+    }{
+        <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+            <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h3>
+            <a class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone">
+                Mode Guidé
+            </a>
+            <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
+            @helper.form(action = routes.ApplicationController.createPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();") {
+                <div class="mdl-cell mdl-cell--12-col mdl-grid">
+                    <h5 class="mdl-cell mdl-cell--12-col">Sélectionnez les organismes concernés sur la zone @area.name</h5>
+
+                    <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
+                        @if(applicationForm("users").hasErrors) {
+                            <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
+                        }
+
+                        <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
+                        @for((organisme, orgUsers) <- users.groupBy(_.qualite).toList.sortBy(_._1).sortBy(_._1 == "Aide A+ / Je ne sais pas")) {
+                            <thead>
+                                <tr>
+                                    <th class="mdl-data-table__cell--non-numeric" colspan="2">
+                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                            <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);" value="@organisme" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisme})){ checked="checked" }>
+                                            <span class="mdl-checkbox__label">@organisme</span>
+                                        </label></th>
+                                </tr>
+                            </thead>
+                            <tbody @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisme})){ class="invisible" }>
+                                @if(organisme.contains("CAF")) {
+                                    <tr><td colspan="2" style="text-align: left; white-space: normal">
+                                        <div class="info-box">La CAF aura besoin du <b>numéro identifiant CAF</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
+                                    </td></tr>
+                                } else if(organisme.contains("CPAM")) {
+                            <tr><td colspan="2" style="text-align: left; white-space: normal">
+                                <div class="info-box">La CPAM aura besoin du <b>numéro de sécurité sociale</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
+                            </td></tr>
+                                }
+
+                                @for(user <- orgUsers) {
+                                    <tr>
+                                        <td style="width: 95px">
+                                            <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
+                                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                                <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked="checked" }>
+                                            </label>
+                                        </td>
+                                        <td class="mdl-data-table__cell--non-numeric">@user.name</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        }
+                        </table>
+                    </div>
+                    <br>
+                    <h5 class="mdl-cell mdl-cell--12-col">Sujet</h5>
+                     @helper.input(applicationForm("subject"), 'label -> "Saisir le sujet de votre demande...") { (id, name, value, args) =>
+                        <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+                    }
+                    <br>
+
+                    <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
+                    @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille"))
+                    <br>
+                    <br>
+                    <h5 class="mdl-cell mdl-cell--12-col">Description</h5>
+                    <div class="info-box">Rédigez une description rapide du problème.</div>
+                    @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
+                        <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
+                    }
+                    <br>
+                    <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset">
+                        Envoyer ma demande
+                    </button>
+                </div>
+            }
+        </div>
+        <script type="text/javascript">
+
+                function showHideUsers(sender) {
+                    var thead = sender.parentNode.parentNode.parentNode.parentNode;
+                    var tbody = thead.nextElementSibling;
+                    if(sender.checked) {
+                        Array.from(tbody.querySelectorAll("[type=checkbox]")).forEach(function(input){
+                            input.checked = true;
+                            input.parentNode.classList.add("is-checked");
+                            componentHandler.upgradeElements(input);
+                        });
+                        tbody.classList.remove("invisible");
+                    } else {
+                        Array.from(tbody.querySelectorAll("[type=checkbox]")).forEach(function(input){
+                            input.checked = false;
+                            input.parentNode.classList.remove("is-checked");
+                            componentHandler.upgradeElements(input);
+                        });
+                        tbody.classList.add("invisible");
+                    }
+
+                }
+        </script>
+    }
