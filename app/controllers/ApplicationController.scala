@@ -58,6 +58,11 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     Ok(views.html.createApplication(request.currentUser, request.currentArea)(userService.byArea(request.currentArea.id).filter(_.instructor), applicationForm))
   }
 
+  def createSimplified = loginAction { implicit request =>
+    eventService.info("APPLICATION_FORM_SHOWED", s"Visualise le formulaire simplifié de création de demande")
+    Ok(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(userService.byArea(request.currentArea.id).filter(_.instructor), applicationForm))
+  }
+
   def createPost = loginAction { implicit request =>
     request.currentUser.helper match {
        case false => {

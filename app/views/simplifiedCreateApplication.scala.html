@@ -11,22 +11,137 @@
                 @@media screen and (max-width: 750px) {
                     .mdl-data-table__cell--split-in-mobile {
                         display: block;
-                        float: left;
+                        float: left;                 
                         width: 100%;
                         height: initial !important;
                     }
                 }
+
+                .aplus-cat-button {
+                    background-color: #FEFEFE;
+                    padding: 20px;
+                    box-sizing: border-box;
+                    border-radius: 5px;
+                    cursor: pointer;
+                }
+
+                .aplus-cat-button:hover {
+                    background-color: #C4C4C4;
+                }
+
+                .aplus-cat-button h4 {
+                    margin: 0px;
+                    font-size: 16px;
+                    font-weight: bold;
+                    line-height: 21px;
+                    color: #555555;
+                }
+
+                .aplus-cat-button span {
+                    font-size: 12px;
+                    font-weight: 600;
+                    line-height: 16px;
+                    color: #888888;
+                }
+
+                .aplus-cat-button p {
+                    margin-top: 10px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    line-height: 20px;
+                }
+
+                .aplus-cat-button--selected {
+                    border: #C4C4C4 solid 8px;
+                    padding: 12px;
+                }
+
+                .aplus-cat-button--selected:hover {
+                    border: #888888 solid 8px;
+                }
+
+                .aplus-subjects .mdl-radio__label {
+                    font-size: 15px;  font-weight: 600;	line-height: 18px;
+                }
+
+                .mdl-data-table {
+                    background-color: initial;
+                    border: none;
+                }
+                .mdl-data-table td {
+                    border-top: none;
+                    border-bottom: none;
+                }
+                .mdl-textfield__input {
+                    border-radius: 5px;
+                    padding-left: 10px;
+                }
+                .mdl-textfield__label {
+                    padding-left: 10px;
+                }
+                .mdl-checkbox__box-outline, .mdl-radio__outer-circle {
+                    background-color: white;
+                }
         </style>
     }{
-        <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
-            <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h3>
-            <a class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone">
-                Mode Guidé
+            <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Créer une nouvelle demande en mode guidé
+            </h3>
+            <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.create()">
+                Mode Avancé
             </a>
             <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
+
+
+
             @helper.form(action = routes.ApplicationController.createPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();") {
+
                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
-                    <h5 class="mdl-cell mdl-cell--12-col">Sélectionnez les organismes concernés sur la zone @area.name</h5>
+
+                    <h5 class="mdl-cell mdl-cell--12-col">Sur quelle thématique porte votre question ?</h5>
+
+                    @for(category <- Organisation.Category.all) {
+                        <div class="mdl-cell mdl-cell--3-col mdl-cell--4-col-tablet mdl-cell--6-col-phone aplus-cat-button">
+                            <h4>@category.name</h4>
+                            <span>@category.defaultOrganisations.map(_.shortName).mkString("/")</span>
+                            <p>@category.description</p>
+                        </div>
+                    }
+
+                    <h5 class="mdl-cell mdl-cell--12-col mdl-grid">Nature du problème rencontré</h5>
+                    <div class="aplus-subjects">
+                        @for((subject,index) <- Organisation.Category.all.head.subjects.zipWithIndex) {
+                            <label class="mdl-cell mdl-cell--12-col mdl-radio mdl-js-radio mdl-js-ripple-effect" for="subject-@index">
+                                <input type="radio" id="subject-@index" class="mdl-radio__button" name="selected-subject" value="@subject.subject" onchange="onSubjectChange(this)">
+                                <span class="mdl-radio__label">@subject.subject</span>
+                            </label>
+                        }
+                        <label class="mdl-cell mdl-cell--12-col mdl-radio mdl-js-radio mdl-js-ripple-effect" for="subject-autre">
+                            <input type="radio" id="subject-autre" class="mdl-radio__button" name="selected-subject" value="other" onchange="onSubjectChange(this)">
+                            <span class="mdl-radio__label">Autre raison</span>
+                        </label>
+                    </div>
+                    <script>
+                        function onSubjectChange(caller) {
+                           if(caller.value === "other") {
+                               document.getElementById("other-subject").classList.remove("invisible")
+                               document.getElementById("subject").value = ""
+                           } else {
+                               document.getElementById("other-subject").classList.add("invisible")
+                               document.getElementById("subject").value = caller.value
+                           }
+                        }
+                    </script>
+
+
+                    <div id="other-subject" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing invisible">
+                    <h5 class="mdl-cell mdl-cell--12-col">Autre raison ? Précisez-là</h5>
+                    @helper.input(applicationForm("subject"), 'label -> "Précisez ici une autre raison") { (id, name, value, args) =>
+                        <input class="mdl-textfield__input mdl-color--white" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+                    }
+
+                    </div>
+                    <h5 class="mdl-cell mdl-cell--12-col">Organismes recommandés pour la demande</h5>
+
 
                     <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
                         @if(applicationForm("users").hasErrors) {
@@ -56,7 +171,7 @@
                                 }
 
                                 @for(user <- orgUsers) {
-                                    <tr>
+                                    <tr class="invisible">
                                         <td style="width: 95px">
                                             <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
@@ -71,12 +186,7 @@
                         </table>
                     </div>
                     <br>
-                    <h5 class="mdl-cell mdl-cell--12-col">Sujet</h5>
-                     @helper.input(applicationForm("subject"), 'label -> "Saisir le sujet de votre demande...") { (id, name, value, args) =>
-                        <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-                    }
-                    <br>
-
+                    
                     <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
                     @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille"))
                     <br>
@@ -84,15 +194,13 @@
                     <h5 class="mdl-cell mdl-cell--12-col">Description</h5>
                     <div class="info-box">Rédigez une description rapide du problème.</div>
                     @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
-                        <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
+                        <textarea class="mdl-textfield__input mdl-color--white" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
                     }
                     <br>
                     <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset">
                         Envoyer ma demande
                     </button>
-                </div>
             }
-        </div>
         <script type="text/javascript">
 
                 function showHideUsers(sender) {
