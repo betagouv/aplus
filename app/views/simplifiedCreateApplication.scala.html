@@ -191,7 +191,7 @@
                         <h5 class="mdl-cell mdl-cell--12-col">Organismes recommandés pour la demande</h5>
 
 
-                        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 15git px">
+                        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 20px">
                             @if(applicationForm("users").hasErrors) {
                                 <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
                             }
@@ -245,7 +245,7 @@
                         }
 
 
-                        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 15px">
+                        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 20px">
                         <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
                         @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"))
                         </div>
