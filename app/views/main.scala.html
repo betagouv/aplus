@@ -143,7 +143,8 @@
         @if(currentUser.admin || currentUser.groupAdmin) {
             <a class="mdl-navigation__link" href="@routes.ApplicationController.stats()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">show_chart</i>Stats</a>
         }
-            <a class="mdl-navigation__link" href="@routes.UserController.showCGU()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">content_paste</i>CGU</a>
+        <a class="mdl-navigation__link" href="@routes.Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf")" target="_blank"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">assignment</i>Mandat</a>
+        <a class="mdl-navigation__link" href="@routes.UserController.showCGU()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">content_paste</i>CGU</a>
         </nav>
     </div>
     <main class="mdl-layout__content mdl-color--grey-200" style="height: calc(100% - 16px); overflow-x: auto">
