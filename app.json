@@ -51,7 +51,7 @@
     },
     "FILES_PATH": {
       "required": true
-    },
+    }
   },
   "formation": {
     "web": {
