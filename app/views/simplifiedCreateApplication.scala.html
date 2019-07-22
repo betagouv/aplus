@@ -191,7 +191,7 @@
                         <h5 class="mdl-cell mdl-cell--12-col">Organismes recommandés pour la demande</h5>
 
 
-                        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
+                        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 15git px">
                             @if(applicationForm("users").hasErrors) {
                                 <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
                             }
@@ -208,7 +208,7 @@
                                                 </label></th>
                                         </tr>
                                     </thead>
-                                    <tbody class="organisation-row invisible"  data-organisation="@organisation.shortName">
+                                    <tbody class="organisation-row invisible" data-organisation="@organisation.shortName">
                                         @if(organisation.shortName.contains("CAF")) {
                                             <tr><td colspan="2" style="text-align: left; white-space: normal">
                                                 <div class="info-box info-box--no-spacing">La CAF aura besoin du <b>numéro identifiant CAF</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
@@ -238,17 +238,17 @@
                             
                         <br>
                         <br>
-                        <h5 class="mdl-cell mdl-cell--12-col">Description</h5>
-                        <div class="info-box">Rédigez une description rapide du problème.</div>
+                        <h5 class="mdl-cell mdl-cell--12-col">Description de la demande</h5>
+                        <div class="info-box"><b>Soyez brief</b>, la personne qui vous lira vous en remerciera, la réponse en sera d'autant plus rapide.</div>
                         @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
                             <textarea class="mdl-textfield__input mdl-color--white" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
                         }
 
 
-                        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
+                        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 15px">
                         <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
-                        @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille"))
-                        </div> <br><br>
+                        @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"))
+                        </div>
                         <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset">
                             Envoyer ma demande
                         </button>
