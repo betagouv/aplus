@@ -9,6 +9,7 @@ import forms.FormsPlusMap
 import models.User.date
 import models.{Area, Organisation, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
+import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.data.Forms._
@@ -180,13 +181,24 @@ class UserController @Inject()(loginAction: LoginAction,
           BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost(groupId)))
         },
         users => {
-          if (userService.add(users.map(_.copy(groupIds = List(groupId))))) {
-            eventService.info("ADD_USER_DONE", s"Utilisateurs ajouté")
-            Redirect(routes.UserController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
-          } else {
-            val form = usersForm.fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne)")
-            eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD")
-            InternalServerError(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
+          try {
+            if (userService.add(users.map(_.copy(groupIds = List(groupId))))) {
+              eventService.info("ADD_USER_DONE", s"Utilisateurs ajouté")
+              Redirect(routes.UserController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
+            } else {
+              val form = usersForm.fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
+              eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD 1")
+              InternalServerError(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
+            }
+          } catch {
+            case ex: PSQLException =>
+              val form = usersForm.fill(users).withGlobalError(s"Erreur DB : ${ex.getServerErrorMessage}")
+              eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}")
+              BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
+            case _: Throwable =>
+              val form = usersForm.fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 2)")
+              eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD. Exception inconnue.")
+              InternalServerError(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
           }
         }
       )
