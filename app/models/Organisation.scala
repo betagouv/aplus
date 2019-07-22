@@ -35,8 +35,12 @@ object Organisation {
     Organisation("Sous-Préf", "Sous-préfecture")
   )
 
-  case class Subject(subject: String, organisations: Seq[Organisation])
-  case class Category(name: String, description: String, defaultOrganisations: Seq[Organisation], subjects: Seq[Subject])
+  case class Subject(subject: String, organisations: Seq[Organisation]) {
+    override def toString: String = subject
+  }
+  case class Category(name: String, description: String, defaultOrganisations: Seq[Organisation], subjects: Seq[Subject]) {
+    override def toString: String = name
+  }
 
   object Category {
     val all = List(

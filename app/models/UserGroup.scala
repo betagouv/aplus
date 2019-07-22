@@ -16,4 +16,10 @@ case class UserGroup(id: UUID,
     (user.groupAdmin && user.groupIds.contains(id)) ||
       user.admin
 
+  def organisationDeductedFromName(): Option[String] = {
+    val lowerCaseName = name.toLowerCase()
+    Organisation.all.find { organisation => lowerCaseName.contains(organisation.shortName.toLowerCase()) || lowerCaseName.contains(organisation.name.toLowerCase()) }.map(_.shortName)
+  }
+
+  lazy val organisationSetOrDeducted = organisation.orElse(organisationDeductedFromName)
 }

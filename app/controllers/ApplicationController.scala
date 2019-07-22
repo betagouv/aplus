@@ -60,7 +60,10 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
   def createSimplified = loginAction { implicit request =>
     eventService.info("APPLICATION_FORM_SHOWED", s"Visualise le formulaire simplifié de création de demande")
-    Ok(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(userService.byArea(request.currentArea.id).filter(_.instructor), applicationForm))
+    val users = userService.byArea(request.currentArea.id).filter(_.instructor)
+    val groupIds = users.flatMap(_.groupIds).distinct
+    val organismeGroups = userService.groupByIds(groupIds).filter(_.organisationSetOrDeducted.nonEmpty)
+    Ok(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(users, organismeGroups, applicationForm))
   }
 
   def createPost = loginAction { implicit request =>

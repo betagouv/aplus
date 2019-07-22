@@ -196,6 +196,11 @@ html, body {
     background-color: white;
 }
 
+.info-box--no-spacing {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
 .info-box--orange {
     border-left-color: #FF7E47;
 }

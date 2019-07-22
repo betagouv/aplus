@@ -1,6 +1,6 @@
 @import models._
 @import extentions.MDLForms._
-@(user: User, area: Area)(users: List[User], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(user: User, area: Area)(users: List[User], organisationGroups: List[UserGroup], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
     @main(user, area)(s"Nouvelle demande")  {
         <style>
@@ -79,8 +79,14 @@
                 .mdl-textfield__label {
                     padding-left: 10px;
                 }
-                .mdl-checkbox__box-outline, .mdl-radio__outer-circle {
+                .mdl-checkbox__box-outline {
                     background-color: white;
+                }
+                .mdl-radio .mdl-radio__outer-circle {
+                    background-color: white;
+                }
+                .mdl-radio.is-checked .mdl-radio__outer-circle {
+                    background: none;
                 }
         </style>
     }{
@@ -99,107 +105,154 @@
 
                     <h5 class="mdl-cell mdl-cell--12-col">Sur quelle thématique porte votre question ?</h5>
 
-                    @for(category <- Organisation.Category.all) {
-                        <div class="mdl-cell mdl-cell--3-col mdl-cell--4-col-tablet mdl-cell--6-col-phone aplus-cat-button">
+                    @for(category <- Organisation.Category.all.filter(_.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty)) {
+                        <div class="mdl-cell mdl-cell--3-col mdl-cell--4-col-tablet mdl-cell--6-col-phone aplus-cat-button category-div" onclick="onCategoryChange(this)" data-category="@category">
                             <h4>@category.name</h4>
-                            <span>@category.defaultOrganisations.map(_.shortName).mkString("/")</span>
+                            <span>@category.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).mkString("/")</span>
                             <p>@category.description</p>
                         </div>
                     }
 
-                    <h5 class="mdl-cell mdl-cell--12-col mdl-grid">Nature du problème rencontré</h5>
-                    <div class="aplus-subjects">
-                        @for((subject,index) <- Organisation.Category.all.head.subjects.zipWithIndex) {
-                            <label class="mdl-cell mdl-cell--12-col mdl-radio mdl-js-radio mdl-js-ripple-effect" for="subject-@index">
-                                <input type="radio" id="subject-@index" class="mdl-radio__button" name="selected-subject" value="@subject.subject" onchange="onSubjectChange(this)">
-                                <span class="mdl-radio__label">@subject.subject</span>
-                            </label>
-                        }
-                        <label class="mdl-cell mdl-cell--12-col mdl-radio mdl-js-radio mdl-js-ripple-effect" for="subject-autre">
-                            <input type="radio" id="subject-autre" class="mdl-radio__button" name="selected-subject" value="other" onchange="onSubjectChange(this)">
-                            <span class="mdl-radio__label">Autre raison</span>
-                        </label>
-                    </div>
                     <script>
-                        function onSubjectChange(caller) {
-                           if(caller.value === "other") {
-                               document.getElementById("other-subject").classList.remove("invisible")
-                               document.getElementById("subject").value = ""
-                           } else {
-                               document.getElementById("other-subject").classList.add("invisible")
-                               document.getElementById("subject").value = caller.value
-                           }
-                        }
+                            function onCategoryChange(caller) {
+                                Array.from(document.getElementsByClassName("subject-label")).forEach(function(label){
+                                    if(label.getAttribute("data-category") === caller.getAttribute("data-category")) {
+                                        label.classList.remove("invisible");
+                                    } else {
+                                        label.classList.add("invisible");
+                                    }
+                                    changeMDLInputChecked(label.getElementsByTagName("input")[0], false);
+                                });
+                                Array.from(document.getElementsByClassName("category-div")).forEach(function(div){
+                                    div.classList.remove("aplus-cat-button--selected");
+                                });
+                                caller.classList.add("aplus-cat-button--selected");
+                                document.getElementById("form-problem").classList.remove("invisible");
+                                document.getElementById("form-other-subject").classList.add("invisible");
+                                document.getElementById("form-end").classList.add("invisible");
+                            }
                     </script>
 
 
-                    <div id="other-subject" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing invisible">
-                    <h5 class="mdl-cell mdl-cell--12-col">Autre raison ? Précisez-là</h5>
-                    @helper.input(applicationForm("subject"), 'label -> "Précisez ici une autre raison") { (id, name, value, args) =>
-                        <input class="mdl-textfield__input mdl-color--white" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-                    }
-
+                    <div id="form-problem" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing invisible">
+                        <h5 class="mdl-cell mdl-cell--12-col mdl-grid">Nature du problème rencontré</h5>
+                        <div class="aplus-subjects">
+                        @for(category <- Organisation.Category.all.filter(_.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty)) {
+                                @for((subject,index) <- category.subjects.zipWithIndex) {
+                                    <label class="mdl-cell mdl-cell--12-col mdl-radio mdl-js-radio mdl-js-ripple-effect subject-label invisible" for="subject-@category-@index" data-category="@category">
+                                        <input type="radio" id="subject-@category-@index" class="mdl-radio__button" name="selected-subject" value="@subject.subject" onchange="onSubjectChange(this)" data-organisations="@subject.organisations.map(_.shortName).mkString(",")">
+                                        <span class="mdl-radio__label">@subject.subject</span>
+                                    </label>
+                                }
+                                <label class="mdl-cell mdl-cell--12-col mdl-radio mdl-js-radio mdl-js-ripple-effect subject-label invisible" for="subject-autre-@category" data-category="@category">
+                                    <input type="radio" id="subject-autre-@category" class="mdl-radio__button" name="selected-subject" value="other" onchange="onSubjectChange(this)" data-organisations="@category.defaultOrganisations.map(_.shortName).mkString(",")">
+                                    <span class="mdl-radio__label">Autre raison</span>
+                                </label>
+                            }
+                        </div>
+                        <script>
+                            function onSubjectChange(caller) {
+                               if(caller.value === "other") {
+                                   document.getElementById("form-other-subject").classList.remove("invisible");
+                                   document.getElementById("subject").value = "";
+                               } else {
+                                   document.getElementById("form-other-subject").classList.add("invisible");
+                                   document.getElementById("subject").value = caller.value;
+                               }
+                               var organisations = caller.getAttribute("data-organisations").split(",");
+                               Array.from(document.getElementsByClassName("organisation-row")).forEach(function(thread){
+                                    if(organisations.indexOf(thread.getAttribute("data-organisation")) != -1) {
+                                        Array.from(thread.getElementsByTagName("input")).forEach(function(input){
+                                            changeMDLInputChecked(input, true);
+                                        });
+                                        thread.classList.remove("invisible");
+                                    } else {
+                                        Array.from(thread.getElementsByTagName("input")).forEach(function(input){
+                                            changeMDLInputChecked(input, false);
+                                        });
+                                        thread.classList.add("invisible");
+                                    }
+                               });
+                               document.getElementById("form-end").classList.remove("invisible")
+                            }
+                        </script>
                     </div>
-                    <h5 class="mdl-cell mdl-cell--12-col">Organismes recommandés pour la demande</h5>
 
 
-                    <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
-                        @if(applicationForm("users").hasErrors) {
-                            <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
+                    <div id="form-other-subject" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing invisible">
+                        <h5 class="mdl-cell mdl-cell--12-col">Autre raison ? Précisez-là</h5>
+                        @helper.input(applicationForm("subject"), 'label -> "Précisez ici une autre raison") { (id, name, value, args) =>
+                            <input class="mdl-textfield__input mdl-color--white" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
                         }
 
-                        <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
-                        @for((organisme, orgUsers) <- users.groupBy(_.qualite).toList.sortBy(_._1).sortBy(_._1 == "Aide A+ / Je ne sais pas")) {
-                            <thead>
-                                <tr>
-                                    <th class="mdl-data-table__cell--non-numeric" colspan="2">
-                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                            <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);" value="@organisme" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisme})){ checked="checked" }>
-                                            <span class="mdl-checkbox__label">@organisme</span>
-                                        </label></th>
-                                </tr>
-                            </thead>
-                            <tbody @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisme})){ class="invisible" }>
-                                @if(organisme.contains("CAF")) {
+                    </div>
+
+                    <div id="form-end" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing invisible">
+                        <h5 class="mdl-cell mdl-cell--12-col">Organismes recommandés pour la demande</h5>
+
+
+                        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
+                            @if(applicationForm("users").hasErrors) {
+                                <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
+                            }
+
+                            <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
+                            @for(organisationGroup <- organisationGroups.sortBy(_.name)) {
+                                @defining(organisationGroup.organisationDeductedFromName().flatMap(Organisation.fromShortName).get) { organisation: Organisation =>
+                                    <thead class="organisation-row invisible" data-organisation="@organisation.shortName">
+                                        <tr>
+                                            <th class="mdl-data-table__cell--non-numeric" colspan="2">
+                                                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                                    <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);" value="@organisation" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisation.shortName})){ checked="checked" }>
+                                                    <span class="mdl-checkbox__label">@organisationGroup.name (@organisation.name) </span>
+                                                </label></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="organisation-row invisible"  data-organisation="@organisation.shortName">
+                                        @if(organisation.shortName.contains("CAF")) {
+                                            <tr><td colspan="2" style="text-align: left; white-space: normal">
+                                                <div class="info-box info-box--no-spacing">La CAF aura besoin du <b>numéro identifiant CAF</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
+                                            </td></tr>
+                                        } else if(organisation.shortName.contains("CPAM")) {
                                     <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                        <div class="info-box">La CAF aura besoin du <b>numéro identifiant CAF</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
+                                        <div class="info-box info-box--no-spacing">La CPAM aura besoin du <b>numéro de sécurité sociale</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
                                     </td></tr>
-                                } else if(organisme.contains("CPAM")) {
-                            <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                <div class="info-box">La CPAM aura besoin du <b>numéro de sécurité sociale</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
-                            </td></tr>
-                                }
+                                        }
 
-                                @for(user <- orgUsers) {
-                                    <tr class="invisible">
-                                        <td style="width: 95px">
-                                            <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
-                                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked="checked" }>
-                                            </label>
-                                        </td>
-                                        <td class="mdl-data-table__cell--non-numeric">@user.name</td>
-                                    </tr>
+                                        @for(user <- users.filter(_.groupIds.contains(organisationGroup.id))) {
+                                            <tr class="invisible">
+                                                <td style="width: 95px">
+                                                    <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
+                                                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                                        <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked="checked" }>
+                                                    </label>
+                                                </td>
+                                                <td class="mdl-data-table__cell--non-numeric">@user.name</td>
+                                            </tr>
+                                        }
+                                    </tbody>
                                 }
-                            </tbody>
+                            }
+                            </table>
+                        </div>
+                            
+                        <br>
+                        <br>
+                        <h5 class="mdl-cell mdl-cell--12-col">Description</h5>
+                        <div class="info-box">Rédigez une description rapide du problème.</div>
+                        @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
+                            <textarea class="mdl-textfield__input mdl-color--white" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
                         }
-                        </table>
+
+
+                        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
+                        <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
+                        @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille"))
+                        </div> <br><br>
+                        <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset">
+                            Envoyer ma demande
+                        </button>
                     </div>
-                    <br>
-                    
-                    <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
-                    @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille"))
-                    <br>
-                    <br>
-                    <h5 class="mdl-cell mdl-cell--12-col">Description</h5>
-                    <div class="info-box">Rédigez une description rapide du problème.</div>
-                    @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
-                        <textarea class="mdl-textfield__input mdl-color--white" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
-                    }
-                    <br>
-                    <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset">
-                        Envoyer ma demande
-                    </button>
             }
         <script type="text/javascript">
 

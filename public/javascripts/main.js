@@ -31,3 +31,14 @@ function clearSearch() {
     document.getElementById("search-input").value = "";
     onSearch();
 }
+
+function changeMDLInputChecked(input, isChecked) {
+    input.checked = isChecked;
+    if(isChecked) {
+        input.parentNode.classList.add("is-checked");
+    } else {
+        input.parentNode.classList.remove("is-checked");
+    }
+    componentHandler.upgradeElements(input);
+}
+
