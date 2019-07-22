@@ -41,7 +41,7 @@
   <div>
   @helper.form(action = action) {
     @if(form.hasGlobalErrors) {
-      <div style="color: red; font-weight: bold;">@form.globalErrors.mkString(", ")</div>
+      <div style="color: red; font-weight: bold;">@form.globalErrors.flatMap(_.messages).mkString(", ")</div>
     }
 
     <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table" style="white-space: normal;">

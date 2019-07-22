@@ -192,7 +192,12 @@ class UserController @Inject()(loginAction: LoginAction,
             }
           } catch {
             case ex: PSQLException =>
-              val form = usersForm.fill(users).withGlobalError(s"Erreur DB : ${ex.getServerErrorMessage}")
+              val EmailErrorPattern = """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
+              val errorMessage = EmailErrorPattern.findFirstIn(ex.getServerErrorMessage.toString) match {
+                case Some(email) => s"Un utilisateur avec l'adresse $email existe déjà."
+                case _ =>  "Erreur d'insertion dans la base de donnée : contacter l'administrateur."
+              }
+              val form = usersForm.fill(users).withGlobalError(errorMessage)
               eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}")
               BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
             case _: Throwable =>
