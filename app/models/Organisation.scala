@@ -1,13 +1,13 @@
 package models
 
-import models.Organisation.Subject
+
 
 case class Organisation(shortName: String,
                         name: String)
 
 object Organisation {
   def fromShortName(shortName: String) = all.find(_.shortName == shortName)
-
+  
   val all = List(
     Organisation("A+", "Administration+"),  // Nationale
     Organisation("ANAH", "Agence nationale de l'habitat"),
@@ -35,59 +35,6 @@ object Organisation {
     Organisation("Sous-Préf", "Sous-préfecture")
   )
 
-  case class Subject(subject: String, organisations: Seq[Organisation]) {
-    override def toString: String = subject
-  }
-  case class Category(name: String, description: String, defaultOrganisations: Seq[Organisation], subjects: Seq[Subject]) {
-    override def toString: String = name
-  }
-
-  object Category {
-    val all = List(
-      Category("Social et famille", "APL, RSA, ...", List("CAF","MSA").flatMap(fromShortName),
-        List(
-          Subject("Trop perçu à la suite d'un contrôle CAF", List("CAF").flatMap(fromShortName)),
-          Subject("Long délais de versement de prestation sociale", List("CAF","MSA").flatMap(fromShortName))
-        )
-      ),
-      Category("Santé et Handicap", "CMU, AME, ACS, Affiliation, Reconnaissance Handicap...", List("CPAM","CRAM","MSA","MDPH").flatMap(fromShortName),
-        List(
-          Subject("Première inscription à l'assurance maladie", List("CPAM","CRAM","MSA").flatMap(fromShortName)),
-          Subject("Renouvellement de CMU-C / ACS", List("CPAM","CRAM").flatMap(fromShortName)), // MSA ?
-          Subject("Aide médicale de l'état pour les personnes sans papier", List("CPAM","CRAM").flatMap(fromShortName)), // MSA ?
-          Subject("Reconnaissance Handicap", List("MDPH").flatMap(fromShortName)), // MSA ?
-        )
-      ),
-      Category("Emploi","Recherche d'emploi, allocation chomage, ...", List("Pôle emploi","Mission locale").flatMap(fromShortName),
-        List(
-
-        )
-      ),
-      Category("Logement","Logement d'urgence, Droit au Logement...", List("CAF","MSA","Préf","Sous-Préf","Mairie").flatMap(fromShortName),
-        List(
-
-        )
-      ),
-      Category("Retraite","Droits retraite, versement, ...", List("CNAV","CARSAT","MSA").flatMap(fromShortName),
-        List(
-
-        )
-      ),
-      Category("Impôts / Argent", "Déclaration impôt, précarité financière, ...", List("DDFIP","DRFIP","BDF").flatMap(fromShortName),
-        List(
-
-        )
-      ),
-      Category("Papier et Titres","Titre de séjour, carte d'identité, passport, ...", List("Préf","Sous-Préf","Mairie").flatMap(fromShortName),
-        List(
-
-        )
-      ),
-      Category("Autre", "Vous ne savez pas quoi choisir", List("A+").flatMap(fromShortName),
-        List(
-
-        )
-      )
-    )
-  }
+  case class Subject(subject: String, organisations: Seq[Organisation])
+  case class Category(name: String, description: String, defaultOrganisations: Seq[Organisation], subjects: Seq[Subject])
 }

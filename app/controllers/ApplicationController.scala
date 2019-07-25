@@ -12,9 +12,9 @@ import play.api.data.validation.Constraints._
 import actions._
 import forms.FormsPlusMap
 import models._
-import org.joda.time.{DateTime}
+import org.joda.time.DateTime
 import org.webjars.play.WebJarsUtil
-import services.{ApplicationService, EventService, NotificationService, UserService}
+import services._
 import extentions.{Time, UUIDHelper}
 import extentions.Time.dateTimeOrdering
 
@@ -30,6 +30,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                                       applicationService: ApplicationService,
                                       notificationsService: NotificationService,
                                       eventService: EventService,
+                                      organisationService: OrganisationService,
                                       configuration: play.api.Configuration)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
   import forms.Models._
 
@@ -63,7 +64,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     val users = userService.byArea(request.currentArea.id).filter(_.instructor)
     val groupIds = users.flatMap(_.groupIds).distinct
     val organismeGroups = userService.groupByIds(groupIds).filter(_.organisationSetOrDeducted.nonEmpty)
-    Ok(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(users, organismeGroups, applicationForm))
+    val categories = organisationService.categories
+    Ok(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(users, organismeGroups, categories, applicationForm))
   }
 
   def createPost = loginAction { implicit request =>

@@ -1,0 +1,47 @@
+---
+- name: Social / Famille
+  description: Allocations familiales, aides et prestations sociales, etc.
+  defaultOrganisations: [CAF, MSA]
+  subjects:
+    - subject: Trop perçu à la suite d'un contrôle CAF
+      organisations: [CAF]
+    - subject: Long délais de versement de prestation sociale
+      organisations: [CAF, MSA]
+    - subject: Accompagnement pour la naissance ou le décès d'un proche
+      organisations: [CAF, MSA, CPAM]
+- name: Santé / Handicap
+  description: Assurance Maladie, CMU-C et ACS, AME, handicap, etc.
+  defaultOrganisations: [CPAM, CRAM, MSA, MDPH]
+  subjects:
+    - subject: Première inscription à l'assurance maladie
+      organisations: [CPAM, CRAM, MSA]
+    - subject: Renouvellement de CMU-C / ACS
+      organisations: [CPAM, CRAM]
+    - subject: Aide médicale de l'état pour les personnes en situation irrégulière
+      organisations: [CPAM, CRAM]
+    - subject: Reconnaissance Handicap
+      organisations: [MDPH]
+- name: Emploi
+  description: Démarches Pôle Emploi, allocations chômage, formation, etc.
+  defaultOrganisations: [Pôle emploi, Mission locale]
+  subjects: []
+- name: Logement
+  description: Assurance Maladie, CMU-C et ACS, AME, handicap, etc.
+  defaultOrganisations: [CAF, MSA, Préf, Sous-Préf, Mairie]
+  subjects: []
+- name: Retraite
+  description: Droits et demande de retraite, ASPA, pension de réversion, etc.
+  defaultOrganisations: [CNAV, CARSAT, MSA]
+  subjects: []
+- name: Impôts / Argent
+  description: Fiscalité, Surendettement, Précarité financière
+  defaultOrganisations: [DDFIP, DRFIP, BDF]
+  subjects: []
+- name: Papier / Titres
+  description: Titre de séjour, carte d'identité, passport, etc.
+  defaultOrganisations: [Préf, Sous-Préf, Mairie]
+  subjects: []
+- name: Autre
+  description: Ma demande concerne un autre sujet
+  defaultOrganisations: [A+]
+  subjects: []

@@ -24,7 +24,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-mailer" % "7.0.0",
   "com.sun.mail" % "javax.mail" % "1.6.1",
   "com.typesafe.play" %% "play-mailer-guice" % "7.0.0",
-  "com.typesafe.play" %% "play-json-joda" % "2.6.13"
+  "com.typesafe.play" %% "play-json-joda" % "2.6.13",
+  "net.jcazevedo" %% "moultingyaml" % "0.4.0"
 )
 // UI
 libraryDependencies ++= Seq(
@@ -43,3 +44,4 @@ libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.5"
 
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "fr.gouv.beta.binders._"
+
