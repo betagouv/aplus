@@ -46,7 +46,8 @@ object Organisation {
     val all = List(
       Category("Social et famille", "APL, RSA, ...", List("CAF","MSA").flatMap(fromShortName),
         List(
-          Subject("Trop perçu à la suite d'un contrôle CAF", List("CAF").flatMap(fromShortName))
+          Subject("Trop perçu à la suite d'un contrôle CAF", List("CAF").flatMap(fromShortName)),
+          Subject("Long délais de versement de prestation sociale", List("CAF","MSA").flatMap(fromShortName))
         )
       ),
       Category("Santé et Handicap", "CMU, AME, ACS, Affiliation, Reconnaissance Handicap...", List("CPAM","CRAM","MSA","MDPH").flatMap(fromShortName),
@@ -62,12 +63,12 @@ object Organisation {
 
         )
       ),
-      Category("Logement","Logement d'urgence, Droit au Logement...", List("CAF","MSA","Préf","Sous-préf","Mairie").flatMap(fromShortName),
+      Category("Logement","Logement d'urgence, Droit au Logement...", List("CAF","MSA","Préf","Sous-Préf","Mairie").flatMap(fromShortName),
         List(
 
         )
       ),
-      Category("Retraite","Droits retraite, versement, ...", List("CNAV","CARSAT").flatMap(fromShortName),
+      Category("Retraite","Droits retraite, versement, ...", List("CNAV","CARSAT","MSA").flatMap(fromShortName),
         List(
 
         )

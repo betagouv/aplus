@@ -13,7 +13,7 @@
     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
         @helper.form(routes.UserController.editGroupPost(userGroup.id), 'method -> "post") {
             <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" id="name" name="name" value="@userGroup.name" @if(!currentUser.admin) { disabled }>
+                <input class="mdl-textfield__input" type="text" id="name" name="name" value="@userGroup.name" @if(!currentUser.admin) { disabled } maxlength="50">
                 <label class="mdl-textfield__label" for="name">Nom du groupe</label>
             </div>
             <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">

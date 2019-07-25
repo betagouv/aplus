@@ -88,23 +88,42 @@
                 .mdl-radio.is-checked .mdl-radio__outer-circle {
                     background: none;
                 }
+
+                .mdl-textfield--no-padding {
+                    padding: 0px;
+                }
+                .mdl-textfield--no-padding .mdl-textfield__label {
+                    top: 3px;
+                }
+                .mdl-textfield--no-padding .mdl-textfield__label:after {
+                    bottom: 0px;
+                }
+                .mdl-textfield--no-padding.mdl-textfield--floating-label.is-focused .mdl-textfield__label, .mdl-textfield--no-padding.mdl-textfield--floating-label.is-dirty .mdl-textfield__label {
+                    top: -14px;
+                }
+                .margin-left-30px {
+                    margin-left: 30px;
+                }
+
+                .mdl-textfield.is-focused.mdl-textfield--floating-label .mdl-textfield__label {
+                    visibility: initial;
+                }
+                .mdl-textfield.is-focused .mdl-textfield__label {
+                    visibility: hidden;
+                }
         </style>
     }{
-            <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Créer une nouvelle demande en mode guidé
-            </h3>
+            <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h3>
             <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.create()">
                 Mode Avancé
             </a>
             <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
 
 
-
             @helper.form(action = routes.ApplicationController.createPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();") {
 
                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
-
-                    <h5 class="mdl-cell mdl-cell--12-col">Sur quelle thématique porte votre question ?</h5>
-
+                    
                     @for(category <- Organisation.Category.all.filter(_.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty)) {
                         <div class="mdl-cell mdl-cell--3-col mdl-cell--4-col-tablet mdl-cell--6-col-phone aplus-cat-button category-div" onclick="onCategoryChange(this)" data-category="@category">
                             <h4>@category.name</h4>
@@ -138,7 +157,7 @@
                         <h5 class="mdl-cell mdl-cell--12-col mdl-grid">Nature du problème rencontré</h5>
                         <div class="aplus-subjects">
                         @for(category <- Organisation.Category.all.filter(_.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty)) {
-                                @for((subject,index) <- category.subjects.zipWithIndex) {
+                                @for((subject,index) <- category.subjects.filter(_.organisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty).zipWithIndex) {
                                     <label class="mdl-cell mdl-cell--12-col mdl-radio mdl-js-radio mdl-js-ripple-effect subject-label invisible" for="subject-@category-@index" data-category="@category">
                                         <input type="radio" id="subject-@category-@index" class="mdl-radio__button" name="selected-subject" value="@subject.subject" onchange="onSubjectChange(this)" data-organisations="@subject.organisations.map(_.shortName).mkString(",")">
                                         <span class="mdl-radio__label">@subject.subject</span>
@@ -146,8 +165,12 @@
                                 }
                                 <label class="mdl-cell mdl-cell--12-col mdl-radio mdl-js-radio mdl-js-ripple-effect subject-label invisible" for="subject-autre-@category" data-category="@category">
                                     <input type="radio" id="subject-autre-@category" class="mdl-radio__button" name="selected-subject" value="other" onchange="onSubjectChange(this)" data-organisations="@category.defaultOrganisations.map(_.shortName).mkString(",")">
-                                    <span class="mdl-radio__label">Autre raison</span>
+                                    <span class="mdl-radio__label">Autre</span>
                                 </label>
+                            }
+
+                            @helper.input(applicationForm("subject"), 'label -> "Précisez ici une autre raison", 'floated -> "No", 'class -> "invisible mdl-textfield--no-padding margin-left-30px", 'divId -> "form-other-subject") { (id, name, value, args) =>
+                                <input class="mdl-textfield__input mdl-color--white" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) onkeyup="showEndOfForm()">
                             }
                         </div>
                         <script>
@@ -173,22 +196,21 @@
                                         thread.classList.add("invisible");
                                     }
                                });
-                               document.getElementById("form-end").classList.remove("invisible")
+                               if(caller.value === "other") {
+                                   document.getElementById("form-other-subject").focus();
+                               }
+                               else {
+                                    showEndOfForm();
+                               }
+                            }
+                            function showEndOfForm() {
+                                document.getElementById("form-end").classList.remove("invisible")
                             }
                         </script>
                     </div>
 
-
-                    <div id="form-other-subject" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing invisible">
-                        <h5 class="mdl-cell mdl-cell--12-col">Autre raison ? Précisez-là</h5>
-                        @helper.input(applicationForm("subject"), 'label -> "Précisez ici une autre raison") { (id, name, value, args) =>
-                            <input class="mdl-textfield__input mdl-color--white" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-                        }
-
-                    </div>
-
                     <div id="form-end" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing invisible">
-                        <h5 class="mdl-cell mdl-cell--12-col">Organismes recommandés pour la demande</h5>
+                        <h5 class="mdl-cell mdl-cell--12-col">Confirmer les organismes à contacter</h5>
 
 
                         <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 20px">
@@ -203,7 +225,7 @@
                                         <tr>
                                             <th class="mdl-data-table__cell--non-numeric" colspan="2">
                                                 <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                    <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);" value="@organisation" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisation.shortName})){ checked="checked" }>
+                                                    <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);" value="@organisation.shortName" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisation.shortName})){ checked="checked" }>
                                                     <span class="mdl-checkbox__label">@organisationGroup.name (@organisation.name) </span>
                                                 </label></th>
                                         </tr>
@@ -239,7 +261,7 @@
                         <br>
                         <br>
                         <h5 class="mdl-cell mdl-cell--12-col">Description de la demande</h5>
-                        <div class="info-box"><b>Soyez brief</b>, la personne qui vous lira vous en remerciera, la réponse en sera d'autant plus rapide.</div>
+                        <div class="info-box"><b>Soyez bref</b>, la personne qui vous lira vous en remerciera, la réponse en sera d'autant plus rapide.</div>
                         @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
                             <textarea class="mdl-textfield__input mdl-color--white" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
                         }
@@ -249,13 +271,26 @@
                         <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
                         @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"))
                         </div>
-                        <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset">
+                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-mandat" style="height: unset; margin-bottom: 10px;">
+                            <input type="checkbox" id="checkbox-mandat" name="validate" class="mdl-checkbox__input" value="true">
+                            <span class="mdl-checkbox__label">Je confirme que l'usager m'a donné mandat pour effectuer cette demande.</span>
+                        </label> <br>
+                        <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset" disabled>
                             Envoyer ma demande
                         </button>
                     </div>
             }
         <script type="text/javascript">
 
+                var checkbox = document.querySelector("#checkbox-mandat");
+
+                checkbox.addEventListener('click', function() {
+                    if(checkbox.checked) {
+                        document.querySelector("#review-validation").disabled = false;
+                    } else {
+                        document.querySelector("#review-validation").disabled = true;
+                    }
+                });
                 function showHideUsers(sender) {
                     var thead = sender.parentNode.parentNode.parentNode.parentNode;
                     var tbody = thead.nextElementSibling;
