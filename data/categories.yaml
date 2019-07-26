@@ -66,15 +66,15 @@
     - subject: Dossier de surendettement
       organisations: [BDF]
 - name: Papiers / Titres
-  description: Vol, perte, première demande ou renouvellement de papiers ou titres, etc.
+  description: Carte d'identité, passeport, titre de séjour, etc.
   defaultOrganisations: [Préf, Sous-Préf, Mairie]
   subjects:
-    - subject: Renouvellement du titre de séjour
-      organisations: [Préf,Sous-Préf]
     - subject: Vol, perte, renouvellement de papiers
       organisations: [Mairie]
-    - subject: Première demande de pièce d'identité
+    - subject: Première demande de carte d'identité ou passeport
       organisations: [Mairie]
+    - subject: Renouvellement du titre de séjour
+      organisations: [Préf,Sous-Préf]
 - name: Autre
   description: Ma demande concerne un autre sujet
   defaultOrganisations: [A+]
