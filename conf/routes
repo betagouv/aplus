@@ -9,6 +9,8 @@ GET      /                           controllers.HomeController.index
 # Application
 GET      /nouvelle-demande          controllers.ApplicationController.create
 POST     /nouvelle-demande          controllers.ApplicationController.createPost
+POST     /nouvelle-demande-guide          controllers.ApplicationController.createSimplifiedPost
+GET      /nouvelle-demande-guide          controllers.ApplicationController.createSimplified
 GET      /toutes-les-demandes        controllers.ApplicationController.all
 GET      /as/:userId/toutes-les-demandes        controllers.ApplicationController.allAs(userId: java.util.UUID)
 GET      /toutes-les-demandes.csv               controllers.ApplicationController.allCSV

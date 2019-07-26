@@ -137,7 +137,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     "insee_code",
     "creation_date",
     "create_by_user_id",
-    "area"         //TODO rename to area_id
+    "area",        //TODO rename to area_id
+    "organisation"
   ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
 
 
@@ -149,7 +150,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
          ${group.inseeCode},
          ${group.creationDate},
          ${group.createByUserId}::uuid,
-         ${group.area}::uuid
+         ${group.area}::uuid,
+         ${group.organisation}
       )"""
       .executeUpdate() == 1
   }
@@ -158,7 +160,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     SQL"""
           UPDATE user_group SET
           name = ${group.name},
-          insee_code = ${group.inseeCode}
+          insee_code = ${group.inseeCode},
+          organisation = ${group.organisation}
           WHERE id = ${group.id}::uuid
        """.executeUpdate() == 1
   }

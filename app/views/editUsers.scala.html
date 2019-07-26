@@ -38,10 +38,10 @@
         }
     </script>
 } {                           
-  <div>
+  <div class="mdl-cell mdl-cell--12-col">
   @helper.form(action = action) {
     @if(form.hasGlobalErrors) {
-      <div style="color: red; font-weight: bold;">@form.globalErrors.mkString(", ")</div>
+      <div style="color: red; font-weight: bold;">@form.globalErrors.flatMap(_.messages).mkString(", ")</div>
     }
 
     <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table" style="white-space: normal;">
@@ -54,7 +54,6 @@
           <th class="mdl-data-table__cell--non-numeric">Email</th>
           <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
           <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
-          <th class="mdl-data-table__cell--non-numeric"></th>
         </tr>
       </thead>
       <tbody>
@@ -100,7 +99,6 @@
                   <th class="mdl-data-table__cell--non-numeric">Email</th>
                   <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
                   <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
-                  <th class="mdl-data-table__cell--non-numeric"></th>
               </tr>
           }
       }

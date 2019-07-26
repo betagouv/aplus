@@ -13,13 +13,21 @@
     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
         @helper.form(routes.UserController.editGroupPost(userGroup.id), 'method -> "post") {
             <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" id="name" name="name" value="@userGroup.name" @if(!currentUser.admin) { disabled }>
+                <input class="mdl-textfield__input" type="text" id="name" name="name" value="@userGroup.name" @if(!currentUser.admin) { disabled } maxlength="50">
                 <label class="mdl-textfield__label" for="name">Nom du groupe</label>
             </div>
             <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" pattern="[0-9AB]{3,5}" id="insee-code" name="insee-code" value="@userGroup.inseeCode" @if(!currentUser.admin) { disabled }>
+                <input class="mdl-textfield__input" type="text" pattern="[0-9AB]{2,5}" id="insee-code" name="insee-code" value="@userGroup.inseeCode" @if(!currentUser.admin) { disabled }>
                 <label class="mdl-textfield__label" for="insee-code">Code INSEE (département ou commune)</label>
                 <span class="mdl-textfield__error">Ce n'est pas un code INSEE valide (code département ou commune)</span>
+            </div>
+            <div class="mdl-cell mdl-cell--12-col">
+                <select id="organisation" name="organisation">
+                    <option @if(userGroup.organisation.isEmpty){selected} style="font-weight: bold" value="">Organisme non-référencé</option>
+                    @for(organisation <- Organisation.all) {
+                        <option value="@organisation.shortName" @if(userGroup.organisation.contains(organisation.shortName)){selected}>@organisation.shortName : @organisation.name</option>
+                    }
+                </select>
             </div>
             @if(currentUser.admin) {
                 <div class="mdl-cell mdl-cell--12-col">

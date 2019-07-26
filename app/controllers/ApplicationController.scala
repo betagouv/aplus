@@ -12,9 +12,9 @@ import play.api.data.validation.Constraints._
 import actions._
 import forms.FormsPlusMap
 import models._
-import org.joda.time.{DateTime}
+import org.joda.time.DateTime
 import org.webjars.play.WebJarsUtil
-import services.{ApplicationService, EventService, NotificationService, UserService}
+import services._
 import extentions.{Time, UUIDHelper}
 import extentions.Time.dateTimeOrdering
 
@@ -30,6 +30,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                                       applicationService: ApplicationService,
                                       notificationsService: NotificationService,
                                       eventService: EventService,
+                                      organisationService: OrganisationService,
                                       configuration: play.api.Configuration)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
   import forms.Models._
 
@@ -49,7 +50,9 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       "description" -> nonEmptyText,
       "infos" -> FormsPlusMap.map(nonEmptyText.verifying(maxLength(30))),
       "users" -> list(uuid).verifying("Vous devez sélectionner au moins un agent", _.nonEmpty),
-      "organismes" -> list(text)
+      "organismes" -> list(text),
+      "category" -> optional(text),
+      "selected-subject" -> optional(text)
     )(ApplicationData.apply)(ApplicationData.unapply)
   )
 
@@ -58,7 +61,21 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     Ok(views.html.createApplication(request.currentUser, request.currentArea)(userService.byArea(request.currentArea.id).filter(_.instructor), applicationForm))
   }
 
-  def createPost = loginAction { implicit request =>
+  def createSimplified = loginAction { implicit request =>
+    eventService.info("APPLICATION_FORM_SHOWED", s"Visualise le formulaire simplifié de création de demande")
+    val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
+    val groupIds = instructors.flatMap(_.groupIds).distinct
+    val organismeGroups = userService.groupByIds(groupIds).filter(_.organisationSetOrDeducted.nonEmpty)
+    val categories = organisationService.categories
+    Ok(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, None, applicationForm))
+  }
+
+  def createPost = createPostBis(false)
+
+  def createSimplifiedPost = createPostBis(true)
+
+
+  private def createPostBis(simplified: Boolean) = loginAction { implicit request =>
     request.currentUser.helper match {
        case false => {
          eventService.warn("APPLICATION_CREATION_UNAUTHORIZED", s"L'utilisateur n'a pas de droit de créer une demande")
@@ -70,7 +87,14 @@ class ApplicationController @Inject()(loginAction: LoginAction,
              // binding failure, you retrieve the form containing errors:
              val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
              eventService.info("APPLICATION_CREATION_INVALID", s"L'utilisateur essai de créé une demande invalide")
-             BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, formWithErrors))
+             if(simplified) {
+               val groupIds = instructors.flatMap(_.groupIds).distinct
+               val organismeGroups = userService.groupByIds(groupIds).filter(_.organisationSetOrDeducted.nonEmpty)
+               val categories = organisationService.categories
+               BadRequest(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, formWithErrors("category").value, formWithErrors))
+             } else {
+               BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, formWithErrors))
+             }
            },
            applicationData => {
              val invitedUsers: Map[UUID, String] = applicationData.users.flatMap {  id =>
@@ -85,7 +109,9 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                applicationData.infos,
                invitedUsers,
                request.currentArea.id,
-               false)
+               false,
+               hasSelectedSubject = applicationData.selectedSubject.contains(applicationData.subject),
+               category = applicationData.category)
              if(applicationService.createApplication(application)) {
                notificationsService.newApplication(application)
                eventService.info("APPLICATION_CREATED", s"La demande ${application.id} a été créé", Some(application))

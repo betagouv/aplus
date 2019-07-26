@@ -8,7 +8,12 @@
        </label>
      }
      case fieldType: String => {
-       <div class="mdl-@fieldType mdl-js-@fieldType @if(fieldType == "textfield") { mdl-textfield--floating-label } @if(elements.hasErrors) {is-invalid} @elements.args.getOrElse('class, "")">
+       <div class="mdl-@fieldType mdl-js-@fieldType @if(fieldType == "textfield" && elements.args.getOrElse('floated, "Yes") == "Yes") { mdl-textfield--floating-label } @if(elements.hasErrors) {is-invalid} @elements.args.getOrElse('class, "")"
+          @elements.args.get('divId) match {
+             case Some(id) => { id="@id" }
+              case None => {}
+            }
+       >
          @elements.input
          <label class="mdl-@{fieldType}__label" for="@elements.field.id">@elements.args('label)</label>
          @if(elements.hasErrors) {

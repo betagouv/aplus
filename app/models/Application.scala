@@ -20,7 +20,9 @@ case class Application(id: UUID,
                        seenByUserIds: List[UUID] = List(),
                        usefulness: Option[String] = None,
                        closedDate: Option[DateTime] = None,
-                       expertInvited: Boolean = false) extends AgeModel {
+                       expertInvited: Boolean = false,
+                       hasSelectedSubject: Boolean = false,
+                       category: Option[String] = None) extends AgeModel {
 
    lazy val searchData = {
      val stripChars = "\"<>'"
@@ -67,10 +69,14 @@ case class Application(id: UUID,
            answer.copy(userInfos = answer.userInfos.map(_.map{ case (key,value) => key -> s"**$key (${value.length})**" }),
              message = s"** Message de ${answer.message.length} caractères **")
        }
-       copy(userInfos = newUsersInfo,
-         subject = s"** Sujet de ${subject.length} caractères **",
+       val result = copy(userInfos = newUsersInfo,
          description = s"** Description de ${description.length} caractères **",
          answers = newAnswers)
+       if(hasSelectedSubject) {
+         result
+       } else {
+         result.copy(subject = s"** Sujet de ${subject.length} caractères **")
+       }
    }
 
    // Security

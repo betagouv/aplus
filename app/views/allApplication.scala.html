@@ -141,6 +141,7 @@
                             <th class="mdl-data-table__cell--non-numeric">Utile</th>
                             <th class="mdl-data-table__cell--non-numeric">Non pertinente</th>
                             <th class="mdl-data-table__cell--non-numeric">Sujet</th>
+                            <th class="mdl-data-table__cell--non-numeric">Catégorie</th>
                             <th class="mdl-data-table__cell--non-numeric"></th>
                             @if(user.admin){  <th class="mdl-data-table__cell--non-numeric" style="width: 20px">Détails</th> }
                         </tr>
@@ -171,6 +172,7 @@
                             }</b></td>
                             <td class="mdl-data-table__cell--non-numeric">@if(application.irrelevant) { <span style="color: red; font-weight: bold;">Oui</span> } else { Non } </td>
                             <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
+                            <td class="mdl-data-table__cell--non-numeric">@application.category.getOrElse("")</td>
                             <td class="mdl-data-table__cell--non-numeric search-cell"></td>
                             @if(user.admin){ <td class="mdl-data-table__cell--non-numeric"> <a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                                 <i class="material-icons">info_outline</i>

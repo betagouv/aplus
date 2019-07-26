@@ -8,7 +8,7 @@
                 <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile">@info.capitalize</td>
                 <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile">
                 @helper.input(infoField, 'label -> s"Saisir $info de l'usager ici") { (id, name, value, args) =>
-                    <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+                    <input class="mdl-textfield__input mdl-color--white" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
                 }
                 </td>
                 <td></td>
@@ -25,13 +25,13 @@
             </select><br>
             <div class="mdl-textfield mdl-js-textfield invisible">
                 <label class="mdl-textfield__label" for="other-type">Saisissez le type d'information</label>
-                <input class="mdl-textfield__input" name="other-type" type="text" id="other-type" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
+                <input class="mdl-textfield__input mdl-color--white" name="other-type" type="text" id="other-type" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
             </div>
         </td>
         <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile">
             <div class="mdl-textfield mdl-js-textfield invisible">
                 <label class="mdl-textfield__label" for="other-type-value">Saisissez l'information </label>
-                <input class="mdl-textfield__input" type="text" name="other-type-value" id="other-type-value" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
+                <input class="mdl-textfield__input mdl-color--white" type="text" name="other-type-value" id="other-type-value" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
             </div>
         </td>
         <td class="mdl-data-table__cell--non-numeric"><button class="mdl-button mdl-js-button mdl-button--fab" type="button" id="add-infos__ok-button" onclick="addInfo();" disabled="disabled">
@@ -73,7 +73,7 @@
             var newNode = document.createElement('tr');
             newNode.innerHTML = '<td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile">'+infoName+'</td> \
                     <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile"><div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label"> \
-                        <input class="mdl-textfield__input" type="text" id="sample1" name="infos['+infoName+']" value="'+valueInput.value+'"> \
+                        <input class="mdl-textfield__input mdl-color--white" type="text" id="sample1" name="infos['+infoName+']" value="'+valueInput.value+'"> \
                         <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+' de l\'usager ici</label> \
                     </div></td> \
                     <td class="mdl-data-table__cell--non-numeric"> \

@@ -7,8 +7,9 @@ import actions.{LoginAction, RequestWithUserData}
 import extentions.{Hash, Time, UUIDHelper}
 import forms.FormsPlusMap
 import models.User.date
-import models.{Area, User, UserGroup}
+import models.{Area, Organisation, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
+import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.data.Forms._
@@ -180,13 +181,29 @@ class UserController @Inject()(loginAction: LoginAction,
           BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost(groupId)))
         },
         users => {
-          if (userService.add(users.map(_.copy(groupIds = List(groupId))))) {
-            eventService.info("ADD_USER_DONE", s"Utilisateurs ajouté")
-            Redirect(routes.UserController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
-          } else {
-            val form = usersForm.fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne)")
-            eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD")
-            InternalServerError(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
+          try {
+            if (userService.add(users.map(_.copy(groupIds = List(groupId))))) {
+              eventService.info("ADD_USER_DONE", s"Utilisateurs ajouté")
+              Redirect(routes.UserController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
+            } else {
+              val form = usersForm.fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
+              eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD 1")
+              InternalServerError(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
+            }
+          } catch {
+            case ex: PSQLException =>
+              val EmailErrorPattern = """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
+              val errorMessage = EmailErrorPattern.findFirstIn(ex.getServerErrorMessage.toString) match {
+                case Some(email) => s"Un utilisateur avec l'adresse $email existe déjà."
+                case _ =>  "Erreur d'insertion dans la base de donnée : contacter l'administrateur."
+              }
+              val form = usersForm.fill(users).withGlobalError(errorMessage)
+              eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}")
+              BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
+            case _: Throwable =>
+              val form = usersForm.fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 2)")
+              eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD. Exception inconnue.")
+              InternalServerError(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
           }
         }
       )
@@ -256,7 +273,7 @@ class UserController @Inject()(loginAction: LoginAction,
           addGroupForm.bindFromRequest.fold(
             formWithErrors => {
               eventService.error("EDIT_USER_GROUP_ERROR", s"Essai d'edition d'un groupe avec des erreurs de validation")
-              BadRequest("Impossible de modifier le groupe (erreur de formulaire")
+              BadRequest("Impossible de modifier le groupe (erreur de formulaire)")
             },
             group => {
               if (userService.edit(group.copy(id = id))) {
@@ -279,6 +296,7 @@ class UserController @Inject()(loginAction: LoginAction,
       "creationDate" -> ignored(DateTime.now(timeZone)),
       "create-by-user-id" -> ignored(request.currentUser.id),
       "area" -> ignored(request.currentArea.id),
+      "organisation" -> optional(text)
     )(UserGroup.apply)(UserGroup.unapply)
   )
 

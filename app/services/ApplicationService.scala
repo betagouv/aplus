@@ -51,7 +51,9 @@ class ApplicationService @Inject()(db: Database) {
     "seen_by_user_ids",
     "usefulness",
     "closed_date",
-    "expert_invited"
+    "expert_invited",
+    "has_selected_subject",
+    "category"
   ).map(application => application.copy(creationDate = application.creationDate.withZone(Time.dateTimeZone), 
                     answers = application.answers.map(answer => answer.copy(creationDate = answer.creationDate.withZone(Time.dateTimeZone)))))
   
@@ -158,30 +160,33 @@ class ApplicationService @Inject()(db: Database) {
       case (key, value) =>
          key.toString -> value
     })
-    SQL(
-      """
-          INSERT INTO application VALUES (
-            {id}::uuid,
-            {creation_date},
-            {creator_user_name},
-            {creator_user_id}::uuid,
-            {subject},
-            {description},
-            {user_infos},
-            {invited_users},
-            {area}::uuid
+    SQL"""
+          INSERT INTO application (
+            id,
+            creation_date,
+            creator_user_name,
+            creator_user_id,
+            subject,
+            description,
+            user_infos,
+            invited_users,
+            area,
+            has_selected_subject,
+            category
+            ) VALUES (
+            ${newApplication.id}::uuid,
+            ${newApplication.creationDate},
+            ${newApplication.creatorUserName},
+            ${newApplication.creatorUserId}::uuid,
+            ${newApplication.subject},
+            ${newApplication.description},
+            ${Json.toJson(newApplication.userInfos)},
+            ${invitedUserJson},
+            ${newApplication.area}::uuid,
+            ${newApplication.hasSelectedSubject},
+            ${newApplication.category}
           )
-      """).on(
-      'id ->   newApplication.id,
-      'creation_date -> newApplication.creationDate,
-      'creator_user_name -> newApplication.creatorUserName,
-      'creator_user_id -> newApplication.creatorUserId,
-      'subject -> newApplication.subject,
-      'description -> newApplication.description,
-      'user_infos -> Json.toJson(newApplication.userInfos),
-      'invited_users -> invitedUserJson,
-      'area -> newApplication.area
-    ).executeUpdate() == 1
+      """.executeUpdate() == 1
   }
   
   def add(applicationId: UUID, answer: Answer, expertInvited: Boolean = false) = db.withTransaction { implicit connection =>

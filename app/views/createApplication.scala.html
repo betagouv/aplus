@@ -19,7 +19,10 @@
         </style>
     }{
         <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
-            <h3 class="mdl-cell mdl-cell--12-col">Nouvelle demande</h3>
+            <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h3>
+            <a class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.createSimplified()">
+                Mode Guidé
+            </a>
             <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
             @helper.form(action = routes.ApplicationController.createPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();") {
                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
@@ -53,7 +56,7 @@
                                 }
 
                                 @for(user <- orgUsers) {
-                                    <tr>
+                                    <tr class="invisible">
                                         <td style="width: 95px">
                                             <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
