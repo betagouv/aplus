@@ -109,7 +109,9 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                applicationData.infos,
                invitedUsers,
                request.currentArea.id,
-               false)
+               false,
+               selectedSubject = applicationData.selectedSubject.contains(applicationData.subject),
+               category = applicationData.category)
              if(applicationService.createApplication(application)) {
                notificationsService.newApplication(application)
                eventService.info("APPLICATION_CREATED", s"La demande ${application.id} a été créé", Some(application))
