@@ -4,43 +4,77 @@
   defaultOrganisations: [CAF, MSA]
   subjects:
     - subject: Trop perçu à la suite d'un contrôle CAF
-      organisations: [CAF]
-    - subject: Long délais de versement de prestation sociale
+      organisations: [CAF, MSA]
+    - subject: Délai d'étude ou de versement d'une aide anormalement long
       organisations: [CAF, MSA]
     - subject: Accompagnement pour la naissance ou le décès d'un proche
-      organisations: [CAF, MSA, CPAM]
+      organisations: [CAF, MSA, CPAM, CRAM]
 - name: Santé / Handicap
   description: Assurance Maladie, CMU-C et ACS, AME, handicap, etc.
   defaultOrganisations: [CPAM, CRAM, MSA, MDPH]
   subjects:
     - subject: Première inscription à l'assurance maladie
       organisations: [CPAM, CRAM, MSA]
+    - subject: Remboursement de soins médicaux
+      organisations: [CPAM, CRAM, MSA]
     - subject: Renouvellement de CMU-C / ACS
-      organisations: [CPAM, CRAM]
-    - subject: Aide médicale de l'état pour les personnes en situation irrégulière
+      organisations: [CPAM, CRAM, MSA]
+    - subject: Aide médicale de l'état pour les personnes en situation irrégulière (AME)
       organisations: [CPAM, CRAM]
     - subject: Reconnaissance Handicap
       organisations: [MDPH]
 - name: Emploi
-  description: Démarches Pôle Emploi, allocations chômage, formation, etc.
+  description: Démarches Pôle emploi, allocations chômage, formation, etc.
   defaultOrganisations: [Pôle emploi, Mission locale]
-  subjects: []
+  subjects:
+    - subject: Inscription à Pôle Emploi
+      organisations: [Pôle emploi]
+    - subject: Dossier Pôle Emploi complexe
+      organisations: [Pôle emploi]
+    - subject: Radiation de Pôle Emploi
+      organisations: [Pôle emploi]
+    - subject: Formation
+      organisations: [Pôle emploi]
 - name: Logement
-  description: Assurance Maladie, CMU-C et ACS, AME, handicap, etc.
+  description: Allocations logement, hébergement d'urgence, etc.
   defaultOrganisations: [CAF, MSA, Préf, Sous-Préf, Mairie]
-  subjects: []
+  subjects:
+    - subject: Demande d'un hébergement d'urgence
+      organisations: [Mairie,CCAS,Département]
+    - subject: Demande d'une allocation logement (APL, ALS, ALF)
+      organisations: [CAF, MSA]
+    - subject: Expulsion du logement
+      organisations: [Mairie,Préf,Sous-Préf]
 - name: Retraite
   description: Droits et demande de retraite, ASPA, pension de réversion, etc.
   defaultOrganisations: [CNAV, CARSAT, MSA]
-  subjects: []
+  subjects:
+    - subject: Préparation de la retraite et première demande
+      organisations: [CNAV,CARSAT,MSA]
+    - subject: Demande de l'allocation de solidarité aux personnes âgées (ASPA)
+      organisations: [CNAV, CARSAT, MSA]
+    - subject: Versements de la pension de retraite
+      organisations: [CNAV, CARSAT, MSA]
+    - subject: Pension de réversion
+      organisations: [CNAV, CARSAT, MSA]
 - name: Impôts / Argent
   description: Fiscalité, Surendettement, Précarité financière
   defaultOrganisations: [DDFIP, DRFIP, BDF]
-  subjects: []
+  subjects:
+    - subject: Impôt
+      organisations: [DDFIP, DRFIP]
+    - subject: Surendettement
+      organisations: [BDF]
 - name: Papier / Titres
   description: Titre de séjour, carte d'identité, passport, etc.
   defaultOrganisations: [Préf, Sous-Préf, Mairie]
-  subjects: []
+  subjects:
+    - subject: Renouvellement du titre de séjour
+      organisations: [Préf,Sous-Préf]
+    - subject: Vol, perte, renouvellement de papiers
+      organisations: [Mairie]
+    - subject: Première demande de Pièces d'identités
+      organisations: [Mairie]
 - name: Autre
   description: Ma demande concerne un autre sujet
   defaultOrganisations: [A+]
