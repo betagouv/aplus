@@ -1,315 +1,313 @@
 @import models._
 @import extentions.MDLForms._
 @import models.Organisation.Category
-@(user: User, area: Area)(users: List[User], organisationGroups: List[UserGroup], categories: Seq[Category], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(user: User, area: Area)(users: List[User], organisationGroups: List[UserGroup], categories: Seq[Category], selectedCategory: Option[String], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
-    @main(user, area)(s"Nouvelle demande")  {
-        <style>
-                .mdl-data-table td {
-                    padding: 0px 18px;
-                }
+@main(user, area)(s"Nouvelle demande"){
+<style>
+        .mdl-data-table td {
+            padding: 0px 18px;
+        }
 
-                @@media screen and (max-width: 750px) {
-                    .mdl-data-table__cell--split-in-mobile {
-                        display: block;
-                        float: left;                 
-                        width: 100%;
-                        height: initial !important;
-                    }
-                }
+        @@media screen and (max-width: 750px) {
+        .mdl-data-table__cell--split-in-mobile {
+            display: block;
+            float: left;
+            width: 100%;
+            height: initial !important;
+        }
+        }
 
-                .aplus-cat-button {
-                    background-color: #FEFEFE;
-                    padding: 20px;
-                    box-sizing: border-box;
-                    border-radius: 5px;
-                    cursor: pointer;
-                }
+        .aplus-cat-button {
+            background-color: #FEFEFE;
+            padding: 20px;
+            box-sizing: border-box;
+            border-radius: 5px;
+            cursor: pointer;
+        }
 
-                .aplus-cat-button:hover {
-                    background-color: #C4C4C4;
-                }
+        .aplus-cat-button:hover {
+            background-color: #C4C4C4;
+        }
 
-                .aplus-cat-button h4 {
-                    margin: 0px;
-                    font-size: 16px;
-                    font-weight: bold;
-                    line-height: 21px;
-                    color: #555555;
-                }
+        .aplus-cat-button h4 {
+            margin: 0px;
+            font-size: 16px;
+            font-weight: bold;
+            line-height: 21px;
+            color: #555555;
+        }
 
-                .aplus-cat-button span {
-                    font-size: 12px;
-                    font-weight: 600;
-                    line-height: 16px;
-                    color: #888888;
-                }
+        .aplus-cat-button span {
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 16px;
+            color: #888888;
+        }
 
-                .aplus-cat-button p {
-                    margin-top: 10px;
-                    font-size: 14px;
-                    font-weight: 600;
-                    line-height: 20px;
-                }
+        .aplus-cat-button p {
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 20px;
+        }
 
-                .aplus-cat-button--selected {
-                    border: #C4C4C4 solid 8px;
-                    padding: 12px;
-                }
+        .aplus-cat-button--selected {
+            border: #C4C4C4 solid 8px;
+            padding: 12px;
+        }
 
-                .aplus-cat-button--selected:hover {
-                    border: #888888 solid 8px;
-                }
+        .aplus-cat-button--selected:hover {
+            border: #888888 solid 8px;
+        }
 
-                .aplus-subjects .mdl-radio__label {
-                    font-size: 15px;  font-weight: 600;	line-height: 18px;
-                }
+        .aplus-subjects .mdl-radio__label {
+            font-size: 15px;  font-weight: 600;	line-height: 18px;
+        }
 
-                .mdl-data-table {
-                    background-color: initial;
-                    border: none;
-                }
-                .mdl-data-table td {
-                    border-top: none;
-                    border-bottom: none;
-                }
-                .mdl-textfield__input {
-                    border-radius: 5px;
-                    padding-left: 10px;
-                }
-                .mdl-textfield__label {
-                    padding-left: 10px;
-                }
-                .mdl-checkbox__box-outline {
-                    background-color: white;
-                }
-                .mdl-radio .mdl-radio__outer-circle {
-                    background-color: white;
-                }
-                .mdl-radio.is-checked .mdl-radio__outer-circle {
-                    background: none;
-                }
+        .mdl-data-table {
+            background-color: initial;
+            border: none;
+        }
+        .mdl-data-table td {
+            border-top: none;
+            border-bottom: none;
+        }
+        .mdl-textfield__input {
+            border-radius: 5px;
+            padding-left: 10px;
+        }
+        .mdl-textfield__label {
+            padding-left: 10px;
+        }
+        .mdl-checkbox__box-outline {
+            background-color: white;
+        }
+        .mdl-radio .mdl-radio__outer-circle {
+            background-color: white;
+        }
+        .mdl-radio.is-checked .mdl-radio__outer-circle {
+            background: none;
+        }
 
-                .mdl-textfield--no-padding {
-                    padding: 0px;
-                }
-                .mdl-textfield--no-padding .mdl-textfield__label {
-                    top: 3px;
-                }
-                .mdl-textfield--no-padding .mdl-textfield__label:after {
-                    bottom: 0px;
-                }
-                .mdl-textfield--no-padding.mdl-textfield--floating-label.is-focused .mdl-textfield__label, .mdl-textfield--no-padding.mdl-textfield--floating-label.is-dirty .mdl-textfield__label {
-                    top: -14px;
-                }
-                .margin-left-30px {
-                    margin-left: 30px;
-                }
+        .mdl-textfield--no-padding {
+            padding: 0px;
+        }
+        .mdl-textfield--no-padding .mdl-textfield__label {
+            top: 3px;
+        }
+        .mdl-textfield--no-padding .mdl-textfield__label:after {
+            bottom: 0px;
+        }
+        .mdl-textfield--no-padding.mdl-textfield--floating-label.is-focused .mdl-textfield__label, .mdl-textfield--no-padding.mdl-textfield--floating-label.is-dirty .mdl-textfield__label {
+            top: -14px;
+        }
+        .margin-left-30px {
+            margin-left: 30px;
+        }
 
-                .mdl-textfield.is-focused.mdl-textfield--floating-label .mdl-textfield__label {
-                    visibility: initial;
-                }
-                .mdl-textfield.is-focused .mdl-textfield__label {
-                    visibility: hidden;
-                }
-        </style>
-    }{
-            <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h3>
-            <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.create()">
-                Mode Avancé
-            </a>
-            <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
+        .mdl-textfield.is-focused.mdl-textfield--floating-label .mdl-textfield__label {
+            visibility: initial;
+        }
+        .mdl-textfield.is-focused .mdl-textfield__label {
+            visibility: hidden;
+        }
+</style>
+}{
+    <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h3>
+    <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.create()">
+        Mode Avancé
+    </a>
+    <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
 
+    @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();") {
 
-            @helper.form(action = routes.ApplicationController.createPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();") {
+        <div class="mdl-cell mdl-cell--12-col mdl-grid">
 
-                <div class="mdl-cell mdl-cell--12-col mdl-grid">
-                    
-                    @for(category <- categories.filter(_.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty)) {
-                        <div class="mdl-cell mdl-cell--3-col mdl-cell--4-col-tablet mdl-cell--6-col-phone aplus-cat-button category-div" onclick="onCategoryChange(this)" data-category="@category">
-                            <h4>@category.name</h4>
-                            <span>@category.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).mkString("/")</span>
-                            <p>@category.description</p>
-                        </div>
-                    }
-                    <script>
-                            function onCategoryChange(caller) {
-                                Array.from(document.getElementsByClassName("subject-label")).forEach(function(label){
-                                    if(label.getAttribute("data-category") === caller.getAttribute("data-category")) {
-                                        label.classList.remove("invisible");
-                                    } else {
-                                        label.classList.add("invisible");
-                                    }
-                                    changeMDLInputChecked(label.getElementsByTagName("input")[0], false);
-                                });
-                                Array.from(document.getElementsByClassName("category-div")).forEach(function(div){
-                                    div.classList.remove("aplus-cat-button--selected");
-                                });
-                                caller.classList.add("aplus-cat-button--selected");
-                                document.getElementById("form-problem").classList.remove("invisible");
-                                document.getElementById("form-other-subject").classList.add("invisible");
-                                document.getElementById("form-end").classList.add("invisible");
-                            }
-                    </script>
-
-
-                    <div id="form-problem" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing invisible">
-                        <h5 class="mdl-cell mdl-cell--12-col mdl-grid">Nature du problème rencontré</h5>
-                        <div class="aplus-subjects">
-                        @for(category <- categories.filter(_.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty)) {
-                                @for((subject,index) <- category.subjects.filter(_.organisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty).zipWithIndex) {
-                                    <label class="mdl-cell mdl-cell--12-col mdl-radio mdl-js-radio mdl-js-ripple-effect subject-label invisible" for="subject-@category-@index" data-category="@category">
-                                        <input type="radio" id="subject-@category-@index" class="mdl-radio__button" name="selected-subject" value="@subject.subject" onchange="onSubjectChange(this)" data-organisations="@subject.organisations.map(_.shortName).mkString(",")">
-                                        <span class="mdl-radio__label">@subject.subject</span>
-                                    </label>
-                                }
-                                <label class="mdl-cell mdl-cell--12-col mdl-radio mdl-js-radio mdl-js-ripple-effect subject-label invisible" for="subject-autre-@category" data-category="@category">
-                                    <input type="radio" id="subject-autre-@category" class="mdl-radio__button" name="selected-subject" value="other" onchange="onSubjectChange(this)" data-organisations="@category.defaultOrganisations.map(_.shortName).mkString(",")">
-                                    <span class="mdl-radio__label">Autre</span>
-                                </label>
-                            }
-
-                            @helper.input(applicationForm("subject"), 'label -> "Précisez ici une autre raison", 'floated -> "No", 'class -> "invisible mdl-textfield--no-padding margin-left-30px", 'divId -> "form-other-subject") { (id, name, value, args) =>
-                                <input class="mdl-textfield__input mdl-color--white" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) onkeyup="showEndOfForm()">
-                            }
-                        </div>
-                        <script>
-                            function onSubjectChange(caller) {
-                               if(caller.value === "other") {
-                                   document.getElementById("form-other-subject").classList.remove("invisible");
-                                   document.getElementById("subject").value = "";
-                               } else {
-                                   document.getElementById("form-other-subject").classList.add("invisible");
-                                   document.getElementById("subject").value = caller.value;
-                               }
-                               var organisations = caller.getAttribute("data-organisations").split(",");
-                               Array.from(document.getElementsByClassName("organisation-row")).forEach(function(thread){
-                                    if(organisations.indexOf(thread.getAttribute("data-organisation")) != -1) {
-                                        Array.from(thread.getElementsByTagName("input")).forEach(function(input){
-                                            changeMDLInputChecked(input, true);
-                                        });
-                                        thread.classList.remove("invisible");
-                                    } else {
-                                        Array.from(thread.getElementsByTagName("input")).forEach(function(input){
-                                            changeMDLInputChecked(input, false);
-                                        });
-                                        thread.classList.add("invisible");
-                                    }
-                               });
-                               if(caller.value === "other") {
-                                   document.getElementById("form-other-subject").focus();
-                               }
-                               else {
-                                    showEndOfForm();
-                               }
-                            }
-                            function showEndOfForm() {
-                                document.getElementById("form-end").classList.remove("invisible")
-                            }
-                        </script>
-                    </div>
-
-                    <div id="form-end" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing invisible">
-                        <h5 class="mdl-cell mdl-cell--12-col">Confirmer les organismes à contacter</h5>
-
-
-                        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 20px">
-                            @if(applicationForm("users").hasErrors) {
-                                <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
-                            }
-
-                            <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
-                            @for(organisationGroup <- organisationGroups.sortBy(_.name)) {
-                                @defining(organisationGroup.organisationDeductedFromName().flatMap(Organisation.fromShortName).get) { organisation: Organisation =>
-                                    <thead class="organisation-row invisible" data-organisation="@organisation.shortName">
-                                        <tr>
-                                            <th class="mdl-data-table__cell--non-numeric" colspan="2">
-                                                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                    <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);" value="@organisation.shortName" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisation.shortName})){ checked="checked" }>
-                                                    <span class="mdl-checkbox__label">@organisationGroup.name (@organisation.name) </span>
-                                                </label></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="organisation-row invisible" data-organisation="@organisation.shortName">
-                                        @if(organisation.shortName.contains("CAF")) {
-                                            <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                                <div class="info-box info-box--no-spacing">La CAF aura besoin du <b>numéro identifiant CAF</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
-                                            </td></tr>
-                                        } else if(organisation.shortName.contains("CPAM")) {
-                                    <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                        <div class="info-box info-box--no-spacing">La CPAM aura besoin du <b>numéro de sécurité sociale</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
-                                    </td></tr>
-                                        }
-
-                                        @for(user <- users.filter(_.groupIds.contains(organisationGroup.id))) {
-                                            <tr class="invisible">
-                                                <td style="width: 95px">
-                                                    <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
-                                                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                        <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked="checked" }>
-                                                    </label>
-                                                </td>
-                                                <td class="mdl-data-table__cell--non-numeric">@user.name</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                }
-                            }
-                            </table>
-                        </div>
-                            
-                        <br>
-                        <br>
-                        <h5 class="mdl-cell mdl-cell--12-col">Description de la demande</h5>
-                        <div class="info-box"><b>Soyez bref</b>, la personne qui vous lira vous en remerciera, la réponse en sera d'autant plus rapide.</div>
-                        @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
-                            <textarea class="mdl-textfield__input mdl-color--white" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
-                        }
-
-
-                        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 20px">
-                        <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
-                        @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"))
-                        </div>
-                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-mandat" style="height: unset; margin-bottom: 10px;">
-                            <input type="checkbox" id="checkbox-mandat" name="validate" class="mdl-checkbox__input" value="true">
-                            <span class="mdl-checkbox__label">Je confirme que l'usager m'a donné mandat pour effectuer cette demande.</span>
-                        </label> <br>
-                        <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset" disabled>
-                            Envoyer ma demande
-                        </button>
-                    </div>
+            @for(category <- categories.filter(_.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty)) {
+                <div class="mdl-cell mdl-cell--3-col mdl-cell--4-col-tablet mdl-cell--6-col-phone aplus-cat-button category-div @if(selectedCategory.contains(category.name)){ aplus-cat-button--selected }" onclick="onCategoryChange(this)" data-category="@category.name">
+                    <h4>@category.name</h4>
+                    <span>@category.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).mkString("/")</span>
+                    <p>@category.description</p>
+                </div>
             }
-        <script type="text/javascript">
-
-                var checkbox = document.querySelector("#checkbox-mandat");
-
-                checkbox.addEventListener('click', function() {
-                    if(checkbox.checked) {
-                        document.querySelector("#review-validation").disabled = false;
-                    } else {
-                        document.querySelector("#review-validation").disabled = true;
-                    }
-                });
-                function showHideUsers(sender) {
-                    var thead = sender.parentNode.parentNode.parentNode.parentNode;
-                    var tbody = thead.nextElementSibling;
-                    if(sender.checked) {
-                        Array.from(tbody.querySelectorAll("[type=checkbox]")).forEach(function(input){
-                            input.checked = true;
-                            input.parentNode.classList.add("is-checked");
-                            componentHandler.upgradeElements(input);
-                        });
-                        tbody.classList.remove("invisible");
-                    } else {
-                        Array.from(tbody.querySelectorAll("[type=checkbox]")).forEach(function(input){
-                            input.checked = false;
-                            input.parentNode.classList.remove("is-checked");
-                            componentHandler.upgradeElements(input);
-                        });
-                        tbody.classList.add("invisible");
-                    }
-
+            <input class="invisible" id="category" name="category" @if(selectedCategory.nonEmpty){ value="@selectedCategory.get" } >
+            <script>
+                function onCategoryChange(caller) {
+                    var category = caller.getAttribute("data-category");
+                    document.getElementById("category").value = category;
+                    Array.from(document.getElementsByClassName("subject-label")).forEach(function(label){
+                        if(label.getAttribute("data-category") === category) {
+                            label.classList.remove("invisible");
+                        } else {
+                            label.classList.add("invisible");
+                        }
+                        changeMDLInputChecked(label.getElementsByTagName("input")[0], false);
+                    });
+                    Array.from(document.getElementsByClassName("category-div")).forEach(function(div){
+                        div.classList.remove("aplus-cat-button--selected");
+                    });
+                    caller.classList.add("aplus-cat-button--selected");
+                    document.getElementById("form-problem").classList.remove("invisible");
+                    document.getElementById("form-other-subject").classList.add("invisible");
+                    document.getElementById("form-end").classList.add("invisible");
                 }
-        </script>
+            </script>
+
+
+            <div id="form-problem" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing @if(selectedCategory.isEmpty){ invisible }">
+                <h5 class="mdl-cell mdl-cell--12-col mdl-grid">Nature du problème rencontré</h5>
+                <div class="aplus-subjects">
+                @for(category <- categories.filter(_.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty)) {
+                        @for((subject,index) <- category.subjects.filter(_.organisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty).zipWithIndex) {
+                            <label class="mdl-cell mdl-cell--12-col mdl-radio mdl-js-radio mdl-js-ripple-effect subject-label @if(selectedCategory.isEmpty || !selectedCategory.contains(category.name)){ invisible }" for="subject-@category.name-@index" data-category="@category.name">
+                                <input  type="radio"
+                                        id="subject-@category.name-@index"
+                                        class="mdl-radio__button"
+                                        name="selected-subject"
+                                        value="@subject.subject"
+                                        onchange="onSubjectChange(this)"
+                                        data-organisations="@subject.organisations.map(_.shortName).mkString(",")"
+                                        @if(selectedCategory.contains(category.name) && applicationForm("selected-subject").value.contains(subject.subject)){ checked }
+                                >
+                                <span class="mdl-radio__label">@subject.subject</span>
+                            </label>
+                        }
+                        <label class="mdl-cell mdl-cell--12-col mdl-radio mdl-js-radio mdl-js-ripple-effect subject-label @if(selectedCategory.isEmpty || !selectedCategory.contains(category.name)){ invisible }"" for="subject-autre-@category.name" data-category="@category.name">
+                            <input  type="radio"
+                                    id="subject-autre-@category.name"
+                                    class="mdl-radio__button"
+                                    name="selected-subject"
+                                    value="other"
+                                    onchange="onSubjectChange(this)"
+                                    data-organisations="@category.defaultOrganisations.map(_.shortName).mkString(",")"
+                                    @if(selectedCategory.contains(category.name) && applicationForm("selected-subject").value.contains("other")){ checked }
+                            >
+                            <span class="mdl-radio__label">Autre</span>
+                        </label>
+                    }
+
+                    @helper.input(applicationForm("subject"), 'label -> "Précisez ici une autre raison", 'floated -> "No", 'class -> s"${if(applicationForm("selected-subject").value.contains("other")){""}else{"invisible"}} mdl-textfield--no-padding margin-left-30px", 'divId -> "form-other-subject") { (id, name, value, args) =>
+                        <input class="mdl-textfield__input mdl-color--white" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) onkeyup="showEndOfForm()">
+                    }
+                </div>
+                <script>
+                    function onSubjectChange(caller) {
+                       if(caller.value === "other") {
+                           document.getElementById("form-other-subject").classList.remove("invisible");
+                           document.getElementById("subject").value = "";
+                       } else {
+                           document.getElementById("form-other-subject").classList.add("invisible");
+                           document.getElementById("subject").value = caller.value;
+                       }
+                       var organisations = caller.getAttribute("data-organisations").split(",");
+                       Array.from(document.getElementsByClassName("organisation-row")).forEach(function(thread){
+                            if(organisations.indexOf(thread.getAttribute("data-organisation")) != -1) {
+                                Array.from(thread.getElementsByTagName("input")).forEach(function(input){
+                                    changeMDLInputChecked(input, true);
+                                });
+                                thread.classList.remove("invisible");
+                            } else {
+                                Array.from(thread.getElementsByTagName("input")).forEach(function(input){
+                                    changeMDLInputChecked(input, false);
+                                });
+                                thread.classList.add("invisible");
+                            }
+                       });
+                       if(caller.value === "other") {
+                           document.getElementById("form-other-subject").focus();
+                       }
+                       else {
+                            showEndOfForm();
+                       }
+                    }
+                    function showEndOfForm() {
+                        document.getElementById("form-end").classList.remove("invisible")
+                    }
+                </script>
+            </div>
+
+            <div id="form-end" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing @if(selectedCategory.isEmpty){ invisible }">
+                <h5 class="mdl-cell mdl-cell--12-col">Confirmer les organismes à contacter</h5>
+
+
+                <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 20px">
+                    @if(applicationForm("users").hasErrors) {
+                        <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
+                    }
+
+                    <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
+                    @for(organisationGroup <- organisationGroups.sortBy(_.name)) {
+                        @defining(organisationGroup.organisationDeductedFromName().flatMap(Organisation.fromShortName).get) { organisation: Organisation =>
+                            <thead class="organisation-row @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisation.shortName})){ invisible }" data-organisation="@organisation.shortName">
+                                <tr>
+                                    <th class="mdl-data-table__cell--non-numeric" colspan="2">
+                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                            <input type="checkbox" class="mdl-checkbox__input" value="@organisation.shortName" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisation.shortName})){ checked="checked" }>
+                                            <span class="mdl-checkbox__label">@organisationGroup.name (@organisation.name) </span>
+                                        </label></th>
+                                </tr>
+                            </thead>
+                            <tbody class="organisation-row @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisation.shortName})){ invisible }" data-organisation="@organisation.shortName">
+                                @if(organisation.shortName.contains("CAF")) {
+                                    <tr><td colspan="2" style="text-align: left; white-space: normal">
+                                        <div class="info-box info-box--no-spacing">La CAF aura besoin du <b>numéro identifiant CAF</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
+                                    </td></tr>
+                                } else if(organisation.shortName.contains("CPAM")) {
+                            <tr><td colspan="2" style="text-align: left; white-space: normal">
+                                <div class="info-box info-box--no-spacing">La CPAM aura besoin du <b>numéro de sécurité sociale</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
+                            </td></tr>
+                                }
+
+                                @for(user <- users.filter(_.groupIds.contains(organisationGroup.id))) {
+                                    <tr class="invisible">
+                                        <td style="width: 95px">
+                                            <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
+                                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                                <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked="checked" }>
+                                            </label>
+                                        </td>
+                                        <td class="mdl-data-table__cell--non-numeric">@user.name</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        }
+                    }
+                    </table>
+                    <span>Si vous vous voulez contacter d'autres organismes, vous devez utiliser le mode <a href="@routes.ApplicationController.create()">Avancé</a></span>
+                </div>
+
+                <br>
+                <br>
+                <h5 class="mdl-cell mdl-cell--12-col">Description de la demande</h5>
+                <div class="info-box"><b>Soyez bref</b>, la personne qui vous lira vous en remerciera, la réponse en sera d'autant plus rapide.</div>
+                @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
+                    <textarea class="mdl-textfield__input mdl-color--white" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
+                }
+
+
+                <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 20px">
+                <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
+                @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"))
+                </div>
+                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-mandat" style="height: unset; margin-bottom: 10px;">
+                    <input type="checkbox" id="checkbox-mandat" name="validate" class="mdl-checkbox__input" value="true">
+                    <span class="mdl-checkbox__label">Je confirme que l'usager m'a donné mandat pour effectuer cette demande.</span>
+                </label> <br>
+                <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset" disabled>
+                    Envoyer ma demande
+                </button>
+            </div>
     }
+    <script type="text/javascript">
+        var checkbox = document.querySelector("#checkbox-mandat");
+
+        checkbox.addEventListener('click', function() {
+            if(checkbox.checked) {
+                document.querySelector("#review-validation").disabled = false;
+            } else {
+                document.querySelector("#review-validation").disabled = true;
+            }
+        });
+    </script>
+}
