@@ -21,7 +21,7 @@ case class Application(id: UUID,
                        usefulness: Option[String] = None,
                        closedDate: Option[DateTime] = None,
                        expertInvited: Boolean = false,
-                       selectedSubject: Boolean = false,
+                       hasSelectedSubject: Boolean = false,
                        category: Option[String] = None) extends AgeModel {
 
    lazy val searchData = {
@@ -72,7 +72,7 @@ case class Application(id: UUID,
        val result = copy(userInfos = newUsersInfo,
          description = s"** Description de ${description.length} caractères **",
          answers = newAnswers)
-       if(selectedSubject) {
+       if(hasSelectedSubject) {
          result
        } else {
          result.copy(subject = s"** Sujet de ${subject.length} caractères **")

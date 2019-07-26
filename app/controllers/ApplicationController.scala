@@ -110,7 +110,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                invitedUsers,
                request.currentArea.id,
                false,
-               selectedSubject = applicationData.selectedSubject.contains(applicationData.subject),
+               hasSelectedSubject = applicationData.selectedSubject.contains(applicationData.subject),
                category = applicationData.category)
              if(applicationService.createApplication(application)) {
                notificationsService.newApplication(application)

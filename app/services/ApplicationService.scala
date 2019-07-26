@@ -52,7 +52,7 @@ class ApplicationService @Inject()(db: Database) {
     "usefulness",
     "closed_date",
     "expert_invited",
-    "selected_subject",
+    "has_selected_subject",
     "category"
   ).map(application => application.copy(creationDate = application.creationDate.withZone(Time.dateTimeZone), 
                     answers = application.answers.map(answer => answer.copy(creationDate = answer.creationDate.withZone(Time.dateTimeZone)))))
@@ -171,7 +171,7 @@ class ApplicationService @Inject()(db: Database) {
             user_infos,
             invited_users,
             area,
-            selected_subject,
+            has_selected_subject,
             category
             ) VALUES (
             ${newApplication.id}::uuid,
@@ -183,7 +183,7 @@ class ApplicationService @Inject()(db: Database) {
             ${Json.toJson(newApplication.userInfos)},
             ${invitedUserJson},
             ${newApplication.area}::uuid,
-            ${newApplication.selectedSubject},
+            ${newApplication.hasSelectedSubject},
             ${newApplication.category}
           )
       """.executeUpdate() == 1
