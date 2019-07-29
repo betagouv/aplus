@@ -156,6 +156,9 @@
                     document.getElementById("form-problem").classList.remove("invisible");
                     document.getElementById("form-other-subject").classList.add("invisible");
                     document.getElementById("form-end").classList.add("invisible");
+                    document.getElementById("form-problem").scrollIntoView({
+                        behavior: 'smooth'
+                    });
                 }
             </script>
 
@@ -199,8 +202,9 @@
                 <script>
                     function onSubjectChange(caller) {
                        if(caller.value === "other") {
-                           document.getElementById("form-other-subject").classList.remove("invisible");
                            document.getElementById("subject").value = "";
+                           var formOtherSubject = document.getElementById("form-other-subject");
+                           formOtherSubject.classList.remove("invisible");
                        } else {
                            document.getElementById("form-other-subject").classList.add("invisible");
                            document.getElementById("subject").value = caller.value;
@@ -220,14 +224,20 @@
                             }
                        });
                        if(caller.value === "other") {
-                           document.getElementById("form-other-subject").focus();
+                           var focusElement = document.getElementById("subject");
+                           focusElement.focus();
+                           focusElement.parentNode.classList.add("is-focused");
                        }
                        else {
-                            showEndOfForm();
+                           showEndOfForm();
                        }
                     }
                     function showEndOfForm() {
-                        document.getElementById("form-end").classList.remove("invisible")
+                        var formEnd = document.getElementById("form-end");
+                        formEnd.classList.remove("invisible");
+                        formEnd.scrollIntoView({
+                            behavior: 'smooth'
+                        });
                     }
                 </script>
             </div>
