@@ -9,26 +9,32 @@ case class Area(id: UUID, name: String)
 object Area {
   def fromId(id: UUID) = all.find(_.id == id)
 
+  def apply(id: String, name: String) = Area(UUIDHelper.namedFrom(id), name)
+
   val all = List(
-    Area(UUIDHelper.namedFrom("nice"), "Alpes-Maritimes"),
-    Area(UUIDHelper.namedFrom("argenteuil"), "Argenteuil"),
-    Area(UUIDHelper.namedFrom("angers"), "Angers"),
-    Area(UUIDHelper.namedFrom("cahors"), "Bassin de Cahors"),
-    Area(UUIDHelper.namedFrom("besancon"), "Besançon"),
-    Area(UUIDHelper.namedFrom("bethune"), "Bethune"),
-    Area(UUIDHelper.namedFrom("coeur-du-perche"), "Cœur du Perche"),
-    Area(UUIDHelper.namedFrom("doubs"), "Doubs"),
-    Area(UUIDHelper.namedFrom("ecouen"), "Écouen"),
-    Area(UUIDHelper.namedFrom("hauts-de-seine"),"Hauts-de-Seine"),
-    Area(UUIDHelper.namedFrom("jura"), "Jura"),
-    Area(UUIDHelper.namedFrom("loir-et-cher"), "Loir-et-Cher"),
-    Area(UUIDHelper.namedFrom("lons-le-saunoer"), "Lons-le-Saunier"),
-    Area(UUIDHelper.namedFrom("lyon"), "Lyon"),
-    Area(UUIDHelper.namedFrom("perigueux"), "Périgueux"),
-    Area(UUIDHelper.namedFrom("val-de-marne"), "Val-de-Marne"),
-    Area(UUIDHelper.namedFrom("var"), "Var"),
-    Area(UUIDHelper.namedFrom("exemple"), "Demo")
+    Area("nice", "Alpes-Maritimes"),
+    Area("ardennes", "Ardennes"),
+    Area("argenteuil", "Argenteuil"),
+    Area("angers", "Angers"),
+    Area("cahors", "Bassin de Cahors"),
+    Area("besancon", "Besançon"),
+    Area("bethune", "Bethune"),
+    Area("calvados", "Calvados"),
+    Area("coeur-du-perche", "Cœur du Perche"),
+    Area("doubs", "Doubs"),
+    Area("ecouen", "Écouen"),
+    Area("hautes-pyrénées", "Hautes-Pyrénées"),
+    Area("hauts-de-seine", "Hauts-de-Seine"),
+    Area("jura", "Jura"),
+    Area("loir-et-cher", "Loir-et-Cher"),
+    Area("lons-le-saunoer", "Lons-le-Saunier"),
+    Area("lyon", "Lyon"),
+    Area("perigueux", "Périgueux"),
+    Area("val-de-marne", "Val-de-Marne"),
+    Area("var", "Var"),
+    Area("vendee", "Vendée"),
+    Area("exemple", "Demo")
   )
 
-  val notApplicable = Area(UUIDHelper.namedFrom("notApplicable"), "NotApplicable")
+  val notApplicable = Area("notApplicable", "NotApplicable")
 }
