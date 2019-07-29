@@ -9,7 +9,7 @@ case class Area(id: UUID, name: String)
 object Area {
   def fromId(id: UUID) = all.find(_.id == id)
 
-  def apply(id: String, name: String) = Area(UUIDHelper.namedFrom(id), name)
+  def apply(id: String, name: String): Area = Area(UUIDHelper.namedFrom(id), name)
 
   val all = List(
     Area("nice", "Alpes-Maritimes"),
