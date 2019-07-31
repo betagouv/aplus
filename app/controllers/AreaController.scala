@@ -16,8 +16,6 @@ class AreaController @Inject()(loginAction: LoginAction,
                                eventService: EventService,
                                configuration: play.api.Configuration)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController {
   private lazy val areasWithLoginByKey = configuration.underlying.getString("app.areasWithLoginByKey").split(",").flatMap(UUIDHelper.fromString)
-  private lazy val areasWithAttachments = configuration.underlying.getString("app.areasWithAttachments").split(",").flatMap(UUIDHelper.fromString)
-
 
   def change(areaId: UUID) = loginAction { implicit request =>
     if (!request.currentUser.areas.contains(areaId)) {
@@ -32,6 +30,6 @@ class AreaController @Inject()(loginAction: LoginAction,
   }
 
   def all = loginAction { implicit request =>
-    Ok(views.html.allArea(request.currentUser, request.currentArea)(Area.all, areasWithLoginByKey, areasWithAttachments))
+    Ok(views.html.allArea(request.currentUser, request.currentArea)(Area.all, areasWithLoginByKey))
   }
 }

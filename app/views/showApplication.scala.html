@@ -1,4 +1,4 @@
-@(user: User, area: Area)(users: List[User], application: Application, answerToAgentsForm: Form[_], attachmentsActivated: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider)
+@(user: User, area: Area)(users: List[User], application: Application, answerToAgentsForm: Form[_])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider)
 @import java.util.Locale
 
 @main(user, area)(s"Demande : ${application.id} - ${area.name} ")  {
@@ -381,11 +381,9 @@ dialog {
                                         <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
                                         <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Votre réponse</label>
                                     </div>
-                                    @if(attachmentsActivated) {
-                                        <div class="mdl-cell mdl-cell--12-col">
-                                             <b>Ajouter un ficher ( 5Mo maximum ) : <input type="file" name="file"></b>
-                                        </div>
-                                    }
+                                    <div class="mdl-cell mdl-cell--12-col">
+                                         <b>Ajouter un ficher ( 5Mo maximum ) : <input type="file" name="file"></b>
+                                    </div>
                                     @if(user.instructor) {
                                         <div id="invalide-choice" class="mdl-cell mdl-cell--12-col">
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
