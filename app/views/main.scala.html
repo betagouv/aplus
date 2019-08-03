@@ -104,7 +104,7 @@
                 <span style="font-weight: bold;">Territoire : </span>
                 @if(currentUser.areas.length > 1) {
                     <select id="area" name="area" onchange="changeArea()">
-                        @for(area <- Area.all) {
+                        @for(area <- currentUser.areas.flatMap(Area.fromId)) {
                             <option value="@area.id" @if(area.id == currentArea.id) { selected }>@area.name</option>
                         }
                     </select>
