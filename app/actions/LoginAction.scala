@@ -40,10 +40,13 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
           Left(Redirect(Call(request.method, url)))
         case (_, Some(user), None) =>
           val area = areaFromContext(user)
+          implicit val requestWithUserData = new RequestWithUserData(user, area, request)
           if(areasWithLoginByKey.contains(area.id) && !user.admin) {
             // areasWithLoginByKey is an insecure setting for demo usage and transition only
+            eventService.info("LOGIN_BY_KEY", s"Connexion par clé réussi (Transition ne doit pas être maintenu en prod)")
             Left(Redirect(Call(request.method, url)).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
           } else {
+            eventService.info("TRY_LOGIN_BY_KEY", "Clé dans l'url, redirige vers la page de connexion")
             Left(Redirect(routes.LoginController.login()).flashing("email" -> user.email, "path" -> path))
           }
         case (_, None, Some(token)) =>
@@ -56,6 +59,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
               eventService.info(User.systemUser, Area.notApplicable, request.remoteAddress, "UNKNOWN_TOKEN", s"Token $token est inconnue", None, None)
               "Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé. Si cette erreur se répète, contactez l'équipe Administration+"
             case None =>
+              Logger.warn(s"Accès à la ${request.path} non autorisé")
               "Vous devez vous identifier pour accèder à cette page."
           }
           userNotLogged(message)
@@ -64,9 +68,11 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
 
   private def manageUserLogged[A](user: User)(implicit request: Request[A]) = {
     val area = areaFromContext(user)
+    implicit val requestWithUserData = new RequestWithUserData(user, area, request)
     if(user.cguAcceptationDate.isDefined || request.path.contains("cgu")) {
-      Right(new RequestWithUserData(user, area, request))
+      Right(requestWithUserData)
     } else {
+      eventService.info("REDIRECTED_TO_CGU","Redirection vers les CGUs")
       Left(Redirect(routes.UserController.showCGU()).flashing("redirect" -> request.path))
     }
   }
