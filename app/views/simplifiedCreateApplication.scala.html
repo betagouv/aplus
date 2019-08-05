@@ -230,14 +230,17 @@
                        }
                        else {
                            showEndOfForm();
+                           document.getElementById("form-end").scrollIntoView({
+                               behavior: 'smooth'
+                           });
                        }
                     }
                     function showEndOfForm() {
                         var formEnd = document.getElementById("form-end");
                         formEnd.classList.remove("invisible");
-                        formEnd.scrollIntoView({
+                     /*   formEnd.scrollIntoView({
                             behavior: 'smooth'
-                        });
+                        });      */
                     }
                 </script>
             </div>
