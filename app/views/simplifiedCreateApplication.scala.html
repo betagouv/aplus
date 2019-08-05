@@ -156,6 +156,9 @@
                     document.getElementById("form-problem").classList.remove("invisible");
                     document.getElementById("form-other-subject").classList.add("invisible");
                     document.getElementById("form-end").classList.add("invisible");
+                    document.getElementById("form-problem").scrollIntoView({
+                        behavior: 'smooth'
+                    });
                 }
             </script>
 
@@ -199,8 +202,9 @@
                 <script>
                     function onSubjectChange(caller) {
                        if(caller.value === "other") {
-                           document.getElementById("form-other-subject").classList.remove("invisible");
                            document.getElementById("subject").value = "";
+                           var formOtherSubject = document.getElementById("form-other-subject");
+                           formOtherSubject.classList.remove("invisible");
                        } else {
                            document.getElementById("form-other-subject").classList.add("invisible");
                            document.getElementById("subject").value = caller.value;
@@ -220,14 +224,23 @@
                             }
                        });
                        if(caller.value === "other") {
-                           document.getElementById("form-other-subject").focus();
+                           var focusElement = document.getElementById("subject");
+                           focusElement.focus();
+                           focusElement.parentNode.classList.add("is-focused");
                        }
                        else {
-                            showEndOfForm();
+                           showEndOfForm();
+                           document.getElementById("form-end").scrollIntoView({
+                               behavior: 'smooth'
+                           });
                        }
                     }
                     function showEndOfForm() {
-                        document.getElementById("form-end").classList.remove("invisible")
+                        var formEnd = document.getElementById("form-end");
+                        formEnd.classList.remove("invisible");
+                     /*   formEnd.scrollIntoView({
+                            behavior: 'smooth'
+                        });      */
                     }
                 </script>
             </div>
@@ -242,8 +255,8 @@
                     }
 
                     <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
-                    @for(organisationGroup <- organisationGroups.sortBy(_.name)) {
-                        @defining(organisationGroup.organisationDeductedFromName().flatMap(Organisation.fromShortName).get) { organisation: Organisation =>
+                    @for(organisationGroup <- organisationGroups.filter(_.organisationSetOrDeducted.nonEmpty).sortBy(_.name)) {
+                        @defining(organisationGroup.organisationSetOrDeducted.flatMap(Organisation.fromShortName).get) { organisation: Organisation =>
                             <thead class="organisation-row @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisation.shortName})){ invisible }" data-organisation="@organisation.shortName">
                                 <tr>
                                     <th class="mdl-data-table__cell--non-numeric" colspan="2">

@@ -328,7 +328,8 @@ class UserController @Inject()(loginAction: LoginAction,
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
       val limit = request.getQueryString("limit").map(_.toInt).getOrElse(500)
-      val events = eventService.all(limit)
+      val userId = request.getQueryString("fromUserId").flatMap(UUIDHelper.fromString)
+      val events = eventService.all(limit, userId)
       eventService.info("EVENTS_SHOWED", s"Affiche les événements")
       Ok(views.html.allEvents(request.currentUser, request.currentArea)(events, limit))
     }

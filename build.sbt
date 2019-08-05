@@ -15,6 +15,8 @@ libraryDependencies ++= Seq(
   evolutions
 )
 
+pipelineStages := Seq(rjs, digest, gzip)
+
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test
 libraryDependencies += guice
 

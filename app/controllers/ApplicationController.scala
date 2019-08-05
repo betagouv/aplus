@@ -37,7 +37,6 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   private implicit val timeZone = Time.dateTimeZone
 
   private val filesPath = configuration.underlying.getString("app.filesPath")
-  private lazy val areasWithAttachments = configuration.underlying.getString("app.areasWithAttachments").split(",").flatMap(UUIDHelper.fromString)
 
   private val dir = Paths.get(s"$filesPath")
   if(!Files.isDirectory(dir)) {
@@ -246,8 +245,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             }
 
             eventService.info("APPLICATION_SHOWED", s"Demande $id consulté", Some(application))
-            val attachmentsActivated = areasWithAttachments.contains(request.currentArea.id)
-            Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, renderedApplication, answerForm, attachmentsActivated))
+            Ok(views.html.showApplication(request.currentUser, request.currentArea)(users, renderedApplication, answerForm))
         }
         else {
           eventService.warn("APPLICATION_UNAUTHORIZED", s"L'accès à la demande $id n'est pas autorisé", Some(application))
