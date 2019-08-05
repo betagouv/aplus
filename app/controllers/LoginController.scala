@@ -33,7 +33,7 @@ class LoginController @Inject()(userService: UserService,
          notificationService.newLoginRequest(url, path, user, loginToken)
 
          implicit val requestWithUserData = new RequestWithUserData(user, Area.notApplicable, request)
-         eventService.info("GENERATE_TOKEN", s"Génére un token pour une connexion par email")
+         eventService.info("GENERATE_TOKEN", s"Génére un token pour une connexion par email body=${request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty}&flash=${request.flash.get("email").nonEmpty}")
 
          Ok(views.html.loginHome(Left(Some(user))))
        }

@@ -8,7 +8,6 @@ import play.api.mvc.Results.{Redirect, _}
 import services.{EventService, TokenService, UserService}
 import extentions.UUIDHelper
 import play.api.Logger
-import scala.collection.JavaConverters._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -75,36 +74,27 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
   private def areaFromContext[A](user: User)(implicit request: Request[A]) = request.session.get("areaId").flatMap(UUIDHelper.fromString).orElse(user.areas.headOption).flatMap(id => Area.all.find(_.id == id)).getOrElse(Area.all.head)
 
   private def manageToken[A](token: LoginToken)(implicit request: Request[A]) = {
-    if(token.isActive){
-      val userOption = userService.byId(token.userId)
-      if(token.ipAddress != request.remoteAddress) {
+    val userOption = userService.byId(token.userId)
+    userOption match {
+      case None =>
+        Logger.error(s"Try to login by token ${token.token} for an unknown user : ${token.userId}")
+        userNotLogged("Une erreur s'est produite, votre utilisateur n'existe plus")
+      case Some(user) =>
         //hack: we need RequestWithUserData to call the logger
-        userOption match {
-          case Some(user) =>
-            val area = areaFromContext(user)
-            implicit val requestWithUserData = new RequestWithUserData(user, area, request)
-            eventService.warn("AUTH_WITH_DIFFERENT_IP", s"Utilisateur ${token.userId} connecté avec une adresse ip différente de l'email")
-          case None =>
-            Logger.error(s"Try to login by token for an unknown user : ${token.userId}")
+        val area = areaFromContext(user)
+        implicit val requestWithUserData = new RequestWithUserData(user, area, request)
+
+        if(token.ipAddress != request.remoteAddress) {
+          eventService.warn("AUTH_WITH_DIFFERENT_IP", s"Utilisateur ${token.userId} à une adresse ip différente pour l'essai de connexion")
         }
-      }
-      userOption match {
-        case Some(user) =>
+        if(token.isActive){
           val url = request.path + queryToString(request.queryString - "key" - "token")
-
-          //hack: we need RequestWithUserData to call the logger
-          val area = areaFromContext(user)
-          implicit val requestWithUserData = new RequestWithUserData(user, area, request)
-
           eventService.info("AUTH_BY_KEY", s"Identification par token")
           Left(Redirect(Call(request.method, url)).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
-        case _ =>
-          Logger.error(s"Try to login by token for an unknown user : ${token.userId}")
-          userNotLogged("Une erreur s'est produite, votre utilisateur n'existe plus")
-      }
-    } else {
-      Logger.error(s"Expired token for ${token.userId}")
-      userNotLogged(s"Le lien que vous avez utilisez a expiré (il expire après $tokenExpirationInMinutes minutes), saisissez votre email pour vous reconnecter")
+        } else {
+          eventService.warn("EXPIRED_TOKEN", s"Token expiré pour ${token.userId}")
+          userNotLogged(s"Le lien que vous avez utilisez a expiré (il expire après $tokenExpirationInMinutes minutes), saisissez votre email pour vous reconnecter")
+        }
     }
   }
 
