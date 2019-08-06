@@ -113,7 +113,7 @@
             @display(myClosedApplications)
         </div>
     }
-    @if(applicationsFromTheArea.nonEmpty && (user.admin || user.groupAdmin)) {
+    @if(user.admin || user.groupAdmin) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         @if(user.admin) {
             <h4 class="mdl-cell mdl-cell--12-col">Toutes les demandes</h4>
@@ -184,9 +184,12 @@
             </div>
         </div>
     }
-    <h4 class="mdl-cell mdl-cell--12-col">Export des demandes en CSV</h4>
-    <b class="mdl-cell mdl-cell--12-col">Il faut importer le fichier dans Excel (ou autre tableur) en ut8 pour avoir les accents correctement.</b>
-    <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--8-col mdl-cell--2-offset" onclick="document.location='@routes.ApplicationController.allCSV()'">
-        Télécharger export CSV
-    </button>
+    @if(myOpenApplications.nonEmpty || myClosedApplications.nonEmpty || applicationsFromTheArea.nonEmpty) {
+        <h4 class="mdl-cell mdl-cell--12-col">Export des demandes en CSV</h4>
+        <b class="mdl-cell mdl-cell--12-col">
+            Il faut importer le fichier dans Excel (ou autre tableur) en ut8 pour avoir les accents correctement.</b>
+        <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--8-col mdl-cell--2-offset" onclick="document.location = '@routes.ApplicationController.allCSV()'">
+            Télécharger export CSV
+        </button>
+    }
 }
