@@ -257,7 +257,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   def file(applicationId: UUID, answerId: UUID, filename: String) = loginAction { implicit request =>
     applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
       case None =>
-        eventService.error("FILE_NOT_FOUND", s"La demande $applicationId n'existe pas")
+        eventService.error("APPLICATION_NOT_FOUND", s"La demande $applicationId n'existe pas")
         NotFound("Nous n'avons pas trouvé ce fichier")
       case Some(application) if application.fileCanBeShowed(request.currentUser, answerId) =>
           application.answers.find(_.id == answerId) match {
