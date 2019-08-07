@@ -14,7 +14,6 @@ object Area {
   val all = List(
     Area("nice", "Alpes-Maritimes"),
     Area("ardennes", "Ardennes"),
-    Area("argenteuil", "Argenteuil"),
     Area("angers", "Angers"),
     Area("cahors", "Bassin de Cahors"),
     Area("besancon", "Besançon"),
@@ -22,7 +21,6 @@ object Area {
     Area("calvados", "Calvados"),
     Area("coeur-du-perche", "Cœur du Perche"),
     Area("doubs", "Doubs"),
-    Area("ecouen", "Écouen"),
     Area("hautes-pyrénées", "Hautes-Pyrénées"),
     Area("hauts-de-seine", "Hauts-de-Seine"),
     Area("ille-et-vilaine", "Ille-et-Vilaine"),
@@ -31,6 +29,7 @@ object Area {
     Area("lons-le-saunoer", "Lons-le-Saunier"),
     Area("lyon", "Lyon"),
     Area("perigueux", "Périgueux"),
+    Area("argenteuil", "Val-d'Oise"),
     Area("val-de-marne", "Val-de-Marne"),
     Area("vaucluse", "Vaucluse"),
     Area("var", "Var"),
