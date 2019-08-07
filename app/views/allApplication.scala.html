@@ -79,9 +79,29 @@
 }{
     @if(myOpenApplications.isEmpty) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
-            <p>Vous n'avez pas de demande en cours.
-            @if(user.helper) {
-                Vous pouvez en créer une nouvelle en cliquant ici : <a href="@routes.ApplicationController.create()">Créer une nouvelle demande</a>
+            @if(myOpenApplications.isEmpty) {
+                <div class="info-box">
+                    <h4>Bonjour et bienvenue sur Administration+</h4><br>
+                    Vous êtes ici sur la page principale d'Administration+ où vous pourrez voir la liste de vos demandes en cours.<br>
+                    Les demandes dans Administration+ servent à la résolution d'un blocage administratif.  <br><br>
+                    Vous n'avez pas de demande en cours, c'est normal, vous venez d'arriver.<br><br>
+                    @if(user.instructor) {
+                        Vous êtes agent instructeur, vous allez recevoir un email quand un aidant fera une demande concernant votre organisme. <br><br>
+                    }
+                    @if(user.helper) {
+                        Vous voulez déposer une demande sur un bloquage que rencontre un usager ? suivez le bouton "Créer une demande"<br>
+                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" onclick="document.location = '@routes.ApplicationController.create()'">
+                            Créer une demande
+                        </button><br>
+                        <br>
+                    <i>Vous avez un doute sur le bloquage ? n'hésitez pas à nous poser la question à <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Question">contact&commat;aplus.beta.gouv.fr</a>.</i>
+                    }
+                </div>
+            } else {
+                <p>Vous n'avez pas de demande en cours.
+                @if(user.helper) {
+                    Vous pouvez en créer une nouvelle en cliquant ici : <a href="@routes.ApplicationController.create()">Créer une nouvelle demande</a>
+                }
             }
             </p>
         </div>
