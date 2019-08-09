@@ -200,10 +200,6 @@ class UserController @Inject()(loginAction: LoginAction,
               val form = usersForm.fill(users).withGlobalError(errorMessage)
               eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}")
               BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
-            case _: Throwable =>
-              val form = usersForm.fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 2)")
-              eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD. Exception inconnue.")
-              InternalServerError(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
           }
         }
       )
