@@ -171,7 +171,13 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           eventService.warn("STATS_INCORRECT_SETUP", s"Erreur d'accès aux demandes pour les stats")
           List()
         }
-        val applicationsByArea = allApplications.groupBy(_.area).map{ case (areaId: UUID, applications: Seq[Application]) => (Area.all.find(_.id == areaId).get, applications) }
+        val currentAreaOnly = request.getQueryString("currentAreaOnly").map(_.toBoolean).getOrElse(false)
+
+        val applicationsByArea = (
+            if(currentAreaOnly) { allApplications.filter(_.area == request.currentArea.id) }
+            else { allApplications }
+          ).groupBy(_.area)
+            .map{ case (areaId: UUID, applications: Seq[Application]) => (Area.all.find(_.id == areaId).get, applications) }
 
         val firstDate = if(allApplications.isEmpty) {
           DateTime.now()
@@ -182,7 +188,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         val weeks = Time.weeksMap(firstDate, today)
         val months = Time.monthsMap(firstDate, today)
         eventService.info("STATS_SHOWED", s"Visualise les stats")
-        Ok(views.html.stats(request.currentUser, request.currentArea)(months, applicationsByArea, users))
+        Ok(views.html.stats(request.currentUser, request.currentArea)(months, applicationsByArea, users, currentAreaOnly))
     }
   }
 
