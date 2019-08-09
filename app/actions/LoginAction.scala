@@ -69,7 +69,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
   private def manageUserLogged[A](user: User)(implicit request: Request[A]) = {
     val area = areaFromContext(user)
     implicit val requestWithUserData = new RequestWithUserData(user, area, request)
-    if(user.cguAcceptationDate.isDefined || request.path.contains("cgu")) {
+    if(user.cguAcceptationDate.nonEmpty || request.path.contains("cgu")) {
       Right(requestWithUserData)
     } else {
       eventService.info("REDIRECTED_TO_CGU","Redirection vers les CGUs")
