@@ -79,7 +79,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     } else {
       ""
     }
-    return s"""<br><br>
+    s"""<br><br>
        |<b>Ne transférez pas cet email et n'y répondez pas directement.</b><br><i>
        |$delegates
        |- Vous pouvez transférer la demande à un autre agent en ouvrant le lien ci-dessus<br>
