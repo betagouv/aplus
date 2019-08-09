@@ -17,10 +17,12 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   private val host = configuration.underlying.getString("app.host")
   private val https = configuration.underlying.getString("app.https") == "true"
 
+  private val from = "Administration+ <contact@beta.gouv.fr>"
+
   private def sendMail(email: Email) {
     val emailWithText = email.copy(
       bodyText = email.bodyHtml.map(_.replaceAll("<[^>]*>", "")),
-      headers = email.headers ++ Set("X-MJ-MonitoringCategory" -> "aplus", "X-Mailjet-TrackClick" -> "0")
+      headers = email.headers ++ Set("X-MJ-MonitoringCategory" -> "aplus", "X-Mailjet-TrackClick" -> "0", "X-MAILJET-TRACKOPEN" -> "0")
     )
     mailerClient.send(emailWithText)
     Logger.info(s"Email sent to ${email.to.mkString(", ")}")
@@ -55,15 +57,15 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     val url = s"${absoluteUrl}?token=${loginToken.token}&path=$path"
     val bodyHtml = s"""Bonjour ${user.name},<br>
                       |<br>
-                      |Vous pouvez maintenant accèder au service A+ en cliquant sur le lien suivant :<br>
+                      |Vous pouvez maintenant accèder au service Administration+ en cliquant sur le lien suivant :<br>
                       |<a href="${url}">${url}</a>
                       |<br>
                       |<br>
-                      |Si vous avez des questions, n'hésitez pas à nous contacter sur contact@aplus.beta.gouv.fr<br>
-                      |Equipe A+""".stripMargin
+                      |Si vous avez des questions ou vous rencontrez un problème, n'hésitez pas à nous contacter sur <a href="mailto:contact@aplus.beta.gouv.fr">contact@aplus.beta.gouv.fr</a><br>
+                      |Equipe Administration+""".stripMargin
     val email = play.api.libs.mailer.Email(
-      s"Connexion à A+",
-      from = "Equipe A+ <contact@aplus.beta.gouv.fr>",
+      s"Connexion à Administration+",
+      from = from,
       Seq(s"${user.name} <${user.email}>"),
       bodyHtml = Some(bodyHtml)
     )
@@ -81,7 +83,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
        |<b>Ne transférez pas cet email et n'y répondez pas directement.</b><br><i>
        |$delegates
        |- Vous pouvez transférer la demande à un autre agent en ouvrant le lien ci-dessus<br>
-       |- Si vous avez un problème ou besoin d'aide à propos de l'outil A+, contactez-nous sur contact@aplus.beta.gouv.fr</i>
+       |- Si vous avez un problème ou besoin d'aide à propos de l'outil Administration+, contactez-nous sur <a href="mailto:contact@aplus.beta.gouv.fr">contact@aplus.beta.gouv.fr</a></i>
      """.stripMargin
   }
 
@@ -97,7 +99,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
                       |$footer
                       """.stripMargin
     Email(subject = s"[A+] Nouvelle demande d'aide : ${application.subject}",
-      from = "A+ Ne pas répondre <ne-pas-repondre-aplus@beta.gouv.fr>",
+      from = from,
       to = List(s"${invitedUser.name} <${invitedUser.email}>"),
       cc = invitedUser.delegations.map { case (name, email) => s"$name <$email>" }.toSeq,
       bodyHtml = Some(bodyHtml)
@@ -119,7 +121,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
                       |$footer
                       """.stripMargin
     Email(subject = s"[A+] Nouvelle réponse pour : ${application.subject}",
-      from = "A+ Ne pas répondre <ne-pas-repondre-aplus@beta.gouv.fr>",
+      from = from,
       to = List(s"${user.name} <${user.email}>"),
       cc = user.delegations.map { case (name, email) => s"$name <$email>" }.toSeq,
       bodyHtml = Some(bodyHtml)
