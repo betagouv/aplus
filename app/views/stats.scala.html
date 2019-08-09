@@ -2,7 +2,7 @@
 @import java.util.Locale
 @import extentions.Time.dateTimeOrdering
 @import extentions.Math
-@(user: User, area: Area)(months: ListMap[String, String], allApplications: Map[Area, Seq[Application]], users: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User, area: Area)(months: ListMap[String, String], allApplications: Map[Area, Seq[Application]], users: List[User], currentAreaOnly: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
 
 @main(user, area)(s"Stats")  {
     <style xmlns="http://www.w3.org/1999/html">
@@ -30,6 +30,12 @@
     </style>
     @webJarsUtil.locate("Chart.bundle.min.js").script()
 }{
+
+    @if(user.areas.length > 1) {
+        <p class="mdl-cell mdl-cell--12-col">Stats de : @if(currentAreaOnly) { <b>@area.name</b> / <a href="@routes.ApplicationController.stats()?currentAreaOnly=false">Tous les territoires</a> } else {
+            <a href="@routes.ApplicationController.stats()?currentAreaOnly=true">@area.name</a> / <b>Tous les territoires</b>
+        }  </p>
+    }
     <!-- New Stats -->
 
     @defining(allApplications.flatMap(_._2)) { all =>
