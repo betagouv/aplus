@@ -45,5 +45,5 @@ jobs:
           key: v2-dependencies--{{ checksum "build.sbt" }}
         
       # run tests!
-      - run: cat /dev/null | sbt test:compile
+      - run: cat /dev/null | sbt test
 
