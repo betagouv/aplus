@@ -17,9 +17,9 @@ class LoginSpec extends Specification with Tables with BaseSpec {
 
   "Login" should {
     "Login with valid or invalid emails" in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {
-        "email"  | "result" |
-        "julien.dauphant" + "@beta.gouv.fr"  ! "Regardez vos emails"|
-        "wrong@beta.gouv.fr" ! "Il n'y a pas d'utilisateur avec cette adresse email"|>
+        "email"                              | "result"                                             |
+        "julien.dauphant" + "@beta.gouv.fr"  ! "Regardez vos emails"                                |
+        "wrong@beta.gouv.fr"                 ! "Il n'y a pas d'utilisateur avec cette adresse email"|>
           { (email, expected) =>
             val loginURL = controllers.routes.LoginController.login().absoluteURL(false, s"localhost:$port")
 
@@ -30,6 +30,7 @@ class LoginSpec extends Specification with Tables with BaseSpec {
             browser.pageSource must contain(expected)
         }
     }
+
     "Use token with success"  in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {
       val tokenService = app.injector.instanceOf[TokenService]
       val loginToken = LoginToken.forUserId(UUIDHelper.namedFrom("julien"), 5, "127.0.0.1")
