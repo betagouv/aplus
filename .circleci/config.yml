@@ -6,13 +6,11 @@ version: 2
 jobs:
   build:
     docker:
-      # specify the version you desire here
       - image: circleci/openjdk:8-jdk
-      
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
+      - image: circleci/postgres:9.6.2-alpine
+        environment:
+          POSTGRES_USER: aplus
+          POSTGRES_DB: aplus
 
     working_directory: ~/repo
 
