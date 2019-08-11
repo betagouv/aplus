@@ -71,10 +71,10 @@
             <div class="login-content mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
                 @userOrToken match {
                     case Left(None) => {
-                    <h3>Connexion à A+</h3>
+                    <h3>Connexion à Administration+</h3>
                     <form action="@routes.LoginController.login()" method="post">
                         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                            <input class="mdl-textfield__input" type="text" id="sample1" name="email" onkeyup="document.getElementsByName('id')[0].disabled = false">
+                            <input class="mdl-textfield__input" type="text" id="sample1" name="email" oninput="document.getElementsByName('id')[0].disabled = false">
                             <label class="mdl-textfield__label" for="sample1">Saisir votre adresse email</label>
                         </div><br>
                         @flash.get("error").map { message =>
@@ -85,9 +85,9 @@
                     }
                     case Left(Some(user)) => {
                         <h3><i class="material-icons">mail_outline</i> Regardez vos emails <i class="material-icons">mail_outline</i></h3>
-                         <p>Vous allez recevoir un email à l'adresse <b>@user.email</b>. Cliquez sur le lien contenu dans l'email pour accéder à A+.</p>
+                         <p>Vous allez recevoir un email à l'adresse <b>@user.email</b>. Cliquez sur le lien contenu dans l'email pour accéder à Administration+.</p>
                     }
-                    case Right((token,path)) => {
+                    case Right((token,path)) => {      Administration
                         <h3>Vous allez accéder automatiquement à Administration+</h3>
                         <p>Si la page suivante ne se charge pas automatiquement, cliquez sur le bouton suivant :</p>
                         <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary" onclick="window.location='@path?token=@token'">Accéder à Administration+</button>
