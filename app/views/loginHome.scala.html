@@ -1,4 +1,4 @@
-@(userOrToken: Either[Option[User],(String,String)])(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil)
+@(userOrToken: Either[Option[User],(String,String)])(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil, request: RequestHeader)
 
 <!doctype html>
 <html lang="fr">
@@ -73,6 +73,7 @@
                     case Left(None) => {
                     <h3>Connexion à Administration+</h3>
                     <form action="@routes.LoginController.login()" method="post">
+                        @helper.CSRF.formField
                         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                             <input class="mdl-textfield__input" type="text" id="sample1" name="email" oninput="document.getElementsByName('id')[0].disabled = false">
                             <label class="mdl-textfield__label" for="sample1">Saisir votre adresse email</label>

@@ -25,6 +25,7 @@
             </a>
             <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
             @helper.form(action = routes.ApplicationController.createPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();") {
+                @helper.CSRF.formField
                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
                     <h5 class="mdl-cell mdl-cell--12-col">Sélectionnez les organismes concernés sur la zone @area.name</h5>
 

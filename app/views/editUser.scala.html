@@ -1,7 +1,7 @@
 @import models._
 @import extentions.MDLForms._
 @import java.util.UUID
-@(currentUser: User, area: Area)(form: Form[User], userId: UUID, userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider)
+@(currentUser: User, area: Area)(form: Form[User], userId: UUID, userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
 @main(currentUser, area)(s"Utilisateur ${userId}") {
@@ -10,6 +10,7 @@
 
     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
   @helper.form(action = routes.UserController.editUserPost(userId)) {
+    @helper.CSRF.formField
     @if(form.hasGlobalErrors) {
       <div style="color: red; font-weight: bold;">@form.globalErrors.mkString(", ")</div>
     }

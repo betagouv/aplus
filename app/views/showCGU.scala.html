@@ -19,6 +19,7 @@
     <p><a href="@routes.Assets.versioned("pdf/CGU_13_mai_2019.pdf")" target="_blank" download="charte_3_octobre_2018.pdf">Si vous ne voyez pas les CGU cliquez-ici pour les télécharger.</a></p>
         @if(user.cguAcceptationDate.isEmpty) {
             @helper.form(action = routes.UserController.validateCGU(), args = 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
+                @helper.CSRF.formField
                 @flash.get("redirect").map { redirect =>
                     <input name="redirect" value="@redirect"  style="display: none">
                 }

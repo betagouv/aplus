@@ -1,4 +1,4 @@
-@(user: User, area: Area)(users: List[User], application: Application, answerToAgentsForm: Form[_])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider)
+@(user: User, area: Area)(users: List[User], application: Application, answerToAgentsForm: Form[_])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 @import java.util.Locale
 
 @main(user, area)(s"Demande : ${application.id} - ${area.name} ")  {
@@ -332,6 +332,7 @@ dialog {
             <div class="mdl-card__supporting-text mdl-card--border">
 
                 <form class="do-not-print" action="@routes.ApplicationController.answer(application.id)" method="post">
+                    @helper.CSRF.formField
                     Réponse rapide à l'aidant :                 <br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-1">
                         <input type="radio" id="option-1" class="mdl-radio__button" name="message" value="Je m'en occupe" checked>
@@ -369,6 +370,7 @@ dialog {
                     @if(application.canBeAnsweredBy(user)) {
                         <div class="mdl-tabs__panel is-active" id="answer-helper">
                             <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('review-validation').disabled=true">
+                                @helper.CSRF.formField
                                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
                                     @if(user.instructor) {
                                         <div class="info-box">Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName et les personnes invitées sur la demande. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. <b>Merci d'utiliser vos outils habituels pour continuer une instruction.</b></div>
@@ -420,6 +422,7 @@ dialog {
                     @if(application.canHaveAgentsInvitedBy(user)) {
                         <div class="mdl-tabs__panel" id="invite-agents">
                             <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
+                                @helper.CSRF.formField
                                 <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" style="border: none;">
                                     <thead>
                                         <tr>

@@ -1,6 +1,6 @@
 @import models._
 @import extentions.MDLForms._
-@(user: User, area: Area)(form: Form[(List[User])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider)
+@(user: User, area: Area)(form: Form[(List[User])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
 @main(user, area)(s"Gestion des utilisateurs ${area.name}") {
@@ -40,6 +40,7 @@
 } {                           
   <div class="mdl-cell mdl-cell--12-col">
   @helper.form(action = action) {
+    @helper.CSRF.formField
     @if(form.hasGlobalErrors) {
       <div style="color: red; font-weight: bold;">@form.globalErrors.flatMap(_.messages).mkString(", ")</div>
     }
