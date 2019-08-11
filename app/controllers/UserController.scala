@@ -211,28 +211,32 @@ class UserController @Inject()(loginAction: LoginAction,
     Ok(views.html.showCGU(request.currentUser, request.currentArea))
   }
 
+  private val validateCGUForm = Form(
+    tuple(
+      "redirect" -> optional(text),
+      "newsletter" -> boolean,
+      "validate" -> boolean
+    )
+  )
+
   def validateCGU() = loginAction { implicit request =>
-    Form(
-      tuple(
-        "redirect" -> optional(text),
-        "newsletter" -> boolean,
-        "validate" -> boolean
-      )
-    ).bindFromRequest.fold(
+    validateCGUForm.bindFromRequest.fold(
       formWithErrors => {
         eventService.error("CGU_VALIDATION_ERROR", s"Erreur de formulaire dans la validation des CGU")
         BadRequest(s"Formulaire invalide, prévenez l'administrateur du service. ${formWithErrors.errors.mkString(", ")}")
       },
-      form => {
-        if(form._3) {
-          userService.acceptCGU(request.currentUser.id, form._2)
-        }
-        eventService.info("CGU_VALIDATED", s"CGU validées")
-        form._1 match {
-          case Some(redirect) =>
-            Redirect(Call("GET", redirect)).flashing("success" -> "Merci d\'avoir accepté les CGU")
-          case _ =>
-            Redirect(routes.ApplicationController.all()).flashing("success" -> "Merci d\'avoir accepté les CGU")
+      {
+        case (redirectOption, newsletter, validate) => {
+          if (validate) {
+            userService.acceptCGU(request.currentUser.id, newsletter)
+          }
+          eventService.info("CGU_VALIDATED", s"CGU validées")
+          redirectOption match {
+            case Some(redirect) =>
+              Redirect(Call("GET", redirect)).flashing("success" -> "Merci d\'avoir accepté les CGU")
+            case _ =>
+              Redirect(routes.ApplicationController.all()).flashing("success" -> "Merci d\'avoir accepté les CGU")
+          }
         }
       }
     )
