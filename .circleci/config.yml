@@ -43,5 +43,12 @@ jobs:
           key: v2-dependencies--{{ checksum "build.sbt" }}
         
       # run tests!
-      - run: cat /dev/null | sbt test
+      - run: cat /dev/null | sbt coverage test
 
+      - run: cat /dev/null | sbt coverageReport
+
+      - store_test_results:
+          path: target/test-reports
+
+      - store_artifacts:
+          path: target/scala-2.12/scoverage-report
