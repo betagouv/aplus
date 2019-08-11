@@ -27,9 +27,9 @@ class HomeController @Inject()(loginAction: LoginAction, db: Database) extends I
         false
     }
     if(connectionValid){
-      Ok("")
+      Ok("OK")
     } else {
-      ServiceUnavailable("")
+      ServiceUnavailable("Indisponible")
     }
   }
 }

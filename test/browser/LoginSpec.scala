@@ -10,13 +10,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 
 
 @RunWith(classOf[JUnitRunner])
-class LoginSpec extends Specification with Tables {
-
-  def applicationWithBrowser = {
-    new GuiceApplicationBuilder()
-      .configure("app.filesPath" -> "files", "app.host" -> "localhost", "play.mailer.mock" -> true)
-      .build()
-  }
+class LoginSpec extends Specification with Tables with BaseSpec {
 
   "Login" should {
     "Login with valid or invalid emails" in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {
