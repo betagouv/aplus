@@ -136,7 +136,7 @@
                     </div>
                 }
             }
-            <input class="invisible" id="category" name="category" @if(selectedCategory.nonEmpty){ value="@selectedCategory.get" } >
+            <input class="invisible" id="category" name="category" @selectedCategory.map{ category => value="@category" } >
             <script>
                 function onCategoryChange(caller) {
                     var category = caller.getAttribute("data-category");
