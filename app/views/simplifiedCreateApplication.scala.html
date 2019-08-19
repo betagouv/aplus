@@ -10,12 +10,12 @@
         }
 
         @@media screen and (max-width: 750px) {
-        .mdl-data-table__cell--split-in-mobile {
-            display: block;
-            float: left;
-            width: 100%;
-            height: initial !important;
-        }
+            .mdl-data-table__cell--split-in-mobile {
+                display: block;
+                float: left;
+                width: 100%;
+                height: initial !important;
+            }
         }
 
         .aplus-cat-button {
@@ -121,7 +121,7 @@
     <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
 
     @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();") {
-
+        @helper.CSRF.formField
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
 
             @defining(categories.filter(_.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty)) { categories =>
@@ -136,7 +136,7 @@
                     </div>
                 }
             }
-            <input class="invisible" id="category" name="category" @if(selectedCategory.nonEmpty){ value="@selectedCategory.get" } >
+            <input class="invisible" id="category" name="category" @selectedCategory.map{ category => value="@category" } >
             <script>
                 function onCategoryChange(caller) {
                     var category = caller.getAttribute("data-category");
