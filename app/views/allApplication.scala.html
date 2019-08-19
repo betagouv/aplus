@@ -1,4 +1,4 @@
-@(user: User, area: Area)(myOpenApplications: Seq[Application], myClosedApplications: Seq[Application], applicationsFromTheArea: Seq[Application] = List())(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User, area: Area)(myOpenApplications: Seq[Application], myClosedApplications: Seq[Application], applicationsFromTheArea: Seq[Application] = List())(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 @import java.util.Locale
 
 @display(applications: Seq[Application]) = {

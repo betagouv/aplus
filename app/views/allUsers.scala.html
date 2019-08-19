@@ -36,10 +36,10 @@
                 </a>
             </td>
           }
-          <td class="mdl-data-table__cell--non-numeric">@user.name</td>
-          <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
+          <td class="mdl-data-table__cell--non-numeric @if(user.disabled){ text--strikethrough }">@user.name</td>
+          <td class="mdl-data-table__cell--non-numeric @if(user.disabled){ text--strikethrough }">@user.qualite</td>
           <td class="mdl-data-table__cell--non-numeric">@user.communeCode</td>
-          <td class="mdl-data-table__cell--non-numeric">@user.email</td>
+          <td class="mdl-data-table__cell--non-numeric @if(user.disabled){ text--strikethrough }">@user.email</td>
           @if(currentUser.admin) {
             <td class="mdl-data-table__cell--non-numeric">
               <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">

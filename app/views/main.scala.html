@@ -1,4 +1,6 @@
-@(currentUser: User, currentArea: Area)(title: String)(header: Html)(content: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@import helper._
+
+@(currentUser: User, currentArea: Area)(title: String)(header: Html)(content: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 <!doctype html>
 <html lang="fr">
@@ -42,7 +44,7 @@
                 var request = new XMLHttpRequest();
                 var parent = sender.parentNode;
                 parent.innerHTML = "<span style='font-weight: bold;'>En cours</span> <img src='@routes.Assets.versioned("images/spin.gif")'>";
-                request.open('POST', '@routes.LoginController.login()', true);
+                request.open('POST', '@CSRF(routes.LoginController.login())', true);
                 request.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
                 request.onload = function() {
                     if (request.status === 200) {

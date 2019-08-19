@@ -51,7 +51,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
           }
         case (_, None, Some(token)) =>
           manageToken(token)
-        case (Some(user), None, None) =>
+        case (Some(user), None, None) if user.disabled == false =>
           manageUserLogged(user)
         case _ =>
           val message = request.getQueryString("token") match {
