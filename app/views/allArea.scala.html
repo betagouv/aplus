@@ -1,6 +1,6 @@
 @import models._
 @import java.util.UUID
-@(user: User, currentArea: Area)(areas: Seq[Area], areasWithLoginByKey: Seq[UUID])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User, currentArea: Area)(areas: Seq[Area], areasWithLoginByKey: Seq[UUID])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
 @main(user, currentArea)(s"Gestion des territoires"){

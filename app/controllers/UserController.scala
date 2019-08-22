@@ -70,6 +70,7 @@ class UserController @Inject()(loginAction: LoginAction,
     "hasAcceptedCharte" -> boolean,
     "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
     "adminGroup" -> boolean,
+    "disabled" -> boolean,
     "expert" -> ignored(false),
     "groupIds" -> default(list(uuid), List()),
     "delegations" -> seq(tuple(
@@ -101,6 +102,7 @@ class UserController @Inject()(loginAction: LoginAction,
         "hasAcceptedCharte" -> ignored(false),
         "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
         "adminGroup" -> ignored(false),
+        "disabled" -> ignored(false),
         "expert" -> ignored(false),
         "groupIds" -> default(list(uuid), List()),
         "delegations" -> ignored(Map[String,String]()),
@@ -116,7 +118,7 @@ class UserController @Inject()(loginAction: LoginAction,
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
       implicit val area = request.currentArea
-      userService.byId(userId) match {
+      userService.byIdCheckDisabled(userId, true) match {
         case None =>
           eventService.error("USER_NOT_FOUND", s"L'utilisateur $userId n'existe pas")
           NotFound("Nous n'avons pas trouvé cet utilisateur")

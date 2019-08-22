@@ -51,8 +51,13 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
           }
         case (_, None, Some(token)) =>
           manageToken(token)
-        case (Some(user), None, None) =>
+        case (Some(user), None, None) if user.disabled == false =>
           manageUserLogged(user)
+        case (Some(user), None, None) if user.disabled == true =>
+          val area = areaFromContext(user)
+          implicit val requestWithUserData = new RequestWithUserData(user, area, request)
+          eventService.info("USER_ACCESS_DISABLED", s"Utilisateur désactivé essaye d'accèder à la page ${request.path}}")
+          userNotLogged("Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur contact@aplus.beta.gouv.fr en cas de problème.")
         case _ =>
           val message = request.getQueryString("token") match {
             case Some(token) =>
@@ -109,6 +114,6 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
 
   private def tokenById[A](implicit request: Request[A]) = request.getQueryString("token").flatMap(tokenService.byToken)
   private def userByKey[A](implicit request: Request[A]) = request.getQueryString("key").flatMap(userService.byKey)
-  private def userBySession[A](implicit request: Request[A]) = request.session.get("userId").flatMap(UUIDHelper.fromString).flatMap(userService.byId)
+  private def userBySession[A](implicit request: Request[A]) = request.session.get("userId").flatMap(UUIDHelper.fromString).flatMap(id => userService.byIdCheckDisabled(id,true))
 }
 

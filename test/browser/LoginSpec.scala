@@ -19,7 +19,8 @@ class LoginSpec extends Specification with Tables with BaseSpec {
     "Login with valid or invalid emails" in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {
         "email"                              | "result"                                             |
         "julien.dauphant" + "@beta.gouv.fr"  ! "Regardez vos emails"                                |
-        "wrong@beta.gouv.fr"                 ! "Il n'y a pas d'utilisateur avec cette adresse email"|>
+        "wrong@beta.gouv.fr"                 ! "Il n'y a pas d'utilisateur avec cette adresse email"|
+        "simon.pineau" + "@beta.gouv.fr"     ! "Il n'y a pas d'utilisateur avec cette adresse email"|>
           { (email, expected) =>
             val loginURL = controllers.routes.LoginController.login().absoluteURL(false, s"localhost:$port")
 

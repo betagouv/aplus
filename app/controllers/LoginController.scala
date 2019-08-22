@@ -23,8 +23,8 @@ class LoginController @Inject()(userService: UserService,
      } else {
        emailFromRequest.flatMap(email => userService.byEmail(email)).fold {
          implicit val requestWithUserData = new RequestWithUserData(User.systemUser, Area.notApplicable, request)
-         eventService.warn("UNKNOWN_EMAIL", s"Il n'y pas d'utilisateur avec l'email $emailFromRequest")
-         Redirect(routes.LoginController.login()).flashing("error" -> "Il n'y a pas d'utilisateur avec cette adresse email")
+         eventService.warn("UNKNOWN_EMAIL", s"Aucun compte actif à cette adresse mail $emailFromRequest")
+         Redirect(routes.LoginController.login()).flashing("error" -> "Aucun compte actif à cette adresse email")
        } { user =>
          val loginToken = LoginToken.forUserId(user.id, tokenExpirationInMinutes, request.remoteAddress)
          tokenService.create(loginToken)
