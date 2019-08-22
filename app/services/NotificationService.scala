@@ -17,7 +17,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   private val host = configuration.underlying.getString("app.host")
   private val https = configuration.underlying.getString("app.https") == "true"
 
-  private val from = "Administration+ <contact@beta.gouv.fr>"
+  private val from = "Administration+ <contact@aplus.beta.gouv.fr>"
 
   private def sendMail(email: Email) {
     val emailWithText = email.copy(
