@@ -2,7 +2,7 @@
 @import java.util.Locale
 @import extentions.Time.dateTimeOrdering
 @import extentions.Math
-@(user: User, area: Area)(months: ListMap[String, String], allApplications: Map[Area, Seq[Application]], users: List[User], currentAreaOnly: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash)
+@(user: User, area: Area)(months: ListMap[String, String], allApplications: Map[Area, Seq[Application]], users: List[User], currentAreaOnly: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 @main(user, area)(s"Stats")  {
     <style xmlns="http://www.w3.org/1999/html">

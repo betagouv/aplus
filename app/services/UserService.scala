@@ -30,6 +30,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     "has_accepted_charte",
     "commune_code",
     "group_admin",
+    "disabled",
     "expert",
     "group_ids",
     "delegations",
@@ -53,9 +54,12 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
   }
 
-  def byId(id: UUID): Option[User] = db.withConnection { implicit connection =>
-    SQL("""SELECT * FROM "user" WHERE id = {id}::uuid""").on('id -> id).as(simpleUser.singleOpt)
-  }.orElse(User.admins.find(_.id == id))
+  def byId(id: UUID): Option[User] = byIdCheckDisabled(id, false)
+
+  def byIdCheckDisabled(id: UUID, includeDisabled: Boolean): Option[User] = db.withConnection { implicit connection =>
+    val disabledSQL: String = if(includeDisabled) { "" } else { "AND disabled = false" }
+    SQL(s"""SELECT * FROM "user" WHERE id = {id}::uuid $disabledSQL""").on('id -> id).as(simpleUser.singleOpt)
+  }.orElse(User.admins.find(_.id == id)).filter(!_.disabled || includeDisabled)
 
   def byIds(ids: List[UUID]): List[User] = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user" WHERE ARRAY[{ids}]::uuid[] @> ARRAY[id]::uuid[]""").on('ids -> ids).as(simpleUser.*)
@@ -67,8 +71,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
   }.orElse(User.admins.find(_.key == key))
 
   def byEmail(email: String): Option[User] = db.withConnection { implicit connection =>
-    SQL("""SELECT * FROM "user" WHERE lower(email) = {email}""").on('email -> email.toLowerCase()).as(simpleUser.singleOpt)
-  }.orElse(User.admins.find(_.email.toLowerCase() == email.toLowerCase()))
+    SQL("""SELECT * FROM "user" WHERE lower(email) = {email} AND disabled = false""").on('email -> email.toLowerCase()).as(simpleUser.singleOpt)
+  }.orElse(User.admins.find(_.email.toLowerCase() == email.toLowerCase())).filter(!_.disabled)
 
   def add(users: List[User]) = db.withTransaction { implicit connection =>
     users.foldRight(true) { (user, success)  =>
@@ -108,7 +112,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
           delegations = ${Json.toJson(user.delegations)},
           group_admin = ${user.groupAdmin},
           group_ids = array[${user.groupIds}]::uuid[],
-          expert = ${user.expert}
+          expert = ${user.expert},
+          disabled = ${user.disabled}
           WHERE id = ${user.id}::uuid
        """.executeUpdate() == 1
   }
