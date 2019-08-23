@@ -1,6 +1,6 @@
 package controllers
 
-import java.util.UUID
+import java.util.{Locale, UUID}
 
 import javax.inject.{Inject, Singleton}
 import actions.{LoginAction, RequestWithUserData}
@@ -48,6 +48,42 @@ class UserController @Inject()(loginAction: LoginAction,
       }
       eventService.info("ALL_USER_SHOWED", s"Visualise la vue des utilisateurs")
       Ok(views.html.allUsers(request.currentUser, request.currentArea)(groups, users, applications))
+    }
+  }
+
+  def allCSV = loginAction { implicit request =>
+    if(request.currentUser.admin == false) {
+      eventService.warn("ALL_USER_CSV_UNAUTHORIZED", s"Accès non autorisé à l'export utilisateur")
+      Unauthorized("Vous n'avez pas le droit de faire ça")
+    } else {
+      val users = userService.byAreas(request.currentUser.areas)
+      val groups = userService.allGroupByAreas(request.currentUser.areas)
+      eventService.info("ALL_USER_CSV_SHOWED", s"Visualise le CSV de tous les zones de l'utilisateur")
+
+      def userToCSV(user: User): String = {
+        List[String](
+          user.id.toString,
+          user.name,
+          user.qualite,
+          user.email,
+          user.creationDate.toString("dd-MM-YYYY-HHhmm", new Locale("fr")),
+          if(user.helper) { "Aidant" } else { " " },
+          if(user.instructor) { "Instructeur" } else { " " },
+          if(user.groupAdmin) { "Responsable" } else { " " },
+          if(user.groupAdmin) { "Expert" } else { " " },
+          if(user.admin) { "Admin" } else { " " },
+          if(user.disabled) { "Désactivé" } else { " " },
+          user.communeCode,
+          user.groupIds.flatMap(id => groups.find(_.id == id)).map(_.name).mkString(","),
+          if(user.cguAcceptationDate.nonEmpty) { "CGU Acceptées" } else { "" },
+          if(user.newsletterAcceptationDate.nonEmpty) { "Newsletter Acceptée"} else { "" },
+        ).mkString(";")
+      }
+      val headers = List[String]("Id", "Nom", "Qualité", "Email", "Création","Aidant","Instructeur","Responsable","Expert","Admin","Actif","Commune INSEE", "Groupes", "CGU", "Newsletter").mkString(";")
+      val csv = (List(headers) ++ users.map(userToCSV)).mkString("\n")
+      val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
+
+      Ok(csv).withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}-users.csv"""" )
     }
   }
 
