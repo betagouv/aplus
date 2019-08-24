@@ -74,12 +74,13 @@ class UserController @Inject()(loginAction: LoginAction,
           if(user.admin) { "Admin" } else { " " },
           if(user.disabled) { "Désactivé" } else { " " },
           user.communeCode,
+          user.areas.flatMap(Area.fromId).map(_.name).mkString(","),
           user.groupIds.flatMap(id => groups.find(_.id == id)).map(_.name).mkString(","),
           if(user.cguAcceptationDate.nonEmpty) { "CGU Acceptées" } else { "" },
           if(user.newsletterAcceptationDate.nonEmpty) { "Newsletter Acceptée"} else { "" },
         ).mkString(";")
       }
-      val headers = List[String]("Id", "Nom", "Qualité", "Email", "Création","Aidant","Instructeur","Responsable","Expert","Admin","Actif","Commune INSEE", "Groupes", "CGU", "Newsletter").mkString(";")
+      val headers = List[String]("Id", "Nom", "Qualité", "Email", "Création","Aidant","Instructeur","Responsable","Expert","Admin","Actif","Commune INSEE", "Territoires","Groupes", "CGU", "Newsletter").mkString(";")
       val csv = (List(headers) ++ users.map(userToCSV)).mkString("\n")
       val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
 
