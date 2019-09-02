@@ -15,11 +15,12 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
 import play.api.mvc.{Call, InjectedController}
-import services.{ApplicationService, EventService, NotificationService, UserService}
+import services.{ApplicationService, EventService, NotificationService, UserGroupService, UserService}
 
 @Singleton
 class UserController @Inject()(loginAction: LoginAction,
                                userService: UserService,
+                               userGroupService: UserGroupService,
                                applicationService: ApplicationService,
                                notificationsService: NotificationService,
                                eventService: EventService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
@@ -44,11 +45,11 @@ class UserController @Inject()(loginAction: LoginAction,
       }
       val applications = applicationService.allByArea(request.currentArea.id, true)
       val groups: List[UserGroup] = if (request.currentUser.admin) {
-        userService.allGroupByAreas(
+        userGroupService.allGroupByAreas(
             if(currentAreaOnly) { List[UUID](request.currentArea.id) }
             else {request.currentUser.areas})
       } else if (request.currentUser.groupAdmin) {
-        userService.groupByIds(request.currentUser.groupIds)
+        userGroupService.groupByIds(request.currentUser.groupIds)
       } else {
         eventService.warn("ALL_USER_INCORRECT_SETUP", s"Erreur d'accès aux groupes")
         List()
@@ -72,7 +73,7 @@ class UserController @Inject()(loginAction: LoginAction,
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
       val users = userService.byAreas(request.currentUser.areas)
-      val groups = userService.allGroupByAreas(request.currentUser.areas)
+      val groups = userGroupService.allGroupByAreas(request.currentUser.areas)
       eventService.info("ALL_USER_CSV_SHOWED", s"Visualise le CSV de tous les zones de l'utilisateur")
 
       def userToCSV(user: User): String = {
@@ -176,7 +177,7 @@ class UserController @Inject()(loginAction: LoginAction,
           NotFound("Nous n'avons pas trouvé cet utilisateur")
         case Some(user) =>
           val form = userForm.fill(user)
-          val groups = userService.allGroups
+          val groups = userGroupService.allGroups
           eventService.info("USER_SHOWED", s"Visualise la vue de modification l'utilisateur ", user = Some(user))
           Ok(views.html.editUser(request.currentUser, request.currentArea)(form, userId, groups))
       }
@@ -191,7 +192,7 @@ class UserController @Inject()(loginAction: LoginAction,
       implicit val area = request.currentArea
       userForm.bindFromRequest.fold(
         formWithErrors => {
-          val groups = userService.allGroups
+          val groups = userGroupService.allGroups
           eventService.error("ADD_USER_ERROR", s"Essai de modification de l'tilisateur $userId avec des erreurs de validation")
           BadRequest(views.html.editUser(request.currentUser, request.currentArea)(formWithErrors, userId, groups))
         },
@@ -201,7 +202,7 @@ class UserController @Inject()(loginAction: LoginAction,
             Redirect(routes.UserController.all()).flashing("success" -> "Utilisateur modifié")
           } else {
             val form = userForm.fill(user).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
-            val groups = userService.allGroups
+            val groups = userGroupService.allGroups
             eventService.error("EDIT_USER_ERROR", s"Impossible de modifier l'utilisateur dans la BDD", user = Some(user))
             InternalServerError(views.html.editUser(request.currentUser, request.currentArea)(form, userId, groups))
           }
@@ -298,7 +299,7 @@ class UserController @Inject()(loginAction: LoginAction,
   }
 
   def editGroup(id: UUID) = loginAction { implicit request =>
-    userService.groupById(id) match {
+    userGroupService.groupById(id) match {
       case None =>
         eventService.error("EDIT_GROUPE_NOT_FOUND", s"La demande $id n'existe pas")
         NotFound("Nous n'avons pas trouvé ce groupe")
@@ -315,7 +316,7 @@ class UserController @Inject()(loginAction: LoginAction,
   }
 
   def editGroupPost(id: UUID) = loginAction { implicit request =>
-    userService.groupById(id) match {
+    userGroupService.groupById(id) match {
       case None =>
         eventService.error("EDIT_GROUPE_NOT_FOUND", s"La demande $id n'existe pas")
         NotFound("Nous n'avons pas trouvé ce groupe")
@@ -330,7 +331,7 @@ class UserController @Inject()(loginAction: LoginAction,
               BadRequest("Impossible de modifier le groupe (erreur de formulaire)")
             },
             group => {
-              if (userService.edit(group.copy(id = id))) {
+              if (userGroupService.edit(group.copy(id = id))) {
                 eventService.info("EDIT_USER_GROUP_DONE", s"Groupe édité")
                 Redirect(routes.UserController.editGroup(id)).flashing("success" -> "Groupe modifié")
               } else {eventService.error("EDIT_USER_GROUP_ERROR", s"Impossible de modifier le groupe dans la BDD")
@@ -365,7 +366,7 @@ class UserController @Inject()(loginAction: LoginAction,
           BadRequest("Impossible d'ajouter le groupe")//BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost()))
         },
         group => {
-          if (userService.add(group)) {
+          if (userGroupService.add(group)) {
             eventService.info("ADD_USER_GROUP_DONE", s"Groupe ajouté")
             Redirect(routes.UserController.editGroup(group.id)).flashing("success" -> "Groupe ajouté")
           } else {eventService.error("ADD_USER_GROUP_ERROR", s"Impossible d'ajouter le groupe dans la BDD")

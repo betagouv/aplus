@@ -31,6 +31,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                                       notificationsService: NotificationService,
                                       eventService: EventService,
                                       organisationService: OrganisationService,
+                                      userGroupService: UserGroupService,
                                       configuration: play.api.Configuration)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
   import forms.Models._
 
@@ -64,7 +65,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     eventService.info("APPLICATION_FORM_SHOWED", s"Visualise le formulaire simplifié de création de demande")
     val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
     val groupIds = instructors.flatMap(_.groupIds).distinct
-    val organismeGroups = userService.groupByIds(groupIds).filter(_.organisationSetOrDeducted.nonEmpty)
+    val organismeGroups = userGroupService.groupByIds(groupIds).filter(_.organisationSetOrDeducted.nonEmpty)
     val categories = organisationService.categories
     Ok(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, None, applicationForm))
   }
@@ -88,7 +89,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
              eventService.info("APPLICATION_CREATION_INVALID", s"L'utilisateur essai de créé une demande invalide")
              if(simplified) {
                val groupIds = instructors.flatMap(_.groupIds).distinct
-               val organismeGroups = userService.groupByIds(groupIds).filter(_.organisationSetOrDeducted.nonEmpty)
+               val organismeGroups = userGroupService.groupByIds(groupIds).filter(_.organisationSetOrDeducted.nonEmpty)
                val categories = organisationService.categories
                BadRequest(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, formWithErrors("category").value, formWithErrors))
              } else {
