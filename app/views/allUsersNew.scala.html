@@ -93,7 +93,7 @@
               Et utilisateurs multigroupes :
               @for(user <- groupUsers.filter(_.groupIds.length != 1)) {
                 <a href="@routes.UserController.editUser(user.id)">@user.name (@user.qualite)</a> /
-              }
+              } <hr>
             }
             @helper.form(routes.UserController.add(userGroup.id), 'method -> "get") {
               @helper.CSRF.formField
