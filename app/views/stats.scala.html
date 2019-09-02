@@ -414,9 +414,9 @@
 
             @defining(months.keys.toSeq.map{ month:String => month -> applications.filter(a => f"${a.creationDate.getYear}/${a.creationDate.getMonthOfYear}%02d" == month) } ) { newApplicationsPerMonth: Seq[(String, Seq[Application])] =>
                 <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white mdl-grid">
-                    <canvas class="mdl-cell mdl-cell--12-col" id="application-chart-@area.name" style="height: 300px"></canvas>
+                    <canvas class="mdl-cell mdl-cell--12-col" id="application-chart-@area.id" style="height: 300px"></canvas>
                     <script>
-                        new Chart(document.getElementById('application-chart-@area.name'), {
+                        new Chart(document.getElementById('application-chart-@area.id'), {
                             // The type of chart we want to create
                             type: 'bar',
 
@@ -486,11 +486,11 @@
 
                         @defining(newApplicationsPerMonth.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
                             <div class="chart-container">
-                                <canvas id="admin-received-chart-@area.name"></canvas>
+                                <canvas id="admin-received-chart-@area.id"></canvas>
                             </div>
                             <script>
                                     var adminReceivedColors = ["#caff70","#caff70","#8b8970","#8b8970","#a2cd5a","#a2cd5a","#eea2ad","#eea2ad","#666666","#666666","#7a7a7a","#7a7a7a","#87ceff","#87ceff","#6ca6cd","#6ca6cd","#eedd82","#eedd82","#ee6a50","#ee6a50","#ee7942","#ee7942","#ff83fa","#ff83fa","#c9c9c9","#c9c9c9","#919191","#919191","#cd5c5c","#cd5c5c","#454545","#454545","#eee9bf","#eee9bf",];
-                                    new Chart(document.getElementById('admin-received-chart-@area.name'), {
+                                    new Chart(document.getElementById('admin-received-chart-@area.id'), {
                                         // The type of chart we want to create
                                         type: 'line',
                                         // The data for our dataset
@@ -550,11 +550,11 @@
                         <summary>Détail des demandes faites par des structures aidantes</summary>
                         @defining(newApplicationsPerMonth.flatMap(_._2).flatMap(_.creatorUserQualite(users)).toSet.toList) { admins =>
                         <div class="chart-container">
-                            <canvas id="helper-admin-chart-@area.name"></canvas>
+                            <canvas id="helper-admin-chart-@area.id"></canvas>
                         </div>
                         <script>
                                 var adminReceivedColors = ["#caff70","#caff70","#8b8970","#8b8970","#a2cd5a","#a2cd5a","#eea2ad","#eea2ad","#666666","#666666","#7a7a7a","#7a7a7a","#87ceff","#87ceff","#6ca6cd","#6ca6cd","#eedd82","#eedd82","#ee6a50","#ee6a50","#ee7942","#ee7942","#ff83fa","#ff83fa","#c9c9c9","#c9c9c9","#919191","#919191","#cd5c5c","#cd5c5c","#454545","#454545","#eee9bf","#eee9bf",];
-                                new Chart(document.getElementById('helper-admin-chart-@area.name'), {
+                                new Chart(document.getElementById('helper-admin-chart-@area.id'), {
                                     // The type of chart we want to create
                                     type: 'line',
                                     // The data for our dataset
