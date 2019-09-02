@@ -293,3 +293,19 @@ html, body {
 .text--strikethrough {
     text-decoration: line-through;
 }
+
+.tag--admin {
+    background-color: #7a008f;
+    color: white;
+}
+
+.tag--responsable {
+    background-color: #e2181a;
+    color: white;
+}
+.tag--instructor {
+    background-color: #bee1ff;
+}
+.tag--aidant {
+    background-color: greenyellow;
+}

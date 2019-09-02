@@ -1,0 +1,149 @@
+@import models._
+@(currentUser: User, area: Area)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], currentAreaOnly: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+
+  @display(users: Seq[User])(header: Html)(footer: Html = Html("")) = {
+    <div class="mdl-cell mdl-cell--12-col pem-container">
+      <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
+        <thead>
+          <th class="mdl-data-table__cell--non-numeric" colspan="6" style="font-size: 20px; text-align: left; color: black; font-weight: normal" >
+            @header
+          </th>
+        </thead>
+        @if(footer != Html("")) {
+           <tfoot>
+              <tr>
+                <td class="mdl-data-table__cell--non-numeric" colspan="5">
+                  @footer
+                </td>
+              </tr>
+              <tr class="invisible">
+                <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+              </tr>
+            </tfoot>
+            <tbody>
+        }
+        @for(user <- users) {
+            <tr class="searchable-row td--clear-border">
+              @if(currentUser.admin) {
+                  <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size" style="width: 20px"><a href="@routes.UserController.editUser(user.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                    <i class="material-icons">edit</i>
+                  </a></td>
+              }
+              <td class="mdl-data-table__cell--non-numeric @if(user.disabled){ text--strikethrough }"><span class="application__name">@user.name</span><i></i>
+                <br><span class="application__subject">@user.qualite</span></td>
+              <td class="mdl-data-table__cell--non-numeric @if(user.disabled){ text--strikethrough }">@user.email<br>
+
+              </td>
+              <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
+                @if(user.groupAdmin) {
+                  <span class="tag tag--responsable">Responsable</span>
+                }
+                @if(user.admin) {
+                  <span class="tag tag--admin">Admin</span>
+                }
+              </td>
+              <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
+                @if(user.instructor) {
+                  <span class="tag tag--instructor">Instructeur</span>
+                }
+                @if(user.helper) {
+                  <span class="tag tag--aidant">Aidant</span>
+                }
+              </td>
+
+              <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
+                <div id="answers-90500d58-4345-4538-a1d7-ff80e87b5398" class="vertical-align--middle">
+                  <i class="material-icons icon--light">chat_bubble</i>
+                  <span class="application__anwsers">@applications.count(_.creatorUserId == user.id) demandes</span><br>
+                  <i class="material-icons icon--light">question_answer</i>
+                  <span class="application__anwsers">@applications.count(_.invitedUsers.contains(user.id)) solicitations</span>
+                </div>
+              </td>
+              <td class="mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size"></td>
+            </tr>
+            }
+        </tbody>
+      </table>
+    </div>
+  }
+  @main(currentUser, area)(s"Gestion des groupes utilisateurs ${if(currentAreaOnly){ area.name }}") {
+
+  } {
+
+  @if(currentUser.areas.length > 1) {
+    <p class="mdl-cell mdl-cell--12-col">Afficher : @if(currentAreaOnly) { <b>@area.name</b> / <a href="@routes.UserController.allNew()?currentAreaOnly=false">Tous les territoires</a> } else {
+      <a href="@routes.UserController.allNew()?currentAreaOnly=true">@area.name</a> / <b>Tous les territoires</b>
+    }  </p>
+  }
+      @for(userGroup <- userGroups) {
+        @defining(allUsers.filter(_.groupIds.contains(userGroup.id))){ groupUsers =>
+          @display(groupUsers.filter(_.groupIds.length == 1)){
+            @Area.fromId(userGroup.area).map(_.name).getOrElse("") /
+            <b>@userGroup.name</b> / (@(userGroup.organisation, userGroup.organisationDeductedFromName()) match {
+              case (Some(organisation), _) => {
+                @organisation / }
+              case (_, Some(organisation)) => { Détecté : @organisation / }
+              case _ => {}
+            } @allUsers.count(_.groupIds.contains(userGroup.id)) utilisateurs / INSEE : @userGroup.inseeCode)
+            @if(currentUser.admin) {
+              <a href="@routes.UserController.editGroup(userGroup.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                <i class="material-icons">edit</i>
+              </a>
+            }
+          }{
+            @if( groupUsers.filter(_.groupIds.length != 1).nonEmpty) {
+              Et utilisateurs multigroupes :
+              @for(user <- groupUsers.filter(_.groupIds.length != 1)) {
+                <a href="@routes.UserController.editUser(user.id)">@user.name (@user.qualite)</a> /
+              }
+            }
+            @helper.form(routes.UserController.add(userGroup.id), 'method -> "get") {
+              @helper.CSRF.formField
+              <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="rows" name="rows" value="1">
+                <label class="mdl-textfield__label" for="rows">Nombre d'utilisateur à ajouter</label>
+                <span class="mdl-textfield__error">Ce n'est pas un nombre</span>
+              </div>
+              <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
+                Ajouter des utilisateurs dans le groupe
+              </button>
+            }
+          }
+        }
+      }
+      @if(currentUser.admin) {
+        @defining(allUsers.filter(_.groupIds.isEmpty)) { users =>
+          @display(users) {
+              Sans groupe (@users.length utilisateurs)
+          }  { }
+        }
+      }
+    </div>
+    @if(currentUser.admin) {
+      <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col  mdl-grid">
+        <h4>Ajouter un groupe</h4> <br>
+        @helper.form(routes.UserController.addGroup(), 'method -> "post") {
+          @helper.CSRF.formField
+          <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <input class="mdl-textfield__input" type="text" id="name" name="name">
+            <label class="mdl-textfield__label" for="name">Nom du groupe</label>
+          </div>
+          <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <input class="mdl-textfield__input" type="text" pattern="[0-9AB]{2,5}" id="insee-code" name="insee-code">
+            <label class="mdl-textfield__label" for="insee-code">Code INSEE (département ou commune)</label>
+            <span class="mdl-textfield__error">Ce n'est pas un code INSEE valide (code département ou commune)</span>
+          </div>
+          <div class="mdl-cell mdl-cell--12-col">
+            <select id="organisation" name="organisation">
+              <option selected style="font-weight: bold;" value="">Organisme non-référencé</option>
+              @for(organisation <- Organisation.all) {
+                <option value="@organisation.shortName">@organisation.shortName : @organisation.name</option>
+              }
+            </select>
+          </div>
+          <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
+            Ajouter le groupe
+          </button>
+        }
+    }
+  }

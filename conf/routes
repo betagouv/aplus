@@ -35,6 +35,7 @@ GET    /validation-connexion             controllers.LoginController.redirect
 
 # Users
 GET     /users                       controllers.UserController.all
+GET     /utilisateurs                controllers.UserController.allNew
 GET     /users.csv                   controllers.UserController.allCSV
 GET     /users/:userId               controllers.UserController.editUser(userId: java.util.UUID)
 POST    /users/:userId               controllers.UserController.editUserPost(userId: java.util.UUID)

@@ -24,32 +24,47 @@ class UserController @Inject()(loginAction: LoginAction,
                                notificationsService: NotificationService,
                                eventService: EventService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
 
-  def all = loginAction { implicit request =>
+  def allWithVersion(newVersion: Boolean) = loginAction { implicit request =>
     if(request.currentUser.admin == false && request.currentUser.groupAdmin == false) {
       eventService.warn("ALL_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs")
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
-      val users = if(request.currentUser.admin){
-        userService.byArea(request.currentArea.id)
-      } else if(request.currentUser.groupAdmin) {
+      val currentAreaOnly = request.getQueryString("currentAreaOnly").map(_.toBoolean).getOrElse(true)
+      val users = if (request.currentUser.admin) {
+        if(currentAreaOnly) {
+          userService.byArea(request.currentArea.id)
+        } else {
+          userService.byAreas(request.currentUser.areas)
+        }
+      } else if (request.currentUser.groupAdmin) {
         userService.byGroupIds(request.currentUser.groupIds)
       } else {
         eventService.warn("ALL_USER_INCORRECT_SETUP", s"Erreur d'accès aux utilisateurs")
         List()
       }
       val applications = applicationService.allByArea(request.currentArea.id, true)
-      val groups = if(request.currentUser.admin) {
-        userService.allGroupByAreas(List[UUID](request.currentArea.id))
-      } else if(request.currentUser.groupAdmin) {
+      val groups: List[UserGroup] = if (request.currentUser.admin) {
+        userService.allGroupByAreas(
+            if(currentAreaOnly) { List[UUID](request.currentArea.id) }
+            else {request.currentUser.areas})
+      } else if (request.currentUser.groupAdmin) {
         userService.groupByIds(request.currentUser.groupIds)
       } else {
         eventService.warn("ALL_USER_INCORRECT_SETUP", s"Erreur d'accès aux groupes")
         List()
       }
       eventService.info("ALL_USER_SHOWED", s"Visualise la vue des utilisateurs")
-      Ok(views.html.allUsers(request.currentUser, request.currentArea)(groups, users, applications))
+      if (newVersion) {
+        Ok(views.html.allUsersNew(request.currentUser, request.currentArea)(groups, users, applications, currentAreaOnly))
+      } else {
+        Ok(views.html.allUsers(request.currentUser, request.currentArea)(groups, users, applications))
+      }
     }
   }
+
+  def all = allWithVersion(false)
+
+  def allNew = allWithVersion(true)
 
   def allCSV = loginAction { implicit request =>
     if(request.currentUser.admin == false) {
