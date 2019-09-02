@@ -17,16 +17,16 @@
     @helper.input(form("id"), 'label -> "Id", 'class -> "hidden") { (id, name, value, args) =>
         <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
     }
-    @helper.input(form("name"), 'label -> "Nom de l'utilisateur") { (id, name, value, args) =>
+    @helper.input(form("name"), 'label -> "Nom et prénom") { (id, name, value, args) =>
     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
     } <br>
-    @helper.input(form("qualite"), 'label -> "Qualité de l'utilisateur") { (id, name, value, args) =>
+    @helper.input(form("qualite"), 'label -> "Qualité") { (id, name, value, args) =>
     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
     } <br>
-    @helper.input(form("communeCode"), 'label -> "Code commune") { (id, name, value, args) =>
+    @helper.input(form("communeCode"), 'label -> "Code INSEE commune") { (id, name, value, args) =>
     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) minlength="0" maxlength="5" pattern="[0-9AB]*">
     } <br>
-    @helper.input(form("email"), 'label -> "Email de l'utilisateur") { (id, name, value, args) =>
+    @helper.input(form("email"), 'label -> "Email") { (id, name, value, args) =>
     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
     }
     @helper.checkbox(form("instructor"), 'type -> "checkbox", 'label -> "Agent", 'class -> "mdl-checkbox__input")
