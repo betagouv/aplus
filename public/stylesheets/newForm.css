@@ -1,12 +1,4 @@
 
-.mdl-data-table {
-    background-color: initial;
-    border: none;
-}
-.mdl-data-table td {
-    border-top: none;
-    border-bottom: none;
-}
 .mdl-textfield__input {
     border-radius: 5px;
     padding-left: 10px;

@@ -2,8 +2,7 @@
 @(currentUser: User, area: Area)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], currentAreaOnly: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
   @display(users: Seq[User])(header: Html)(footer: Html = Html("")) = {
-    <div class="mdl-cell mdl-cell--12-col pem-container">
-      <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
+      <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
         <thead>
           <th class="mdl-data-table__cell--non-numeric" colspan="6" style="font-size: 20px; text-align: left; color: black; font-weight: normal" >
             @header
@@ -64,11 +63,10 @@
             }
         </tbody>
       </table>
-    </div>
   }
   @main(currentUser, area)(s"Gestion des groupes utilisateurs ${if(currentAreaOnly){ area.name }}") {
-
-  } {
+    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+} {
 
   @if(currentUser.areas.length > 1) {
     <p class="mdl-cell mdl-cell--12-col">Afficher : @if(currentAreaOnly) { <b>@area.name</b> / <a href="@routes.UserController.allNew()?currentAreaOnly=false">Tous les territoires</a> } else {
@@ -91,7 +89,7 @@
               </a>
             }
           }{
-            @if( groupUsers.filter(_.groupIds.length != 1).nonEmpty) {
+            @if(groupUsers.exists(_.groupIds.length != 1)) {
               Et utilisateurs multigroupes :
               @for(user <- groupUsers.filter(_.groupIds.length != 1)) {
                 <a href="@routes.UserController.editUser(user.id)">@user.name (@user.qualite)</a> /
@@ -118,9 +116,8 @@
           }  { }
         }
       }
-    </div>
     @if(currentUser.admin) {
-      <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col  mdl-grid">
+      <div class="mdl-cell mdl-cell--12-col  mdl-grid">
         <h4>Ajouter un groupe</h4> <br>
         @helper.form(routes.UserController.addGroup(), 'method -> "post") {
           @helper.CSRF.formField
