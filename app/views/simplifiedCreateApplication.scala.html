@@ -196,7 +196,7 @@
                     }
 
                     @helper.input(applicationForm("subject"), 'label -> "Précisez ici une autre raison", 'floated -> "No", 'class -> s"${if(applicationForm("selected-subject").value.contains("other")){""}else{"invisible"}} mdl-textfield--no-padding margin-left-30px", 'divId -> "form-other-subject") { (id, name, value, args) =>
-                        <input class="mdl-textfield__input mdl-color--white" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) onkeyup="showEndOfForm()">
+                        <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) onkeyup="showEndOfForm()">
                     }
                 </div>
                 <script>
@@ -300,7 +300,7 @@
                 <h5 class="mdl-cell mdl-cell--12-col">Description de la demande</h5>
                 <div class="info-box"><b>Soyez bref</b>, la personne qui vous lira vous en remerciera, la réponse en sera d'autant plus rapide.</div>
                 @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
-                    <textarea class="mdl-textfield__input mdl-color--white" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
+                    <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
                 }
 
 

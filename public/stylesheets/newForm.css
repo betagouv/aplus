@@ -1,0 +1,52 @@
+
+.mdl-data-table {
+    background-color: initial;
+    border: none;
+}
+.mdl-data-table td {
+    border-top: none;
+    border-bottom: none;
+}
+.mdl-textfield__input {
+    border-radius: 5px;
+    padding-left: 10px;
+}
+.mdl-textfield__label {
+    padding-left: 10px;
+}
+.mdl-checkbox__box-outline {
+    background-color: white;
+}
+.mdl-radio .mdl-radio__outer-circle {
+    background-color: white;
+}
+.mdl-radio.is-checked .mdl-radio__outer-circle {
+    background: none;
+}
+
+.mdl-textfield--no-padding {
+    padding: 0px;
+}
+.mdl-textfield--no-padding .mdl-textfield__label {
+    top: 3px;
+}
+.mdl-textfield--no-padding .mdl-textfield__label:after {
+    bottom: 0px;
+}
+.mdl-textfield--no-padding.mdl-textfield--floating-label.is-focused .mdl-textfield__label, .mdl-textfield--no-padding.mdl-textfield--floating-label.is-dirty .mdl-textfield__label {
+    top: -14px;
+}
+.margin-left-30px {
+    margin-left: 30px;
+}
+
+.mdl-textfield.is-focused.mdl-textfield--floating-label .mdl-textfield__label {
+    visibility: initial;
+}
+.mdl-textfield.is-focused .mdl-textfield__label {
+    visibility: hidden;
+}
+
+.mdl-textfield__input {
+    background-color: white
+}
