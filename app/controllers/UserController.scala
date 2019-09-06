@@ -30,30 +30,26 @@ class UserController @Inject()(loginAction: LoginAction,
       eventService.warn("ALL_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs")
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
-      val currentAreaOnly = request.getQueryString("currentAreaOnly").map(_.toBoolean).getOrElse(true)
-      val users = if (request.currentUser.admin) {
-        if(currentAreaOnly) {
-          userService.byArea(request.currentArea.id)
-        } else {
-          userService.byAreas(request.currentUser.areas)
-        }
-      } else if (request.currentUser.groupAdmin) {
-        userService.byGroupIds(request.currentUser.groupIds)
-      } else {
-        eventService.warn("ALL_USER_INCORRECT_SETUP", s"Erreur d'accès aux utilisateurs")
-        List()
+      val currentAreaOnly = request.getQueryString("currentAreaOnly").forall(_.toBoolean)
+      val users = (request.currentUser.admin, request.currentUser.groupAdmin, currentAreaOnly) match {
+        case (true, _, true)  => userService.byArea(request.currentArea.id)
+        case (true, _,false)  => userService.byAreas(request.currentUser.areas)
+        case (false, true, _) => userService.byGroupIds(request.currentUser.groupIds)
+        case _ =>
+          eventService.warn("ALL_USER_INCORRECT_SETUP", s"Erreur d'accès aux utilisateurs")
+          List()
       }
+
       val applications = applicationService.allByArea(request.currentArea.id, true)
-      val groups: List[UserGroup] = if (request.currentUser.admin) {
-        userGroupService.allGroupByAreas(
-            if(currentAreaOnly) { List[UUID](request.currentArea.id) }
-            else {request.currentUser.areas})
-      } else if (request.currentUser.groupAdmin) {
-        userGroupService.groupByIds(request.currentUser.groupIds)
-      } else {
-        eventService.warn("ALL_USER_INCORRECT_SETUP", s"Erreur d'accès aux groupes")
-        List()
+      val groups: List[UserGroup] = (request.currentUser.admin, request.currentUser.groupAdmin,currentAreaOnly) match {
+        case (true, _, true)  => userGroupService.allGroupByAreas(List[UUID](request.currentArea.id))
+        case (true, _, false) => userGroupService.allGroupByAreas(request.currentUser.areas)
+        case (false, true, _) => userGroupService.groupByIds(request.currentUser.groupIds)
+        case _ =>
+          eventService.warn("ALL_USER_INCORRECT_SETUP", s"Erreur d'accès aux groupes")
+          List()
       }
+
       eventService.info("ALL_USER_SHOWED", s"Visualise la vue des utilisateurs")
       if (newVersion) {
         Ok(views.html.allUsersNew(request.currentUser, request.currentArea)(groups, users, applications, currentAreaOnly))
