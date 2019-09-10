@@ -1,37 +1,47 @@
 @import models._
 @import java.util.UUID
-@(user: User, currentArea: Area)(areas: Seq[Area], areasWithLoginByKey: Seq[UUID])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(user: User, currentArea: Area)(areas: Seq[Area], areasWithLoginByKey: Seq[UUID], userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
 @main(user, currentArea)(s"Gestion des territoires"){
-<style>
-    .cell-selected {
-        font-weight: bold;
-    }
-</style>
+
 }{
-    <div class="mdl-cell mdl-cell--12-col pem-container">
-        <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
+    <div class="mdl-cell mdl-cell--12-col pem-container mdl-grid">
+        @for(area <- Area.all.filter(area => user.areas.contains(area.id))) {
+        <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
             <thead>
                 <tr>
-                    <th>Territoire</th>
-                    @if(user.admin){
-                        <th>Identifiant</th>
-                        <th>Login par Clé</th>
-                    }
+                    <th class="mdl-data-table__cell--non-numeric @if(area.id == currentArea.id){ mdl-color-text--black }">
+                        @area.name
+                        @if(user.admin) { /
+                            @area.id /
+                            @if(areasWithLoginByKey.contains(area.id)) {
+                                <i class="material-icons">warning</i> Login par clé possible<i class="material-icons">warning</i> /
+                            }
+                            @if(area.id != currentArea.id){
+                                <a href="@routes.AreaController.change(area.id)?redirect=@routes.AreaController.all" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                                    <i class="material-icons">forward</i>
+                                </a>
+                            }
+                        }
+                    </th>
                 </tr>
             </thead>
             <tbody>
-                @for(area <- Area.all.filter(area => user.areas.contains(area.id))) {
+                @for(userGroup <- userGroups.filter(_.area == area.id).sortBy(_.name)) {
                     <tr>
-                        <td class="mdl-data-table__cell--non-numeric@if(area.id == currentArea.id){ cell-selected }">@area.name</td>
-                        @if(user.admin){
-                            <td class="mdl-data-table__cell--non-numeric@if(area.id == currentArea.id){ cell-selected }">@area.id</td>
-                            <td class="mdl-data-table__cell--non-numeric">@if(areasWithLoginByKey.contains(area.id)) { <i class="material-icons">warning</i> Possible } else { Impossible }</td>
-                        }
+                        <td class="mdl-data-table__cell--non-numeric">
+                            <i class="material-icons" style="vertical-align: middle;">chevron_right</i> Groupe : @userGroup.name
+                            @if(user.admin && area.id == currentArea.id){
+                                <a href="@routes.UserController.editGroup(userGroup.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                                    <i class="material-icons">edit</i>
+                                </a>
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>
         </table>
+        }
     </div>
 }

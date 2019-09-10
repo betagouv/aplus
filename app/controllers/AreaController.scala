@@ -8,12 +8,14 @@ import javax.inject.{Inject, Singleton}
 import models.Area
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{InjectedController, Request}
-import services.EventService
+import services.{EventService, UserGroupService}
+
 import scala.collection.JavaConverters._
 
 @Singleton
 class AreaController @Inject()(loginAction: LoginAction,
                                eventService: EventService,
+                               userGroupService: UserGroupService,
                                configuration: play.api.Configuration)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController {
   private lazy val areasWithLoginByKey = configuration.underlying.getString("app.areasWithLoginByKey").split(",").flatMap(UUIDHelper.fromString)
 
@@ -30,6 +32,16 @@ class AreaController @Inject()(loginAction: LoginAction,
   }
 
   def all = loginAction { implicit request =>
-    Ok(views.html.allArea(request.currentUser, request.currentArea)(Area.all, areasWithLoginByKey))
+    if(!request.currentUser.admin && !request.currentUser.groupAdmin) {
+      eventService.warn("ALL_AREA_UNAUTHORIZED", s"Accès non autorisé pour voir la page des territoires")
+      Unauthorized("Vous n'avez pas le droit de faire ça")
+    } else {
+      val userGroups = if(request.currentUser.admin){
+        userGroupService.allGroupByAreas(request.currentUser.areas)
+      } else { 
+        userGroupService.groupByIds(request.currentUser.groupIds)
+      }
+      Ok(views.html.allArea(request.currentUser, request.currentArea)(Area.all, areasWithLoginByKey, userGroups))
+    }
   }
 }

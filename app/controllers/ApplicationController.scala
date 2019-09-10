@@ -31,6 +31,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                                       notificationsService: NotificationService,
                                       eventService: EventService,
                                       organisationService: OrganisationService,
+                                      userGroupService: UserGroupService,
                                       configuration: play.api.Configuration)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
   import forms.Models._
 
@@ -64,7 +65,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     eventService.info("APPLICATION_FORM_SHOWED", s"Visualise le formulaire simplifié de création de demande")
     val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
     val groupIds = instructors.flatMap(_.groupIds).distinct
-    val organismeGroups = userService.groupByIds(groupIds).filter(_.organisationSetOrDeducted.nonEmpty)
+    val organismeGroups = userGroupService.groupByIds(groupIds).filter(_.organisationSetOrDeducted.nonEmpty)
     val categories = organisationService.categories
     Ok(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, None, applicationForm))
   }
@@ -88,7 +89,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
              eventService.info("APPLICATION_CREATION_INVALID", s"L'utilisateur essai de créé une demande invalide")
              if(simplified) {
                val groupIds = instructors.flatMap(_.groupIds).distinct
-               val organismeGroups = userService.groupByIds(groupIds).filter(_.organisationSetOrDeducted.nonEmpty)
+               val organismeGroups = userGroupService.groupByIds(groupIds).filter(_.organisationSetOrDeducted.nonEmpty)
                val categories = organisationService.categories
                BadRequest(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, formWithErrors("category").value, formWithErrors))
              } else {
@@ -193,21 +194,22 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def allAs(userId: UUID) = loginAction { implicit request =>
-    (request.currentUser.admin, userService.byId(userId))  match {
+    val userOption = userService.byId(userId)
+    (request.currentUser.admin, userOption)  match {
       case (false, Some(user)) =>
         eventService.warn("ALL_AS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur $userId", user=Some(user))
         Unauthorized("Vous n'avez pas le droits de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
       case (true, Some(user)) if user.admin =>
         eventService.warn("ALL_AS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur admin $userId", user=Some(user))
         Unauthorized("Vous n'avez pas le droits de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
-      case (true, Some(user)) if user.areas.contains(request.currentArea.id) =>
+      case (true, Some(user)) if request.currentUser.areas.intersect(user.areas).nonEmpty =>
         val currentUserId = user.id
         val applicationsFromTheArea = List[Application]()
         eventService.info("ALL_AS_SHOWED", s"Visualise la vue de l'utilisateur $userId", user= Some(user))
         Ok(views.html.allApplication(user, request.currentArea)(applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin), applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin), applicationsFromTheArea))
       case  _ =>
         eventService.error("ALL_AS_NOT_FOUND", s"L'utilisateur $userId n'existe pas")
-        BadRequest("L'utilisateur n'existe pas ou vous n'étes pas dans sa zone. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+        BadRequest("L'utilisateur n'existe pas ou vous n'avez pas le droit d'accèder à cette page. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
     }
   }
 

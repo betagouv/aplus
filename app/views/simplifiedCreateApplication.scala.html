@@ -4,9 +4,19 @@
 @(user: User, area: Area)(users: List[User], organisationGroups: List[UserGroup], categories: Seq[Category], selectedCategory: Option[String], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
 @main(user, area)(s"Nouvelle demande"){
-<style>
+    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+
+    <style>
         .mdl-data-table td {
             padding: 0px 18px;
+        }
+        .mdl-data-table {
+            background-color: initial;
+            border: none;
+        }
+        .mdl-data-table td {
+            border-top: none;
+            border-bottom: none;
         }
 
         @@media screen and (max-width: 750px) {
@@ -63,54 +73,6 @@
 
         .aplus-subjects .mdl-radio__label {
             font-size: 15px;  font-weight: 600;	line-height: 18px;
-        }
-
-        .mdl-data-table {
-            background-color: initial;
-            border: none;
-        }
-        .mdl-data-table td {
-            border-top: none;
-            border-bottom: none;
-        }
-        .mdl-textfield__input {
-            border-radius: 5px;
-            padding-left: 10px;
-        }
-        .mdl-textfield__label {
-            padding-left: 10px;
-        }
-        .mdl-checkbox__box-outline {
-            background-color: white;
-        }
-        .mdl-radio .mdl-radio__outer-circle {
-            background-color: white;
-        }
-        .mdl-radio.is-checked .mdl-radio__outer-circle {
-            background: none;
-        }
-
-        .mdl-textfield--no-padding {
-            padding: 0px;
-        }
-        .mdl-textfield--no-padding .mdl-textfield__label {
-            top: 3px;
-        }
-        .mdl-textfield--no-padding .mdl-textfield__label:after {
-            bottom: 0px;
-        }
-        .mdl-textfield--no-padding.mdl-textfield--floating-label.is-focused .mdl-textfield__label, .mdl-textfield--no-padding.mdl-textfield--floating-label.is-dirty .mdl-textfield__label {
-            top: -14px;
-        }
-        .margin-left-30px {
-            margin-left: 30px;
-        }
-
-        .mdl-textfield.is-focused.mdl-textfield--floating-label .mdl-textfield__label {
-            visibility: initial;
-        }
-        .mdl-textfield.is-focused .mdl-textfield__label {
-            visibility: hidden;
         }
 </style>
 }{
@@ -196,7 +158,7 @@
                     }
 
                     @helper.input(applicationForm("subject"), 'label -> "Précisez ici une autre raison", 'floated -> "No", 'class -> s"${if(applicationForm("selected-subject").value.contains("other")){""}else{"invisible"}} mdl-textfield--no-padding margin-left-30px", 'divId -> "form-other-subject") { (id, name, value, args) =>
-                        <input class="mdl-textfield__input mdl-color--white" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) onkeyup="showEndOfForm()">
+                        <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) onkeyup="showEndOfForm()">
                     }
                 </div>
                 <script>
@@ -300,7 +262,7 @@
                 <h5 class="mdl-cell mdl-cell--12-col">Description de la demande</h5>
                 <div class="info-box"><b>Soyez bref</b>, la personne qui vous lira vous en remerciera, la réponse en sera d'autant plus rapide.</div>
                 @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
-                    <textarea class="mdl-textfield__input mdl-color--white" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
+                    <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
                 }
 
 
