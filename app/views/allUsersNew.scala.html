@@ -34,6 +34,9 @@
 
               </td>
               <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
+                @if(user.disabled) {
+                  <span class="tag tag--disabled">Désactivé</span>
+                }
                 @if(user.groupAdmin) {
                   <span class="tag tag--responsable">Responsable</span>
                 }

@@ -309,3 +309,8 @@ html, body {
 .tag--aidant {
     background-color: greenyellow;
 }
+
+.tag--disabled {
+    background-color: #646464;
+    color: white;
+}
