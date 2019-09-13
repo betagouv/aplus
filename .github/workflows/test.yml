@@ -21,3 +21,5 @@ jobs:
          postgresql password: 'mysecretpassword'
     - name: Run test
       run: sbt coverage test coverageReport codacyCoverage
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
