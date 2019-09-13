@@ -13,5 +13,11 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
+    - uses: harmon758/postgresql-action@v1
+      with:
+         postgresql version: '10'
+         postgresql db: 'aplus'
+         postgresql user: 'aplus'
+         postgresql password: 'mysecretpassword'
     - name: Run test
       run: sbt coverage test coverageReport codacyCoverage
