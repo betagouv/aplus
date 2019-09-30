@@ -249,7 +249,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
               userService.byGroupIds(request.currentUser.groupIds).filter(_.helper)
             } else {
               List[User]()
-            }).filterNot(_.id == request.currentUser.id)
+            }).filterNot(user => user.id == request.currentUser.id || application.invitedUsers.contains(user.id))
 
             val renderedApplication = if((application.haveUserInvitedOn(request.currentUser) || request.currentUser.id == application.creatorUserId) && request.currentUser.expert && request.currentUser.admin && !application.closed) {
               // If user is expert, admin and invited to the application we desanonymate
