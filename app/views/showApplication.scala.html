@@ -1,4 +1,4 @@
-@(user: User, area: Area)(users: List[User], application: Application, answerToAgentsForm: Form[_])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(user: User, area: Area)(usersThatCanBeInvited: List[User], application: Application, answerToAgentsForm: Form[_])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 @import java.util.Locale
 
 @main(user, area)(s"Demande : ${application.id} - ${area.name} ")  {
@@ -287,7 +287,7 @@ dialog {
                                         case Some((_,icon)) => { <img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
                                         case None => { <i class="material-icons mdl-list__item-avatar">person</i> }
                                     }
-                                    <span>@answer.creatorUserName</span>@if(user.admin){ <span style="font-weight: bold; color:red"> @users.find(_.id == answer.creatorUserID).map(_.email).getOrElse("")</span>}
+                                    <span>@answer.creatorUserName</span>@if(user.admin){ <span style="font-weight: bold; color:red"> <a href="@routes.UserController.editUser(answer.creatorUserID)"> Voir fiche utilisateur</a></span>}
                                     <span class="mdl-list__item-sub-title"></span>
                                 </span>
                                 <span class="mdl-list__item-secondary-content">
@@ -362,9 +362,9 @@ dialog {
                             <a href="#answer-helper" class="mdl-tabs__tab is-active mdl-color-text--primary"><i class="material-icons">
                                 reply_all</i> Ajouter une réponse</a>
                         }
-                        @if(application.canHaveAgentsInvitedBy(user)) {
+                        @if(usersThatCanBeInvited.nonEmpty) {
                             <a href="#invite-agents" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
-                                person_add</i> Inviter un agent</a>
+                                person_add</i> Inviter une personne</a>
                         }
                     </div>
                     @if(application.canBeAnsweredBy(user)) {
@@ -419,7 +419,7 @@ dialog {
                         </div>
                     }
 
-                    @if(application.canHaveAgentsInvitedBy(user)) {
+                    @if(usersThatCanBeInvited.nonEmpty) {
                         <div class="mdl-tabs__panel" id="invite-agents">
                             <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
                                 @helper.CSRF.formField
@@ -432,7 +432,7 @@ dialog {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                    @for(user <- users) {
+                                    @for(user <- usersThatCanBeInvited.sortBy(_.qualite)) {
                                         <tr>
                                             <td>
                                                 <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
@@ -462,7 +462,7 @@ dialog {
                                 } else {
                                     <br>
                                 }
-                                <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Inviter les agents Administration+ sélectionnés</button>
+                                <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Inviter les personnes sélectionnés</button>
                             </form>
                         </div>
                     }
