@@ -11,6 +11,7 @@
     @webJarsUtil.locate("material-icons.css").css()
     @webJarsUtil.locate("material.min.css").css()
     <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/main.css")'>
+    <script src="@routes.Assets.versioned("javascripts/polyfills.js")"></script>
     <meta name="robots" content="noindex" />
     <style>
         .login-ribbon {
@@ -92,10 +93,11 @@
                     case Right((token,path)) => {
                         <h3>Vous allez accéder automatiquement à Administration+</h3>
                         <p>Si la page suivante ne se charge pas automatiquement, cliquez sur le bouton suivant :</p>
-                        <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary" onclick="window.location='@path?token=@token'">Accéder à Administration+</button>
+                        <button id="validation-button" type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary" onclick="window.location='@path?token=@token'">Accéder à Administration+</button>
                         <br>
                         <script>
                             window.setTimeout(function(){
+                                 document.getElementById("validation-button").disabled = true;
                                  window.location='@path?token=@token';
                             }, 2000);
                         </script>
