@@ -2,7 +2,7 @@ package models
 
 import java.util.UUID
 
-import extentions.{Hash, UUIDHelper}
+import extentions.{Hash, Time, UUIDHelper}
 import org.joda.time.DateTime
 
 case class User(id: UUID,
@@ -27,21 +27,22 @@ case class User(id: UUID,
                 newsletterAcceptationDate: Option[DateTime] = None) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"
 
-  def canBeEditedBy(user: User) =
-    ((user.admin && user.areas.intersect(user.areas).nonEmpty))
+  def canBeEditedBy(user: User): Boolean =
+    (user.admin && user.areas.intersect(user.areas).nonEmpty)
 
-  def canSeeUsersInArea(areaId: UUID) = (areaId == Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
+  def canSeeUsersInArea(areaId: UUID): Boolean =
+    (areaId == Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
+
 }
 
 object User {
   private val date = DateTime.parse("2017-11-01T00:00+01:00")
   val systemUser = User(UUIDHelper.namedFrom("system"), Hash.sha256(s"system"), "Système A+", "System A+", "contact@aplus.beta.gouv.fr", false, false, false, List(), date, false, "75056", false, disabled = true)
 
-  val admins =  List(
+  val admins = List(
     // Enabled
     User(UUIDHelper.namedFrom("zohra"), Hash.sha256(s"zohra"), "Zohra LEBEL", "Experte A+", "zohra.lebel@beta.gouv.fr", true, false, true, Area.all.map(_.id), date, true, "75056", true, disabled = false, expert = true, cguAcceptationDate = Some(date)),
     User(UUIDHelper.namedFrom("julien"), Hash.sha256(s"julien"), "Julien DAUPHANT", "Admin A+", "julien.dauphant@beta.gouv.fr", true, false, true, Area.all.map(_.id), date, true, "75056", true, disabled = false, cguAcceptationDate = Some(date)),
-    User(UUIDHelper.namedFrom("sylvain"), Hash.sha256(s"sylvain"), "Sylvain DERMY", "Expert A+", "sylvain.dermy@beta.gouv.fr", true, false, true, Area.all.map(_.id), date, true, "75056", true, disabled = false, expert = true, cguAcceptationDate = Some(date)),
     User(UUIDHelper.namedFrom("thibault"), Hash.sha256(s"thibault"), "Thibault DESJARDINS", "Expert A+", "thibault.desjardins@beta.gouv.fr", true, false, true, Area.all.map(_.id), date, true, "75056", true, disabled = false, expert = false, cguAcceptationDate = Some(date)),
     User(UUIDHelper.namedFrom("laurent"), Hash.sha256(s"laurent"), "Laurent COURTOIS-COURRET", "Expert A+", "laurent.courtois-courret@beta.gouv.fr", true, false, true, Area.all.map(_.id), date, true, "75056", true, disabled = false, expert = false, cguAcceptationDate = Some(date)),
     User(id = UUIDHelper.namedFrom("lucien"),
@@ -81,5 +82,27 @@ object User {
     User(UUIDHelper.namedFrom("yan"), Hash.sha256(s"yan - disabled"), "Yan TANGUY (disabled)", "Aide A+", "yan.tanguy@dila.gouv.fr", false, false, false, List(), date, false, "75056", false, disabled = true),
     User(UUIDHelper.namedFrom("pierre"), Hash.sha256(s"pierre -disabled"), "Pierre MOMBOISSE (disabled)", "Aide A+", "pierre.momboisse@beta.gouv.fr", false, false, false, List(), date, false, "75056", false, disabled = true),
     User(UUIDHelper.namedFrom("dominique"), Hash.sha256(s"dominique - disabled"), "Dominique LEQUEPEYS (disabled)", "Aide A+", "dominique.lequepeys@beta.gouv.fr", false, false, false, List(), date, false, "75056", false, disabled = true),
+    User(UUIDHelper.namedFrom("sylvain"), Hash.sha256(s"sylvain"), "Sylvain DERMY", "Expert A+", "sylvain.dermy@beta.gouv.fr", true, false, true, Area.all.map(_.id), date, true, "75056", true, expert = true, cguAcceptationDate = Some(date), disabled = true),
   )
+
+  // "Id", "Nom", "Qualité", "Email", "Création","Aidant","Instructeur","Responsable","Expert","Admin","Actif","Commune INSEE", "Territoires","Groupes", "CGU", "Newsletter")
+  def fromMap(values: Map[String, String]): Option[User] = {
+    val id = values.get("Id").flatMap(UUIDHelper.fromString).getOrElse(UUIDHelper.randomUUID)
+    val key = "key"
+    for {name <- values.get("Nom")
+         email <- values.get("Email")
+         qualite <- values.get("Qualité")
+         helper = values.get("Aidant").contains("Aidant")
+         instructor = values.get("Instructeur").contains("Instructeur")
+         admin = false
+         areas = List()
+         creationDate = Time.now()
+         hasAcceptedCharte = false
+         communeCode = values.getOrElse("Commune INSEE", "000")
+         groupAdmin = values.get("Responsable").contains("Responsable")
+         disabled = values.get("Actif").contains("Désactivé")
+         expert = values.get("Expert").contains("Expert")
+         } yield User(id, key, name, qualite, email, helper, instructor, admin, areas, creationDate,
+      hasAcceptedCharte, communeCode, groupAdmin, disabled, expert = expert)
+  }
 }

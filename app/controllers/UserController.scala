@@ -19,6 +19,8 @@ import play.filters.csrf.CSRF.Token
 import services.{ApplicationService, EventService, NotificationService, UserGroupService, UserService}
 import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
+import com.github.tototoshi.csv._
+import scala.io.Source
 
 @Singleton
 case class UserController @Inject()(loginAction: LoginAction,
@@ -60,16 +62,12 @@ case class UserController @Inject()(loginAction: LoginAction,
   }
 
   def allCSV(areaId: java.util.UUID) = loginAction { implicit request =>
-    if(request.currentUser.admin == false || request.currentUser.canSeeUsersInArea(areaId) == false) {
-      eventService.warn("ALL_USER_CSV_UNAUTHORIZED", s"Accès non autorisé à l'export utilisateur")
-      Unauthorized("Vous n'avez pas le droit de faire ça")
-    } else {
+    asAdminWhoSeesUsersOfArea(areaId) { () =>
+      "ALL_USER_CSV_UNAUTHORIZED" -> "Accès non autorisé à l'export utilisateur"
+    } { () =>
       val area = Area.fromId(areaId).get
-      val users = if(areaId == Area.allArea.id) {
-        userService.byAreas(request.currentUser.areas) }
-      else {
-        userService.byArea(areaId)
-      }
+      val users = if (areaId == Area.allArea.id) userService.byAreas(request.currentUser.areas)
+      else userService.byArea(areaId)
       val groups = groupService.allGroupByAreas(request.currentUser.areas)
       eventService.info("ALL_USER_CSV_SHOWED", s"Visualise le CSV de tous les zones de l'utilisateur")
 
@@ -80,24 +78,25 @@ case class UserController @Inject()(loginAction: LoginAction,
           user.qualite,
           user.email,
           user.creationDate.toString("dd-MM-YYYY-HHhmm", new Locale("fr")),
-          if(user.helper) { "Aidant" } else { " " },
-          if(user.instructor) { "Instructeur" } else { " " },
-          if(user.groupAdmin) { "Responsable" } else { " " },
-          if(user.expert) { "Expert" } else { " " },
-          if(user.admin) { "Admin" } else { " " },
-          if(user.disabled) { "Désactivé" } else { " " },
+          if (user.helper) "Aidant" else " ",
+          if (user.instructor) "Instructeur" else " ",
+          if (user.groupAdmin) "Responsable" else " ",
+          if (user.expert) "Expert" else " ",
+          if (user.admin) "Admin" else " ",
+          if (user.disabled) "Désactivé" else " ",
           user.communeCode,
           user.areas.flatMap(Area.fromId).map(_.name).mkString(","),
           user.groupIds.flatMap(id => groups.find(_.id == id)).map(_.name).mkString(","),
-          if(user.cguAcceptationDate.nonEmpty) { "CGU Acceptées" } else { "" },
-          if(user.newsletterAcceptationDate.nonEmpty) { "Newsletter Acceptée"} else { "" },
+          if (user.cguAcceptationDate.nonEmpty) "CGU Acceptées" else "",
+          if (user.newsletterAcceptationDate.nonEmpty) "Newsletter Acceptée" else ""
         ).mkString(";")
       }
-      val headers = List[String]("Id", "Nom", "Qualité", "Email", "Création","Aidant","Instructeur","Responsable","Expert","Admin","Actif","Commune INSEE", "Territoires","Groupes", "CGU", "Newsletter").mkString(";")
+
+      val headers = List[String]("Id", "Nom", "Qualité", "Email", "Création", "Aidant", "Instructeur", "Responsable", "Expert", "Admin", "Actif", "Commune INSEE", "Territoires", "Groupes", "CGU", "Newsletter").mkString(";")
       val csv = (List(headers) ++ users.map(userToCSV)).mkString("\n")
       val date = DateTime.now(Time.dateTimeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
 
-      Ok(csv).withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}-users-${area.name.replace(" ","-")}.csv"""" )
+      Ok(csv).withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}-users-${area.name.replace(" ", "-")}.csv"""")
     }
   }
 
@@ -338,4 +337,39 @@ case class UserController @Inject()(loginAction: LoginAction,
     "cguAcceptationDate" -> optional(ignored(Time.now())),
     "newsletterAcceptationDate" -> optional(ignored(Time.now()))
   )(User.apply)(User.unapply)
+
+  val applicationsChangesForm = Form(
+    "csv" -> nonEmptyText
+  )
+  
+  def importUsers = loginAction { implicit request =>
+    if (request.currentUser.admin == false) {
+      eventService.warn("IMPORT_USER_UNAUTHORIZED", s"Accès non autorisé pour importer les utilisateurs")
+      Unauthorized("Vous n'avez pas le droit de faire ça")
+    } else {
+      Ok(views.html.importUsers(request.currentUser, request.currentArea)(applicationsChangesForm))
+    }
+  }
+
+  def readCSV(csvText: String) = {
+    implicit object SemiConFormat extends DefaultCSVFormat {
+      override val delimiter = ';'
+    }
+    val reader = CSVReader.open(Source.fromString(csvText))
+    reader.allWithHeaders().flatMap(User.fromMap)
+  }
+
+  def importUsersPost: Action[AnyContent] = loginAction { implicit request =>
+    asAdmin { () =>
+      "IMPORT_USER_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
+    } { () =>
+      applicationsChangesForm.bindFromRequest.fold({ formWithErrors =>
+        BadRequest(views.html.importUsers(request.currentUser, request.currentArea)(formWithErrors))
+      }, { csvText =>
+        val usersParsed = readCSV(csvText)
+        val usersFormFilled = usersForm(Time.dateTimeZone)(request.currentArea).fill(usersParsed)
+        Ok(views.html.editUsers(request.currentUser, request.currentArea)(usersFormFilled, 0, routes.UserController.addPost(UUID.randomUUID())))
+      })
+    }
+  }
 }
