@@ -36,7 +36,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   }
 
   def newAnswer(application: Application, answer: Answer) = {
-    application.invitedUsers.keys
+    (application.invitedUsers ++ answer.invitedUsers).keys
       .filter(_ != answer.creatorUserID)
       .flatMap(userService.byId)
         .map {  user =>
