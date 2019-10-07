@@ -3,7 +3,9 @@
 @(user: User, area: Area)(users: List[User], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
     @main(user, area)(s"Nouvelle demande")  {
-        <style>
+    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+
+    <style>
                 .mdl-data-table td {
                     padding: 0px 18px;
                 }
@@ -18,7 +20,7 @@
                 }
         </style>
     }{
-        <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+        <div class="mdl-cell mdl-cell--12-col mdl-grid">
             <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h3>
             <a class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.createSimplified()">
                 Mode Guidé
@@ -77,6 +79,7 @@
                         <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
                     }
                     <br>
+
 
                     <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
                     @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille"))
