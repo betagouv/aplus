@@ -236,6 +236,17 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     )(AnswerData.apply)(AnswerData.unapply)
   )
 
+
+  def usersThatCanBeInvitedOn[A](application: Application)(implicit request: RequestWithUserData[A]) = {
+    (if(request.currentUser.instructor || request.currentUser.expert) {
+      userService.byArea(request.currentArea.id).filter(_.instructor)
+    } else if(request.currentUser.helper && application.creatorUserId == request.currentUser.id) {
+      userService.byGroupIds(request.currentUser.groupIds).filter(_.helper)
+    } else {
+      List[User]()
+    }).filterNot(user => user.id == request.currentUser.id || application.invitedUsers.contains(user.id))
+  }
+
   def show(id: UUID) = loginAction { implicit request =>
     applicationService.byId(id, request.currentUser.id, request.currentUser.admin) match {
       case None =>
@@ -243,13 +254,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
         if(application.canBeShowedBy(request.currentUser)) {
-            val usersThatCanBeInvited = (if(request.currentUser.instructor || request.currentUser.expert) {
-              userService.byArea(request.currentArea.id).filter(_.instructor)
-            } else if(request.currentUser.helper && application.creatorUserId == request.currentUser.id) {
-              userService.byGroupIds(request.currentUser.groupIds).filter(_.helper)
-            } else {
-              List[User]()
-            }).filterNot(user => user.id == request.currentUser.id || application.invitedUsers.contains(user.id))
+            val usersThatCanBeInvited =  usersThatCanBeInvitedOn(application)
 
             val renderedApplication = if((application.haveUserInvitedOn(request.currentUser) || request.currentUser.id == application.creatorUserId) && request.currentUser.expert && request.currentUser.admin && !application.closed) {
               // If user is expert, admin and invited to the application we desanonymate
@@ -354,13 +359,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter des experts")
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
-        val usersThatCanBeInvited = if(request.currentUser.instructor || request.currentUser.expert) {
-          userService.byArea(request.currentArea.id).filter(_.instructor)
-        } else if(request.currentUser.helper && application.creatorUserId == request.currentUser.id) {
-          userService.byGroupIds(request.currentUser.groupIds).filter(_.helper)
-        } else {
-          List[User]()
-          }.filterNot(_.id == request.currentUser.id)
+        val usersThatCanBeInvited = usersThatCanBeInvitedOn(application)
 
         val invitedUsers: Map[UUID, String] = usersThatCanBeInvited
           .filter(user => inviteData.invitedUsers.contains(user.id))
