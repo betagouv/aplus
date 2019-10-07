@@ -347,7 +347,8 @@ class UserController @Inject()(loginAction: LoginAction,
       "creationDate" -> ignored(DateTime.now(timeZone)),
       "create-by-user-id" -> ignored(request.currentUser.id),
       "area" -> ignored(request.currentArea.id),
-      "organisation" -> optional(text)
+      "organisation" -> optional(text),
+      "email" -> optional(email)
     )(UserGroup.apply)(UserGroup.unapply)
   )
 

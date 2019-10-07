@@ -20,7 +20,8 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
     "creation_date",
     "create_by_user_id",
     "area",        //TODO rename to area_id
-    "organisation"
+    "organisation",
+    "email"
   ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
 
 
@@ -33,7 +34,8 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
          ${group.creationDate},
          ${group.createByUserId}::uuid,
          ${group.area}::uuid,
-         ${group.organisation}
+         ${group.organisation},
+         ${group.email}
       )"""
       .executeUpdate() == 1
   }
@@ -43,7 +45,8 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
           UPDATE user_group SET
           name = ${group.name},
           insee_code = ${group.inseeCode},
-          organisation = ${group.organisation}
+          organisation = ${group.organisation},
+          email = ${group.email}
           WHERE id = ${group.id}::uuid
        """.executeUpdate() == 1
   }
