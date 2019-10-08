@@ -42,3 +42,15 @@
 .mdl-textfield__input {
     background-color: white
 }
+
+.mdl-data-table td {
+    padding: 0px 18px;
+}
+.mdl-data-table {
+    background-color: initial;
+    border: none;
+}
+.mdl-data-table td {
+    border-top: none;
+    border-bottom: none;
+}

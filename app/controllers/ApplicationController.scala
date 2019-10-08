@@ -58,7 +58,10 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
   def create = loginAction { implicit request =>
     eventService.info("APPLICATION_FORM_SHOWED", s"Visualise le formulaire de création de demande")
-    Ok(views.html.createApplication(request.currentUser, request.currentArea)(userService.byArea(request.currentArea.id).filter(_.instructor), applicationForm))
+    val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
+    val groupIds = instructors.flatMap(_.groupIds).distinct
+    val organismeGroups = userGroupService.groupByIds(groupIds).filter(_.area == request.currentArea.id)
+    Ok(views.html.createApplication(request.currentUser,request.currentArea)(instructors, organismeGroups, applicationForm))
   }
 
   def createSimplified = loginAction { implicit request =>
@@ -87,13 +90,13 @@ class ApplicationController @Inject()(loginAction: LoginAction,
              // binding failure, you retrieve the form containing errors:
              val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
              eventService.info("APPLICATION_CREATION_INVALID", s"L'utilisateur essai de créé une demande invalide")
+             val groupIds = instructors.flatMap(_.groupIds).distinct
+             val organismeGroups = userGroupService.groupByIds(groupIds).filter(_.organisationSetOrDeducted.nonEmpty)
              if(simplified) {
-               val groupIds = instructors.flatMap(_.groupIds).distinct
-               val organismeGroups = userGroupService.groupByIds(groupIds).filter(_.organisationSetOrDeducted.nonEmpty)
                val categories = organisationService.categories
                BadRequest(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, formWithErrors("category").value, formWithErrors))
              } else {
-               BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, formWithErrors))
+               BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, formWithErrors))
              }
            },
            applicationData => {

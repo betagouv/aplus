@@ -1,9 +1,11 @@
 @import models._
 @import extentions.MDLForms._
-@(user: User, area: Area)(users: List[User], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(user: User, area: Area)(users: List[User], organisationGroups: List[UserGroup], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
     @main(user, area)(s"Nouvelle demande")  {
-        <style>
+    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+
+    <style>
                 .mdl-data-table td {
                     padding: 0px 18px;
                 }
@@ -18,7 +20,7 @@
                 }
         </style>
     }{
-        <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+        <div class="mdl-cell mdl-cell--12-col mdl-grid">
             <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h3>
             <a class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.createSimplified()">
                 Mode Guidé
@@ -33,41 +35,43 @@
                         @if(applicationForm("users").hasErrors) {
                             <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
                         }
-
+                        
                         <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
-                        @for((organisme, orgUsers) <- users.groupBy(_.qualite).toList.sortBy(_._1).sortBy(_._1 == "Aide A+ / Je ne sais pas")) {
-                            <thead>
-                                <tr>
-                                    <th class="mdl-data-table__cell--non-numeric" colspan="2">
-                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                            <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);" value="@organisme" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisme})){ checked="checked" }>
-                                            <span class="mdl-checkbox__label">@organisme</span>
-                                        </label></th>
-                                </tr>
-                            </thead>
-                            <tbody @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisme})){ class="invisible" }>
-                                @if(organisme.contains("CAF")) {
-                                    <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                        <div class="info-box">La CAF aura besoin du <b>numéro identifiant CAF</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
-                                    </td></tr>
-                                } else if(organisme.contains("CPAM")) {
-                            <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                <div class="info-box">La CPAM aura besoin du <b>numéro de sécurité sociale</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
-                            </td></tr>
-                                }
-
-                                @for(user <- orgUsers) {
-                                    <tr class="invisible">
-                                        <td style="width: 95px">
-                                            <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
+                        @for(organisationGroup <- organisationGroups.sortBy(_.name)) {
+                            @defining(organisationGroup.organisationSetOrDeducted.flatMap(Organisation.fromShortName)) { organisation: Option[Organisation] =>
+                                <thead>
+                                    <tr>
+                                        <th class="mdl-data-table__cell--non-numeric" colspan="2">
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked="checked" }>
-                                            </label>
-                                        </td>
-                                        <td class="mdl-data-table__cell--non-numeric">@user.name</td>
+                                                <input type="checkbox" class="mdl-checkbox__input" value="@organisationGroup.name" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisationGroup.name})){ checked="checked" }>
+                                                <span class="mdl-checkbox__label">@organisationGroup.name @if(organisation.nonEmpty){ (@organisation.get.name) }</span>
+                                            </label></th>
                                     </tr>
-                                }
-                            </tbody>
+                                </thead>
+                                <tbody class="organisation-row @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisationGroup.name})){ invisible }">
+                                    @if(organisation.map(_.shortName).contains("CAF")) {
+                                        <tr><td colspan="2" style="text-align: left; white-space: normal">
+                                            <div class="info-box info-box--no-spacing">La CAF aura besoin du <b>numéro identifiant CAF</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
+                                        </td></tr>
+                                    } else if(organisation.map(_.shortName).contains("CPAM")) {
+                                    <tr><td colspan="2" style="text-align: left; white-space: normal">
+                                        <div class="info-box info-box--no-spacing">La CPAM aura besoin du <b>numéro de sécurité sociale</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
+                                    </td></tr>
+                                    }
+
+                                    @for(user <- users.filter(_.groupIds.contains(organisationGroup.id))) {
+                                        <tr class="invisible">
+                                            <td style="width: 95px">
+                                                <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
+                                                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                                    <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked="checked" }>
+                                                </label>
+                                            </td>
+                                            <td class="mdl-data-table__cell--non-numeric">@user.name</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            }
                         }
                         </table>
                     </div>
@@ -77,6 +81,7 @@
                         <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
                     }
                     <br>
+
 
                     <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
                     @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille"))
