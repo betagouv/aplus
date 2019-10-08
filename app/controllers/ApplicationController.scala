@@ -60,7 +60,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     eventService.info("APPLICATION_FORM_SHOWED", s"Visualise le formulaire de création de demande")
     val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
     val groupIds = instructors.flatMap(_.groupIds).distinct
-    val organismeGroups = userGroupService.groupByIds(groupIds).filter(userGroup => userGroup.organisationSetOrDeducted.nonEmpty && userGroup.area == request.currentArea.id)
+    val organismeGroups = userGroupService.groupByIds(groupIds).filter(_.area == request.currentArea.id)
     Ok(views.html.createApplication(request.currentUser,request.currentArea)(instructors, organismeGroups, applicationForm))
   }
 
