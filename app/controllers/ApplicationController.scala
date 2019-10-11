@@ -89,7 +89,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
            formWithErrors => {
              // binding failure, you retrieve the form containing errors:
              val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
-             eventService.info("APPLICATION_CREATION_INVALID", s"L'utilisateur essai de créé une demande invalide")
+             eventService.info(s"APPLICATION_CREATION_INVALID", s"L'utilisateur essai de créé une demande invalide $formWithErrors")
              val groupIds = instructors.flatMap(_.groupIds).distinct
              if(simplified) {
                val categories = organisationService.categories
