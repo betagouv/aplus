@@ -27,7 +27,8 @@ libraryDependencies ++= Seq(
   "com.sun.mail" % "javax.mail" % "1.6.1",
   "com.typesafe.play" %% "play-mailer-guice" % "7.0.0",
   "com.typesafe.play" %% "play-json-joda" % "2.6.13",
-  "net.jcazevedo" %% "moultingyaml" % "0.4.0"
+  "net.jcazevedo" %% "moultingyaml" % "0.4.0",
+  "com.google.guava" % "guava" % "25.1-jre"
 )
 // UI
 libraryDependencies ++= Seq(

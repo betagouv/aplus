@@ -43,7 +43,7 @@
                                     <tr>
                                         <th class="mdl-data-table__cell--non-numeric" colspan="2">
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                <input type="checkbox" class="mdl-checkbox__input" value="@organisationGroup.name" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisationGroup.name})){ checked="checked" }>
+                                                <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);" value="@organisationGroup.name" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisationGroup.name})){ checked="checked" }>
                                                 <span class="mdl-checkbox__label">@organisationGroup.name @if(organisation.nonEmpty){ (@organisation.get.name) }</span>
                                             </label></th>
                                     </tr>
@@ -60,7 +60,7 @@
                                     }
 
                                     @for(user <- users.filter(_.groupIds.contains(organisationGroup.id))) {
-                                        <tr class="invisible">
+                                        <tr class="invisible" >
                                             <td style="width: 95px">
                                                 <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
                                                 <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
@@ -107,24 +107,26 @@
             function showHideUsers(sender) {
                 var thead = sender.parentNode.parentNode.parentNode.parentNode;
                 var tbody = thead.nextElementSibling;
+                var inputs = tbody.querySelectorAll("[type=checkbox]");
                 if(sender.checked) {
-                    Array.from(tbody.querySelectorAll("[type=checkbox]")).forEach(function(input){
+                    for(var i = 0; i < inputs.length; i++){
+                        var input = inputs[i];
                         input.checked = true;
                         input.parentNode.classList.add("is-checked");
                         componentHandler.upgradeElements(input);
-                    });
+                    }
                     tbody.classList.remove("invisible");
                 } else {
-                    Array.from(tbody.querySelectorAll("[type=checkbox]")).forEach(function(input){
+                    for(var i = 0; i < inputs.length; i++){
+                        var input = inputs[i];
                         input.checked = false;
                         input.parentNode.classList.remove("is-checked");
                         componentHandler.upgradeElements(input);
-                    });
+                    }
                     tbody.classList.add("invisible");
                 }
 
             }
-            
             var checkbox = document.querySelector("#checkbox-mandat");
 
             checkbox.addEventListener('click', function() {
