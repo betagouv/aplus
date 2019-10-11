@@ -91,11 +91,12 @@ class ApplicationController @Inject()(loginAction: LoginAction,
              val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
              eventService.info("APPLICATION_CREATION_INVALID", s"L'utilisateur essai de créé une demande invalide")
              val groupIds = instructors.flatMap(_.groupIds).distinct
-             val organismeGroups = userGroupService.groupByIds(groupIds).filter(_.organisationSetOrDeducted.nonEmpty)
              if(simplified) {
                val categories = organisationService.categories
+               val organismeGroups = userGroupService.groupByIds(groupIds).filter(userGroup => userGroup.organisationSetOrDeducted.nonEmpty && userGroup.area == request.currentArea.id)
                BadRequest(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, formWithErrors("category").value, formWithErrors))
              } else {
+               val organismeGroups = userGroupService.groupByIds(groupIds).filter(_.area == request.currentArea.id)
                BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, formWithErrors))
              }
            },
