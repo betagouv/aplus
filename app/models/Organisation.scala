@@ -31,7 +31,7 @@ object Organisation {
     Organisation("MDPH", "Maison départementale des personnes handicapées"),
     Organisation("Mission locale", "Mission locale"), //Ville
     Organisation("MSA", "Mutualité sociale agricole"),
-    Organisation("MSAP", "Maison de service au public"), // Ville
+    Organisation("MSAP", "Maison de services au public"), // Ville
     Organisation("Pôle emploi", "Pôle emploi"),
     Organisation("Préf", "Préfecture"),  //Département
     Organisation("Sous-Préf", "Sous-préfecture")
