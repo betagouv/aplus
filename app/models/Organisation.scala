@@ -29,6 +29,7 @@ object Organisation {
     Organisation("OFPRA", "Office français de protection des réfugiés et apatrides"), //Nationale
     Organisation("Mairie", "Mairie"),  //Ville
     Organisation("MDPH", "Maison départementale des personnes handicapées"),
+    Organisation("MFS", "Maison France Services"),
     Organisation("Mission locale", "Mission locale"), //Ville
     Organisation("MSA", "Mutualité sociale agricole"),
     Organisation("MSAP", "Maison de services au public"), // Ville
