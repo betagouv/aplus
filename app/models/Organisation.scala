@@ -27,6 +27,7 @@ object Organisation {
     Organisation("DRFIP", "Direction régionale des Finances publiques"),//Région
     Organisation("Hôpital", "Hôpital"), //Ville
     Organisation("OFPRA", "Office français de protection des réfugiés et apatrides"), //Nationale
+    Organisation("La Poste", "La Poste"),
     Organisation("Mairie", "Mairie"),  //Ville
     Organisation("MDPH", "Maison départementale des personnes handicapées"),
     Organisation("MFS", "Maison France Services"),
