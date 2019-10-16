@@ -14,6 +14,7 @@ object Organisation {
     Organisation("CAF", "Caisse d’allocations familiale"),  //Département
     Organisation("ANTS", "Agence nationale des titres sécurisés"),
     Organisation("CAF", "Caisse d’allocations familiale"),  //Département
+    Organisation("CDAD", "Conseils départementaux d'accès au droit"), //Département
     Organisation("BDF", "Banque de France"),
     Organisation("CAF", "Caisse d’allocations familiale"),  //Département
     Organisation("CARSAT", "Caisse d'assurance retraite et de la santé au travail"), //
@@ -28,8 +29,10 @@ object Organisation {
     Organisation("OFPRA", "Office français de protection des réfugiés et apatrides"), //Nationale
     Organisation("Mairie", "Mairie"),  //Ville
     Organisation("MDPH", "Maison départementale des personnes handicapées"),
+    Organisation("MFS", "Maison France Services"),
     Organisation("Mission locale", "Mission locale"), //Ville
     Organisation("MSA", "Mutualité sociale agricole"),
+    Organisation("MSAP", "Maison de services au public"), // Ville
     Organisation("Pôle emploi", "Pôle emploi"),
     Organisation("Préf", "Préfecture"),  //Département
     Organisation("Sous-Préf", "Sous-préfecture")
