@@ -44,7 +44,7 @@ class UserController @Inject()(loginAction: LoginAction,
       val groups: List[UserGroup] = (request.currentUser.admin, request.currentUser.groupAdmin,currentAreaOnly) match {
         case (true, _, true)  => userGroupService.allGroupByAreas(List[UUID](request.currentArea.id))
         case (true, _, false) => userGroupService.allGroupByAreas(request.currentUser.areas)
-        case (false, true, _) => userGroupService.groupByIds(request.currentUser.groupIds)
+        case (false, true, _) => userGroupService.byIds(request.currentUser.groupIds)
         case _ =>
           eventService.warn("ALL_USER_INCORRECT_SETUP", s"Erreur d'accès aux groupes")
           List()

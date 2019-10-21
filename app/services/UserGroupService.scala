@@ -59,7 +59,7 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
     SQL"SELECT * FROM user_group".as(simpleUserGroup.*)
   }
 
-  def groupByIds(groupIds: List[UUID]) = db.withConnection { implicit connection =>
+  def byIds(groupIds: List[UUID]) = db.withConnection { implicit connection =>
     SQL"SELECT * FROM user_group WHERE ARRAY[$groupIds]::uuid[] @> ARRAY[id]::uuid[]".as(simpleUserGroup.*)
   }
 

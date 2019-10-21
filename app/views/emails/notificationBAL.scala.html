@@ -1,0 +1,20 @@
+@(application: Application, answer: Option[Answer] = None, group: UserGroup, users: List[User], url: String)
+
+Bonjour, <br>
+<br>
+Une nouvelle@if(answer.isEmpty){ demande } else { réponse }de la part de @if(answer.isEmpty){ application.creatorUserName } else { answer.get.creatorUserName } pour votre groupe @group.name est disponible sur Administration+.<br>
+<br>
+Les personnes suivantes peuvent accèder à la@if(answer.isEmpty){ demande } else { réponse }:  <br>
+<ul>@for(user <- application.invitedUsers(users).filter(_.groupIds.contains(group.id))) {
+<li>@user.name</li> }
+</ul>
+<br>
+Cliquez ici pour accèder à la@if(answer.isEmpty){ demande } else { réponse }: <br>
+<a href="@url">@url</a><br>
+<br>
+<br>
+Vous n’avez pas d’accès à Administration+ ?<br>
+Contactez l'équipe Administration+ <a href="mailto:contact@@aplus.beta.gouv.fr">contact@@aplus.beta.gouv.fr</a>.<br>
+<br>
+Bonne journée,<br>
+L’équipe Administration+ <br>

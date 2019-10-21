@@ -12,7 +12,9 @@ import play.api.mvc.{AnyContent, Request}
 @Singleton
 class NotificationService @Inject()(configuration: play.api.Configuration,
                                     mailerClient: MailerClient,
-                                    userService: UserService) {
+                                    userService: UserService,
+                                    eventService: EventService,
+                                    groupService: UserGroupService) {
 
   private val host = configuration.underlying.getString("app.host")
   private val https = configuration.underlying.getString("app.https") == "true"
@@ -29,23 +31,43 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   }
 
   def newApplication(application: Application): Unit = {
-      application.invitedUsers.keys
-        .flatMap(userService.byId)
+    val userIds = (application.invitedUsers).keys
+    val users = userService.byIds(userIds.toList)
+    val groups = groupService.byIds(users.flatMap(_.groupIds)).filter(_.email.nonEmpty)
+    val groupIds = groups.map(_.id)
+
+    users.filter(_.groupIds.intersect(groupIds).isEmpty)  // Users if filtered if we send a notification to the group
           .map(generateInvitationEmail(application))
             .foreach(sendMail)
+
+    groups.map(generateNotificationBALEmail(application, None, users))
+      .foreach(sendMail)
   }
 
   def newAnswer(application: Application, answer: Answer) = {
-    (application.invitedUsers ++ answer.invitedUsers).keys
+    // Retrieve data
+    val userIds = (application.invitedUsers ++ answer.invitedUsers).keys
       .filter(_ != answer.creatorUserID)
-      .flatMap(userService.byId)
-        .map {  user =>
-          if(answer.invitedUsers.contains(user.id)) {
-            generateInvitationEmail(application, Some(answer))(user)
-          } else {
-            generateAnswerEmail(application, answer)(user)
-          }
-        }.foreach(sendMail)
+    val users = userService.byIds(userIds.toList)
+    val groups = groupService.byIds(users.flatMap(_.groupIds)).filter(_.email.nonEmpty)
+    val groupIds = groups.map(_.id)
+
+    // Send emails to users
+    users.flatMap {  user =>
+      if(user.groupIds.intersect(groupIds).nonEmpty) {
+        eventService.info(user, Area.fromId(application.area).get, "0.0.0.0", "EMAIL_NOT_SEND", "L'utilisateur n'est pas notifié car il existe une notification de bal", Some(application), None)
+        None
+      } else if(answer.invitedUsers.contains(user.id)) {
+        Some(generateInvitationEmail(application, Some(answer))(user))
+      } else {
+        Some(generateAnswerEmail(application, answer)(user))
+      }
+    }.foreach(sendMail)
+
+    // Send emails to groups
+    groups.map(generateNotificationBALEmail(application, Some(answer), users))
+      .foreach(sendMail)
+
     if(answer.visibleByHelpers && answer.creatorUserID != application.creatorUserId) {
       userService.byId(application.creatorUserId)
        .map(generateAnswerEmail(application, answer))
@@ -85,6 +107,26 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
        |- Vous pouvez transférer la demande à un autre agent en ouvrant le lien ci-dessus<br>
        |- Si vous avez un problème ou besoin d'aide à propos de l'outil Administration+, contactez-nous sur <a href="mailto:contact@aplus.beta.gouv.fr">contact@aplus.beta.gouv.fr</a></i>
      """.stripMargin
+  }
+
+
+  private def generateNotificationBALEmail(application: Application, answerOption: Option[Answer] = None, users: List[User])(group: UserGroup): Email = {
+    val (subject,url) = answerOption match {
+      case Some(answer) =>
+        ( "[A+] Nouvelle réponse : ${application.subject}",
+         s"${routes.ApplicationController.show(application.id).absoluteURL(https, host)}#answer-${answer.id}"
+        )
+      case None =>
+        ( "[A+] Nouvelle demande : ${application.subject}",
+          s"${routes.ApplicationController.show(application.id).absoluteURL(https, host)}"
+        )
+    }
+    val bodyHtml = views.html.emails.notificationBAL(application, answerOption, group, users, url).toString()
+    Email(subject = subject,
+      from = from,
+      to = List(s"${group.name} <${group.email.get}>"),
+      bodyHtml = Some(bodyHtml)
+    )
   }
 
   private def generateInvitationEmail(application: Application, answer: Option[Answer] = None)(invitedUser: User): Email = {
