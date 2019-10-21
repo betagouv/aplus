@@ -1,7 +1,8 @@
 package services
 
-import javax.inject.{Inject, Singleton}
+import java.util.UUID
 
+import javax.inject.{Inject, Singleton}
 import controllers.routes
 import models._
 import play.api.Logger
@@ -47,14 +48,15 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   def newAnswer(application: Application, answer: Answer) = {
     // Retrieve data
     val userIds = (application.invitedUsers ++ answer.invitedUsers).keys
-      .filter(_ != answer.creatorUserID)
     val users = userService.byIds(userIds.toList)
     val groups = groupService.byIds(users.flatMap(_.groupIds)).filter(_.email.nonEmpty)
     val groupIds = groups.map(_.id)
 
     // Send emails to users
     users.flatMap {  user =>
-      if(user.groupIds.intersect(groupIds).nonEmpty) {
+      if(user.id != answer.creatorUserID) {
+        None
+      } else if(user.groupIds.intersect(groupIds).nonEmpty) {
         eventService.info(user, Area.fromId(application.area).get, "0.0.0.0", "EMAIL_NOT_SEND", "L'utilisateur n'est pas notifié car il existe une notification de bal", Some(application), None)
         None
       } else if(answer.invitedUsers.contains(user.id)) {
@@ -65,7 +67,10 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     }.foreach(sendMail)
 
     // Send emails to groups
-    groups.map(generateNotificationBALEmail(application, Some(answer), users))
+    val oldGroupIds: List[UUID] = users.filter(user => application.invitedUsers.contains(user.id)).flatMap(_.groupIds)
+    groups.filter(group => oldGroupIds.contains(group.id)).map(generateNotificationBALEmail(application, Some(answer), users))
+      .foreach(sendMail)
+    groups.filter(group => !oldGroupIds.contains(group.id)).map(generateNotificationBALEmail(application, None, users))
       .foreach(sendMail)
 
     if(answer.visibleByHelpers && answer.creatorUserID != application.creatorUserId) {
