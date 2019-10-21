@@ -14,7 +14,7 @@ object Area {
   val all = List(
     Area("nice", "Alpes-Maritimes (06)"),
     Area("ardennes", "Ardennes (07)"),
-    Area("angers", "Maine-et-loire (49)"),
+    Area("maine-et-loire", "Maine-et-loire (49)"),
     Area("cahors", "Lot (46)"),
     Area("bethune", "Pas-de-Calais (62)"),
     Area("calvados", "Calvados (14)"),
