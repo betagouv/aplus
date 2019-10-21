@@ -28,7 +28,7 @@ object Area {
     Area("loir-et-cher", "Loir-et-Cher (41)"),
     Area("lyon", "Rhônes (69)"),
     Area("paris", "Paris (75)"),
-    Area("perigueux", "Dordogne (24)"),
+    Area("dordogne", "Dordogne (24)"),
     Area("seine-saint-denis", "Seine-Saint-Denis (93)"),
     Area("argenteuil", "Val-d'Oise (95)"),
     Area("val-de-marne", "Val-de-Marne (94)"),
