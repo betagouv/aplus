@@ -235,18 +235,31 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     }
   }
 
-  def allCSV = loginAction { implicit request =>
-    val currentUserId = request.currentUser.id
-    val users = userService.byArea(request.currentArea.id)
-    val exportedApplications = if(request.currentUser.admin || request.currentUser.groupAdmin) {
-      allApplicationVisibleByUserAdmin(request.currentUser, request.currentArea)
-    } else  {
-      applicationService.allForUserId(currentUserId, request.currentUser.admin)
-    }
-    val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
+  def myCSV = loginAction { implicit request =>
+    val exportedApplications = applicationService.allForUserId(request.currentUser.id, request.currentUser.admin)
+    val usersId = exportedApplications.flatMap(_.invitedUsers.keys) ++ exportedApplications.map(_.creatorUserId)
+    val users = userService.byIds(usersId)
 
-    eventService.info("CSV_SHOWED", s"Visualise un CSV")
+    val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HH'h'mm", new Locale("fr"))
+
+    eventService.info("MY_CSV_SHOWED", s"Visualise un CSV")
     Ok(views.html.allApplicationCSV(exportedApplications.toSeq, request.currentUser, users)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}.csv"""" )
+  }
+
+  def allCSV(areaId: UUID) = loginAction { implicit request =>
+    val area = Area.fromId(areaId).get
+    val exportedApplications = if(request.currentUser.admin || request.currentUser.groupAdmin) {
+      allApplicationVisibleByUserAdmin(request.currentUser, area)
+    } else  {
+      List()
+    }
+    val usersId = exportedApplications.flatMap(_.invitedUsers.keys) ++ exportedApplications.map(_.creatorUserId)
+    val users = userService.byIds(usersId)
+
+    val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HH'h'mm", new Locale("fr"))
+
+    eventService.info("ALL_CSV_SHOWED", s"Visualise un CSV pour la zone ${area.name}")
+    Ok(views.html.allApplicationCSV(exportedApplications.toSeq, request.currentUser, users)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}-${area.name.replace(" ","-")}.csv"""" )
   }
 
   val answerForm = Form(

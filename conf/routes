@@ -13,7 +13,7 @@ POST     /nouvelle-demande-guide          controllers.ApplicationController.crea
 GET      /nouvelle-demande-guide          controllers.ApplicationController.createSimplified
 GET      /toutes-les-demandes        controllers.ApplicationController.my
 GET      /as/:userId/toutes-les-demandes        controllers.ApplicationController.allAs(userId: java.util.UUID)
-GET      /toutes-les-demandes.csv               controllers.ApplicationController.allCSV
+GET      /toutes-les-demandes.csv               controllers.ApplicationController.myCSV
 GET      /toutes-les-demandes/:id    controllers.ApplicationController.show(id: java.util.UUID)
 POST     /toutes-les-demandes/:applicationId/inviter_des_agents     controllers.ApplicationController.invite(applicationId: java.util.UUID)
 GET      /toutes-les-demandes/:applicationId/inviter_un_expert      controllers.ApplicationController.inviteExpert(applicationId: java.util.UUID)
@@ -34,7 +34,6 @@ GET    /validation-connexion             controllers.LoginController.redirect
 
 
 # Users
-GET     /utilisateurs.csv                   controllers.UserController.allCSV
 GET     /utilisateurs/:userId               controllers.UserController.editUser(userId: java.util.UUID)
 POST    /utilisateurs/:userId               controllers.UserController.editUserPost(userId: java.util.UUID)
 
@@ -54,10 +53,12 @@ GET     /cgu                      controllers.UserController.showCGU
 POST    /cgu                      controllers.UserController.validateCGU
 
 # Areas
-GET     /territoires                       controllers.AreaController.all
-GET     /territoires/:areaId               controllers.AreaController.change(areaId: java.util.UUID)
-GET     /territoires/:areaId/demandes      controllers.ApplicationController.all(areaId: java.util.UUID)
-GET     /territoires/:areaId/utilisateurs  controllers.UserController.all(areaId: java.util.UUID)
+GET     /territoires                            controllers.AreaController.all
+GET     /territoires/:areaId                    controllers.AreaController.change(areaId: java.util.UUID)
+GET     /territoires/:areaId/demandes           controllers.ApplicationController.all(areaId: java.util.UUID)
+GET     /territoires/:areaId/demandes.csv       controllers.ApplicationController.allCSV(areaId: java.util.UUID)
+GET     /territoires/:areaId/utilisateurs       controllers.UserController.all(areaId: java.util.UUID)
+GET     /territoires/:areaId/utilisateurs.csv   controllers.UserController.allCSV(areaId: java.util.UUID)
 
 # Check
 GET     /status                     controllers.HomeController.status

@@ -57,12 +57,17 @@ class UserController @Inject()(loginAction: LoginAction,
   }
 
 
-  def allCSV = loginAction { implicit request =>
+  def allCSV(areaId: java.util.UUID) = loginAction { implicit request =>
     if(request.currentUser.admin == false) {
       eventService.warn("ALL_USER_CSV_UNAUTHORIZED", s"Accès non autorisé à l'export utilisateur")
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
-      val users = userService.byAreas(request.currentUser.areas)
+      val area = Area.fromId(areaId).get
+      val users = if(areaId == Area.allArea.id) {
+        userService.byAreas(request.currentUser.areas) }
+      else {
+        userService.byArea(areaId)
+      }
       val groups = userGroupService.allGroupByAreas(request.currentUser.areas)
       eventService.info("ALL_USER_CSV_SHOWED", s"Visualise le CSV de tous les zones de l'utilisateur")
 
@@ -90,7 +95,7 @@ class UserController @Inject()(loginAction: LoginAction,
       val csv = (List(headers) ++ users.map(userToCSV)).mkString("\n")
       val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
 
-      Ok(csv).withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}-users.csv"""" )
+      Ok(csv).withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}-users-${area.name.replace(" ","-")}.csv"""" )
     }
   }
 
