@@ -34,11 +34,10 @@ GET    /validation-connexion             controllers.LoginController.redirect
 
 
 # Users
-GET     /users                       controllers.UserController.all
-GET     /utilisateurs                controllers.UserController.allNew
-GET     /users.csv                   controllers.UserController.allCSV
-GET     /users/:userId               controllers.UserController.editUser(userId: java.util.UUID)
-POST    /users/:userId               controllers.UserController.editUserPost(userId: java.util.UUID)
+GET     /utilisateurs                       controllers.UserController.all
+GET     /utilisateurs.csv                   controllers.UserController.allCSV
+GET     /utilisateurs/:userId               controllers.UserController.editUser(userId: java.util.UUID)
+POST    /utilisateurs/:userId               controllers.UserController.editUserPost(userId: java.util.UUID)
 
 
 # Groups

@@ -25,7 +25,7 @@ class UserController @Inject()(loginAction: LoginAction,
                                notificationsService: NotificationService,
                                eventService: EventService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
 
-  def allWithVersion(newVersion: Boolean) = loginAction { implicit request =>
+  def all = loginAction { implicit request =>
     if(request.currentUser.admin == false && request.currentUser.groupAdmin == false) {
       eventService.warn("ALL_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs")
       Unauthorized("Vous n'avez pas le droit de faire ça")
@@ -51,17 +51,11 @@ class UserController @Inject()(loginAction: LoginAction,
       }
 
       eventService.info("ALL_USER_SHOWED", s"Visualise la vue des utilisateurs")
-      if (newVersion) {
-        Ok(views.html.allUsersNew(request.currentUser, request.currentArea)(groups, users, applications, currentAreaOnly))
-      } else {
-        Ok(views.html.allUsers(request.currentUser, request.currentArea)(groups, users, applications))
-      }
+
+      Ok(views.html.allUsers(request.currentUser, request.currentArea)(groups, users, applications, currentAreaOnly))
     }
   }
 
-  def all = allWithVersion(false)
-
-  def allNew = allWithVersion(true)
 
   def allCSV = loginAction { implicit request =>
     if(request.currentUser.admin == false) {
