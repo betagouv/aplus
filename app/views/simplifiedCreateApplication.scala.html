@@ -70,7 +70,7 @@
     </a>
     <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
 
-    @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();") {
+    @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data") {
         @helper.CSRF.formField
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
 
@@ -258,6 +258,9 @@
                 <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
                 @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"))
                 </div>
+                <br>
+                Ajouter un ficher ( Facultatif, 5Mo maximum ) : <input type="file" name="file">
+                </div></br></br>
                 <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-mandat" style="height: unset; margin-bottom: 10px;">
                     <input type="checkbox" id="checkbox-mandat" name="validate" class="mdl-checkbox__input" value="true">
                     <span class="mdl-checkbox__label">Je confirme que l'usager m'a donné mandat pour effectuer cette demande.</span>
