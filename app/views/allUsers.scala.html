@@ -1,5 +1,5 @@
 @import models._
-@(currentUser: User, area: Area)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], currentAreaOnly: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
   @display(users: Seq[User])(header: Html)(footer: Html = Html("")) = {
       <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white" style="white-space: normal;">
@@ -67,14 +67,32 @@
         </tbody>
       </table>
   }
-@main(currentUser, area)(s"Gestion des groupes utilisateurs ${if(currentAreaOnly){ area.name }}") {
+@main(currentUser, selectedArea)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 } {
 
   @if(currentUser.areas.length > 1) {
-    <p class="mdl-cell mdl-cell--12-col">Afficher : @if(currentAreaOnly) { <b>@area.name</b> / <a href="@routes.UserController.all()?currentAreaOnly=false">Tous les territoires</a> } else {
-      <a href="@routes.UserController.all()?currentAreaOnly=true">@area.name</a> / <b>Tous les territoires</b>
-    }  </p>
+    <p class="mdl-cell mdl-cell--12-col">Afficher :
+      <select id="area-selector" name="area-selector" onchange="changeAreaApps()">
+        <option value="@Area.allArea.id" @if(selectedArea.id == Area.allArea.id) { selected }>tous les territoires</option>
+        @for(area <- currentUser.areas.flatMap(Area.fromId)) {
+          <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area.name</option>
+        }
+      </select>
+    
+      @helper.javascriptRouter("jsRoutes")(
+        routes.javascript.UserController.all
+      )
+      <script>
+              function changeAreaApps() {
+                var areaSelected = document.getElementById("area-selector").value;
+                if(areaSelected != "@selectedArea.id") {
+                  document.location = jsRoutes.controllers.UserController.all(areaSelected).url;
+                }
+              }
+      </script>
+
+    </p>
   }
       @for(area <- Area.all; userGroup <- userGroups.filter(_.area == area.id).sortBy(_.name)) {
         @defining(allUsers.filter(_.groupIds.contains(userGroup.id))){ groupUsers =>

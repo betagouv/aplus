@@ -25,13 +25,13 @@ class UserController @Inject()(loginAction: LoginAction,
                                notificationsService: NotificationService,
                                eventService: EventService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
 
-  def all = loginAction { implicit request =>
+  def all(areaId: UUID) = loginAction { implicit request =>
     if(request.currentUser.admin == false && request.currentUser.groupAdmin == false) {
       eventService.warn("ALL_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs")
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
-      val currentAreaOnly = request.getQueryString("currentAreaOnly").forall(_.toBoolean)
-      val users = (request.currentUser.admin, request.currentUser.groupAdmin, currentAreaOnly) match {
+      val selectedArea = Area.fromId(areaId).get
+      val users = (request.currentUser.admin, request.currentUser.groupAdmin, selectedArea.id == Area.allArea.id) match {
         case (true, _, true)  => userService.byArea(request.currentArea.id)
         case (true, _,false)  => userService.byAreas(request.currentUser.areas)
         case (false, true, _) => userService.byGroupIds(request.currentUser.groupIds)
@@ -41,7 +41,7 @@ class UserController @Inject()(loginAction: LoginAction,
       }
 
       val applications = applicationService.allByArea(request.currentArea.id, true)
-      val groups: List[UserGroup] = (request.currentUser.admin, request.currentUser.groupAdmin,currentAreaOnly) match {
+      val groups: List[UserGroup] = (request.currentUser.admin, request.currentUser.groupAdmin, selectedArea.id == Area.allArea.id) match {
         case (true, _, true)  => userGroupService.allGroupByAreas(List[UUID](request.currentArea.id))
         case (true, _, false) => userGroupService.allGroupByAreas(request.currentUser.areas)
         case (false, true, _) => userGroupService.groupByIds(request.currentUser.groupIds)
@@ -52,7 +52,7 @@ class UserController @Inject()(loginAction: LoginAction,
 
       eventService.info("ALL_USER_SHOWED", s"Visualise la vue des utilisateurs")
 
-      Ok(views.html.allUsers(request.currentUser, request.currentArea)(groups, users, applications, currentAreaOnly))
+      Ok(views.html.allUsers(request.currentUser)(groups, users, applications, selectedArea))
     }
   }
 
@@ -189,7 +189,7 @@ class UserController @Inject()(loginAction: LoginAction,
         user => {
           if(userService.update(user)) {
             eventService.info("EDIT_USER_DONE", s"Utilisateur $userId modifié", user = Some(user))
-            Redirect(routes.UserController.all()).flashing("success" -> "Utilisateur modifié")
+            Redirect(routes.UserController.all(Area.allArea.id)).flashing("success" -> "Utilisateur modifié")
           } else {
             val form = userForm.fill(user).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
             val groups = userGroupService.allGroups
@@ -361,7 +361,7 @@ class UserController @Inject()(loginAction: LoginAction,
             eventService.info("ADD_USER_GROUP_DONE", s"Groupe ajouté")
             Redirect(routes.UserController.editGroup(group.id)).flashing("success" -> "Groupe ajouté")
           } else {eventService.error("ADD_USER_GROUP_ERROR", s"Impossible d'ajouter le groupe dans la BDD")
-            Redirect(routes.UserController.all()).flashing("success" -> "Impossible d'ajouter le groupe")
+            Redirect(routes.UserController.all(Area.allArea.id)).flashing("success" -> "Impossible d'ajouter le groupe")
           }
         }
       )

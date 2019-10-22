@@ -137,7 +137,7 @@
         }
         @if(currentUser.admin || currentUser.groupAdmin) {
             <a class="mdl-navigation__link" href="@routes.ApplicationController.all(Area.allArea.id)"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">folder</i>Toutes les demandes</a>
-            <a class="mdl-navigation__link" href="@routes.UserController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">people</i>Utilisateurs</a>
+            <a class="mdl-navigation__link" href="@routes.UserController.all(Area.allArea.id)"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">people</i>Utilisateurs</a>
         }
         @if(currentUser.admin) {
             <a class="mdl-navigation__link" href="@routes.UserController.allEvents()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">event</i>Événements</a>
