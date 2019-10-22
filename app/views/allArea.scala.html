@@ -3,7 +3,7 @@
 @(user: User, currentArea: Area)(areas: Seq[Area], areasWithLoginByKey: Seq[UUID], userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
-@main(user, currentArea)(s"Gestion des territoires"){
+@main(user, currentArea, false)(s"Gestion des territoires"){
 
 }{
     <div class="mdl-cell mdl-cell--12-col pem-container mdl-grid">
@@ -20,6 +20,9 @@
                             }
                             <a href="@routes.ApplicationController.all(area.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--raised">
                                 Voir les demandes
+                            </a> /
+                            <a href="@routes.UserController.all(area.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--raised">
+                                Voir les utilisateurs
                             </a>
                         }
                     </th>

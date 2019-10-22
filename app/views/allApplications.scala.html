@@ -1,7 +1,7 @@
-@(user: User)(applications: Seq[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User)(applications: Seq[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 @import java.util.Locale
 
-@main(user, selectedArea)(s"Demandes - ${selectedArea.name}")  {
+@main(currentUser, selectedArea, false)(s"Demandes - ${selectedArea.name}")  {
 <style>
     .pem-table {
         width: 100%;
@@ -25,26 +25,29 @@
 <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("sortable/sortable.css")'>
 <script src="@routes.Assets.versioned("sortable/sortable.js")"></script>
 }{
-    @helper.javascriptRouter("jsRoutes")(
-        routes.javascript.ApplicationController.all
-    )
    <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
-        @if(user.admin) {
-            <h4 class="mdl-cell mdl-cell--12-col">Demandes :
-        } else {
-            <h4 class="mdl-cell mdl-cell--12-col">Demandes de mes groupes - 
-        }
-       @if(user.areas.length > 1) {
-           <select id="area-apps" name="area-apps" onchange="changeAreaApps()">
-               <option value="@Area.allArea.id" @if(selectedArea.id == Area.allArea.id) { selected }>tous les territoires</option>
-               @for(area <- user.areas.flatMap(Area.fromId)) {
-                   <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area.name</option>
-               }
-           </select>
-       } else {
-           @selectedArea.name
+       @if(currentUser.areas.length > 1) {
+           <p class="mdl-cell mdl-cell--12-col">Afficher :
+               <select id="area-selector" name="area-selector" onchange="changeSelectedArea()">
+                   <option value="@Area.allArea.id" @if(selectedArea.id == Area.allArea.id) { selected }>tous les territoires</option>
+                   @for(area <- currentUser.areas.flatMap(Area.fromId)) {
+                       <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area.name</option>
+                   }
+               </select>
+
+               @helper.javascriptRouter("jsRoutes")(
+                   routes.javascript.ApplicationController.all
+               )
+               <script>
+                       function changeSelectedArea() {
+                           var areaSelected = document.getElementById("area-selector").value;
+                           if(areaSelected != "@selectedArea.id") {
+                               document.location = jsRoutes.controllers.ApplicationController.all(areaSelected).url;
+                           }
+                       }
+               </script>
+           </p>
        }
-       </h4>
        <script>
            function changeAreaApps() {
                var areaSelected = document.getElementById("area-apps").value;
@@ -60,13 +63,13 @@
        <input class="mdl-cell mdl-cell--12-col" type="search" placeholder="Filtrer les demandes (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
 
        <div class="mdl-cell mdl-cell--12-col pem-container">
-                Total : @applications.size ( @applications.groupBy(_.longStatus(user)).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
+                Total : @applications.size ( @applications.groupBy(_.status).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
                 <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp sortable" style="white-space: normal;">
                     <thead>
                         <tr>
-                            @if(user.admin){ <th class="mdl-data-table__cell--non-numeric">#</th> }
+                            @if(currentUser.admin){ <th class="mdl-data-table__cell--non-numeric">#</th> }
                             <th class="mdl-data-table__cell--non-numeric">Date</th>
-                            @if(user.admin) {
+                            @if(currentUser.admin) {
                                 <th class="mdl-data-table__cell--non-numeric">Territoires</th>
                             }
                             <th class="mdl-data-table__cell--non-numeric">Avancement</th>
@@ -79,7 +82,7 @@
                             <th class="mdl-data-table__cell--non-numeric">Sujet</th>
                             <th class="mdl-data-table__cell--non-numeric">Catégorie</th>
                             <th class="mdl-data-table__cell--non-numeric"></th>
-                            @if(user.admin){  <th class="mdl-data-table__cell--non-numeric" style="width: 20px">Détails</th> }
+                            @if(currentUser.admin){  <th class="mdl-data-table__cell--non-numeric" style="width: 20px">Détails</th> }
                         </tr>
                     </thead>
                     <tfoot class="invisible">
@@ -89,10 +92,10 @@
                     </tfoot>
                     <tbody>
                     @for((application) <- applications) {
-                        <tr @if(user.admin){ onclick="window.document.location='@routes.ApplicationController.show(application.id)';" class="searchable-row" } else { style="cursor: none" } data-search="@application.searchData" >
-                        @if(user.admin){ <td class="mdl-data-table__cell--non-numeric" style="font-weight: bold; color: red;">@application.internalId</td>}
+                        <tr @if(currentUser.admin){ onclick="window.document.location='@routes.ApplicationController.show(application.id)';" class="searchable-row" } else { style="cursor: none" } data-search="@application.searchData" >
+                        @if(currentUser.admin){ <td class="mdl-data-table__cell--non-numeric" style="font-weight: bold; color: red;">@application.internalId</td>}
                             <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))</td>
-                            @if(user.admin) {
+                            @if(currentUser.admin) {
                                 <td class="mdl-data-table__cell--non-numeric">@Area.fromId(application.area).get.name</td>
                             }
                             <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status</td>
@@ -110,7 +113,7 @@
                             <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.category.getOrElse("")</td>
                             <td class="mdl-data-table__cell--non-numeric search-cell"></td>
-                            @if(user.admin){ <td class="mdl-data-table__cell--non-numeric"> <a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                            @if(currentUser.admin){ <td class="mdl-data-table__cell--non-numeric"> <a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                                 <i class="material-icons">info_outline</i>
                             </a></td>}
                         </tr>

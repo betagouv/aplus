@@ -3,7 +3,7 @@
 @(user: User, area: Area)(form: Form[(List[User])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
-@main(user, area)(s"Gestion des utilisateurs ${area.name}") {
+@main(user, area, false)(s"Gestion des utilisateurs ${area.name}") {
     @webJarsUtil.locate("dialog-polyfill.css").css()
   <style>
           .pem-table {

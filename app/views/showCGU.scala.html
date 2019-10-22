@@ -2,7 +2,7 @@
 @import extentions.MDLForms._
 @(user: User, area: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
-@main(user, area)("Conditions générales d'utilisations")  {
+@main(user, area, false)("Conditions générales d'utilisations")  {
 <style>
     .mdl-data-table td {
         padding: 0px 18px;

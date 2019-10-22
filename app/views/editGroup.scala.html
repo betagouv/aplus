@@ -2,7 +2,7 @@
 @(currentUser: User, area: Area)(userGroup: UserGroup, groupUsers: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
-@main(currentUser, area)(s"Gestion du groupe ${userGroup.name} ${area.name}") {
+@main(currentUser, area, false)(s"Gestion du groupe ${userGroup.name} ${area.name}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 } {
 

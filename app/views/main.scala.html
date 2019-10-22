@@ -1,6 +1,6 @@
 @import helper._
 
-@(currentUser: User, currentArea: Area)(title: String)(header: Html)(content: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentArea: Area, showAreaSelector: Boolean = true)(title: String)(header: Html)(content: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 <!doctype html>
 <html lang="fr">
@@ -103,15 +103,18 @@
             @currentUser.qualite
             </p>
             <p style="line-height: 1.2; font-size: 11px;">
-                <span style="font-weight: bold;">Territoire : </span>
-                @if(currentUser.areas.length > 1) {
-                    <select id="area" name="area" onchange="changeArea()">
+                @if(showAreaSelector) {
+                    <span style="font-weight: bold;">Territoire : </span>
+                    @if(currentUser.areas.length > 1) {
+                        <select id="area" name="area" onchange="changeArea()">
                         @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-                            <option value="@area.id" @if(area.id == currentArea.id) { selected }>@area.name</option>
+                            <option value="@area.id"
+                            @if(area.id == currentArea.id) { selected }>@area.name </option>
                         }
-                    </select>
-                } else {
-                    @currentArea.name
+                        </select>
+                    } else {
+                        @currentArea.name
+                    }
                 }
             </p>
             <div class="demo-avatar-dropdown">

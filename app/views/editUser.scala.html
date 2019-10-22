@@ -4,7 +4,7 @@
 @(currentUser: User, area: Area)(form: Form[User], userId: UUID, userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
-@main(currentUser, area)(s"Utilisateur ${userId}") {
+@main(currentUser, area, false)(s"Utilisateur ${userId}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 
 } {

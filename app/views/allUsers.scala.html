@@ -67,7 +67,7 @@
         </tbody>
       </table>
   }
-@main(currentUser, selectedArea)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
+@main(currentUser, selectedArea, false)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 } {
 
@@ -91,7 +91,6 @@
                 }
               }
       </script>
-
     </p>
   }
       @for(area <- Area.all; userGroup <- userGroups.filter(_.area == area.id).sortBy(_.name)) {
