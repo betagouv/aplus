@@ -18,11 +18,9 @@
                             @if(areasWithLoginByKey.contains(area.id)) {
                                 <i class="material-icons">warning</i> Login par clé possible<i class="material-icons">warning</i> /
                             }
-                            @if(area.id != currentArea.id){
-                                <a href="@routes.AreaController.change(area.id)?redirect=@routes.AreaController.all" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
-                                    <i class="material-icons">forward</i>
-                                </a>
-                            }
+                            <a href="@routes.ApplicationController.all(area.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--raised">
+                                Voir les demandes
+                            </a>
                         }
                     </th>
                 </tr>

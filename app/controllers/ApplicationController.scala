@@ -130,26 +130,43 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     }
   }
 
+  def allApplicationVisibleByUserAdmin(user: User, areaId: UUID) = user.admin match {
+    case true if areaId == Area.allId =>
+      applicationService.allForAreas(user.areas, true)
+    case true =>
+      applicationService.allForAreas(List(areaId), true)
+    case false if user.groupAdmin && areaId == Area.allId=>
+      val userIds = userService.byGroupIds(user.groupIds).map(_.id)
+      applicationService.allForUserIds(userIds, true)
+    case false if user.groupAdmin =>
+      val userGroupIds = userGroupService.groupByIds(user.groupIds).filter(_.area == areaId).map(_.id)
+      val userIds = userService.byGroupIds(userGroupIds).map(_.id)
+      applicationService.allForUserIds(userIds, true)
+    case _ =>
+      List()
+  }
 
-  def allApplicationVisibleByUserAdmin(user: User) = if(user.admin) {
-    applicationService.allForAreas(user.areas, true)
-  } else if(user.groupAdmin) {
-    val users = userService.byArea(user.id)
-    val groupUserIds = users.filter(_.groupIds.intersect(user.groupIds).nonEmpty).map(_.id)
-    applicationService.allForUserIds(groupUserIds, true)
-  } else { List[Application]() }
-
+  def all(areaId: UUID) = loginAction { implicit request =>
+    (request.currentUser.admin, request.currentUser.groupAdmin) match {
+      case (false, false) =>
+        eventService.warn("ALL_APPLICATIONS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher toutes les demandes")
+        Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+      case _ =>
+        val applications = allApplicationVisibleByUserAdmin(request.currentUser, areaId)
+        eventService.info("ALL_APPLICATIONS_SHOWED",
+          s"Visualise la liste des applications de $areaId - taille = ${applications.size}")
+        Ok(views.html.allApplications(request.currentUser, request.currentArea)(applications, Area.fromId(areaId)))
+    }
+  }
 
   def my = loginAction { implicit request =>
     val myApplications = applicationService.allForUserId(request.currentUser.id, request.currentUser.admin)
     val myOpenApplications = myApplications.filter(!_.closed)
     val myClosedApplications = myApplications.filter(_.closed)
-    
-    val applicationsFromTheArea = allApplicationVisibleByUserAdmin(request.currentUser)
 
-    eventService.info("ALL_APPLICATIONS_SHOWED",
-      s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}/zone=${applicationsFromTheArea.size}")
-    Ok(views.html.myApplications(request.currentUser, request.currentArea)(myOpenApplications, myClosedApplications, applicationsFromTheArea))
+    eventService.info("MY_APPLICATIONS_SHOWED",
+      s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}")
+    Ok(views.html.myApplications(request.currentUser, request.currentArea)(myOpenApplications, myClosedApplications))
   }
   
 
@@ -221,7 +238,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     val currentUserId = request.currentUser.id
     val users = userService.byArea(request.currentArea.id)
     val exportedApplications = if(request.currentUser.admin || request.currentUser.groupAdmin) {
-      allApplicationVisibleByUserAdmin(request.currentUser)
+      allApplicationVisibleByUserAdmin(request.currentUser, Area.allId)
     } else  {
       applicationService.allForUserId(currentUserId, request.currentUser.admin)
     }

@@ -38,5 +38,7 @@ object Area {
     Area("exemple", "Demo")
   )
 
+  val allId = UUIDHelper.namedFrom("all")
+
   val notApplicable = Area("notApplicable", "NotApplicable")
 }

@@ -132,83 +132,17 @@
             @display(myClosedApplications)
         </div>
     }
-    @if(user.admin || user.groupAdmin) {
-        <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
-        @if(user.admin) {
-            <h4 class="mdl-cell mdl-cell--12-col">Toutes les demandes</h4>
-        } else {
-            <h4 class="mdl-cell mdl-cell--12-col">Demandes de mes groupes</h4>
-        }
-            <button class="mdl-button mdl-js-button mdl-button--raised" onclick="document.location='@routes.ApplicationController.allCSV()'">
-                Télécharger export CSV
-            </button>
-            <div class="mdl-cell mdl-cell--12-col pem-container">
-                Total : @applicationsFromTheArea.size ( @applicationsFromTheArea.groupBy(_.longStatus(user)).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
-                <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp sortable" style="white-space: normal;">
-                    <thead>
-                        <tr>
-                            @if(user.admin){ <th class="mdl-data-table__cell--non-numeric">#</th> }
-                            <th class="mdl-data-table__cell--non-numeric">Date</th>
-                            @if(user.admin) {
-                                <th class="mdl-data-table__cell--non-numeric">Territoires</th>
-                            }
-                            <th class="mdl-data-table__cell--non-numeric">Avancement</th>
-                            <th class="mdl-data-table__cell--non-numeric">Créateur</th>
-                            <th class="mdl-data-table__cell--non-numeric">Invités</th>
-                            <th class="mdl-data-table__cell--non-numeric">Messages</th>
-                            <th class="mdl-data-table__cell--non-numeric">Réponses</th>
-                            <th class="mdl-data-table__cell--non-numeric">Utile</th>
-                            <th class="mdl-data-table__cell--non-numeric">Non pertinente</th>
-                            <th class="mdl-data-table__cell--non-numeric">Sujet</th>
-                            <th class="mdl-data-table__cell--non-numeric">Catégorie</th>
-                            <th class="mdl-data-table__cell--non-numeric"></th>
-                            @if(user.admin){  <th class="mdl-data-table__cell--non-numeric" style="width: 20px">Détails</th> }
-                        </tr>
-                    </thead>
-                    <tfoot class="invisible">
-                        <tr>
-                            <td class="mdl-data-table__cell--non-numeric" colspan="8" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
-                        </tr>
-                    </tfoot>
-                    <tbody>
-                    @for((application) <- applicationsFromTheArea) {
-                        <tr @if(user.admin){ onclick="window.document.location='@routes.ApplicationController.show(application.id)';" class="searchable-row" } else { style="cursor: none" } data-search="@application.searchData" >
-                        @if(user.admin){ <td class="mdl-data-table__cell--non-numeric" style="font-weight: bold; color: red;">@application.internalId</td>}
-                            <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))</td>
-                            @if(user.admin) {
-                                <td class="mdl-data-table__cell--non-numeric">@Area.fromId(application.area).get.name</td>
-                            }
-                            <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status</td>
-                            <td class="mdl-data-table__cell--non-numeric">@application.creatorUserName</td>
-                            <td class="mdl-data-table__cell--non-numeric">@application.invitedUsers.size</td>
-                            <td class="mdl-data-table__cell--non-numeric">@(application.answers.length + 1)</td>
-                            <td class="mdl-data-table__cell--non-numeric">@application.answers.count(_.creatorUserID != application.creatorUserId)</td>
-                            <td class="mdl-data-table__cell--non-numeric"><b>@application.usefulness match {
-                                case Some("Oui") => {<img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"> Oui}
-                                case Some("Je ne sais pas") => {<img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"> Je ne sais pas}
-                                case Some("Non") => {<img class="usefulness__icon" src="@webJarsUtil.locate("1f61e.svg").url.get"> Non}
-                                case None => { ? }
-                            }</b></td>
-                            <td class="mdl-data-table__cell--non-numeric">@if(application.irrelevant) { <span style="color: red; font-weight: bold;">Oui</span> } else { Non } </td>
-                            <td class="mdl-data-table__cell--non-numeric">@application.subject</td>
-                            <td class="mdl-data-table__cell--non-numeric">@application.category.getOrElse("")</td>
-                            <td class="mdl-data-table__cell--non-numeric search-cell"></td>
-                            @if(user.admin){ <td class="mdl-data-table__cell--non-numeric"> <a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
-                                <i class="material-icons">info_outline</i>
-                            </a></td>}
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    }
-    @if(myOpenApplications.nonEmpty || myClosedApplications.nonEmpty || applicationsFromTheArea.nonEmpty) {
+
+    @if(myOpenApplications.nonEmpty || myClosedApplications.nonEmpty) {
         <h4 class="mdl-cell mdl-cell--12-col">Export des demandes en CSV</h4>
         <b class="mdl-cell mdl-cell--12-col">
             Il faut importer le fichier dans Excel (ou autre tableur) en ut8 pour avoir les accents correctement.</b>
         <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--8-col mdl-cell--2-offset" onclick="document.location = '@routes.ApplicationController.allCSV()'">
             Télécharger export CSV
         </button>
+    }
+
+    @if(user.admin || user.groupAdmin) {
+       <p>Vous êtes admin ou responsable de groupe : <a href="">Voir la nouvelle page de gestion de demande</a></p>
     }
 }

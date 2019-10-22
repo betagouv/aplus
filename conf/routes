@@ -56,8 +56,9 @@ GET     /cgu                      controllers.UserController.showCGU
 POST    /cgu                      controllers.UserController.validateCGU
 
 # Areas
-GET     /areas                       controllers.AreaController.all
-GET     /areas/:areaId               controllers.AreaController.change(areaId: java.util.UUID)
+GET     /territoires                       controllers.AreaController.all
+GET     /territoires/:areaId               controllers.AreaController.change(areaId: java.util.UUID)
+GET     /territoires/:areaId/demandes      controllers.ApplicationController.all(areaId: java.util.UUID)
 
 # Check
 GET     /status                     controllers.HomeController.status
