@@ -11,7 +11,7 @@ import play.api.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class RequestWithUserData[A](val currentUser: User, val currentArea: Area, request: Request[A]) extends WrappedRequest[A](request)
+class RequestWithUserData[A](val currentUser: User, @deprecated val currentArea: Area, request: Request[A]) extends WrappedRequest[A](request)
 
 @Singleton
 class LoginAction @Inject()(val parser: BodyParsers.Default,
