@@ -130,16 +130,16 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     }
   }
 
-  def allApplicationVisibleByUserAdmin(user: User, areaId: UUID) = user.admin match {
-    case true if areaId == Area.allId =>
+  def allApplicationVisibleByUserAdmin(user: User, area: Area) = user.admin match {
+    case true if area.id == Area.allArea.id =>
       applicationService.allForAreas(user.areas, true)
     case true =>
-      applicationService.allForAreas(List(areaId), true)
-    case false if user.groupAdmin && areaId == Area.allId=>
+      applicationService.allForAreas(List(area.id), true)
+    case false if user.groupAdmin && area.id == Area.allArea.id =>
       val userIds = userService.byGroupIds(user.groupIds).map(_.id)
       applicationService.allForUserIds(userIds, true)
     case false if user.groupAdmin =>
-      val userGroupIds = userGroupService.groupByIds(user.groupIds).filter(_.area == areaId).map(_.id)
+      val userGroupIds = userGroupService.groupByIds(user.groupIds).filter(_.area == area.id).map(_.id)
       val userIds = userService.byGroupIds(userGroupIds).map(_.id)
       applicationService.allForUserIds(userIds, true)
     case _ =>
@@ -152,10 +152,11 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         eventService.warn("ALL_APPLICATIONS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher toutes les demandes")
         Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
       case _ =>
-        val applications = allApplicationVisibleByUserAdmin(request.currentUser, areaId)
+        val area = Area.fromId(areaId).get
+        val applications = allApplicationVisibleByUserAdmin(request.currentUser, area)
         eventService.info("ALL_APPLICATIONS_SHOWED",
           s"Visualise la liste des applications de $areaId - taille = ${applications.size}")
-        Ok(views.html.allApplications(request.currentUser, request.currentArea)(applications, Area.fromId(areaId)))
+        Ok(views.html.allApplications(request.currentUser)(applications, area))
     }
   }
 
@@ -238,7 +239,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     val currentUserId = request.currentUser.id
     val users = userService.byArea(request.currentArea.id)
     val exportedApplications = if(request.currentUser.admin || request.currentUser.groupAdmin) {
-      allApplicationVisibleByUserAdmin(request.currentUser, Area.allId)
+      allApplicationVisibleByUserAdmin(request.currentUser, request.currentArea)
     } else  {
       applicationService.allForUserId(currentUserId, request.currentUser.admin)
     }

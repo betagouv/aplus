@@ -1,7 +1,7 @@
-@(user: User, currentArea: Area)(applications: Seq[Application], area: Option[Area])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(user: User)(applications: Seq[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 @import java.util.Locale
 
-@main(user, currentArea)(s"Demandes - ${area.map(_.name).getOrElse("tous les territoires")}")  {
+@main(user, selectedArea)(s"Demandes - ${selectedArea.name}")  {
 <style>
     .pem-table {
         width: 100%;
@@ -25,12 +25,34 @@
 <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("sortable/sortable.css")'>
 <script src="@routes.Assets.versioned("sortable/sortable.js")"></script>
 }{
+    @helper.javascriptRouter("jsRoutes")(
+        routes.javascript.ApplicationController.all
+    )
    <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         @if(user.admin) {
-            <h4 class="mdl-cell mdl-cell--12-col">Toutes les demandes - @area.map(_.name).getOrElse("tous les territoires")</h4>
+            <h4 class="mdl-cell mdl-cell--12-col">Demandes :
         } else {
-            <h4 class="mdl-cell mdl-cell--12-col">Demandes de mes groupes - @area.map(_.name).getOrElse("tous les territoires")</h4>
+            <h4 class="mdl-cell mdl-cell--12-col">Demandes de mes groupes - 
         }
+       @if(user.areas.length > 1) {
+           <select id="area-apps" name="area-apps" onchange="changeAreaApps()">
+               <option value="@Area.allArea.id" @if(selectedArea.id == Area.allArea.id) { selected }>tous les territoires</option>
+               @for(area <- user.areas.flatMap(Area.fromId)) {
+                   <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area.name</option>
+               }
+           </select>
+       } else {
+           @selectedArea.name
+       }
+       </h4>
+       <script>
+           function changeAreaApps() {
+               var areaSelected = document.getElementById("area-apps").value;
+               if(areaSelected != "@selectedArea.id") {
+                   document.location = jsRoutes.controllers.ApplicationController.all(areaSelected).url;
+               }
+           }
+       </script>
             <button class="mdl-button mdl-js-button mdl-button--raised" onclick="document.location='@routes.ApplicationController.allCSV()'">
                 Télécharger export CSV
             </button>
