@@ -91,13 +91,21 @@ class ApplicationController @Inject()(loginAction: LoginAction,
              val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
              eventService.info(s"APPLICATION_CREATION_INVALID", s"L'utilisateur essai de créé une demande invalide $formWithErrors")
              val groupIds = instructors.flatMap(_.groupIds).distinct
+
+             val formWithErrorsfinal = if(request.body.asMultipartFormData.flatMap(_.file("file")).isEmpty) {
+               formWithErrors
+             } else {
+               formWithErrors.copy(
+                 errors = formWithErrors.errors :+ FormError("file", "Vous aviez ajouté un fichier, il n'a pas pu être sauvegardé, vous devez le remettre.")
+               )
+             }
              if(simplified) {
                val categories = organisationService.categories
                val organismeGroups = userGroupService.groupByIds(groupIds).filter(userGroup => userGroup.organisationSetOrDeducted.nonEmpty && userGroup.area == request.currentArea.id)
-               BadRequest(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, formWithErrors("category").value, formWithErrors))
+               BadRequest(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, formWithErrors("category").value, formWithErrorsfinal))
              } else {
                val organismeGroups = userGroupService.groupByIds(groupIds).filter(_.area == request.currentArea.id)
-               BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, formWithErrors))
+               BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, formWithErrorsfinal))
              }
            },
            applicationData => {

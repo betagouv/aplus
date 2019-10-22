@@ -94,9 +94,12 @@
                     }
                     <br>
                     <br>
-                    <div>
-                    Ajouter un ficher ( Facultatif, 5Mo maximum ) : <input type="file" name="file">
-                    </div></br></br>
+                    <p>
+                        @if(applicationForm("file").hasErrors) {
+                            <span style="color: red; font-weight: bold;">@applicationForm("file").errors.map(_.format).mkString(", ")</span><br>
+                        }
+                        Ajouter un ficher ( Facultatif, 5Mo maximum ) : <input type="file" name="file">
+                    </p>
                     <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-mandat" style="height: unset; margin-bottom: 10px;">
                         <input type="checkbox" id="checkbox-mandat" name="validate" class="mdl-checkbox__input" value="true">
                         <span class="mdl-checkbox__label">Je confirme que l'usager m'a donné mandat pour effectuer cette demande.</span>
