@@ -80,7 +80,7 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
 
       // Wait for login
       eventually {
-        browser.url must endWith(controllers.routes.ApplicationController.all().url.substring(1))
+        browser.url must endWith(controllers.routes.ApplicationController.my().url.substring(1))
       }
 
       // Submit an application
@@ -111,7 +111,7 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
 
       // Wait for form submit
       eventually {
-        browser.url must endWith(controllers.routes.ApplicationController.all().url.substring(1))
+        browser.url must endWith(controllers.routes.ApplicationController.my().url.substring(1))
       }
 
       // Check if the application exist in database

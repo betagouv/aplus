@@ -119,7 +119,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
              if(applicationService.createApplication(application)) {
                notificationsService.newApplication(application)
                eventService.info("APPLICATION_CREATED", s"La demande ${application.id} a été créé", Some(application))
-               Redirect(routes.ApplicationController.all()).flashing("success" -> "Votre demande a bien été envoyée")
+               Redirect(routes.ApplicationController.my()).flashing("success" -> "Votre demande a bien été envoyée")
              }  else {
                eventService.error("APPLICATION_CREATION_ERROR", s"La demande ${application.id} n'a pas pu être créé", Some(application))
                InternalServerError("Error Interne: Votre demande n'a pas pu être envoyé. Merci de rééssayer ou contacter l'administrateur")
@@ -140,7 +140,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   } else { List[Application]() }
 
 
-  def all = loginAction { implicit request =>
+  def my = loginAction { implicit request =>
     val myApplications = applicationService.allForUserId(request.currentUser.id, request.currentUser.admin)
     val myOpenApplications = myApplications.filter(!_.closed)
     val myClosedApplications = myApplications.filter(_.closed)
@@ -149,7 +149,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
     eventService.info("ALL_APPLICATIONS_SHOWED",
       s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}/zone=${applicationsFromTheArea.size}")
-    Ok(views.html.allApplication(request.currentUser, request.currentArea)(myOpenApplications, myClosedApplications, applicationsFromTheArea))
+    Ok(views.html.myApplications(request.currentUser, request.currentArea)(myOpenApplications, myClosedApplications, applicationsFromTheArea))
   }
   
 
@@ -210,7 +210,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         val currentUserId = user.id
         val applicationsFromTheArea = List[Application]()
         eventService.info("ALL_AS_SHOWED", s"Visualise la vue de l'utilisateur $userId", user= Some(user))
-        Ok(views.html.allApplication(user, request.currentArea)(applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin), applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin), applicationsFromTheArea))
+        Ok(views.html.myApplications(user, request.currentArea)(applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin), applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin), applicationsFromTheArea))
       case  _ =>
         eventService.error("ALL_AS_NOT_FOUND", s"L'utilisateur $userId n'existe pas")
         BadRequest("L'utilisateur n'existe pas ou vous n'avez pas le droit d'accèder à cette page. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
@@ -384,7 +384,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           if (applicationService.add(applicationId, answer)  == 1) {
             notificationsService.newAnswer(application, answer)
             eventService.info("AGENTS_ADDED", s"L'ajout d'agent ${answer.id} a été créé sur la demande $applicationId", Some(application))
-            Redirect(routes.ApplicationController.all()).flashing ("success" -> "Les agents ont été invités sur la demande")
+            Redirect(routes.ApplicationController.my()).flashing ("success" -> "Les agents ont été invités sur la demande")
           } else {
             eventService.error("AGENTS_NOT_ADDED", s"L'ajout d'agent ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
             InternalServerError("Les agents n'ont pas pu être invités")
@@ -418,7 +418,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           if (applicationService.add(applicationId, answer, true)  == 1) {
             notificationsService.newAnswer(application, answer)
             eventService.info("ADD_EXPERT_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
-            Redirect(routes.ApplicationController.all()).flashing ("success" -> "Un expert a été invité sur la demande")
+            Redirect(routes.ApplicationController.my()).flashing ("success" -> "Un expert a été invité sur la demande")
           } else {
             eventService.error("ADD_EXPERT_NOT_CREATED", s"L'invitation d'agents ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
             InternalServerError("L'expert n'a pas pu être invité")
@@ -447,7 +447,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         if(application.canBeClosedBy(request.currentUser)) {
           if(applicationService.close(applicationId, finalUsefulness, DateTime.now(timeZone))) {
             eventService.info("TERMINATE_COMPLETED", s"La demande $applicationId est clôturé", Some(application))
-            Redirect(routes.ApplicationController.all()).flashing("success" -> "L'application a été indiqué comme clôturée")
+            Redirect(routes.ApplicationController.my()).flashing("success" -> "L'application a été indiqué comme clôturée")
           } else {
             eventService.error("TERMINATE_ERROR", s"La demande $applicationId n'a pas pu être clôturé en BDD", Some(application))
             InternalServerError("Erreur interne: l'application n'a pas pu être indiqué comme clôturée")
