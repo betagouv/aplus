@@ -93,9 +93,11 @@
       </script>
     </p>
   }
-  <button class="mdl-button mdl-js-button mdl-button--raised" onclick="document.location='@routes.UserController.allCSV(selectedArea.id)'">
-    Télécharger export CSV
-  </button>
+  @if(currentUser.admin) {
+    <button class="mdl-button mdl-js-button mdl-button--raised" onclick="document.location = '@routes.UserController.allCSV(selectedArea.id)'">
+      Télécharger export CSV
+    </button>
+  }
       @for(area <- Area.all; userGroup <- userGroups.filter(_.area == area.id).sortBy(_.name)) {
         @defining(allUsers.filter(_.groupIds.contains(userGroup.id))){ groupUsers =>
           @display(groupUsers.filter(_.groupIds.length == 1)){
