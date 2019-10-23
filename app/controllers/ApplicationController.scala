@@ -310,7 +310,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           application.answers.find(_.id == answerId) match {
             case Some(answer) if answer.files.getOrElse(Map()).contains(filename) =>
               eventService.info("FILE_OPEN", s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert")
-              Ok.sendPath(Paths.get(s"$filesPath/ans_$answerId-$filename"))
+              Ok.sendPath(Paths.get(s"$filesPath/ans_$answerId-$filename"), true, { _: Path => filename })
             case _ =>
               eventService.error("FILE_NOT_FOUND", s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas")
               NotFound("Nous n'avons pas trouvé ce fichier")
@@ -318,7 +318,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       case (None, Some(application)) if application.fileCanBeShowed(request.currentUser) =>
         if(application.files.contains(filename)) {
             eventService.info("FILE_OPEN", s"Le fichier de la demande $applicationId a été ouvert")
-            Ok.sendPath (Paths.get (s"$filesPath/app_$applicationId-$filename") )
+            Ok.sendPath(Paths.get (s"$filesPath/app_$applicationId-$filename"), true, { _: Path => filename })
         } else {
             eventService.error("FILE_NOT_FOUND", s"Le fichier de la demande $application sur la demande $applicationId n'existe pas")
             NotFound("Nous n'avons pas trouvé ce fichier")
