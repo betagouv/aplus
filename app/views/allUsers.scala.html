@@ -141,7 +141,7 @@
       }
     @if(currentUser.admin) {
       <div class="mdl-cell mdl-cell--12-col  mdl-grid">
-        <h4>Ajouter un groupe</h4> <br>
+        <h4 class="mdl-cell mdl-cell--12-col">Ajouter un groupe</h4> <br>
         @helper.form(routes.UserController.addGroup(), 'method -> "post") {
           @helper.CSRF.formField
           <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
@@ -163,6 +163,13 @@
               @for(organisation <- Organisation.all) {
                 <option value="@organisation.shortName">@organisation.shortName : @organisation.name</option>
               }
+            </select>
+          </div>
+          <div class="mdl-cell mdl-cell--12-col">
+            <select id="area" name="area">
+            @for(area <- currentUser.areas.flatMap(Area.fromId)) {
+              <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area.name</option>
+            }
             </select>
           </div>
           <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">

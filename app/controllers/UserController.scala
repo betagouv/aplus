@@ -32,18 +32,18 @@ class UserController @Inject()(loginAction: LoginAction,
     } else {
       val selectedArea = Area.fromId(areaId).get
       val users = (request.currentUser.admin, request.currentUser.groupAdmin, selectedArea.id == Area.allArea.id) match {
-        case (true, _, true)  => userService.byArea(request.currentArea.id)
-        case (true, _,false)  => userService.byAreas(request.currentUser.areas)
+        case (true, _, false)  => userService.byArea(areaId)
+        case (true, _, true)  => userService.byAreas(request.currentUser.areas)
         case (false, true, _) => userService.byGroupIds(request.currentUser.groupIds)
         case _ =>
           eventService.warn("ALL_USER_INCORRECT_SETUP", s"Erreur d'accès aux utilisateurs")
           List()
       }
 
-      val applications = applicationService.allByArea(request.currentArea.id, true)
+      val applications = applicationService.allByArea(selectedArea.id, true)
       val groups: List[UserGroup] = (request.currentUser.admin, request.currentUser.groupAdmin, selectedArea.id == Area.allArea.id) match {
-        case (true, _, true)  => userGroupService.allGroupByAreas(List[UUID](request.currentArea.id))
-        case (true, _, false) => userGroupService.allGroupByAreas(request.currentUser.areas)
+        case (true, _, false)  => userGroupService.allGroupByAreas(List[UUID](areaId))
+        case (true, _, true) => userGroupService.allGroupByAreas(request.currentUser.areas)
         case (false, true, _) => userGroupService.groupByIds(request.currentUser.groupIds)
         case _ =>
           eventService.warn("ALL_USER_INCORRECT_SETUP", s"Erreur d'accès aux groupes")
@@ -165,7 +165,6 @@ class UserController @Inject()(loginAction: LoginAction,
       eventService.warn("VIEW_USER_UNAUTHORIZED", s"Accès non autorisé pour voir $userId")
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
-      implicit val area = request.currentArea
       userService.byIdCheckDisabled(userId, true) match {
         case None =>
           eventService.error("USER_NOT_FOUND", s"L'utilisateur $userId n'existe pas")
@@ -184,7 +183,6 @@ class UserController @Inject()(loginAction: LoginAction,
       eventService.warn("POST_EDIT_USER_UNAUTHORIZED", s"Accès non autorisé à modifier $userId")
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
-      implicit val area = request.currentArea
       userForm.bindFromRequest.fold(
         formWithErrors => {
           val groups = userGroupService.allGroups
@@ -212,7 +210,8 @@ class UserController @Inject()(loginAction: LoginAction,
       eventService.warn("SHOW_ADD_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs du groupe $groupId")
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
-      implicit val area = request.currentArea
+      val group = userGroupService.groupById(groupId).get
+      implicit val area = Area.fromId(group.area).get
       val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
       eventService.info("EDIT_USER_SHOWED", s"Visualise la vue d'ajouts des utilisateurs")
       Ok(views.html.editUsers(request.currentUser, request.currentArea)(usersForm, rows, routes.UserController.addPost(groupId)))
@@ -224,7 +223,8 @@ class UserController @Inject()(loginAction: LoginAction,
       eventService.warn("POST_ADD_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs")
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
-      implicit val area = request.currentArea
+      val group = userGroupService.groupById(groupId).get
+      implicit val area = Area.fromId(group.area).get
       usersForm.bindFromRequest.fold(
         formWithErrors => {
           eventService.error("ADD_USER_ERROR", s"Essai d'ajout d'utilisateurs avec des erreurs de validation")
@@ -299,7 +299,7 @@ class UserController @Inject()(loginAction: LoginAction,
         eventService.error("EDIT_GROUPE_NOT_FOUND", s"La demande $id n'existe pas")
         NotFound("Nous n'avons pas trouvé ce groupe")
       case Some(group) =>
-        if(!group.canHaveUsersAddedBy(request.currentUser) || group.area != request.currentArea.id) {
+        if(!group.canHaveUsersAddedBy(request.currentUser)) {
           eventService.warn("EDIT_GROUPE_UNAUTHORIZED", s"Accès non autorisé à l'edition de ce groupe")
           Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?")
         } else {
@@ -316,7 +316,7 @@ class UserController @Inject()(loginAction: LoginAction,
         eventService.error("EDIT_GROUPE_NOT_FOUND", s"La demande $id n'existe pas")
         NotFound("Nous n'avons pas trouvé ce groupe")
       case Some(group) =>
-        if(request.currentUser.admin == false || group.area != request.currentArea.id) {
+        if(request.currentUser.admin == false) {
           eventService.warn("EDIT_GROUPE_UNAUTHORIZED", s"Accès non autorisé à l'edition de ce groupe")
           Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?")
         } else {
@@ -345,7 +345,7 @@ class UserController @Inject()(loginAction: LoginAction,
       "insee-code" -> text,
       "creationDate" -> ignored(DateTime.now(timeZone)),
       "create-by-user-id" -> ignored(request.currentUser.id),
-      "area" -> ignored(request.currentArea.id),
+      "area" -> uuid,
       "organisation" -> optional(text),
       "email" -> optional(email)
     )(UserGroup.apply)(UserGroup.unapply)
