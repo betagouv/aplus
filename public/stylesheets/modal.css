@@ -1,0 +1,80 @@
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: var(--black);
+    cursor: pointer;
+    visibility: hidden;
+    opacity: 1;
+    transition: all 0.35s ease-in;
+}
+
+.modal-dialog {
+    position: relative;
+    max-width: 800px;
+    max-height: 80vh;
+    border-radius: 5px;
+    background: var(--white);
+    overflow: auto;
+    cursor: default;
+    padding: 1rem 1em;
+    opacity: 1;
+    background-color: lightcoral;
+    z-index: 2;
+}
+
+.modal-dialog > * {
+    opacity: 1;
+    z-index: 2;
+}
+
+.modal-header, .modal-footer {
+    background: var(--lightgray);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 2em;
+    margin-bottom: 1em;
+}
+
+.modal-content {
+    margin-bottom: 1em;
+}
+
+.modal-header .modal-close {
+    font-size: 1.5rem;
+    font-color: white;
+}
+
+.modal p + p {
+    margin-top: 1rem;
+}
+
+.modal {
+    visibility: hidden;
+    opacity: 0;
+    transition: all 0.35s ease-in;
+}
+
+.modal.is-visible {
+    visibility: visible;
+    opacity: 1;
+    z-index: 1;
+}
+
+.close-modal {
+    float: right;
+}
+
+.confirm-modal {
+    float: left;
+}
