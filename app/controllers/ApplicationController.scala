@@ -89,22 +89,41 @@ class ApplicationController @Inject()(loginAction: LoginAction,
            formWithErrors => {
              // binding failure, you retrieve the form containing errors:
              val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
-             eventService.info(s"APPLICATION_CREATION_INVALID", s"L'utilisateur essai de créé une demande invalide $formWithErrors")
+             eventService.info(s"APPLICATION_CREATION_INVALID", s"L'utilisateur essai de créé une demande invalide ${formWithErrors.errors.map(_.message)}")
              val groupIds = instructors.flatMap(_.groupIds).distinct
+
+             val formWithErrorsfinal = if(request.body.asMultipartFormData.flatMap(_.file("file")).isEmpty) {
+               formWithErrors
+             } else {
+               formWithErrors.copy(
+                 errors = formWithErrors.errors :+ FormError("file", "Vous aviez ajouté un fichier, il n'a pas pu être sauvegardé, vous devez le remettre.")
+               )
+             }
              if(simplified) {
                val categories = organisationService.categories
                val organismeGroups = userGroupService.groupByIds(groupIds).filter(userGroup => userGroup.organisationSetOrDeducted.nonEmpty && userGroup.area == request.currentArea.id)
-               BadRequest(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, formWithErrors("category").value, formWithErrors))
+               BadRequest(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, formWithErrors("category").value, formWithErrorsfinal))
              } else {
                val organismeGroups = userGroupService.groupByIds(groupIds).filter(_.area == request.currentArea.id)
-               BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, formWithErrors))
+               BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, formWithErrorsfinal))
              }
            },
            applicationData => {
              val invitedUsers: Map[UUID, String] = applicationData.users.flatMap {  id =>
                userService.byId(id).map(id -> _.nameWithQualite)
              }.toMap
-             val application = Application(UUIDHelper.randomUUID,
+             val applicationId = UUIDHelper.randomUUID
+             val file = request.body.asMultipartFormData.flatMap(_.file("file")).flatMap { uploadedFile =>
+               if(!uploadedFile.filename.isEmpty) {
+                 val filename = Paths.get(uploadedFile.filename).getFileName
+                 val fileDestination = Paths.get(s"$filesPath/app_$applicationId-$filename")
+                 Files.copy(uploadedFile.ref, fileDestination)
+                 Some(filename.toString -> 0L)  // ToDo filesize
+               } else {
+                 None
+               }
+             }
+             val application = Application(applicationId,
                DateTime.now(timeZone),
                request.currentUser.nameWithQualite,
                request.currentUser.id,
@@ -115,7 +134,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                request.currentArea.id,
                false,
                hasSelectedSubject = applicationData.selectedSubject.contains(applicationData.subject),
-               category = applicationData.category)
+               category = applicationData.category,
+               files = file.toMap)
              if(applicationService.createApplication(application)) {
                notificationsService.newApplication(application)
                eventService.info("APPLICATION_CREATED", s"La demande ${application.id} a été créé", Some(application))
@@ -277,20 +297,33 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     }
   }
 
-  def file(applicationId: UUID, answerId: UUID, filename: String) = loginAction { implicit request =>
-    applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
-      case None =>
+  def answerFile(applicationId: UUID, answerId: UUID, filename: String) =  file(applicationId, Some(answerId), filename)
+
+  def applicationFile(applicationId: UUID, filename: String) = file(applicationId, None, filename)
+
+  def file(applicationId: UUID, answerIdOption: Option[UUID], filename: String) = loginAction { implicit request =>
+    (answerIdOption,applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin)) match {
+      case (_, None) =>
         eventService.error("APPLICATION_NOT_FOUND", s"La demande $applicationId n'existe pas")
         NotFound("Nous n'avons pas trouvé ce fichier")
-      case Some(application) if application.fileCanBeShowed(request.currentUser, answerId) =>
+      case (Some(answerId), Some(application)) if application.fileCanBeShowed(request.currentUser, answerId) =>
           application.answers.find(_.id == answerId) match {
             case Some(answer) if answer.files.getOrElse(Map()).contains(filename) =>
-              Ok.sendPath(Paths.get(s"$filesPath/ans_$answerId-$filename"))
+              eventService.info("FILE_OPEN", s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert")
+              Ok.sendPath(Paths.get(s"$filesPath/ans_$answerId-$filename"), true, { _: Path => filename })
             case _ =>
               eventService.error("FILE_NOT_FOUND", s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas")
               NotFound("Nous n'avons pas trouvé ce fichier")
           }
-      case Some(application) =>
+      case (None, Some(application)) if application.fileCanBeShowed(request.currentUser) =>
+        if(application.files.contains(filename)) {
+            eventService.info("FILE_OPEN", s"Le fichier de la demande $applicationId a été ouvert")
+            Ok.sendPath(Paths.get (s"$filesPath/app_$applicationId-$filename"), true, { _: Path => filename })
+        } else {
+            eventService.error("FILE_NOT_FOUND", s"Le fichier de la demande $application sur la demande $applicationId n'existe pas")
+            NotFound("Nous n'avons pas trouvé ce fichier")
+        }
+      case (_, Some(application)) =>
           eventService.warn("FILE_UNAUTHORIZED", s"L'accès aux fichiers sur la demande $applicationId n'est pas autorisé", Some(application))
           Unauthorized("Vous n'avez pas les droits suffisants pour voir les fichiers sur cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
 

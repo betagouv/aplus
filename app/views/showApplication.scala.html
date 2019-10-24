@@ -194,8 +194,21 @@ dialog {
                         }
                     }
                 </div>
-
                 <p class="application__message">@application.description</p>
+                @for((filename, fileSize) <- application.files) {
+                        <div class="vertical-align--middle" style="
+                            color: #000000d6;
+                            font-size: 14px;
+                            font-weight: 600;
+                            line-height: 16px;">
+                            <i class="icon material-icons icon--light">attach_file</i>
+                            @application.creatorUserName a ajouté le fichier @if(application.fileCanBeShowed(user)) { <a href="@routes.ApplicationController.applicationFile(application.id, filename)" target="_blank">@filename</a> } else { @filename }
+                            @application.filesAvailabilityLeftInDays match {
+                                case None => { ( Fichier expiré et supprimé ) }
+                                case Some(expirationInDays) => { ( Suppression du fichier dans @expirationInDays jours ) }
+                            }
+                        </div> <br>
+                }
                 @if(application.canBeClosedBy(user) && application.closed == false) {
                     <button class="mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()" style="margin-right: 10px;">
                         Clôturer la demande
@@ -268,7 +281,7 @@ dialog {
                             font-weight: 600;
                             line-height: 16px;">
                             <i class="icon material-icons icon--light">attach_file</i>
-                            @answer.creatorUserName a ajouté le fichier @if(application.fileCanBeShowed(user, answer.id)) { <a href="@routes.ApplicationController.file(application.id, answer.id, filename)" target="_blank">@filename</a> } else { @filename }
+                            @answer.creatorUserName a ajouté le fichier @if(application.fileCanBeShowed(user, answer.id)) { <a href="@routes.ApplicationController.answerFile(application.id, answer.id, filename)" target="_blank">@filename</a> } else { @filename }
                             @answer.filesAvailabilityLeftInDays match {
                                 case None => { ( Fichier expiré et supprimé ) }
                                 case Some(expirationInDays) => { ( Suppression du fichier dans @expirationInDays jours ) }

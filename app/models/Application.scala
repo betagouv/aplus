@@ -22,7 +22,14 @@ case class Application(id: UUID,
                        closedDate: Option[DateTime] = None,
                        expertInvited: Boolean = false,
                        hasSelectedSubject: Boolean = false,
-                       category: Option[String] = None) extends AgeModel {
+                       category: Option[String] = None,
+                       files: Map[String, Long] = Map()) extends AgeModel {
+
+  lazy val filesAvailabilityLeftInDays: Option[Int] = if(ageInDays > 8 ) { None } else { Some(7 - ageInDays) }
+
+  lazy val allFiles: Map[String, Long] = {
+     files ++ answers.flatMap(_.files).flatten
+   }
 
    lazy val searchData = {
      val stripChars = "\"<>'"
@@ -89,12 +96,16 @@ case class Application(id: UUID,
     def fileCanBeShowed(user: User, answer: UUID) =
       answers.find(_.id == answer) match {
         case None => false
-        case Some(answer) if answer.filesAvailabilityLeftInDays == None => false // You can't download expired file
+        case Some(answer) if answer.filesAvailabilityLeftInDays.isEmpty => false // You can't download expired file
         case Some(answer) if answer.creatorUserID == user.id => false   // You can't download your own file
         case _ =>
           (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
             (user.helper && user.id == creatorUserId)
       }
+  
+    def fileCanBeShowed(user: User) =
+      filesAvailabilityLeftInDays.nonEmpty && (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+        (user.helper && user.id == creatorUserId)
 
 
     def canBeAnsweredBy(user: User) =
