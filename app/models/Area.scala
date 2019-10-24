@@ -13,7 +13,7 @@ object Area {
 
   val all = List(
     Area("nice", "Alpes-Maritimes (06)"),
-    Area("ardennes", "Ardennes (07)"),
+    Area("ardennes", "Ardennes (08)"),
     Area("calvados", "Calvados (14)"),
     Area("dordogne", "Dordogne (24)"),
     Area("doubs", "Doubs (25)"),
