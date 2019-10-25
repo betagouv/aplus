@@ -1,7 +1,7 @@
 @import models._
 @import extentions.MDLForms._
 @import java.util.UUID
-@(currentUser: User, area: Area)(form: Form[User], userId: UUID, userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User, area: Area)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
 @main(currentUser, area)(s"Utilisateur ${userId}") {
@@ -36,6 +36,10 @@
     @helper.checkbox(form("adminGroup"), 'type -> "checkbox", 'label -> "Responsable de ces groupes", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("disabled"), 'type -> "checkbox", 'label -> "Désactiver l'utilisateur", 'class -> "mdl-checkbox__input")
 
+        @if(unused) {
+        <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="confirmUserDeletion()">Supprimer cet utilisateur inutilisé.</button>
+        <br>
+        }
     <b>Délégations</b>
     <div class="mdl-grid mdl-grid--no-spacing user-delegations" >
     @helper.repeatWithIndex(form("delegations"), min = 0) { (field, indexDelegations) =>
@@ -146,4 +150,16 @@
             }
         }
     </script>
+<div class="modal" id="user-deletion-modal">
+    <div class="modal-dialog">
+        <header class="modal-header">
+            Suppression d'un utilisateur inutilisé.
+        </header>
+        <section class="modal-content">Êtes-vous certain de vouloir supprimer le compte de cet utilisateur?</section>
+        <footer class="modal-footer">
+            <button id="modal-confirm-button" class="confirm-modal" aria-label="confirm modal" onclick="confirmUnusedUserDeletionModal('@userId', '@tokenName', '@tokenValue')">Confirmer</button>
+            <button id="modal-close-button" class="close-modal" aria-label="close modal" onclick="closeModal()">Annuler</button>
+        </footer>
+    </div>
+</div>
 }
