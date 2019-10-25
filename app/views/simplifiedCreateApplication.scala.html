@@ -70,7 +70,7 @@
     </a>
     <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
 
-    @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();") {
+    @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data") {
         @helper.CSRF.formField
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
 
@@ -257,11 +257,20 @@
                 <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 20px">
                 <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
                 @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"))
+                <br>
                 </div>
-                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-mandat" style="height: unset; margin-bottom: 10px;">
-                    <input type="checkbox" id="checkbox-mandat" name="validate" class="mdl-checkbox__input" value="true">
-                    <span class="mdl-checkbox__label">Je confirme que l'usager m'a donné mandat pour effectuer cette demande.</span>
-                </label> <br>
+                <p>
+                @if(applicationForm("file").hasErrors) {
+                    <span style="color: red; font-weight: bold;">@applicationForm("file").errors.map(_.format).mkString(", ")</span><br>
+                }
+                Ajouter un ficher ( Facultatif, 5Mo maximum ) : <input type="file" name="file">
+                </p>
+                <div>
+                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-mandat" style="height: unset; margin-bottom: 10px;">
+                        <input type="checkbox" id="checkbox-mandat" name="validate" class="mdl-checkbox__input" value="true">
+                        <span class="mdl-checkbox__label">Je confirme que l'usager m'a donné mandat pour effectuer cette demande.</span>
+                    </label> <br>
+                </div>
                 <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset" disabled>
                     Envoyer ma demande
                 </button>
