@@ -26,7 +26,7 @@ class UserController @Inject()(loginAction: LoginAction,
                                eventService: EventService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
 
   def all(areaId: UUID) = loginAction { implicit request =>
-    if((request.currentUser.admin == false && request.currentUser.groupAdmin == false) || !request.currentUser.areas.contains(areaId)) {
+    if(request.currentUser.canSeeUsersInArea(areaId) == false) {
       eventService.warn("ALL_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs")
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
@@ -58,7 +58,7 @@ class UserController @Inject()(loginAction: LoginAction,
 
 
   def allCSV(areaId: java.util.UUID) = loginAction { implicit request =>
-    if(request.currentUser.admin == false || !request.currentUser.areas.contains(areaId)) {
+    if(request.currentUser.admin == false || request.currentUser.canSeeUsersInArea(areaId) == false) {
       eventService.warn("ALL_USER_CSV_UNAUTHORIZED", s"Accès non autorisé à l'export utilisateur")
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {

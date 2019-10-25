@@ -29,6 +29,8 @@ case class User(id: UUID,
 
   def canBeEditedBy(user: User) =
     ((user.admin && user.areas.intersect(user.areas).nonEmpty))
+
+  def canSeeUsersInArea(areaId: UUID) = (areaId == Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
 }
 
 object User {
