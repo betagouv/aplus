@@ -1,7 +1,7 @@
 @import models._
 @import extentions.MDLForms._
 @import java.util.UUID
-@(currentUser: User, area: Area)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User, area: Area)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
 @main(currentUser, area)(s"Utilisateur ${userId}") {
@@ -157,7 +157,7 @@
         </header>
         <section class="modal-content">Êtes-vous certain de vouloir supprimer le compte de cet utilisateur?</section>
         <footer class="modal-footer">
-            <button id="modal-confirm-button" class="confirm-modal" aria-label="confirm modal" onclick="confirmUnusedUserDeletionModal('@userId')">Confirmer</button>
+            <button id="modal-confirm-button" class="confirm-modal" aria-label="confirm modal" onclick="confirmUnusedUserDeletionModal('@userId', '@tokenName', '@tokenValue')">Confirmer</button>
             <button id="modal-close-button" class="close-modal" aria-label="close modal" onclick="closeModal()">Annuler</button>
         </footer>
     </div>

@@ -15,6 +15,8 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
 import play.api.mvc.{Action, AnyContent, Call, InjectedController, Result}
+import play.filters.csrf.CSRF
+import play.filters.csrf.CSRF.Token
 import services.{ApplicationService, EventService, NotificationService, UserGroupService, UserService}
 
 @Singleton
@@ -175,8 +177,9 @@ class UserController @Inject()(loginAction: LoginAction,
           val form = userForm.fill(user)
           val groups = userGroupService.allGroups
           val unused = isUserUnused(user)
+          val Token(tokenName, tokenValue) = CSRF.getToken.get
           eventService.info("USER_SHOWED", s"Visualise la vue de modification l'utilisateur ", user = Some(user))
-          Ok(views.html.editUser(request.currentUser, request.currentArea)(form, userId, groups, unused))
+          Ok(views.html.editUser(request.currentUser, request.currentArea)(form, userId, groups, unused, tokenName = tokenName, tokenValue = tokenValue))
       }
     }
   }
@@ -191,7 +194,8 @@ class UserController @Inject()(loginAction: LoginAction,
       asAdminOfUserZone(user) { () =>
         if (isUserUnused(user)) {
           userService.deleteById(userId)
-          Redirect(controllers.routes.UserController.all().fragment, 303)
+          val path = "/" + controllers.routes.UserController.all().relativeTo("/")
+          Redirect(path, 303)
         } else {
           Unauthorized("User is not unused.")
         }
