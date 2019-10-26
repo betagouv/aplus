@@ -13,10 +13,12 @@
     @webJarsUtil.locate("roboto-fontface.css").css()
     @webJarsUtil.locate("material-icons.css").css()
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/main.css")'>
+    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/modal.css")'>
     @header
     @webJarsUtil.locate("material.min.js").script()
     <script src="@routes.Assets.versioned("javascripts/polyfills.js")"></script>
     <script src="@routes.Assets.versioned("javascripts/main.js")"></script>
+    <script src="@routes.Assets.versioned("javascripts/modal.js")"></script>
     <style>
         html, body {
             max-width: 100%;

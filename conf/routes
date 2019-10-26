@@ -19,7 +19,6 @@ POST     /toutes-les-demandes/:applicationId/inviter_des_agents     controllers.
 GET      /toutes-les-demandes/:applicationId/inviter_un_expert      controllers.ApplicationController.inviteExpert(applicationId: java.util.UUID)
 POST     /toutes-les-demandes/:applicationId/messages               controllers.ApplicationController.answer(applicationId: java.util.UUID)
 GET      /toutes-les-demandes/:applicationId/terminer               controllers.ApplicationController.terminate(applicationId: java.util.UUID)
-
 GET      /toutes-les-demandes/:applicationId/fichiers/:filename    controllers.ApplicationController.applicationFile(applicationId: java.util.UUID, filename: String)
 GET      /toutes-les-demandes/:applicationId/messages/:answerId/fichiers/:filename    controllers.ApplicationController.answerFile(applicationId: java.util.UUID, answerId: java.util.UUID, filename: String)
 
@@ -37,6 +36,7 @@ GET    /validation-connexion             controllers.LoginController.redirect
 # Users
 GET     /utilisateurs/:userId               controllers.UserController.editUser(userId: java.util.UUID)
 POST    /utilisateurs/:userId               controllers.UserController.editUserPost(userId: java.util.UUID)
+GET     /user/delete/unused/:userId  controllers.UserController.deleteUnusedUserById(userId: java.util.UUID)
 
 
 # Groups

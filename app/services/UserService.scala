@@ -78,6 +78,10 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     SQL("""SELECT * FROM "user" WHERE lower(email) = {email} AND disabled = false""").on('email -> email.toLowerCase()).as(simpleUser.singleOpt)
   }.orElse(User.admins.find(_.email.toLowerCase() == email.toLowerCase())).filter(!_.disabled)
 
+  def deleteById(userId: UUID): Unit = db.withTransaction { implicit connection =>
+    SQL"""DELETE FROM "user" WHERE id = ${userId}::uuid""".execute()
+  }
+
   def add(users: List[User]) = db.withTransaction { implicit connection =>
     users.foldRight(true) { (user, success)  =>
       success && SQL"""
