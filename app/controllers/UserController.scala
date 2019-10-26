@@ -195,7 +195,7 @@ class UserController @Inject()(loginAction: LoginAction,
       asAdminOfUserZone(user) { () =>
         if (isUserUnused(user)) {
           userService.deleteById(userId)
-          val path = "/" + controllers.routes.UserController.all().relativeTo("/")
+          val path = "/" + controllers.routes.UserController.all(Area.allArea.id).relativeTo("/")
           Redirect(path, 303)
         } else {
           Unauthorized("User is not unused.")
