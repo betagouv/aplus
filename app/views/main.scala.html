@@ -136,7 +136,7 @@
             <a class="mdl-navigation__link" href="@routes.ApplicationController.create()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">
                 create_new_folder</i>Nouvelle demande</a>
         }
-        <a class="mdl-navigation__link" href="@routes.ApplicationController.my()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">folder</i>Mes demandes</a>
+        <a class="mdl-navigation__link" href="@routes.ApplicationController.myApplications()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">folder</i>Mes demandes</a>
         @if(currentUser.admin) {
             <a class="mdl-navigation__link" href="@routes.AreaController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">place</i>Territoires</a>
         }

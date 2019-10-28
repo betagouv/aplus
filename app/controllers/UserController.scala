@@ -339,7 +339,7 @@ class UserController @Inject()(loginAction: LoginAction,
             case Some(redirect) =>
               Redirect(Call("GET", redirect)).flashing("success" -> "Merci d\'avoir accepté les CGU")
             case _ =>
-              Redirect(routes.ApplicationController.my()).flashing("success" -> "Merci d\'avoir accepté les CGU")
+              Redirect(routes.ApplicationController.myApplications()).flashing("success" -> "Merci d\'avoir accepté les CGU")
           }
         }
       }
