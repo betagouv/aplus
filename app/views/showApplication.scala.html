@@ -1,7 +1,7 @@
 @(user: User, area: Area)(usersThatCanBeInvited: List[User], application: Application, answerToAgentsForm: Form[_])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 @import java.util.Locale
 
-@main(user, area)(s"Demande : ${application.id} - ${area.name} ")  {
+@main(user, area, false)(s"Demande : ${application.id} - ${area.name} ")  {
 <style>
 .mdl-list__item-primary-content {
     font-weight: bold;

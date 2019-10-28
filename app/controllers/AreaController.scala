@@ -26,7 +26,7 @@ class AreaController @Inject()(loginAction: LoginAction,
     } else {
       eventService.info("AREA_CHANGE", s"Changement vers la zone $areaId")
       val redirect = request.getQueryString("redirect").map(url => Redirect(url))
-        .getOrElse(Redirect(routes.ApplicationController.all()))
+        .getOrElse(Redirect(routes.ApplicationController.myApplications()))
       redirect.withSession(request.session - "areaId" + ("areaId" -> areaId.toString))
     }
   }

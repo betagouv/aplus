@@ -15,7 +15,7 @@ case class UserGroup(id: UUID,
 
   def canHaveUsersAddedBy(user: User) =
     (user.groupAdmin && user.groupIds.contains(id)) ||
-      user.admin
+      (user.admin && user.areas.contains(area))
 
   def organisationDeductedFromName(): Option[String] = {
     val lowerCaseName = name.toLowerCase()

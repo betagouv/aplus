@@ -2,7 +2,7 @@
 @(currentUser: User, area: Area)(userGroup: UserGroup, groupUsers: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
-@main(currentUser, area)(s"Gestion du groupe ${userGroup.name} ${area.name}") {
+@main(currentUser, area, false)(s"Gestion du groupe ${userGroup.name} - ${Area.fromId(userGroup.area).get.name}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 } {
 
@@ -29,6 +29,13 @@
                         <option value="@organisation.shortName" @if(userGroup.organisation.contains(organisation.shortName)){selected}>@organisation.shortName : @organisation.name</option>
                     }
                 </select>
+            </div>
+            <div class="mdl-cell mdl-cell--12-col">
+                <select id="area" name="area">
+                    @for(area <- currentUser.areas.flatMap(Area.fromId)) {
+                    <option value="@area.id" @if(userGroup.area == area.id) { selected }>@area.name</option>
+            }
+            </select>
             </div>
             @if(currentUser.admin) {
                 <div class="mdl-cell mdl-cell--12-col">

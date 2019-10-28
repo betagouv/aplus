@@ -1,6 +1,6 @@
 @(users: Seq[User])(implicit currentUser: User)
 
-    <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table" style="white-space: normal;">
+    <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table mdl-color--white" style="white-space: normal;">
         <thead>
             <tr>
                 @if(currentUser.admin) {
@@ -16,7 +16,7 @@
                 <th class="mdl-data-table__cell--non-numeric">Responsable groupe</th>
                 <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
                 <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
-                <th class="mdl-data-table__cell--non-numeric">Charte validé</th>
+                <th class="mdl-data-table__cell--non-numeric">CGU validé</th>
                 @if(currentUser.admin) {
                     <th class="mdl-data-table__cell--non-numeric">Email de login</th>
                 }
@@ -64,8 +64,8 @@
             </td>
             <td class="mdl-data-table__cell--non-numeric">
                 <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                    <input type="checkbox" class="mdl-checkbox__input" @if(user.hasAcceptedCharte){ checked } disabled>
-                    <span class="mdl-checkbox__label">Charte</span>
+                    <input type="checkbox" class="mdl-checkbox__input" @if(user.cguAcceptationDate.nonEmpty){ checked } disabled>
+                    <span class="mdl-checkbox__label">CGU</span>
                 </label>
             </td>
                 @if(currentUser.admin) {

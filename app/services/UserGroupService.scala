@@ -46,6 +46,7 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
           name = ${group.name},
           insee_code = ${group.inseeCode},
           organisation = ${group.organisation},
+          area = ${group.area}::uuid,
           email = ${group.email}
           WHERE id = ${group.id}::uuid
        """.executeUpdate() == 1

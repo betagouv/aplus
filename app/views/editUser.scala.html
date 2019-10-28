@@ -4,12 +4,17 @@
 @(currentUser: User, area: Area)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
-@main(currentUser, area)(s"Utilisateur ${userId}") {
+@main(currentUser, area, false)(s"Utilisateur ${userId}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 
 } {
 
     @helper.form(action = routes.UserController.editUserPost(userId), 'class -> "mdl-grid mdl-cell mdl-cell--12-col") {
+    <div class="mdl-cell mdl-cell--12-col">
+        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
+            Sauvegarder
+        </button>
+    </div>
     <div class="mdl-cell mdl-cell--6-col-desktop mdl-cell--12-col">
     @helper.CSRF.formField
 

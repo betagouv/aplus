@@ -42,7 +42,7 @@ class LoginSpec extends Specification with Tables with BaseSpec {
       browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
 
       eventually {
-        browser.url must endWith(controllers.routes.ApplicationController.all().url.substring(1))
+        browser.url must endWith(controllers.routes.ApplicationController.myApplications().url.substring(1))
       }
     }
     "Use expired token without sucess"  in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {

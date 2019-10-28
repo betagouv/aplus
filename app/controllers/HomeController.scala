@@ -13,7 +13,7 @@ import play.api.db.Database
 @Singleton
 class HomeController @Inject()(loginAction: LoginAction, db: Database) extends InjectedController {
   def index = loginAction { implicit request =>
-    Redirect(routes.ApplicationController.all())
+    Redirect(routes.ApplicationController.myApplications())
   }
 
   def status = Action { implicit request =>
