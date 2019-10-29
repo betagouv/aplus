@@ -22,14 +22,14 @@ class GroupController @Inject()(loginAction: LoginAction,
         "GROUP_DELETION_UNAUTHORIZED" -> s"Droits insuffisants pour la suppression du groupe ${groupId}."
       } { () =>
         val empty = groupService.isGroupEmpty(group.id)
-        if (empty) {
+        if (not(empty)) {
+          eventService.error(code = "USED_GROUP_DELETION_UNAUTHORIZED", description = "Tentative de suppression d'un groupe utilisé.")
+          Unauthorized("Group is not unused.")
+        } else {
           groupService.deleteById(groupId)
           eventService.info("DELETE_GROUP_DONE", s"Suppression du groupe ${groupId}.")
           val path = "/" + controllers.routes.AreaController.all.relativeTo("/")
           Redirect(path, 303)
-        } else {
-          eventService.error(code = "USED_GROUP_DELETION_UNAUTHORIZED", description = "Tentative de supprimer un groupe utilisé.")
-          Unauthorized("Group is not unused.")
         }
       }
     }
