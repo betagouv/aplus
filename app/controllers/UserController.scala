@@ -395,7 +395,7 @@ class UserController @Inject()(loginAction: LoginAction,
   def addGroupForm[A](implicit request: RequestWithUserData[A]) = Form(
     mapping(
       "id" -> ignored(UUID.randomUUID()),
-      "name" -> text,
+      "name" -> text(maxLength = 50),
       "insee-code" -> text,
       "creationDate" -> ignored(DateTime.now(timeZone)),
       "create-by-user-id" -> ignored(request.currentUser.id),
