@@ -16,6 +16,7 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
   private val simpleUserGroup: RowParser[UserGroup] = Macro.parser[UserGroup](
     "id",
     "name",
+    "description",
     "insee_code",
     "creation_date",
     "create_by_user_id",
@@ -27,9 +28,10 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
 
   def add(group: UserGroup) = db.withConnection { implicit connection =>
     SQL"""
-      INSERT INTO user_group VALUES (
+      INSERT INTO user_group(id, name, description, insee_code, creation_date, create_by_user_id, area, organisation, email) VALUES (
          ${group.id}::uuid,
          ${group.name},
+         ${group.description},
          ${group.inseeCode},
          ${group.creationDate},
          ${group.createByUserId}::uuid,
@@ -44,6 +46,7 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
     SQL"""
           UPDATE user_group SET
           name = ${group.name},
+          description = ${group.description},
           insee_code = ${group.inseeCode},
           organisation = ${group.organisation},
           area = ${group.area}::uuid,

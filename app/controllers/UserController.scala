@@ -396,6 +396,7 @@ class UserController @Inject()(loginAction: LoginAction,
     mapping(
       "id" -> ignored(UUID.randomUUID()),
       "name" -> text,
+      "description" -> optional(text),
       "insee-code" -> text,
       "creationDate" -> ignored(DateTime.now(timeZone)),
       "create-by-user-id" -> ignored(request.currentUser.id),

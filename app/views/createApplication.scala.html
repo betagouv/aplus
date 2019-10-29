@@ -45,6 +45,7 @@
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
                                                 <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);" value="@organisationGroup.name" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisationGroup.name})){ checked="checked" }>
                                                 <span class="mdl-checkbox__label">@organisationGroup.name @if(organisation.nonEmpty){ (@organisation.get.name) }</span>
+                                                <span id="span-group-description">@organisationGroup.description</span>
                                             </label></th>
                                     </tr>
                                 </thead>

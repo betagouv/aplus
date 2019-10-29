@@ -314,3 +314,7 @@ html, body {
     background-color: #646464;
     color: white;
 }
+
+#span-group-description {
+    display: block;
+}
