@@ -10,7 +10,7 @@ import play.api.mvc.{Action, AnyContent, InjectedController}
 import services.{EventService, NotificationService, UserGroupService, UserService}
 
 @Singleton
-class GroupController @Inject()(loginAction: LoginAction,
+case class GroupController @Inject()(loginAction: LoginAction,
                                 groupService: UserGroupService,
                                 notificationService: NotificationService,
                                 eventService: EventService,
@@ -35,6 +35,6 @@ class GroupController @Inject()(loginAction: LoginAction,
     }
   }
 
-  override val gs: UserGroupService = groupService
-  override val es: EventService = eventService
+  //override val groupService: UserGroupService = groupService
+  //override val eventService: EventService = eventService
 }
