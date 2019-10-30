@@ -4,7 +4,7 @@ Group = {
 window.document.addEventListener("DOMContentLoaded", function(event) {
     var dialog = document.getElementById("dialog-delete-group");
 
-    if (!dialog.showModal) {
+    if (dialog && !dialog.showModal) {
         dialogPolyfill.registerDialog(dialog);
     }
 
