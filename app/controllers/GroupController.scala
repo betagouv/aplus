@@ -34,7 +34,4 @@ case class GroupController @Inject()(loginAction: LoginAction,
       }
     }
   }
-
-  //override val groupService: UserGroupService = groupService
-  //override val eventService: EventService = eventService
 }
