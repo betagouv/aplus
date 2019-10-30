@@ -4,7 +4,7 @@ import java.util.{Locale, UUID}
 
 import javax.inject.{Inject, Singleton}
 import actions.{LoginAction, RequestWithUserData}
-import extentions.Operators.{GroupOperators, UserOperators}
+import extentions.Operators.{GroupOperators, UserOperators, not}
 import extentions.{Time, UUIDHelper}
 import models.{Area, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -172,7 +172,7 @@ class UserController @Inject()(loginAction: LoginAction,
         case Some(user) if user.canBeEditedBy(request.currentUser) =>
           val form = userForm.fill(user)
           val groups = userGroupService.allGroups
-          val unused = isUserUnused(user)
+          val unused = not(isAccountUsed(user))
           val Token(tokenName, tokenValue) = CSRF.getToken.get
           eventService.info("USER_SHOWED", s"Visualise la vue de modification l'utilisateur ", user = Some(user))
           Ok(views.html.editUser(request.currentUser, request.currentArea)(form, userId, groups, unused, tokenName = tokenName, tokenValue = tokenValue))
@@ -183,9 +183,8 @@ class UserController @Inject()(loginAction: LoginAction,
     }
   }
 
-  def isUserUnused(user: User): Boolean = {
-    val applications = applicationService.allForUserId(userId = user.id, anonymous = false)
-    applications.isEmpty
+  def isAccountUsed(user: User): Boolean = {
+    applicationService.allForUserId(userId = user.id, anonymous = false).nonEmpty
   }
 
   def deleteUnusedUserById(userId: UUID): Action[AnyContent] = loginAction { implicit request =>
@@ -193,13 +192,13 @@ class UserController @Inject()(loginAction: LoginAction,
       asAdminOfUserZone(user) { () =>
         "DELETE_USER_UNAUTHORIZED" -> s"Suppression de l'utilisateur $userId refusée."
       } { () =>
-        if (isUserUnused(user)) {
+        if (isAccountUsed(user)) {
+          es.error(code = "USER_IS_USED", description = s"Le compte ${user.id} est utilisé.")
+          Unauthorized("User is not unused.")
+        } else {
           userService.deleteById(userId)
           val path = "/" + controllers.routes.UserController.all(Area.allArea.id).relativeTo("/")
           Redirect(path, 303)
-        } else {
-          es.error(code = "USER_IS_USED", description = "")
-          Unauthorized("User is not unused.")
         }
       }
     }
