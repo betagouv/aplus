@@ -1,11 +1,11 @@
 @import models._
-@(currentUser: User, area: Area)(userGroup: UserGroup, groupUsers: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, area: Area)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
 @main(currentUser, area, false)(s"Gestion du groupe ${userGroup.name} - ${Area.fromId(userGroup.area).get.name}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+    <script src='@routes.Assets.versioned("javascripts/group.js")'></script>
 } {
-
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         @helper.form(routes.UserController.editGroupPost(userGroup.id), 'method -> "post") {
             @helper.CSRF.formField
@@ -42,6 +42,12 @@
                     <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
                         Editer le groupe
                     </button>
+                    <br>
+                    @if(isEmpty) {
+                        <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="Group.showGroupRemovalDialog()">
+                            Supprimer le groupe
+                        </button>
+                    }
                 </div>
             }
         }
@@ -60,4 +66,12 @@
             </button>
         }
     </div>
+
+    <dialog class="mdl-dialog dialog--50percent-width" id="dialog-delete-group">
+        <h4 class="mdl-dialog__title">Veuillez confirmer la suppression du groupe.</h4>
+        <div class="mdl-dialog__actions">
+            <button type="button" class="mdl-button mdl-button" id="dialog-delete-group-cancel" onclick="Group.closeGroupRemovalDialog()">Annuler</button>
+            <button type="button" class="mdl-button mdl-button" id="dialog-delete-group-confirm" onclick="Group.confirmRemovalDialog('@userGroup.id')">Confirmer</button>
+        </div>
+    </dialog>
 }

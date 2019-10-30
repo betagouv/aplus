@@ -314,3 +314,7 @@ html, body {
     background-color: #646464;
     color: white;
 }
+
+dialog.dialog--50percent-width {
+    width: 50%;
+}
