@@ -79,10 +79,6 @@
           <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area.name</option>
         }
       </select>
-    
-      @helper.javascriptRouter("jsRoutes")(
-        routes.javascript.UserController.all
-      )
       <script>
               function changeAreaApps() {
                 var areaSelected = document.getElementById("area-selector").value;
