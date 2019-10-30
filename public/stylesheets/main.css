@@ -318,3 +318,7 @@ html, body {
 #span-group-description {
     display: block;
 }
+
+dialog.dialog--50percent-width {
+    width: 50%;
+}

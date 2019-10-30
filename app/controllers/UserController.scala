@@ -208,6 +208,7 @@ class UserController @Inject()(loginAction: LoginAction,
 
   def withUser(userId: UUID)(payload: User => Result)(implicit request: RequestWithUserData[AnyContent]): Result = {
     userService.byId(userId).fold({
+      eventService.error(code = "USER_NOT_FOUND", description = "Tentative d'accès à un utilisateur inexistant.")
       NotFound("Utilisateur inexistant.")
     })({ user: User =>
       payload(user)
@@ -219,6 +220,7 @@ class UserController @Inject()(loginAction: LoginAction,
       if(request.currentUser.areas.intersect(user.areas).nonEmpty) {
         payload()
       } else {
+        eventService.error(code = "ADMIN_OUT_OF_RANGE", description = "L'administrateur n'est pas dans son périmètre de responsabilité.")
         Unauthorized("Vous n'êtes pas en charge de la zone de cet utilisateur.")
       }
     } else {
@@ -359,7 +361,8 @@ class UserController @Inject()(loginAction: LoginAction,
         } else {
           val groupUsers = userService.byGroupIds(List(id))
           eventService.info("EDIT_GROUP_SHOWED", s"Visualise la vue de modification du groupe")
-          Ok(views.html.editGroup(request.currentUser, request.currentArea)(group, groupUsers))
+          val isEmpty = userGroupService.isGroupEmpty(group.id)
+          Ok(views.html.editGroup(request.currentUser, request.currentArea)(group, groupUsers, isEmpty))
         }
     }
   }
@@ -395,7 +398,7 @@ class UserController @Inject()(loginAction: LoginAction,
   def addGroupForm[A](implicit request: RequestWithUserData[A]) = Form(
     mapping(
       "id" -> ignored(UUID.randomUUID()),
-      "name" -> text,
+      "name" -> text(maxLength = 50),
       "description" -> optional(text),
       "insee-code" -> text,
       "creationDate" -> ignored(DateTime.now(timeZone)),

@@ -1,5 +1,6 @@
 package services
 
+import java.sql.ResultSet
 import java.util.UUID
 
 import anorm._
@@ -11,6 +12,7 @@ import anorm.JodaParameterMetaData._
 
 @javax.inject.Singleton
 class UserGroupService @Inject()(configuration: play.api.Configuration, db: Database) {
+
   import extentions.Anorm._
 
   private val simpleUserGroup: RowParser[UserGroup] = Macro.parser[UserGroup](
@@ -20,7 +22,7 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
     "insee_code",
     "creation_date",
     "create_by_user_id",
-    "area",        //TODO rename to area_id
+    "area", //TODO rename to area_id
     "organisation",
     "email"
   ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
@@ -42,7 +44,7 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
       .executeUpdate() == 1
   }
 
-  def edit(group: UserGroup) = db.withConnection {  implicit connection =>
+  def edit(group: UserGroup) = db.withConnection { implicit connection =>
     SQL"""
           UPDATE user_group SET
           name = ${group.name},
@@ -69,5 +71,20 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
 
   def groupById(groupId: UUID) = db.withConnection { implicit connection =>
     SQL"SELECT * FROM user_group WHERE id = $groupId::uuid".as(simpleUserGroup.singleOpt)
+  }
+
+  def deleteById(groupId: UUID): Unit = db.withConnection { implicit connection =>
+    SQL"""DELETE FROM "user_group" WHERE id = ${groupId}::uuid""".execute()
+  }
+
+  def isGroupEmpty(groupId: UUID): Boolean = db.withConnection { implicit connection =>
+    val cardinality: Int =
+      SQL"""SELECT COUNT(id) as cardinality FROM "user" WHERE group_ids @> ARRAY[$groupId]::uuid[]"""
+        .executeQuery()
+        .resultSet.apply[Int]({ (rs: ResultSet) =>
+        rs.next()
+        rs.getInt("cardinality")
+      })
+    cardinality == 0
   }
 }

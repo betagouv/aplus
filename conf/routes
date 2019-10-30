@@ -40,11 +40,12 @@ GET     /user/delete/unused/:userId  controllers.UserController.deleteUnusedUser
 
 
 # Groups
-POST    /groups                      controllers.UserController.addGroup
-GET     /groups/:groupId             controllers.UserController.editGroup(groupId: java.util.UUID)
-POST    /groups/:groupId             controllers.UserController.editGroupPost(groupId: java.util.UUID)
-GET     /groups/:groupId/users       controllers.UserController.add(groupId: java.util.UUID)
-POST    /groups/:groupId/users       controllers.UserController.addPost(groupId: java.util.UUID)
+POST    /groups                         controllers.UserController.addGroup
+GET     /groups/:groupId                controllers.UserController.editGroup(groupId: java.util.UUID)
+POST    /groups/:groupId                controllers.UserController.editGroupPost(groupId: java.util.UUID)
+GET     /groups/:groupId/users          controllers.UserController.add(groupId: java.util.UUID)
+POST    /groups/:groupId/users          controllers.UserController.addPost(groupId: java.util.UUID)
+GET     /group/delete/unused/:groupId   controllers.GroupController.deleteUnusedGroupById(groupId: java.util.UUID)
 
 # Events
 GET     /events                     controllers.UserController.allEvents
@@ -63,6 +64,9 @@ GET     /territoires/:areaId/utilisateurs.csv   controllers.UserController.allCS
 
 # Check
 GET     /status                     controllers.HomeController.status
+
+# Javascript resource
+GET     /jsRoutes           controllers.JavascriptController.javascriptRoutes
 
 
 # Map static resources from the /public folder to the /assets URL path
