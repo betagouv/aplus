@@ -105,7 +105,7 @@
               case _ => {}
             } INSEE : @userGroup.inseeCode
             @if(currentUser.admin) {
-              <a href="@routes.UserController.editGroup(userGroup.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+              <a href="@routes.GroupController.editGroup(userGroup.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                 <i class="material-icons">edit</i>
               </a>
             }
@@ -140,7 +140,7 @@
     @if(currentUser.admin) {
       <div class="mdl-cell mdl-cell--12-col  mdl-grid">
         <h4 class="mdl-cell mdl-cell--12-col">Ajouter un groupe</h4> <br>
-        @helper.form(routes.UserController.addGroup(), 'method -> "post") {
+        @helper.form(routes.GroupController.addGroup(), 'method -> "post") {
           @helper.CSRF.formField
           <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
             <input class="mdl-textfield__input" type="text" id="name" name="name" maxlength="50">

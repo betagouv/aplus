@@ -37,9 +37,9 @@
                             case None => {}
                             }
                             @if(user.admin && area.id == currentArea.id){
-                            <a href="@routes.UserController.editGroup(userGroup.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
-                                <i class="material-icons">edit</i>
-                            </a>
+                                <a href="@routes.GroupController.editGroup(userGroup.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                                    <i class="material-icons">edit</i>
+                                </a>
                             }
                         </td>
                     </tr>

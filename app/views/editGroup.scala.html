@@ -7,7 +7,7 @@
     <script src='@routes.Assets.versioned("javascripts/group.js")'></script>
 } {
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
-        @helper.form(routes.UserController.editGroupPost(userGroup.id), 'method -> "post") {
+        @helper.form(routes.GroupController.editGroupPost(userGroup.id), 'method -> "post") {
             @helper.CSRF.formField
             <div class="mdl-cell mdl-cell--12-col  mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                 <input class="mdl-textfield__input" type="text" id="name" name="name" value="@userGroup.name" @if(!currentUser.admin) { disabled } maxlength="50">
