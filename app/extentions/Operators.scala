@@ -52,8 +52,8 @@ object Operators {
 
     import Results._
 
-    def withUser(userId: UUID)(payload: User => Result)(implicit request: RequestWithUserData[AnyContent]): Result = {
-      userService.byIdCheckDisabled(userId, includeDisabled = true).fold({
+    def withUser(userId: UUID, includeDisabled: Boolean = false)(payload: User => Result)(implicit request: RequestWithUserData[AnyContent]): Result = {
+      userService.byIdCheckDisabled(userId, includeDisabled).fold({
         eventService.error(code = "USER_NOT_FOUND", description = "Tentative d'accès à un utilisateur inexistant.")
         NotFound("Utilisateur inexistant.")
       })({ user: User =>
