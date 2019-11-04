@@ -2,13 +2,15 @@ package controllers
 
 import java.util.UUID
 
-import actions.LoginAction
+import actions.{LoginAction, RequestWithUserData}
 import extentions.Operators._
 import extentions.Time
-import forms.Models
 import javax.inject.{Inject, Singleton}
 import models.{Area, UserGroup}
+import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
+import play.api.data.Form
+import play.api.data.Forms.{email, ignored, mapping, optional, text, uuid}
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import services.{EventService, NotificationService, UserGroupService, UserService}
 
@@ -56,7 +58,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "ADD_GROUP_UNAUTHORIZED" -> s"Accès non autorisé pour ajouter un groupe"
     } { () =>
-      Models.addGroupForm(Time.dateTimeZone).bindFromRequest.fold(_ => {
+      addGroupForm(Time.dateTimeZone).bindFromRequest.fold(_ => {
         eventService.error("ADD_USER_GROUP_ERROR", s"Essai d'ajout d'un groupe avec des erreurs de validation")
         BadRequest("Impossible d'ajouter le groupe") //BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost()))
       }, group => {
@@ -80,7 +82,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
           eventService.warn("ADD_USER_TO_GROUP_UNAUTHORIZED", s"L'utilisateur ${request.currentUser.id} n'est pas authorisé à ajouter des utilisateurs au groupe ${currentGroup.id}.")
           Unauthorized("Vous n'êtes pas authorisé à ajouter des utilisateurs à ce groupe.")
         } else {
-          Models.addGroupForm(Time.dateTimeZone).bindFromRequest.fold(_ => {
+          addGroupForm(Time.dateTimeZone).bindFromRequest.fold(_ => {
             eventService.error("EDIT_USER_GROUP_ERROR", s"Essai d'edition d'un groupe avec des erreurs de validation")
             BadRequest("Impossible de modifier le groupe (erreur de formulaire)")
           }, group => {
@@ -97,4 +99,18 @@ case class GroupController @Inject()(loginAction: LoginAction,
       }
     }
   }
+
+  def addGroupForm[A](timeZone: DateTimeZone)(implicit request: RequestWithUserData[A]) = Form(
+    mapping(
+      "id" -> ignored(UUID.randomUUID()),
+      "name" -> text(maxLength = 50),
+      "description" -> optional(text),
+      "insee-code" -> text,
+      "creationDate" -> ignored(DateTime.now(timeZone)),
+      "create-by-user-id" -> ignored(request.currentUser.id),
+      "area" -> uuid.verifying("Vous devez sélectionner un territoire sur lequel vous êtes admin", area => request.currentUser.areas.contains(area)),
+      "organisation" -> optional(text),
+      "email" -> optional(email)
+    )(UserGroup.apply)(UserGroup.unapply)
+  )
 }

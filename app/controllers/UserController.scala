@@ -6,18 +6,18 @@ import javax.inject.{Inject, Singleton}
 import actions.LoginAction
 import extentions.Operators.{GroupOperators, UserOperators, not}
 import extentions.{Time, UUIDHelper}
-import forms.Models
 import models.{Area, User, UserGroup}
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
-import play.api.data.Form
+import play.api.data.{Form, Mapping}
 import play.api.data.Forms.{optional, text, tuple}
 import play.api.mvc.{Action, AnyContent, Call, InjectedController}
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
 import services.{ApplicationService, EventService, NotificationService, UserGroupService, UserService}
 import play.api.data.Forms._
+import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 
 @Singleton
 case class UserController @Inject()(loginAction: LoginAction,
@@ -109,7 +109,7 @@ case class UserController @Inject()(loginAction: LoginAction,
           eventService.error("USER_NOT_FOUND", s"L'utilisateur $userId n'existe pas")
           NotFound("Nous n'avons pas trouvé cet utilisateur")
         case Some(user) if user.canBeEditedBy(request.currentUser) =>
-          val form = Models.userForm(Time.dateTimeZone).fill(user)
+          val form = userForm(Time.dateTimeZone).fill(user)
           val groups = groupService.allGroups
           val unused = not(isAccountUsed(user))
           val Token(tokenName, tokenValue) = CSRF.getToken.get
@@ -147,7 +147,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "POST_EDIT_USER_UNAUTHORIZED" -> s"Accès non autorisé à modifier $userId"
     } { () =>
-      Models.userForm(Time.dateTimeZone).bindFromRequest.fold(
+      userForm(Time.dateTimeZone).bindFromRequest.fold(
         formWithErrors => {
           val groups = groupService.allGroups
           eventService.error("ADD_USER_ERROR", s"Essai de modification de l'tilisateur $userId avec des erreurs de validation")
@@ -161,7 +161,7 @@ case class UserController @Inject()(loginAction: LoginAction,
               eventService.info("EDIT_USER_DONE", s"Utilisateur $userId modifié", user = Some(updatedUser))
               Redirect(routes.UserController.all(Area.allArea.id)).flashing("success" -> "Utilisateur modifié")
             } else {
-              val form = Models.userForm(Time.dateTimeZone).fill(updatedUser).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
+              val form = userForm(Time.dateTimeZone).fill(updatedUser).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
               val groups = groupService.allGroups
               eventService.error("EDIT_USER_ERROR", s"Impossible de modifier l'utilisateur dans la BDD", user = Some(updatedUser))
               InternalServerError(views.html.editUser(request.currentUser, request.currentArea)(form, userId, groups))
@@ -180,7 +180,7 @@ case class UserController @Inject()(loginAction: LoginAction,
       } else {
         val group = groupService.groupById(groupId).get
         implicit val area = Area.fromId(group.area).get
-        Models.usersForm(Time.dateTimeZone).bindFromRequest.fold(
+        usersForm(Time.dateTimeZone).bindFromRequest.fold(
           formWithErrors => {
             eventService.error("ADD_USER_ERROR", s"Essai d'ajout d'utilisateurs avec des erreurs de validation")
             BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost(groupId)))
@@ -191,7 +191,7 @@ case class UserController @Inject()(loginAction: LoginAction,
                 eventService.info("ADD_USER_DONE", s"Utilisateurs ajouté")
                 Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
               } else {
-                val form = Models.usersForm(Time.dateTimeZone).fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
+                val form = usersForm(Time.dateTimeZone).fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
                 eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD 1")
                 InternalServerError(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
               }
@@ -202,7 +202,7 @@ case class UserController @Inject()(loginAction: LoginAction,
                   case Some(email) => s"Un utilisateur avec l'adresse $email existe déjà."
                   case _ => "Erreur d'insertion dans la base de donnée : contacter l'administrateur."
                 }
-                val form = Models.usersForm(Time.dateTimeZone).fill(users).withGlobalError(errorMessage)
+                val form = usersForm(Time.dateTimeZone).fill(users).withGlobalError(errorMessage)
                 eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}")
                 BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
             }
@@ -255,7 +255,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         implicit val area = Area.fromId(group.area).get
         val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
         eventService.info("EDIT_USER_SHOWED", s"Visualise la vue d'ajouts des utilisateurs")
-        Ok(views.html.editUsers(request.currentUser, request.currentArea)(Models.usersForm(Time.dateTimeZone), rows, routes.UserController.addPost(groupId)))
+        Ok(views.html.editUsers(request.currentUser, request.currentArea)(usersForm(Time.dateTimeZone), rows, routes.UserController.addPost(groupId)))
       }
     }
   }
@@ -271,4 +271,71 @@ case class UserController @Inject()(loginAction: LoginAction,
       Ok(views.html.allEvents(request.currentUser, request.currentArea)(events, limit))
     }
   }
+
+  def usersForm(timeZone: DateTimeZone)(implicit area: Area): Form[List[User]] = Form(
+    single(
+      "users" -> list(mapping(
+        "id" -> optional(uuid).transform[UUID]({
+          case None => UUID.randomUUID()
+          case Some(id) => id
+        }, {
+          Some(_)
+        }),
+        "key" -> ignored("key"),
+        "name" -> nonEmptyText.verifying(maxLength(100)),
+        "qualite" -> nonEmptyText.verifying(maxLength(100)),
+        "email" -> email.verifying(maxLength(200), nonEmpty),
+        "helper" -> boolean,
+        "instructor" -> boolean,
+        "admin" -> ignored(false),
+        "areas" -> ignored(List(area.id)),
+        "creationDate" -> ignored(DateTime.now(timeZone)),
+        "hasAcceptedCharte" -> ignored(false),
+        "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
+        "adminGroup" -> ignored(false),
+        "disabled" -> ignored(false),
+        "expert" -> ignored(false),
+        "groupIds" -> default(list(uuid), List()),
+        "delegations" -> ignored(Map[String, String]()),
+        "cguAcceptationDate" -> optional(ignored(Time.now())),
+        "newsletterAcceptationDate" -> optional(ignored(Time.now()))
+      )(User.apply)(User.unapply))
+    )
+  )
+
+  def userForm(timeZone: DateTimeZone): Form[User] = Form(userMapping(timeZone))
+
+  private def userMapping(implicit timeZone: DateTimeZone): Mapping[User] = mapping(
+    "id" -> optional(uuid).transform[UUID]({
+      case None => UUID.randomUUID()
+      case Some(id) => id
+    }, {
+      Some(_)
+    }),
+    "key" -> ignored("key"),
+    "name" -> nonEmptyText.verifying(maxLength(100)),
+    "qualite" -> nonEmptyText.verifying(maxLength(100)),
+    "email" -> email.verifying(maxLength(200), nonEmpty),
+    "helper" -> boolean,
+    "instructor" -> boolean,
+    "admin" -> boolean,
+    "areas" -> list(uuid).verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
+    "creationDate" -> ignored(DateTime.now(timeZone)),
+    "hasAcceptedCharte" -> boolean,
+    "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
+    "adminGroup" -> boolean,
+    "disabled" -> boolean,
+    "expert" -> ignored(false),
+    "groupIds" -> default(list(uuid), List()),
+    "delegations" -> seq(tuple(
+      "name" -> nonEmptyText,
+      "email" -> email
+    )).transform[Map[String, String]]({
+      _.toMap
+    }, {
+      _.toSeq
+    }),
+    "cguAcceptationDate" -> optional(ignored(Time.now())),
+    "newsletterAcceptationDate" -> optional(ignored(Time.now()))
+  )(User.apply)(User.unapply)
 }
