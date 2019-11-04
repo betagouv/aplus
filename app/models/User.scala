@@ -3,7 +3,7 @@ package models
 import java.util.UUID
 
 import extentions.{Hash, UUIDHelper}
-import org.joda.time.{DateTime, Days}
+import org.joda.time.DateTime
 
 case class User(id: UUID,
                 key: String,
@@ -26,6 +26,11 @@ case class User(id: UUID,
                 cguAcceptationDate: Option[DateTime] = None,
                 newsletterAcceptationDate: Option[DateTime] = None) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"
+
+  def canBeEditedBy(user: User) =
+    ((user.admin && user.areas.intersect(user.areas).nonEmpty))
+
+  def canSeeUsersInArea(areaId: UUID) = (areaId == Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
 }
 
 object User {
@@ -39,6 +44,37 @@ object User {
     User(UUIDHelper.namedFrom("sylvain"), Hash.sha256(s"sylvain"), "Sylvain DERMY", "Expert A+", "sylvain.dermy@beta.gouv.fr", true, false, true, Area.all.map(_.id), date, true, "75056", true, disabled = false, expert = true, cguAcceptationDate = Some(date)),
     User(UUIDHelper.namedFrom("thibault"), Hash.sha256(s"thibault"), "Thibault DESJARDINS", "Expert A+", "thibault.desjardins@beta.gouv.fr", true, false, true, Area.all.map(_.id), date, true, "75056", true, disabled = false, expert = false, cguAcceptationDate = Some(date)),
     User(UUIDHelper.namedFrom("laurent"), Hash.sha256(s"laurent"), "Laurent COURTOIS-COURRET", "Expert A+", "laurent.courtois-courret@beta.gouv.fr", true, false, true, Area.all.map(_.id), date, true, "75056", true, disabled = false, expert = false, cguAcceptationDate = Some(date)),
+    User(id = UUIDHelper.namedFrom("lucien"),
+      key = Hash.sha256(s"lucien"),
+      name = "Lucien PEREIRA",
+      qualite = "Expert A+",
+      email = "lucien.pereira@beta.gouv.fr",
+      helper = true,
+      instructor = false,
+      admin = true,
+      areas = Area.all.map(_.id),
+      creationDate = date,
+      hasAcceptedCharte = true,
+      communeCode = "75056",
+      groupAdmin = true,
+      disabled = false,
+      cguAcceptationDate = Some(date)),
+
+    User(id = UUIDHelper.namedFrom("dunia"),
+      key = Hash.sha256("dunia"),
+      name = "Dunia El Achcar",
+      qualite = "Experte A+",
+      email = "dunia.el_achcar@beta.gouv.fr",
+      helper = true,
+      instructor = false,
+      admin = true,
+      areas = Area.all.map(_.id),
+      creationDate = date,
+      hasAcceptedCharte = true,
+      communeCode = "75056",
+      groupAdmin = true,
+      disabled = false,
+      cguAcceptationDate = Some(date)),
     // Disabled
     User(UUIDHelper.namedFrom("simon"), Hash.sha256(s"simon - disabled"), "Simon PINEAU", "Expert A+", "simon.pineau@beta.gouv.fr", false, false, false, List(), date, false, "75056", false, disabled = true),
     User(UUIDHelper.namedFrom("louis"), Hash.sha256(s"louis - disabled"), "Louis MOSCAROLA (disabled)", "Expert A+", "louis.moscarola@beta.gouv.fr", false, false, false, List(), date, false, "75056", false, disabled = true),

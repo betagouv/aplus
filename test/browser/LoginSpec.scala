@@ -42,10 +42,10 @@ class LoginSpec extends Specification with Tables with BaseSpec {
       browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
 
       eventually {
-        browser.url must endWith(controllers.routes.ApplicationController.all().url.substring(1))
+        browser.url must endWith(controllers.routes.ApplicationController.myApplications().url.substring(1))
       }
     }
-    "Use expired token without sucess"  in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {
+    "Use expired token without success"  in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {
       val tokenService = app.injector.instanceOf[TokenService]
       val loginToken = LoginToken.forUserId(UUIDHelper.namedFrom("julien"), 5, "127.0.0.1")
         .copy(expirationDate = DateTime.now(Time.dateTimeZone).minusMinutes(5))

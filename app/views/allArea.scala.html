@@ -3,7 +3,7 @@
 @(user: User, currentArea: Area)(areas: Seq[Area], areasWithLoginByKey: Seq[UUID], userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
-@main(user, currentArea)(s"Gestion des territoires"){
+@main(user, currentArea, false)(s"Gestion des territoires"){
 
 }{
     <div class="mdl-cell mdl-cell--12-col pem-container mdl-grid">
@@ -18,11 +18,12 @@
                             @if(areasWithLoginByKey.contains(area.id)) {
                                 <i class="material-icons">warning</i> Login par clé possible<i class="material-icons">warning</i> /
                             }
-                            @if(area.id != currentArea.id){
-                                <a href="@routes.AreaController.change(area.id)?redirect=@routes.AreaController.all" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
-                                    <i class="material-icons">forward</i>
-                                </a>
-                            }
+                            <a href="@routes.ApplicationController.all(area.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--raised">
+                                Voir les demandes
+                            </a> /
+                            <a href="@routes.UserController.all(area.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--raised">
+                                Voir les utilisateurs
+                            </a>
                         }
                     </th>
                 </tr>
@@ -32,11 +33,11 @@
                     <tr>
                         <td class="mdl-data-table__cell--non-numeric">
                             <i class="material-icons" style="vertical-align: middle;">chevron_right</i> Groupe : @userGroup.name @userGroup.organisationSetOrDeducted match {
-                                    case Some(organisation) => { ( @organisation ) }
-                                    case None => {}
-                                }
+                            case Some(organisation) => { ( @organisation ) }
+                            case None => {}
+                            }
                             @if(user.admin && area.id == currentArea.id){
-                                <a href="@routes.UserController.editGroup(userGroup.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                                <a href="@routes.GroupController.editGroup(userGroup.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                                     <i class="material-icons">edit</i>
                                 </a>
                             }

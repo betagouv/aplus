@@ -1,6 +1,6 @@
 @import helper._
 
-@(currentUser: User, currentArea: Area)(title: String)(header: Html)(content: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentArea: Area, showAreaSelector: Boolean = true)(title: String)(header: Html)(content: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 <!doctype html>
 <html lang="fr">
@@ -13,10 +13,17 @@
     @webJarsUtil.locate("roboto-fontface.css").css()
     @webJarsUtil.locate("material-icons.css").css()
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/main.css")'>
+
     @header
     @webJarsUtil.locate("material.min.js").script()
     <script src="@routes.Assets.versioned("javascripts/polyfills.js")"></script>
     <script src="@routes.Assets.versioned("javascripts/main.js")"></script>
+    @webJarsUtil.locate("dialog-polyfill.css").css()
+    @webJarsUtil.locate("dialog-polyfill.js").script()
+    <script type="text/javascript" src="@routes.JavascriptController.javascriptRoutes"></script>
+
+    <script src='@routes.Assets.versioned("javascripts/modal.js")'></script>
+    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/modal.css")'>
     <style>
         html, body {
             max-width: 100%;
@@ -39,6 +46,8 @@
                 g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
             })();
     </script>
+    <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border:0;" alt="" /></p></noscript>
+        <!-- End Piwik Code -->
     <script>
             function sendLoginMail(sender, email) {
                 var request = new XMLHttpRequest();
@@ -66,8 +75,6 @@
                 }
             }
     </script>
-    <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border:0;" alt="" /></p></noscript>
-        <!-- End Piwik Code -->
     </head>
 <body>
 <div class="header__ribbon do-not-print" id="header__ribbon">
@@ -103,15 +110,18 @@
             @currentUser.qualite
             </p>
             <p style="line-height: 1.2; font-size: 11px;">
-                <span style="font-weight: bold;">Territoire : </span>
-                @if(currentUser.areas.length > 1) {
-                    <select id="area" name="area" onchange="changeArea()">
+                @if(showAreaSelector) {
+                    <span style="font-weight: bold;">Territoire : </span>
+                    @if(currentUser.areas.length > 1) {
+                        <select id="area" name="area" onchange="changeArea()">
                         @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-                            <option value="@area.id" @if(area.id == currentArea.id) { selected }>@area.name</option>
+                            <option value="@area.id"
+                            @if(area.id == currentArea.id) { selected }>@area.name </option>
                         }
-                    </select>
-                } else {
-                    @currentArea.name
+                        </select>
+                    } else {
+                        @currentArea.name
+                    }
                 }
             </p>
             <div class="demo-avatar-dropdown">
@@ -131,15 +141,13 @@
             <a class="mdl-navigation__link" href="@routes.ApplicationController.create()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">
                 create_new_folder</i>Nouvelle demande</a>
         }
-        <a class="mdl-navigation__link" href="@routes.ApplicationController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">folder</i>Toutes les demandes</a>
+        <a class="mdl-navigation__link" href="@routes.ApplicationController.myApplications()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">folder</i>Mes demandes</a>
         @if(currentUser.admin) {
             <a class="mdl-navigation__link" href="@routes.AreaController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">place</i>Territoires</a>
         }
         @if(currentUser.admin || currentUser.groupAdmin) {
-            <a class="mdl-navigation__link" href="@routes.UserController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">people</i>Utilisateurs</a>
-        }
-        @if(currentUser.admin) {
-            <a class="mdl-navigation__link" href="@routes.UserController.allNew()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">people</i>Utilisateurs (N)</a>
+            <a class="mdl-navigation__link" href="@routes.ApplicationController.all(Area.allArea.id)"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">folder</i>Admin : demandes</a>
+            <a class="mdl-navigation__link" href="@routes.UserController.all(Area.allArea.id)"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">people</i>Utilisateurs</a>
         }
         @if(currentUser.admin) {
             <a class="mdl-navigation__link" href="@routes.UserController.allEvents()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">event</i>Événements</a>

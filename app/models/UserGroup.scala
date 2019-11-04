@@ -5,17 +5,18 @@ import java.util.UUID
 import org.joda.time.DateTime
 
 case class UserGroup(id: UUID,
-                name: String,
-                inseeCode: String,
-                creationDate: DateTime,
-                createByUserId: UUID,
-                area: UUID,
-                organisation: Option[String] = None,
-                email: Option[String] = None)   {
+                     name: String,
+                     description: Option[String],
+                     inseeCode: String,
+                     creationDate: DateTime,
+                     createByUserId: UUID,
+                     area: UUID,
+                     organisation: Option[String] = None,
+                     email: Option[String] = None) {
 
   def canHaveUsersAddedBy(user: User) =
     (user.groupAdmin && user.groupIds.contains(id)) ||
-      user.admin
+      (user.admin && user.areas.contains(area))
 
   def organisationDeductedFromName(): Option[String] = {
     val lowerCaseName = name.toLowerCase()
