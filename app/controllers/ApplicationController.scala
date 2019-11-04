@@ -159,7 +159,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       val userIds = userService.byGroupIds(user.groupIds).map(_.id)
       applicationService.allForUserIds(userIds, true)
     case false if user.groupAdmin =>
-      val userGroupIds = userGroupService.groupByIds(user.groupIds).filter(_.area == area.id).map(_.id)
+      val userGroupIds = userGroupService.byIds(user.groupIds).filter(_.area == area.id).map(_.id)
       val userIds = userService.byGroupIds(userGroupIds).map(_.id)
       applicationService.allForUserIds(userIds, true)
     case _ =>
