@@ -1,4 +1,4 @@
-package browser
+package csv
 
 import extentions.CSVUtil
 import org.junit.runner.RunWith
