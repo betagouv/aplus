@@ -127,7 +127,7 @@ case class UserController @Inject()(loginAction: LoginAction,
   }
 
   def deleteUnusedUserById(userId: UUID): Action[AnyContent] = loginAction { implicit request =>
-    withUser(userId) { user: User =>
+    withUser(userId, includeDisabled = true) { user: User =>
       asAdminOfUserZone(user) { () =>
         "DELETE_USER_UNAUTHORIZED" -> s"Suppression de l'utilisateur $userId refusée."
       } { () =>
@@ -153,7 +153,7 @@ case class UserController @Inject()(loginAction: LoginAction,
           eventService.error("ADD_USER_ERROR", s"Essai de modification de l'tilisateur $userId avec des erreurs de validation")
           BadRequest(views.html.editUser(request.currentUser, request.currentArea)(formWithErrors, userId, groups))
         }, updatedUser => {
-          withUser(updatedUser.id) { user: User =>
+          withUser(updatedUser.id, includeDisabled = true) { user: User =>
             if (!user.canBeEditedBy(request.currentUser)) {
               eventService.warn("POST_EDIT_USER_UNAUTHORIZED", s"Accès non autorisé à modifier $userId")
               Unauthorized("Vous n'avez pas le droit de faire ça")
