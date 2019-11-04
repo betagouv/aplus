@@ -69,6 +69,10 @@
   }
 @main(currentUser, selectedArea, false)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+
+  <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/auto-complete.css")'>
+  <script src='@routes.Assets.versioned("javascripts/auto-complete.min.js")'></script>
+  <script src='@routes.Assets.versioned("javascripts/group-autocomplete.js")'></script>
 } {
 
   @if(currentUser.areas.length > 1) {
@@ -140,7 +144,7 @@
     @if(currentUser.admin) {
       <div class="mdl-cell mdl-cell--12-col  mdl-grid">
         <h4 class="mdl-cell mdl-cell--12-col">Ajouter un groupe</h4> <br>
-        @helper.form(routes.GroupController.addGroup(), 'method -> "post") {
+        @helper.form(routes.GroupController.addGroup(), 'method -> "post", 'class -> "mdl-cell mdl-cell--9-col") {
           @helper.CSRF.formField
           <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
             <input class="mdl-textfield__input" type="text" id="name" name="name" maxlength="50">
@@ -151,9 +155,9 @@
             <label class="mdl-textfield__label" for="description">Description du groupe</label>
           </div>
           <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="mdl-textfield__input" type="text" pattern="[0-9AB]{2,5}" id="insee-code" name="insee-code">
-            <label class="mdl-textfield__label" for="insee-code">Code INSEE (département ou commune)</label>
-            <span class="mdl-textfield__error">Ce n'est pas un code INSEE valide (code département ou commune)</span>
+            <input class="mdl-textfield__input" type="text" id="insee-code">
+            <label class="mdl-textfield__label" for="insee-code">Département ou commune</label>
+            <ul id="group-area-container"></ul>
           </div>
           <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
             <input class="mdl-textfield__input" type="text" id="email" name="email" maxlength="200">

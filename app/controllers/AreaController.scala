@@ -7,16 +7,18 @@ import extentions.UUIDHelper
 import javax.inject.{Inject, Singleton}
 import models.Area
 import org.webjars.play.WebJarsUtil
-import play.api.mvc.{InjectedController, Request}
-import services.{EventService, UserGroupService}
+import play.api.libs.json.{JsArray, JsResult}
+import play.api.mvc.{Action, AnyContent, InjectedController}
+import services.{AreaService, EventService, UserGroupService}
 
-import scala.collection.JavaConverters._
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class AreaController @Inject()(loginAction: LoginAction,
                                eventService: EventService,
                                userGroupService: UserGroupService,
-                               configuration: play.api.Configuration)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController {
+                               areaService: AreaService,
+                               configuration: play.api.Configuration)(implicit val webJarsUtil: WebJarsUtil, ec: ExecutionContext) extends InjectedController {
   private lazy val areasWithLoginByKey = configuration.underlying.getString("app.areasWithLoginByKey").split(",").flatMap(UUIDHelper.fromString)
 
   def change(areaId: UUID) = loginAction { implicit request =>
@@ -32,16 +34,33 @@ class AreaController @Inject()(loginAction: LoginAction,
   }
 
   def all = loginAction { implicit request =>
-    if(!request.currentUser.admin && !request.currentUser.groupAdmin) {
+    if (!request.currentUser.admin && !request.currentUser.groupAdmin) {
       eventService.warn("ALL_AREA_UNAUTHORIZED", s"Accès non autorisé pour voir la page des territoires")
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
-      val userGroups = if(request.currentUser.admin){
+      val userGroups = if (request.currentUser.admin) {
         userGroupService.allGroupByAreas(request.currentUser.areas)
       } else { 
         userGroupService.byIds(request.currentUser.groupIds)
       }
       Ok(views.html.allArea(request.currentUser, request.currentArea)(Area.all, areasWithLoginByKey, userGroups))
     }
+  }
+
+  def search: Action[AnyContent] = loginAction.async { implicit request =>
+    request.getQueryString("query").fold({
+      Future.apply {
+        eventService.error("QUERY_PARAMETER_UNDEFINED", "Le paramètre query est indéfini.")
+        BadRequest("Le paramètre query est indéfini.")
+      }
+    })({ query =>
+      areaService.search(query).map({ jsResult: JsResult[JsArray] =>
+        jsResult.fold({ debugInfo =>
+          eventService.error("UNEXPECTED_JSON_STRUCTURE", debugInfo.mkString("\n"))
+          InternalServerError("Erreur inattendue.")
+        }, { jsArray => Ok(jsArray)
+        })
+      })
+    })
   }
 }

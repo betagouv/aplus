@@ -177,7 +177,6 @@ case class UserController @Inject()(loginAction: LoginAction,
         eventService.warn("POST_ADD_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs")
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
-        val group = groupService.groupById(groupId).get
         implicit val area = Area.fromId(group.area).get
         usersForm(Time.dateTimeZone).bindFromRequest.fold(
           formWithErrors => {
