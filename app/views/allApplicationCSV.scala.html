@@ -1,3 +1,5 @@
 @(applications: Seq[Application], user: User, users: List[User])"Id";"Etat";"Date";"Créateur";"Id Créateur";"Sujet";"Utilisateurs invités";"Administrations";"Territoire";"Date de clôture"@if(user.admin){;"Non Pertinente";"Utile"};"Délais de première réponse (Minutes)";"Délais de clôture (Minutes)"
-@for(a <- applications) {@Html(s""""${a.id}";"${a.status}";"${a.creationDate}";"${a.creatorUserName}";"${a.creatorUserId}";"${a.subject.filterNot(List(';','\n').contains)}";"${a.invitedUsers.values.mkString(",")}";"${a.administrations(users).mkString(",")}";"${Area.all.find(_.id == a.area).map(_.name).head}";"${a.closedDate.getOrElse("")}"""")@if(user.admin){;"@if(a.irrelevant){Oui}else{Non}";"@a.usefulness.getOrElse("?")"};@Html(s""""${a.firstAnswerTimeInMinutes.map(_.toString).getOrElse("")}";"${a.resolutionTimeInMinutes.map(_.toString).getOrElse("")}"""")
+@import extentions.CSVUtil
+@for(a <- applications) {
+    @Html(CSVUtil.getCSVLineFor(a,users,user.admin))
 }
