@@ -35,10 +35,8 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     val userIds = (application.invitedUsers).keys
     val users = userService.byIds(userIds.toList)
     val groups = groupService.byIds(users.flatMap(_.groupIds)).filter(_.email.nonEmpty)
-    val groupIds = groups.map(_.id)
 
-    users.filter(_.groupIds.intersect(groupIds).isEmpty)  // Users if filtered if we send a notification to the group
-          .map(generateInvitationEmail(application))
+    users.map(generateInvitationEmail(application))
             .foreach(sendMail)
 
     groups.map(generateNotificationBALEmail(application, None, users))
@@ -55,9 +53,6 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     // Send emails to users
     users.flatMap {  user =>
       if(user.id != answer.creatorUserID) {
-        None
-      } else if(user.groupIds.intersect(groupIds).nonEmpty) {
-        eventService.info(user, Area.fromId(application.area).get, "0.0.0.0", "EMAIL_NOT_SEND", "L'utilisateur n'est pas notifié car il existe une notification de bal", Some(application), None)
         None
       } else if(answer.invitedUsers.contains(user.id)) {
         Some(generateInvitationEmail(application, Some(answer))(user))
