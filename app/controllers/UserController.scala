@@ -3,20 +3,21 @@ package controllers
 import java.util.{Locale, UUID}
 
 import javax.inject.{Inject, Singleton}
-import actions.{LoginAction, RequestWithUserData}
+import actions.LoginAction
 import extentions.Operators.{GroupOperators, UserOperators, not}
 import extentions.{Time, UUIDHelper}
 import models.{Area, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
-import play.api.data.Form
-import play.api.data.Forms._
-import play.api.data.validation.Constraints._
+import play.api.data.{Form, Mapping}
+import play.api.data.Forms.{optional, text, tuple}
 import play.api.mvc.{Action, AnyContent, Call, InjectedController}
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
 import services.{ApplicationService, EventService, NotificationService, UserGroupService, UserService}
+import play.api.data.Forms._
+import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 
 @Singleton
 case class UserController @Inject()(loginAction: LoginAction,
@@ -57,7 +58,6 @@ case class UserController @Inject()(loginAction: LoginAction,
     }
   }
 
-
   def allCSV(areaId: java.util.UUID) = loginAction { implicit request =>
     if(request.currentUser.admin == false || request.currentUser.canSeeUsersInArea(areaId) == false) {
       eventService.warn("ALL_USER_CSV_UNAUTHORIZED", s"Accès non autorisé à l'export utilisateur")
@@ -94,72 +94,11 @@ case class UserController @Inject()(loginAction: LoginAction,
       }
       val headers = List[String]("Id", "Nom", "Qualité", "Email", "Création","Aidant","Instructeur","Responsable","Expert","Admin","Actif","Commune INSEE", "Territoires","Groupes", "CGU", "Newsletter").mkString(";")
       val csv = (List(headers) ++ users.map(userToCSV)).mkString("\n")
-      val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
+      val date = DateTime.now(Time.dateTimeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
 
       Ok(csv).withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}-users-${area.name.replace(" ","-")}.csv"""" )
     }
   }
-
-  private val timeZone = DateTimeZone.forID("Europe/Paris")
-
-  def userMapping = mapping(
-    "id" -> optional(uuid).transform[UUID]({
-        case None => UUID.randomUUID()
-        case Some(id) => id
-      }, { Some(_) }),
-    "key" -> ignored("key"),
-    "name" -> nonEmptyText.verifying(maxLength(100)),
-    "qualite" -> nonEmptyText.verifying(maxLength(100)),
-    "email" -> email.verifying(maxLength(200), nonEmpty),
-    "helper" -> boolean,
-    "instructor" -> boolean,
-    "admin" -> boolean,
-    "areas" -> list(uuid).verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
-    "creationDate" -> ignored(DateTime.now(timeZone)),
-    "hasAcceptedCharte" -> boolean,
-    "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
-    "adminGroup" -> boolean,
-    "disabled" -> boolean,
-    "expert" -> ignored(false),
-    "groupIds" -> default(list(uuid), List()),
-    "delegations" -> seq(tuple(
-      "name" -> nonEmptyText,
-      "email" -> email
-    )).transform[Map[String,String]]({ _.toMap }, { _.toSeq }),
-    "cguAcceptationDate" -> optional(ignored(Time.now())),
-    "newsletterAcceptationDate" -> optional(ignored(Time.now()))
-  )(User.apply)(User.unapply)
-
-  val userForm = Form(userMapping)
-
-  def usersForm(implicit area: Area) = Form(
-    single(
-      "users" -> list(mapping(
-        "id" -> optional(uuid).transform[UUID]({
-          case None => UUID.randomUUID()
-          case Some(id) => id
-        }, { Some(_) }),
-        "key" -> ignored("key"),
-        "name" -> nonEmptyText.verifying(maxLength(100)),
-        "qualite" -> nonEmptyText.verifying(maxLength(100)),
-        "email" -> email.verifying(maxLength(200), nonEmpty),
-        "helper" -> boolean,
-        "instructor" -> boolean,
-        "admin" -> ignored(false),
-        "areas" -> ignored(List(area.id)),
-        "creationDate" -> ignored(DateTime.now(timeZone)),
-        "hasAcceptedCharte" -> ignored(false),
-        "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
-        "adminGroup" -> ignored(false),
-        "disabled" -> ignored(false),
-        "expert" -> ignored(false),
-        "groupIds" -> default(list(uuid), List()),
-        "delegations" -> ignored(Map[String,String]()),
-        "cguAcceptationDate" -> optional(ignored(Time.now())),
-        "newsletterAcceptationDate" -> optional(ignored(Time.now()))
-      )(User.apply)(User.unapply))
-    )
-  )
 
   def editUser(userId: UUID): Action[AnyContent] = loginAction { implicit request =>
     asAdmin { () =>
@@ -170,7 +109,7 @@ case class UserController @Inject()(loginAction: LoginAction,
           eventService.error("USER_NOT_FOUND", s"L'utilisateur $userId n'existe pas")
           NotFound("Nous n'avons pas trouvé cet utilisateur")
         case Some(user) if user.canBeEditedBy(request.currentUser) =>
-          val form = userForm.fill(user)
+          val form = userForm(Time.dateTimeZone).fill(user)
           val groups = groupService.allGroups
           val unused = not(isAccountUsed(user))
           val Token(tokenName, tokenValue) = CSRF.getToken.get
@@ -208,7 +147,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "POST_EDIT_USER_UNAUTHORIZED" -> s"Accès non autorisé à modifier $userId"
     } { () =>
-      userForm.bindFromRequest.fold(
+      userForm(Time.dateTimeZone).bindFromRequest.fold(
         formWithErrors => {
           val groups = groupService.allGroups
           eventService.error("ADD_USER_ERROR", s"Essai de modification de l'tilisateur $userId avec des erreurs de validation")
@@ -222,7 +161,7 @@ case class UserController @Inject()(loginAction: LoginAction,
               eventService.info("EDIT_USER_DONE", s"Utilisateur $userId modifié", user = Some(updatedUser))
               Redirect(routes.UserController.all(Area.allArea.id)).flashing("success" -> "Utilisateur modifié")
             } else {
-              val form = userForm.fill(updatedUser).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
+              val form = userForm(Time.dateTimeZone).fill(updatedUser).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
               val groups = groupService.allGroups
               eventService.error("EDIT_USER_ERROR", s"Impossible de modifier l'utilisateur dans la BDD", user = Some(updatedUser))
               InternalServerError(views.html.editUser(request.currentUser, request.currentArea)(form, userId, groups))
@@ -230,20 +169,6 @@ case class UserController @Inject()(loginAction: LoginAction,
           }
         }
       )
-    }
-  }
-
-  def add(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
-    withGroup(groupId) { group: UserGroup =>
-      if (!group.canHaveUsersAddedBy(request.currentUser)) {
-        eventService.warn("SHOW_ADD_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs du groupe $groupId")
-        Unauthorized("Vous n'avez pas le droit de faire ça")
-      } else {
-        implicit val area = Area.fromId(group.area).get
-        val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
-        eventService.info("EDIT_USER_SHOWED", s"Visualise la vue d'ajouts des utilisateurs")
-        Ok(views.html.editUsers(request.currentUser, request.currentArea)(usersForm, rows, routes.UserController.addPost(groupId)))
-      }
     }
   }
 
@@ -255,7 +180,7 @@ case class UserController @Inject()(loginAction: LoginAction,
       } else {
         val group = groupService.groupById(groupId).get
         implicit val area = Area.fromId(group.area).get
-        usersForm.bindFromRequest.fold(
+        usersForm(Time.dateTimeZone).bindFromRequest.fold(
           formWithErrors => {
             eventService.error("ADD_USER_ERROR", s"Essai d'ajout d'utilisateurs avec des erreurs de validation")
             BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost(groupId)))
@@ -264,9 +189,9 @@ case class UserController @Inject()(loginAction: LoginAction,
             try {
               if (userService.add(users.map(_.copy(groupIds = List(groupId))))) {
                 eventService.info("ADD_USER_DONE", s"Utilisateurs ajouté")
-                Redirect(routes.UserController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
+                Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
               } else {
-                val form = usersForm.fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
+                val form = usersForm(Time.dateTimeZone).fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
                 eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD 1")
                 InternalServerError(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
               }
@@ -277,7 +202,7 @@ case class UserController @Inject()(loginAction: LoginAction,
                   case Some(email) => s"Un utilisateur avec l'adresse $email existe déjà."
                   case _ => "Erreur d'insertion dans la base de donnée : contacter l'administrateur."
                 }
-                val form = usersForm.fill(users).withGlobalError(errorMessage)
+                val form = usersForm(Time.dateTimeZone).fill(users).withGlobalError(errorMessage)
                 eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}")
                 BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
             }
@@ -291,14 +216,6 @@ case class UserController @Inject()(loginAction: LoginAction,
     eventService.info("CGU_SHOWED", s"CGU visualisé")
     Ok(views.html.showCGU(request.currentUser, request.currentArea))
   }
-
-  private val validateCGUForm = Form(
-    tuple(
-      "redirect" -> optional(text),
-      "newsletter" -> boolean,
-      "validate" -> boolean
-    )
-  )
 
   def validateCGU(): Action[AnyContent] = loginAction { implicit request =>
     validateCGUForm.bindFromRequest.fold(
@@ -321,75 +238,25 @@ case class UserController @Inject()(loginAction: LoginAction,
         }
       }
     )
-
   }
 
-  def editGroup(id: UUID): Action[AnyContent] = loginAction { implicit request =>
-    withGroup(id) { group: UserGroup =>
+  val validateCGUForm: Form[(Option[String], Boolean, Boolean)] = Form(tuple(
+    "redirect" -> optional(text),
+    "newsletter" -> boolean,
+    "validate" -> boolean
+  ))
+
+  def add(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
+    withGroup(groupId) { group: UserGroup =>
       if (!group.canHaveUsersAddedBy(request.currentUser)) {
-        eventService.warn("EDIT_GROUPE_UNAUTHORIZED", s"Accès non autorisé à l'edition de ce groupe")
-        Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?")
+        eventService.warn("SHOW_ADD_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs du groupe $groupId")
+        Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
-        val groupUsers = userService.byGroupIds(List(id))
-        eventService.info("EDIT_GROUP_SHOWED", s"Visualise la vue de modification du groupe")
-        val isEmpty = groupService.isGroupEmpty(group.id)
-        Ok(views.html.editGroup(request.currentUser, request.currentArea)(group, groupUsers, isEmpty))
+        implicit val area = Area.fromId(group.area).get
+        val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
+        eventService.info("EDIT_USER_SHOWED", s"Visualise la vue d'ajouts des utilisateurs")
+        Ok(views.html.editUsers(request.currentUser, request.currentArea)(usersForm(Time.dateTimeZone), rows, routes.UserController.addPost(groupId)))
       }
-    }
-  }
-
-  def editGroupPost(id: UUID): Action[AnyContent] = loginAction { implicit request =>
-    asAdmin { () =>
-      "EDIT_GROUPE_UNAUTHORIZED" -> s"Accès non autorisé à l'edition de ce groupe"
-    } { () =>
-      withGroup(id) { _: UserGroup =>
-        addGroupForm.bindFromRequest.fold(_ => {
-          eventService.error("EDIT_USER_GROUP_ERROR", s"Essai d'edition d'un groupe avec des erreurs de validation")
-          BadRequest("Impossible de modifier le groupe (erreur de formulaire)")
-        }, group => {
-          if (groupService.edit(group.copy(id = id))) {
-            eventService.info("EDIT_USER_GROUP_DONE", s"Groupe édité")
-            Redirect(routes.UserController.editGroup(id)).flashing("success" -> "Groupe modifié")
-          } else {
-            eventService.error("EDIT_USER_GROUP_ERROR", s"Impossible de modifier le groupe dans la BDD")
-            Redirect(routes.UserController.editGroup(id)).flashing("success" -> "Impossible de modifier le groupe")
-          }
-        }
-        )
-      }
-    }
-  }
-
-  def addGroupForm[A](implicit request: RequestWithUserData[A]) = Form(
-    mapping(
-      "id" -> ignored(UUID.randomUUID()),
-      "name" -> text(maxLength = 50),
-      "description" -> optional(text),
-      "insee-code" -> text,
-      "creationDate" -> ignored(DateTime.now(timeZone)),
-      "create-by-user-id" -> ignored(request.currentUser.id),
-      "area" -> uuid.verifying("Vous devez sélectionner un territoire sur lequel vous êtes admin", area => request.currentUser.areas.contains(area)),
-      "organisation" -> optional(text),
-      "email" -> optional(email)
-    )(UserGroup.apply)(UserGroup.unapply)
-  )
-
-  def addGroup(): Action[AnyContent] = loginAction { implicit request =>
-    asAdmin { () =>
-      "ADD_GROUP_UNAUTHORIZED" -> s"Accès non autorisé pour ajouter un groupe"
-    } { () =>
-      addGroupForm.bindFromRequest.fold(_ => {
-        eventService.error("ADD_USER_GROUP_ERROR", s"Essai d'ajout d'un groupe avec des erreurs de validation")
-        BadRequest("Impossible d'ajouter le groupe") //BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost()))
-      }, group => {
-        if (groupService.add(group)) {
-          eventService.info("ADD_USER_GROUP_DONE", s"Groupe ajouté")
-          Redirect(routes.UserController.editGroup(group.id)).flashing("success" -> "Groupe ajouté")
-        } else {
-          eventService.error("ADD_USER_GROUP_ERROR", s"Impossible d'ajouter le groupe dans la BDD")
-          Redirect(routes.UserController.all(Area.allArea.id)).flashing("success" -> "Impossible d'ajouter le groupe")
-        }
-      })
     }
   }
 
@@ -404,4 +271,71 @@ case class UserController @Inject()(loginAction: LoginAction,
       Ok(views.html.allEvents(request.currentUser, request.currentArea)(events, limit))
     }
   }
+
+  def usersForm(timeZone: DateTimeZone)(implicit area: Area): Form[List[User]] = Form(
+    single(
+      "users" -> list(mapping(
+        "id" -> optional(uuid).transform[UUID]({
+          case None => UUID.randomUUID()
+          case Some(id) => id
+        }, {
+          Some(_)
+        }),
+        "key" -> ignored("key"),
+        "name" -> nonEmptyText.verifying(maxLength(100)),
+        "qualite" -> nonEmptyText.verifying(maxLength(100)),
+        "email" -> email.verifying(maxLength(200), nonEmpty),
+        "helper" -> boolean,
+        "instructor" -> boolean,
+        "admin" -> ignored(false),
+        "areas" -> ignored(List(area.id)),
+        "creationDate" -> ignored(DateTime.now(timeZone)),
+        "hasAcceptedCharte" -> ignored(false),
+        "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
+        "adminGroup" -> ignored(false),
+        "disabled" -> ignored(false),
+        "expert" -> ignored(false),
+        "groupIds" -> default(list(uuid), List()),
+        "delegations" -> ignored(Map[String, String]()),
+        "cguAcceptationDate" -> optional(ignored(Time.now())),
+        "newsletterAcceptationDate" -> optional(ignored(Time.now()))
+      )(User.apply)(User.unapply))
+    )
+  )
+
+  def userForm(timeZone: DateTimeZone): Form[User] = Form(userMapping(timeZone))
+
+  private def userMapping(implicit timeZone: DateTimeZone): Mapping[User] = mapping(
+    "id" -> optional(uuid).transform[UUID]({
+      case None => UUID.randomUUID()
+      case Some(id) => id
+    }, {
+      Some(_)
+    }),
+    "key" -> ignored("key"),
+    "name" -> nonEmptyText.verifying(maxLength(100)),
+    "qualite" -> nonEmptyText.verifying(maxLength(100)),
+    "email" -> email.verifying(maxLength(200), nonEmpty),
+    "helper" -> boolean,
+    "instructor" -> boolean,
+    "admin" -> boolean,
+    "areas" -> list(uuid).verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
+    "creationDate" -> ignored(DateTime.now(timeZone)),
+    "hasAcceptedCharte" -> boolean,
+    "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
+    "adminGroup" -> boolean,
+    "disabled" -> boolean,
+    "expert" -> ignored(false),
+    "groupIds" -> default(list(uuid), List()),
+    "delegations" -> seq(tuple(
+      "name" -> nonEmptyText,
+      "email" -> email
+    )).transform[Map[String, String]]({
+      _.toMap
+    }, {
+      _.toSeq
+    }),
+    "cguAcceptationDate" -> optional(ignored(Time.now())),
+    "newsletterAcceptationDate" -> optional(ignored(Time.now()))
+  )(User.apply)(User.unapply)
 }
