@@ -10,14 +10,14 @@
     - subject: Accompagnement pour la naissance ou le décès d'un proche
       organisations: [CAF, MSA, CPAM, CRAM]
 - name: Santé / Handicap
-  description: Sécurité sociale, CMU-C et ACS, AME, etc.
+  description: Sécurité sociale, CSS, AME, etc.
   defaultOrganisations: [CPAM, CRAM, MSA, MDPH]
   subjects:
     - subject: Première inscription à la Sécurité Sociale
       organisations: [CPAM, CRAM, MSA]
     - subject: Remboursement de soins médicaux
       organisations: [CPAM, CRAM, MSA]
-    - subject: Renouvellement CMU-C ou ACS
+    - subject: Renouvellement CSS
       organisations: [CPAM, CRAM, MSA]
     - subject: Aide médicale de l'État (AME) pour les personnes en situation irrégulière
       organisations: [CPAM, CRAM]
