@@ -18,12 +18,6 @@ object Models {
 
   case class InvitationData(message: String, invitedUsers: List[UUID], privateToHelpers: Boolean)
 
-  val validateCGUForm: Form[(Option[String], Boolean, Boolean)] = Form(tuple(
-    "redirect" -> optional(text),
-    "newsletter" -> boolean,
-    "validate" -> boolean
-  ))
-
   private def userMapping(implicit timeZone: DateTimeZone): Mapping[User] = mapping(
     "id" -> optional(uuid).transform[UUID]({
       case None => UUID.randomUUID()
@@ -58,7 +52,7 @@ object Models {
     "newsletterAcceptationDate" -> optional(ignored(Time.now()))
   )(User.apply)(User.unapply)
 
-  def usersForm(implicit area: Area, timeZone: DateTimeZone): Form[List[User]] = Form(
+  def usersForm(timeZone: DateTimeZone)(implicit area: Area): Form[List[User]] = Form(
     single(
       "users" -> list(mapping(
         "id" -> optional(uuid).transform[UUID]({
@@ -89,9 +83,9 @@ object Models {
     )
   )
 
-  def userForm(implicit timeZone: DateTimeZone): Form[User] = Form(userMapping)
+  def userForm(timeZone: DateTimeZone): Form[User] = Form(userMapping(timeZone))
 
-  def addGroupForm[A](implicit request: RequestWithUserData[A], timeZone: DateTimeZone) = Form(
+  def addGroupForm[A](timeZone: DateTimeZone)(implicit request: RequestWithUserData[A]) = Form(
     mapping(
       "id" -> ignored(UUID.randomUUID()),
       "name" -> text(maxLength = 50),

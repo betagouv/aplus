@@ -5,16 +5,19 @@ import java.util.{Locale, UUID}
 import javax.inject.{Inject, Singleton}
 import actions.LoginAction
 import extentions.Operators.{GroupOperators, UserOperators, not}
-import extentions.UUIDHelper
+import extentions.{Time, UUIDHelper}
 import forms.Models
 import models.{Area, User, UserGroup}
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
+import play.api.data.Form
+import play.api.data.Forms.{optional, text, tuple}
 import play.api.mvc.{Action, AnyContent, Call, InjectedController}
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
 import services.{ApplicationService, EventService, NotificationService, UserGroupService, UserService}
+import play.api.data.Forms._
 
 @Singleton
 case class UserController @Inject()(loginAction: LoginAction,
@@ -23,8 +26,6 @@ case class UserController @Inject()(loginAction: LoginAction,
                                     applicationService: ApplicationService,
                                     notificationsService: NotificationService,
                                     eventService: EventService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport with UserOperators with GroupOperators {
-
-  private implicit val timeZone :DateTimeZone= DateTimeZone.forID("Europe/Paris")
 
   def all(areaId: UUID) = loginAction { implicit request =>
     if(request.currentUser.canSeeUsersInArea(areaId) == false) {
@@ -93,7 +94,7 @@ case class UserController @Inject()(loginAction: LoginAction,
       }
       val headers = List[String]("Id", "Nom", "Qualité", "Email", "Création","Aidant","Instructeur","Responsable","Expert","Admin","Actif","Commune INSEE", "Territoires","Groupes", "CGU", "Newsletter").mkString(";")
       val csv = (List(headers) ++ users.map(userToCSV)).mkString("\n")
-      val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
+      val date = DateTime.now(Time.dateTimeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
 
       Ok(csv).withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}-users-${area.name.replace(" ","-")}.csv"""" )
     }
@@ -108,7 +109,7 @@ case class UserController @Inject()(loginAction: LoginAction,
           eventService.error("USER_NOT_FOUND", s"L'utilisateur $userId n'existe pas")
           NotFound("Nous n'avons pas trouvé cet utilisateur")
         case Some(user) if user.canBeEditedBy(request.currentUser) =>
-          val form = Models.userForm.fill(user)
+          val form = Models.userForm(Time.dateTimeZone).fill(user)
           val groups = groupService.allGroups
           val unused = not(isAccountUsed(user))
           val Token(tokenName, tokenValue) = CSRF.getToken.get
@@ -146,7 +147,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "POST_EDIT_USER_UNAUTHORIZED" -> s"Accès non autorisé à modifier $userId"
     } { () =>
-      Models.userForm.bindFromRequest.fold(
+      Models.userForm(Time.dateTimeZone).bindFromRequest.fold(
         formWithErrors => {
           val groups = groupService.allGroups
           eventService.error("ADD_USER_ERROR", s"Essai de modification de l'tilisateur $userId avec des erreurs de validation")
@@ -160,7 +161,7 @@ case class UserController @Inject()(loginAction: LoginAction,
               eventService.info("EDIT_USER_DONE", s"Utilisateur $userId modifié", user = Some(updatedUser))
               Redirect(routes.UserController.all(Area.allArea.id)).flashing("success" -> "Utilisateur modifié")
             } else {
-              val form = Models.userForm.fill(updatedUser).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
+              val form = Models.userForm(Time.dateTimeZone).fill(updatedUser).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
               val groups = groupService.allGroups
               eventService.error("EDIT_USER_ERROR", s"Impossible de modifier l'utilisateur dans la BDD", user = Some(updatedUser))
               InternalServerError(views.html.editUser(request.currentUser, request.currentArea)(form, userId, groups))
@@ -179,7 +180,7 @@ case class UserController @Inject()(loginAction: LoginAction,
       } else {
         val group = groupService.groupById(groupId).get
         implicit val area = Area.fromId(group.area).get
-        Models.usersForm.bindFromRequest.fold(
+        Models.usersForm(Time.dateTimeZone).bindFromRequest.fold(
           formWithErrors => {
             eventService.error("ADD_USER_ERROR", s"Essai d'ajout d'utilisateurs avec des erreurs de validation")
             BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost(groupId)))
@@ -190,7 +191,7 @@ case class UserController @Inject()(loginAction: LoginAction,
                 eventService.info("ADD_USER_DONE", s"Utilisateurs ajouté")
                 Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
               } else {
-                val form = Models.usersForm.fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
+                val form = Models.usersForm(Time.dateTimeZone).fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
                 eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD 1")
                 InternalServerError(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
               }
@@ -201,7 +202,7 @@ case class UserController @Inject()(loginAction: LoginAction,
                   case Some(email) => s"Un utilisateur avec l'adresse $email existe déjà."
                   case _ => "Erreur d'insertion dans la base de donnée : contacter l'administrateur."
                 }
-                val form = Models.usersForm.fill(users).withGlobalError(errorMessage)
+                val form = Models.usersForm(Time.dateTimeZone).fill(users).withGlobalError(errorMessage)
                 eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}")
                 BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
             }
@@ -217,7 +218,7 @@ case class UserController @Inject()(loginAction: LoginAction,
   }
 
   def validateCGU(): Action[AnyContent] = loginAction { implicit request =>
-    Models.validateCGUForm.bindFromRequest.fold(
+    validateCGUForm.bindFromRequest.fold(
       formWithErrors => {
         eventService.error("CGU_VALIDATION_ERROR", s"Erreur de formulaire dans la validation des CGU")
         BadRequest(s"Formulaire invalide, prévenez l'administrateur du service. ${formWithErrors.errors.mkString(", ")}")
@@ -239,6 +240,12 @@ case class UserController @Inject()(loginAction: LoginAction,
     )
   }
 
+  val validateCGUForm: Form[(Option[String], Boolean, Boolean)] = Form(tuple(
+    "redirect" -> optional(text),
+    "newsletter" -> boolean,
+    "validate" -> boolean
+  ))
+
   def add(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
     withGroup(groupId) { group: UserGroup =>
       if (!group.canHaveUsersAddedBy(request.currentUser)) {
@@ -248,7 +255,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         implicit val area = Area.fromId(group.area).get
         val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
         eventService.info("EDIT_USER_SHOWED", s"Visualise la vue d'ajouts des utilisateurs")
-        Ok(views.html.editUsers(request.currentUser, request.currentArea)(Models.usersForm, rows, routes.UserController.addPost(groupId)))
+        Ok(views.html.editUsers(request.currentUser, request.currentArea)(Models.usersForm(Time.dateTimeZone), rows, routes.UserController.addPost(groupId)))
       }
     }
   }

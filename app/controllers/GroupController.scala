@@ -4,10 +4,10 @@ import java.util.UUID
 
 import actions.LoginAction
 import extentions.Operators._
+import extentions.Time
 import forms.Models
 import javax.inject.{Inject, Singleton}
 import models.{Area, UserGroup}
-import org.joda.time.DateTimeZone
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import services.{EventService, NotificationService, UserGroupService, UserService}
@@ -18,8 +18,6 @@ case class GroupController @Inject()(loginAction: LoginAction,
                                 notificationService: NotificationService,
                                 eventService: EventService,
                                 userService: UserService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with GroupOperators with UserOperators {
-
-  private implicit val timeZone = DateTimeZone.forID("Europe/Paris")
 
   def deleteUnusedGroupById(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
     withGroup(groupId) { group: UserGroup =>
@@ -58,7 +56,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "ADD_GROUP_UNAUTHORIZED" -> s"Accès non autorisé pour ajouter un groupe"
     } { () =>
-      Models.addGroupForm.bindFromRequest.fold(_ => {
+      Models.addGroupForm(Time.dateTimeZone).bindFromRequest.fold(_ => {
         eventService.error("ADD_USER_GROUP_ERROR", s"Essai d'ajout d'un groupe avec des erreurs de validation")
         BadRequest("Impossible d'ajouter le groupe") //BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost()))
       }, group => {
@@ -77,20 +75,25 @@ case class GroupController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "EDIT_GROUPE_UNAUTHORIZED" -> s"Accès non autorisé à l'edition de ce groupe"
     } { () =>
-      withGroup(id) { _: UserGroup =>
-        Models.addGroupForm.bindFromRequest.fold(_ => {
-          eventService.error("EDIT_USER_GROUP_ERROR", s"Essai d'edition d'un groupe avec des erreurs de validation")
-          BadRequest("Impossible de modifier le groupe (erreur de formulaire)")
-        }, group => {
-          if (groupService.edit(group.copy(id = id))) {
-            eventService.info("EDIT_USER_GROUP_DONE", s"Groupe édité")
-            Redirect(routes.GroupController.editGroup(id)).flashing("success" -> "Groupe modifié")
-          } else {
-            eventService.error("EDIT_USER_GROUP_ERROR", s"Impossible de modifier le groupe dans la BDD")
-            Redirect(routes.GroupController.editGroup(id)).flashing("success" -> "Impossible de modifier le groupe")
+      withGroup(id) { currentGroup: UserGroup =>
+        if (not(currentGroup.canHaveUsersAddedBy(request.currentUser))) {
+          eventService.warn("ADD_USER_TO_GROUP_UNAUTHORIZED", s"L'utilisateur ${request.currentUser.id} n'est pas authorisé à ajouter des utilisateurs au groupe ${currentGroup.id}.")
+          Unauthorized("Vous n'êtes pas authorisé à ajouter des utilisateurs à ce groupe.")
+        } else {
+          Models.addGroupForm(Time.dateTimeZone).bindFromRequest.fold(_ => {
+            eventService.error("EDIT_USER_GROUP_ERROR", s"Essai d'edition d'un groupe avec des erreurs de validation")
+            BadRequest("Impossible de modifier le groupe (erreur de formulaire)")
+          }, group => {
+            if (groupService.edit(group.copy(id = id))) {
+              eventService.info("EDIT_USER_GROUP_DONE", s"Groupe édité")
+              Redirect(routes.GroupController.editGroup(id)).flashing("success" -> "Groupe modifié")
+            } else {
+              eventService.error("EDIT_USER_GROUP_ERROR", s"Impossible de modifier le groupe dans la BDD")
+              Redirect(routes.GroupController.editGroup(id)).flashing("success" -> "Impossible de modifier le groupe")
+            }
           }
+          )
         }
-        )
       }
     }
   }
