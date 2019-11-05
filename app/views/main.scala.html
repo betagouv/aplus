@@ -85,11 +85,11 @@
         <div class="mdl-layout__header-row">
             <span class="mdl-layout-title">
                 <a href="@routes.HomeController.index()"><img src='@routes.Assets.versioned("images/logo_120.png")' class="logo-header" alt="Administration+"></a>
-                @title
+                <span class="hidden--small-screen"> @title</span>
             </span>
                 <!-- Add spacer, to align navigation to the right in desktop -->
             <div class="mdl-layout-spacer"></div>
-            <div>
+            <div class="hidden--small-screen">
                 @currentUser.name
                 @if(showAreaSelector && currentUser.areas.length > 1) {
                         <select id="area" name="area" onchange="changeArea()">
@@ -128,6 +128,10 @@
             </div>
         </header>
         <nav class="navigation mdl-navigation mdl-color--blue-grey-800">
+        @if(currentUser.helper) {
+            <a class="mdl-navigation__link" href="@routes.ApplicationController.create()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">
+                create_new_folder</i>Nouvelle demande</a>
+        }
         @if(currentUser.admin) {
             <a class="mdl-navigation__link" href="@routes.AreaController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">place</i>Territoires</a>
         }

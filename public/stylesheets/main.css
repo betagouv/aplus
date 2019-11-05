@@ -266,6 +266,16 @@ html, body {
 .hidden {
     display: none;
 }
+@media (max-width: 767px) {
+    .hidden--small-screen {
+        display: none;
+    }
+}
+@media (min-width: 767px) {
+    .show--small-screen {
+        display: none;
+    }
+}
 
 .application__subject {
     color: #888888;
