@@ -39,7 +39,7 @@ class AreaController @Inject()(loginAction: LoginAction,
       val userGroups = if(request.currentUser.admin){
         userGroupService.allGroupByAreas(request.currentUser.areas)
       } else { 
-        userGroupService.groupByIds(request.currentUser.groupIds)
+        userGroupService.byIds(request.currentUser.groupIds)
       }
       Ok(views.html.allArea(request.currentUser, request.currentArea)(Area.all, areasWithLoginByKey, userGroups))
     }

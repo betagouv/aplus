@@ -41,12 +41,11 @@ case class UserController @Inject()(loginAction: LoginAction,
           eventService.warn("ALL_USER_INCORRECT_SETUP", s"Erreur d'accès aux utilisateurs")
           List()
       }
-
       val applications = applicationService.allByArea(selectedArea.id, true)
       val groups: List[UserGroup] = (request.currentUser.admin, request.currentUser.groupAdmin, selectedArea.id == Area.allArea.id) match {
         case (true, _, false)  => groupService.allGroupByAreas(List[UUID](areaId))
         case (true, _, true) => groupService.allGroupByAreas(request.currentUser.areas)
-        case (false, true, _) => groupService.groupByIds(request.currentUser.groupIds)
+        case (false, true, _) => groupService.byIds(request.currentUser.groupIds)
         case _ =>
           eventService.warn("ALL_USER_INCORRECT_SETUP", s"Erreur d'accès aux groupes")
           List()
