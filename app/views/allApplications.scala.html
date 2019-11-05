@@ -1,7 +1,7 @@
 @(currentUser: User)(applications: Seq[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 @import java.util.Locale
 
-@main(currentUser, selectedArea, false)(s"Demandes - ${selectedArea.name}")  {
+@main(currentUser, selectedArea, false, maxWidth = false)(s"Demandes - ${selectedArea.name}")  {
 <style>
     .pem-table {
         width: 100%;

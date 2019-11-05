@@ -1,6 +1,6 @@
 @import helper._
 
-@(currentUser: User, currentArea: Area, showAreaSelector: Boolean = true)(title: String)(header: Html)(content: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentArea: Area, showAreaSelector: Boolean = true, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 <!doctype html>
 <html lang="fr">
@@ -80,34 +80,38 @@
 <div class="header__ribbon do-not-print" id="header__ribbon">
     BETA
 </div>
-<div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header">
-    <header class="demo-header mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 do-not-print">
+<div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-header @if(currentUser.admin){ mdl-layout--fixed-drawer }">
+    <div class="mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 do-not-print">
         <div class="mdl-layout__header-row">
-            <span class="mdl-layout-title">@title</span>
+            <span class="mdl-layout-title">
+                <img src='@routes.Assets.versioned("images/logo_120.png")' class="logo-header" alt="Administration+">
+                @title
+            </span>
+                <!-- Add spacer, to align navigation to the right in desktop -->
             <div class="mdl-layout-spacer"></div>
-            <!--
-            <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable">
-                <label class="mdl-button mdl-js-button mdl-button--icon" for="search">
-                    <i class="material-icons">search</i>
-                </label>
-                <div class="mdl-textfield__expandable-holder">
-                    <input class="mdl-textfield__input" type="text" id="search">
-                    <label class="mdl-textfield__label" for="search">Rechercher une demande...</label>
-                </div>
+            <div>
+                @currentUser.name
             </div>
-            -->
+                <!-- Navigation -->
+            <div>
+                <a class="mdl-button" href="@routes.ApplicationController.myApplications()">Toutes mes demandes</a>
+            </div>
+            <button class="mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" id="more-button">
+                <i class="material-icons">more_vert</i>
+            </button>
+            <ul class="mdl-menu mdl-js-menu mdl-menu--bottom-right mdl-js-ripple-effect" for="more-button">
+                <span onclick="document.location='@routes.LoginController.disconnect()';"><li class="mdl-menu__item"><i class="material-icons">power_settings_new</i>Déconnexion</li></span>
+            </ul>
         </div>
-    </header>
-    <div class="demo-drawer mdl-layout__drawer mdl-color--white mdl-color-text--blue-grey-800 do-not-print">
+    </div>
+
+    @if(currentUser.admin) {
+    <div class="mdl-layout__drawer mdl-color--white mdl-color-text--blue-grey-800 do-not-print">
         <header class="drawer-header" style="display: -webkit-flex;
                 display: -ms-flexbox;
                 display: flex;">
             <p style="line-height: 1.2; text-align: center;">
                 <img src='@routes.Assets.versioned("images/logo_120.png")' class="logo">
-            </p>
-            <p style="line-height: 1.2;">
-            <span style="font-weight: bold;">@currentUser.name</span><br/>
-            @currentUser.qualite
             </p>
             <p style="line-height: 1.2; font-size: 11px;">
                 @if(showAreaSelector) {
@@ -126,22 +130,9 @@
             </p>
             <div class="demo-avatar-dropdown">
                 <span style="font-size: 11px;">@currentUser.email</span>
-                <div class="mdl-layout-spacer"></div>
-                <button id="accbtn" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
-                    <i class="material-icons" role="presentation">arrow_drop_down</i>
-                    <span class="visuallyhidden">Accounts</span>
-                </button>
-                <ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect" for="accbtn">
-                    <span onclick="document.location='@routes.LoginController.disconnect()';"><li class="mdl-menu__item"><i class="material-icons">power_settings_new</i>Déconnexion</li></span>
-                </ul>
             </div>
         </header>
         <nav class="navigation mdl-navigation mdl-color--blue-grey-800">
-        @if(currentUser.helper) {
-            <a class="mdl-navigation__link" href="@routes.ApplicationController.create()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">
-                create_new_folder</i>Nouvelle demande</a>
-        }
-        <a class="mdl-navigation__link" href="@routes.ApplicationController.myApplications()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">folder</i>Mes demandes</a>
         @if(currentUser.admin) {
             <a class="mdl-navigation__link" href="@routes.AreaController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">place</i>Territoires</a>
         }
@@ -155,15 +146,27 @@
         @if(currentUser.admin || currentUser.groupAdmin) {
             <a class="mdl-navigation__link" href="@routes.ApplicationController.stats()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">show_chart</i>Stats</a>
         }
-        <a class="mdl-navigation__link" href="@routes.Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf")" target="_blank"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">assignment</i>Mandat</a>
-        <a class="mdl-navigation__link" href="@routes.UserController.showCGU()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">content_paste</i>CGU</a>
-        <a class="mdl-navigation__link" href="@routes.HomeController.help()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">help</i>Webinaire</a>
         </nav>
     </div>
+    }
+
     <main class="mdl-layout__content mdl-color--grey-200" style="height: calc(100% - 16px); overflow-x: auto">
-        <div class="mdl-grid main__grid">
+        <div class="mdl-grid main__grid"  @if(maxWidth) { style="max-width: 960px;" }>
             @content
         </div>
+
+        <footer class="mdl-mega-footer">
+            <div class="mdl-mega-footer--bottom-section">
+                <div class="mdl-logo">
+              Plus d'informations :
+                </div>
+                <ul class="mdl-mega-footer--link-list">
+                    <li><a href="@routes.UserController.showCGU()">CGU</a></li>
+                    <li><a href="@routes.HomeController.help()">Contact / Aide / Webinaire</a></li>
+                    <li><a href="@routes.Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf")" target="_blank">Mandat</a></li>
+                </ul>
+            </div>
+        </footer>
     </main>
     <div aria-live="assertive" aria-atomic="true" aria-relevant="text" class="mdl-snackbar mdl-js-snackbar">
         <div class="mdl-snackbar__text"></div>
