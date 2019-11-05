@@ -2,6 +2,7 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 import actions.LoginAction
+import org.webjars.play.WebJarsUtil
 import play.api.Logger
 import play.api.mvc._
 import play.api.db.Database
@@ -11,7 +12,7 @@ import play.api.db.Database
  * application's home page.
  */
 @Singleton
-class HomeController @Inject()(loginAction: LoginAction, db: Database) extends InjectedController {
+class HomeController @Inject()(loginAction: LoginAction, db: Database)(implicit webJarsUtil: WebJarsUtil) extends InjectedController {
   def index = loginAction { implicit request =>
     Redirect(routes.ApplicationController.myApplications())
   }
@@ -31,5 +32,9 @@ class HomeController @Inject()(loginAction: LoginAction, db: Database) extends I
     } else {
       ServiceUnavailable("Indisponible")
     }
+  }
+
+  def help = loginAction { implicit request =>
+    Ok(views.html.help(request.currentUser, request.currentArea))
   }
 }
