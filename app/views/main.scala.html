@@ -84,13 +84,23 @@
     <div class="mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 do-not-print">
         <div class="mdl-layout__header-row">
             <span class="mdl-layout-title">
-                <img src='@routes.Assets.versioned("images/logo_120.png")' class="logo-header" alt="Administration+">
+                <a href="@routes.HomeController.index()"><img src='@routes.Assets.versioned("images/logo_120.png")' class="logo-header" alt="Administration+"></a>
                 @title
             </span>
                 <!-- Add spacer, to align navigation to the right in desktop -->
             <div class="mdl-layout-spacer"></div>
             <div>
                 @currentUser.name
+                @if(showAreaSelector && currentUser.areas.length > 1) {
+                        <select id="area" name="area" onchange="changeArea()">
+                        @for(area <- currentUser.areas.flatMap(Area.fromId)) {
+                            <option value="@area.id"
+                            @if(area.id == currentArea.id) { selected }>@area.name </option>
+                        }
+                        </select>
+                } else {
+                    ( @currentArea.name )
+                }
             </div>
                 <!-- Navigation -->
             <div>
@@ -112,21 +122,6 @@
                 display: flex;">
             <p style="line-height: 1.2; text-align: center;">
                 <img src='@routes.Assets.versioned("images/logo_120.png")' class="logo">
-            </p>
-            <p style="line-height: 1.2; font-size: 11px;">
-                @if(showAreaSelector) {
-                    <span style="font-weight: bold;">Territoire : </span>
-                    @if(currentUser.areas.length > 1) {
-                        <select id="area" name="area" onchange="changeArea()">
-                        @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-                            <option value="@area.id"
-                            @if(area.id == currentArea.id) { selected }>@area.name </option>
-                        }
-                        </select>
-                    } else {
-                        @currentArea.name
-                    }
-                }
             </p>
             <div class="demo-avatar-dropdown">
                 <span style="font-size: 11px;">@currentUser.email</span>
