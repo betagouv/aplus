@@ -5,7 +5,7 @@ Bonjour l'équipe @group.name, <br>
 Une nouvelle@if(answer.isEmpty){ demande } else { réponse }de la part de@if(answer.isEmpty){ @application.creatorUserName } else { @answer.get.creatorUserName }est disponible sur Administration+.<br>
 <br>
 Les personnes suivantes peuvent accèder à la@if(answer.isEmpty){ demande } else { réponse }:  <br><ul>@for(user <- application.invitedUsers(users).filter(_.groupIds.contains(group.id))) {
-<li>@user.name @if(application.answers.exists(_.creatorUserID == user.id)){ ( Intervenu dans la demande ) } </li>  }
+<li>@user.name @if(application.answers.exists(_.creatorUserID == user.id)){ ( Intervenient dans la demande ) } </li>  }
 </ul>
 <br>
 Cliquez ici pour accèder à la@if(answer.isEmpty){ demande } else { réponse }: <br>
