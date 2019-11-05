@@ -4,7 +4,7 @@
 # ~~~~
 
 GET      /                           controllers.HomeController.index
-
+GET      /aide                       controllers.HomeController.help
 
 # Application
 GET      /nouvelle-demande          controllers.ApplicationController.create
