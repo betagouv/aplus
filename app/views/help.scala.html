@@ -1,0 +1,24 @@
+@(user: User, area: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+
+@main(user, area, false)("Webinaire")  {
+
+} {
+     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+          <h4 class="mdl-cell mdl-cell--12-col">Administration+ en trois minutes</h4>
+          <iframe frameborder="0" width="480" height="270" src="https://www.dailymotion.com/embed/video/k3xYlJNjAD0JMrvkjL5" allowfullscreen allow="autoplay"></iframe>
+     </div>
+     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+          <h4 class="mdl-cell mdl-cell--12-col">Agents d'accueil - Formation Administration+</h4>
+            <iframe frameborder="0" width="480" height="270" src="https://www.dailymotion.com/embed/video/k5dsJdS0WSm998vkjMm" allowfullscreen allow="autoplay"></iframe>
+            <a class="mdl-cell mdl-cell--12-col" href="#">Télécharger la fiche pratique Agents d'acceuil</a>
+     </div>
+     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+          <h4 class="mdl-cell mdl-cell--12-col">Référents opérateurs - Formation Administration+</h4>
+          <iframe frameborder="0" width="480" height="270" src="https://www.dailymotion.com/embed/video/k5BrDZ2VbpxOfqvkjMn" allowfullscreen allow="autoplay"></iframe>
+          <a class="mdl-cell mdl-cell--12-col" href="#">Télécharger la fiche pratique Référents opérateurs</a>
+     </div>
+     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+          <h4 class="mdl-cell mdl-cell--12-col">Contacter l'équipe Administration+</h4>
+          Contactez-nous sur : <a href="mailto:contact@@aplus.beta.gouv.fr">contact@@aplus.beta.gouv.fr</a>
+     </div>
+}
