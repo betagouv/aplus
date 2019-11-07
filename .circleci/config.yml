@@ -8,11 +8,12 @@ jobs:
     context: Aplus
     docker:
       - image: circleci/openjdk:8-jdk
+        environment:
+          ES_HOST: 195.154.253.74
       - image: circleci/postgres:9.6.2-alpine
         environment:
           POSTGRES_USER: aplus
           POSTGRES_DB: aplus
-          ES_HOST: 195.154.253.74
 
     working_directory: ~/repo
 
@@ -20,6 +21,7 @@ jobs:
       # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx3200m
       TERM: dumb
+      ES_HOST: 195.154.253.74
     
     steps:
       - checkout
