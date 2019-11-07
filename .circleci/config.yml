@@ -12,6 +12,7 @@ jobs:
         environment:
           POSTGRES_USER: aplus
           POSTGRES_DB: aplus
+          ES_HOST: 195.154.253.74
 
     working_directory: ~/repo
 
