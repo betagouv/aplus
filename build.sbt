@@ -38,7 +38,7 @@ libraryDependencies ++= Seq(
   "org.webjars.npm" % "roboto-fontface" % "0.9.0",
   "org.webjars.npm" % "dialog-polyfill" % "0.4.9",
   "org.webjars.npm" % "twemoji" % "2.5.1",
-  "org.webjars" % "chartjs" % "2.7.2"
+  "org.webjars" % "chartjs" % "2.7.3"
 )
 // Crash
 libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.5"
