@@ -37,7 +37,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "material-design-icons" % "3.0.1",
   "org.webjars.npm" % "roboto-fontface" % "0.9.0",
   "org.webjars.npm" % "dialog-polyfill" % "0.4.9",
-  "org.webjars.npm" % "twemoji" % "2.5.1",
+  "org.webjars.npm" % "twemoji" % "12.0.0",
   "org.webjars" % "chartjs" % "2.7.2"
 )
 // Crash
