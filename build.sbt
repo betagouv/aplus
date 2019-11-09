@@ -41,7 +41,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "chartjs" % "2.7.2"
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.5"
+libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.28"
 
 // Adds additional packages into Twirl
 
