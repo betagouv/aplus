@@ -66,7 +66,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     // initialize
     var my_autoComplete = new autoComplete({
         selector: 'input[id="insee-code"]',
-        minChars: 3,
+        minChars: 2,
         source: function(term, response) {
             function reqListener() {
                 var results = JSON.parse(this.response);
