@@ -9,9 +9,11 @@ import javax.inject.{Inject, Singleton}
 import models.{Area, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
+import play.api.Configuration
 import play.api.data.Form
 import play.api.data.Forms.{email, ignored, list, mapping, optional, text, uuid}
 import play.api.mvc.{Action, AnyContent, InjectedController}
+import play.libs.ws.WSClient
 import services._
 
 import scala.collection.parallel.immutable.ParSeq
@@ -20,8 +22,9 @@ import scala.collection.parallel.immutable.ParSeq
 case class GroupController @Inject()(loginAction: LoginAction,
                                      groupService: UserGroupService,
                                      notificationService: NotificationService,
-                                     areaService: AreaService,
                                      eventService: EventService,
+                                     configuration: Configuration,
+                                     ws:WSClient,
                                      userService: UserService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with GroupOperators with UserOperators {
 
   def deleteUnusedGroupById(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
@@ -44,6 +47,8 @@ case class GroupController @Inject()(loginAction: LoginAction,
   }
 
   def editGroup(id: UUID): Action[AnyContent] = loginAction { implicit request =>
+    val host = configuration.underlying.getString("geoservice.host")
+
     withGroup(id) { group: UserGroup =>
       if (!group.canHaveUsersAddedBy(request.currentUser)) {
         eventService.warn("EDIT_GROUPE_UNAUTHORIZED", s"Accès non autorisé à l'edition de ce groupe")
@@ -55,7 +60,8 @@ case class GroupController @Inject()(loginAction: LoginAction,
         val areas: ParSeq[(String, String)] = for {
           code <- group.inseeCode.par
         } yield {
-          code -> areaService.getNameFromCode(code)
+          val url = s"https://${host}/bycode/?code=$code"
+          code -> ws.url(url).get().toCompletableFuture.get().getBody
         }
         val zoneAsJson = areas.map({ case (code, name) => s"""{ "code": "$code", "name": "$name" }""" }).mkString("[", ",", "]")
         Ok(views.html.editGroup(request.currentUser, request.currentArea)(group, groupUsers, isEmpty, zoneAsJson))

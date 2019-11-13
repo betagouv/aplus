@@ -78,7 +78,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             }
             var oReq = new XMLHttpRequest();
             oReq.addEventListener("load", reqListener);
-            var url = '/territoires/search/?query='+term
+            var url = 'https://joplus.herokuapp.com/search/?query='+term
             oReq.open("GET", url);
             oReq.send();
         }, renderItem: function (item, search) {

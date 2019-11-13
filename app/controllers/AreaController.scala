@@ -7,17 +7,15 @@ import extentions.UUIDHelper
 import javax.inject.{Inject, Singleton}
 import models.Area
 import org.webjars.play.WebJarsUtil
-import play.api.libs.json.{JsArray, JsResult}
-import play.api.mvc.{Action, AnyContent, InjectedController}
-import services.{AreaService, EventService, UserGroupService}
+import play.api.mvc.InjectedController
+import services.{EventService, UserGroupService}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 @Singleton
 class AreaController @Inject()(loginAction: LoginAction,
                                eventService: EventService,
                                userGroupService: UserGroupService,
-                               areaService: AreaService,
                                configuration: play.api.Configuration)(implicit val webJarsUtil: WebJarsUtil, ec: ExecutionContext) extends InjectedController {
   private lazy val areasWithLoginByKey = configuration.underlying.getString("app.areasWithLoginByKey").split(",").flatMap(UUIDHelper.fromString)
 
@@ -45,22 +43,5 @@ class AreaController @Inject()(loginAction: LoginAction,
       }
       Ok(views.html.allArea(request.currentUser, request.currentArea)(Area.all, areasWithLoginByKey, userGroups))
     }
-  }
-
-  def search: Action[AnyContent] = loginAction.async { implicit request =>
-    request.getQueryString("query").fold({
-      Future.apply {
-        eventService.error("QUERY_PARAMETER_UNDEFINED", "Le paramètre query est indéfini.")
-        BadRequest("Le paramètre query est indéfini.")
-      }
-    })({ query =>
-      areaService.search(query).map({ jsResult: JsResult[JsArray] =>
-        jsResult.fold({ debugInfo =>
-          eventService.error("UNEXPECTED_JSON_STRUCTURE", debugInfo.mkString("\n"))
-          InternalServerError("Erreur inattendue.")
-        }, { jsArray => Ok(jsArray)
-        })
-      })
-    })
   }
 }

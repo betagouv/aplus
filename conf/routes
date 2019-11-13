@@ -61,7 +61,6 @@ GET     /territoires/:areaId/demandes           controllers.ApplicationControlle
 GET     /territoires/:areaId/demandes.csv       controllers.ApplicationController.allCSV(areaId: java.util.UUID)
 GET     /territoires/:areaId/utilisateurs       controllers.UserController.all(areaId: java.util.UUID)
 GET     /territoires/:areaId/utilisateurs.csv   controllers.UserController.allCSV(areaId: java.util.UUID)
-GET     /territoires/search/                    controllers.AreaController.search
 
 # Check
 GET     /status                     controllers.HomeController.status

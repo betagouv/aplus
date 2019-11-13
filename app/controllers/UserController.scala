@@ -27,15 +27,15 @@ case class UserController @Inject()(loginAction: LoginAction,
                                     notificationsService: NotificationService,
                                     eventService: EventService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport with UserOperators with GroupOperators {
 
-  def all(areaId: UUID) = loginAction { implicit request =>
-    if(request.currentUser.canSeeUsersInArea(areaId) == false) {
+  def all(areaId: UUID): Action[AnyContent] = loginAction { implicit request =>
+    if (request.currentUser.canSeeUsersInArea(areaId) == false) {
       eventService.warn("ALL_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs")
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
       val selectedArea = Area.fromId(areaId).get
       val users = (request.currentUser.admin, request.currentUser.groupAdmin, selectedArea.id == Area.allArea.id) match {
-        case (true, _, false)  => userService.byArea(areaId)
-        case (true, _, true)  => userService.byAreas(request.currentUser.areas)
+        case (true, _, false) => userService.byArea(areaId)
+        case (true, _, true) => userService.byAreas(request.currentUser.areas)
         case (false, true, _) => userService.byGroupIds(request.currentUser.groupIds)
         case _ =>
           eventService.warn("ALL_USER_INCORRECT_SETUP", s"Erreur d'accès aux utilisateurs")
@@ -43,7 +43,7 @@ case class UserController @Inject()(loginAction: LoginAction,
       }
       val applications = applicationService.allByArea(selectedArea.id, true)
       val groups: List[UserGroup] = (request.currentUser.admin, request.currentUser.groupAdmin, selectedArea.id == Area.allArea.id) match {
-        case (true, _, false)  => groupService.allGroupByAreas(List[UUID](areaId))
+        case (true, _, false) => groupService.allGroupByAreas(List[UUID](areaId))
         case (true, _, true) => groupService.allGroupByAreas(request.currentUser.areas)
         case (false, true, _) => groupService.byIds(request.currentUser.groupIds)
         case _ =>
