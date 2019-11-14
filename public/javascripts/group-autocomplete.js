@@ -2,8 +2,14 @@
 var Group = {
     areas: [],
     addArea: function (element) {
-        Group.areas.push(element);
-        Group.displayArea(element);
+        var result = Group.areas.find(function(e) {
+            return e.code === element.code;
+        });
+        if (result == null) {
+            Group.areas.push(element);
+            Group.displayArea(element);
+        }
+        Group.input.value = "";
     },
     remove: function(code) {
         for (var i = 0; i < Group.areas.length; i++) {
@@ -78,7 +84,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             }
             var oReq = new XMLHttpRequest();
             oReq.addEventListener("load", reqListener);
-            var url = "https://joplus.herokuapp.com/search/?query="+term
+            var url = "https://geoplus-demo.herokuapp.com/search/?query="+term
             oReq.open("GET", url);
             oReq.send();
         }, renderItem: function (item, search) {
