@@ -23,4 +23,4 @@ jobs:
       run: sbt coverage test coverageReport codacyCoverage
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        GEO_HOST: joplus.herokuapp.com
+        GEO_HOST: geoplus-demo.herokuapp.com
