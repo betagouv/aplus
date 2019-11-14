@@ -145,6 +145,8 @@ case class Application(id: UUID,
    lazy val firstAgentAnswerDate = answers.find(_.id != creatorUserId).map(_.creationDate)
 
    lazy val firstAnswerTimeInMinutes = firstAgentAnswerDate.map{ firstAnswerDate => Minutes.minutesBetween(creationDate, firstAnswerDate).getMinutes }
+
+   lazy val userName = s"${userInfos(Application.USER_LAST_NAME_KEY)} ${userInfos(Application.USER_FIRST_NAME_KEY)}"
 }
 
 object Application {
@@ -155,4 +157,6 @@ object Application {
   val USER_CAF_NUMBER_KEY = "Identifiant CAF"
   val USER_APPLICATION_NUMBER_KEY = "Numéro de dossier"
   val USER_BIRTHNAME_KEY = "Nom de Naissance"
+  val USER_CITY_KEY = "Commune d'habitation"
+  val USER_MOBILE_PHONE_NUMBER_KEY = "Numéro de téléphone de l'usager"
 }

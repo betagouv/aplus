@@ -1,0 +1,53 @@
+@(user: User, area: Area)(application: Application, executorName: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+
+@main(user, area, false)(s"Validation du mandat")  {
+
+}  {
+<div class="mdl-cell mdl-cell--12-col mdl-grid">
+    <p class="mdl-cell mdl-cell--12-col">Pour votre couverture juridique sur l'acte que vous êtes en train de faire. <br>
+        Vous devez : <p>
+    <ul class="mdl-cell mdl-cell--12-col">
+        <li>Lire ce mandat à l'usager</li>
+        <li>Lui faire valider le mandat</li>
+    </ul>
+    <pre class="mdl-color--white mdl-cell--12-col">
+<b>Mandat « Administration+ »
+de réalisation de démarches administratives numériques
+au bénéfice d’une personne aidée</b>
+
+@application.userName, @application.userInfos.get(Application.USER_BIRTHNAME_KEY).map(birthName => s"aillant pour nom de naissance $birthName ,").getOrElse("") @application.userInfos.get(Application.USER_BIRTHDAY_KEY).map(date => s"né le/en $date ,").getOrElse("") @application.userInfos.get(Application.USER_CITY_KEY).map(city => s"habitant $city ,").getOrElse("") @application.userInfos.get(Application.USER_MOBILE_PHONE_NUMBER_KEY).map(phone => s"tel $phone ,").getOrElse("")
+reconnaît avoir mandaté :
+
+@executorName pour réaliser les démarches administrative numérique permettant de résoudre la demande aillant pour sujet @application.subject
+
+A cette fin :
+@application.userName autorise :
+@executorName à utiliser ses données à caractère personnel suivantes : @for(key <- application.userInfos.keys) {
+  - @key }
+  - Description de la demande
+
+@executorName a rappelé à @application.userName :
+  - l’objet de l’intervention
+  - la raison pour laquelle ses informations sont collectées et leur utilité
+  - l’existence de droits sur ses données (accès, rectification, suppression, etc.
+  - la possibilité pour l’usager de retirer à tout moment son consentement
+
+@executorName s’engage à :
+  1) utiliser les données à caractère personnel strictement nécessaires à la réalisation de ces seules démarches administratives
+  2) conserver les données à caractère personnel strictement nécessaires à ces démarches le seul temps nécessaire à leur réalisation
+  3) détruire, dès la réalisation de ces démarches, les données à caractère personnel en sa possession
+
+Le présent mandat prend fin à compter de la réalisation des démarches précitées. A défaut, il est valable pour une durée d’un an renouvelable.
+    </pre>
+       <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-validation" style="height: unset;">
+                <input type="checkbox" id="checkbox-validation" name="validate" class="mdl-checkbox__input" value="true">
+                <span class="mdl-checkbox__label">Moi @application.userName, j’atteste avoir pris connaissance du mandat.</span>
+       </label>
+        <button id="validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset" disabled>
+            Je valide le mandat
+        </button>
+    <script>
+            addValidationForButton("#checkbox-validation","#validation");
+    </script>
+</div>
+}

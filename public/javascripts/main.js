@@ -42,3 +42,9 @@ function changeMDLInputChecked(input, isChecked) {
     componentHandler.upgradeElements(input);
 }
 
+function addValidationForButton(objectSelector, buttonSelector) {
+    var object = document.querySelector(objectSelector);
+    object.addEventListener('click', function() {
+        document.querySelector(buttonSelector).disabled = false;
+    });
+}

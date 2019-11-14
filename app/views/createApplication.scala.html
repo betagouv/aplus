@@ -3,7 +3,8 @@
 @(user: User, area: Area)(users: List[User], organisationGroups: List[UserGroup], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
     @main(user, area)(s"Nouvelle demande")  {
-    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'
+    xmlns="http://www.w3.org/1999/html">
 
     <style>
                 .mdl-data-table td {
@@ -101,12 +102,24 @@
                         }
                         Ajouter un ficher ( Facultatif, 5Mo maximum ) : <input type="file" name="file">
                     </p>
-                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-mandat" style="height: unset; margin-bottom: 10px;">
-                        <input type="checkbox" id="checkbox-mandat" name="validate" class="mdl-checkbox__input" value="true">
-                        <span class="mdl-checkbox__label">Je confirme que l'usager m'a donné mandat pour effectuer cette demande.</span>
-                    </label> <br>
+                    <label class="mdl-cell mdl-cell--12-col mdl-radio mdl-js-radio mdl-js-ripple-effect">
+                         <input type="radio"
+                                id="mandat-other"
+                                class="mdl-radio__button"
+                                name="mandat"
+                                value="other"  >
+                         <span class="mdl-radio__label">J'ai un mandat papier ou numérique de l'usager pour effectuer cette démarche</span>
+                    </label>
+                    <label class="mdl-cell mdl-cell--12-col mdl-radio mdl-js-radio mdl-js-ripple-effect">
+                         <input type="radio"
+                            id="mandat-numerique"
+                            class="mdl-radio__button"
+                            name="mandat"
+                            value="numerique"  >
+                        <span class="mdl-radio__label">Je souhaites créer un mandat numérique</span>
+                    </label>
                     <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset" disabled>
-                        Envoyer ma demande
+                        Valider
                     </button>
                 </div>
             }
@@ -135,14 +148,7 @@
                 }
 
             }
-            var checkbox = document.querySelector("#checkbox-mandat");
-
-            checkbox.addEventListener('click', function() {
-                if(checkbox.checked) {
-                    document.querySelector("#review-validation").disabled = false;
-                } else {
-                    document.querySelector("#review-validation").disabled = true;
-                }
-            });
+            addValidationForButton("#mandat-numerique", "#review-validation");
+            addValidationForButton("#mandat-other", "#review-validation");
         </script>
     }

@@ -52,7 +52,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       "users" -> list(uuid).verifying("Vous devez sélectionner au moins un agent", _.nonEmpty),
       "organismes" -> list(text),
       "category" -> optional(text),
-      "selected-subject" -> optional(text)
+      "selected-subject" -> optional(text),
+      "mandat" -> default(text, "other")
     )(ApplicationData.apply)(ApplicationData.unapply)
   )
 
@@ -136,7 +137,15 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                hasSelectedSubject = applicationData.selectedSubject.contains(applicationData.subject),
                category = applicationData.category,
                files = file.toMap)
-             if(applicationService.createApplication(application)) {
+             if(applicationData.mandat == "numerique"){
+               val executorName = request.currentUser.groupIds.headOption.map(userGroupService.groupById) match {
+                 case Some(group) =>
+                    s"La structure $group.name"
+                 case None =>
+                    request.currentUser.name
+               }
+               Ok(views.html.mandatValidation(request.currentUser, request.currentArea)(application, executorName))
+             } else if(applicationService.createApplication(application)) {
                notificationsService.newApplication(application)
                eventService.info("APPLICATION_CREATED", s"La demande ${application.id} a été créé", Some(application))
                Redirect(routes.ApplicationController.myApplications()).flashing("success" -> "Votre demande a bien été envoyée")
