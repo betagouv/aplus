@@ -75,16 +75,16 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         minChars: 2,
         source: function(term, response) {
             function reqListener() {
-                var results = JSON.parse(this.response);
-                var newarray = results.map(myFunction)
                 function myFunction(i) {
                     return [ i.name, i.code, i.type ];
                 }
+                var results = JSON.parse(this.response);
+                var newarray = results.map(myFunction);
                 response(newarray);
             }
             var oReq = new XMLHttpRequest();
             oReq.addEventListener("load", reqListener);
-            var url = "https://geoplus-demo.herokuapp.com/search/?query="+term
+            var url = "https://geoplus-demo.herokuapp.com/search/?query="+term;
             oReq.open("GET", url);
             oReq.send();
         }, renderItem: function (item, search) {
