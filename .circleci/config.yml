@@ -9,7 +9,7 @@ jobs:
     docker:
       - image: circleci/openjdk:8-jdk
         environment:
-          GEOPLUS_HOST: geoplus-demo.herokuapp.com
+          GEOPLUS_HOST: geoplus.aplus.beta.gouv.fr
       - image: circleci/postgres:9.6.2-alpine
         environment:
           POSTGRES_USER: aplus
@@ -21,7 +21,7 @@ jobs:
       # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx3200m
       TERM: dumb
-      GEOPLUS_HOST: geoplus-demo.herokuapp.com
+      GEOPLUS_HOST: geoplus.aplus.beta.gouv.fr
     
     steps:
       - checkout
