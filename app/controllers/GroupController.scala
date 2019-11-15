@@ -47,7 +47,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
   }
 
   def editGroup(id: UUID): Action[AnyContent] = loginAction { implicit request =>
-    val host = configuration.underlying.getString("geoservice.host")
+    val Host = configuration.underlying.getString("geoservice.host")
 
     withGroup(id) { group: UserGroup =>
       if (!group.canHaveUsersAddedBy(request.currentUser)) {
@@ -60,7 +60,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
         val areas: ParSeq[(String, String)] = for {
           code <- group.inseeCode.par
         } yield {
-          val url = s"https://${host}/bycode/?code=$code"
+          val url = s"https://${Host}/bycode/?code=$code"
           code -> ws.url(url).get().toCompletableFuture.get().getBody
         }
         val zoneAsJson = areas.map({ case (code, name) => s"""{ "code": "$code", "name": "$name" }""" }).mkString("[", ",", "]")
