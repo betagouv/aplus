@@ -51,7 +51,8 @@ var Group = {
         Group.container.appendChild(li);
         Group.input.value = "";
     },
-    init: function(data) {
+    init: function(data, host) {
+        Group.host = host;
         var iterable = JSON.parse(data);
         if (iterable) {
             iterable.forEach(function (e) {
@@ -67,7 +68,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     "use strict";
     Group.container = document.getElementById("group-area-container");
     Group.input = document.getElementById("insee-code");
-    Group.init(Group.input.getAttribute("data-lang"));
+    Group.init(Group.input.getAttribute("data-lang"), Group.input.getAttribute("data-langname"));
 
     // initialize
     var my_autoComplete = new autoComplete({
@@ -84,7 +85,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             }
             var oReq = new XMLHttpRequest();
             oReq.addEventListener("load", reqListener);
-            var url = "https://geoplus-demo.herokuapp.com/search/?query="+term;
+            var url = "https://"+Group.host+"/search/?query="+term;
             oReq.open("GET", url);
             oReq.send();
         }, renderItem: function (item, search) {

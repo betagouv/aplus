@@ -1,5 +1,5 @@
 @import models._
-@(currentUser: User)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
   @display(users: Seq[User])(header: Html)(footer: Html = Html("")) = {
       <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white" style="white-space: normal;">
@@ -155,7 +155,7 @@
             <label class="mdl-textfield__label" for="description">Description du groupe</label>
           </div>
           <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="mdl-textfield__input" type="text" id="insee-code">
+            <input class="mdl-textfield__input" type="text" id="insee-code" data-langname="@geoplusHost">
             <label class="mdl-textfield__label" for="insee-code">Région(s), Arrondissement(s), Département(s), Commune(s) par nom ou code INSEE</label>
             <ul id="group-area-container"></ul>
           </div>

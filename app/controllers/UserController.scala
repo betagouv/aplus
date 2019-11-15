@@ -10,6 +10,7 @@ import models.{Area, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
+import play.api.Configuration
 import play.api.data.{Form, Mapping}
 import play.api.data.Forms.{optional, text, tuple}
 import play.api.mvc.{Action, AnyContent, Call, InjectedController}
@@ -25,6 +26,7 @@ case class UserController @Inject()(loginAction: LoginAction,
                                     groupService: UserGroupService,
                                     applicationService: ApplicationService,
                                     notificationsService: NotificationService,
+                                    configuration: Configuration,
                                     eventService: EventService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport with UserOperators with GroupOperators {
 
   def all(areaId: UUID): Action[AnyContent] = loginAction { implicit request =>
@@ -53,7 +55,7 @@ case class UserController @Inject()(loginAction: LoginAction,
 
       eventService.info("ALL_USER_SHOWED", s"Visualise la vue des utilisateurs")
 
-      Ok(views.html.allUsers(request.currentUser)(groups, users, applications, selectedArea))
+      Ok(views.html.allUsers(request.currentUser)(groups, users, applications, selectedArea, configuration.underlying.getString("geoplus.host")))
     }
   }
 

@@ -1,5 +1,5 @@
 @import models._
-@(currentUser: User, area: Area)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean, zoneAsJson: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, area: Area)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean, zoneAsJson: String, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
 @main(currentUser, area, false)(s"Gestion du groupe ${userGroup.name} - ${Area.fromId(userGroup.area).get.name}") {
@@ -22,7 +22,7 @@
                 <label class="mdl-textfield__label" for="description">Description du groupe</label>
             </div>
             <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" id="insee-code" data-lang="@zoneAsJson" @if(!currentUser.admin) { disabled }>
+                <input class="mdl-textfield__input" type="text" id="insee-code" data-langname="@geoplusHost" data-lang="@zoneAsJson" @if(!currentUser.admin) { disabled }>
                 <label class="mdl-textfield__label" for="insee-code">Région(s), Arrondissement(s), Département(s), Commune(s) par nom ou code INSEE</label>
                 <ul id="group-area-container"></ul>
             </div>
