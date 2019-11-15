@@ -90,7 +90,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         }, renderItem: function (item, search) {
             search = search.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
             var re = new RegExp("(" + search.split(" ").join("|") + ")", "gi");
-            return '<div class="autocomplete-suggestion" data-lang="'+item[1]+'" data-langname="'+item[0]+'" data-val="'+search+'">'+(item[0]+ " ("+item[2]+" / "+item[1]+")").replace(re, "<b>$1</b>")+'</div>';
+            return "<div class=\"autocomplete-suggestion\" data-lang=\""+item[1]+"\" data-langname=\""+item[0]+"\" data-val=\""+search+"\">"+(item[0]+ " ("+item[2]+" / "+item[1]+")").replace(re, "<b>$1</b>")+"</div>";
         }, onSelect: function(e, term, item) {
             var element = {
                 name: item.getAttribute("data-langname"),
