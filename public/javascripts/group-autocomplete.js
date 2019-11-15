@@ -32,7 +32,7 @@ var Group = {
         label.textContent = element.name;
         var closeButton = document.createElement("input");
         closeButton.setAttribute("type", "button");
-        closeButton.name=element.code
+        closeButton.name=element.code;
         closeButton.value = "X";
         closeButton.addEventListener("click", function (event) {
             Group.remove(element.code);
