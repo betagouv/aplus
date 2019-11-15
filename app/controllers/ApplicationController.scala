@@ -6,10 +6,12 @@ import java.util.{Locale, UUID}
 import javax.inject.{Inject, Singleton}
 import play.api.mvc._
 import play.api.data._
-import play.api.data.Forms._
+import play.api.data.Forms.{mapping, _}
 import play.api.data.validation._
 import play.api.data.validation.Constraints._
 import actions._
+import com.google.inject.Provides
+import com.hhandoko.play.pdf.PdfGenerator
 import forms.FormsPlusMap
 import models._
 import org.joda.time.DateTime
@@ -17,6 +19,7 @@ import org.webjars.play.WebJarsUtil
 import services._
 import extentions.{Time, UUIDHelper}
 import extentions.Time.dateTimeOrdering
+import play.api.Environment
 
 import scala.concurrent.ExecutionContext
 
@@ -32,6 +35,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                                       eventService: EventService,
                                       organisationService: OrganisationService,
                                       userGroupService: UserGroupService,
+                                      environment: Environment,
                                       configuration: play.api.Configuration)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
   import forms.Models._
 
@@ -56,12 +60,46 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     )(ApplicationData.apply)(ApplicationData.unapply)
   )
 
+  val authorizationForm = Form(mapping(
+    "helped_firstname" -> optional(text),
+    "helped_lastname" -> nonEmptyText,
+    "helped_address" -> nonEmptyText,
+    "helped_phonenumber" -> nonEmptyText.verifying(maxLength(10)),
+    "helper_firstname" -> optional(text),
+    "helper_lastname" -> nonEmptyText,
+    "helped_personal_data" -> nonEmptyText,
+    "helper_phonenumber" -> nonEmptyText.verifying(maxLength(10)),
+    "helper_function" -> nonEmptyText,
+    "helper_structure" -> nonEmptyText,
+    "helper_tasks" -> nonEmptyText
+  )(AuthorizationModel.apply)(AuthorizationModel.unapply))
+
   def create = loginAction { implicit request =>
     eventService.info("APPLICATION_FORM_SHOWED", s"Visualise le formulaire de création de demande")
     val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
     val groupIds = instructors.flatMap(_.groupIds).distinct
     val organismeGroups = userGroupService.byIds(groupIds).filter(_.area == request.currentArea.id)
-    Ok(views.html.createApplication(request.currentUser,request.currentArea)(instructors, organismeGroups, applicationForm))
+    Ok(views.html.createApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, applicationForm))
+  }
+
+  def providePdfGenerator(): PdfGenerator = {
+    val pdfGen = new PdfGenerator(environment)
+    pdfGen
+  }
+
+  def authorization: Action[AnyContent] = loginAction { implicit request =>
+    eventService.info("APPLICATION_FORM_SHOWED", s"Visualise le formulaire de création de demande")
+    Ok(views.html.authorization(request.currentUser, request.currentArea, Map.empty[String, String]))
+  }
+
+  def authorizationPost: Action[AnyContent] = loginAction { implicit request =>
+    eventService.info("APPLICATION_FORM_SHOWED", s"Visualise le formulaire de création de demande")
+    authorizationForm.bindFromRequest.fold({ formWithErrors: Form[AuthorizationModel] =>
+      formWithErrors.errors.foreach(println)
+      BadRequest(views.html.authorization(request.currentUser, request.currentArea,formWithErrors.data))
+    }, { authorizationModel: AuthorizationModel =>
+      providePdfGenerator().ok(views.html.authorizationPdf(authorizationModel),"http://localhost:9000")
+    })
   }
 
   def createSimplified = loginAction { implicit request =>
@@ -189,7 +227,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}")
     Ok(views.html.myApplications(request.currentUser, request.currentArea)(myOpenApplications, myClosedApplications))
   }
-  
+
 
   def stats = loginAction { implicit request =>
     (request.currentUser.admin || request.currentUser.groupAdmin) match {
@@ -459,7 +497,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         }
     }
   }
-  
+
   def inviteExpert(applicationId: UUID) = loginAction { implicit request =>
     applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
       case None =>

@@ -1,0 +1,58 @@
+@import models._
+@import extentions.MDLForms._
+@(user: User, area: Area, form: Map[String, String])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@main(user, area)(s"Nouvelle demande : Mandat « Administration+ »")  {
+<link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+}{
+<div class="mdl-cell mdl-cell--12-col mdl-grids">
+    <h5>Mandat « Administration+ » d’un aidant réalisant des démarches administratives numériques au bénéfice d’une personne aidée</h5>
+    @helper.form(action = routes.ApplicationController.authorizationPost(), 'class -> "authorization-container", 'enctype -> "multipart/form-data") {
+    @helper.CSRF.formField
+    <div class="authorization">
+        <h6>Personne aidée</h6>
+        <ul>
+            <li>
+                <label for="helped_firstname">Prénom</label><input name="helped_firstname" id="helped_firstname" value="@form.get("helped_firstname")">
+            </li>
+            <li>
+                <label for="helped_lastname">Nom</label><input name="helped_lastname" id="helped_lastname" required="required" value="@form.get("helped_lastname")">
+            </li>
+            <li>
+                <label for="helped_address">Adresse</label><input name="helped_address" id="helped_address" required="required" value="@form.get("helped_address")">
+            </li>
+            <li>
+                <label for="helped_phonenumber">Numéro de téléphone</label><input name="helped_phonenumber" id="helped_phonenumber" required="required" pattern="[A-Za-z0-9]{10,20}" value="@form.get("helped_phonenumber")">
+            </li>
+            <li>
+                <label for="helped_personal_data">Données à caractère personnel demandées</label><textarea id="helped_personal_data" name="helped_personal_data" required="required" value="@form.get("helped_personal_data")"></textarea>
+            </li>
+        </ul>
+    </div>
+
+    <div class="authorization">
+        <h6>Aidant</h6>
+        <ul>
+            <li>
+                <label for="helper_firstname">Prénom</label><input name="helper_firstname" id="helper_firstname" required="required" value="@form.get("helper_firstname")">
+            </li>
+            <li>
+                <label for="helper_lastname">Nom</label><input name="helper_lastname" id="helper_lastname" required="required" value="@form.get("helper_lastname")">
+            </li>
+            <li>
+                <label for="helper_function">Fonction</label><input name="helper_function" id="helper_function" required="required" value="@form.get("helper_function")">
+            </li>
+            <li>
+                <label for="helper_structure">Structure</label><input name="helper_structure" id="helper_structure" required="required" value="@form.get("helper_structure")">
+            </li>
+            <li>
+                <label for="helper_phonenumber">Numéro de téléphone</label><input name="helper_phonenumber" id="helper_phonenumber" required="required" pattern="[A-Za-z0-9]{10,20}" value="@form.get("helper_phonenumber")">
+            </li>
+            <li>
+                <label for="helper_tasks">Démarches administratives numériques à réaliser</label><textarea id="helper_tasks" name="helper_tasks" required="required" value="@form.get("helper_tasks")"></textarea>
+            </li>
+            <li><input type="submit" value="Valider"></li>
+        </ul>
+    </div>
+    }
+</div>
+}

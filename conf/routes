@@ -8,6 +8,8 @@ GET      /aide                       controllers.HomeController.help
 
 # Application
 GET      /nouvelle-demande          controllers.ApplicationController.create
+GET      /authorization             controllers.ApplicationController.authorization
+POST     /authorizationPost         controllers.ApplicationController.authorizationPost
 POST     /nouvelle-demande          controllers.ApplicationController.createPost
 POST     /nouvelle-demande-guide          controllers.ApplicationController.createSimplifiedPost
 GET      /nouvelle-demande-guide          controllers.ApplicationController.createSimplified

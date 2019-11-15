@@ -138,7 +138,7 @@
         </header>
         <nav class="navigation mdl-navigation mdl-color--blue-grey-800">
         @if(currentUser.helper) {
-            <a class="mdl-navigation__link" href="@routes.ApplicationController.create()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">
+            <a class="mdl-navigation__link" href="@routes.ApplicationController.authorization()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">
                 create_new_folder</i>Nouvelle demande</a>
         }
         <a class="mdl-navigation__link" href="@routes.ApplicationController.myApplications()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">folder</i>Mes demandes</a>

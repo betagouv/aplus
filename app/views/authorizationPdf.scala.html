@@ -1,0 +1,40 @@
+@(authorizationModel: AuthorizationModel)
+<meta charset="UTF-8">
+<h1>Mandat « Administration+ » d’un aidant réalisant des démarches administratives numériques au bénéfice d’une personne aidée</h1>
+
+<p>@authorizationModel.helpedFirstName @authorizationModel.helpedLastName, habitant @authorizationModel.helpedAddress,
+    tel @authorizationModel.helpedPhoneNumber, reconnait avoir mandaté :</p>
+
+<p>@authorizationModel.helperFirstName @authorizationModel.helperLastName, exerçant la fonction de
+    @authorizationModel.helperFunction dans/à @authorizationModel.helperStructure, tel @authorizationModel.helperPhoneNumber, pour réaliser les démarches administratives numériques suivantes me concernant : @authorizationModel.helperTasks</p>
+
+<p>&Agrave; cette fin :</p>
+<p>@authorizationModel.helpedFirstName @authorizationModel.helpedLastName autorise :</p>
+<p>@authorizationModel.helperFirstName @authorizationModel.helperLastName à utiliser ses données à caractère personnel suivantes :</p>
+<p>@authorizationModel.helpedPersonalData</p>
+@authorizationModel.helperFirstName @authorizationModel.helperLastName a rappelé à @authorizationModel.helpedFirstName @authorizationModel.helpedLastName:
+<ul>
+    <li>l’objet de l’intervention ; la raison pour laquelle ses informations sont collectées et leur utilité ;</li>
+    <li>l’existence de droits sur ses données (accès, rectification, suppression, etc.) ; la possibilité pour l’usager de retirer à tout moment son consentement.</li>
+</ul>
+
+<p>@authorizationModel.helperFirstName @authorizationModel.helperLastName s’engage à :
+<ol>
+    <li>utiliser les données à caractère personnel strictement nécessaires à la réalisation de ces seules démarches administratives* ;</li>
+    <li>conserver les données à caractère personnel strictement nécessaires à ces démarches le seul temps nécessaire à leur réalisation ;</li>
+    <li>détruire, dès la réalisation de ces démarches, les données à caractère personnel en sa possession.</li>
+</ol>
+</p>
+
+<p>Le présent mandat prend fin à compter de la réalisation des démarches précitées. A défaut, il est valable pour une durée d’un an renouvelable.</p>
+
+<div style="display:inline;width:100%">
+    <div style="margin-left: 1em;">
+        Date, Lieu et Signature<br>
+        Le mandant
+    </div>
+    <div style="float:right;margin-right: 1em">
+        Date, Lieu et Signature<br>
+        Le mandataire
+    </div>
+</div>

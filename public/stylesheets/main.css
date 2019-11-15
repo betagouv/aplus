@@ -322,3 +322,47 @@ html, body {
 dialog.dialog--50percent-width {
     width: 50%;
 }
+
+form.authorization-container {
+    display: inline-flex;
+    width: 100%;
+}
+
+div.authorization {
+    display: block;
+    margin: 1em 1em 0px 2em;
+    padding: 0px 0px;
+    min-width: 30%;
+}
+
+div.authorization ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0px 0px;
+    padding: 0px 0px;
+}
+
+div.authorization li {
+    margin: 0px 0px 10px 0px;
+}
+
+div.authorization h6 {
+    margin: 0px 0px;
+    padding: 0px 0px;
+    font-size: large;
+}
+
+div.authorization label {
+    display: block;
+}
+
+div.authorization input {
+    display: block;
+    min-width: 100%;
+}
+
+div.authorization textarea {
+    display: block;
+    min-width: 100%;
+    height: 5em;
+}

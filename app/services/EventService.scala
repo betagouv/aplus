@@ -3,7 +3,6 @@ package services
 import java.util.UUID
 
 import actions.RequestWithUserData
-import akka.http.scaladsl.model.RemoteAddress
 import javax.inject.Inject
 import models._
 import play.api.db.Database
@@ -94,9 +93,8 @@ class EventService @Inject()(db: Database) {
     fromUserId match {
       case Some(userId) =>
         SQL"""SELECT *, host(ip_address)::TEXT AS ip_address FROM "event" WHERE from_user_id = $userId::uuid ORDER BY creation_date DESC LIMIT $limit""".as(simpleEvent.*)
-      case None => ""
+      case None =>
         SQL"""SELECT *, host(ip_address)::TEXT AS ip_address FROM "event" ORDER BY creation_date DESC LIMIT $limit""".as(simpleEvent.*)
     }
-
   }
 }
