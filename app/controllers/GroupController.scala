@@ -47,7 +47,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
   }
 
   def editGroup(id: UUID): Action[AnyContent] = loginAction { implicit request =>
-    val Host = configuration.underlying.getString("geoservice.host")
+    val Host = configuration.underlying.getString("geoplus.host")
 
     withGroup(id) { group: UserGroup =>
       if (!group.canHaveUsersAddedBy(request.currentUser)) {
