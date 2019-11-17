@@ -25,7 +25,7 @@
                         @application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))
                         </div>
                     </td>
-                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
+                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size hidden--small-screen">
                         <div id="answers-@application.id" class="vertical-align--middle">
                             <i class="material-icons icon--light">chat_bubble</i>
                             <span class="application__anwsers">@application.answers.length messages</span>
@@ -36,8 +36,8 @@
                             }
                         </div>
                     </td>
-                    <td class="mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size"></td>
-                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size" style="width: 20px"><a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                    <td class="mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size hidden--small-screen"></td>
+                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size hidden--small-screen" style="width: 20px"><a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                         <i class="material-icons">info_outline</i>
                     </a></td>
                 </tr>
@@ -47,7 +47,7 @@
     </div>
 }
 
-@main(user, area, false)(s"Toutes mes demandes")  {
+@newMain(user, area, false)(s"Mes demandes")  {
 <style>
     .pem-table {
         width: 100%;
@@ -76,6 +76,10 @@
         document.getElementById("closed-applications").classList.remove("invisible");
     }
 </script>
+} {
+    <div>
+        <a class="mdl-button mdl-button--accent" href="@routes.ApplicationController.myApplications()">Mes demandes</a>
+    </div>
 }{
     @if(myOpenApplications.isEmpty) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
@@ -106,16 +110,19 @@
         </div>
 
     } else {
-        <input class="mdl-cell mdl-cell--12-col" type="search" placeholder="Filtrer les demandes (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
-        <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20A+">contact&commat;aplus.beta.gouv.fr</a></span>
         @if(myOpenApplications.nonEmpty) {
             <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing mdl-grid">
+                <span>Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20A+">contact&commat;aplus.beta.gouv.fr</a></span>
+
                 <h4 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Mes demandes</h4>
                 @if(user.helper) {
                     <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" onclick="document.location = '@routes.ApplicationController.create()'">
                         Créer une demande
                     </button>
                 }
+
+                <span class="mdl-cell mdl-cell--12-col">FILTRER PAR </span><input class="mdl-cell mdl-cell--12-col" type="search" placeholder="Saisir nom, numéro, description, etc" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
+
                 @display(myOpenApplications)
             </div>
         }
@@ -131,18 +138,5 @@
             <h4 class="mdl-cell mdl-cell--12-col">Demandes clôturées</h4>
             @display(myClosedApplications)
         </div>
-    }
-
-    @if(myOpenApplications.nonEmpty || myClosedApplications.nonEmpty) {
-        <h4 class="mdl-cell mdl-cell--12-col">Export des demandes en CSV</h4>
-        <b class="mdl-cell mdl-cell--12-col">
-            Il faut importer le fichier dans Excel (ou autre tableur) en ut8 pour avoir les accents correctement.</b>
-        <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--8-col mdl-cell--2-offset" onclick="document.location = '@routes.ApplicationController.myCSV()'">
-            Télécharger export CSV
-        </button>
-    }
-
-    @if(user.admin || user.groupAdmin) {
-       <p>Vous êtes admin ou responsable de groupe : <a href="">Voir la nouvelle page de gestion de demandes</a></p>
     }
 }

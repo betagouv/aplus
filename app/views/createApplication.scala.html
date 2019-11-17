@@ -2,30 +2,34 @@
 @import extentions.MDLForms._
 @(user: User, area: Area)(users: List[User], organisationGroups: List[UserGroup], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
-    @main(user, area)(s"Nouvelle demande")  {
-    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+@newMain(user, area)(s"Nouvelle demande")  {
+<link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 
-    <style>
-                .mdl-data-table td {
-                    padding: 0px 18px;
-                }
+<style>
+            .mdl-data-table td {
+                padding: 0px 18px;
+            }
 
-                @@media screen and (max-width: 750px) {
-                    .mdl-data-table__cell--split-in-mobile {
-                        display: block;
-                        float: left;
-                        width: 100%;
-                        height: initial !important;
-                    }
+            @@media screen and (max-width: 750px) {
+                .mdl-data-table__cell--split-in-mobile {
+                    display: block;
+                    float: left;
+                    width: 100%;
+                    height: initial !important;
                 }
-        </style>
-    }{
-        <div class="mdl-cell mdl-cell--12-col mdl-grid">
-            <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h3>
+            }
+    </style>
+}{
+<div>
+    <a class="mdl-button" href="@routes.ApplicationController.myApplications()">Mes demandes</a>
+</div>
+}{
+        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
+            Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a>
+            <h4 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h4>
             <a class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.createSimplified()">
                 Mode Guidé
             </a>
-            <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
             @helper.form(action = routes.ApplicationController.createPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data") {
                 @helper.CSRF.formField
                 <div class="mdl-cell mdl-cell--12-col mdl-grid">

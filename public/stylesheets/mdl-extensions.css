@@ -1,0 +1,5 @@
+@media screen and (min-width: 1025px) {
+    .mdl-mega-footer--fixed-drawer {
+        padding-left: 300px;
+    }
+}
