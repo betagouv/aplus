@@ -48,3 +48,4 @@ libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.5"
 
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "fr.gouv.beta.binders._"
+
