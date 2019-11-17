@@ -15,7 +15,6 @@
     @webJarsUtil.locate("fontawesome.css").css()
     @webJarsUtil.locate("solid.css").css()
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/main.css")'>
-    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/mdl-extensions.css")'>
 
     @header
     @webJarsUtil.locate("material.min.js").script()
@@ -161,30 +160,30 @@
         <div class="mdl-grid main__grid"  @if(maxWidth) { style="max-width: 960px;" }>
             @content
         </div>
-
-
-    </main>
-    <footer class="mdl-mega-footer mdl-mega-footer--fixed-drawer @if(currentUser.admin){ mdl-mega-footer--fixed-drawer } do-not-print">
-        <div class="mdl-mega-footer__middle-section">
-            <div class="mdl-mega-footer__drop-down-section">
-                <input class="mdl-mega-footer__heading-checkbox" type="checkbox" checked>
-                <h1 class="mdl-mega-footer__heading">Autres actions</h1>
-                <ul class="mdl-mega-footer__link-list">
-                    <li><a href="@routes.ApplicationController.showExportMyApplicationsCSV()">Exporter mes demandes en CSV</a></li>
-                    <li><a href="@routes.Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf")" target="_blank">Télécharger un mandat imprimable</a></li>
+        <footer class="mdl-mega-footer do-not-print">
+            <div class="mdl-mega-footer__middle-section">
+                <div class="mdl-mega-footer__drop-down-section">
+                    <input class="mdl-mega-footer__heading-checkbox" type="checkbox" checked>
+                    <h1 class="mdl-mega-footer__heading">Autres actions</h1>
+                    <ul class="mdl-mega-footer__link-list">
+                        <li><a href="@routes.LoginController.disconnect()">Déconnexion</a></li>
+                        <li><a href="@routes.ApplicationController.showExportMyApplicationsCSV()">Exporter mes demandes en CSV</a></li>
+                        <li><a href="@routes.Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf")" target="_blank">Télécharger un mandat imprimable</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mdl-mega-footer--bottom-section">
+                <div class="mdl-logo">
+                    Plus d'informations :
+                </div>
+                <ul class="mdl-mega-footer--link-list">
+                    <li><a href="@routes.UserController.showCGU()">CGU</a></li>
+                    <li><a href="@routes.HomeController.help()">Contact / Aide / Webinaire</a></li>
                 </ul>
             </div>
-        </div>
-        <div class="mdl-mega-footer--bottom-section">
-            <div class="mdl-logo">
-                Plus d'informations :
-            </div>
-            <ul class="mdl-mega-footer--link-list">
-                <li><a href="@routes.UserController.showCGU()">CGU</a></li>
-                <li><a href="@routes.HomeController.help()">Contact / Aide / Webinaire</a></li>
-            </ul>
-        </div>
-    </footer>
+        </footer>
+
+    </main>
     <div aria-live="assertive" aria-atomic="true" aria-relevant="text" class="mdl-snackbar mdl-js-snackbar">
         <div class="mdl-snackbar__text"></div>
         <button type="button" class="mdl-snackbar__action"></button>
