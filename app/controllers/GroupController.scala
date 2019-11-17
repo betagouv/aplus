@@ -9,17 +9,23 @@ import javax.inject.{Inject, Singleton}
 import models.{Area, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
+import play.api.Configuration
 import play.api.data.Form
-import play.api.data.Forms.{email, ignored, mapping, optional, text, uuid}
+import play.api.data.Forms.{email, ignored, list, mapping, optional, text, uuid}
 import play.api.mvc.{Action, AnyContent, InjectedController}
-import services.{EventService, NotificationService, UserGroupService, UserService}
+import play.libs.ws.WSClient
+import services._
+
+import scala.collection.parallel.immutable.ParSeq
 
 @Singleton
 case class GroupController @Inject()(loginAction: LoginAction,
-                                groupService: UserGroupService,
-                                notificationService: NotificationService,
-                                eventService: EventService,
-                                userService: UserService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with GroupOperators with UserOperators {
+                                     groupService: UserGroupService,
+                                     notificationService: NotificationService,
+                                     eventService: EventService,
+                                     configuration: Configuration,
+                                     ws:WSClient,
+                                     userService: UserService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with GroupOperators with UserOperators {
 
   def deleteUnusedGroupById(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
     withGroup(groupId) { group: UserGroup =>
@@ -41,6 +47,8 @@ case class GroupController @Inject()(loginAction: LoginAction,
   }
 
   def editGroup(id: UUID): Action[AnyContent] = loginAction { implicit request =>
+    val Host = configuration.underlying.getString("geoplus.host")
+
     withGroup(id) { group: UserGroup =>
       if (!group.canHaveUsersAddedBy(request.currentUser)) {
         eventService.warn("EDIT_GROUPE_UNAUTHORIZED", s"Accès non autorisé à l'edition de ce groupe")
@@ -49,7 +57,14 @@ case class GroupController @Inject()(loginAction: LoginAction,
         val groupUsers = userService.byGroupIds(List(id))
         eventService.info("EDIT_GROUP_SHOWED", s"Visualise la vue de modification du groupe")
         val isEmpty = groupService.isGroupEmpty(group.id)
-        Ok(views.html.editGroup(request.currentUser, request.currentArea)(group, groupUsers, isEmpty))
+        val areas: ParSeq[(String, String)] = for {
+          code <- group.inseeCode.par
+        } yield {
+          val url = s"https://${Host}/bycode/?code=$code"
+          code -> ws.url(url).get().toCompletableFuture.get().getBody
+        }
+        val zoneAsJson = areas.map({ case (code, name) => s"""{ "code": "$code", "name": "$name" }""" }).mkString("[", ",", "]")
+        Ok(views.html.editGroup(request.currentUser, request.currentArea)(group, groupUsers, isEmpty, zoneAsJson, Host))
       }
     }
   }
@@ -105,7 +120,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
       "id" -> ignored(UUID.randomUUID()),
       "name" -> text(maxLength = 50),
       "description" -> optional(text),
-      "insee-code" -> text,
+      "insee-code" -> list(text),
       "creationDate" -> ignored(DateTime.now(timeZone)),
       "create-by-user-id" -> ignored(request.currentUser.id),
       "area" -> uuid.verifying("Vous devez sélectionner un territoire sur lequel vous êtes admin", area => request.currentUser.areas.contains(area)),
