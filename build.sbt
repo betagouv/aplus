@@ -28,7 +28,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-mailer-guice" % "7.0.0",
   "com.typesafe.play" %% "play-json-joda" % "2.6.13",
   "net.jcazevedo" %% "moultingyaml" % "0.4.0",
-  "com.google.guava" % "guava" % "25.1-jre",
+  "com.google.guava" % "guava" % "28.1-jre",
   ws
 )
 // UI
