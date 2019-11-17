@@ -13,8 +13,6 @@ import anorm.JodaParameterMetaData._
 @javax.inject.Singleton
 class UserGroupService @Inject()(configuration: play.api.Configuration, db: Database) {
 
-  import extentions.Anorm._
-
   private val simpleUserGroup: RowParser[UserGroup] = Macro.parser[UserGroup](
     "id",
     "name",
@@ -34,7 +32,7 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
          ${group.id}::uuid,
          ${group.name},
          ${group.description},
-         ${group.inseeCode},
+         array[${group.inseeCode}]::character varying(5)[],
          ${group.creationDate},
          ${group.createByUserId}::uuid,
          ${group.area}::uuid,
@@ -49,7 +47,7 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
           UPDATE user_group SET
           name = ${group.name},
           description = ${group.description},
-          insee_code = ${group.inseeCode},
+          insee_code = array[${group.inseeCode}]::character varying(5)[],
           organisation = ${group.organisation},
           area = ${group.area}::uuid,
           email = ${group.email}
