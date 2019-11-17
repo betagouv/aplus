@@ -47,7 +47,7 @@ jobs:
       # run tests!
       - run: cat /dev/null | sbt coverage test coverageReport 
       # Upload coverage
-      - run: "[[ -v CODACY_PROJECT_TOKEN ]] && cat /dev/null | sbt codacyCoverage"
+      - run: "[[ -v CODACY_PROJECT_TOKEN ]] && cat /dev/null | sbt codacyCoverage || true"
       
       - store_test_results:
           path: target/test-reports

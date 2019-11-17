@@ -21,14 +21,14 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.2.2",
-  "org.playframework.anorm" %% "anorm" % "2.6.2",
-  "com.typesafe.play" %% "play-mailer" % "7.0.0",
-  "com.sun.mail" % "javax.mail" % "1.6.1",
-  "com.typesafe.play" %% "play-mailer-guice" % "7.0.0",
-  "com.typesafe.play" %% "play-json-joda" % "2.6.13",
+  "org.postgresql" % "postgresql" % "42.2.8",
+  "org.playframework.anorm" %% "anorm" % "2.6.5",
+  "com.typesafe.play" %% "play-mailer" % "7.0.1",
+  "com.sun.mail" % "javax.mail" % "1.6.2",
+  "com.typesafe.play" %% "play-mailer-guice" % "7.0.1",
+  "com.typesafe.play" %% "play-json-joda" % "2.6.14",
   "net.jcazevedo" %% "moultingyaml" % "0.4.0",
-  "com.google.guava" % "guava" % "25.1-jre",
+  "com.google.guava" % "guava" % "28.1-jre",
   ws
 )
 // UI
@@ -36,13 +36,13 @@ libraryDependencies ++= Seq(
   "org.webjars" %% "webjars-play" % "2.6.3",
   "org.webjars.bower" % "material-design-lite" % "1.3.0",
   "org.webjars" % "material-design-icons" % "3.0.1",
-  "org.webjars.npm" % "roboto-fontface" % "0.9.0",
-  "org.webjars.npm" % "dialog-polyfill" % "0.4.9",
+  "org.webjars.npm" % "roboto-fontface" % "0.10.0",
+  "org.webjars.npm" % "dialog-polyfill" % "0.4.10",
   "org.webjars.npm" % "twemoji" % "2.5.1",
-  "org.webjars" % "chartjs" % "2.7.2"
+  "org.webjars" % "chartjs" % "2.7.3"
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.5"
+libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.28"
 
 // Adds additional packages into Twirl
 
