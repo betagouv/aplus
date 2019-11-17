@@ -7,7 +7,7 @@ import org.joda.time.DateTime
 case class UserGroup(id: UUID,
                      name: String,
                      description: Option[String],
-                     inseeCode: String,
+                     inseeCode: List[String],
                      creationDate: DateTime,
                      createByUserId: UUID,
                      area: UUID,
