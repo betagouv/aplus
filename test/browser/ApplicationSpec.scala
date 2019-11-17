@@ -26,7 +26,7 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
       val instructorGroup = UserGroup(
         id = UUIDHelper.randomUUID,
         name = s"Group $number",
-        inseeCode = "0",
+        inseeCode = List("0"),
         creationDate = Time.now(),
         createByUserId = UUIDHelper.namedFrom("julien"),
         area = area,
