@@ -19,6 +19,7 @@ jobs:
       # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx3200m
       TERM: dumb
+      GEOPLUS_HOST: geoplus.aplus.beta.gouv.fr
     
     steps:
       - checkout
@@ -44,8 +45,10 @@ jobs:
           key: v2-dependencies--{{ checksum "build.sbt" }}
         
       # run tests!
-      - run: cat /dev/null | sbt coverage test coverageReport codacyCoverage
-
+      - run: cat /dev/null | sbt coverage test coverageReport 
+      # Upload coverage
+      - run: "[[ -v CODACY_PROJECT_TOKEN ]] && cat /dev/null | sbt codacyCoverage"
+      
       - store_test_results:
           path: target/test-reports
 
