@@ -14,8 +14,8 @@
                     <th class="mdl-data-table__cell--non-numeric">Admin de zone</th>
                 }
                 <th class="mdl-data-table__cell--non-numeric">Responsable groupe</th>
-                <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
-                <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
+                <th class="mdl-data-table__cell--non-numeric">Instructeur</th>
+                <th class="mdl-data-table__cell--non-numeric">Aidant</th>
                 <th class="mdl-data-table__cell--non-numeric">CGU validé</th>
                 @if(currentUser.admin) {
                     <th class="mdl-data-table__cell--non-numeric">Email de login</th>
@@ -53,7 +53,7 @@
             <td class="mdl-data-table__cell--non-numeric">
                 <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
                     <input type="checkbox" class="mdl-checkbox__input" @if(user.instructor){ checked } disabled>
-                    <span class="mdl-checkbox__label">Agent</span>
+                    <span class="mdl-checkbox__label">Instructeur</span>
                 </label>
             </td>
             <td class="mdl-data-table__cell--non-numeric">

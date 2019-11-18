@@ -31,12 +31,12 @@
     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
     } <br>
     @helper.input(form("communeCode"), 'label -> "Code INSEE commune") { (id, name, value, args) =>
-    <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) minlength="0" maxlength="5" pattern="[0-9AB]*">
+    <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) disabled>
     } <br>
     @helper.input(form("email"), 'label -> "Email") { (id, name, value, args) =>
     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
     }
-    @helper.checkbox(form("instructor"), 'type -> "checkbox", 'label -> "Agent", 'class -> "mdl-checkbox__input")
+    @helper.checkbox(form("instructor"), 'type -> "checkbox", 'label -> "Instructeur", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("helper"), 'type -> "checkbox", 'label -> "Aidant", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("adminGroup"), 'type -> "checkbox", 'label -> "Responsable de ces groupes", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("disabled"), 'type -> "checkbox", 'label -> "Désactiver l'utilisateur", 'class -> "mdl-checkbox__input")
@@ -55,7 +55,7 @@
       @helper.input(field("email"), 'label -> "Email", 'class -> "mdl-cell mdl-cell--12-col") { (id, name, value, args) =>
           <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
       } <br>
-        <p>Pourra agir au nom de l'agent</p>
+        <p>Pourra agir au nom de l'utilisateur</p>
        <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--12-col" type="button" onclick="deleteDelegation(this);">
           Supprimer
        </button>
@@ -137,7 +137,7 @@
                         <input class="mdl-textfield__input" type="text" name="users['+userIndex+'].delegations['+countDelegation+'].email" id="users_'+userIndex+'_delegations_0_email" value="" label="Email" class="mdl-cell mdl-cell--12-col"> \
                         <label class="mdl-textfield__label" for="users_'+userIndex+'_delegations_'+countDelegation+'_email">Email</label> \
                     </div><br>  \
-                    <p>Pourra agir au nom de l\'agent</p>  \
+                    <p>Pourra agir au nom de l\'utilisateur</p>  \
                     <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--12-col" type="button" onclick="deleteDelegation(this);">  \
                     Supprimer  \
                     </button>';

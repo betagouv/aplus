@@ -254,7 +254,7 @@
                                 labels: [@Html(applicationsGroupByMonths.map(s => s"'${s._1}'").mkString(", "))],
                                 datasets: [@for((area, apps) <- allApplications) {
                                         {
-                                            label: "@if(user.areas.length > 1){ @area.name } else { Mes agents }",
+                                            label: "@if(user.areas.length > 1){ @area.name } else { Mes utilisateurs }",
                                             lineTension: 0,
                                             borderColor: adminReceivedColors.pop(),
                                             backgroundColor: adminReceivedColors.pop(),
@@ -482,7 +482,7 @@
                         });
                     </script>
                     <details class="mdl-cell mdl-cell--12-col">
-                        <summary>Détail des demandes reçues par les agents d'administrations </summary>
+                        <summary>Détail des demandes reçues par les instructeurs d'administrations </summary>
 
                         @defining(newApplicationsPerMonth.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
                             <div class="chart-container">

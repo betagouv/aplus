@@ -3,7 +3,7 @@
 @(user: User, area: Area)(form: Form[(List[User])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
-@main(user, area, false)(s"Gestion des utilisateurs ${area.name}") {
+@main(user, area, false)(s"Gestion des utilisateurs") {
     @webJarsUtil.locate("dialog-polyfill.css").css()
   <style>
           .pem-table {
@@ -51,10 +51,9 @@
           <th></th>
           <th class="mdl-data-table__cell--non-numeric">Nom et prénom</th>
           <th class="mdl-data-table__cell--non-numeric">Qualité</th>
-          <th class="mdl-data-table__cell--non-numeric">Code commune</th>
           <th class="mdl-data-table__cell--non-numeric">Email</th>
-          <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
-          <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
+          <th class="mdl-data-table__cell--non-numeric">Instructeur</th>
+          <th class="mdl-data-table__cell--non-numeric">Aidant</th>
         </tr>
       </thead>
       <tbody>
@@ -75,18 +74,13 @@
               <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
             }
           </td>
-          <td class="mdl-data-table__cell--non-numeric smaller-textfield">
-            @helper.input(userField("communeCode"), 'label -> "Code INSEE commune") { (id, name, value, args) =>
-                <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) minlength="0" maxlength="5" pattern="[0-9AB]*">
-            }
-          </td>
           <td class="mdl-data-table__cell--non-numeric">
             @helper.input(userField("email"), 'label -> "Email") { (id, name, value, args) =>
               <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
             }
           </td>
           <td>
-            @helper.checkbox(userField("instructor"), 'type -> "checkbox", 'label -> "Agent", 'class -> "mdl-checkbox__input")
+            @helper.checkbox(userField("instructor"), 'type -> "checkbox", 'label -> "Instructeur", 'class -> "mdl-checkbox__input")
           </td>
           <td>
             @helper.checkbox(userField("helper"), 'type -> "checkbox", 'label -> "Aidant", 'class -> "mdl-checkbox__input")
@@ -98,8 +92,8 @@
                   <th class="mdl-data-table__cell--non-numeric">Nom</th>
                   <th class="mdl-data-table__cell--non-numeric">Qualité</th>
                   <th class="mdl-data-table__cell--non-numeric">Email</th>
-                  <th class="mdl-data-table__cell--non-numeric">Agent A+</th>
-                  <th class="mdl-data-table__cell--non-numeric">Aidant A+</th>
+                  <th class="mdl-data-table__cell--non-numeric">Instructeur</th>
+                  <th class="mdl-data-table__cell--non-numeric">Aidant</th>
               </tr>
           }
       }
