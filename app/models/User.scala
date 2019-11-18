@@ -28,7 +28,7 @@ case class User(id: UUID,
   def nameWithQualite = s"$name ( $qualite )"
 
   def canBeEditedBy(user: User): Boolean =
-    (user.admin && user.areas.intersect(user.areas).nonEmpty)
+    user.admin && user.areas.intersect(user.areas).nonEmpty
 
   def canSeeUsersInArea(areaId: UUID): Boolean =
     (areaId == Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
@@ -82,27 +82,32 @@ object User {
     User(UUIDHelper.namedFrom("yan"), Hash.sha256(s"yan - disabled"), "Yan TANGUY (disabled)", "Aide A+", "yan.tanguy@dila.gouv.fr", false, false, false, List(), date, false, "75056", false, disabled = true),
     User(UUIDHelper.namedFrom("pierre"), Hash.sha256(s"pierre -disabled"), "Pierre MOMBOISSE (disabled)", "Aide A+", "pierre.momboisse@beta.gouv.fr", false, false, false, List(), date, false, "75056", false, disabled = true),
     User(UUIDHelper.namedFrom("dominique"), Hash.sha256(s"dominique - disabled"), "Dominique LEQUEPEYS (disabled)", "Aide A+", "dominique.lequepeys@beta.gouv.fr", false, false, false, List(), date, false, "75056", false, disabled = true),
-    User(UUIDHelper.namedFrom("sylvain"), Hash.sha256(s"sylvain"), "Sylvain DERMY", "Expert A+", "sylvain.dermy@beta.gouv.fr", true, false, true, Area.all.map(_.id), date, true, "75056", true, expert = true, cguAcceptationDate = Some(date), disabled = true),
+    User(UUIDHelper.namedFrom("sylvain"), Hash.sha256(s"sylvain - disabled"), "Sylvain DERMY", "Expert A+", "sylvain.dermy@beta.gouv.fr", false, false, false, List.empty, date, false, "75056", false, cguAcceptationDate = Some(date), disabled = true),
   )
 
-  // "Id", "Nom", "Qualité", "Email", "Création","Aidant","Instructeur","Responsable","Expert","Admin","Actif","Commune INSEE", "Territoires","Groupes", "CGU", "Newsletter")
+  // "Id", "Nom", "Qualité", "Email", "Création", "Aidant", "Instructeur", "Responsable", "Expert", "Actif",
+  // "Commune INSEE", "Territoires", "Groupes", "CGU", "Newsletter"
   def fromMap(values: Map[String, String]): Option[User] = {
     val id = values.get("Id").flatMap(UUIDHelper.fromString).getOrElse(UUIDHelper.randomUUID)
     val key = "key"
-    for {name <- values.get("Nom")
-         email <- values.get("Email")
-         qualite <- values.get("Qualité")
-         helper = values.get("Aidant").contains("Aidant")
-         instructor = values.get("Instructeur").contains("Instructeur")
-         admin = false
-         areas = List()
-         creationDate = Time.now()
-         hasAcceptedCharte = false
-         communeCode = values.getOrElse("Commune INSEE", "000")
-         groupAdmin = values.get("Responsable").contains("Responsable")
-         disabled = values.get("Actif").contains("Désactivé")
-         expert = values.get("Expert").contains("Expert")
-         } yield User(id, key, name, qualite, email, helper, instructor, admin, areas, creationDate,
-      hasAcceptedCharte, communeCode, groupAdmin, disabled, expert = expert)
+    val admin = false
+    val hasAcceptedCharte = false
+    val areas = List.empty[UUID]
+    val groupIds = List.empty[UUID]
+    val creationDate = Time.now()
+    for {
+      name <- values.get("Nom")
+      email <- values.get("Email")
+      qualite <- values.get("Qualité")
+      helper = values.get("Aidant").contains("Aidant")
+      instructor = values.get("Instructeur").contains("Instructeur")
+      communeCode = values.getOrElse("Commune INSEE", "000")
+      groupAdmin = values.get("Responsable").contains("Responsable")
+      disabled = values.get("Actif").contains("Désactivé")
+      expert = values.get("Expert").contains("Expert")
+    } yield User(id = id, key = key, name = name, qualite = qualite, email = email, helper = helper,
+      instructor = instructor, admin = admin, areas = areas, creationDate = creationDate,
+      hasAcceptedCharte = hasAcceptedCharte, communeCode = communeCode, groupAdmin = groupAdmin, disabled = disabled,
+      expert = expert, groupIds = groupIds)
   }
 }

@@ -81,6 +81,16 @@ object Operators {
       }
     }
 
+    def asUserWhoSeesUsersOfArea(areaId: UUID)(event: () => (String, String))(payload: () => play.api.mvc.Result)(implicit request: RequestWithUserData[AnyContent]): Result = {
+      if (not(request.currentUser.canSeeUsersInArea(areaId))) {
+        val (code, description) = event()
+        eventService.warn(code, description = description)
+        Unauthorized("Vous n'avez pas le droit de faire ça")
+      } else {
+        payload()
+      }
+    }
+
     def asAdminOfUserZone(user: User)(event: () => (String, String))(payload: () => play.api.mvc.Result)(implicit request: RequestWithUserData[AnyContent]): play.api.mvc.Result = {
       if (not(request.currentUser.admin)) {
         val (code, description) = event()
