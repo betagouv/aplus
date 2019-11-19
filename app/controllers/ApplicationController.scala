@@ -140,7 +140,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
              if(applicationData.mandat == "numerique"){
                val executorName = request.currentUser.groupIds.headOption.map(userGroupService.groupById) match {
                  case Some(group) =>
-                    s"La structure $group.name"
+                    s"La structure ${group.name}"
                  case None =>
                     request.currentUser.name
                }
