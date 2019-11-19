@@ -15,10 +15,10 @@
 de réalisation de démarches administratives numériques
 au bénéfice d’une personne aidée</b>
 
-@application.userName, @application.userInfos.get(Application.USER_BIRTHNAME_KEY).map(birthName => s"nom de naissance $birthName ,").getOrElse("") @application.userInfos.get(Application.USER_BIRTHDAY_KEY).map(date => s"né(e) le/en $date ,").get rElse("") @application.userInfos.get(Application.USER_CITY_KEY).map(city => s"demeurant à $city ,").getOrElse("") @application.userInfos.get(Application.USER_MOBILE_PHONE_NUMBER_KEY).map(phone => s"tel $phone ,").getOrElse("")
+@application.userName, @application.userInfos.get(Application.USER_BIRTHNAME_KEY).map(birthName => s"nom de naissance $birthName ,").getOrElse("") @application.userInfos.get(Application.USER_BIRTHDAY_KEY).map(date => s"né(e) le/en $date ,").getOrElse("") @application.userInfos.get(Application.USER_CITY_KEY).map(city => s"demeurant à $city ,").getOrElse("") @application.userInfos.get(Application.USER_MOBILE_PHONE_NUMBER_KEY).map(phone => s"tel $phone ,").getOrElse("")
 reconnaît avoir mandaté :
 
-@executorName pour réaliser les démarches administratives numériques permettant de résoudre la demande relatif à @application.subject
+@executorName pour réaliser les démarches administratives numériques permettant de résoudre la demande relative à @application.subject
 
 A cette fin, @application.userName autorise :
 @executorName à utiliser ses données à caractère personnel suivantes : @for(key <- application.userInfos.keys) {
@@ -37,7 +37,7 @@ A cette fin, @application.userName autorise :
   3) détruire, dès la réalisation de ces démarches, les données à caractère personnel en sa possession
 
 Le présent mandat prend fin à compter de la réalisation des démarches précitées. A défaut, il est valable pour une durée d’un an renouvelable.
-    </pre>
+</pre>
        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-validation" style="height: unset;">
                 <input type="checkbox" id="checkbox-validation" name="validate" class="mdl-checkbox__input" value="true">
                 <span class="mdl-checkbox__label">Moi @application.userName, j’atteste avoir pris connaissance du mandat.</span>
