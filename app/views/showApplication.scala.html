@@ -290,7 +290,7 @@ dialog {
                     <div class="mdl-card mdl-cell mdl-cell--10-col mdl-cell--12-col-phone @if(answer.creatorUserID == user.id){ mdl-cell--2-offset mdl-cell--0-offset-phone } answer" id="answer-@answer.id">
                         <div class="mdl-card__supporting-text mdl-card--border @if(!answer.visibleByHelpers){ mdl-color--grey-50 }" >
                             @if(!answer.visibleByHelpers) {
-                                <div id="reserved-@answer.id" class="vertical-align--middle">Réponse réservée aux agents
+                                <div id="reserved-@answer.id" class="vertical-align--middle">Réponse réservée aux instructeurs
                                     <i class="icon material-icons icon--light">info</i>
                                 </div>
                                 <div class="mdl-tooltip" for="reserved-@answer.id">
@@ -332,7 +332,7 @@ dialog {
                             <p class="application__message">@answer.message</p>
                             @if(application.answers.last == answer && application.creatorUserId == user.id && !application.closed && answer.creatorUserID != user.id) {
                                 <div class="info-box do-not-print">
-                                Si l'agent a répondu à votre demande, vous pouvez clore la demande:<br><br>
+                                Si l'instructeur a répondu à votre demande, vous pouvez clore la demande:<br><br>
                                 <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="showDialog()" >
                                         Clore la demande
                                 </button> <br><br>
@@ -419,7 +419,7 @@ dialog {
                                         <div id="private-answer" class="mdl-cell mdl-cell--12-col">
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
                                                 <input type="checkbox" class="mdl-checkbox__input" name="privateToHelpers" value="true">
-                                                <span class="mdl-checkbox__label">Restreindre le message aux Agents Administration+ </span> <i class="icon material-icons icon--light">info</i>
+                                                <span class="mdl-checkbox__label">Restreindre le message aux instructeurs Administration+ </span> <i class="icon material-icons icon--light">info</i>
                                             </label>
                                         </div>
                                         <div class="mdl-tooltip" for="private-answer">

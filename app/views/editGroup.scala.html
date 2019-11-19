@@ -11,6 +11,7 @@
     <script src='@routes.Assets.versioned("javascripts/group-autocomplete.js")'></script>
 } {
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
+        <span class="mdl-cell mdl-cell--12-col">Territoire : <a href="@routes.UserController.all(userGroup.area)#group-@userGroup.id">@{Area.fromId(userGroup.area).get.name}</a> / Groupe :  @userGroup.name </span>
         @helper.form(routes.GroupController.editGroupPost(userGroup.id), 'method -> "post") {
             @helper.CSRF.formField
             <div class="mdl-cell mdl-cell--12-col  mdl-textfield mdl-js-textfield mdl-textfield--floating-label">

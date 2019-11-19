@@ -97,14 +97,14 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
 
   private def generateFooter(user: User): String = {
     val delegates = if(user.delegations.nonEmpty) {
-      s"- Les personnes suivantes ont une délégation sur votre compte agent : <b>${user.delegations.map { case (name, email) => s"$name &#x3C;$email&#x3E;" }.mkString(", ")}</b>. (Elles peuvent agir en votre nom sur le réseau A+)<br>"
+      s"- Les personnes suivantes ont une délégation sur votre compte utilisateur : <b>${user.delegations.map { case (name, email) => s"$name &#x3C;$email&#x3E;" }.mkString(", ")}</b>. (Elles peuvent agir en votre nom sur le réseau A+)<br>"
     } else {
       ""
     }
     s"""<br><br>
        |<b>Ne transférez pas cet email et n'y répondez pas directement.</b><br><i>
        |$delegates
-       |- Vous pouvez transférer la demande à un autre agent en ouvrant le lien ci-dessus<br>
+       |- Vous pouvez transférer la demande à un autre utilisateur en ouvrant le lien ci-dessus<br>
        |- Si vous avez un problème ou besoin d'aide à propos de l'outil Administration+, contactez-nous sur <a href="mailto:contact@aplus.beta.gouv.fr">contact@aplus.beta.gouv.fr</a></i>
      """.stripMargin
   }

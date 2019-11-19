@@ -49,7 +49,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       "subject" -> nonEmptyText.verifying(maxLength(150)),
       "description" -> nonEmptyText,
       "infos" -> FormsPlusMap.map(nonEmptyText.verifying(maxLength(30))),
-      "users" -> list(uuid).verifying("Vous devez sélectionner au moins un agent", _.nonEmpty),
+      "users" -> list(uuid).verifying("Vous devez sélectionner au moins une structure", _.nonEmpty),
       "organismes" -> list(text),
       "category" -> optional(text),
       "selected-subject" -> optional(text)
@@ -447,15 +447,15 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             Some(Map()))
           if (applicationService.add(applicationId, answer)  == 1) {
             notificationsService.newAnswer(application, answer)
-            eventService.info("AGENTS_ADDED", s"L'ajout d'agent ${answer.id} a été créé sur la demande $applicationId", Some(application))
-            Redirect(routes.ApplicationController.myApplications()).flashing ("success" -> "Les agents ont été invités sur la demande")
+            eventService.info("AGENTS_ADDED", s"L'ajout d'utilisateur ${answer.id} a été créé sur la demande $applicationId", Some(application))
+            Redirect(routes.ApplicationController.myApplications()).flashing ("success" -> "Les utilisateurs ont été invités sur la demande")
           } else {
-            eventService.error("AGENTS_NOT_ADDED", s"L'ajout d'agent ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
-            InternalServerError("Les agents n'ont pas pu être invités")
+            eventService.error("AGENTS_NOT_ADDED", s"L'ajout d'utilisateur ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
+            InternalServerError("Les utilisateurs n'ont pas pu être invités")
           }
         } else {
-          eventService.warn("ADD_AGENTS_UNAUTHORIZED", s"L'invitation d'agents pour la demande $applicationId n'est pas autorisé", Some(application))
-          Unauthorized("Vous n'avez pas les droits suffisants pour inviter des agents à cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+          eventService.warn("ADD_AGENTS_UNAUTHORIZED", s"L'invitation d'utilisateurs pour la demande $applicationId n'est pas autorisé", Some(application))
+          Unauthorized("Vous n'avez pas les droits suffisants pour inviter des utilisateurs à cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
         }
     }
   }
@@ -484,11 +484,11 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             eventService.info("ADD_EXPERT_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
             Redirect(routes.ApplicationController.myApplications()).flashing ("success" -> "Un expert a été invité sur la demande")
           } else {
-            eventService.error("ADD_EXPERT_NOT_CREATED", s"L'invitation d'agents ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
+            eventService.error("ADD_EXPERT_NOT_CREATED", s"L'invitation d'experts ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
             InternalServerError("L'expert n'a pas pu être invité")
           }
         } else {
-          eventService.warn("ADD_EXPERT_UNAUTHORIZED", s"L'invitation d'agents pour la demande $applicationId n'est pas autorisé", Some(application))
+          eventService.warn("ADD_EXPERT_UNAUTHORIZED", s"L'invitation d'experts pour la demande $applicationId n'est pas autorisé", Some(application))
           Unauthorized("Vous n'avez pas les droits suffisants pour inviter des agents à cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
         }
     }
