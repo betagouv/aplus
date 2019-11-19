@@ -15,10 +15,10 @@
 de réalisation de démarches administratives numériques
 au bénéfice d’une personne aidée</b>
 
-@application.userName, @application.userInfos.get(Application.USER_BIRTHNAME_KEY).map(birthName => s"aillant pour nom de naissance $birthName ,").getOrElse("") @application.userInfos.get(Application.USER_BIRTHDAY_KEY).map(date => s"né le/en $date ,").getOrElse("") @application.userInfos.get(Application.USER_CITY_KEY).map(city => s"habitant $city ,").getOrElse("") @application.userInfos.get(Application.USER_MOBILE_PHONE_NUMBER_KEY).map(phone => s"tel $phone ,").getOrElse("")
+@application.userName, @application.userInfos.get(Application.USER_BIRTHNAME_KEY).map(birthName => s"nom de naissance $birthName ,").getOrElse("") @application.userInfos.get(Application.USER_BIRTHDAY_KEY).map(date => s"né(e) le/en $date ,").get rElse("") @application.userInfos.get(Application.USER_CITY_KEY).map(city => s"demeurant à $city ,").getOrElse("") @application.userInfos.get(Application.USER_MOBILE_PHONE_NUMBER_KEY).map(phone => s"tel $phone ,").getOrElse("")
 reconnaît avoir mandaté :
 
-@executorName pour réaliser les démarches administrative numérique permettant de résoudre la demande aillant pour sujet @application.subject
+@executorName pour réaliser les démarches administratives numériques permettant de résoudre la demande relatif à @application.subject
 
 A cette fin, @application.userName autorise :
 @executorName à utiliser ses données à caractère personnel suivantes : @for(key <- application.userInfos.keys) {
@@ -27,8 +27,8 @@ A cette fin, @application.userName autorise :
 
 @executorName a rappelé à @application.userName :
   - l’objet de l’intervention
-  - la raison pour laquelle ses informations sont collectées et leur utilité
-  - l’existence de droits sur ses données (accès, rectification, suppression, etc.
+  - la raison pour laquelle ces informations sont collectées et leur utilité
+  - l’existence de droits sur ses données (accès, rectification, suppression, etc.)
   - la possibilité pour l’usager de retirer à tout moment son consentement
 
 @executorName s’engage à :
