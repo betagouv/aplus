@@ -138,7 +138,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                category = applicationData.category,
                files = file.toMap)
              if(applicationData.mandat == "numerique"){
-               val executorName = request.currentUser.groupIds.headOption.map(userGroupService.groupById) match {
+               val executorName = request.currentUser.groupIds.headOption.flatMap(userGroupService.groupById) match {
                  case Some(group) =>
                     s"La structure ${group.name}"
                  case None =>
