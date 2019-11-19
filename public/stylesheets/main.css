@@ -335,3 +335,13 @@ ul#group-area-container li {
     border-radius: 1em;
     background-color: white;
 }
+
+.ariane {
+    font-weight: bold;
+    font-size: 19px;
+}
+
+.text--font-size-medium {
+    font-size: 16px;
+    font-weight: 400;
+}
