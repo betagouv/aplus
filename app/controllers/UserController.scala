@@ -3,7 +3,7 @@ package controllers
 import java.util.{Locale, UUID}
 
 import javax.inject.{Inject, Singleton}
-import actions.LoginAction
+import actions.{LoginAction, RequestWithUserData}
 import extentions.Operators.{GroupOperators, UserOperators, not}
 import extentions.{Time, UUIDHelper}
 import models.{Area, User, UserGroup}
@@ -13,13 +13,15 @@ import org.webjars.play.WebJarsUtil
 import play.api.Configuration
 import play.api.data.{Form, Mapping}
 import play.api.data.Forms.{optional, text, tuple}
-import play.api.mvc.{Action, AnyContent, Call, InjectedController}
+import play.api.mvc.{Action, AnyContent, Call, InjectedController, Result}
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
 import services.{ApplicationService, EventService, NotificationService, UserGroupService, UserService}
 import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import com.github.tototoshi.csv._
+import csvImport.{CSVImportError, GroupImport, UserImport}
+
 import scala.io.Source
 
 @Singleton
@@ -31,7 +33,7 @@ case class UserController @Inject()(loginAction: LoginAction,
                                     configuration: Configuration,
                                     eventService: EventService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport with UserOperators with GroupOperators {
 
-  def all(areaId: UUID): Action[AnyContent] = loginAction { implicit request =>
+  def all(areaId: UUID): Action[AnyContent] = loginAction { implicit request: RequestWithUserData[AnyContent] =>
     asUserWhoSeesUsersOfArea(areaId) { () =>
       "ALL_USER_UNAUTHORIZED" -> "Accès non autorisé à l'admin des utilisateurs"
     } { () =>
@@ -58,7 +60,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     }
   }
 
-  def allCSV(areaId: java.util.UUID): Action[AnyContent] = loginAction { implicit request =>
+  def allCSV(areaId: java.util.UUID): Action[AnyContent] = loginAction { implicit request: RequestWithUserData[AnyContent] =>
     asAdminWhoSeesUsersOfArea(areaId) { () =>
       "ALL_USER_CSV_UNAUTHORIZED" -> "Accès non autorisé à l'export utilisateur"
     } { () =>
@@ -97,7 +99,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     }
   }
 
-  def editUser(userId: UUID): Action[AnyContent] = loginAction { implicit request =>
+  def editUser(userId: UUID): Action[AnyContent] = loginAction { implicit request: RequestWithUserData[AnyContent] =>
     asAdmin { () =>
       "VIEW_USER_UNAUTHORIZED" -> s"Accès non autorisé pour voir $userId"
     } { () =>
@@ -176,33 +178,31 @@ case class UserController @Inject()(loginAction: LoginAction,
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
         implicit val area: Area = Area.fromId(group.area).get
-        usersForm(Time.dateTimeZone).bindFromRequest.fold(
-          formWithErrors => {
-            eventService.error("ADD_USER_ERROR", "Essai d'ajout d'utilisateurs avec des erreurs de validation")
-            BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost(groupId)))
-          },
-          users => {
-            try {
-              if (userService.add(users.map(_.copy(groupIds = List(groupId))))) {
-                eventService.info("ADD_USER_DONE", "Utilisateurs ajouté")
-                Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
-              } else {
-                val form = usersForm(Time.dateTimeZone).fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
-                eventService.error("ADD_USER_ERROR", "Impossible d'ajouter des utilisateurs dans la BDD 1")
-                InternalServerError(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
-              }
-            } catch {
-              case ex: PSQLException =>
-                val EmailErrorPattern = """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
-                val errorMessage = EmailErrorPattern.findFirstIn(ex.getServerErrorMessage.toString) match {
-                  case Some(email) => s"Un utilisateur avec l'adresse $email existe déjà."
-                  case _ => "Erreur d'insertion dans la base de donnée : contacter l'administrateur."
-                }
-                val form = usersForm(Time.dateTimeZone).fill(users).withGlobalError(errorMessage)
-                eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}")
-                BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
+        usersForm(Time.dateTimeZone).bindFromRequest.fold({ formWithErrors =>
+          eventService.error("ADD_USER_ERROR", "Essai d'ajout d'utilisateurs avec des erreurs de validation")
+          BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost(groupId)))
+        }, { users =>
+          try {
+            if (userService.add(users.map(_.copy(groupIds = List(groupId))))) {
+              eventService.info("ADD_USER_DONE", "Utilisateurs ajouté")
+              Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
+            } else {
+              val form = usersForm(Time.dateTimeZone).fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
+              eventService.error("ADD_USER_ERROR", "Impossible d'ajouter des utilisateurs dans la BDD 1")
+              InternalServerError(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
             }
+          } catch {
+            case ex: PSQLException =>
+              val EmailErrorPattern = """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
+              val errorMessage = EmailErrorPattern.findFirstIn(ex.getServerErrorMessage.toString) match {
+                case Some(email) => s"Un utilisateur avec l'adresse $email existe déjà."
+                case _ => "Erreur d'insertion dans la base de donnée : contacter l'administrateur."
+              }
+              val form = usersForm(Time.dateTimeZone).fill(users).withGlobalError(errorMessage)
+              eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}")
+              BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
           }
+        }
         )
       }
     }
@@ -294,6 +294,21 @@ case class UserController @Inject()(loginAction: LoginAction,
     )
   )
 
+  def groupMapping(timeZone: DateTimeZone): Mapping[UserGroup] = mapping(
+    "id" -> optional(uuid).transform[UUID](_.getOrElse(UUID.randomUUID()), Option.apply),
+    "name" -> nonEmptyText.verifying(maxLength(100)),
+    "description" -> optional(nonEmptyText.verifying(maxLength(100))),
+    "areas" -> list(nonEmptyText),
+    "creationDate" -> ignored(DateTime.now(timeZone)),
+    "createByUserId" -> uuid,
+    "area" -> uuid,
+    "organisation" -> optional(nonEmptyText),
+    "email" -> optional(email.verifying(maxLength(200), nonEmpty)))((id: UUID, name: String, description: Option[String], areas: List[String], creation: DateTime, createByUserId: UUID, area: UUID, organisation: Option[String], email: Option[String]) =>
+    UserGroup.apply(id = id, name = name, description = description, inseeCode = areas, creationDate = creation, createByUserId = createByUserId, area = area, organisation = organisation, email = email))((a: UserGroup) =>
+    Option(a).map(b => (b.id, b.name, b.description, b.inseeCode, b.creationDate, b.createByUserId, b.area, b.organisation, b.email)))
+
+  def groupsForm(mapping: Mapping[UserGroup]): Form[List[UserGroup]] = Form(single("groups" -> list(mapping)))
+
   def userForm(timeZone: DateTimeZone): Form[User] = Form(userMapping(timeZone))
 
   private def userMapping(implicit timeZone: DateTimeZone): Mapping[User] = mapping(
@@ -330,36 +345,69 @@ case class UserController @Inject()(loginAction: LoginAction,
     "newsletterAcceptationDate" -> optional(ignored(Time.now()))
   )(User.apply)(User.unapply)
 
-  val applicationsChangesForm = Form(
-    "csv" -> nonEmptyText
-  )
-  
-  def importUsers: Action[AnyContent] = loginAction { implicit request =>
+  private val csvImportContentForm = Form("csv-import-content" -> nonEmptyText)
+
+  def importUsersFromCSV: Action[AnyContent] = loginAction { implicit request =>
     asAdmin { () =>
       "IMPORT_USER_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
-      Ok(views.html.importUsers(request.currentUser, request.currentArea)(applicationsChangesForm))
+      Ok(views.html.importUsers(request.currentUser, request.currentArea)("", csvImport.NO_CONTENT -> 1))
     }
   }
 
-  def readCSV(csvText: String): List[User] = {
+  def extractFromCSV(creator: User, area: Area)(csvText: String): List[(Either[csvImport.CSVImportError, GroupImport], Either[csvImport.CSVImportError, UserImport])] = {
     implicit object SemiConFormat extends DefaultCSVFormat {
       override val delimiter = ';'
     }
     val reader = CSVReader.open(Source.fromString(csvText))
-    reader.allWithHeaders().flatMap(User.fromMap)
+    reader.allWithHeaders().map(line => GroupImport.fromCSVLine(line) -> UserImport.fromCSVLine(line))
+  }
+
+  def importUsersReview: Action[AnyContent] = {
+    loginAction { implicit request =>
+      asAdmin { () =>
+        "IMPORT_GROUP_UNAUTHORIZED" -> "Accès non autorisé pour importer les groupes"
+      } { () =>
+        csvImportContentForm.bindFromRequest.fold({ _ =>
+          BadRequest(views.html.importUsers(request.currentUser, request.currentArea)("", csvImport.NO_CONTENT -> 1))
+        }, { csvImportContent =>
+          val list = extractFromCSV(request.currentUser, request.currentArea)(csvImportContent)
+          val firstError = list.zipWithIndex.find({ case (a, _) => a._1.isLeft || a._2.isLeft })
+
+          firstError.fold[Result]({
+
+            val data = list.map(a => a._1.right.get -> a._2.right.get)
+              .groupBy(_._1)
+              .map({ case (k, v) =>
+                k.copy(existingId = groupService.groupByName(k.name).map(_.id)) -> v
+              })
+              .mapValues(_.map(_._2).distinct.map(user => user.copy(existingId = userService.byEmail(user.email).map(_.id))))
+            Ok(views.html.reviewUsersImport(request.currentUser, request.currentArea)(data))
+          })({ e: ((Either[csvImport.CSVImportError, csvImport.GroupImport], Either[csvImport.CSVImportError, csvImport.UserImport]), Int) =>
+
+            val error: (CSVImportError, Int) = (if (e._1._1.isLeft) e._1._1.left.get else e._1._2.left.get) -> (e._2 + 1)
+            BadRequest(views.html.importUsers(request.currentUser, request.currentArea)(csvImportContent, error))
+          })
+        })
+      }
+    }
   }
 
   def importUsersPost: Action[AnyContent] = loginAction { implicit request =>
     asAdmin { () =>
       "IMPORT_USER_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
-      applicationsChangesForm.bindFromRequest.fold({ formWithErrors =>
-        BadRequest(views.html.importUsers(request.currentUser, request.currentArea)(formWithErrors))
+      csvImportContentForm.bindFromRequest.fold({ _ =>
+        BadRequest(views.html.importUsers(request.currentUser, request.currentArea)("", csvImport.NO_CONTENT -> 1))
       }, { csvText =>
-        val usersParsed = readCSV(csvText)
-        val usersFormFilled = usersForm(Time.dateTimeZone)(request.currentArea).fill(usersParsed)
-        Ok(views.html.editUsers(request.currentUser, request.currentArea)(usersFormFilled, 0, routes.UserController.addPost(UUID.randomUUID())))
+        val d: String = request.session.get("data").getOrElse("")
+        import play.api.libs.json._
+        val c: JsValue = Json.parse(d).as[JsArray]
+        println(c)
+        //val data: JsArray = usersFormFilled.value.map({ users => JsArray(users.map(User.userWrites.writes)) }).getOrElse(JsArray.empty)
+        //val newSession =  session + ("data", data.toString())
+        //Ok(views.html.editUsers(request.currentUser, request.currentArea)(usersFormFilled, 0, routes.UserController.addPost(UUID.randomUUID()))).withSession(newSession)
+        Ok("")
       })
     }
   }

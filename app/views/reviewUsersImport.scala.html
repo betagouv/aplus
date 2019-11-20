@@ -1,0 +1,63 @@
+@import models._
+@import extentions.MDLForms._
+@(currentUser: User, area: Area)(data: Map[csvImport.GroupImport, List[csvImport.UserImport]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+
+@display(users: Iterable[User])(header: Html)(footer: Option[Html] = None) = {
+<table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white">
+  <thead>
+    <th class="mdl-data-table__cell--non-numeric" colspan="5">@header</th>
+  </thead>
+  <tbody>
+    @for(user <- users) {
+    <tr class="searchable-row td--clear-border">
+      @if(currentUser.admin) {
+        <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
+          <a href="@routes.UserController.editUser(user.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon"><i class="material-icons">edit</i></a>
+        </td>
+      }
+      <td class="mdl-data-table__cell--non-numeric @if(user.disabled){ text--strikethrough }">
+        <span class="application__name">@user.name</span><i></i><br><span class="application__subject">@user.qualite</span>
+      </td>
+      <td class="mdl-data-table__cell--non-numeric @if(user.disabled){ text--strikethrough }">
+        @user.email<br>
+      </td>
+      <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
+        @if(user.disabled) {
+          <span class="tag tag--disabled">Désactivé</span>
+        }
+        @if(user.groupAdmin) {
+          <span class="tag tag--responsable">Responsable</span>
+        }
+        @if(user.admin) {
+          <span class="tag tag--admin">Admin</span>
+        }
+      </td>
+      <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
+        @if(user.instructor) {
+          <span class="tag tag--instructor">Instructeur</span>
+        }
+        @if(user.helper) {
+          <span class="tag tag--aidant">Aidant</span>
+        }
+      </td>
+      <td class="mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size"></td>
+    </tr>
+    }
+  </tbody>
+  @if(footer.isDefined) {
+  <tfoot>
+    <tr>
+      <td class="mdl-data-table__cell--non-numeric" colspan="5">@footer.get</td>
+    </tr>
+    <tr class="invisible">
+      <td class="mdl-data-table__cell--non-numeric" colspan="5"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+    </tr>
+  </tfoot>
+  }
+</table>
+}
+
+@main(currentUser, area, false)("Revue d'import de groupe.") {
+} {
+
+}

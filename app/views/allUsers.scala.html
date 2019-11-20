@@ -76,9 +76,7 @@
 } {
 
   @if(currentUser.admin) {
-    <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--8-offset mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.UserController.importUsers()">
-      Importer utilisateurs
-    </a>
+    <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--8-offset mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.UserController.importUsersFromCSV()">Importer utilisateurs</a>
   }
   @if(currentUser.areas.length > 1) {
     <p class="mdl-cell mdl-cell--12-col">Territoire :
@@ -193,5 +191,6 @@
             Ajouter le groupe
           </button>
         }
+      </div>
     }
   }

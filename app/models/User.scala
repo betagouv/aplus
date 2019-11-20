@@ -4,6 +4,8 @@ import java.util.UUID
 
 import extentions.{Hash, Time, UUIDHelper}
 import org.joda.time.DateTime
+import play.api.libs.json.{JsPath, JsValue, Json, Reads, Writes}
+import play.api.libs.functional.syntax._
 
 case class User(id: UUID,
                 key: String,
@@ -85,6 +87,7 @@ object User {
     User(UUIDHelper.namedFrom("sylvain"), Hash.sha256(s"sylvain - disabled"), "Sylvain DERMY", "Expert A+", "sylvain.dermy@beta.gouv.fr", false, false, false, List.empty, date, false, "75056", false, cguAcceptationDate = Some(date), disabled = true),
   )
 
+
   // "Id", "Nom", "Qualité", "Email", "Création", "Aidant", "Instructeur", "Responsable", "Expert", "Actif",
   // "Commune INSEE", "Territoires", "Groupes", "CGU", "Newsletter"
   def fromMap(values: Map[String, String]): Option[User] = {
@@ -93,21 +96,79 @@ object User {
     val admin = false
     val hasAcceptedCharte = false
     val areas = List.empty[UUID]
-    val groupIds = List.empty[UUID]
     val creationDate = Time.now()
     for {
       name <- values.get("Nom")
       email <- values.get("Email")
       qualite <- values.get("Qualité")
-      helper = values.get("Aidant").contains("Aidant")
-      instructor = values.get("Instructeur").contains("Instructeur")
-      communeCode = values.getOrElse("Commune INSEE", "000")
-      groupAdmin = values.get("Responsable").contains("Responsable")
-      disabled = values.get("Actif").contains("Désactivé")
-      expert = values.get("Expert").contains("Expert")
-    } yield User(id = id, key = key, name = name, qualite = qualite, email = email, helper = helper,
-      instructor = instructor, admin = admin, areas = areas, creationDate = creationDate,
-      hasAcceptedCharte = hasAcceptedCharte, communeCode = communeCode, groupAdmin = groupAdmin, disabled = disabled,
-      expert = expert, groupIds = groupIds)
+    } yield {
+      val groupIds = values.get("Groupes").map(_.split(",").map(UUID.fromString).toList).getOrElse(Nil)
+      val helper = values.get("Aidant").contains("Aidant")
+      val instructor = values.get("Instructeur").contains("Instructeur")
+      val communeCode = values.getOrElse("Commune INSEE", "000")
+      val groupAdmin = values.get("Responsable").contains("Responsable")
+      val disabled = values.get("Actif").contains("Désactivé")
+      val expert = values.get("Expert").contains("Expert")
+
+      User(id = id, key = key, name = name, qualite = qualite, email = email, helper = helper,
+        instructor = instructor, admin = admin, areas = areas, creationDate = creationDate,
+        hasAcceptedCharte = hasAcceptedCharte, communeCode = communeCode, groupAdmin = groupAdmin, disabled = disabled,
+        expert = expert, groupIds = groupIds)
+    }
+  }
+
+  implicit val userWrites = new Writes[User] {
+    def writes(user: User): JsValue = Json.obj(
+      "id" -> user.id,
+      "admin" -> user.admin,
+      "areas" -> user.areas,
+      "communeCode" -> user.communeCode,
+      "disabled" -> user.disabled,
+      "email" -> user.email,
+      "expert" -> user.expert,
+      "groupAdmin" -> user.groupAdmin,
+      "groupIds" -> user.groupIds,
+      "helper" -> user.helper,
+      "instructor" -> user.instructor,
+      "key" -> user.key,
+      "name" -> user.name,
+      "qualite" -> user.qualite
+    )
+  }
+
+  implicit val userReads: Reads[User] = {
+    ((JsPath \ "id").read[UUID] and
+      (JsPath \ "admin").read[Boolean] and
+      (JsPath \ "areas").read[List[UUID]] and
+      (JsPath \ "communeCode").read[String] and
+      (JsPath \ "disabled").read[Boolean] and
+      (JsPath \ "email").read[String] and
+      (JsPath \ "expert").read[Boolean] and
+      (JsPath \ "groupAdmin").read[Boolean] and
+      (JsPath \ "groupIds").read[List[UUID]] and
+      (JsPath \ "helper").read[Boolean] and
+      (JsPath \ "instructor").read[Boolean] and
+      (JsPath \ "key").read[String] and
+      (JsPath \ "name").read[String] and
+      (JsPath \ "qualite").read[String]).apply[User]((id: UUID, admin: Boolean, areas: List[UUID], communeCode: String,
+                                                      disabled: Boolean, email: String, expert: Boolean,
+                                                      groupAdmin: Boolean, groupIds: List[UUID], helper: Boolean,
+                                                      instructor: Boolean, key: String, name: String, qualite: String) =>
+      User.apply(id = id,
+        admin = admin,
+        areas = areas,
+        communeCode = communeCode,
+        disabled = disabled,
+        email = email,
+        expert = expert,
+        groupAdmin = groupAdmin,
+        groupIds = groupIds,
+        helper = helper,
+        instructor = instructor,
+        key = key,
+        name = name,
+        qualite = qualite,
+        creationDate = Time.now(),
+        hasAcceptedCharte = false))
   }
 }

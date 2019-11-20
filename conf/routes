@@ -35,12 +35,11 @@ GET    /validation-connexion         controllers.LoginController.redirect
 
 # Users
 
-GET     /utilisateurs/:userId           controllers.UserController.editUser(userId: java.util.UUID)
-POST    /utilisateurs/:userId           controllers.UserController.editUserPost(userId: java.util.UUID)
-GET     /user/delete/unused/:userId     controllers.UserController.deleteUnusedUserById(userId: java.util.UUID)
-GET     /importation/utilisateurs       controllers.UserController.importUsers
-POST    /importation/utilisateurs       controllers.UserController.importUsersPost
-
+GET     /utilisateurs/:userId                   controllers.UserController.editUser(userId: java.util.UUID)
+POST    /utilisateurs/:userId                   controllers.UserController.editUserPost(userId: java.util.UUID)
+GET     /user/delete/unused/:userId             controllers.UserController.deleteUnusedUserById(userId: java.util.UUID)
+GET     /importation/utilisateurs-depuis-csv    controllers.UserController.importUsersFromCSV
+POST    /importation/revue-import               controllers.UserController.importUsersReview
 
 # Groups
 POST    /groups                         controllers.GroupController.addGroup
