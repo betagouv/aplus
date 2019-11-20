@@ -2,27 +2,26 @@
 
 @main(user, area, false)(s"Exporter mes demandes") {
 }{
-    <div>
-        <a class="mdl-button" href="@routes.ApplicationController.myApplications()">Mes demandes</a>
-    </div>
-}{
-    <h4 class="mdl-cell mdl-cell--12-col">Exportation des demandes au format CSV</h4>
-    <b class="mdl-cell mdl-cell--12-col">
-        Il faut importer le fichier dans Excel (ou autre tableur) en ut8 pour avoir les accents correctement.
-    </b>
-    <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--8-col mdl-cell--2-offset" onclick="document.location = '@routes.ApplicationController.myCSV()'">
-        Télécharger l'export de mes demandes en CSV
-    </button>
+    <div class="mdl-cell mdl-cell--12-col">
+        <h4 >Exportation des demandes au format CSV</h4>
+        <p>
+            Il faut importer le fichier dans Excel (ou autre tableur) en ut8 pour avoir les accents correctement.
+        </p>
+        <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--8-col mdl-cell--2-offset" onclick="document.location = '@routes.ApplicationController.myCSV()'">
+            Télécharger l'export de mes demandes en CSV
+        </button>
 
-    <h5>Ouvrir le fichier dans Excel</h5>
-    <ul>
-        <li>Lancer l’application Excel</li>
-        <li>Créez un nouveau classeur</li>
-        <li>Aller dans l’onglet « Données » et cliquez sur « Données externes » puis sur « Fichier texte »</li>
-        <li>Sélectionnez le fichier CSV et cliquez sur « Importer »</li>
-        <li>Dans « Type de données d’origine » , sélectionnez « Délimité »</li>
-        <li>Dans « Origine du fichier », sélectionnez « Unicode (UTF-8) »</li>
-        <li>Cliquez sur le bouton suivant</li>
-        <li>Choisissez sur l'écran suivant Point-virgule puis cliquez sur Terminer.</li>
-    </ul>
+        <h5>Ouvrir le fichier dans Excel</h5>
+        <ul>
+            <li>Lancer l’application Excel</li>
+            <li>Créez un nouveau classeur</li>
+            <li>Aller dans l’onglet « Données » et cliquez sur « Données externes » puis sur « Fichier texte »</li>
+            <li>Sélectionnez le fichier CSV et cliquez sur « Importer »</li>
+            <li>Dans « Type de données d’origine » , sélectionnez « Délimité »</li>
+            <li>Dans « Origine du fichier », sélectionnez « Unicode (UTF-8) »</li>
+            <li>Cliquez sur le bouton suivant</li>
+            <li>Choisissez sur l'écran suivant Point-virgule puis cliquez sur Terminer.</li>
+        </ul>
+    </div>
+
 }

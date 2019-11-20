@@ -350,3 +350,34 @@ ul#group-area-container li {
     border-radius: 1em;
     background-color: white;
 }
+
+a {
+   color: initial;
+}
+
+.mdl-textfield--large {
+    width: 600px;
+    max-width: 90%;
+}
+
+.mdl-data-table__cell--split {
+    display: block;
+    float: left;
+    width: 100%;
+    height: initial !important;
+}
+
+.title--addline {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.title--addline:after {
+    content: '';
+    border-top: 2px solid;
+    margin: 0 20px 0 20px;
+    flex: 1 0 20px;
+}      

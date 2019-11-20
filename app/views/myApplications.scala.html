@@ -3,7 +3,7 @@
 
 @display(applications: Seq[Application]) = {
     <div class="mdl-cell mdl-cell--12-col pem-container">
-        Total : @applications.size ( @applications.groupBy(_.longStatus(user)).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
+        Toutes (@applications.size) :  @applications.groupBy(_.longStatus(user)).mapValues(_.size).map{case (k,v) => @k ( @v ) }.mkString(" / ")
         <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
             <tfoot class="invisible">
                 <tr>
@@ -76,10 +76,6 @@
         document.getElementById("closed-applications").classList.remove("invisible");
     }
 </script>
-} {
-    <div>
-        <a class="mdl-button mdl-button--accent" href="@routes.ApplicationController.myApplications()">Mes demandes</a>
-    </div>
 }{
     @if(myOpenApplications.isEmpty) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
@@ -111,29 +107,28 @@
 
     } else {
         @if(myOpenApplications.nonEmpty) {
-            <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing mdl-grid">
-                <span>Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20A+">contact&commat;aplus.beta.gouv.fr</a></span>
+            <div class="mdl-cell mdl-cell--12-col">
 
+                <div class="mdl-grid mdl-grid--no-spacing">
                 <h4 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Mes demandes</h4>
                 @if(user.helper) {
                     <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" onclick="document.location = '@routes.ApplicationController.create()'">
                         Créer une demande
                     </button>
                 }
-
-                <span class="mdl-cell mdl-cell--12-col">FILTRER PAR </span><input class="mdl-cell mdl-cell--12-col" type="search" placeholder="Saisir nom, numéro, description, etc" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
-
+                    <span>Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
+                </div>
+               <br>
+                <span>FILTRER PAR </span><input style="width: 400px; max-width: 100%" type="search" placeholder="Saisir nom, numéro, description, etc" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
+                <br>    
                 @display(myOpenApplications)
             </div>
         }
     }
     @if(myClosedApplications.nonEmpty) {
-        <div class="mdl-cell mdl-cell--12-col info-box"><b>Vous ne voyez pas vos anciennes demandes ?</b> Cliquez-sur "Afficher les demandes clôturées" pour voir vos demandes clôturéees.<br>
+        <div class="mdl-cell mdl-cell--12-col info-box" id="show-closed-applications"><b>Vous ne voyez pas vos anciennes demandes ?</b> Cliquez-sur <a href="#" onclick="showClosedApplications()">Afficher les demandes clôturées</a> pour voir vos demandes clôturéees.<br>
             (Elles seront supprimées 1 mois après la clôture.)</div>
-
-        <div class="mdl-cell mdl-cell--12-col" style="text-align: center" id="show-closed-applications">
-            <a href="#" onclick="showClosedApplications()">Afficher les demandes clôturées</a>
-        </div>
+        
         <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing invisible" id="closed-applications">
             <h4 class="mdl-cell mdl-cell--12-col">Demandes clôturées</h4>
             @display(myClosedApplications)

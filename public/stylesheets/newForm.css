@@ -1,10 +1,11 @@
 
 .mdl-textfield__input {
-    border-radius: 5px;
     padding-left: 10px;
+    height: 30px;
 }
 .mdl-textfield__label {
     padding-left: 10px;
+    top: 29px;
 }
 .mdl-checkbox__box-outline {
     background-color: white;
@@ -53,4 +54,8 @@
 .mdl-data-table td {
     border-top: none;
     border-bottom: none;
+}
+
+.textfield__input--no-height-constraint {
+    height: initial;
 }
