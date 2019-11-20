@@ -26,7 +26,6 @@ object GroupImport {
   )(GroupImport.apply)(GroupImport.unapply)
 
   def fromCSVLine(values: Map[String, String]): Either[CSVImportError, GroupImport] = {
-    println(values.toList)
     values.get(GROUP_NAME_LABEL).fold[Either[CSVImportError, GroupImport]]({
       Left[CSVImportError, GroupImport](GROUP_NAME_UNDEFINED)
     })({ name: String =>

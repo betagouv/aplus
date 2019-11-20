@@ -28,7 +28,6 @@ object UserImport {
   )(UserImport.apply)(UserImport.unapply)
 
   def fromCSVLine(values: Map[String, String]): Either[CSVImportError, UserImport] = {
-    println(values.toList)
     values.get(USER_NAME_LABEL).fold[Either[CSVImportError, UserImport]]({
       Left[CSVImportError, UserImport](GROUP_NAME_UNDEFINED)
     })({ name: String =>

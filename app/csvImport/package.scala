@@ -8,7 +8,6 @@ package object csvImport {
   val USER_EMAIL_LABEL: String = "Email de l'utilisateur"
   val HELPER_LABEL: String = "Aidant"
   val INSTRUCTOR_LABEL: String = "Instructeur"
-  val ADMINISTRATOR_LABEL: String = "Administrateur"
   val DEPARTEMENT_LABEL: String = "Département du groupe"
   val ORGANISATION_LABEL: String = "Organisation du groupe"
   val DESCRIPTION_LABEL: String = "Description du groupe"

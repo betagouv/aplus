@@ -402,7 +402,6 @@ case class UserController @Inject()(loginAction: LoginAction,
         val d: String = request.session.get("data").getOrElse("")
         import play.api.libs.json._
         val c: JsValue = Json.parse(d).as[JsArray]
-        println(c)
         //val data: JsArray = usersFormFilled.value.map({ users => JsArray(users.map(User.userWrites.writes)) }).getOrElse(JsArray.empty)
         //val newSession =  session + ("data", data.toString())
         //Ok(views.html.editUsers(request.currentUser, request.currentArea)(usersFormFilled, 0, routes.UserController.addPost(UUID.randomUUID()))).withSession(newSession)
