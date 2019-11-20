@@ -1,6 +1,6 @@
 @(user: User, area: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-@newMain(user, area, false)(s"Exporter mes demandes") {
+@main(user, area, false)(s"Exporter mes demandes") {
 }{
     <div>
         <a class="mdl-button" href="@routes.ApplicationController.myApplications()">Mes demandes</a>

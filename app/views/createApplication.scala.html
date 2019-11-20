@@ -2,7 +2,7 @@
 @import extentions.MDLForms._
 @(user: User, area: Area)(users: List[User], organisationGroups: List[UserGroup], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
-@newMain(user, area)(s"Nouvelle demande")  {
+@main(user, area)(s"Nouvelle demande")  {
 <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 
 <style>
