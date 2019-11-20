@@ -77,8 +77,8 @@
     }
 </script>
 }{
+    <div class="mdl-cell mdl-cell--12-col">
     @if(myOpenApplications.isEmpty) {
-        <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
             @if(myOpenApplications.isEmpty) {
                 <div class="info-box">
                     <h4>Bienvenue sur Administration+</h4><br>
@@ -103,13 +103,10 @@
                 }
             }
             </p>
-        </div>
 
     } else {
         @if(myOpenApplications.nonEmpty) {
-            <div class="mdl-cell mdl-cell--12-col">
-
-                <div class="mdl-grid mdl-grid--no-spacing">
+           <div class="mdl-grid mdl-grid--no-spacing">
                 <h4 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Mes demandes</h4>
                 @if(user.helper) {
                     <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" onclick="document.location = '@routes.ApplicationController.create()'">
@@ -117,21 +114,22 @@
                     </button>
                 }
                     <span>Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
-                </div>
+            </div>
                <br>
                 <span>FILTRER PAR </span><input style="width: 400px; max-width: 100%" type="search" placeholder="Saisir nom, numéro, description, etc" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
                 <br>    
                 @display(myOpenApplications)
-            </div>
         }
     }
     @if(myClosedApplications.nonEmpty) {
-        <div class="mdl-cell mdl-cell--12-col info-box" id="show-closed-applications"><b>Vous ne voyez pas vos anciennes demandes ?</b> Cliquez-sur <a href="#" onclick="showClosedApplications()">Afficher les demandes clôturées</a> pour voir vos demandes clôturéees.<br>
+        <div class="info-box" id="show-closed-applications"><b>Vous ne voyez pas vos anciennes demandes ?</b> Cliquez-sur <a href="#" onclick="showClosedApplications()">Afficher les demandes clôturées</a> pour voir vos demandes clôturéees.<br>
             (Elles seront supprimées 1 mois après la clôture.)</div>
         
-        <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing invisible" id="closed-applications">
+        <div class="mdl-grid mdl-grid--no-spacing invisible" id="closed-applications" style="margin: 50px 0;">
             <h4 class="mdl-cell mdl-cell--12-col">Demandes clôturées</h4>
             @display(myClosedApplications)
         </div>
     }
+
+    </div>
 }
