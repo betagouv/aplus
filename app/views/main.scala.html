@@ -82,9 +82,9 @@
         <div class="header__ribbon do-not-print" id="header__ribbon">
             BETA
         </div>
-        <div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-header @if(currentUser.admin){ mdl-layout--fixed-drawer }">
+        <div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-header mdl-layout--fixed-drawer">
             <div class="mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 do-not-print">
-                <div class="mdl-layout__header-row" style="    display: flex;">
+                <div class="mdl-layout__header-row">
                     <span class="mdl-layout-title">
                         <a href="@routes.HomeController.index()"><img src='@routes.Assets.versioned("images/logo_small_150x160.png")' class="logo-header" alt="Administration+"></a>
                     </span>
