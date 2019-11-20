@@ -335,3 +335,12 @@ ul#group-area-container li {
     border-radius: 1em;
     background-color: white;
 }
+
+.input-import-user {
+    width: initial;
+}
+
+.cell-import-user {
+    margin: 3px 3px !important;
+    padding: 3px 3px !important;
+}

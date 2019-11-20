@@ -1,63 +1,70 @@
 @import models._
 @import extentions.MDLForms._
-@(currentUser: User, area: Area)(data: Map[csvImport.GroupImport, List[csvImport.UserImport]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User, area: Area)(form: Form[List[csvImport.SectionImport]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
-@display(users: Iterable[User])(header: Html)(footer: Option[Html] = None) = {
+@display(section: Field)(header: Html)(footer: Html) = {
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white">
   <thead>
-    <th class="mdl-data-table__cell--non-numeric" colspan="5">@header</th>
+    <tr>
+      <th class="mdl-data-table__cell--non-numeric" colspan="6">
+        @header
+      </th>
+    </tr>
   </thead>
   <tbody>
-    @for(user <- users) {
+    @helper.repeatWithIndex(section("users")) { (user, index) =>
     <tr class="searchable-row td--clear-border">
-      @if(currentUser.admin) {
-        <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
-          <a href="@routes.UserController.editUser(user.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon"><i class="material-icons">edit</i></a>
-        </td>
-      }
-      <td class="mdl-data-table__cell--non-numeric @if(user.disabled){ text--strikethrough }">
-        <span class="application__name">@user.name</span><i></i><br><span class="application__subject">@user.qualite</span>
-      </td>
-      <td class="mdl-data-table__cell--non-numeric @if(user.disabled){ text--strikethrough }">
-        @user.email<br>
-      </td>
-      <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
-        @if(user.disabled) {
-          <span class="tag tag--disabled">Désactivé</span>
-        }
-        @if(user.groupAdmin) {
-          <span class="tag tag--responsable">Responsable</span>
-        }
-        @if(user.admin) {
-          <span class="tag tag--admin">Admin</span>
+      <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size cell-import-user">
+        @helper.input(user("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
+          <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
-      <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
-        @if(user.instructor) {
-          <span class="tag tag--instructor">Instructeur</span>
-        }
-        @if(user.helper) {
-          <span class="tag tag--aidant">Aidant</span>
+      <td class="mdl-data-table__cell--non-numeric cell-import-user">
+        @helper.input(user("name"), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
+          <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
-      <td class="mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size"></td>
+      <td class="mdl-data-table__cell--non-numeric cell-import-user">
+        @helper.input(user("qualite"), 'label -> "Qualité", 'class -> "input-import-user") { (id, name, value, args) =>
+          <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+        }
+      </td>
+      <td class="mdl-data-table__cell--non-numeric cell-import-user">
+        @helper.input(user("email"), 'label -> "Email", 'class -> "input-import-user") { (id, name, value, args) =>
+          <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+        }
+      </td>
+      <td class="cell-import-user">
+        @helper.checkbox(user("administrator"), 'label -> "Administrateur", 'class -> "input-import-user test")
+      </td>
+      <td class="mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size cell-import-user"></td>
     </tr>
     }
   </tbody>
-  @if(footer.isDefined) {
   <tfoot>
     <tr>
-      <td class="mdl-data-table__cell--non-numeric" colspan="5">@footer.get</td>
+      <td class="mdl-data-table__cell--non-numeric" colspan="6">
+        @footer
+      </td>
     </tr>
     <tr class="invisible">
-      <td class="mdl-data-table__cell--non-numeric" colspan="5"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+      <td class="mdl-data-table__cell--non-numeric" colspan="6">
+        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button>
+      </td>
     </tr>
   </tfoot>
-  }
 </table>
 }
 
-@main(currentUser, area, false)("Revue d'import de groupe.") {
+@main(currentUser, area, false)("Revue de votre import CSV") {
 } {
-
+  @helper.form(routes.UserController.importUsersReview(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
+  @helper.CSRF.formField
+    @helper.repeatWithIndex(form("sections")) { (section, index) =>
+        @display(section) {
+        }{
+          test
+        }
+    }
+  }
 }

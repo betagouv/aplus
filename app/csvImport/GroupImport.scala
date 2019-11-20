@@ -2,6 +2,10 @@ package csvImport
 
 import java.util.UUID
 
+import play.api.data.Forms._
+import play.api.data.validation.Constraints.{maxLength, nonEmpty}
+import play.api.data.{Form, Mapping}
+
 case class GroupImport(name: String,
                        departement: String,
                        organisation: Option[String],
@@ -11,6 +15,15 @@ case class GroupImport(name: String,
 
 object GroupImport {
   val HEADER: String = List(GROUP_NAME_LABEL, DEPARTEMENT_LABEL, ORGANISATION_LABEL, DESCRIPTION_LABEL, GROUP_EMAIL_LABEL).mkString(SEPARATOR)
+
+  val groupMapping: Mapping[GroupImport] = mapping(
+    "name" -> nonEmptyText.verifying(maxLength(100)),
+    "department" -> nonEmptyText,
+    "organisation" -> optional(nonEmptyText),
+    "description" -> optional(nonEmptyText.verifying(maxLength(100))),
+    "email" -> optional(email.verifying(maxLength(200), nonEmpty)),
+    "existingId" -> optional(uuid)
+  )(GroupImport.apply)(GroupImport.unapply)
 
   def fromCSVLine(values: Map[String, String]): Either[CSVImportError, GroupImport] = {
     println(values.toList)

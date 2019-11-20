@@ -1,3 +1,6 @@
+import play.api.data.Forms.{mapping, list}
+import play.api.data.Mapping
+
 package object csvImport {
 
   val USER_NAME_LABEL: String = "Nom de l'utilisateur"
@@ -11,6 +14,7 @@ package object csvImport {
   val DESCRIPTION_LABEL: String = "Description du groupe"
   val GROUP_NAME_LABEL: String = "Nom du groupe"
   val GROUP_EMAIL_LABEL: String = "Email du groupe"
+  val GROUP_MANAGER_LABEL: String = "Administrateur de groupe"
 
   val SEPARATOR: String = ";"
 
@@ -25,5 +29,12 @@ package object csvImport {
   object EMAIL_UNDEFINED extends CSVImportError
 
   object NO_CONTENT extends CSVImportError
+
+  val sectionMapping: Mapping[SectionImport] = mapping(
+    "group" -> GroupImport.groupMapping,
+    "users" -> list(UserImport.userMaping)
+  )(SectionImport.apply)(SectionImport.unapply)
+
+  case class SectionImport(group: GroupImport, users: List[UserImport])
 
 }

@@ -2,25 +2,24 @@ package controllers
 
 import java.util.{Locale, UUID}
 
-import javax.inject.{Inject, Singleton}
 import actions.{LoginAction, RequestWithUserData}
+import com.github.tototoshi.csv._
+import csvImport.{CSVImportError, GroupImport, SectionImport, UserImport}
 import extentions.Operators.{GroupOperators, UserOperators, not}
 import extentions.{Time, UUIDHelper}
+import javax.inject.{Inject, Singleton}
 import models.{Area, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
+import play.api.data.Forms.{optional, text, tuple, _}
+import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.{Form, Mapping}
-import play.api.data.Forms.{optional, text, tuple}
-import play.api.mvc.{Action, AnyContent, Call, InjectedController, Result}
+import play.api.mvc._
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
-import services.{ApplicationService, EventService, NotificationService, UserGroupService, UserService}
-import play.api.data.Forms._
-import play.api.data.validation.Constraints.{maxLength, nonEmpty}
-import com.github.tototoshi.csv._
-import csvImport.{CSVImportError, GroupImport, UserImport}
+import services._
 
 import scala.io.Source
 
@@ -363,6 +362,8 @@ case class UserController @Inject()(loginAction: LoginAction,
     reader.allWithHeaders().map(line => GroupImport.fromCSVLine(line) -> UserImport.fromCSVLine(line))
   }
 
+  val form: Form[List[SectionImport]] = Form(single("sections" -> list(csvImport.sectionMapping)))
+
   def importUsersReview: Action[AnyContent] = {
     loginAction { implicit request =>
       asAdmin { () =>
@@ -373,21 +374,19 @@ case class UserController @Inject()(loginAction: LoginAction,
         }, { csvImportContent =>
           val list = extractFromCSV(request.currentUser, request.currentArea)(csvImportContent)
           val firstError = list.zipWithIndex.find({ case (a, _) => a._1.isLeft || a._2.isLeft })
+            firstError.fold[Result]({
 
-          firstError.fold[Result]({
+              val data = list.map(a => a._1.right.get -> a._2.right.get).groupBy(_._1)
+                .map({ case (k, v) => k.copy(existingId = groupService.groupByName(k.name).map(_.id)) -> v })
+                .mapValues(_.map(_._2).distinct.map(user => user.copy(existingId = userService.byEmail(user.email).map(_.id))))
+                  .map({ case (group:GroupImport, users: List[UserImport]) => SectionImport(group,users)})
 
-            val data = list.map(a => a._1.right.get -> a._2.right.get)
-              .groupBy(_._1)
-              .map({ case (k, v) =>
-                k.copy(existingId = groupService.groupByName(k.name).map(_.id)) -> v
-              })
-              .mapValues(_.map(_._2).distinct.map(user => user.copy(existingId = userService.byEmail(user.email).map(_.id))))
-            Ok(views.html.reviewUsersImport(request.currentUser, request.currentArea)(data))
-          })({ e: ((Either[csvImport.CSVImportError, csvImport.GroupImport], Either[csvImport.CSVImportError, csvImport.UserImport]), Int) =>
+              Ok(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form.fill(data.toList)))
+            })({ e: ((Either[csvImport.CSVImportError, csvImport.GroupImport], Either[csvImport.CSVImportError, csvImport.UserImport]), Int) =>
 
-            val error: (CSVImportError, Int) = (if (e._1._1.isLeft) e._1._1.left.get else e._1._2.left.get) -> (e._2 + 1)
-            BadRequest(views.html.importUsers(request.currentUser, request.currentArea)(csvImportContent, error))
-          })
+              val error: (CSVImportError, Int) = (if (e._1._1.isLeft) e._1._1.left.get else e._1._2.left.get) -> (e._2 + 1)
+              BadRequest(views.html.importUsers(request.currentUser, request.currentArea)(csvImportContent, error))
+            })
         })
       }
     }

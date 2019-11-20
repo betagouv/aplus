@@ -2,16 +2,32 @@ package csvImport
 
 import java.util.UUID
 
+import play.api.data.Forms._
+import play.api.data.Mapping
+import play.api.data.validation.Constraints.{maxLength, nonEmpty}
+
 case class UserImport(name: String,
                       qualite: String,
                       email: String,
                       helper: Boolean,
                       instructor: Boolean,
-                      admin: Boolean,
+                      administrator: Boolean,
+                      groupManager: Boolean,
                       existingId: Option[UUID] = None)
 
 object UserImport {
-  val HEADER: String = List(USER_NAME_LABEL, QUALITE_LABEL, USER_EMAIL_LABEL, HELPER_LABEL, INSTRUCTOR_LABEL, ADMINISTRATOR_LABEL).mkString(SEPARATOR)
+  val HEADER: String = List(USER_NAME_LABEL, QUALITE_LABEL, USER_EMAIL_LABEL, HELPER_LABEL, INSTRUCTOR_LABEL, ADMINISTRATOR_LABEL, GROUP_MANAGER_LABEL).mkString(SEPARATOR)
+
+  val userMaping: Mapping[UserImport] = mapping(
+    "name" -> nonEmptyText.verifying(maxLength(100)),
+    "qualite" -> nonEmptyText,
+    "email" -> email.verifying(maxLength(200), nonEmpty),
+    "helper" -> boolean,
+    "instructor" -> boolean,
+    "administrator" -> boolean,
+    "groupManager" -> boolean,
+    "existingId" -> optional(uuid)
+  )(UserImport.apply)(UserImport.unapply)
 
   def fromCSVLine(values: Map[String, String]): Either[CSVImportError, UserImport] = {
     println(values.toList)
@@ -29,7 +45,8 @@ object UserImport {
             email = email,
             helper = values.get(HELPER_LABEL).exists(!_.isEmpty),
             instructor = values.get(INSTRUCTOR_LABEL).exists(!_.isEmpty),
-            admin = values.get(ADMINISTRATOR_LABEL).exists(!_.isEmpty)))
+            administrator = values.get(ADMINISTRATOR_LABEL).exists(!_.isEmpty),
+            groupManager = values.get(GROUP_MANAGER_LABEL).exists(!_.isEmpty)))
         })
       })
     })

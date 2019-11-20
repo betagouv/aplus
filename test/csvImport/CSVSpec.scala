@@ -15,8 +15,7 @@ class CSVSpec extends Specification {
       |Lucien Pereira;Monsieur;lucien.pereira@beta.gouv.fr;X;X;X;SuperGroupe;94;;Le Super Groupe!;super.groupe@beta.gouv.fr
       |Roxanne Duchamp;Madame;roxanne.duchamp@beta.gouv.fr;X;;X;SuperGroupe;94;;Le Super Groupe!;super.groupe@beta.gouv.fr
       |John Ben;Monsieur;john.ben@beta.gouv.fr;;X;X;SuperGroupe;94;;Le Super Groupe 2!;super.groupe2@beta.gouv.fr
-      |Li June;Madame;li.june@beta.gouv.fr;X;X;;SuperGroupe;94;;Le Super Groupe 2!;super.groupe2@beta.gouv.fr
-      |""".stripMargin
+      |Li June;Madame;li.june@beta.gouv.fr;X;X;;SuperGroupe;94;;Le Super Groupe 2!;super.groupe2@beta.gouv.fr""".stripMargin
 
   "The 'ap;l\"us' string should" >> {
     "be escaped as '\"ap;l\"\"us\"'" >> {
@@ -49,13 +48,15 @@ class CSVSpec extends Specification {
         email = "lucien.pereira@beta.gouv.fr",
         helper = true,
         instructor = true,
-        admin = true))
+        administrator = true,
+        groupManager = false))
       list(1)._2 must beRight(UserImport(name = "Roxanne Duchamp",
         qualite = "Madame",
         email = "roxanne.duchamp@beta.gouv.fr",
         helper = true,
         instructor = false,
-        admin = true))
+        administrator = true,
+        groupManager = false))
     }
   }
 }
