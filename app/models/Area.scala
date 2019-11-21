@@ -33,8 +33,8 @@ object Area {
     Area("seine-saint-denis", "Seine-Saint-Denis (93)"),
     Area("argenteuil", "Val-d'Oise (95)"),
     Area("val-de-marne", "Val-de-Marne (94)"),
-    Area("vaucluse", "Vaucluse (84)"),
     Area("var", "Var (83)"),
+    Area("vaucluse", "Vaucluse (84)"),
     Area("vendee", "Vendée (85)"),
     Area("exemple", "Demo")
   )
