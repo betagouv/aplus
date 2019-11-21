@@ -381,3 +381,13 @@ a {
     margin: 0 20px 0 20px;
     flex: 1 0 20px;
 }      
+
+.ariane {
+    font-weight: bold;
+    font-size: 19px;
+}
+
+.text--font-size-medium {
+    font-size: 16px;
+    font-weight: 400;
+}
