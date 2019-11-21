@@ -55,14 +55,13 @@
         }
 </style>
 }{
-    <div cbbbbbbbbbbbbbbbbbbbblass="mdl-cell mdl-cell--12-col">
-
+    <div class="mdl-cell mdl-cell--12-col">
         <div class="mdl-grid mdl-grid--no-spacing">
             <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h3>
             <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.create()">
                 Mode Avancé
             </a>
-            <span>Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
+            <span>Besoin d'aide ? Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Aidez-moi%20avec%20Administration+">@Constants.supportEmail</a></span>
         </div>
     @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data") {
         @helper.CSRF.formField

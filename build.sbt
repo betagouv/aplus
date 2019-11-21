@@ -46,6 +46,7 @@ libraryDependencies ++= Seq(
 libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.28"
 
 // Adds additional packages into Twirl
+TwirlKeys.templateImports += "constants.Constants"
 
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "fr.gouv.beta.binders._"
