@@ -116,7 +116,7 @@
               case (_, Some(organisation)) => { @organisation / }
               case _ => {}
             } INSEE : @userGroup.inseeCode  <br>
-            <h7>@userGroup.description</h7>
+            <span class="text--font-size-medium">@userGroup.description</span>
           }{
             @if(groupUsers.exists(_.groupIds.length != 1)) {
               Et utilisateurs multigroupes :
