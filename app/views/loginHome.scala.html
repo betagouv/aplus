@@ -93,13 +93,20 @@
                     case Right((token,path)) => {
                         <h3>Vous allez accéder automatiquement à Administration+</h3>
                         <p>Si la page suivante ne se charge pas automatiquement, cliquez sur le bouton suivant :</p>
-                        <button id="validation-button" type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary" onclick="window.location='@path?token=@token'">Accéder à Administration+</button>
+                        <button id="validation-button" type="submit" class="mdl-button mdl-js-button mdl-button--raised" onclick="redirect();">Accéder à Administration+</button>
                         <br>
                         <script>
+                            var redirected = false;
+                            function redirect() {
+                                if(!redirected) {
+                                    document.getElementById("validation-button").disabled = true;
+                                    redirected = true;
+                                    window.location='@path?token=@token';
+                                }
+                            }
                             window.setTimeout(function(){
-                                 document.getElementById("validation-button").disabled = true;
-                                 window.location='@path?token=@token';
-                            }, 2000);
+                                redirect();
+                            }, 1500);
                         </script>
                     }
                 }
