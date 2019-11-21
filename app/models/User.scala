@@ -4,8 +4,6 @@ import java.util.UUID
 
 import extentions.{Hash, Time, UUIDHelper}
 import org.joda.time.DateTime
-import play.api.libs.json.{JsPath, JsValue, Json, Reads, Writes}
-import play.api.libs.functional.syntax._
 
 case class User(id: UUID,
                 key: String,
@@ -115,60 +113,5 @@ object User {
         hasAcceptedCharte = hasAcceptedCharte, communeCode = communeCode, groupAdmin = groupAdmin, disabled = disabled,
         expert = expert, groupIds = groupIds)
     }
-  }
-
-  implicit val userWrites = new Writes[User] {
-    def writes(user: User): JsValue = Json.obj(
-      "id" -> user.id,
-      "admin" -> user.admin,
-      "areas" -> user.areas,
-      "communeCode" -> user.communeCode,
-      "disabled" -> user.disabled,
-      "email" -> user.email,
-      "expert" -> user.expert,
-      "groupAdmin" -> user.groupAdmin,
-      "groupIds" -> user.groupIds,
-      "helper" -> user.helper,
-      "instructor" -> user.instructor,
-      "key" -> user.key,
-      "name" -> user.name,
-      "qualite" -> user.qualite
-    )
-  }
-
-  implicit val userReads: Reads[User] = {
-    ((JsPath \ "id").read[UUID] and
-      (JsPath \ "admin").read[Boolean] and
-      (JsPath \ "areas").read[List[UUID]] and
-      (JsPath \ "communeCode").read[String] and
-      (JsPath \ "disabled").read[Boolean] and
-      (JsPath \ "email").read[String] and
-      (JsPath \ "expert").read[Boolean] and
-      (JsPath \ "groupAdmin").read[Boolean] and
-      (JsPath \ "groupIds").read[List[UUID]] and
-      (JsPath \ "helper").read[Boolean] and
-      (JsPath \ "instructor").read[Boolean] and
-      (JsPath \ "key").read[String] and
-      (JsPath \ "name").read[String] and
-      (JsPath \ "qualite").read[String]).apply[User]((id: UUID, admin: Boolean, areas: List[UUID], communeCode: String,
-                                                      disabled: Boolean, email: String, expert: Boolean,
-                                                      groupAdmin: Boolean, groupIds: List[UUID], helper: Boolean,
-                                                      instructor: Boolean, key: String, name: String, qualite: String) =>
-      User.apply(id = id,
-        admin = admin,
-        areas = areas,
-        communeCode = communeCode,
-        disabled = disabled,
-        email = email,
-        expert = expert,
-        groupAdmin = groupAdmin,
-        groupIds = groupIds,
-        helper = helper,
-        instructor = instructor,
-        key = key,
-        name = name,
-        qualite = qualite,
-        creationDate = Time.now(),
-        hasAcceptedCharte = false))
   }
 }

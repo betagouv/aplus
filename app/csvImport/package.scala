@@ -3,17 +3,18 @@ import play.api.data.Mapping
 
 package object csvImport {
 
-  val USER_NAME_LABEL: String = "Nom de l'utilisateur"
-  val QUALITE_LABEL: String = "Qualité de l'utilisateur"
-  val USER_EMAIL_LABEL: String = "Email de l'utilisateur"
-  val HELPER_LABEL: String = "Aidant"
-  val INSTRUCTOR_LABEL: String = "Instructeur"
-  val DEPARTEMENT_LABEL: String = "Département du groupe"
-  val ORGANISATION_LABEL: String = "Organisation du groupe"
-  val DESCRIPTION_LABEL: String = "Description du groupe"
-  val GROUP_NAME_LABEL: String = "Nom du groupe"
-  val GROUP_EMAIL_LABEL: String = "Email du groupe"
-  val GROUP_MANAGER_LABEL: String = "Administrateur de groupe"
+  val USER_NAME_HEADER_PREFIX: String = "Nom"
+  val USER_QUALITY_HEADER_PREFIX: String = "Qualité"
+  val USER_EMAIL_HEADER_PREFIX: String = "Email"
+  val HELPER_HEADER_PREFIX: String = "Aidant"
+  val INSTRUCTOR_HEADER_PREFIX: String = "Instructeur"
+  val GROUP_MANAGER_HEADER_PREFIX: String = "Responsable"
+
+  val TERRITORY_HEADER_PREFIX: String = "Territoire"
+  val GROUP_ORGANISATION_HEADER_PREFIX: String = "Organisation"
+  val GROUP_NAME_HEADER_PREFIX: String = "Groupe"
+  val GROUP_EMAIL_HEADER_PREFIX: String = "Bal"
+
 
   val SEPARATOR: String = ";"
 
@@ -28,6 +29,10 @@ package object csvImport {
   object EMAIL_UNDEFINED extends CSVImportError
 
   object NO_CONTENT extends CSVImportError
+
+  def searchByPrefix(prefix: String, values: Map[String, String]): Option[String] = {
+    values.find(_._1.startsWith(prefix)).map(_._2)
+  }
 
   val sectionMapping: Mapping[SectionImport] = mapping(
     "group" -> GroupImport.groupMapping,

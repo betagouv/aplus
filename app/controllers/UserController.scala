@@ -208,7 +208,7 @@ case class UserController @Inject()(loginAction: LoginAction,
   }
 
   def showCGU(): Action[AnyContent] = loginAction { implicit request =>
-    eventService.info("CGU_SHOWED", s"CGU visualisé")
+    eventService.info("CGU_SHOWED", "CGU visualisé")
     Ok(views.html.showCGU(request.currentUser, request.currentArea))
   }
 
@@ -220,7 +220,7 @@ case class UserController @Inject()(loginAction: LoginAction,
       if (validate) {
         userService.acceptCGU(request.currentUser.id, newsletter)
       }
-      eventService.info("CGU_VALIDATED", s"CGU validées")
+      eventService.info("CGU_VALIDATED", "CGU validées")
       redirectOption match {
         case Some(redirect) =>
           Redirect(Call("GET", redirect)).flashing("success" -> "Merci d\'avoir accepté les CGU")
@@ -293,21 +293,6 @@ case class UserController @Inject()(loginAction: LoginAction,
     )
   )
 
-  def groupMapping(timeZone: DateTimeZone): Mapping[UserGroup] = mapping(
-    "id" -> optional(uuid).transform[UUID](_.getOrElse(UUID.randomUUID()), Option.apply),
-    "name" -> nonEmptyText.verifying(maxLength(100)),
-    "description" -> optional(nonEmptyText.verifying(maxLength(100))),
-    "areas" -> list(nonEmptyText),
-    "creationDate" -> ignored(DateTime.now(timeZone)),
-    "createByUserId" -> uuid,
-    "area" -> uuid,
-    "organisation" -> optional(nonEmptyText),
-    "email" -> optional(email.verifying(maxLength(200), nonEmpty)))((id: UUID, name: String, description: Option[String], areas: List[String], creation: DateTime, createByUserId: UUID, area: UUID, organisation: Option[String], email: Option[String]) =>
-    UserGroup.apply(id = id, name = name, description = description, inseeCode = areas, creationDate = creation, createByUserId = createByUserId, area = area, organisation = organisation, email = email))((a: UserGroup) =>
-    Option(a).map(b => (b.id, b.name, b.description, b.inseeCode, b.creationDate, b.createByUserId, b.area, b.organisation, b.email)))
-
-  def groupsForm(mapping: Mapping[UserGroup]): Form[List[UserGroup]] = Form(single("groups" -> list(mapping)))
-
   def userForm(timeZone: DateTimeZone): Form[User] = Form(userMapping(timeZone))
 
   private def userMapping(implicit timeZone: DateTimeZone): Mapping[User] = mapping(
@@ -367,7 +352,7 @@ case class UserController @Inject()(loginAction: LoginAction,
   def importUsersReview: Action[AnyContent] = {
     loginAction { implicit request =>
       asAdmin { () =>
-        "IMPORT_GROUP_UNAUTHORIZED" -> "Accès non autorisé pour importer les groupes"
+        "IMPORT_GROUP_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
       } { () =>
         csvImportContentForm.bindFromRequest.fold({ _ =>
           BadRequest(views.html.importUsers(request.currentUser, request.currentArea)("", csvImport.NO_CONTENT -> 1))
@@ -389,24 +374,6 @@ case class UserController @Inject()(loginAction: LoginAction,
             })
         })
       }
-    }
-  }
-
-  def importUsersPost: Action[AnyContent] = loginAction { implicit request =>
-    asAdmin { () =>
-      "IMPORT_USER_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
-    } { () =>
-      csvImportContentForm.bindFromRequest.fold({ _ =>
-        BadRequest(views.html.importUsers(request.currentUser, request.currentArea)("", csvImport.NO_CONTENT -> 1))
-      }, { csvText =>
-        val d: String = request.session.get("data").getOrElse("")
-        import play.api.libs.json._
-        val c: JsValue = Json.parse(d).as[JsArray]
-        //val data: JsArray = usersFormFilled.value.map({ users => JsArray(users.map(User.userWrites.writes)) }).getOrElse(JsArray.empty)
-        //val newSession =  session + ("data", data.toString())
-        //Ok(views.html.editUsers(request.currentUser, request.currentArea)(usersFormFilled, 0, routes.UserController.addPost(UUID.randomUUID()))).withSession(newSession)
-        Ok("")
-      })
     }
   }
 }

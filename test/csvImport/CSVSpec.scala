@@ -11,7 +11,7 @@ import scala.io.Source
 @RunWith(classOf[JUnitRunner])
 class CSVSpec extends Specification {
 
-  val oneUser: String = """Nom de l'utilisateur;Qualité de l'utilisateur;Email de l'utilisateur;Aidant;Instructeur;Nom du groupe;Département du groupe;Organisation du groupe;Description du groupe;Email du groupe
+  val oneUser: String = """Nom de l'utilisateur;Qualité de l'utilisateur;Email de l'utilisateur;Aidant;Instructeur;Groupe(s);Territoire(s);Organisation du groupe;Description du groupe;Bal
       |Lucien Pereira;Monsieur;lucien.pereira@beta.gouv.fr;X;X;SuperGroupe;94;;Le Super Groupe!;super.groupe@beta.gouv.fr
       |Roxanne Duchamp;Madame;roxanne.duchamp@beta.gouv.fr;X;;SuperGroupe;94;;Le Super Groupe!;super.groupe@beta.gouv.fr
       |John Ben;Monsieur;john.ben@beta.gouv.fr;;X;SuperGroupe;94;;Le Super Groupe 2!;super.groupe2@beta.gouv.fr
@@ -35,7 +35,6 @@ class CSVSpec extends Specification {
       result._1 must beRight(GroupImport(name = "SuperGroupe",
         departement = "94",
         organisation = None,
-        description = Some("Le Super Groupe!"),
         email = Some("super.groupe@beta.gouv.fr")))
       list.map(_._1).distinct must have size 2
     }
