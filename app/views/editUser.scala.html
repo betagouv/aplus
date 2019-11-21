@@ -4,12 +4,15 @@
 @(currentUser: User, area: Area)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
-@main(currentUser, area, false)(s"Utilisateur ${userId}") {
+@main(currentUser, area, false)(s"Fiche utilisateur") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 
 } {
 
     @helper.form(action = routes.UserController.editUserPost(userId), 'class -> "mdl-grid mdl-cell mdl-cell--12-col") {
+        @if(form.get.areas.size == 1 && form.get.groupIds.size == 1) {
+            <span class="mdl-cell mdl-cell--12-col ariane">Territoire : <a href="@routes.UserController.all(form.get.areas.head)#group-@form.get.groupIds.head">@{Area.fromId(form.get.areas.head).get.name}</a> / Groupe : <a href="@routes.GroupController.editGroup(form.get.groupIds.head)">@{userGroups.find(_.id == form.get.groupIds.head).get.name}</a> / Utilisateur : @form.get.name </span>
+        }
     <div class="mdl-cell mdl-cell--12-col">
         <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
             Sauvegarder
