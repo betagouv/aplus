@@ -85,10 +85,10 @@
         <div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-header mdl-layout--fixed-drawer">
             <div class="mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 do-not-print">
                 <div class="mdl-layout__header-row">
-                    <span class="mdl-layout-title">
+                    <span class="mdl-layout-title invisible">
                         <a href="@routes.HomeController.index()"><img src='@routes.Assets.versioned("images/logo_small_150x160.png")' class="logo-header" alt="Administration+"></a>
                     </span>
-                    <div>
+                    <div class="invisible">
                         <a class="mdl-button @if(title =="Mes demandes") { mdl-button--accent }" href="@routes.ApplicationController.myApplications()">Mes demandes</a>
                     </div>
                         <!-- Add spacer, to align navigation to the right in desktop -->
@@ -133,7 +133,7 @@
                     </div>
                 </header>
                 <nav class="navigation mdl-navigation mdl-color--blue-grey-800">
-
+                    <a class="mdl-navigation__link" href="@routes.ApplicationController.myApplications()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">folder</i>Mes demandes</a>
                     @if(currentUser.admin) {
                         <a class="mdl-navigation__link" href="@routes.AreaController.all()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">place</i>Territoires</a>
                     }
