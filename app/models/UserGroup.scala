@@ -2,7 +2,6 @@ package models
 
 import java.util.UUID
 
-import extentions.{Time, UUIDHelper}
 import org.joda.time.DateTime
 
 case class UserGroup(id: UUID,
@@ -26,21 +25,4 @@ case class UserGroup(id: UUID,
   }
 
   lazy val organisationSetOrDeducted: Option[String] = organisation.orElse(organisationDeductedFromName)
-}
-
-object UserGroup {
-  def fromMap(creator: UUID, area: UUID)(values: Map[String, String]) : Option[UserGroup] = {
-    val creationDate = Time.now()
-    for {
-      name <- values.get("name")
-      areas <- values.get("areas").map(_.split(",").toList)
-    } yield {
-      val id = values.get("id").flatMap(UUIDHelper.fromString).getOrElse(UUIDHelper.randomUUID)
-      val description = values.get("description")
-      val organisation = values.get("organisation")
-      val email = values.get("email")
-      UserGroup(id = id, name = name, description = description, inseeCode = areas, creationDate = creationDate,
-        createByUserId = creator, area = area, organisation = organisation, email = email)
-    }
-  }
 }

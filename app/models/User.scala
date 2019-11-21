@@ -2,7 +2,7 @@ package models
 
 import java.util.UUID
 
-import extentions.{Hash, Time, UUIDHelper}
+import extentions.{Hash, UUIDHelper}
 import org.joda.time.DateTime
 
 case class User(id: UUID,
@@ -84,34 +84,4 @@ object User {
     User(UUIDHelper.namedFrom("dominique"), Hash.sha256(s"dominique - disabled"), "Dominique LEQUEPEYS (disabled)", "Aide A+", "dominique.lequepeys@beta.gouv.fr", false, false, false, List(), date, false, "75056", false, disabled = true),
     User(UUIDHelper.namedFrom("sylvain"), Hash.sha256(s"sylvain - disabled"), "Sylvain DERMY", "Expert A+", "sylvain.dermy@beta.gouv.fr", false, false, false, List.empty, date, false, "75056", false, cguAcceptationDate = Some(date), disabled = true),
   )
-
-
-  // "Id", "Nom", "Qualité", "Email", "Création", "Aidant", "Instructeur", "Responsable", "Expert", "Actif",
-  // "Commune INSEE", "Territoires", "Groupes", "CGU", "Newsletter"
-  def fromMap(values: Map[String, String]): Option[User] = {
-    val id = values.get("Id").flatMap(UUIDHelper.fromString).getOrElse(UUIDHelper.randomUUID)
-    val key = "key"
-    val admin = false
-    val hasAcceptedCharte = false
-    val areas = List.empty[UUID]
-    val creationDate = Time.now()
-    for {
-      name <- values.get("Nom")
-      email <- values.get("Email")
-      qualite <- values.get("Qualité")
-    } yield {
-      val groupIds = values.get("Groupes").map(_.split(",").map(UUID.fromString).toList).getOrElse(Nil)
-      val helper = values.get("Aidant").contains("Aidant")
-      val instructor = values.get("Instructeur").contains("Instructeur")
-      val communeCode = values.getOrElse("Commune INSEE", "000")
-      val groupAdmin = values.get("Responsable").contains("Responsable")
-      val disabled = values.get("Actif").contains("Désactivé")
-      val expert = values.get("Expert").contains("Expert")
-
-      User(id = id, key = key, name = name, qualite = qualite, email = email, helper = helper,
-        instructor = instructor, admin = admin, areas = areas, creationDate = creationDate,
-        hasAcceptedCharte = hasAcceptedCharte, communeCode = communeCode, groupAdmin = groupAdmin, disabled = disabled,
-        expert = expert, groupIds = groupIds)
-    }
-  }
 }
