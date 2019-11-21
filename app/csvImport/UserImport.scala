@@ -15,36 +15,23 @@ case class UserImport(name: String,
                       existingId: Option[UUID] = None)
 
 object UserImport {
-  val HEADER: String = List(USER_NAME_HEADER_PREFIX, USER_QUALITY_HEADER_PREFIX, USER_EMAIL_HEADER_PREFIX, HELPER_HEADER_PREFIX, INSTRUCTOR_HEADER_PREFIX, GROUP_MANAGER_HEADER_PREFIX).mkString(SEPARATOR)
 
-  val userMaping: Mapping[UserImport] = mapping(
-    "name" -> nonEmptyText.verifying(maxLength(100)),
-    "qualite" -> nonEmptyText,
-    "email" -> email.verifying(maxLength(200), nonEmpty),
-    "helper" -> boolean,
-    "instructor" -> boolean,
-    "groupManager" -> boolean,
-    "existingId" -> optional(uuid)
+  val HEADERS = List(USER_NAME_HEADER_PREFIX, USER_QUALITY_HEADER_PREFIX, USER_EMAIL_HEADER_PREFIX, HELPER_HEADER_PREFIX, INSTRUCTOR_HEADER_PREFIX, GROUP_MANAGER_HEADER_PREFIX)
+  val HEADER = HEADERS.mkString(SEPARATOR)
+
+  val userMapping: Mapping[UserImport] = mapping(
+    USER_NAME_HEADER_PREFIX -> nonEmptyText.verifying(maxLength(100)),
+    USER_QUALITY_HEADER_PREFIX -> nonEmptyText,
+    USER_EMAIL_HEADER_PREFIX -> email.verifying(maxLength(200), nonEmpty),
+    HELPER_HEADER_PREFIX -> text.verifying(s => s.isEmpty || s.startsWith(HELPER_HEADER_PREFIX))
+      .transform[Boolean](s => if (s.isEmpty) false else true, b => if (b) HELPER_HEADER_PREFIX else ""),
+
+    INSTRUCTOR_HEADER_PREFIX -> text.verifying(s => s.isEmpty || s.startsWith(INSTRUCTOR_HEADER_PREFIX))
+      .transform[Boolean](s => if (s.isEmpty) false else true, b => if (b) INSTRUCTOR_HEADER_PREFIX else ""),
+
+    GROUP_MANAGER_HEADER_PREFIX -> text.verifying(s => s.isEmpty || s.startsWith(GROUP_MANAGER_HEADER_PREFIX))
+      .transform[Boolean](s => if (s.isEmpty) false else true, b => if (b) GROUP_MANAGER_HEADER_PREFIX else ""),
+
+    EXISTING_UUID -> optional(uuid)
   )(UserImport.apply)(UserImport.unapply)
-
-  def fromCSVLine(values: Map[String, String]): Either[CSVImportError, UserImport] = {
-    searchByPrefix(USER_NAME_HEADER_PREFIX, values).fold[Either[CSVImportError, UserImport]]({
-      Left[CSVImportError, UserImport](GROUP_NAME_UNDEFINED)
-    })({ name: String =>
-      searchByPrefix(USER_QUALITY_HEADER_PREFIX, values).fold[Either[CSVImportError, UserImport]]({
-        Left[CSVImportError, UserImport](QUALITE_UNDEFINED)
-      })({ qualite: String =>
-        searchByPrefix(USER_EMAIL_HEADER_PREFIX, values).fold[Either[CSVImportError, UserImport]]({
-          Left[CSVImportError, UserImport](EMAIL_UNDEFINED)
-        })({ email: String =>
-          Right[CSVImportError, UserImport](UserImport.apply(name = name,
-            qualite = qualite,
-            email = email,
-            helper = searchByPrefix(HELPER_HEADER_PREFIX, values).exists(!_.isEmpty),
-            instructor = searchByPrefix(INSTRUCTOR_HEADER_PREFIX, values).exists(!_.isEmpty),
-            groupManager = searchByPrefix(GROUP_MANAGER_HEADER_PREFIX, values).exists(!_.isEmpty)))
-        })
-      })
-    })
-  }
 }

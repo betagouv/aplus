@@ -1,5 +1,7 @@
-import play.api.data.Forms.{mapping, list}
-import play.api.data.Mapping
+import java.util.UUID
+
+import play.api.data.Forms.{list, mapping}
+import play.api.data.{FormError, Mapping}
 
 package object csvImport {
 
@@ -14,6 +16,7 @@ package object csvImport {
   val GROUP_ORGANISATION_HEADER_PREFIX: String = "Organisation"
   val GROUP_NAME_HEADER_PREFIX: String = "Groupe"
   val GROUP_EMAIL_HEADER_PREFIX: String = "Bal"
+  val EXISTING_UUID = "ExistingId"
 
 
   val SEPARATOR: String = ";"
@@ -30,15 +33,24 @@ package object csvImport {
 
   object NO_CONTENT extends CSVImportError
 
-  def searchByPrefix(prefix: String, values: Map[String, String]): Option[String] = {
-    values.find(_._1.startsWith(prefix)).map(_._2)
+  def convertToPrefixForm(values: Map[String, String], headers: List[String]): Map[String, String] = {
+    val a = values.map({ case (key, value) =>
+      headers.find(key.startsWith).map(_ -> value)
+    }).flatten.toMap
+    println(a)
+    a
   }
 
   val sectionMapping: Mapping[SectionImport] = mapping(
     "group" -> GroupImport.groupMapping,
-    "users" -> list(UserImport.userMaping)
+    "users" -> list(UserImport.userMapping)
   )(SectionImport.apply)(SectionImport.unapply)
 
   case class SectionImport(group: GroupImport, users: List[UserImport])
 
+  def fromCSVLine[T](values: Map[String, String], mapping: Mapping[T], headers: List[String]): Either[Seq[FormError], T] = {
+    mapping.bind(convertToPrefixForm(values, headers))
+  }
+
+  val deadbeef: UUID = UUID.fromString("deadbeef-0000-0000-0000-000000000000")
 }

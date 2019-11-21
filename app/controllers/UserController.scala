@@ -15,7 +15,7 @@ import org.webjars.play.WebJarsUtil
 import play.api.Configuration
 import play.api.data.Forms.{optional, text, tuple, _}
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
-import play.api.data.{Form, Mapping}
+import play.api.data.{Form, FormError, Mapping}
 import play.api.mvc._
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
@@ -335,16 +335,16 @@ case class UserController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "IMPORT_USER_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
-      Ok(views.html.importUsers(request.currentUser, request.currentArea)("", csvImport.NO_CONTENT -> 1))
+      Ok(views.html.importUsers(request.currentUser, request.currentArea)("", Seq(FormError.apply("","Le champ est vide.")) -> 1))
     }
   }
 
-  def extractFromCSV(creator: User, area: Area)(csvText: String): List[(Either[csvImport.CSVImportError, GroupImport], Either[csvImport.CSVImportError, UserImport])] = {
+  def extractFromCSV(creator: User, area: Area)(csvText: String): List[(Either[Seq[FormError], GroupImport], Either[Seq[FormError], UserImport])] = {
     implicit object SemiConFormat extends DefaultCSVFormat {
       override val delimiter = ';'
     }
     val reader = CSVReader.open(Source.fromString(csvText))
-    reader.allWithHeaders().map(line => GroupImport.fromCSVLine(line) -> UserImport.fromCSVLine(line))
+    reader.allWithHeaders().map(line => csvImport.fromCSVLine(line,GroupImport.groupMapping, GroupImport.HEADERS) -> csvImport.fromCSVLine(line, UserImport.userMapping, UserImport.HEADERS))
   }
 
   val form: Form[List[SectionImport]] = Form(single("sections" -> list(csvImport.sectionMapping)))
@@ -355,7 +355,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         "IMPORT_GROUP_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
       } { () =>
         csvImportContentForm.bindFromRequest.fold({ _ =>
-          BadRequest(views.html.importUsers(request.currentUser, request.currentArea)("", csvImport.NO_CONTENT -> 1))
+          BadRequest(views.html.importUsers(request.currentUser, request.currentArea)("", Seq(FormError.apply("","Le champ est vide.")) -> 1))
         }, { csvImportContent =>
           val list = extractFromCSV(request.currentUser, request.currentArea)(csvImportContent)
           val firstError = list.zipWithIndex.find({ case (a, _) => a._1.isLeft || a._2.isLeft })
@@ -367,9 +367,9 @@ case class UserController @Inject()(loginAction: LoginAction,
                   .map({ case (group:GroupImport, users: List[UserImport]) => SectionImport(group,users)})
 
               Ok(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form.fill(data.toList)))
-            })({ e: ((Either[csvImport.CSVImportError, csvImport.GroupImport], Either[csvImport.CSVImportError, csvImport.UserImport]), Int) =>
+            })({ e: ((Either[Seq[FormError], csvImport.GroupImport], Either[Seq[FormError], csvImport.UserImport]), Int) =>
 
-              val error: (CSVImportError, Int) = (if (e._1._1.isLeft) e._1._1.left.get else e._1._2.left.get) -> (e._2 + 1)
+              val error: (Seq[FormError], Int) = (if (e._1._1.isLeft) e._1._1.left.get else e._1._2.left.get) -> (e._2 + 1)
               BadRequest(views.html.importUsers(request.currentUser, request.currentArea)(csvImportContent, error))
             })
         })
