@@ -21,45 +21,57 @@
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
         @helper.input(user(csv.USER_NAME_HEADER_PREFIX), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
-          <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+          <input class="mdl-textfield__input input-import-user" @{if(user("id").value.get != csv.deadbeef.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
         @helper.input(user(csv.USER_QUALITY_HEADER_PREFIX), 'label -> "Qualité", 'class -> "input-import-user") { (id, name, value, args) =>
-          <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+          <input class="mdl-textfield__input input-import-user" @{if(user("id").value.get != csv.deadbeef.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
         @helper.input(user(csv.USER_EMAIL_HEADER_PREFIX), 'label -> "Email", 'class -> "input-import-user") { (id, name, value, args) =>
-          <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+          <input class="mdl-textfield__input" @{if(user("id").value.get != csv.deadbeef.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
       <td class="cell-import-user">
-        <label for="@user(csv.HELPER_HEADER_PREFIX).id">@csv.HELPER_HEADER_PREFIX</label>
-        <input class=""
-               type="checkbox"
-               name="@user(csv.HELPER_HEADER_PREFIX).name"
-               id="@user(csv.HELPER_HEADER_PREFIX).id"
-               value="@user(csv.HELPER_HEADER_PREFIX).value.get"
-               @{if (!user(csv.HELPER_HEADER_PREFIX).value.get.isEmpty) "checked" } />
+        @if(user("id").value.get != csv.deadbeef.toString) {
+          <span>@csv.HELPER_HEADER_PREFIX</span>
+        } else {
+            <label for="@user(csv.HELPER_HEADER_PREFIX).id">@csv.HELPER_HEADER_PREFIX</label>
+            <input class=""
+                   type="checkbox"
+                   name="@user(csv.HELPER_HEADER_PREFIX).name"
+                   id="@user(csv.HELPER_HEADER_PREFIX).id"
+                   value="@user(csv.HELPER_HEADER_PREFIX).value.get"
+                   @{if(!user(csv.HELPER_HEADER_PREFIX).value.get.isEmpty) "checked"} />
+        }
       </td>
       <td class="cell-import-user">
-        <label for="@user(csv.INSTRUCTOR_HEADER_PREFIX).id">@csv.INSTRUCTOR_HEADER_PREFIX</label>
-        <input class=""
-               type="checkbox"
-               name="@user(csv.INSTRUCTOR_HEADER_PREFIX).name"
-               id="@user(csv.INSTRUCTOR_HEADER_PREFIX).id"
-               value="@user(csv.INSTRUCTOR_HEADER_PREFIX).value.get"
-               @{if (!user(csv.INSTRUCTOR_HEADER_PREFIX).value.get.isEmpty) "checked" } />
+        @if(user("id").value.get != csv.deadbeef.toString) {
+          <span>@csv.INSTRUCTOR_HEADER_PREFIX</span>
+        } else {
+          <label for="@user(csv.INSTRUCTOR_HEADER_PREFIX).id">@csv.INSTRUCTOR_HEADER_PREFIX</label>
+          <input class=""
+                 type="checkbox"
+                 name="@user(csv.INSTRUCTOR_HEADER_PREFIX).name"
+                 id="@user(csv.INSTRUCTOR_HEADER_PREFIX).id"
+                 value="@user(csv.INSTRUCTOR_HEADER_PREFIX).value.get"
+                 @{if(!user(csv.INSTRUCTOR_HEADER_PREFIX).value.get.isEmpty) "checked"} />
+        }
       </td>
       <td class="cell-import-user">
-        <label for="@user(csv.GROUP_MANAGER_HEADER_PREFIX).id">@csv.GROUP_MANAGER_HEADER_PREFIX</label>
-        <input class=""
-               type="checkbox"
-               name="@user(csv.GROUP_MANAGER_HEADER_PREFIX).name"
-               id="@user(csv.GROUP_MANAGER_HEADER_PREFIX).id"
-               value="@user(csv.GROUP_MANAGER_HEADER_PREFIX).value.get"
-               @{if (!user(csv.GROUP_MANAGER_HEADER_PREFIX).value.get.isEmpty) "checked" } />
+        @if(user("id").value.get != csv.deadbeef.toString) {
+          <span>@csv.GROUP_MANAGER_HEADER_PREFIX</span>
+        } else {
+          <label for="@user(csv.GROUP_MANAGER_HEADER_PREFIX).id">@csv.GROUP_MANAGER_HEADER_PREFIX</label>
+          <input class=""
+                 type="checkbox"
+                 name="@user(csv.GROUP_MANAGER_HEADER_PREFIX).name"
+                 id="@user(csv.GROUP_MANAGER_HEADER_PREFIX).id"
+                 value="@user(csv.GROUP_MANAGER_HEADER_PREFIX).value.get"
+                 @{if(!user(csv.GROUP_MANAGER_HEADER_PREFIX).value.get.isEmpty) "checked"} />
+        }
       </td>
       <td class="mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size cell-import-user"></td>
     </tr>

@@ -2,7 +2,7 @@ package csv
 
 import java.util.UUID
 
-import extentions.Time
+import extentions.{Operators, Time}
 import models.User
 import org.joda.time.DateTime
 import play.api.data.Forms._
@@ -22,10 +22,10 @@ object UserImport {
     USER_EMAIL_HEADER_PREFIX -> email.verifying(maxLength(200), nonEmpty),
 
     HELPER_HEADER_PREFIX -> text.verifying(s => s.startsWith(HELPER_HEADER_PREFIX) || s.isEmpty)
-      .transform[Boolean](s => if (s.isEmpty) false else true, helper => if (helper) HELPER_HEADER_PREFIX else ""),
+      .transform[Boolean](s => Operators.not(s.isEmpty), helper => if (helper) HELPER_HEADER_PREFIX else ""),
 
     INSTRUCTOR_HEADER_PREFIX -> text.verifying(s => s.startsWith(INSTRUCTOR_HEADER_PREFIX) || s.isEmpty)
-      .transform[Boolean](s => if (s.isEmpty) false else true, helper => if (helper) INSTRUCTOR_HEADER_PREFIX else ""),
+      .transform[Boolean](s => Operators.not(s.isEmpty), helper => if (helper) INSTRUCTOR_HEADER_PREFIX else ""),
 
     "admin" -> ignored(false),
     "areas" -> default(list(uuid).verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
@@ -35,7 +35,7 @@ object UserImport {
     "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
 
     GROUP_MANAGER_HEADER_PREFIX -> text.verifying(s => s.startsWith(GROUP_MANAGER_HEADER_PREFIX) || s.isEmpty)
-      .transform[Boolean](s => if (s.isEmpty) false else true, helper => if (helper) GROUP_MANAGER_HEADER_PREFIX else ""),
+      .transform[Boolean](s => Operators.not(s.isEmpty), helper => if (helper) GROUP_MANAGER_HEADER_PREFIX else ""),
 
     "disabled" -> boolean,
     "expert" -> ignored(false),

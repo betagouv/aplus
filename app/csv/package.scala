@@ -20,18 +20,6 @@ package object csv {
 
   val SEPARATOR = ";"
 
-  sealed trait CSVImportError
-
-  object GROUP_NAME_UNDEFINED extends CSVImportError
-
-  object DEPARTEMENT_UNDEFINED extends CSVImportError
-
-  object QUALITE_UNDEFINED extends CSVImportError
-
-  object EMAIL_UNDEFINED extends CSVImportError
-
-  object NO_CONTENT extends CSVImportError
-
   def convertToPrefixForm(values: Map[String, String], headers: List[String]): Map[String, String] = {
     values.map({ case (key, value) =>
       headers.find(key.startsWith).map(_ -> value)
