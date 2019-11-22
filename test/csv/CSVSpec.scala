@@ -1,4 +1,4 @@
-package csvImport
+package csv
 
 import java.util.UUID
 
@@ -29,13 +29,13 @@ class CSVSpec extends Specification {
 
   "The csv string should" >> {
     implicit object SemiConFormat extends DefaultCSVFormat {
-      override val delimiter: Char = csvImport.SEPARATOR.charAt(0)
+      override val delimiter: Char = csv.SEPARATOR.charAt(0)
     }
 
     "produce valid groups" >> {
       val reader = CSVReader.open(Source.fromString(oneUser))
-      val list = reader.allWithHeaders().map(line => csvImport.fromCSVLine(line, GroupImport.groupMappingForCSVImport, GroupImport.HEADERS) ->
-        csvImport.fromCSVLine(line, UserImport.userMappingForCVSImport, UserImport.HEADERS))
+      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.groupMappingForCSVImport, GroupImport.HEADERS) ->
+        csv.fromCSVLine(line, UserImport.userMappingForCVSImport, UserImport.HEADERS))
       list must have size 4
       val result = list.head
       result._1 must beRight(UserGroup(id = null,
@@ -52,8 +52,8 @@ class CSVSpec extends Specification {
 
     "produce a valid users" >> {
       val reader = CSVReader.open(Source.fromString(oneUser))
-      val list = reader.allWithHeaders().map(line => csvImport.fromCSVLine(line, GroupImport.groupMappingForCSVImport, GroupImport.HEADERS) ->
-        csvImport.fromCSVLine(line, UserImport.userMappingForCVSImport, UserImport.HEADERS))
+      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.groupMappingForCSVImport, GroupImport.HEADERS) ->
+        csv.fromCSVLine(line, UserImport.userMappingForCVSImport, UserImport.HEADERS))
       list must have size 4
       list.head._2 must beRight(User(id = null,
         key = "key",

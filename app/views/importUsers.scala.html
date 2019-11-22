@@ -10,7 +10,7 @@
         @helper.form(routes.UserController.importUsersReview(), 'method -> "post") {
             @helper.CSRF.formField
             <h2 class="mdl-cell mdl-cell--12-col">Importer un contenu CSV (Séparé par des ; )</h2>
-            <p>@csvImport.UserImport.HEADER@csvImport.SEPARATOR@csvImport.GroupImport.HEADER</p>
+            <p>@csv.UserImport.HEADER@csv.SEPARATOR@csv.GroupImport.HEADER</p>
             <textarea label="Contenu du CSV"
                       class="mdl-textfield--floating-label mdl-cell mdl-cell--12-col mdl-textfield__input mdl-color--white"
                       rows= "20"

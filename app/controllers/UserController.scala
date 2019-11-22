@@ -4,7 +4,7 @@ import java.util.{Locale, UUID}
 
 import actions.{LoginAction, RequestWithUserData}
 import com.github.tototoshi.csv._
-import csvImport.{GroupImport, SectionImport, UserImport}
+import csv.{GroupImport, UserImport}
 import extentions.Operators.{GroupOperators, UserOperators, not}
 import extentions.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
@@ -344,10 +344,10 @@ case class UserController @Inject()(loginAction: LoginAction,
       override val delimiter = ';'
     }
     val reader = CSVReader.open(Source.fromString(csvText))
-    reader.allWithHeaders().map(line => csvImport.fromCSVLine(line, GroupImport.groupMappingForCSVImport, GroupImport.HEADERS) -> csvImport.fromCSVLine(line, UserImport.userMappingForCVSImport, UserImport.HEADERS))
+    reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.groupMappingForCSVImport, GroupImport.HEADERS) -> csv.fromCSVLine(line, UserImport.userMappingForCVSImport, UserImport.HEADERS))
   }
 
-  val form: Form[List[SectionImport]] = Form(single("sections" -> list(csvImport.sectionMapping)))
+  val form = Form(single("sections" -> list(csv.sectionMapping)))
 
   def importUsersReview: Action[AnyContent] = {
     loginAction { implicit request =>
@@ -367,7 +367,7 @@ case class UserController @Inject()(loginAction: LoginAction,
             val groupUserByRelatedGroup = list.map(a => a._1.right.get -> a._2.right.get).groupBy(_._1)
             val groupIdRetrievalStep = groupUserByRelatedGroup.map({ case (k, v) => k.copy(id = groupService.groupByName(k.name).map(_.id).orNull) -> v })
             val userIdRetrievalStep = groupIdRetrievalStep.mapValues(_.map(_._2).distinct.map(user => user.copy(id = userService.byEmail(user.email).map(_.id).orNull)))
-            val sectionWrappingStep = userIdRetrievalStep.map({ case (group: UserGroup, users: List[User]) => SectionImport(group, users) })
+            val sectionWrappingStep = userIdRetrievalStep.map({ case (group: UserGroup, users: List[User]) => csv.SectionImport(group, users) })
 
             Ok(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form.fill(sectionWrappingStep.toList)))
           }
