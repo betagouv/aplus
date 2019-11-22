@@ -1,8 +1,10 @@
 package csvImport
 
+import java.util.UUID
+
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import extentions.{CSVUtil, UUIDHelper}
-import models.UserGroup
+import models.{User, UserGroup}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
@@ -31,7 +33,8 @@ class CSVSpec extends Specification {
     }
     "produce valid groups" >> {
       val reader = CSVReader.open(Source.fromString(oneUser))
-      val list = reader.allWithHeaders().map(line => csvImport.fromCSVLine[GroupImport](line, GroupImport.groupMapping, GroupImport.HEADERS) -> csvImport.fromCSVLine[UserImport](line, UserImport.userMapping, UserImport.HEADERS))
+      val list = reader.allWithHeaders().map(line => csvImport.fromCSVLine(line, GroupImport.groupMapping, GroupImport.HEADERS) ->
+        csvImport.fromCSVLine(line, UserImport.userMapping, UserImport.HEADERS))
       list must have size 4
       val result = list.head
       result._1 must beRight(GroupImport(name = "SuperGroupe",
@@ -42,7 +45,8 @@ class CSVSpec extends Specification {
     }
     "produce valid groups with UserGroup mapping" >> {
       val reader = CSVReader.open(Source.fromString(oneUser))
-      val list = reader.allWithHeaders().map(line => csvImport.fromCSVLine[UserGroup](line, GroupImport.userGroupMapping, GroupImport.HEADERS) -> csvImport.fromCSVLine[UserImport](line, UserImport.userMapping, UserImport.HEADERS))
+      val list = reader.allWithHeaders().map(line => csvImport.fromCSVLine(line, GroupImport.userGroupMappingForCSVImport, GroupImport.HEADERS) ->
+        csvImport.fromCSVLine(line, UserImport.userMapping, UserImport.HEADERS))
       list must have size 4
       val result = list.head
       result._1 must beRight(UserGroup(id = null,
@@ -58,7 +62,8 @@ class CSVSpec extends Specification {
     }
     "produce a valid users" >> {
       val reader = CSVReader.open(Source.fromString(oneUser))
-      val list = reader.allWithHeaders().map(line => csvImport.fromCSVLine[GroupImport](line, GroupImport.groupMapping, GroupImport.HEADERS) -> csvImport.fromCSVLine[UserImport](line, UserImport.userMapping, UserImport.HEADERS))
+      val list = reader.allWithHeaders().map(line => csvImport.fromCSVLine(line, GroupImport.groupMapping, GroupImport.HEADERS) ->
+        csvImport.fromCSVLine(line, UserImport.userMapping, UserImport.HEADERS))
       list must have size 4
       list.head._2 must beRight(UserImport(name = "Lucien Pereira",
         qualite = "Monsieur",
@@ -72,6 +77,51 @@ class CSVSpec extends Specification {
         helper = true,
         instructor = false,
         groupManager = false))
+    }
+
+    "produce a valid users with User mapping" >> {
+      val reader = CSVReader.open(Source.fromString(oneUser))
+      val list = reader.allWithHeaders().map(line => csvImport.fromCSVLine(line, GroupImport.userGroupMappingForCSVImport, GroupImport.HEADERS) ->
+        csvImport.fromCSVLine(line, UserImport.userMappingForCVSImport, UserImport.HEADERS))
+      list must have size 4
+      list.head._2 must beRight(User(id = null,
+        key = "key",
+        name = "Lucien Pereira",
+        qualite = "Monsieur",
+        email = "lucien.pereira@beta.gouv.fr",
+        helper = true,
+        instructor = true,
+        groupAdmin = false,
+        admin = false,
+        areas = List.empty[UUID],
+        creationDate = null,
+        hasAcceptedCharte = false,
+        communeCode = "0",
+        disabled = false,
+        groupIds = List.empty[UUID],
+        delegations = Map.empty[String, String],
+        cguAcceptationDate = None,
+        newsletterAcceptationDate = None
+      ))
+      list(1)._2 must beRight(User(id = null,
+        key = "key",
+        name = "Roxanne Duchamp",
+        qualite = "Madame",
+        email = "roxanne.duchamp@beta.gouv.fr",
+        helper = true,
+        instructor = false,
+        groupAdmin = false,
+        admin = false,
+        areas = List.empty[UUID],
+        creationDate = null,
+        hasAcceptedCharte = false,
+        communeCode = "0",
+        disabled = false,
+        groupIds = List.empty[UUID],
+        delegations = Map.empty[String, String],
+        cguAcceptationDate = None,
+        newsletterAcceptationDate = None
+      ))
     }
   }
 }

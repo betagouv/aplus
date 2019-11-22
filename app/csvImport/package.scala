@@ -16,8 +16,6 @@ package object csvImport {
   val GROUP_ORGANISATION_HEADER_PREFIX: String = "Organisation"
   val GROUP_NAME_HEADER_PREFIX: String = "Groupe"
   val GROUP_EMAIL_HEADER_PREFIX: String = "Bal"
-  val EXISTING_UUID = "ExistingId"
-
 
   val SEPARATOR: String = ";"
 
