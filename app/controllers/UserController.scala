@@ -365,11 +365,13 @@ case class UserController @Inject()(loginAction: LoginAction,
             BadRequest(views.html.importUsers(request.currentUser, request.currentArea)(csvImportContent, errors))
           } else {
             val groupUserByRelatedGroup = list.map(a => a._1.right.get -> a._2.right.get).groupBy(_._1)
-            val groupIdRetrievalStep = groupUserByRelatedGroup.map({ case (k, v) => k.copy(id = groupService.groupByName(k.name).map(_.id).orNull) -> v })
-            val userIdRetrievalStep = groupIdRetrievalStep.mapValues(_.map(_._2).distinct.map(user => user.copy(id = userService.byEmail(user.email).map(_.id).orNull)))
+            val groupIdRetrievalStep = groupUserByRelatedGroup.map({ case (k, v) => k.copy(id = groupService.groupByName(k.name).map(_.id).getOrElse(csv.deadbeef)) -> v })
+            val userIdRetrievalStep = groupIdRetrievalStep.mapValues(_.map(_._2).distinct.map(user => user.copy(id = userService.byEmail(user.email).map(_.id).getOrElse(csv.deadbeef))))
             val sectionWrappingStep = userIdRetrievalStep.map({ case (group: UserGroup, users: List[User]) => csv.SectionImport(group, users) })
+            // Let's fill
+            val filledForm = form.fill(sectionWrappingStep.toList)
 
-            Ok(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form.fill(sectionWrappingStep.toList)))
+            Ok(views.html.reviewUsersImport(request.currentUser, request.currentArea)(filledForm))
           }
         })
       }
