@@ -19,7 +19,8 @@ class CSVSpec extends Specification {
       |Lucien Pereira;Monsieur;lucien.pereira@beta.gouv.fr;Aidant;Instructeur;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe!;super.groupe@beta.gouv.fr
       |Roxanne Duchamp;Madame;roxanne.duchamp@beta.gouv.fr;Aidant;;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe!;super.groupe@beta.gouv.fr
       |John Ben;Monsieur;john.ben@beta.gouv.fr;;Instructeur;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe 2!;super.groupe2@beta.gouv.fr
-      |Li June;Madame;li.june@beta.gouv.fr;Aidant;Instructeur;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe 2!;super.groupe2@beta.gouv.fr""".stripMargin
+      |Li June;Madame;li.june@beta.gouv.fr;Aidant;Instructeur;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe 2!;super.groupe2@beta.gouv.fr
+      |Géraline Kaplant;Big boss;geraldine.kaplant@beta.gouv.fr;Aidant;Instructeur;;Group -1045109618;Alpes-Maritimes (06);;Ceci est une desc;Group.1045109618@beta.gouv.fr""".stripMargin
 
   "The 'ap;l\"us' string should" >> {
     "be escaped as '\"ap;l\"\"us\"'" >> {
@@ -36,7 +37,7 @@ class CSVSpec extends Specification {
       val reader = CSVReader.open(Source.fromString(oneUser))
       val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.groupMappingForCSVImport, GroupImport.HEADERS) ->
         csv.fromCSVLine(line, UserImport.userMappingForCVSImport, UserImport.HEADERS))
-      list must have size 4
+      list must have size 5
       val result = list.head
       result._1 must beRight(UserGroup(id = null,
         name = "SuperGroupe",
@@ -47,14 +48,14 @@ class CSVSpec extends Specification {
         area = UUIDHelper.namedFrom("nice"),
         organisation = None,
         email = Some("super.groupe@beta.gouv.fr")))
-      list.map(_._1).distinct must have size 2
+      list.map(_._1).distinct must have size 3
     }
 
     "produce a valid users" >> {
       val reader = CSVReader.open(Source.fromString(oneUser))
       val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.groupMappingForCSVImport, GroupImport.HEADERS) ->
         csv.fromCSVLine(line, UserImport.userMappingForCVSImport, UserImport.HEADERS))
-      list must have size 4
+      list must have size 5
       list.head._2 must beRight(User(id = null,
         key = "key",
         name = "Lucien Pereira",

@@ -15,7 +15,7 @@ object GroupImport {
 
   // CSV import mapping
   val groupMappingForCSVImport: Mapping[UserGroup] = mapping(
-    "id" -> ignored(deadbeef),
+    "id" -> default(uuid, deadbeef),
     GROUP_NAME_HEADER_PREFIX -> nonEmptyText.verifying(maxLength(100)),
     "description" -> ignored(Option.empty[String]),
     "inseeCode" -> ignored(List.empty[String]),

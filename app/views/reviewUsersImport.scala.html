@@ -6,35 +6,31 @@
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white">
   <thead>
     <tr>
-      <th class="mdl-data-table__cell--non-numeric" colspan="6">
-        @header
-      </th>
+      @header
     </tr>
   </thead>
   <tbody>
     @helper.repeatWithIndex(section("users")) { (user, index) =>
     <tr class="searchable-row td--clear-border">
-      <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size cell-import-user">
+      <td class="mdl-data-table__cell--non-numeric cell-import-user">
         @helper.input(user("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
           <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
-      </td>
-      <td class="mdl-data-table__cell--non-numeric cell-import-user">
         @helper.input(user(csv.USER_NAME_HEADER_PREFIX), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
-          <input class="mdl-textfield__input input-import-user" @{if(user("id").value.get != csv.deadbeef.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+          <input class="mdl-textfield__input input-import-user @if(user("id").value.get != csv.deadbeef.toString) {mdl-textfield__input--readonly}" @{if(user("id").value.get != csv.deadbeef.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
         @helper.input(user(csv.USER_QUALITY_HEADER_PREFIX), 'label -> "Qualité", 'class -> "input-import-user") { (id, name, value, args) =>
-          <input class="mdl-textfield__input input-import-user" @{if(user("id").value.get != csv.deadbeef.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+          <input class="mdl-textfield__input input-import-user @if(user("id").value.get != csv.deadbeef.toString) {mdl-textfield__input--readonly}" @{if(user("id").value.get != csv.deadbeef.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
         @helper.input(user(csv.USER_EMAIL_HEADER_PREFIX), 'label -> "Email", 'class -> "input-import-user") { (id, name, value, args) =>
-          <input class="mdl-textfield__input" @{if(user("id").value.get != csv.deadbeef.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+          <input class="mdl-textfield__input input-import-user @if(user("id").value.get != csv.deadbeef.toString) {mdl-textfield__input--readonly}" @{if(user("id").value.get != csv.deadbeef.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
-      <td class="cell-import-user">
+      <td class="mdl-data-table__cell--non-numeric cell-import-user">
         @if(user("id").value.get != csv.deadbeef.toString) {
           <span>@csv.HELPER_HEADER_PREFIX</span>
         } else {
@@ -47,7 +43,7 @@
                    @{if(!user(csv.HELPER_HEADER_PREFIX).value.get.isEmpty) "checked"} />
         }
       </td>
-      <td class="cell-import-user">
+      <td class="mdl-data-table__cell--non-numeric cell-import-user">
         @if(user("id").value.get != csv.deadbeef.toString) {
           <span>@csv.INSTRUCTOR_HEADER_PREFIX</span>
         } else {
@@ -60,7 +56,7 @@
                  @{if(!user(csv.INSTRUCTOR_HEADER_PREFIX).value.get.isEmpty) "checked"} />
         }
       </td>
-      <td class="cell-import-user">
+      <td class="mdl-data-table__cell--non-numeric cell-import-user">
         @if(user("id").value.get != csv.deadbeef.toString) {
           <span>@csv.GROUP_MANAGER_HEADER_PREFIX</span>
         } else {
@@ -73,7 +69,6 @@
                  @{if(!user(csv.GROUP_MANAGER_HEADER_PREFIX).value.get.isEmpty) "checked"} />
         }
       </td>
-      <td class="mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size cell-import-user"></td>
     </tr>
     }
   </tbody>
@@ -98,9 +93,27 @@
   @helper.CSRF.formField
     @helper.repeatWithIndex(form("sections")) { (section, index) =>
         @display(section) {
-        }{
-          test
-        }
+            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding">
+              @helper.input(section("group")(csv.GROUP_NAME_HEADER_PREFIX), 'label -> csv.GROUP_NAME_HEADER_PREFIX, 'class -> "input-import-user") { (id, name, value, args) =>
+                <input class="mdl-textfield__input input-import-user @if(section("group")("id").value.get != csv.deadbeef.toString) {mdl-textfield__input--readonly}" @{if(section("group")("id").value.get != csv.deadbeef.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+              }
+            </th>
+            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="1">
+              @helper.input(section("group")(csv.GROUP_ORGANISATION_HEADER_PREFIX), 'label -> csv.GROUP_ORGANISATION_HEADER_PREFIX, 'class -> "input-import-user") { (id, name, value, args) =>
+                <input class="mdl-textfield__input input-import-user @if(section("group")("id").value.get != csv.deadbeef.toString) {mdl-textfield__input--readonly}" @{if(section("group")("id").value.get != csv.deadbeef.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+              }
+            </th>
+            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="2">
+              @helper.input(section("group")(csv.TERRITORY_HEADER_PREFIX), 'label -> csv.TERRITORY_HEADER_PREFIX, 'class -> "input-import-user") { (id, name, value, args) =>
+                <input class="mdl-textfield__input input-import-user @if(section("group")("id").value.get != csv.deadbeef.toString) {mdl-textfield__input--readonly}" @{if(section("group")("id").value.get != csv.deadbeef.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+              }
+            </th>
+            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="2">
+              @helper.input(section("group")(csv.GROUP_EMAIL_HEADER_PREFIX), 'label -> csv.GROUP_EMAIL_HEADER_PREFIX, 'class -> "input-import-user") { (id, name, value, args) =>
+                <input class="mdl-textfield__input input-import-user @if(section("group")("id").value.get != csv.deadbeef.toString) {mdl-textfield__input--readonly}" @{if(section("group")("id").value.get != csv.deadbeef.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+              }
+            </th>
+        } { }
     }
   }
 }

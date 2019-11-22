@@ -347,10 +347,19 @@ ul#group-area-container li {
 }
 
 .input-import-user {
-    width: initial;
+    width: 100%;
 }
 
 .cell-import-user {
     margin: 3px 3px !important;
     padding: 3px 3px !important;
+}
+
+.mdl-data-table--th--nopadding {
+    padding-left: 0px !important;
+    padding-right: 0.5em !important;
+}
+
+.mdl-textfield__input--readonly {
+    background-color: lightgrey;
 }
