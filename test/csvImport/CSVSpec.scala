@@ -31,22 +31,11 @@ class CSVSpec extends Specification {
     implicit object SemiConFormat extends DefaultCSVFormat {
       override val delimiter: Char = csvImport.SEPARATOR.charAt(0)
     }
+
     "produce valid groups" >> {
       val reader = CSVReader.open(Source.fromString(oneUser))
-      val list = reader.allWithHeaders().map(line => csvImport.fromCSVLine(line, GroupImport.groupMapping, GroupImport.HEADERS) ->
-        csvImport.fromCSVLine(line, UserImport.userMapping, UserImport.HEADERS))
-      list must have size 4
-      val result = list.head
-      result._1 must beRight(GroupImport(name = "SuperGroupe",
-        departement = "Alpes-Maritimes (06)",
-        organisation = None,
-        email = Some("super.groupe@beta.gouv.fr")))
-      list.map(_._1).distinct must have size 2
-    }
-    "produce valid groups with UserGroup mapping" >> {
-      val reader = CSVReader.open(Source.fromString(oneUser))
-      val list = reader.allWithHeaders().map(line => csvImport.fromCSVLine(line, GroupImport.userGroupMappingForCSVImport, GroupImport.HEADERS) ->
-        csvImport.fromCSVLine(line, UserImport.userMapping, UserImport.HEADERS))
+      val list = reader.allWithHeaders().map(line => csvImport.fromCSVLine(line, GroupImport.groupMappingForCSVImport, GroupImport.HEADERS) ->
+        csvImport.fromCSVLine(line, UserImport.userMappingForCVSImport, UserImport.HEADERS))
       list must have size 4
       val result = list.head
       result._1 must beRight(UserGroup(id = null,
@@ -60,28 +49,10 @@ class CSVSpec extends Specification {
         email = Some("super.groupe@beta.gouv.fr")))
       list.map(_._1).distinct must have size 2
     }
+
     "produce a valid users" >> {
       val reader = CSVReader.open(Source.fromString(oneUser))
-      val list = reader.allWithHeaders().map(line => csvImport.fromCSVLine(line, GroupImport.groupMapping, GroupImport.HEADERS) ->
-        csvImport.fromCSVLine(line, UserImport.userMapping, UserImport.HEADERS))
-      list must have size 4
-      list.head._2 must beRight(UserImport(name = "Lucien Pereira",
-        qualite = "Monsieur",
-        email = "lucien.pereira@beta.gouv.fr",
-        helper = true,
-        instructor = true,
-        groupManager = false))
-      list(1)._2 must beRight(UserImport(name = "Roxanne Duchamp",
-        qualite = "Madame",
-        email = "roxanne.duchamp@beta.gouv.fr",
-        helper = true,
-        instructor = false,
-        groupManager = false))
-    }
-
-    "produce a valid users with User mapping" >> {
-      val reader = CSVReader.open(Source.fromString(oneUser))
-      val list = reader.allWithHeaders().map(line => csvImport.fromCSVLine(line, GroupImport.userGroupMappingForCSVImport, GroupImport.HEADERS) ->
+      val list = reader.allWithHeaders().map(line => csvImport.fromCSVLine(line, GroupImport.groupMappingForCSVImport, GroupImport.HEADERS) ->
         csvImport.fromCSVLine(line, UserImport.userMappingForCVSImport, UserImport.HEADERS))
       list must have size 4
       list.head._2 must beRight(User(id = null,

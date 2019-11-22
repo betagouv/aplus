@@ -8,27 +8,13 @@ import play.api.data.Forms._
 import play.api.data.Mapping
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 
-case class GroupImport(name: String,
-                       departement: String,
-                       organisation: Option[String],
-                       email: Option[String],
-                       existingId: Option[UUID] = None)
-
 object GroupImport {
 
   val HEADERS = List(TERRITORY_HEADER_PREFIX, GROUP_ORGANISATION_HEADER_PREFIX, GROUP_NAME_HEADER_PREFIX, GROUP_EMAIL_HEADER_PREFIX)
   val HEADER = HEADERS.mkString(SEPARATOR)
 
-  val groupMapping: Mapping[GroupImport] = mapping(
-    GROUP_NAME_HEADER_PREFIX -> nonEmptyText.verifying(maxLength(100)),
-    TERRITORY_HEADER_PREFIX -> nonEmptyText,
-    GROUP_ORGANISATION_HEADER_PREFIX -> optional(nonEmptyText),
-    GROUP_EMAIL_HEADER_PREFIX -> optional(email.verifying(maxLength(200), nonEmpty)),
-    "id" -> optional(uuid)
-  )(GroupImport.apply)(GroupImport.unapply)
-
   // CSV import mapping
-  val userGroupMappingForCSVImport: Mapping[UserGroup] = mapping(
+  val groupMappingForCSVImport: Mapping[UserGroup] = mapping(
     "id" -> ignored(deadbeef),
     GROUP_NAME_HEADER_PREFIX -> nonEmptyText.verifying(maxLength(100)),
     "description" -> ignored(Option.empty[String]),

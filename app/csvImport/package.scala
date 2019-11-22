@@ -1,5 +1,6 @@
 import java.util.UUID
 
+import models.{User, UserGroup}
 import play.api.data.Forms.{list, mapping}
 import play.api.data.{FormError, Mapping}
 
@@ -32,19 +33,17 @@ package object csvImport {
   object NO_CONTENT extends CSVImportError
 
   def convertToPrefixForm(values: Map[String, String], headers: List[String]): Map[String, String] = {
-    val a = values.map({ case (key, value) =>
+    values.map({ case (key, value) =>
       headers.find(key.startsWith).map(_ -> value)
     }).flatten.toMap
-    println(a)
-    a
   }
 
   val sectionMapping: Mapping[SectionImport] = mapping(
-    "group" -> GroupImport.groupMapping,
-    "users" -> list(UserImport.userMapping)
+    "group" -> GroupImport.groupMappingForCSVImport,
+    "users" -> list(UserImport.userMappingForCVSImport)
   )(SectionImport.apply)(SectionImport.unapply)
 
-  case class SectionImport(group: GroupImport, users: List[UserImport])
+  case class SectionImport(group: UserGroup, users: List[User])
 
   def fromCSVLine[T](values: Map[String, String], mapping: Mapping[T], headers: List[String]): Either[Seq[FormError], T] = {
     mapping.bind(convertToPrefixForm(values, headers))

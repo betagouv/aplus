@@ -4,7 +4,7 @@ import java.util.{Locale, UUID}
 
 import actions.{LoginAction, RequestWithUserData}
 import com.github.tototoshi.csv._
-import csvImport.{CSVImportError, GroupImport, SectionImport, UserImport}
+import csvImport.{GroupImport, SectionImport, UserImport}
 import extentions.Operators.{GroupOperators, UserOperators, not}
 import extentions.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
@@ -12,7 +12,7 @@ import models.{Area, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
-import play.api.Configuration
+import play.api.{Configuration, data}
 import play.api.data.Forms.{optional, text, tuple, _}
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.{Form, FormError, Mapping}
@@ -21,6 +21,7 @@ import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
 import services._
 
+import scala.collection.immutable
 import scala.io.Source
 
 @Singleton
@@ -335,16 +336,16 @@ case class UserController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "IMPORT_USER_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
-      Ok(views.html.importUsers(request.currentUser, request.currentArea)("", Seq(FormError.apply("","Le champ est vide.")) -> 1))
+      Ok(views.html.importUsers(request.currentUser, request.currentArea)("", Seq(FormError.apply("", "Le champ est vide.")) -> 1))
     }
   }
 
-  def extractFromCSV(creator: User, area: Area)(csvText: String): List[(Either[Seq[FormError], GroupImport], Either[Seq[FormError], UserImport])] = {
+  def extractFromCSV(creator: User, area: Area)(csvText: String): List[(Either[Seq[FormError], UserGroup], Either[Seq[FormError], User])] = {
     implicit object SemiConFormat extends DefaultCSVFormat {
       override val delimiter = ';'
     }
     val reader = CSVReader.open(Source.fromString(csvText))
-    reader.allWithHeaders().map(line => csvImport.fromCSVLine(line,GroupImport.groupMapping, GroupImport.HEADERS) -> csvImport.fromCSVLine(line, UserImport.userMapping, UserImport.HEADERS))
+    reader.allWithHeaders().map(line => csvImport.fromCSVLine(line, GroupImport.groupMappingForCSVImport, GroupImport.HEADERS) -> csvImport.fromCSVLine(line, UserImport.userMappingForCVSImport, UserImport.HEADERS))
   }
 
   val form: Form[List[SectionImport]] = Form(single("sections" -> list(csvImport.sectionMapping)))
@@ -355,23 +356,23 @@ case class UserController @Inject()(loginAction: LoginAction,
         "IMPORT_GROUP_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
       } { () =>
         csvImportContentForm.bindFromRequest.fold({ _ =>
-          BadRequest(views.html.importUsers(request.currentUser, request.currentArea)("", Seq(FormError.apply("","Le champ est vide.")) -> 1))
+          BadRequest(views.html.importUsers(request.currentUser, request.currentArea)("", Seq(FormError.apply("", "Le champ est vide.")) -> 1))
         }, { csvImportContent =>
           val list = extractFromCSV(request.currentUser, request.currentArea)(csvImportContent)
           val firstError = list.zipWithIndex.find({ case (a, _) => a._1.isLeft || a._2.isLeft })
-            firstError.fold[Result]({
+          firstError.fold[Result]({
 
-              val data = list.map(a => a._1.right.get -> a._2.right.get).groupBy(_._1)
-                .map({ case (k, v) => k.copy(existingId = groupService.groupByName(k.name).map(_.id)) -> v })
-                .mapValues(_.map(_._2).distinct.map(user => user.copy(existingId = userService.byEmail(user.email).map(_.id))))
-                  .map({ case (group:GroupImport, users: List[UserImport]) => SectionImport(group,users)})
+            val step1: Map[UserGroup, List[(UserGroup, User)]] = list.map(a => a._1.right.get -> a._2.right.get).groupBy(_._1)
+            val step2: Map[UserGroup, List[(UserGroup, User)]] = step1.map({ case (k, v) => k.copy(id = groupService.groupByName(k.name).map(_.id).get) -> v })
+            val step3: Map[UserGroup, List[User]] = step2.mapValues(_.map(_._2).distinct.map(user => user.copy(id = userService.byEmail(user.email).map(_.id).get)))
+            val step4: immutable.Iterable[SectionImport] = step3.map({ case (group: UserGroup, users: List[User]) => SectionImport(group, users) })
 
-              Ok(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form.fill(data.toList)))
-            })({ e: ((Either[Seq[FormError], csvImport.GroupImport], Either[Seq[FormError], csvImport.UserImport]), Int) =>
+            Ok(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form.fill(step4.toList)))
+          })({ e: ((Either[Seq[FormError], UserGroup], Either[Seq[FormError], User]), Int) =>
 
-              val error: (Seq[FormError], Int) = (if (e._1._1.isLeft) e._1._1.left.get else e._1._2.left.get) -> (e._2 + 1)
-              BadRequest(views.html.importUsers(request.currentUser, request.currentArea)(csvImportContent, error))
-            })
+            val error: (Seq[FormError], Int) = (if (e._1._1.isLeft) e._1._1.left.get else e._1._2.left.get) -> (e._2 + 1)
+            BadRequest(views.html.importUsers(request.currentUser, request.currentArea)(csvImportContent, error))
+          })
         })
       }
     }
