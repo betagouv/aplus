@@ -10,6 +10,7 @@ import play.api.data.Forms._
 import play.api.data.validation._
 import play.api.data.validation.Constraints._
 import actions._
+import constants.Constants
 import forms.FormsPlusMap
 import models._
 import org.joda.time.DateTime
@@ -82,7 +83,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     request.currentUser.helper match {
        case false => {
          eventService.warn("APPLICATION_CREATION_UNAUTHORIZED", s"L'utilisateur n'a pas de droit de créer une demande")
-         Unauthorized("Vous n'avez pas les droits suffisants pour créer une demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+         Unauthorized(s"Vous n'avez pas les droits suffisants pour créer une demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
        }
        case true => {
          applicationForm.bindFromRequest.fold(
@@ -170,7 +171,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     (request.currentUser.admin, request.currentUser.groupAdmin) match {
       case (false, false) =>
         eventService.warn("ALL_APPLICATIONS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher toutes les demandes")
-        Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+        Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
       case _ =>
         val area = Area.fromId(areaId).get
         val applications = allApplicationVisibleByUserAdmin(request.currentUser, area)
@@ -197,7 +198,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     (request.currentUser.admin || request.currentUser.groupAdmin) match {
       case false =>
         eventService.warn("STATS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher les stats")
-        Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+        Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
       case true =>
         val users = if(request.currentUser.admin) {
           userService.all
@@ -242,10 +243,10 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     (request.currentUser.admin, userOption)  match {
       case (false, Some(user)) =>
         eventService.warn("ALL_AS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur $userId", user=Some(user))
-        Unauthorized("Vous n'avez pas le droits de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+        Unauthorized("Vous n'avez pas le droits de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
       case (true, Some(user)) if user.admin =>
         eventService.warn("ALL_AS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur admin $userId", user=Some(user))
-        Unauthorized("Vous n'avez pas le droits de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+        Unauthorized("Vous n'avez pas le droits de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
       case (true, Some(user)) if request.currentUser.areas.intersect(user.areas).nonEmpty =>
         val currentUserId = user.id
         val applicationsFromTheArea = List[Application]()
@@ -254,7 +255,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         Ok(views.html.myApplications(user, request.currentArea)(applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin), applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin), applicationsFromTheArea))
       case  _ =>
         eventService.error("ALL_AS_NOT_FOUND", s"L'utilisateur $userId n'existe pas")
-        BadRequest("L'utilisateur n'existe pas ou vous n'avez pas le droit d'accèder à cette page. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+        BadRequest("L'utilisateur n'existe pas ou vous n'avez pas le droit d'accèder à cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
     }
   }
 
@@ -330,7 +331,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         }
         else {
           eventService.warn("APPLICATION_UNAUTHORIZED", s"L'accès à la demande $id n'est pas autorisé", Some(application))
-          Unauthorized("Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+          Unauthorized("Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
         }
     }
   }
@@ -363,7 +364,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         }
       case (_, Some(application)) =>
           eventService.warn("FILE_UNAUTHORIZED", s"L'accès aux fichiers sur la demande $applicationId n'est pas autorisé", Some(application))
-          Unauthorized("Vous n'avez pas les droits suffisants pour voir les fichiers sur cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+          Unauthorized("Vous n'avez pas les droits suffisants pour voir les fichiers sur cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
 
     }
   }
@@ -372,7 +373,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     answerForm.bindFromRequest.fold(
       formWithErrors => {
         eventService.error("ANSWER_NOT_CREATED", s"Impossible d'ajouter une réponse sur la demande $applicationId : problème formulaire")
-        BadRequest("Erreur interne, contacter l'administrateur A+ : contact@aplus.beta.gouv.fr")
+        BadRequest("Erreur interne, contacter l'administrateur A+ : ${Constants.supportEmail}")
       },
       answerData => {
         applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
@@ -413,7 +414,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
               }
             } else {
               eventService.warn("ADD_ANSWER_UNAUTHORIZED", s"La réponse à l'aidant pour la demande $applicationId n'est pas autorisé", Some(application))
-              Unauthorized("Vous n'avez pas les droits suffisants pour répondre à cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+              Unauthorized("Vous n'avez pas les droits suffisants pour répondre à cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
             }
         }
       })
@@ -462,7 +463,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           }
         } else {
           eventService.warn("ADD_AGENTS_UNAUTHORIZED", s"L'invitation d'utilisateurs pour la demande $applicationId n'est pas autorisé", Some(application))
-          Unauthorized("Vous n'avez pas les droits suffisants pour inviter des utilisateurs à cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+          Unauthorized("Vous n'avez pas les droits suffisants pour inviter des utilisateurs à cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
         }
     }
   }
@@ -496,7 +497,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
           }
         } else {
           eventService.warn("ADD_EXPERT_UNAUTHORIZED", s"L'invitation d'experts pour la demande $applicationId n'est pas autorisé", Some(application))
-          Unauthorized("Vous n'avez pas les droits suffisants pour inviter des agents à cette demande. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+          Unauthorized("Vous n'avez pas les droits suffisants pour inviter des agents à cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
         }
     }
   }
@@ -508,7 +509,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         NotFound("Nous n'avons pas trouvé cette demande.")
       case (None, _) =>
         eventService.error("TERMINATE_INCOMPLETED", s"La demande de clôture pour $applicationId est incompléte")
-        BadGateway("L'utilité de la demande n'est pas présente, il s'agit surement d'une erreur. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+        BadGateway("L'utilité de la demande n'est pas présente, il s'agit surement d'une erreur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
       case (Some(usefulness), Some(application)) =>
         val finalUsefulness = if(request.currentUser.id == application.creatorUserId) {
           Some(usefulness)

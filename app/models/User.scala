@@ -2,6 +2,7 @@ package models
 
 import java.util.UUID
 
+import constants.Constants
 import extentions.{Hash, UUIDHelper}
 import org.joda.time.DateTime
 
@@ -37,7 +38,7 @@ case class User(id: UUID,
 
 object User {
   private val date = DateTime.parse("2017-11-01T00:00+01:00")
-  val systemUser = User(UUIDHelper.namedFrom("system"), Hash.sha256(s"system"), "Système A+", "System A+", "contact@aplus.beta.gouv.fr", false, false, false, List(), date, false, "75056", false, disabled = true)
+  val systemUser = User(UUIDHelper.namedFrom("system"), Hash.sha256(s"system"), "Système A+", "System A+", Constants.supportEmail, false, false, false, List(), date, false, "75056", false, disabled = true)
 
   val admins = List(
     // Enabled

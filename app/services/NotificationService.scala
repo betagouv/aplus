@@ -2,6 +2,7 @@ package services
 
 import java.util.UUID
 
+import constants.Constants
 import javax.inject.{Inject, Singleton}
 import controllers.routes
 import models._
@@ -20,7 +21,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   private val host = configuration.underlying.getString("app.host")
   private val https = configuration.underlying.getString("app.https") == "true"
 
-  private val from = "Administration+ <contact@aplus.beta.gouv.fr>"
+  private val from = s"Administration+ <${Constants.supportEmail}>"
 
   private def sendMail(email: Email) {
     val emailWithText = email.copy(
@@ -83,7 +84,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
                       |<a href="${url}">${url}</a>
                       |<br>
                       |<br>
-                      |Si vous avez des questions ou vous rencontrez un problème, n'hésitez pas à nous contacter sur <a href="mailto:contact@aplus.beta.gouv.fr">contact@aplus.beta.gouv.fr</a><br>
+                      |Si vous avez des questions ou vous rencontrez un problème, n'hésitez pas à nous contacter sur <a href="mailto:${Constants.supportEmail}">${Constants.supportEmail}</a><br>
                       |Equipe Administration+""".stripMargin
     val email = play.api.libs.mailer.Email(
       s"Connexion à Administration+",
@@ -105,7 +106,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
        |<b>Ne transférez pas cet email et n'y répondez pas directement.</b><br><i>
        |$delegates
        |- Vous pouvez transférer la demande à un autre utilisateur en ouvrant le lien ci-dessus<br>
-       |- Si vous avez un problème ou besoin d'aide à propos de l'outil Administration+, contactez-nous sur <a href="mailto:contact@aplus.beta.gouv.fr">contact@aplus.beta.gouv.fr</a></i>
+       |- Si vous avez un problème ou besoin d'aide à propos de l'outil Administration+, contactez-nous sur <a href="mailto:${Constants.supportEmail}">${Constants.supportEmail}</a></i>
      """.stripMargin
   }
 
