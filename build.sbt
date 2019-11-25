@@ -39,12 +39,14 @@ libraryDependencies ++= Seq(
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
   "org.webjars.npm" % "dialog-polyfill" % "0.4.10",
   "org.webjars.npm" % "twemoji" % "2.5.1",
-  "org.webjars" % "chartjs" % "2.8.0"
+  "org.webjars" % "chartjs" % "2.8.0",
+  "org.webjars" % "font-awesome" % "5.11.2"
 )
 // Crash
 libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.28"
 
 // Adds additional packages into Twirl
+TwirlKeys.templateImports += "constants.Constants"
 
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "fr.gouv.beta.binders._"

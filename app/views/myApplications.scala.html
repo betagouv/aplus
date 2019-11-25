@@ -3,7 +3,7 @@
 
 @display(applications: Seq[Application]) = {
     <div class="mdl-cell mdl-cell--12-col pem-container">
-        Total : @applications.size ( @applications.groupBy(_.longStatus(user)).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
+        Toutes (@applications.size) :  @applications.groupBy(_.longStatus(user)).mapValues(_.size).map{case (k,v) => @k ( @v ) }.mkString(" / ")
         <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
             <tfoot class="invisible">
                 <tr>
@@ -25,7 +25,7 @@
                         @application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))
                         </div>
                     </td>
-                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
+                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size hidden--small-screen">
                         <div id="answers-@application.id" class="vertical-align--middle">
                             <i class="material-icons icon--light">chat_bubble</i>
                             <span class="application__anwsers">@application.answers.length messages</span>
@@ -36,8 +36,8 @@
                             }
                         </div>
                     </td>
-                    <td class="mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size"></td>
-                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size" style="width: 20px"><a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                    <td class="mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size hidden--small-screen"></td>
+                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size hidden--small-screen" style="width: 20px"><a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                         <i class="material-icons">info_outline</i>
                     </a></td>
                 </tr>
@@ -47,7 +47,7 @@
     </div>
 }
 
-@main(user, area, false)(s"Toutes mes demandes")  {
+@main(user, area, false)(s"Mes demandes")  {
 <style>
     .pem-table {
         width: 100%;
@@ -77,8 +77,8 @@
     }
 </script>
 }{
+    <div class="mdl-cell mdl-cell--12-col">
     @if(myOpenApplications.isEmpty) {
-        <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
             @if(myOpenApplications.isEmpty) {
                 <div class="info-box">
                     <h4>Bienvenue sur Administration+</h4><br>
@@ -88,61 +88,48 @@
                         Vous êtes instructeur : vous recevrez un email lorsqu'un aidant sollicitera votre administration ou organisme. <br><br>
                     }
                     @if(user.helper) {
-                        Pour créer votre première demande, vous pouvez utiliser le lien du menu ou le bouton suivant.<br>
+                        Pour créer votre première demande, vous pouvez utiliser le bouton suivant.<br>
                         <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" onclick="document.location = '@routes.ApplicationController.create()'">
                             Créer une demande
                         </button><br>
                         <br>
-                    <i>Un doute sur la nature du blocage ? Posez-nous la question par mail : <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Question">contact&commat;aplus.beta.gouv.fr</a>.</i>
+                    <i>Un doute sur la nature du blocage ? Posez-nous la question par mail : <a href="mailto:@Constants.supportEmail?subject=Question">@Constants.supportEmail</a>.</i>
                     }
                 </div>
             } else {
                 <p>Vous n'avez pas de demande en cours.
                 @if(user.helper) {
-                    Pour créer votre première demande, vous pouvez utiliser le lien du menu ou le lien suivant : <a href="@routes.ApplicationController.create()">Créer une demande</a>.
+                    Pour créer une demande, vous pouvez utiliser le lien suivant : <a href="@routes.ApplicationController.create()">Créer une demande</a>.
                 }
             }
             </p>
-        </div>
 
     } else {
-        <input class="mdl-cell mdl-cell--12-col" type="search" placeholder="Filtrer les demandes (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
-        <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20A+">contact&commat;aplus.beta.gouv.fr</a></span>
         @if(myOpenApplications.nonEmpty) {
-            <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing mdl-grid">
+           <div class="mdl-grid mdl-grid--no-spacing">
                 <h4 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Mes demandes</h4>
                 @if(user.helper) {
                     <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" onclick="document.location = '@routes.ApplicationController.create()'">
                         Créer une demande
                     </button>
                 }
-                @display(myOpenApplications)
+                    <span>Besoin d'aide ? Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Aidez-moi%20avec%20Administration+">@Constants.supportEmail</a></span>
             </div>
+               <br>
+                <span>FILTRER PAR </span><input style="width: 400px; max-width: 100%" type="search" placeholder="Saisir nom, numéro, description, etc" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
+                <br>    
+                @display(myOpenApplications)
         }
     }
     @if(myClosedApplications.nonEmpty) {
-        <div class="mdl-cell mdl-cell--12-col info-box"><b>Vous ne voyez pas vos anciennes demandes ?</b> Cliquez-sur "Afficher les demandes clôturées" pour voir vos demandes clôturéees.<br>
+        <div class="info-box" id="show-closed-applications"><b>Vous ne voyez pas vos anciennes demandes ?</b> Cliquez-sur <a href="#" onclick="showClosedApplications()">Afficher les demandes clôturées</a> pour voir vos demandes clôturéees.<br>
             (Elles seront supprimées 1 mois après la clôture.)</div>
-
-        <div class="mdl-cell mdl-cell--12-col" style="text-align: center" id="show-closed-applications">
-            <a href="#" onclick="showClosedApplications()">Afficher les demandes clôturées</a>
-        </div>
-        <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing invisible" id="closed-applications">
+        
+        <div class="mdl-grid mdl-grid--no-spacing invisible" id="closed-applications" style="margin: 50px 0;">
             <h4 class="mdl-cell mdl-cell--12-col">Demandes clôturées</h4>
             @display(myClosedApplications)
         </div>
     }
 
-    @if(myOpenApplications.nonEmpty || myClosedApplications.nonEmpty) {
-        <h4 class="mdl-cell mdl-cell--12-col">Export des demandes en CSV</h4>
-        <b class="mdl-cell mdl-cell--12-col">
-            Il faut importer le fichier dans Excel (ou autre tableur) en ut8 pour avoir les accents correctement.</b>
-        <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--8-col mdl-cell--2-offset" onclick="document.location = '@routes.ApplicationController.myCSV()'">
-            Télécharger export CSV
-        </button>
-    }
-
-    @if(user.admin || user.groupAdmin) {
-       <p>Vous êtes admin ou responsable de groupe : <a href="">Voir la nouvelle page de gestion de demandes</a></p>
-    }
+    </div>
 }
