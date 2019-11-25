@@ -5,8 +5,8 @@
     <tbody>
         @repeatMap(form("infos"), form, mandatoryFields) {  (infoField, info) =>
             <tr>
-                <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile">@info.capitalize</td>
-                <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile">
+                <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split">@info.capitalize</td>
+                <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split">
                 @helper.input(infoField, 'label -> s"Saisir $info de l'usager ici") { (id, name, value, args) =>
                     <input class="mdl-textfield__input mdl-color--white" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
                 }
@@ -15,7 +15,7 @@
             </tr>
         }
     <tr>
-        <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile">
+        <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split">
             <b>Ajouter une autre information :</b><br>
             <select id="types" onchange="newTypeSelected()">
                 <option disabled selected value="">Selectionnez une information à ajouter</option>
@@ -28,7 +28,7 @@
                 <input class="mdl-textfield__input mdl-color--white" name="other-type" type="text" id="other-type" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
             </div>
         </td>
-        <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile">
+        <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split">
             <div class="mdl-textfield mdl-js-textfield invisible">
                 <label class="mdl-textfield__label" for="other-type-value">Saisissez l'information </label>
                 <input class="mdl-textfield__input mdl-color--white" type="text" name="other-type-value" id="other-type-value" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">

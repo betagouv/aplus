@@ -2,7 +2,7 @@
 @import java.util.Locale
 
 
-@main(user, area, false)(s"Evénements ($limit derniers)")  {
+@main(user, area, false, maxWidth = false)(s"Evénements ($limit derniers)")  {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("sortable/sortable.css")'>
     <script src="@routes.Assets.versioned("sortable/sortable.js")"></script>
 }{

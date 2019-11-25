@@ -7,15 +7,6 @@
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 
     <style>
-        @@media screen and (max-width: 750px) {
-            .mdl-data-table__cell--split-in-mobile {
-                display: block;
-                float: left;
-                width: 100%;
-                height: initial !important;
-            }
-        }
-
         .aplus-cat-button {
             background-color: #FEFEFE;
             padding: 20px;
@@ -64,16 +55,17 @@
         }
 </style>
 }{
-    <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h3>
-    <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.create()">
-        Mode Avancé
-    </a>
-    <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
-
-    @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing", 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data") {
+    <div class="mdl-cell mdl-cell--12-col">
+        <div class="mdl-grid mdl-grid--no-spacing">
+            <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h3>
+            <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.create()">
+                Mode Avancé
+            </a>
+            <span>Besoin d'aide ? Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Aidez-moi%20avec%20Administration+">@Constants.supportEmail</a></span>
+        </div>
+    @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data") {
         @helper.CSRF.formField
-        <div class="mdl-cell mdl-cell--12-col mdl-grid">
-
+        <div class="mdl-grid">
             @defining(categories.filter(_.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty)) { categories =>
                 @if(categories.isEmpty) {
                     <h1>Le mode guidé n'est pas encore disponible dans votre territoire.</h1>
@@ -86,6 +78,7 @@
                     </div>
                 }
             }
+        </div>
             <input class="invisible" id="category" name="category" @selectedCategory.map{ category => value="@category" } >
             <script>
                 function onCategoryChange(caller) {
@@ -113,7 +106,7 @@
             </script>
 
 
-            <div id="form-problem" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing @if(selectedCategory.isEmpty){ invisible }">
+            <div id="form-problem" class="mdl-grid mdl-grid--no-spacing @if(selectedCategory.isEmpty){ invisible }">
                 <h5 class="mdl-cell mdl-cell--12-col mdl-grid">Nature du problème rencontré</h5>
                 <div class="aplus-subjects">
                 @for(category <- categories.filter(_.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty)) {
@@ -195,7 +188,7 @@
                 </script>
             </div>
 
-            <div id="form-end" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing @if(selectedCategory.isEmpty){ invisible }">
+            <div id="form-end" class="mdl-grid mdl-grid--no-spacing @if(selectedCategory.isEmpty){ invisible }">
                 <h5 class="mdl-cell mdl-cell--12-col">Confirmer les organismes à contacter</h5>
 
 
@@ -276,6 +269,7 @@
                 </button>
             </div>
     }
+    </div>
     <script type="text/javascript">
         var checkbox = document.querySelector("#checkbox-mandat");
 

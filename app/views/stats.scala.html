@@ -30,7 +30,6 @@
     </style>
     @webJarsUtil.locate("Chart.bundle.min.js").script()
 }{
-
     @if(user.areas.length > 1) {
         <p class="mdl-cell mdl-cell--12-col">Stats de : @if(currentAreaOnly) { <b>@area.name</b> / <a href="@routes.ApplicationController.stats()?currentAreaOnly=false">Tous les territoires</a> } else {
             <a href="@routes.ApplicationController.stats()?currentAreaOnly=true">@area.name</a> / <b>Tous les territoires</b>
