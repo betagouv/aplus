@@ -110,7 +110,7 @@
               </a>
             }
             @Area.fromId(userGroup.area).map(_.name).getOrElse("") /
-            <b>@userGroup.name</b> / @(userGroup.organisation, userGroup.organisationDeductedFromName()) match {
+            <b>@userGroup.name</b> / @(userGroup.organisation, UserGroup.organisationDeductedFromName(userGroup.name)) match {
               case (Some(organisation), _) => {
                 @organisation / }
               case (_, Some(organisation)) => { @organisation / }

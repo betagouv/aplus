@@ -1,6 +1,6 @@
 @import models._
 @import extentions.MDLForms._
-@(currentUser: User, area: Area)(form: Form[List[csv.SectionImport]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User, area: Area)(form: Form[List[csv.Section]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @display(section: Field)(header: Html)(footer: Html) = {
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white">
@@ -72,24 +72,12 @@
     </tr>
     }
   </tbody>
-  <tfoot>
-    <tr>
-      <td class="mdl-data-table__cell--non-numeric" colspan="6">
-        @footer
-      </td>
-    </tr>
-    <tr class="invisible">
-      <td class="mdl-data-table__cell--non-numeric" colspan="6">
-        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button>
-      </td>
-    </tr>
-  </tfoot>
 </table>
 }
 
 @main(currentUser, area, false)("Revue de votre import CSV") {
 } {
-  @helper.form(routes.UserController.importUsersReview(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
+  @helper.form(routes.UserController.importUsers(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
   @helper.CSRF.formField
     @helper.repeatWithIndex(form("sections")) { (section, index) =>
         @display(section) {
@@ -115,5 +103,6 @@
             </th>
         } { }
     }
+    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">Importer</button>
   }
 }

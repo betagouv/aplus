@@ -15,17 +15,18 @@ object UserImport {
   val HEADER = HEADERS.mkString(SEPARATOR)
 
   val userMappingForCVSImport: Mapping[User] = mapping(
-    "id" -> default(uuid, deadbeef),
+    "id" -> default(uuid, deadbeef).transform[UUID](uuid => if(uuid == null) deadbeef else uuid,
+      uuid => if(uuid == null) deadbeef else uuid),
     "key" -> default(nonEmptyText, "key"),
     USER_NAME_HEADER_PREFIX -> nonEmptyText.verifying(maxLength(100)),
     USER_QUALITY_HEADER_PREFIX -> nonEmptyText.verifying(maxLength(100)),
     USER_EMAIL_HEADER_PREFIX -> email.verifying(maxLength(200), nonEmpty),
 
-    HELPER_HEADER_PREFIX -> text.verifying(s => s.startsWith(HELPER_HEADER_PREFIX) || s.isEmpty)
-      .transform[Boolean](s => Operators.not(s.isEmpty), helper => if (helper) HELPER_HEADER_PREFIX else ""),
+    HELPER_HEADER_PREFIX -> optional(text.verifying(s => s.startsWith(HELPER_HEADER_PREFIX) || s.isEmpty))
+      .transform[Boolean](os => os.exists(s=>Operators.not(s.isEmpty)), helper => if (helper) Some(HELPER_HEADER_PREFIX) else None),
 
-    INSTRUCTOR_HEADER_PREFIX -> text.verifying(s => s.startsWith(INSTRUCTOR_HEADER_PREFIX) || s.isEmpty)
-      .transform[Boolean](s => Operators.not(s.isEmpty), helper => if (helper) INSTRUCTOR_HEADER_PREFIX else ""),
+    INSTRUCTOR_HEADER_PREFIX -> optional(text.verifying(s => s.startsWith(INSTRUCTOR_HEADER_PREFIX) || s.isEmpty))
+      .transform[Boolean](os => os.exists(s=>Operators.not(s.isEmpty)), helper => if (helper) Some(INSTRUCTOR_HEADER_PREFIX) else None),
 
     "admin" -> ignored(false),
     "areas" -> default(list(uuid).verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
@@ -34,8 +35,8 @@ object UserImport {
     "hasAcceptedCharte" -> default(boolean, false),
     "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
 
-    GROUP_MANAGER_HEADER_PREFIX -> text.verifying(s => s.startsWith(GROUP_MANAGER_HEADER_PREFIX) || s.isEmpty)
-      .transform[Boolean](s => Operators.not(s.isEmpty), helper => if (helper) GROUP_MANAGER_HEADER_PREFIX else ""),
+    GROUP_MANAGER_HEADER_PREFIX -> optional(text.verifying(s => s.startsWith(GROUP_MANAGER_HEADER_PREFIX) || s.isEmpty))
+      .transform[Boolean](os => os.exists(s=>Operators.not(s.isEmpty)), helper => if (helper) Some(GROUP_MANAGER_HEADER_PREFIX) else None),
 
     "disabled" -> boolean,
     "expert" -> ignored(false),

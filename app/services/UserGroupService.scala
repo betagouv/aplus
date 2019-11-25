@@ -55,6 +55,15 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
        """.executeUpdate() == 1
   }
 
+  def reImport(group: UserGroup): Boolean = db.withConnection { implicit connection =>
+    SQL"""UPDATE user_group SET
+          organisation = ${group.organisation},
+          area = ${group.area}::uuid,
+          email = ${group.email}
+          WHERE id = ${group.id}::uuid
+       """.executeUpdate() == 1
+  }
+
   def allGroupByAreas(areaIds: List[UUID]): List[UserGroup] = db.withConnection { implicit connection =>
     SQL"SELECT * FROM user_group WHERE ARRAY[$areaIds]::uuid[] @> ARRAY[area]::uuid[]".as(simpleUserGroup.*)
   }

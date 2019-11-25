@@ -26,10 +26,10 @@ package object csv {
     }).flatten.toMap
   }
 
-  val sectionMapping: Mapping[SectionImport] = mapping(
+  val sectionMapping: Mapping[Section] = mapping(
     "group" -> GroupImport.groupMappingForCSVImport,
     "users" -> list(UserImport.userMappingForCVSImport)
-  )(SectionImport.apply)(SectionImport.unapply)
+  )(Section.apply)(Section.unapply)
 
   private val tupleMapping: Mapping[(UserGroup, User)] = mapping(
     "group" -> GroupImport.groupMappingForCSVImport,
@@ -38,7 +38,7 @@ package object csv {
 
   val tupleForm: Form[(UserGroup, User)] = Form.apply(tupleMapping)
 
-  case class SectionImport(group: UserGroup, users: List[User])
+  case class Section(group: UserGroup, users: List[User])
 
   def fromCSVLine(values: Map[String, String], groupHeaders: List[String], userHeaders: List[String]): Form[(UserGroup, User)] = {
     tupleForm.bind(convertToPrefixForm(values, groupHeaders, "group.") ++ convertToPrefixForm(values, userHeaders, "user."))

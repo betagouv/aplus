@@ -40,6 +40,7 @@ POST    /utilisateurs/:userId                   controllers.UserController.editU
 GET     /user/delete/unused/:userId             controllers.UserController.deleteUnusedUserById(userId: java.util.UUID)
 GET     /importation/utilisateurs-depuis-csv    controllers.UserController.importUsersFromCSV
 POST    /importation/revue-import               controllers.UserController.importUsersReview
+POST    /importation/import                     controllers.UserController.importUsers
 
 # Groups
 POST    /groups                         controllers.GroupController.addGroup

@@ -22,6 +22,15 @@ class CSVSpec extends Specification {
       |Li June;Madame;li.june@beta.gouv.fr;Aidant;Instructeur;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe 2!;super.groupe2@beta.gouv.fr
       |Géraline Kaplant;Big boss;geraldine.kaplant@beta.gouv.fr;Aidant;Instructeur;;Group -1045109618;Alpes-Maritimes (06);;Ceci est une desc;Group.1045109618@beta.gouv.fr""".stripMargin
 
+  val excelFile: String =
+      """Nom de l'utilisateur;Qualité de l'utilisateur;Email de l'utilisateur;Aidant;Instructeur;Responsable;Territoire(s);Groupe(s);Bal
+        |Sabine MAIDE;Agent d’accueil FS;sabine.maide@laposte.com;Aidant;;;Val-d’Oise;MFS Saint Laurent;mfs.saint-laurent@laposte.com
+        |Jean MAIDE;Agent d’accueil FS;jean.maide@laposte.com;Aidant;;;Val-d’Oise;MFS Saint Laurent;mfs.saint-laurent@laposte.com
+        |Paul LAPOSTE;Référent La Poste Ardennes;pau.laposte@laposte.com;;Instructeur;;Ardennes;La Poste Ardennes;
+        |Jeanne LAPOSTE;Référent La Poste Ardennes;jeanne.laposte@laposte.com;;Instructeur;;Ardennes,Jura;La Poste Ardennes;
+        |Nathan LAPOSTE;Référent La Poste Nationnal;nathan.laposte@laposte.com;;Instructeur;;Tous;La Poste;
+        |Anne LAPOSTE;Réponsable La Poste;anne.laposte@laposte.com;;;Responsable;Ardennes;La Poste Ardennes;""".stripMargin
+
   val failFile: String =
     """Nom de l'utilisateur;Qualité de l'utilisateur;Email de l'utilisateur;Aidant;Instructeur;Responsable;Groupe(s);Territoire(s);Organisation du groupe;Description du groupe;Bal
       |;Monsieur;;Aidant;Instructeur;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe!;super.groupe@beta.gouv.fr""".stripMargin
