@@ -52,7 +52,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
 
     // Send emails to users
     users.flatMap {  user =>
-      if(user.id != answer.creatorUserID) {
+      if(user.id == answer.creatorUserID) {
         None
       } else if(answer.invitedUsers.contains(user.id)) {
         Some(generateInvitationEmail(application, Some(answer))(user))
