@@ -1,5 +1,6 @@
 package actions
 
+import constants.Constants
 import javax.inject.{Inject, Singleton}
 import controllers.routes
 import models._
@@ -56,7 +57,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
           val area = areaFromContext(user)
           implicit val requestWithUserData = new RequestWithUserData(user, area, request)
           eventService.info("USER_ACCESS_DISABLED", s"Utilisateur désactivé essaye d'accèder à la page ${request.path}}")
-          userNotLogged("Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur contact@aplus.beta.gouv.fr en cas de problème.")
+          userNotLogged(s"Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème.")
         case _ =>
           val message = request.getQueryString("token") match {
             case Some(token) =>

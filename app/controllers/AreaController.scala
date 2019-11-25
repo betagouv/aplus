@@ -3,6 +3,7 @@ package controllers
 import java.util.UUID
 
 import actions.LoginAction
+import constants.Constants
 import extentions.UUIDHelper
 import javax.inject.{Inject, Singleton}
 import models.Area
@@ -22,7 +23,7 @@ class AreaController @Inject()(loginAction: LoginAction,
   def change(areaId: UUID) = loginAction { implicit request =>
     if (!request.currentUser.areas.contains(areaId)) {
       eventService.warn("CHANGE_AREA_UNAUTHORIZED", s"Accès à la zone $areaId non autorisé")
-      Unauthorized("Vous n'avez pas les droits suffisants pour accèder à cette zone. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
+      Unauthorized(s"Vous n'avez pas les droits suffisants pour accèder à cette zone. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
     } else {
       eventService.info("AREA_CHANGE", s"Changement vers la zone $areaId")
       val redirect = request.getQueryString("redirect").map(url => Redirect(url))
