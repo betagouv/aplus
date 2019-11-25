@@ -180,6 +180,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     }
   }
 
+
+
   def myApplications = loginAction { implicit request =>
     val myApplications = applicationService.allForUserId(request.currentUser.id, request.currentUser.admin)
     val myOpenApplications = myApplications.filter(!_.closed)
@@ -248,11 +250,16 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         val currentUserId = user.id
         val applicationsFromTheArea = List[Application]()
         eventService.info("ALL_AS_SHOWED", s"Visualise la vue de l'utilisateur $userId", user= Some(user))
+        // Bug To Fix
         Ok(views.html.myApplications(user, request.currentArea)(applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin), applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin), applicationsFromTheArea))
       case  _ =>
         eventService.error("ALL_AS_NOT_FOUND", s"L'utilisateur $userId n'existe pas")
         BadRequest("L'utilisateur n'existe pas ou vous n'avez pas le droit d'accèder à cette page. Vous pouvez contacter l'équipe A+ : contact@aplus.beta.gouv.fr")
     }
+  }
+
+  def showExportMyApplicationsCSV =  loginAction { implicit request =>
+    Ok(views.html.CSVExport(request.currentUser, request.currentArea))
   }
 
   def myCSV = loginAction { implicit request =>

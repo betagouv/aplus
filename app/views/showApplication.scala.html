@@ -1,7 +1,7 @@
 @(user: User, area: Area)(usersThatCanBeInvited: List[User], application: Application, answerToAgentsForm: Form[_])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 @import java.util.Locale
 
-@main(user, area, false)(s"Demande : ${application.id} - ${area.name} ")  {
+@main(user, area, false)(s"Demande de ${application.creatorUserName}")  {
 <style>
 .mdl-list__item-primary-content {
     font-weight: bold;
@@ -162,7 +162,7 @@ dialog {
                 <div class="mdl-card__menu do-not-print">
                     @if(application.canBeClosedBy(user) && application.closed == false) {
                         <button class="mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()" style="margin-right: 10px;">
-                            Clore
+                            Clore la demande
                         </button>
                     }
                     <button class="mdl-button mdl-button--raised mdl-js-button mdl-button--icon mdl-button--fab" onclick="window.print();">
@@ -174,7 +174,7 @@ dialog {
                 @if(user.admin) {
                     <span style="font-weight: bold; color:red">Reférence interne pour les administrateurs: @application.internalId</span>
                 } else {
-                    <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:contact&commat;aplus.beta.gouv.fr?subject=Aidez-moi%20avec%20Administration+">contact&commat;aplus.beta.gouv.fr</a></span>
+                    <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Aidez-moi%20avec%20Administration+">@Constants.supportEmail</a></span>
                 }
             </div>
             <div class="mdl-card__supporting-text mdl-card--border vertical-align--middle">
@@ -208,7 +208,7 @@ dialog {
                 }
                 @if(application.canBeClosedBy(user) && application.closed == false) {
                     <button class="mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()" style="margin-right: 10px;">
-                        Clôturer la demande
+                        Clore la demande
                     </button>
                 }
             </div>
@@ -336,7 +336,7 @@ dialog {
                                 <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="showDialog()" >
                                         Clore la demande
                                 </button> <br><br>
-                                Sinon n'hésitez à le recontacter en utilisant </i><b>Ajouter une réponse</b> ci-dessous.
+                                Sinon n'hésitez à recontacter la personne en utilisant </i><b>Ajouter une réponse</b> ci-dessous.
                                 </div>
                             }
                         </div>
