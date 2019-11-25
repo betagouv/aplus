@@ -185,11 +185,11 @@ case class UserController @Inject()(loginAction: LoginAction,
       else group
     }
     val replaceId = { group: UserGroup =>
-      if (group.id == csv.deadbeef)
+      if (group.id == csv.undefined)
         group.copy(id = UUID.randomUUID())
       else group
     }
-    if (group.id == csv.deadbeef) {
+    if (group.id == csv.undefined) {
       val newGroup = replaceId.compose(replaceCreationDate)
         .compose(replaceCreateBy)
         .apply(group)
@@ -209,7 +209,7 @@ case class UserController @Inject()(loginAction: LoginAction,
       else user
     }
     val replaceId = { user: User =>
-      if (user.id == csv.deadbeef)
+      if (user.id == csv.undefined)
         user.copy(id = UUID.randomUUID())
       else user
     }
@@ -219,7 +219,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     val setAreas = { user: User =>
       user.copy(areas = (group.area :: user.areas).distinct)
     }
-    val newUsers = users.filter(_.id == csv.deadbeef)
+    val newUsers = users.filter(_.id == csv.undefined)
     val newPreparedUsers = newUsers.map(replaceCreationDate.compose(setGroup).compose(setAreas).compose(replaceId))
     if (newPreparedUsers.nonEmpty) userService.add(newPreparedUsers)
     else true

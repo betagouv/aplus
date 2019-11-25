@@ -15,13 +15,13 @@ object GroupImport {
 
   // CSV import mapping
   val groupMappingForCSVImport: Mapping[UserGroup] = mapping(
-    "id" -> default(uuid, deadbeef).transform[UUID](uuid => if (uuid == null) deadbeef else uuid,
-      uuid => if (uuid == null) deadbeef else uuid),
+    "id" -> default(uuid, undefined).transform[UUID](uuid => if (uuid == null) undefined else uuid,
+      uuid => if (uuid == null) undefined else uuid),
     GROUP_NAME_HEADER_PREFIX -> nonEmptyText.verifying(maxLength(100)),
     "description" -> ignored(Option.empty[String]),
     "inseeCode" -> ignored(List.empty[String]),
     "creationDate" -> ignored(null: DateTime),
-    "createByUserId" -> ignored(deadbeef),
+    "createByUserId" -> ignored(undefined),
     TERRITORY_HEADER_PREFIX -> nonEmptyText.transform[UUID]({ s =>
       s.split(",").map({ t: String =>
         val territory = canonizeTerritory(t.split(" ")(0))

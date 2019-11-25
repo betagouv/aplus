@@ -44,5 +44,5 @@ package object csv {
     tupleForm.bind(convertToPrefixForm(values, groupHeaders, "group.") ++ convertToPrefixForm(values, userHeaders, "user."))
   }
 
-  val deadbeef: UUID = UUID.fromString("deadbeef-0000-0000-0000-000000000000")
+  val undefined: UUID = UUID.fromString("deadbeef-0000-0000-0000-000000000000")
 }

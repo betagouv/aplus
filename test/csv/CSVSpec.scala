@@ -65,7 +65,7 @@ class CSVSpec extends Specification {
       val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS))
       list must have size 5
       val result = list.head
-      result.value.map(_._1) must beSome(UserGroup(id = csv.deadbeef,
+      result.value.map(_._1) must beSome(UserGroup(id = csv.undefined,
         name = "SuperGroupe",
         description = None,
         inseeCode = List.empty[String],
@@ -81,7 +81,7 @@ class CSVSpec extends Specification {
       val reader = CSVReader.open(Source.fromString(csvFile))
       val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS))
       list must have size 5
-      list.head.value.map(_._2) must beSome(User(id = csv.deadbeef,
+      list.head.value.map(_._2) must beSome(User(id = csv.undefined,
         key = "key",
         name = "Lucien Pereira",
         qualite = "Monsieur",
@@ -100,7 +100,7 @@ class CSVSpec extends Specification {
         cguAcceptationDate = None,
         newsletterAcceptationDate = None
       ))
-      list(1).value.map(_._2) must beSome(User(id = csv.deadbeef,
+      list(1).value.map(_._2) must beSome(User(id = csv.undefined,
         key = "key",
         name = "Roxanne Duchamp",
         qualite = "Madame",

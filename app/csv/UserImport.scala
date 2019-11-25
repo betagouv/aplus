@@ -15,8 +15,8 @@ object UserImport {
   val HEADER = HEADERS.mkString(SEPARATOR)
 
   val userMappingForCVSImport: Mapping[User] = mapping(
-    "id" -> default(uuid, deadbeef).transform[UUID](uuid => if(uuid == null) deadbeef else uuid,
-      uuid => if(uuid == null) deadbeef else uuid),
+    "id" -> default(uuid, undefined).transform[UUID](uuid => if(uuid == null) undefined else uuid,
+      uuid => if(uuid == null) undefined else uuid),
     "key" -> default(nonEmptyText, "key"),
     USER_NAME_HEADER_PREFIX -> nonEmptyText.verifying(maxLength(100)),
     USER_QUALITY_HEADER_PREFIX -> nonEmptyText.verifying(maxLength(100)),
