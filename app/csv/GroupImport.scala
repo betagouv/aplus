@@ -5,7 +5,6 @@ import java.util.UUID
 import models.{Area, UserGroup}
 import org.joda.time.DateTime
 import play.api.data.Forms._
-import play.api.data.Mapping
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 
 object GroupImport {
@@ -14,7 +13,7 @@ object GroupImport {
   val HEADER = HEADERS.mkString(SEPARATOR)
 
   // CSV import mapping
-  val groupMappingForCSVImport: Mapping[UserGroup] = mapping(
+  val groupMappingForCSVImport = mapping(
     "id" -> default(uuid, deadbeef),
     GROUP_NAME_HEADER_PREFIX -> nonEmptyText.verifying(maxLength(100)),
     "description" -> ignored(Option.empty[String]),

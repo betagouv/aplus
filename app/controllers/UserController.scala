@@ -339,15 +339,42 @@ case class UserController @Inject()(loginAction: LoginAction,
     }
   }
 
-  def extractFromCSV(creator: User, area: Area)(csvText: String): List[(Either[Seq[FormError], UserGroup], Either[Seq[FormError], User])] = {
+  val sectionsMapping: Mapping[List[csv.SectionImport]] = single("sections" -> list(csv.sectionMapping))
+  val form: Form[List[csv.SectionImport]] = Form(sectionsMapping)
+
+  def extractFromCSV(csvText: String): List[Form[(UserGroup, User)]] = {
     implicit object SemiConFormat extends DefaultCSVFormat {
       override val delimiter = ';'
     }
     val reader = CSVReader.open(Source.fromString(csvText))
-    reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.groupMappingForCSVImport, GroupImport.HEADERS) -> csv.fromCSVLine(line, UserImport.userMappingForCVSImport, UserImport.HEADERS))
+    reader.allWithHeaders()
+      .map(csv.fromCSVLine(_, GroupImport.HEADERS, UserImport.HEADERS))
   }
 
-  val form = Form(single("sections" -> list(csv.sectionMapping)))
+  def extractAndConvertFormNames(forms: List[Form[(UserGroup, User)]], id: Int): Map[String, String] = {
+    def prefixBySection(key: String, id: Int): String = "sections[" + id + "]." + key
+
+    forms.zipWithIndex.flatMap({ f =>
+      val remappedGroups = f._1.data.filter(_._1.startsWith("group."))
+        .map({ case (key, value) => prefixBySection(key, id) -> value })
+      val remappedUsers = f._1.data.filter(_._1.startsWith("user."))
+        .map(t => t._1.replace("user.", "users[" + f._2 + "].") -> t._2)
+        .map({ case (key, value) => prefixBySection(key, id) -> value })
+      remappedGroups ++ remappedUsers
+    }).toMap
+  }
+
+  def extractDataFromCSVAndMapToTreeStructure(csvImportContent: String): Map[String, String] = {
+    val forms: List[Form[(UserGroup, User)]] = extractFromCSV(csvImportContent)
+    // If the name of the group is not defined, the line is discarded.
+    val groupNameToForms = forms.groupBy(_.data.get("group.Groupe"))
+      .filter(_._1.isDefined)
+      .map(t => t._1.get -> t._2)
+    groupNameToForms
+      .toList
+      .zipWithIndex
+      .flatMap(t => extractAndConvertFormNames(t._1._2, t._2)).toMap
+  }
 
   def importUsersReview: Action[AnyContent] = {
     loginAction { implicit request =>
@@ -357,22 +384,9 @@ case class UserController @Inject()(loginAction: LoginAction,
         csvImportContentForm.bindFromRequest.fold({ _ =>
           BadRequest(views.html.importUsers(request.currentUser, request.currentArea)("", List(FormError.apply("", "Le champ est vide."))))
         }, { csvImportContent =>
-          val list = extractFromCSV(request.currentUser, request.currentArea)(csvImportContent)
-          val errors = list.flatMap({ case (group, user) =>
-            group.left.getOrElse(List.empty[FormError]) ++ user.left.getOrElse(List.empty[FormError])
-          })
-          if (not(errors.isEmpty)) {
-            BadRequest(views.html.importUsers(request.currentUser, request.currentArea)(csvImportContent, errors))
-          } else {
-            val groupUserByRelatedGroup = list.map(a => a._1.right.get -> a._2.right.get).groupBy(_._1)
-            val groupIdRetrievalStep = groupUserByRelatedGroup.map({ case (k, v) => k.copy(id = groupService.groupByName(k.name).map(_.id).getOrElse(csv.deadbeef)) -> v })
-            val userIdRetrievalStep = groupIdRetrievalStep.mapValues(_.map(_._2).distinct.map(user => user.copy(id = userService.byEmail(user.email).map(_.id).getOrElse(csv.deadbeef))))
-            val sectionWrappingStep = userIdRetrievalStep.map({ case (group: UserGroup, users: List[User]) => csv.SectionImport(group, users) })
-            // Let's fill
-            val filledForm = form.fill(sectionWrappingStep.toList)
-
-            Ok(views.html.reviewUsersImport(request.currentUser, request.currentArea)(filledForm))
-          }
+          val data = extractDataFromCSVAndMapToTreeStructure(csvImportContent)
+          val filledForm = form.bind(data)
+          Ok(views.html.reviewUsersImport(request.currentUser, request.currentArea)(filledForm))
         })
       }
     }

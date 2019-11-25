@@ -2,7 +2,7 @@ import java.util.UUID
 
 import models.{User, UserGroup}
 import play.api.data.Forms.{list, mapping}
-import play.api.data.{FormError, Mapping}
+import play.api.data.{Form, Mapping}
 
 package object csv {
 
@@ -20,9 +20,9 @@ package object csv {
 
   val SEPARATOR = ";"
 
-  def convertToPrefixForm(values: Map[String, String], headers: List[String]): Map[String, String] = {
+  def convertToPrefixForm(values: Map[String, String], headers: List[String], prefix: String): Map[String, String] = {
     values.map({ case (key, value) =>
-      headers.find(key.startsWith).map(_ -> value)
+      headers.find(key.startsWith).map(prefix + _ -> value)
     }).flatten.toMap
   }
 
@@ -31,10 +31,17 @@ package object csv {
     "users" -> list(UserImport.userMappingForCVSImport)
   )(SectionImport.apply)(SectionImport.unapply)
 
+  private val tupleMapping: Mapping[(UserGroup, User)] = mapping(
+    "group" -> GroupImport.groupMappingForCSVImport,
+    "user" -> UserImport.userMappingForCVSImport
+  )((g: UserGroup, u: User) => g -> u)(tuple => Option(tuple._1 -> tuple._2))
+
+  val tupleForm: Form[(UserGroup, User)] = Form.apply(tupleMapping)
+
   case class SectionImport(group: UserGroup, users: List[User])
 
-  def fromCSVLine[T](values: Map[String, String], mapping: Mapping[T], headers: List[String]): Either[Seq[FormError], T] = {
-    mapping.bind(convertToPrefixForm(values, headers))
+  def fromCSVLine(values: Map[String, String], groupHeaders: List[String], userHeaders: List[String]): Form[(UserGroup, User)] = {
+    tupleForm.bind(convertToPrefixForm(values, groupHeaders, "group.") ++ convertToPrefixForm(values, userHeaders, "user."))
   }
 
   val deadbeef: UUID = UUID.fromString("deadbeef-0000-0000-0000-000000000000")

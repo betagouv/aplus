@@ -14,7 +14,7 @@ import scala.io.Source
 @RunWith(classOf[JUnitRunner])
 class CSVSpec extends Specification {
 
-  val oneUser: String =
+  val csvFile: String =
     """Nom de l'utilisateur;Qualité de l'utilisateur;Email de l'utilisateur;Aidant;Instructeur;Responsable;Groupe(s);Territoire(s);Organisation du groupe;Description du groupe;Bal
       |Lucien Pereira;Monsieur;lucien.pereira@beta.gouv.fr;Aidant;Instructeur;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe!;super.groupe@beta.gouv.fr
       |Roxanne Duchamp;Madame;roxanne.duchamp@beta.gouv.fr;Aidant;;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe!;super.groupe@beta.gouv.fr
@@ -22,24 +22,41 @@ class CSVSpec extends Specification {
       |Li June;Madame;li.june@beta.gouv.fr;Aidant;Instructeur;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe 2!;super.groupe2@beta.gouv.fr
       |Géraline Kaplant;Big boss;geraldine.kaplant@beta.gouv.fr;Aidant;Instructeur;;Group -1045109618;Alpes-Maritimes (06);;Ceci est une desc;Group.1045109618@beta.gouv.fr""".stripMargin
 
+  val failFile: String =
+    """Nom de l'utilisateur;Qualité de l'utilisateur;Email de l'utilisateur;Aidant;Instructeur;Responsable;Groupe(s);Territoire(s);Organisation du groupe;Description du groupe;Bal
+      |;Monsieur;;Aidant;Instructeur;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe!;super.groupe@beta.gouv.fr""".stripMargin
+
   "The 'ap;l\"us' string should" >> {
     "be escaped as '\"ap;l\"\"us\"'" >> {
       CSVUtil.escape("ap;l\"us") mustEqual "\"ap;l\"\"us\""
     }
   }
 
-  "The csv string should" >> {
+  "The failFile string should" >> {
+    implicit object SemiConFormat extends DefaultCSVFormat {
+      override val delimiter: Char = csv.SEPARATOR.charAt(0)
+    }
+    "produce 3 errors" >> {
+      val reader = CSVReader.open(Source.fromString(failFile))
+      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS))
+      list must have size 1
+      val result = list.head
+      result.errors must have size 3
+      result.value.map(_._1) must beNone
+    }
+  }
+
+  "The csvFile string should" >> {
     implicit object SemiConFormat extends DefaultCSVFormat {
       override val delimiter: Char = csv.SEPARATOR.charAt(0)
     }
 
     "produce valid groups" >> {
-      val reader = CSVReader.open(Source.fromString(oneUser))
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.groupMappingForCSVImport, GroupImport.HEADERS) ->
-        csv.fromCSVLine(line, UserImport.userMappingForCVSImport, UserImport.HEADERS))
+      val reader = CSVReader.open(Source.fromString(csvFile))
+      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS))
       list must have size 5
       val result = list.head
-      result._1 must beRight(UserGroup(id = null,
+      result.value.map(_._1) must beSome(UserGroup(id = null,
         name = "SuperGroupe",
         description = None,
         inseeCode = List.empty[String],
@@ -48,15 +65,14 @@ class CSVSpec extends Specification {
         area = UUIDHelper.namedFrom("nice"),
         organisation = None,
         email = Some("super.groupe@beta.gouv.fr")))
-      list.map(_._1).distinct must have size 3
+      list.flatMap(_.value).distinct must have size 5
     }
 
     "produce a valid users" >> {
-      val reader = CSVReader.open(Source.fromString(oneUser))
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.groupMappingForCSVImport, GroupImport.HEADERS) ->
-        csv.fromCSVLine(line, UserImport.userMappingForCVSImport, UserImport.HEADERS))
+      val reader = CSVReader.open(Source.fromString(csvFile))
+      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS))
       list must have size 5
-      list.head._2 must beRight(User(id = null,
+      list.head.value.map(_._2) must beSome(User(id = null,
         key = "key",
         name = "Lucien Pereira",
         qualite = "Monsieur",
@@ -75,7 +91,7 @@ class CSVSpec extends Specification {
         cguAcceptationDate = None,
         newsletterAcceptationDate = None
       ))
-      list(1)._2 must beRight(User(id = null,
+      list(1).value.map(_._2) must beSome(User(id = null,
         key = "key",
         name = "Roxanne Duchamp",
         qualite = "Madame",
