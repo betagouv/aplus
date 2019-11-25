@@ -4,7 +4,7 @@ import java.util.UUID
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import extentions.{CSVUtil, UUIDHelper}
-import models.{User, UserGroup}
+import models.{Area, User, UserGroup}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
@@ -65,13 +65,13 @@ class CSVSpec extends Specification {
       val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS))
       list must have size 5
       val result = list.head
-      result.value.map(_._1) must beSome(UserGroup(id = null,
+      result.value.map(_._1) must beSome(UserGroup(id = csv.deadbeef,
         name = "SuperGroupe",
         description = None,
         inseeCode = List.empty[String],
         creationDate = null,
         createByUserId = null,
-        area = UUIDHelper.namedFrom("nice"),
+        area = Area.allArea.id, // TODO correct
         organisation = None,
         email = Some("super.groupe@beta.gouv.fr")))
       list.flatMap(_.value).distinct must have size 5
@@ -81,7 +81,7 @@ class CSVSpec extends Specification {
       val reader = CSVReader.open(Source.fromString(csvFile))
       val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS))
       list must have size 5
-      list.head.value.map(_._2) must beSome(User(id = null,
+      list.head.value.map(_._2) must beSome(User(id = csv.deadbeef,
         key = "key",
         name = "Lucien Pereira",
         qualite = "Monsieur",
@@ -100,7 +100,7 @@ class CSVSpec extends Specification {
         cguAcceptationDate = None,
         newsletterAcceptationDate = None
       ))
-      list(1).value.map(_._2) must beSome(User(id = null,
+      list(1).value.map(_._2) must beSome(User(id = csv.deadbeef,
         key = "key",
         name = "Roxanne Duchamp",
         qualite = "Madame",
