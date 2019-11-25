@@ -90,11 +90,14 @@ case class UserController @Inject()(loginAction: LoginAction,
         ).mkString(";")
       }
 
-      val headers = List[String]("Id", "Nom", "Qualité", "Email", "Création", "Aidant", "Instructeur", "Responsable", "Expert", "Admin", "Actif", "Commune INSEE", "Territoires", "Groupes", "CGU", "Newsletter").mkString(";")
-      val csv = (List(headers) ++ users.map(userToCSV)).mkString("\n")
+      val headers = List[String]("Id", csv.USER_NAME_HEADER_PREFIX, csv.USER_QUALITY_HEADER_PREFIX,
+        csv.USER_EMAIL_HEADER_PREFIX, "Création", csv.HELPER_HEADER_PREFIX, csv.INSTRUCTOR_HEADER_PREFIX,
+        csv.GROUP_MANAGER_HEADER_PREFIX, "Expert", "Admin", "Actif", "Commune INSEE", csv.TERRITORY_HEADER_PREFIX,
+        csv.GROUP_NAME_HEADER_PREFIX, "CGU", "Newsletter").mkString(";")
+      val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
       val date = DateTime.now(Time.dateTimeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
 
-      Ok(csv).withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-$date-users-${area.name.replace(" ", "-")}.csv"""")
+      Ok(csvContent).withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-$date-users-${area.name.replace(" ", "-")}.csv"""")
     }
   }
 
