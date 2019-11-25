@@ -242,7 +242,8 @@ case class UserController @Inject()(loginAction: LoginAction,
       "IMPORT_GROUP_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
       sectionsForm.bindFromRequest.fold({ missFilledForm =>
-        BadRequest(views.html.reviewUsersImport(request.currentUser, request.currentArea)(missFilledForm))
+        val cleanedForm = missFilledForm.copy(data = missFilledForm.data.filter({ case (_, v) => v.nonEmpty }))
+        BadRequest(views.html.reviewUsersImport(request.currentUser, request.currentArea)(cleanedForm))
       }, { sections =>
         if (sections.isEmpty) {
           val form = sectionsForm.fill(sections).withGlobalError("Action impossible, il n'y a aucun utilisateur à ajouter.")
