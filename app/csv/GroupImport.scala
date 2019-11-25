@@ -24,8 +24,10 @@ object GroupImport {
     "createByUserId" -> ignored(deadbeef),
     TERRITORY_HEADER_PREFIX -> nonEmptyText.transform[UUID]({ s =>
       s.split(",").map({ t: String =>
-        val territory = canonizeTerritory(t)
-        Area.all.find(a => canonizeTerritory(a.name.split(" ")(0)) == territory).map(_.id).getOrElse(Area.allArea.id)
+        val territory = canonizeTerritory(t.split(" ")(0))
+        Area.all.find(a => canonizeTerritory(a.name.split(" ")(0)) == territory)
+          .map(_.id)
+          .getOrElse(Area.allArea.id)
       }).toList.head
     }, uuid => uuid.toString),
 

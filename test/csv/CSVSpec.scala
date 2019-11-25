@@ -4,7 +4,7 @@ import java.util.UUID
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import extentions.{CSVUtil, UUIDHelper}
-import models.{Area, User, UserGroup}
+import models.{User, UserGroup}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
@@ -71,7 +71,7 @@ class CSVSpec extends Specification {
         inseeCode = List.empty[String],
         creationDate = null,
         createByUserId = null,
-        area = Area.allArea.id, // TODO correct
+        area = UUIDHelper.namedFrom("nice"),
         organisation = None,
         email = Some("super.groupe@beta.gouv.fr")))
       list.flatMap(_.value).distinct must have size 5
