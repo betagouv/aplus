@@ -2,7 +2,7 @@ package csv
 
 import java.util.UUID
 
-import models.{Area, UserGroup}
+import models.{Area, Organisation, UserGroup}
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data.Mapping
@@ -32,7 +32,7 @@ object GroupImport {
     }, uuid => uuid.toString),
 
     GROUP_ORGANISATION_HEADER_PREFIX -> optional(nonEmptyText)
-      .transform[Option[String]](_.flatMap(UserGroup.organisationDeductedFromName), identity),
+      .transform[Option[String]](_.flatMap(name => Organisation.fromName(name).map(_.shortName)), identity),
     GROUP_EMAIL_HEADER_PREFIX -> optional(email.verifying(maxLength(200), nonEmpty)),
   )(UserGroup.apply)(UserGroup.unapply)
 

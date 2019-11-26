@@ -456,13 +456,23 @@ case class UserController @Inject()(loginAction: LoginAction,
         .map(t => t._1.replace("user.", "users[" + userId + "].") -> t._2)
         .map({ case (key, value) => prefixBySection(key, id) -> value })
       val emailKey = prefixBySection("users[" + userId + "]." + csv.USER_EMAIL_HEADER_PREFIX, id)
-      val existingId = remappedUsers.get(emailKey).flatMap(userService.byEmail).fold(
+
+      val existingUserId = remappedUsers.get(emailKey).flatMap(userService.byEmail).fold(
         Map.empty[String, String]
       )({ user: User =>
         val idKey = prefixBySection("users[" + userId + "].id", id)
         Map(idKey -> user.id.toString)
       })
-      remappedGroups ++ remappedUsers ++ existingId
+
+      val groupNameKey = prefixBySection("group."+csv.GROUP_NAME_HEADER_PREFIX, id)
+      val existingGroupId = remappedGroups.get(groupNameKey).flatMap(groupService.groupByName).fold(
+        Map.empty[String, String]
+      )({ group: UserGroup =>
+        val idKey = prefixBySection("group.id", id)
+        Map(idKey -> group.id.toString)
+      })
+
+      remappedGroups ++ remappedUsers ++ existingUserId ++ existingGroupId
     }).toMap
   }
 
@@ -470,7 +480,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     val forms: List[Form[(UserGroup, User)]] = extractFromCSV(csvImportContent)
     // If the name of the group is not defined, the line is discarded.
     val groupNameToForms = forms.groupBy(_.data.get("group.Groupe"))
-      .filter(_._1.isDefined)
+      .filter(a => a._1.isDefined && a._1.get.nonEmpty)
       .map(t => t._1.get -> t._2)
     groupNameToForms
       .toList

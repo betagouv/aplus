@@ -82,6 +82,9 @@
     @helper.repeatWithIndex(form("sections")) { (section, index) =>
         @display(section) {
             <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding">
+              @helper.input(section("group")("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
+              <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+              }
               @helper.input(section("group")(csv.GROUP_NAME_HEADER_PREFIX), 'label -> csv.GROUP_NAME_HEADER_PREFIX, 'class -> "input-import-user") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user @if(section("group")("id").value.getOrElse(csv.undefined.toString) != csv.undefined.toString) {mdl-textfield__input--readonly}" @{if(section("group")("id").value.getOrElse(csv.undefined.toString) != csv.undefined.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }

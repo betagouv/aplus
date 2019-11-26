@@ -11,6 +11,7 @@ import org.specs2.runner.JUnitRunner
 
 import scala.io.Source
 
+
 @RunWith(classOf[JUnitRunner])
 class CSVSpec extends Specification {
 
@@ -23,13 +24,14 @@ class CSVSpec extends Specification {
       |Géraline Kaplant;Big boss;geraldine.kaplant@beta.gouv.fr;Aidant;Instructeur;;Group -1045109618;Alpes-Maritimes (06);;Ceci est une desc;Group.1045109618@beta.gouv.fr""".stripMargin
 
   val excelFile: String =
-      """Nom de l'utilisateur;Qualité de l'utilisateur;Email de l'utilisateur;Aidant;Instructeur;Responsable;Territoire(s);Groupe(s);Bal
-        |Sabine MAIDE;Agent d’accueil FS;sabine.maide@laposte.com;Aidant;;;Val-d’Oise;MFS Saint Laurent;mfs.saint-laurent@laposte.com
-        |Jean MAIDE;Agent d’accueil FS;jean.maide@laposte.com;Aidant;;;Val-d’Oise;MFS Saint Laurent;mfs.saint-laurent@laposte.com
-        |Paul LAPOSTE;Référent La Poste Ardennes;pau.laposte@laposte.com;;Instructeur;;Ardennes;La Poste Ardennes;
-        |Jeanne LAPOSTE;Référent La Poste Ardennes;jeanne.laposte@laposte.com;;Instructeur;;Ardennes,Jura;La Poste Ardennes;
-        |Nathan LAPOSTE;Référent La Poste Nationnal;nathan.laposte@laposte.com;;Instructeur;;Tous;La Poste;
-        |Anne LAPOSTE;Réponsable La Poste;anne.laposte@laposte.com;;;Responsable;Ardennes;La Poste Ardennes;""".stripMargin
+    """Nom;Qualité;Email;Instructeur;Responsable;Territoires;Organisation du groupe;Groupe;Bal générique / fonctionnelle;Précisions / Commentaires
+      |Sabine MAIDE;Agent d’accueil FS;sabine.maide@france-service.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;
+      |Marie-France SAIRVISSE;Agent d’accueil FS;Marie-france.sairvisse@laposte.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;
+      |Jean PLOI;Référent Pole Emploi;jean.ploi@pole-emploi.fr;Instructeur;;Ardennes;Pôle emploi;Pole Emploi Charleville Mézières;chareville-mezieres@pole.emploi.com;
+      |Jean DUCAFE;Réponsable CAF;jean.ducafe@caf.fr;Instructeur;Responsable;Ardennes;Caisse d’allocations familiale;CAF Ardennes;ardennes@caf.fr;
+      |Anne TRESOR;Responsable DDFIP;Anne.tresor@ddfip.fr;;Responsable;Mayotte;Direction départementale des Finances publiques;DDFIP Mayotte (amendes);amendes@ddfip.fr;
+      |Martin Paux;Responsable DDFIP;martin.paux@ddfip.fr;Instructeur;;Mayotte;Direction départementale des Finances publiques;DDFIP Mayotte (Impots locaux);amendes@ddfip.fr;
+      |;;;;;;;;;""".stripMargin
 
   val failFile: String =
     """Nom de l'utilisateur;Qualité de l'utilisateur;Email de l'utilisateur;Aidant;Instructeur;Responsable;Groupe(s);Territoire(s);Organisation du groupe;Description du groupe;Bal
