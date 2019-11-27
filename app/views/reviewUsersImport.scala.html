@@ -69,6 +69,9 @@
 } {
   @helper.form(routes.UserController.importUsers(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
   @helper.CSRF.formField
+    @if(form.hasGlobalErrors) {
+      <div style="color: red; font-weight: bold;">@form.globalErrors.mkString(", ")</div>
+    }
     @helper.repeatWithIndex(form("sections")) { (section, index) =>
         @display(section) {
             <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding">

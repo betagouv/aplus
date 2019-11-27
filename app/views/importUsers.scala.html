@@ -1,6 +1,6 @@
 @import models._
 @import extentions.MDLForms._
-@(currentUser: User, area: Area)(csvImportContent: String, error: List[FormError])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(currentUser: User, area: Area)(csvImportContent: String, errors: List[FormError])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
 @main(currentUser, area)(s"Importer des utilisateurs") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
@@ -11,6 +11,9 @@
             @helper.CSRF.formField
             <h2 class="mdl-cell mdl-cell--12-col">Importer un contenu CSV (Séparé par des ; )</h2>
             <p>@csv.UserImport.HEADER@csv.SEPARATOR@csv.GroupImport.HEADER</p>
+            @if(errors.nonEmpty) {
+                <div style="color: red; font-weight: bold;">errors.mkString(", ")</div>
+            }
             <textarea label="Contenu du CSV"
                       class="mdl-textfield--floating-label mdl-cell mdl-cell--12-col mdl-textfield__input mdl-color--white"
                       rows= "20"
