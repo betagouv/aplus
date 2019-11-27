@@ -91,7 +91,7 @@ case class UserController @Inject()(loginAction: LoginAction,
       }
 
       val headers = List[String]("Id", csv.USER_NAME_HEADER_PREFIX, csv.USER_QUALITY_HEADER_PREFIX,
-        csv.USER_EMAIL_HEADER_PREFIX, "Création", csv.HELPER_HEADER_PREFIX, csv.INSTRUCTOR_HEADER_PREFIX,
+        csv.USER_EMAIL_HEADER_PREFIX, "Création", "Aidant", csv.INSTRUCTOR_HEADER_PREFIX,
         csv.GROUP_MANAGER_HEADER_PREFIX, "Expert", "Admin", "Actif", "Commune INSEE", csv.TERRITORY_HEADER_PREFIX,
         csv.GROUP_NAME_HEADER_PREFIX, "CGU", "Newsletter").mkString(";")
       val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")

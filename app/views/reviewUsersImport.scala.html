@@ -32,19 +32,6 @@
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
         @if(user("id").value.getOrElse(csv.undefined.toString) != csv.undefined.toString) {
-          <span>@csv.HELPER_HEADER_PREFIX</span>
-        } else {
-            <label for="@user(csv.HELPER_HEADER_PREFIX).id">@csv.HELPER_HEADER_PREFIX</label>
-            <input class=""
-                   type="checkbox"
-                   name="@user(csv.HELPER_HEADER_PREFIX).name"
-                   id="@user(csv.HELPER_HEADER_PREFIX).id"
-                   value="@user(csv.HELPER_HEADER_PREFIX).value.getOrElse("")"
-                   @{if(!user(csv.HELPER_HEADER_PREFIX).value.getOrElse("").isEmpty) "checked"} />
-        }
-      </td>
-      <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @if(user("id").value.getOrElse(csv.undefined.toString) != csv.undefined.toString) {
           <span>@csv.INSTRUCTOR_HEADER_PREFIX</span>
         } else {
           <label for="@user(csv.INSTRUCTOR_HEADER_PREFIX).id">@csv.INSTRUCTOR_HEADER_PREFIX</label>
@@ -94,7 +81,7 @@
                 <input class="mdl-textfield__input input-import-user @if(section("group")("id").value.getOrElse(csv.undefined.toString) != csv.undefined.toString) {mdl-textfield__input--readonly}" @{if(section("group")("id").value.getOrElse(csv.undefined.toString) != csv.undefined.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
             </th>
-            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="2">
+            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="1">
               @helper.input(section("group")(csv.TERRITORY_HEADER_PREFIX), 'label -> csv.TERRITORY_HEADER_PREFIX, 'class -> "input-import-user") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user @if(section("group")("id").value.getOrElse(csv.undefined.toString) != csv.undefined.toString) {mdl-textfield__input--readonly}" @{if(section("group")("id").value.getOrElse(csv.undefined.toString) != csv.undefined.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }

@@ -9,7 +9,6 @@ package object csv {
   val USER_NAME_HEADER_PREFIX = "Nom"
   val USER_QUALITY_HEADER_PREFIX = "Qualité"
   val USER_EMAIL_HEADER_PREFIX = "Email"
-  val HELPER_HEADER_PREFIX = "Aidant"
   val INSTRUCTOR_HEADER_PREFIX = "Instructeur"
   val GROUP_MANAGER_HEADER_PREFIX = "Responsable"
 

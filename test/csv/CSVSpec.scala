@@ -4,7 +4,7 @@ import java.util.UUID
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import extentions.{CSVUtil, UUIDHelper}
-import models.{User, UserGroup}
+import models.{Organisation, User, UserGroup}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
@@ -16,14 +16,6 @@ import scala.io.Source
 class CSVSpec extends Specification {
 
   val csvFile: String =
-    """Nom de l'utilisateur;Qualité de l'utilisateur;Email de l'utilisateur;Aidant;Instructeur;Responsable;Groupe(s);Territoire(s);Organisation du groupe;Description du groupe;Bal
-      |Lucien Pereira;Monsieur;lucien.pereira@beta.gouv.fr;Aidant;Instructeur;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe!;super.groupe@beta.gouv.fr
-      |Roxanne Duchamp;Madame;roxanne.duchamp@beta.gouv.fr;Aidant;;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe!;super.groupe@beta.gouv.fr
-      |John Ben;Monsieur;john.ben@beta.gouv.fr;;Instructeur;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe 2!;super.groupe2@beta.gouv.fr
-      |Li June;Madame;li.june@beta.gouv.fr;Aidant;Instructeur;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe 2!;super.groupe2@beta.gouv.fr
-      |Géraline Kaplant;Big boss;geraldine.kaplant@beta.gouv.fr;Aidant;Instructeur;;Group -1045109618;Alpes-Maritimes (06);;Ceci est une desc;Group.1045109618@beta.gouv.fr""".stripMargin
-
-  val excelFile: String =
     """Nom;Qualité;Email;Instructeur;Responsable;Territoires;Organisation du groupe;Groupe;Bal générique / fonctionnelle;Précisions / Commentaires
       |Sabine MAIDE;Agent d’accueil FS;sabine.maide@france-service.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;
       |Marie-France SAIRVISSE;Agent d’accueil FS;Marie-france.sairvisse@laposte.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;
@@ -65,31 +57,31 @@ class CSVSpec extends Specification {
     "produce valid groups" >> {
       val reader = CSVReader.open(Source.fromString(csvFile))
       val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS))
-      list must have size 5
+      list must have size 7
       val result = list.head
       result.value.map(_._1) must beSome(UserGroup(id = csv.undefined,
-        name = "SuperGroupe",
+        name = "MFS Saint Laurent",
         description = None,
         inseeCode = List.empty[String],
         creationDate = null,
         createByUserId = null,
-        area = UUIDHelper.namedFrom("nice"),
-        organisation = None,
-        email = Some("super.groupe@beta.gouv.fr")))
-      list.flatMap(_.value).distinct must have size 5
+        area = UUIDHelper.namedFrom("argenteuil"),
+        organisation = Organisation.fromShortName("MFS").map(_.shortName),
+        email = Some("sfs.saint-laurent@laposte.com")))
+      list.flatMap(_.value).distinct must have size 6
     }
 
     "produce a valid users" >> {
       val reader = CSVReader.open(Source.fromString(csvFile))
       val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS))
-      list must have size 5
+      list must have size 7
       list.head.value.map(_._2) must beSome(User(id = csv.undefined,
         key = "key",
-        name = "Lucien Pereira",
-        qualite = "Monsieur",
-        email = "lucien.pereira@beta.gouv.fr",
+        name = "Sabine MAIDE",
+        qualite = "Agent d’accueil FS",
+        email = "sabine.maide@france-service.com",
         helper = true,
-        instructor = true,
+        instructor = false,
         groupAdmin = false,
         admin = false,
         areas = List.empty[UUID],
@@ -104,9 +96,9 @@ class CSVSpec extends Specification {
       ))
       list(1).value.map(_._2) must beSome(User(id = csv.undefined,
         key = "key",
-        name = "Roxanne Duchamp",
-        qualite = "Madame",
-        email = "roxanne.duchamp@beta.gouv.fr",
+        name = "Marie-France SAIRVISSE",
+        qualite = "Agent d’accueil FS",
+        email = "Marie-france.sairvisse@laposte.com",
         helper = true,
         instructor = false,
         groupAdmin = false,

@@ -11,7 +11,7 @@ import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 
 object UserImport {
 
-  val HEADERS = List(USER_NAME_HEADER_PREFIX, USER_QUALITY_HEADER_PREFIX, USER_EMAIL_HEADER_PREFIX, HELPER_HEADER_PREFIX, INSTRUCTOR_HEADER_PREFIX, GROUP_MANAGER_HEADER_PREFIX)
+  val HEADERS = List(USER_NAME_HEADER_PREFIX, USER_QUALITY_HEADER_PREFIX, USER_EMAIL_HEADER_PREFIX, INSTRUCTOR_HEADER_PREFIX, GROUP_MANAGER_HEADER_PREFIX)
   val HEADER = HEADERS.mkString(SEPARATOR)
 
   val userMappingForCVSImport: Mapping[User] = mapping(
@@ -21,10 +21,7 @@ object UserImport {
     USER_NAME_HEADER_PREFIX -> nonEmptyText.verifying(maxLength(100)),
     USER_QUALITY_HEADER_PREFIX -> nonEmptyText.verifying(maxLength(100)),
     USER_EMAIL_HEADER_PREFIX -> email.verifying(maxLength(200), nonEmpty),
-
-    HELPER_HEADER_PREFIX -> optional(text.verifying(s => s.startsWith(HELPER_HEADER_PREFIX) || s.isEmpty))
-      .transform[Boolean](os => os.exists(s=>Operators.not(s.isEmpty)), helper => if (helper) Some(HELPER_HEADER_PREFIX) else None),
-
+    "Aidant" -> ignored(true),
     INSTRUCTOR_HEADER_PREFIX -> optional(text.verifying(s => s.startsWith(INSTRUCTOR_HEADER_PREFIX) || s.isEmpty))
       .transform[Boolean](os => os.exists(s=>Operators.not(s.isEmpty)), helper => if (helper) Some(INSTRUCTOR_HEADER_PREFIX) else None),
 
