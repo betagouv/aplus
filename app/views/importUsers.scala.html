@@ -12,7 +12,7 @@
             <h2 class="mdl-cell mdl-cell--12-col">Importer un contenu CSV (Séparé par des ; )</h2>
             <p>@csv.UserImport.HEADER@csv.SEPARATOR@csv.GroupImport.HEADER</p>
             @if(errors.nonEmpty) {
-                <div style="color: red; font-weight: bold;">errors.mkString(", ")</div>
+                <div style="color: red; font-weight: bold;">@errors.mkString(", ")</div>
             }
             <textarea label="Contenu du CSV"
                       class="mdl-textfield--floating-label mdl-cell mdl-cell--12-col mdl-textfield__input mdl-color--white"
