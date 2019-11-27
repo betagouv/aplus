@@ -174,25 +174,13 @@ case class UserController @Inject()(loginAction: LoginAction,
   }
 
   def importGroup(group: UserGroup, creator: User): (UserGroup, Boolean) = {
-    val replaceCreationDate = { group: UserGroup =>
-      if (group.creationDate == null)
-        group.copy(creationDate = DateTime.now(Time.dateTimeZone))
-      else group
-    }
     val replaceCreateBy = { group: UserGroup =>
       if (group.createByUserId == null)
         group.copy(createByUserId = creator.id)
       else group
     }
-    val replaceId = { group: UserGroup =>
-      if (group.id == csv.undefined)
-        group.copy(id = UUID.randomUUID())
-      else group
-    }
-    if (group.id == csv.undefined) {
-      val newGroup = replaceId.compose(replaceCreationDate)
-        .compose(replaceCreateBy)
-        .apply(group)
+    if (true) { // TODO find a way to avoid update
+      val newGroup = replaceCreateBy(group)
       newGroup -> groupService.add(newGroup)
     } else { // No update for now
       group -> true
@@ -200,16 +188,6 @@ case class UserController @Inject()(loginAction: LoginAction,
   }
 
   def importUsers(users: List[User], group: UserGroup): Boolean = {
-    val replaceCreationDate = { user: User =>
-      if (user.creationDate == null)
-        user.copy(creationDate = DateTime.now(Time.dateTimeZone))
-      else user
-    }
-    val replaceId = { user: User =>
-      if (user.id == csv.undefined)
-        user.copy(id = UUID.randomUUID())
-      else user
-    }
     val setGroup = { user: User =>
       user.copy(groupIds = (group.id :: user.groupIds).distinct)
     }
@@ -217,8 +195,8 @@ case class UserController @Inject()(loginAction: LoginAction,
       user.copy(areas = (group.area :: user.areas).distinct)
     }
     // No update for now
-    val newUsers = users.filter(_.id == csv.undefined)
-    val newPreparedUsers = newUsers.map(replaceCreationDate.compose(setGroup).compose(setAreas).compose(replaceId))
+    val newUsers = users.filter(_ => true) // TODO find a way to avoid update
+    val newPreparedUsers = newUsers.map(setGroup.compose(setAreas))
     if (newPreparedUsers.nonEmpty) userService.add(newPreparedUsers)
     else true
   }
@@ -432,16 +410,29 @@ case class UserController @Inject()(loginAction: LoginAction,
     }
   }
 
-  val sectionsMapping: Mapping[List[csv.Section]] = single("sections" -> list(csv.sectionMapping))
-  val sectionsForm: Form[List[csv.Section]] = Form(sectionsMapping)
+  val sectionsMapping: UUID => UUID => UUID => DateTime => Mapping[List[csv.Section]] =
+    (groupId: UUID) => (userId: UUID) => (creatorId: UUID) => (dateTime: DateTime) =>
+      single("sections" -> list(csv.sectionMapping(groupId)(userId)(creatorId)(dateTime)))
+
+  def sectionsForm(groupId: => UUID, userId: => UUID, creatorId: => UUID, dateTime: DateTime): Form[List[csv.Section]] =
+    Form(sectionsMapping(groupId)(userId)(creatorId)(dateTime))
+
+  def sectionsForm: Form[List[csv.Section]] =
+    sectionsForm(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), DateTime.now(Time.dateTimeZone))
 
   def extractFromCSV(csvText: String): List[Form[(UserGroup, User)]] = {
     implicit object SemiConFormat extends DefaultCSVFormat {
       override val delimiter = ';'
     }
     val reader = CSVReader.open(Source.fromString(csvText))
+    val dateTime = DateTime.now(Time.dateTimeZone)
     reader.allWithHeaders()
-      .map(csv.fromCSVLine(_, GroupImport.HEADERS, UserImport.HEADERS))
+      .map({ data =>
+        val groupId = UUID.randomUUID()
+        val userId = UUID.randomUUID()
+        val creatorId = UUID.randomUUID()
+        csv.fromCSVLine(data, GroupImport.HEADERS, UserImport.HEADERS, groupId, userId, creatorId, dateTime)
+      })
   }
 
   def extractAndConvertFormNames(forms: List[Form[(UserGroup, User)]], id: Int): Map[String, String] = {
@@ -459,15 +450,17 @@ case class UserController @Inject()(loginAction: LoginAction,
         Map.empty[String, String]
       )({ user: User =>
         val idKey = prefixBySection("users[" + userId + "].id", id)
-        Map(idKey -> user.id.toString)
+        val readOnlyKey = prefixBySection("users[" + userId + "].readonly", id)
+        Map(idKey -> user.id.toString, readOnlyKey -> "true")
       })
 
-      val groupNameKey = prefixBySection("group."+csv.GROUP_NAME_HEADER_PREFIX, id)
+      val groupNameKey = prefixBySection("group." + csv.GROUP_NAME_HEADER_PREFIX, id)
       val existingGroupId = remappedGroups.get(groupNameKey).flatMap(groupService.groupByName).fold(
         Map.empty[String, String]
       )({ group: UserGroup =>
         val idKey = prefixBySection("group.id", id)
-        Map(idKey -> group.id.toString)
+        val readOnlyKey = prefixBySection("group.readonly", id)
+        Map(idKey -> group.id.toString, readOnlyKey -> "true")
       })
 
       remappedGroups ++ remappedUsers ++ existingUserId ++ existingGroupId

@@ -3,8 +3,9 @@ package csv
 import java.util.UUID
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import extentions.{CSVUtil, UUIDHelper}
+import extentions.{CSVUtil, Time, UUIDHelper}
 import models.{Organisation, User, UserGroup}
+import org.joda.time.DateTime
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
@@ -41,7 +42,11 @@ class CSVSpec extends Specification {
     }
     "produce 3 errors" >> {
       val reader = CSVReader.open(Source.fromString(failFile))
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS))
+      val userId = UUID.randomUUID()
+      val groupId = UUID.randomUUID()
+      val creatorId = UUID.randomUUID()
+      val dateTime = DateTime.now(Time.dateTimeZone)
+      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS, groupId, userId, creatorId, dateTime))
       list must have size 1
       val result = list.head
       result.errors must have size 3
@@ -56,15 +61,19 @@ class CSVSpec extends Specification {
 
     "produce valid groups" >> {
       val reader = CSVReader.open(Source.fromString(csvFile))
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS))
+      val userId = UUID.randomUUID()
+      val groupId = UUID.randomUUID()
+      val creatorId = UUID.randomUUID()
+      val dateTime = DateTime.now(Time.dateTimeZone)
+      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS, userId, groupId, creatorId, dateTime))
       list must have size 7
       val result = list.head
-      result.value.map(_._1) must beSome(UserGroup(id = csv.undefined,
+      result.value.map(_._1) must beSome(UserGroup(id = userId,
         name = "MFS Saint Laurent",
         description = None,
         inseeCode = List.empty[String],
-        creationDate = null,
-        createByUserId = null,
+        creationDate = dateTime,
+        createByUserId = creatorId,
         area = UUIDHelper.namedFrom("argenteuil"),
         organisation = Organisation.fromShortName("MFS").map(_.shortName),
         email = Some("sfs.saint-laurent@laposte.com")))
@@ -73,9 +82,13 @@ class CSVSpec extends Specification {
 
     "produce a valid users" >> {
       val reader = CSVReader.open(Source.fromString(csvFile))
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS))
+      val userId = UUID.randomUUID()
+      val groupId = UUID.randomUUID()
+      val creatorId = UUID.randomUUID()
+      val dateTime = DateTime.now(Time.dateTimeZone)
+      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS, groupId, userId, creatorId,dateTime))
       list must have size 7
-      list.head.value.map(_._2) must beSome(User(id = csv.undefined,
+      list.head.value.map(_._2) must beSome(User(id = userId,
         key = "key",
         name = "Sabine MAIDE",
         qualite = "Agent d’accueil FS",
@@ -85,7 +98,7 @@ class CSVSpec extends Specification {
         groupAdmin = false,
         admin = false,
         areas = List.empty[UUID],
-        creationDate = null,
+        creationDate = dateTime,
         hasAcceptedCharte = false,
         communeCode = "0",
         disabled = false,
@@ -94,7 +107,7 @@ class CSVSpec extends Specification {
         cguAcceptationDate = None,
         newsletterAcceptationDate = None
       ))
-      list(1).value.map(_._2) must beSome(User(id = csv.undefined,
+      list(1).value.map(_._2) must beSome(User(id = userId,
         key = "key",
         name = "Marie-France SAIRVISSE",
         qualite = "Agent d’accueil FS",
@@ -104,7 +117,7 @@ class CSVSpec extends Specification {
         groupAdmin = false,
         admin = false,
         areas = List.empty[UUID],
-        creationDate = null,
+        creationDate = dateTime,
         hasAcceptedCharte = false,
         communeCode = "0",
         disabled = false,
