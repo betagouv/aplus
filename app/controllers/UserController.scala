@@ -173,44 +173,29 @@ case class UserController @Inject()(loginAction: LoginAction,
     }
   }
 
-  def importGroup(group: UserGroup, creator: User): (UserGroup, Boolean) = {
+  def prepareGroup(group: UserGroup, creator: User): UserGroup = {
     val replaceCreateBy = { group: UserGroup =>
       if (group.createByUserId == null)
         group.copy(createByUserId = creator.id)
       else group
     }
-    if (true) { // TODO find a way to avoid update
-      val newGroup = replaceCreateBy(group)
-      newGroup -> groupService.add(newGroup)
-    } else { // No update for now
-      group -> true
-    }
+    replaceCreateBy(group)
   }
 
-  def importUsers(users: List[User], group: UserGroup): Boolean = {
+  def prepareUsers(users: List[User], group: UserGroup): List[User] = {
     val setGroup = { user: User =>
       user.copy(groupIds = (group.id :: user.groupIds).distinct)
     }
     val setAreas = { user: User =>
       user.copy(areas = (group.area :: user.areas).distinct)
     }
-    // No update for now
-    val newUsers = users.filter(_ => true) // TODO find a way to avoid update
-    val newPreparedUsers = newUsers.map(setGroup.compose(setAreas))
-    if (newPreparedUsers.nonEmpty) userService.add(newPreparedUsers)
-    else true
+    users.map(setGroup.compose(setAreas).apply)
   }
 
-  def importSection(section: Section, creator: User): Either[(String, String), Unit] = {
-    val (group, groupImportSuccess) = importGroup(section.group, creator)
-    if (not(groupImportSuccess)) {
-      Left("ADD_GROUP_ERROR" -> "Impossible d'ajouter un groupe dans la BDD.")
-    } else {
-      val usersImportSuccess = importUsers(section.users, group)
-      if (not(usersImportSuccess)) {
-        Left("ADD_USER_ERROR" -> "Impossible d'ajouter un utilisateur dans la BDD.")
-      } else Right(())
-    }
+  def prepareSection(section: Section, creator: User): (UserGroup, List[User]) = {
+    val group = prepareGroup(section.group, creator)
+    val users = prepareUsers(section.users, group)
+    group -> users
   }
 
   def importUsers: Action[AnyContent] = loginAction { implicit request =>
@@ -225,12 +210,28 @@ case class UserController @Inject()(loginAction: LoginAction,
           val form = sectionsForm.fill(sections).withGlobalError("Action impossible, il n'y a aucun utilisateur à ajouter.")
           BadRequest(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
         } else {
-          val result = sections.foldLeft[Either[(String, String), Unit]](Right(()))({ (either, section) =>
-            either.fold[Either[(String, String), Unit]](Left.apply, (_: Unit) => importSection(section, request.currentUser))
+          val toInsert: List[(UserGroup, List[User])] = sections.map(section => prepareSection(section, request.currentUser))
+          val usersToInsert: List[User] = toInsert.flatMap(_._2)
+          val groupsToInsert: List[UserGroup] = toInsert.map(_._1)
+
+          val insertResult = groupsToInsert.filterNot(group => groupService.groupById(group.id).isDefined)
+            .foldLeft[Either[(String, String), Unit]](Right(()))({ case (either, group) =>
+            either.fold(Left.apply, { _: Unit =>
+              if (not(groupService.add(group))) {
+                Left("ADD_GROUP_ERROR" -> "Impossible d'ajouter un groupe dans la BDD.")
+              } else {
+                Right(())
+              }
+            })
           })
-          if (result.isLeft) {
-            val (code, description) = result.left.get
+          if (insertResult.isLeft) {
+            val (code, description) = insertResult.left.get
             eventService.error(code, description)
+            val form = sectionsForm.fill(sections).withGlobalError(description)
+            InternalServerError(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
+          } else if (not(userService.add(usersToInsert.filterNot(user => userService.byId(user.id).isDefined)))) {
+            val description = "Impossible d'ajouter un utilisateur dans la BDD."
+            eventService.error("ADD_USER_ERROR", description)
             val form = sectionsForm.fill(sections).withGlobalError(description)
             InternalServerError(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
           } else {
