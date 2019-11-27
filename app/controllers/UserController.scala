@@ -376,7 +376,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "IMPORT_USER_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
-      Ok(views.html.importUsers(request.currentUser, request.currentArea)("", List(FormError.apply("csv-import-content", "Le champ est vide."))))
+      Ok(views.html.importUsers(request.currentUser, request.currentArea)("", List.empty))
     }
   }
 
