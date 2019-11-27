@@ -56,6 +56,9 @@
                  @{if(!user(csv.GROUP_MANAGER_HEADER_PREFIX).value.getOrElse("").isEmpty) "checked"} />
         }
       </td>
+      <td>
+        @if(user("id").value.getOrElse(csv.undefined.toString) != csv.undefined.toString) { <em>Existe déjà.</em> }
+      </td>
     </tr>
     }
   </tbody>
@@ -90,6 +93,9 @@
               @helper.input(section("group")(csv.GROUP_EMAIL_HEADER_PREFIX), 'label -> csv.GROUP_EMAIL_HEADER_PREFIX, 'class -> "input-import-user") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user @if(section("group")("id").value.getOrElse(csv.undefined.toString) != csv.undefined.toString) {mdl-textfield__input--readonly}" @{if(section("group")("id").value.getOrElse(csv.undefined.toString) != csv.undefined.toString) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
+            </th>
+            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="1">
+              @if(section("group")("id").value.getOrElse(csv.undefined.toString) != csv.undefined.toString) { <em>Existe déjà.</em> }
             </th>
         } { }
     }
