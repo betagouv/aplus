@@ -194,11 +194,8 @@ case class UserController @Inject()(loginAction: LoginAction,
         .compose(replaceCreateBy)
         .apply(group)
       newGroup -> groupService.add(newGroup)
-    } else {
-      val newGroup = replaceId.compose(replaceCreationDate)
-        .compose(replaceCreateBy)
-        .apply(group)
-      newGroup -> groupService.reImport(newGroup)
+    } else { // No update for now
+      group -> true
     }
   }
 
@@ -219,6 +216,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     val setAreas = { user: User =>
       user.copy(areas = (group.area :: user.areas).distinct)
     }
+    // No update for now
     val newUsers = users.filter(_.id == csv.undefined)
     val newPreparedUsers = newUsers.map(replaceCreationDate.compose(setGroup).compose(setAreas).compose(replaceId))
     if (newPreparedUsers.nonEmpty) userService.add(newPreparedUsers)
