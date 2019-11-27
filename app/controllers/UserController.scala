@@ -3,8 +3,6 @@ package controllers
 import java.util.{Locale, UUID}
 
 import actions.{LoginAction, RequestWithUserData}
-import com.github.tototoshi.csv._
-import csv.{GroupImport, Section, UserImport}
 import extentions.Operators.{GroupOperators, UserOperators, not}
 import extentions.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
@@ -20,8 +18,6 @@ import play.api.mvc._
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
 import services._
-
-import scala.io.Source
 
 @Singleton
 case class UserController @Inject()(loginAction: LoginAction,
@@ -173,66 +169,47 @@ case class UserController @Inject()(loginAction: LoginAction,
     }
   }
 
-  def prepareGroup(group: UserGroup, creator: User): UserGroup = {
-    val replaceCreateBy = { group: UserGroup =>
-      if (group.createByUserId == null)
-        group.copy(createByUserId = creator.id)
-      else group
-    }
-    replaceCreateBy(group)
-  }
-
-  def prepareUsers(users: List[User], group: UserGroup): List[User] = {
-    val setGroup = { user: User =>
-      user.copy(groupIds = (group.id :: user.groupIds).distinct)
-    }
-    val setAreas = { user: User =>
-      user.copy(areas = (group.area :: user.areas).distinct)
-    }
-    users.map(setGroup.compose(setAreas).apply)
-  }
-
-  def prepareSection(section: Section, creator: User): (UserGroup, List[User]) = {
-    val group = prepareGroup(section.group, creator)
-    val users = prepareUsers(section.users, group)
-    group -> users
-  }
-
   def importUsers: Action[AnyContent] = loginAction { implicit request =>
     asAdmin { () =>
       "IMPORT_GROUP_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
-      sectionsForm.bindFromRequest.fold({ missFilledForm =>
+      csv.sectionsForm.bindFromRequest.fold({ missFilledForm =>
         val cleanedForm = missFilledForm.copy(data = missFilledForm.data.filter({ case (_, v) => v.nonEmpty }))
+        println(missFilledForm.errors)
         BadRequest(views.html.reviewUsersImport(request.currentUser, request.currentArea)(cleanedForm))
       }, { sections =>
         if (sections.isEmpty) {
-          val form = sectionsForm.fill(sections).withGlobalError("Action impossible, il n'y a aucun utilisateur à ajouter.")
+          println(sections)
+          val form = csv.sectionsForm.fill(sections).withGlobalError("Action impossible, il n'y a aucun utilisateur à ajouter.")
+          println("there")
           BadRequest(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
         } else {
-          val toInsert: List[(UserGroup, List[User])] = sections.map(section => prepareSection(section, request.currentUser))
+          val toInsert: List[(UserGroup, List[User])] = sections.map(section => csv.prepareSection(section, request.currentUser))
           val usersToInsert: List[User] = toInsert.flatMap(_._2)
           val groupsToInsert: List[UserGroup] = toInsert.map(_._1)
 
           val insertResult = groupsToInsert.filterNot(group => groupService.groupById(group.id).isDefined)
             .foldLeft[Either[(String, String), Unit]](Right(()))({ case (either, group) =>
-            either.fold(Left.apply, { _: Unit =>
-              if (not(groupService.add(group))) {
-                Left("ADD_GROUP_ERROR" -> "Impossible d'ajouter un groupe dans la BDD.")
-              } else {
-                Right(())
-              }
+              either.fold(Left.apply, { _: Unit =>
+                println(group.id)
+                if (not(groupService.add(group))) {
+                  Left("ADD_GROUP_ERROR" -> "Impossible d'ajouter un groupe dans la BDD.")
+                } else {
+                  Right(())
+                }
+              })
             })
-          })
           if (insertResult.isLeft) {
             val (code, description) = insertResult.left.get
             eventService.error(code, description)
-            val form = sectionsForm.fill(sections).withGlobalError(description)
+            val form = csv.sectionsForm.fill(sections).withGlobalError(description)
+            println("ici")
             InternalServerError(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
           } else if (not(userService.add(usersToInsert.filterNot(user => userService.byId(user.id).isDefined)))) {
             val description = "Impossible d'ajouter un utilisateur dans la BDD."
             eventService.error("ADD_USER_ERROR", description)
-            val form = sectionsForm.fill(sections).withGlobalError(description)
+            val form = csv.sectionsForm.fill(sections).withGlobalError(description)
+            println("la")
             InternalServerError(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
           } else {
             eventService.info("ADD_USER_DONE", "Utilisateurs ajoutés.")
@@ -401,8 +378,6 @@ case class UserController @Inject()(loginAction: LoginAction,
     "newsletterAcceptationDate" -> optional(ignored(Time.now()))
   )(User.apply)(User.unapply)
 
-  private val csvImportContentForm = Form("csv-import-content" -> nonEmptyText)
-
   def importUsersFromCSV: Action[AnyContent] = loginAction { implicit request =>
     asAdmin { () =>
       "IMPORT_USER_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
@@ -411,85 +386,16 @@ case class UserController @Inject()(loginAction: LoginAction,
     }
   }
 
-  val sectionsMapping: UUID => UUID => UUID => DateTime => Mapping[List[csv.Section]] =
-    (groupId: UUID) => (userId: UUID) => (creatorId: UUID) => (dateTime: DateTime) =>
-      single("sections" -> list(csv.sectionMapping(groupId)(userId)(creatorId)(dateTime)))
-
-  def sectionsForm(groupId: => UUID, userId: => UUID, creatorId: => UUID, dateTime: DateTime): Form[List[csv.Section]] =
-    Form(sectionsMapping(groupId)(userId)(creatorId)(dateTime))
-
-  def sectionsForm: Form[List[csv.Section]] =
-    sectionsForm(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), DateTime.now(Time.dateTimeZone))
-
-  def extractFromCSV(csvText: String): List[Form[(UserGroup, User)]] = {
-    implicit object SemiConFormat extends DefaultCSVFormat {
-      override val delimiter = ';'
-    }
-    val reader = CSVReader.open(Source.fromString(csvText))
-    val dateTime = DateTime.now(Time.dateTimeZone)
-    reader.allWithHeaders()
-      .map({ data =>
-        val groupId = UUID.randomUUID()
-        val userId = UUID.randomUUID()
-        val creatorId = UUID.randomUUID()
-        csv.fromCSVLine(data, GroupImport.HEADERS, UserImport.HEADERS, groupId, userId, creatorId, dateTime)
-      })
-  }
-
-  def extractAndConvertFormNames(forms: List[Form[(UserGroup, User)]], id: Int): Map[String, String] = {
-    def prefixBySection(key: String, id: Int): String = "sections[" + id + "]." + key
-
-    forms.zipWithIndex.flatMap({ case (form, userId) =>
-      val remappedGroups = form.data.filter(_._1.startsWith("group."))
-        .map({ case (key, value) => prefixBySection(key, id) -> value })
-      val remappedUsers = form.data.filter(_._1.startsWith("user."))
-        .map(t => t._1.replace("user.", "users[" + userId + "].") -> t._2)
-        .map({ case (key, value) => prefixBySection(key, id) -> value })
-      val emailKey = prefixBySection("users[" + userId + "]." + csv.USER_EMAIL_HEADER_PREFIX, id)
-
-      val existingUserId = remappedUsers.get(emailKey).flatMap(userService.byEmail).fold(
-        Map.empty[String, String]
-      )({ user: User =>
-        val idKey = prefixBySection("users[" + userId + "].id", id)
-        val readOnlyKey = prefixBySection("users[" + userId + "].readonly", id)
-        Map(idKey -> user.id.toString, readOnlyKey -> "true")
-      })
-
-      val groupNameKey = prefixBySection("group." + csv.GROUP_NAME_HEADER_PREFIX, id)
-      val existingGroupId = remappedGroups.get(groupNameKey).flatMap(groupService.groupByName).fold(
-        Map.empty[String, String]
-      )({ group: UserGroup =>
-        val idKey = prefixBySection("group.id", id)
-        val readOnlyKey = prefixBySection("group.readonly", id)
-        Map(idKey -> group.id.toString, readOnlyKey -> "true")
-      })
-
-      remappedGroups ++ remappedUsers ++ existingUserId ++ existingGroupId
-    }).toMap
-  }
-
-  def extractDataFromCSVAndMapToTreeStructure(csvImportContent: String): Map[String, String] = {
-    val forms: List[Form[(UserGroup, User)]] = extractFromCSV(csvImportContent)
-    // If the name of the group is not defined, the line is discarded.
-    val groupNameToForms = forms.groupBy(_.data.get("group.Groupe"))
-      .filter(a => a._1.isDefined && a._1.get.nonEmpty)
-      .map(t => t._1.get -> t._2)
-    groupNameToForms
-      .toList
-      .zipWithIndex
-      .flatMap(t => extractAndConvertFormNames(t._1._2, t._2)).toMap
-  }
-
   def importUsersReview: Action[AnyContent] = {
     loginAction { implicit request =>
       asAdmin { () =>
         "IMPORT_GROUP_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
       } { () =>
-        csvImportContentForm.bindFromRequest.fold({ _ =>
-          BadRequest(views.html.importUsers(request.currentUser, request.currentArea)("", List(FormError.apply("", "Le champ est vide."))))
+        csv.csvImportContentForm.bindFromRequest.fold({ _ =>
+          BadRequest(views.html.importUsers(request.currentUser, request.currentArea)("", List(FormError.apply("csv-import-content", "Le champ est vide."))))
         }, { csvImportContent =>
-          val data = extractDataFromCSVAndMapToTreeStructure(csvImportContent)
-          val filledForm = sectionsForm.bind(data)
+          val data = csv.extractDataFromCSVAndMapToTreeStructure(csvImportContent)(userService, groupService)
+          val filledForm = csv.sectionsForm.bind(data)
           Ok(views.html.reviewUsersImport(request.currentUser, request.currentArea)(filledForm))
         })
       }

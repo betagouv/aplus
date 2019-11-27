@@ -5,7 +5,7 @@ import java.util.UUID
 import extentions.{Operators, Time}
 import models.User
 import org.joda.time.DateTime
-import play.api.data.Forms._
+import play.api.data.Forms.{uuid, _}
 import play.api.data.Mapping
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 
@@ -14,9 +14,8 @@ object UserImport {
   val HEADERS = List(USER_NAME_HEADER_PREFIX, USER_QUALITY_HEADER_PREFIX, USER_EMAIL_HEADER_PREFIX, INSTRUCTOR_HEADER_PREFIX, GROUP_MANAGER_HEADER_PREFIX)
   val HEADER = HEADERS.mkString(SEPARATOR)
 
-  val userMappingForCVSImport: UUID => DateTime => Mapping[User] = (userId: UUID) => (dateTime: DateTime) => mapping(
-    "id" -> default(uuid, userId).transform[UUID](uuid => if (uuid == null) userId else uuid,
-      uuid => if (uuid == null) userId else uuid),
+  val userMappingForCVSImport: (() => UUID) => DateTime => Mapping[User] = (userId: () => UUID) => (dateTime: DateTime) => mapping(
+    "id" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(userId()), uuid => if (uuid == null) Some(userId()) else Some(uuid)),
     "key" -> default(nonEmptyText, "key"),
     USER_NAME_HEADER_PREFIX -> nonEmptyText.verifying(maxLength(100)),
     USER_QUALITY_HEADER_PREFIX -> nonEmptyText.verifying(maxLength(100)),

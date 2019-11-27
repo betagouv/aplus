@@ -46,7 +46,7 @@ class CSVSpec extends Specification {
       val groupId = UUID.randomUUID()
       val creatorId = UUID.randomUUID()
       val dateTime = DateTime.now(Time.dateTimeZone)
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS, groupId, userId, creatorId, dateTime))
+      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS, () => groupId, () => userId, () => creatorId, dateTime))
       list must have size 1
       val result = list.head
       result.errors must have size 3
@@ -65,7 +65,7 @@ class CSVSpec extends Specification {
       val groupId = UUID.randomUUID()
       val creatorId = UUID.randomUUID()
       val dateTime = DateTime.now(Time.dateTimeZone)
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS, userId, groupId, creatorId, dateTime))
+      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS, () => userId, () => groupId, () => creatorId, dateTime))
       list must have size 7
       val result = list.head
       result.value.map(_._1) must beSome(UserGroup(id = userId,
@@ -86,7 +86,7 @@ class CSVSpec extends Specification {
       val groupId = UUID.randomUUID()
       val creatorId = UUID.randomUUID()
       val dateTime = DateTime.now(Time.dateTimeZone)
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS, groupId, userId, creatorId,dateTime))
+      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, GroupImport.HEADERS, UserImport.HEADERS, () => groupId, () => userId, () => creatorId, dateTime))
       list must have size 7
       list.head.value.map(_._2) must beSome(User(id = userId,
         key = "key",

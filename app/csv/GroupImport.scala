@@ -4,7 +4,7 @@ import java.util.UUID
 
 import models.{Area, Organisation, UserGroup}
 import org.joda.time.DateTime
-import play.api.data.Forms._
+import play.api.data.Forms.{uuid, _}
 import play.api.data.Mapping
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 
@@ -14,15 +14,16 @@ object GroupImport {
   val HEADER = HEADERS.mkString(SEPARATOR)
 
   // CSV import mapping
-  val groupMappingForCSVImport: UUID => UUID => DateTime => Mapping[UserGroup] =
-    (groupId: UUID) => (creatorId: UUID) => (dateTime: DateTime) => mapping(
-      "id" -> default(uuid, groupId).transform[UUID](uuid => if (uuid == null) groupId else uuid,
-        uuid => if (uuid == null) groupId else uuid),
+  val groupMappingForCSVImport: (() => UUID) => (() => UUID) => DateTime => Mapping[UserGroup] =
+    (groupId: () => UUID) => (creatorId: () => UUID) => (dateTime: DateTime) => mapping(
+      "id" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(groupId()),
+        uuid => if (uuid == null) Some(groupId()) else Some(uuid)),
       GROUP_NAME_HEADER_PREFIX -> nonEmptyText.verifying(maxLength(100)),
       "description" -> ignored(Option.empty[String]),
       "inseeCode" -> ignored(List.empty[String]),
       "creationDate" -> ignored(dateTime),
-      "createByUserId" -> ignored(creatorId),
+      "createByUserId" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(creatorId()),
+        uuid => if (uuid == null) Some(creatorId()) else Some(uuid)),
       TERRITORY_HEADER_PREFIX -> nonEmptyText.transform[UUID]({ s =>
         s.split(",").map({ t: String =>
           val territory = canonizeTerritory(t.split(" ")(0))
