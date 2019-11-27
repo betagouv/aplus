@@ -1,6 +1,7 @@
 package controllers
 
-import java.nio.file.{Files, Path, Paths}
+import java.io.File
+import java.nio.file.{FileAlreadyExistsException, Files, Path, Paths}
 import java.util.{Locale, UUID}
 
 import javax.inject.{Inject, Singleton}
@@ -86,7 +87,10 @@ class ApplicationController @Inject()(loginAction: LoginAction,
          Unauthorized(s"Vous n'avez pas les droits suffisants pour créer une demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
        }
        case true => {
-         applicationForm.bindFromRequest.fold(
+         val form = applicationForm.bindFromRequest
+         val applicationId = AttachmentService.retrieveOrGenerateApplicationId(form)
+         val (pendingAttachments, newAttachments) = AttachmentService.computeStoreAndRemovePendingAndNewAttachment(applicationId,form,request,filesPath)
+         form.fold(
            formWithErrors => {
              // binding failure, you retrieve the form containing errors:
              val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
@@ -103,27 +107,17 @@ class ApplicationController @Inject()(loginAction: LoginAction,
              if(simplified) {
                val categories = organisationService.categories
                val organismeGroups = userGroupService.byIds(groupIds).filter(userGroup => userGroup.organisationSetOrDeducted.nonEmpty && userGroup.area == request.currentArea.id)
-               BadRequest(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, formWithErrors("category").value, formWithErrors))
+               BadRequest(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, formWithErrors("category").value, formWithErrors, pendingAttachments.keys))
              } else {
                val organismeGroups = userGroupService.byIds(groupIds).filter(_.area == request.currentArea.id)
-               BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, formWithErrorsfinal))
+               BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, formWithErrorsfinal, pendingAttachments.keys))
              }
            },
            applicationData => {
              val invitedUsers: Map[UUID, String] = applicationData.users.flatMap {  id =>
                userService.byId(id).map(id -> _.nameWithQualite)
              }.toMap
-             val applicationId = UUIDHelper.randomUUID
-             val file = request.body.asMultipartFormData.flatMap(_.file("file")).flatMap { uploadedFile =>
-               if(!uploadedFile.filename.isEmpty) {
-                 val filename = Paths.get(uploadedFile.filename).getFileName
-                 val fileDestination = Paths.get(s"$filesPath/app_$applicationId-$filename")
-                 Files.copy(uploadedFile.ref, fileDestination)
-                 Some(filename.toString -> 0L)  // ToDo filesize
-               } else {
-                 None
-               }
-             }
+
              val application = Application(applicationId,
                DateTime.now(timeZone),
                request.currentUser.nameWithQualite,
@@ -136,7 +130,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                false,
                hasSelectedSubject = applicationData.selectedSubject.contains(applicationData.subject),
                category = applicationData.category,
-               files = file.toMap)
+               files = newAttachments ++ pendingAttachments)
              if(applicationService.createApplication(application)) {
                notificationsService.newApplication(application)
                eventService.info("APPLICATION_CREATED", s"La demande ${application.id} a été créé", Some(application))
