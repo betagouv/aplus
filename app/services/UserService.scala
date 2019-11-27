@@ -62,7 +62,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
 
   def byIdCheckDisabled(id: UUID, includeDisabled: Boolean): Option[User] = db.withConnection { implicit connection =>
     val disabledSQL: String = if(includeDisabled) { "" } else { "AND disabled = false" }
-    SQL(s"""SELECT * FROM "user" WHERE id = {id}::uuid $disabledSQL LIMIT 1""").on('id -> id).as(simpleUser.singleOpt)
+    SQL(s"""SELECT * FROM "user" WHERE id = {id}::uuid $disabledSQL""").on('id -> id).as(simpleUser.singleOpt)
   }.orElse(User.admins.find(_.id == id)).filter(!_.disabled || includeDisabled)
 
   def byIds(ids: List[UUID]): List[User] = db.withConnection { implicit connection =>
@@ -71,11 +71,11 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
 
 
   def byKey(key: String): Option[User] = db.withConnection { implicit connection =>
-    SQL("""SELECT * FROM "user" WHERE key = {key} LIMIT 1""").on('key -> key).as(simpleUser.singleOpt)
+    SQL("""SELECT * FROM "user" WHERE key = {key}""").on('key -> key).as(simpleUser.singleOpt)
   }.orElse(User.admins.find(_.key == key))
 
   def byEmail(email: String): Option[User] = db.withConnection { implicit connection =>
-    SQL("""SELECT * FROM "user" WHERE lower(email) = {email} AND disabled = false LIMIT 1""").on('email -> email.toLowerCase()).as(simpleUser.singleOpt)
+    SQL("""SELECT * FROM "user" WHERE lower(email) = {email} AND disabled = false""").on('email -> email.toLowerCase()).as(simpleUser.singleOpt)
   }.orElse(User.admins.find(_.email.toLowerCase() == email.toLowerCase())).filter(!_.disabled)
 
   def deleteById(userId: UUID): Unit = db.withTransaction { implicit connection =>

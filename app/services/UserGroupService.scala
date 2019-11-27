@@ -68,11 +68,11 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
   }
 
   def groupById(groupId: UUID): Option[UserGroup] = db.withConnection { implicit connection =>
-    SQL"SELECT * FROM user_group WHERE id = $groupId::uuid LIMIT 1".as(simpleUserGroup.singleOpt)
+    SQL"SELECT * FROM user_group WHERE id = $groupId::uuid".as(simpleUserGroup.singleOpt)
   }
 
   def groupByName(groupName: String): Option[UserGroup] = db.withConnection { implicit connection =>
-    SQL"SELECT * FROM user_group WHERE name = $groupName LIMIT 1".as(simpleUserGroup.singleOpt)
+    SQL"SELECT * FROM user_group WHERE name = $groupName".as(simpleUserGroup.singleOpt)
   }
 
   def deleteById(groupId: UUID): Unit = db.withConnection { implicit connection =>
