@@ -175,13 +175,10 @@ case class UserController @Inject()(loginAction: LoginAction,
     } { () =>
       csv.sectionsForm.bindFromRequest.fold({ missFilledForm =>
         val cleanedForm = missFilledForm.copy(data = missFilledForm.data.filter({ case (_, v) => v.nonEmpty }))
-        println(missFilledForm.errors)
         BadRequest(views.html.reviewUsersImport(request.currentUser, request.currentArea)(cleanedForm))
       }, { sections =>
         if (sections.isEmpty) {
-          println(sections)
           val form = csv.sectionsForm.fill(sections).withGlobalError("Action impossible, il n'y a aucun utilisateur à ajouter.")
-          println("there")
           BadRequest(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
         } else {
           val toInsert: List[(UserGroup, List[User])] = sections.map(section => csv.prepareSection(section, request.currentUser))
@@ -191,7 +188,6 @@ case class UserController @Inject()(loginAction: LoginAction,
           val insertResult = groupsToInsert.filterNot(group => groupService.groupById(group.id).isDefined)
             .foldLeft[Either[(String, String), Unit]](Right(()))({ case (either, group) =>
               either.fold(Left.apply, { _: Unit =>
-                println(group.id)
                 if (not(groupService.add(group))) {
                   Left("ADD_GROUP_ERROR" -> "Impossible d'ajouter un groupe dans la BDD.")
                 } else {
@@ -203,13 +199,11 @@ case class UserController @Inject()(loginAction: LoginAction,
             val (code, description) = insertResult.left.get
             eventService.error(code, description)
             val form = csv.sectionsForm.fill(sections).withGlobalError(description)
-            println("ici")
             InternalServerError(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
           } else if (not(userService.add(usersToInsert.filterNot(user => userService.byId(user.id).isDefined)))) {
             val description = "Impossible d'ajouter un utilisateur dans la BDD."
             eventService.error("ADD_USER_ERROR", description)
             val form = csv.sectionsForm.fill(sections).withGlobalError(description)
-            println("la")
             InternalServerError(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
           } else {
             eventService.info("ADD_USER_DONE", "Utilisateurs ajoutés.")
@@ -382,7 +376,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "IMPORT_USER_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
-      Ok(views.html.importUsers(request.currentUser, request.currentArea)("", List(FormError.apply("", "Le champ est vide."))))
+      Ok(views.html.importUsers(request.currentUser, request.currentArea)("", List(FormError.apply("csv-import-content", "Le champ est vide."))))
     }
   }
 
