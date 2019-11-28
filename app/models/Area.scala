@@ -7,7 +7,11 @@ import extentions.UUIDHelper
 case class Area(id: UUID, name: String)
 
 object Area {
-  def fromId(id: UUID) = if(id == allArea.id) { Some(allArea) } else { all.find(_.id == id) }
+  def fromId(id: UUID) = if (id == allArea.id) {
+    Some(allArea)
+  } else {
+    all.find(_.id == id)
+  }
 
   def apply(id: String, name: String): Area = Area(UUIDHelper.namedFrom(id), name)
 

@@ -75,6 +75,9 @@
   <script src='@routes.Assets.versioned("javascripts/group-autocomplete.js")'></script>
 }{
 
+  @if(currentUser.admin) {
+    <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--8-offset mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.UserController.importUsersFromCSV()">Importer utilisateurs</a>
+  }
   @if(currentUser.areas.length > 1) {
     <p class="mdl-cell mdl-cell--12-col">Territoire :
       <select id="area-selector" name="area-selector" onchange="changeAreaApps()">
@@ -107,7 +110,7 @@
               </a>
             }
             @Area.fromId(userGroup.area).map(_.name).getOrElse("") /
-            <b>@userGroup.name</b> / @(userGroup.organisation, userGroup.organisationDeductedFromName()) match {
+            <b>@userGroup.name</b> / @(userGroup.organisation, UserGroup.organisationDeductedFromName(userGroup.name)) match {
               case (Some(organisation), _) => {
                 @organisation / }
               case (_, Some(organisation)) => { @organisation / }
@@ -188,5 +191,6 @@
             Ajouter le groupe
           </button>
         }
+      </div>
     }
   }
