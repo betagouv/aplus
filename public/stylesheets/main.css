@@ -391,3 +391,21 @@ a {
     font-size: 16px;
     font-weight: 400;
 }
+
+.input-import-user {
+    width: 100%;
+}
+
+.cell-import-user {
+    margin: 3px 3px !important;
+    padding: 3px 3px !important;
+}
+
+.mdl-data-table--th--nopadding {
+    padding-left: 0px !important;
+    padding-right: 0.5em !important;
+}
+
+.mdl-textfield__input--readonly {
+    background-color: lightgrey;
+}

@@ -7,6 +7,8 @@ case class Organisation(shortName: String,
 
 object Organisation {
   def fromShortName(shortName: String) = all.find(_.shortName == shortName)
+
+  def fromName(name: String) = all.find(_.name == name)
   
   val all = List(
     Organisation("A+", "Administration+"),  // Nationale
