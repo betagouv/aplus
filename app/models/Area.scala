@@ -93,7 +93,7 @@ object Area {
     Area("Puy-de-Dome", "Puy-de-Dôme (63)"),
     Area("Pyrenees-Atlantiques", "Pyrénées-Atlantiques (64)"),
     Area("Pyrenees-Orientales", "Pyrénées-Orientales (66)"),
-    Area("lyon", "Rhônes (69)"),
+    Area("lyon", "Rhône (69)"),
     Area("Saone-et-Loire", "Saône-et-Loire (71)"),
     Area("Sarthe", "Sarthe (72)"),
     Area("Savoie", "Savoie (73)"),
