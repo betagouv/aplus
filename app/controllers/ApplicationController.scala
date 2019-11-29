@@ -86,8 +86,11 @@ class ApplicationController @Inject()(loginAction: LoginAction,
        }
        case true => {
          val form = applicationForm.bindFromRequest
-         val applicationId = AttachmentService.retrieveOrGenerateApplicationId(form)
-         val (pendingAttachments, newAttachments) = AttachmentService.computeStoreAndRemovePendingAndNewApplicationAttachment(applicationId,form,request,filesPath)
+         val applicationId = AttachmentService.retrieveOrGenerateApplicationId(form.data)
+         val (pendingAttachments, newAttachments) = AttachmentService.computeStoreAndRemovePendingAndNewApplicationAttachment(applicationId,
+           form.data,
+           computeAttachmentsToStore(request),
+           filesPath)
          form.fold(
            formWithErrors => {
              // binding failure, you retrieve the form containing errors:
@@ -141,6 +144,18 @@ class ApplicationController @Inject()(loginAction: LoginAction,
          )
        }
     }
+  }
+
+  private def computeAttachmentsToStore(request: RequestWithUserData[AnyContent]): Iterable[Path] = {
+    request
+      .body
+      .asMultipartFormData
+      .map(_.files.filter(_.key.matches("file\\[\\d+\\]")))
+      .getOrElse(Nil)
+      .flatMap({ attachment =>
+        if (attachment.filename.isEmpty) None
+        else Some(Paths.get(attachment.filename))
+      })
   }
 
   def allApplicationVisibleByUserAdmin(user: User, area: Area) = user.admin match {
@@ -363,8 +378,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
   def answer(applicationId: UUID) = loginAction { implicit request =>
     val form = answerForm.bindFromRequest
-    val answerId = AttachmentService.retrieveOrGenerateAnswerId(form)
-    val (pendingAttachments, newAttachments) = AttachmentService.computeStoreAndRemovePendingAndNewAnswerAttachment(answerId, form, request, filesPath)
+    val answerId = AttachmentService.retrieveOrGenerateAnswerId(form.data)
+    val (pendingAttachments, newAttachments) = AttachmentService.computeStoreAndRemovePendingAndNewAnswerAttachment(answerId, form.data, computeAttachmentsToStore(request), filesPath)
       form.fold(
       formWithErrors => {
         eventService.error("ANSWER_NOT_CREATED", s"Impossible d'ajouter une réponse sur la demande $applicationId : problème formulaire")
