@@ -146,7 +146,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
     }
   }
 
-  private def computeAttachmentsToStore(request: RequestWithUserData[AnyContent]): Iterable[Path] = {
+  private def computeAttachmentsToStore(request: RequestWithUserData[AnyContent]): Iterable[(Path, String)] = {
     request
       .body
       .asMultipartFormData
@@ -154,7 +154,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       .getOrElse(Nil)
       .flatMap({ attachment =>
         if (attachment.filename.isEmpty) None
-        else Some(Paths.get(attachment.filename))
+        else Some(attachment.ref.path -> attachment.filename)
       })
   }
 

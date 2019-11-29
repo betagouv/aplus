@@ -12,7 +12,7 @@ object AttachmentService {
   private val ANSWER_PREFIX = "ans_"
   private val PENDING_FILE_PREFIX = "pending-file"
 
-  def computeStoreAndRemovePendingAndNewApplicationAttachment(applicationId: UUID, formContent: Map[String, String], getAttachmentsToStore: => Iterable[Path], filesPath: String): (Map[String, Long], Map[String, Long]) = {
+  def computeStoreAndRemovePendingAndNewApplicationAttachment(applicationId: UUID, formContent: Map[String, String], getAttachmentsToStore: => Iterable[(Path, String)], filesPath: String): (Map[String, Long], Map[String, Long]) = {
     val attachmentsToDelete = getAttachments(applicationId, filesPath, APPLICATION_PREFIX)
       .filterNot({ case (name, _) => formContent.filter({ case (k, _) => k.startsWith(PENDING_FILE_PREFIX) }).values.toList.contains(name) })
       .keys.toList
@@ -23,7 +23,7 @@ object AttachmentService {
     pendingAttachments -> newAttachments
   }
 
-  def computeStoreAndRemovePendingAndNewAnswerAttachment(applicationId: UUID, formContent: Map[String, String], getAttachmentsToStore: => Iterable[Path], filesPath: String): (Map[String, Long], Map[String, Long]) = {
+  def computeStoreAndRemovePendingAndNewAnswerAttachment(applicationId: UUID, formContent: Map[String, String], getAttachmentsToStore: => Iterable[(Path, String)], filesPath: String): (Map[String, Long], Map[String, Long]) = {
     val attachmentsToDelete = getAttachments(applicationId, filesPath, ANSWER_PREFIX)
       .filterNot({ case (name, _) => formContent.filter({ case (k, _) => k.startsWith(PENDING_FILE_PREFIX) }).values.toList.contains(name) })
       .keys.toList
@@ -42,8 +42,8 @@ object AttachmentService {
     formContent.get(ANSWER_ID_KEY).map(UUID.fromString).getOrElse(UUID.randomUUID())
   }
 
-  private def storeAttachments(getAttachmentsToStore: => Iterable[Path], applicationId: UUID, filesPath: String, prefix: String): Map[String, Long] = {
-    getAttachmentsToStore.flatMap({ attachment => storeAttachment(attachment, applicationId, filesPath, prefix) }).toMap
+  private def storeAttachments(getAttachmentsToStore: => Iterable[(Path, String)], applicationId: UUID, filesPath: String, prefix: String): Map[String, Long] = {
+    getAttachmentsToStore.flatMap({ case (attachmentPath, attachmentName) => storeAttachment(attachmentPath, attachmentName, applicationId, filesPath, prefix) }).toMap
   }
 
   private def getAttachments(applicationId: UUID, filesPath: String, prefix: String): Map[String, Long] = {
@@ -64,17 +64,16 @@ object AttachmentService {
     storageFilename.replaceFirst(s"${prefix}$applicationId-", "")
   }
 
-  def storeAttachment(source: Path, applicationId: UUID, filesPath: String, prefix: String): Option[(String, Long)] = {
-    val filename = source.getFileName
-    val fileDestination = Paths.get(s"$filesPath/${prefix}$applicationId-$filename")
+  def storeAttachment(attachmentPath: Path, attachmentName: String, applicationId: UUID, filesPath: String, prefix: String): Option[(String, Long)] = {
+    val fileDestination = Paths.get(s"$filesPath/${prefix}$applicationId-$attachmentName")
     try {
-      Files.copy(source, fileDestination)
+      Files.copy(attachmentPath, fileDestination)
       val f: File = new File(fileDestination.toString)
-      Some(filename.toString -> f.length())
+      Some(attachmentName -> f.length())
     } catch {
       case _: FileAlreadyExistsException =>
         val f: File = new File(fileDestination.toString)
-        Some(filename.toString -> f.length())
+        Some(attachmentName -> f.length())
     }
   }
 }
