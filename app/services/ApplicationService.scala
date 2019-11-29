@@ -98,6 +98,22 @@ class ApplicationService @Inject()(db: Database) {
      SQL(s"SELECT * FROM application WHERE closed = false AND age(creation_date) > '$day days' AND expert_invited = false").as(simpleApplication.*)
   }
 
+  def allOpenOrRecentForUserId(userId: UUID, anonymous: Boolean, referenceDate: DateTime): List[Application] = {
+    db.withConnection { implicit connection =>
+      val result = SQL(
+        """SELECT * FROM application
+          |WHERE (creator_user_id = {userId}::uuid OR invited_users ?? {userId}) AND
+          |  (closed == FALSE OR DATE_PART('day', {referenceDate} - closed_date) < 30)
+          |ORDER BY creation_date DESC""".stripMargin)
+        .on('userId -> userId).as(simpleApplication.*)
+      if (anonymous) {
+        result.map(_.anonymousApplication)
+      } else {
+        result
+      }
+    }
+  }
+
   def allForUserId(userId: UUID, anonymous: Boolean) = db.withConnection { implicit connection =>
     val result = SQL("SELECT * FROM application WHERE creator_user_id = {userId}::uuid OR invited_users ?? {userId} ORDER BY creation_date DESC")
       .on('userId -> userId).as(simpleApplication.*)

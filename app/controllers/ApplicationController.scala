@@ -184,7 +184,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
 
   def myApplications = loginAction { implicit request =>
-    val myApplications = applicationService.allForUserId(request.currentUser.id, request.currentUser.admin)
+    val myApplications = applicationService.allOpenOrRecentForUserId(request.currentUser.id, request.currentUser.admin, DateTime.now(Time.dateTimeZone))
     val myOpenApplications = myApplications.filter(!_.closed)
     val myClosedApplications = myApplications.filter(_.closed)
 
