@@ -184,7 +184,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
 
   def myApplications = loginAction { implicit request =>
-    val myApplications = applicationService.allForUserId(request.currentUser.id, request.currentUser.admin)
+    val myApplications = applicationService.allOpenOrRecentForUserId(request.currentUser.id, request.currentUser.admin, DateTime.now(Time.dateTimeZone))
     val myOpenApplications = myApplications.filter(!_.closed)
     val myClosedApplications = myApplications.filter(_.closed)
 
@@ -264,11 +264,12 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def myCSV = loginAction { implicit request =>
-    val exportedApplications = applicationService.allForUserId(request.currentUser.id, request.currentUser.admin)
+    val currentDate = DateTime.now(timeZone)
+    val exportedApplications = applicationService.allOpenOrRecentForUserId(request.currentUser.id, request.currentUser.admin, currentDate)
     val usersId = exportedApplications.flatMap(_.invitedUsers.keys) ++ exportedApplications.map(_.creatorUserId)
     val users = userService.byIds(usersId)
 
-    val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HH'h'mm", new Locale("fr"))
+    val date = currentDate.toString("dd-MMM-YYY-HH'h'mm", new Locale("fr"))
 
     eventService.info("MY_CSV_SHOWED", s"Visualise un CSV")
     Ok(views.html.allApplicationCSV(exportedApplications.toSeq, request.currentUser, users)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}.csv"""" )
