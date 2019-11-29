@@ -2,7 +2,7 @@ ApplicationAttachment = {};
 
 window.document.addEventListener("DOMContentLoaded", function (event) {
     "use strict";
-    ApplicationAttachment.list = document.getElementById("application-attachment-list");
+    ApplicationAttachment.list = document.getElementById("attachment-list");
     ApplicationAttachment.currentCount = 1;
     ApplicationAttachment.maxId = 0;
     ApplicationAttachment.inputChangedEventListener = function (event) {

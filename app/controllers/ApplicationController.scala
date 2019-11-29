@@ -1,24 +1,22 @@
 package controllers
 
-import java.io.File
-import java.nio.file.{FileAlreadyExistsException, Files, Path, Paths}
+import java.nio.file.{Files, Path, Paths}
 import java.util.{Locale, UUID}
 
-import javax.inject.{Inject, Singleton}
-import play.api.mvc._
-import play.api.data._
-import play.api.data.Forms._
-import play.api.data.validation._
-import play.api.data.validation.Constraints._
 import actions._
 import constants.Constants
+import extentions.Time
+import extentions.Time.dateTimeOrdering
 import forms.FormsPlusMap
+import javax.inject.{Inject, Singleton}
 import models._
 import org.joda.time.DateTime
 import org.webjars.play.WebJarsUtil
+import play.api.data.Forms._
+import play.api.data._
+import play.api.data.validation.Constraints._
+import play.api.mvc._
 import services._
-import extentions.{Time, UUIDHelper}
-import extentions.Time.dateTimeOrdering
 
 import scala.concurrent.ExecutionContext
 
@@ -89,7 +87,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
        case true => {
          val form = applicationForm.bindFromRequest
          val applicationId = AttachmentService.retrieveOrGenerateApplicationId(form)
-         val (pendingAttachments, newAttachments) = AttachmentService.computeStoreAndRemovePendingAndNewAttachment(applicationId,form,request,filesPath)
+         val (pendingAttachments, newAttachments) = AttachmentService.computeStoreAndRemovePendingAndNewApplicationAttachment(applicationId,form,request,filesPath)
          form.fold(
            formWithErrors => {
              // binding failure, you retrieve the form containing errors:
@@ -107,10 +105,10 @@ class ApplicationController @Inject()(loginAction: LoginAction,
              if(simplified) {
                val categories = organisationService.categories
                val organismeGroups = userGroupService.byIds(groupIds).filter(userGroup => userGroup.organisationSetOrDeducted.nonEmpty && userGroup.area == request.currentArea.id)
-               BadRequest(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, formWithErrors("category").value, formWithErrors, pendingAttachments.keys))
+               BadRequest(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, formWithErrors("category").value, formWithErrors, pendingAttachments.keys ++ newAttachments.keys))
              } else {
                val organismeGroups = userGroupService.byIds(groupIds).filter(_.area == request.currentArea.id)
-               BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, formWithErrorsfinal, pendingAttachments.keys))
+               BadRequest(views.html.createApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, formWithErrorsfinal, pendingAttachments.keys ++ newAttachments.keys))
              }
            },
            applicationData => {
@@ -364,7 +362,10 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def answer(applicationId: UUID) = loginAction { implicit request =>
-    answerForm.bindFromRequest.fold(
+    val form = answerForm.bindFromRequest
+    val answerId = AttachmentService.retrieveOrGenerateAnswerId(form)
+    val (pendingAttachments, newAttachments) = AttachmentService.computeStoreAndRemovePendingAndNewAnswerAttachment(answerId, form, request, filesPath)
+      form.fold(
       formWithErrors => {
         eventService.error("ANSWER_NOT_CREATED", s"Impossible d'ajouter une réponse sur la demande $applicationId : problème formulaire")
         BadRequest("Erreur interne, contacter l'administrateur A+ : ${Constants.supportEmail}")
@@ -376,17 +377,6 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             NotFound("Nous n'avons pas trouvé cette demande")
           case Some(application) =>
             if(application.canBeAnsweredBy(request.currentUser)) {
-              val answerId = UUID.randomUUID()
-              val file = request.body.asMultipartFormData.flatMap(_.file("file")).flatMap { uploadedFile =>
-                if(!uploadedFile.filename.isEmpty) {
-                  val filename = Paths.get(uploadedFile.filename).getFileName
-                  val fileDestination = Paths.get(s"$filesPath/ans_$answerId-$filename")
-                  Files.copy(uploadedFile.ref, fileDestination)
-                  Some(filename.toString -> 0L)  // ToDo filesize
-                } else {
-                  None
-                }
-              }
               val answer = Answer(answerId,
                 applicationId, DateTime.now(timeZone),
                 answerData.message,
@@ -397,7 +387,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                 request.currentArea.id,
                 answerData.applicationIsDeclaredIrrelevant,
                 Some(answerData.infos),
-                files = Some(file.toMap))
+                files = Some(newAttachments ++ pendingAttachments))
               if (applicationService.add(applicationId, answer) == 1) {
                 eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
                 notificationsService.newAnswer(application, answer)

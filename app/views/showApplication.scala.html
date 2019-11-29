@@ -1,4 +1,4 @@
-@(user: User, area: Area)(usersThatCanBeInvited: List[User], application: Application, answerToAgentsForm: Form[_])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(user: User, area: Area)(usersThatCanBeInvited: List[User], application: Application, answerToAgentsForm: Form[_], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 @import java.util.Locale
 
 @main(user, area, false)(s"Demande de ${application.creatorUserName}")  {
@@ -134,6 +134,7 @@ dialog {
     font-weight: initial;
 }
 </style>
+    <script src='@routes.Assets.versioned("javascripts/application-attachment.js")'></script>
 }{
     <dialog class="mdl-dialog" id="dialog-terminate">
         <h4 class="mdl-dialog__title">Est-ce que la réponse vous semble utile pour l'usager ?</h4>
@@ -385,6 +386,7 @@ dialog {
                         <div class="mdl-tabs__panel is-active" id="answer-helper">
                             <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('review-validation').disabled=true">
                                 @helper.CSRF.formField
+                                <input type="hidden" name="answer-id" readonly value="@answerToAgentsForm("answer-id").value.getOrElse(java.util.UUID.randomUUID)">
                                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
                                     @if(user.instructor) {
                                         <div class="info-box">Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName et les personnes invitées sur la demande. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. <b>Merci d'utiliser vos outils habituels pour continuer une instruction.</b></div>
@@ -398,7 +400,17 @@ dialog {
                                         <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Votre réponse</label>
                                     </div>
                                     <div class="mdl-cell mdl-cell--12-col">
-                                         <b>Ajouter un ficher ( 5Mo maximum ) : <input type="file" name="file"></b>
+                                        <b>Ajouter un ficher ( 5Mo maximum ) :</b>
+                                        <ul>
+                                            @for((attachment,index) <- attachments.zipWithIndex) {
+                                            <li>
+                                                <input type="checkbox" checked value="@attachment" id="pending-file[@index]" name="pending-file[@index]"><label for="pending-file[@index]">@attachment</label>
+                                            </li>
+                                            }
+                                        </ul>
+                                        <ul id="attachment-list">
+                                            <li><input type="file" name="file[0]"></li>
+                                        </ul>
                                     </div>
                                     @if(user.instructor) {
                                         <div id="invalide-choice" class="mdl-cell mdl-cell--12-col">
