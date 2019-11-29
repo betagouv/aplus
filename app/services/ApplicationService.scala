@@ -103,9 +103,9 @@ class ApplicationService @Inject()(db: Database) {
       val result = SQL(
         """SELECT * FROM application
           |WHERE (creator_user_id = {userId}::uuid OR invited_users ?? {userId}) AND
-          |  (closed == FALSE OR DATE_PART('day', {referenceDate} - closed_date) < 30)
+          |  (closed = FALSE OR DATE_PART('day', {referenceDate} - closed_date) < 30)
           |ORDER BY creation_date DESC""".stripMargin)
-        .on('userId -> userId).as(simpleApplication.*)
+        .on('userId -> userId, 'referenceDate -> referenceDate).as(simpleApplication.*)
       if (anonymous) {
         result.map(_.anonymousApplication)
       } else {
