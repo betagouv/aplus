@@ -1,4 +1,4 @@
-# Guidlines de Code
+# Guidelines de Code
 
 > Ces guidelines sont là pour nous simplifier la vie sur le longtemps terme.
 
