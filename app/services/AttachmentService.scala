@@ -13,24 +13,16 @@ object AttachmentService {
   private val PENDING_FILE_PREFIX = "pending-file"
 
   def computeStoreAndRemovePendingAndNewApplicationAttachment(applicationId: UUID, formContent: Map[String, String], getAttachmentsToStore: => Iterable[(Path, String)], filesPath: String): (Map[String, Long], Map[String, Long]) = {
-    val attachmentsToDelete = getAttachments(applicationId, filesPath, APPLICATION_PREFIX)
-      .filterNot({ case (name, _) => formContent.filter({ case (k, _) => k.startsWith(PENDING_FILE_PREFIX) }).values.toList.contains(name) })
-      .keys.toList
-    deleteAttachments(applicationId, attachmentsToDelete, filesPath, APPLICATION_PREFIX)
     val newAttachments = storeAttachments(getAttachmentsToStore, applicationId, filesPath, APPLICATION_PREFIX)
-    val pendingAttachments = getAttachments(applicationId, filesPath, APPLICATION_PREFIX)
-      .filter({ case (name, _) => formContent.filter({ case (k, _) => k.startsWith(PENDING_FILE_PREFIX) }).values.toList.contains(name) })
+    val attachmentsToJoin = formContent.filter({ case (k, _) => k.startsWith(PENDING_FILE_PREFIX) }).values.toList
+    val pendingAttachments = getAttachments(applicationId, filesPath, APPLICATION_PREFIX, attachmentsToJoin)
     pendingAttachments -> newAttachments
   }
 
   def computeStoreAndRemovePendingAndNewAnswerAttachment(applicationId: UUID, formContent: Map[String, String], getAttachmentsToStore: => Iterable[(Path, String)], filesPath: String): (Map[String, Long], Map[String, Long]) = {
-    val attachmentsToDelete = getAttachments(applicationId, filesPath, ANSWER_PREFIX)
-      .filterNot({ case (name, _) => formContent.filter({ case (k, _) => k.startsWith(PENDING_FILE_PREFIX) }).values.toList.contains(name) })
-      .keys.toList
-    deleteAttachments(applicationId, attachmentsToDelete, filesPath, ANSWER_PREFIX)
     val newAttachments = storeAttachments(getAttachmentsToStore, applicationId, filesPath, ANSWER_PREFIX)
-    val pendingAttachments = getAttachments(applicationId, filesPath, ANSWER_PREFIX)
-      .filter({ case (name, _) => formContent.filter({ case (k, _) => k.startsWith(PENDING_FILE_PREFIX) }).values.toList.contains(name) })
+    val attachmentsToJoin = formContent.filter({ case (k, _) => k.startsWith(PENDING_FILE_PREFIX) }).values.toList
+    val pendingAttachments = getAttachments(applicationId, filesPath, ANSWER_PREFIX, attachmentsToJoin)
     pendingAttachments -> newAttachments
   }
 
@@ -46,18 +38,12 @@ object AttachmentService {
     getAttachmentsToStore.flatMap({ case (attachmentPath, attachmentName) => storeAttachment(attachmentPath, attachmentName, applicationId, filesPath, prefix) }).toMap
   }
 
-  private def getAttachments(applicationId: UUID, filesPath: String, prefix: String): Map[String, Long] = {
+  private def getAttachments(applicationId: UUID, filesPath: String, prefix: String, attachmentsToJoin: List[String]): Map[String, Long] = {
     val path = new File(s"$filesPath")
     path.listFiles.filter(_.isFile)
       .filter(_.getName.startsWith(s"${prefix}$applicationId"))
-      .map(path => storageFilenameToClientFilename(path.getName, applicationId.toString, prefix) -> path.length()).toMap
-  }
-
-  private def deleteAttachments(applicationId: UUID, attachments: List[String], filesPath: String, prefix: String): Unit = {
-    val path = new File(s"$filesPath")
-    path.listFiles.filter(_.isFile)
-      .filter(f => attachments.contains(storageFilenameToClientFilename(f.getName, applicationId.toString, prefix)))
-      .foreach(_.delete())
+      .map(path => storageFilenameToClientFilename(path.getName, applicationId.toString, prefix) -> path.length())
+      .filter(tuple => attachmentsToJoin.contains(tuple._1)).toMap
   }
 
   private def storageFilenameToClientFilename(storageFilename: String, applicationId: String, prefix: String): String = {
