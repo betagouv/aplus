@@ -283,7 +283,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
       List()
     }
     val usersId = exportedApplications.flatMap(_.invitedUsers.keys) ++ exportedApplications.map(_.creatorUserId)
-    val users = userService.byIds(usersId)
+    val users = userService.byIds(usersId, includeDisabled = true)
 
     val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HH'h'mm", new Locale("fr"))
 
