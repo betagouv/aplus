@@ -37,7 +37,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
       val url = "http" + (if (request.secure) "s" else "") + "://" + request.host + path
       (userBySession,userByKey,tokenById) match {
         case (Some(userSession), Some(userKey), None) if userSession.id == userKey.id =>
-          Left(Redirect(Call(request.method, url)))
+          Left(Found(Call(request.method, url).absoluteURL()))
         case (_, Some(user), None) =>
           val area = areaFromContext(user)
           implicit val requestWithUserData = new RequestWithUserData(user, area, request)
@@ -78,7 +78,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
       Right(requestWithUserData)
     } else {
       eventService.info("REDIRECTED_TO_CGU","Redirection vers les CGUs")
-      Left(Redirect(routes.UserController.showCGU()).flashing("redirect" -> request.path))
+      Left(Found(routes.UserController.showCGU().absoluteURL()).flashing("redirect" -> request.path))
     }
   }
 
@@ -101,7 +101,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
         if(token.isActive){
           val url = request.path + queryToString(request.queryString - "key" - "token")
           eventService.info("AUTH_BY_KEY", s"Identification par token")
-          Left(Redirect(Call(request.method, url)).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
+          Left(Found(Call(request.method, url).absoluteURL()).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
         } else {
           eventService.warn("EXPIRED_TOKEN", s"Token expiré pour ${token.userId}")
           userNotLogged(s"Le lien que vous avez utilisez a expiré (il expire après $tokenExpirationInMinutes minutes), saisissez votre email pour vous reconnecter")
@@ -109,7 +109,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
     }
   }
 
-  private def userNotLogged[A](message: String)(implicit request: Request[A]) = Left(Redirect(routes.LoginController.login())
+  private def userNotLogged[A](message: String)(implicit request: Request[A]) = Left(Found(routes.LoginController.login().absoluteURL())
     .withSession(request.session - "userId").flashing("error" -> message))
 
   private def tokenById[A](implicit request: Request[A]) = request.getQueryString("token").flatMap(tokenService.byToken)

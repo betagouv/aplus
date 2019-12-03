@@ -29,7 +29,7 @@ class LoginController @Inject()(userService: UserService,
          val loginToken = LoginToken.forUserId(user.id, tokenExpirationInMinutes, request.remoteAddress)
          tokenService.create(loginToken)
          val path = request.flash.get("path").getOrElse(routes.HomeController.index().url)
-         val url = routes.LoginController.temporary_redirect().absoluteURL()
+         val url = routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL()
          notificationService.newLoginRequest(url, path, user, loginToken)
 
          implicit val requestWithUserData = new RequestWithUserData(user, Area.notApplicable, request)
@@ -40,7 +40,7 @@ class LoginController @Inject()(userService: UserService,
      }
    }
 
-  def temporary_redirect() = Action { implicit request =>
+  def magicLinkAntiConsumptionPage() = Action { implicit request =>
     (request.getQueryString("token"),request.getQueryString("path")) match {
       case (Some(token), Some(path)) =>
         Ok(views.html.loginHome(Right((token,path))))
@@ -50,6 +50,6 @@ class LoginController @Inject()(userService: UserService,
   }
 
   def disconnect() = Action { implicit request =>
-      TemporaryRedirect(routes.LoginController.login().absoluteURL()).withNewSession
+      Redirect(routes.LoginController.login()).withNewSession
   }
 }

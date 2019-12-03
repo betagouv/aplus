@@ -31,7 +31,7 @@ GET     /stats                       controllers.ApplicationController.stats
 GET    /login                        controllers.LoginController.login
 POST   /login                        controllers.LoginController.login
 GET    /login/disconnect             controllers.LoginController.disconnect
-GET    /validation-connexion         controllers.LoginController.temporary_redirect
+GET    /validation-connexion         controllers.LoginController.magicLinkAntiConsumptionPage
 
 
 # Users
