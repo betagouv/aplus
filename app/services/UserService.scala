@@ -58,17 +58,16 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
   }
 
-  def byId(id: UUID): Option[User] = byIdCheckDisabled(id, false)
-
-  def byIdCheckDisabled(id: UUID, includeDisabled: Boolean): Option[User] = db.withConnection { implicit connection =>
-    val disabledSQL: String = if(includeDisabled) { "" } else { "AND disabled = false" }
-    SQL(s"""SELECT * FROM "user" WHERE id = {id}::uuid $disabledSQL""").on('id -> id).as(simpleUser.singleOpt)
-  }.orElse(User.admins.find(_.id == id)).filter(!_.disabled || includeDisabled)
+  def byId(id: UUID, includeDisabled: Boolean = false): Option[User] = {
+    val results = byIds(List(id), includeDisabled)
+    assert(results.length <= 1)
+    results.headOption
+  }
 
   def byIds(ids: List[UUID], includeDisabled: Boolean = false): List[User] = db.withConnection { implicit connection =>
     val disabledSQL: String = if(includeDisabled) { "" } else { "AND disabled = false" }
     SQL(s"""SELECT * FROM "user" WHERE ARRAY[{ids}]::uuid[] @> ARRAY[id]::uuid[] $disabledSQL""").on('ids -> ids).as(simpleUser.*)
-  } ++ User.admins.filter(user => ids.contains(user.id))
+  } ++ User.admins.filter(user => ids.contains(user.id)).filter(!_.disabled || includeDisabled)
 
   def byKey(key: String): Option[User] = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user" WHERE key = {key} AND disabled = false""").on('key -> key).as(simpleUser.singleOpt)
