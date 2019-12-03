@@ -95,9 +95,7 @@
                         Ajouter un/des ficher(s) ( Facultatif, 5Mo maximum ) :
                         <ul>
                             @for((attachment,index) <- attachments.zipWithIndex) {
-                                <li>
-                                    <input type="checkbox" checked value="@attachment" id="pending-file[@index]" name="pending-file[@index]"><label for="pending-file[@index]">@attachment</label>
-                                </li>
+                                <li>@attachment</li>
                             }
                         </ul>
                         <ul id="attachment-list">

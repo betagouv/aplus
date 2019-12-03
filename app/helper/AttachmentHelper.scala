@@ -1,28 +1,25 @@
-package services
+package helper
 
 import java.io.File
 import java.nio.file.{FileAlreadyExistsException, Files, Path, Paths}
 import java.util.UUID
 
-object AttachmentService {
+object AttachmentHelper {
 
   private val APPLICATION_ID_KEY = "application-id"
   private val ANSWER_ID_KEY = "answer-id"
   private val APPLICATION_PREFIX = "app_"
   private val ANSWER_PREFIX = "ans_"
-  private val PENDING_FILE_PREFIX = "pending-file"
 
   def computeStoreAndRemovePendingAndNewApplicationAttachment(applicationId: UUID, formContent: Map[String, String], getAttachmentsToStore: => Iterable[(Path, String)], filesPath: String): (Map[String, Long], Map[String, Long]) = {
     val newAttachments = storeAttachments(getAttachmentsToStore, applicationId, filesPath, APPLICATION_PREFIX)
-    val attachmentsToJoin = formContent.filter({ case (k, _) => k.startsWith(PENDING_FILE_PREFIX) }).values.toList
-    val pendingAttachments = getAttachments(applicationId, filesPath, APPLICATION_PREFIX, attachmentsToJoin)
+    val pendingAttachments = getAttachments(applicationId, filesPath, APPLICATION_PREFIX)
     pendingAttachments -> newAttachments
   }
 
   def computeStoreAndRemovePendingAndNewAnswerAttachment(applicationId: UUID, formContent: Map[String, String], getAttachmentsToStore: => Iterable[(Path, String)], filesPath: String): (Map[String, Long], Map[String, Long]) = {
     val newAttachments = storeAttachments(getAttachmentsToStore, applicationId, filesPath, ANSWER_PREFIX)
-    val attachmentsToJoin = formContent.filter({ case (k, _) => k.startsWith(PENDING_FILE_PREFIX) }).values.toList
-    val pendingAttachments = getAttachments(applicationId, filesPath, ANSWER_PREFIX, attachmentsToJoin)
+    val pendingAttachments = getAttachments(applicationId, filesPath, ANSWER_PREFIX)
     pendingAttachments -> newAttachments
   }
 
@@ -38,12 +35,11 @@ object AttachmentService {
     getAttachmentsToStore.flatMap({ case (attachmentPath, attachmentName) => storeAttachment(attachmentPath, attachmentName, applicationId, filesPath, prefix) }).toMap
   }
 
-  private def getAttachments(applicationId: UUID, filesPath: String, prefix: String, attachmentsToJoin: List[String]): Map[String, Long] = {
+  private def getAttachments(applicationId: UUID, filesPath: String, prefix: String): Map[String, Long] = {
     val path = new File(s"$filesPath")
     path.listFiles.filter(_.isFile)
       .filter(_.getName.startsWith(s"${prefix}$applicationId"))
-      .map(path => storageFilenameToClientFilename(path.getName, applicationId.toString, prefix) -> path.length())
-      .filter(tuple => attachmentsToJoin.contains(tuple._1)).toMap
+      .map(path => storageFilenameToClientFilename(path.getName, applicationId.toString, prefix) -> path.length()).toMap
   }
 
   private def storageFilenameToClientFilename(storageFilename: String, applicationId: String, prefix: String): String = {

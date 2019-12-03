@@ -8,6 +8,7 @@ import constants.Constants
 import extentions.Time
 import extentions.Time.dateTimeOrdering
 import forms.FormsPlusMap
+import helper.AttachmentHelper
 import javax.inject.{Inject, Singleton}
 import models._
 import org.joda.time.DateTime
@@ -86,8 +87,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
        }
        case true => {
          val form = applicationForm.bindFromRequest
-         val applicationId = AttachmentService.retrieveOrGenerateApplicationId(form.data)
-         val (pendingAttachments, newAttachments) = AttachmentService.computeStoreAndRemovePendingAndNewApplicationAttachment(applicationId,
+         val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
+         val (pendingAttachments, newAttachments) = AttachmentHelper.computeStoreAndRemovePendingAndNewApplicationAttachment(applicationId,
            form.data,
            computeAttachmentsToStore(request),
            filesPath)
@@ -378,8 +379,8 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
   def answer(applicationId: UUID) = loginAction { implicit request =>
     val form = answerForm.bindFromRequest
-    val answerId = AttachmentService.retrieveOrGenerateAnswerId(form.data)
-    val (pendingAttachments, newAttachments) = AttachmentService.computeStoreAndRemovePendingAndNewAnswerAttachment(answerId, form.data, computeAttachmentsToStore(request), filesPath)
+    val answerId = AttachmentHelper.retrieveOrGenerateAnswerId(form.data)
+    val (pendingAttachments, newAttachments) = AttachmentHelper.computeStoreAndRemovePendingAndNewAnswerAttachment(answerId, form.data, computeAttachmentsToStore(request), filesPath)
       form.fold(
       formWithErrors => {
         eventService.error("ANSWER_NOT_CREATED", s"Impossible d'ajouter une réponse sur la demande $applicationId : problème formulaire")
