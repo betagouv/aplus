@@ -65,13 +65,13 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     SQL(s"""SELECT * FROM "user" WHERE id = {id}::uuid $disabledSQL""").on('id -> id).as(simpleUser.singleOpt)
   }.orElse(User.admins.find(_.id == id)).filter(!_.disabled || includeDisabled)
 
-  def byIds(ids: List[UUID]): List[User] = db.withConnection { implicit connection =>
-    SQL("""SELECT * FROM "user" WHERE ARRAY[{ids}]::uuid[] @> ARRAY[id]::uuid[]""").on('ids -> ids).as(simpleUser.*)
+  def byIds(ids: List[UUID], includeDisabled: Boolean = false): List[User] = db.withConnection { implicit connection =>
+    val disabledSQL: String = if(includeDisabled) { "" } else { "AND disabled = false" }
+    SQL(s"""SELECT * FROM "user" WHERE ARRAY[{ids}]::uuid[] @> ARRAY[id]::uuid[] $disabledSQL""").on('ids -> ids).as(simpleUser.*)
   } ++ User.admins.filter(user => ids.contains(user.id))
 
-
   def byKey(key: String): Option[User] = db.withConnection { implicit connection =>
-    SQL("""SELECT * FROM "user" WHERE key = {key}""").on('key -> key).as(simpleUser.singleOpt)
+    SQL("""SELECT * FROM "user" WHERE key = {key} AND disabled = false""").on('key -> key).as(simpleUser.singleOpt)
   }.orElse(User.admins.find(_.key == key))
 
   def byEmail(email: String): Option[User] = db.withConnection { implicit connection =>
