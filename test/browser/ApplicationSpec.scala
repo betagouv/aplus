@@ -75,7 +75,7 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
       val loginToken = LoginToken.forUserId(helperUser.id, 5, "127.0.0.1")
       tokenService.create(loginToken)
 
-      val loginURL = controllers.routes.LoginController.redirect().absoluteURL(false, s"localhost:$port")
+      val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL(false, s"localhost:$port")
 
       browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
 

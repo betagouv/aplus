@@ -37,7 +37,7 @@ class LoginSpec extends Specification with Tables with BaseSpec {
       val loginToken = LoginToken.forUserId(UUIDHelper.namedFrom("julien"), 5, "127.0.0.1")
       tokenService.create(loginToken)
 
-      val loginURL = controllers.routes.LoginController.redirect().absoluteURL(false, s"localhost:$port")
+      val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL(false, s"localhost:$port")
 
       browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
 
@@ -51,7 +51,7 @@ class LoginSpec extends Specification with Tables with BaseSpec {
         .copy(expirationDate = DateTime.now(Time.dateTimeZone).minusMinutes(5))
       tokenService.create(loginToken)
 
-      val loginURL = controllers.routes.LoginController.redirect().absoluteURL(false, s"localhost:$port")
+      val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL(false, s"localhost:$port")
 
       browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
 
@@ -61,7 +61,7 @@ class LoginSpec extends Specification with Tables with BaseSpec {
       }
     }
     "Use token without success"  in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {
-      val loginURL = controllers.routes.LoginController.redirect().absoluteURL(false, s"localhost:$port")
+      val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL(false, s"localhost:$port")
 
       browser.goTo(s"$loginURL?token=90798798789798&path=/")
 
