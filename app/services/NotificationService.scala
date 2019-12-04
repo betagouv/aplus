@@ -114,11 +114,11 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   private def generateNotificationBALEmail(application: Application, answerOption: Option[Answer] = None, users: List[User])(group: UserGroup): Email = {
     val (subject,url) = answerOption match {
       case Some(answer) =>
-        ( "[A+] Nouvelle réponse : ${application.subject}",
+        ( s"[A+] Nouvelle réponse : ${application.subject}",
          s"${routes.ApplicationController.show(application.id).absoluteURL(https, host)}#answer-${answer.id}"
         )
       case None =>
-        ( "[A+] Nouvelle demande : ${application.subject}",
+        ( s"[A+] Nouvelle demande : ${application.subject}",
           s"${routes.ApplicationController.show(application.id).absoluteURL(https, host)}"
         )
     }
