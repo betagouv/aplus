@@ -12,6 +12,7 @@
 - Utiliser le router de Play pour la gestion des URLs : https://www.playframework.com/documentation/2.7.x/ScalaRouting
 - Les urls publiques de l'applications sont en francais (/utilisateurs), le reste est en anglais.
   - Il y a des migrations à faire au fur et à mesure
+- Les arguments boolean doivent être nommé
 
 ## Concept de développement
 - Utiliser un maximum de fonction pure

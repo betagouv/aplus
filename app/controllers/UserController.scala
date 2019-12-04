@@ -101,7 +101,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "VIEW_USER_UNAUTHORIZED" -> s"Accès non autorisé pour voir $userId"
     } { () =>
-      userService.byIdCheckDisabled(userId, includeDisabled = true) match {
+      userService.byId(userId, includeDisabled = true) match {
         case None =>
           eventService.error("USER_NOT_FOUND", s"L'utilisateur $userId n'existe pas")
           NotFound("Nous n'avons pas trouvé cet utilisateur")
