@@ -114,6 +114,6 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
 
   private def tokenById[A](implicit request: Request[A]) = request.getQueryString("token").flatMap(tokenService.byToken)
   private def userByKey[A](implicit request: Request[A]) = request.getQueryString("key").flatMap(userService.byKey)
-  private def userBySession[A](implicit request: Request[A]) = request.session.get("userId").flatMap(UUIDHelper.fromString).flatMap(id => userService.byIdCheckDisabled(id,true))
+  private def userBySession[A](implicit request: Request[A]) = request.session.get("userId").flatMap(UUIDHelper.fromString).flatMap(id => userService.byId(id,true))
 }
 
