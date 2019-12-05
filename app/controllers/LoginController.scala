@@ -29,7 +29,7 @@ class LoginController @Inject()(userService: UserService,
          val loginToken = LoginToken.forUserId(user.id, tokenExpirationInMinutes, request.remoteAddress)
          tokenService.create(loginToken)
          val path = request.flash.get("path").getOrElse(routes.HomeController.index().url)
-         val url = routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL()
+         val url = routes.LoginController.magicLinkAntiConsumptionPage().url
          notificationService.newLoginRequest(url, path, user, loginToken)
 
          implicit val requestWithUserData = new RequestWithUserData(user, Area.notApplicable, request)
@@ -45,7 +45,7 @@ class LoginController @Inject()(userService: UserService,
       case (Some(token), Some(path)) =>
         Ok(views.html.loginHome(Right((token,path))))
       case _ =>
-        TemporaryRedirect(routes.LoginController.login().absoluteURL()).flashing("error" -> "Il y a une erreur dans votre lien de connexion. Merci de contacter l'équipe Administration+")
+        TemporaryRedirect(routes.LoginController.login().url).flashing("error" -> "Il y a une erreur dans votre lien de connexion. Merci de contacter l'équipe Administration+")
     }
   }
 
