@@ -20,4 +20,14 @@ window.document.addEventListener("DOMContentLoaded", function(event) {
             CsvImport.checkboxes[i].checked = false;
         }
     });
+
+    // Deletion of line
+    CsvImport.deleteLineButtons = window.document.getElementsByClassName("delete-line");
+    for (var i = 0; i < CsvImport.deleteLineButtons.length; i++) {
+        CsvImport.deleteLineButtons[i].addEventListener("click", function(event) {
+            var lineElementId = event.target.getAttribute("data-line-id");
+            var lineElement = document.getElementById(lineElementId);
+            lineElement.parentNode.removeChild(lineElement);
+        });
+    }
 }, false);
