@@ -1,6 +1,7 @@
 @import models._
 @import extentions.MDLForms._
-@(currentUser: User, area: Area)(form: Form[List[csv.Section]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+
+@(currentUser: User, area: Area)(form: Form[(List[csv.Section], java.util.UUID)])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @display(section: Field)(header: Html)(footer: Html) = {
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white">
@@ -16,48 +17,42 @@
         @helper.input(user("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
           <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
-        @helper.input(user(csv.USER_NAME_HEADER_PREFIX), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
-          <input class="mdl-textfield__input input-import-user @if(user("readonly").value.isDefined) {mdl-textfield__input--readonly}" @{if(user("readonly").value.isDefined) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+        @helper.input(user(csv.USER_LAST_NAME.key), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
+          <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.input(user(csv.USER_QUALITY_HEADER_PREFIX), 'label -> "Qualité", 'class -> "input-import-user") { (id, name, value, args) =>
-          <input class="mdl-textfield__input input-import-user @if(user("readonly").value.isDefined) {mdl-textfield__input--readonly}" @{if(user("readonly").value.isDefined) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+        @helper.input(user(csv.USER_QUALITY.key), 'label -> "Qualité", 'class -> "input-import-user") { (id, name, value, args) =>
+          <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.input(user(csv.USER_EMAIL_HEADER_PREFIX), 'label -> "Email", 'class -> "input-import-user") { (id, name, value, args) =>
-          <input class="mdl-textfield__input input-import-user @if(user("readonly").value.isDefined) {mdl-textfield__input--readonly}" @{if(user("readonly").value.isDefined) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+        @helper.input(user(csv.USER_EMAIL.key), 'label -> "Email", 'class -> "input-import-user") { (id, name, value, args) =>
+          <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @if(user("id").value.isDefined) {
-          <span>@csv.INSTRUCTOR_HEADER_PREFIX</span>
-        } else {
-          <label for="@user(csv.INSTRUCTOR_HEADER_PREFIX).id">@csv.INSTRUCTOR_HEADER_PREFIX</label>
-          <input class=""
+        @helper.input(user(csv.USER_PHONE_NUMBER.key), 'label -> "Numéro de téléphone", 'class -> "input-import-user") { (id, name, value, args) =>
+        <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+        }
+      </td>
+      <td class="mdl-data-table__cell--non-numeric cell-import-user">
+          <label for="@user(csv.INSTRUCTOR.key).id">@csv.INSTRUCTOR.prefixes(0)</label>
+          <input class="instructor"
                  type="checkbox"
-                 name="@user(csv.INSTRUCTOR_HEADER_PREFIX).name"
-                 id="@user(csv.INSTRUCTOR_HEADER_PREFIX).id"
-                 value="@user(csv.INSTRUCTOR_HEADER_PREFIX).value.getOrElse("")"
-                 @{if(!user(csv.INSTRUCTOR_HEADER_PREFIX).value.getOrElse("").isEmpty) "checked"} />
-        }
+                 name="@user(csv.INSTRUCTOR.key).name"
+                 id="@user(csv.INSTRUCTOR.key).id"
+                 value="@user(csv.INSTRUCTOR.key).value.getOrElse("")"
+                 @{if(!user(csv.INSTRUCTOR.key).value.getOrElse("").isEmpty) "checked"} />
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @if(user("id").value.isDefined) {
-          <span>@csv.GROUP_MANAGER_HEADER_PREFIX</span>
-        } else {
-          <label for="@user(csv.GROUP_MANAGER_HEADER_PREFIX).id">@csv.GROUP_MANAGER_HEADER_PREFIX</label>
-          <input class=""
+          <label for="@user(csv.GROUP_MANAGER.key).id">@csv.GROUP_MANAGER.prefixes(0)</label>
+          <input class="manager"
                  type="checkbox"
-                 name="@user(csv.GROUP_MANAGER_HEADER_PREFIX).name"
-                 id="@user(csv.GROUP_MANAGER_HEADER_PREFIX).id"
-                 value="@user(csv.GROUP_MANAGER_HEADER_PREFIX).value.getOrElse("")"
-                 @{if(!user(csv.GROUP_MANAGER_HEADER_PREFIX).value.getOrElse("").isEmpty) "checked"} />
-        }
-      </td>
-      <td>
-        @if(user("id").value.isDefined) { <em>Existe déjà.</em> }
+                 name="@user(csv.GROUP_MANAGER.key).name"
+                 id="@user(csv.GROUP_MANAGER.key).id"
+                 value="@user(csv.GROUP_MANAGER.key).value.getOrElse("")"
+                 @{if(!user(csv.GROUP_MANAGER.key).value.getOrElse("").isEmpty) "checked"} />
       </td>
     </tr>
     }
@@ -66,39 +61,43 @@
 }
 
 @main(currentUser, area, false)("Revue de votre import CSV") {
+  <script src='@routes.Assets.versioned("javascripts/csv-import.js")'></script>
 } {
   @helper.form(routes.UserController.importUsers(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
   @helper.CSRF.formField
     @if(form.hasGlobalErrors) {
-      <div style="color: red; font-weight: bold;">@form.globalErrors.mkString(", ")</div>
+      @for(error <- form.globalErrors) {
+        @for(args <- error.args) {
+          <div style="color: red; font-weight: bold;">@args</div>
+        }
+      }
     }
+    <em>Département : </em>
+    <select id="area-selector" name="area-selector">
+      @for(area <- currentUser.areas.flatMap(Area.fromId)) {
+        <option value="@area.id">@area.name</option>
+      }
+    </select>
+    <em>Instructeur : </em><a href="#" id="instructor-all-link">Tous</a> / <a href="#" id="instructor-none-link">Aucuns</a>
     @helper.repeatWithIndex(form("sections")) { (section, index) =>
         @display(section) {
-            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding">
+            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="1">
               @helper.input(section("group")("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
-              @helper.input(section("group")(csv.GROUP_NAME_HEADER_PREFIX), 'label -> csv.GROUP_NAME_HEADER_PREFIX, 'class -> "input-import-user") { (id, name, value, args) =>
-                <input class="mdl-textfield__input input-import-user @if(section("group")("readonly").value.isDefined) {mdl-textfield__input--readonly}" @{if(section("group")("readonly").value.isDefined) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-              }
-            </th>
-            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="1">
-              @helper.input(section("group")(csv.GROUP_ORGANISATION_HEADER_PREFIX), 'label -> csv.GROUP_ORGANISATION_HEADER_PREFIX, 'class -> "input-import-user") { (id, name, value, args) =>
-                <input class="mdl-textfield__input input-import-user @if(section("group")("readonly").value.isDefined) {mdl-textfield__input--readonly}" @{if(section("group")("readonly").value.isDefined) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-              }
-            </th>
-            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="1">
-              @helper.input(section("group")(csv.TERRITORY_HEADER_PREFIX), 'label -> csv.TERRITORY_HEADER_PREFIX, 'class -> "input-import-user") { (id, name, value, args) =>
-                <input class="mdl-textfield__input input-import-user @if(section("group")("readonly").value.isDefined) {mdl-textfield__input--readonly}" @{if(section("group")("readonly").value.isDefined) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+              @helper.input(section("group")(csv.GROUP_NAME.key), 'label -> csv.GROUP_NAME.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
+                <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
             </th>
             <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="2">
-              @helper.input(section("group")(csv.GROUP_EMAIL_HEADER_PREFIX), 'label -> csv.GROUP_EMAIL_HEADER_PREFIX, 'class -> "input-import-user") { (id, name, value, args) =>
-                <input class="mdl-textfield__input input-import-user @if(section("group")("readonly").value.isDefined) {mdl-textfield__input--readonly}" @{if(section("group")("readonly").value.isDefined) {"readonly"}} type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+              @helper.input(section("group")(csv.GROUP_ORGANISATION.key), 'label -> csv.GROUP_ORGANISATION.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
+                <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
             </th>
-            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="1">
-              @if(section("group")("id").value.isDefined) { <em>Existe déjà.</em> }
+            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="3">
+              @helper.input(section("group")(csv.GROUP_EMAIL.key), 'label -> csv.GROUP_EMAIL.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
+                <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+              }
             </th>
         } { }
     }

@@ -35,7 +35,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     "group_ids",
     "delegations",
     "cgu_acceptation_date",
-    "newsletter_acceptation_date"
+    "newsletter_acceptation_date",
+    "phone_number"
   ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
 
   def all = db.withConnection { implicit connection =>
@@ -84,7 +85,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
   def add(users: List[User]) = db.withTransaction { implicit connection =>
     users.foldRight(true) { (user, success)  =>
       success && SQL"""
-      INSERT INTO "user" VALUES (
+      INSERT INTO "user" (id, key, name, qualite, email, helper, instructor, admin, areas, delegations, creation_date,
+      has_accepted_charte, commune_code, group_admin, group_ids, expert, phone_number) VALUES (
          ${user.id}::uuid,
          ${Hash.sha256(s"${user.id}$cryptoSecret")},
          ${user.name},
@@ -100,7 +102,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
          ${user.communeCode},
          ${user.groupAdmin},
          array[${user.groupIds}]::uuid[],
-         ${user.expert})
+         ${user.expert},
+         ${user.phoneNumber})
       """.executeUpdate() == 1
     }
   }
@@ -120,6 +123,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
           group_admin = ${user.groupAdmin},
           group_ids = array[${user.groupIds}]::uuid[],
           expert = ${user.expert},
+          phone_number = ${user.phoneNumber},
           disabled = ${user.disabled}
           WHERE id = ${user.id}::uuid
        """.executeUpdate() == 1

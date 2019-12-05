@@ -409,3 +409,7 @@ a {
 .mdl-textfield__input--readonly {
     background-color: lightgrey;
 }
+
+.mdl-textarea--more-height {
+  height: 20em;
+}}

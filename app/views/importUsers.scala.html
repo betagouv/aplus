@@ -9,13 +9,18 @@
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         @helper.form(routes.UserController.importUsersReview(), 'method -> "post") {
             @helper.CSRF.formField
-            <h2 class="mdl-cell mdl-cell--12-col">Importer un contenu CSV (Séparé par des ; )</h2>
-            <p>@csv.UserImport.HEADER@csv.SEPARATOR@csv.GroupImport.HEADER</p>
+            <h2 class="mdl-cell mdl-cell--12-col">Importer un contenu CSV</h2>
+            <div>
+                <em>Séparateur</em>
+                <input type="radio" name="separator" value=";" id="semicolon" checked><label for="semicolon">Point-virgule</label>
+                <input type="radio" name="separator" value="," id="comma"><label for="comma">Virgule</label>
+            </div>
+            <p>@csv.USER_HEADER@csv.SEPARATOR@csv.GROUP_HEADER</p>
             @if(errors.nonEmpty) {
-                <div style="color: red; font-weight: bold;">@errors.mkString(", ")</div>
+                <div style="color: red; font-weight: bold;">@errors.map(_.message)</div>
             }
             <textarea label="Contenu du CSV"
-                      class="mdl-textfield--floating-label mdl-cell mdl-cell--12-col mdl-textfield__input mdl-color--white"
+                      class="mdl-textfield--floating-label mdl-cell mdl-cell--12-col mdl-color--white .mdl-textarea--more-height"
                       rows= "20"
                       name="csv-import-content"
                       id="csv-import-content">@csvImportContent</textarea>

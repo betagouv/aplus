@@ -11,7 +11,9 @@
 - Gérer les erreurs immédiatement, écrire l'action ensuite
 - Utiliser le router de Play pour la gestion des URLs : https://www.playframework.com/documentation/2.7.x/ScalaRouting
 - Les urls publiques de l'applications sont en francais (/utilisateurs), le reste est en anglais.
-  - Il y a des migrations à faire au fur et à mesure
+- Il y a des migrations à faire au fur et à mesure
+- Privilégier la definition d'une méthode avec `def` plutôt que sur une `var`
+- Les services ne peuvent être utiliser que depuis les controlleurs
 - Les arguments boolean doivent être nommé
 
 ## Concept de développement
@@ -20,6 +22,7 @@
 - Convention plutôt que configuration (Convention over configuration) : https://fr.wikipedia.org/wiki/Convention_plut%C3%B4t_que_configuration
 - The Boy Scout Rule : "Always leave the campground cleaner than you found it." https://www.oreilly.com/library/view/97-things-every/9780596809515/ch08.html
 - Les noms de variables, noms de méthodes sont en anglais(sauf les termes francais intraduisibles) et très explicite (éviter les abréviations)
+- Ne faire de référence circulaire
 
 ## CSS
 - Utiliser BEM pour écrire du CSS http://getbem.com/introduction/

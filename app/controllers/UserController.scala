@@ -3,6 +3,7 @@ package controllers
 import java.util.{Locale, UUID}
 
 import actions.{LoginAction, RequestWithUserData}
+import csv.Section
 import extentions.Operators.{GroupOperators, UserOperators, not}
 import extentions.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
@@ -86,10 +87,10 @@ case class UserController @Inject()(loginAction: LoginAction,
         ).mkString(";")
       }
 
-      val headers = List[String]("Id", csv.USER_NAME_HEADER_PREFIX, csv.USER_QUALITY_HEADER_PREFIX,
-        csv.USER_EMAIL_HEADER_PREFIX, "Création", "Aidant", csv.INSTRUCTOR_HEADER_PREFIX,
-        csv.GROUP_MANAGER_HEADER_PREFIX, "Expert", "Admin", "Actif", "Commune INSEE", csv.TERRITORY_HEADER_PREFIX,
-        csv.GROUP_NAME_HEADER_PREFIX, "CGU", "Newsletter").mkString(";")
+      val headers = List[String]("Id", csv.USER_LAST_NAME.prefixes(0), csv.USER_QUALITY.prefixes(0),
+        csv.USER_EMAIL.prefixes(0), "Création", "Aidant", csv.INSTRUCTOR.prefixes(0),
+        csv.GROUP_MANAGER.prefixes(0), "Expert", "Admin", "Actif", "Commune INSEE", csv.GROUP_AREA.prefixes(0),
+        csv.GROUP_NAME.prefixes(0), "CGU", "Newsletter").mkString(";")
       val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
       val date = DateTime.now(Time.dateTimeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
 
@@ -173,19 +174,23 @@ case class UserController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "IMPORT_GROUP_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
-      csv.sectionsForm.bindFromRequest.fold({ missFilledForm =>
+      csv.sectionsForm(request.currentUser.id).bindFromRequest.fold({ missFilledForm =>
         val cleanedForm = missFilledForm.copy(data = missFilledForm.data.filter({ case (_, v) => v.nonEmpty }))
         BadRequest(views.html.reviewUsersImport(request.currentUser, request.currentArea)(cleanedForm))
-      }, { sections =>
+      }, { case (sections, areaId) =>
         if (sections.isEmpty) {
-          val form = csv.sectionsForm.fill(sections).withGlobalError("Action impossible, il n'y a aucun utilisateur à ajouter.")
+          val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError("Action impossible, il n'y a aucun utilisateur à ajouter.")
           BadRequest(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
         } else {
-          val toInsert: List[(UserGroup, List[User])] = sections.map(section => csv.prepareSection(section, request.currentUser))
+          val area = Area.fromId(areaId).get
+          val toInsert = sections.map({ section =>
+            val group = groupService.groupByName(area.name + ":" + section.group.name).getOrElse(section.group)
+            csv.prepareSection(group, section.users, request.currentUser, area)
+          })
           val usersToInsert: List[User] = toInsert.flatMap(_._2)
           val groupsToInsert: List[UserGroup] = toInsert.map(_._1)
 
-          val insertResult = groupsToInsert.filterNot(group => groupService.groupById(group.id).isDefined)
+          val insertResult = groupsToInsert.filterNot(group => groupService.groupByName(group.name).isDefined)
             .foldLeft[Either[(String, String), Unit]](Right(()))({ case (either, group) =>
               either.fold(Left.apply, { _: Unit =>
                 if (not(groupService.add(group))) {
@@ -198,12 +203,12 @@ case class UserController @Inject()(loginAction: LoginAction,
           if (insertResult.isLeft) {
             val (code, description) = insertResult.left.get
             eventService.error(code, description)
-            val form = csv.sectionsForm.fill(sections).withGlobalError(description)
+            val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
             InternalServerError(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
-          } else if (not(userService.add(usersToInsert.filterNot(user => userService.byId(user.id).isDefined)))) {
+          } else if (not(userService.add(usersToInsert.filterNot(user => userService.byEmail(user.email).isDefined)))) {
             val description = "Impossible d'ajouter un utilisateur dans la BDD."
             eventService.error("ADD_USER_ERROR", description)
-            val form = csv.sectionsForm.fill(sections).withGlobalError(description)
+            val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
             InternalServerError(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
           } else {
             eventService.info("ADD_USER_DONE", "Utilisateurs ajoutés.")
@@ -330,8 +335,9 @@ case class UserController @Inject()(loginAction: LoginAction,
         "expert" -> ignored(false),
         "groupIds" -> default(list(uuid), List()),
         "delegations" -> ignored(Map[String, String]()),
-        "cguAcceptationDate" -> optional(ignored(Time.now())),
-        "newsletterAcceptationDate" -> optional(ignored(Time.now()))
+        "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
+        "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
+        csv.USER_PHONE_NUMBER.key -> optional(text),
       )(User.apply)(User.unapply))
     )
   )
@@ -368,8 +374,9 @@ case class UserController @Inject()(loginAction: LoginAction,
     }, {
       _.toSeq
     }),
-    "cguAcceptationDate" -> optional(ignored(Time.now())),
-    "newsletterAcceptationDate" -> optional(ignored(Time.now()))
+    "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
+    "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
+    csv.USER_PHONE_NUMBER.key -> optional(text),
   )(User.apply)(User.unapply)
 
   def importUsersFromCSV: Action[AnyContent] = loginAction { implicit request =>
@@ -386,11 +393,24 @@ case class UserController @Inject()(loginAction: LoginAction,
         "IMPORT_GROUP_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
       } { () =>
         csv.csvImportContentForm.bindFromRequest.fold({ _ =>
+          eventService.warn(code = "CSV_IMPORT_INPUT_EMPTY", description = "Le champ d'import de CSV est vide.")
           BadRequest(views.html.importUsers(request.currentUser, request.currentArea)("", List(FormError.apply("csv-import-content", "Le champ est vide."))))
-        }, { csvImportContent =>
-          val data = csv.extractDataFromCSVAndMapToTreeStructure(csvImportContent)(userService, groupService)
-          val filledForm = csv.sectionsForm.bind(data)
-          Ok(views.html.reviewUsersImport(request.currentUser, request.currentArea)(filledForm))
+        }, { case (csvImportContent, separator) =>
+          val (groupToUsersMap, lineNumberToErrors) = csv.extractValidInputAndErrors(csvImportContent, separator.head, request.currentUser.id)
+          if (groupToUsersMap.isEmpty) {
+            eventService.warn(code = "INVALID_CSV", description = "Le CSV fourni est invalide.")
+            BadRequest(views.html.importUsers(request.currentUser, request.currentArea)("", List(FormError.apply("csv-import-content", "Le format est invalide, veuillez vérifier le séparateur ainsi que le données."))))
+          } else {
+            // Remove already existing users
+            val groupToNewUsersMap = groupToUsersMap.map({ case (group, users) =>
+              group -> users.filterNot(user => userService.byEmail(user.email).isDefined)
+            })
+            val errors = lineNumberToErrors.map({ case (lineNumber, errors) => "Ligne %d : %s".format(lineNumber, errors.map(e => s"${e.key} ${e.message}").mkString(", ")) }).toList
+            val filledForm = csv.sectionsForm(request.currentUser.id)
+              .fill(groupToNewUsersMap.map({ case (group, users) => Section(group, users) }).toList -> request.currentArea.id)
+                .withGlobalError("Il y a des erreurs", errors: _*)
+            Ok(views.html.reviewUsersImport(request.currentUser, request.currentArea)(filledForm))
+          }
         })
       }
     }
