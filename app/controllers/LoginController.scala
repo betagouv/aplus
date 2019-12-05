@@ -29,7 +29,7 @@ class LoginController @Inject()(userService: UserService,
          val loginToken = LoginToken.forUserId(user.id, tokenExpirationInMinutes, request.remoteAddress)
          tokenService.create(loginToken)
          val path = request.flash.get("path").getOrElse(routes.HomeController.index().url)
-         val url = routes.LoginController.magicLinkAntiConsumptionPage().url
+         val url = routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL()
          notificationService.newLoginRequest(url, path, user, loginToken)
 
          implicit val requestWithUserData = new RequestWithUserData(user, Area.notApplicable, request)
