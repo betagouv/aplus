@@ -32,6 +32,12 @@
     @helper.input(form("qualite"), 'label -> "Qualité") { (id, name, value, args) =>
     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
     } <br>
+        @if(currentUser.admin) {
+            @helper.input(form("user_phone_number"), 'label -> "Numéro de téléphone") { (id, name, value, args) =>
+                <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+            }
+            <br>
+        }
     @helper.input(form("communeCode"), 'label -> "Code INSEE commune") { (id, name, value, args) =>
     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) disabled>
     } <br>
