@@ -1,7 +1,7 @@
 import java.util.UUID
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import extentions.{Operators, Time}
+import extentions.Time
 import models.{Area, Organisation, User, UserGroup}
 import org.joda.time.DateTime
 import play.api.data.Forms.{boolean, default, email, ignored, list, mapping, nonEmptyText, optional, seq, text, tuple, uuid}
@@ -79,7 +79,8 @@ package object csv {
     USER_QUALITY.key -> default(text, "").verifying(maxLength(100)),
     USER_EMAIL.key -> email.verifying(maxLength(200), nonEmpty),
     "Aidant" -> ignored(true),
-    INSTRUCTOR.key -> boolean,
+    INSTRUCTOR.key -> optional(text.verifying(s => INSTRUCTOR.lowerPrefixes.exists(s.toLowerCase.startsWith) || s.toLowerCase() == "false"  || s.toLowerCase() == "true" || s.isEmpty))
+      .transform[Boolean](os => os.exists(s => INSTRUCTOR.lowerPrefixes.exists(s.toLowerCase.startsWith) || s.toLowerCase() == "false"  || s.toLowerCase() == "true"), manager => if (manager) Some("true") else Some("false")),
 
     "admin" -> ignored(false),
     "areas" -> default(list(uuid).verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
@@ -88,7 +89,8 @@ package object csv {
     "hasAcceptedCharte" -> default(boolean, false),
     "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
 
-    GROUP_MANAGER.key -> boolean,
+    GROUP_MANAGER.key -> optional(text.verifying(s => GROUP_MANAGER.lowerPrefixes.exists(s.toLowerCase.startsWith) || s.toLowerCase() == "false"  || s.toLowerCase() == "true" || s.isEmpty))
+      .transform[Boolean](os => os.exists(s => GROUP_MANAGER.lowerPrefixes.exists(s.toLowerCase.startsWith) || s.toLowerCase() == "false"  || s.toLowerCase() == "true"), manager => if (manager) Some("true") else Some("false")),
 
     "disabled" -> ignored(false),
     "expert" -> ignored(false),
