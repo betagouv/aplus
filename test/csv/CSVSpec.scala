@@ -19,12 +19,12 @@ class CSVSpec extends Specification {
 
   val csvFile: String =
     """Nom;Qualité;Email;Instructeur;Responsable;Territoires;Organisation du groupe;Groupe;Bal générique / fonctionnelle;Précisions / Commentaires
-      |Sabine MAIDE;Agent d’accueil FS;sabine.maide@france-service.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;
-      |Marie-France SAIRVISSE;Agent d’accueil FS;Marie-france.sairvisse@laposte.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;
-      |Jean PLOI;Référent Pole Emploi;jean.ploi@pole-emploi.fr;Instructeur;;Ardennes;Pôle emploi;Pole Emploi Charleville Mézières;chareville-mezieres@pole.emploi.com;
-      |Jean DUCAFE;Réponsable CAF;jean.ducafe@caf.fr;Instructeur;Responsable;Ardennes;Caisse d’allocations familiale;CAF Ardennes;ardennes@caf.fr;
-      |Anne TRESOR;Responsable DDFIP;Anne.tresor@ddfip.fr;;Responsable;Mayotte;Direction départementale des Finances publiques;DDFIP Mayotte (amendes);amendes@ddfip.fr;
-      |Martin Paux;Responsable DDFIP;martin.paux@ddfip.fr;Instructeur;;Mayotte;Direction départementale des Finances publiques;DDFIP Mayotte (Impots locaux);amendes@ddfip.fr;
+      |Prénom1 Nom1;Agent d’accueil FS;prenom1.nom1@france-service.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;
+      |Prénom2 Nom2;Agent d’accueil FS;prenom2.nom2@laposte.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;
+      |Prénom3 Nom3;Référent Pole Emploi;prenom3.nom3@pole-emploi.fr;Instructeur;;Ardennes;Pôle emploi;Pole Emploi Charleville Mézières;chareville-mezieres@pole.emploi.com;
+      |Prénom4 Nom4;Réponsable CAF;prenom4.nom4@pole-emploi.fr;Instructeur;Responsable;Ardennes;Caisse d’allocations familiale;CAF Ardennes;ardennes@caf.fr;
+      |Prénom5 Nom5;Responsable DDFIP;prenom5.nom5@ddfip.fr;;Responsable;Mayotte;Direction départementale des Finances publiques;DDFIP Mayotte (amendes);amendes@ddfip.fr;
+      |Prénom6 Nom6;Responsable DDFIP;prenom6.nom6@ddfip.fr;Instructeur;;Mayotte;Direction départementale des Finances publiques;DDFIP Mayotte (Impots locaux);amendes@ddfip.fr;
       |;;;;;;;;;""".stripMargin
 
   val failFile: String =
@@ -33,28 +33,28 @@ class CSVSpec extends Specification {
 
   val prefFormat: String =
     """Opérateur partenaire,Nom Référent,Prénom Référent,Adresse e-mail,numéro de téléphone,"adresse mail générique (si nécessaire)"
-      |CAF,BOUTS,Stéphanie,stephanie.bouts@cafaisne.cnafmail.fr,03.23.75.60.27,MFS.cafaisne@cafaisne.cnafmail.fr
-      |CPAM,GLADIEUX,Fabrice,fabrice.gladieux@assurance-maladie.fr,03 23 26 23 40,_x0001_
-      |CPAM,BEAURAIN,Nathalie,nathalie.beaurain@assurance-maladie.fr,03 23 65 43 85,
-      |CARSAT,BOURQUIN,Cathy,cathy.bourquin@carsat-nordpicardie.fr,03 20 05 61 10,partenariatsretraite@carsat-nordpicardie.fr
-      |DGFIP,THEVENIN,JEAN-LUC,jean-luc.thevenin@dgfip.finances.gouv.fr,03 23 26 28 07,sip.laon@dgfip.finances.gouv.fr
-      |DGFIP,CLAISSE,FLORENCE,florence.claisse@dgfip.finances.gouv.fr,03.23.26.70.16,ddfip02.gestionfiscale@dgfip.finances.gouv.fr
-      |DGFIP,HOBART,FREDERIC,frederic.hobart@dgfip.finances.gouv.fr,03 23 76 49 19,sip.soissons@dgfip.finances.gouv.fr
-      |La Poste,QUENTIN,Laure,laure.quentin@laposte.fr,,
-      |Min. Intérieur,REMIOT,Christine,christine.remiot@aisne.gouv.fr,03 23 21 82 49,
-      |Min. Justice,SAUVEZ,Clothilde,cdad-aisne@justice.fr,03 60 81 30 10,
-      |MSA,FONTE NOVA,Sandrine,fonte-nova.sandrine@picardie.msa.fr,0322826334,
-      |Pôle Emploi,LACOMBLEZ,Christelle,christelle.lacomblez@pole-emploi.fr,,
+      |CAF,Nom1,Prénom1,prenom1.nom1@cafaisne.cnafmail.fr,01.02.03.04.05,MFS.cafaisne@cafaisne.cnafmail.fr
+      |CPAM,Nom2,Prénom2,prenom2.nom2@assurance-maladie.fr,01.02.03.04.05,_x0001_
+      |CPAM,Nom3,Prénom3,prenom3.nom3@assurance-maladie.fr,01.02.03.04.05,
+      |CARSAT,Nom4,Prénom4,prenom4.nom4@carsat-nordpicardie.fr,01.02.03.04.05,partenariatsretraite@carsat-nordpicardie.fr
+      |DGFIP,Nom5,Prénom5,prenom5.nom5@dgfip.finances.gouv.fr,01.02.03.04.05,sip.laon@dgfip.finances.gouv.fr
+      |DGFIP,Nom6,Prénom6,prenom6.nom6@dgfip.finances.gouv.fr,01.02.03.04.05,ddfip02.gestionfiscale@dgfip.finances.gouv.fr
+      |DGFIP,Nom7,Prénom7,prenom7.nom7@dgfip.finances.gouv.fr,01.02.03.04.05,sip.soissons@dgfip.finances.gouv.fr
+      |La Poste,Nom8,Prénom8,prenom8.nom8@laposte.fr,,
+      |Min. Intérieur,Nom9,Prénom9,prenom9.nom9@aisne.gouv.fr,01.02.03.04.05,
+      |Min. Justice,Nom10,Prénom10,prenom10.nom10@justice.fr,01.02.03.04.05,
+      |MSA,Nom11,Prénom11,prenom11.nom11@picardie.msa.fr,01.02.03.04.05,
+      |Pôle Emploi,Nom12,Prénom12,prenom12.nom12@pole-emploi.fr,,
       |,,,,,
       |""".stripMargin
 
   val organisationTest: String =
     """organisation,Nom de la structure labellisable,Adresse,Code Postal,Commune,Nom Agent,Prénom Agent,Contact mail Agent,Bal,"Coordonnées du référent préfectoral en charge du dossier France Services"
-      |MSAP,d’Aubigny sur Nère,6 rue du 8 mai 1945,18700,Aubigny sur Nère,LAURENT,Florence,flo@aubigny-sur-nere.fr,msap@aubigny-sur-nere.fr,
-      |MSAP,d’Aubigny sur Nère,6 rue du 8 mai 1945,18700,Aubigny sur Nère,COURCELLES,Carine,carine@aubigny-sur-nere.fr,msap@aubigny-sur-nere.fr,
-      |MSAP,d’Aubigny sur Nère,6 rue du 8 mai 1945,18700,Aubigny sur Nère,AOUTIN,Catherine,catherine@aubigny-sur-nere.fr,msap@aubigny-sur-nere.fr,
-      |MSAP,de Sancoins,38 rue de la croix blanche,18600,Sancoins,LAGNEAU,Julie,julie@aubigny-sur-nere.fr,msap@sancoins.fr,
-      |MSAP,de Sancoins,38 rue de la croix blanche,18600,Sancoins,BARTHELEMY,Déborah,deborah@aubigny-sur-nere.fr,msap@sancoins.fr,
+      |MSAP,d’Aubigny sur Nère,6 rue du 8 mai 1945,18700,Aubigny sur Nère,Nom1,Prénom1,test1@aubigny-sur-nere.fr,msap@aubigny-sur-nere.fr,
+      |MSAP,d’Aubigny sur Nère,6 rue du 8 mai 1945,18700,Aubigny sur Nère,Nom2,Prénom2,test2@aubigny-sur-nere.fr,msap@aubigny-sur-nere.fr,
+      |MSAP,d’Aubigny sur Nère,6 rue du 8 mai 1945,18700,Aubigny sur Nère,Nom3,Prénom3,test3@aubigny-sur-nere.fr,msap@aubigny-sur-nere.fr,
+      |MSAP,de Sancoins,38 rue de la croix blanche,18600,Sancoins,Nom4,Prénom4,test4@aubigny-sur-nere.fr,msap@sancoins.fr,
+      |MSAP,de Sancoins,38 rue de la croix blanche,18600,Sancoins,Nom5,Prénom5,test5@aubigny-sur-nere.fr,msap@sancoins.fr,
       |""".stripMargin
 
   "The 'ap;l\"us' string should" >> {
@@ -87,9 +87,9 @@ class CSVSpec extends Specification {
 
       result.right.get._2 must equalTo(User(id = userId,
         key = "key",
-        name = "Stéphanie BOUTS",
+        name = "Prénom1 Nom1",
         qualite = "",
-        email = "stephanie.bouts@cafaisne.cnafmail.fr",
+        email = "prenom1.nom1@cafaisne.cnafmail.fr",
         helper = true,
         instructor = false,
         groupAdmin = false,
@@ -103,7 +103,7 @@ class CSVSpec extends Specification {
         delegations = Map.empty[String, String],
         cguAcceptationDate = None,
         newsletterAcceptationDate = None,
-        phoneNumber = Some("03.23.75.60.27")
+        phoneNumber = Some("01.02.03.04.05")
       ))
       list.filter(_.isRight) must have size 11
     }
@@ -179,9 +179,9 @@ class CSVSpec extends Specification {
       list must have size 7
       list.head.right.get._2 must equalTo(User(id = userId,
         key = "key",
-        name = "Sabine MAIDE",
+        name = "Prénom1 Nom1",
         qualite = "Agent d’accueil FS",
-        email = "sabine.maide@france-service.com",
+        email = "prenom1.nom1@france-service.com",
         helper = true,
         instructor = false,
         groupAdmin = false,
@@ -198,9 +198,9 @@ class CSVSpec extends Specification {
       ))
       list(1).right.get._2 must equalTo(User(id = userId,
         key = "key",
-        name = "Marie-France SAIRVISSE",
+        name = "Prénom2 Nom2",
         qualite = "Agent d’accueil FS",
-        email = "Marie-france.sairvisse@laposte.com",
+        email = "prenom2.nom2@laposte.com",
         helper = true,
         instructor = false,
         groupAdmin = false,

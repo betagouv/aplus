@@ -1,6 +1,7 @@
 @import models._
 @import extentions.MDLForms._
-@(currentUser: User, area: Area)(form: Form[(List[csv.Section], java.util.UUID)], errors: List[String])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+
+@(currentUser: User, area: Area)(form: Form[(List[csv.Section], java.util.UUID)])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @display(section: Field)(header: Html)(footer: Html) = {
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white">
@@ -52,11 +53,15 @@
 } {
   @helper.form(routes.UserController.importUsers(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
   @helper.CSRF.formField
-    @for(error <- errors) {
-      <div style="color: red; font-weight: bold;">@error</div>
+    @if(form.hasGlobalErrors) {
+      @for(error <- form.globalErrors) {
+        @for(args <- error.args) {
+          <div style="color: red; font-weight: bold;">@args</div>
+        }
+      }
     }
     <em>Département : </em>
-    <select id="territory-selector" name="territory-selector">
+    <select id="area-selector" name="area-selector">
       @for(area <- currentUser.areas.flatMap(Area.fromId)) {
         <option value="@area.id">@area.name</option>
       }

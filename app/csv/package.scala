@@ -1,7 +1,7 @@
 import java.util.UUID
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import extentions.Time
+import extentions.{Operators, Time}
 import models.{Area, Organisation, User, UserGroup}
 import org.joda.time.DateTime
 import play.api.data.Forms.{boolean, default, email, ignored, list, mapping, nonEmptyText, optional, seq, text, tuple, uuid}
@@ -24,7 +24,7 @@ package object csv {
   val GROUP_MANAGER = Header("user_group_manager", List("Responsable"))
   val USER_PHONE_NUMBER = Header("user_phone_number", List("Numéro de téléphone", "téléphone"))
 
-  val GROUP_TERRITORY = Header("group_territory", List("Territoire"))
+  val GROUP_AREA = Header("group_area", List("Territoire"))
   val GROUP_ORGANISATION = Header("group_organisation", List("Organisation"))
   val GROUP_NAME = Header("group_name", List("Groupe", "Opérateur partenaire", "Nom de la structure labellisable"))
   val GROUP_EMAIL = Header("group_email", List("Bal", "adresse mail générique"))
@@ -34,7 +34,7 @@ package object csv {
   val USER_HEADERS = List(USER_PHONE_NUMBER, USER_FIRST_NAME, USER_LAST_NAME, USER_QUALITY, USER_EMAIL, INSTRUCTOR, GROUP_MANAGER)
   val USER_HEADER = USER_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
 
-  val GROUP_HEADERS = List(GROUP_TERRITORY, GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL)
+  val GROUP_HEADERS = List(GROUP_AREA, GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL)
   val GROUP_HEADER = GROUP_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
 
   type UUIDGenerator = () => UUID
@@ -50,11 +50,11 @@ package object csv {
       "creationDate" -> ignored(currentDate),
       "createByUserId" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(creatorId),
         uuid => if (uuid == null) Some(creatorId) else Some(uuid)),
-      GROUP_TERRITORY.key -> optional(text).transform[UUID]({ os =>
+      GROUP_AREA.key -> optional(text).transform[UUID]({ os =>
         os.fold(Area.allArea.id)({ s =>
           s.split(",").map({ t: String =>
-            val territory = canonizeTerritory(t.split(" ")(0))
-            Area.all.find(a => canonizeTerritory(a.name.split(" ")(0)) == territory)
+            val area = canonizeArea(t.split(" ")(0))
+            Area.all.find(a => canonizeArea(a.name.split(" ")(0)) == area)
               .map(_.id)
               .getOrElse(Area.allArea.id)
           }).toList.head
@@ -82,6 +82,7 @@ package object csv {
     INSTRUCTOR.key -> optional(text.verifying(s => INSTRUCTOR.lowerPrefixes.exists(s.toLowerCase.startsWith) || s.toLowerCase() == "false"  || s.toLowerCase() == "true" || s.isEmpty))
       .transform[Boolean](os => os.exists(s => INSTRUCTOR.lowerPrefixes.exists(s.toLowerCase.startsWith) || s.toLowerCase() == "false"  || s.toLowerCase() == "true"), manager => if (manager) Some("true") else Some("false")),
 
+
     "admin" -> ignored(false),
     "areas" -> default(list(uuid).verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
       List.empty[UUID]),
@@ -97,9 +98,8 @@ package object csv {
     "groupIds" -> default(list(uuid), List()),
     "delegations" -> default(seq(tuple("name" -> nonEmptyText, "email" -> email))
       .transform[Map[String, String]](_.toMap, _.toSeq), Map.empty[String, String]),
-
-    "cguAcceptationDate" -> optional(ignored(Time.now())),
-    "newsletterAcceptationDate" -> optional(ignored(Time.now()))
+    "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
+    "newsletterAcceptationDate" -> ignored(Option.empty[DateTime])
   )(apply)(unapply)
 
   def apply(id: UUID, key: String, lastName: String, firstName: Option[String], phoneNumber: Option[String], qualite: String, email: String,
@@ -118,7 +118,7 @@ package object csv {
     user.groupAdmin, user.disabled, user.expert, user.groupIds, user.delegations, user.cguAcceptationDate,
     user.newsletterAcceptationDate))
 
-  def canonizeTerritory(territory: String): String = territory.toLowerCase().replaceAll("[-'’]", "")
+  def canonizeArea(area: String): String = area.toLowerCase().replaceAll("[-'’]", "")
 
   private def convertToPrefixForm(values: Map[String, String], headers: List[Header], formPrefix: String): Map[String, String] = {
     values.map({ case (key, value) =>
@@ -155,8 +155,8 @@ package object csv {
 
   private def sectionsMapping(groupId: UUIDGenerator, userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Mapping[(List[Section], UUID)] =
     mapping("sections" -> list(csv.sectionMapping(groupId, userId, creatorId, dateTime)),
-      "territory-selector" -> uuid
-    )({ case (sections, territory) => sections -> territory })({ case (section, territory) => Some(section -> territory) })
+      "area-selector" -> uuid
+    )({ case (sections, area) => sections -> area })({ case (section, area) => Some(section -> area) })
 
   private def sectionsForm(groupId: UUIDGenerator, userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Form[(List[Section], UUID)] =
     Form(sectionsMapping(groupId, userId, creatorId, dateTime))
@@ -191,13 +191,13 @@ package object csv {
     groupToUsersMap -> lineNumberToErrors
   }
 
-  private def prepareGroup(group: UserGroup, creator: User, territory: Area): UserGroup = {
+  private def prepareGroup(group: UserGroup, creator: User, area: Area): UserGroup = {
     val replaceCreateBy = { group: UserGroup =>
       if (group.createByUserId == null)
         group.copy(createByUserId = creator.id)
       else group
     }
-    replaceCreateBy(group.copy(name = territory.name + ":" + group.name, area = territory.id))
+    replaceCreateBy(group.copy(name = area.name + ":" + group.name, area = area.id))
   }
 
   private def prepareUsers(users: List[User], group: UserGroup): List[User] = {
@@ -210,8 +210,8 @@ package object csv {
     users.map(setGroup.compose(setAreas).apply)
   }
 
-  def prepareSection(group: UserGroup, users: List[User], creator: User, territory: Area): (UserGroup, List[User]) = {
-    val finalGroup = prepareGroup(group, creator, territory)
+  def prepareSection(group: UserGroup, users: List[User], creator: User, area: Area): (UserGroup, List[User]) = {
+    val finalGroup = prepareGroup(group, creator, area)
     val finalUsers = prepareUsers(users, finalGroup)
     finalGroup -> finalUsers
   }
