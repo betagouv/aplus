@@ -12,7 +12,7 @@
   </thead>
   <tbody>
     @helper.repeatWithIndex(section("users")) { (user, index) =>
-    <tr class="searchable-row td--clear-border">
+    <tr class="searchable-row td--clear-border" id="line_@index">
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
         @helper.input(user("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
           <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
@@ -53,6 +53,9 @@
                  id="@user(csv.GROUP_MANAGER.key).id"
                  value="@user(csv.GROUP_MANAGER.key).value.getOrElse("")"
                  @{if(!user(csv.GROUP_MANAGER.key).value.getOrElse("").isEmpty) "checked"} />
+      </td>
+      <td>
+        <input type="button" class="delete-line" data-line-id="line_@index" value="Supprimer la ligne">
       </td>
     </tr>
     }
