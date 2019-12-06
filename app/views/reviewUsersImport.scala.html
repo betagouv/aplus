@@ -41,8 +41,7 @@
                  type="checkbox"
                  name="@user(csv.INSTRUCTOR.key).name"
                  id="@user(csv.INSTRUCTOR.key).id"
-                 value="@user(csv.INSTRUCTOR.key).value.getOrElse("")"
-                 @{if(!user(csv.INSTRUCTOR.key).value.getOrElse("").isEmpty) "checked"} />
+                 value="true" @if(user(csv.INSTRUCTOR.key).value.contains("true")){checked="checked"} />
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
           <label for="@user(csv.GROUP_MANAGER.key).id">@csv.GROUP_MANAGER.prefixes(0)</label>
@@ -50,8 +49,7 @@
                  type="checkbox"
                  name="@user(csv.GROUP_MANAGER.key).name"
                  id="@user(csv.GROUP_MANAGER.key).id"
-                 value="@user(csv.GROUP_MANAGER.key).value.getOrElse("")"
-                 @{if(!user(csv.GROUP_MANAGER.key).value.getOrElse("").isEmpty) "checked"} />
+                 value="true" @if(user(csv.GROUP_MANAGER.key).value.contains("true")){checked="checked"} />
       </td>
     </tr>
     }

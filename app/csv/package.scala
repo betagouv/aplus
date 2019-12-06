@@ -79,8 +79,7 @@ package object csv {
     USER_QUALITY.key -> default(text, "").verifying(maxLength(100)),
     USER_EMAIL.key -> email.verifying(maxLength(200), nonEmpty),
     "Aidant" -> ignored(true),
-    INSTRUCTOR.key -> optional(text.verifying(s => INSTRUCTOR.lowerPrefixes.exists(s.toLowerCase.startsWith) || s.isEmpty))
-      .transform[Boolean](os => os.exists(s => Operators.not(s.isEmpty)), helper => if (helper) Some(INSTRUCTOR.prefixes(0)) else None),
+    INSTRUCTOR.key -> boolean,
 
     "admin" -> ignored(false),
     "areas" -> default(list(uuid).verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
@@ -89,8 +88,7 @@ package object csv {
     "hasAcceptedCharte" -> default(boolean, false),
     "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
 
-    GROUP_MANAGER.key -> optional(text.verifying(s => GROUP_MANAGER.lowerPrefixes.exists(s.toLowerCase.startsWith) || s.isEmpty))
-      .transform[Boolean](os => os.exists(s => Operators.not(s.isEmpty)), helper => if (helper) Some(GROUP_MANAGER.prefixes(0)) else None),
+    GROUP_MANAGER.key -> boolean,
 
     "disabled" -> ignored(false),
     "expert" -> ignored(false),
