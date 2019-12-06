@@ -10,6 +10,7 @@ window.document.addEventListener("DOMContentLoaded", function(event) {
         CsvImport.checkboxes = window.document.getElementsByClassName("instructor");
         for (var i = 0; i < CsvImport.checkboxes.length; i++) {
             CsvImport.checkboxes[i].checked = true;
+            CsvImport.checkboxes[i].parentElement.classList.add("is-checked");
         }
     });
 
@@ -18,6 +19,7 @@ window.document.addEventListener("DOMContentLoaded", function(event) {
         CsvImport.checkboxes = window.document.getElementsByClassName("instructor");
         for (var i = 0; i < CsvImport.checkboxes.length; i++) {
             CsvImport.checkboxes[i].checked = false;
+            CsvImport.checkboxes[i].parentElement.classList.remove("is-checked");
         }
     });
 
