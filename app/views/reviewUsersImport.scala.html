@@ -36,20 +36,10 @@
         }
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-          <label for="@user(csv.INSTRUCTOR.key).id">@csv.INSTRUCTOR.prefixes(0)</label>
-          <input class="instructor"
-                 type="checkbox"
-                 name="@user(csv.INSTRUCTOR.key).name"
-                 id="@user(csv.INSTRUCTOR.key).id"
-                 value="true" @if(user(csv.INSTRUCTOR.key).value.contains("true")){checked="checked"} />
+        @helper.checkbox(user(csv.INSTRUCTOR.key), 'type -> "checkbox", 'label -> csv.INSTRUCTOR.prefixes(0), 'class -> "mdl-checkbox__input instructor")
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-          <label for="@user(csv.GROUP_MANAGER.key).id">@csv.GROUP_MANAGER.prefixes(0)</label>
-          <input class="manager"
-                 type="checkbox"
-                 name="@user(csv.GROUP_MANAGER.key).name"
-                 id="@user(csv.GROUP_MANAGER.key).id"
-                 value="true" @if(user(csv.GROUP_MANAGER.key).value.contains("true")){checked="checked"} />
+        @helper.checkbox(user(csv.GROUP_MANAGER.key), 'type -> "checkbox", 'label -> csv.GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
       </td>
     </tr>
     }
