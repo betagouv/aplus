@@ -61,7 +61,7 @@ object Area {
     Area("Haute-Saone", "Haute-Saône (70)"),
     Area("Haute-Vienne", "Haute-Vienne (87)"),
     Area("Hautes-Alpes", "Hautes-Alpes (05)"),
-    Area("hautes-pyrenees", "Hautes-Pyrénées (65)"),
+    Area("hautes-pyrénées", "Hautes-Pyrénées (65)"),
     Area("hauts-de-seine", "Hauts-de-Seine (92)"),
     Area("Herault", "Hérault (34)"),
     Area("ille-et-vilaine", "Ille-et-Vilaine (35)"),
