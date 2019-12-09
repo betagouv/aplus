@@ -32,14 +32,13 @@
                 @for(userGroup <- userGroups.filter(_.area == area.id).sortBy(_.name)) {
                     <tr>
                         <td class="mdl-data-table__cell--non-numeric">
-                            <i class="material-icons" style="vertical-align: middle;">chevron_right</i> Groupe : @userGroup.name @userGroup.organisationSetOrDeducted match {
+                            @if(user.admin){
+                                <a href="@routes.GroupController.editGroup(userGroup.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                                    <i class="material-icons" style="vertical-align: middle;">edit</i>
+                                </a>
+                            } Groupe : @userGroup.name @userGroup.organisationSetOrDeducted match {
                             case Some(organisation) => { ( @organisation ) }
                             case None => {}
-                            }
-                            @if(user.admin && area.id == currentArea.id){
-                                <a href="@routes.GroupController.editGroup(userGroup.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
-                                    <i class="material-icons">edit</i>
-                                </a>
                             }
                         </td>
                     </tr>
