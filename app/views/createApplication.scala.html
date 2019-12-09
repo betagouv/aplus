@@ -1,15 +1,14 @@
 @import models._
 @import extentions.MDLForms._
-@(user: User, area: Area)(users: List[User], organisationGroups: List[UserGroup], applicationForm: Form[forms.Models.ApplicationData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(user: User, area: Area)(users: List[User], organisationGroups: List[UserGroup], applicationForm: Form[forms.Models.ApplicationData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
 @main(user, area)(s"Nouvelle demande")  {
-<link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
-
-<style>
-            .mdl-data-table td {
-                padding: 0px 18px;
-            }
-
+    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+    <script src='@routes.Assets.versioned("javascripts/application-attachment.js")'></script>
+    <style>
+    .mdl-data-table td {
+        padding: 0px 18px;
+    }
     </style>
 }{
         <div class="mdl-cell mdl-cell--12-col">
@@ -24,6 +23,7 @@
 
             @helper.form(action = routes.ApplicationController.createPost(), 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data") {
                 @helper.CSRF.formField
+                    <input type="hidden" name="application-id" readonly value="@applicationForm("application-id").value.getOrElse(java.util.UUID.randomUUID)">
                     <h5 class="title--addline">Sélectionnez les organismes concernés sur la zone @area.name</h5>
 
                     <div class="mdl-grid mdl-grid--no-spacing">
@@ -92,7 +92,15 @@
                         @if(applicationForm("file").hasErrors) {
                             <span style="color: red; font-weight: bold;">@applicationForm("file").errors.map(_.format).mkString(", ")</span><br>
                         }
-                        Ajouter un ficher ( Facultatif, 5Mo maximum ) : <input type="file" name="file">
+                        Ajouter un/des ficher(s) ( Facultatif, 5Mo maximum ) :
+                        <ul>
+                            @for((attachment,index) <- attachments.zipWithIndex) {
+                                <li>@attachment</li>
+                            }
+                        </ul>
+                        <ul id="attachment-list">
+                            <li><input type="file" name="file[0]"></li>
+                        </ul>
                     </div>  <br>
                     <div style="margin-top: 60px; margin-bottom: 50px;">
                         <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-mandat" style="height: unset; margin-bottom: 10px;">
