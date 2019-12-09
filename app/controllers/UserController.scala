@@ -172,14 +172,16 @@ case class UserController @Inject()(loginAction: LoginAction,
 
   def importUsers: Action[AnyContent] = loginAction { implicit request =>
     asAdmin { () =>
-      "IMPORT_GROUP_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
+      "IMPORT_USERS_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
       csv.sectionsForm(request.currentUser.id).bindFromRequest.fold({ missFilledForm =>
         val cleanedForm = missFilledForm.copy(data = missFilledForm.data.filter({ case (_, v) => v.nonEmpty }))
+        eventService.info("IMPORT_USERS_ERROR", s"Erreur dans le formulaire importation utilisateur")
         BadRequest(views.html.reviewUsersImport(request.currentUser, request.currentArea)(cleanedForm))
       }, { case (sections, areaId) =>
         if (sections.isEmpty) {
           val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError("Action impossible, il n'y a aucun utilisateur à ajouter.")
+          eventService.info("IMPORT_USERS_ERROR", s"Erreur d'importation utilisateur : aucun utilisateur à ajouter")
           BadRequest(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
         } else {
           val area = Area.fromId(areaId).get
@@ -188,31 +190,38 @@ case class UserController @Inject()(loginAction: LoginAction,
             csv.prepareSection(group, section.users, request.currentUser, area)
           })
           val usersToInsert: List[User] = toInsert.flatMap(_._2)
+            .filterNot(user => userService.byId(user.id).isDefined)
           val groupsToInsert: List[UserGroup] = toInsert.map(_._1)
+            .filterNot(group => groupService.groupByName(group.name).isDefined)
 
-          val insertResult = groupsToInsert.filterNot(group => groupService.groupByName(group.name).isDefined)
+          val insertResult = groupsToInsert
             .foldLeft[Either[(String, String), Unit]](Right(()))({ case (either, group) =>
               either.fold(Left.apply, { _: Unit =>
                 if (not(groupService.add(group))) {
-                  Left("ADD_GROUP_ERROR" -> "Impossible d'ajouter un groupe dans la BDD.")
+                  Left("ADD_GROUP_ERROR" -> s"Impossible d'ajouter le groupe ${group.name} dans la BDD à l'importation.")
                 } else {
                   Right(())
                 }
               })
             })
+          
           if (insertResult.isLeft) {
             val (code, description) = insertResult.left.get
             eventService.error(code, description)
             val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
             InternalServerError(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
-          } else if (not(userService.add(usersToInsert.filterNot(user => userService.byEmail(user.email).isDefined)))) {
-            val description = "Impossible d'ajouter un utilisateur dans la BDD."
+          } else if (not(userService.add(usersToInsert))) {
+            val description = s"Impossible d'ajouter des utilisateurs dans la BDD à l'importation."
             eventService.error("ADD_USER_ERROR", description)
             val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
             InternalServerError(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
           } else {
-            eventService.info("ADD_USER_DONE", "Utilisateurs ajoutés.")
-            Redirect(routes.UserController.all(request.currentArea.id)).flashing("success" -> "Utilisateurs ajoutés.")
+            usersToInsert.foreach {  user =>
+                notificationsService.newUser(user)
+                eventService.info("ADD_USER_DONE", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
+            }
+            eventService.info("IMPORT_USERS_DONE", "Utilisateurs ajoutés par l'importation")
+            Redirect(routes.UserController.all(request.currentArea.id)).flashing("success" -> "Utilisateurs importés.")
           }
         }
       })
@@ -232,7 +241,11 @@ case class UserController @Inject()(loginAction: LoginAction,
         }, { users =>
           try {
             if (userService.add(users.map(_.copy(groupIds = List(groupId))))) {
-              eventService.info("ADD_USER_DONE", "Utilisateurs ajouté")
+              users.foreach {  user =>
+                notificationsService.newUser(user)
+                eventService.info("ADD_USER_DONE", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
+              }
+              eventService.info("ADD_USERS_DONE", "Utilisateurs ajoutés")
               Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
             } else {
               val form = usersForm(Time.dateTimeZone).fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
