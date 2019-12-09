@@ -76,6 +76,10 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     }
   }
 
+  def newUser(newUser: User) = {
+    sendMail(generateWelcomeEmail(newUser))
+  }
+
   def newLoginRequest(absoluteUrl: String, path: String, user: User, loginToken: LoginToken) = {
     val url = s"${absoluteUrl}?token=${loginToken.token}&path=$path"
     val bodyHtml = s"""Bonjour ${user.name},<br>
@@ -94,7 +98,6 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     )
     sendMail(email)
   }
-
 
   private def generateFooter(user: User): String = {
     val delegates = if(user.delegations.nonEmpty) {
@@ -126,6 +129,15 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     Email(subject = subject,
       from = from,
       to = List(s"${group.name} <${group.email.get}>"),
+      bodyHtml = Some(bodyHtml)
+    )
+  }
+
+  private def generateWelcomeEmail(user: User): Email = {
+    val bodyHtml = views.html.emails.welcome(user).toString()
+    Email(subject = "[A+] Bienvenue sur Administration+",
+      from = from,
+      to = List(s"${user.name} <${user.email}>"),
       bodyHtml = Some(bodyHtml)
     )
   }
