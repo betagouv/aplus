@@ -412,4 +412,8 @@ a {
 
 .mdl-textarea--more-height {
   height: 20em;
-}}
+}
+
+.--padding-20px {
+    padding: 20px;
+}
