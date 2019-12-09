@@ -187,7 +187,7 @@ case class UserController @Inject()(loginAction: LoginAction,
           val area = Area.fromId(areaId).get
           val toInsert = sections.map({ section =>
             val group = groupService.groupByName(area.name + ":" + section.group.name).getOrElse(section.group)
-            csv.prepareSection(group, section.users, request.currentUser, area)
+            csv.prepareSection(group, section.users, area)
           })
           val usersToInsert: List[User] = toInsert.flatMap(_._2)
             .filterNot(user => userService.byId(user.id).isDefined)
