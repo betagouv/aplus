@@ -42,14 +42,12 @@ package object csv {
   // CSV import mapping
   def groupMappingForCSVImport(uuidGenerator: UUIDGenerator)(creatorId: UUID)(currentDate: DateTime): Mapping[UserGroup] =
     mapping(
-      "id" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(uuidGenerator()),
-        uuid => if (uuid == null) Some(uuidGenerator()) else Some(uuid)),
+      "id" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(uuidGenerator()), uuid => Some(uuid)),
       GROUP_NAME.key -> nonEmptyText.verifying(maxLength(100)),
       "description" -> ignored(Option.empty[String]),
       "inseeCode" -> ignored(List.empty[String]),
       "creationDate" -> ignored(currentDate),
-      "createByUserId" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(creatorId),
-        uuid => if (uuid == null) Some(creatorId) else Some(uuid)),
+      "createByUserId" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(creatorId), uuid => Some(uuid)),
       GROUP_AREA.key -> optional(text).transform[UUID]({ os =>
         os.fold(Area.allArea.id)({ s =>
           s.split(",").map({ t: String =>
@@ -71,7 +69,7 @@ package object csv {
     )(UserGroup.apply)(UserGroup.unapply)
 
   def userMappingForCVSImport(userId: UUIDGenerator, dateTime: DateTime): Mapping[User] = mapping(
-    "id" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(userId()), uuid => if (uuid == null) Some(userId()) else Some(uuid)),
+    "id" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(userId()), uuid => Some(uuid)),
     "key" -> default(nonEmptyText, "key"),
     USER_LAST_NAME.key -> nonEmptyText.verifying(maxLength(100)),
     USER_FIRST_NAME.key -> optional(text),
@@ -191,13 +189,8 @@ package object csv {
     groupToUsersMap -> lineNumberToErrors
   }
 
-  private def prepareGroup(group: UserGroup, creator: User, area: Area): UserGroup = {
-    val replaceCreateBy = { group: UserGroup =>
-      if (group.createByUserId == null)
-        group.copy(createByUserId = creator.id)
-      else group
-    }
-    replaceCreateBy(group.copy(name = area.name + ":" + group.name, area = area.id))
+  private def prepareGroup(group: UserGroup, area: Area): UserGroup = {
+    group.copy(name = area.name + ":" + group.name, area = area.id)
   }
 
   private def prepareUsers(users: List[User], group: UserGroup): List[User] = {
@@ -210,8 +203,8 @@ package object csv {
     users.map(setGroup.compose(setAreas).apply)
   }
 
-  def prepareSection(group: UserGroup, users: List[User], creator: User, area: Area): (UserGroup, List[User]) = {
-    val finalGroup = prepareGroup(group, creator, area)
+  def prepareSection(group: UserGroup, users: List[User], area: Area): (UserGroup, List[User]) = {
+    val finalGroup = prepareGroup(group, area)
     val finalUsers = prepareUsers(users, finalGroup)
     finalGroup -> finalUsers
   }
