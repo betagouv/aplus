@@ -54,7 +54,6 @@ class AutoAddExpertTask @Inject()(actorSystem: ActorSystem,
           expert.nameWithQualite,
           experts,
           true,
-          application.area,
           false,
           Some(Map()))
         if (applicationService.add(application.id, answer, true)  == 1) {

@@ -42,7 +42,7 @@ class AreaController @Inject()(loginAction: LoginAction,
       } else { 
         userGroupService.byIds(request.currentUser.groupIds)
       }
-      Ok(views.html.allArea(request.currentUser, request.currentArea)(Area.all, areasWithLoginByKey, userGroups))
+      Ok(views.html.allArea(request.currentUser)(Area.all, areasWithLoginByKey, userGroups))
     }
   }
 }

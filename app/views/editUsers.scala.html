@@ -1,9 +1,9 @@
 @import models._
 @import extentions.MDLForms._
-@(user: User, area: Area)(form: Form[(List[User])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(user: User)(form: Form[(List[User])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
-@main(user, area, false)(s"Gestion des utilisateurs") {
+@main(user)(s"Gestion des utilisateurs") {
     @webJarsUtil.locate("dialog-polyfill.css").css()
   <style>
           .pem-table {

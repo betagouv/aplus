@@ -64,7 +64,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
           code -> ws.url(url).get().toCompletableFuture.get().getBody
         }
         val zoneAsJson = areas.map({ case (code, name) => s"""{ "code": "$code", "name": "$name" }""" }).mkString("[", ",", "]")
-        Ok(views.html.editGroup(request.currentUser, request.currentArea)(group, groupUsers, isEmpty, zoneAsJson, Host))
+        Ok(views.html.editGroup(request.currentUser)(group, groupUsers, isEmpty, zoneAsJson, Host))
       }
     }
   }

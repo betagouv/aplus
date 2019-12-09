@@ -1,6 +1,6 @@
 @import helper._
 
-@(currentUser: User, currentArea: Area, showAreaSelector: Boolean = true, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentArea: Option[Area] = None, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 <!doctype html>
 <html lang="fr">
@@ -70,10 +70,12 @@
                     request.send("email="+email);
                 }
 
-                function changeArea() {
-                    var areaSelected = document.getElementById("area").value;
-                    if(areaSelected != "@currentArea.id") {
-                        document.location = "@routes.AreaController.all()/"+areaSelected+"?redirect="+window.location.href;
+                @if(currentArea.nonEmpty) {
+                    function changeArea() {
+                        var areaSelected = document.getElementById("area").value;
+                        if(areaSelected != "@currentArea.get.id") {
+                            document.location = "@routes.AreaController.all()/"+areaSelected+"?redirect="+window.location.href;
+                        }
                     }
                 }
         </script>
@@ -119,12 +121,12 @@
                     <p style="line-height: 1.2; text-align: center;">
                         <img src='@routes.Assets.versioned("images/logo_full_500x397.png")' class="logo">
                     </p>
-                    <div class="demo-avatar-dropdown">
-                        @if(showAreaSelector && currentUser.areas.length > 1) {
+                    <div>
+                        @if(currentArea.nonEmpty && currentUser.areas.length > 1) {
                             <select id="area" name="area" onchange="changeArea()">
                             @for(area <- currentUser.areas.flatMap(Area.fromId)) {
                                 <option value="@area.id"
-                                @if(area.id == currentArea.id) { selected }>@area.name </option>
+                                @if(area.id == currentArea.get.id) { selected }>@area.name </option>
                             }
                             </select>
                         }
