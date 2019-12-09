@@ -20,6 +20,7 @@ class AreaController @Inject()(loginAction: LoginAction,
                                configuration: play.api.Configuration)(implicit val webJarsUtil: WebJarsUtil, ec: ExecutionContext) extends InjectedController {
   private lazy val areasWithLoginByKey = configuration.underlying.getString("app.areasWithLoginByKey").split(",").flatMap(UUIDHelper.fromString)
 
+  @deprecated
   def change(areaId: UUID) = loginAction { implicit request =>
     if (!request.currentUser.areas.contains(areaId)) {
       eventService.warn("CHANGE_AREA_UNAUTHORIZED", s"Accès à la zone $areaId non autorisé")
