@@ -218,7 +218,7 @@ case class UserController @Inject()(loginAction: LoginAction,
           } else {
             usersToInsert.foreach {  user =>
                 notificationsService.newUser(user)
-                eventService.info("ADD_USER_SUCCESS", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
+                eventService.info("ADD_USER_DONE", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
             }
             eventService.info("IMPORT_USERS_DONE", "Utilisateurs ajoutés par l'importation")
             Redirect(routes.UserController.all(request.currentArea.id)).flashing("success" -> "Utilisateurs importés.")
@@ -241,8 +241,11 @@ case class UserController @Inject()(loginAction: LoginAction,
         }, { users =>
           try {
             if (userService.add(users.map(_.copy(groupIds = List(groupId))))) {
-              eventService.info("ADD_USER_DONE", "Utilisateurs ajouté")
-              users.foreach(notificationsService.newUser)
+              users.foreach {  user =>
+                notificationsService.newUser(user)
+                eventService.info("ADD_USER_DONE", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
+              }
+              eventService.info("ADD_USERS_DONE", "Utilisateurs ajoutés")
               Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
             } else {
               val form = usersForm(Time.dateTimeZone).fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
