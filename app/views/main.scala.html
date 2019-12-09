@@ -98,16 +98,7 @@
                             <li class="mdl-list__item mdl-list__item--two-line">
                                 <span class="mdl-list__item-primary-content">
                                     <span>@currentUser.name</span>
-                                    <span class="mdl-list__item-sub-title">  @if(showAreaSelector && currentUser.areas.length > 1) {
-                                        <select id="area" name="area" onchange="changeArea()">
-                                        @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-                                            <option value="@area.id"
-                                            @if(area.id == currentArea.id) { selected }>@area.name </option>
-                                        }
-                                        </select>
-                                    } else {
-                                        @currentArea.name
-                                    }</span>
+                                    <span class="mdl-list__item-sub-title">@currentUser.email</span>
                                 </span>
                                 <span class="mdl-list__item-secondary-content">
                                     <a class="mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" href="@routes.LoginController.disconnect()" title="Déconnexion">
@@ -129,7 +120,14 @@
                         <img src='@routes.Assets.versioned("images/logo_full_500x397.png")' class="logo">
                     </p>
                     <div class="demo-avatar-dropdown">
-                        <span style="font-size: 11px;">@currentUser.email</span>
+                        @if(showAreaSelector && currentUser.areas.length > 1) {
+                            <select id="area" name="area" onchange="changeArea()">
+                            @for(area <- currentUser.areas.flatMap(Area.fromId)) {
+                                <option value="@area.id"
+                                @if(area.id == currentArea.id) { selected }>@area.name </option>
+                            }
+                            </select>
+                        }
                     </div>
                 </header>
                 <nav class="navigation mdl-navigation mdl-color--blue-grey-800">
