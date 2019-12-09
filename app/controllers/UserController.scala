@@ -198,7 +198,7 @@ case class UserController @Inject()(loginAction: LoginAction,
             .foldLeft[Either[(String, String), Unit]](Right(()))({ case (either, group) =>
               either.fold(Left.apply, { _: Unit =>
                 if (not(groupService.add(group))) {
-                  Left("ADD_GROUP_ERROR" -> "Impossible d'ajouter un groupe dans la BDD.")
+                  Left("ADD_GROUP_ERROR" -> s"Impossible d'ajouter le groupe ${group.name} dans la BDD à l'importation.")
                 } else {
                   Right(())
                 }
@@ -211,13 +211,16 @@ case class UserController @Inject()(loginAction: LoginAction,
             val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
             InternalServerError(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
           } else if (not(userService.add(usersToInsert))) {
-            val description = "Impossible d'ajouter un utilisateur dans la BDD."
+            val description = s"Impossible d'ajouter des utilisateurs dans la BDD à l'importation."
             eventService.error("ADD_USER_ERROR", description)
             val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
             InternalServerError(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
           } else {
+            usersToInsert.foreach {  user =>
+                notificationsService.newUser(user)
+                eventService.info("ADD_USER_SUCCESS", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
+            }
             eventService.info("IMPORT_USERS_DONE", "Utilisateurs ajoutés par l'importation")
-            usersToInsert.foreach(notificationsService.newUser)
             Redirect(routes.UserController.all(request.currentArea.id)).flashing("success" -> "Utilisateurs importés.")
           }
         }
