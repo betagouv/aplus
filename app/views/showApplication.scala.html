@@ -173,9 +173,9 @@ dialog {
             </div>
             <div class="mdl-card__supporting-text mdl-card--border do-not-print">
                 @if(user.admin) {
-                    <span style="font-weight: bold; color:red">Reférence interne pour les administrateurs: @application.internalId</span>
+                    <span style="font-weight: bold; color:red" class="do-not-print">Reférence interne pour les administrateurs: @application.internalId</span>
                 } else {
-                    <span><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Aidez-moi%20avec%20Administration+">@Constants.supportEmail</a></span>
+                    <span class="do-not-print"><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Aidez-moi%20avec%20Administration+">@Constants.supportEmail</a></span>
                 }
             </div>
             <div class="mdl-card__supporting-text mdl-card--border vertical-align--middle">
@@ -214,7 +214,7 @@ dialog {
                 }
             </div>
         </div>
-        <div class="mdl-card mdl-cell mdl-cell--4-col mdl-cell--12-col-phone mdl-grid mdl-color--blue-grey-100">
+        <div class="mdl-card mdl-cell mdl-cell--4-col mdl-cell--12-col-phone mdl-grid mdl-color--blue-grey-100 do-not-print">
             <div class="mdl-list mdl-cell mdl-cell--12-col">
                 Créée par
                 <div class="mdl-list__item">
@@ -305,7 +305,7 @@ dialog {
                                             case Some((_,icon)) => { <img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
                                             case None => { <i class="material-icons mdl-list__item-avatar">person</i> }
                                         }
-                                        <span>@answer.creatorUserName</span>@if(user.admin){ <span style="font-weight: bold; color:red"> <a href="@routes.UserController.editUser(answer.creatorUserID)"> Voir fiche utilisateur</a></span>}
+                                        <span>@answer.creatorUserName</span>@if(user.admin){ <span style="font-weight: bold; color:red" class="do-not-print"> <a href="@routes.UserController.editUser(answer.creatorUserID)"> Voir fiche utilisateur</a></span>}
                                         <span class="mdl-list__item-sub-title"></span>
                                     </span>
                                     <span class="mdl-list__item-secondary-content">
