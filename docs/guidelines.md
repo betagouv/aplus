@@ -23,7 +23,7 @@
 - The Boy Scout Rule : "Always leave the campground cleaner than you found it." https://www.oreilly.com/library/view/97-things-every/9780596809515/ch08.html
 - Les noms de variables, noms de méthodes sont en anglais(sauf les termes francais intraduisibles) et très explicite (éviter les abréviations)
 - Ne faire de référence circulaire
-- Penser à la loi de murphy
+- Penser à la loi de murphy (Si ça peut tourner mal, statistiquement ça va arriver)
 
 ## CSS
 - Utiliser BEM pour écrire du CSS http://getbem.com/introduction/
@@ -32,10 +32,15 @@
    - https://caniuse.com/
    - Les var ne sont pas dispo
    - Flexbox est dispo
+- Place le code css dans un fichier `.css`
+- Ecrire du css réutilisable si c'est possible
 
 ## Javascript
 - Privilégier le Javascript Vanille
 - Utiliser le router Javascript de Play : https://www.playframework.com/documentation/2.7.x/ScalaJavascriptRouting
+- Place le code javascript dans un fichier `.js`
+- Utiliser les attributs `onchange` html pour configurer les événements
+- Ecrire des fonctions javascript réutilisable si c'est possible
 
 ## Git
 - Branche
