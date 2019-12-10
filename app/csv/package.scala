@@ -120,10 +120,10 @@ package object csv {
 
   private def convertToPrefixForm(values: Map[String, String], headers: List[Header], formPrefix: String): Map[String, String] = {
     values.map({ case (key, value) =>
-      val lowerKey = key.toLowerCase
+      val lowerKey = key.trim.toLowerCase
       headers.find(header => header.lowerPrefixes
         .exists(lowerKey.startsWith))
-        .map(header => formPrefix + header.key -> value)
+        .map(header => formPrefix + header.key -> value.trim)
     }).flatten.toMap
   }
 
