@@ -42,3 +42,6 @@ function changeMDLInputChecked(input, isChecked) {
     componentHandler.upgradeElements(input);
 }
 
+function disableEventTarget(event) {
+    event.target.disabled = 'true';
+}
