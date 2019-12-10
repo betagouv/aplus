@@ -23,6 +23,7 @@
 - The Boy Scout Rule : "Always leave the campground cleaner than you found it." https://www.oreilly.com/library/view/97-things-every/9780596809515/ch08.html
 - Les noms de variables, noms de méthodes sont en anglais(sauf les termes francais intraduisibles) et très explicite (éviter les abréviations)
 - Ne faire de référence circulaire
+- Penser à la loi de murphy
 
 ## CSS
 - Utiliser BEM pour écrire du CSS http://getbem.com/introduction/
@@ -51,6 +52,7 @@
    - Dans le descriptif de la PR : mettre la liste des changements et des éléments à tester pour le reviewer
    - Mettre des captures d'écran pour les changements visuels
    - Demander à un membre de l'équipe non développeur de tester les nouvelles fonctionnalités
+   - Avoir une review ou un go d'un autre développeur avant de merger
   
 
 ## Infos
