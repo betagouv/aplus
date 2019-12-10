@@ -120,10 +120,10 @@ package object csv {
 
   private def convertToPrefixForm(values: Map[String, String], headers: List[Header], formPrefix: String): Map[String, String] = {
     values.map({ case (key, value) =>
-      val lowerKey = key.toLowerCase
+      val lowerKey = key.trim.toLowerCase
       headers.find(header => header.lowerPrefixes
         .exists(lowerKey.startsWith))
-        .map(header => formPrefix + header.key -> value)
+        .map(header => formPrefix + header.key -> value.trim)
     }).flatten.toMap
   }
 
@@ -188,9 +188,9 @@ package object csv {
     val groupToUsersMap = deduplicatedEmail.groupBy(_._1.name).map({ case (_, tuple) => tuple.head._1 -> tuple.map(_._2) }) // Group by group name
     groupToUsersMap -> lineNumberToErrors
   }
-
+  
   private def prepareGroup(group: UserGroup, area: Area): UserGroup = {
-    group.copy(name = area.name + ":" + group.name, area = area.id)
+    group.copy(name = s"${group.name} - ${area.name}", area = area.id)
   }
 
   private def prepareUsers(users: List[User], group: UserGroup): List[User] = {

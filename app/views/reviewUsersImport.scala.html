@@ -52,6 +52,7 @@
 }
 
 @main(currentUser)("Revue de votre import CSV") {
+  <script src='@routes.Assets.versioned("javascripts/main.js")'></script>
   <script src='@routes.Assets.versioned("javascripts/csv-import.js")'></script>
 } {
   @helper.form(routes.UserController.importUsers(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
@@ -92,6 +93,6 @@
             </th>
         } { }
     }
-    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">Importer</button>
+    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell" onsubmit="Main.disableEventTarget(this)">Importer</button>
   }
 }
