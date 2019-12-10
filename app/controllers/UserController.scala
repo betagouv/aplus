@@ -350,7 +350,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         "delegations" -> ignored(Map[String, String]()),
         "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
         "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-        csv.USER_PHONE_NUMBER.key -> optional(text),
+        csv.USER_PHONE_NUMBER.key -> default(text, "").transform[Option[String]](Some.apply,_.getOrElse("")),
       )(User.apply)(User.unapply))
     )
   )
@@ -389,7 +389,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     }),
     "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
     "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-    csv.USER_PHONE_NUMBER.key -> optional(text),
+    csv.USER_PHONE_NUMBER.key -> default(text, "").transform[Option[String]](Some.apply,_.getOrElse(""))
   )(User.apply)(User.unapply)
 
   def importUsersFromCSV: Action[AnyContent] = loginAction { implicit request =>
