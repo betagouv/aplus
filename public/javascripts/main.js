@@ -44,7 +44,6 @@ function changeMDLInputChecked(input, isChecked) {
 
 var Main = {
     disableEventTarget: function(element) {
-        console.log(element);
         element.disabled = 'true';
     }
 }
