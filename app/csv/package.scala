@@ -165,7 +165,7 @@ package object csv {
   def allWithCompleteLine(csvReader: CSVReader)(implicit format:DefaultCSVFormat): List[(Map[String, String], String)] = {
     val headers = csvReader.readNext()
     headers.map(headers => {
-      val lines = csvReader.all()
+      val lines = csvReader.all().filter(_.reduce(_+_).nonEmpty)
       lines.map(line => headers.zip(line).toMap -> line.mkString(format.delimiter.toString))
     }).getOrElse(Nil)
   }
