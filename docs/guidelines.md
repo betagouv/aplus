@@ -39,7 +39,7 @@
 - Privilégier le Javascript Vanille
 - Utiliser le router Javascript de Play : https://www.playframework.com/documentation/2.7.x/ScalaJavascriptRouting
 - Place le code javascript dans un fichier `.js`
-- Utiliser les attributs `onchange` html pour configurer les événements
+- Utiliser les attributs html `onchange`, `onclick`, etc  pour configurer les événements quand c'est possible
 - Ecrire des fonctions javascript réutilisable si c'est possible
 
 ## Git
