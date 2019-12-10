@@ -1,7 +1,7 @@
 @import models._
 @import extentions.MDLForms._
 
-@(currentUser: User, area: Area)(form: Form[(List[csv.Section], java.util.UUID)])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User)(form: Form[(List[csv.Section], java.util.UUID)])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @display(section: Field)(header: Html)(footer: Html) = {
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white">
@@ -51,7 +51,7 @@
 </table>
 }
 
-@main(currentUser, area, false)("Revue de votre import CSV") {
+@main(currentUser)("Revue de votre import CSV") {
   <script src='@routes.Assets.versioned("javascripts/main.js")'></script>
   <script src='@routes.Assets.versioned("javascripts/csv-import.js")'></script>
 } {

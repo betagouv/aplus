@@ -49,19 +49,7 @@ html, body {
           justify-content: flex-end;
   padding: 16px;
 }
-.demo-avatar-dropdown {
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  position: relative;
-  -webkit-flex-direction: row;
-      -ms-flex-direction: row;
-          flex-direction: row;
-  -webkit-align-items: center;
-      -ms-flex-align: center;
-          align-items: center;
-  width: 100%;
-}
+
 
 .navigation {
   -webkit-flex-grow: 1;

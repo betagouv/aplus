@@ -2,7 +2,7 @@
 @import extentions.MDLForms._
 @(user: User, area: Area)(users: List[User], organisationGroups: List[UserGroup], applicationForm: Form[forms.Models.ApplicationData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
-@main(user, area)(s"Nouvelle demande")  {
+@main(user, Some(area))(s"Nouvelle demande")  {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
     <script src='@routes.Assets.versioned("javascripts/application-attachment.js")'></script>
     <style>

@@ -12,7 +12,6 @@ case class Answer(id: UUID,
                   creatorUserName: String,
                   invitedUsers: Map[UUID, String],
                   visibleByHelpers: Boolean,
-                  area: UUID,
                   declareApplicationHasIrrelevant: Boolean,
                   userInfos: Option[Map[String, String]],
                   files: Option[Map[String, Long]] = Some(Map())) extends AgeModel {

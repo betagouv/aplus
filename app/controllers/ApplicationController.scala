@@ -198,9 +198,9 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
     eventService.info("MY_APPLICATIONS_SHOWED",
       s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}")
-    Ok(views.html.myApplications(request.currentUser, request.currentArea)(myOpenApplications, myClosedApplications))
+    Ok(views.html.myApplications(request.currentUser)(myOpenApplications, myClosedApplications))
   }
-  
+
 
   def stats = loginAction { implicit request =>
     (request.currentUser.admin || request.currentUser.groupAdmin) match {
@@ -260,7 +260,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
         val applicationsFromTheArea = List[Application]()
         eventService.info("ALL_AS_SHOWED", s"Visualise la vue de l'utilisateur $userId", user= Some(user))
         // Bug To Fix
-        Ok(views.html.myApplications(user, request.currentArea)(applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin), applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin), applicationsFromTheArea))
+        Ok(views.html.myApplications(user)(applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin), applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin), applicationsFromTheArea))
       case  _ =>
         eventService.error("ALL_AS_NOT_FOUND", s"L'utilisateur $userId n'existe pas")
         BadRequest("L'utilisateur n'existe pas ou vous n'avez pas le droit d'accèder à cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
@@ -268,7 +268,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def showExportMyApplicationsCSV =  loginAction { implicit request =>
-    Ok(views.html.CSVExport(request.currentUser, request.currentArea))
+    Ok(views.html.CSVExport(request.currentUser))
   }
 
   def myCSV = loginAction { implicit request =>
@@ -311,7 +311,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
 
   def usersThatCanBeInvitedOn[A](application: Application)(implicit request: RequestWithUserData[A]) = {
     (if(request.currentUser.instructor || request.currentUser.expert) {
-      userService.byArea(request.currentArea.id).filter(_.instructor)
+      userService.byArea(application.area).filter(_.instructor)
     } else if(request.currentUser.helper && application.creatorUserId == request.currentUser.id) {
       userService.byGroupIds(request.currentUser.groupIds).filter(_.helper)
     } else {
@@ -336,7 +336,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             }
 
             eventService.info("APPLICATION_SHOWED", s"Demande $id consulté", Some(application))
-            Ok(views.html.showApplication(request.currentUser, request.currentArea)(usersThatCanBeInvited, renderedApplication, answerForm))
+            Ok(views.html.showApplication(request.currentUser)(usersThatCanBeInvited, renderedApplication, answerForm))
         }
         else {
           eventService.warn("APPLICATION_UNAUTHORIZED", s"L'accès à la demande $id n'est pas autorisé", Some(application))
@@ -401,7 +401,6 @@ class ApplicationController @Inject()(loginAction: LoginAction,
                 request.currentUser.nameWithQualite,
                 Map(),
                 answerData.privateToHelpers == false,
-                request.currentArea.id,
                 answerData.applicationIsDeclaredIrrelevant,
                 Some(answerData.infos),
                 files = Some(newAttachments ++ pendingAttachments))
@@ -451,7 +450,6 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             request.currentUser.nameWithQualite,
             invitedUsers,
             inviteData.privateToHelpers == false,
-            request.currentArea.id,
             false,
             Some(Map()))
           if (applicationService.add(applicationId, answer)  == 1) {
@@ -485,7 +483,6 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             request.currentUser.nameWithQualite,
             experts,
             true,
-            request.currentArea.id,
             false,
             Some(Map()))
           if (applicationService.add(applicationId, answer, true)  == 1) {

@@ -112,7 +112,7 @@ case class UserController @Inject()(loginAction: LoginAction,
           val unused = not(isAccountUsed(user))
           val Token(tokenName, tokenValue) = CSRF.getToken.get
           eventService.info("USER_SHOWED", "Visualise la vue de modification l'utilisateur ", user = Some(user))
-          Ok(views.html.editUser(request.currentUser, request.currentArea)(form, userId, groups, unused, tokenName = tokenName, tokenValue = tokenValue))
+          Ok(views.html.editUser(request.currentUser)(form, userId, groups, unused, tokenName = tokenName, tokenValue = tokenValue))
         case _ =>
           eventService.warn("VIEW_USER_UNAUTHORIZED", s"Accès non autorisé pour voir $userId")
           Unauthorized("Vous n'avez pas le droit de faire ça")
@@ -149,7 +149,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         formWithErrors => {
           val groups = groupService.allGroups
           eventService.error("ADD_USER_ERROR", s"Essai de modification de l'tilisateur $userId avec des erreurs de validation")
-          BadRequest(views.html.editUser(request.currentUser, request.currentArea)(formWithErrors, userId, groups))
+          BadRequest(views.html.editUser(request.currentUser)(formWithErrors, userId, groups))
         }, updatedUser => {
           withUser(updatedUser.id, includeDisabled = true) { user: User =>
             if (!user.canBeEditedBy(request.currentUser)) {
@@ -162,7 +162,7 @@ case class UserController @Inject()(loginAction: LoginAction,
               val form = userForm(Time.dateTimeZone).fill(updatedUser).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
               val groups = groupService.allGroups
               eventService.error("EDIT_USER_ERROR", "Impossible de modifier l'utilisateur dans la BDD", user = Some(updatedUser))
-              InternalServerError(views.html.editUser(request.currentUser, request.currentArea)(form, userId, groups))
+              InternalServerError(views.html.editUser(request.currentUser)(form, userId, groups))
             }
           }
         }
@@ -177,12 +177,12 @@ case class UserController @Inject()(loginAction: LoginAction,
       csv.sectionsForm(request.currentUser.id).bindFromRequest.fold({ missFilledForm =>
         val cleanedForm = missFilledForm.copy(data = missFilledForm.data.filter({ case (_, v) => v.nonEmpty }))
         eventService.info("IMPORT_USERS_ERROR", s"Erreur dans le formulaire importation utilisateur")
-        BadRequest(views.html.reviewUsersImport(request.currentUser, request.currentArea)(cleanedForm))
+        BadRequest(views.html.reviewUsersImport(request.currentUser)(cleanedForm))
       }, { case (sections, areaId) =>
         if (sections.isEmpty) {
           val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError("Action impossible, il n'y a aucun utilisateur à ajouter.")
           eventService.info("IMPORT_USERS_ERROR", s"Erreur d'importation utilisateur : aucun utilisateur à ajouter")
-          BadRequest(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
+          BadRequest(views.html.reviewUsersImport(request.currentUser)(form))
         } else {
           val area = Area.fromId(areaId).get
           val toInsert = sections.map({ section =>
@@ -209,12 +209,12 @@ case class UserController @Inject()(loginAction: LoginAction,
             val (code, description) = insertResult.left.get
             eventService.error(code, description)
             val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
-            InternalServerError(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
+            InternalServerError(views.html.reviewUsersImport(request.currentUser)(form))
           } else if (not(userService.add(usersToInsert))) {
             val description = s"Impossible d'ajouter des utilisateurs dans la BDD à l'importation."
             eventService.error("ADD_USER_ERROR", description)
             val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
-            InternalServerError(views.html.reviewUsersImport(request.currentUser, request.currentArea)(form))
+            InternalServerError(views.html.reviewUsersImport(request.currentUser)(form))
           } else {
             usersToInsert.foreach {  user =>
                 notificationsService.newUser(user)
@@ -237,7 +237,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         implicit val area: Area = Area.fromId(group.area).get
         usersForm(Time.dateTimeZone).bindFromRequest.fold({ formWithErrors =>
           eventService.error("ADD_USER_ERROR", "Essai d'ajout d'utilisateurs avec des erreurs de validation")
-          BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost(groupId)))
+          BadRequest(views.html.editUsers(request.currentUser)(formWithErrors, 0, routes.UserController.addPost(groupId)))
         }, { users =>
           try {
             if (userService.add(users.map(_.copy(groupIds = List(groupId))))) {
@@ -250,7 +250,7 @@ case class UserController @Inject()(loginAction: LoginAction,
             } else {
               val form = usersForm(Time.dateTimeZone).fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
               eventService.error("ADD_USER_ERROR", "Impossible d'ajouter des utilisateurs dans la BDD 1")
-              InternalServerError(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
+              InternalServerError(views.html.editUsers(request.currentUser)(form, users.length, routes.UserController.addPost(groupId)))
             }
           } catch {
             case ex: PSQLException =>
@@ -261,7 +261,7 @@ case class UserController @Inject()(loginAction: LoginAction,
               }
               val form = usersForm(Time.dateTimeZone).fill(users).withGlobalError(errorMessage)
               eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}")
-              BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(form, users.length, routes.UserController.addPost(groupId)))
+              BadRequest(views.html.editUsers(request.currentUser)(form, users.length, routes.UserController.addPost(groupId)))
           }
         })
       }
@@ -270,7 +270,7 @@ case class UserController @Inject()(loginAction: LoginAction,
 
   def showCGU(): Action[AnyContent] = loginAction { implicit request =>
     eventService.info("CGU_SHOWED", "CGU visualisé")
-    Ok(views.html.showCGU(request.currentUser, request.currentArea))
+    Ok(views.html.showCGU(request.currentUser))
   }
 
   def validateCGU(): Action[AnyContent] = loginAction { implicit request =>
@@ -306,7 +306,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         implicit val area: Area = Area.fromId(group.area).get
         val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
         eventService.info("EDIT_USER_SHOWED", "Visualise la vue d'ajouts des utilisateurs")
-        Ok(views.html.editUsers(request.currentUser, request.currentArea)(usersForm(Time.dateTimeZone), rows, routes.UserController.addPost(groupId)))
+        Ok(views.html.editUsers(request.currentUser)(usersForm(Time.dateTimeZone), rows, routes.UserController.addPost(groupId)))
       }
     }
   }
@@ -319,7 +319,7 @@ case class UserController @Inject()(loginAction: LoginAction,
       val userId = request.getQueryString("fromUserId").flatMap(UUIDHelper.fromString)
       val events = eventService.all(limit, userId)
       eventService.info("EVENTS_SHOWED", s"Affiche les événements")
-      Ok(views.html.allEvents(request.currentUser, request.currentArea)(events, limit))
+      Ok(views.html.allEvents(request.currentUser)(events, limit))
     }
   }
 
@@ -396,7 +396,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "IMPORT_USER_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
-      Ok(views.html.importUsers(request.currentUser, request.currentArea)("", List.empty))
+      Ok(views.html.importUsers(request.currentUser)("", List.empty))
     }
   }
 
@@ -407,12 +407,12 @@ case class UserController @Inject()(loginAction: LoginAction,
       } { () =>
         csv.csvImportContentForm.bindFromRequest.fold({ _ =>
           eventService.warn(code = "CSV_IMPORT_INPUT_EMPTY", description = "Le champ d'import de CSV est vide.")
-          BadRequest(views.html.importUsers(request.currentUser, request.currentArea)("", List(FormError.apply("csv-import-content", "Le champ est vide."))))
+          BadRequest(views.html.importUsers(request.currentUser)("", List(FormError.apply("csv-import-content", "Le champ est vide."))))
         }, { case (csvImportContent, separator) =>
           val (groupToUsersMap, lineNumberToErrors) = csv.extractValidInputAndErrors(csvImportContent, separator.head, request.currentUser.id)
           if (groupToUsersMap.isEmpty) {
             eventService.warn(code = "INVALID_CSV", description = "Le CSV fourni est invalide.")
-            BadRequest(views.html.importUsers(request.currentUser, request.currentArea)("", List(FormError.apply("csv-import-content", "Le format est invalide, veuillez vérifier le séparateur ainsi que le données."))))
+            BadRequest(views.html.importUsers(request.currentUser)("", List(FormError.apply("csv-import-content", "Le format est invalide, veuillez vérifier le séparateur ainsi que le données."))))
           } else {
             // Remove already existing users
             val groupToNewUsersMap = groupToUsersMap.map({ case (group, users) =>
@@ -422,7 +422,7 @@ case class UserController @Inject()(loginAction: LoginAction,
             val filledForm = csv.sectionsForm(request.currentUser.id)
               .fill(groupToNewUsersMap.map({ case (group, users) => Section(group, users) }).toList -> request.currentArea.id)
                 .withGlobalError("Il y a des erreurs", errors: _*)
-            Ok(views.html.reviewUsersImport(request.currentUser, request.currentArea)(filledForm))
+            Ok(views.html.reviewUsersImport(request.currentUser)(filledForm))
           }
         })
       }

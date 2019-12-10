@@ -1,9 +1,9 @@
 @import models._
 @import java.util.UUID
-@(user: User, currentArea: Area)(areas: Seq[Area], areasWithLoginByKey: Seq[UUID], userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(user: User)(areas: Seq[Area], areasWithLoginByKey: Seq[UUID], userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
-@main(user, currentArea, false)(s"Gestion des territoires"){
+@main(user)(s"Gestion des territoires"){
 
 }{
     <div class="mdl-cell mdl-cell--12-col pem-container mdl-grid">
@@ -11,7 +11,7 @@
         <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
             <thead>
                 <tr>
-                    <th class="mdl-data-table__cell--non-numeric @if(area.id == currentArea.id){ mdl-color-text--black }">
+                    <th class="mdl-data-table__cell--non-numeric">
                         @area.name
                         @if(user.admin) { /
                             @area.id /

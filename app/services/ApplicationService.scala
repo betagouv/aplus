@@ -58,35 +58,10 @@ class ApplicationService @Inject()(db: Database) {
   ).map(application => application.copy(creationDate = application.creationDate.withZone(Time.dateTimeZone), 
                     answers = application.answers.map(answer => answer.copy(creationDate = answer.creationDate.withZone(Time.dateTimeZone)))))
   
-  private val simpleAnswer: RowParser[Answer] = Macro.parser[Answer](
-    "id",
-    "application_id",
-    "creation_date",
-    "message",
-    "creator_user_id",
-    "creator_user_name",
-    "invited_users",
-    "visible_by_helpers",
-    "area",
-    "declare_application_has_irrelevant",
-    "user_infos",
-    "files"
-  ).map(answer => answer.copy(creationDate = answer.creationDate.withZone(Time.dateTimeZone)))
-
-
   def byId(id: UUID, fromUserId: UUID, anonymous: Boolean): Option[Application] = db.withConnection { implicit connection =>
-    val answers = SQL("SELECT *, NULL as files FROM answer_unused WHERE application_id = {applicationId}::uuid ORDER BY creation_date ASC")
-      // Hack to reintegrate answers that haven't been migrated (error in the migration SQL). Counting are wrong in general view.
-      .on('applicationId -> id).as(simpleAnswer.*)
     val result = SQL("UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *")
       .on('id -> id,
           'seen_by_user_id -> fromUserId).as(simpleApplication.singleOpt)
-       .map { application =>
-         implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
-         // Hack to reintegrate answers that haven't been migrated (error in the migration SQL). Counting are wrong in general view.
-         val newAnswers = (answers ++ application.answers).groupBy(_.id).map(_._2.head).toList.sortBy(_.creationDate)
-         application.copy(answers = newAnswers)
-    }
     if(anonymous){
       result.map(_.anonymousApplication)
     } else {

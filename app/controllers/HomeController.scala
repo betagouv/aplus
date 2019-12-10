@@ -35,6 +35,6 @@ class HomeController @Inject()(loginAction: LoginAction, db: Database)(implicit 
   }
 
   def help = loginAction { implicit request =>
-    Ok(views.html.help(request.currentUser, request.currentArea))
+    Ok(views.html.help(request.currentUser))
   }
 }

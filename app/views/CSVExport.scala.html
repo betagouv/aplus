@@ -1,6 +1,6 @@
-@(user: User, area: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(user: User)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-@main(user, area, false)(s"Exporter mes demandes") {
+@main(user)(s"Exporter mes demandes") {
 }{
     <div class="mdl-cell mdl-cell--12-col">
         <h4 >Exportation des demandes au format CSV</h4>

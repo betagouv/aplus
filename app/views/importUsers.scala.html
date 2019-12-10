@@ -1,8 +1,8 @@
 @import models._
 @import extentions.MDLForms._
-@(currentUser: User, area: Area)(csvImportContent: String, errors: List[FormError])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(currentUser: User)(csvImportContent: String, errors: List[FormError])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
-@main(currentUser, area)(s"Importer des utilisateurs") {
+@main(currentUser)(s"Importer des utilisateurs") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 } {
 
