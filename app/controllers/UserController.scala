@@ -134,8 +134,8 @@ case class UserController @Inject()(loginAction: LoginAction,
           Unauthorized("User is not unused.")
         } else {
           userService.deleteById(userId)
-          val path = "/" + controllers.routes.UserController.all(Area.allArea.id).relativeTo("/")
-          Redirect(path, 303)
+          eventService.info("USER_DELETED", s"Utilisateur $userId / ${user.email} a été supprimé", user = Some(user))
+          Redirect(controllers.routes.UserController.all(Area.allArea.id))
         }
       }
     }
@@ -157,7 +157,7 @@ case class UserController @Inject()(loginAction: LoginAction,
               Unauthorized("Vous n'avez pas le droit de faire ça")
             } else if (userService.update(updatedUser)) {
               eventService.info("EDIT_USER_DONE", s"Utilisateur $userId modifié", user = Some(updatedUser))
-              Redirect(routes.UserController.all(Area.allArea.id)).flashing("success" -> "Utilisateur modifié")
+              Redirect(routes.UserController.editUser(userId)).flashing("success" -> "Utilisateur modifié")
             } else {
               val form = userForm(Time.dateTimeZone).fill(updatedUser).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
               val groups = groupService.allGroups
@@ -389,7 +389,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     }),
     "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
     "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-    csv.USER_PHONE_NUMBER.key -> optional(text),
+    csv.USER_PHONE_NUMBER.key -> optional(text), 
   )(User.apply)(User.unapply)
 
   def importUsersFromCSV: Action[AnyContent] = loginAction { implicit request =>
