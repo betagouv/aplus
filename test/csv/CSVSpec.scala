@@ -17,16 +17,6 @@ import scala.io.Source
 @RunWith(classOf[JUnitRunner])
 class CSVSpec extends Specification {
 
-  val csvFile: String =
-    """Nom;Qualité;Email;Instructeur;Responsable;Territoires;Organisation du groupe;Groupe;Bal générique / fonctionnelle;Précisions / Commentaires
-      |Prénom1 Nom1;Agent d’accueil FS;prenom1.nom1@france-service.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;
-      |Prénom2 Nom2;Agent d’accueil FS;prenom2.nom2@laposte.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;
-      |Prénom3 Nom3;Référent Pole Emploi;prenom3.nom3@pole-emploi.fr;Instructeur;;Ardennes;Pôle emploi;Pole Emploi Charleville Mézières;chareville-mezieres@pole.emploi.com;
-      |Prénom4 Nom4;Réponsable CAF;prenom4.nom4@pole-emploi.fr;Instructeur;Responsable;Ardennes;Caisse d’allocations familiale;CAF Ardennes;ardennes@caf.fr;
-      |Prénom5 Nom5;Responsable DDFIP;prenom5.nom5@ddfip.fr;;Responsable;Mayotte;Direction départementale des Finances publiques;DDFIP Mayotte (amendes);amendes@ddfip.fr;
-      |Prénom6 Nom6;Responsable DDFIP;prenom6.nom6@ddfip.fr;Instructeur;;Mayotte;Direction départementale des Finances publiques;DDFIP Mayotte (Impots locaux);amendes@ddfip.fr;
-      |;;;;;;;;;""".stripMargin
-
   val failFile: String =
     """Nom de l'utilisateur;Qualité de l'utilisateur;Email de l'utilisateur;Aidant;Instructeur;Responsable;Groupe(s);Territoire(s);Organisation du groupe;Description du groupe;Bal
       |;Monsieur;;Aidant;Instructeur;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe!;super.groupe@beta.gouv.fr""".stripMargin
@@ -87,7 +77,7 @@ class CSVSpec extends Specification {
 
       result.right.get._2 must equalTo(User(id = userId,
         key = "key",
-        name = "Prénom1 Nom1",
+        name = "Nom1 Prénom1",
         qualite = "",
         email = "prenom1.nom1@cafaisne.cnafmail.fr",
         helper = true,
@@ -143,6 +133,16 @@ class CSVSpec extends Specification {
     }
   }
 
+  val csvFile: String =
+    """Nom;Qualité;Email;Instructeur;Responsable;Territoires;Organisation du groupe;Groupe;Bal générique / fonctionnelle;Précisions / Commentaires
+      |Nom1 Prénom1;Agent d’accueil FS;prenom1.nom1@france-service.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;
+      |Nom2 Prénom2;Agent d’accueil FS;prenom2.nom2@laposte.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;
+      |Nom3 Prénom3;Référent Pole Emploi;prenom3.nom3@pole-emploi.fr;Instructeur;;Ardennes;Pôle emploi;Pole Emploi Charleville Mézières;chareville-mezieres@pole.emploi.com;
+      |Nom4 Prénom4;Réponsable CAF;prenom4.nom4@pole-emploi.fr;Instructeur;Responsable;Ardennes;Caisse d’allocations familiale;CAF Ardennes;ardennes@caf.fr;
+      |Nom5 Prénom5;Responsable DDFIP;prenom5.nom5@ddfip.fr;;Responsable;Mayotte;Direction départementale des Finances publiques;DDFIP Mayotte (amendes);amendes@ddfip.fr;
+      |Nom6 Prénom6;Responsable DDFIP;prenom6.nom6@ddfip.fr;Instructeur;;Mayotte;Direction départementale des Finances publiques;DDFIP Mayotte (Impots locaux);amendes@ddfip.fr;
+      |;;;;;;;;;""".stripMargin
+
   "The csvFile string should" >> {
     implicit object SemiConFormat extends DefaultCSVFormat {
       override val delimiter: Char = csv.SEPARATOR.charAt(0)
@@ -179,7 +179,7 @@ class CSVSpec extends Specification {
       list must have size 7
       list.head.right.get._2 must equalTo(User(id = userId,
         key = "key",
-        name = "Prénom1 Nom1",
+        name = "Nom1 Prénom1",
         qualite = "Agent d’accueil FS",
         email = "prenom1.nom1@france-service.com",
         helper = true,
@@ -198,7 +198,7 @@ class CSVSpec extends Specification {
       ))
       list(1).right.get._2 must equalTo(User(id = userId,
         key = "key",
-        name = "Prénom2 Nom2",
+        name = "Nom2 Prénom2",
         qualite = "Agent d’accueil FS",
         email = "prenom2.nom2@laposte.com",
         helper = true,
