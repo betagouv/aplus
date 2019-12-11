@@ -3,7 +3,7 @@
 
 @(currentUser: User)(form: Form[(List[csv.Section], java.util.UUID)])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
-@display(section: Field)(header: Html)(footer: Html) = {
+@display(section: Field, sectionIndex: Int)(header: Html)(footer: Html) = {
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white">
   <thead>
     <tr style="background-color: lightblue">
@@ -12,7 +12,7 @@
   </thead>
   <tbody>
     @helper.repeatWithIndex(section("users")) { (user, index) =>
-    <tr class="searchable-row td--clear-border" id="line_@index">
+    <tr class="searchable-row td--clear-border" id="line_@{sectionIndex}_@{index}">
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
         @helper.input(user("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
           <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
@@ -43,7 +43,7 @@
         @helper.checkbox(user(csv.GROUP_MANAGER.key), 'type -> "checkbox", 'label -> csv.GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
       </td>
       <td>
-        <input type="button" class="delete-line" data-line-id="line_@index" value="Supprimer la ligne">
+        <input type="button" class="delete-line" data-line-id="line_@{sectionIndex}_@{index}" value="Supprimer la ligne">
       </td>
     </tr>
     }
@@ -75,8 +75,8 @@
       }
     </select>
     <em>Instructeur : </em><a href="#" id="instructor-all-link">Tous</a> / <a href="#" id="instructor-none-link">Aucuns</a>
-    @helper.repeatWithIndex(form("sections")) { (section, index) =>
-        @display(section) {
+    @helper.repeatWithIndex(form("sections")) { (section, sectionIndex) =>
+        @display(section, sectionIndex) {
             <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="1">
               @helper.input(section("group")("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
