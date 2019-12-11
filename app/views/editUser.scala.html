@@ -8,13 +8,14 @@
 }{
     @helper.form(action = routes.UserController.editUserPost(userId), 'class -> "mdl-grid mdl-cell mdl-cell--12-col") {
         @form.value match {
-            case Some(user) =>
+            case Some(user) => {
                 if(user.areas.size == 1 && user.groupIds.size == 1) {
                     <span class="mdl-cell mdl-cell--12-col ariane">
                         Territoire : <a href="@routes.UserController.all(user.areas.head)#group-@user.groupIds.head">@{Area.fromId(user.areas.head).get.name}</a> /
                         Groupe : <a href="@routes.GroupController.editGroup(user.groupIds.head)">@{userGroups.find(_.id == user.groupIds.head).get.name}</a> /
                         Utilisateur : @form("name").value.getOrElse("") </span>
                 }
+            }
             case None => {
             }
         }
