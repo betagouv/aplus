@@ -50,7 +50,7 @@ package object csv {
   def groupMappingForCSVImport(uuidGenerator: UUIDGenerator)(creatorId: UUID)(currentDate: DateTime): Mapping[UserGroup] =
     mapping(
       "id" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(uuidGenerator()), uuid => Some(uuid)),
-      GROUP_NAME.key -> nonEmptyText.verifying(maxLength(100)).transform[String](groupNamePreprocessing, identity),
+      GROUP_NAME.key -> nonEmptyText.verifying(maxLength(60)).transform[String](groupNamePreprocessing, identity),
       "description" -> ignored(Option.empty[String]),
       "inseeCode" -> ignored(List.empty[String]),
       "creationDate" -> ignored(currentDate),
