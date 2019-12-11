@@ -14,7 +14,7 @@
                     Groupe : <a href="@routes.GroupController.editGroup(user.groupIds.head)">@{userGroups.find(_.id == user.groupIds.head).get.name}</a> /
                     Utilisateur : @form("name").value.getOrElse("") </span>
             }
-            case None => {
+            case _ => {
             }
         }
     <div class="mdl-cell mdl-cell--12-col">
