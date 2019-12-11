@@ -80,7 +80,7 @@ html, body {
 }
 
 .demo-content {
-  max-width: 1080px;
+  mbbbbbbbbbbbbbbbbbbbbax-width: 1080px;
 }
 
 .mdl-button--raised.mdl-button--colored {
@@ -404,4 +404,19 @@ a {
 
 .--padding-20px {
     padding: 20px;
+}
+
+
+.notification {
+    background: #b4e1fa;
+    border: 1px solid #006be6;
+    border-radius: 3px;
+    padding: 1em;
+    margin-bottom: 1em;
+    position: relative;
+}
+
+.notification--error {
+    background: rgba(239,172,166,0.45882);
+    border-color: #d63626;
 }
