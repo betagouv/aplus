@@ -1,7 +1,7 @@
 import java.util.UUID
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import extentions.Time
+import extentions.{Operators, Time}
 import models.{Area, Organisation, User, UserGroup}
 import org.joda.time.DateTime
 import play.api.data.Forms.{boolean, default, email, ignored, list, mapping, nonEmptyText, optional, seq, text, tuple, uuid}
@@ -158,15 +158,14 @@ package object csv {
       Right(form.value.get)
   }
 
-  private def sectionsMapping(groupId: UUIDGenerator, userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Mapping[(List[Section], UUID)] =
-    mapping("sections" -> list(csv.sectionMapping(groupId, userId, creatorId, dateTime)),
-      "area-selector" -> uuid
-    )({ case (sections, area) => sections -> area })({ case (section, area) => Some(section -> area) })
+  private def sectionsMapping(groupId: UUIDGenerator, userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Mapping[List[Section]] =
+    mapping("sections" -> list(csv.sectionMapping(groupId, userId, creatorId, dateTime))
+    )(identity)(Option.apply)
 
-  private def sectionsForm(groupId: UUIDGenerator, userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Form[(List[Section], UUID)] =
+  private def sectionsForm(groupId: UUIDGenerator, userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Form[List[Section]] =
     Form(sectionsMapping(groupId, userId, creatorId, dateTime))
 
-  def sectionsForm(creatorId: UUID): Form[(List[Section], UUID)] =
+  def sectionsForm(creatorId: UUID): Form[List[Section]] =
     sectionsForm(UUID.randomUUID, UUID.randomUUID, creatorId, DateTime.now(Time.dateTimeZone))
 
   def allWithCompleteLine(csvReader: CSVReader)(implicit format:DefaultCSVFormat): List[(Map[String, String], String)] = {
@@ -237,8 +236,9 @@ package object csv {
     finalGroup -> finalUsers
   }
 
-  val csvImportContentForm: Form[(String, String)] = Form(mapping(
+  val csvImportContentForm: Form[(String, UUID, String)] = Form(mapping(
     "csv-import-content" -> play.api.data.Forms.nonEmptyText,
+    "area-selector" -> uuid.verifying(area => Operators.not(List(Area.allArea,Area.notApplicable).contains(area))),
     "separator" -> play.api.data.Forms.nonEmptyText.verifying(value => value.equals(";") || value.equals(",")))
-  ({ (content, separator) => content -> separator })(tuple => Some(tuple._1 -> tuple._2)))
+  ({ (content, area, separator) => (content, area, separator) })({ case (content, area, separator) => Some((content, area, separator)) }))
 }
