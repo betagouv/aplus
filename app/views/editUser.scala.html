@@ -3,14 +3,19 @@
 @import java.util.UUID
 @(currentUser: User)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
-@main(currentUser)(s"Utilisateur ${form.get.name}") {
+@main(currentUser)(s"Utilisateur ${form("name").value.getOrElse("")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
-
 }{
-
     @helper.form(action = routes.UserController.editUserPost(userId), 'class -> "mdl-grid mdl-cell mdl-cell--12-col") {
-        @if(form.get.areas.size == 1 && form.get.groupIds.size == 1) {
-            <span class="mdl-cell mdl-cell--12-col ariane">Territoire : <a href="@routes.UserController.all(form.get.areas.head)#group-@form.get.groupIds.head">@{Area.fromId(form.get.areas.head).get.name}</a> / Groupe : <a href="@routes.GroupController.editGroup(form.get.groupIds.head)">@{userGroups.find(_.id == form.get.groupIds.head).get.name}</a> / Utilisateur : @form.get.name </span>
+        @form.value match {
+            case Some(user) if(user.areas.size == 1 && user.groupIds.size == 1) => {
+                <span class="mdl-cell mdl-cell--12-col ariane">
+                    Territoire : <a href="@routes.UserController.all(user.areas.head)#group-@user.groupIds.head">@{Area.fromId(user.areas.head).get.name}</a> /
+                    Groupe : <a href="@routes.GroupController.editGroup(user.groupIds.head)">@{userGroups.find(_.id == user.groupIds.head).get.name}</a> /
+                    Utilisateur : @form("name").value.getOrElse("") </span>
+            }
+            case None => {
+            }
         }
     <div class="mdl-cell mdl-cell--12-col">
         <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
@@ -32,12 +37,9 @@
     @helper.input(form("qualite"), 'label -> "Qualité") { (id, name, value, args) =>
     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
     } <br>
-        @if(currentUser.admin) {
-            @helper.input(form("user_phone_number"), 'label -> "Numéro de téléphone") { (id, name, value, args) =>
-                <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-            }
-            <br>
-        }
+    @helper.input(form(csv.USER_PHONE_NUMBER.key), 'label -> "Numéro de téléphone") { (id, name, value, args) =>
+       <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+     } <br>
     @helper.input(form("communeCode"), 'label -> "Code INSEE commune") { (id, name, value, args) =>
     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) disabled>
     } <br>
@@ -117,14 +119,13 @@
             Sauvegarder
         </button>
     </div>
-        <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col">
-            <b>Outils</b>
-            <p>
+    <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col">
+        <b>Outils</b>
+        <p>
             <a href="@routes.ApplicationController.allAs(userId)">Aperçu de l'écran de toutes les demandes de l'utilisateur</a><br>
             <a href="@routes.UserController.allEvents()?fromUserId=@userId">Log d'événements de l'utilisateur</a>
-            </p>
-        </div>
-
+        </p>
+    </div>
     }
     <script type='text/javascript'>
         function deleteDelegation(button){
