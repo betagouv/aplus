@@ -13,7 +13,7 @@ import services.TokenService
 
 
 @RunWith(classOf[JUnitRunner])
-class LoginSpec extends Specification with Tables with BaseSpec {
+class gLoginSpec extends Specification with Tables with BaseSpec {
 
   "Login" should {
     "Login with valid or invalid emails" in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {
