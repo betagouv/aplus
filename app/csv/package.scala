@@ -112,7 +112,7 @@ package object csv {
             hasAcceptedCharte: Boolean, communeCode: String, groupAdmin: Boolean, disabled: Boolean, expert: Boolean,
             groupIds: List[UUID], delegations: Map[String, String], cguAcceptationDate: Option[DateTime],
             newsLetterAcceptationDate: Option[DateTime]): User = User.apply(id, key,
-    firstName.map(_ + " " + lastName).getOrElse(lastName), qualite, email, helper, instructor, admin, areas,
+    firstName.map(lastName + " " + _).getOrElse(lastName), qualite, email, helper, instructor, admin, areas,
     creationDate, hasAcceptedCharte, communeCode, groupAdmin, disabled, expert, groupIds, delegations,
     cguAcceptationDate, newsLetterAcceptationDate, phoneNumber)
 
