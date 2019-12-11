@@ -60,7 +60,11 @@
     @if(form.hasGlobalErrors) {
       @for(error <- form.globalErrors) {
         @for(args <- error.args) {
-          <div style="color: red; font-weight: bold;">@args</div>
+          <div style="color: red; font-weight: bold;">
+            <p>@args.asInstanceOf[Tuple2[String,String]]._1</p>
+            <p>@args.asInstanceOf[Tuple2[String,String]]._2</p>
+          </div>
+          <br>
         }
       }
     }

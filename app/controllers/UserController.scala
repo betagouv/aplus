@@ -418,7 +418,7 @@ case class UserController @Inject()(loginAction: LoginAction,
             val groupToNewUsersMap = groupToUsersMap.map({ case (group, users) =>
               group -> users.filterNot(user => userService.byEmail(user.email).isDefined)
             })
-            val errors = lineNumberToErrors.map({ case (lineNumber, errors) => "Ligne %d : %s".format(lineNumber, errors.map(e => s"${e.key} ${e.message}").mkString(", ")) }).toList
+            val errors: List[(String, String)] = lineNumberToErrors.map({ case (lineNumber, (errors, completeLine)) => "Ligne %d : %s".format(lineNumber, errors.map(e => s"${e.key} ${e.message}").mkString(", ")) -> completeLine })
             val filledForm = csv.sectionsForm(request.currentUser.id)
               .fill(groupToNewUsersMap.map({ case (group, users) => Section(group, users) }).toList -> request.currentArea.id)
                 .withGlobalError("Il y a des erreurs", errors: _*)

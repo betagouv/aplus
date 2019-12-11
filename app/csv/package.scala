@@ -150,10 +150,10 @@ package object csv {
   case class Section(group: UserGroup, users: List[User])
 
   def fromCSVLine(values: Map[String, String], groupHeaders: List[Header], userHeaders: List[Header], groupId: UUIDGenerator,
-                  userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Either[List[FormError], (UserGroup, User)] = {
+                  userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime, completeLine: String): Either[(List[FormError], String), (UserGroup, User)] = {
     val form = tupleForm(groupId)(userId)(creatorId)(dateTime).bind(convertToPrefixForm(values, groupHeaders, "group.") ++ convertToPrefixForm(values, userHeaders, "user."))
     if (form.hasErrors)
-      Left(form.errors.toList)
+      Left(form.errors.toList -> completeLine)
     else
       Right(form.value.get)
   }
@@ -169,27 +169,39 @@ package object csv {
   def sectionsForm(creatorId: UUID): Form[(List[Section], UUID)] =
     sectionsForm(UUID.randomUUID, UUID.randomUUID, creatorId, DateTime.now(Time.dateTimeZone))
 
-  private def extractFromCSVToMap(csvText: String, separator: Char): List[(Map[String, String], Int)] = try {
+  def allWithCompleteLine(csvReader: CSVReader)(implicit format:DefaultCSVFormat): List[(Map[String, String], String)] = {
+    val headers = csvReader.readNext()
+    headers.map(headers => {
+      val lines = csvReader.all().filter(_.reduce(_+_).nonEmpty)
+      lines.map(line => headers.zip(line).toMap -> line.mkString(format.delimiter.toString))
+    }).getOrElse(Nil)
+  }
+
+  private def extractFromCSVToMap(csvText: String, separator: Char): List[((Map[String, String], String), Int)] = try {
     implicit object SemiConFormat extends DefaultCSVFormat {
       override val delimiter: Char = separator
     }
     val reader = CSVReader.open(Source.fromString(csvText))
-    reader.allWithHeaders().zipWithIndex
+    allWithCompleteLine(reader).zipWithIndex
   } catch {
     case _: com.github.tototoshi.csv.MalformedCSVException =>
       Nil
   }
 
-  private def extractFromCSV(csvText: String, separator: Char, creatorId: UUID): List[Either[(Int, List[FormError]), (UserGroup, User)]] = {
+  private def extractFromCSV(csvText: String, separator: Char, creatorId: UUID): List[Either[(Int, List[FormError], String), (UserGroup, User)]] = {
     val dateTime = Time.now()
-    extractFromCSVToMap(csvText, separator).map { case (data: Map[String, String], lineNumber: Int) =>
-      csv.fromCSVLine(data, GROUP_HEADERS, USER_HEADERS, UUID.randomUUID, UUID.randomUUID, creatorId, dateTime).left.map(lineNumber -> _)
+    extractFromCSVToMap(csvText, separator).map { case ((data: Map[String, String], completeLine: String), lineNumber: Int) =>
+      csv.fromCSVLine(data, GROUP_HEADERS, USER_HEADERS, UUID.randomUUID, UUID.randomUUID, creatorId, dateTime, completeLine)
+        .left.map({ case (errors, completeLine) => (lineNumber + 1, errors, completeLine) })
     }
   }
 
-  def extractValidInputAndErrors(csvImportContent: String, separator: Char, creatorId: UUID): (Map[UserGroup, List[User]], Map[Int, List[FormError]]) = {
-    val forms: List[Either[(Int, List[FormError]), (UserGroup, User)]] = extractFromCSV(csvImportContent, separator, creatorId)
-    val lineNumberToErrors: Map[Int, List[FormError]] = forms.filter(_.isLeft).map(_.left.get).toMap
+  def extractValidInputAndErrors(csvImportContent: String, separator: Char, creatorId: UUID): (Map[UserGroup, List[User]], List[(Int, (List[FormError], String))]) = {
+    val forms = extractFromCSV(csvImportContent, separator, creatorId)
+    val lineNumberToErrors = forms.filter(_.isLeft).map(_.left.get)
+      .map({ case (lineNumber, errors, completeLine) =>
+        lineNumber -> (errors -> completeLine)
+      }).sortBy(_._1)
 
     val deduplicatedEmail = forms.filter(_.isRight).map(_.right.get).groupBy(_._2.email).mapValues(_.head).values.toList
     val groupToUsersMap = deduplicatedEmail.groupBy(_._1.name).map({ case (_, tuple) => tuple.head._1 -> tuple.map(_._2) }) // Group by group name

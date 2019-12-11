@@ -73,7 +73,7 @@ class CSVSpec extends Specification {
       val groupId = UUID.randomUUID()
       val creatorId = UUID.randomUUID()
       val dateTime = DateTime.now(Time.dateTimeZone)
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => groupId, () => userId, creatorId, dateTime))
+      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => groupId, () => userId, creatorId, dateTime,""))
       val result = list.head
       result.right.get._1 must equalTo(UserGroup(id = groupId,
         name = "CAF",
@@ -113,7 +113,7 @@ class CSVSpec extends Specification {
       val groupId = UUID.randomUUID()
       val creatorId = UUID.randomUUID()
       val dateTime = DateTime.now(Time.dateTimeZone)
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => userId, () => groupId, creatorId, dateTime))
+      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => userId, () => groupId, creatorId, dateTime,""))
       val result = list.head
       result.right.get._1 must equalTo(UserGroup(id = userId,
         name = "d’Aubigny sur Nère",
@@ -138,7 +138,7 @@ class CSVSpec extends Specification {
       val groupId = UUID.randomUUID()
       val creatorId = UUID.randomUUID()
       val dateTime = DateTime.now(Time.dateTimeZone)
-      val list: List[Either[List[FormError], (UserGroup, User)]] = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => groupId, () => userId, creatorId, dateTime))
+      val list: List[Either[(List[FormError], String), (UserGroup, User)]] = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => groupId, () => userId, creatorId, dateTime, ""))
       list.filter(_.isLeft) must have size 1
     }
   }
@@ -154,7 +154,7 @@ class CSVSpec extends Specification {
       val groupId = UUID.randomUUID()
       val creatorId = UUID.randomUUID()
       val dateTime = DateTime.now(Time.dateTimeZone)
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => userId, () => groupId, creatorId, dateTime))
+      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => userId, () => groupId, creatorId, dateTime, ""))
       list must have size 7
       val result = list.head
       result.right.get._1 must equalTo(UserGroup(id = userId,
@@ -175,7 +175,7 @@ class CSVSpec extends Specification {
       val groupId = UUID.randomUUID()
       val creatorId = UUID.randomUUID()
       val dateTime = DateTime.now(Time.dateTimeZone)
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => groupId, () => userId, creatorId, dateTime))
+      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => groupId, () => userId, creatorId, dateTime, ""))
       list must have size 7
       list.head.right.get._2 must equalTo(User(id = userId,
         key = "key",
