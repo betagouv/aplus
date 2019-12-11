@@ -420,7 +420,7 @@ case class UserController @Inject()(loginAction: LoginAction,
             })
             val errors: List[(String, String)] = lineNumberToErrors.map({ case (lineNumber, (errors, completeLine)) => "Ligne %d : %s".format(lineNumber, errors.map(e => s"${e.key} ${e.message}").mkString(", ")) -> completeLine })
             val filledForm = csv.sectionsForm(request.currentUser.id)
-              .fill(groupToNewUsersMap.map({ case (group, users) => Section(group, users) }).toList -> request.currentArea.id)
+              .fill(groupToNewUsersMap.map({ case (group, users) => Section(group, users) }) -> request.currentArea.id)
                 .withGlobalError("Il y a des erreurs", errors: _*)
             Ok(views.html.reviewUsersImport(request.currentUser)(filledForm))
           }

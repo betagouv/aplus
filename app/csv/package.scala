@@ -1,7 +1,7 @@
 import java.util.UUID
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import extentions.{Operators, Time}
+import extentions.Time
 import models.{Area, Organisation, User, UserGroup}
 import org.joda.time.DateTime
 import play.api.data.Forms.{boolean, default, email, ignored, list, mapping, nonEmptyText, optional, seq, text, tuple, uuid}
@@ -196,15 +196,24 @@ package object csv {
     }
   }
 
-  def extractValidInputAndErrors(csvImportContent: String, separator: Char, creatorId: UUID): (Map[UserGroup, List[User]], List[(Int, (List[FormError], String))]) = {
+  def extractValidInputAndErrors(csvImportContent: String, separator: Char, creatorId: UUID): (List[(UserGroup, List[User])], List[(Int, (List[FormError], String))]) = {
     val forms = extractFromCSV(csvImportContent, separator, creatorId)
     val lineNumberToErrors = forms.filter(_.isLeft).map(_.left.get)
       .map({ case (lineNumber, errors, completeLine) =>
         lineNumber -> (errors -> completeLine)
       }).sortBy(_._1)
 
-    val deduplicatedEmail = forms.filter(_.isRight).map(_.right.get).groupBy(_._2.email).mapValues(_.head).values.toList
-    val groupToUsersMap = deduplicatedEmail.groupBy(_._1.name).map({ case (_, tuple) => tuple.head._1 -> tuple.map(_._2) }) // Group by group name
+    val deduplicatedEmail: List[((UserGroup, User), Int)] = forms.filter(_.isRight).map(_.right.get).zipWithIndex
+      .groupBy({ case ((_, user), _) => user.email })
+      .mapValues(_.head).values.toList.sortBy(_._2)
+
+    // Group by group name and keep csv line order
+    val groupToUsersMap: List[(UserGroup, List[User])] = deduplicatedEmail
+      .groupBy({ case ((group, _), _) => group.name }) // Group by name
+      .map({ case (_,list) => (list.head._1._1 -> list.map(_._2).min) -> list.sortBy(_._2).map(_._1._2) }) // Sort users
+      .toList
+      .sortBy(_._1._2) // sort groups
+      .map({ case (key,value) => key._1 -> value }) // discard index
     groupToUsersMap -> lineNumberToErrors
   }
   
