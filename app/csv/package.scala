@@ -209,11 +209,11 @@ package object csv {
 
     // Group by group name and keep csv line order
     val groupToUsersMap: List[(UserGroup, List[User])] = deduplicatedEmail
-      .groupBy({ case ((group, _), _) => group.name })
-      .map({ case (_,list) => (list.head._1._1 -> list.map(_._2).min) -> list.sortBy(_._2).map(_._1._2) })
+      .groupBy({ case ((group, _), _) => group.name }) // Group by name
+      .map({ case (_,list) => (list.head._1._1 -> list.map(_._2).min) -> list.sortBy(_._2).map(_._1._2) }) // Sort users
       .toList
-      .sortBy(_._1._2)
-      .map({ case (key,value) => key._1 -> value })
+      .sortBy(_._1._2) // sort groups
+      .map({ case (key,value) => key._1 -> value }) // discard index
     groupToUsersMap -> lineNumberToErrors
   }
   
