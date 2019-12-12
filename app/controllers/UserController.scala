@@ -87,7 +87,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         ).mkString(";")
       }
 
-      val headers = List[String]("Id", csv.USER_LAST_NAME.prefixes(0), csv.USER_QUALITY.prefixes(0),
+      val headers = List[String]("Id", csv.USER_LAST_NAME.prefixes(0),
         csv.USER_EMAIL.prefixes(0), "Création", "Aidant", csv.INSTRUCTOR.prefixes(0),
         csv.GROUP_MANAGER.prefixes(0), "Expert", "Admin", "Actif", "Commune INSEE", csv.GROUP_AREA.prefixes(0),
         csv.GROUP_NAME.prefixes(0), "CGU", "Newsletter").mkString(";")
