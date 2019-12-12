@@ -1,7 +1,7 @@
 @import models._
 @import extentions.MDLForms._
 
-@(currentUser: User)(form: Form[(List[csv.Section], java.util.UUID)])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User)(form: Form[(List[csv.Section], java.util.UUID)], existingUsers: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @display(section: Field, sectionIndex: Int)(header: Html)(footer: Html) = {
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white">
@@ -67,6 +67,14 @@
           <br>
         }
       }
+    }
+    @if(existingUsers.nonEmpty) {
+      Utilisateurs dont le compte existe déjà :
+      <ul>
+        @for(existingUser <- existingUsers) {
+          <li><a href="/utilisateurs/@existingUser.id">@existingUser.name</a></li>
+        }
+      </ul>
     }
     <em>Département : </em>
     <select id="area-selector" name="area-selector">
