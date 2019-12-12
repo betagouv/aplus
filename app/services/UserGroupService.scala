@@ -4,11 +4,12 @@ import java.sql.ResultSet
 import java.util.UUID
 
 import anorm._
-import extentions.Time
+import extentions.{Hash, Time}
 import javax.inject.Inject
-import models.UserGroup
+import models.{User, UserGroup}
 import play.api.db.Database
 import anorm.JodaParameterMetaData._
+import play.api.libs.json.Json
 
 @javax.inject.Singleton
 class UserGroupService @Inject()(configuration: play.api.Configuration, db: Database) {
@@ -25,6 +26,23 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
     "email"
   ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
 
+  def add(groups: List[UserGroup]) = db.withTransaction { implicit connection =>
+    groups.foldRight(true) { (group, success) =>
+      success &&
+        SQL"""
+      INSERT INTO user_group(id, name, description, insee_code, creation_date, create_by_user_id, area, organisation, email) VALUES (
+         ${group.id}::uuid,
+         ${group.name},
+         ${group.description},
+         array[${group.inseeCode}]::character varying(5)[],
+         ${group.creationDate},
+         ${group.createByUserId}::uuid,
+         ${group.area}::uuid,
+         ${group.organisation},
+         ${group.email})
+      """.executeUpdate() == 1
+    }
+  }
 
   def add(group: UserGroup): Boolean = db.withConnection { implicit connection =>
     SQL"""
