@@ -118,7 +118,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
   def addGroupForm[A](timeZone: DateTimeZone)(implicit request: RequestWithUserData[A]) = Form(
     mapping(
       "id" -> ignored(UUID.randomUUID()),
-      "name" -> text(maxLength = 50),
+      "name" -> text(maxLength = 60),
       "description" -> optional(text),
       "insee-code" -> list(text),
       "creationDate" -> ignored(DateTime.now(timeZone)),

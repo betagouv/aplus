@@ -18,7 +18,6 @@ package object csv {
 
   val USER_LAST_NAME = Header("user_lastname", List("Nom"))
   val USER_FIRST_NAME = Header("user_firstname", List("Prénom"))
-  val USER_QUALITY = Header("user_quality", List("Qualité"))
   val USER_EMAIL = Header("user_email", List("Email", "Adresse e-mail", "Contact mail Agent"))
   val INSTRUCTOR = Header("user_instructor", List("Instructeur"))
   val GROUP_MANAGER = Header("user_group_manager", List("Responsable"))
@@ -31,7 +30,7 @@ package object csv {
 
   val SEPARATOR = ";"
 
-  val USER_HEADERS = List(USER_PHONE_NUMBER, USER_FIRST_NAME, USER_LAST_NAME, USER_QUALITY, USER_EMAIL, INSTRUCTOR, GROUP_MANAGER)
+  val USER_HEADERS = List(USER_PHONE_NUMBER, USER_FIRST_NAME, USER_LAST_NAME, USER_EMAIL, INSTRUCTOR, GROUP_MANAGER)
   val USER_HEADER = USER_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
 
   val GROUP_HEADERS = List(GROUP_AREA, GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL)
@@ -50,7 +49,7 @@ package object csv {
   def groupMappingForCSVImport(uuidGenerator: UUIDGenerator)(creatorId: UUID)(currentDate: DateTime): Mapping[UserGroup] =
     mapping(
       "id" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(uuidGenerator()), uuid => Some(uuid)),
-      GROUP_NAME.key -> nonEmptyText.verifying(maxLength(100)).transform[String](groupNamePreprocessing, identity),
+      GROUP_NAME.key -> nonEmptyText.verifying(maxLength(60)).transform[String](groupNamePreprocessing, identity),
       "description" -> ignored(Option.empty[String]),
       "inseeCode" -> ignored(List.empty[String]),
       "creationDate" -> ignored(currentDate),
@@ -81,7 +80,6 @@ package object csv {
     USER_LAST_NAME.key -> nonEmptyText.verifying(maxLength(100)),
     USER_FIRST_NAME.key -> optional(text),
     USER_PHONE_NUMBER.key -> optional(text),
-    USER_QUALITY.key -> default(text, "").verifying(maxLength(100)),
     USER_EMAIL.key -> email.verifying(maxLength(200), nonEmpty),
     "Aidant" -> ignored(true),
     INSTRUCTOR.key -> optional(text.verifying(s => INSTRUCTOR.lowerPrefixes.exists(s.toLowerCase.startsWith) || s.toLowerCase() == "false"  || s.toLowerCase() == "true" || s.isEmpty))
@@ -107,18 +105,18 @@ package object csv {
     "newsletterAcceptationDate" -> ignored(Option.empty[DateTime])
   )(apply)(unapply)
 
-  def apply(id: UUID, key: String, lastName: String, firstName: Option[String], phoneNumber: Option[String], qualite: String, email: String,
+  def apply(id: UUID, key: String, lastName: String, firstName: Option[String], phoneNumber: Option[String], email: String,
             helper: Boolean, instructor: Boolean, admin: Boolean, areas: List[UUID], creationDate: DateTime,
             hasAcceptedCharte: Boolean, communeCode: String, groupAdmin: Boolean, disabled: Boolean, expert: Boolean,
             groupIds: List[UUID], delegations: Map[String, String], cguAcceptationDate: Option[DateTime],
             newsLetterAcceptationDate: Option[DateTime]): User = User.apply(id, key,
-    firstName.map(lastName + " " + _).getOrElse(lastName), qualite, email, helper, instructor, admin, areas,
+    firstName.map(lastName + " " + _).getOrElse(lastName), "", email, helper, instructor, admin, areas,
     creationDate, hasAcceptedCharte, communeCode, groupAdmin, disabled, expert, groupIds, delegations,
     cguAcceptationDate, newsLetterAcceptationDate, phoneNumber)
 
-  def unapply(user: User): Option[(UUID, String, String, Option[String], Option[String], String, String, Boolean, Boolean, Boolean, List[UUID],
+  def unapply(user: User): Option[(UUID, String, String, Option[String], Option[String], String, Boolean, Boolean, Boolean, List[UUID],
     DateTime, Boolean, String, Boolean, Boolean, Boolean, List[UUID], Map[String, String], Option[DateTime],
-    Option[DateTime])] = Some((user.id, user.key, user.name, None, user.phoneNumber, user.qualite, user.email, user.helper,
+    Option[DateTime])] = Some((user.id, user.key, user.name, None, user.phoneNumber, user.email, user.helper,
     user.instructor, user.admin, user.areas, user.creationDate, user.hasAcceptedCharte, user.communeCode,
     user.groupAdmin, user.disabled, user.expert, user.groupIds, user.delegations, user.cguAcceptationDate,
     user.newsletterAcceptationDate))
