@@ -194,19 +194,9 @@ case class UserController @Inject()(loginAction: LoginAction,
           val groupsToInsert: List[UserGroup] = toInsert.map(_._1)
             .filterNot(group => groupService.groupByName(group.name).isDefined)
 
-          val insertResult = groupsToInsert
-            .foldLeft[Either[(String, String), Unit]](Right(()))({ case (either, group) =>
-              either.fold(Left.apply, { _: Unit =>
-                if (not(groupService.add(group))) {
-                  Left("ADD_GROUP_ERROR" -> s"Impossible d'ajouter le groupe ${group.name} dans la BDD à l'importation.")
-                } else {
-                  Right(())
-                }
-              })
-            })
-          
-          if (insertResult.isLeft) {
-            val (code, description) = insertResult.left.get
+          if (not(groupService.add(groupsToInsert))) {
+            val code = "ADD_GROUP_ERROR"
+            val description = s"Impossible d'ajouter les groupes ${groupsToInsert.map(_.name).mkString(", ")} dans la BDD à l'importation."
             eventService.error(code, description)
             val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
             InternalServerError(views.html.reviewUsersImport(request.currentUser)(form))
@@ -216,9 +206,9 @@ case class UserController @Inject()(loginAction: LoginAction,
             val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
             InternalServerError(views.html.reviewUsersImport(request.currentUser)(form))
           } else {
-            usersToInsert.foreach {  user =>
-                notificationsService.newUser(user)
-                eventService.info("ADD_USER_DONE", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
+            usersToInsert.foreach { user =>
+              notificationsService.newUser(user)
+              eventService.info("ADD_USER_DONE", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
             }
             eventService.info("IMPORT_USERS_DONE", "Utilisateurs ajoutés par l'importation")
             Redirect(routes.UserController.all(request.currentArea.id)).flashing("success" -> "Utilisateurs importés.")
