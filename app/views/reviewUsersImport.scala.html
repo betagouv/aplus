@@ -72,7 +72,7 @@
       Utilisateurs dont le compte existe déjà :
       <ul>
         @for(existingUser <- existingUsers) {
-          <li><a href="/utilisateurs/@existingUser.id">@existingUser.name</a></li>
+          <li><a href="/utilisateurs/@existingUser.id">@existingUser.name (@existingUser.email)</a></li>
         }
       </ul>
     }
