@@ -29,8 +29,6 @@ case class UserController @Inject()(loginAction: LoginAction,
                                     configuration: Configuration,
                                     eventService: EventService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport with UserOperators with GroupOperators {
 
-  val IMPORT_AREA_ID_COOKIE_NAME = "import-area-id"
-
   def all(areaId: UUID): Action[AnyContent] = loginAction { implicit request: RequestWithUserData[AnyContent] =>
     asUserWhoSeesUsersOfArea(areaId) { () =>
       "ALL_USER_UNAUTHORIZED" -> "Accès non autorisé à l'admin des utilisateurs"
@@ -180,13 +178,9 @@ case class UserController @Inject()(loginAction: LoginAction,
         val cleanedForm = missFilledForm.copy(data = missFilledForm.data.filter({ case (_, v) => v.nonEmpty }))
         eventService.info("IMPORT_USERS_ERROR", s"Erreur dans le formulaire importation utilisateur")
         BadRequest(views.html.reviewUsersImport(request.currentUser)(cleanedForm))
-      }, { case sections =>
-        request.cookies.get(IMPORT_AREA_ID_COOKIE_NAME).flatMap(cookie => UUIDHelper.fromString(cookie.value)).fold({
-          eventService.info("IMPORT_USERS_NO_AREA_ERROR", s"Erreur d'importation utilisateur : aucun département n'est défini.")
-          BadRequest(views.html.importUsers(request.currentUser)(csv.csvImportContentForm))
-        })({ areaId =>
+      }, { case (sections, areaId) =>
           if (sections.isEmpty) {
-            val form = csv.sectionsForm(request.currentUser.id).fill(sections).withGlobalError("Action impossible, il n'y a aucun utilisateur à ajouter.")
+            val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError("Action impossible, il n'y a aucun utilisateur à ajouter.")
             eventService.info("IMPORT_USERS_ERROR", s"Erreur d'importation utilisateur : aucun utilisateur à ajouter")
             BadRequest(views.html.reviewUsersImport(request.currentUser)(form))
           } else {
@@ -214,12 +208,12 @@ case class UserController @Inject()(loginAction: LoginAction,
             if (insertResult.isLeft) {
               val (code, description) = insertResult.left.get
               eventService.error(code, description)
-              val form = csv.sectionsForm(request.currentUser.id).fill(sections).withGlobalError(description)
+              val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
               InternalServerError(views.html.reviewUsersImport(request.currentUser)(form))
             } else if (not(userService.add(usersToInsert))) {
               val description = s"Impossible d'ajouter des utilisateurs dans la BDD à l'importation."
               eventService.error("ADD_USER_ERROR", description)
-              val form = csv.sectionsForm(request.currentUser.id).fill(sections).withGlobalError(description)
+              val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
               InternalServerError(views.html.reviewUsersImport(request.currentUser)(form))
             } else {
               usersToInsert.foreach {  user =>
@@ -230,7 +224,6 @@ case class UserController @Inject()(loginAction: LoginAction,
               Redirect(routes.UserController.all(request.currentArea.id)).flashing("success" -> "Utilisateurs importés.")
             }
           }
-        })
       })
     }
   }
@@ -421,7 +414,6 @@ case class UserController @Inject()(loginAction: LoginAction,
           if (groupToUsersMap.isEmpty) {
             eventService.warn(code = "INVALID_CSV", description = "Le CSV fourni est invalide.")
             BadRequest(views.html.importUsers(request.currentUser)(csv.csvImportContentForm))
-              .withCookies(Cookie(name = "import-area-id", value = area.toString))
           } else {
             // Remove already existing users
             val groupToNewUsersMap = groupToUsersMap.map({ case (group, users) =>
@@ -429,10 +421,9 @@ case class UserController @Inject()(loginAction: LoginAction,
             })
             val errors: List[(String, String)] = lineNumberToErrors.map({ case (lineNumber, (errors, completeLine)) => "Ligne %d : %s".format(lineNumber, errors.map(e => s"${e.key} ${e.message}").mkString(", ")) -> completeLine })
             val filledForm = csv.sectionsForm(request.currentUser.id)
-              .fill(groupToNewUsersMap.map({ case (group, users) => Section(group, users) }))
+              .fill(groupToNewUsersMap.map({ case (group, users) => Section(group, users) }) -> area)
               .withGlobalError("Il y a des erreurs", errors: _*)
             Ok(views.html.reviewUsersImport(request.currentUser)(filledForm))
-              .withCookies(Cookie(name = "import-area-id", value = area.toString))
           }
         })
       }

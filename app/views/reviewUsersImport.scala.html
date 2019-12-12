@@ -1,7 +1,7 @@
 @import models._
 @import extentions.MDLForms._
 
-@(currentUser: User)(form: Form[List[csv.Section]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User)(form: Form[(List[csv.Section], java.util.UUID)])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @display(section: Field, sectionIndex: Int)(header: Html)(footer: Html) = {
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white">
@@ -68,6 +68,14 @@
         }
       }
     }
+  <div>
+    <em>Département : </em>
+    <select id="area-selector" name="area-selector">
+      @for(area <- currentUser.areas.flatMap(Area.fromId)) {
+        <option value="@area.id" @if(area.id.toString() == form("area-selector").value.get) { selected="true" }>@area.name</option>
+      }
+    </select>
+  </div>
     <em>Instructeur : </em><a href="#" id="instructor-all-link">Tous</a> / <a href="#" id="instructor-none-link">Aucuns</a>
     @helper.repeatWithIndex(form("sections")) { (section, sectionIndex) =>
         @display(section, sectionIndex) {

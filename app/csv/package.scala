@@ -158,14 +158,15 @@ package object csv {
       Right(form.value.get)
   }
 
-  private def sectionsMapping(groupId: UUIDGenerator, userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Mapping[List[Section]] =
-    mapping("sections" -> list(csv.sectionMapping(groupId, userId, creatorId, dateTime))
-    )(identity)(Option.apply)
+  private def sectionsMapping(groupId: UUIDGenerator, userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Mapping[(List[Section], UUID)] =
+    mapping("sections" -> list(csv.sectionMapping(groupId, userId, creatorId, dateTime)),
+      "area-selector" ->  uuid.verifying(area => Operators.not(List(Area.allArea,Area.notApplicable).contains(area)))
+    )({ case (sections, area) => sections -> area })({ case (section, area) => Some(section -> area) })
 
-  private def sectionsForm(groupId: UUIDGenerator, userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Form[List[Section]] =
+  private def sectionsForm(groupId: UUIDGenerator, userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Form[(List[Section], UUID)] =
     Form(sectionsMapping(groupId, userId, creatorId, dateTime))
 
-  def sectionsForm(creatorId: UUID): Form[List[Section]] =
+  def sectionsForm(creatorId: UUID): Form[(List[Section], UUID)] =
     sectionsForm(UUID.randomUUID, UUID.randomUUID, creatorId, DateTime.now(Time.dateTimeZone))
 
   def allWithCompleteLine(csvReader: CSVReader)(implicit format:DefaultCSVFormat): List[(Map[String, String], String)] = {
