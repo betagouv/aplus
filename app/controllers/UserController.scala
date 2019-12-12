@@ -193,6 +193,8 @@ case class UserController @Inject()(loginAction: LoginAction,
             .filterNot(user => userService.byId(user.id).isDefined)
           val groupsToInsert: List[UserGroup] = toInsert.map(_._1)
             .filterNot(group => groupService.groupByName(group.name).isDefined)
+          val existingUsers: List[User] = toInsert.flatMap(_._2)
+            .flatMap(user => userService.byEmail(user.email))
 
           if (not(groupService.add(groupsToInsert))) {
             val code = "ADD_GROUP_ERROR"
