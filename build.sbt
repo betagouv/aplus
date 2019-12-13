@@ -33,7 +33,7 @@ libraryDependencies ++= Seq(
 )
 // UI
 libraryDependencies ++= Seq(
-  "org.webjars" %% "webjars-play" % "2.6.3",
+  "org.webjars" %% "webjars-play" % "2.8.0",
   "org.webjars.bower" % "material-design-lite" % "1.3.0",
   "org.webjars" % "material-design-icons" % "3.0.1",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
