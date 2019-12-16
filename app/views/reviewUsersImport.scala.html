@@ -72,12 +72,7 @@
         }
       </ul>
     }
-    <em>Département : </em>
-    <select id="area-selector" name="area-selector">
-      @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-        <option value="@area.id" @if(area.id.toString() == form("area-selector").value.get) { selected="true" }>@area.name</option>
-      }
-    </select>
+    <input type="hidden" id="area-selector" name="area-selector" value="@form("area-selector").value" />
   </div>
     <em>Instructeur : </em><a href="#" id="instructor-all-link">Tous</a> / <a href="#" id="instructor-none-link">Aucuns</a>
     @helper.repeatWithIndex(form("sections")) { (section, sectionIndex) =>

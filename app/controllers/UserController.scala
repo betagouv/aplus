@@ -407,11 +407,16 @@ case class UserController @Inject()(loginAction: LoginAction,
             eventService.warn(code = "INVALID_CSV", description = "Le CSV fourni est invalide.")
             BadRequest(views.html.importUsers(request.currentUser)(csv.csvImportContentForm))
           } else {
+            // Concatenate area to name
+            val uniqueGroupToUsersMap = groupToUsersMap.map({ case (group, users) =>
+              group.copy(name = s"${group.name} - ${Area.fromId(area).map(_.name).getOrElse("")}") -> users
+            })
+
             // Remove already existing users
-            val groupToNewUsersMap = groupToUsersMap.map({ case (group, users) =>
+            val groupToNewUsersMap = uniqueGroupToUsersMap.map({ case (group, users) =>
               group -> users.filterNot(user => userService.byEmail(user.email).isDefined)
             })
-            val existingUsers: List[User] = groupToUsersMap.flatMap(_._2)
+            val existingUsers: List[User] = uniqueGroupToUsersMap.flatMap(_._2)
               .flatMap(user => userService.byEmail(user.email))
 
             val errors: List[(String, String)] = lineNumberToErrors.map({ case (lineNumber, (errors, completeLine)) => "Ligne %d : %s".format(lineNumber, errors.map(e => s"${e.key} ${e.message}").mkString(", ")) -> completeLine })

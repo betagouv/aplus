@@ -38,12 +38,8 @@ package object csv {
 
   type UUIDGenerator = () => UUID
 
-  def groupNamePreprocessing(groupName: String): String = {
-    if(groupName == "Min. Intérieur")
-      "Préfecture"
-    else
-      groupName
-  }
+  def groupNamePreprocessing(groupName: String): String =
+    groupName.replaceFirst("Min. Intérieur", "Préfecture")
 
   // CSV import mapping
   def groupMappingForCSVImport(uuidGenerator: UUIDGenerator)(creatorId: UUID)(currentDate: DateTime): Mapping[UserGroup] =
@@ -158,7 +154,9 @@ package object csv {
 
   private def sectionsMapping(groupId: UUIDGenerator, userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Mapping[(List[Section], UUID)] =
     mapping("sections" -> list(csv.sectionMapping(groupId, userId, creatorId, dateTime)),
-      "area-selector" ->  uuid.verifying(area => Operators.not(List(Area.allArea,Area.notApplicable).contains(area)))
+      "area-selector" -> uuid.verifying(area =>
+        Operators.not(List(Area.allArea, Area.notApplicable).map(_.id).contains(area))
+      )
     )({ case (sections, area) => sections -> area })({ case (section, area) => Some(section -> area) })
 
   private def sectionsForm(groupId: UUIDGenerator, userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Form[(List[Section], UUID)] =
@@ -214,10 +212,6 @@ package object csv {
       .map({ case (key,value) => key._1 -> value }) // discard index
     groupToUsersMap -> lineNumberToErrors
   }
-  
-  private def prepareGroup(group: UserGroup, area: Area): UserGroup = {
-    group.copy(name = s"${group.name} - ${area.name}", area = area.id)
-  }
 
   private def prepareUsers(users: List[User], group: UserGroup): List[User] = {
     val setGroup = { user: User =>
@@ -230,7 +224,7 @@ package object csv {
   }
 
   def prepareSection(group: UserGroup, users: List[User], area: Area): (UserGroup, List[User]) = {
-    val finalGroup = prepareGroup(group, area)
+    val finalGroup = group.copy(area = area.id)
     val finalUsers = prepareUsers(users, finalGroup)
     finalGroup -> finalUsers
   }
