@@ -203,7 +203,7 @@ case class UserController @Inject()(loginAction: LoginAction,
             InternalServerError(views.html.reviewUsersImport(request.currentUser)(form, existingUsers))
           } else {
             val usersToInsert: List[User] = groupToUsers.flatMap({ case (group, users) =>
-              csv.prepareUsers(users.filter(user => userService.byId(user.id).isEmpty), group)
+              csv.prepareUsers(users, group)
             })
             if (not(userService.add(usersToInsert))) {
               val description = s"Impossible d'ajouter des utilisateurs dans la BDD à l'importation."
