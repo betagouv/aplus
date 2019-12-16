@@ -185,16 +185,15 @@ case class UserController @Inject()(loginAction: LoginAction,
           BadRequest(views.html.reviewUsersImport(request.currentUser)(form, Nil))
         } else {
           val area = Area.fromId(areaId).get
-          val toInsert = sections.map({ section =>
-            val group = groupService.groupByName(s"${section.group.name} - ${area.name}").getOrElse(section.group)
-            csv.prepareSection(group, section.users, area)
+          val groupToUsers = sections.map({ section =>
+            section.group.copy(name = s"${section.group.name} - ${area.name}", area = area.id) -> section.users
           })
-          val usersToInsert: List[User] = toInsert.flatMap(_._2)
-            .filterNot(user => userService.byId(user.id).isDefined)
-          val groupsToInsert: List[UserGroup] = toInsert.map(_._1)
-            .filterNot(group => groupService.groupByName(group.name).isDefined)
-          val existingUsers: List[User] = toInsert.flatMap(_._2)
+          val existingUsers: List[User] = groupToUsers.flatMap(_._2)
             .flatMap(user => userService.byEmail(user.email))
+          val groupsToInsert: List[UserGroup] = groupToUsers.map(_._1)
+            .filterNot({ group =>
+              groupService.groupByName(group.name).isDefined
+            })
 
           if (not(groupService.add(groupsToInsert))) {
             val code = "ADD_GROUP_ERROR"
@@ -202,18 +201,23 @@ case class UserController @Inject()(loginAction: LoginAction,
             eventService.error(code, description)
             val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
             InternalServerError(views.html.reviewUsersImport(request.currentUser)(form, existingUsers))
-          } else if (not(userService.add(usersToInsert))) {
-            val description = s"Impossible d'ajouter des utilisateurs dans la BDD à l'importation."
-            eventService.error("ADD_USER_ERROR", description)
-            val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
-            InternalServerError(views.html.reviewUsersImport(request.currentUser)(form, existingUsers))
           } else {
-            usersToInsert.foreach { user =>
-              notificationsService.newUser(user)
-              eventService.info("ADD_USER_DONE", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
+            val usersToInsert: List[User] = groupToUsers.flatMap({ case (group, users) =>
+              csv.prepareUsers(users.filter(user => userService.byId(user.id).isEmpty), group)
+            })
+            if (not(userService.add(usersToInsert))) {
+              val description = s"Impossible d'ajouter des utilisateurs dans la BDD à l'importation."
+              eventService.error("ADD_USER_ERROR", description)
+              val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
+              InternalServerError(views.html.reviewUsersImport(request.currentUser)(form, existingUsers))
+            } else {
+              usersToInsert.foreach { user =>
+                notificationsService.newUser(user)
+                eventService.info("ADD_USER_DONE", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
+              }
+              eventService.info("IMPORT_USERS_DONE", "Utilisateurs ajoutés par l'importation")
+              Redirect(routes.UserController.all(request.currentArea.id)).flashing("success" -> "Utilisateurs importés.")
             }
-            eventService.info("IMPORT_USERS_DONE", "Utilisateurs ajoutés par l'importation")
-            Redirect(routes.UserController.all(request.currentArea.id)).flashing("success" -> "Utilisateurs importés.")
           }
         }
       })
