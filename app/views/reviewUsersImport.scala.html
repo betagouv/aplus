@@ -63,6 +63,7 @@
         }
       }
     }
+  <div>
     @if(existingUsers.nonEmpty) {
       Utilisateurs dont le compte existe déjà :
       <ul>
@@ -71,12 +72,8 @@
         }
       </ul>
     }
-    <em>Département : </em>
-    <select id="area-selector" name="area-selector">
-      @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-        <option value="@area.id">@area.name</option>
-      }
-    </select>
+    <input type="hidden" id="area-selector" name="area-selector" value="@form("area-selector").value" />
+  </div>
     <em>Instructeur : </em><a href="#" id="instructor-all-link">Tous</a> / <a href="#" id="instructor-none-link">Aucuns</a>
     @helper.repeatWithIndex(form("sections")) { (section, sectionIndex) =>
         @display(section, sectionIndex) {

@@ -392,7 +392,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "IMPORT_USER_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
-      Ok(views.html.importUsers(request.currentUser)("", List.empty))
+      Ok(views.html.importUsers(request.currentUser)(csv.csvImportContentForm))
     }
   }
 
@@ -401,26 +401,32 @@ case class UserController @Inject()(loginAction: LoginAction,
       asAdmin { () =>
         "IMPORT_GROUP_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
       } { () =>
-        csv.csvImportContentForm.bindFromRequest.fold({ _ =>
-          eventService.warn(code = "CSV_IMPORT_INPUT_EMPTY", description = "Le champ d'import de CSV est vide.")
-          BadRequest(views.html.importUsers(request.currentUser)("", List(FormError.apply("csv-import-content", "Le champ est vide."))))
-        }, { case (csvImportContent, separator) =>
+        val form = csv.csvImportContentForm.bindFromRequest
+        form.fold({ _ =>
+          eventService.warn(code = "CSV_IMPORT_INPUT_EMPTY", description = "Le champ d'import de CSV est vide ou le département n'est pas défini.")
+          BadRequest(views.html.importUsers(request.currentUser)(form))
+        }, { case (csvImportContent, area, separator) =>
           val (groupToUsersMap, lineNumberToErrors) = csv.extractValidInputAndErrors(csvImportContent, separator.head, request.currentUser.id)
           if (groupToUsersMap.isEmpty) {
             eventService.warn(code = "INVALID_CSV", description = "Le CSV fourni est invalide.")
-            BadRequest(views.html.importUsers(request.currentUser)("", List(FormError.apply("csv-import-content", "Le format est invalide, veuillez vérifier le séparateur ainsi que le données."))))
+            BadRequest(views.html.importUsers(request.currentUser)(csv.csvImportContentForm))
           } else {
+            // Concatenate area to name
+            val uniqueGroupToUsersMap = groupToUsersMap.map({ case (group, users) =>
+              group.copy(name = s"${group.name} - ${Area.fromId(area).map(_.name).getOrElse("")}") -> users
+            })
+
             // Remove already existing users
-            val groupToNewUsersMap = groupToUsersMap.map({ case (group, users) =>
+            val groupToNewUsersMap = uniqueGroupToUsersMap.map({ case (group, users) =>
               group -> users.filterNot(user => userService.byEmail(user.email).isDefined)
             })
-            val existingUsers: List[User] = groupToUsersMap.flatMap(_._2)
+            val existingUsers: List[User] = uniqueGroupToUsersMap.flatMap(_._2)
               .flatMap(user => userService.byEmail(user.email))
 
             val errors: List[(String, String)] = lineNumberToErrors.map({ case (lineNumber, (errors, completeLine)) => "Ligne %d : %s".format(lineNumber, errors.map(e => s"${e.key} ${e.message}").mkString(", ")) -> completeLine })
             val filledForm = csv.sectionsForm(request.currentUser.id)
-              .fill(groupToNewUsersMap.map({ case (group, users) => Section(group, users) }) -> request.currentArea.id)
-                .withGlobalError("Il y a des erreurs", errors: _*)
+              .fill(groupToNewUsersMap.map({ case (group, users) => Section(group, users) }) -> area)
+              .withGlobalError("Il y a des erreurs", errors: _*)
             Ok(views.html.reviewUsersImport(request.currentUser)(filledForm, existingUsers))
           }
         })

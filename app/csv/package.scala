@@ -1,7 +1,7 @@
 import java.util.UUID
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import extentions.Time
+import extentions.{Operators, Time}
 import models.{Area, Organisation, User, UserGroup}
 import org.joda.time.DateTime
 import play.api.data.Forms.{boolean, default, email, ignored, list, mapping, nonEmptyText, optional, seq, text, tuple, uuid}
@@ -38,12 +38,8 @@ package object csv {
 
   type UUIDGenerator = () => UUID
 
-  def groupNamePreprocessing(groupName: String): String = {
-    if(groupName == "Min. Intérieur")
-      "Préfecture"
-    else
-      groupName
-  }
+  def groupNamePreprocessing(groupName: String): String =
+    groupName.replaceFirst("Min. Intérieur", "Préfecture")
 
   // CSV import mapping
   def groupMappingForCSVImport(uuidGenerator: UUIDGenerator)(creatorId: UUID)(currentDate: DateTime): Mapping[UserGroup] =
@@ -158,7 +154,9 @@ package object csv {
 
   private def sectionsMapping(groupId: UUIDGenerator, userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Mapping[(List[Section], UUID)] =
     mapping("sections" -> list(csv.sectionMapping(groupId, userId, creatorId, dateTime)),
-      "area-selector" -> uuid
+      "area-selector" -> uuid.verifying(area =>
+        Operators.not(List(Area.allArea, Area.notApplicable).map(_.id).contains(area))
+      )
     )({ case (sections, area) => sections -> area })({ case (section, area) => Some(section -> area) })
 
   private def sectionsForm(groupId: UUIDGenerator, userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Form[(List[Section], UUID)] =
@@ -220,14 +218,20 @@ package object csv {
       user.copy(groupIds = (group.id :: user.groupIds).distinct)
     }
     val setAreas = { user: User =>
-
       user.copy(areas = (group.area :: user.areas).distinct)
     }
     users.map(setGroup.compose(setAreas).apply)
   }
 
-  val csvImportContentForm: Form[(String, String)] = Form(mapping(
+  def prepareSection(group: UserGroup, users: List[User], area: Area): (UserGroup, List[User]) = {
+    val finalGroup = group.copy(area = area.id)
+    val finalUsers = prepareUsers(users, finalGroup)
+    finalGroup -> finalUsers
+  }
+
+  val csvImportContentForm: Form[(String, UUID, String)] = Form(mapping(
     "csv-import-content" -> play.api.data.Forms.nonEmptyText,
+    "area-selector" -> uuid.verifying(area => Operators.not(List(Area.allArea,Area.notApplicable).contains(area))),
     "separator" -> play.api.data.Forms.nonEmptyText.verifying(value => value.equals(";") || value.equals(",")))
-  ({ (content, separator) => content -> separator })(tuple => Some(tuple._1 -> tuple._2)))
+  ({ (content, area, separator) => (content, area, separator) })({ case (content, area, separator) => Some((content, area, separator)) }))
 }
