@@ -214,25 +214,16 @@ package object csv {
       .map({ case (key,value) => key._1 -> value }) // discard index
     groupToUsersMap -> lineNumberToErrors
   }
-  
-  private def prepareGroup(group: UserGroup, area: Area): UserGroup = {
-    group.copy(name = s"${group.name} - ${area.name}", area = area.id)
-  }
 
-  private def prepareUsers(users: List[User], group: UserGroup): List[User] = {
+  def prepareUsers(users: List[User], group: UserGroup): List[User] = {
     val setGroup = { user: User =>
       user.copy(groupIds = (group.id :: user.groupIds).distinct)
     }
     val setAreas = { user: User =>
+
       user.copy(areas = (group.area :: user.areas).distinct)
     }
     users.map(setGroup.compose(setAreas).apply)
-  }
-
-  def prepareSection(group: UserGroup, users: List[User], area: Area): (UserGroup, List[User]) = {
-    val finalGroup = prepareGroup(group, area)
-    val finalUsers = prepareUsers(users, finalGroup)
-    finalGroup -> finalUsers
   }
 
   val csvImportContentForm: Form[(String, String)] = Form(mapping(
