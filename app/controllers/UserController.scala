@@ -5,7 +5,7 @@ import java.util.{Locale, UUID}
 import actions.{LoginAction, RequestWithUserData}
 import csv.Section
 import extentions.Operators.{GroupOperators, UserOperators, not}
-import extentions.{Time, UUIDHelper}
+import extentions.{Operators, Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
 import models.{Area, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -14,7 +14,7 @@ import org.webjars.play.WebJarsUtil
 import play.api.Configuration
 import play.api.data.Forms.{optional, text, tuple, _}
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
-import play.api.data.{Form, FormError, Mapping}
+import play.api.data.{Form, Mapping}
 import play.api.mvc._
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
@@ -184,12 +184,12 @@ case class UserController @Inject()(loginAction: LoginAction,
           eventService.info("IMPORT_USERS_ERROR", s"Erreur d'importation utilisateur : aucun utilisateur à ajouter")
           BadRequest(views.html.reviewUsersImport(request.currentUser)(form, Nil))
         } else {
-          val area = Area.fromId(areaId).get
-          val groupToUsers = sections.map({ section =>
-            section.group.copy(name = s"${section.group.name} - ${area.name}", area = area.id) -> section.users
-          })
-          val existingUsers: List[User] = groupToUsers.flatMap(_._2)
-            .flatMap(user => userService.byEmail(user.email))
+          val groupToUsers = sections.map({ section => section.group -> section.users })
+
+          val existingUsers: List[User] = groupToUsers.map({ case (group, users) =>
+            group -> users.filter(user => userService.byEmail(user.email).exists(_.areas.contains(group.area)))
+          }).flatMap(_._2)
+
           val groupsToInsert: List[UserGroup] = groupToUsers.map(_._1)
             .filterNot({ group =>
               groupService.groupByName(group.name).isDefined
@@ -205,18 +205,39 @@ case class UserController @Inject()(loginAction: LoginAction,
             val usersToInsert: List[User] = groupToUsers.flatMap({ case (group, users) =>
               csv.prepareUsers(users, group)
             })
+
+            val existingUsersThatNeedToBeAddedToAGroup: List[User] = groupToUsers.flatMap({ case (group, users) =>
+              users.flatMap({ user: User =>
+                val optionalUser = userService.byEmail(user.email)
+                if (optionalUser.exists(user => Operators.not(user.groupIds.contains(group.area)))) {
+                  val previousUser = optionalUser.get
+                  Some(previousUser.copy(groupIds = (group.id :: previousUser.groupIds).distinct,
+                    areas = (group.area :: previousUser.areas).distinct))
+                } else {
+                  None
+                }
+              })
+            })
+
             if (not(userService.add(usersToInsert))) {
               val description = s"Impossible d'ajouter des utilisateurs dans la BDD à l'importation."
               eventService.error("ADD_USER_ERROR", description)
               val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
               InternalServerError(views.html.reviewUsersImport(request.currentUser)(form, existingUsers))
             } else {
-              usersToInsert.foreach { user =>
-                notificationsService.newUser(user)
-                eventService.info("ADD_USER_DONE", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
+              if(not(userService.update(existingUsersThatNeedToBeAddedToAGroup))) {
+                val description = s"Impossible de mettre à des utilisateurs à l'importation."
+                eventService.error("UPDATE_USER_ERROR", description)
+                val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
+                InternalServerError(views.html.reviewUsersImport(request.currentUser)(form, existingUsers))
+              } else {
+                usersToInsert.foreach { user =>
+                  notificationsService.newUser(user)
+                  eventService.info("ADD_USER_DONE", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
+                }
+                eventService.info("IMPORT_USERS_DONE", "Utilisateurs ajoutés par l'importation")
+                Redirect(routes.UserController.all(request.currentArea.id)).flashing("success" -> "Utilisateurs importés.")
               }
-              eventService.info("IMPORT_USERS_DONE", "Utilisateurs ajoutés par l'importation")
-              Redirect(routes.UserController.all(request.currentArea.id)).flashing("success" -> "Utilisateurs importés.")
             }
           }
         }
@@ -411,17 +432,14 @@ case class UserController @Inject()(loginAction: LoginAction,
             eventService.warn(code = "INVALID_CSV", description = "Le CSV fourni est invalide.")
             BadRequest(views.html.importUsers(request.currentUser)(csv.csvImportContentForm))
           } else {
-            // Concatenate area to name
-            val uniqueGroupToUsersMap = groupToUsersMap.map({ case (group, users) =>
-              group.copy(name = s"${group.name} - ${Area.fromId(area).map(_.name).getOrElse("")}") -> users
+            // Remove already existing users that also already belongs to the group.
+            val groupToNewUsersMap = groupToUsersMap.map({ case (group, users) =>
+              group -> users.filterNot(user => userService.byEmail(user.email).exists(_.areas.contains(group.area)))
             })
 
-            // Remove already existing users
-            val groupToNewUsersMap = uniqueGroupToUsersMap.map({ case (group, users) =>
-              group -> users.filterNot(user => userService.byEmail(user.email).isDefined)
-            })
-            val existingUsers: List[User] = uniqueGroupToUsersMap.flatMap(_._2)
-              .flatMap(user => userService.byEmail(user.email))
+            val existingUsers: List[User] = groupToUsersMap.map({ case (group, users) =>
+              group -> users.filter(user => userService.byEmail(user.email).exists(_.areas.contains(group.area)))
+            }).flatMap(_._2)
 
             val errors: List[(String, String)] = lineNumberToErrors.map({ case (lineNumber, (errors, completeLine)) => "Ligne %d : %s".format(lineNumber, errors.map(e => s"${e.key} ${e.message}").mkString(", ")) -> completeLine })
             val filledForm = csv.sectionsForm(request.currentUser.id)

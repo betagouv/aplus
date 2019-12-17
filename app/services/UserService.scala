@@ -107,6 +107,31 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
       """.executeUpdate() == 1
     }
   }
+
+  def update(users: List[User]) = db.withTransaction { implicit connection =>
+    users.foldRight(true) { (user, success)  =>
+      success && SQL"""
+          UPDATE "user" SET
+          name = ${user.name},
+          qualite = ${user.qualite},
+          email = ${user.email},
+          helper = ${user.helper},
+          instructor = ${user.instructor},
+          admin = ${user.admin},
+          areas = array[${user.areas}]::uuid[],
+          has_accepted_charte = ${user.hasAcceptedCharte},
+          commune_code = ${user.communeCode},
+          delegations = ${Json.toJson(user.delegations)},
+          group_admin = ${user.groupAdmin},
+          group_ids = array[${user.groupIds}]::uuid[],
+          expert = ${user.expert},
+          phone_number = ${user.phoneNumber},
+          disabled = ${user.disabled}
+          WHERE id = ${user.id}::uuid
+       """.executeUpdate() == 1
+    }
+  }
+
   def update(user: User) = db.withConnection {  implicit connection =>
     SQL"""
           UPDATE "user" SET

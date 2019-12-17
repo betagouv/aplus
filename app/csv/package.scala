@@ -226,7 +226,7 @@ package object csv {
 
     val duplicatedGroupForEachArea: List[((UserGroup, User), Int)] = deduplicatedEmail
       .flatMap({ case ((group, user), lineNumber) =>
-        val areaIds = if(group.inseeCode.isEmpty) List(area.toString)
+        val areaIds = if (group.inseeCode.isEmpty || group.inseeCode.head == Area.allArea.id.toString) List(area.toString)
         else group.inseeCode.distinct
         areaIds.flatMap({ areaUuid =>
           Area.fromId(UUID.fromString(areaUuid)).map({ area: Area =>
