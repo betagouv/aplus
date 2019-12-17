@@ -213,7 +213,7 @@ package object csv {
     groupToUsersMap -> lineNumberToErrors
   }
 
-  private def prepareUsers(users: List[User], group: UserGroup): List[User] = {
+  def prepareUsers(users: List[User], group: UserGroup): List[User] = {
     val setGroup = { user: User =>
       user.copy(groupIds = (group.id :: user.groupIds).distinct)
     }
