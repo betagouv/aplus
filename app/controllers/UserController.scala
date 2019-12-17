@@ -89,7 +89,7 @@ case class UserController @Inject()(loginAction: LoginAction,
 
       val headers = List[String]("Id", csv.USER_LAST_NAME.prefixes(0),
         csv.USER_EMAIL.prefixes(0), "Création", "Aidant", csv.INSTRUCTOR.prefixes(0),
-        csv.GROUP_MANAGER.prefixes(0), "Expert", "Admin", "Actif", "Commune INSEE", csv.GROUP_AREA.prefixes(0),
+        csv.GROUP_MANAGER.prefixes(0), "Expert", "Admin", "Actif", "Commune INSEE", csv.GROUP_AREAS.prefixes(0),
         csv.GROUP_NAME.prefixes(0), "CGU", "Newsletter").mkString(";")
       val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
       val date = DateTime.now(Time.dateTimeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
@@ -406,7 +406,7 @@ case class UserController @Inject()(loginAction: LoginAction,
           eventService.warn(code = "CSV_IMPORT_INPUT_EMPTY", description = "Le champ d'import de CSV est vide ou le département n'est pas défini.")
           BadRequest(views.html.importUsers(request.currentUser)(form))
         }, { case (csvImportContent, area, separator) =>
-          val (groupToUsersMap, lineNumberToErrors) = csv.extractValidInputAndErrors(csvImportContent, separator.head, request.currentUser.id)
+          val (groupToUsersMap, lineNumberToErrors) = csv.extractValidInputAndErrors(csvImportContent, separator.head, request.currentUser.id, area)
           if (groupToUsersMap.isEmpty) {
             eventService.warn(code = "INVALID_CSV", description = "Le CSV fourni est invalide.")
             BadRequest(views.html.importUsers(request.currentUser)(csv.csvImportContentForm))
