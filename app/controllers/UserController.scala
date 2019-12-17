@@ -184,16 +184,14 @@ case class UserController @Inject()(loginAction: LoginAction,
           eventService.info("IMPORT_USERS_ERROR", s"Erreur d'importation utilisateur : aucun utilisateur à ajouter")
           BadRequest(views.html.reviewUsersImport(request.currentUser)(form, Nil))
         } else {
-          val groupToUsers = sections.map({ section => section.group -> section.users })
+          val groupToUsers = sections.map({ section => section.group.copy(inseeCode = Nil) -> section.users })
 
           val existingUsers: List[User] = groupToUsers.map({ case (group, users) =>
             group -> users.filter(user => userService.byEmail(user.email).exists(_.areas.contains(group.area)))
           }).flatMap(_._2)
 
           val groupsToInsert: List[UserGroup] = groupToUsers.map(_._1)
-            .filterNot({ group =>
-              groupService.groupByName(group.name).isDefined
-            })
+            .filterNot({ group => groupService.groupByName(group.name).isDefined })
 
           if (not(groupService.add(groupsToInsert))) {
             val code = "ADD_GROUP_ERROR"
@@ -202,9 +200,13 @@ case class UserController @Inject()(loginAction: LoginAction,
             val form = csv.sectionsForm(request.currentUser.id).fill(sections -> areaId).withGlobalError(description)
             InternalServerError(views.html.reviewUsersImport(request.currentUser)(form, existingUsers))
           } else {
-            val usersToInsert: List[User] = groupToUsers.flatMap({ case (group, users) =>
-              csv.prepareUsers(users, group)
-            })
+            val usersToInsert: List[User] = groupToUsers.map({ case (group, users) =>
+              group -> csv.prepareUsers(users.filter(user => userService.byEmail(user.email).isEmpty), group)
+            }).flatMap(_._2).groupBy(_.email).map({ case (_, users) =>
+              val mergedAreas = users.flatMap(user => user.areas).distinct
+              val mergedGroups = users.flatten(user => user.groupIds).distinct
+              users.head.copy(areas = mergedAreas, groupIds = mergedGroups)
+            }).toList
 
             val existingUsersThatNeedToBeAddedToAGroup: List[User] = groupToUsers.flatMap({ case (group, users) =>
               users.flatMap({ user: User =>

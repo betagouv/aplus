@@ -230,7 +230,7 @@ package object csv {
         else group.inseeCode.distinct
         areaIds.flatMap({ areaUuid =>
           Area.fromId(UUID.fromString(areaUuid)).map({ area: Area =>
-            (group.copy(name = s"${group.name} - ${area.name}", inseeCode = Nil, area = area.id) -> user) -> lineNumber
+            (group.copy(name = s"${group.name} - ${area.name}", inseeCode = List(area.id.toString), area = area.id, id = UUID.randomUUID()) -> user) -> lineNumber
           })
         })
       })
