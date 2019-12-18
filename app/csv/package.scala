@@ -8,6 +8,7 @@ import play.api.data.Forms.{boolean, default, email, ignored, list, mapping, non
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.{Form, FormError, Mapping}
 
+import scala.collection.immutable
 import scala.io.Source
 
 package object csv {
@@ -220,24 +221,39 @@ package object csv {
         lineNumber -> (errors -> completeLine)
       }).sortBy(_._1)
 
-    val deduplicatedEmail: List[((UserGroup, User), Int)] = forms.filter(_.isRight).map(_.right.get).zipWithIndex
-      .groupBy({ case ((_, user), _) => user.email })
-      .mapValues(_.head).values.toList.sortBy(_._2)
+    val formLines: List[((UserGroup, User), Int)] = forms.filter(_.isRight).map(_.right.get).zipWithIndex
 
-    val duplicatedGroupForEachArea: List[((UserGroup, User), Int)] = deduplicatedEmail
+    val appliedDefaultGroupAndExplode: List[((UserGroup, User), Int)] = formLines
       .flatMap({ case ((group, user), lineNumber) =>
-        val areaIds = if (group.inseeCode.isEmpty || group.inseeCode.head == Area.allArea.id.toString) List(area.toString)
-        else group.inseeCode.distinct
-        areaIds.flatMap({ areaUuid =>
-          Area.fromId(UUID.fromString(areaUuid)).map({ area: Area =>
-            (group.copy(name = s"${group.name} - ${area.name}", inseeCode = List(area.id.toString), area = area.id, id = UUID.randomUUID()) -> user) -> lineNumber
-          })
+        val areaIds = if (group.inseeCode.isEmpty || group.inseeCode.head == Area.allArea.id.toString)
+          List(area.toString)
+        else
+          group.inseeCode.distinct
+        areaIds.map({ areaId =>
+          (group.copy(inseeCode = List(areaId), area = UUID.fromString(areaId)) -> user.copy(areas = List(areaId).map(UUID.fromString))) -> lineNumber
         })
       })
 
+    val groupedByNameAndAreaId: List[((String, String), (UserGroup, List[(User, Int)]))] = appliedDefaultGroupAndExplode.groupBy({ case ((group, _), _) => group.name -> group.area.toString })
+      .mapValues({ case users =>
+        val areas: List[UUID] = users.map(_._1._1.area)
+        (users.head._1._1.name -> users.head._1._1.area.toString) -> (users.head._1._1 -> users.map({ case ((_, user), lineNumber) => user.copy(areas = areas) -> lineNumber }))
+      }).values.toList
+
+    val groupedBySameUsersSet: List[((UserGroup, User), Int)] = groupedByNameAndAreaId.groupBy(_._2._2.map(_._1.email).distinct.sorted.mkString(";")).flatMap({ case (_, value) =>
+      val lines: List[((List[UUID], UserGroup), List[(User, Int)])] = value.map(_._2).map({ case (group, users) =>
+        val areas = users.flatMap(_._1.areas).distinct.sorted
+        (areas, group.copy(area = areas.head, inseeCode = areas.map(_.toString))) -> users
+      })
+      val users = lines.flatMap(_._2).groupBy(_._1.email).mapValues(_.head).values.toList
+      val areas = lines.flatMap(_._1._1)
+      val group = lines.head._1._2
+      users.map(user => (group.copy(area = areas.head, inseeCode = areas.map(_.toString)) -> user._1.copy(areas = areas)) -> user._2)
+    }).toList
+
     // Group by group name and keep csv line order
-    val groupToUsersMap: List[(UserGroup, List[User])] = duplicatedGroupForEachArea
-      .groupBy({ case ((group, _), _) => group.name }) // Group by name
+    val groupToUsersMap: List[(UserGroup, List[User])] = groupedBySameUsersSet //appliedDefaultGroup
+      .groupBy({ case ((group, _), _) => group.name + group.inseeCode.distinct.sorted.mkString("-")  }) // Group by name
       .map({ case (_,list) => (list.head._1._1 -> list.map(_._2).min) -> list.sortBy(_._2).map(_._1._2) }) // Sort users
       .toList
       .sortBy(_._1._2) // sort groups
