@@ -7,7 +7,7 @@
 } {
 
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
-        @helper.form(routes.UserController.importUsersReview(), 'method -> "post") {
+        @helper.form(routes.CSVImportController.importUsersReview(), 'method -> "post") {
             @helper.CSRF.formField
             <h2 class="mdl-cell mdl-cell--12-col">Importer un contenu CSV</h2>
             <div>

@@ -277,9 +277,5 @@ package object csv {
     finalGroup -> finalUsers
   }
 
-  val csvImportContentForm: Form[(String, UUID, String)] = Form(mapping(
-    "csv-import-content" -> play.api.data.Forms.nonEmptyText,
-    "area-selector" -> uuid.verifying(area => Operators.not(List(Area.allArea,Area.notApplicable).map(_.id).contains(area))),
-    "separator" -> play.api.data.Forms.nonEmptyText.verifying(value => value.equals(";") || value.equals(",")))
-  ({ (content, area, separator) => (content, area, separator) })({ case (content, area, separator) => Some((content, area, separator)) }))
+
 }

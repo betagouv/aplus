@@ -50,7 +50,7 @@
   <script src='@routes.Assets.versioned("javascripts/main.js")'></script>
   <script src='@routes.Assets.versioned("javascripts/csv-import.js")'></script>
 } {
-  @helper.form(routes.UserController.importUsers(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
+  @helper.form(routes.CSVImportController.importUsersReviewPost(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
   @helper.CSRF.formField
     @if(form.hasGlobalErrors) {
       @for(error <- form.globalErrors) {
