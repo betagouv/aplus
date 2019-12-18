@@ -98,7 +98,7 @@
           </thead>
           <tbody @if(!form.data.find({case (k, v) => k.startsWith("areas[") && v == area.id.toString})){ class="invisible" }>
 
-          @for(userGroup <- userGroups.filter(_.area == area.id)) {
+          @for(userGroup <- userGroups.filter(_.areaIds.contains(area.id))) {
               <tr>
                   <td style="width: 95px">
                       <i class="material-icons" style="vertical-align: middle;">chevron_right</i>

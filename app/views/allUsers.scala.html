@@ -101,7 +101,7 @@
       Télécharger export CSV
     </button>
   }
-      @for(area <- Area.all; userGroup <- userGroups.filter(_.area == area.id).sortBy(_.name)) {
+      @for(area <- Area.all; userGroup <- userGroups.filter(_.areaIds.contains(area.id)).sortBy(_.name)) {
         @defining(allUsers.filter(_.groupIds.contains(userGroup.id))){ groupUsers =>
           @display(groupUsers.filter(_.groupIds.length == 1), Some(s"group-${userGroup.id}")){
             @if(currentUser.admin) {
@@ -109,7 +109,7 @@
                 <i class="material-icons">edit</i>
               </a>
             }
-            @Area.fromId(userGroup.area).map(_.name).getOrElse("") /
+            @userGroup.areaIds.flatMap(Area.fromId).map(_.name).sorted.mkString(", ") /
             <b>@userGroup.name</b> / @(userGroup.organisation, UserGroup.organisationDeductedFromName(userGroup.name)) match {
               case (Some(organisation), _) => {
                 @organisation / }
@@ -181,7 +181,7 @@
             </select>
           </div>
           <div class="mdl-cell mdl-cell--12-col">
-            <select id="area" name="area">
+            <select id="area-ids" name="area-ids[]" multiple size="5" >
             @for(area <- currentUser.areas.flatMap(Area.fromId)) {
               <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area.name</option>
             }

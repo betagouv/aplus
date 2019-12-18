@@ -177,8 +177,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         eventService.warn("POST_ADD_USER_UNAUTHORIZED", "Accès non autorisé à l'admin des utilisateurs")
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
-        implicit val area: Area = Area.fromId(group.area).get
-        usersForm(Time.dateTimeZone).bindFromRequest.fold({ formWithErrors =>
+        usersForm(Time.dateTimeZone, group.areaIds).bindFromRequest.fold({ formWithErrors =>
           eventService.error("ADD_USER_ERROR", "Essai d'ajout d'utilisateurs avec des erreurs de validation")
           BadRequest(views.html.editUsers(request.currentUser)(formWithErrors, 0, routes.UserController.addPost(groupId)))
         }, { users =>
@@ -191,7 +190,7 @@ case class UserController @Inject()(loginAction: LoginAction,
               eventService.info("ADD_USERS_DONE", "Utilisateurs ajoutés")
               Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
             } else {
-              val form = usersForm(Time.dateTimeZone).fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
+              val form = usersForm(Time.dateTimeZone, group.areaIds).fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
               eventService.error("ADD_USER_ERROR", "Impossible d'ajouter des utilisateurs dans la BDD 1")
               InternalServerError(views.html.editUsers(request.currentUser)(form, users.length, routes.UserController.addPost(groupId)))
             }
@@ -202,7 +201,7 @@ case class UserController @Inject()(loginAction: LoginAction,
                 case Some(email) => s"Un utilisateur avec l'adresse $email existe déjà."
                 case _ => "Erreur d'insertion dans la base de donnée : contacter l'administrateur."
               }
-              val form = usersForm(Time.dateTimeZone).fill(users).withGlobalError(errorMessage)
+              val form = usersForm(Time.dateTimeZone, group.areaIds).fill(users).withGlobalError(errorMessage)
               eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}")
               BadRequest(views.html.editUsers(request.currentUser)(form, users.length, routes.UserController.addPost(groupId)))
           }
@@ -246,10 +245,9 @@ case class UserController @Inject()(loginAction: LoginAction,
         eventService.warn("SHOW_ADD_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs du groupe $groupId")
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
-        implicit val area: Area = Area.fromId(group.area).get
         val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
         eventService.info("EDIT_USER_SHOWED", "Visualise la vue d'ajouts des utilisateurs")
-        Ok(views.html.editUsers(request.currentUser)(usersForm(Time.dateTimeZone), rows, routes.UserController.addPost(groupId)))
+        Ok(views.html.editUsers(request.currentUser)(usersForm(Time.dateTimeZone, group.areaIds), rows, routes.UserController.addPost(groupId)))
       }
     }
   }
@@ -266,7 +264,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     }
   }
 
-  def usersForm(timeZone: DateTimeZone)(implicit area: Area): Form[List[User]] = Form(
+  def usersForm(timeZone: DateTimeZone, areaIds: List[UUID]): Form[List[User]] = Form(
     single(
       "users" -> list(mapping(
         "id" -> optional(uuid).transform[UUID]({
@@ -282,7 +280,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         "helper" -> boolean,
         "instructor" -> boolean,
         "admin" -> ignored(false),
-        "areas" -> ignored(List(area.id)),
+        "areas" -> ignored(areaIds),
         "creationDate" -> ignored(DateTime.now(timeZone)),
         "hasAcceptedCharte" -> ignored(false),
         "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),

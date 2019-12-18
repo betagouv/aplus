@@ -73,7 +73,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "ADD_GROUP_UNAUTHORIZED" -> s"Accès non autorisé pour ajouter un groupe"
     } { () =>
-      addGroupForm(Time.dateTimeZone).bindFromRequest.fold(_ => {
+      addGroupForm(Time.dateTimeZone).bindFromRequest.fold(formWithErrors => {
         eventService.error("ADD_USER_GROUP_ERROR", s"Essai d'ajout d'un groupe avec des erreurs de validation")
         BadRequest("Impossible d'ajouter le groupe") //BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost()))
       }, group => {
@@ -88,11 +88,11 @@ case class GroupController @Inject()(loginAction: LoginAction,
     }
   }
 
-  def editGroupPost(id: UUID): Action[AnyContent] = loginAction { implicit request =>
+  def editGroupPost(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
     asAdmin { () =>
       "EDIT_GROUPE_UNAUTHORIZED" -> s"Accès non autorisé à l'edition de ce groupe"
     } { () =>
-      withGroup(id) { currentGroup: UserGroup =>
+      withGroup(groupId) { currentGroup: UserGroup =>
         if (not(currentGroup.canHaveUsersAddedBy(request.currentUser))) {
           eventService.warn("ADD_USER_TO_GROUP_UNAUTHORIZED", s"L'utilisateur ${request.currentUser.id} n'est pas authorisé à ajouter des utilisateurs au groupe ${currentGroup.id}.")
           Unauthorized("Vous n'êtes pas authorisé à ajouter des utilisateurs à ce groupe.")
@@ -101,12 +101,12 @@ case class GroupController @Inject()(loginAction: LoginAction,
             eventService.error("EDIT_USER_GROUP_ERROR", s"Essai d'edition d'un groupe avec des erreurs de validation")
             BadRequest("Impossible de modifier le groupe (erreur de formulaire)")
           }, group => {
-            if (groupService.edit(group.copy(id = id))) {
+            if (groupService.edit(group.copy(id = groupId))) {
               eventService.info("EDIT_USER_GROUP_DONE", s"Groupe édité")
-              Redirect(routes.GroupController.editGroup(id)).flashing("success" -> "Groupe modifié")
+              Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Groupe modifié")
             } else {
               eventService.error("EDIT_USER_GROUP_ERROR", s"Impossible de modifier le groupe dans la BDD")
-              Redirect(routes.GroupController.editGroup(id)).flashing("success" -> "Impossible de modifier le groupe")
+              Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Impossible de modifier le groupe")
             }
           }
           )
@@ -123,7 +123,10 @@ case class GroupController @Inject()(loginAction: LoginAction,
       "insee-code" -> list(text),
       "creationDate" -> ignored(DateTime.now(timeZone)),
       "create-by-user-id" -> ignored(request.currentUser.id),
-      "area" -> uuid.verifying("Vous devez sélectionner un territoire sur lequel vous êtes admin", area => request.currentUser.areas.contains(area)),
+      "area-ids" -> list(uuid).verifying(
+                          "Vous devez sélectionner les territoires sur lequel vous êtes admin",
+                          areaIds => areaIds.forall(request.currentUser.areas.contains)
+                        ).verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
       "organisation" -> optional(text),
       "email" -> optional(email)
     )(UserGroup.apply)(UserGroup.unapply)

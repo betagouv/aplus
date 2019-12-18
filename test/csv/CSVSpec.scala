@@ -65,15 +65,7 @@ class CSVSpec extends Specification {
       val dateTime = DateTime.now(Time.dateTimeZone)
       val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => groupId, () => userId, creatorId, dateTime,""))
       val result = list.head
-      result.right.get._1 must equalTo(UserGroup(id = groupId,
-        name = "CAF",
-        description = None,
-        inseeCode = List(Area.allArea.id.toString),
-        creationDate = dateTime,
-        createByUserId = creatorId,
-        area = Area.allArea.id,
-        organisation = None,
-        email = Some("MFS.cafaisne@cafaisne.cnafmail.fr")))
+      result.right.get._1 must equalTo(UserGroup(id = groupId, name = "CAF", description = None, inseeCode = List(Area.allArea.id.toString), creationDate = dateTime, createByUserId = creatorId, areaIds = Area.allArea.id, organisation = None, email = Some("MFS.cafaisne@cafaisne.cnafmail.fr")))
 
       result.right.get._2 must equalTo(User(id = userId,
         key = "key",
@@ -105,15 +97,7 @@ class CSVSpec extends Specification {
       val dateTime = DateTime.now(Time.dateTimeZone)
       val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => userId, () => groupId, creatorId, dateTime,""))
       val result = list.head
-      result.right.get._1 must equalTo(UserGroup(id = userId,
-        name = "d’Aubigny sur Nère",
-        description = None,
-        inseeCode = List(Area.allArea.id.toString),
-        creationDate = dateTime,
-        createByUserId = creatorId,
-        area = Area.allArea.id,
-        organisation = Some("MSAP"),
-        email = Some("msap@aubigny-sur-nere.fr")))
+      result.right.get._1 must equalTo(UserGroup(id = userId, name = "d’Aubigny sur Nère", description = None, inseeCode = List(Area.allArea.id.toString), creationDate = dateTime, createByUserId = creatorId, areaIds = Area.allArea.id, organisation = Some("MSAP"), email = Some("msap@aubigny-sur-nere.fr")))
       list.filter(_.isRight) must have size 5
     }
   }
@@ -157,15 +141,7 @@ class CSVSpec extends Specification {
       val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => userId, () => groupId, creatorId, dateTime, ""))
       list must have size 7
       val result = list.head
-      result.right.get._1 must equalTo(UserGroup(id = userId,
-        name = "MFS Saint Laurent",
-        description = None,
-        inseeCode = List(UUIDHelper.namedFrom("argenteuil").toString),
-        creationDate = dateTime,
-        createByUserId = creatorId,
-        area = UUIDHelper.namedFrom("argenteuil"),
-        organisation = Organisation.fromShortName("MFS").map(_.shortName),
-        email = Some("sfs.saint-laurent@laposte.com")))
+      result.right.get._1 must equalTo(UserGroup(id = userId, name = "MFS Saint Laurent", description = None, inseeCode = List(UUIDHelper.namedFrom("argenteuil").toString), creationDate = dateTime, createByUserId = creatorId, areaIds = UUIDHelper.namedFrom("argenteuil"), organisation = Organisation.fromShortName("MFS").map(_.shortName), email = Some("sfs.saint-laurent@laposte.com")))
       list.filter(_.isRight) must have size 6
     }
 
