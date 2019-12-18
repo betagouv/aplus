@@ -45,13 +45,18 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
           BadRequest(views.html.importUsersCSV(request.currentUser)(csvImportContentForm))
         }, { csvImportData =>
           /*
-          val csvMap = csvLinesToMap(csvImportData.csvLines)
-          
-          val csvMapWithCleanHeaders = csvCleanHeadersWithExpextedHeaders(csvMap)
-          val csvMapWithCleanName = csvCleanName(csvMapWithCleanHeaders)
-          val (userGroupDatas, userNotImported) = csvMapToUserGroupDats(userGroupDatas)
+          csvLinesToMap(csvImportData.csvLines)
+             .flatMap(csvCleanHeadersWithExpextedHeaders(csvMap))
+             .flatMap(csvCleanName(csvMapWithCleanHeaders))
+             .flatMap(csvMapToUserGroupDats(userGroupDatas)) match {
+                  case Left(Error(message) =>
+                    BadRequest
+                  case Right((userGroupData: UserGroupData, userNotImported: List(String)) =>
+                     val form = importUsersReviewFrom.filled(userGroupDatas)
+                     Ok
 
-          val form = importUsersReviewFrom.filled(userGroupDatas)
+               }
+
                    */
           NotImplemented
         })
