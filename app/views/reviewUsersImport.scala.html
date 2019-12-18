@@ -90,9 +90,14 @@
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
             </th>
-            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="3">
+            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="2">
               @helper.input(section("group")(csv.GROUP_EMAIL.key), 'label -> csv.GROUP_EMAIL.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+              }
+            </th>
+            <th>
+              @helper.input(section("group")(csv.GROUP_AREAS.key), 'label -> "Territoires", 'class -> "input-import-user") { (id, name, value, args) =>
+                <input class="mdl-textfield__input input-import-user" type="text" name="@name" readonly id="@id" value="@value" @toHtmlArgs(args)>
               }
             </th>
         } { }

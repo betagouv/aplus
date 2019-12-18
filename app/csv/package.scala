@@ -8,6 +8,7 @@ import play.api.data.Forms.{boolean, default, email, ignored, list, mapping, non
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.{Form, FormError, Mapping}
 
+import scala.collection.immutable
 import scala.io.Source
 
 package object csv {
@@ -16,14 +17,14 @@ package object csv {
     val lowerPrefixes = prefixes.map(_.toLowerCase())
   }
 
-  val USER_LAST_NAME = Header("user_lastname", List("Nom"))
+  val USER_LAST_NAME = Header("user_lastname", List("Nom", "PRENOM NOM"))
   val USER_FIRST_NAME = Header("user_firstname", List("Prénom"))
-  val USER_EMAIL = Header("user_email", List("Email", "Adresse e-mail", "Contact mail Agent"))
+  val USER_EMAIL = Header("user_email", List("Email", "Adresse e-mail", "Contact mail Agent", "MAIL"))
   val INSTRUCTOR = Header("user_instructor", List("Instructeur"))
   val GROUP_MANAGER = Header("user_group_manager", List("Responsable"))
   val USER_PHONE_NUMBER = Header("user_phone_number", List("Numéro de téléphone", "téléphone"))
 
-  val GROUP_AREA = Header("group_area", List("Territoire"))
+  val GROUP_AREAS = Header("group_area", List("Territoire", "DEPARTEMENTS"))
   val GROUP_ORGANISATION = Header("group_organisation", List("Organisation"))
   val GROUP_NAME = Header("group_name", List("Groupe", "Opérateur partenaire", "Nom de la structure labellisable"))
   val GROUP_EMAIL = Header("group_email", List("Bal", "adresse mail générique"))
@@ -33,13 +34,28 @@ package object csv {
   val USER_HEADERS = List(USER_PHONE_NUMBER, USER_FIRST_NAME, USER_LAST_NAME, USER_EMAIL, INSTRUCTOR, GROUP_MANAGER)
   val USER_HEADER = USER_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
 
-  val GROUP_HEADERS = List(GROUP_AREA, GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL)
+  val GROUP_HEADERS = List(GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL, GROUP_AREAS)
   val GROUP_HEADER = GROUP_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
 
   type UUIDGenerator = () => UUID
 
-  def groupNamePreprocessing(groupName: String): String =
+  private def groupNamePreprocessing(groupName: String): String =
     groupName.replaceFirst("Min. Intérieur", "Préfecture")
+
+  private def areaFromCode(code: String): Option[Area] =
+    Area.all.find(area => area.name.contains(s"($code)"))
+
+  private def fieldToArea(field: String): List[Area] = {
+    val segments = field.split(" ").toList
+    val area = canonizeArea(segments.head)
+    Area.all.find(a => canonizeArea(a.name.split(" ")(0)) == area).fold({
+      field.split(",").flatMap(_.split("-")).map(_.trim).flatMap(areaFromCode).toList
+    })((area: Area) =>
+      List(area) ++ segments.tail.flatMap(_.split(",").flatMap(_.split("-"))).map(_.trim).flatMap(areaFromCode)
+    ).distinct
+  }
+
+  private val areaCodeRegex = "\\(([^\\)]+)\\)".r
 
   // CSV import mapping
   def groupMappingForCSVImport(uuidGenerator: UUIDGenerator)(creatorId: UUID)(currentDate: DateTime): Mapping[UserGroup] =
@@ -47,20 +63,14 @@ package object csv {
       "id" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(uuidGenerator()), uuid => Some(uuid)),
       GROUP_NAME.key -> nonEmptyText.verifying(maxLength(60)).transform[String](groupNamePreprocessing, identity),
       "description" -> ignored(Option.empty[String]),
-      "inseeCode" -> ignored(List.empty[String]),
+      GROUP_AREAS.key -> optional(text).transform[List[String]]({ os =>
+        os.fold(List(Area.allArea.id.toString))({ s =>
+          fieldToArea(s).distinct.map(_.id.toString)
+        })
+      }, (uuids: List[String]) => Some(uuids.flatMap(uuid => Area.fromId(UUID.fromString(uuid)))
+        .flatMap(area => areaCodeRegex.findFirstMatchIn(area.name).map(_.group(1))).mkString("-"))),
       "creationDate" -> ignored(currentDate),
       "createByUserId" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(creatorId), uuid => Some(uuid)),
-      GROUP_AREA.key -> optional(text).transform[UUID]({ os =>
-        os.fold(Area.allArea.id)({ s =>
-          s.split(",").map({ t: String =>
-            val area = canonizeArea(t.split(" ")(0))
-            Area.all.find(a => canonizeArea(a.name.split(" ")(0)) == area)
-              .map(_.id)
-              .getOrElse(Area.allArea.id)
-          }).toList.head
-        })
-      }, uuid => Some(uuid.toString)),
-
       GROUP_ORGANISATION.key -> optional(nonEmptyText)
         .transform[Option[String]](_.flatMap(name => {
           val organisation = Organisation.fromShortName(name)
@@ -68,7 +78,19 @@ package object csv {
           else Organisation.fromName(name).map(_.shortName)
         }), identity),
       GROUP_EMAIL.key -> optional(email.verifying(maxLength(200), nonEmpty)),
-    )(UserGroup.apply)(UserGroup.unapply)
+    )(groupApply)(groupUnapply)
+
+  def groupApply(id: UUID, name: String, description: Option[String], inseeCode: List[String], creationDate: DateTime,
+                 createByUserId: UUID, organisation: Option[String] = None, email: Option[String] = None): UserGroup = {
+    UserGroup.apply(id, name, description, inseeCode, creationDate, createByUserId,
+      inseeCode.headOption.map(UUID.fromString).getOrElse(Area.allArea.id), organisation, email)
+  }
+
+  def groupUnapply(userGroup: UserGroup): Option[(UUID, String, Option[String], List[String], DateTime, UUID, Option[String],
+    Option[String])] = {
+    Some(userGroup.id, userGroup.name, userGroup.description, userGroup.inseeCode, userGroup.creationDate,
+      userGroup.createByUserId, userGroup.organisation, userGroup.email)
+  }
 
   def userMappingForCVSImport(userId: UUIDGenerator, dateTime: DateTime): Mapping[User] = mapping(
     "id" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(userId()), uuid => Some(uuid)),
@@ -192,20 +214,46 @@ package object csv {
     }
   }
 
-  def extractValidInputAndErrors(csvImportContent: String, separator: Char, creatorId: UUID): (List[(UserGroup, List[User])], List[(Int, (List[FormError], String))]) = {
+  def extractValidInputAndErrors(csvImportContent: String, separator: Char, creatorId: UUID, area: UUID): (List[(UserGroup, List[User])], List[(Int, (List[FormError], String))]) = {
     val forms = extractFromCSV(csvImportContent, separator, creatorId)
     val lineNumberToErrors = forms.filter(_.isLeft).map(_.left.get)
       .map({ case (lineNumber, errors, completeLine) =>
         lineNumber -> (errors -> completeLine)
       }).sortBy(_._1)
 
-    val deduplicatedEmail: List[((UserGroup, User), Int)] = forms.filter(_.isRight).map(_.right.get).zipWithIndex
-      .groupBy({ case ((_, user), _) => user.email })
-      .mapValues(_.head).values.toList.sortBy(_._2)
+    val formLines: List[((UserGroup, User), Int)] = forms.filter(_.isRight).map(_.right.get).zipWithIndex
+
+    val appliedDefaultGroupAndExplode: List[((UserGroup, User), Int)] = formLines
+      .flatMap({ case ((group, user), lineNumber) =>
+        val areaIds = if (group.inseeCode.isEmpty || group.inseeCode.head == Area.allArea.id.toString)
+          List(area.toString)
+        else
+          group.inseeCode.distinct
+        areaIds.map({ areaId =>
+          (group.copy(inseeCode = List(areaId), area = UUID.fromString(areaId)) -> user.copy(areas = List(areaId).map(UUID.fromString))) -> lineNumber
+        })
+      })
+
+    val groupedByNameAndAreaId: List[((String, String), (UserGroup, List[(User, Int)]))] = appliedDefaultGroupAndExplode.groupBy({ case ((group, _), _) => group.name -> group.area.toString })
+      .mapValues({ case users =>
+        val areas: List[UUID] = users.map(_._1._1.area)
+        (users.head._1._1.name -> users.head._1._1.area.toString) -> (users.head._1._1 -> users.map({ case ((_, user), lineNumber) => user.copy(areas = areas) -> lineNumber }))
+      }).values.toList
+
+    val groupedBySameUsersSet: List[((UserGroup, User), Int)] = groupedByNameAndAreaId.groupBy(_._2._2.map(_._1.email).distinct.sorted.mkString(";")).flatMap({ case (_, value) =>
+      val lines: List[((List[UUID], UserGroup), List[(User, Int)])] = value.map(_._2).map({ case (group, users) =>
+        val areas = users.flatMap(_._1.areas).distinct.sorted
+        (areas, group.copy(area = areas.head, inseeCode = areas.map(_.toString))) -> users
+      })
+      val users = lines.flatMap(_._2).groupBy(_._1.email).mapValues(_.head).values.toList
+      val areas = lines.flatMap(_._1._1)
+      val group = lines.head._1._2
+      users.map(user => (group.copy(area = areas.head, inseeCode = areas.map(_.toString)) -> user._1.copy(areas = areas)) -> user._2)
+    }).toList
 
     // Group by group name and keep csv line order
-    val groupToUsersMap: List[(UserGroup, List[User])] = deduplicatedEmail
-      .groupBy({ case ((group, _), _) => group.name }) // Group by name
+    val groupToUsersMap: List[(UserGroup, List[User])] = groupedBySameUsersSet //appliedDefaultGroup
+      .groupBy({ case ((group, _), _) => group.name + group.inseeCode.distinct.sorted.mkString("-")  }) // Group by name
       .map({ case (_,list) => (list.head._1._1 -> list.map(_._2).min) -> list.sortBy(_._2).map(_._1._2) }) // Sort users
       .toList
       .sortBy(_._1._2) // sort groups
@@ -231,7 +279,7 @@ package object csv {
 
   val csvImportContentForm: Form[(String, UUID, String)] = Form(mapping(
     "csv-import-content" -> play.api.data.Forms.nonEmptyText,
-    "area-selector" -> uuid.verifying(area => Operators.not(List(Area.allArea,Area.notApplicable).contains(area))),
+    "area-selector" -> uuid.verifying(area => Operators.not(List(Area.allArea,Area.notApplicable).map(_.id).contains(area))),
     "separator" -> play.api.data.Forms.nonEmptyText.verifying(value => value.equals(";") || value.equals(",")))
   ({ (content, area, separator) => (content, area, separator) })({ case (content, area, separator) => Some((content, area, separator)) }))
 }
