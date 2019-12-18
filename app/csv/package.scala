@@ -1,7 +1,8 @@
 import java.util.UUID
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import extentions.{Operators, Time}
+import extentions.BooleanHelper.not
+import extentions.{BooleanHelper, Operators, Time}
 import models.{Area, Organisation, User, UserGroup}
 import org.joda.time.DateTime
 import play.api.data.Forms.{boolean, default, email, ignored, list, mapping, nonEmptyText, optional, seq, text, tuple, uuid}
@@ -177,7 +178,7 @@ package object csv {
   private def sectionsMapping(groupId: UUIDGenerator, userId: UUIDGenerator, creatorId: UUID, dateTime: DateTime): Mapping[(List[Section], UUID)] =
     mapping("sections" -> list(csv.sectionMapping(groupId, userId, creatorId, dateTime)),
       "area-selector" -> uuid.verifying(area =>
-        Operators.not(List(Area.allArea, Area.notApplicable).map(_.id).contains(area))
+        not(List(Area.allArea, Area.notApplicable).map(_.id).contains(area))
       )
     )({ case (sections, area) => sections -> area })({ case (section, area) => Some(section -> area) })
 
