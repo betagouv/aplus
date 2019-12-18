@@ -3,7 +3,6 @@ package controllers
 import java.util.{Locale, UUID}
 
 import actions.{LoginAction, RequestWithUserData}
-import csv.Section
 import extentions.Operators.{GroupOperators, UserOperators, not}
 import extentions.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}

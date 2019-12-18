@@ -1,6 +1,7 @@
 @import models._
 @import extentions.MDLForms._
-@(currentUser: User)(form: Form[(String, java.util.UUID, String)])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@import forms.Models.CSVImportData
+@(currentUser: User)(form: Form[CSVImportData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
 @main(currentUser)(s"Importer des utilisateurs") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
@@ -28,11 +29,10 @@
             @if(form.errors.nonEmpty) {
                 <div style="color: red; font-weight: bold;">@form.errors.map(_.message)</div>
             }
-            <textarea label="Contenu du CSV"
-                      class="mdl-textfield--floating-label mdl-cell mdl-cell--12-col mdl-color--white .mdl-textarea--more-height"
-                      rows= "20"
-                      name="csv-import-content"
-                      id="csv-import-content">@form("csv-import-content").value</textarea>
+
+            @helper.input(form("csv-lines"), 'class -> "mdl-textfield--floating-label mdl-textfield--large", 'label -> "Contenu du CSV ...") { (id, name, value, args) =>
+                <textarea class="mdl-textfield__input textfield__input--no-height-constraint" type="text" rows= "20" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
+            }
 
             <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset">
                     Prévisualiser l'importation d'utilisateurs

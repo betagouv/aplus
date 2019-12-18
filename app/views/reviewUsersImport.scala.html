@@ -1,7 +1,8 @@
 @import models._
 @import extentions.MDLForms._
 
-@(currentUser: User)(form: Form[(List[csv.Section], java.util.UUID)], existingUsers: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@import forms.Models.UserGroupData
+@(currentUser: User)(form: Form[List[UserGroupData]], existingUsers: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @display(section: Field, sectionIndex: Int)(header: Html)(footer: Html) = {
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white">
@@ -72,7 +73,6 @@
         }
       </ul>
     }
-    <input type="hidden" id="area-selector" name="area-selector" value="@form("area-selector").value" />
   </div>
     <em>Instructeur : </em><a href="#" id="instructor-all-link">Tous</a> / <a href="#" id="instructor-none-link">Aucuns</a>
     @helper.repeatWithIndex(form("sections")) { (section, sectionIndex) =>
