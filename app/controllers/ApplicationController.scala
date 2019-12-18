@@ -337,9 +337,10 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
             } else {
               application
             }
+            val openedTab = request.flash.get("opened-tab").getOrElse("answer")
           
             eventService.info("APPLICATION_SHOWED", s"Demande $id consulté", Some(application))
-            Ok(views.html.showApplication(request.currentUser)(usersThatCanBeInvited, renderedApplication, answerForm))
+            Ok(views.html.showApplication(request.currentUser)(usersThatCanBeInvited, renderedApplication, answerForm, openedTab))
         }
         else {
           eventService.warn("APPLICATION_UNAUTHORIZED", s"L'accès à la demande $id n'est pas autorisé", Some(application))
@@ -390,7 +391,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
         formWithErrors => {
           val error = s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.message).mkString(", ")})."
           eventService.error("ANSWER_NOT_CREATED", s"$error")
-          Redirect(routes.ApplicationController.show(applicationId).withFragment("answer-error")).flashing("answer-error" -> error )
+          Redirect(routes.ApplicationController.show(applicationId).withFragment("answer-error")).flashing("answer-error" -> error, "opened-tab" -> "anwser")
         },
         answerData => {
            val answer = Answer(answerId,
@@ -430,7 +431,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
         formWithErrors => {
           val error = s"Erreur dans le formulaire d'invitation (${formWithErrors.errors.map(_.message).mkString(", ")})."
           eventService.error("INVITE_NOT_CREATED", s"$error")
-          Redirect(routes.ApplicationController.show(applicationId).withFragment("answer-error")).flashing("answer-error" -> error )
+          Redirect(routes.ApplicationController.show(applicationId).withFragment("answer-error")).flashing("answer-error" -> error, "opened-tab" -> "invite" )
         },
         inviteData => {
           val usersThatCanBeInvited = usersThatCanBeInvitedOn(application)

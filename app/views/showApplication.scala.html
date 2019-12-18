@@ -1,4 +1,4 @@
-@(user: User)(usersThatCanBeInvited: List[User], application: Application, answerToAgentsForm: Form[_], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(user: User)(usersThatCanBeInvited: List[User], application: Application, answerToAgentsForm: Form[_], openedTab: String, attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 @import java.util.Locale
 
 @main(user)(s"Demande de ${application.creatorUserName} - ${Area.fromId(application.area).get.name}")  {
@@ -379,14 +379,14 @@ dialog {
     <div class="mdl-card mdl-cell mdl-cell--12-col do-not-print">
                 <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
                     <div class="mdl-tabs__tab-bar">
-                        <a href="#answer-helper" class="mdl-tabs__tab is-active mdl-color-text--primary"><i class="material-icons">
+                        <a href="#answer" class="mdl-tabs__tab mdl-color-text--primary @if(openedTab =="answer"){ is-active  } "><i class="material-icons">
                                 reply_all</i> Ajouter une réponse</a>
                         @if(usersThatCanBeInvited.nonEmpty) {
-                            <a href="#invite-agents" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
+                            <a href="#invite" class="mdl-tabs__tab mdl-color-text--primary @if(openedTab =="invite"){ is-active }"><i class="material-icons">
                                 person_add</i> Inviter une personne</a>
                         }
                     </div>
-                    <div class="mdl-tabs__panel is-active" id="answer-helper">
+                    <div class="mdl-tabs__panel @if(openedTab =="answer"){ is-active  } " id="answer">
                         <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('review-validation').disabled=true">
                             @helper.CSRF.formField
                             <input type="hidden" name="answer-id" readonly value="@answerToAgentsForm("answer-id").value.getOrElse(java.util.UUID.randomUUID)">
@@ -448,7 +448,7 @@ dialog {
                     </div>
 
                     @if(usersThatCanBeInvited.nonEmpty) {
-                        <div class="mdl-tabs__panel" id="invite-agents">
+                        <div class="mdl-tabs__panel @if(openedTab =="invite"){ is-active }" id="invite">
                             <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
                                 @helper.CSRF.formField
                                 <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" style="border: none;">
