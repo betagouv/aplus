@@ -48,13 +48,12 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
           csvLinesToMap(csvImportData.csvLines)
              .flatMap(csvCleanHeadersWithExpextedHeaders(csvMap))
              .flatMap(csvCleanName(csvMapWithCleanHeaders))
-             .flatMap(csvMapToUserGroupDats(userGroupDatas)) match {
-                  case Left(Error(message) =>
+             .flatMap(csvMapToUserGroupDats(userGroupDatas)).fold {
+                  case Error(message) =>
                     BadRequest
-                  case Right((userGroupData: UserGroupData, userNotImported: List(String)) =>
+                  case (userGroupData: UserGroupData, userNotImported: List(String)) =>
                      val form = importUsersReviewFrom.filled(userGroupDatas)
                      Ok
-
                }
 
                    */
