@@ -209,7 +209,7 @@ case class UserController @Inject()(loginAction: LoginAction,
           // user/group pair already existing
           val alreadyExistingPair = existingUserAndGroupPairStatus.map({ case ((user, dbUser), (existing, _)) =>
             (user, dbUser) -> existing
-          }).filter(_._2.nonEmpty).map(_._1._1)
+          }).filter(_._2.nonEmpty).map(_._1._2.get)
 
           if (not(groupService.add(groupsToInsert))) {
             val code = "ADD_GROUP_ERROR"
@@ -419,7 +419,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     }),
     "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
     "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-    csv.USER_PHONE_NUMBER.key -> optional(text), 
+    csv.USER_PHONE_NUMBER.key -> optional(text),
   )(User.apply)(User.unapply)
 
   def importUsersFromCSV: Action[AnyContent] = loginAction { implicit request =>
@@ -451,7 +451,8 @@ case class UserController @Inject()(loginAction: LoginAction,
             })
 
             val existingUsers: List[User] = groupToUsersMap.map({ case (group, users) =>
-              group -> users.filter(user => userService.byEmail(user.email).exists(_.areas.contains(group.area)))
+              val newAndOldUser = users.map(user => user -> userService.byEmail(user.email))
+              group -> newAndOldUser.filter(tuple => tuple._2.exists(_.areas.contains(group.area))).flatMap(_._2)
             }).flatMap(_._2)
 
             val errors: List[(String, String)] = lineNumberToErrors.map({ case (lineNumber, (errors, completeLine)) => "Ligne %d : %s".format(lineNumber, errors.map(e => s"${e.key} ${e.message}").mkString(", ")) -> completeLine })
