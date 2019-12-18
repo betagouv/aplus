@@ -8,10 +8,9 @@ import models.{Application, User, UserGroup}
 import play.api.mvc.Results._
 import play.api.mvc.{AnyContent, Result, Results}
 import services.{ApplicationService, EventService, UserGroupService, UserService}
+import BooleanHelper.not
 
 object Operators {
-
-  val not: Boolean => Boolean = !_
 
   trait GroupOperators {
 

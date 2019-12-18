@@ -369,81 +369,83 @@ dialog {
             </div>
         </div>
     }
-    <div class="mdl-card mdl-cell mdl-cell--12-col">
-            <div class="mdl-card__supporting-text do-not-print mdl-grid">
+    @flash.get("answer-error").map { error =>
+        <div class="mdl-cell mdl-cell--12-col" id="answer-error">
+            <div class="notification notification--error"><b>@error</b><br>
+                Si l'erreur persiste vous pouvez contacter l'équipe A+ : <a href="mailto:@Constants.supportEmail?subject=@error">@Constants.supportEmail</a>
+            </div>
+        </div>
+    }
+    <div class="mdl-card mdl-cell mdl-cell--12-col do-not-print">
                 <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
                     <div class="mdl-tabs__tab-bar">
-                        @if(application.canBeAnsweredBy(user)) {
-                            <a href="#answer-helper" class="mdl-tabs__tab is-active mdl-color-text--primary"><i class="material-icons">
+                        <a href="#answer-helper" class="mdl-tabs__tab is-active mdl-color-text--primary"><i class="material-icons">
                                 reply_all</i> Ajouter une réponse</a>
-                        }
                         @if(usersThatCanBeInvited.nonEmpty) {
                             <a href="#invite-agents" class="mdl-tabs__tab mdl-color-text--primary"><i class="material-icons">
                                 person_add</i> Inviter une personne</a>
                         }
                     </div>
-                    @if(application.canBeAnsweredBy(user)) {
-                        <div class="mdl-tabs__panel is-active" id="answer-helper">
-                            <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('review-validation').disabled=true">
-                                @helper.CSRF.formField
-                                <input type="hidden" name="answer-id" readonly value="@answerToAgentsForm("answer-id").value.getOrElse(java.util.UUID.randomUUID)">
-                                <div class="mdl-cell mdl-cell--12-col mdl-grid">
-                                    @if(user.instructor) {
-                                        <div class="info-box">Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName et les personnes invitées sur la demande. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. <b>Merci d'utiliser vos outils habituels pour continuer une instruction.</b></div>
-                                    }
-                                    @if(user.id == application.creatorUserId) {
-                                        <h5 class="mdl-cell mdl-cell--12-col">Ajouter informations concernant l'usager</h5>
-                                        @helpers.usersInformations(answerToAgentsForm)
-                                    }
-                                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
-                                        <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
-                                        <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Votre réponse</label>
-                                    </div>
-                                    <div class="mdl-cell mdl-cell--12-col">
-                                        <b>Ajouter un ficher ( 5Mo maximum ) :</b>
-                                        <ul>
-                                            @for((attachment,index) <- attachments.zipWithIndex) {
-                                            <li>
-                                                <input type="checkbox" checked value="@attachment" id="pending-file[@index]" name="pending-file[@index]"><label for="pending-file[@index]">@attachment</label>
-                                            </li>
-                                            }
-                                        </ul>
-                                        <ul id="attachment-list">
-                                            <li><input type="file" name="file[0]"></li>
-                                        </ul>
-                                    </div>
-                                    @if(user.instructor) {
-                                        <div id="invalide-choice" class="mdl-cell mdl-cell--12-col">
-                                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
-                                                <input type="checkbox" class="mdl-checkbox__input" name="irrelevant" value="true">
-                                                <span class="mdl-checkbox__label">Cette demande dispose d'une procédure standard que l'aidant aurait pu utiliser</span> <i class="icon material-icons icon--light">info</i>
-                                            </label>
-                                        </div>
-                                        <div class="mdl-tooltip" for="invalide-choice">
-                                            La demande sera classée comme non-pertinente dans les statistiques d'usage. L'équipe recontactera l'aidant pour l'aider à la création des demandes.
-                                        </div>
-                                    }
-                                    @if(user.instructor || user.expert) {
-                                        <div id="private-answer" class="mdl-cell mdl-cell--12-col">
-                                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
-                                                <input type="checkbox" class="mdl-checkbox__input" name="privateToHelpers" value="true">
-                                                <span class="mdl-checkbox__label">Restreindre le message aux instructeurs Administration+ </span> <i class="icon material-icons icon--light">info</i>
-                                            </label>
-                                        </div>
-                                        <div class="mdl-tooltip" for="private-answer">
-                                            Le message ne sera pas visible par l'aidant.
-                                        </div>
-
-                                    }
-                                    <div class="mdl-cell mdl-cell--12-col">
-                                        <button id="review-validation" class="mdl-button mdl-button--primary mdl-js-button mdl-button--raised mdl-button--colored" disabled>
-                                            Répondre
-                                        </button>
-                                    </div>
+                    <div class="mdl-tabs__panel is-active" id="answer-helper">
+                        <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('review-validation').disabled=true">
+                            @helper.CSRF.formField
+                            <input type="hidden" name="answer-id" readonly value="@answerToAgentsForm("answer-id").value.getOrElse(java.util.UUID.randomUUID)">
+                            <div class="mdl-cell mdl-cell--12-col mdl-grid">
+                                @if(user.instructor) {
+                                    <div class="info-box">Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName et les personnes invitées sur la demande. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. <b>Merci d'utiliser vos outils habituels pour continuer une instruction.</b></div>
+                                }
+                                @if(user.id == application.creatorUserId) {
+                                    <h5 class="mdl-cell mdl-cell--12-col">Ajouter informations concernant l'usager</h5>
+                                    @helpers.usersInformations(answerToAgentsForm)
+                                }
+                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
+                                    <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
+                                    <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Votre réponse</label>
                                 </div>
-                            </form>
-                        </div>
-                    }
+                                <div class="mdl-cell mdl-cell--12-col">
+                                    <b>Ajouter un ficher ( 5Mo maximum ) :</b>
+                                    <ul>
+                                        @for((attachment,index) <- attachments.zipWithIndex) {
+                                        <li>
+                                            <input type="checkbox" checked value="@attachment" id="pending-file[@index]" name="pending-file[@index]"><label for="pending-file[@index]">@attachment</label>
+                                        </li>
+                                        }
+                                    </ul>
+                                    <ul id="attachment-list">
+                                        <li><input type="file" name="file[0]"></li>
+                                    </ul>
+                                </div>
+                                @if(user.instructor) {
+                                    <div id="invalide-choice" class="mdl-cell mdl-cell--12-col">
+                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
+                                            <input type="checkbox" class="mdl-checkbox__input" name="irrelevant" value="true">
+                                            <span class="mdl-checkbox__label">Cette demande dispose d'une procédure standard que l'aidant aurait pu utiliser</span> <i class="icon material-icons icon--light">info</i>
+                                        </label>
+                                    </div>
+                                    <div class="mdl-tooltip" for="invalide-choice">
+                                        La demande sera classée comme non-pertinente dans les statistiques d'usage. L'équipe recontactera l'aidant pour l'aider à la création des demandes.
+                                    </div>
+                                }
+                                @if(user.instructor || user.expert) {
+                                    <div id="private-answer" class="mdl-cell mdl-cell--12-col">
+                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
+                                            <input type="checkbox" class="mdl-checkbox__input" name="privateToHelpers" value="true">
+                                            <span class="mdl-checkbox__label">Restreindre le message aux instructeurs Administration+ </span> <i class="icon material-icons icon--light">info</i>
+                                        </label>
+                                    </div>
+                                    <div class="mdl-tooltip" for="private-answer">
+                                        Le message ne sera pas visible par l'aidant.
+                                    </div>
+
+                                }
+                                <div class="mdl-cell mdl-cell--12-col">
+                                    <button id="review-validation" class="mdl-button mdl-button--primary mdl-js-button mdl-button--raised mdl-button--colored" disabled>
+                                        Répondre
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
 
                     @if(usersThatCanBeInvited.nonEmpty) {
                         <div class="mdl-tabs__panel" id="invite-agents">
@@ -493,7 +495,6 @@ dialog {
                         </div>
                     }
                 </div>
-            </div>
         </div>
 
 

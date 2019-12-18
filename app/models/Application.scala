@@ -106,12 +106,7 @@ case class Application(id: UUID,
     def fileCanBeShowed(user: User) =
       filesAvailabilityLeftInDays.nonEmpty && (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
         (user.helper && user.id == creatorUserId)
-
-
-    def canBeAnsweredBy(user: User) =
-      (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
-        (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
-        creatorUserId==user.id
+  
 
    def canHaveExpertsInvitedBy(user: User) =
      (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
