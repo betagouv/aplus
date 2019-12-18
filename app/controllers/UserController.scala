@@ -209,7 +209,7 @@ case class UserController @Inject()(loginAction: LoginAction,
           // user/group pair already existing
           val alreadyExistingPair = existingUserAndGroupPairStatus.map({ case ((user, dbUser), (existing, _)) =>
             (user, dbUser) -> existing
-          }).filter(_._2.nonEmpty).map(_._1._1)
+          }).filter(_._2.nonEmpty).map(_._1._2.get)
 
           if (not(groupService.add(groupsToInsert))) {
             val code = "ADD_GROUP_ERROR"
