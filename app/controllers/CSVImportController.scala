@@ -8,7 +8,7 @@ import javax.inject.Inject
 import models.{Area, User, UserGroup}
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
-import play.api.data.Forms.{mapping, nonEmptyText, uuid}
+import play.api.data.Forms._
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import services.{EventService, NotificationService, UserGroupService, UserService}
 
@@ -22,9 +22,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
   val csvImportContentForm: Form[CSVImportData] = Form(
     mapping(
     "csv-lines" -> nonEmptyText,
-    "area-selector" -> uuid.verifying(area =>
-      Operators.not(List(Area.allArea,Area.notApplicable).map(_.id).contains(area))
-    ),
+    "area-default-ids" -> list(uuid),
     "separator" -> nonEmptyText.verifying(value => value.equals(";") || value.equals(","))
   )(CSVImportData.apply)(CSVImportData.unapply))
 
@@ -42,8 +40,21 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
       asAdmin { () =>
         "IMPORT_GROUP_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
       } { () =>
-        val form = csvImportContentForm.bindFromRequest
-        NotImplemented
+        csvImportContentForm.fold({ _ =>
+          eventService.warn(code = "CSV_IMPORT_INPUT_EMPTY", description = "Le champ d'import de CSV est vide ou le séparateur n'est pas défini.")
+          BadRequest(views.html.importUsersCSV(request.currentUser)(csvImportContentForm))
+        }, { csvImportData =>
+          /*
+          val csvMap = csvLinesToMap(csvImportData.csvLines)
+          
+          val csvMapWithCleanHeaders = csvCleanHeadersWithExpextedHeaders(csvMap)
+          val csvMapWithCleanName = csvCleanName(csvMapWithCleanHeaders)
+          val (userGroupDatas, userNotImported) = csvMapToUserGroupDats(userGroupDatas)
+
+          val form = importUsersReviewFrom.filled(userGroupDatas)
+                   */
+          NotImplemented
+        })
     /*    form.fold({ _ =>
           eventService.warn(code = "CSV_IMPORT_INPUT_EMPTY", description = "Le champ d'import de CSV est vide ou le département n'est pas défini.")
           BadRequest(views.html.importUsersCSV(request.currentUser)(form))

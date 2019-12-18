@@ -14,5 +14,5 @@ object Models {
 
   case class UserGroupData(group: UserGroup, users: List[User])
 
-  case class CSVImportData(csvLines: String, area: UUID, separator: String)
+  case class CSVImportData(csvLines: String, areaIds: List[UUID], separator: String)
 }

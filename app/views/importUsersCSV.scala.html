@@ -17,14 +17,14 @@
                 <input type="radio" name="separator" value="," id="comma"><label for="comma">Virgule</label>
             </div>
             <div>
-                <em>Département : </em>
-                <select id="area-selector" name="area-selector">
-                    <option value="@Area.notApplicable">Choisissez</option>
+                <em>Départements par défaut : (optionnel, le champ "Territoires" est utilisé dans le cas où il est présent)</em><br>
+                <select id="area-default-ids" name="area-default-ids[]" multiple size="5">
                     @for(area <- currentUser.areas.flatMap(Area.fromId)) {
                     <option value="@area.id">@area.name</option>
                     }
                 </select>
             </div>
+            <em>Format de base attendu : </em>
             <p>@csv.USER_HEADER@csv.SEPARATOR@csv.GROUP_HEADER</p>
             @if(form.errors.nonEmpty) {
                 <div style="color: red; font-weight: bold;">@form.errors.map(_.message)</div>
