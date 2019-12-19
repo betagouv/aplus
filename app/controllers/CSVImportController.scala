@@ -1,9 +1,10 @@
 package controllers
 
 import actions.LoginAction
+import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import extentions.Operators
 import extentions.Operators.{GroupOperators, UserOperators, not}
-import forms.Models.CSVImportData
+import forms.Models.{CSVImportData, UserGroupFormData}
 import javax.inject.Inject
 import models.{Area, User, UserGroup}
 import org.webjars.play.WebJarsUtil
@@ -11,6 +12,8 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import services.{EventService, NotificationService, UserGroupService, UserService}
+
+import scala.io.Source
 
 case class CSVImportController @Inject()(loginAction: LoginAction,
                                     userService: UserService,
@@ -34,6 +37,75 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     }
   }
 
+
+
+  def csvLinesToMap(csvLines: String): Either[String, List[Either[Map[String, String], String]]]
+
+
+  type LineNumber = Int
+  type CSVMap = Map[String, String]
+  type RawCSVLine = String
+  type CSVExtractResult = List[(LineNumber, CSVMap, RawCSVLine)]
+
+
+  def extractFromCSVToMap(csvText: String, separator: Char): Either[String, CSVExtractResult] = try {
+    implicit object SemiConFormat extends DefaultCSVFormat {
+      override val delimiter: Char = separator
+    }
+    val csvReader = CSVReader.open(Source.fromString(csvText))
+    val headers = csvReader.readNext()
+    val result = headers.map(headers => {
+    val lines = csvReader.all().filter(_.reduce(_+_).nonEmpty)
+      lines.map(line => headers.zip(line).toMap -> line.mkString(SemiConFormat.delimiter.toString))
+    }).getOrElse(Nil).zipWithIndex
+       Right(result)
+    } catch {
+        case ex: com.github.tototoshi.csv.MalformedCSVException =>
+        Left(s"Erreur lors de l'extraction du csv ${ex.message}")
+    }
+
+  def csvCleanHeadersWithExpectedHeaders(csvMap: CSVMap): CSVMap = ???
+
+  def csvIncludeFirstnameInLastName(csvMap: CSVMap): CSVMap = ???
+
+  def csvMapToUserGroupData(csvMap: CSVMap, line: LineNumber): Either[String, UserGroupFormData] = ???
+
+  def userGroupDataListToUserGroupData(userGroupFormData: List[UserGroupFormData]): List[UserGroupFormData] = ???
+
+  def augmentUserGroupInformation(userGroupFormData: UserGroupFormData): Either[String, UserGroupFormData] = ???
+  
+/* 
+  type CSVExtractResult = List[(/* result */Either[String, CSVMap],/* line */LineNumber, CSVMap, RawCSVLine)]
+
+    val (csvLinesErrorPart: CSVExtractResult, csvMapList: CSVExtractResult) = csvExtractResult.partition(_._1.isLeft)
+            val csvLinesError
+            for( csvMap 
+
+*/
+
+  def includeAreaNameInGroupName() = ???
+  
+  
+
+  def csvLinesToUserGroupData(csvLines: String): Either[String, (List[String], List[UserGroupFormData])] = {
+    def partition(list: List[Either[String, UserGroupFormData]]): (List[String], List[UserGroupFormData]) = ???
+    
+    extractFromCSVToMap(csvLines)
+       .flatMap{
+          val result: List[Either[String, UserGroupFormData]] = _.flatMap { 
+            case (lineNumber: LineNumber, csvMap: CSVMap, rawCSVLine: RawCSVLine) =>
+            val newCsvMap = csvCleanHeadersWithExpectedHeaders(csvIncludeFirstnameInLastName(csvMap))
+            csvMapToUserGroupData(newCsvMap, lineNumber).left.map { error =>
+               s"Ligne $lineNumber : error $error ( $rawCSVLine )"
+            }
+          }
+          partition(result)
+       }
+       .flatMap{
+          case (linesErrorList: List[String], userGroupFormDataList: List[UserGroupFormData]) =>
+          (linesErrorList, userGroupDataListToUserGroupData(userGroupFormDataList))
+       }
+    }
   
   def importUsersReview: Action[AnyContent] = {
     loginAction { implicit request =>
@@ -51,10 +123,13 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
              .flatMap(csvMapToUserGroupDats(userGroupDatas)).fold {
                   case Error(message) =>
                     BadRequest
-                  case (userGroupData: UserGroupData, userNotImported: List(String)) =>
+                  case (userGroupData: UserGroupFormData, userNotImported: List(String)) =>
+                     augmentUserGroupInformation(userGroupDatas)
+
                      val form = importUsersReviewFrom.filled(userGroupDatas)
                      Ok
                }
+              
 
                    */
           NotImplemented
