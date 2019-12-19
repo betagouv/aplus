@@ -13,6 +13,12 @@ object Area {
     all.find(_.id == id)
   }
 
+  def searchFromName(name: String): Option[Area] = {
+    // check number
+    // check name  (lowercase, strip accents)
+    ???
+  }
+
   def apply(id: String, name: String): Area = Area(UUIDHelper.namedFrom(id), name)
 
   val all = List(

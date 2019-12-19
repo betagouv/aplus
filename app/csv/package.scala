@@ -1,6 +1,21 @@
 import java.util.UUID
 
+import models.UserGroup
+import org.joda.time.DateTime
+import play.api.data.Mapping
+import play.api.data.Forms._
+
 package object csv {
+
+  sealed trait HeaderBis {
+     val key = this.getClass.getSimpleName
+     def prefixes(): List[String]
+     val name = prefixes.head
+  }
+
+  case object UserLastName extends HeaderBis { def prefixes = List("Nom", "PRENOM NOM") }
+  case object GroupAreas extends HeaderBis { def prefixes = List("Territoire", "DEPARTEMENTS") }
+
 
   case class Header(key: String, prefixes: List[String]) {
     val lowerPrefixes = prefixes.map(_.toLowerCase())
@@ -28,7 +43,22 @@ package object csv {
 
   type UUIDGenerator = () => UUID
 
-
+  def groupMappingForCSVImport(uuidGenerator: UUIDGenerator)(creatorId: UUID)(currentDate: DateTime): Mapping[UserGroup] =
+    mapping(
+      "id" -> ignored(uuidGenerator()),
+      UserLastName.key -> nonEmptyText,
+      "description" -> ignored(Option.empty[String]),
+      GROUP_AREAS.key -> areaMapping,
+      "creationDate" -> ignored(currentDate),
+      "createByUserId" -> optional(uuid).transform[UUID](uuid => uuid.getOrElse(creatorId), uuid => Some(uuid)),
+      GROUP_ORGANISATION.key -> optional(nonEmptyText)
+        .transform[Option[String]](_.flatMap(name => {
+          val organisation = Organisation.fromShortName(name)
+          if (organisation.isDefined) organisation.map(_.shortName)
+          else Organisation.fromName(name).map(_.shortName)
+        }), identity),
+      GROUP_EMAIL.key -> optional(email.verifying(maxLength(200), nonEmpty)),
+    )(groupApply)(groupUnapply)
 
 
 /*

@@ -1,8 +1,8 @@
 @import models._
 @import extentions.MDLForms._
 
-@import forms.Models.UserGroupData
-@(currentUser: User)(form: Form[List[UserGroupData]], existingUsers: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@import forms.Models.UserGroupFormData
+@(currentUser: User)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @display(section: Field, sectionIndex: Int)(header: Html)(footer: Html) = {
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white">
@@ -54,26 +54,18 @@
   @helper.form(routes.CSVImportController.importUsersReviewPost(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
   @helper.CSRF.formField
     @if(form.hasGlobalErrors) {
-      @for(error <- form.globalErrors) {
-        @for(args <- error.args) {
-          <div style="color: red; font-weight: bold;">
-            <p>@args.asInstanceOf[Tuple2[String,String]]._1</p>
-            <p>@args.asInstanceOf[Tuple2[String,String]]._2</p>
-          </div>
-          <br>
+      <div style="color: red; font-weight: bold;">
+        @for(error <- form.globalErrors) {
+          @error.message
+          @for(arg <- error.args) {
+              <p>@arg</p><br>
+          }
         }
-      }
+      </div>
     }
-  <div>
-    @if(existingUsers.nonEmpty) {
-      Utilisateurs dont le compte existe déjà :
-      <ul>
-        @for(existingUser <- existingUsers) {
-          <li><a href="/utilisateurs/@existingUser.id">@existingUser.name (@existingUser.email)</a></li>
-        }
-      </ul>
-    }
-  </div>
+    <!--
+      //TODO : Show existing users
+    -->
     <em>Instructeur : </em><a href="#" id="instructor-all-link">Tous</a> / <a href="#" id="instructor-none-link">Aucuns</a>
     @helper.repeatWithIndex(form("sections")) { (section, sectionIndex) =>
         @display(section, sectionIndex) {

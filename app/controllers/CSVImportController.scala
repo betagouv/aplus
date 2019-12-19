@@ -2,21 +2,21 @@ package controllers
 
 import java.util.UUID
 
-import csv.{Header, GROUP_AREAS, GROUP_EMAIL,GROUP_HEADER,GROUP_HEADERS,GROUP_MANAGER,GROUP_NAME,GROUP_ORGANISATION}
+import csv.{GROUP_AREAS, GROUP_EMAIL, GROUP_HEADER, GROUP_HEADERS, GROUP_MANAGER, GROUP_NAME, GROUP_ORGANISATION, Header}
 import actions.LoginAction
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import extentions.Operators
 import extentions.UUIDHelper
 import extentions.Operators.{GroupOperators, UserOperators, not}
-import forms.Models.{CSVImportData, UserGroupFormData}
+import forms.Models.{CSVImportData, UserFormData, UserGroupFormData}
 import javax.inject.Inject
 import models.{Area, User, UserGroup}
 import org.webjars.play.WebJarsUtil
-import play.api.data.Form
+import play.api.data.{Form, Mapping}
 import play.api.data.Forms._
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import services.{EventService, NotificationService, UserGroupService, UserService}
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 
 import scala.io.Source
 import extentions.Time
@@ -32,7 +32,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     mapping(
     "csv-lines" -> nonEmptyText,
     "area-default-ids" -> list(uuid),
-    "separator" -> nonEmptyText.verifying(value => value.equals(";") || value.equals(","))
+    "separator" -> char.verifying(value => value.equals(";") || value.equals(","))
   )(CSVImportData.apply)(CSVImportData.unapply))
 
   def importUsersFromCSV: Action[AnyContent] = loginAction { implicit request =>
@@ -42,11 +42,6 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
       Ok(views.html.importUsersCSV(request.currentUser)(csvImportContentForm))
     }
   }
-
-
-
-  def csvLinesToMap(csvLines: String): Either[String, List[Either[Map[String, String], String]]]
-
 
   type LineNumber = Int
   type CSVMap = Map[String, String]
@@ -64,32 +59,61 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     val lines = csvReader.all().filter(_.reduce(_+_).nonEmpty)
       lines.map(line => headers.zip(line).toMap -> line.mkString(SemiConFormat.delimiter.toString))
     }).getOrElse(Nil).zipWithIndex
-       Right(result)
+       Right(???)
     } catch {
         case ex: com.github.tototoshi.csv.MalformedCSVException =>
-        Left(s"Erreur lors de l'extraction du csv ${ex.message}")
+        Left(s"Erreur lors de l'extraction du csv ${ex.getMessage}")
     }
 
-  def csvCleanHeadersWithExpectedHeaders(expectedGroupHeaders: List[Header],
-                                         expectedUserHeaders: List[Header])(csvMap: CSVMap): CSVMap = {
-    def convertToPrefixForm(values: CSVMap, expectedHeaders: List[Header], formPrefix: String): CSVMap = {
-      values.map({ case (key, value) =>
-        val lowerKey = key.trim.toLowerCase
-        expectedHeaders.find(expectedHeader => expectedHeader.lowerPrefixes.exists(lowerKey.startsWith))
-          .map(expectedHeader => formPrefix + expectedHeader.key -> value.trim)
-      }).flatten.toMap
+  private val expectedGroupHeaders: List[Header]  = Nil
+  private val expectedUserHeaders: List[Header] = Nil
+
+
+  implicit class CSVMapPreprocessing(csvMap: CSVMap) {
+    def csvCleanHeadersWithExpectedHeaders(): CSVMap = {
+      def convertToPrefixForm(values: CSVMap, expectedHeaders: List[Header], formPrefix: String): CSVMap = {
+        values.map({ case (key, value) =>
+          val lowerKey = key.trim.toLowerCase
+          expectedHeaders.find(expectedHeader => expectedHeader.lowerPrefixes.exists(lowerKey.startsWith))
+            .map(expectedHeader => formPrefix + expectedHeader.key -> value.trim)
+        }).flatten.toMap
+      }
+
+      convertToPrefixForm(csvMap, expectedGroupHeaders, "group.") ++ convertToPrefixForm(csvMap, expectedUserHeaders, "user.")
     }
 
-    convertToPrefixForm(csvMap, expectedGroupHeaders, "group.") ++ convertToPrefixForm(csvMap, expectedUserHeaders, "user.")
+    def includeAreaNameInGroupName(defaultAreas: Seq[Area]): CSVMap = {
+      val newAreas: Seq[Area] = csvMap.get(csv.GroupAreas.key) match {
+        case Some(areas) =>
+          areas.split(",").flatMap(_.split(";")).flatMap(Area.searchFromName)
+        case None =>
+          defaultAreas
+      }
+      csvMap + (csv.GroupAreas.key -> newAreas.map(_.id.toString).mkString(","))
+    }
+
+    def includeFirstnameInLastName(): CSVMap = ???
+
+    def toUserGroupData(lineNumber: LineNumber): Either[String, UserGroupFormData] = {
+      groupCSVMapping.bind(csvMap).fold({ errors =>
+        Left(errors.mkString(", "))
+      }, { group =>
+        userCSVMapping.bind(csvMap).fold({ errors =>
+          Left(errors.mkString(", "))
+        }, { user =>
+          Right(UserGroupFormData(group, List(UserFormData(user, lineNumber))))
+        })
+      })
+    }
   }
-
-  def csvIncludeFirstnameInLastName(csvMap: CSVMap): CSVMap = ???
-
-  def csvMapToUserGroupData(csvMap: CSVMap, line: LineNumber): Either[String, UserGroupFormData] = ???
+  
+  private val userCSVMapping: Mapping[User] = ???
+  private val groupCSVMapping: Mapping[UserGroup] = ???
 
   def userGroupDataListToUserGroupData(userGroupFormData: List[UserGroupFormData]): List[UserGroupFormData] = ???
 
-  def augmentUserGroupInformation(userGroupFormData: UserGroupFormData): Either[String, UserGroupFormData] = ???
+
+  def augmentUserGroupInformation(userGroupFormData: UserGroupFormData): UserGroupFormData = ???
   
 /* 
   type CSVExtractResult = List[(/* result */Either[String, CSVMap],/* line */LineNumber, CSVMap, RawCSVLine)]
@@ -100,57 +124,108 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
 
 */
 
-  def includeAreaNameInGroupName() = ???
-  
-  def csvLinesToUserGroupData(separator: Char)(csvLines: String): Either[String, (List[String], List[UserGroupFormData])] = {
+
+  def csvLinesToUserGroupData(separator: Char, defaultAreas: Seq[Area])(csvLines: String): Either[String, (List[String], List[UserGroupFormData])] = {
     def partition(list: List[Either[String, UserGroupFormData]]): (List[String], List[UserGroupFormData]) = ???
     
-    val x: Either[String, (List[String], List[UserGroupFormData])] = extractFromCSVToMap(separator)(csvLines)
-       .flatMap{
-          val result: List[Either[String, UserGroupFormData]] = _.flatMap { 
+    extractFromCSVToMap(separator)(csvLines)
+       .map { csvExtractResult: CSVExtractResult =>
+          val result: List[Either[String, UserGroupFormData]] = csvExtractResult.map {
             case (lineNumber: LineNumber, csvMap: CSVMap, rawCSVLine: RawCSVLine) =>
-            val newCsvMap = csvCleanHeadersWithExpectedHeaders(csvIncludeFirstnameInLastName(csvMap))
-            csvMapToUserGroupData(newCsvMap, lineNumber).left.map { error =>
-               s"Ligne $lineNumber : error $error ( $rawCSVLine )"
-            }
+              csvMap.csvCleanHeadersWithExpectedHeaders
+                  .includeAreaNameInGroupName(defaultAreas)
+                  .includeFirstnameInLastName()
+                  .toUserGroupData(lineNumber).left.map { error: String =>
+                 s"Ligne $lineNumber : error $error ( $rawCSVLine )"
+              }
           }
           partition(result)
-       }
-
-       x.flatMap {
+       }.map {
           case (linesErrorList: List[String], userGroupFormDataList: List[UserGroupFormData]) =>
           (linesErrorList, userGroupDataListToUserGroupData(userGroupFormDataList))
        }
     }
-  
+
+  /*
+  private def userMapping(implicit timeZone: DateTimeZone): Mapping[User] = mapping(
+    "id" -> optional(uuid).transform[UUID]({
+      case None => UUID.randomUUID()
+      case Some(id) => id
+    }, {
+      Some(_)
+    }),
+    "key" -> ignored("key"),
+    "name" -> nonEmptyText.verifying(maxLength(100)),
+    "qualite" -> nonEmptyText.verifying(maxLength(100)),
+    "email" -> email.verifying(maxLength(200), nonEmpty),
+    "helper" -> boolean,
+    "instructor" -> boolean,
+    "admin" -> boolean,
+    "areas" -> list(uuid).verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
+    "creationDate" -> ignored(DateTime.now(timeZone)),
+    "hasAcceptedCharte" -> boolean,
+    "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
+    "adminGroup" -> boolean,
+    "disabled" -> boolean,
+    "expert" -> ignored(false),
+    "groupIds" -> default(list(uuid), List()),
+    "delegations" -> seq(tuple(
+      "name" -> nonEmptyText,
+      "email" -> email
+    )).transform[Map[String, String]]({
+      _.toMap
+    }, {
+      _.toSeq
+    }),
+    "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
+    "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
+    csv.USER_PHONE_NUMBER.key -> optional(text),
+  )(User.apply)(User.unapply)   */
+
+
+  private val userImportMapping: Mapping[User] = ???
+  private val groupImportMapping: Mapping[UserGroup] = ???
+
+  val importUsersReviewFrom: Form[List[UserGroupFormData]] = Form(
+    single(
+    "groups" -> list(
+            mapping(
+              "group" -> groupImportMapping,
+              "user" -> list(
+                  mapping(
+                    "user" -> userImportMapping,
+                    "line" -> number,
+                    "alreadyExistingUser" -> ignored(Option.empty[User])
+                  )(UserFormData.apply)(UserFormData.unapply)
+              ),
+              "alreadyExistingGroup" -> ignored(Option.empty[UserGroup])
+            )(UserGroupFormData.apply)(UserGroupFormData.unapply)
+        )
+    )
+  )
+
   def importUsersReview: Action[AnyContent] = {
     loginAction { implicit request =>
       asAdmin { () =>
         "IMPORT_GROUP_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
       } { () =>
-        csvImportContentForm.fold({ _ =>
+        csvImportContentForm.bindFromRequest.fold({ csvImportContentFormWithError =>
           eventService.warn(code = "CSV_IMPORT_INPUT_EMPTY", description = "Le champ d'import de CSV est vide ou le séparateur n'est pas défini.")
-          BadRequest(views.html.importUsersCSV(request.currentUser)(csvImportContentForm))
+          BadRequest(views.html.importUsersCSV(request.currentUser)(csvImportContentFormWithError))
         }, { csvImportData =>
+          val defaultAreas = csvImportData.areaIds.flatMap(Area.fromId)
+          csvLinesToUserGroupData(csvImportData.separator, defaultAreas)(csvImportData.csvLines).fold({
+            error: String =>
+              val csvImportContentFormWithError = csvImportContentForm.fill(csvImportData).withGlobalError(error)
+              BadRequest(views.html.importUsersCSV(request.currentUser)(csvImportContentFormWithError))
+          }, {
+            case (userNotImported: List[String], userGroupDataForm: List[UserGroupFormData]) =>
+              val augmentedUserGroupInformation: List[UserGroupFormData] = userGroupDataForm.map(augmentUserGroupInformation)
+              val formWithError = importUsersReviewFrom.fillAndValidate(augmentedUserGroupInformation)
 
-          csvLinesToUserGroupData
-          /*
-          csvLinesToMap(csvImportData.csvLines)
-             .flatMap(csvCleanHeadersWithExpextedHeaders(csvMap))
-             .flatMap(csvCleanName(csvMapWithCleanHeaders))
-             .flatMap(csvMapToUserGroupDats(userGroupDatas)).fold {
-                  case Error(message) =>
-                    BadRequest
-                  case (userGroupData: UserGroupFormData, userNotImported: List(String)) =>
-                     augmentUserGroupInformation(userGroupDatas)
-
-                     val form = importUsersReviewFrom.filled(userGroupDatas)
-                     Ok
-               }
-              
-
-                   */
-          NotImplemented
+              formWithError.withGlobalError("Certaines lignes du CSV n'ont pas pu être importé", userNotImported)
+              Ok(views.html.reviewUsersImport(request.currentUser)(formWithError))
+          })
         })
     /*    form.fold({ _ =>
           eventService.warn(code = "CSV_IMPORT_INPUT_EMPTY", description = "Le champ d'import de CSV est vide ou le département n'est pas défini.")
@@ -192,6 +267,39 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     asAdmin { () =>
       "IMPORT_USERS_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
+      importUsersReviewFrom.bindFromRequest.fold({ importUsersReviewFromWithError =>
+        BadRequest
+      }, {  userGroupDataForm: List[UserGroupFormData] =>
+        val augmentedUserGroupInformation: List[UserGroupFormData] = userGroupDataForm.map(augmentUserGroupInformation)
+
+        val groupsToInsert = augmentedUserGroupInformation.filter(_.alreadyExistingGroup.isEmpty).map(_.group)
+        if(!groupService.add(groupsToInsert)) {
+          //TODO : catch exception : groupe name already exist
+          val description = s"Impossible d'importer les groupes"
+          eventService.error("IMPORT_USER_ERROR", description)
+          val formWithError = importUsersReviewFrom.fill(augmentedUserGroupInformation).withGlobalError(description)
+          InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError))
+        } else {
+          val usersToInsert = augmentedUserGroupInformation.flatMap(_.users).filter(_.alreadyExistingUser.isEmpty).map(_.user)
+          if(!userService.add(usersToInsert)) {
+            //TODO : catch exception : email already exist
+            val description = s"Impossible de mettre à des utilisateurs à l'importation."
+            eventService.error("IMPORT_USER_ERROR", description)
+            val formWithError = importUsersReviewFrom.fill(augmentedUserGroupInformation).withGlobalError(description)
+            InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError))
+          } else {
+            usersToInsert.foreach { user =>
+              notificationsService.newUser(user)
+              eventService.info("ADD_USER_DONE", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
+            }
+            eventService.info("IMPORT_USERS_DONE", "Utilisateurs ajoutés par l'importation")
+            Redirect(routes.UserController.all(request.currentArea.id)).flashing("success" -> "Utilisateurs importés.")
+          }
+        }
+      }
+
+
+
       NotImplemented
      /* csv.sectionsForm(request.currentUser.id).bindFromRequest.fold({ missFilledForm =>
         val cleanedForm = missFilledForm.copy(data = missFilledForm.data.filter({ case (_, v) => v.nonEmpty }))
