@@ -1,8 +1,12 @@
 package controllers
 
+import java.util.UUID
+
+import csv.{Header, GROUP_AREAS, GROUP_EMAIL,GROUP_HEADER,GROUP_HEADERS,GROUP_MANAGER,GROUP_NAME,GROUP_ORGANISATION}
 import actions.LoginAction
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import extentions.Operators
+import extentions.UUIDHelper
 import extentions.Operators.{GroupOperators, UserOperators, not}
 import forms.Models.{CSVImportData, UserGroupFormData}
 import javax.inject.Inject
@@ -12,8 +16,10 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import services.{EventService, NotificationService, UserGroupService, UserService}
+import org.joda.time.DateTime
 
 import scala.io.Source
+import extentions.Time
 
 case class CSVImportController @Inject()(loginAction: LoginAction,
                                     userService: UserService,
@@ -48,7 +54,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
   type CSVExtractResult = List[(LineNumber, CSVMap, RawCSVLine)]
 
 
-  def extractFromCSVToMap(csvText: String, separator: Char): Either[String, CSVExtractResult] = try {
+  def extractFromCSVToMap(separator: Char)(csvText: String): Either[String, CSVExtractResult] = try {
     implicit object SemiConFormat extends DefaultCSVFormat {
       override val delimiter: Char = separator
     }
@@ -64,7 +70,18 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
         Left(s"Erreur lors de l'extraction du csv ${ex.message}")
     }
 
-  def csvCleanHeadersWithExpectedHeaders(csvMap: CSVMap): CSVMap = ???
+  def csvCleanHeadersWithExpectedHeaders(expectedGroupHeaders: List[Header],
+                                         expectedUserHeaders: List[Header])(csvMap: CSVMap): CSVMap = {
+    def convertToPrefixForm(values: CSVMap, expectedHeaders: List[Header], formPrefix: String): CSVMap = {
+      values.map({ case (key, value) =>
+        val lowerKey = key.trim.toLowerCase
+        expectedHeaders.find(expectedHeader => expectedHeader.lowerPrefixes.exists(lowerKey.startsWith))
+          .map(expectedHeader => formPrefix + expectedHeader.key -> value.trim)
+      }).flatten.toMap
+    }
+
+    convertToPrefixForm(csvMap, expectedGroupHeaders, "group.") ++ convertToPrefixForm(csvMap, expectedUserHeaders, "user.")
+  }
 
   def csvIncludeFirstnameInLastName(csvMap: CSVMap): CSVMap = ???
 
@@ -85,12 +102,10 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
 
   def includeAreaNameInGroupName() = ???
   
-  
-
-  def csvLinesToUserGroupData(csvLines: String): Either[String, (List[String], List[UserGroupFormData])] = {
+  def csvLinesToUserGroupData(separator: Char)(csvLines: String): Either[String, (List[String], List[UserGroupFormData])] = {
     def partition(list: List[Either[String, UserGroupFormData]]): (List[String], List[UserGroupFormData]) = ???
     
-    extractFromCSVToMap(csvLines)
+    val x: Either[String, (List[String], List[UserGroupFormData])] = extractFromCSVToMap(separator)(csvLines)
        .flatMap{
           val result: List[Either[String, UserGroupFormData]] = _.flatMap { 
             case (lineNumber: LineNumber, csvMap: CSVMap, rawCSVLine: RawCSVLine) =>
@@ -101,7 +116,8 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
           }
           partition(result)
        }
-       .flatMap{
+
+       x.flatMap {
           case (linesErrorList: List[String], userGroupFormDataList: List[UserGroupFormData]) =>
           (linesErrorList, userGroupDataListToUserGroupData(userGroupFormDataList))
        }
@@ -116,6 +132,8 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
           eventService.warn(code = "CSV_IMPORT_INPUT_EMPTY", description = "Le champ d'import de CSV est vide ou le séparateur n'est pas défini.")
           BadRequest(views.html.importUsersCSV(request.currentUser)(csvImportContentForm))
         }, { csvImportData =>
+
+          csvLinesToUserGroupData
           /*
           csvLinesToMap(csvImportData.csvLines)
              .flatMap(csvCleanHeadersWithExpextedHeaders(csvMap))
