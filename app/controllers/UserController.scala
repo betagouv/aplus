@@ -86,9 +86,9 @@ case class UserController @Inject()(loginAction: LoginAction,
         ).mkString(";")
       }
 
-      val headers = List[String]("Id", csv.USER_LAST_NAME.prefixes(0),
-        csv.USER_EMAIL.prefixes(0), "Création", "Aidant", csv.INSTRUCTOR.prefixes(0),
-        csv.GROUP_MANAGER.prefixes(0), "Expert", "Admin", "Actif", "Commune INSEE", csv.GROUP_AREAS.prefixes(0),
+      val headers = List[String]("Id", csv.USER_NAME.prefixes(0),
+        csv.USER_EMAIL.prefixes(0), "Création", "Aidant", csv.USER_INSTRUCTOR.prefixes(0),
+        csv.USER_GROUP_MANAGER.prefixes(0), "Expert", "Admin", "Actif", "Commune INSEE", csv.GROUP_AREAS_IDS.prefixes(0),
         csv.GROUP_NAME.prefixes(0), "CGU", "Newsletter").mkString(";")
       val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
       val date = DateTime.now(Time.dateTimeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))

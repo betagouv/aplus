@@ -172,7 +172,10 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
   }
 
   def csvLinesToUserGroupData(separator: Char, defaultAreas: Seq[Area], currentDate: DateTime)(csvLines: String): Either[String, (List[String], List[UserGroupFormData])] = {
-    def partition(list: List[Either[String, UserGroupFormData]]): (List[String], List[UserGroupFormData]) = ???
+    def partition(list: List[Either[String, UserGroupFormData]]): (List[String], List[UserGroupFormData]) = {
+      val (errors, successes) = list.partition(_.isLeft)
+      errors.map(_.left.get) -> successes.map(_.right.get)
+    }
     
     extractFromCSVToMap(separator)(csvLines)
        .map { csvExtractResult: CSVExtractResult =>

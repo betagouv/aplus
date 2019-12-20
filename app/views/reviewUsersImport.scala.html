@@ -18,7 +18,7 @@
         @helper.input(user("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
           <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
-        @helper.input(user(csv.USER_LAST_NAME.key), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
+        @helper.input(user(csv.USER_NAME.key), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
           <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
@@ -33,10 +33,10 @@
         }
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.checkbox(user(csv.INSTRUCTOR.key), 'type -> "checkbox", 'label -> csv.INSTRUCTOR.prefixes(0), 'class -> "mdl-checkbox__input instructor")
+        @helper.checkbox(user(csv.USER_INSTRUCTOR.key), 'type -> "checkbox", 'label -> csv.USER_INSTRUCTOR.prefixes(0), 'class -> "mdl-checkbox__input instructor")
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.checkbox(user(csv.GROUP_MANAGER.key), 'type -> "checkbox", 'label -> csv.GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
+        @helper.checkbox(user(csv.USER_GROUP_MANAGER.key), 'type -> "checkbox", 'label -> csv.USER_GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
       </td>
       <td>
         <input type="button" class="delete-line" data-line-id="line_@{sectionIndex}_@{index}" value="Supprimer la ligne">
@@ -88,7 +88,7 @@
               }
             </th>
             <th>
-              @helper.input(section("group")(csv.GROUP_AREAS.key), 'label -> "Territoires", 'class -> "input-import-user") { (id, name, value, args) =>
+              @helper.input(section("group")(csv.GROUP_AREAS_IDS.key), 'label -> "Territoires", 'class -> "input-import-user") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" readonly id="@id" value="@value" @toHtmlArgs(args)>
               }
             </th>
