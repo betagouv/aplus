@@ -149,33 +149,35 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     }
   }
   
-  private def userCSVMapping(currentDate: DateTime): Mapping[User] = mapping(
-    "id" -> optional(uuid).transform[UUID]({
-      case None => UUID.randomUUID()
-      case Some(id) => id
-    }, {
-      Some(_)
-    }),
-    "key" -> ignored("key"),
-    "name" -> nonEmptyText,
-    "qualite" -> default(text, ""),
-    "email" -> nonEmptyText,
-    "helper" -> ignored(true),
-    "instructor" -> boolean,
-    "admin" -> ignored(false),
-    "area-ids" -> ignored(List.empty[UUID]),
-    "creationDate" -> ignored(currentDate),
-    "hasAcceptedCharte" -> ignored(true),
-    "communeCode" -> ignored("0"),
-    "admin-group" -> boolean,
-    "disabled" -> ignored(false),
-    "expert" -> ignored(false),
-    "groupIds" -> default(list(uuid), List()),
-    "delegations" -> ignored(Map.empty[String, String]),
-    "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
-    "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-    "phone-number" -> optional(text),
-  )(User.apply)(User.unapply)
+  private def userCSVMapping(currentDate: DateTime): Mapping[User] = single(
+    "user" -> mapping(
+          "id" -> optional(uuid).transform[UUID]({
+            case None => UUID.randomUUID()
+            case Some(id) => id
+          }, {
+            Some(_)
+          }),
+          "key" -> ignored("key"),
+          "name" -> nonEmptyText,
+          "qualite" -> default(text, ""),
+          "email" -> nonEmptyText,
+          "helper" -> ignored(true),
+          "instructor" -> boolean,
+          "admin" -> ignored(false),
+          "area-ids" -> ignored(List.empty[UUID]),
+          "creationDate" -> ignored(currentDate),
+          "hasAcceptedCharte" -> ignored(true),
+          "communeCode" -> ignored("0"),
+          "admin-group" -> boolean,
+          "disabled" -> ignored(false),
+          "expert" -> ignored(false),
+          "groupIds" -> default(list(uuid), List()),
+          "delegations" -> ignored(Map.empty[String, String]),
+          "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
+          "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
+          "phone-number" -> optional(text),
+        )(User.apply)(User.unapply)
+  )
 
   private def groupCSVMapping(currentDate: DateTime): Mapping[UserGroup] = single(
     "group" ->
@@ -348,8 +350,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
               
               val currentDate = Time.now()
               val formWithError = importUsersReviewFrom(currentDate).fillAndValidate(filteredUserGroupInformation)
-
-              formWithError.withGlobalError("Certaines lignes du CSV n'ont pas pu être importé", userNotImported ++ alreadyExistingUsersErrors)
+                .withGlobalError("Certaines lignes du CSV n'ont pas pu être importé", userNotImported ++ alreadyExistingUsersErrors :_*)
               Ok(views.html.reviewUsersImport(request.currentUser)(formWithError))
           })
         })
