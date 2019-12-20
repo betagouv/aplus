@@ -89,7 +89,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
       convertToPrefixForm(csvMap, expectedGroupHeaders, "group.") ++ convertToPrefixForm(csvMap, expectedUserHeaders, "user.")
     }
 
-    def includeAreaNameInGroupName(defaultAreas: Seq[Area]): CSVMap = {
+    def convertAreasNameToAreaUUID(defaultAreas: Seq[Area]): CSVMap = {
       val newAreas: Seq[Area] = csvMap.get(csv.GROUP_AREAS_IDS.key) match {
         case Some(areas) =>
           areas.split(",").flatMap(_.split(";")).flatMap(_.split("-")).flatMap(Area.searchFromName)
@@ -99,7 +99,19 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
       csvMap + (csv.GROUP_AREAS_IDS.key -> newAreas.map(_.id.toString).mkString(","))
     }
 
-    def includeAreaNameInGroupName(): CSVMap = ???
+    def includeAreasNameInGroupName(): CSVMap = {
+      val optionalAreaNames: Option[List[String]] = csvMap.get(csv.GROUP_AREAS_IDS.key).map({ ids: String =>
+        ids.split(",").flatMap({ uuid: String =>
+          Area.fromId(UUID.fromString(uuid))
+        }).toList.map(_.name)
+      })
+      (optionalAreaNames -> csvMap.get(csv.GROUP_NAME.key)) match {
+        case (Some(areaNames), Some(initialGroupName)) =>
+          csvMap + (csv.GROUP_NAME.key -> s"$initialGroupName - ${areaNames.mkString("/")}")
+        case _ =>
+          csvMap
+      }
+    }
 
     def fromCsvFieldNameToHtmlFieldName: CSVMap = {
       csvMap.get(csv.GROUP_AREAS_IDS.key).fold({
@@ -183,7 +195,8 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
             case (lineNumber: LineNumber, csvMap: CSVMap, rawCSVLine: RawCSVLine) =>
               csvMap.trimValues
                   .csvCleanHeadersWithExpectedHeaders
-                  .includeAreaNameInGroupName(defaultAreas)
+                  .convertAreasNameToAreaUUID(defaultAreas)
+                  .includeAreasNameInGroupName
                   .fromCsvFieldNameToHtmlFieldName
                   .includeFirstnameInLastName()
                   .toUserGroupData(lineNumber, currentDate).left.map { error: String =>
