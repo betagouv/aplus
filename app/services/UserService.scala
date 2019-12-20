@@ -81,7 +81,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
   def byEmails(emails: List[String]): List[User] = {
     val lowerCaseEmails = emails.map(_.toLowerCase)
     db.withConnection { implicit connection =>
-      SQL"""SELECT * FROM "user" WHERE  ARRAY[${lowerCaseEmails}] @> ARRAY[lower(email)]""".as(simpleUser.singleOpt)
+      SQL"""SELECT * FROM "user" WHERE  ARRAY[${lowerCaseEmails}]::text[] @> ARRAY[lower(email)]::text[]""".as(simpleUser.*)
     }.toList ++ (User.admins.filter(user => lowerCaseEmails.contains(user.email.toLowerCase)))
   }
 

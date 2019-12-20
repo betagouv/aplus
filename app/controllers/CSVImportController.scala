@@ -99,6 +99,14 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
       csvMap + (csv.GROUP_AREAS_IDS.key -> newAreas.map(_.id.toString).mkString(","))
     }
 
+    def convertBooleanValue(key: String, trueValue: String): CSVMap = {
+      csvMap.get(key).fold {
+        csvMap
+      } {  value =>
+        csvMap + (key -> (value.toLowerCase().contains(trueValue.toLowerCase())).toString)
+      }
+    }
+
     def includeAreasNameInGroupName(): CSVMap = {
       val optionalAreaNames: Option[List[String]] = csvMap.get(csv.GROUP_AREAS_IDS.key).map({ ids: String =>
         ids.split(",").flatMap({ uuid: String =>
@@ -249,6 +257,8 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
               csvMap.trimValues
                   .csvCleanHeadersWithExpectedHeaders
                   .convertAreasNameToAreaUUID(defaultAreas)
+                  .convertBooleanValue(csv.USER_GROUP_MANAGER.key, "Responsable")
+                  .convertBooleanValue(csv.USER_INSTRUCTOR.key, "Instructeur")
                   .includeAreasNameInGroupName
                   .fromCsvFieldNameToHtmlFieldName
                   .includeFirstnameInLastName()
@@ -350,7 +360,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
               
               val currentDate = Time.now()
               val formWithError = importUsersReviewFrom(currentDate).fillAndValidate(filteredUserGroupInformation)
-                .withGlobalError("Certaines lignes du CSV n'ont pas pu être importé", userNotImported ++ alreadyExistingUsersErrors :_*)
+                .withGlobalError("Certaines lignes du CSV n'ont pas pu être importé", userNotImported ++ alreadyExistingUsersErrors :_*)  // TODO : Only if no error
               Ok(views.html.reviewUsersImport(request.currentUser)(formWithError))
           })
         })
