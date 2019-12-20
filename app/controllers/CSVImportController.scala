@@ -105,6 +105,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
           Area.fromId(UUID.fromString(uuid))
         }).toList.map(_.name)
       })
+      // TODO: Only if the groupName dont include the area
       (optionalAreaNames -> csvMap.get(csv.GROUP_NAME.key)) match {
         case (Some(areaNames), Some(initialGroupName)) =>
           csvMap + (csv.GROUP_NAME.key -> s"$initialGroupName - ${areaNames.mkString("/")}")
@@ -139,7 +140,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
       groupCSVMapping(currentDate).bind(csvMap).fold({ errors =>
         Left(errors.mkString(", "))
       }, { group =>
-        userCSVMapping.bind(csvMap).fold({ errors =>
+        userCSVMapping(currentDate).bind(csvMap).fold({ errors =>
           Left(errors.mkString(", "))
         }, { user =>
           Right(UserGroupFormData(group, List(UserFormData(user, lineNumber))))
@@ -148,7 +149,34 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     }
   }
   
-  private val userCSVMapping: Mapping[User] = ???
+  private def userCSVMapping(currentDate: DateTime): Mapping[User] = mapping(
+    "id" -> optional(uuid).transform[UUID]({
+      case None => UUID.randomUUID()
+      case Some(id) => id
+    }, {
+      Some(_)
+    }),
+    "key" -> ignored("key"),
+    "name" -> nonEmptyText,
+    "qualite" -> nonEmptyText,
+    "email" -> nonEmptyText,
+    "helper" -> ignored(true),
+    "instructor" -> boolean,
+    "admin" -> ignored(false),
+    "area-ids" -> ignored(List.empty[UUID]),
+    "creationDate" -> ignored(currentDate),
+    "hasAcceptedCharte" -> ignored(true),
+    "communeCode" -> ignored("0"),
+    "admin-group" -> boolean,
+    "disabled" -> ignored(false),
+    "expert" -> ignored(false),
+    "groupIds" -> default(list(uuid), List()),
+    "delegations" -> ignored(Map.empty[String, String]),
+    "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
+    "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
+    "phone-number" -> optional(text),
+  )(User.apply)(User.unapply)
+
   private def groupCSVMapping(currentDate: DateTime): Mapping[UserGroup] = single( 
     "group" ->
       groupImportMapping(currentDate)
@@ -158,8 +186,15 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     userGroupFormData
       .groupBy(_.group.name)
       .mapValues({ case sameGroupNameList: List[UserGroupFormData] =>
-        val users = sameGroupNameList.flatMap(_.users)
-        sameGroupNameList.head.copy(users = users)
+        val group = sameGroupNameList.head
+        val groupId = group.group.id
+        val areasId = group.group.areaIds
+        val usersFormData = sameGroupNameList.flatMap(_.users).map({ userFormData => 
+          val newUser = userFormData.user.copy(groupIds = (groupId :: userFormData.user.groupIds).distinct,
+            areas = (areasId ++ userFormData.user.areas).distinct)
+          userFormData.copy(user = newUser)
+        })
+        group.copy(users = usersFormData)
       }).values.toList
   }
 
@@ -182,6 +217,22 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
       )
     }.copy(users = newUsersFormDataList) 
   }
+
+  def filterAlreadyExistingUsersAndGenerateErrors(groups: List[UserGroupFormData]): (List[String], List[UserGroupFormData]) = {
+    val (newErrors, newGroups) = groups.foldLeft((List.empty[String], List.empty[UserGroupFormData])) { filterAlreadyExistingUsersAndGenerateErrors }
+    newErrors.reverse -> newGroups.reverse
+  }
+
+  def filterAlreadyExistingUsersAndGenerateErrors(accu: (List[String], List[UserGroupFormData]), group: UserGroupFormData): (List[String], List[UserGroupFormData]) = {
+    val (newUsers, existingUsers) = group.users.partition(_.alreadyExistingUser.isEmpty)
+    val errors = existingUsers.map { (existingUser: UserFormData) =>
+      s"${existingUser.user.name} (${existingUser.user.email}) existe déjà."
+    }
+    val newGroup = group.copy(users = newUsers)
+    (errors ++ accu._1) -> (newGroup :: accu._2)
+  }
+  
+
 
   def csvLinesToUserGroupData(separator: Char, defaultAreas: Seq[Area], currentDate: DateTime)(csvLines: String): Either[String, (List[String], List[UserGroupFormData])] = {
     def partition(list: List[Either[String, UserGroupFormData]]): (List[String], List[UserGroupFormData]) = {
@@ -242,7 +293,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     }),
     "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
     "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-    csv.USER_PHONE_NUMBER.key -> optional(text),
+    "phone-number" -> optional(text),
   )(User.apply)(User.unapply)
 
   private def groupImportMapping(date: DateTime): Mapping[UserGroup] = mapping(
@@ -262,7 +313,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     "groups" -> list(
             mapping(
               "group" -> groupImportMapping(date),
-              "user" -> list(
+              "users" -> list(
                   mapping(
                     "user" -> userImportMapping(date),
                     "line" -> number,
@@ -292,10 +343,13 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
           }, {
             case (userNotImported: List[String], userGroupDataForm: List[UserGroupFormData]) =>
               val augmentedUserGroupInformation: List[UserGroupFormData] = userGroupDataForm.map(augmentUserGroupInformation)
-              val currentDate = Time.now()
-              val formWithError = importUsersReviewFrom(currentDate).fillAndValidate(augmentedUserGroupInformation)
+              val (alreadyExistingUsersErrors, filteredUserGroupInformation) = filterAlreadyExistingUsersAndGenerateErrors(augmentedUserGroupInformation)
 
-              formWithError.withGlobalError("Certaines lignes du CSV n'ont pas pu être importé", userNotImported)
+              
+              val currentDate = Time.now()
+              val formWithError = importUsersReviewFrom(currentDate).fillAndValidate(filteredUserGroupInformation)
+
+              formWithError.withGlobalError("Certaines lignes du CSV n'ont pas pu être importé", userNotImported ++ alreadyExistingUsersErrors)
               Ok(views.html.reviewUsersImport(request.currentUser)(formWithError))
           })
         })

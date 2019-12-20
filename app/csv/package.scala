@@ -7,17 +7,6 @@ import play.api.data.Forms._
 
 package object csv {
 
-/*
-  sealed trait HeaderBis {
-     val key = this.getClass.getSimpleName
-     def prefixes(): List[String]
-     val name = prefixes.head
-  }
-
-  case object LastName extends HeaderBis { def prefixes = List("Nom", "PRENOM NOM") }
-  case object AreaIds extends HeaderBis { def prefixes = List("Territoire", "DEPARTEMENTS") }
-  */
-
   case class Header(key: String, prefixes: List[String]) {
     val lowerPrefixes = prefixes.map(_.toLowerCase())
   }
@@ -26,7 +15,7 @@ package object csv {
   val USER_FIRST_NAME = Header("user.firstname", List("Prénom"))
   val USER_EMAIL = Header("user.email", List("Email", "Adresse e-mail", "Contact mail Agent", "MAIL"))
   val USER_INSTRUCTOR = Header("user.instructor", List("Instructeur"))
-  val USER_GROUP_MANAGER = Header("user.group-manager", List("Responsable"))
+  val USER_GROUP_MANAGER = Header("user.admin-group", List("Responsable"))
   val USER_PHONE_NUMBER = Header("user.phone-number", List("Numéro de téléphone", "téléphone"))
 
   val GROUP_AREAS_IDS = Header("group.area-ids", List("Territoire", "DEPARTEMENTS"))

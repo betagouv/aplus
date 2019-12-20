@@ -1,45 +1,44 @@
 @import models._
 @import extentions.MDLForms._
+@import extentions.UUIDHelper
 
 @import forms.Models.UserGroupFormData
 @(currentUser: User)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
-@display(section: Field, sectionIndex: Int)(header: Html)(footer: Html) = {
+@display(section: Field, groupIndex: Int)(header: Html)(footer: Html) = {
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white">
   <thead>
-    <tr style="background-color: lightblue">
       @header
-    </tr>
   </thead>
   <tbody>
     @helper.repeatWithIndex(section("users")) { (user, index) =>
-    <tr class="searchable-row td--clear-border" id="line_@{sectionIndex}_@{index}">
+    <tr class="searchable-row td--clear-border" id="line_@{groupIndex}_@{index}">
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
         @helper.input(user("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
           <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
-        @helper.input(user(csv.USER_NAME.key), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
+        @helper.input(user("name"), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
           <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.input(user(csv.USER_EMAIL.key), 'label -> "Email", 'class -> "input-import-user") { (id, name, value, args) =>
+        @helper.input(user("email"), 'label -> "Email", 'class -> "input-import-user") { (id, name, value, args) =>
           <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.input(user(csv.USER_PHONE_NUMBER.key), 'label -> "Numéro de téléphone", 'class -> "input-import-user") { (id, name, value, args) =>
+        @helper.input(user("phone-number"), 'label -> "Numéro de téléphone", 'class -> "input-import-user") { (id, name, value, args) =>
         <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.checkbox(user(csv.USER_INSTRUCTOR.key), 'type -> "checkbox", 'label -> csv.USER_INSTRUCTOR.prefixes(0), 'class -> "mdl-checkbox__input instructor")
+        @helper.checkbox(user("instructor"), 'type -> "checkbox", 'label -> csv.USER_INSTRUCTOR.prefixes(0), 'class -> "mdl-checkbox__input instructor")
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.checkbox(user(csv.USER_GROUP_MANAGER.key), 'type -> "checkbox", 'label -> csv.USER_GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
+        @helper.checkbox(user("adminGroup"), 'type -> "checkbox", 'label -> csv.USER_GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
       </td>
       <td>
-        <input type="button" class="delete-line" data-line-id="line_@{sectionIndex}_@{index}" value="Supprimer la ligne">
+        <input type="button" class="delete-line" data-line-id="line_@{groupIndex}_@{index}" value="Supprimer la ligne">
       </td>
     </tr>
     }
@@ -47,7 +46,7 @@
 </table>
 }
 
-@main(currentUser)("Revue de votre import CSV") {
+@main(currentUser, maxWidth = false)("Revue de votre import CSV") {
   <script src='@routes.Assets.versioned("javascripts/main.js")'></script>
   <script src='@routes.Assets.versioned("javascripts/csv-import.js")'></script>
 } {
@@ -67,31 +66,43 @@
       //TODO : Show existing users
     -->
     <em>Instructeur : </em><a href="#" id="instructor-all-link">Tous</a> / <a href="#" id="instructor-none-link">Aucuns</a>
-    @helper.repeatWithIndex(form("sections")) { (section, sectionIndex) =>
-        @display(section, sectionIndex) {
+    @helper.repeatWithIndex(form("groups")) { (group, groupIndex) =>
+        @display(group, groupIndex) {
+          <tr style="background-color: lightblue">
             <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="1">
-              @helper.input(section("group")("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
+              @helper.input(group("group")("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
-              @helper.input(section("group")(csv.GROUP_NAME.key), 'label -> csv.GROUP_NAME.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
+              @helper.input(group("group")(csv.GROUP_NAME.key), 'label -> csv.GROUP_NAME.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
             </th>
             <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="2">
-              @helper.input(section("group")(csv.GROUP_ORGANISATION.key), 'label -> csv.GROUP_ORGANISATION.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
+              @helper.input(group("group")(csv.GROUP_ORGANISATION.key), 'label -> csv.GROUP_ORGANISATION.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
             </th>
             <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="2">
-              @helper.input(section("group")(csv.GROUP_EMAIL.key), 'label -> csv.GROUP_EMAIL.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
+              @helper.input(group("group")(csv.GROUP_EMAIL.key), 'label -> csv.GROUP_EMAIL.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
             </th>
             <th>
-              @helper.input(section("group")(csv.GROUP_AREAS_IDS.key), 'label -> "Territoires", 'class -> "input-import-user") { (id, name, value, args) =>
+              @helper.input(group("group")(csv.GROUP_AREAS_IDS.key), 'label -> "Territoires", 'class -> "input-import-user") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" readonly id="@id" value="@value" @toHtmlArgs(args)>
               }
             </th>
+          </tr>
+          <tr>
+            <th colspan="6">
+              @helper.repeat(group("group")("area-ids")) { areaIdFied =>
+                @areaIdFied.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId).foreach { area =>
+                  <input name="area-ids[]" value="@area.id" type="hidden">
+                  @{area.name} (@area.inseeCode ) /   
+                }
+              }
+            </th>  
+          </tr>
         } { }
     }
     <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell" onsubmit="Main.disableEventTarget(this)">Importer</button>
