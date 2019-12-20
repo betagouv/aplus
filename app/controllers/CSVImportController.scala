@@ -33,7 +33,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     mapping(
     "csv-lines" -> nonEmptyText,
     "area-default-ids" -> list(uuid),
-    "separator" -> char.verifying(value => value.equals(";") || value.equals(","))
+    "separator" -> char.verifying("Séparateur incorrect", (value: Char) => (value == ';' || value == ','))
   )(CSVImportData.apply)(CSVImportData.unapply))
 
   def importUsersFromCSV: Action[AnyContent] = loginAction { implicit request =>
@@ -82,7 +82,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
         values.map({ case (key, value) =>
           val lowerKey = key.trim.toLowerCase
           expectedHeaders.find(expectedHeader => expectedHeader.lowerPrefixes.exists(lowerKey.startsWith))
-            .map(expectedHeader => formPrefix + expectedHeader.key -> value)
+            .map(expectedHeader => expectedHeader.key -> value)
         }).flatten.toMap
       }
 
@@ -158,7 +158,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     }),
     "key" -> ignored("key"),
     "name" -> nonEmptyText,
-    "qualite" -> nonEmptyText,
+    "qualite" -> default(text, ""),
     "email" -> nonEmptyText,
     "helper" -> ignored(true),
     "instructor" -> boolean,
@@ -177,7 +177,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     "phone-number" -> optional(text),
   )(User.apply)(User.unapply)
 
-  private def groupCSVMapping(currentDate: DateTime): Mapping[UserGroup] = single( 
+  private def groupCSVMapping(currentDate: DateTime): Mapping[UserGroup] = single(
     "group" ->
       groupImportMapping(currentDate)
   )
