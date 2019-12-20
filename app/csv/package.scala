@@ -7,42 +7,44 @@ import play.api.data.Forms._
 
 package object csv {
 
+/*
   sealed trait HeaderBis {
      val key = this.getClass.getSimpleName
      def prefixes(): List[String]
      val name = prefixes.head
   }
 
-  case object UserLastName extends HeaderBis { def prefixes = List("Nom", "PRENOM NOM") }
-  case object GroupAreas extends HeaderBis { def prefixes = List("Territoire", "DEPARTEMENTS") }
-
+  case object LastName extends HeaderBis { def prefixes = List("Nom", "PRENOM NOM") }
+  case object AreaIds extends HeaderBis { def prefixes = List("Territoire", "DEPARTEMENTS") }
+  */
 
   case class Header(key: String, prefixes: List[String]) {
     val lowerPrefixes = prefixes.map(_.toLowerCase())
   }
 
-  val USER_LAST_NAME = Header("user_lastname", List("Nom", "PRENOM NOM"))
-  val USER_FIRST_NAME = Header("user_firstname", List("Prénom"))
-  val USER_EMAIL = Header("user_email", List("Email", "Adresse e-mail", "Contact mail Agent", "MAIL"))
-  val INSTRUCTOR = Header("user_instructor", List("Instructeur"))
-  val GROUP_MANAGER = Header("user_group_manager", List("Responsable"))
-  val USER_PHONE_NUMBER = Header("user_phone_number", List("Numéro de téléphone", "téléphone"))
+  val USER_NAME = Header("user.name", List("Nom", "PRENOM NOM"))
+  val USER_FIRST_NAME = Header("user.firstname", List("Prénom"))
+  val USER_EMAIL = Header("user.email", List("Email", "Adresse e-mail", "Contact mail Agent", "MAIL"))
+  val USER_INSTRUCTOR = Header("user.instructor", List("Instructeur"))
+  val USER_GROUP_MANAGER = Header("user.group-manager", List("Responsable"))
+  val USER_PHONE_NUMBER = Header("user.phone-number", List("Numéro de téléphone", "téléphone"))
 
-  val GROUP_AREAS = Header("group_area", List("Territoire", "DEPARTEMENTS"))
-  val GROUP_ORGANISATION = Header("group_organisation", List("Organisation"))
-  val GROUP_NAME = Header("group_name", List("Groupe", "Opérateur partenaire", "Nom de la structure labellisable"))
-  val GROUP_EMAIL = Header("group_email", List("Bal", "adresse mail générique"))
+  val GROUP_AREAS_IDS = Header("group.area-ids", List("Territoire", "DEPARTEMENTS"))
+  val GROUP_ORGANISATION = Header("group.organisation", List("Organisation"))
+  val GROUP_NAME = Header("group.name", List("Groupe", "Opérateur partenaire", "Nom de la structure labellisable"))
+  val GROUP_EMAIL = Header("group.email", List("Bal", "adresse mail générique"))
 
   val SEPARATOR = ";"
 
-  val USER_HEADERS = List(USER_PHONE_NUMBER, USER_FIRST_NAME, USER_LAST_NAME, USER_EMAIL, INSTRUCTOR, GROUP_MANAGER)
+  val USER_HEADERS = List(USER_PHONE_NUMBER, USER_FIRST_NAME, USER_NAME, USER_EMAIL, USER_INSTRUCTOR, USER_GROUP_MANAGER)
   val USER_HEADER = USER_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
 
-  val GROUP_HEADERS = List(GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL, GROUP_AREAS)
+  val GROUP_HEADERS = List(GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL, GROUP_AREAS_IDS)
   val GROUP_HEADER = GROUP_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
 
   type UUIDGenerator = () => UUID
 
+/*
   def groupMappingForCSVImport(uuidGenerator: UUIDGenerator)(creatorId: UUID)(currentDate: DateTime): Mapping[UserGroup] =
     mapping(
       "id" -> ignored(uuidGenerator()),
@@ -58,7 +60,7 @@ package object csv {
           else Organisation.fromName(name).map(_.shortName)
         }), identity),
       GROUP_EMAIL.key -> optional(email.verifying(maxLength(200), nonEmpty)),
-    )(groupApply)(groupUnapply)
+    )(groupApply)(groupUnapply) */
 
 
 /*
