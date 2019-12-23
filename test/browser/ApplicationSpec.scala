@@ -8,7 +8,7 @@ import org.specs2.mutable._
 import org.specs2.runner._
 import play.api.test.Helpers._
 import play.api.test._
-import services.{ApplicationService, TokenService, UserGroupService, UserService}
+import services.{ApplicationService, EventService, TokenService, UserGroupService, UserService}
 
 
 @RunWith(classOf[JUnitRunner])
@@ -19,11 +19,12 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
       val tokenService = app.injector.instanceOf[TokenService]
       val userService = app.injector.instanceOf[UserService]
       val groupService = app.injector.instanceOf[UserGroupService]
+      val eventService = app.injector.instanceOf[EventService]
       val applicationService = app.injector.instanceOf[ApplicationService]
 
       val number = scala.util.Random.nextInt()
       val area = Area.all.head.id
-      val instructorGroup = UserGroup(id = UUIDHelper.randomUUID, name = s"Group $number", description = None, inseeCode = List("0"), creationDate = Time.now(), createByUserId = UUIDHelper.namedFrom("julien"), areaIds = area::Nil)
+      val instructorGroup = UserGroup(id = UUIDHelper.randomUUID, name = s"Group $number", description = None, inseeCode = List("0"), creationDate = Time.now(), areaIds = area::Nil)
       groupService.add(instructorGroup)
       val instructorUser = User(
         UUIDHelper.randomUUID,

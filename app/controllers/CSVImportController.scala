@@ -100,7 +100,6 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     "description" -> optional(text),
     "insee-code" -> list(text),
     "creationDate" -> ignored(date),
-    "create-by-user-id" -> ignored(UUIDHelper.namedFrom("deprecated")),
     "area-ids" -> list(uuid).verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
     "organisation" -> optional(text).verifying("Vous devez sélectionner une organisation dans la liste", organisation =>
       organisation.map(Organisation.fromShortName).forall(_.isDefined)
@@ -181,6 +180,9 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
               .withGlobalError(description)
             InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError))
         }, {  Unit =>
+          groupsToInsert.foreach({ userGroup =>
+            eventService.info("ADD_USER_GROUP_DONE", s"Groupe ${userGroup.id} ajouté par l'utilisateur d'id ${request.currentUser.id}")
+          })
           val usersToInsert = augmentedUserGroupInformation.flatMap(_.users)
             .filter(_.alreadyExistingUser.isEmpty)
             .map(_.user)

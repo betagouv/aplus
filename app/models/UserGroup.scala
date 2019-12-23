@@ -9,7 +9,6 @@ case class UserGroup(id: UUID,
                      description: Option[String],
                      inseeCode: List[String],
                      creationDate: DateTime,
-                     createByUserId: UUID,
                      areaIds: List[UUID],
                      organisation: Option[String] = None,
                      email: Option[String] = None) {
