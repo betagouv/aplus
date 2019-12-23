@@ -5,18 +5,19 @@
 @import forms.Models.UserGroupFormData
 @(currentUser: User)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
-@display(section: Field, groupIndex: Int)(header: Html)(footer: Html) = {
-<table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white">
-  <thead>
-      @header
-  </thead>
+@display(section: Field, groupIndex: Int)(header: Html) = {
+  <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
+@header
+  <b>Utilisateurs du groupe :</b>
+<table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table">
   <tbody>
     @helper.repeatWithIndex(section("users")) { (user, index) =>
     <tr class="searchable-row td--clear-border" id="line_@{groupIndex}_@{index}">
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.input(user("user")("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
-          <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-        }
+        <input name="@user("line").name" value="@user("line").value" type="hidden">
+        <input name="@user("user")("id").name" value="@user("user")("id").value" type="hidden">
+        <input name="@user("user")("qualite").name" value="@user("user")("qualite").value" type="hidden">
+        
         @helper.input(user("user")("name"), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
           <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
@@ -38,17 +39,20 @@
         @helper.checkbox(user("user")("adminGroup"), 'type -> "checkbox", 'label -> csv.USER_GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
       </td>
       <td>
-        <input type="button" class="delete-line" data-line-id="line_@{groupIndex}_@{index}" value="Supprimer la ligne">
+          <button type="button" class="delete-line mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" data-line-id="line_@{groupIndex}_@{index}"><i class="material-icons">delete_forever</i></button>
       </td>
     </tr>
     }
   </tbody>
 </table>
+  </div>
 }
 
 @main(currentUser, maxWidth = false)("Revue de votre import CSV") {
   <script src='@routes.Assets.versioned("javascripts/main.js")'></script>
   <script src='@routes.Assets.versioned("javascripts/csv-import.js")'></script>
+    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+
 } {
   @helper.form(routes.CSVImportController.importUsersReviewPost(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
   @helper.CSRF.formField
@@ -65,37 +69,39 @@
     <em>Instructeur : </em><a href="#" id="instructor-all-link">Tous</a> / <a href="#" id="instructor-none-link">Aucuns</a>
     @helper.repeatWithIndex(form("groups")) { (group, groupIndex) =>
         @display(group, groupIndex) {
-          <tr style="background-color: lightblue">
-            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="1">
-              @helper.input(group("group")("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
-              <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-              }
-              @helper.input(group("group")("name"), 'label -> csv.GROUP_NAME.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
+          <div class="mdl-cell mdl-cell--12-col mdl-grid" style="padding: 0px;">
+            <h5 class="title--addline mdl-cell mdl-cell--12-col">@group("group")("name").value.getOrElse("")</h5>
+              @helper.input(group("group")("id"), 'label -> "Id", 'class -> "hidden") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
-            </th>
-            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="2">
-              @helper.input(group("group")("organisation"), 'label -> csv.GROUP_ORGANISATION.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
+              @helper.input(group("group")("name"), 'label -> "Nom du groupe", 'class -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
-            </th>
-            <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="2">
-              @helper.input(group("group")("email"), 'label -> csv.GROUP_EMAIL.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
+             @helper.input(group("group")("email"), 'label -> csv.GROUP_EMAIL.prefixes(0), 'class -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
-            </th>
-          </tr>
-          <tr>
-            <th colspan="5">
-              @helper.repeat(group("group")("area-ids")) { areaIdField =>
-                @areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId).foreach { area =>
-                  <input name="area-ids[]" value="@area.id" type="hidden">
-                  @{area.name} (@area.inseeCode ) /   
+            @defining(group("group")("organisation")) { field =>
+              <div class="mdl-cell mdl-cell--4-col">
+                Organisation : 
+                <select id="@field.id" name="@field.name">
+                  <option style="font-weight: bold" value="">Organisme non-référencé</option>
+                  @for(organisation <- Organisation.all) {
+                    <option value="@organisation.shortName"
+                    @if(field.value.forall(value => organisation.name.contains(value) || organisation.shortName.contains(value))) {selected}>@organisation.shortName : @organisation.name </option>
+                  }
+                </select>
+              </div>
+            }
+            <div class="mdl-cell mdl-cell--12-col">
+              Territoires : @helper.repeat(group("group")("area-ids")) { areaIdField =>
+                @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
+                  <input name="@areaIdField.name" value="@area.id" type="hidden">
+                  <b>@{area.name} (@area.inseeCode ) /</b>
                 }
               }
-            </th>  
-          </tr>
-        } { }
+            </div>
+          </div>
+        } 
     }
     <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell" onsubmit="Main.disableEventTarget(this)">Importer</button>
   }

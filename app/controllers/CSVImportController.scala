@@ -7,7 +7,7 @@ import extentions.UUIDHelper
 import extentions.Operators.{GroupOperators, UserOperators}
 import forms.Models.{CSVImportData, UserFormData, UserGroupFormData}
 import javax.inject.Inject
-import models.{Area, User, UserGroup}
+import models.{Area, Organisation, User, UserGroup}
 import org.webjars.play.WebJarsUtil
 import play.api.data.{Form, Mapping}
 import play.api.data.Forms.{uuid, _}
@@ -15,7 +15,6 @@ import play.api.mvc.{Action, AnyContent, InjectedController}
 import services.{EventService, NotificationService, UserGroupService, UserService}
 import org.joda.time.DateTime
 import helper.CsvHelper
-
 import extentions.Time
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 
@@ -70,12 +69,12 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     }),
     "key" -> ignored("key"),
     "name" -> nonEmptyText.verifying(maxLength(100)),
-    "qualite" -> nonEmptyText.verifying(maxLength(100)),
+    "qualite" -> default(text, ""),
     "email" -> email.verifying(maxLength(200), nonEmpty),
     "helper" -> boolean,
     "instructor" -> boolean,
     "admin" -> ignored(false),
-    "areas" -> list(uuid).verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
+    "areas" -> list(uuid),
     "creationDate" -> ignored(date),
     "hasAcceptedCharte" -> boolean,
     "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
@@ -96,11 +95,25 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     "phone-number" -> optional(text),
   )(User.apply)(User.unapply)
 
+  def groupImportMapping(date: DateTime): Mapping[UserGroup] = mapping(
+    "id" -> ignored(UUID.randomUUID()),
+    "name" -> text(maxLength = 60),
+    "description" -> optional(text),
+    "insee-code" -> list(text),
+    "creationDate" -> ignored(date),
+    "create-by-user-id" -> ignored(UUIDHelper.namedFrom("deprecated")),
+    "area-ids" -> list(uuid).verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
+    "organisation" -> optional(text).verifying("Vous devez sélectionner une organisation dans la liste", organisation =>
+      organisation.map(Organisation.fromShortName).forall(_.isDefined)
+    ),
+    "email" -> optional(email)
+  )(UserGroup.apply)(UserGroup.unapply)
+
   def importUsersReviewFrom(date: DateTime): Form[List[UserGroupFormData]] = Form(
     single(
     "groups" -> list(
             mapping(
-              "group" -> CsvHelper.groupImportMapping(date),
+              "group" -> groupImportMapping(date),
               "users" -> list(
                   mapping(
                     "user" -> userImportMapping(date),
@@ -127,6 +140,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
           CsvHelper.csvLinesToUserGroupData(csvImportData.separator, defaultAreas, Time.now())(csvImportData.csvLines).fold({
             error: String =>
               val csvImportContentFormWithError = csvImportContentForm.fill(csvImportData).withGlobalError(error)
+              eventService.warn(code = "CSV_IMPORT_FORM_ERROR", description = "Erreur de formulaire Importation")
               BadRequest(views.html.importUsersCSV(request.currentUser)(csvImportContentFormWithError))
           }, {
             case (userNotImported: List[String], userGroupDataForm: List[UserGroupFormData]) =>
@@ -150,11 +164,15 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     } { () =>
       val currentDate = Time.now()
       importUsersReviewFrom(currentDate).bindFromRequest.fold({ importUsersReviewFromWithError =>
-        BadRequest
+        eventService.warn(code = "IMPORT_USER_FORM_ERROR", description = "Erreur de formulaire de review")
+        BadRequest(views.html.reviewUsersImport(request.currentUser)(importUsersReviewFromWithError))
       }, { userGroupDataForm: List[UserGroupFormData] =>
         val augmentedUserGroupInformation: List[UserGroupFormData] = userGroupDataForm.map(augmentUserGroupInformation)
 
-        val groupsToInsert = augmentedUserGroupInformation.filter(_.alreadyExistingGroup.isEmpty).map(_.group)
+        val groupsToInsert = augmentedUserGroupInformation
+          .filter(_.alreadyExistingGroup.isEmpty)
+          .map(_.group)
+
         if (!groupService.add(groupsToInsert)) {
           //TODO : catch exception : groupe name already exist
           val description = s"Impossible d'importer les groupes"
@@ -162,7 +180,9 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
           val formWithError = importUsersReviewFrom(currentDate).fill(augmentedUserGroupInformation).withGlobalError(description)
           InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError))
         } else {
-          val usersToInsert = augmentedUserGroupInformation.flatMap(_.users).filter(_.alreadyExistingUser.isEmpty).map(_.user)
+          val usersToInsert = augmentedUserGroupInformation.flatMap(_.users)
+            .filter(_.alreadyExistingUser.isEmpty)
+            .map(_.user)
           if (!userService.add(usersToInsert)) {
             //TODO : catch exception : email already exist
             val description = s"Impossible de mettre à des utilisateurs à l'importation."

@@ -75,7 +75,7 @@ object CsvHelper {
         Left(s"Erreur lors de l'extraction du csv ${ex.getMessage}")
     }
 
-  def csvLinesToUserGroupData(separator: Char, defaultAreas: Seq[Area], currentDate: DateTime)(csvLines: String): Either[String, (List[String], List[UserGroupFormData])] = {
+  private def csvLinesToUserGroupData(separator: Char, defaultAreas: Seq[Area], currentDate: DateTime)(csvLines: String): Either[String, (List[String], List[UserGroupFormData])] = {
     def partition(list: List[Either[String, UserGroupFormData]]): (List[String], List[UserGroupFormData]) = {
       val (errors, successes) = list.partition(_.isLeft)
       errors.map(_.left.get) -> successes.map(_.right.get)
@@ -187,7 +187,7 @@ object CsvHelper {
       }
     }
 
-    def userCSVMapping(currentDate: DateTime): Mapping[User] = single(
+  private def userCSVMapping(currentDate: DateTime): Mapping[User] = single(
       "user" -> mapping(
             "id" -> optional(uuid).transform[UUID]({
               case None => UUID.randomUUID()
@@ -219,18 +219,16 @@ object CsvHelper {
   
     private def groupCSVMapping(currentDate: DateTime): Mapping[UserGroup] = single(
       "group" ->
-        groupImportMapping(currentDate)
+        mapping(
+          "id" -> ignored(UUID.randomUUID()),
+          "name" -> text(maxLength = 60),
+          "description" -> optional(text),
+          "insee-code" -> list(text),
+          "creationDate" -> ignored(date),
+          "create-by-user-id" -> ignored(UUIDHelper.namedFrom("deprecated")),
+          "area-ids" -> list(uuid),
+          "organisation" -> optional(text),
+          "email" -> optional(email)
+        )(UserGroup.apply)(UserGroup.unapply)
     )
-
-    def groupImportMapping(date: DateTime): Mapping[UserGroup] = mapping(
-      "id" -> ignored(UUID.randomUUID()),
-      "name" -> text(maxLength = 60),
-      "description" -> optional(text),
-      "insee-code" -> list(text),
-      "creationDate" -> ignored(date),
-      "create-by-user-id" -> ignored(UUIDHelper.namedFrom("deprecated")),
-      "area-ids" -> list(uuid).verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
-      "organisation" -> optional(text),
-      "email" -> optional(email)
-    )(UserGroup.apply)(UserGroup.unapply)
 }
