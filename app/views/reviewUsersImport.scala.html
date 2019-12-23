@@ -33,6 +33,11 @@
         }
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
+        @helper.input(user("user")("quality"), 'label -> "Qualité", 'class -> "input-import-user") { (id, name, value, args) =>
+        <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+        }
+      </td>
+      <td class="mdl-data-table__cell--non-numeric cell-import-user">
         @helper.checkbox(user("user")("instructor"), 'type -> "checkbox", 'label -> csv.USER_INSTRUCTOR.prefixes(0), 'class -> "mdl-checkbox__input instructor")
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
