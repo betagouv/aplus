@@ -14,28 +14,28 @@
     @helper.repeatWithIndex(section("users")) { (user, index) =>
     <tr class="searchable-row td--clear-border" id="line_@{groupIndex}_@{index}">
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.input(user("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
+        @helper.input(user("user")("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
           <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
-        @helper.input(user("name"), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
-          <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-        }
-      </td>
-      <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.input(user("email"), 'label -> "Email", 'class -> "input-import-user") { (id, name, value, args) =>
+        @helper.input(user("user")("name"), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
           <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.input(user("phone-number"), 'label -> "Numéro de téléphone", 'class -> "input-import-user") { (id, name, value, args) =>
+        @helper.input(user("user")("email"), 'label -> "Email", 'class -> "input-import-user") { (id, name, value, args) =>
+          <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+        }
+      </td>
+      <td class="mdl-data-table__cell--non-numeric cell-import-user">
+        @helper.input(user("user")("phone-number"), 'label -> "Numéro de téléphone", 'class -> "input-import-user") { (id, name, value, args) =>
         <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
         }
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.checkbox(user("instructor"), 'type -> "checkbox", 'label -> csv.USER_INSTRUCTOR.prefixes(0), 'class -> "mdl-checkbox__input instructor")
+        @helper.checkbox(user("user")("instructor"), 'type -> "checkbox", 'label -> csv.USER_INSTRUCTOR.prefixes(0), 'class -> "mdl-checkbox__input instructor")
       </td>
       <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.checkbox(user("adminGroup"), 'type -> "checkbox", 'label -> csv.USER_GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
+        @helper.checkbox(user("user")("adminGroup"), 'type -> "checkbox", 'label -> csv.USER_GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
       </td>
       <td>
         <input type="button" class="delete-line" data-line-id="line_@{groupIndex}_@{index}" value="Supprimer la ligne">
@@ -62,9 +62,6 @@
         }
       </div>
     }
-    <!--
-      //TODO : Show existing users
-    -->
     <em>Instructeur : </em><a href="#" id="instructor-all-link">Tous</a> / <a href="#" id="instructor-none-link">Aucuns</a>
     @helper.repeatWithIndex(form("groups")) { (group, groupIndex) =>
         @display(group, groupIndex) {
@@ -73,30 +70,25 @@
               @helper.input(group("group")("id"), 'label -> "Id", 'class -> "hidden input-import-user") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
-              @helper.input(group("group")(csv.GROUP_NAME.key), 'label -> csv.GROUP_NAME.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
+              @helper.input(group("group")("name"), 'label -> csv.GROUP_NAME.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
             </th>
             <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="2">
-              @helper.input(group("group")(csv.GROUP_ORGANISATION.key), 'label -> csv.GROUP_ORGANISATION.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
+              @helper.input(group("group")("organisation"), 'label -> csv.GROUP_ORGANISATION.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
             </th>
             <th class="mdl-data-table__cell--non-numeric mdl-data-table--th--nopadding" colspan="2">
-              @helper.input(group("group")(csv.GROUP_EMAIL.key), 'label -> csv.GROUP_EMAIL.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
+              @helper.input(group("group")("email"), 'label -> csv.GROUP_EMAIL.prefixes(0), 'class -> "input-import-user") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-              }
-            </th>
-            <th>
-              @helper.input(group("group")(csv.GROUP_AREAS_IDS.key), 'label -> "Territoires", 'class -> "input-import-user") { (id, name, value, args) =>
-                <input class="mdl-textfield__input input-import-user" type="text" name="@name" readonly id="@id" value="@value" @toHtmlArgs(args)>
               }
             </th>
           </tr>
           <tr>
-            <th colspan="6">
-              @helper.repeat(group("group")("area-ids")) { areaIdFied =>
-                @areaIdFied.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId).foreach { area =>
+            <th colspan="5">
+              @helper.repeat(group("group")("area-ids")) { areaIdField =>
+                @areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId).foreach { area =>
                   <input name="area-ids[]" value="@area.id" type="hidden">
                   @{area.name} (@area.inseeCode ) /   
                 }
