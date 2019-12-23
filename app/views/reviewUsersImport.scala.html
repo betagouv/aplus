@@ -39,7 +39,7 @@
         @helper.checkbox(user("user")("adminGroup"), 'type -> "checkbox", 'label -> csv.USER_GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
       </td>
       <td>
-          <button type="button" class="delete-line mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" data-line-id="line_@{groupIndex}_@{index}"><i class="material-icons">delete_forever</i></button>
+          <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onclick="deleteElement('#line_@{groupIndex}_@index')"><i class="material-icons">delete_forever</i></button>
       </td>
     </tr>
     }
@@ -50,7 +50,6 @@
 
 @main(currentUser, maxWidth = false)("Revue de votre import CSV") {
   <script src='@routes.Assets.versioned("javascripts/main.js")'></script>
-  <script src='@routes.Assets.versioned("javascripts/csv-import.js")'></script>
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 
 } {
@@ -66,7 +65,7 @@
         }
       </div>
     }
-    <em>Instructeur : </em><a href="#" id="instructor-all-link">Tous</a> / <a href="#" id="instructor-none-link">Aucuns</a>
+    <em>Instructeur : </em><a href="#" onclick="checkAllBySelector('.instructor')">Tous</a> / <a href="#" onclick="uncheckAllBySelector('.instructor')">Aucuns</a>
     @helper.repeatWithIndex(form("groups")) { (group, groupIndex) =>
         @display(group, groupIndex) {
           <div class="mdl-cell mdl-cell--12-col mdl-grid" style="padding: 0px;">
