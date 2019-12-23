@@ -95,7 +95,7 @@ object CsvHelper {
               .fromCsvFieldNameToHtmlFieldName
               .includeFirstnameInLastName()
               .toUserGroupData(lineNumber, currentDate).left.map { error: String =>
-              s"Ligne $lineNumber : error $error ( $rawCSVLine )"
+              s"Ligne $lineNumber : error $error (ligne initale : $rawCSVLine )"
             }
         }
         partition(result)
@@ -189,9 +189,9 @@ object CsvHelper {
     }
 
   private def prettifyFormError(formError: FormError): String = {
-    val prettyKey = formError.key.split(".").lastOption.getOrElse("")
-    val prettyMessages = formError.messages.map(_.split(".").lastOption.getOrElse("")).mkString(", ")
-    s"$prettyKey : $prettyMessages"
+    val prettyKey = formError.key.split("\\.").lastOption.getOrElse("")
+    val prettyMessages = formError.messages.flatMap(_.split("\\.").lastOption).mkString(", ")
+    s"($prettyKey : $prettyMessages)"
   }
 
   private def userCSVMapping(currentDate: DateTime): Mapping[User] = single(
