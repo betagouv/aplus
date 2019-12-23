@@ -75,34 +75,34 @@ object CsvHelper {
         Left(s"Erreur lors de l'extraction du csv ${ex.getMessage}")
     }
 
-  private def csvLinesToUserGroupData(separator: Char, defaultAreas: Seq[Area], currentDate: DateTime)(csvLines: String): Either[String, (List[String], List[UserGroupFormData])] = {
+  def csvLinesToUserGroupData(separator: Char, defaultAreas: Seq[Area], currentDate: DateTime)(csvLines: String): Either[String, (List[String], List[UserGroupFormData])] = {
     def partition(list: List[Either[String, UserGroupFormData]]): (List[String], List[UserGroupFormData]) = {
       val (errors, successes) = list.partition(_.isLeft)
       errors.map(_.left.get) -> successes.map(_.right.get)
     }
-    
+
     extractFromCSVToMap(separator)(csvLines)
-       .map { csvExtractResult: CSVExtractResult =>
-          val result: List[Either[String, UserGroupFormData]] = csvExtractResult.map {
-            case (lineNumber: LineNumber, csvMap: CSVMap, rawCSVLine: RawCSVLine) =>
-              csvMap.trimValues
-                  .csvCleanHeadersWithExpectedHeaders
-                  .convertAreasNameToAreaUUID(defaultAreas)
-                  .convertBooleanValue(csv.USER_GROUP_MANAGER.key, "Responsable")
-                  .convertBooleanValue(csv.USER_INSTRUCTOR.key, "Instructeur")
-                  .includeAreasNameInGroupName
-                  .fromCsvFieldNameToHtmlFieldName
-                  .includeFirstnameInLastName()
-                  .toUserGroupData(lineNumber, currentDate).left.map { error: String =>
-                 s"Ligne $lineNumber : error $error ( $rawCSVLine )"
-              }
-          }
-          partition(result)
-       }.map {
-          case (linesErrorList: List[String], userGroupFormDataList: List[UserGroupFormData]) =>
-          (linesErrorList, userGroupDataListToUserGroupData(userGroupFormDataList))
-       }
+      .map { csvExtractResult: CSVExtractResult =>
+        val result: List[Either[String, UserGroupFormData]] = csvExtractResult.map {
+          case (lineNumber: LineNumber, csvMap: CSVMap, rawCSVLine: RawCSVLine) =>
+            csvMap.trimValues
+              .csvCleanHeadersWithExpectedHeaders
+              .convertAreasNameToAreaUUID(defaultAreas)
+              .convertBooleanValue(csv.USER_GROUP_MANAGER.key, "Responsable")
+              .convertBooleanValue(csv.USER_INSTRUCTOR.key, "Instructeur")
+              .includeAreasNameInGroupName
+              .fromCsvFieldNameToHtmlFieldName
+              .includeFirstnameInLastName()
+              .toUserGroupData(lineNumber, currentDate).left.map { error: String =>
+              s"Ligne $lineNumber : error $error ( $rawCSVLine )"
+            }
+        }
+        partition(result)
+      }.map {
+      case (linesErrorList: List[String], userGroupFormDataList: List[UserGroupFormData]) =>
+        (linesErrorList, userGroupDataListToUserGroupData(userGroupFormDataList))
     }
+  }
 
     implicit class CSVMapPreprocessing(csvMap: CSVMap) {
       def csvCleanHeadersWithExpectedHeaders(): CSVMap = {
@@ -224,7 +224,7 @@ object CsvHelper {
           "name" -> text(maxLength = 60),
           "description" -> optional(text),
           "insee-code" -> list(text),
-          "creationDate" -> ignored(date),
+          "creationDate" -> ignored(currentDate),
           "create-by-user-id" -> ignored(UUIDHelper.namedFrom("deprecated")),
           "area-ids" -> list(uuid),
           "organisation" -> optional(text),
