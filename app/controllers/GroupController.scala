@@ -78,13 +78,13 @@ case class GroupController @Inject()(loginAction: LoginAction,
         eventService.error("ADD_USER_GROUP_ERROR", s"Essai d'ajout d'un groupe avec des erreurs de validation")
         BadRequest("Impossible d'ajouter le groupe") //BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost()))
       }, group => {
-        if (groupService.add(group)) {
+        groupService.add(group).fold({ error: String =>
+          eventService.error("ADD_USER_GROUP_ERROR", s"Impossible d'ajouter le groupe dans la BDD")
+          Redirect(routes.UserController.all(Area.allArea.id)).flashing("error" -> s"Impossible d'ajouter le groupe : $error")
+        }, {  Unit =>
           eventService.info("ADD_USER_GROUP_DONE", s"Groupe ajouté")
           Redirect(routes.GroupController.editGroup(group.id)).flashing("success" -> "Groupe ajouté")
-        } else {
-          eventService.error("ADD_USER_GROUP_ERROR", s"Impossible d'ajouter le groupe dans la BDD")
-          Redirect(routes.UserController.all(Area.allArea.id)).flashing("success" -> "Impossible d'ajouter le groupe")
-        }
+        })
       })
     }
   }

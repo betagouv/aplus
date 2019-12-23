@@ -183,18 +183,20 @@ case class UserController @Inject()(loginAction: LoginAction,
           BadRequest(views.html.editUsers(request.currentUser)(formWithErrors, 0, routes.UserController.addPost(groupId)))
         }, { users =>
           try {
-            if (userService.add(users.map(_.copy(groupIds = List(groupId))))) {
-              users.foreach {  user =>
+            val userToInsert = users.map(_.copy(groupIds = List(groupId)))
+            userService.add(userToInsert).fold({ error =>
+              val errorMessage = s"Impossible d'ajouté les utilisateurs (Erreur interne 1) $error"
+              eventService.error("ADD_USER_ERROR", errorMessage)
+              val form = usersForm(Time.dateTimeZone, group.areaIds).fill(users).withGlobalError(errorMessage)
+              InternalServerError(views.html.editUsers(request.currentUser)(form, users.length, routes.UserController.addPost(groupId)))
+            }, { Unit =>
+              users.foreach { user =>
                 notificationsService.newUser(user)
                 eventService.info("ADD_USER_DONE", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
               }
               eventService.info("ADD_USERS_DONE", "Utilisateurs ajoutés")
               Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
-            } else {
-              val form = usersForm(Time.dateTimeZone, group.areaIds).fill(users).withGlobalError("Impossible d'ajouté les utilisateurs (Erreur interne 1)")
-              eventService.error("ADD_USER_ERROR", "Impossible d'ajouter des utilisateurs dans la BDD 1")
-              InternalServerError(views.html.editUsers(request.currentUser)(form, users.length, routes.UserController.addPost(groupId)))
-            }
+            })
           } catch {
             case ex: PSQLException =>
               val EmailErrorPattern = """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
