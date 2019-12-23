@@ -27,4 +27,5 @@ package object csv {
   val GROUP_HEADER = GROUP_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
 
   type UUIDGenerator = () => UUID
+
 }

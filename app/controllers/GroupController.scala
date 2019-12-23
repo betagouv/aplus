@@ -15,6 +15,7 @@ import play.api.data.Forms.{email, ignored, list, mapping, optional, text, uuid}
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import play.libs.ws.WSClient
 import services._
+import extentions.BooleanHelper.not
 
 import scala.collection.parallel.immutable.ParSeq
 

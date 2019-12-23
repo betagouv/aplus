@@ -3,13 +3,14 @@ package extentions
 import java.util.UUID
 
 import actions.RequestWithUserData
-import models.{User, UserGroup}
+import constants.Constants
+import models.{Application, User, UserGroup}
+import play.api.mvc.Results._
 import play.api.mvc.{AnyContent, Result, Results}
-import services.{EventService, UserGroupService, UserService}
+import services.{ApplicationService, EventService, UserGroupService, UserService}
+import BooleanHelper.not
 
 object Operators {
-
-  val not: Boolean => Boolean = !_
 
   trait GroupOperators {
 
@@ -104,6 +105,28 @@ object Operators {
           payload()
         }
       }
+    }
+  }
+
+  trait ApplicationOperators {
+
+    def applicationService: ApplicationService
+    def eventService: EventService
+
+    def withApplication(applicationId: UUID)(payload: Application => Result)
+                 (implicit request: RequestWithUserData[AnyContent]): Result = {
+      applicationService.byId(applicationId, fromUserId = request.currentUser.id, anonymous = request.currentUser.admin).fold({
+        eventService.error(code = "INEXISTING_APPLICATION", description = "Tentative d'accès à une application inexistant.")
+        NotFound("Application inexistante.")
+      })({ application: Application =>
+        if(not(application.canBeShowedBy(request.currentUser))) {
+          eventService.error(code = "APPLICATION_UNAUTHORIZED", description = "Tentative d'accès à une application non autorisé.")
+          Unauthorized(s"Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
+        }
+        else {
+           payload(application)
+        }
+      })
     }
   }
 }

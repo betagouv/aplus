@@ -3,7 +3,8 @@ package controllers
 import java.util.{Locale, UUID}
 
 import actions.{LoginAction, RequestWithUserData}
-import extentions.Operators.{GroupOperators, UserOperators, not}
+import extentions.BooleanHelper.not
+import extentions.Operators.{GroupOperators, UserOperators}
 import extentions.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
 import models.{Area, User, UserGroup}

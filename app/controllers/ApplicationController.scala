@@ -5,7 +5,7 @@ import java.util.{Locale, UUID}
 
 import actions._
 import constants.Constants
-import extentions.Time
+import extentions.{Time}
 import extentions.Time.dateTimeOrdering
 import forms.FormsPlusMap
 import helper.AttachmentHelper
@@ -18,6 +18,7 @@ import play.api.data._
 import play.api.data.validation.Constraints._
 import play.api.mvc._
 import services._
+import extentions.BooleanHelper.not
 
 import scala.concurrent.ExecutionContext
 
@@ -26,14 +27,16 @@ import scala.concurrent.ExecutionContext
  * application's home page.
  */
 @Singleton
-class ApplicationController @Inject()(loginAction: LoginAction,
+case class ApplicationController @Inject()(loginAction: LoginAction,
                                       userService: UserService,
                                       applicationService: ApplicationService,
                                       notificationsService: NotificationService,
                                       eventService: EventService,
                                       organisationService: OrganisationService,
                                       userGroupService: UserGroupService,
-                                      configuration: play.api.Configuration)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport {
+                                      configuration: play.api.Configuration
+                                     )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil
+                                      ) extends InjectedController with play.api.i18n.I18nSupport with extentions.Operators.ApplicationOperators {
   import forms.Models._
 
   private implicit val timeZone = Time.dateTimeZone
@@ -334,9 +337,10 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             } else {
               application
             }
-
+            val openedTab = request.flash.get("opened-tab").getOrElse("answer")
+          
             eventService.info("APPLICATION_SHOWED", s"Demande $id consulté", Some(application))
-            Ok(views.html.showApplication(request.currentUser)(usersThatCanBeInvited, renderedApplication, answerForm))
+            Ok(views.html.showApplication(request.currentUser)(usersThatCanBeInvited, renderedApplication, answerForm, openedTab))
         }
         else {
           eventService.warn("APPLICATION_UNAUTHORIZED", s"L'accès à la demande $id n'est pas autorisé", Some(application))
@@ -379,69 +383,62 @@ class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def answer(applicationId: UUID) = loginAction { implicit request =>
-    val form = answerForm.bindFromRequest
-    val answerId = AttachmentHelper.retrieveOrGenerateAnswerId(form.data)
-    val (pendingAttachments, newAttachments) = AttachmentHelper.computeStoreAndRemovePendingAndNewAnswerAttachment(answerId, form.data, computeAttachmentsToStore(request), filesPath)
+    withApplication(applicationId) {  application =>
+      val form = answerForm.bindFromRequest
+      val answerId = AttachmentHelper.retrieveOrGenerateAnswerId(form.data)
+      val (pendingAttachments, newAttachments) = AttachmentHelper.computeStoreAndRemovePendingAndNewAnswerAttachment(answerId, form.data, computeAttachmentsToStore(request), filesPath)
       form.fold(
-      formWithErrors => {
-        eventService.error("ANSWER_NOT_CREATED", s"Impossible d'ajouter une réponse sur la demande $applicationId : problème formulaire")
-        BadRequest("Erreur interne, contacter l'administrateur A+ : ${Constants.supportEmail}")
-      },
-      answerData => {
-        applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
-          case None =>
-            eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter une réponse")
-            NotFound("Nous n'avons pas trouvé cette demande")
-          case Some(application) =>
-            if(application.canBeAnsweredBy(request.currentUser)) {
-              val answer = Answer(answerId,
-                applicationId, DateTime.now(timeZone),
-                answerData.message,
-                request.currentUser.id,
-                request.currentUser.nameWithQualite,
-                Map(),
-                answerData.privateToHelpers == false,
-                answerData.applicationIsDeclaredIrrelevant,
-                Some(answerData.infos),
-                files = Some(newAttachments ++ pendingAttachments))
-              if (applicationService.add(applicationId, answer) == 1) {
-                eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
-                notificationsService.newAnswer(application, answer)
-                Redirect(s"${routes.ApplicationController.show(applicationId)}#answer-${answer.id}").flashing("success" -> "Votre réponse a bien été envoyée")
-              } else {
-                eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
-                InternalServerError("Votre réponse n'a pas pu être envoyé")
-              }
-            } else {
-              eventService.warn("ADD_ANSWER_UNAUTHORIZED", s"La réponse à l'aidant pour la demande $applicationId n'est pas autorisé", Some(application))
-              Unauthorized("Vous n'avez pas les droits suffisants pour répondre à cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
-            }
+        formWithErrors => {
+          val error = s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.message).mkString(", ")})."
+          eventService.error("ANSWER_NOT_CREATED", s"$error")
+          Redirect(routes.ApplicationController.show(applicationId).withFragment("answer-error")).flashing("answer-error" -> error, "opened-tab" -> "anwser")
+        },
+        answerData => {
+           val answer = Answer(answerId,
+              applicationId, DateTime.now(timeZone),
+              answerData.message,
+              request.currentUser.id,
+              request.currentUser.nameWithQualite,
+              Map(),
+              answerData.privateToHelpers == false,
+              answerData.applicationIsDeclaredIrrelevant,
+              Some(answerData.infos),
+              files = Some(newAttachments ++ pendingAttachments))
+          if (applicationService.add(applicationId, answer) == 1) {
+            eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
+            notificationsService.newAnswer(application, answer)
+            Redirect(s"${routes.ApplicationController.show(applicationId)}#answer-${answer.id}").flashing("success" -> "Votre réponse a bien été envoyée")
+          } else {
+            eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
+            InternalServerError("Votre réponse n'a pas pu être envoyé")
+          }
         }
-      })
+      )
+    }
   }
 
   val inviteForm = Form(
     mapping(
       "message" -> text,
-      "users" -> list(uuid)   ,
+      "users" -> list(uuid).verifying("Vous devez inviter au moins une personne", _.nonEmpty)   ,
       "privateToHelpers" -> boolean
     )(InvitationData.apply)(InvitationData.unapply)
   )
 
   def invite(applicationId: UUID) = loginAction { implicit request =>
-    val inviteData = inviteForm.bindFromRequest.get
-    applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
-      case None =>
-        eventService.error("ADD_ANSWER_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter des experts")
-        NotFound("Nous n'avons pas trouvé cette demande")
-      case Some(application) =>
-        val usersThatCanBeInvited = usersThatCanBeInvitedOn(application)
+    withApplication(applicationId) {  application =>
+      inviteForm.bindFromRequest.fold(
+        formWithErrors => {
+          val error = s"Erreur dans le formulaire d'invitation (${formWithErrors.errors.map(_.message).mkString(", ")})."
+          eventService.error("INVITE_NOT_CREATED", s"$error")
+          Redirect(routes.ApplicationController.show(applicationId).withFragment("answer-error")).flashing("answer-error" -> error, "opened-tab" -> "invite" )
+        },
+        inviteData => {
+          val usersThatCanBeInvited = usersThatCanBeInvitedOn(application)
+          val invitedUsers: Map[UUID, String] = usersThatCanBeInvited
+            .filter(user => inviteData.invitedUsers.contains(user.id))
+            .map(user => (user.id,user.nameWithQualite)).toMap
 
-        val invitedUsers: Map[UUID, String] = usersThatCanBeInvited
-          .filter(user => inviteData.invitedUsers.contains(user.id))
-          .map(user => (user.id,user.nameWithQualite)).toMap
-
-        if(application.canBeShowedBy(request.currentUser) && invitedUsers.nonEmpty) {
           val answer = Answer(UUID.randomUUID(),
             applicationId,
             DateTime.now(timeZone),
@@ -449,7 +446,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             request.currentUser.id,
             request.currentUser.nameWithQualite,
             invitedUsers,
-            inviteData.privateToHelpers == false,
+            not(inviteData.privateToHelpers),
             false,
             Some(Map()))
           if (applicationService.add(applicationId, answer)  == 1) {
@@ -460,10 +457,7 @@ class ApplicationController @Inject()(loginAction: LoginAction,
             eventService.error("AGENTS_NOT_ADDED", s"L'ajout d'utilisateur ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
             InternalServerError("Les utilisateurs n'ont pas pu être invités")
           }
-        } else {
-          eventService.warn("ADD_AGENTS_UNAUTHORIZED", s"L'invitation d'utilisateurs pour la demande $applicationId n'est pas autorisé", Some(application))
-          Unauthorized("Vous n'avez pas les droits suffisants pour inviter des utilisateurs à cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
-        }
+        })
     }
   }
   
