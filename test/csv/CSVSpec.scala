@@ -1,18 +1,13 @@
 package csv
 
-import java.util.UUID
-
-import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
+import com.github.tototoshi.csv.DefaultCSVFormat
 import extentions.{CSVUtil, Time, UUIDHelper}
-import models.{Area, Organisation, User, UserGroup}
-import org.joda.time.DateTime
+import forms.Models
+import helper.CsvHelper
+import models.{Area, UserGroup}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
-import play.api.data.FormError
-
-import scala.io.Source
-
 
 @RunWith(classOf[JUnitRunner])
 class CSVSpec extends Specification {
@@ -28,8 +23,8 @@ class CSVSpec extends Specification {
       |CPAM,Nom3,Prénom3,prenom3.nom3@assurance-maladie.fr,01.02.03.04.05,
       |CARSAT,Nom4,Prénom4,prenom4.nom4@carsat-nordpicardie.fr,01.02.03.04.05,partenariatsretraite@carsat-nordpicardie.fr
       |DGFIP,Nom5,Prénom5,prenom5.nom5@dgfip.finances.gouv.fr,01.02.03.04.05,sip.laon@dgfip.finances.gouv.fr
-      |DGFIP,Nom6,Prénom6,prenom6.nom6@dgfip.finances.gouv.fr,01.02.03.04.05,ddfip02.gestionfiscale@dgfip.finances.gouv.fr
-      |DGFIP,Nom7,Prénom7,prenom7.nom7@dgfip.finances.gouv.fr,01.02.03.04.05,sip.soissons@dgfip.finances.gouv.fr
+      |DGFIP,Nom6,Prénom6,prenom6.nom6@dgfip.finances.gouv.fr,01.02.03.04.06,ddfip02.gestionfiscale@dgfip.finances.gouv.fr
+      |DGFIP,Nom7,Prénom7,prenom7.nom7@dgfip.finances.gouv.fr,01.02.03.04.07,sip.soissons@dgfip.finances.gouv.fr
       |La Poste,Nom8,Prénom8,prenom8.nom8@laposte.fr,,
       |Min. Intérieur,Nom9,Prénom9,prenom9.nom9@aisne.gouv.fr,01.02.03.04.05,
       |Min. Justice,Nom10,Prénom10,prenom10.nom10@justice.fr,01.02.03.04.05,
@@ -58,47 +53,53 @@ class CSVSpec extends Specification {
       override val delimiter: Char = ','
     }
     "be recognized" >> {
-      val reader = CSVReader.open(Source.fromString(prefFormat))
-      val userId = UUID.randomUUID()
-      val groupId = UUID.randomUUID()
-      val creatorId = UUID.randomUUID()
-      val dateTime = DateTime.now(Time.dateTimeZone)
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => groupId, () => userId, creatorId, dateTime,""))
-      val result = list.head
-      result.right.get._1 must equalTo(UserGroup(id = groupId, name = "CAF", description = None, inseeCode = List(Area.allArea.id.toString), creationDate = dateTime, createByUserId = creatorId, areaIds = Area.allArea.id, organisation = None, email = Some("MFS.cafaisne@cafaisne.cnafmail.fr")))
+      val result: Either[String, (List[String], List[Models.UserGroupFormData])] = CsvHelper.csvLinesToUserGroupData(separator = ',', defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten, Time.now())(prefFormat)
+      result must beRight
 
-      result.right.get._2 must equalTo(User(id = userId,
-        key = "key",
-        name = "Nom1 Prénom1",
-        qualite = "",
-        email = "prenom1.nom1@cafaisne.cnafmail.fr",
-        helper = true,
-        instructor = false,
-        groupAdmin = false,
-        admin = false,
-        areas = List.empty[UUID],
-        creationDate = dateTime,
-        hasAcceptedCharte = false,
-        communeCode = "0",
-        disabled = false,
-        groupIds = List.empty[UUID],
-        delegations = Map.empty[String, String],
-        cguAcceptationDate = None,
-        newsletterAcceptationDate = None,
-        phoneNumber = Some("01.02.03.04.05")
-      ))
-      list.filter(_.isRight) must have size 11
+      val (errors, data) = result.right.get
+      errors must have size 1
+      data must have size 9
+
+      val expectedUserGroup = UserGroup(id = UUIDHelper.namedFrom("id"),
+        name = "DGFIP - Ardennes",
+        description = None,
+        inseeCode = Nil,
+        creationDate = Time.now(),
+        createByUserId = UUIDHelper.namedFrom("creatorId"),
+        areaIds = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten.map(_.id),
+        organisation = None,
+        email = Some("sip.laon@dgfip.finances.gouv.fr"))
+
+      val dgfip = data.find(_.group.name == expectedUserGroup.name)
+      dgfip must beSome
+
+      dgfip.get.group.name must equalTo(expectedUserGroup.name)
+      dgfip.get.group.description must equalTo(expectedUserGroup.description)
+      dgfip.get.group.inseeCode must equalTo(expectedUserGroup.inseeCode)
+      dgfip.get.group.areaIds must equalTo(expectedUserGroup.areaIds)
+      dgfip.get.group.organisation must equalTo(expectedUserGroup.organisation)
+      dgfip.get.group.email must equalTo(expectedUserGroup.email)
+      dgfip.get.users must have size 3
+
+      val expectedUserName = "Nom5 Prénom5"
+      val expectedEmail = "prenom5.nom5@dgfip.finances.gouv.fr"
+      val expectedPhoneNumber = "01.02.03.04.05"
+      dgfip.get.users.head.user.name must equalTo(expectedUserName)
+      dgfip.get.users.head.user.email must equalTo(expectedEmail)
+      dgfip.get.users.head.user.helper must beTrue
+      dgfip.get.users.head.user.areas must equalTo(expectedUserGroup.areaIds)
+      dgfip.get.users.head.user.phoneNumber must beSome(expectedPhoneNumber)
     }
+
     "be recognized with proper organisation" >> {
-      val reader = CSVReader.open(Source.fromString(organisationTest))
-      val userId = UUID.randomUUID()
-      val groupId = UUID.randomUUID()
-      val creatorId = UUID.randomUUID()
-      val dateTime = DateTime.now(Time.dateTimeZone)
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => userId, () => groupId, creatorId, dateTime,""))
-      val result = list.head
-      result.right.get._1 must equalTo(UserGroup(id = userId, name = "d’Aubigny sur Nère", description = None, inseeCode = List(Area.allArea.id.toString), creationDate = dateTime, createByUserId = creatorId, areaIds = Area.allArea.id, organisation = Some("MSAP"), email = Some("msap@aubigny-sur-nere.fr")))
-      list.filter(_.isRight) must have size 5
+      val result: Either[String, (List[String], List[Models.UserGroupFormData])] = CsvHelper.csvLinesToUserGroupData(separator = ',', defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten, Time.now())(organisationTest)
+      result must beRight
+      val (errors, data) = result.right.get
+      errors must have size 0
+      val group = data.find(_.group.name == "d’Aubigny sur Nère - Ardennes")
+      group must beSome
+      group.get.group.organisation must beSome("MSAP")
+      data must have size 2
     }
   }
 
@@ -107,13 +108,10 @@ class CSVSpec extends Specification {
       override val delimiter: Char = csv.SEPARATOR.charAt(0)
     }
     "produce 1 errors" >> {
-      val reader = CSVReader.open(Source.fromString(failFile))
-      val userId = UUID.randomUUID()
-      val groupId = UUID.randomUUID()
-      val creatorId = UUID.randomUUID()
-      val dateTime = DateTime.now(Time.dateTimeZone)
-      val list: List[Either[(List[FormError], String), (UserGroup, User)]] = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => groupId, () => userId, creatorId, dateTime, ""))
-      list.filter(_.isLeft) must have size 1
+      val result: Either[String, (List[String], List[Models.UserGroupFormData])] = CsvHelper.csvLinesToUserGroupData(separator = ';', defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten, Time.now())(failFile)
+      result must beRight
+      val (errors, _) = result.right.get
+      errors must have size 1
     }
   }
 
@@ -133,64 +131,19 @@ class CSVSpec extends Specification {
     }
 
     "produce valid groups" >> {
-      val reader = CSVReader.open(Source.fromString(csvFile))
-      val userId = UUID.randomUUID()
-      val groupId = UUID.randomUUID()
-      val creatorId = UUID.randomUUID()
-      val dateTime = DateTime.now(Time.dateTimeZone)
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => userId, () => groupId, creatorId, dateTime, ""))
-      list must have size 7
-      val result = list.head
-      result.right.get._1 must equalTo(UserGroup(id = userId, name = "MFS Saint Laurent", description = None, inseeCode = List(UUIDHelper.namedFrom("argenteuil").toString), creationDate = dateTime, createByUserId = creatorId, areaIds = UUIDHelper.namedFrom("argenteuil"), organisation = Organisation.fromShortName("MFS").map(_.shortName), email = Some("sfs.saint-laurent@laposte.com")))
-      list.filter(_.isRight) must have size 6
+      val result: Either[String, (List[String], List[Models.UserGroupFormData])] = CsvHelper.csvLinesToUserGroupData(separator = ';', defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten, Time.now())(csvFile)
+      result must beRight
+      val (errors, data) = result.right.get
+      errors must have size 0
+      data must have size 5
     }
 
     "produce a valid users" >> {
-      val reader = CSVReader.open(Source.fromString(csvFile))
-      val userId = UUID.randomUUID()
-      val groupId = UUID.randomUUID()
-      val creatorId = UUID.randomUUID()
-      val dateTime = DateTime.now(Time.dateTimeZone)
-      val list = reader.allWithHeaders().map(line => csv.fromCSVLine(line, csv.GROUP_HEADERS, csv.USER_HEADERS, () => groupId, () => userId, creatorId, dateTime, ""))
-      list must have size 7
-      list.head.right.get._2 must equalTo(User(id = userId,
-        key = "key",
-        name = "Nom1 Prénom1",
-        qualite = "",
-        email = "prenom1.nom1@france-service.com",
-        helper = true,
-        instructor = false,
-        groupAdmin = false,
-        admin = false,
-        areas = List.empty[UUID],
-        creationDate = dateTime,
-        hasAcceptedCharte = false,
-        communeCode = "0",
-        disabled = false,
-        groupIds = List.empty[UUID],
-        delegations = Map.empty[String, String],
-        cguAcceptationDate = None,
-        newsletterAcceptationDate = None
-      ))
-      list(1).right.get._2 must equalTo(User(id = userId,
-        key = "key",
-        name = "Nom2 Prénom2",
-        qualite = "",
-        email = "prenom2.nom2@laposte.com",
-        helper = true,
-        instructor = false,
-        groupAdmin = false,
-        admin = false,
-        areas = List.empty[UUID],
-        creationDate = dateTime,
-        hasAcceptedCharte = false,
-        communeCode = "0",
-        disabled = false,
-        groupIds = List.empty[UUID],
-        delegations = Map.empty[String, String],
-        cguAcceptationDate = None,
-        newsletterAcceptationDate = None
-      ))
+      val result: Either[String, (List[String], List[Models.UserGroupFormData])] = CsvHelper.csvLinesToUserGroupData(separator = ';', defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten, Time.now())(csvFile)
+      result must beRight
+      val (errors, data) = result.right.get
+      errors must have size 0
+      data.flatMap(_.users.map(_.user)) must have size 6
     }
   }
 }

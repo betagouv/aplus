@@ -116,11 +116,15 @@ object CsvHelper {
   
         convertToPrefixForm(csvMap, expectedGroupHeaders, "group.") ++ convertToPrefixForm(csvMap, expectedUserHeaders, "user.")
       }
-  
+
       def convertAreasNameToAreaUUID(defaultAreas: Seq[Area]): CSVMap = {
         val newAreas: Seq[Area] = csvMap.get(csv.GROUP_AREAS_IDS.key) match {
           case Some(areas) =>
-            areas.split(",").flatMap(_.split(";")).flatMap(_.split("-")).flatMap(Area.searchFromName).distinct
+            val detectedAreas = areas.split(",").flatMap(_.split(";")).flatMap(_.split("-")).flatMap(Area.searchFromName).distinct
+            if (detectedAreas.isEmpty)
+              defaultAreas
+            else
+              detectedAreas
           case None =>
             defaultAreas
         }
