@@ -189,8 +189,8 @@ object CsvHelper {
     }
 
   private def prettifyFormError(formError: FormError): String = {
-    val prettyKey = formError.key.split(".").last
-    val prettyMessages = formError.messages.map(_.split(".").last).mkString(", ")
+    val prettyKey = formError.key.split(".").lastOption.getOrElse("")
+    val prettyMessages = formError.messages.map(_.split(".").lastOption.getOrElse("")).mkString(", ")
     s"$prettyKey : $prettyMessages"
   }
 
