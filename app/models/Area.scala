@@ -10,22 +10,21 @@ case class Area(id: UUID, name: String, inseeCode: String){
 }
 
 object Area {
-  def fromId(id: UUID) = if (id== allArea.id) {
+  def fromId(id: UUID): Option[Area] = if (id== allArea.id) {
     Some(allArea)
   } else {
     all.find(_.id == id)
   }
 
-  def searchFromName(name: String): Option[Area] =
-    Area.fromInseeCode(name).orElse {
-      val area = canonizeArea(name)
-      Area.all.find(a => canonizeArea(a.name) == area)
-    }
+  def searchFromName(name: String): Option[Area] = {
+   val area = canonizeArea(name)
+   Area.all.find(a => canonizeArea(a.name) == area)
+  }
 
-  def fromInseeCode(inseeCode: String): Option[Area] = all.find(area => inseeCode.contains(area.inseeCode))
+  def fromInseeCode(inseeCode: String): Option[Area] = all.find(area => inseeCode == area.inseeCode)
 
   def canonizeArea(area: String): String =
-    StringUtils.stripAccents(area.toLowerCase().replaceAll("[-'’]", ""))
+    StringUtils.stripAccents(area.toLowerCase().replaceAll("[-'’ ]", ""))
 
   def apply(id: String, name: String, inseeCode: String): Area = Area(UUIDHelper.namedFrom(id), name, inseeCode)
 
