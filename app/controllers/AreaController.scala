@@ -4,20 +4,22 @@ import java.util.UUID
 
 import actions.LoginAction
 import constants.Constants
+import extentions.Operators.UserOperators
 import extentions.UUIDHelper
 import javax.inject.{Inject, Singleton}
-import models.Area
+import models.{Area, Organisation, User}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
-import services.{EventService, UserGroupService}
+import services.{EventService, UserGroupService, UserService}
 
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class AreaController @Inject()(loginAction: LoginAction,
+case class AreaController @Inject()(loginAction: LoginAction,
                                eventService: EventService,
+                               userService: UserService,
                                userGroupService: UserGroupService,
-                               configuration: play.api.Configuration)(implicit val webJarsUtil: WebJarsUtil, ec: ExecutionContext) extends InjectedController {
+                               configuration: play.api.Configuration)(implicit val webJarsUtil: WebJarsUtil, ec: ExecutionContext) extends InjectedController with UserOperators {
   private lazy val areasWithLoginByKey = configuration.underlying.getString("app.areasWithLoginByKey").split(",").flatMap(UUIDHelper.fromString)
 
   @deprecated
@@ -44,6 +46,29 @@ class AreaController @Inject()(loginAction: LoginAction,
         userGroupService.byIds(request.currentUser.groupIds)
       }
       Ok(views.html.allArea(request.currentUser)(Area.all, areasWithLoginByKey, userGroups))
+    }
+  }
+
+  def deploymentDashboard = loginAction {  implicit  request =>
+    asAdmin { () =>
+      "DEPLOYMENT_DASHBOARD_UNAUTHORIZED" -> s"Accès non autorisé au dashboard de déploiement"
+    } { () =>
+      val userGroups = userGroupService.allGroups
+      val users = userService.all
+
+      def usersIn(area: Area, organisation: Organisation): List[User] =
+        for(group <- userGroups.filter(group => group.areaIds.contains(area.id) && group.organisationSetOrDeducted.contains(organisation.shortName));
+            user <- users.filter(_.groupIds.contains(group.id)))
+          yield user
+
+      val data = for(area <- Area.all;
+                     organisationMap: Map[Organisation, Int] =
+                              (for(organisation <- Organisation.all;
+                                   userSum = usersIn(area, organisation).size)
+                        yield { organisation -> userSum }).toMap
+                      ) yield (area, organisationMap)
+      
+      Ok(views.html.deploymentDashboard(request.currentUser)(data))
     }
   }
 }

@@ -1,9 +1,12 @@
 package models
 
+import helper.StringHelper
 
 
 case class Organisation(shortName: String,
-                        name: String)
+                        name: String) {
+  def key: String = StringHelper.canonize(shortName)
+}
 
 object Organisation {
   def fromShortName(shortName: String) = all.find(_.shortName == shortName)

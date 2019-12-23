@@ -40,7 +40,7 @@ GET     /utilisateurs/:userId                   controllers.UserController.editU
 POST    /utilisateurs/:userId                   controllers.UserController.editUserPost(userId: java.util.UUID)
 GET     /user/delete/unused/:userId             controllers.UserController.deleteUnusedUserById(userId: java.util.UUID)
 
-# Importationk
+# Importation
 GET     /importation/utilisateurs-depuis-csv    controllers.CSVImportController.importUsersFromCSV
 POST    /importation/revue-import               controllers.CSVImportController.importUsersReview
 POST    /importation/import                     controllers.CSVImportController.importUsersReviewPost
@@ -62,6 +62,7 @@ POST    /cgu                      controllers.UserController.validateCGU
 
 # Areas
 GET     /territoires                            controllers.AreaController.all
+GET     /territoires/deploiement                controllers.AreaController.deploymentDashboard
 GET     /territoires/:areaId                    controllers.AreaController.change(areaId: java.util.UUID)
 GET     /territoires/:areaId/demandes           controllers.ApplicationController.all(areaId: java.util.UUID)
 GET     /territoires/:areaId/demandes.csv       controllers.ApplicationController.allCSV(areaId: java.util.UUID)
