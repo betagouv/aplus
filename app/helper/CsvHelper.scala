@@ -225,7 +225,6 @@ object CsvHelper {
           "description" -> optional(text),
           "insee-code" -> list(text),
           "creationDate" -> ignored(currentDate),
-          "create-by-user-id" -> ignored(UUIDHelper.namedFrom("deprecated")),
           "area-ids" -> list(uuid),
           "organisation" -> optional(text),
           "email" -> optional(email)

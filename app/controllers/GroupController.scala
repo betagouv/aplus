@@ -4,7 +4,7 @@ import java.util.UUID
 
 import actions.{LoginAction, RequestWithUserData}
 import extentions.Operators._
-import extentions.Time
+import extentions.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
 import models.{Area, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -79,7 +79,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
         BadRequest("Impossible d'ajouter le groupe") //BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost()))
       }, group => {
         if (groupService.add(group)) {
-          eventService.info("ADD_USER_GROUP_DONE", s"Groupe ajouté")
+          eventService.info("ADD_USER_GROUP_DONE", s"Groupe ${group.id} ajouté par l'utilisateur d'id ${request.currentUser.id}")
           Redirect(routes.GroupController.editGroup(group.id)).flashing("success" -> "Groupe ajouté")
         } else {
           eventService.error("ADD_USER_GROUP_ERROR", s"Impossible d'ajouter le groupe dans la BDD")
@@ -123,7 +123,6 @@ case class GroupController @Inject()(loginAction: LoginAction,
       "description" -> optional(text),
       "insee-code" -> list(text),
       "creationDate" -> ignored(DateTime.now(timeZone)),
-      "create-by-user-id" -> ignored(request.currentUser.id),
       "area-ids" -> list(uuid).verifying(
                           "Vous devez sélectionner les territoires sur lequel vous êtes admin",
                           areaIds => areaIds.forall(request.currentUser.areas.contains)

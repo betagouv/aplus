@@ -20,7 +20,6 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
     "description",
     "insee_code",
     "creation_date",
-    "create_by_user_id",
     "area_ids",
     "organisation",
     "email"
@@ -30,13 +29,12 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
     groups.foldRight(true) { (group, success) =>
       success &&
         SQL"""
-      INSERT INTO user_group(id, name, description, insee_code, creation_date, create_by_user_id, area_ids, organisation, email) VALUES (
+      INSERT INTO user_group(id, name, description, insee_code, creation_date, area_ids, organisation, email) VALUES (
          ${group.id}::uuid,
          ${group.name},
          ${group.description},
          array[${group.inseeCode}]::character varying(5)[],
          ${group.creationDate},
-         ${group.createByUserId}::uuid,
          array[${group.areaIds}]::uuid[],
          ${group.organisation},
          ${group.email})

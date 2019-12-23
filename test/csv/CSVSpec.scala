@@ -65,7 +65,6 @@ class CSVSpec extends Specification {
         description = None,
         inseeCode = Nil,
         creationDate = Time.now(),
-        createByUserId = UUIDHelper.namedFrom("creatorId"),
         areaIds = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten.map(_.id),
         organisation = None,
         email = Some("sip.laon@dgfip.finances.gouv.fr"))
