@@ -117,10 +117,22 @@ object CsvHelper {
         convertToPrefixForm(csvMap, expectedGroupHeaders, "group.") ++ convertToPrefixForm(csvMap, expectedUserHeaders, "user.")
       }
 
+      def stringToInseeCodeList(string: String): List[String] = {
+        val inseeCodeRegex = "[0-9AB]{2,3}".r
+        inseeCodeRegex.findAllIn(string).toList
+      }
+
       def convertAreasNameToAreaUUID(defaultAreas: Seq[Area]): CSVMap = {
         val newAreas: Seq[Area] = csvMap.get(csv.GROUP_AREAS_IDS.key) match {
           case Some(areas) =>
-            val detectedAreas = areas.split(",").flatMap(_.split(";")).flatMap(_.split("-")).flatMap(Area.searchFromName).distinct
+            val inseeCodes = stringToInseeCodeList(areas)
+
+            val detectedAreas: Seq[Area] = if(inseeCodes.nonEmpty) {
+              inseeCodes.flatMap(Area.fromInseeCode).toList
+            } else {
+              areas.split(",").flatMap(_.split(";")).flatMap(Area.searchFromName)
+            }.distinct
+
             if (detectedAreas.isEmpty)
               defaultAreas
             else
@@ -220,7 +232,7 @@ object CsvHelper {
       "group" ->
         mapping(
           "id" -> ignored(UUID.randomUUID()),
-          "name" -> text(maxLength = 60),
+          "name" -> text,
           "description" -> optional(text),
           "insee-code" -> list(text),
           "creationDate" -> ignored(currentDate),
