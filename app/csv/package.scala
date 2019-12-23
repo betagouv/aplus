@@ -11,6 +11,7 @@ package object csv {
   val USER_EMAIL = Header("user.email", List("Email", "Adresse e-mail", "Contact mail Agent", "MAIL"))
   val USER_INSTRUCTOR = Header("user.instructor", List("Instructeur"))
   val USER_GROUP_MANAGER = Header("user.admin-group", List("Responsable"))
+  val USER_QUALITY = Header("user.quality", List("Qualité"))
   val USER_PHONE_NUMBER = Header("user.phone-number", List("Numéro de téléphone", "téléphone"))
 
   val GROUP_AREAS_IDS = Header("group.area-ids", List("Territoire", "DEPARTEMENTS"))

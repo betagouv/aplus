@@ -19,7 +19,7 @@ object CsvHelper {
   type CSVExtractResult = List[(LineNumber, CSVMap, RawCSVLine)]
 
 
-  private val expectedUserHeaders: List[Header] = List(USER_PHONE_NUMBER, USER_FIRST_NAME, USER_NAME, USER_EMAIL, USER_INSTRUCTOR, USER_GROUP_MANAGER)
+  private val expectedUserHeaders: List[Header] = List(USER_PHONE_NUMBER, USER_FIRST_NAME, USER_NAME, USER_EMAIL, USER_INSTRUCTOR, USER_GROUP_MANAGER, USER_QUALITY)
   private val expectedGroupHeaders: List[Header] = List(GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL, GROUP_AREAS_IDS)
 
   def filterAlreadyExistingUsersAndGenerateErrors(groups: List[UserGroupFormData]): (List[String], List[UserGroupFormData]) = {
@@ -43,7 +43,7 @@ object CsvHelper {
         val group = sameGroupNameList.head
         val groupId = group.group.id
         val areasId = group.group.areaIds
-        val usersFormData = sameGroupNameList.flatMap(_.users).map({ userFormData => 
+        val usersFormData = sameGroupNameList.flatMap(_.users).map({ userFormData =>
           val newUser = userFormData.user.copy(groupIds = (groupId :: userFormData.user.groupIds).distinct,
             areas = (areasId ++ userFormData.user.areas).distinct)
           userFormData.copy(user = newUser)
@@ -93,6 +93,7 @@ object CsvHelper {
               .includeAreasNameInGroupName
               .fromCsvFieldNameToHtmlFieldName
               .includeFirstnameInLastName()
+              .setDefaultQualityIfNeeded()
               .toUserGroupData(lineNumber, currentDate).left.map { error: String =>
               s"Ligne $lineNumber : error $error ( $rawCSVLine )"
             }
@@ -171,9 +172,21 @@ object CsvHelper {
             csvMap
         }
       }
-  
+
+      def setDefaultQualityIfNeeded(): CSVMap = {
+        val defaultUserQuality = csvMap.getOrElse(csv.GROUP_NAME.key, "")
+        csvMap.get(csv.USER_QUALITY.key).fold {
+          csvMap + (csv.USER_QUALITY.key -> defaultUserQuality)
+        } { quality =>
+          if (quality.isEmpty)
+            csvMap + (csv.USER_QUALITY.key -> defaultUserQuality)
+          else
+            csvMap
+        }
+      }
+
       def trimValues(): CSVMap = csvMap.mapValues(_.trim)
-  
+
       def toUserGroupData(lineNumber: LineNumber, currentDate: DateTime): Either[String, UserGroupFormData] = {
         groupCSVMapping(currentDate).bind(csvMap).fold({ errors =>
           Left(errors.mkString(", "))
@@ -197,7 +210,7 @@ object CsvHelper {
             }),
             "key" -> ignored("key"),
             "name" -> nonEmptyText,
-            "qualite" -> default(text, ""),
+            "quality" -> default(text, ""),
             "email" -> nonEmptyText,
             "helper" -> ignored(true),
             "instructor" -> boolean,
