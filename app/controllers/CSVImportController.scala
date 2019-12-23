@@ -95,7 +95,12 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
   )(User.apply)(User.unapply)
 
   def groupImportMapping(date: DateTime): Mapping[UserGroup] = mapping(
-    "id" -> ignored(UUID.randomUUID()),
+    "id" -> optional(uuid).transform[UUID]({
+      case None => UUID.randomUUID()
+      case Some(id) => id
+    }, {
+      Some(_)
+    }),
     "name" -> text(maxLength = 60),
     "description" -> optional(text),
     "insee-code" -> list(text),
