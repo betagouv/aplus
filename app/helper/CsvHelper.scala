@@ -3,11 +3,12 @@ package helper
 import csv._
 import forms.Models.{UserFormData, UserGroupFormData}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
+
 import scala.io.Source
 import org.joda.time.DateTime
 import models.{Area, User, UserGroup}
 import extentions.UUIDHelper
-import play.api.data.{Form, Mapping}
+import play.api.data.{Form, FormError, Mapping}
 import play.api.data.Forms.{uuid, _}
 import java.util.UUID
 
@@ -94,7 +95,7 @@ object CsvHelper {
               .fromCsvFieldNameToHtmlFieldName
               .includeFirstnameInLastName()
               .toUserGroupData(lineNumber, currentDate).left.map { error: String =>
-              s"Ligne $lineNumber : error $error ( $rawCSVLine )"
+              s"Il y au moins une erreur à la ligne $lineNumber : $error (ligne initale : $rawCSVLine )"
             }
         }
         partition(result)
@@ -188,10 +189,10 @@ object CsvHelper {
   
       def toUserGroupData(lineNumber: LineNumber, currentDate: DateTime): Either[String, UserGroupFormData] = {
         groupCSVMapping(currentDate).bind(csvMap).fold({ errors =>
-          Left(errors.mkString(", "))
+          Left(errors.map(FormHelper.prettifyFormError).mkString(", "))
         }, { group =>
           userCSVMapping(currentDate).bind(csvMap).fold({ errors =>
-            Left(errors.mkString(", "))
+            Left(errors.map(FormHelper.prettifyFormError).mkString(", "))
           }, { user =>
             Right(UserGroupFormData(group, List(UserFormData(user, lineNumber))))
           })
