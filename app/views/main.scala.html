@@ -126,7 +126,7 @@
                             <select id="area" name="area" onchange="changeArea()">
                             @for(area <- currentUser.areas.flatMap(Area.fromId)) {
                                 <option value="@area.id"
-                                @if(area.id == currentArea.get.id) { selected }>@area.name </option>
+                                @if(area.id == currentArea.get.id) { selected }>@area</option>
                             }
                             </select>
                         }
