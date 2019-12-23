@@ -76,7 +76,6 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     "admin" -> ignored(false),
     "areas" -> list(uuid),
     "creationDate" -> ignored(date),
-    "hasAcceptedCharte" -> boolean,
     "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
     "adminGroup" -> boolean,
     "disabled" -> boolean,
@@ -172,35 +171,37 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
           .filter(_.alreadyExistingGroup.isEmpty)
           .map(_.group)
 
-        if (!groupService.add(groupsToInsert)) {
-          //TODO : catch exception : groupe name already exist
-          val description = s"Impossible d'importer les groupes"
-          eventService.error("IMPORT_USER_ERROR", description)
-          val formWithError = importUsersReviewFrom(currentDate).fill(augmentedUserGroupInformation).withGlobalError(description)
-          InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError))
-        } else {
+        groupService.add(groupsToInsert)
+          .fold( { error: String =>
+            val description = s"Impossible d'importer les groupes : $error"
+            eventService.error("IMPORT_USER_ERROR", description)
+            val formWithError = importUsersReviewFrom(currentDate)
+              .fill(augmentedUserGroupInformation)
+              .withGlobalError(description)
+            InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError))
+        }, {  Unit =>
           groupsToInsert.foreach({ userGroup =>
             eventService.info("ADD_USER_GROUP_DONE", s"Groupe ${userGroup.id} ajouté par l'utilisateur d'id ${request.currentUser.id}")
           })
-
           val usersToInsert = augmentedUserGroupInformation.flatMap(_.users)
             .filter(_.alreadyExistingUser.isEmpty)
             .map(_.user)
-          if (!userService.add(usersToInsert)) {
-            //TODO : catch exception : email already exist
-            val description = s"Impossible de mettre à des utilisateurs à l'importation."
+          userService.add(usersToInsert).fold({ error: String =>
+            val description = s"Impossible d'importer les utilisateurs : $error"
             eventService.error("IMPORT_USER_ERROR", description)
-            val formWithError = importUsersReviewFrom(currentDate).fill(augmentedUserGroupInformation).withGlobalError(description)
+            val formWithError = importUsersReviewFrom(currentDate)
+              .fill(augmentedUserGroupInformation)
+              .withGlobalError(description)
             InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError))
-          } else {
+          }, { Unit =>
             usersToInsert.foreach { user =>
               notificationsService.newUser(user)
               eventService.info("ADD_USER_DONE", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
             }
             eventService.info("IMPORT_USERS_DONE", "Utilisateurs ajoutés par l'importation")
             Redirect(routes.UserController.all(request.currentArea.id)).flashing("success" -> "Utilisateurs importés.")
-          }
-        }
+          })
+        })
       })
     }
   }

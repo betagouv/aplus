@@ -9,6 +9,7 @@ import javax.inject.Inject
 import models.{User, UserGroup}
 import play.api.db.Database
 import anorm.JodaParameterMetaData._
+import org.postgresql.util.PSQLException
 import play.api.libs.json.Json
 
 @javax.inject.Singleton
@@ -25,10 +26,12 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
     "email"
   ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
 
-  def add(groups: List[UserGroup]) = db.withTransaction { implicit connection =>
-    groups.foldRight(true) { (group, success) =>
-      success &&
-        SQL"""
+  def add(groups: List[UserGroup]): Either[String, Unit] = {
+    try {
+      val result = db.withTransaction { implicit connection =>
+        groups.foldRight(true) { (group, success) =>
+          success &&
+            SQL"""
       INSERT INTO user_group(id, name, description, insee_code, creation_date, create_by_user_id, area_ids, organisation, email) VALUES (
          ${group.id}::uuid,
          ${group.name},
@@ -40,10 +43,24 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
          ${group.organisation},
          ${group.email})
       """.executeUpdate() == 1
+        }
+      }
+      if(result)
+        Right(Unit)
+      else
+        Left("Aucun groupe n'a été ajouté")
+    } catch {
+      case ex: PSQLException =>
+        val EmailErrorPattern = """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
+        val errorMessage = EmailErrorPattern.findFirstIn(ex.getServerErrorMessage.toString) match {
+          case Some(email) => s"Un groupe avec l'adresse $email existe déjà."
+          case _ => s"SQL Erreur : ${ex.getServerErrorMessage.toString}"
+        }
+        Left(errorMessage)
     }
   }
 
-  def add(group: UserGroup): Boolean = add(List(group))
+  def add(group: UserGroup): Either[String, Unit] = add(List(group))
 
   def edit(group: UserGroup): Boolean = db.withConnection { implicit connection =>
     SQL"""

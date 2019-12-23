@@ -204,7 +204,6 @@ object CsvHelper {
             "admin" -> ignored(false),
             "area-ids" -> ignored(List.empty[UUID]),
             "creationDate" -> ignored(currentDate),
-            "hasAcceptedCharte" -> ignored(true),
             "communeCode" -> ignored("0"),
             "admin-group" -> boolean,
             "disabled" -> ignored(false),

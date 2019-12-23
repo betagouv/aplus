@@ -154,6 +154,13 @@
 
             <main class="mdl-layout__content mdl-color--grey-200" style="height: calc(100% - 16px); overflow-x: auto">
                 <div class="mdl-grid main__grid" style="min-height: 800px; @if(maxWidth) { max-width: 960px; }">
+                @flash.get("error").map { error =>
+                    <div class="mdl-cell mdl-cell--12-col" id="answer-error">
+                        <div class="notification notification--error"><b>@error</b><br>
+                            Si l'erreur persiste vous pouvez contacter l'équipe A+ : <a href="mailto:@Constants.supportEmail?subject=@error">@Constants.supportEmail</a>
+                        </div>
+                    </div>
+                }
                 @content
                 </div>
                 <footer class="mdl-mega-footer do-not-print">

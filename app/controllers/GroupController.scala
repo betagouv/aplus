@@ -76,15 +76,15 @@ case class GroupController @Inject()(loginAction: LoginAction,
     } { () =>
       addGroupForm(Time.dateTimeZone).bindFromRequest.fold(formWithErrors => {
         eventService.error("ADD_USER_GROUP_ERROR", s"Essai d'ajout d'un groupe avec des erreurs de validation")
-        BadRequest("Impossible d'ajouter le groupe") //BadRequest(views.html.editUsers(request.currentUser, request.currentArea)(formWithErrors, 0, routes.UserController.addPost()))
+        Redirect(routes.UserController.all(Area.allArea.id)).flashing("error" -> s"Impossible d'ajouter le groupe : ${formWithErrors.errors.mkString}")
       }, group => {
-        if (groupService.add(group)) {
+        groupService.add(group).fold({ error: String =>
+          eventService.error("ADD_USER_GROUP_ERROR", s"Impossible d'ajouter le groupe dans la BDD")
+          Redirect(routes.UserController.all(Area.allArea.id)).flashing("error" -> s"Impossible d'ajouter le groupe : $error")
+        }, {  Unit =>
           eventService.info("ADD_USER_GROUP_DONE", s"Groupe ${group.id} ajouté par l'utilisateur d'id ${request.currentUser.id}")
           Redirect(routes.GroupController.editGroup(group.id)).flashing("success" -> "Groupe ajouté")
-        } else {
-          eventService.error("ADD_USER_GROUP_ERROR", s"Impossible d'ajouter le groupe dans la BDD")
-          Redirect(routes.UserController.all(Area.allArea.id)).flashing("success" -> "Impossible d'ajouter le groupe")
-        }
+        })
       })
     }
   }
@@ -98,16 +98,16 @@ case class GroupController @Inject()(loginAction: LoginAction,
           eventService.warn("ADD_USER_TO_GROUP_UNAUTHORIZED", s"L'utilisateur ${request.currentUser.id} n'est pas authorisé à ajouter des utilisateurs au groupe ${currentGroup.id}.")
           Unauthorized("Vous n'êtes pas authorisé à ajouter des utilisateurs à ce groupe.")
         } else {
-          addGroupForm(Time.dateTimeZone).bindFromRequest.fold(_ => {
+          addGroupForm(Time.dateTimeZone).bindFromRequest.fold( formWithError => {
             eventService.error("EDIT_USER_GROUP_ERROR", s"Essai d'edition d'un groupe avec des erreurs de validation")
-            BadRequest("Impossible de modifier le groupe (erreur de formulaire)")
+            Redirect(routes.GroupController.editGroup(groupId)).flashing("error" -> s"Impossible de modifier le groupe (erreur de formulaire) : ${formWithError.errors.mkString}")
           }, group => {
             if (groupService.edit(group.copy(id = groupId))) {
               eventService.info("EDIT_USER_GROUP_DONE", s"Groupe édité")
               Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Groupe modifié")
             } else {
               eventService.error("EDIT_USER_GROUP_ERROR", s"Impossible de modifier le groupe dans la BDD")
-              Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Impossible de modifier le groupe")
+              Redirect(routes.GroupController.editGroup(groupId)).flashing("error" -> "Impossible de modifier le groupe: erreur en base de donnée")
             }
           }
           )
