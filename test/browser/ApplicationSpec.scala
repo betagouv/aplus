@@ -23,15 +23,7 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
 
       val number = scala.util.Random.nextInt()
       val area = Area.all.head.id
-      val instructorGroup = UserGroup(
-        id = UUIDHelper.randomUUID,
-        name = s"Group $number",
-        inseeCode = List("0"),
-        creationDate = Time.now(),
-        createByUserId = UUIDHelper.namedFrom("julien"),
-        area = area,
-        description = None
-      )
+      val instructorGroup = UserGroup(id = UUIDHelper.randomUUID, name = s"Group $number", description = None, inseeCode = List("0"), creationDate = Time.now(), createByUserId = UUIDHelper.namedFrom("julien"), areaIds = area::Nil)
       groupService.add(instructorGroup)
       val instructorUser = User(
         UUIDHelper.randomUUID,

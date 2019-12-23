@@ -21,7 +21,7 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
     "insee_code",
     "creation_date",
     "create_by_user_id",
-    "area", //TODO rename to area_id
+    "area_ids",
     "organisation",
     "email"
   ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
@@ -30,35 +30,21 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
     groups.foldRight(true) { (group, success) =>
       success &&
         SQL"""
-      INSERT INTO user_group(id, name, description, insee_code, creation_date, create_by_user_id, area, organisation, email) VALUES (
+      INSERT INTO user_group(id, name, description, insee_code, creation_date, create_by_user_id, area_ids, organisation, email) VALUES (
          ${group.id}::uuid,
          ${group.name},
          ${group.description},
          array[${group.inseeCode}]::character varying(5)[],
          ${group.creationDate},
          ${group.createByUserId}::uuid,
-         ${group.area}::uuid,
+         array[${group.areaIds}]::uuid[],
          ${group.organisation},
          ${group.email})
       """.executeUpdate() == 1
     }
   }
 
-  def add(group: UserGroup): Boolean = db.withConnection { implicit connection =>
-    SQL"""
-      INSERT INTO user_group(id, name, description, insee_code, creation_date, create_by_user_id, area, organisation, email) VALUES (
-         ${group.id}::uuid,
-         ${group.name},
-         ${group.description},
-         array[${group.inseeCode}]::character varying(5)[],
-         ${group.creationDate},
-         ${group.createByUserId}::uuid,
-         ${group.area}::uuid,
-         ${group.organisation},
-         ${group.email}
-      )"""
-      .executeUpdate() == 1
-  }
+  def add(group: UserGroup): Boolean = add(List(group))
 
   def edit(group: UserGroup): Boolean = db.withConnection { implicit connection =>
     SQL"""
@@ -67,14 +53,14 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
           description = ${group.description},
           insee_code = array[${group.inseeCode}]::character varying(5)[],
           organisation = ${group.organisation},
-          area = ${group.area}::uuid,
+          area_ids = array[${group.areaIds}]::uuid[],
           email = ${group.email}
           WHERE id = ${group.id}::uuid
        """.executeUpdate() == 1
   }
 
   def allGroupByAreas(areaIds: List[UUID]): List[UserGroup] = db.withConnection { implicit connection =>
-    SQL"SELECT * FROM user_group WHERE ARRAY[$areaIds]::uuid[] @> ARRAY[area]::uuid[]".as(simpleUserGroup.*)
+    SQL"SELECT * FROM user_group WHERE ARRAY[$areaIds]::uuid[] && area_ids".as(simpleUserGroup.*)
   }
 
   def allGroups: List[UserGroup] = db.withConnection { implicit connection =>

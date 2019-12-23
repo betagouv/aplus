@@ -36,7 +36,7 @@ object Operators {
         eventService.warn(code, description = description)
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
-        if (request.currentUser.areas.contains(group.area)) {
+        if (group.areaIds.forall(request.currentUser.areas.contains)) {
           payload()
         } else {
           eventService.error(code = "ADMIN_OUT_OF_RANGE", description = "L'administrateur n'est pas dans son périmètre de responsabilité.")

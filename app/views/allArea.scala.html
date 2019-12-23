@@ -29,7 +29,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for(userGroup <- userGroups.filter(_.area == area.id).sortBy(_.name)) {
+                @for(userGroup <- userGroups.filter(_.areaIds.contains(area.id)).sortBy(_.name)) {
                     <tr>
                         <td class="mdl-data-table__cell--non-numeric">
                             @if(user.admin){
