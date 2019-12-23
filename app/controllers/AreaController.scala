@@ -64,7 +64,7 @@ case class AreaController @Inject()(loginAction: LoginAction,
       val data = for(area <- request.currentUser.areas.flatMap(Area.fromId);
                      organisationMap: List[(Organisation, Int)] =
                               (for(organisation <- Organisation.all;
-                                   userSum = usersIn(area, organisation).size)
+                                   userSum = usersIn(area, organisation).filter(_.instructor).size)
                         yield { organisation -> userSum })
                       ) yield (area, organisationMap)
       

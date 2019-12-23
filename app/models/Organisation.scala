@@ -17,12 +17,11 @@ object Organisation {
     Organisation("A+", "Administration+"),  // Nationale
     Organisation("ANAH", "Agence nationale de l'habitat"),
     Organisation("ANTS", "Agence nationale des titres sécurisés"),
-    Organisation("CAF", "Caisse d’allocations familiale"),  //Département
-    Organisation("CDAD", "Conseils départementaux d'accès au droit"), //Département
     Organisation("BDF", "Banque de France"),
     Organisation("CAF", "Caisse d’allocations familiale"),  //Département
     Organisation("CARSAT", "Caisse d'assurance retraite et de la santé au travail"), //
     Organisation("CCAS", "Centre communal d'action sociale"), //Ville
+    Organisation("CDAD", "Conseils départementaux d'accès au droit"), //Département
     Organisation("CNAV", "Caisse nationale d'assurance vieillesse"),  //Département
     Organisation("CPAM", "Caisse primaire d'assurance maladie"), //Département
     Organisation("CRAM", "Caisse régionale d'assurance maladie"), //Région
