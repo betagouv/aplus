@@ -48,6 +48,23 @@ function deleteElement(selector) {
     element.parentNode.removeChild(element);
 }
 
+function checkAllBySelector(selector) {
+    var checkboxes = window.document.querySelectorAll(selector);
+    for (var i = 0; i < checkboxes.length; i++) {
+        checkboxes[i].checked = true;
+        checkboxes[i].parentElement.classList.add("is-checked");
+    }
+}
+
+function uncheckAllBySelector(selector) {
+    var checkboxes = window.document.querySelectorAll(selector);
+    for (var i = 0; i < checkboxes.length; i++) {
+        checkboxes[i].checked = false;
+        checkboxes[i].parentElement.classList.remove("is-checked");
+    }
+}
+
+
 var Main = {
     disableEventTarget: function(element) {
         element.disabled = 'true';

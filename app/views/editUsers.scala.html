@@ -3,7 +3,7 @@
 @(user: User)(form: Form[(List[User])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
-@main(user)(s"Gestion des utilisateurs") {
+@main(user, maxWidth = false)(s"Gestion des utilisateurs") {
     @webJarsUtil.locate("dialog-polyfill.css").css()
   <style>
           .pem-table {
@@ -44,8 +44,9 @@
     @if(form.hasGlobalErrors) {
       <div style="color: red; font-weight: bold;">@form.globalErrors.flatMap(_.messages).mkString(", ")</div>
     }
+      <em>Instructeur : </em><a href="#" onclick="checkAllBySelector('.instructor')">Tous</a> / <a href="#" onclick="uncheckAllBySelector('.instructor')">Aucuns</a>
 
-    <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table" style="white-space: normal;">
+      <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table" style="white-space: normal;">
       <thead>
         <tr>
           <th></th>
@@ -80,7 +81,7 @@
             }
           </td>
           <td>
-            @helper.checkbox(userField("instructor"), 'type -> "checkbox", 'label -> "Instructeur", 'class -> "mdl-checkbox__input")
+            @helper.checkbox(userField("instructor"), 'type -> "checkbox", 'label -> "Instructeur", 'class -> "mdl-checkbox__input instructor")
           </td>
           <td>
             @helper.checkbox(userField("helper"), 'type -> "checkbox", 'label -> "Aidant", 'class -> "mdl-checkbox__input")

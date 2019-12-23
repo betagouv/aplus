@@ -50,7 +50,6 @@
 
 @main(currentUser, maxWidth = false)("Revue de votre import CSV") {
   <script src='@routes.Assets.versioned("javascripts/main.js")'></script>
-  <script src='@routes.Assets.versioned("javascripts/csv-import.js")'></script>
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 
 } {
@@ -66,7 +65,7 @@
         }
       </div>
     }
-    <em>Instructeur : </em><a href="#" id="instructor-all-link">Tous</a> / <a href="#" id="instructor-none-link">Aucuns</a>
+    <em>Instructeur : </em><a href="#" onclick="checkAllBySelector('.instructor')">Tous</a> / <a href="#" onclick="uncheckAllBySelector('.instructor')">Aucuns</a>
     @helper.repeatWithIndex(form("groups")) { (group, groupIndex) =>
         @display(group, groupIndex) {
           <div class="mdl-cell mdl-cell--12-col mdl-grid" style="padding: 0px;">
