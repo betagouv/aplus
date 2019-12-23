@@ -62,10 +62,10 @@ case class AreaController @Inject()(loginAction: LoginAction,
           yield user
 
       val data = for(area <- request.currentUser.areas.flatMap(Area.fromId);
-                     organisationMap: Map[Organisation, Int] =
+                     organisationMap: List[(Organisation, Int)] =
                               (for(organisation <- Organisation.all;
                                    userSum = usersIn(area, organisation).size)
-                        yield { organisation -> userSum }).toMap
+                        yield { organisation -> userSum })
                       ) yield (area, organisationMap)
       
       Ok(views.html.deploymentDashboard(request.currentUser)(data))

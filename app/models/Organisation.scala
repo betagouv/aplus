@@ -16,7 +16,6 @@ object Organisation {
   val all = List(
     Organisation("A+", "Administration+"),  // Nationale
     Organisation("ANAH", "Agence nationale de l'habitat"),
-    Organisation("CAF", "Caisse d’allocations familiale"),  //Département
     Organisation("ANTS", "Agence nationale des titres sécurisés"),
     Organisation("CAF", "Caisse d’allocations familiale"),  //Département
     Organisation("CDAD", "Conseils départementaux d'accès au droit"), //Département
