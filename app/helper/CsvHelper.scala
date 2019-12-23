@@ -245,7 +245,12 @@ object CsvHelper {
     private def groupCSVMapping(currentDate: DateTime): Mapping[UserGroup] = single(
       "group" ->
         mapping(
-          "id" -> ignored(UUID.randomUUID()),
+          "id" -> optional(uuid).transform[UUID]({
+            case None => UUID.randomUUID()
+            case Some(id) => id
+          }, {
+            Some(_)
+          }),
           "name" -> text,
           "description" -> optional(text),
           "insee-code" -> list(text),
