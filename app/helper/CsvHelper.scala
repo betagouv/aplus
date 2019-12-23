@@ -232,7 +232,7 @@ object CsvHelper {
       "group" ->
         mapping(
           "id" -> ignored(UUID.randomUUID()),
-          "name" -> text(maxLength = 60),
+          "name" -> text,
           "description" -> optional(text),
           "insee-code" -> list(text),
           "creationDate" -> ignored(currentDate),

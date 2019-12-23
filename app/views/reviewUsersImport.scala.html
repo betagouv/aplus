@@ -95,7 +95,7 @@
               Territoires : @helper.repeat(group("group")("area-ids")) { areaIdField =>
                 @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
                   <input name="@areaIdField.name" value="@area.id" type="hidden">
-                  <b>@{area.name} (@area.inseeCode ) /</b>
+                  <b>@{area.name} (@area.inseeCode) /</b>
                 }
               }
             </div>
