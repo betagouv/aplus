@@ -27,7 +27,6 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     "admin",
     "areas",
     "creation_date",
-    "has_accepted_charte",
     "commune_code",
     "group_admin",
     "disabled",
@@ -93,7 +92,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     users.foldRight(true) { (user, success)  =>
       success && SQL"""
       INSERT INTO "user" (id, key, name, qualite, email, helper, instructor, admin, areas, delegations, creation_date,
-      has_accepted_charte, commune_code, group_admin, group_ids, expert, phone_number) VALUES (
+      commune_code, group_admin, group_ids, expert, phone_number) VALUES (
          ${user.id}::uuid,
          ${Hash.sha256(s"${user.id}$cryptoSecret")},
          ${user.name},
@@ -105,7 +104,6 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
          array[${user.areas}]::uuid[],
          ${Json.toJson(user.delegations)},
          ${user.creationDate},
-         ${user.hasAcceptedCharte},
          ${user.communeCode},
          ${user.groupAdmin},
          array[${user.groupIds}]::uuid[],
@@ -126,7 +124,6 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
           instructor = ${user.instructor},
           admin = ${user.admin},
           areas = array[${user.areas}]::uuid[],
-          has_accepted_charte = ${user.hasAcceptedCharte},
           commune_code = ${user.communeCode},
           delegations = ${Json.toJson(user.delegations)},
           group_admin = ${user.groupAdmin},
@@ -149,7 +146,6 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
           instructor = ${user.instructor},
           admin = ${user.admin},
           areas = array[${user.areas}]::uuid[],
-          has_accepted_charte = ${user.hasAcceptedCharte},
           commune_code = ${user.communeCode},
           delegations = ${Json.toJson(user.delegations)},
           group_admin = ${user.groupAdmin},
