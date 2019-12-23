@@ -41,7 +41,7 @@ libraryDependencies ++= Seq(
   "org.webjars.npm" % "twemoji" % "2.5.1",
   "org.webjars" % "chartjs" % "2.8.0",
   "com.github.tototoshi" %% "scala-csv" % "1.3.6",
-  "org.webjars" % "font-awesome" % "5.11.2"
+  "org.webjars" % "font-awesome" % "5.12.0"
 )
 // Crash
 libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.28"
