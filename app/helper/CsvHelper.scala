@@ -177,22 +177,16 @@ object CsvHelper {
   
       def toUserGroupData(lineNumber: LineNumber, currentDate: DateTime): Either[String, UserGroupFormData] = {
         groupCSVMapping(currentDate).bind(csvMap).fold({ errors =>
-          Left(errors.map(prettifyFormError).mkString(", "))
+          Left(errors.map(FormHelper.prettifyFormError).mkString(", "))
         }, { group =>
           userCSVMapping(currentDate).bind(csvMap).fold({ errors =>
-            Left(errors.map(prettifyFormError).mkString(", "))
+            Left(errors.map(FormHelper.prettifyFormError).mkString(", "))
           }, { user =>
             Right(UserGroupFormData(group, List(UserFormData(user, lineNumber))))
           })
         })
       }
     }
-
-  private def prettifyFormError(formError: FormError): String = {
-    val prettyKey = formError.key.split("\\.").lastOption.getOrElse("")
-    val prettyMessages = formError.messages.flatMap(_.split("\\.").lastOption).mkString(", ")
-    s"($prettyKey : $prettyMessages)"
-  }
 
   private def userCSVMapping(currentDate: DateTime): Mapping[User] = single(
       "user" -> mapping(
