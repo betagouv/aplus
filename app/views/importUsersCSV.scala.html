@@ -3,7 +3,7 @@
 @import forms.Models.CSVImportData
 @(currentUser: User)(form: Form[CSVImportData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
-@main(currentUser)(s"Importer des utilisateurs") {
+@main(currentUser, maxWidth = false)(s"Importer des utilisateurs") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 } {
 
