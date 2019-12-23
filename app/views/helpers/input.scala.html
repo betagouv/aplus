@@ -15,7 +15,9 @@
             }
        >
          @elements.input
-         <label class="mdl-@{fieldType}__label" for="@elements.field.id">@elements.args('label)</label>
+         @for(label <- elements.args.get('label)) {
+           <label class="mdl-@{fieldType}__label" for="@elements.field.id">@label</label>
+         }
          @if(elements.hasErrors) {
            <span class="mdl-@{fieldType}__error">@elements.errors.mkString(", ")</span>
          }

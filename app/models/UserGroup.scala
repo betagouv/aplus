@@ -10,12 +10,12 @@ case class UserGroup(id: UUID,
                      inseeCode: List[String],
                      creationDate: DateTime,
                      createByUserId: UUID,
-                     area: UUID,
+                     areaIds: List[UUID],
                      organisation: Option[String] = None,
                      email: Option[String] = None) {
 
   def canHaveUsersAddedBy(user: User): Boolean =
-    (user.groupAdmin && user.groupIds.contains(id)) || (user.admin && user.areas.contains(area))
+    (user.groupAdmin && user.groupIds.contains(id)) || (user.admin && areaIds.forall(user.areas.contains))
   
   lazy val organisationSetOrDeducted: Option[String] = organisation.orElse(UserGroup.organisationDeductedFromName(name))
 }

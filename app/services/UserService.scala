@@ -78,6 +78,13 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     SQL("""SELECT * FROM "user" WHERE lower(email) = {email} AND disabled = false""").on('email -> email.toLowerCase()).as(simpleUser.singleOpt)
   }.orElse(User.admins.find(_.email.toLowerCase() == email.toLowerCase())).filter(!_.disabled)
 
+  def byEmails(emails: List[String]): List[User] = {
+    val lowerCaseEmails = emails.map(_.toLowerCase)
+    db.withConnection { implicit connection =>
+      SQL"""SELECT * FROM "user" WHERE  ARRAY[${lowerCaseEmails}]::text[] @> ARRAY[lower(email)]::text[]""".as(simpleUser.*)
+    }.toList ++ (User.admins.filter(user => lowerCaseEmails.contains(user.email.toLowerCase)))
+  }
+
   def deleteById(userId: UUID): Unit = db.withTransaction { implicit connection =>
     SQL"""DELETE FROM "user" WHERE id = ${userId}::uuid""".execute()
   }
