@@ -35,7 +35,7 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
          ${group.description},
          array[${group.inseeCode}]::character varying(5)[],
          ${group.creationDate},
-         ${UUIDHelper.namedFrom("deprecated")}
+         ${UUIDHelper.namedFrom("deprecated")}::uuid,
          array[${group.areaIds}]::uuid[],
          ${group.organisation},
          ${group.email})
