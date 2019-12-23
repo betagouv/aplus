@@ -20,7 +20,7 @@
        ]
 
        var columns = [
-           {title: "Département", field: "area", sorter:"string", width:150, headerVertical:true},
+           {title: "Département", field: "area", sorter:"string", width:150},
            @for(organisation <- Organisation.all) {
                 {title: "@organisation.shortName", field: "@organisation.key", sorter:"number", headerVertical:true},
            }
