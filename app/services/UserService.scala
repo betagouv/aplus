@@ -9,6 +9,7 @@ import play.api.db.Database
 import extentions.{Hash, Time}
 import play.api.libs.json.Json
 import anorm.JodaParameterMetaData._
+import org.postgresql.util.PSQLException
 
 @javax.inject.Singleton
 class UserService @Inject()(configuration: play.api.Configuration, db: Database) {
@@ -88,29 +89,43 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     SQL"""DELETE FROM "user" WHERE id = ${userId}::uuid""".execute()
   }
 
-  def add(users: List[User]) = db.withTransaction { implicit connection =>
-    users.foldRight(true) { (user, success)  =>
-      success && SQL"""
-      INSERT INTO "user" (id, key, name, qualite, email, helper, instructor, admin, areas, delegations, creation_date,
-      commune_code, group_admin, group_ids, expert, phone_number) VALUES (
-         ${user.id}::uuid,
-         ${Hash.sha256(s"${user.id}$cryptoSecret")},
-         ${user.name},
-         ${user.qualite},
-         ${user.email},
-         ${user.helper},
-         ${user.instructor},
-         ${user.admin},
-         array[${user.areas}]::uuid[],
-         ${Json.toJson(user.delegations)},
-         ${user.creationDate},
-         ${user.communeCode},
-         ${user.groupAdmin},
-         array[${user.groupIds}]::uuid[],
-         ${user.expert},
-         ${user.phoneNumber})
-      """.executeUpdate() == 1
+  def add(users: List[User]): Either[String, Unit] = try {
+    val result = db.withTransaction { implicit connection =>
+      users.foldRight(true) { (user, success)  =>
+        success && SQL"""
+        INSERT INTO "user" (id, key, name, qualite, email, helper, instructor, admin, areas, delegations, creation_date,
+                            commune_code, group_admin, group_ids, expert, phone_number) VALUES (
+           ${user.id}::uuid,
+           ${Hash.sha256(s"${user.id}$cryptoSecret")},
+           ${user.name},
+           ${user.qualite},
+           ${user.email},
+           ${user.helper},
+           ${user.instructor},
+           ${user.admin},
+           array[${user.areas}]::uuid[],
+           ${Json.toJson(user.delegations)},
+           ${user.creationDate},
+           ${user.communeCode},
+           ${user.groupAdmin},
+           array[${user.groupIds}]::uuid[],
+           ${user.expert},
+           ${user.phoneNumber})
+        """.executeUpdate() == 1
+      }
     }
+    if(result)
+      Right(Unit)
+    else
+      Left("Aucun utilisateur n'a été ajouté")
+  } catch {
+    case ex: PSQLException =>
+      val EmailErrorPattern = """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
+      val errorMessage = EmailErrorPattern.findFirstIn(ex.getServerErrorMessage.toString) match {
+        case Some(email) => s"Un utilisateur avec l'adresse $email existe déjà."
+        case _ => s"SQL Erreur : ${ex.getServerErrorMessage.toString}"
+      }
+      Left(errorMessage)
   }
 
   def update(users: List[User]) = db.withTransaction { implicit connection =>
