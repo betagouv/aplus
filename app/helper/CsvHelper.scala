@@ -95,7 +95,7 @@ object CsvHelper {
               .fromCsvFieldNameToHtmlFieldName
               .includeFirstnameInLastName()
               .toUserGroupData(lineNumber, currentDate).left.map { error: String =>
-              s"Ligne $lineNumber : error $error (ligne initale : $rawCSVLine )"
+              s"Il y au moins une erreur à la ligne $lineNumber : $error (ligne initale : $rawCSVLine )"
             }
         }
         partition(result)
