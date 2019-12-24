@@ -52,7 +52,7 @@
     @helper.checkbox(form("disabled"), 'type -> "checkbox", 'label -> "Désactiver l'utilisateur", 'class -> "mdl-checkbox__input")
 
         @if(unused) {
-        <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="confirmUserDeletion()">Supprimer cet utilisateur inutilisé.</button>
+        <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="showDialog()">Supprimer cet utilisateur inutilisé.</button>
         <br>
         }
     <b>Délégations</b>
@@ -164,16 +164,34 @@
             }
         }
     </script>
-<div class="modal" id="user-deletion-modal">
-    <div class="modal-dialog">
-        <header class="modal-header">
-            Suppression d'un utilisateur inutilisé.
-        </header>
-        <section class="modal-content">Êtes-vous certain de vouloir supprimer le compte de cet utilisateur?</section>
-        <footer class="modal-footer">
-            <button id="modal-confirm-button" class="confirm-modal" aria-label="confirm modal" onclick="confirmUnusedUserDeletionModal('@userId', '@tokenName', '@tokenValue')">Confirmer</button>
-            <button id="modal-close-button" class="close-modal" aria-label="close modal" onclick="closeModal()">Annuler</button>
-        </footer>
-    </div>
-</div>
+
+    <dialog class="mdl-dialog" id="dialog-delete-user">
+        <h4 class="mdl-dialog__title">Suppression d'un utilisateur inutilisé.</h4>
+        <div class="mdl-dialog__content">
+            <b>Êtes-vous certain de vouloir supprimer le compte de cet utilisateur?</b>
+        </div>
+        <div class="mdl-dialog__actions">
+            <button type="button" class="mdl-button mdl-button--raised mdl-button--colored" onclick="confirmDeletion()">Confirmer</button>
+            <button type="button" class="mdl-button mdl-button--raised" onclick="closeDialog()">Annuler</button>
+        </div>
+    </dialog>
+
+    <script type="text/javascript">
+        var dialog = document.querySelector('#dialog-delete-user');
+        if (!dialog.showModal) {
+            dialogPolyfill.registerDialog(dialog);
+        }
+
+        function closeDialog() {
+            dialog.close();
+        }
+
+        function showDialog() {
+            dialog.showModal();
+        }
+
+        function confirmDeletion() {
+            document.location = '@routes.UserController.deleteUnusedUserById(userId)';
+        }
+    </script>
 }
