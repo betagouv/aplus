@@ -11,36 +11,39 @@
     @webJarsUtil.locate("material-icons.css").css()
     @webJarsUtil.locate("material.min.css").css()
     <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/main.css")'>
+    <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
     <script src="@routes.Assets.versioned("javascripts/polyfills.js")"></script>
     <meta name="robots" content="noindex" />
     <style>
-        .login-ribbon {
-            width: 100%;
-            height: 40vh;
-            background-color: #263238;
-            -webkit-flex-shrink: 0;
-            -ms-flex-negative: 0;
-            flex-shrink: 0;
-        }
         .login-main {
-            margin-top: -35vh;
+            margin-top: 10vh;
             -webkit-flex-shrink: 0;
             -ms-flex-negative: 0;
             flex-shrink: 0;
         }
         .login-content {
             border-radius: 2px;
-            padding: 80px 56px;
+            padding: 60px 56px;
             margin-bottom: 80px;
+            text-align: center;
+        }
+
+        .login-container p {
+            text-align: left;
         }
         .login-container {
             max-width: 1600px;
             width: calc(100% - 16px);
             margin: 0 auto;
         }
-        .login-layout.is-small-screen .demo-content {
-  padding: 40px 28px;
-}
+
+        @@media (max-width: 479px)
+        {
+            .login-content {
+                padding: 10px;
+                margin-bottom: 10px;
+            }
+        }
 
     </style>
      <!-- Piwik -->
@@ -65,30 +68,40 @@
     <div class="header__ribbon do-not-print" id="header__ribbon">
     BETA
     </div>
-<div class="login-layout mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--grey-100">
-    <div class="login-ribbon"></div>
+<div class="mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--blue-grey-800">
+    <div class="mdl-layout__header mdl-color-text--grey-600 do-not-print mdl-color--grey-100">
+        <div class="mdl-layout__header-row">
+            <span class="mdl-layout-title">
+                <a href="@routes.HomeController.index()"><img src='@routes.Assets.versioned("images/logo_small_150x160.png")' class="logo-header" alt="Administration+"></a>
+            </span>
+        </div>
+    </div>
     <main class="login-main mdl-layout__content">
         <div class="login-container mdl-grid">
             <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
-            <div class="login-content mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
+            <div class="login-content mdl-color--grey-100 mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
                 @userOrToken match {
                     case Left(None) => {
-                    <h3>Connexion à Administration+</h3>
+                    <h3>Se connecter à Administration+</h3>
                     <form action="@routes.LoginController.login()" method="post">
                         @helper.CSRF.formField
                         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                            <input class="mdl-textfield__input" type="text" id="sample1" name="email" oninput="document.getElementsByName('id')[0].disabled = false">
-                            <label class="mdl-textfield__label" for="sample1">Saisir votre adresse email</label>
+                            <input class="mdl-textfield__input" type="text" id="email" name="email" oninput="document.getElementsByName('id')[0].disabled = false">
+                            <label class="mdl-textfield__label" for="email">Saisir votre adresse e-mail professionnel</label>
                         </div><br>
+
+                    <br>
                         @flash.get("error").map { message =>
-                            <p style="color: red;"><b>@message</b></p>
+                            <div class="notification notification--error"><b>@message</b></div>
                         }
-                        <button type="submit" class="mdl-button mdl-js-button mdl-button--raised" name="id" disabled>Connexion</button>
+                        <button type="submit" class="mdl-button mdl-js-button mdl-button--raised" name="id" disabled>Envoyer</button>
                     </form>
                     }
                     case Left(Some(user)) => {
-                        <h3><i class="material-icons">mail_outline</i> Regardez vos emails <i class="material-icons">mail_outline</i></h3>
-                         <p>Vous allez recevoir un email à l'adresse <b>@user.email</b>. Cliquez sur le lien contenu dans l'email pour accéder à Administration+.</p>
+                        <h3><i class="material-icons">mail_outline</i><br>Consultez vos emails</h3>
+                         <p>Nous avons envoyé par e-mal un lien valable 15 minutes à l'adresse <b>@user.email</b>. Cliquez sur le lien contenu dans l'email pour accéder à Administration+.</p>
+
+                        <p><i>Vous n'avez pas reçu d'e-email ? Veuillez consulter vos courriers indésirables ou <a href="@routes.LoginController.login()">renvoyer un autre e-email</a></i><br></p>
                     }
                     case Right((token,path)) => {
                         <h3>Vous allez accéder automatiquement à Administration+</h3>
@@ -110,8 +123,8 @@
                         </script>
                     }
                 }
-                <br>
-                <p>Vous rencontrez des difficultés à vous connecter ? Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Problème%20A+%20Connexion">@Constants.supportEmail</a></p>
+                <br><br>
+                <p style="margin-top: 30px">Vous rencontrez des difficultés à vous connecter ? Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Problème%20A+%20Connexion">@Constants.supportEmail</a></p>
             </div>
         </div>
     </main>
@@ -120,9 +133,9 @@
 <script>
     if(/localhost|demo/.test(window.location.hostname)) {
         document.getElementById("header__ribbon").innerText = "DEMO";
-        var nav = document.getElementsByClassName("login-layout")[0]
+        var nav = document.getElementsByClassName("mdl-layout")[0]
         nav.classList.add("mdl-color--deep-purple-900")
-        nav.classList.remove("mdl-color--grey-100")
+        nav.classList.remove("mdl-color--blue-grey-800")
     }
 </script>
     @webJarsUtil.locate("material.min.js").script()
