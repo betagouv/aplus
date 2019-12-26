@@ -18,7 +18,7 @@ class gLoginSpec extends Specification with Tables with BaseSpec {
   "Login" should {
     "Login with valid or invalid emails" in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {
         "email"                              | "result"                                             |
-        "julien.dauphant" + "@beta.gouv.fr"  ! "Regardez vos emails"                                |
+        "julien.dauphant" + "@beta.gouv.fr"  ! "Consultez vos emails"                                |
         "wrong@beta.gouv.fr"                 ! "Aucun compte actif à l'adresse wrong@beta.gouv.fr"  |
         "simon.pineau" + "@beta.gouv.fr"     ! "Aucun compte actif à l'adresse simon.pineau"        |>
           { (email, expected) =>
