@@ -330,7 +330,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
       case Some(application) =>
         if(application.canBeShowedBy(request.currentUser)) {
             val usersThatCanBeInvited =  usersThatCanBeInvitedOn(application)
-            val groups = userGroupService.byIds(usersThatCanBeInvited.flatMap(_.groupIds))
+            val groups = userGroupService.byIds(usersThatCanBeInvited.flatMap(_.groupIds)).filter(_.areaIds.contains(application.area))
             val groupsWithUsersThatCanBeInvited = groups.map { group =>
               group -> usersThatCanBeInvited.filter(_.groupIds.contains(group.id))
             }
