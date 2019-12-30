@@ -76,7 +76,8 @@
 }{
 
   @if(currentUser.admin) {
-    <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--8-offset mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.CSVImportController.importUsersFromCSV()">Importer utilisateurs</a>
+    <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-offset mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.UserController.all(selectedArea.id)?vue=nouvelle">Nouvelle vue utilisateurs</a>
+    <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.CSVImportController.importUsersFromCSV()">Importer utilisateurs</a>
   }
   @if(currentUser.areas.length > 1) {
     <p class="mdl-cell mdl-cell--12-col">Territoire :

@@ -52,7 +52,13 @@ case class UserController @Inject()(loginAction: LoginAction,
           List()
       }
       eventService.info("ALL_USER_SHOWED", "Visualise la vue des utilisateurs")
-      Ok(views.html.allUsersByGroup(request.currentUser)(groups, users, applications, selectedArea, configuration.underlying.getString("geoplus.host")))
+      val result = request.getQueryString("vue").getOrElse("classique") match {
+        case "nouvelle" =>
+          views.html.allUsersNew(request.currentUser)(groups, users, applications, selectedArea, configuration.underlying.getString("geoplus.host"))
+        case _ =>
+          views.html.allUsersByGroup(request.currentUser)(groups, users, applications, selectedArea, configuration.underlying.getString("geoplus.host"))
+      }
+      Ok(result)
     }
   }
 
