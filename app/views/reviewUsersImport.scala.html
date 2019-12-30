@@ -60,12 +60,12 @@
 } {
   @helper.form(routes.CSVImportController.importUsersReviewPost(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
   @helper.CSRF.formField
-    @if(form.hasGlobalErrors) {
-      <div style="color: red; font-weight: bold;">
-        @for(error <- form.globalErrors) {
-          @error.message
+    @if(form.hasErrors) {
+      <div class="notification notification--error">
+        @for(error <- form.errors) {
+          @error.format - @error.key
           @for(arg <- error.args) {
-              <p>@arg</p>
+              @arg<br>
           }
         }
       </div>

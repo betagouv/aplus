@@ -93,7 +93,7 @@ class EventService @Inject()(db: Database) {
   def all(limit: Int = 1000, fromUserId: Option[UUID] = None) = db.withConnection { implicit connection =>
     fromUserId match {
       case Some(userId) =>
-        SQL"""SELECT *, host(ip_address)::TEXT AS ip_address FROM "event" WHERE from_user_id = $userId::uuid ORDER BY creation_date DESC LIMIT $limit""".as(simpleEvent.*)
+        SQL"""SELECT *, host(ip_address)::TEXT AS ip_address FROM "event" WHERE from_user_id = $userId::uuid OR to_user_id = $userId::uuid ORDER BY creation_date DESC LIMIT $limit""".as(simpleEvent.*)
       case None => ""
         SQL"""SELECT *, host(ip_address)::TEXT AS ip_address FROM "event" ORDER BY creation_date DESC LIMIT $limit""".as(simpleEvent.*)
     }
