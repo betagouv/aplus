@@ -1,0 +1,42 @@
+@(currentUser: User)(data: List[(Area,List[(Organisation,Int)])])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+
+@main(currentUser, maxWidth = false)(s"Tableau de suivie déploiement") {
+    @webJarsUtil.locate("tabulator.min.css").css()
+    @webJarsUtil.locate("tabulator.min.js").script()
+}{
+    <h5 class="title--addline">Nombre d'agents instructeurs par organisation</h5>
+    <i>Les agents sont comptés double s'ils sont dans plusieurs départements. Les organisations manquantes ne sont pas affichées. Certains agents ne sont pas détecté comme faisant partie d'un organisation (Vous devez corriger le groupe dans ce cas)</i>
+    <div id="table" class="mdl-cell mdl-cell--12-col"></div>
+
+    <script>
+       var tableData = [
+           @for((area: Area, usersSumPerOrganisation: List[(Organisation, Int)]) <- data) {
+                { area: "@area",
+                    @for((organisation, userSum) <- usersSumPerOrganisation)  {
+                        @organisation.key: @userSum,
+                    }
+                },
+           }
+       ]
+
+       var columns = [
+           {title: "Département", field: "area", sorter:"string", width:150},
+           @for(organisation <- Organisation.all) {
+                {title: "@organisation.shortName", field: "@organisation.key", sorter:"number", headerVertical:true},
+           }
+       ]
+
+       var table = new Tabulator("#table", {
+           data:tableData,           //load row data from array
+           layout:"fitColumns",      //fit columns to width of table
+           responsiveLayout:"hide",  //hide columns that dont fit on the table
+           movableColumns:true,      //allow column order to be changed
+           resizableRows:true,       //allow row order to be changed
+           initialSort:[             //set the initial sort order of the data
+               {column:"area", dir:"asc"},
+           ],
+           columns: columns
+       });
+
+    </script>
+}

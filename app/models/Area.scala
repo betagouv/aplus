@@ -3,6 +3,7 @@ package models
 import java.util.UUID
 
 import extentions.UUIDHelper
+import helper.StringHelper
 import org.apache.commons.lang3.StringUtils
 
 case class Area(id: UUID, name: String, inseeCode: String){
@@ -17,14 +18,11 @@ object Area {
   }
 
   def searchFromName(name: String): Option[Area] = {
-   val area = canonizeArea(name)
-   Area.all.find(a => canonizeArea(a.name) == area)
+   val area = StringHelper.canonize(name)
+   Area.all.find(a => StringHelper.canonize(a.name) == area)
   }
 
   def fromInseeCode(inseeCode: String): Option[Area] = all.find(area => inseeCode == area.inseeCode)
-
-  def canonizeArea(area: String): String =
-    StringUtils.stripAccents(area.toLowerCase().replaceAll("[-'’ ]", ""))
 
   def apply(id: String, name: String, inseeCode: String): Area = Area(UUIDHelper.namedFrom(id), name, inseeCode)
 
