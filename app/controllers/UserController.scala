@@ -52,7 +52,13 @@ case class UserController @Inject()(loginAction: LoginAction,
           List()
       }
       eventService.info("ALL_USER_SHOWED", "Visualise la vue des utilisateurs")
-      Ok(views.html.allUsers(request.currentUser)(groups, users, applications, selectedArea, configuration.underlying.getString("geoplus.host")))
+      val result = request.getQueryString("vue").getOrElse("classique") match {
+        case "nouvelle" =>
+          views.html.allUsersNew(request.currentUser)(groups, users, applications, selectedArea, configuration.underlying.getString("geoplus.host"))
+        case _ =>
+          views.html.allUsersByGroup(request.currentUser)(groups, users, applications, selectedArea, configuration.underlying.getString("geoplus.host"))
+      }
+      Ok(result)
     }
   }
 
@@ -309,7 +315,7 @@ case class UserController @Inject()(loginAction: LoginAction,
     }),
     "key" -> ignored("key"),
     "name" -> nonEmptyText.verifying(maxLength(100)),
-    "qualite" -> nonEmptyText.verifying(maxLength(100)),
+    "qualite" -> text.verifying(maxLength(100)),
     "email" -> email.verifying(maxLength(200), nonEmpty),
     "helper" -> boolean,
     "instructor" -> boolean,

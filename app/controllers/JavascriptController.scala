@@ -14,7 +14,9 @@ class JavascriptController() extends InjectedController{
       JavaScriptReverseRouter("jsRoutes")(
         routes.javascript.GroupController.deleteUnusedGroupById,
         routes.javascript.ApplicationController.all,
-        routes.javascript.UserController.all)
+        routes.javascript.UserController.all,
+        routes.javascript.UserController.editUser
+      )
     ).as(MimeTypes.JAVASCRIPT)
   }
 }
