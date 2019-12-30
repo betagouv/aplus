@@ -29,6 +29,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-json-joda" % "2.8.1",
   "net.jcazevedo" %% "moultingyaml" % "0.4.0",
   "com.google.guava" % "guava" % "28.1-jre",
+  "com.github.tototoshi" %% "scala-csv" % "1.3.6",
   ws
 )
 // UI
@@ -40,8 +41,8 @@ libraryDependencies ++= Seq(
   "org.webjars.npm" % "dialog-polyfill" % "0.4.10",
   "org.webjars.npm" % "twemoji" % "2.5.1",
   "org.webjars" % "chartjs" % "2.9.3",
-  "com.github.tototoshi" %% "scala-csv" % "1.3.6",
-  "org.webjars" % "font-awesome" % "5.12.0"
+  "org.webjars" % "font-awesome" % "5.12.0",
+  "org.webjars.bowergithub.olifolkerd" % "tabulator" % "4.4.1"
 )
 // Crash
 libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.29"

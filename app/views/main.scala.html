@@ -142,6 +142,7 @@
                         <a class="mdl-navigation__link" href="@routes.UserController.all(Area.allArea.id)"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">people</i>Utilisateurs</a>
                     }
                     @if(currentUser.admin) {
+                        <a class="mdl-navigation__link" href="@routes.AreaController.deploymentDashboard()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">track_changes</i>Déploiement</a>
                         <a class="mdl-navigation__link" href="@routes.UserController.allEvents()"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">event</i>Événements</a>
                     }
                     @if(currentUser.admin || currentUser.groupAdmin) {
