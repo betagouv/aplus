@@ -158,7 +158,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
                 .fillAndValidate(filteredUserGroupInformation)
 
               val formWithError = if(userNotImported.nonEmpty || alreadyExistingUsersErrors.nonEmpty || alreadyExistingGroupErrorMessages.nonEmpty) {
-                formWithData.withGlobalError("Certaines lignes du CSV n'ont pas pu être importé", userNotImported ++ alreadyExistingUsersErrors ++ alreadyExistingGroupErrorMessages: _*)
+                formWithData.withGlobalError("Certaines lignes du CSV n'ont pas pu être importé", (userNotImported ++ alreadyExistingUsersErrors ++ alreadyExistingGroupErrorMessages): _*)
               } else {
                 formWithData
               }

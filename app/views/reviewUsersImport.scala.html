@@ -63,7 +63,7 @@
     @if(form.hasErrors) {
       <div class="notification notification--error">
         @for(error <- form.errors) {
-          @error.format - @error.key
+        @error.format - @error.key<br>
           @for(arg <- error.args) {
               @arg<br>
           }
