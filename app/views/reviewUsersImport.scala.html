@@ -90,8 +90,7 @@
                 <select id="@field.id" name="@field.name">
                   <option style="font-weight: bold" value="">Organisme non-référencé</option>
                   @for(organisation <- Organisation.all) {
-                    <option value="@organisation.shortName"
-                    @if(field.value.forall(value => organisation.name.contains(value) || organisation.shortName.contains(value))) {selected}>@organisation.shortName : @organisation.name </option>
+                    <option value="@organisation.shortName">@organisation.shortName : @organisation.name</option>
                   }
                 </select>
               </div>
