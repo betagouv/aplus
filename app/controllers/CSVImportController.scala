@@ -107,7 +107,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     "creationDate" -> ignored(date),
     "area-ids" -> list(uuid).verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
     "organisation" -> optional(text).verifying("Vous devez sélectionner une organisation dans la liste", organisation =>
-      organisation.map(Organisation.fromShortName).forall(_.isDefined)
+      organisation.flatMap(Organisation.fromShortName).isDefined
     ),
     "email" -> optional(email)
   )(UserGroup.apply)(UserGroup.unapply)
