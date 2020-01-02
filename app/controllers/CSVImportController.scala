@@ -3,7 +3,6 @@ package controllers
 import java.util.UUID
 
 import actions.LoginAction
-import extentions.UUIDHelper
 import extentions.Operators.{GroupOperators, UserOperators}
 import forms.Models.{CSVImportData, UserFormData, UserGroupFormData}
 import javax.inject.Inject
@@ -166,6 +165,17 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     }
   }
 
+  def associateGroupToUsers(groupFormData: UserGroupFormData): UserGroupFormData = {
+    val groupId = groupFormData.group.id
+    val areasId = groupFormData.group.areaIds
+    val newUsers = groupFormData.users.map({ userFormData =>
+      val newUser = userFormData.user.copy(groupIds = (groupId :: userFormData.user.groupIds).distinct,
+        areas = (areasId ++ userFormData.user.areas).distinct)
+      userFormData.copy(user = newUser)
+    })
+    groupFormData.copy(users = newUsers)
+  }
+
   def importUsersReviewPost: Action[AnyContent] = loginAction { implicit request =>
     asAdmin { () =>
       "IMPORT_USERS_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
@@ -190,12 +200,13 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
               .withGlobalError(description)
             InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError))
         }, {  Unit =>
-          groupsToInsert.foreach({ userGroup =>
-            eventService.info("ADD_USER_GROUP_DONE", s"Groupe ${userGroup.id} ajouté par l'utilisateur d'id ${request.currentUser.id}")
-          })
-          val usersToInsert = augmentedUserGroupInformation.flatMap(_.users)
+          groupsToInsert.foreach { userGroup =>
+            eventService.info("ADD_USER_GROUP_DONE", s"Groupe ${userGroup.id} ajouté")
+          }
+          val usersToInsert = augmentedUserGroupInformation.map(associateGroupToUsers).flatMap(_.users)
             .filter(_.alreadyExistingUser.isEmpty)
             .map(_.user)
+
           userService.add(usersToInsert).fold({ error: String =>
             val description = s"Impossible d'importer les utilisateurs : $error"
             eventService.error("IMPORT_USER_ERROR", description)
