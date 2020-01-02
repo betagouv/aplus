@@ -86,7 +86,7 @@ class CSVSpec extends Specification {
       dgfip.get.users.head.user.name must equalTo(expectedUserName)
       dgfip.get.users.head.user.email must equalTo(expectedEmail)
       dgfip.get.users.head.user.helper must beTrue
-      dgfip.get.users.head.user.areas must equalTo(expectedUserGroup.areaIds)
+      dgfip.get.users.head.user.areas must equalTo(List[String]())
       dgfip.get.users.head.user.phoneNumber must beSome(expectedPhoneNumber)
     }
 
