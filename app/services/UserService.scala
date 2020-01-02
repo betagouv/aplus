@@ -92,6 +92,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
   def add(users: List[User]): Either[String, Unit] = try {
     val result = db.withTransaction { implicit connection =>
       users.foldRight(true) { (user, success)  =>
+        assert(user.areas.nonEmpty)
         success && SQL"""
         INSERT INTO "user" (id, key, name, qualite, email, helper, instructor, admin, areas, delegations, creation_date,
                             commune_code, group_admin, group_ids, expert, phone_number) VALUES (

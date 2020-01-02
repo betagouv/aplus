@@ -42,13 +42,7 @@ object CsvHelper {
       .groupBy(_.group.name)
       .mapValues({ case sameGroupNameList: List[UserGroupFormData] =>
         val group = sameGroupNameList.head
-        val groupId = group.group.id
-        val areasId = group.group.areaIds
-        val usersFormData = sameGroupNameList.flatMap(_.users).map({ userFormData =>
-          val newUser = userFormData.user.copy(groupIds = (groupId :: userFormData.user.groupIds).distinct,
-            areas = (areasId ++ userFormData.user.areas).distinct)
-          userFormData.copy(user = newUser)
-        })
+        val usersFormData = sameGroupNameList.flatMap(_.users)
         group.copy(users = usersFormData)
       }).values.toList
   }
