@@ -149,16 +149,20 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
               val augmentedUserGroupInformation: List[UserGroupFormData] = userGroupDataForm.map(augmentUserGroupInformation)
               val (alreadyExistingUsersErrors, filteredUserGroupInformation) = CsvHelper.filterAlreadyExistingUsersAndGenerateErrors(augmentedUserGroupInformation)
 
+              val alreadyExistingGroupErrorMessages = augmentedUserGroupInformation.filter(_.alreadyExistingGroup.nonEmpty).map(_.group).map({ group =>
+                s"""Le groupe '${group.name}' existe déjà."""
+              })
+
               val currentDate = Time.now()
               val formWithData = importUsersReviewFrom(currentDate)
                 .fillAndValidate(filteredUserGroupInformation)
 
-              val formWithError = if(userNotImported.nonEmpty || alreadyExistingUsersErrors.nonEmpty) {
-                formWithData.withGlobalError("Certaines lignes du CSV n'ont pas pu être importé", userNotImported ++ alreadyExistingUsersErrors: _*)
+              val formWithError = if(userNotImported.nonEmpty || alreadyExistingUsersErrors.nonEmpty || alreadyExistingGroupErrorMessages.nonEmpty) {
+                formWithData.withGlobalError("Certaines lignes du CSV n'ont pas pu être importé", userNotImported ++ alreadyExistingUsersErrors ++ alreadyExistingGroupErrorMessages: _*)
               } else {
                 formWithData
               }
-              Ok(views.html.reviewUsersImport(request.currentUser)(formWithError, alreadyExistingUsersErrors))
+              Ok(views.html.reviewUsersImport(request.currentUser)(formWithError))
           })
         })
       }
@@ -183,42 +187,45 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
       val currentDate = Time.now()
       importUsersReviewFrom(currentDate).bindFromRequest.fold({ importUsersReviewFromWithError =>
         eventService.warn(code = "IMPORT_USER_FORM_ERROR", description = "Erreur de formulaire de review")
-        BadRequest(views.html.reviewUsersImport(request.currentUser)(importUsersReviewFromWithError, List.empty[String]))
+        BadRequest(views.html.reviewUsersImport(request.currentUser)(importUsersReviewFromWithError))
       }, { userGroupDataForm: List[UserGroupFormData] =>
         val augmentedUserGroupInformation: List[UserGroupFormData] = userGroupDataForm.map(augmentUserGroupInformation)
 
-        val groupsToInsert = augmentedUserGroupInformation
-          .filter(_.alreadyExistingGroup.isEmpty)
-          .map(_.group)
+        val (alreadyExistingGroups, notAlreadyExistingGroups) = augmentedUserGroupInformation
+          .partition(_.alreadyExistingGroup.isDefined)
 
+        val alreadyExistingGroupErrorMessages = alreadyExistingGroups.map(_.group).map({ group =>
+          s"""Le groupe '${group.name}' existe déjà."""
+        })
+
+        val groupsToInsert = notAlreadyExistingGroups.map(_.group)
         groupService.add(groupsToInsert)
           .fold({ error: String =>
             val description = s"Impossible d'importer les groupes : $error"
             eventService.error("IMPORT_USER_ERROR", description)
             val formWithError = importUsersReviewFrom(currentDate)
               .fill(augmentedUserGroupInformation)
-              .withGlobalError(description)
-            InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError, List.empty[String]))
+              .withGlobalError(description, alreadyExistingGroupErrorMessages: _*)
+            InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError))
           }, { Unit =>
             groupsToInsert.foreach { userGroup =>
               eventService.info("ADD_USER_GROUP_DONE", s"Groupe ${userGroup.id} ajouté")
             }
-            val (groupWithExistingUser, groupWithoutExistingUser) = augmentedUserGroupInformation.map(associateGroupToUsers).flatMap(_.users)
-              .partition(_.alreadyExistingUser.isEmpty)
+            val (alreadyExistingUsers, notAlreadyExistingUsers) = augmentedUserGroupInformation.map(associateGroupToUsers).flatMap(_.users)
+              .partition(_.alreadyExistingUser.isDefined)
 
-            val usersToInsert = groupWithoutExistingUser.map(_.user)
-
-            val existingUsers = groupWithExistingUser.flatMap(_.alreadyExistingUser).map({ user =>
-              s"""Un compte dont le mail est <a href="/utilisateurs/${user.id.toString}">${user.email}</a> existe déja."""
+            val alreadyExistingUserErrorMessages = alreadyExistingUsers.map(_.alreadyExistingUser.get).map({ user =>
+              s"${user.name} (${user.email}) existe déjà."
             })
 
+            val usersToInsert = notAlreadyExistingUsers.map(_.user)
             userService.add(usersToInsert).fold({ error: String =>
               val description = s"Impossible d'importer les utilisateurs : $error"
               eventService.error("IMPORT_USER_ERROR", description)
               val formWithError = importUsersReviewFrom(currentDate)
                 .fill(augmentedUserGroupInformation)
-                .withGlobalError(description)
-              InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError, existingUsers))
+                .withGlobalError(description, alreadyExistingUserErrorMessages: _*)
+              InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError))
             }, { Unit =>
               usersToInsert.foreach { user =>
                 notificationsService.newUser(user)

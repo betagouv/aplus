@@ -3,7 +3,7 @@
 @import extentions.UUIDHelper
 
 @import forms.Models.UserGroupFormData
-@(currentUser: User)(form: Form[List[UserGroupFormData]], alreadyExistingUsersErrors: Seq[String])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @display(section: Field, groupIndex: Int)(header: Html) = {
   <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
@@ -67,9 +67,6 @@
           @for(arg <- error.args) {
               @arg<br>
           }
-        }
-        @for(existingUserError <- alreadyExistingUsersErrors) {
-          <p>@existingUserError</p>
         }
       </div>
     }
