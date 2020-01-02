@@ -5,6 +5,7 @@
 
 @main(currentUser)(s"Utilisateur ${form("name").value.getOrElse("")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+    <script src='@routes.Assets.versioned("javascripts/dialog.js")'></script>
 }{
     @helper.form(action = routes.UserController.editUserPost(userId), 'class -> "mdl-grid mdl-cell mdl-cell--12-col") {
         @form.value match {
@@ -172,7 +173,7 @@
         </div>
         <div class="mdl-dialog__actions">
             <button type="button" class="mdl-button mdl-button--raised mdl-button--colored" onclick="confirmDeletion()">Confirmer</button>
-            <button type="button" class="mdl-button mdl-button--raised" onclick="closeDialog(showDialog(document.querySelector('#dialog-delete-user'))">Annuler</button>
+            <button type="button" class="mdl-button mdl-button--raised" onclick="closeDialog(document.querySelector('#dialog-delete-user'))">Annuler</button>
         </div>
     </dialog>
 
