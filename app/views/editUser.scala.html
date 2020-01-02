@@ -52,7 +52,7 @@
     @helper.checkbox(form("disabled"), 'type -> "checkbox", 'label -> "Désactiver l'utilisateur", 'class -> "mdl-checkbox__input")
 
         @if(unused) {
-        <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="showDialog()">Supprimer cet utilisateur inutilisé.</button>
+        <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="showDialog(document.querySelector('#dialog-delete-user'))">Supprimer cet utilisateur inutilisé.</button>
         <br>
         }
     <b>Délégations</b>
@@ -172,7 +172,7 @@
         </div>
         <div class="mdl-dialog__actions">
             <button type="button" class="mdl-button mdl-button--raised mdl-button--colored" onclick="confirmDeletion()">Confirmer</button>
-            <button type="button" class="mdl-button mdl-button--raised" onclick="closeDialog()">Annuler</button>
+            <button type="button" class="mdl-button mdl-button--raised" onclick="closeDialog(showDialog(document.querySelector('#dialog-delete-user'))">Annuler</button>
         </div>
     </dialog>
 
@@ -180,14 +180,6 @@
         var dialog = document.querySelector('#dialog-delete-user');
         if (!dialog.showModal) {
             dialogPolyfill.registerDialog(dialog);
-        }
-
-        function closeDialog() {
-            dialog.close();
-        }
-
-        function showDialog() {
-            dialog.showModal();
         }
 
         function confirmDeletion() {
