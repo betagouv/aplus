@@ -6,3 +6,11 @@
 # Code
 - [Guidelines](docs/guidelines.md)
 - [Wiki](https://github.com/betagouv/aplus/wiki) (Le wiki est visé à être remplacer par la doc dans le repo)
+
+# Commande
+
+- Lancer une base de donnée Postgresql avec docker-compose :
+`docker-compose up db`
+- Lancer une serveur Play de dev avec docker-compose :
+  `docker-compose up web`
+- Pour lancer le serveur sans docker `sbt run` (Vous pouvez regarder les variables d'environnement indispensables dans le `docker-compose.yml` et la liste des variables dans le `application.conf`)  

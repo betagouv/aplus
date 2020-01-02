@@ -17,6 +17,7 @@ services:
       APP_HOST: localhost:9000
       MAIL_MOCK: "true"
       APPLICATION_SECRET: secret
+      FILES_PATH: files
     ports:
       - "9000:9000"
   admin-db:
