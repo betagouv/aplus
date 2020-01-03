@@ -11,6 +11,7 @@ import extentions.UUIDHelper
 import play.api.data.{Form, FormError, Mapping}
 import play.api.data.Forms.{uuid, _}
 import java.util.UUID
+import StringHelper.CanonizeString
 
 object CsvHelper {
 
@@ -39,7 +40,7 @@ object CsvHelper {
 
   def userGroupDataListToUserGroupData(userGroupFormData: List[UserGroupFormData]): List[UserGroupFormData] = {
     userGroupFormData
-      .groupBy(_.group.name)
+      .groupBy(_.group.name.canonize)
       .mapValues({ case sameGroupNameList: List[UserGroupFormData] =>
         val group = sameGroupNameList.head
         val usersFormData = sameGroupNameList.flatMap(_.users)
