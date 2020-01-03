@@ -147,14 +147,16 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
           }, {
             case (userNotImported: List[String], userGroupDataForm: List[UserGroupFormData]) =>
               val augmentedUserGroupInformation: List[UserGroupFormData] = userGroupDataForm.map(augmentUserGroupInformation)
-              val (alreadyExistingUsersErrors, filteredUserGroupInformation) = CsvHelper.filterAlreadyExistingUsersAndGenerateErrors(augmentedUserGroupInformation)
+              val (alreadyExistingUsersErrors, filteredUserGroupFormData) = CsvHelper.filterAlreadyExistingUsersAndGenerateErrors(augmentedUserGroupInformation)
+              val (emptyUserGroups, filteredNonEmptyUserGroupFormData) = filteredUserGroupFormData.partition(_.users.isEmpty)
+              val emptyUserGroupsErrors = emptyUserGroups.map { userGroupFormData => s"Le groupe ${userGroupFormData.group.name} est vide, il ne sera pas importé" }
 
               val currentDate = Time.now()
               val formWithData = importUsersReviewFrom(currentDate)
-                .fillAndValidate(filteredUserGroupInformation)
+                .fillAndValidate(filteredNonEmptyUserGroupFormData)
 
-              val formWithError = if(userNotImported.nonEmpty || alreadyExistingUsersErrors.nonEmpty) {
-                formWithData.withGlobalError("Certaines lignes du CSV n'ont pas pu être importé", userNotImported ++ alreadyExistingUsersErrors: _*)
+              val formWithError = if(userNotImported.nonEmpty || alreadyExistingUsersErrors.nonEmpty || emptyUserGroupsErrors.nonEmpty) {
+                formWithData.withGlobalError("Certaines lignes du CSV n'ont pas pu être importé", userNotImported ++ alreadyExistingUsersErrors ++ emptyUserGroupsErrors: _*)
               } else {
                 formWithData
               }
