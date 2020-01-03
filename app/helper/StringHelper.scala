@@ -3,6 +3,8 @@ package helper
 import org.apache.commons.lang3.StringUtils
 
 object StringHelper {
-  def canonize(area: String): String =
-    StringUtils.stripAccents(area.toLowerCase().replaceAll("[-'’ +]", ""))
+  implicit class CanonizeString(string: String) {
+    def canonize: String =
+      StringUtils.stripAccents(string.toLowerCase().replaceAll("[-'’ +]", ""))
+  }
 }

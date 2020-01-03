@@ -11,6 +11,7 @@ import extentions.UUIDHelper
 import play.api.data.{Form, FormError, Mapping}
 import play.api.data.Forms.{uuid, _}
 import java.util.UUID
+import StringHelper.CanonizeString
 
 object CsvHelper {
 
@@ -24,22 +25,22 @@ object CsvHelper {
   private val expectedGroupHeaders: List[Header] = List(GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL, GROUP_AREAS_IDS)
 
   def filterAlreadyExistingUsersAndGenerateErrors(groups: List[UserGroupFormData]): (List[String], List[UserGroupFormData]) = {
+    def filterAlreadyExistingUsersAndGenerateErrors(accu: (List[String], List[UserGroupFormData]), group: UserGroupFormData): (List[String], List[UserGroupFormData]) = {
+      val (newUsers, existingUsers) = group.users.partition(_.alreadyExistingUser.isEmpty)
+      val errors = existingUsers.map { (existingUser: UserFormData) =>
+        s"${existingUser.user.name} (${existingUser.user.email}) existe déjà."
+      }
+      val newGroup = group.copy(users = newUsers)
+      (errors ++ accu._1) -> (newGroup :: accu._2)
+    }
+
     val (newErrors, newGroups) = groups.foldLeft((List.empty[String], List.empty[UserGroupFormData])) { filterAlreadyExistingUsersAndGenerateErrors }
     newErrors.reverse -> newGroups.reverse
   }
 
-  def filterAlreadyExistingUsersAndGenerateErrors(accu: (List[String], List[UserGroupFormData]), group: UserGroupFormData): (List[String], List[UserGroupFormData]) = {
-    val (newUsers, existingUsers) = group.users.partition(_.alreadyExistingUser.isEmpty)
-    val errors = existingUsers.map { (existingUser: UserFormData) =>
-      s"${existingUser.user.name} (${existingUser.user.email}) existe déjà."
-    }
-    val newGroup = group.copy(users = newUsers)
-    (errors ++ accu._1) -> (newGroup :: accu._2)
-  }
-
   def userGroupDataListToUserGroupData(userGroupFormData: List[UserGroupFormData]): List[UserGroupFormData] = {
     userGroupFormData
-      .groupBy(_.group.name)
+      .groupBy(_.group.name.canonize)
       .mapValues({ case sameGroupNameList: List[UserGroupFormData] =>
         val group = sameGroupNameList.head
         val usersFormData = sameGroupNameList.flatMap(_.users)

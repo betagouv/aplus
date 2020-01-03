@@ -1,11 +1,11 @@
 package models
 
-import helper.StringHelper
+import helper.StringHelper.CanonizeString
 
 
 case class Organisation(shortName: String,
                         name: String) {
-  def key: String = StringHelper.canonize(shortName)
+  def key: String = shortName.canonize
 }
 
 object Organisation {
