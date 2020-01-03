@@ -44,6 +44,10 @@
     background-color: white
 }
 
+.mdl-textfield__input--readonly {
+    background-color: lightgrey;
+}
+
 .mdl-data-table td {
     padding: 0px 18px;
 }

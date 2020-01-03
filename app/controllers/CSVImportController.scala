@@ -147,22 +147,27 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
           }, {
             case (userNotImported: List[String], userGroupDataForm: List[UserGroupFormData]) =>
               val augmentedUserGroupInformation: List[UserGroupFormData] = userGroupDataForm.map(augmentUserGroupInformation)
-              val (alreadyExistingUsersErrors, filteredUserGroupInformation) = CsvHelper.filterAlreadyExistingUsersAndGenerateErrors(augmentedUserGroupInformation)
 
-              val alreadyExistingGroupErrorMessages = augmentedUserGroupInformation.filter(_.alreadyExistingGroup.nonEmpty).map(_.group).map({ group =>
-                s"""Le groupe '${group.name}' existe déjà."""
-              })
+              val groupNameToAlreadyExistingGroup: Map[String, UserGroup] = augmentedUserGroupInformation.map({ userGroupFormData =>
+                userGroupFormData.group.name -> userGroupFormData.alreadyExistingGroup
+              }).flatMap(tuple => tuple._2.map(group => tuple._1 -> group )).toMap
+
+              val userEmailToAlreadyExistingUser: Map[String, User] = augmentedUserGroupInformation.flatMap({ userGroupFormData =>
+                userGroupFormData.users.flatMap(userFormData => userFormData.alreadyExistingUser.map(user => userFormData.user.email -> user))
+              }).toMap
+
+              val (alreadyExistingUsersErrors, filteredUserGroupInformation) = CsvHelper.filterAlreadyExistingUsersAndGenerateErrors(augmentedUserGroupInformation)
 
               val currentDate = Time.now()
               val formWithData = importUsersReviewFrom(currentDate)
                 .fillAndValidate(filteredUserGroupInformation)
 
-              val formWithError = if(userNotImported.nonEmpty || alreadyExistingUsersErrors.nonEmpty || alreadyExistingGroupErrorMessages.nonEmpty) {
-                formWithData.withGlobalError("Certaines lignes du CSV n'ont pas pu être importé", (userNotImported ++ alreadyExistingUsersErrors ++ alreadyExistingGroupErrorMessages): _*)
+              val formWithError = if(userNotImported.nonEmpty || alreadyExistingUsersErrors.nonEmpty) {
+                formWithData.withGlobalError("Certaines lignes du CSV n'ont pas pu être importé", userNotImported ++ alreadyExistingUsersErrors: _*)
               } else {
                 formWithData
               }
-              Ok(views.html.reviewUsersImport(request.currentUser)(formWithError))
+              Ok(views.html.reviewUsersImport(request.currentUser)(formWithError, groupNameToAlreadyExistingGroup, userEmailToAlreadyExistingUser))
           })
         })
       }
@@ -187,7 +192,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
       val currentDate = Time.now()
       importUsersReviewFrom(currentDate).bindFromRequest.fold({ importUsersReviewFromWithError =>
         eventService.warn(code = "IMPORT_USER_FORM_ERROR", description = "Erreur de formulaire de review")
-        BadRequest(views.html.reviewUsersImport(request.currentUser)(importUsersReviewFromWithError))
+        BadRequest(views.html.reviewUsersImport(request.currentUser)(importUsersReviewFromWithError, Map.empty[String, UserGroup], Map.empty[String, User]))
       }, { userGroupDataForm: List[UserGroupFormData] =>
         val augmentedUserGroupInformation: List[UserGroupFormData] = userGroupDataForm.map(augmentUserGroupInformation)
 
@@ -206,7 +211,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
             val formWithError = importUsersReviewFrom(currentDate)
               .fill(augmentedUserGroupInformation)
               .withGlobalError(description, alreadyExistingGroupErrorMessages: _*)
-            InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError))
+            InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError, Map.empty[String, UserGroup], Map.empty[String, User]))
           }, { Unit =>
             groupsToInsert.foreach { userGroup =>
               eventService.info("ADD_USER_GROUP_DONE", s"Groupe ${userGroup.id} ajouté")
@@ -214,18 +219,14 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
             val (alreadyExistingUsers, notAlreadyExistingUsers) = augmentedUserGroupInformation.map(associateGroupToUsers).flatMap(_.users)
               .partition(_.alreadyExistingUser.isDefined)
 
-            val alreadyExistingUserErrorMessages = alreadyExistingUsers.map(_.alreadyExistingUser.get).map({ user =>
-              s"${user.name} (${user.email}) existe déjà."
-            })
-
             val usersToInsert = notAlreadyExistingUsers.map(_.user)
             userService.add(usersToInsert).fold({ error: String =>
               val description = s"Impossible d'importer les utilisateurs : $error"
               eventService.error("IMPORT_USER_ERROR", description)
               val formWithError = importUsersReviewFrom(currentDate)
                 .fill(augmentedUserGroupInformation)
-                .withGlobalError(description, alreadyExistingUserErrorMessages: _*)
-              InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError))
+                .withGlobalError(description)
+              InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError, ???, ???))
             }, { Unit =>
               usersToInsert.foreach { user =>
                 notificationsService.newUser(user)

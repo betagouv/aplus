@@ -3,7 +3,9 @@
 @import extentions.UUIDHelper
 
 @import forms.Models.UserGroupFormData
-@(currentUser: User)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User)(form: Form[List[UserGroupFormData]],
+  groupNameToAlreadyExistingGroup: Map[String, UserGroup],
+  userEmailToAlreadyExistingUser: Map[String, User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @display(section: Field, groupIndex: Int)(header: Html) = {
   <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
@@ -72,40 +74,74 @@
     }
     <em>Instructeur : </em><a href="#" onclick="checkAllBySelector('.instructor')">Tous</a> / <a href="#" onclick="uncheckAllBySelector('.instructor')">Aucuns</a>
     @helper.repeatWithIndex(form("groups")) { (group, groupIndex) =>
-        @display(group, groupIndex) {
-          <div class="mdl-cell mdl-cell--12-col mdl-grid" style="padding: 0px;">
-            <h5 class="title--addline mdl-cell mdl-cell--12-col">@group("group")("name").value.getOrElse("")</h5>
+      @display(group, groupIndex) {
+        @defining(groupNameToAlreadyExistingGroup.get(group("group")("name").value.getOrElse(""))) { existingGroup =>
+          @if(existingGroup.isEmpty) {
+            <div class="mdl-cell mdl-cell--12-col mdl-grid" style="padding: 0px;">
+              <h5 class="title--addline mdl-cell mdl-cell--12-col">@group("group")("name").value.getOrElse("")</h5>
               @helper.input(group("group")("id"), 'label -> "Id", 'class -> "hidden") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
               @helper.input(group("group")("name"), 'label -> "Nom du groupe", 'class -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
-             @helper.input(group("group")("email"), 'label -> csv.GROUP_EMAIL.prefixes(0), 'class -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
+              @helper.input(group("group")("email"), 'label -> csv.GROUP_EMAIL.prefixes(0), 'class -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
                 <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
               }
-            @defining(group("group")("organisation")) { field =>
+              @defining(group("group")("organisation")) { field =>
               <div class="mdl-cell mdl-cell--4-col">
-                Organisation : 
+                Organisation :
                 <select id="@field.id" name="@field.name">
                   <option style="font-weight: bold" value="">Organisme non-référencé</option>
                   @for(organisation <- Organisation.all) {
-                    <option value="@organisation.shortName"
-                    @if(field.value.forall(value => organisation.name.contains(value) || organisation.shortName.contains(value))) {selected}>@organisation.shortName : @organisation.name </option>
+                  <option value="@organisation.shortName"
+                          @if(field.value.forall(value => organisation.name.contains(value) || organisation.shortName.contains(value))) {selected}>@organisation.shortName : @organisation.name </option>
                   }
                 </select>
               </div>
-            }
-            <div class="mdl-cell mdl-cell--12-col">
-              Territoires : @helper.repeat(group("group")("area-ids")) { areaIdField =>
-                @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
-                  <input name="@areaIdField.name" value="@area.id" type="hidden">
-                  <b>@{area.name} (@area.inseeCode) /</b>
-                }
               }
+              <div class="mdl-cell mdl-cell--12-col">
+                Territoires : @helper.repeat(group("group")("area-ids")) { areaIdField =>
+                @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
+                <input name="@areaIdField.name" value="@area.id" type="hidden">
+                <b>@{area.name} (@area.inseeCode) /</b>
+                }
+                }
+              </div>
             </div>
-          </div>
-        } 
+          } else {
+            <div class="mdl-cell mdl-cell--12-col mdl-grid" style="padding: 0px;">
+              <h5 class="title--addline mdl-cell mdl-cell--12-col">@existingGroup.map(_.name).getOrElse("")</h5>
+              <div class="mdl-cell mdl-cell--4-col">
+                <input class="input-import-user is-disabled mdl-textfield__input--readonly mdl-textfield__input" disabled type="text" value="@existingGroup.map(_.name).getOrElse("")">
+              </div>
+              <div class="mdl-cell mdl-cell--4-col">
+                <input class="input-import-user is-disabled mdl-textfield__input--readonly mdl-textfield__input" disabled type="text" value="@existingGroup.map(_.email).getOrElse("")">
+              </div>
+              @defining(existingGroup.map(_.organisation).get) { value =>
+                <div class="mdl-cell mdl-cell--4-col">
+                  Organisation :
+                  <select disabled>
+                    <option style="font-weight: bold" value="">Organisme non-référencé</option>
+                    @for(organisation <- Organisation.all) {
+                      <option value="@organisation.shortName" @if(value.exists(value => organisation.name.contains(value) || organisation.shortName.contains(value))) {selected}>
+                        @organisation.shortName : @organisation.name
+                      </option>
+                    }
+                  </select>
+                </div>
+              }
+              <div class="mdl-cell mdl-cell--12-col">
+                Territoires : @for(areaId <- existingGroup.map(_.areaIds).getOrElse(Nil)) {
+                  @for(area <- Area.fromId(areaId)) {
+                    <b>@{area.name} (@area.inseeCode) /</b>
+                  }
+                }
+              </div>
+            </div>
+          }
+        }
+      }
     }
     <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell" onsubmit="Main.disableEventTarget(this)">Importer</button>
   }
