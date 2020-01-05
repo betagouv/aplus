@@ -14,41 +14,92 @@
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table">
   <tbody>
     @helper.repeatWithIndex(section("users")) { (user, index) =>
-    <tr class="searchable-row td--clear-border" id="line_@{groupIndex}_@{index}">
-      <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        <input name="@user("line").name" value="@user("line").value" type="hidden">
-        <input name="@user("user")("id").name" value="@user("user")("id").value" type="hidden">
-        <input name="@user("user")("qualite").name" value="@user("user")("qualite").value" type="hidden">
-        
-        @helper.input(user("user")("name"), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
-          <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+      @defining(userEmailToAlreadyExistingUser.get(user("user")("email").value.getOrElse(""))) { existingUser =>
+        @if(existingUser.isEmpty) {
+          <tr class="searchable-row td--clear-border" id="line_@{groupIndex}_@{index}">
+            <td class="mdl-data-table__cell--non-numeric cell-import-user">
+              <input name="@user("line").name" value="@user("line").value" type="hidden">
+              <input name="@user("user")("id").name" value="@user("user")("id").value" type="hidden">
+              <input name="@user("user")("qualite").name" value="@user("user")("qualite").value" type="hidden">
+
+              @helper.input(user("user")("name"), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
+              <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+              }
+            </td>
+            <td class="mdl-data-table__cell--non-numeric cell-import-user">
+              @helper.input(user("user")("email"), 'label -> "Email", 'class -> "input-import-user") { (id, name, value, args) =>
+              <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+              }
+            </td>
+            <td class="mdl-data-table__cell--non-numeric cell-import-user">
+              @helper.input(user("user")("phone-number"), 'label -> "Numéro de téléphone", 'class -> "input-import-user") { (id, name, value, args) =>
+              <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+              }
+            </td>
+            <td class="mdl-data-table__cell--non-numeric cell-import-user">
+              @helper.input(user("user")("quality"), 'label -> "Qualité", 'class -> "input-import-user") { (id, name, value, args) =>
+              <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+              }
+            </td>
+            <td class="mdl-data-table__cell--non-numeric cell-import-user">
+              @helper.checkbox(user("user")("instructor"), 'type -> "checkbox", 'label -> csv.USER_INSTRUCTOR.prefixes(0), 'class -> "mdl-checkbox__input instructor")
+            </td>
+            <td class="mdl-data-table__cell--non-numeric cell-import-user">
+              @helper.checkbox(user("user")("adminGroup"), 'type -> "checkbox", 'label -> csv.USER_GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
+            </td>
+            <td>
+              <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onclick="deleteElement('#line_@{groupIndex}_@index')"><i class="material-icons">delete_forever</i></button>
+            </td>
+          </tr>
+        } else {
+          <tr class="searchable-row td--clear-border" id="line_@{groupIndex}_@{index}">
+            <td class="mdl-data-table__cell--non-numeric cell-import-user">
+              <input class="mdl-textfield__input  input-import-user is-disabled mdl-textfield__input--readonly mdl-textfield__input"
+                     disabled
+                     type="text"
+                     value="@existingUser.map(_.name).getOrElse("")">
+            </td>
+            <td class="mdl-data-table__cell--non-numeric cell-import-user">
+              <input class="mdl-textfield__input  input-import-user is-disabled mdl-textfield__input--readonly mdl-textfield__input"
+                     disabled
+                     type="text"
+                     value="@existingUser.map(_.email).getOrElse("")">
+            </td>
+            <td class="mdl-data-table__cell--non-numeric cell-import-user">
+              <input class="mdl-textfield__input  input-import-user is-disabled mdl-textfield__input--readonly mdl-textfield__input"
+                     disabled
+                     type="text"
+                     value="@existingUser.map(_.phoneNumber).getOrElse("")">
+            </td>
+            <td class="mdl-data-table__cell--non-numeric cell-import-user">
+              <input class="mdl-textfield__input  input-import-user is-disabled mdl-textfield__input--readonly mdl-textfield__input"
+                     disabled
+                     type="text"
+                     value="@existingUser.map(_.qualite).getOrElse("")">
+            </td>
+            <td class="mdl-data-table__cell--non-numeric cell-import-user">
+              <input
+                      class="mdl-checkbox__input instructor"
+                      type="checkbox"
+                      id="instructor_@{groupIndex}_@{index}"
+                      disabled
+                      @if(existingUser.map(_.instructor).getOrElse(false)) { checked }>
+              <label for="instructor_@{groupIndex}_@{index}">@csv.USER_INSTRUCTOR.prefixes(0)</label>
+            </td>
+            <td class="mdl-data-table__cell--non-numeric cell-import-user">
+              <input
+                      class="mdl-checkbox__input instructor"
+                      type="checkbox"
+                      id="group_manager_@{groupIndex}_@{index}"
+                      disabled
+                      @if(existingUser.map(_.groupAdmin).getOrElse(false)) { checked }>
+              <label for="group_manager_@{groupIndex}_@{index}">@csv.USER_GROUP_MANAGER.prefixes(0)</label>
+            </td>
+            <td>
+            </td>
+          </tr>
         }
-      </td>
-      <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.input(user("user")("email"), 'label -> "Email", 'class -> "input-import-user") { (id, name, value, args) =>
-          <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-        }
-      </td>
-      <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.input(user("user")("phone-number"), 'label -> "Numéro de téléphone", 'class -> "input-import-user") { (id, name, value, args) =>
-        <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-        }
-      </td>
-      <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.input(user("user")("quality"), 'label -> "Qualité", 'class -> "input-import-user") { (id, name, value, args) =>
-        <input class="mdl-textfield__input input-import-user" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-        }
-      </td>
-      <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.checkbox(user("user")("instructor"), 'type -> "checkbox", 'label -> csv.USER_INSTRUCTOR.prefixes(0), 'class -> "mdl-checkbox__input instructor")
-      </td>
-      <td class="mdl-data-table__cell--non-numeric cell-import-user">
-        @helper.checkbox(user("user")("adminGroup"), 'type -> "checkbox", 'label -> csv.USER_GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
-      </td>
-      <td>
-          <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onclick="deleteElement('#line_@{groupIndex}_@index')"><i class="material-icons">delete_forever</i></button>
-      </td>
-    </tr>
+      }
     }
   </tbody>
 </table>
