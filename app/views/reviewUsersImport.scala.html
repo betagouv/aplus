@@ -54,28 +54,48 @@
         } else {
           <tr class="searchable-row td--clear-border" id="line_@{groupIndex}_@{index}">
             <td class="mdl-data-table__cell--non-numeric cell-import-user">
-              <input class="mdl-textfield__input  input-import-user is-disabled mdl-textfield__input--readonly mdl-textfield__input"
-                     disabled
-                     type="text"
-                     value="@existingUser.map(_.name).getOrElse("")">
+              <input name="@user("line").name" value="@user("line").value" type="hidden">
+              <input name="@user("user")("id").name" value="@existingUser.map(_.id).getOrElse("")" type="hidden">
+              <input name="@user("user")("qualite").name" value="@existingUser.map(_.qualite).getOrElse("")" type="hidden">
+
+              @helper.input(user("user")("name"), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
+                <input class="mdl-textfield__input input-import-user is-disabled mdl-textfield__input--readonly"
+                       type="text"
+                       name="@name"
+                       id="@id"
+                       disabled
+                       value="@existingUser.map(_.name).getOrElse("")" @toHtmlArgs(args)>
+              }
             </td>
             <td class="mdl-data-table__cell--non-numeric cell-import-user">
-              <input class="mdl-textfield__input  input-import-user is-disabled mdl-textfield__input--readonly mdl-textfield__input"
-                     disabled
-                     type="text"
-                     value="@existingUser.map(_.email).getOrElse("")">
+              @helper.input(user("user")("email"), 'label -> "Email", 'class -> "input-import-user") { (id, name, value, args) =>
+                <input class="mdl-textfield__input input-import-user is-disabled mdl-textfield__input--readonly"
+                       type="text"
+                       name="@name"
+                       id="@id"
+                       disabled
+                       value="@existingUser.map(_.email).getOrElse("")" @toHtmlArgs(args)>
+              }
             </td>
             <td class="mdl-data-table__cell--non-numeric cell-import-user">
-              <input class="mdl-textfield__input  input-import-user is-disabled mdl-textfield__input--readonly mdl-textfield__input"
-                     disabled
-                     type="text"
-                     value="@existingUser.map(_.phoneNumber).getOrElse("")">
+              @helper.input(user("user")("phone-number"), 'label -> "Numéro de téléphone", 'class -> "input-import-user") { (id, name, value, args) =>
+                <input class="mdl-textfield__input input-import-user is-disabled mdl-textfield__input--readonly"
+                       type="text"
+                       name="@name"
+                       id="@id"
+                       disabled
+                       value="@existingUser.map(_.phoneNumber).getOrElse("")" @toHtmlArgs(args)>
+              }
             </td>
             <td class="mdl-data-table__cell--non-numeric cell-import-user">
-              <input class="mdl-textfield__input  input-import-user is-disabled mdl-textfield__input--readonly mdl-textfield__input"
-                     disabled
-                     type="text"
-                     value="@existingUser.map(_.qualite).getOrElse("")">
+              @helper.input(user("user")("quality"), 'label -> "Qualité", 'class -> "input-import-user") { (id, name, value, args) =>
+                <input class="mdl-textfield__input input-import-user is-disabled mdl-textfield__input--readonly"
+                       type="text"
+                       name="@name"
+                       id="@id"
+                       disabled
+                       value="@existingUser.map(_.qualite).getOrElse("")" @toHtmlArgs(args)>
+              }
             </td>
             <td class="mdl-data-table__cell--non-numeric cell-import-user">
               <input
@@ -83,6 +103,7 @@
                       type="checkbox"
                       id="instructor_@{groupIndex}_@{index}"
                       disabled
+                      name="@user("user")("instructor").name"
                       @if(existingUser.map(_.instructor).getOrElse(false)) { checked }>
               <label for="instructor_@{groupIndex}_@{index}">@csv.USER_INSTRUCTOR.prefixes(0)</label>
             </td>
@@ -91,6 +112,7 @@
                       class="mdl-checkbox__input instructor"
                       type="checkbox"
                       id="group_manager_@{groupIndex}_@{index}"
+                      name="@user("user")("adminGroup").name"
                       disabled
                       @if(existingUser.map(_.groupAdmin).getOrElse(false)) { checked }>
               <label for="group_manager_@{groupIndex}_@{index}">@csv.USER_GROUP_MANAGER.prefixes(0)</label>
@@ -164,16 +186,34 @@
           } else {
             <div class="mdl-cell mdl-cell--12-col mdl-grid" style="padding: 0px;">
               <h5 class="title--addline mdl-cell mdl-cell--12-col">@existingGroup.map(_.name).getOrElse("")</h5>
-              <div class="mdl-cell mdl-cell--4-col">
-                <input class="input-import-user is-disabled mdl-textfield__input--readonly mdl-textfield__input" disabled type="text" value="@existingGroup.map(_.name).getOrElse("")">
-              </div>
-              <div class="mdl-cell mdl-cell--4-col">
-                <input class="input-import-user is-disabled mdl-textfield__input--readonly mdl-textfield__input" disabled type="text" value="@existingGroup.map(_.email).getOrElse("")">
-              </div>
+              @helper.input(group("group")("id"), 'label -> "Id", 'class -> "hidden") { (id, name, value, args) =>
+                <input class="mdl-textfield__input input-import-user"
+                       type="text"
+                       name="@name"
+                       id="@id"
+                       disabled
+                       value="@existingGroup.map(_.id).getOrElse("")" @toHtmlArgs(args)>
+              }
+              @helper.input(group("group")("name"), 'label -> "Nom du groupe", 'class -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
+                <input class="mdl-textfield__input input-import-user"
+                       type="text"
+                       name="@name"
+                       id="@id"
+                       disabled
+                       value="@existingGroup.map(_.name).getOrElse("")" @toHtmlArgs(args)>
+              }
+              @helper.input(group("group")("email"), 'label -> csv.GROUP_EMAIL.prefixes(0), 'class -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
+                <input class="mdl-textfield__input input-import-user"
+                       type="text"
+                       name="@name"
+                       id="@id"
+                       disabled
+                       value="@existingGroup.map(_.email).getOrElse("")" @toHtmlArgs(args)>
+              }
               @defining(existingGroup.map(_.organisation).get) { value =>
                 <div class="mdl-cell mdl-cell--4-col">
                   Organisation :
-                  <select disabled>
+                  <select disabled id="@group("group")("organisation").id" name="@group("group")("organisation").name">
                     <option style="font-weight: bold" value="">Organisme non-référencé</option>
                     @for(organisation <- Organisation.all) {
                       <option value="@organisation.shortName" @if(value.exists(value => organisation.name.contains(value) || organisation.shortName.contains(value))) {selected}>
@@ -187,6 +227,11 @@
                 Territoires : @for(areaId <- existingGroup.map(_.areaIds).getOrElse(Nil)) {
                   @for(area <- Area.fromId(areaId)) {
                     <b>@{area.name} (@area.inseeCode) /</b>
+                  }
+                }
+                @helper.repeat(group("group")("area-ids")) { areaIdField =>
+                  @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
+                    <input name="@areaIdField.name" value="@area.id" type="hidden">
                   }
                 }
               </div>
