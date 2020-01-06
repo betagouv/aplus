@@ -102,9 +102,8 @@
                       class="mdl-checkbox__input instructor"
                       type="checkbox"
                       id="instructor_@{groupIndex}_@{index}"
-                      readonly
                       name="@user("user")("instructor").name"
-                      @if(existingUser.map(_.instructor).getOrElse(false)) { checked }>
+                      value="@existingUser.map(_.instructor).getOrElse(false)"
               <label for="instructor_@{groupIndex}_@{index}">@csv.USER_INSTRUCTOR.prefixes(0)</label>
             </td>
             <td class="mdl-data-table__cell--non-numeric cell-import-user">
@@ -113,8 +112,7 @@
                       type="checkbox"
                       id="group_manager_@{groupIndex}_@{index}"
                       name="@user("user")("adminGroup").name"
-                      readonly
-                      @if(existingUser.map(_.groupAdmin).getOrElse(false)) { checked }>
+                      value="@existingUser.map(_.groupAdmin).getOrElse(false)"
               <label for="group_manager_@{groupIndex}_@{index}">@csv.USER_GROUP_MANAGER.prefixes(0)</label>
             </td>
             <td>
