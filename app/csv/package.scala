@@ -16,7 +16,7 @@ package object csv {
 
   val GROUP_AREAS_IDS = Header("group.area-ids", List("Territoire", "DEPARTEMENTS"))
   val GROUP_ORGANISATION = Header("group.organisation", List("Organisation"))
-  val GROUP_NAME = Header("group.name", List("Groupe", "Opérateur partenaire", "Nom de la structure labellisable"))
+  val GROUP_NAME = Header("group.name", List("Groupe", "Opérateur partenaire")) // "Nom de la structure labellisable"
   val GROUP_EMAIL = Header("group.email", List("Bal", "adresse mail générique"))
 
   val SEPARATOR = ";"
