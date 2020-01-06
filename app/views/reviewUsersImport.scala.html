@@ -63,7 +63,7 @@
                        type="text"
                        name="@name"
                        id="@id"
-                       disabled
+                       readonly
                        value="@existingUser.map(_.name).getOrElse("")" @toHtmlArgs(args)>
               }
             </td>
@@ -73,7 +73,7 @@
                        type="text"
                        name="@name"
                        id="@id"
-                       disabled
+                       readonly
                        value="@existingUser.map(_.email).getOrElse("")" @toHtmlArgs(args)>
               }
             </td>
@@ -83,7 +83,7 @@
                        type="text"
                        name="@name"
                        id="@id"
-                       disabled
+                       readonly
                        value="@existingUser.map(_.phoneNumber).getOrElse("")" @toHtmlArgs(args)>
               }
             </td>
@@ -93,7 +93,7 @@
                        type="text"
                        name="@name"
                        id="@id"
-                       disabled
+                       readonly
                        value="@existingUser.map(_.qualite).getOrElse("")" @toHtmlArgs(args)>
               }
             </td>
@@ -102,7 +102,7 @@
                       class="mdl-checkbox__input instructor"
                       type="checkbox"
                       id="instructor_@{groupIndex}_@{index}"
-                      disabled
+                      readonly
                       name="@user("user")("instructor").name"
                       @if(existingUser.map(_.instructor).getOrElse(false)) { checked }>
               <label for="instructor_@{groupIndex}_@{index}">@csv.USER_INSTRUCTOR.prefixes(0)</label>
@@ -113,7 +113,7 @@
                       type="checkbox"
                       id="group_manager_@{groupIndex}_@{index}"
                       name="@user("user")("adminGroup").name"
-                      disabled
+                      readonly
                       @if(existingUser.map(_.groupAdmin).getOrElse(false)) { checked }>
               <label for="group_manager_@{groupIndex}_@{index}">@csv.USER_GROUP_MANAGER.prefixes(0)</label>
             </td>
@@ -187,33 +187,33 @@
             <div class="mdl-cell mdl-cell--12-col mdl-grid" style="padding: 0px;">
               <h5 class="title--addline mdl-cell mdl-cell--12-col">@existingGroup.map(_.name).getOrElse("")</h5>
               @helper.input(group("group")("id"), 'label -> "Id", 'class -> "hidden") { (id, name, value, args) =>
-                <input class="mdl-textfield__input input-import-user"
+                <input class="mdl-textfield__input input-import-user is-disabled mdl-textfield__input--readonly"
                        type="text"
                        name="@name"
                        id="@id"
-                       disabled
+                       readonly
                        value="@existingGroup.map(_.id).getOrElse("")" @toHtmlArgs(args)>
               }
               @helper.input(group("group")("name"), 'label -> "Nom du groupe", 'class -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
-                <input class="mdl-textfield__input input-import-user"
+                <input class="mdl-textfield__input input-import-user is-disabled mdl-textfield__input--readonly"
                        type="text"
                        name="@name"
                        id="@id"
-                       disabled
+                       readonly
                        value="@existingGroup.map(_.name).getOrElse("")" @toHtmlArgs(args)>
               }
               @helper.input(group("group")("email"), 'label -> csv.GROUP_EMAIL.prefixes(0), 'class -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
-                <input class="mdl-textfield__input input-import-user"
+                <input class="mdl-textfield__input input-import-user is-disabled mdl-textfield__input--readonly"
                        type="text"
                        name="@name"
                        id="@id"
-                       disabled
+                       readonly
                        value="@existingGroup.map(_.email).getOrElse("")" @toHtmlArgs(args)>
               }
               @defining(existingGroup.map(_.organisation).get) { value =>
                 <div class="mdl-cell mdl-cell--4-col">
                   Organisation :
-                  <select disabled id="@group("group")("organisation").id" name="@group("group")("organisation").name">
+                  <select readonly id="@group("group")("organisation").id" name="@group("group")("organisation").name">
                     <option style="font-weight: bold" value="">Organisme non-référencé</option>
                     @for(organisation <- Organisation.all) {
                       <option value="@organisation.shortName" @if(value.exists(value => organisation.name.contains(value) || organisation.shortName.contains(value))) {selected}>
@@ -231,7 +231,7 @@
                 }
                 @helper.repeat(group("group")("area-ids")) { areaIdField =>
                   @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
-                    <input name="@areaIdField.name" value="@area.id" type="hidden">
+                    <input name="@areaIdField.name" value="@area.id" type="hidden" readonly>
                   }
                 }
               </div>
