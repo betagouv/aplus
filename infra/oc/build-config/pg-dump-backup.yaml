@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: BuildConfig
+metadata:
+  labels:
+    build: pg-dump-backup
+    env: dev
+  name: pg-dump-backup-dev
+  namespace: dinsic-aplus
+spec:
+  failedBuildsHistoryLimit: 5
+  nodeSelector: null
+  output:
+    to:
+      kind: ImageStreamTag
+      name: pg-dump-backup:dev
+  resources:
+    limits:
+      cpu: "2"
+      memory: 2Gi
+    requests:
+      cpu: "1"
+      memory: 1Gi
+  runPolicy: Serial
+  source:
+    contextDir: pg-dump-backup
+    git:
+      ref: master
+      uri: https://github.com/betagouv/postgresql-openshift-docker.git
+    type: Git
+  strategy:
+    dockerStrategy:
+      from:
+        kind: ImageStreamTag
+        name: postgresql-10-centos7:latest
+    type: Docker
+  successfulBuildsHistoryLimit: 5
