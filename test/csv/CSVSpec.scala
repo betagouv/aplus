@@ -33,8 +33,9 @@ class CSVSpec extends Specification {
       |,,,,,
       |""".stripMargin
 
+  //TODO : In the future, manage "Nom de la structure labellisable"
   val organisationTest: String =
-    """organisation,Nom de la structure labellisable,Adresse,Code Postal,Commune,Nom Agent,Prénom Agent,Contact mail Agent,Bal,"Coordonnées du référent préfectoral en charge du dossier France Services"
+    """organisation,Groupe,Adresse,Code Postal,Commune,Nom Agent,Prénom Agent,Contact mail Agent,Bal,"Coordonnées du référent préfectoral en charge du dossier France Services"
       |MSAP,d’Aubigny sur Nère,6 rue du 8 mai 1945,18700,Aubigny sur Nère,Nom1,Prénom1,test1@aubigny-sur-nere.fr,msap@aubigny-sur-nere.fr,
       |MSAP,d’Aubigny sur Nère,6 rue du 8 mai 1945,18700,Aubigny sur Nère,Nom2,Prénom2,test2@aubigny-sur-nere.fr,msap@aubigny-sur-nere.fr,
       |MSAP,d’Aubigny sur Nère,6 rue du 8 mai 1945,18700,Aubigny sur Nère,Nom3,Prénom3,test3@aubigny-sur-nere.fr,msap@aubigny-sur-nere.fr,
