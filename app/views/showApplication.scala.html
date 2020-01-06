@@ -1,4 +1,4 @@
-@(user: User)(usersThatCanBeInvited: List[User], application: Application, answerToAgentsForm: Form[_], openedTab: String, attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(user: User)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], application: Application, answerToAgentsForm: Form[_], openedTab: String, attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 @import java.util.Locale
 
 @main(user)(s"Demande de ${application.creatorUserName} - ${Area.fromId(application.area).get.name}")  {
@@ -381,7 +381,7 @@ dialog {
                     <div class="mdl-tabs__tab-bar">
                         <a href="#answer" class="mdl-tabs__tab mdl-color-text--primary @if(openedTab =="answer"){ is-active  } "><i class="material-icons">
                                 reply_all</i> Ajouter une réponse</a>
-                        @if(usersThatCanBeInvited.nonEmpty) {
+                        @if(groupsWithUsersThatCanBeInvited.nonEmpty) {
                             <a href="#invite" class="mdl-tabs__tab mdl-color-text--primary @if(openedTab =="invite"){ is-active }"><i class="material-icons">
                                 person_add</i> Inviter une personne</a>
                         }
@@ -447,7 +447,7 @@ dialog {
                         </form>
                     </div>
 
-                    @if(usersThatCanBeInvited.nonEmpty) {
+                    @if(groupsWithUsersThatCanBeInvited.nonEmpty) {
                         <div class="mdl-tabs__panel @if(openedTab =="invite"){ is-active }" id="invite">
                             <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
                                 @helper.CSRF.formField
@@ -455,21 +455,25 @@ dialog {
                                     <thead>
                                         <tr>
                                             <th class="mdl-data-table__cell--non-numeric"></th>
-                                            <th class="mdl-data-table__cell--non-numeric">Qualité</th>
+                                            <th class="mdl-data-table__cell--non-numeric">Structure</th>
                                             <th class="mdl-data-table__cell--non-numeric">Nom</th>
+                                            <th class="mdl-data-table__cell--non-numeric">Qualité</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                    @for(user <- usersThatCanBeInvited.sortBy(_.qualite)) {
-                                        <tr>
-                                            <td>
-                                                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                    <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id">
-                                                </label>
-                                            </td>
-                                            <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
-                                            <td class="mdl-data-table__cell--non-numeric">@user.name</td>
-                                        </tr>
+                                    @for((group, users) <- groupsWithUsersThatCanBeInvited.sortBy(_._1.name)) {
+                                        @for(user <- users.sortBy(_.name)) {
+                                            <tr>
+                                                <td>
+                                                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                                                        <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id">
+                                                    </label>
+                                                </td>
+                                                <td class="mdl-data-table__cell--non-numeric">@group.name</td>
+                                                <td class="mdl-data-table__cell--non-numeric">@user.name</td>
+                                                <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
+                                            </tr>
+                                        }
                                     }
                                     </tbody>
                                 </table>
