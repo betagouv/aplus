@@ -83,6 +83,8 @@ object CsvHelper {
           case (lineNumber: LineNumber, csvMap: CSVMap, rawCSVLine: RawCSVLine) =>
             csvMap.trimValues
               .csvCleanHeadersWithExpectedHeaders
+              .lowerCaseGroupEmail()
+              .lowerCaseUserEmail()
               .convertAreasNameToAreaUUID(defaultAreas)
               .convertBooleanValue(csv.USER_GROUP_MANAGER.key, "Responsable")
               .convertBooleanValue(csv.USER_INSTRUCTOR.key, "Instructeur")
@@ -194,6 +196,22 @@ object CsvHelper {
       }
 
       def trimValues(): CSVMap = csvMap.mapValues(_.trim)
+
+      def lowerCaseUserEmail(): CSVMap = {
+        csvMap.get(csv.USER_EMAIL.key).map(_.toLowerCase).fold {
+          csvMap
+        } { lowerEmail =>
+          csvMap + (csv.USER_EMAIL.key -> lowerEmail)
+        }
+      }
+
+      def lowerCaseGroupEmail(): CSVMap = {
+        csvMap.get(csv.GROUP_EMAIL.key).map(_.toLowerCase).fold {
+          csvMap
+        } { lowerEmail =>
+          csvMap + (csv.GROUP_EMAIL.key -> lowerEmail)
+        }
+      }
 
       def toUserGroupData(lineNumber: LineNumber, currentDate: DateTime): Either[String, UserGroupFormData] = {
         groupCSVMapping(currentDate).bind(csvMap).fold({ errors =>
