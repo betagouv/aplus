@@ -33,7 +33,6 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     "disabled",
     "expert",
     "group_ids",
-    "delegations",
     "cgu_acceptation_date",
     "newsletter_acceptation_date",
     "phone_number"
@@ -94,7 +93,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
       users.foldRight(true) { (user, success)  =>
         assert(user.areas.nonEmpty)
         success && SQL"""
-        INSERT INTO "user" (id, key, name, qualite, email, helper, instructor, admin, areas, delegations, creation_date,
+        INSERT INTO "user" (id, key, name, qualite, email, helper, instructor, admin, areas, creation_date,
                             commune_code, group_admin, group_ids, expert, phone_number) VALUES (
            ${user.id}::uuid,
            ${Hash.sha256(s"${user.id}$cryptoSecret")},
@@ -105,7 +104,6 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
            ${user.instructor},
            ${user.admin},
            array[${user.areas}]::uuid[],
-           ${Json.toJson(user.delegations)},
            ${user.creationDate},
            ${user.communeCode},
            ${user.groupAdmin},
@@ -141,7 +139,6 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
           admin = ${user.admin},
           areas = array[${user.areas}]::uuid[],
           commune_code = ${user.communeCode},
-          delegations = ${Json.toJson(user.delegations)},
           group_admin = ${user.groupAdmin},
           group_ids = array[${user.groupIds}]::uuid[],
           expert = ${user.expert},
@@ -163,7 +160,6 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
           admin = ${user.admin},
           areas = array[${user.areas}]::uuid[],
           commune_code = ${user.communeCode},
-          delegations = ${Json.toJson(user.delegations)},
           group_admin = ${user.groupAdmin},
           group_ids = array[${user.groupIds}]::uuid[],
           expert = ${user.expert},

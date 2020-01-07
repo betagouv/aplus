@@ -100,14 +100,9 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   }
 
   private def generateFooter(user: User): String = {
-    val delegates = if(user.delegations.nonEmpty) {
-      s"- Les personnes suivantes ont une délégation sur votre compte utilisateur : <b>${user.delegations.map { case (name, email) => s"$name &#x3C;$email&#x3E;" }.mkString(", ")}</b>. (Elles peuvent agir en votre nom sur le réseau A+)<br>"
-    } else {
-      ""
-    }
     s"""<br><br>
        |<b>Ne transférez pas cet email et n'y répondez pas directement.</b><br><i>
-       |$delegates
+       |
        |- Vous pouvez transférer la demande à un autre utilisateur en ouvrant le lien ci-dessus<br>
        |- Si vous avez un problème ou besoin d'aide à propos de l'outil Administration+, contactez-nous sur <a href="mailto:${Constants.supportEmail}">${Constants.supportEmail}</a></i>
      """.stripMargin
@@ -156,7 +151,6 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     Email(subject = s"[A+] Nouvelle demande d'aide : ${application.subject}",
       from = from,
       to = List(s"${invitedUser.name} <${invitedUser.email}>"),
-      cc = invitedUser.delegations.map { case (name, email) => s"$name <$email>" }.toSeq,
       bodyHtml = Some(bodyHtml)
     )
   }
@@ -178,7 +172,6 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     Email(subject = s"[A+] Nouvelle réponse pour : ${application.subject}",
       from = from,
       to = List(s"${user.name} <${user.email}>"),
-      cc = user.delegations.map { case (name, email) => s"$name <$email>" }.toSeq,
       bodyHtml = Some(bodyHtml)
     )
   }
