@@ -83,16 +83,13 @@
     <div class="mdl-cell mdl-cell--6-col-desktop mdl-cell--12-col mdl-grid">
         <b class="mdl-cell mdl-cell--12-col">Territoires</b>
         <select id="multiple" multiple>
-            <optgroup label="Val d'oise">
-                <option value="value 1" selected>CAF - Argenteuil</option>
-                <option value="value 2">CPAM - Argenteuil</option>
-                <option value="value 3">France Services Argenteuil</option>
-            </optgroup>
-            <optgroup label="Yonne">
-                <option value="value 21">CAF - Yonne</option>
-                <option value="value 22">CNAV - Yonne</option>
-                <option value="value 23">France Services Ville 2</option>
-            </optgroup>
+            @for(area <- Area.all) {
+                <optgroup label="@area.name">
+                    @for(userGroup <- userGroups.filter(_.areaIds.contains(area.id))) {
+                        <option value="@userGroup.id">@userGroup.name</option> <!-- selected -->
+                    }
+                </optgroup>
+            }
         </select>
         <script>
             new SlimSelect({ select: '#multiple' });
