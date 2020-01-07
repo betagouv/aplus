@@ -151,7 +151,6 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     Email(subject = s"[A+] Nouvelle demande d'aide : ${application.subject}",
       from = from,
       to = List(s"${invitedUser.name} <${invitedUser.email}>"),
-      cc = List.empty[String],
       bodyHtml = Some(bodyHtml)
     )
   }
@@ -173,7 +172,6 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     Email(subject = s"[A+] Nouvelle réponse pour : ${application.subject}",
       from = from,
       to = List(s"${user.name} <${user.email}>"),
-      cc = List.empty[String],
       bodyHtml = Some(bodyHtml)
     )
   }
