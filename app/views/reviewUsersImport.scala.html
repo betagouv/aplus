@@ -139,7 +139,7 @@
     <em>Instructeur : </em><a href="#" onclick="checkAllBySelector('.instructor')">Tous</a> / <a href="#" onclick="uncheckAllBySelector('.instructor')">Aucuns</a>
     @helper.repeatWithIndex(form("groups")) { (group, groupIndex) =>
       @display(group, groupIndex) {
-        @defining(groupNameToAlreadyExistingGroup.get(group("group")("name").value.getOrElse(""))) { existingGroup =>
+        @defining(group("group")("name").value.flatMap(groupNameToAlreadyExistingGroup.get)) { existingGroup =>
           @if(existingGroup.isEmpty) {
             <div class="mdl-cell mdl-cell--12-col mdl-grid" style="padding: 0px;">
               <h5 class="title--addline mdl-cell mdl-cell--12-col">@group("group")("name").value.getOrElse("")</h5>
