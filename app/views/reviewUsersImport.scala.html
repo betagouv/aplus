@@ -14,7 +14,7 @@
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table">
   <tbody>
     @helper.repeatWithIndex(section("users")) { (user, index) =>
-      @defining(userEmailToAlreadyExistingUser.get(user("user")("email").value.getOrElse(""))) { existingUser =>
+      @defining(user("user")("email").value.flatMap(userEmailToAlreadyExistingUser.get)) { existingUser =>
         @if(existingUser.isEmpty) {
           <tr class="searchable-row td--clear-border" id="line_@{groupIndex}_@{index}">
             <td class="mdl-data-table__cell--non-numeric cell-import-user">
