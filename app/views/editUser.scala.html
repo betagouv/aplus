@@ -61,21 +61,22 @@
     <br>
     <b style="color: red">@helper.checkbox(form("admin"), 'type -> "checkbox", 'label -> "Admin de la zone", 'class -> "mdl-checkbox__input")</b>
   </div>
-    <div class="mdl-cell mdl-cell--6-col-desktop mdl-cell--12-col mdl-grid">
-        <b class="mdl-cell mdl-cell--12-col">Sélectionner des territoires</b>
-        <select id="area-ids" name="areas[]" multiple>
-            @helper.repeat(form("areas")) { userField =>
+  <div class="mdl-grid mdl-cell--6-col-desktop mdl-cell--12-col">
+      <div class="mdl-cell mdl-cell--12-col-desktop mdl-cell--12-col">
+          <b class="mdl-cell mdl-cell--12-col">Sélectionner des territoires</b>
+          <select id="area-ids" name="areas[]" multiple>
+              @helper.repeat(form("areas")) { userField =>
                 <option value="@userField.value" selected>@{userField.value.flatMap(uuid => fromString(uuid).flatMap(Area.fromId)).map(_.name)}</option>
-            }
-            @for(areaId <- currentUser.areas) {
+              }
+              @for(areaId <- currentUser.areas) {
                 @if(BooleanHelper.not(form.data.values.toList.contains(areaId.toString))) {
                     <option value="@areaId">@{Area.fromId(areaId).map(_.name)}</option>
                 }
-            }
-        </select>
-        <b class="mdl-cell mdl-cell--12-col">Sélectionner les groupes</b>
-        <select id="multiple" name="groupIds[]" multiple>
-            @helper.repeat(form("areas")) { areaField =>
+              }
+          </select>
+          <b class="mdl-cell mdl-cell--12-col">Sélectionner les groupes</b>
+          <select id="multiple" name="groupIds[]" multiple>
+              @helper.repeat(form("areas")) { areaField =>
                 @defining(areaField.value.flatMap(id => fromString(id).flatMap(Area.fromId)).get) { area =>
                     <optgroup label="@{area.name}">
                         @helper.repeat(form("groupIds")) { groupField =>
@@ -90,16 +91,18 @@
                         }
                     </optgroup>
                 }
-            }
-        </select>
-        <script>
+              }
+          </select>
+          <script>
             new SlimSelect({ select: '#area-ids' });
             new SlimSelect({ select: '#multiple' });
-        </script>
-        @if(form("areas").hasErrors) {
+          </script>
+          @if(form("areas").hasErrors) {
             <p style="color: red; font-weight: bold;">@form("areas").errors.map(_.format).mkString(", ")</p>
-        }
-    </div>
+          }
+      </div>
+  </div>
+
     <div class="mdl-cell mdl-cell--12-col">
         <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
             Sauvegarder
