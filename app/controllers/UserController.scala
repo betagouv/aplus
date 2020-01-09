@@ -118,7 +118,7 @@ case class UserController @Inject()(loginAction: LoginAction,
           val unused = not(isAccountUsed(user))
           val Token(tokenName, tokenValue) = CSRF.getToken.get
           eventService.info("USER_SHOWED", "Visualise la vue de modification l'utilisateur ", user = Some(user))
-          Ok(views.html.editUser(request.currentUser)(form, userId, user.areas, user.groupIds, groups, unused, tokenName = tokenName, tokenValue = tokenValue))
+          Ok(views.html.editUser(request.currentUser)(form, userId, groups, unused, tokenName = tokenName, tokenValue = tokenValue))
         case _ =>
           eventService.warn("VIEW_USER_UNAUTHORIZED", s"Accès non autorisé pour voir $userId")
           Unauthorized("Vous n'avez pas le droit de faire ça")
@@ -155,7 +155,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         formWithErrors => {
           val groups = groupService.allGroups
           eventService.error("ADD_USER_ERROR", s"Essai de modification de l'tilisateur $userId avec des erreurs de validation")
-          BadRequest(views.html.editUser(request.currentUser)(formWithErrors, userId, List.empty[UUID], List.empty[UUID], groups))
+          BadRequest(views.html.editUser(request.currentUser)(formWithErrors, userId, groups))
         }, updatedUser => {
           withUser(updatedUser.id, includeDisabled = true) { user: User =>
             if (!user.canBeEditedBy(request.currentUser)) {
@@ -168,7 +168,7 @@ case class UserController @Inject()(loginAction: LoginAction,
               val form = userForm(Time.dateTimeZone).fill(updatedUser).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
               val groups = groupService.allGroups
               eventService.error("EDIT_USER_ERROR", "Impossible de modifier l'utilisateur dans la BDD", user = Some(updatedUser))
-              InternalServerError(views.html.editUser(request.currentUser)(form, userId, updatedUser.areas, updatedUser.groupIds, groups))
+              InternalServerError(views.html.editUser(request.currentUser)(form, userId, groups))
             }
           }
         }

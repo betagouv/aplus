@@ -3,7 +3,7 @@
 @import extentions.UUIDHelper._
 @import extentions.BooleanHelper
 @import java.util.UUID
-@(currentUser: User)(form: Form[User], userId: UUID, areas: List[UUID], selectedGroups: List[UUID], userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @main(currentUser)(s"Utilisateur ${form("name").value.getOrElse("")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
@@ -67,9 +67,9 @@
             @helper.repeat(form("areas")) { userField =>
                 <option value="@userField.value" selected>@{userField.value.flatMap(uuid => fromString(uuid).flatMap(Area.fromId)).map(_.name)}</option>
             }
-            @for(area <- Area.all) {
-                @if(BooleanHelper.not(areas.contains(area.id))) {
-                    <option value="@area.id">@area.name</option>
+            @for(areaId <- currentUser.areas) {
+                @if(BooleanHelper.not(form.data.values.toList.contains(areaId.toString))) {
+                    <option value="@areaId">@{Area.fromId(areaId).map(_.name)}</option>
                 }
             }
         </select>
