@@ -24,6 +24,7 @@ object Organisation {
     Organisation("CDAD", "Conseils départementaux d'accès au droit"), //Département
     Organisation("CNAV", "Caisse nationale d'assurance vieillesse"),  //Département
     Organisation("CPAM", "Caisse primaire d'assurance maladie"), //Département
+    Organisation("CNAM", "Caisse nationale d'assurance maladie"),
     Organisation("CRAM", "Caisse régionale d'assurance maladie"), //Région
     Organisation("DDFIP", "Direction départementale des Finances publiques"),//Département
     Organisation("Département", "Conseil départemental"),
