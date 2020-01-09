@@ -26,7 +26,7 @@
                      name="@name"
                      id="@id"
                      @if(existingUser.isDefined) { readonly }
-                     value="@if(existingUser.isEmpty) { @value } else { @existingUser.map(_.name).getOrElse("") }"
+                     value="@existingUser.map(_.name).getOrElse(value)"
                       @toHtmlArgs(args)>
             }
           </td>
