@@ -85,7 +85,7 @@
                                 }
                             }
                         }
-                        @for(userGroup <- userGroups.filter(group => group.areaIds.contains(area.id)).filterNot(group => form.data.values.toList.contains(group.id))) {
+                        @for(userGroup <- userGroups.filter(group => group.areaIds.contains(area.id)).filterNot(group => form.data.values.toList.contains(group.id.toString))) {
                             <option value="@userGroup.id">@userGroup.name</option>
                         }
                     </optgroup>
