@@ -44,7 +44,11 @@
     background-color: white
 }
 
-.mdl-textfield__input--readonly {
+.mdl-textfield__input:-moz-read-only {
+    background-color: lightgrey;
+}
+
+.mdl-textfield__input:read-only {
     background-color: lightgrey;
 }
 
