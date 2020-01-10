@@ -132,55 +132,36 @@
                      @if(existingGroup.isDefined) { readonly }
                      value="@existingGroup.map(_.email).getOrElse(value)" @toHtmlArgs(args)>
             }
-            @if(existingGroup.isEmpty) {
-              @defining(group("group")("organisation")) { field =>
-                <div class="mdl-cell mdl-cell--4-col">
-                  Organisation :
-                  <select id="@field.id" name="@field.name">
-                    <option style="font-weight: bold" value="">Organisme non-référencé</option>
-                    @for(organisation <- Organisation.all) {
-                      <option value="@organisation.shortName" @if(field.value.exists(value => organisation.name.contains(value) || organisation.shortName.contains(value))) {selected}>
-                        @organisation.shortName : @organisation.name
-                      </option>
-                    }
-                  </select>
-                </div>
-              }
-              <div class="mdl-cell mdl-cell--12-col">
+
+            <div class="mdl-cell mdl-cell--4-col">
+              Organisation :
+              <select id="@group("group")("organisation").id" name="@group("group")("organisation").name">
+                <option style="font-weight: bold" value="">Organisme non-référencé</option>
+                @for(organisation <- Organisation.all) {
+                  <option value="@organisation.shortName" @if(existingGroup.flatMap(_.organisation).orElse(group("group")("organisation").value).exists(List(organisation.name, organisation.shortName).contains)) {selected}>
+                    @organisation.shortName : @organisation.name
+                  </option>
+                }
+              </select>
+            </div>
+            <div class="mdl-cell mdl-cell--12-col">
+              @if(existingGroup.isEmpty) {
                 Territoires : @helper.repeat(group("group")("area-ids")) { areaIdField =>
                   @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
-                    <input name="@areaIdField.name" value="@area.id" type="hidden">
                     <b>@{area.name} (@area.inseeCode) /</b>
                   }
                 }
-              </div>
-            } else {
-              @defining(existingGroup.map(_.organisation).get) { value =>
-                <div class="mdl-cell mdl-cell--4-col">
-                  Organisation :
-                  <select readonly id="@group("group")("organisation").id" name="@group("group")("organisation").name">
-                    <option style="font-weight: bold" value="">Organisme non-référencé</option>
-                    @for(organisation <- Organisation.all) {
-                      <option value="@organisation.shortName" @if(value.exists(value => organisation.name.contains(value) || organisation.shortName.contains(value))) {selected}>
-                        @organisation.shortName : @organisation.name
-                      </option>
-                    }
-                  </select>
-                </div>
+              } else {
+                Territoires : @for(area <- existingGroup.map(_.areaIds.flatMap(Area.fromId)).getOrElse(Nil)) {
+                  <b>@{area.name} (@area.inseeCode) /</b>
+                }
               }
-              <div class="mdl-cell mdl-cell--12-col">
-                Territoires : @for(areaId <- existingGroup.map(_.areaIds).getOrElse(Nil)) {
-                  @for(area <- Area.fromId(areaId)) {
-                    <b>@{area.name} (@area.inseeCode) /</b>
-                  }
+              @helper.repeat(group("group")("area-ids")) { areaIdField =>
+                @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
+                  <input name="@areaIdField.name" value="@area.id" type="hidden" readonly>
                 }
-                @helper.repeat(group("group")("area-ids")) { areaIdField =>
-                  @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
-                    <input name="@areaIdField.name" value="@area.id" type="hidden" readonly>
-                  }
-                }
-              </div>
-            }
+              }
+            </div>
           </div>
         }
       }
