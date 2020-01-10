@@ -7,7 +7,10 @@ metadata:
     env: dev
 spec:
   concurrencyPolicy: Allow
-  failedJobsHistoryLimit: 6
+  failedJobsHistoryLimit: 10
+  successfulJobsHistoryLimit: 10
+  schedule: "* */24 * * *"
+  suspend: false
   jobTemplate:
     metadata:
       labels:
@@ -80,6 +83,3 @@ spec:
             - name: db-backups
               persistentVolumeClaim:
                 claimName: aplus-prep-prod-files
-  schedule: "* */24 * * *"
-  successfulJobsHistoryLimit: 30
-  suspend: false
