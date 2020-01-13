@@ -18,6 +18,15 @@
             <input name="@user("line").name" value="@user("line").value" type="hidden">
             <input name="@user("user")("id").name" value="@user("user")("id").value" type="hidden">
             <input name="@user("user")("qualite").name" value="@user("user")("qualite").value" type="hidden">
+
+            @helper.input(user("user")("alreadyExists"), 'label -> "", 'class -> "hidden") { (id, name, value, args) =>
+            <input type="text"
+                   name="@name"
+                   id="@id"
+                   value="@value"
+                   @toHtmlArgs(args)>
+            }
+
             @helper.input(user("user")("name"), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user"
                      type="text"
@@ -103,6 +112,15 @@
       @display(group, groupIndex) {
           <div class="mdl-cell mdl-cell--12-col mdl-grid" style="padding: 0px;">
             <h5 class="title--addline mdl-cell mdl-cell--12-col">@group("group")("name").value</h5>
+
+            @helper.input(group("group")("alreadyExists"), 'label -> "", 'class -> "hidden") { (id, name, value, args) =>
+            <input type="text"
+                   name="@name"
+                   id="@id"
+                   value="@value"
+                   @toHtmlArgs(args)>
+            }
+
             @helper.input(group("group")("id"), 'label -> "Id", 'class -> "hidden") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user"
                      type="text"
