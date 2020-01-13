@@ -7,7 +7,7 @@ package object csv {
   }
 
   val USER_NAME = Header("user.name", List("Nom", "PRENOM NOM"))
-  val USER_FIRST_NAME = Header("user.firstname", List("Prénom"))
+  val USER_FIRST_NAME = Header("user.firstname", List("Prénom", "Prenom"))
   val USER_EMAIL = Header("user.email", List("Email", "Adresse e-mail", "Contact mail Agent", "MAIL"))
   val USER_INSTRUCTOR = Header("user.instructor", List("Instructeur"))
   val USER_GROUP_MANAGER = Header("user.admin-group", List("Responsable"))
