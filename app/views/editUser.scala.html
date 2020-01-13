@@ -1,11 +1,15 @@
 @import models._
 @import extentions.MDLForms._
+@import extentions.UUIDHelper._
+@import extentions.BooleanHelper
 @import java.util.UUID
 @(currentUser: User)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @main(currentUser)(s"Utilisateur ${form("name").value.getOrElse("")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
     <script src='@routes.Assets.versioned("javascripts/dialog.js")'></script>
+    @webJarsUtil.locate("slimselect.min.css").css()
+    @webJarsUtil.locate("slimselect.min.js").script()
 }{
     @helper.form(action = routes.UserController.editUserPost(userId), 'class -> "mdl-grid mdl-cell mdl-cell--12-col") {
         @for(user <- form.value) {
@@ -50,69 +54,55 @@
     @helper.checkbox(form("adminGroup"), 'type -> "checkbox", 'label -> "Responsable de ces groupes", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("disabled"), 'type -> "checkbox", 'label -> "Désactiver l'utilisateur", 'class -> "mdl-checkbox__input")
 
-        @if(unused) {
-        <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="showDialog(document.querySelector('#dialog-delete-user'))">Supprimer cet utilisateur inutilisé.</button>
-        <br>
-        }
-    <b>Délégations</b>
-    <div class="mdl-grid mdl-grid--no-spacing user-delegations" >
-    @helper.repeatWithIndex(form("delegations"), min = 0) { (field, indexDelegations) =>
-     <fieldset class="mdl-grid mdl-cell mdl-cell--12-col" style="border: 2px groove threedface;">
-      @helper.input(field("name"), 'label -> "Nom", 'class -> "mdl-cell mdl-cell--12-col") { (id, name, value, args) =>
-          <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-      }
-      @helper.input(field("email"), 'label -> "Email", 'class -> "mdl-cell mdl-cell--12-col") { (id, name, value, args) =>
-          <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-      } <br>
-        <p>Pourra agir au nom de l'utilisateur</p>
-       <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--12-col" type="button" onclick="deleteDelegation(this);">
-          Supprimer
-       </button>
-     </fieldset>
+    @if(unused) {
+      <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="showDialog(document.querySelector('#dialog-delete-user'))">Supprimer cet utilisateur inutilisé.</button>
+      <br>
     }
-      </div><br>
-        <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="addDelegation(0, this)">
-              Ajouter délégation
-        </button> <br>
-
-
-      <b style="color: red">@helper.checkbox(form("admin"), 'type -> "checkbox", 'label -> "Admin de la zone", 'class -> "mdl-checkbox__input")</b>
+    <br>
+    <b style="color: red">@helper.checkbox(form("admin"), 'type -> "checkbox", 'label -> "Admin de la zone", 'class -> "mdl-checkbox__input")</b>
   </div>
-        <div class="mdl-cell mdl-cell--6-col-desktop mdl-cell--12-col mdl-grid">
-            
-        <b class="mdl-cell mdl-cell--12-col">Territoires</b>
-      @if(form("areas").hasErrors) {
-          <p style="color: red; font-weight: bold;">@form("areas").errors.map(_.format).mkString(", ")</p>
-      }
-            <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col mdl-color--white" id="users">
-      @for(area <- Area.all) {
-          <thead>
-              <tr>
-                  <th class="mdl-data-table__cell--non-numeric" colspan="2">
-                      <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                          <input type="checkbox" class="mdl-checkbox__input" onclick="showHide(this);" value="@area.id" name="areas[]" @if(form.data.find({case (k, v) => k.startsWith("areas[") && v == area.id.toString})){ checked="checked" }>
-                          <span class="mdl-checkbox__label">@area.name</span>
-                      </label></th>
-              </tr>
-          </thead>
-          <tbody @if(!form.data.find({case (k, v) => k.startsWith("areas[") && v == area.id.toString})){ class="invisible" }>
-
-          @for(userGroup <- userGroups.filter(_.areaIds.contains(area.id))) {
-              <tr>
-                  <td style="width: 95px">
-                      <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
-                      <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events is-disabled">
-                          <input type="checkbox" class="mdl-checkbox__input" name="groupIds[]" value="@userGroup.id" @if(form.data.find({case (k, v) => k.startsWith("groupIds[") && v == userGroup.id.toString})){ checked="checked" }>
-                      </label>
-                  </td>
-                  <td class="mdl-data-table__cell--non-numeric">Groupe : @userGroup.name</td>
-              </tr>
+  <div class="mdl-grid mdl-cell--6-col-desktop mdl-cell--12-col">
+      <div class="mdl-cell mdl-cell--12-col-desktop mdl-cell--12-col">
+          <b class="mdl-cell mdl-cell--12-col">Sélectionner des territoires</b>
+          <select id="area-ids" name="areas[]" multiple>
+              @helper.repeat(form("areas")) { userField =>
+                <option value="@userField.value" selected>@{userField.value.flatMap(uuid => fromString(uuid).flatMap(Area.fromId)).map(_.name)}</option>
+              }
+              @for(areaId <- currentUser.areas) {
+                @if(BooleanHelper.not(form.data.values.toList.contains(areaId.toString))) {
+                    <option value="@areaId">@{Area.fromId(areaId).map(_.name)}</option>
+                }
+              }
+          </select>
+          <b class="mdl-cell mdl-cell--12-col">Sélectionner les groupes</b>
+          <select id="multiple" name="groupIds[]" multiple>
+              @helper.repeat(form("areas")) { areaField =>
+                @defining(areaField.value.flatMap(id => fromString(id).flatMap(Area.fromId)).get) { area =>
+                    <optgroup label="@{area.name}">
+                        @helper.repeat(form("groupIds")) { groupField =>
+                            @defining(groupField.value.flatMap(groupId => userGroups.find(_.id.toString == groupId))) { group =>
+                                @if(group.map(_.areaIds.contains(area.id)).getOrElse(false)) {
+                                    <option value="@groupField.value" selected>@{group.map(_.name)}</option>
+                                }
+                            }
+                        }
+                        @for(userGroup <- userGroups.filter(group => group.areaIds.contains(area.id)).filterNot(group => form.data.values.toList.contains(group.id.toString))) {
+                            <option value="@userGroup.id">@userGroup.name</option>
+                        }
+                    </optgroup>
+                }
+              }
+          </select>
+          <script>
+            new SlimSelect({ select: '#area-ids' });
+            new SlimSelect({ select: '#multiple' });
+          </script>
+          @if(form("areas").hasErrors) {
+            <p style="color: red; font-weight: bold;">@form("areas").errors.map(_.format).mkString(", ")</p>
           }
-          </tbody>
-      }
-      </table>
-
+      </div>
   </div>
+
     <div class="mdl-cell mdl-cell--12-col">
         <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
             Sauvegarder
@@ -127,32 +117,6 @@
     </div>
     }
     <script type='text/javascript'>
-        function deleteDelegation(button){
-          button.parentNode.parentNode.removeChild(button.parentNode);
-        }
-
-        function addDelegation(userIndex, button) {
-          var dialog = button.parentNode.parentNode;
-          var countDelegation =  dialog.querySelectorAll(".user-delegations fieldset").length;
-          var newNode = document.createElement('fieldset');
-          newNode.className = "mdl-grid mdl-cell mdl-cell--12-col";
-          newNode.style = "border: 2px groove threedface;";
-          newNode.innerHTML = '<div class="mdl-textfield mdl-js-textfield  mdl-textfield--floating-label mdl-cell mdl-cell--12-col">   \
-                        <input class="mdl-textfield__input" type="text" name="users['+userIndex+'].delegations['+countDelegation+'].name" id="users_'+userIndex+'_delegations_0_name" value="" label="Nom" class="mdl-cell mdl-cell--12-col">  \
-                        <label class="mdl-textfield__label" for="users_'+userIndex+'_delegations_'+countDelegation+'_name">Nom</label>  \
-                    </div>                                                                                 \
-                    <div class="mdl-textfield mdl-js-textfield  mdl-textfield--floating-label mdl-cell mdl-cell--12-col">  \
-                        <input class="mdl-textfield__input" type="text" name="users['+userIndex+'].delegations['+countDelegation+'].email" id="users_'+userIndex+'_delegations_0_email" value="" label="Email" class="mdl-cell mdl-cell--12-col"> \
-                        <label class="mdl-textfield__label" for="users_'+userIndex+'_delegations_'+countDelegation+'_email">Email</label> \
-                    </div><br>  \
-                    <p>Pourra agir au nom de l\'utilisateur</p>  \
-                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--12-col" type="button" onclick="deleteDelegation(this);">  \
-                    Supprimer  \
-                    </button>';
-          dialog.querySelector(".user-delegations").appendChild(newNode);
-          componentHandler.upgradeElements(newNode);
-        }
-
         function showHide(sender) {
             var thead = sender.parentNode.parentNode.parentNode.parentNode;
             var tbody = thead.nextElementSibling;

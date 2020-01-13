@@ -82,7 +82,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
           eventService.error("ADD_USER_GROUP_ERROR", s"Impossible d'ajouter le groupe dans la BDD")
           Redirect(routes.UserController.all(Area.allArea.id)).flashing("error" -> s"Impossible d'ajouter le groupe : $error")
         }, {  Unit =>
-          eventService.info("ADD_USER_GROUP_DONE", s"Groupe ${group.id} ajouté par l'utilisateur d'id ${request.currentUser.id}")
+          eventService.info("ADD_USER_GROUP_DONE", s"Groupe ${group.name} (id : ${group.id}) ajouté par l'utilisateur d'id ${request.currentUser.id}")
           Redirect(routes.GroupController.editGroup(group.id)).flashing("success" -> "Groupe ajouté")
         })
       })

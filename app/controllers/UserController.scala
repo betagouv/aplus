@@ -296,7 +296,6 @@ case class UserController @Inject()(loginAction: LoginAction,
         "disabled" -> ignored(false),
         "expert" -> ignored(false),
         "groupIds" -> default(list(uuid), List()),
-        "delegations" -> ignored(Map[String, String]()),
         "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
         "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
         csv.USER_PHONE_NUMBER.key -> optional(text),
@@ -328,14 +327,6 @@ case class UserController @Inject()(loginAction: LoginAction,
     "disabled" -> boolean,
     "expert" -> ignored(false),
     "groupIds" -> default(list(uuid), List()),
-    "delegations" -> seq(tuple(
-      "name" -> nonEmptyText,
-      "email" -> email
-    )).transform[Map[String, String]]({
-      _.toMap
-    }, {
-      _.toSeq
-    }),
     "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
     "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
     csv.USER_PHONE_NUMBER.key -> optional(text),

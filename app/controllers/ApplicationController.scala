@@ -330,7 +330,10 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
       case Some(application) =>
         if(application.canBeShowedBy(request.currentUser)) {
             val usersThatCanBeInvited =  usersThatCanBeInvitedOn(application)
-
+            val groups = userGroupService.byIds(usersThatCanBeInvited.flatMap(_.groupIds)).filter(_.areaIds.contains(application.area))
+            val groupsWithUsersThatCanBeInvited = groups.map { group =>
+              group -> usersThatCanBeInvited.filter(_.groupIds.contains(group.id))
+            }
             val renderedApplication = if((application.haveUserInvitedOn(request.currentUser) || request.currentUser.id == application.creatorUserId) && request.currentUser.expert && request.currentUser.admin && !application.closed) {
               // If user is expert, admin and invited to the application we desanonymate
               applicationService.byId(id, request.currentUser.id, false).get
@@ -340,7 +343,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
             val openedTab = request.flash.get("opened-tab").getOrElse("answer")
           
             eventService.info("APPLICATION_SHOWED", s"Demande $id consulté", Some(application))
-            Ok(views.html.showApplication(request.currentUser)(usersThatCanBeInvited, renderedApplication, answerForm, openedTab))
+            Ok(views.html.showApplication(request.currentUser)(groupsWithUsersThatCanBeInvited, renderedApplication, answerForm, openedTab))
         }
         else {
           eventService.warn("APPLICATION_UNAUTHORIZED", s"L'accès à la demande $id n'est pas autorisé", Some(application))

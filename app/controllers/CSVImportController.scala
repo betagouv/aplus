@@ -71,7 +71,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     "name" -> nonEmptyText.verifying(maxLength(100)),
     "quality" -> default(text, ""),
     "email" -> email.verifying(maxLength(200), nonEmpty),
-    "helper" -> boolean,
+    "helper" -> ignored(true),
     "instructor" -> boolean,
     "admin" -> ignored(false),
     "areas" -> list(uuid),
@@ -81,14 +81,6 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     "disabled" -> boolean,
     "expert" -> ignored(false),
     "groupIds" -> default(list(uuid), List()),
-    "delegations" -> seq(tuple(
-      "name" -> nonEmptyText,
-      "email" -> email
-    )).transform[Map[String, String]]({
-      _.toMap
-    }, {
-      _.toSeq
-    }),
     "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
     "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
     "phone-number" -> optional(text),

@@ -230,7 +230,6 @@ object CsvHelper {
             "disabled" -> ignored(false),
             "expert" -> ignored(false),
             "groupIds" -> default(list(uuid), List()),
-            "delegations" -> ignored(Map.empty[String, String]),
             "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
             "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
             "phone-number" -> optional(text),

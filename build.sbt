@@ -38,6 +38,7 @@ libraryDependencies ++= Seq(
   "org.webjars.bower" % "material-design-lite" % "1.3.0",
   "org.webjars" % "material-design-icons" % "3.0.1",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
+  "org.webjars.npm" % "slim-select" % "1.24.0",
   "org.webjars.npm" % "dialog-polyfill" % "0.4.10",
   "org.webjars.npm" % "twemoji" % "2.5.1",
   "org.webjars" % "chartjs" % "2.9.3",
