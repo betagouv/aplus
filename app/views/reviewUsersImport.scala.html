@@ -1,11 +1,10 @@
 @import models._
 @import extentions.MDLForms._
 @import extentions.UUIDHelper
+@import extentions.BooleanHelper.not
 
 @import forms.Models.UserGroupFormData
-@(currentUser: User)(form: Form[List[UserGroupFormData]],
-  groupNameToAlreadyExistingGroup: Map[String, UserGroup],
-  userEmailToAlreadyExistingUser: Map[String, User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @display(section: Field, groupIndex: Int)(header: Html) = {
   <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
@@ -14,7 +13,6 @@
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table">
   <tbody>
     @helper.repeatWithIndex(section("users")) { (user, index) =>
-      @defining(user("user")("email").value.flatMap(userEmailToAlreadyExistingUser.get)) { existingUser =>
         <tr class="searchable-row td--clear-border" id="line_@{groupIndex}_@{index}">
           <td class="mdl-data-table__cell--non-numeric cell-import-user">
             <input name="@user("line").name" value="@user("line").value" type="hidden">
@@ -25,9 +23,9 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(existingUser.isDefined) { readonly }
-                     value="@existingUser.map(_.name).getOrElse(value)"
-                      @toHtmlArgs(args)>
+                     @if(user("user")("alreadyExists").value.exists(_ == "true")) { readonly }
+                     value="@value"
+                     @toHtmlArgs(args)>
             }
           </td>
           <td class="mdl-data-table__cell--non-numeric cell-import-user">
@@ -36,8 +34,8 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(existingUser.isDefined) { readonly }
-                     value="@existingUser.map(_.email).getOrElse(value)"
+                     @if(user("user")("alreadyExists").value.exists(_ == "true")) { readonly }
+                     value="@value"
                      @toHtmlArgs(args)>
             }
           </td>
@@ -47,8 +45,8 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(existingUser.isDefined) { readonly }
-                     value="@existingUser.map(_.phoneNumber).getOrElse(value)"
+                     @if(user("user")("alreadyExists").value.exists(_ == "true")) { readonly }
+                     value="@value"
                      @toHtmlArgs(args)>
             }
           </td>
@@ -58,29 +56,25 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(existingUser.isDefined) { readonly }
-                     value="@existingUser.map(_.qualite).getOrElse(value)"
+                     @if(user("user")("alreadyExists").value.exists(_ == "true")) { readonly }
+                     value="@value"
                      @toHtmlArgs(args)>
             }
           </td>
-          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(existingUser.isDefined){avoid-clicks}">
+          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("user")("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
             @helper.checkbox(user("user")("instructor"), 'type -> "checkbox", 'label -> csv.USER_INSTRUCTOR.prefixes(0), 'class -> "mdl-checkbox__input instructor")
           </td>
-          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(existingUser.isDefined){avoid-clicks}">
+          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("user")("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
             @helper.checkbox(user("user")("adminGroup"), 'type -> "checkbox", 'label -> csv.USER_GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
           </td>
           <td>
-            @existingUser match {
-                case Some(user) => {
-                    <a target="_blank" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" title="Voir fiche utilisateur" href="@routes.UserController.editUser(user.id)"><i class='fas fa-user-edit'></i></a>
-                }
-                case None => {
-                    <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" title="Supprimer (Définitif)" onclick="deleteElement('#line_@{groupIndex}_@index')"><i class="material-icons">delete_forever</i></button>
-                }
+            @if(user("user")("alreadyExists").value.exists(_ == "true")) {
+              <a target="_blank" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" title="Voir fiche utilisateur" href="@routes.UserController.editUser(user("user")("id").value.flatMap(UUIDHelper.fromString).get)"><i class='fas fa-user-edit'></i></a>
+            } else {
+              <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" title="Supprimer (Définitif)" onclick="deleteElement('#line_@{groupIndex}_@index')"><i class="material-icons">delete_forever</i></button>
             }
           </td>
         </tr>
-      }
     }
   </tbody>
 </table>
@@ -107,16 +101,15 @@
     <em>Instructeur : </em><a href="#" onclick="checkAllBySelector('.instructor')">Tous</a> / <a href="#" onclick="uncheckAllBySelector('.instructor')">Aucuns</a>
     @helper.repeatWithIndex(form("groups")) { (group, groupIndex) =>
       @display(group, groupIndex) {
-        @defining(group("group")("name").value.flatMap(groupNameToAlreadyExistingGroup.get)) { existingGroup =>
           <div class="mdl-cell mdl-cell--12-col mdl-grid" style="padding: 0px;">
-            <h5 class="title--addline mdl-cell mdl-cell--12-col">@existingGroup.flatMap(group => Some(group.name)).getOrElse(group("group")("name").value)</h5>
+            <h5 class="title--addline mdl-cell mdl-cell--12-col">@group("group")("name").value</h5>
             @helper.input(group("group")("id"), 'label -> "Id", 'class -> "hidden") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user"
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(existingGroup.isDefined) { readonly }
-                     value="@existingGroup.map(_.id).getOrElse(value)"
+                     @if(group("group")("alreadyExists").value.exists(_ == "true")) { readonly }
+                     value="@value"
                      @toHtmlArgs(args)>
             }
             @helper.input(group("group")("name"), 'label -> "Nom du groupe", 'class -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
@@ -124,16 +117,16 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(existingGroup.isDefined) { readonly }
-                     value="@existingGroup.map(_.name).getOrElse(value)" @toHtmlArgs(args)>
+                     @if(group("group")("alreadyExists").value.exists(_ == "true")) { readonly }
+                     value="@value" @toHtmlArgs(args)>
             }
             @helper.input(group("group")("email"), 'label -> csv.GROUP_EMAIL.prefixes(0), 'class -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user"
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(existingGroup.isDefined) { readonly }
-                     value="@existingGroup.map(_.email).getOrElse(value)" @toHtmlArgs(args)>
+                     @if(group("group")("alreadyExists").value.exists(_ == "true")) { readonly }
+                     value="@value" @toHtmlArgs(args)>
             }
 
             <div class="mdl-cell mdl-cell--4-col">
@@ -142,9 +135,8 @@
                 <option style="font-weight: bold" value="">Organisme non-référencé</option>
                 @for(organisation <- Organisation.all) {
                   <option value="@organisation.shortName"
-                    @if(existingGroup.flatMap(_.organisation)
-                            .orElse(group("group")("organisation").value)
-                            .exists(List(organisation.name, organisation.shortName).contains)) {selected}>
+                    @if(group("group")("organisation").value
+                          .exists(List(organisation.name, organisation.shortName).contains)) {selected}>
                     @organisation.shortName : @organisation.name
                   </option>
                 }
@@ -152,15 +144,11 @@
             </div>
             <div class="mdl-cell mdl-cell--12-col">
               Territoires :
-              @if(existingGroup.isEmpty) {
+              @if(not(group("group")("alreadyExists").value.exists(_ == "false"))) {
                 @helper.repeat(group("group")("area-ids")) { areaIdField: Field =>
                   @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
                     <b>@{area.name} (@area.inseeCode) /</b>
                   }
-                }
-              } else {
-                @for(area <- existingGroup.map(_.areaIds.flatMap(Area.fromId)).getOrElse(Nil)) {
-                  <b>@{area.name} (@area.inseeCode) /</b>
                 }
               }
               @helper.repeat(group("group")("area-ids")) { areaIdField =>
@@ -170,7 +158,6 @@
               }
             </div>
           </div>
-        }
       }
     }
     <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell" onsubmit="Main.disableEventTarget(this)">Importer</button>

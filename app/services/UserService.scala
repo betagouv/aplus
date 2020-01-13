@@ -36,7 +36,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     "delegations",
     "cgu_acceptation_date",
     "newsletter_acceptation_date",
-    "phone_number"
+    "phone_number",
+    "already_exists"
   ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
 
   def all = db.withConnection { implicit connection =>
@@ -95,7 +96,7 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
         assert(user.areas.nonEmpty)
         success && SQL"""
         INSERT INTO "user" (id, key, name, qualite, email, helper, instructor, admin, areas, delegations, creation_date,
-                            commune_code, group_admin, group_ids, expert, phone_number) VALUES (
+                            commune_code, group_admin, group_ids, expert, phone_number, already_exists) VALUES (
            ${user.id}::uuid,
            ${Hash.sha256(s"${user.id}$cryptoSecret")},
            ${user.name},
@@ -111,7 +112,8 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
            ${user.groupAdmin},
            array[${user.groupIds}]::uuid[],
            ${user.expert},
-           ${user.phoneNumber})
+           ${user.phoneNumber},
+           TRUE)
         """.executeUpdate() == 1
       }
     }

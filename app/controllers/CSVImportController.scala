@@ -9,7 +9,7 @@ import javax.inject.Inject
 import models.{Area, Organisation, User, UserGroup}
 import org.webjars.play.WebJarsUtil
 import play.api.data.{Form, Mapping}
-import play.api.data.Forms.{uuid, _}
+import play.api.data.Forms._
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import services.{EventService, NotificationService, UserGroupService, UserService}
 import org.joda.time.DateTime
@@ -46,14 +46,15 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
       alreadyExistingUsers.find(_.email == userDataForm.user.email).fold {
         userDataForm
       } { alreadyExistingUser =>
-        userDataForm.copy(user = userDataForm.user.copy(id = alreadyExistingUser.id), alreadyExistingUser = Some(alreadyExistingUser))
+        userDataForm.copy(user = userDataForm.user.copy(id = alreadyExistingUser.id, alreadyExists = true),
+          alreadyExistingUser = Some(alreadyExistingUser))
       }
     }
     groupService.groupByName(userGroupFormData.group.name).fold {
       userGroupFormData
     } { alreadyExistingGroup =>
       userGroupFormData.copy(
-        group = userGroupFormData.group.copy(id = alreadyExistingGroup.id), 
+        group = userGroupFormData.group.copy(id = alreadyExistingGroup.id, alreadyExists = true),
         alreadyExistingGroup = Some(alreadyExistingGroup)
       )
     }.copy(users = newUsersFormDataList) 
@@ -91,6 +92,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
     "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
     "phone-number" -> optional(text),
+    "alreadyExists" -> boolean,
   )(User.apply)(User.unapply)
 
   def groupImportMapping(date: DateTime): Mapping[UserGroup] = mapping(
@@ -108,7 +110,8 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     "organisation" -> optional(text).verifying("Vous devez sélectionner une organisation dans la liste", organisation =>
       organisation.flatMap(Organisation.fromShortName).isDefined
     ),
-    "email" -> optional(email)
+    "email" -> optional(email),
+    "alreadyExists" -> boolean,
   )(UserGroup.apply)(UserGroup.unapply)
 
   def importUsersReviewFrom(date: DateTime): Form[List[UserGroupFormData]] = Form(
@@ -165,7 +168,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
               } else {
                 formWithData
               }
-              Ok(views.html.reviewUsersImport(request.currentUser)(formWithError, groupNameToAlreadyExistingGroup, userEmailToAlreadyExistingUser))
+              Ok(views.html.reviewUsersImport(request.currentUser)(formWithError))
           })
         })
       }
@@ -190,7 +193,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
       val currentDate = Time.now()
       importUsersReviewFrom(currentDate).bindFromRequest.fold({ importUsersReviewFromWithError =>
         eventService.warn(code = "IMPORT_USER_FORM_ERROR", description = "Erreur de formulaire de review")
-        BadRequest(views.html.reviewUsersImport(request.currentUser)(importUsersReviewFromWithError, Map.empty[String, UserGroup], Map.empty[String, User]))
+        BadRequest(views.html.reviewUsersImport(request.currentUser)(importUsersReviewFromWithError))
       }, { userGroupDataForm: List[UserGroupFormData] =>
         val augmentedUserGroupInformation: List[UserGroupFormData] = userGroupDataForm.map(augmentUserGroupInformation)
 
@@ -212,7 +215,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
             val formWithError = importUsersReviewFrom(currentDate)
               .fill(augmentedUserGroupInformation)
               .withGlobalError(description)
-            InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError, groupNameToAlreadyExistingGroup, userEmailToAlreadyExistingUser))
+            InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError))
           }, { _ =>
             groupsToInsert.foreach { userGroup =>
               eventService.info("ADD_USER_GROUP_DONE", s"Groupe ${userGroup.id} ajouté")
@@ -229,7 +232,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
               val formWithError = importUsersReviewFrom(currentDate)
                 .fill(augmentedUserGroupInformation)
                 .withGlobalError(description)
-              InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError, groupNameToAlreadyExistingGroup, userEmailToAlreadyExistingUser))
+              InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError))
             }, { _ =>
               usersToInsert.foreach { user =>
                 notificationsService.newUser(user)

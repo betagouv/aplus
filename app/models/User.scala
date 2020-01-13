@@ -24,7 +24,8 @@ case class User(id: UUID,
                 delegations: Map[String, String] = Map(),
                 cguAcceptationDate: Option[DateTime] = None,
                 newsletterAcceptationDate: Option[DateTime] = None,
-                phoneNumber: Option[String] = None) extends AgeModel {
+                phoneNumber: Option[String] = None,
+                alreadyExists: Boolean = false) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"
   
   def canBeEditedBy(user: User): Boolean =

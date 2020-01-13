@@ -8,8 +8,8 @@ import scala.io.Source
 import org.joda.time.DateTime
 import models.{Area, User, UserGroup}
 import extentions.UUIDHelper
-import play.api.data.{Form, FormError, Mapping}
-import play.api.data.Forms.{uuid, _}
+import play.api.data.Mapping
+import play.api.data.Forms._
 import java.util.UUID
 import StringHelper.CanonizeString
 
@@ -234,6 +234,7 @@ object CsvHelper {
             "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
             "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
             "phone-number" -> optional(text),
+            "alreadyExists" -> boolean,
           )(User.apply)(User.unapply)
     )
   
@@ -252,7 +253,8 @@ object CsvHelper {
           "creationDate" -> ignored(currentDate),
           "area-ids" -> list(uuid),
           "organisation" -> optional(text),
-          "email" -> optional(email)
+          "email" -> optional(email),
+          "alreadyExists" -> boolean
         )(UserGroup.apply)(UserGroup.unapply)
     )
 }
