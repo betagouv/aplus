@@ -63,17 +63,20 @@
                      @toHtmlArgs(args)>
             }
           </td>
-          <td class="mdl-data-table__cell--non-numeric cell-import-user">
+          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(existingUser.isDefined){avoid-clicks}">
             @helper.checkbox(user("user")("instructor"), 'type -> "checkbox", 'label -> csv.USER_INSTRUCTOR.prefixes(0), 'class -> "mdl-checkbox__input instructor")
           </td>
-          <td class="mdl-data-table__cell--non-numeric cell-import-user">
+          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(existingUser.isDefined){avoid-clicks}">
             @helper.checkbox(user("user")("adminGroup"), 'type -> "checkbox", 'label -> csv.USER_GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
           </td>
           <td>
-            @if(existingUser.isDefined) {
-              <a target="_blank" href="@existingUser.map(user => s"/utilisateurs/${user.id}").getOrElse("")">@existingUser.map(_.email).getOrElse("")</a>
-            } else {
-              <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onclick="deleteElement('#line_@{groupIndex}_@index')"><i class="material-icons">delete_forever</i></button>
+            @existingUser match {
+                case Some(user) => {
+                    <a target="_blank" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" title="Voir fiche utilisateur" href="@routes.UserController.editUser(user.id)"><i class='fas fa-user-edit'></i></a>
+                }
+                case None => {
+                    <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" title="Supprimer (Définitif)" onclick="deleteElement('#line_@{groupIndex}_@index')"><i class="material-icons">delete_forever</i></button>
+                }
             }
           </td>
         </tr>
@@ -138,21 +141,25 @@
               <select id="@group("group")("organisation").id" name="@group("group")("organisation").name">
                 <option style="font-weight: bold" value="">Organisme non-référencé</option>
                 @for(organisation <- Organisation.all) {
-                  <option value="@organisation.shortName" @if(existingGroup.flatMap(_.organisation).orElse(group("group")("organisation").value).exists(List(organisation.name, organisation.shortName).contains)) {selected}>
+                  <option value="@organisation.shortName"
+                    @if(existingGroup.flatMap(_.organisation)
+                            .orElse(group("group")("organisation").value)
+                            .exists(List(organisation.name, organisation.shortName).contains)) {selected}>
                     @organisation.shortName : @organisation.name
                   </option>
                 }
               </select>
             </div>
             <div class="mdl-cell mdl-cell--12-col">
+              Territoires :
               @if(existingGroup.isEmpty) {
-                Territoires : @helper.repeat(group("group")("area-ids")) { areaIdField =>
+                @helper.repeat(group("group")("area-ids")) { areaIdField: Field =>
                   @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
                     <b>@{area.name} (@area.inseeCode) /</b>
                   }
                 }
               } else {
-                Territoires : @for(area <- existingGroup.map(_.areaIds.flatMap(Area.fromId)).getOrElse(Nil)) {
+                @for(area <- existingGroup.map(_.areaIds.flatMap(Area.fromId)).getOrElse(Nil)) {
                   <b>@{area.name} (@area.inseeCode) /</b>
                 }
               }
