@@ -202,7 +202,7 @@ object CsvHelper {
           userCSVMapping(currentDate).bind(csvMap).fold({ errors =>
             Left(errors.map(FormHelper.prettifyFormError).mkString(", "))
           }, { user =>
-            Right(UserGroupFormData(group, List(UserFormData(user, lineNumber))))
+            Right(UserGroupFormData(group, List(UserFormData(user, lineNumber, alreadyExists = false)), alreadyExists = false))
           })
         })
       }
@@ -232,8 +232,7 @@ object CsvHelper {
             "groupIds" -> default(list(uuid), List()),
             "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
             "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-            "phone-number" -> optional(text),
-            "alreadyExists" -> boolean,
+            "phone-number" -> optional(text)
           )(User.apply)(User.unapply)
     )
   
@@ -252,8 +251,7 @@ object CsvHelper {
           "creationDate" -> ignored(currentDate),
           "area-ids" -> list(uuid),
           "organisation" -> optional(text),
-          "email" -> optional(email),
-          "alreadyExists" -> boolean
+          "email" -> optional(email)
         )(UserGroup.apply)(UserGroup.unapply)
     )
 }

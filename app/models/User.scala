@@ -23,8 +23,7 @@ case class User(id: UUID,
                 groupIds: List[UUID] = List(),
                 cguAcceptationDate: Option[DateTime] = None,
                 newsletterAcceptationDate: Option[DateTime] = None,
-                phoneNumber: Option[String] = None,
-                alreadyExists: Boolean = false) extends AgeModel {
+                phoneNumber: Option[String] = None) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"
   
   def canBeEditedBy(user: User): Boolean =

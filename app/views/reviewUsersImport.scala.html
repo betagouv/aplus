@@ -19,7 +19,7 @@
             <input name="@user("user")("id").name" value="@user("user")("id").value" type="hidden">
             <input name="@user("user")("qualite").name" value="@user("user")("qualite").value" type="hidden">
 
-            @helper.input(user("user")("alreadyExists"), 'label -> "", 'class -> "hidden") { (id, name, value, args) =>
+            @helper.input(user("alreadyExists"), 'label -> "", 'class -> "hidden") { (id, name, value, args) =>
             <input type="text"
                    name="@name"
                    id="@id"
@@ -32,7 +32,7 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(user("user")("alreadyExists").value.exists(_ == "true")) { readonly }
+                     @if(user("alreadyExists").value.exists(_ == "true")) { readonly }
                      value="@value"
                      @toHtmlArgs(args)>
             }
@@ -43,7 +43,7 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(user("user")("alreadyExists").value.exists(_ == "true")) { readonly }
+                     @if(user("alreadyExists").value.exists(_ == "true")) { readonly }
                      value="@value"
                      @toHtmlArgs(args)>
             }
@@ -54,7 +54,7 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(user("user")("alreadyExists").value.exists(_ == "true")) { readonly }
+                     @if(user("alreadyExists").value.exists(_ == "true")) { readonly }
                      value="@value"
                      @toHtmlArgs(args)>
             }
@@ -65,19 +65,19 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(user("user")("alreadyExists").value.exists(_ == "true")) { readonly }
+                     @if(user("alreadyExists").value.exists(_ == "true")) { readonly }
                      value="@value"
                      @toHtmlArgs(args)>
             }
           </td>
-          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("user")("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
+          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
             @helper.checkbox(user("user")("instructor"), 'type -> "checkbox", 'label -> csv.USER_INSTRUCTOR.prefixes(0), 'class -> "mdl-checkbox__input instructor")
           </td>
-          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("user")("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
+          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
             @helper.checkbox(user("user")("adminGroup"), 'type -> "checkbox", 'label -> csv.USER_GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
           </td>
           <td>
-            @if(user("user")("alreadyExists").value.exists(_ == "true")) {
+            @if(user("alreadyExists").value.exists(_ == "true")) {
               <a target="_blank" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" title="Voir fiche utilisateur" href="@routes.UserController.editUser(user("user")("id").value.flatMap(UUIDHelper.fromString).get)"><i class='fas fa-user-edit'></i></a>
             } else {
               <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" title="Supprimer (Définitif)" onclick="deleteElement('#line_@{groupIndex}_@index')"><i class="material-icons">delete_forever</i></button>
@@ -113,7 +113,7 @@
           <div class="mdl-cell mdl-cell--12-col mdl-grid" style="padding: 0px;">
             <h5 class="title--addline mdl-cell mdl-cell--12-col">@group("group")("name").value</h5>
 
-            @helper.input(group("group")("alreadyExists"), 'label -> "", 'class -> "hidden") { (id, name, value, args) =>
+            @helper.input(group("alreadyExists"), 'label -> "", 'class -> "hidden") { (id, name, value, args) =>
             <input type="text"
                    name="@name"
                    id="@id"
@@ -126,7 +126,7 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(group("group")("alreadyExists").value.exists(_ == "true")) { readonly }
+                     @if(group("alreadyExists").value.exists(_ == "true")) { readonly }
                      value="@value"
                      @toHtmlArgs(args)>
             }
@@ -135,7 +135,7 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(group("group")("alreadyExists").value.exists(_ == "true")) { readonly }
+                     @if(group("alreadyExists").value.exists(_ == "true")) { readonly }
                      value="@value" @toHtmlArgs(args)>
             }
             @helper.input(group("group")("email"), 'label -> csv.GROUP_EMAIL.prefixes(0), 'class -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
@@ -143,7 +143,7 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(group("group")("alreadyExists").value.exists(_ == "true")) { readonly }
+                     @if(group("alreadyExists").value.exists(_ == "true")) { readonly }
                      value="@value" @toHtmlArgs(args)>
             }
 
@@ -162,7 +162,7 @@
             </div>
             <div class="mdl-cell mdl-cell--12-col">
               Territoires :
-              @if(not(group("group")("alreadyExists").value.exists(_ == "false"))) {
+              @if(not(group("alreadyExists").value.exists(_ == "false"))) {
                 @helper.repeat(group("group")("area-ids")) { areaIdField: Field =>
                   @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
                     <b>@{area.name} (@area.inseeCode) /</b>

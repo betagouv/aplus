@@ -298,8 +298,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         "groupIds" -> default(list(uuid), List()),
         "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
         "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-        csv.USER_PHONE_NUMBER.key -> optional(text),
-        "alreadyExists" -> boolean
+        csv.USER_PHONE_NUMBER.key -> optional(text)
       )(User.apply)(User.unapply))
     )
   )
@@ -329,7 +328,6 @@ case class UserController @Inject()(loginAction: LoginAction,
     "groupIds" -> default(list(uuid), List()),
     "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
     "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-    csv.USER_PHONE_NUMBER.key -> optional(text),
-    "alreadyExists" -> boolean
+    csv.USER_PHONE_NUMBER.key -> optional(text)
   )(User.apply)(User.unapply)
 }

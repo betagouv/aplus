@@ -46,18 +46,20 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
       alreadyExistingUsers.find(_.email == userDataForm.user.email).fold {
         userDataForm
       } { alreadyExistingUser =>
-        userDataForm.copy(user = userDataForm.user.copy(id = alreadyExistingUser.id, alreadyExists = true),
-          alreadyExistingUser = Some(alreadyExistingUser))
+        userDataForm.copy(user = userDataForm.user.copy(id = alreadyExistingUser.id),
+          alreadyExistingUser = Some(alreadyExistingUser),
+          alreadyExists = true)
       }
     }
     groupService.groupByName(userGroupFormData.group.name).fold {
       userGroupFormData
     } { alreadyExistingGroup =>
       userGroupFormData.copy(
-        group = userGroupFormData.group.copy(id = alreadyExistingGroup.id, alreadyExists = true),
-        alreadyExistingGroup = Some(alreadyExistingGroup)
+        group = userGroupFormData.group.copy(id = alreadyExistingGroup.id),
+        alreadyExistingGroup = Some(alreadyExistingGroup),
+        alreadyExists = true
       )
-    }.copy(users = newUsersFormDataList) 
+    }.copy(users = newUsersFormDataList)
   }
 
   def userImportMapping(date: DateTime): Mapping[User] = mapping(
@@ -83,8 +85,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     "groupIds" -> default(list(uuid), List()),
     "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
     "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-    "phone-number" -> optional(text),
-    "alreadyExists" -> boolean,
+    "phone-number" -> optional(text)
   )(User.apply)(User.unapply)
 
   def groupImportMapping(date: DateTime): Mapping[UserGroup] = mapping(
@@ -102,8 +103,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     "organisation" -> optional(text).verifying("Vous devez sélectionner une organisation dans la liste", organisation =>
       organisation.flatMap(Organisation.fromShortName).isDefined
     ),
-    "email" -> optional(email),
-    "alreadyExists" -> boolean,
+    "email" -> optional(email)
   )(UserGroup.apply)(UserGroup.unapply)
 
   def importUsersReviewFrom(date: DateTime): Form[List[UserGroupFormData]] = Form(
@@ -115,9 +115,11 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
                   mapping(
                     "user" -> userImportMapping(date),
                     "line" -> number,
+                    "alreadyExists" -> boolean,
                     "alreadyExistingUser" -> ignored(Option.empty[User])
                   )(UserFormData.apply)(UserFormData.unapply)
               ),
+              "alreadyExists" -> boolean,
               "alreadyExistingGroup" -> ignored(Option.empty[UserGroup])
             )(UserGroupFormData.apply)(UserGroupFormData.unapply)
         )
@@ -142,14 +144,6 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
           }, {
             case (userNotImported: List[String], userGroupDataForm: List[UserGroupFormData]) =>
               val augmentedUserGroupInformation: List[UserGroupFormData] = userGroupDataForm.map(augmentUserGroupInformation)
-
-              val groupNameToAlreadyExistingGroup: Map[String, UserGroup] = augmentedUserGroupInformation.map({ userGroupFormData =>
-                userGroupFormData.group.name -> userGroupFormData.alreadyExistingGroup
-              }).flatMap(tuple => tuple._2.map(group => tuple._1 -> group )).toMap
-
-              val userEmailToAlreadyExistingUser: Map[String, User] = augmentedUserGroupInformation.flatMap({ userGroupFormData =>
-                userGroupFormData.users.flatMap(userFormData => userFormData.alreadyExistingUser.map(user => userFormData.user.email -> user))
-              }).toMap
 
               val currentDate = Time.now()
               val formWithData = importUsersReviewFrom(currentDate)
@@ -188,14 +182,6 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
         BadRequest(views.html.reviewUsersImport(request.currentUser)(importUsersReviewFromWithError))
       }, { userGroupDataForm: List[UserGroupFormData] =>
         val augmentedUserGroupInformation: List[UserGroupFormData] = userGroupDataForm.map(augmentUserGroupInformation)
-
-        val groupNameToAlreadyExistingGroup: Map[String, UserGroup] = augmentedUserGroupInformation.map({ userGroupFormData =>
-          userGroupFormData.group.name -> userGroupFormData.alreadyExistingGroup
-        }).flatMap(tuple => tuple._2.map(group => tuple._1 -> group )).toMap
-
-        val userEmailToAlreadyExistingUser: Map[String, User] = augmentedUserGroupInformation.flatMap({ userGroupFormData =>
-          userGroupFormData.users.flatMap(userFormData => userFormData.alreadyExistingUser.map(user => userFormData.user.email -> user))
-        }).toMap
 
         val groupsToInsert = augmentedUserGroupInformation
           .filter(_.alreadyExistingGroup.isEmpty)

@@ -11,8 +11,7 @@ case class UserGroup(id: UUID,
                      creationDate: DateTime,
                      areaIds: List[UUID],
                      organisation: Option[String] = None,
-                     email: Option[String] = None,
-                     alreadyExists: Boolean = false) {
+                     email: Option[String] = None) {
 
   def canHaveUsersAddedBy(user: User): Boolean =
     (user.groupAdmin && user.groupIds.contains(id)) || (user.admin && areaIds.forall(user.areas.contains))

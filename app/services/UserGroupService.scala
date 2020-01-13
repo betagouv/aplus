@@ -23,8 +23,7 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
     "creation_date",
     "area_ids",
     "organisation",
-    "email",
-    "already_exists",
+    "email"
   ).map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
 
   def add(groups: List[UserGroup]): Either[String, Unit] = {
@@ -33,7 +32,7 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
         groups.foldRight(true) { (group, success) =>
           success &&
             SQL"""
-      INSERT INTO user_group(id, name, description, insee_code, creation_date, create_by_user_id, area_ids, organisation, email, already_exists) VALUES (
+      INSERT INTO user_group(id, name, description, insee_code, creation_date, create_by_user_id, area_ids, organisation, email) VALUES (
          ${group.id}::uuid,
          ${group.name},
          ${group.description},
@@ -42,8 +41,7 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
          ${UUIDHelper.namedFrom("deprecated")}::uuid,
          array[${group.areaIds}]::uuid[],
          ${group.organisation},
-         ${group.email},
-         TRUE)
+         ${group.email})
       """.executeUpdate() == 1
         }
       }

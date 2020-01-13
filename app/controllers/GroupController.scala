@@ -128,8 +128,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
                           areaIds => areaIds.forall(request.currentUser.areas.contains)
                         ).verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
       "organisation" -> optional(text),
-      "email" -> optional(email),
-      "alreadyExists" -> boolean
+      "email" -> optional(email)
     )(UserGroup.apply)(UserGroup.unapply)
   )
 }
