@@ -91,7 +91,7 @@
 
                     // The data for our dataset
                     data: {
-                        labels: ['Pertinante', 'Non Pertinante'],
+                        labels: ['Pertinente', 'Non Pertinente'],
                         datasets: [{
                             label: "Status",
                             data: [@all.count(!_.irrelevant),@all.count(_.irrelevant)],
@@ -112,7 +112,7 @@
                     }
                 });
         </script>
-        <h5>@all.count(a => a.ageInDays <= 30 && a.irrelevant) non pertinante sur les 30 derniers jours</h5>
+        <h5>@all.count(a => a.ageInDays <= 30 && a.irrelevant) non pertinente sur les 30 derniers jours</h5>
     </div>
     @defining(months.values.toSeq.map{ month:String => month -> all.filter(_.creationDate.toString("MMMM YYYY", new Locale("fr")) == month).toSeq  } ) { applicationsGroupByMonths: Seq[(String, Seq[Application])] =>
         @defining(months.values.toSeq.map { month: String => month -> all.filter(a => a.estimatedClosedDate != None && a.estimatedClosedDate.get.toString("MMMM YYYY", new Locale("fr")) == month).toSeq }) { applicationsGroupByMonthsClosed: Seq[(String, Seq[Application])] =>
@@ -379,7 +379,7 @@
                         <th class="mdl-data-table__cell--non-numeric">Territoire</th>
                         <th>Total</th>
                         <th>Total clôturé</th>
-                        <th>Total Non Pertinante</th>
+                        <th>Total Non Pertinente</th>
                         <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"> Oui</th>
                         <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"> Je ne sais pas</th>
                         <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f61e.svg").url.get"> Non</th>
@@ -616,7 +616,7 @@
                         <tr>
                             <th class="mdl-data-table__cell--non-numeric">Semaine</th>
                             <th>Clôturé</th>
-                            <th>Non Pertinante</th>
+                            <th>Non Pertinente</th>
                             <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"> Oui</th>
                             <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"> Je ne sais pas</th>
                             <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f61e.svg").url.get"> Non</th>
