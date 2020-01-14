@@ -12,7 +12,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
-import play.api.data.Forms.{optional, text, tuple, _}
+import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.{Form, Mapping}
 import play.api.mvc._
@@ -298,7 +298,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         "groupIds" -> default(list(uuid), List()),
         "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
         "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-        csv.USER_PHONE_NUMBER.key -> optional(text),
+        csv.USER_PHONE_NUMBER.key -> optional(text)
       )(User.apply)(User.unapply))
     )
   )
@@ -328,6 +328,6 @@ case class UserController @Inject()(loginAction: LoginAction,
     "groupIds" -> default(list(uuid), List()),
     "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
     "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-    csv.USER_PHONE_NUMBER.key -> optional(text),
+    csv.USER_PHONE_NUMBER.key -> optional(text)
   )(User.apply)(User.unapply)
 }

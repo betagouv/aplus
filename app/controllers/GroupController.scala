@@ -4,14 +4,14 @@ import java.util.UUID
 
 import actions.{LoginAction, RequestWithUserData}
 import extentions.Operators._
-import extentions.{Time, UUIDHelper}
+import extentions.Time
 import javax.inject.{Inject, Singleton}
 import models.{Area, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
 import play.api.data.Form
-import play.api.data.Forms.{email, ignored, list, mapping, optional, text, uuid}
+import play.api.data.Forms.{email, ignored, list, mapping, optional, text, uuid, boolean}
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import play.libs.ws.WSClient
 import services._

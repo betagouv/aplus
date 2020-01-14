@@ -44,6 +44,14 @@
     background-color: white
 }
 
+.mdl-textfield__input:-moz-read-only {
+    background-color: lightgrey;
+}
+
+.mdl-textfield__input:read-only {
+    background-color: lightgrey;
+}
+
 .mdl-data-table td {
     padding: 0px 18px;
 }

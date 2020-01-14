@@ -420,3 +420,17 @@ a {
     background: rgba(239,172,166,0.45882);
     border-color: #d63626;
 }
+
+.avoid-clicks {
+    pointer-events: none;
+}
+
+.mdl-button--fab .fas, .mdl-button--fab .fa {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-12px,-12px);
+    transform: translate(-12px,-12px);
+    line-height: 24px;
+    width: 20px;
+}
