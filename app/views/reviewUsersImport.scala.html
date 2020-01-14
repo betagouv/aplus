@@ -7,7 +7,7 @@
 @(currentUser: User)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @display(section: Field, groupIndex: Int)(header: Html) = {
-  <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
+  <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" id="line_@{groupIndex}">
 @header
   <b>Utilisateurs du groupe :</b>
 <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table">
@@ -111,7 +111,13 @@
     @helper.repeatWithIndex(form("groups")) { (group, groupIndex) =>
       @display(group, groupIndex) {
           <div class="mdl-cell mdl-cell--12-col mdl-grid" style="padding: 0px;">
-            <h5 class="title--addline mdl-cell mdl-cell--12-col">@group("group")("name").value</h5>
+            <h5 class="title--addline mdl-cell mdl-cell--12-col">
+              @group("group")("name").value
+              @if(group("alreadyExists").value.exists(_ == "false")) {
+                <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab mdl-button--in-title" title="Supprimer (Définitif)" onclick="deleteElement('#line_@{groupIndex}')"><i class="material-icons">delete_forever</i></button>
+              }
+            </h5>
+
 
             @helper.input(group("alreadyExists"), 'label -> "", 'class -> "hidden") { (id, name, value, args) =>
             <input type="text"
