@@ -158,14 +158,21 @@ case class UserController @Inject()(loginAction: LoginAction,
           BadRequest(views.html.editUser(request.currentUser)(formWithErrors, userId, groups))
         }, updatedUser => {
           withUser(updatedUser.id, includeDisabled = true) { user: User =>
-            if (!user.canBeEditedBy(request.currentUser)) {
+            // Ensure that user include all areas of his group
+            val groups = groupService.byIds(updatedUser.groupIds)
+            val areaIds = (updatedUser.areas ++ groups.flatMap(_.areaIds))
+              .distinct
+            val userToUpdate = updatedUser.copy(areas = areaIds.intersect(request.currentUser.areas)) // intersect is a safe gard (In case an Admin try to manage an authorized area)
+
+            if (not(user.canBeEditedBy(request.currentUser))
+                || areaIds.diff(request.currentUser.areas).nonEmpty) { // fail if in case an Admin try to manage an authorized area
               eventService.warn("POST_EDIT_USER_UNAUTHORIZED", s"Accès non autorisé à modifier $userId")
               Unauthorized("Vous n'avez pas le droit de faire ça")
-            } else if (userService.update(updatedUser)) {
+            } else if (userService.update(userToUpdate)) {
               eventService.info("EDIT_USER_DONE", s"Utilisateur $userId modifié", user = Some(updatedUser))
               Redirect(routes.UserController.editUser(userId)).flashing("success" -> "Utilisateur modifié")
             } else {
-              val form = userForm(Time.dateTimeZone).fill(updatedUser).withGlobalError("Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
+              val form = userForm(Time.dateTimeZone).fill(userToUpdate).withGlobalError(s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
               val groups = groupService.allGroups
               eventService.error("EDIT_USER_ERROR", "Impossible de modifier l'utilisateur dans la BDD", user = Some(updatedUser))
               InternalServerError(views.html.editUser(request.currentUser)(form, userId, groups))

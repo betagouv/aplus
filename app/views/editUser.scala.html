@@ -65,33 +65,23 @@
       <div class="mdl-cell mdl-cell--12-col-desktop mdl-cell--12-col">
           <b class="mdl-cell mdl-cell--12-col">Sélectionner des territoires</b>
           <select id="area-ids" name="areas[]" multiple>
-              @helper.repeat(form("areas")) { userField =>
-                <option value="@userField.value" selected>@{userField.value.flatMap(uuid => fromString(uuid).flatMap(Area.fromId)).map(_.name)}</option>
-              }
               @for(areaId <- currentUser.areas) {
-                @if(BooleanHelper.not(form.data.values.toList.contains(areaId.toString))) {
-                    <option value="@areaId">@{Area.fromId(areaId).map(_.name)}</option>
-                }
+                    <option value="@areaId"
+                        @if(form.data.values.toList.contains(areaId.toString)){ selected }
+                    >@{Area.fromId(areaId).map(_.name)}</option>
               }
           </select>
           <b class="mdl-cell mdl-cell--12-col">Sélectionner les groupes</b>
           <select id="multiple" name="groupIds[]" multiple>
-              @helper.repeat(form("areas")) { areaField =>
-                @defining(areaField.value.flatMap(id => fromString(id).flatMap(Area.fromId)).get) { area =>
-                    <optgroup label="@{area.name}">
-                        @helper.repeat(form("groupIds")) { groupField =>
-                            @defining(groupField.value.flatMap(groupId => userGroups.find(_.id.toString == groupId))) { group =>
-                                @if(group.map(_.areaIds.contains(area.id)).getOrElse(false)) {
-                                    <option value="@groupField.value" selected>@{group.map(_.name)}</option>
-                                }
-                            }
-                        }
-                        @for(userGroup <- userGroups.filter(group => group.areaIds.contains(area.id)).filterNot(group => form.data.values.toList.contains(group.id.toString))) {
-                            <option value="@userGroup.id">@userGroup.name</option>
-                        }
-                    </optgroup>
-                }
-              }
+            @for(area <- currentUser.areas.flatMap(Area.fromId)) {
+                <optgroup label="@{area}">
+                    @for(userGroup <- userGroups.filter(group => group.areaIds.contains(area.id))) {
+                        <option value="@userGroup.id"
+                            @if(form.data.values.toList.contains(userGroup.id.toString)){ selected }
+                        >@userGroup.name</option>
+                    }
+                </optgroup>
+            }
           </select>
           <script>
             new SlimSelect({ select: '#area-ids' });
