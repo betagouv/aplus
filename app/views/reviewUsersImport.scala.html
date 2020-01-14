@@ -163,7 +163,7 @@
             </div>
             <div class="mdl-cell mdl-cell--4-col">
               Territoires :
-              <select id="area-ids-@groupIndex" name="@group("group")("area-ids").name" multiple>
+              <select id="area-ids-@groupIndex" name="@{group("group")("area-ids").name}[]" multiple>
                 @for(areaId <- currentUser.areas) {
                   <option value="@areaId"
                           @if(form.data.filter(_._1.startsWith(s"groups[$groupIndex]")).values.toList.contains(areaId.toString)){ selected }>
