@@ -10,6 +10,7 @@ import play.api.db.Database
 import anorm._
 import anorm.JodaParameterMetaData._
 import extentions.Time
+import monitoring.EventType.EventType
 import org.joda.time.DateTime
 import play.api.Logger
 
@@ -30,7 +31,7 @@ class EventService @Inject()(db: Database) {
     "ip_address"
   )
 
-  def log[A](event: Event, description: String, application: Option[Application] = None, user: Option[User] = None)(implicit request: RequestWithUserData[A])
+  def log[A](event: EventType, description: String, application: Option[Application] = None, user: Option[User] = None)(implicit request: RequestWithUserData[A])
   = register[A](event.level)(request.currentUser, request.currentArea, request.remoteAddress, event.code, description, application, user)
 
   def info[A](code: String, description: String, application: Option[Application] = None, user: Option[User] = None)(implicit request: RequestWithUserData[A])
