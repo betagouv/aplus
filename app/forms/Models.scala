@@ -14,7 +14,7 @@ object Models {
   case class InvitationData(message: String, invitedUsers: List[UUID], privateToHelpers: Boolean)
 
   case class UserFormData(user: User, line: Int, alreadyExists: Boolean, alreadyExistingUser: Option[User] = None)
-  case class UserGroupFormData(group: UserGroup, users: List[UserFormData], alreadyExists: Boolean, alreadyExistingGroup: Option[UserGroup] = None)
+  case class UserGroupFormData(group: UserGroup, users: List[UserFormData], alreadyExists: Boolean, doNotInsert: Boolean, alreadyExistingGroup: Option[UserGroup] = None)
 
   case class CSVImportData(csvLines: String, areaIds: List[UUID], separator: Char)
 }

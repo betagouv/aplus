@@ -111,7 +111,10 @@
     @helper.repeatWithIndex(form("groups")) { (group, groupIndex) =>
       @display(group, groupIndex) {
           <div class="mdl-cell mdl-cell--12-col mdl-grid" style="padding: 0px;">
-            <h5 class="title--addline mdl-cell mdl-cell--12-col">@group("group")("name").value</h5>
+            <h5 class="title--addline mdl-cell mdl-cell--12-col">
+              @group("group")("name").value
+            </h5>
+
 
             @helper.input(group("alreadyExists"), 'label -> "", 'class -> "hidden") { (id, name, value, args) =>
             <input type="text"
@@ -174,6 +177,9 @@
                   <input name="@areaIdField.name" value="@area.id" type="hidden" readonly>
                 }
               }
+            </div>
+            <div class="mdl-cell mdl-cell--4-col @if(group("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
+              @helper.checkbox(group("group")("doNotInsert"), 'type -> "checkbox", 'label -> "Ne pas insérer", 'class -> "mdl-checkbox__input")
             </div>
           </div>
       }
