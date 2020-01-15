@@ -14,6 +14,7 @@ import play.api.mvc.{Action, AnyContent, InjectedController}
 import services.{EventService, NotificationService, UserGroupService, UserService}
 import org.joda.time.DateTime
 import helper.CsvHelper
+import helper.StringHelper._
 import extentions.Time
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 
@@ -43,7 +44,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
     val userEmails = userGroupFormData.users.map(_.user.email)
     val alreadyExistingUsers = userService.byEmails(userEmails)
     val newUsersFormDataList = userGroupFormData.users.map { userDataForm =>
-      alreadyExistingUsers.find(_.email == userDataForm.user.email).fold {
+      alreadyExistingUsers.find(_.email.canonize == userDataForm.user.email.canonize).fold {
         userDataForm
       } { alreadyExistingUser =>
         userDataForm.copy(user = userDataForm.user.copy(id = alreadyExistingUser.id),
