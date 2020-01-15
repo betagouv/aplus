@@ -91,7 +91,7 @@
               function changeAreaApps() {
                 var areaSelected = document.getElementById("area-selector").value;
                 if(areaSelected != "@selectedArea.id") {
-                  document.location = jsRoutes.controllers.UserController.all(areaSelected).url;
+                  document.location = jsRoutes.controllers.UserController.all(areaSelected).url + "?vue=classique";
                 }
               }
       </script>

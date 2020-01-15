@@ -18,6 +18,7 @@ import play.api.data.{Form, Mapping}
 import play.api.mvc._
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
+import play.api.http.Status
 import services._
 
 @Singleton
@@ -28,6 +29,10 @@ case class UserController @Inject()(loginAction: LoginAction,
                                     notificationsService: NotificationService,
                                     configuration: Configuration,
                                     eventService: EventService)(implicit val webJarsUtil: WebJarsUtil) extends InjectedController with play.api.i18n.I18nSupport with UserOperators with GroupOperators {
+  
+  def home = loginAction { implicit request =>
+    TemporaryRedirect(controllers.routes.UserController.all(Area.allArea.id).url)
+  }
 
   def all(areaId: UUID): Action[AnyContent] = loginAction { implicit request: RequestWithUserData[AnyContent] =>
     asUserWhoSeesUsersOfArea(areaId) { () =>
@@ -52,7 +57,7 @@ case class UserController @Inject()(loginAction: LoginAction,
           List()
       }
       eventService.info("ALL_USER_SHOWED", "Visualise la vue des utilisateurs")
-      val result = request.getQueryString("vue").getOrElse("classique") match {
+      val result = request.getQueryString("vue").getOrElse("nouvelle") match {
         case "nouvelle" =>
           views.html.allUsersNew(request.currentUser)(groups, users, applications, selectedArea, configuration.underlying.getString("geoplus.host"))
         case _ =>
@@ -140,8 +145,9 @@ case class UserController @Inject()(loginAction: LoginAction,
           Unauthorized("User is not unused.")
         } else {
           userService.deleteById(userId)
-          eventService.info("USER_DELETED", s"Utilisateur $userId / ${user.email} a été supprimé", user = Some(user))
-          Redirect(controllers.routes.UserController.all(Area.allArea.id))
+          val message = s"Utilisateur $userId / ${user.email} a été supprimé"
+          eventService.info("USER_DELETED", message, user = Some(user))
+          Redirect(controllers.routes.UserController.home).flashing("success" -> message)
         }
       }
     }
