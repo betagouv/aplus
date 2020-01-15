@@ -120,6 +120,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
                   )(UserFormData.apply)(UserFormData.unapply)
               ),
               "alreadyExists" -> boolean,
+              "doNotInsert" -> boolean,
               "alreadyExistingGroup" -> ignored(Option.empty[UserGroup])
             )(UserGroupFormData.apply)(UserGroupFormData.unapply)
         )
@@ -184,6 +185,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
         val augmentedUserGroupInformation: List[UserGroupFormData] = userGroupDataForm.map(augmentUserGroupInformation)
 
         val groupsToInsert = augmentedUserGroupInformation
+          .filterNot(_.doNotInsert)
           .filter(_.alreadyExistingGroup.isEmpty)
           .map(_.group)
         groupService.add(groupsToInsert)
@@ -199,6 +201,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
               eventService.info("ADD_USER_GROUP_DONE", s"Groupe ${userGroup.id} ajouté")
             }
             val usersToInsert: List[User] = augmentedUserGroupInformation
+              .filterNot(_.doNotInsert)
               .map(associateGroupToUsers)
               .flatMap(_.users)
               .filter(_.alreadyExistingUser.isEmpty)

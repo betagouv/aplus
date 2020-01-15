@@ -202,7 +202,7 @@ object CsvHelper {
           userCSVMapping(currentDate).bind(csvMap).fold({ errors =>
             Left(errors.map(FormHelper.prettifyFormError).mkString(", "))
           }, { user =>
-            Right(UserGroupFormData(group, List(UserFormData(user, lineNumber, alreadyExists = false)), alreadyExists = false))
+            Right(UserGroupFormData(group, List(UserFormData(user, lineNumber, alreadyExists = false)), alreadyExists = false, doNotInsert = false))
           })
         })
       }
