@@ -178,7 +178,7 @@
                 }
               }
             </div>
-            <div class="mdl-cell mdl-cell--4-col">
+            <div class="mdl-cell mdl-cell--4-col @if(group("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
               @helper.checkbox(group("group")("doNotInsert"), 'type -> "checkbox", 'label -> "Ne pas insérer", 'class -> "mdl-checkbox__input")
             </div>
           </div>
