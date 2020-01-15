@@ -10,7 +10,7 @@ import play.api.db.Database
 import anorm._
 import anorm.JodaParameterMetaData._
 import extentions.Time
-import monitoring.EventType.EventType
+import monitoring.EventType
 import org.joda.time.DateTime
 import play.api.Logger
 

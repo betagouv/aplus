@@ -8,7 +8,7 @@ import extentions.Operators.{GroupOperators, UserOperators}
 import extentions.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
 import models.{Area, User, UserGroup}
-import monitoring.EventType.AddUserDone
+import monitoring.AddUserDone
 import org.joda.time.{DateTime, DateTimeZone}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
