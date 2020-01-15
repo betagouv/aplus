@@ -7,4 +7,6 @@ object StringHelper {
     def canonize: String =
       StringUtils.stripAccents(string.toLowerCase().replaceAll("[-'’ +]", ""))
   }
+
+  def camelToUnderscoresUpperCase(name: String) = "_?[A-Z][a-z\\d]+".r.findAllMatchIn(name).map(_.group(0).toLowerCase).mkString("_").toUpperCase()
 }
