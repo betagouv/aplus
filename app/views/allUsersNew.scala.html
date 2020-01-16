@@ -5,6 +5,9 @@
 @main(currentUser, maxWidth = false)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
     @webJarsUtil.locate("tabulator.min.css").css()
     @webJarsUtil.locate("tabulator.min.js").script()
+    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+    @webJarsUtil.locate("slimselect.min.css").css()
+    @webJarsUtil.locate("slimselect.min.js").script()
     <style>
             .row--disabled {
                 background-color: grey !important;
@@ -34,7 +37,7 @@
             </script>
         </p>
     }
-    <div id="users-table"></div>
+    <div class="mdl-cell mdl-cell--12-col" id="users-table"></div>
 
     <script>
             var verticalHeader = false;
@@ -67,7 +70,9 @@
 
             var editIcon = function(cell, formatterParams) {
                 //plain text value
-                return "<i class='fas fa-user-edit'></i>";
+                var uuid = cell.getRow().getData().id;
+                var url = jsRoutes.controllers.UserController.editUser(uuid).url;
+                return "<a href='"+url+"'><i class='fas fa-user-edit'></i></a>";
             };
 
             var rawFormatter = function(row) {
@@ -105,13 +110,9 @@
                         formatter: editIcon,
                         width: 40,
                         align: "center",
-                        cellClick: function(e, cell) {
-                            var uuid = cell.getRow().getData().id;
-                            var url = jsRoutes.controllers.UserController.editUser(uuid).url;
-                            window.location = url;
-                        }
+                        frozen:true
                     },
-                    { title: "Nom et Prénom", field: "name", headerFilter: "input" },
+                    { title: "Nom et Prénom", field: "name", headerFilter: "input", frozen:true, formatter:"html" },
                     { title: "Email", field: "email", headerFilter: "input" },
                     { title: "Qualité", field: "qualite", headerFilter: "input" },
                     {
@@ -181,5 +182,50 @@
             table.setSort("name", "asc");
     </script>
 
-
+    @if(currentUser.admin) {
+        <div class="mdl-cell mdl-cell--12-col mdl-grid">
+            <h4 class="mdl-cell mdl-cell--12-col">Ajouter un groupe</h4> <br>
+            @helper.form(routes.GroupController.addGroup(), 'method -> "post", 'class -> "mdl-cell mdl-cell--9-col") {
+                @helper.CSRF.formField
+                <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                    <input class="mdl-textfield__input" type="text" id="name" name="name" maxlength="50">
+                    <label class="mdl-textfield__label" for="name">Nom du groupe</label>
+                </div>
+                <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                    <input class="mdl-textfield__input" type="text" id="description" name="description">
+                    <label class="mdl-textfield__label" for="description">Description du groupe</label>
+                </div>
+                <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                    <input class="mdl-textfield__input" type="text" id="insee-code" data-langname="@geoplusHost">
+                    <label class="mdl-textfield__label" for="insee-code">Région(s), Arrondissement(s), Département(s), Commune(s) par nom ou code INSEE</label>
+                    <ul id="group-area-container"></ul>
+                </div>
+                <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                    <input class="mdl-textfield__input" type="text" id="email" name="email" maxlength="200">
+                    <label class="mdl-textfield__label" for="email">Email du groupe (BAL générique pour inscription et notification, champ facultatif)</label>
+                </div>
+                <div class="mdl-cell mdl-cell--12-col">
+                    <select id="organisation" name="organisation">
+                        <option selected style="font-weight: bold;" value="">Organisme non-référencé</option>
+                        @for(organisation <- Organisation.all) {
+                            <option value="@organisation.shortName">@organisation.shortName : @organisation.name</option>
+                        }
+                    </select>
+                </div>
+                <div class="mdl-cell mdl-cell--12-col">
+                    <select id="area-ids" name="area-ids[]" multiple size="5" >
+                    @for(area <- currentUser.areas.flatMap(Area.fromId)) {
+                        <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area.name</option>
+                    }
+                    </select>
+                    <script>
+                            new SlimSelect({ select: '#area-ids' });
+                    </script>
+                </div>
+                <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
+                    Ajouter le groupe
+                </button>
+            }
+        </div>
+    }
 }
