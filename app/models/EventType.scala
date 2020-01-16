@@ -1,4 +1,4 @@
-package monitoring
+package models
 
 import helper.StringHelper
 
