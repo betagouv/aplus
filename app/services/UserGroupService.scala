@@ -109,4 +109,13 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
       })
     cardinality == 0
   }
+
+  def contextualizedUserName(user: User): String = {
+    val groupsName = byIds(user.groupIds).map(_.name)
+    val context = if(groupsName.isEmpty)
+      user.qualite
+    else
+      groupsName.mkString(";")
+    s"${user.name} ( $context )"
+  }
 }

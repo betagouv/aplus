@@ -14,7 +14,7 @@ import org.joda.time.DateTime
 import play.api.Logger
 
 @javax.inject.Singleton
-class EventService @Inject()(db: Database) {
+class EventService @Inject()(userGroupService: UserGroupService, db: Database) {
 
   private val simpleEvent: RowParser[Event] = Macro.parser[Event](
     "id",
@@ -48,7 +48,7 @@ class EventService @Inject()(db: Database) {
       UUID.randomUUID(),
       level,
       code,
-      currentUser.nameWithQualite,
+      userGroupService.contextualizedUserName(currentUser),
       currentUser.id,
       DateTime.now(Time.dateTimeZone),
       description,
