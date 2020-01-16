@@ -19,4 +19,6 @@ sealed trait Warn extends EventType {
   val level = "WARN"
 }
 
-object AddUserDone extends Info
+object EventType {
+  object AddUserDone extends Info
+}
