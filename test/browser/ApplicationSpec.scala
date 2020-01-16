@@ -121,8 +121,8 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
       application.userInfos("Date de naissance") mustEqual birthDate
       application.description mustEqual description
       application.creatorUserId mustEqual helperUser.id
-      application.creatorUserName mustEqual helperUser.nameWithQualite
-      application.invitedUsers mustEqual Map(instructorUser.id -> instructorUser.nameWithQualite)
+      application.creatorUserName mustEqual groupService.contextualizedUserName(helperUser)
+      application.invitedUsers mustEqual Map(instructorUser.id -> groupService.contextualizedUserName(instructorUser))
     }
   }
 }
