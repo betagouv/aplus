@@ -1,11 +1,10 @@
 package controllers
 
 import actions.RequestWithUserData
-import extentions.UUIDHelper
 import javax.inject.{Inject, Singleton}
 import models.{Area, LoginToken, User}
 import org.webjars.play.WebJarsUtil
-import play.api.mvc.{InjectedController, Request, Result}
+import play.api.mvc.InjectedController
 import services.{EventService, NotificationService, TokenService, UserService}
 
 @Singleton
@@ -17,7 +16,10 @@ class LoginController @Inject()(userService: UserService,
   private lazy val tokenExpirationInMinutes = configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
   def login() = Action { implicit request =>
-    val emailFromRequest: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("email").flatMap(_.headOption)).orElse(request.flash.get("email"))
+    val emailFromRequest: Option[String] = request.body.asFormUrlEncoded
+      .flatMap(_.get("email").flatMap(_.headOption))
+      .orElse(request.getQueryString("email"))
+      .orElse(request.flash.get("email"))
     emailFromRequest.fold {
        Ok(views.html.loginHome(Left(None)))
      } { email =>
