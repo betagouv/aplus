@@ -16,11 +16,11 @@ class LoginController @Inject()(userService: UserService,
   private lazy val tokenExpirationInMinutes = configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
   def login() = Action { implicit request =>
-    val emailFromRequest: Option[String] = request.body.asFormUrlEncoded
+    val emailFromRequestOrQueryParamOrFlash: Option[String] = request.body.asFormUrlEncoded
       .flatMap(_.get("email").flatMap(_.headOption))
       .orElse(request.getQueryString("email"))
       .orElse(request.flash.get("email"))
-    emailFromRequest.fold {
+    emailFromRequestOrQueryParamOrFlash.fold {
        Ok(views.html.loginHome(Left(None)))
      } { email =>
        userService.byEmail(email).fold {
