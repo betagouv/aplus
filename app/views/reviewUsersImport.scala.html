@@ -92,8 +92,9 @@
 
 @main(currentUser, maxWidth = false)("Revue de votre import CSV") {
   <script src='@routes.Assets.versioned("javascripts/main.js")'></script>
-    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
-
+  <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+  @webJarsUtil.locate("slimselect.min.css").css()
+  @webJarsUtil.locate("slimselect.min.js").script()
 } {
   @helper.form(routes.CSVImportController.importUsersReviewPost(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
   @helper.CSRF.formField
@@ -163,18 +164,27 @@
                 }
               </select>
             </div>
-            <div class="mdl-cell mdl-cell--12-col">
+            <div class="mdl-cell mdl-cell--4-col">
               Territoires :
-              @if(not(group("alreadyExists").value.exists(_ == "false"))) {
-                @helper.repeat(group("group")("area-ids")) { areaIdField: Field =>
-                  @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
-                    <b>@{area.name} (@area.inseeCode) /</b>
-                  }
+              <select id="area-ids-@groupIndex" name="@{group("group")("area-ids").name}[]" multiple>
+                @for(areaId <- currentUser.areas) {
+                  <option value="@areaId"
+                          @if(form.data.filter(_._1.startsWith(s"groups[$groupIndex]")).values.toList.contains(areaId.toString)){ selected }>
+                    @{Area.fromId(areaId).map(_.name)}
+                  </option>
                 }
-              }
-              @helper.repeat(group("group")("area-ids")) { areaIdField =>
-                @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
-                  <input name="@areaIdField.name" value="@area.id" type="hidden" readonly>
+              </select>
+              <script>
+                var select_@groupIndex = new SlimSelect({ select: '#area-ids-@groupIndex' })
+                @if(group("alreadyExists").value.exists(_ == "true")) {
+                  select_@{groupIndex}.disable();
+                }
+              </script>
+              @if(group("alreadyExists").value.exists(_ == "true")) {
+                @helper.repeat(group("group")("area-ids")) { areaIdField =>
+                  @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
+                    <input name="@areaIdField.name" value="@area.id" type="hidden" readonly>
+                  }
                 }
               }
             </div>
