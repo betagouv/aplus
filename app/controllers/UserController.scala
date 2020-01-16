@@ -7,7 +7,7 @@ import extentions.BooleanHelper.not
 import extentions.Operators.{GroupOperators, UserOperators}
 import extentions.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
-import models.{Area, User, UserGroup}
+import models.{EventType, Area, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
@@ -211,7 +211,7 @@ case class UserController @Inject()(loginAction: LoginAction,
             }, { Unit =>
               users.foreach { user =>
                 notificationsService.newUser(user)
-                eventService.info("ADD_USER_DONE", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
+                eventService.log(EventType.AddUserDone, s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
               }
               eventService.info("ADD_USERS_DONE", "Utilisateurs ajoutés")
               Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
