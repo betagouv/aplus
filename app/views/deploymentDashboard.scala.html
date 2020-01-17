@@ -1,4 +1,4 @@
-@(currentUser: User)(data: List[(Area,List[(Organisation,Int)])])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User)(data: List[(Area,List[(Set[Organisation],Int)])])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 @main(currentUser, maxWidth = false)(s"Tableau de suivie déploiement") {
     @webJarsUtil.locate("tabulator.min.css").css()
@@ -10,10 +10,10 @@
 
     <script>
        var tableData = [
-           @for((area: Area, usersSumPerOrganisation: List[(Organisation, Int)]) <- data) {
+           @for((area: Area, usersSumPerOrganisation: List[(Set[Organisation], Int)]) <- data) {
                 { area: "@area",
-                    @for((organisation, userSum) <- usersSumPerOrganisation)  {
-                        @organisation.key: @userSum,
+                    @for((organisations, userSum) <- usersSumPerOrganisation)  {
+                        @{organisations.map(_.key).mkString} : @userSum,
                     }
                 },
            }
@@ -21,8 +21,8 @@
 
        var columns = [
            {title: "Département", field: "area", sorter:"string", width:150},
-           @for(organisation <- Organisation.all) {
-                {title: "@organisation.shortName", field: "@organisation.key", sorter:"number", headerVertical:true},
+           @for(organisations <- Organisation.organisationGrouping) {
+                {title: "@{organisations.map(_.shortName).mkString("/")}", field: "@{organisations.map(_.key).mkString}", sorter:"number", headerVertical:true},
            }
        ]
 

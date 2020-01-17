@@ -56,20 +56,20 @@ case class AreaController @Inject()(loginAction: LoginAction,
       val userGroups = userGroupService.allGroups
       val users = userService.all
 
-      def usersIn(area: Area, organisation: Organisation): List[User] = for {
+      def usersIn(area: Area, organisationSet: Set[Organisation]): List[User] = for {
         group <- userGroups.filter(group => group.areaIds.contains(area.id)
-          && group.organisationSetOrDeducted.contains(organisation.shortName))
+          && organisationSet.map(_.shortName).exists(group.organisationSetOrDeducted.contains))
         user <- users if user.groupIds.contains(group.id)
       } yield user
 
       val data = for {
         area <- request.currentUser.areas.flatMap(Area.fromId)
       } yield {
-        val organisationMap: List[(Organisation, Int)] = for {
-          organisation <- Organisation.all
-          users = usersIn(area, organisation)
+        val organisationMap: List[(Set[Organisation], Int)] = for {
+          organisations <- Organisation.organisationGrouping
+          users = usersIn(area, organisations)
           userSum = users.count(_.instructor)
-        } yield organisation -> userSum
+        } yield organisations -> userSum
         area -> organisationMap
       }
       
