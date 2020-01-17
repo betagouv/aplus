@@ -434,3 +434,11 @@ a {
     line-height: 24px;
     width: 20px;
 }
+
+.deployment-warning-cell {
+    background-color: red;
+}
+
+.deployment-all-good-cell {
+    background-color: green;
+}

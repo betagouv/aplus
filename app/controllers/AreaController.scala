@@ -70,7 +70,7 @@ case class AreaController @Inject()(loginAction: LoginAction,
           users = usersIn(area, organisations)
           userSum = users.count(_.instructor)
         } yield organisations -> userSum
-        area -> organisationMap
+        (area, organisationMap, organisationMap.count(_._2 > 0))
       }
       
       Ok(views.html.deploymentDashboard(request.currentUser)(data))
