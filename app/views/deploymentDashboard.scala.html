@@ -33,6 +33,8 @@
                             cell._cell.element.classList.add("deployment-warning-cell");
                         } else if (cell.getValue() >= 2) {
                             cell._cell.element.classList.add("deployment-all-good-cell");
+                        } else {
+                            cell._cell.element.classList.add("deployment-quite-good-cell");
                         }
                         return cell.getValue(); //return the contents of the cell;
                     }
