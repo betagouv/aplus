@@ -30,11 +30,11 @@
                     headerVertical:true,
                     formatter: function(cell, formatterParams, onRendered) {
                         if (cell.getValue() < 1) {
-                            cell._cell.element.classList.add("deployment-warning-cell");
+                            cell._cell.element.classList.add("mdl-color--red");
                         } else if (cell.getValue() >= 2) {
-                            cell._cell.element.classList.add("deployment-all-good-cell");
+                            cell._cell.element.classList.add("mdl-color--yellow");
                         } else {
-                            cell._cell.element.classList.add("deployment-quite-good-cell");
+                            cell._cell.element.classList.add("mdl-color--green");
                         }
                         return cell.getValue(); //return the contents of the cell;
                     }
