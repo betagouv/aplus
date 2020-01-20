@@ -40,7 +40,25 @@
                     }
                 },
            },
-           {title: "TOTAUX (nombre de structure)", field: "total", sorter: "number", headerVertical: true}
+           {
+                title: "TOTAUX (nombre de structure)",
+                field: "total",
+                sorter: "number",
+                headerVertical: true,
+                formatter: function(cell, formatterParams, onRendered) {
+                    var value = cell.getValue();
+                    if (value < 1) {
+                        cell._cell.element.classList.add("mdl-color--red");
+                    } else if (value <= 4) {
+                        cell._cell.element.classList.add("mdl-color--light-green");
+                    } else if (value <= 7){
+                        cell._cell.element.classList.add("mdl-color--medium-green");
+                    } else {
+                        cell._cell.element.classList.add("mdl-color--dark-green");
+                    }
+                    return value;
+                }
+           }
        ]
 
        var table = new Tabulator("#table", {

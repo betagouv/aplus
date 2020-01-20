@@ -434,3 +434,15 @@ a {
     line-height: 24px;
     width: 20px;
 }
+
+.mdl-color--light-green {
+    background-color: #B8E2A3;
+}
+
+.mdl-color--medium-green {
+    background-color: #42A341;
+}
+
+.mdl-color--dark-green {
+    background-color: #108803;
+}
