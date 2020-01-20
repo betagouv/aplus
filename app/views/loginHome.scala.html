@@ -65,19 +65,22 @@
 
 </head>
 <body>
-    <div class="header__ribbon do-not-print" id="header__ribbon">
+    <div class="header__ribbon do-not-print mdl-color--pink-600" id="header__ribbon">
     BETA
     </div>
-<div class="mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--blue-grey-800">
-    <div class="mdl-layout__header mdl-color-text--grey-600 do-not-print mdl-color--grey-100">
-        <div class="mdl-layout__header-row">
-            <span class="mdl-layout-title">
-                <a href="@routes.HomeController.index()"><img src='@routes.Assets.versioned("images/logo_small_150x160.png")' class="logo-header" alt="Administration+"></a>
-            </span>
-        </div>
+<div class="mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--deep-purple-900">
+    <div class="mdl-layout__header mdl-color-text--grey-600 do-not-print mdl-color--grey-100  invisible demo-only">
+      <div class="mdl-layout__header-row mdl-color--pink-600 mdl-color-text--white">
+        <span class="mdl-layout-title">
+            Version de démonstration d'Administration+
+        </span>
+      </div>
     </div>
-    <main class="login-main mdl-layout__content">
+    <main class="login-main">
         <div class="login-container mdl-grid">
+            <div class="mdl-cell mdl-cell--12-col mdl-typography--text-center ">
+                <img src='@routes.Assets.versioned("images/logo_small_150x160.png")' class="logo-header" alt="Administration+"></a>
+            </div>
             <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
             <div class="login-content mdl-color--grey-100 mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
                 @userOrToken match {
@@ -132,10 +135,10 @@
 
 <script>
     if(/localhost|demo/.test(window.location.hostname)) {
-        document.getElementById("header__ribbon").innerText = "DEMO";
-        var nav = document.getElementsByClassName("mdl-layout")[0]
-        nav.classList.add("mdl-color--deep-purple-900")
-        nav.classList.remove("mdl-color--blue-grey-800")
+        var elements = document.getElementsByClassName("demo-only");
+        for(var i=0; i < elements.length; i++) {
+            elements[i].classList.remove("invisible");
+        }
     }
 </script>
     @webJarsUtil.locate("material.min.js").script()
