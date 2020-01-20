@@ -32,9 +32,9 @@
                         if (cell.getValue() < 1) {
                             cell._cell.element.classList.add("mdl-color--red");
                         } else if (cell.getValue() >= 2) {
-                            cell._cell.element.classList.add("mdl-color--yellow");
-                        } else {
                             cell._cell.element.classList.add("mdl-color--green");
+                        } else {
+                            cell._cell.element.classList.add("mdl-color--yellow");
                         }
                         return cell.getValue(); //return the contents of the cell;
                     }
