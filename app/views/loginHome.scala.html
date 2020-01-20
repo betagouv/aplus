@@ -25,7 +25,7 @@
             flex-shrink: 0;
         }
         .login-content {
-            border-radius: 2px;
+            border-radius: 8px;
             padding: 60px 120px;
             margin-bottom: 80px;
         }
@@ -55,9 +55,17 @@
             width: 200px;
             max-width: 100%;
         }
-        .aplus-textfield__input::placeholder {
+        .aplus-textfield__label {
+            font-size: 16px;
+            margin-bottom: 5px;
+            display: inline-block;
+        }
+        .aplus-textfield__label__example {
             font-style: italic;
             color: #71777A;
+            font-size: 14px;
+            margin-top: 6px;
+            display: inline-block;
         }
 
         .aplus-textfield__input--large {
@@ -116,9 +124,11 @@
                     </div><br><br>
                     <form action="@routes.LoginController.login()" method="post">
                         @helper.CSRF.formField
-                        <label for="email">Saisir votre e-mail professionnel et nominatif :</label><br>
-                        <input class="aplus-textfield__input aplus-textfield__input--large" minlength="1" type="text" id="email" name="email" @for(email <- flash.get("email-value")) { value = "@email" } placeholder="prenom.nom@@votre-structure.fr"><br>
-                        <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary" name="id">Envoyer</button>
+                        <label class="aplus-textfield__label" for="email">Saisir votre e-mail professionnel et nominatif :<br>
+                            <span class="aplus-textfield__label__example">Ex: prenom.nom@@votre-structure.fr</span>
+                        </label><br>
+                        <input class="aplus-textfield__input aplus-textfield__input--large" minlength="1" type="text" id="email" name="email" @for(email <- flash.get("email-value")) { value = "@email" }><br>
+                        <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary" style="margin-top: 10px" name="id">Envoyer</button>
                     <br>   <br>
                         @flash.get("error").map { message =>
                             <div class="notification notification--error" style="white-space: pre-wrap">@message</div>
