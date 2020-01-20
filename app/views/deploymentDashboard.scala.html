@@ -18,6 +18,13 @@
                   total: "@total"
                 },
            }
+           {
+                area: "TOTAUX (nombre de structure)",
+                @for((organisations, count) <- data.flatMap(_._2).toMap.groupBy(_._1).mapValues(_.map(_._2).count(_ > 0)))  {
+                    @{organisations.map(_.key).mkString} : @count,
+                }
+                total: ""
+           }
        ]
 
        var columns = [
@@ -29,14 +36,27 @@
                     sorter:"number",
                     headerVertical:true,
                     formatter: function(cell, formatterParams, onRendered) {
-                        if (cell.getValue() < 1) {
+                        var value = cell.getValue();
+                        if (cell._cell.row.data.area == "TOTAUX (nombre de structure)") {
+                            if (value < 1) {
+                                cell._cell.element.classList.add("mdl-color--red");
+                            } else if (value <= 4) {
+                                cell._cell.element.classList.add("mdl-color--light-green");
+                            } else if (value <= 7) {
+                                cell._cell.element.classList.add("mdl-color--medium-green");
+                            } else {
+                                cell._cell.element.classList.add("mdl-color--dark-green");
+                            }
+                            return value;
+                        }
+                        if (value < 1) {
                             cell._cell.element.classList.add("mdl-color--red");
-                        } else if (cell.getValue() >= 2) {
+                        } else if (value >= 2) {
                             cell._cell.element.classList.add("mdl-color--green");
                         } else {
                             cell._cell.element.classList.add("mdl-color--yellow");
                         }
-                        return cell.getValue(); //return the contents of the cell;
+                        return value;
                     }
                 },
            },
@@ -67,9 +87,7 @@
            responsiveLayout:"hide",  //hide columns that dont fit on the table
            movableColumns:true,      //allow column order to be changed
            resizableRows:true,       //allow row order to be changed
-           initialSort:[             //set the initial sort order of the data
-               {column:"area", dir:"asc"},
-           ],
+           initialSort: [],
            columns: columns
        });
 
