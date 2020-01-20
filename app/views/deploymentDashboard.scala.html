@@ -20,7 +20,7 @@
            }
            {
                 area: "TOTAUX (nombre de structure)",
-                @for((organisations, count) <- data.flatMap(_._2).toMap.groupBy(_._1).mapValues(_.map(_._2).count(_ > 0)))  {
+                @for((organisations, count) <- data.flatMap(_._2).groupBy(_._1).mapValues(_.map(_._2).count(_ > 0)))  {
                     @{organisations.map(_.key).mkString} : @count,
                 }
                 total: ""
