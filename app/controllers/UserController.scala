@@ -7,7 +7,8 @@ import extentions.BooleanHelper.not
 import extentions.Operators.{GroupOperators, UserOperators}
 import extentions.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
-import models.{EventType, Area, User, UserGroup}
+import models.EventType.{AddUsersDone, AllUserCsvShowed, AllUserIncorrectSetup, AllUserShowed, CGUShowed, CGUValidated, EditUserDone, EditUserShowed, EventsShowed, UserDeleted, UserShowed}
+import models.{Area, EventType, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
@@ -44,7 +45,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         case (true, _, true) => userService.byAreas(request.currentUser.areas)
         case (false, true, _) => userService.byGroupIds(request.currentUser.groupIds)
         case _ =>
-          eventService.warn("ALL_USER_INCORRECT_SETUP", "Erreur d'accès aux utilisateurs")
+          eventService.log(AllUserIncorrectSetup, "Erreur d'accès aux utilisateurs")
           List()
       }
       val applications = applicationService.allByArea(selectedArea.id, anonymous = true)
@@ -53,10 +54,10 @@ case class UserController @Inject()(loginAction: LoginAction,
         case (true, _, true) => groupService.allGroupByAreas(request.currentUser.areas)
         case (false, true, _) => groupService.byIds(request.currentUser.groupIds)
         case _ =>
-          eventService.warn("ALL_USER_INCORRECT_SETUP", "Erreur d'accès aux groupes")
+          eventService.log(AllUserIncorrectSetup, "Erreur d'accès aux groupes")
           List()
       }
-      eventService.info("ALL_USER_SHOWED", "Visualise la vue des utilisateurs")
+      eventService.log(AllUserShowed, "Visualise la vue des utilisateurs")
       val result = request.getQueryString("vue").getOrElse("nouvelle") match {
         case "nouvelle" =>
           views.html.allUsersNew(request.currentUser)(groups, users, applications, selectedArea, configuration.underlying.getString("geoplus.host"))
@@ -75,7 +76,7 @@ case class UserController @Inject()(loginAction: LoginAction,
       val users = if (areaId == Area.allArea.id) userService.byAreas(request.currentUser.areas)
       else userService.byArea(areaId)
       val groups = groupService.allGroupByAreas(request.currentUser.areas)
-      eventService.info("ALL_USER_CSV_SHOWED", "Visualise le CSV de tous les zones de l'utilisateur")
+      eventService.log(AllUserCsvShowed, "Visualise le CSV de tous les zones de l'utilisateur")
 
       def userToCSV(user: User): String = {
         List[String](
@@ -122,7 +123,7 @@ case class UserController @Inject()(loginAction: LoginAction,
           val groups = groupService.allGroups
           val unused = not(isAccountUsed(user))
           val Token(tokenName, tokenValue) = CSRF.getToken.get
-          eventService.info("USER_SHOWED", "Visualise la vue de modification l'utilisateur ", user = Some(user))
+          eventService.log(UserShowed, "Visualise la vue de modification l'utilisateur ", user = Some(user))
           Ok(views.html.editUser(request.currentUser)(form, userId, groups, unused, tokenName = tokenName, tokenValue = tokenValue))
         case _ =>
           eventService.warn("VIEW_USER_UNAUTHORIZED", s"Accès non autorisé pour voir $userId")
@@ -146,7 +147,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         } else {
           userService.deleteById(userId)
           val message = s"Utilisateur $userId / ${user.email} a été supprimé"
-          eventService.info("USER_DELETED", message, user = Some(user))
+          eventService.log(UserDeleted, message, user = Some(user))
           Redirect(controllers.routes.UserController.home).flashing("success" -> message)
         }
       }
@@ -175,7 +176,7 @@ case class UserController @Inject()(loginAction: LoginAction,
               eventService.warn("POST_EDIT_USER_UNAUTHORIZED", s"Accès non autorisé à modifier $userId")
               Unauthorized("Vous n'avez pas le droit de faire ça")
             } else if (userService.update(userToUpdate)) {
-              eventService.info("EDIT_USER_DONE", s"Utilisateur $userId modifié", user = Some(updatedUser))
+              eventService.log(EditUserDone, s"Utilisateur $userId modifié", user = Some(updatedUser))
               Redirect(routes.UserController.editUser(userId)).flashing("success" -> "Utilisateur modifié")
             } else {
               val form = userForm(Time.dateTimeZone).fill(userToUpdate).withGlobalError(s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
@@ -213,7 +214,7 @@ case class UserController @Inject()(loginAction: LoginAction,
                 notificationsService.newUser(user)
                 eventService.log(EventType.AddUserDone, s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
               }
-              eventService.info("ADD_USERS_DONE", "Utilisateurs ajoutés")
+              eventService.log(AddUsersDone, "Utilisateurs ajoutés")
               Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
             })
           } catch {
@@ -233,7 +234,7 @@ case class UserController @Inject()(loginAction: LoginAction,
   }
 
   def showCGU(): Action[AnyContent] = loginAction { implicit request =>
-    eventService.info("CGU_SHOWED", "CGU visualisé")
+    eventService.log(CGUShowed, "CGU visualisé")
     Ok(views.html.showCGU(request.currentUser))
   }
 
@@ -245,7 +246,7 @@ case class UserController @Inject()(loginAction: LoginAction,
       if (validate) {
         userService.acceptCGU(request.currentUser.id, newsletter)
       }
-      eventService.info("CGU_VALIDATED", "CGU validées")
+      eventService.log(CGUValidated, "CGU validées")
       redirectOption match {
         case Some(redirect) =>
           Redirect(Call("GET", redirect)).flashing("success" -> "Merci d\'avoir accepté les CGU")
@@ -268,7 +269,7 @@ case class UserController @Inject()(loginAction: LoginAction,
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
         val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
-        eventService.info("EDIT_USER_SHOWED", "Visualise la vue d'ajouts des utilisateurs")
+        eventService.log(EditUserShowed, "Visualise la vue d'ajouts des utilisateurs")
         Ok(views.html.editUsers(request.currentUser)(usersForm(Time.dateTimeZone, group.areaIds), rows, routes.UserController.addPost(groupId)))
       }
     }
@@ -281,7 +282,7 @@ case class UserController @Inject()(loginAction: LoginAction,
       val limit = request.getQueryString("limit").map(_.toInt).getOrElse(500)
       val userId = request.getQueryString("fromUserId").flatMap(UUIDHelper.fromString)
       val events = eventService.all(limit, userId)
-      eventService.info("EVENTS_SHOWED", s"Affiche les événements")
+      eventService.log(EventsShowed, s"Affiche les événements")
       Ok(views.html.allEvents(request.currentUser)(events, limit))
     }
   }

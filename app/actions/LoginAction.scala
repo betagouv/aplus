@@ -8,6 +8,7 @@ import play.api.mvc._
 import play.api.mvc.Results.TemporaryRedirect
 import services.{EventService, TokenService, UserService}
 import extentions.UUIDHelper
+import models.EventType.{AuthByKey, LoginByKey, RedirectedToCGU, TryLoginByKey, UserAccessDisabled}
 import play.api.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -43,10 +44,10 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
           implicit val requestWithUserData = new RequestWithUserData(user, area, request)
           if(areasWithLoginByKey.contains(area.id) && !user.admin) {
             // areasWithLoginByKey is an insecure setting for demo usage and transition only
-            eventService.info("LOGIN_BY_KEY", s"Connexion par clé réussi (Transition ne doit pas être maintenu en prod)")
+            eventService.log(LoginByKey, s"Connexion par clé réussi (Transition ne doit pas être maintenu en prod)")
             Left(TemporaryRedirect(Call(request.method, url).url).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
           } else {
-            eventService.info("TRY_LOGIN_BY_KEY", "Clé dans l'url, redirige vers la page de connexion")
+            eventService.log(TryLoginByKey, "Clé dans l'url, redirige vers la page de connexion")
             Left(TemporaryRedirect(routes.LoginController.login().url).flashing("email" -> user.email, "path" -> path))
           }
         case (_, None, Some(token)) =>
@@ -56,7 +57,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
         case (Some(user), None, None) if user.disabled == true =>
           val area = areaFromContext(user)
           implicit val requestWithUserData = new RequestWithUserData(user, area, request)
-          eventService.info("USER_ACCESS_DISABLED", s"Utilisateur désactivé essaye d'accèder à la page ${request.path}}")
+          eventService.log(UserAccessDisabled, s"Utilisateur désactivé essaye d'accèder à la page ${request.path}}")
           userNotLogged(s"Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème.")
         case _ =>
           val message = request.getQueryString("token") match {
@@ -77,7 +78,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
     if(user.cguAcceptationDate.nonEmpty || request.path.contains("cgu")) {
       Right(requestWithUserData)
     } else {
-      eventService.info("REDIRECTED_TO_CGU","Redirection vers les CGUs")
+      eventService.log(RedirectedToCGU, "Redirection vers les CGUs")
       Left(TemporaryRedirect(routes.UserController.showCGU().url).flashing("redirect" -> request.path))
     }
   }
@@ -100,7 +101,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
         }
         if(token.isActive){
           val url = request.path + queryToString(request.queryString - "key" - "token")
-          eventService.info("AUTH_BY_KEY", s"Identification par token")
+          eventService.log(AuthByKey, s"Identification par token")
           Left(TemporaryRedirect(Call(request.method, url).url).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
         } else {
           eventService.warn("EXPIRED_TOKEN", s"Token expiré pour ${token.userId}")
