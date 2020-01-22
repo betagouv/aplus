@@ -1,4 +1,4 @@
-@(currentUser: User)(data: List[(Area, List[(Set[Organisation],Int)], Int)])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User)(data: List[(Area, List[(Set[Organisation],Int)], Int)], organisationSetToCountOfCounts: Map[Set[Organisation], Int])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 @main(currentUser, maxWidth = false)(s"Tableau de suivie déploiement") {
     @webJarsUtil.locate("tabulator.min.css").css()
@@ -6,6 +6,11 @@
 }{
     <h5 class="title--addline">Nombre d'agents instructeurs par organisation</h5>
     <i>Les agents sont comptés double s'ils sont dans plusieurs départements. Les organisations manquantes ne sont pas affichées. Certains agents ne sont pas détecté comme faisant partie d'un organisation (Vous devez corriger le groupe dans ce cas)</i>
+    @for(organisationSet <- data.head._2.map(_._1)) {
+        <div class="mdl-cell mdl-cell--2-col">
+            <input type="checkbox" checked name="@{organisationSet.map(_.key).mkString}" onchange="table.toggleColumn('@{organisationSet.map(_.key).mkString}')">@{organisationSet.map(_.shortName).mkString("/")}</input>
+        </div>
+}
     <div id="table" class="mdl-cell mdl-cell--12-col"></div>
 
     <script>
@@ -20,7 +25,7 @@
            }
            {
                 area: "TOTAUX (nombre de structure)",
-                @for((organisations, count) <- data.flatMap(_._2).groupBy(_._1).mapValues(_.map(_._2).count(_ > 0)))  {
+                @for((organisations, count) <- organisationSetToCountOfCounts)  {
                     @{organisations.map(_.key).mkString} : @count,
                 }
                 total: ""
