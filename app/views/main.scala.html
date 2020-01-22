@@ -28,9 +28,6 @@
                     max-width: 100%;
                     overflow-x: hidden;
                 }
-                #accbtn ~ div {
-                    z-index: 999 !important
-                }
         </style>
             <!-- Piwik -->
         <script type="text/javascript">
@@ -48,25 +45,6 @@
         <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border:0;" alt="" /></p></noscript>
             <!-- End Piwik Code -->
         <script>
-                function sendLoginMail(sender, email) {
-                    var request = new XMLHttpRequest();
-                    var parent = sender.parentNode;
-                    parent.innerHTML = "<span style='font-weight: bold;'>En cours</span> <img src='@routes.Assets.versioned("images/spin.gif")'>";
-                    request.open('POST', '@CSRF(routes.LoginController.login())', true);
-                    request.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
-                    request.onload = function() {
-                        if (request.status === 200) {
-                            parent.innerHTML = "<span style='color: green; font-weight: bold;'>Ok !</span>";
-                        } else {
-                            parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
-                        }
-                    };
-                    request.onerror = function() {
-                        parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
-                    };
-                    request.send("email="+email);
-                }
-
                 @if(currentArea.nonEmpty) {
                     function changeArea() {
                         var areaSelected = document.getElementById("area").value;
@@ -158,17 +136,17 @@
                 <footer class="drawer-footer mdl-color--deep-purple-900">
                     <img src='@routes.Assets.versioned("images/contact_phone_104x104.png")' class="contact-phone-icon">
 
-                    <p>Besoin d'aide ?
-                       Contactez-nous
-                        
-                        <a href="mailto:@Constants.supportEmail">@Constants.supportEmail</a>
-
-                        Tél. 01 84 80 88 12
+                    <p><span class="mdl-typography--subhead">Besoin d'aide ?</span> <br>
+                       Contactez-nous: <br>
+                        <br>
+                        <a href="mailto:@Constants.supportEmail" class="mdl-color-text--cyan-600">@Constants.supportEmail</a>  <br>
+                        <br>
+                        <span class="mdl-color-text--cyan-600 mdl-typography--font-medium mdl-typography--title">Tél. 01 84 80 88 12</span><br>
                     </p>
                 </footer>
             </div>
 
-            <main class="mdl-layout__content mdl-color--grey-200" style="height: calc(100% - 16px); overflow-x: auto">
+            <main class="mdl-layout__content mdl-color--grey-200">
                 <div class="mdl-grid main__grid" style="min-height: 800px; @if(maxWidth) { max-width: 960px; }">
                 @flash.get("error").map { error =>
                     <div class="mdl-cell mdl-cell--12-col" id="answer-error">
