@@ -35,7 +35,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   def newApplication(application: Application): Unit = {
     val userIds = (application.invitedUsers).keys
     val users = userService.byIds(userIds.toList)
-    val groups = groupService.byIds(users.flatMap(_.groupIds)).filter(_.email.nonEmpty)
+    val groups = groupService.byIds(users.flatMap(_.groupIds)).filter(_.email.nonEmpty).filter(_.areaIds.contains(application.area))
 
     users.map(generateInvitationEmail(application))
             .foreach(sendMail)
@@ -48,7 +48,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
     // Retrieve data
     val userIds = (application.invitedUsers ++ answer.invitedUsers).keys
     val users = userService.byIds(userIds.toList)
-    val groups = groupService.byIds(users.flatMap(_.groupIds)).filter(_.email.nonEmpty)
+    val groups = groupService.byIds(users.flatMap(_.groupIds)).filter(_.email.nonEmpty).filter(_.areaIds.contains(application.area))
     val groupIds = groups.map(_.id)
 
     // Send emails to users
