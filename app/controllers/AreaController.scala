@@ -7,6 +7,7 @@ import constants.Constants
 import extentions.Operators.UserOperators
 import extentions.UUIDHelper
 import javax.inject.{Inject, Singleton}
+import models.EventType.AreaChanged
 import models.{Area, Organisation, User}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
@@ -28,7 +29,7 @@ case class AreaController @Inject()(loginAction: LoginAction,
       eventService.warn("CHANGE_AREA_UNAUTHORIZED", s"Accès à la zone $areaId non autorisé")
       Unauthorized(s"Vous n'avez pas les droits suffisants pour accèder à cette zone. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
     } else {
-      eventService.info("AREA_CHANGE", s"Changement vers la zone $areaId")
+      eventService.log(AreaChanged, s"Changement vers la zone $areaId")
       val redirect = request.getQueryString("redirect").map(url => Redirect(url))
         .getOrElse(Redirect(routes.ApplicationController.myApplications()))
       redirect.withSession(request.session - "areaId" + ("areaId" -> areaId.toString))
