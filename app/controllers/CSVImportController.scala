@@ -16,6 +16,7 @@ import org.joda.time.DateTime
 import helper.CsvHelper
 import helper.StringHelper._
 import extentions.Time
+import models.EventType.{UserCreated, UserGroupCreated, UsersImported}
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 
 case class CSVImportController @Inject()(loginAction: LoginAction,
@@ -199,7 +200,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
             InternalServerError(views.html.reviewUsersImport(request.currentUser)(formWithError))
           }, { _ =>
             groupsToInsert.foreach { userGroup =>
-              eventService.info("ADD_USER_GROUP_DONE", s"Groupe ${userGroup.id} ajouté")
+              eventService.log(UserGroupCreated, s"Groupe ${userGroup.id} ajouté")
             }
             val usersToInsert: List[User] = augmentedUserGroupInformation
               .filterNot(_.doNotInsert)
@@ -218,9 +219,9 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
             }, { _ =>
               usersToInsert.foreach { user =>
                 notificationsService.newUser(user)
-                eventService.info("ADD_USER_DONE", s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
+                eventService.log(UserCreated, s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
               }
-              eventService.info("IMPORT_USERS_DONE", "Utilisateurs ajoutés par l'importation")
+              eventService.log(UsersImported, "Utilisateurs ajoutés par l'importation")
               Redirect(routes.UserController.all(request.currentArea.id)).flashing("success" -> "Utilisateurs importés.")
             })
           })

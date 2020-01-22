@@ -69,7 +69,9 @@
                                 <th class="mdl-data-table__cell--non-numeric">Territoires</th>
                             }
                             <th class="mdl-data-table__cell--non-numeric">Avancement</th>
-                            <th class="mdl-data-table__cell--non-numeric">Créateur</th>
+                            @if(currentUser.admin) {
+                                <th class="mdl-data-table__cell--non-numeric">Créateur</th>
+                            }
                             <th class="mdl-data-table__cell--non-numeric">Invités</th>
                             <th class="mdl-data-table__cell--non-numeric">Messages</th>
                             <th class="mdl-data-table__cell--non-numeric">Réponses</th>
@@ -95,7 +97,9 @@
                                 <td class="mdl-data-table__cell--non-numeric">@Area.fromId(application.area).get.name</td>
                             }
                             <td class="mdl-data-table__cell--non-numeric" @if(application.closed == false) { style="font-weight: bold" }>@application.status</td>
-                            <td class="mdl-data-table__cell--non-numeric">@application.creatorUserName</td>
+                            @if(currentUser.admin) {
+                                <td class="mdl-data-table__cell--non-numeric">@application.creatorUserName</td>
+                            }
                             <td class="mdl-data-table__cell--non-numeric">@application.invitedUsers.size</td>
                             <td class="mdl-data-table__cell--non-numeric">@(application.answers.length + 1)</td>
                             <td class="mdl-data-table__cell--non-numeric">@application.answers.count(_.creatorUserID != application.creatorUserId)</td>

@@ -2,6 +2,7 @@ package controllers
 
 import actions.RequestWithUserData
 import javax.inject.{Inject, Singleton}
+import models.EventType.GenerateToken
 import models.{Area, LoginToken, User}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
@@ -38,7 +39,7 @@ class LoginController @Inject()(userService: UserService,
          notificationService.newLoginRequest(url, path, user, loginToken)
 
          implicit val requestWithUserData = new RequestWithUserData(user, Area.notApplicable, request)
-         eventService.info("GENERATE_TOKEN", s"Génére un token pour une connexion par email body=${request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty}&flash=${request.flash.get("email").nonEmpty}")
+         eventService.log(GenerateToken, s"Génére un token pour une connexion par email body=${request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty}&flash=${request.flash.get("email").nonEmpty}")
 
          Ok(views.html.loginHome(Left(Some(user)))).flashing("email" -> email)
        }

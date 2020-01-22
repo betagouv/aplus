@@ -1,4 +1,5 @@
 @import models._
+@import views.html.helper.CSRF
 @(currentUser: User)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean, zoneAsJson: String, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
@@ -9,6 +10,27 @@
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/auto-complete.css")'>
     <script src='@routes.Assets.versioned("javascripts/auto-complete.min.js")'></script>
     <script src='@routes.Assets.versioned("javascripts/group-autocomplete.js")'></script>
+
+      <script>
+                function sendLoginMail(sender, email) {
+                    var request = new XMLHttpRequest();
+                    var parent = sender.parentNode;
+                    parent.innerHTML = "<span style='font-weight: bold;'>En cours</span> <img src='@routes.Assets.versioned("images/spin.gif")'>";
+                    request.open('POST', '@CSRF(routes.LoginController.login())', true);
+                    request.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
+                    request.onload = function() {
+                        if (request.status === 200) {
+                            parent.innerHTML = "<span style='color: green; font-weight: bold;'>Ok !</span>";
+                        } else {
+                            parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
+                        }
+                    };
+                    request.onerror = function() {
+                        parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
+                    };
+                    request.send("email="+email);
+                }
+      </script>
 }{
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         <span class="mdl-cell mdl-cell--12-col ariane">Territoires : @for(areaId <- userGroup.areaIds) {
