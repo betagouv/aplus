@@ -108,8 +108,8 @@
     BETA
     </div>
 <div class="mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--deep-purple-900">
-    <div class="mdl-layout__header mdl-color-text--grey-600 do-not-print mdl-color--grey-100 demo-only invisible">
-        <div class="mdl-layout__header-row mdl-color--pink-600 mdl-color-text--white">
+    <div class="mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100 demo-only invisible">
+        <div class="mdl-layout__header-row mdl-color--pink-500 mdl-color-text--white">
             <span class="mdl-layout-title aplus-demo-header__title">
                 Version de démonstration d'Administration+
             </span>
@@ -181,6 +181,7 @@
 
 <script>
     if(/localhost|demo/.test(window.location.hostname)) {
+        document.getElementById("header__ribbon").innerText = "DEMO";
         var elements = document.getElementsByClassName("demo-only");
         for(var i=0; i < elements.length; i++) {
             elements[i].classList.remove("invisible");
