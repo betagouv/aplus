@@ -1,6 +1,7 @@
 package models
 
 import java.util.UUID
+import extentions.BooleanHelper.not
 
 import org.joda.time.{DateTime, Hours, Minutes}
 
@@ -89,7 +90,7 @@ case class Application(id: UUID,
    // Security
 
    def canBeShowedBy(user: User) =  user.admin ||
-     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+     ((user.instructor || user.helper) && not(user.expert) && invitedUsers.keys.toList.contains(user.id)) ||
      (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
      creatorUserId==user.id
 
@@ -99,7 +100,7 @@ case class Application(id: UUID,
         case Some(answer) if answer.filesAvailabilityLeftInDays.isEmpty => false // You can't download expired file
         case Some(answer) if answer.creatorUserID == user.id => false   // You can't download your own file
         case _ =>
-          (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+          ((user.instructor || user.helper) && not(user.expert) && invitedUsers.keys.toList.contains(user.id)) ||
             (user.helper && user.id == creatorUserId)
       }
   
