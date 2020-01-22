@@ -433,3 +433,41 @@ a {
     line-height: 24px;
     width: 20px;
 }
+
+.aplus-demo-header__title {
+    font-size: 14px;
+    font-family: "Courier New";
+}
+
+.aplus-textfield__input {
+    background: #FFFFFF 0% 0% no-repeat padding-box;
+    border: 1px solid #CBCBCB;
+    font-size: 14px;
+    padding: 10px 12px;
+    width: 200px;
+    max-width: 100%;
+}
+.aplus-textfield__label {
+    font-size: 16px;
+    margin-bottom: 5px;
+    display: inline-block;
+}
+.aplus-textfield__label__example {
+    font-style: italic;
+    color: #71777A;
+    font-size: 14px;
+    margin-top: 6px;
+    display: inline-block;
+}
+
+.aplus-textfield__input--large {
+    width: 440px;
+}
+
+.margin-top--10px {
+    margin-top: 10px;
+}
+
+.margin-top--30px {
+    margin-top: 30px;
+}

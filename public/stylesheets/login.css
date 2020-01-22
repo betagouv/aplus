@@ -1,0 +1,38 @@
+html, body {
+    overflow-x: hidden;
+}
+
+.login-main {
+    margin-top: 10vh;
+    -webkit-flex-shrink: 0;
+    -ms-flex-negative: 0;
+    flex-shrink: 0;
+}
+.login-content {
+    border-radius: 8px;
+    padding: 60px 120px;
+    margin-bottom: 80px;
+}
+
+.login-container p {
+    text-align: left;
+}
+
+.login-container {
+    max-width: 1600px;
+    width: calc(100% - 16px);
+    margin: 0 auto;
+}
+
+@media (max-width: 600px)
+{
+    .login-content {
+        padding: 30px;
+    }
+}
+
+.logo-login {
+    width: 65px;
+    height: 69px;
+    margin-bottom: 20px;
+}

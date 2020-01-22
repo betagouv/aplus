@@ -11,80 +11,10 @@
     @webJarsUtil.locate("material-icons.css").css()
     @webJarsUtil.locate("material.min.css").css()
     <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/main.css")'>
-    <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+    <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/login.css")'>
+    <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/mdl-extensions.css")'>
     <script src="@routes.Assets.versioned("javascripts/polyfills.js")"></script>
     <meta name="robots" content="noindex" />
-    <style>
-        html, body {
-            overflow-x: hidden;
-        }
-        .login-main {
-            margin-top: 10vh;
-            -webkit-flex-shrink: 0;
-            -ms-flex-negative: 0;
-            flex-shrink: 0;
-        }
-        .login-content {
-            border-radius: 8px;
-            padding: 60px 120px;
-            margin-bottom: 80px;
-        }
-
-        .login-container p {
-            text-align: left;
-        }
-        .login-container {
-            max-width: 1600px;
-            width: calc(100% - 16px);
-            margin: 0 auto;
-        }
-
-        @@media (max-width: 600px)
-        {
-            .login-content {
-                padding: 30px;
-            }
-        }
-        .aplus-demo-header__title {
-            font-size: 14px;
-            font-family: "Courier New";
-        }
-
-        .aplus-textfield__input {
-            background: #FFFFFF 0% 0% no-repeat padding-box;
-            border: 1px solid #CBCBCB;
-            font-size: 14px;
-            padding: 10px 12px;
-            width: 200px;
-            max-width: 100%;
-        }
-        .aplus-textfield__label {
-            font-size: 16px;
-            margin-bottom: 5px;
-            display: inline-block;
-        }
-        .aplus-textfield__label__example {
-            font-style: italic;
-            color: #71777A;
-            font-size: 14px;
-            margin-top: 6px;
-            display: inline-block;
-        }
-
-        .aplus-textfield__input--large {
-            width: 440px;
-        }
-
-        .logo-login {
-            width: 65px;
-            height: 69px;
-            margin-bottom: 20px;
-        }
-        .material-icons--36px {
-            font-size: 36px;
-        }
-
-    </style>
      <!-- Piwik -->
     <script type="text/javascript">
       var _paq = _paq || [];
@@ -104,7 +34,7 @@
 
 </head>
 <body>
-    <div class="header__ribbon do-not-print mdl-color--pink-600" id="header__ribbon">
+    <div class="header__ribbon do-not-print mdl-color--pink-500" id="header__ribbon">
     BETA
     </div>
 <div class="mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--deep-purple-900">
@@ -134,10 +64,10 @@
                             <span class="aplus-textfield__label__example">Ex: prenom.nom@@votre-structure.fr</span>
                         </label><br>
                         <input class="aplus-textfield__input aplus-textfield__input--large" minlength="1" type="text" id="email" name="email" @for(email <- flash.get("email-value")) { value = "@email" }><br>
-                        <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary" style="margin-top: 10px" name="id">Envoyer</button>
+                        <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary margin-top--10px" name="id">Envoyer</button>
                     <br>   <br>
                         @flash.get("error").map { message =>
-                            <div class="notification notification--error" style="white-space: pre-wrap">@message</div>
+                            <div class="notification notification--error mdl-typography--text-prewrap" >@message</div>
                         }
 
                     </form>
@@ -171,7 +101,7 @@
                     }
                 }
                 <br><br>
-                <p style="margin-top: 30px">Vous rencontrez des difficultés à vous connecter ?<br>
+                <p class="margin-top--30px">Vous rencontrez des difficultés à vous connecter ?<br>
                     Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Problème%20A+%20Connexion">@Constants.supportEmail</a>
                     ou sur la Hotline (support): 01 84 80 88 12 (du lundi au vendredi de 9h à 17h)</p>
             </div>
