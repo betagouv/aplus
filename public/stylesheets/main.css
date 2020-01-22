@@ -11,6 +11,11 @@ html, body {
     height: 50px;
 }
 
+.contact-phone-icon {
+    width: 52px;
+    height: 52px;
+}
+
 .demo-layout .mdl-layout__header .mdl-layout__drawer-button {
   color: rgba(0, 0, 0, 0.54);
 }
@@ -36,7 +41,7 @@ html, body {
       -ms-flex-align: center;
           align-items: center;
 }
-.drawer-header {
+.drawer-header, .drawer-footer {
   box-sizing: border-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -50,6 +55,9 @@ html, body {
   padding: 16px;
 }
 
+.drawer-footer {
+    padding-left: 40px;
+}
 
 .navigation {
   -webkit-flex-grow: 1;
