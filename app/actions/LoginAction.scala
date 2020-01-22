@@ -8,7 +8,7 @@ import play.api.mvc._
 import play.api.mvc.Results.TemporaryRedirect
 import services.{EventService, TokenService, UserService}
 import extentions.UUIDHelper
-import models.EventType.{AuthByKey, LoginByKey, RedirectedToCGU, TryLoginByKey, UserAccessDisabled}
+import models.EventType.{AuthByKey, LoginByKey, ToCGURedirected, TryLoginByKey, UserAccessDisabled}
 import play.api.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -78,7 +78,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
     if(user.cguAcceptationDate.nonEmpty || request.path.contains("cgu")) {
       Right(requestWithUserData)
     } else {
-      eventService.log(RedirectedToCGU, "Redirection vers les CGUs")
+      eventService.log(ToCGURedirected, "Redirection vers les CGUs")
       Left(TemporaryRedirect(routes.UserController.showCGU().url).flashing("redirect" -> request.path))
     }
   }

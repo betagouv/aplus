@@ -16,7 +16,7 @@ import play.api.mvc.{Action, AnyContent, InjectedController}
 import play.libs.ws.WSClient
 import services._
 import extentions.BooleanHelper.not
-import models.EventType.{AddUserGroupDone, DeleteGroupDone, EditGroupShowed, EditUserGroupDone}
+import models.EventType.{UserGroupCreated, UserGroupDeleted, EditGroupShowed, UserGroupEdited}
 
 import scala.collection.parallel.immutable.ParSeq
 
@@ -40,7 +40,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
           Unauthorized("Group is not unused.")
         } else {
           groupService.deleteById(groupId)
-          eventService.log(DeleteGroupDone, s"Suppression du groupe ${groupId}.")
+          eventService.log(UserGroupDeleted, s"Suppression du groupe ${groupId}.")
           val path = "/" + controllers.routes.AreaController.all.relativeTo("/")
           Redirect(path, 303)
         }
@@ -83,7 +83,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
           eventService.error("ADD_USER_GROUP_ERROR", s"Impossible d'ajouter le groupe dans la BDD")
           Redirect(routes.UserController.home).flashing("error" -> s"Impossible d'ajouter le groupe : $error")
         }, {  Unit =>
-          eventService.log(AddUserGroupDone, s"Groupe ${group.name} (id : ${group.id}) ajouté par l'utilisateur d'id ${request.currentUser.id}")
+          eventService.log(UserGroupCreated, s"Groupe ${group.name} (id : ${group.id}) ajouté par l'utilisateur d'id ${request.currentUser.id}")
           Redirect(routes.GroupController.editGroup(group.id)).flashing("success" -> "Groupe ajouté")
         })
       })
@@ -104,7 +104,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
             Redirect(routes.GroupController.editGroup(groupId)).flashing("error" -> s"Impossible de modifier le groupe (erreur de formulaire) : ${formWithError.errors.mkString}")
           }, group => {
             if (groupService.edit(group.copy(id = groupId))) {
-              eventService.log(EditUserGroupDone, s"Groupe édité")
+              eventService.log(UserGroupEdited, s"Groupe édité")
               Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Groupe modifié")
             } else {
               eventService.error("EDIT_USER_GROUP_ERROR", s"Impossible de modifier le groupe dans la BDD")

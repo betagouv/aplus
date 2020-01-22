@@ -7,7 +7,7 @@ import extentions.BooleanHelper.not
 import extentions.Operators.{GroupOperators, UserOperators}
 import extentions.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
-import models.EventType.{AddUsersDone, AllUserCsvShowed, AllUserIncorrectSetup, AllUserShowed, CGUShowed, CGUValidated, EditUserDone, EditUserShowed, EventsShowed, UserDeleted, UserShowed}
+import models.EventType.{UsersCreated, AllUserCsvShowed, AllUserIncorrectSetup, UsersShowed, CGUShowed, CGUValidated, UserEdited, EditUserShowed, EventsShowed, UserDeleted, UserShowed}
 import models.{Area, EventType, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.postgresql.util.PSQLException
@@ -57,7 +57,7 @@ case class UserController @Inject()(loginAction: LoginAction,
           eventService.log(AllUserIncorrectSetup, "Erreur d'accès aux groupes")
           List()
       }
-      eventService.log(AllUserShowed, "Visualise la vue des utilisateurs")
+      eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
       val result = request.getQueryString("vue").getOrElse("nouvelle") match {
         case "nouvelle" =>
           views.html.allUsersNew(request.currentUser)(groups, users, applications, selectedArea, configuration.underlying.getString("geoplus.host"))
@@ -176,7 +176,7 @@ case class UserController @Inject()(loginAction: LoginAction,
               eventService.warn("POST_EDIT_USER_UNAUTHORIZED", s"Accès non autorisé à modifier $userId")
               Unauthorized("Vous n'avez pas le droit de faire ça")
             } else if (userService.update(userToUpdate)) {
-              eventService.log(EditUserDone, s"Utilisateur $userId modifié", user = Some(updatedUser))
+              eventService.log(UserEdited, s"Utilisateur $userId modifié", user = Some(updatedUser))
               Redirect(routes.UserController.editUser(userId)).flashing("success" -> "Utilisateur modifié")
             } else {
               val form = userForm(Time.dateTimeZone).fill(userToUpdate).withGlobalError(s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
@@ -212,9 +212,9 @@ case class UserController @Inject()(loginAction: LoginAction,
             }, { Unit =>
               users.foreach { user =>
                 notificationsService.newUser(user)
-                eventService.log(EventType.AddUserDone, s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
+                eventService.log(EventType.UserCreated, s"Ajout de l'utilisateur ${user.name} ${user.email}", user = Some(user))
               }
-              eventService.log(AddUsersDone, "Utilisateurs ajoutés")
+              eventService.log(UsersCreated, "Utilisateurs ajoutés")
               Redirect(routes.GroupController.editGroup(groupId)).flashing("success" -> "Utilisateurs ajouté")
             })
           } catch {
