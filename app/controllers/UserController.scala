@@ -59,7 +59,7 @@ case class UserController @Inject()(loginAction: LoginAction,
       }
       eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
       val result = request.getQueryString("vue").getOrElse("nouvelle") match {
-        case "nouvelle" =>
+        case "nouvelle" if request.currentUser.admin =>
           views.html.allUsersNew(request.currentUser)(groups, users, applications, selectedArea, configuration.underlying.getString("geoplus.host"))
         case _ =>
           views.html.allUsersByGroup(request.currentUser)(groups, users, applications, selectedArea, configuration.underlying.getString("geoplus.host"))
@@ -300,19 +300,19 @@ case class UserController @Inject()(loginAction: LoginAction,
         "name" -> nonEmptyText.verifying(maxLength(100)),
         "qualite" -> text.verifying(maxLength(100)),
         "email" -> email.verifying(maxLength(200), nonEmpty),
-        "helper" -> boolean,
+        "helper" -> ignored(true),
         "instructor" -> boolean,
         "admin" -> ignored(false),
         "areas" -> ignored(areaIds),
         "creationDate" -> ignored(DateTime.now(timeZone)),
         "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
-        "adminGroup" -> ignored(false),
+        "adminGroup" -> boolean,
         "disabled" -> ignored(false),
         "expert" -> ignored(false),
         "groupIds" -> default(list(uuid), List()),
         "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
         "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-        csv.USER_PHONE_NUMBER.key -> optional(text)
+        "phone-number" -> optional(text)
       )(User.apply)(User.unapply))
     )
   )
@@ -342,6 +342,6 @@ case class UserController @Inject()(loginAction: LoginAction,
     "groupIds" -> default(list(uuid), List()),
     "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
     "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-    csv.USER_PHONE_NUMBER.key -> optional(text)
+    "phone-number" -> optional(text)
   )(User.apply)(User.unapply)
 }

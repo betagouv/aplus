@@ -53,8 +53,9 @@
           <th class="mdl-data-table__cell--non-numeric">Nom et prénom</th>
           <th class="mdl-data-table__cell--non-numeric">Qualité</th>
           <th class="mdl-data-table__cell--non-numeric">Email</th>
+          <th class="mdl-data-table__cell--non-numeric">Téléphone</th>
           <th class="mdl-data-table__cell--non-numeric">Instructeur</th>
-          <th class="mdl-data-table__cell--non-numeric">Aidant</th>
+          <th class="mdl-data-table__cell--non-numeric">Responsable</th>
         </tr>
       </thead>
       <tbody>
@@ -80,26 +81,21 @@
               <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
             }
           </td>
+          <td class="mdl-data-table__cell--non-numeric">
+            @helper.input(userField("phone-number"), 'label -> "Téléphone") { (id, name, value, args) =>
+                <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+            }
+          </td>
           <td>
             @helper.checkbox(userField("instructor"), 'type -> "checkbox", 'label -> "Instructeur", 'class -> "mdl-checkbox__input instructor")
           </td>
           <td>
-            @helper.checkbox(userField("helper"), 'type -> "checkbox", 'label -> "Aidant", 'class -> "mdl-checkbox__input")
+          @helper.checkbox(userField("adminGroup"), 'type -> "checkbox", 'label -> "Responsable", 'class -> "mdl-checkbox__input")
           </td>
         <td>
             <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onclick="deleteElement('#line_@index')"><i class="material-icons">delete_forever</i></button>
         </td>
         </tr>
-          @if(index % 10 == 9) {
-              <tr>
-                  <th></th>
-                  <th class="mdl-data-table__cell--non-numeric">Nom</th>
-                  <th class="mdl-data-table__cell--non-numeric">Qualité</th>
-                  <th class="mdl-data-table__cell--non-numeric">Email</th>
-                  <th class="mdl-data-table__cell--non-numeric">Instructeur</th>
-                  <th class="mdl-data-table__cell--non-numeric">Aidant</th>
-              </tr>
-          }
       }
       </tbody>
     </table>
