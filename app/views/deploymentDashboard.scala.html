@@ -1,4 +1,4 @@
-@(currentUser: User)(data: List[(Area, List[(Set[Organisation],Int)], Int)])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User)(data: List[(Area, List[(Set[Organisation],Int)], Int)], organisationSetToCountOfCounts: Map[Set[Organisation], Int])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 @main(currentUser, maxWidth = false)(s"Tableau de suivie déploiement") {
     @webJarsUtil.locate("tabulator.min.css").css()
@@ -6,6 +6,11 @@
 }{
     <h5 class="title--addline">Nombre d'agents instructeurs par organisation</h5>
     <i>Les agents sont comptés double s'ils sont dans plusieurs départements. Les organisations manquantes ne sont pas affichées. Certains agents ne sont pas détecté comme faisant partie d'un organisation (Vous devez corriger le groupe dans ce cas)</i>
+    @for(organisationSet <- data.head._2.map(_._1)) {
+        <div class="mdl-cell mdl-cell--2-col">
+            <input type="checkbox" checked name="@{organisationSet.map(_.key).mkString}" onchange="table.toggleColumn('@{organisationSet.map(_.key).mkString}')">@{organisationSet.map(_.shortName).mkString("/")}</input>
+        </div>
+}
     <div id="table" class="mdl-cell mdl-cell--12-col"></div>
 
     <script>
@@ -18,6 +23,13 @@
                   total: "@total"
                 },
            }
+           {
+                area: "TOTAUX (nombre de structure)",
+                @for((organisations, count) <- organisationSetToCountOfCounts)  {
+                    @{organisations.map(_.key).mkString} : @count,
+                }
+                total: ""
+           }
        ]
 
        var columns = [
@@ -29,18 +41,49 @@
                     sorter:"number",
                     headerVertical:true,
                     formatter: function(cell, formatterParams, onRendered) {
-                        if (cell.getValue() < 1) {
+                        var value = cell.getValue();
+                        if (cell._cell.row.data.area == "TOTAUX (nombre de structure)") {
+                            if (value < 1) {
+                                cell._cell.element.classList.add("mdl-color--red");
+                            } else if (value <= 4) {
+                                cell._cell.element.classList.add("mdl-color--light-green");
+                            } else if (value <= 7) {
+                                cell._cell.element.classList.add("mdl-color--medium-green");
+                            } else {
+                                cell._cell.element.classList.add("mdl-color--dark-green");
+                            }
+                            return value;
+                        }
+                        if (value < 1) {
                             cell._cell.element.classList.add("mdl-color--red");
-                        } else if (cell.getValue() >= 2) {
+                        } else if (value >= 2) {
                             cell._cell.element.classList.add("mdl-color--green");
                         } else {
                             cell._cell.element.classList.add("mdl-color--yellow");
                         }
-                        return cell.getValue(); //return the contents of the cell;
+                        return value;
                     }
                 },
            },
-           {title: "TOTAUX (nombre de structure)", field: "total", sorter: "number", headerVertical: true}
+           {
+                title: "TOTAUX (nombre de structure)",
+                field: "total",
+                sorter: "number",
+                headerVertical: true,
+                formatter: function(cell, formatterParams, onRendered) {
+                    var value = cell.getValue();
+                    if (value < 1) {
+                        cell._cell.element.classList.add("mdl-color--red");
+                    } else if (value <= 4) {
+                        cell._cell.element.classList.add("mdl-color--light-green");
+                    } else if (value <= 7){
+                        cell._cell.element.classList.add("mdl-color--medium-green");
+                    } else {
+                        cell._cell.element.classList.add("mdl-color--dark-green");
+                    }
+                    return value;
+                }
+           }
        ]
 
        var table = new Tabulator("#table", {
@@ -49,9 +92,7 @@
            responsiveLayout:"hide",  //hide columns that dont fit on the table
            movableColumns:true,      //allow column order to be changed
            resizableRows:true,       //allow row order to be changed
-           initialSort:[             //set the initial sort order of the data
-               {column:"area", dir:"asc"},
-           ],
+           initialSort: [],
            columns: columns
        });
 

@@ -73,8 +73,15 @@ case class AreaController @Inject()(loginAction: LoginAction,
         } yield organisations -> userSum
         (area, organisationMap, organisationMap.count(_._2 > 0))
       }
+
+      val organisationSetToCountOfCounts: Map[Set[Organisation], Int] = {
+        val organisationSetToCount: List[(Set[Organisation], Int)] = data.flatMap(_._2)
+        val countsGroupedByOrganisationSet: Map[Set[Organisation], List[(Set[Organisation], Int)]] = organisationSetToCount.groupBy(_._1)
+        val organisationSetToCountOfCounts: Map[Set[Organisation], Int] = countsGroupedByOrganisationSet.mapValues(_.map(_._2).count(_ > 0))
+        organisationSetToCountOfCounts
+      }
       
-      Ok(views.html.deploymentDashboard(request.currentUser)(data))
+      Ok(views.html.deploymentDashboard(request.currentUser)(data, organisationSetToCountOfCounts))
     }
   }
 }
