@@ -2,6 +2,7 @@ package controllers
 
 import actions.RequestWithUserData
 import javax.inject.{Inject, Singleton}
+import models.EventType.GenerateToken
 import models.{Area, LoginToken, User}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
@@ -26,7 +27,10 @@ class LoginController @Inject()(userService: UserService,
        userService.byEmail(email).fold {
          implicit val requestWithUserData = new RequestWithUserData(User.systemUser, Area.notApplicable, request)
          eventService.warn("UNKNOWN_EMAIL", s"Aucun compte actif à cette adresse mail $email")
-         Redirect(routes.LoginController.login()).flashing("error" -> s"Aucun compte actif à l'adresse $email")
+         val message =
+           """Aucun compte actif n'est associé à cette adresse e-mail.
+             |Merci de vérifier qu'il s'agit bien de votre adresse professionnelle et nominative qui doit être sous la forme : prenom.nom@votre-structure.fr""".stripMargin
+         Redirect(routes.LoginController.login()).flashing("error" -> message, "email-value" -> email)
        } { user: User =>
          val loginToken = LoginToken.forUserId(user.id, tokenExpirationInMinutes, request.remoteAddress)
          tokenService.create(loginToken)
@@ -35,7 +39,7 @@ class LoginController @Inject()(userService: UserService,
          notificationService.newLoginRequest(url, path, user, loginToken)
 
          implicit val requestWithUserData = new RequestWithUserData(user, Area.notApplicable, request)
-         eventService.info("GENERATE_TOKEN", s"Génére un token pour une connexion par email body=${request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty}&flash=${request.flash.get("email").nonEmpty}")
+         eventService.log(GenerateToken, s"Génére un token pour une connexion par email body=${request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty}&flash=${request.flash.get("email").nonEmpty}")
 
          Ok(views.html.loginHome(Left(Some(user)))).flashing("email" -> email)
        }

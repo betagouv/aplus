@@ -5,7 +5,7 @@ import java.util.{Locale, UUID}
 
 import actions._
 import constants.Constants
-import extentions.{Time}
+import extentions.Time
 import extentions.Time.dateTimeOrdering
 import forms.FormsPlusMap
 import helper.AttachmentHelper
@@ -19,6 +19,7 @@ import play.api.data.validation.Constraints._
 import play.api.mvc._
 import services._
 import extentions.BooleanHelper.not
+import models.EventType.{AddExpertCreated, AgentsAdded, AllApplicationsShowed, AllAsShowed, AllCSVShowed, AnswerCreated, ApplicationCreated, ApplicationCreationInvalid, ApplicationFormShowed, ApplicationShowed, FileOpened, MyApplicationsShowed, MyCSVShowed, StatsShowed, TerminateCompleted}
 
 import scala.concurrent.ExecutionContext
 
@@ -61,7 +62,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
   )
 
   def create = loginAction { implicit request =>
-    eventService.info("APPLICATION_FORM_SHOWED", s"Visualise le formulaire de création de demande")
+    eventService.log(ApplicationFormShowed, s"Visualise le formulaire de création de demande")
     val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
     val groupIds = instructors.flatMap(_.groupIds).distinct
     val organismeGroups = userGroupService.byIds(groupIds).filter(_.areaIds.contains(request.currentArea.id))
@@ -69,7 +70,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def createSimplified = loginAction { implicit request =>
-    eventService.info("APPLICATION_FORM_SHOWED", s"Visualise le formulaire simplifié de création de demande")
+    eventService.log(ApplicationFormShowed, s"Visualise le formulaire simplifié de création de demande")
     val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
     val groupIds = instructors.flatMap(_.groupIds).distinct
     val organismeGroups = userGroupService.byIds(groupIds).filter(userGroup => userGroup.organisationSetOrDeducted.nonEmpty && userGroup.areaIds.contains(request.currentArea.id))
@@ -99,7 +100,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
            formWithErrors => {
              // binding failure, you retrieve the form containing errors:
              val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
-             eventService.info(s"APPLICATION_CREATION_INVALID", s"L'utilisateur essai de créé une demande invalide ${formWithErrors.errors.map(_.message)}")
+             eventService.log(ApplicationCreationInvalid, s"L'utilisateur essai de créé une demande invalide ${formWithErrors.errors.map(_.message)}")
              val groupIds = instructors.flatMap(_.groupIds).distinct
 
              val formWithErrorsfinal = if(request.body.asMultipartFormData.flatMap(_.file("file")).isEmpty) {
@@ -138,7 +139,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
                files = newAttachments ++ pendingAttachments)
              if(applicationService.createApplication(application)) {
                notificationsService.newApplication(application)
-               eventService.info("APPLICATION_CREATED", s"La demande ${application.id} a été créé", Some(application))
+               eventService.log(ApplicationCreated, s"La demande ${application.id} a été créé", Some(application))
                Redirect(routes.ApplicationController.myApplications()).flashing("success" -> "Votre demande a bien été envoyée")
              }  else {
                eventService.error("APPLICATION_CREATION_ERROR", s"La demande ${application.id} n'a pas pu être créé", Some(application))
@@ -186,7 +187,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
       case _ =>
         val area = Area.fromId(areaId).get
         val applications = allApplicationVisibleByUserAdmin(request.currentUser, area)
-        eventService.info("ALL_APPLICATIONS_SHOWED",
+        eventService.log(AllApplicationsShowed,
           s"Visualise la liste des applications de $areaId - taille = ${applications.size}")
         Ok(views.html.allApplications(request.currentUser)(applications, area))
     }
@@ -199,7 +200,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
     val myOpenApplications = myApplications.filter(!_.closed)
     val myClosedApplications = myApplications.filter(_.closed)
 
-    eventService.info("MY_APPLICATIONS_SHOWED",
+    eventService.log(MyApplicationsShowed,
       s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}")
     Ok(views.html.myApplications(request.currentUser)(myOpenApplications, myClosedApplications))
   }
@@ -242,9 +243,8 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
           allApplications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
         }
         val today = DateTime.now(timeZone)
-        val weeks = Time.weeksMap(firstDate, today)
         val months = Time.monthsMap(firstDate, today)
-        eventService.info("STATS_SHOWED", s"Visualise les stats")
+        eventService.log(StatsShowed, s"Visualise les stats")
         Ok(views.html.stats(request.currentUser, request.currentArea)(months, applicationsByArea, users, currentAreaOnly))
     }
   }
@@ -261,7 +261,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
       case (true, Some(user)) if request.currentUser.areas.intersect(user.areas).nonEmpty =>
         val currentUserId = user.id
         val applicationsFromTheArea = List[Application]()
-        eventService.info("ALL_AS_SHOWED", s"Visualise la vue de l'utilisateur $userId", user= Some(user))
+        eventService.log(AllAsShowed, s"Visualise la vue de l'utilisateur $userId", user= Some(user))
         // Bug To Fix
         Ok(views.html.myApplications(user)(applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin), applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin), applicationsFromTheArea))
       case  _ =>
@@ -282,8 +282,8 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
 
     val date = currentDate.toString("dd-MMM-YYY-HH'h'mm", new Locale("fr"))
 
-    eventService.info("MY_CSV_SHOWED", s"Visualise un CSV")
-    Ok(views.html.allApplicationCSV(exportedApplications.toSeq, request.currentUser, users)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}.csv"""" )
+    eventService.log(MyCSVShowed, s"Visualise un CSV")
+    Ok(views.html.allApplicationCSV(exportedApplications, request.currentUser, users)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}.csv"""" )
   }
 
   def allCSV(areaId: UUID) = loginAction { implicit request =>
@@ -298,8 +298,8 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
 
     val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HH'h'mm", new Locale("fr"))
 
-    eventService.info("ALL_CSV_SHOWED", s"Visualise un CSV pour la zone ${area.name}")
-    Ok(views.html.allApplicationCSV(exportedApplications.toSeq, request.currentUser, users)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}-${area.name.replace(" ","-")}.csv"""" )
+    eventService.log(AllCSVShowed, s"Visualise un CSV pour la zone ${area.name}")
+    Ok(views.html.allApplicationCSV(exportedApplications, request.currentUser, users)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}-${area.name.replace(" ","-")}.csv"""" )
   }
 
   val answerForm = Form(
@@ -342,12 +342,12 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
             }
             val openedTab = request.flash.get("opened-tab").getOrElse("answer")
           
-            eventService.info("APPLICATION_SHOWED", s"Demande $id consulté", Some(application))
+            eventService.log(ApplicationShowed, s"Demande $id consulté", Some(application))
             Ok(views.html.showApplication(request.currentUser)(groupsWithUsersThatCanBeInvited, renderedApplication, answerForm, openedTab))
         }
         else {
           eventService.warn("APPLICATION_UNAUTHORIZED", s"L'accès à la demande $id n'est pas autorisé", Some(application))
-          Unauthorized("Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
+          Unauthorized(s"Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
         }
     }
   }
@@ -364,7 +364,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
       case (Some(answerId), Some(application)) if application.fileCanBeShowed(request.currentUser, answerId) =>
           application.answers.find(_.id == answerId) match {
             case Some(answer) if answer.files.getOrElse(Map()).contains(filename) =>
-              eventService.info("FILE_OPEN", s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert")
+              eventService.log(FileOpened, s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert")
               Ok.sendPath(Paths.get(s"$filesPath/ans_$answerId-$filename"), true, { _: Path => filename })
             case _ =>
               eventService.error("FILE_NOT_FOUND", s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas")
@@ -372,7 +372,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
           }
       case (None, Some(application)) if application.fileCanBeShowed(request.currentUser) =>
         if(application.files.contains(filename)) {
-            eventService.info("FILE_OPEN", s"Le fichier de la demande $applicationId a été ouvert")
+            eventService.log(FileOpened, s"Le fichier de la demande $applicationId a été ouvert")
             Ok.sendPath(Paths.get (s"$filesPath/app_$applicationId-$filename"), true, { _: Path => filename })
         } else {
             eventService.error("FILE_NOT_FOUND", s"Le fichier de la demande $application sur la demande $applicationId n'existe pas")
@@ -408,7 +408,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
               Some(answerData.infos),
               files = Some(newAttachments ++ pendingAttachments))
           if (applicationService.add(applicationId, answer) == 1) {
-            eventService.info("ANSWER_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
+            eventService.log(AnswerCreated, s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
             notificationsService.newAnswer(application, answer)
             Redirect(s"${routes.ApplicationController.show(applicationId)}#answer-${answer.id}").flashing("success" -> "Votre réponse a bien été envoyée")
           } else {
@@ -454,7 +454,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
             Some(Map()))
           if (applicationService.add(applicationId, answer)  == 1) {
             notificationsService.newAnswer(application, answer)
-            eventService.info("AGENTS_ADDED", s"L'ajout d'utilisateur ${answer.id} a été créé sur la demande $applicationId", Some(application))
+            eventService.log(AgentsAdded, s"L'ajout d'utilisateur ${answer.id} a été créé sur la demande $applicationId", Some(application))
             Redirect(routes.ApplicationController.myApplications()).flashing ("success" -> "Les utilisateurs ont été invités sur la demande")
           } else {
             eventService.error("AGENTS_NOT_ADDED", s"L'ajout d'utilisateur ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
@@ -484,7 +484,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
             Some(Map()))
           if (applicationService.add(applicationId, answer, true)  == 1) {
             notificationsService.newAnswer(application, answer)
-            eventService.info("ADD_EXPERT_CREATED", s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
+            eventService.log(AddExpertCreated, s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
             Redirect(routes.ApplicationController.myApplications()).flashing ("success" -> "Un expert a été invité sur la demande")
           } else {
             eventService.error("ADD_EXPERT_NOT_CREATED", s"L'invitation d'experts ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
@@ -513,7 +513,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
         }
         if(application.canBeClosedBy(request.currentUser)) {
           if(applicationService.close(applicationId, finalUsefulness, DateTime.now(timeZone))) {
-            eventService.info("TERMINATE_COMPLETED", s"La demande $applicationId est clôturé", Some(application))
+            eventService.log(TerminateCompleted, s"La demande $applicationId est clôturé", Some(application))
             Redirect(routes.ApplicationController.myApplications()).flashing("success" -> "L'application a été indiqué comme clôturée")
           } else {
             eventService.error("TERMINATE_ERROR", s"La demande $applicationId n'a pas pu être clôturé en BDD", Some(application))
