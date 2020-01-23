@@ -19,9 +19,11 @@ import play.api.data.validation.Constraints._
 import play.api.mvc._
 import services._
 import extentions.BooleanHelper.not
+import extentions.CSVUtil.escape
 import models.EventType.{AddExpertCreated, AgentsAdded, AllApplicationsShowed, AllAsShowed, AllCSVShowed, AnswerCreated, ApplicationCreated, ApplicationCreationInvalid, ApplicationFormShowed, ApplicationShowed, FileOpened, MyApplicationsShowed, MyCSVShowed, StatsShowed, TerminateCompleted}
 
 import scala.concurrent.ExecutionContext
+import helper.StringHelper.CanonizeString
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -163,15 +165,15 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
       })
   }
 
-  def allApplicationVisibleByUserAdmin(user: User, area: Area) = user.admin match {
-    case true if area.id == Area.allArea.id =>
+  def allApplicationVisibleByUserAdmin(user: User, areaOption: Option[Area]) = (user.admin, areaOption) match {
+    case (true, None) =>
       applicationService.allForAreas(user.areas, true)
-    case true =>
+    case (true, Some(area)) =>
       applicationService.allForAreas(List(area.id), true)
-    case false if user.groupAdmin && area.id == Area.allArea.id =>
+    case (false, None) if user.groupAdmin =>
       val userIds = userService.byGroupIds(user.groupIds).map(_.id)
       applicationService.allForUserIds(userIds, true)
-    case false if user.groupAdmin =>
+    case (false, Some(area)) if user.groupAdmin =>
       val userGroupIds = userGroupService.byIds(user.groupIds).filter(_.areaIds.contains(area.id)).map(_.id)
       val userIds = userService.byGroupIds(userGroupIds).map(_.id)
       applicationService.allForUserIds(userIds, true)
@@ -185,14 +187,13 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
         eventService.warn("ALL_APPLICATIONS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher toutes les demandes")
         Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
       case _ =>
-        val area = Area.fromId(areaId).get
+        val area = if(areaId == Area.allArea.id) None else Area.fromId(areaId)
         val applications = allApplicationVisibleByUserAdmin(request.currentUser, area)
         eventService.log(AllApplicationsShowed,
           s"Visualise la liste des applications de $areaId - taille = ${applications.size}")
-        Ok(views.html.allApplications(request.currentUser)(applications, area))
+        Ok(views.html.allApplications(request.currentUser)(applications, area.getOrElse(Area.allArea)))
     }
   }
-
 
 
   def myApplications = loginAction { implicit request =>
@@ -271,35 +272,87 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
   def showExportMyApplicationsCSV =  loginAction { implicit request =>
+
     Ok(views.html.CSVExport(request.currentUser))
+  }
+
+  private def applicationsToCSV(applications: List[Application]): String = {
+    val usersId = applications.flatMap(_.invitedUsers.keys) ++ applications.map(_.creatorUserId)
+    val users = userService.byIds(usersId, includeDisabled = true)
+    val userGroupIds = users.flatMap(_.groupIds)
+    val groups = userGroupService.byIds(userGroupIds)
+
+    def applicationToCSV(application: Application): String = {
+      val creatorUser = users.find(_.id == application.creatorUserId)
+      val invitedUsers = users.filter(user => application.invitedUsers.keys.toList.contains(user.id))
+      val creatorUserGroupNames = creatorUser.toList
+      .flatMap(_.groupIds)
+      .flatMap { groupId: UUID => groups.filter(group => group.id == groupId) }
+      .map(_.name)
+      .mkString(",")
+      val invitedUserGroupNames =  invitedUsers.flatMap(_.groupIds)
+      .distinct
+      .flatMap { groupId: UUID => groups.filter(group => group.id == groupId) }
+      .map(_.name)
+      .mkString(",")
+
+      List[String](
+      application.id.toString,
+      application.status,
+      application.creationDate.toString("YYY-MM-dd"), // Precision limited for stats,
+      creatorUserGroupNames,
+      invitedUserGroupNames,
+      Area.all.find(_.id == application.area).map(_.name).head,
+      application.closedDate.map(_.toString("YYY-MM-dd")).getOrElse(""),
+      if (not(application.irrelevant)) "Oui" else "Non",
+      application.usefulness.getOrElse("?"),
+      application.firstAnswerTimeInMinutes.map(_.toString).getOrElse(""),
+      application.resolutionTimeInMinutes.map(_.toString).getOrElse(""))
+      .map(escape)
+      .mkString(";")
+    }
+
+    val headers = List("Id",
+    "Etat",
+    "Date de création",
+    "Groupes du demandeur",
+    "Groupes des invités",
+    "Territoire",
+    "Date de clôture",
+    "Pertinente",
+    "Utile",
+    "Délais de première réponse (Minutes)",
+    "Délais de clôture (Minutes)"
+    ).mkString(";")
+
+    (List(headers) ++ applications.map(applicationToCSV)).mkString("\n")
   }
 
   def myCSV = loginAction { implicit request =>
     val currentDate = DateTime.now(timeZone)
     val exportedApplications = applicationService.allOpenOrRecentForUserId(request.currentUser.id, request.currentUser.admin, currentDate)
-    val usersId = exportedApplications.flatMap(_.invitedUsers.keys) ++ exportedApplications.map(_.creatorUserId)
-    val users = userService.byIds(usersId, includeDisabled = true)
 
-    val date = currentDate.toString("dd-MMM-YYY-HH'h'mm", new Locale("fr"))
+    val date = currentDate.toString("YYY-MM-dd-HH'h'mm", new Locale("fr"))
+    val csvContent = applicationsToCSV(exportedApplications)
 
-    eventService.log(MyCSVShowed, s"Visualise un CSV")
-    Ok(views.html.allApplicationCSV(exportedApplications, request.currentUser, users)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}.csv"""" )
+    eventService.log(MyCSVShowed, s"Visualise le CSV de mes demandes")
+    Ok(csvContent).withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-demandes-$date.csv"""").as("text/csv")
   }
 
+
   def allCSV(areaId: UUID) = loginAction { implicit request =>
-    val area = Area.fromId(areaId).get
+    val area = if(areaId== Area.allArea.id) None else Area.fromId(areaId)
     val exportedApplications = if(request.currentUser.admin || request.currentUser.groupAdmin) {
       allApplicationVisibleByUserAdmin(request.currentUser, area)
     } else  {
       List()
     }
-    val usersId = exportedApplications.flatMap(_.invitedUsers.keys) ++ exportedApplications.map(_.creatorUserId)
-    val users = userService.byIds(usersId, includeDisabled = true)
 
-    val date = DateTime.now(timeZone).toString("dd-MMM-YYY-HH'h'mm", new Locale("fr"))
+    val date = DateTime.now(Time.dateTimeZone).toString("YYY-MM-dd-HH'h'mm", new Locale("fr"))
+    val csvContent = applicationsToCSV(exportedApplications)
 
-    eventService.log(AllCSVShowed, s"Visualise un CSV pour la zone ${area.name}")
-    Ok(views.html.allApplicationCSV(exportedApplications, request.currentUser, users)).as("text/csv").withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-${date}-${area.name.replace(" ","-")}.csv"""" )
+    eventService.log(AllCSVShowed, s"Visualise un CSV pour la zone ${area}")
+    Ok(csvContent).withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-demandes-$date-${area.map(_.name.canonize).getOrElse("tous")}.csv"""").as("text/csv")
   }
 
   val answerForm = Form(
