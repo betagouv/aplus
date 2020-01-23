@@ -4,11 +4,12 @@ import java.util.UUID
 
 import actions.RequestWithUserData
 import constants.Constants
-import models.{Application, User, UserGroup}
+import models.{Application, EventType, User, UserGroup}
 import play.api.mvc.Results._
 import play.api.mvc.{AnyContent, Result, Results}
 import services.{ApplicationService, EventService, UserGroupService, UserService}
 import BooleanHelper.not
+import models.EventType.{AdminOutOfRange, ApplicationUnauthorized, InexistingApplication, InexistingGroup, UserNotFound}
 
 object Operators {
 
@@ -22,24 +23,24 @@ object Operators {
     def withGroup(groupId: UUID)(payload: UserGroup => Result)
                  (implicit request: RequestWithUserData[AnyContent]): Result = {
       groupService.groupById(groupId).fold({
-        eventService.error(code = "INEXISTING_GROUP", description = "Tentative d'accès à un groupe inexistant.")
+        eventService.log(InexistingGroup, description = "Tentative d'accès à un groupe inexistant.")
         NotFound("Groupe inexistant.")
       })({ group: UserGroup =>
         payload(group)
       })
     }
 
-    def asAdminOfGroupZone(group: UserGroup)(event: () => (String, String))(payload: () => play.api.mvc.Result)
+    def asAdminOfGroupZone(group: UserGroup)(event: () => (EventType, String))(payload: () => play.api.mvc.Result)
                           (implicit request: RequestWithUserData[AnyContent]): Result = {
       if (not(request.currentUser.admin)) {
-        val (code, description) = event()
-        eventService.warn(code, description = description)
+        val (eventType, description) = event()
+        eventService.log(eventType, description = description)
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
         if (group.areaIds.forall(request.currentUser.areas.contains)) {
           payload()
         } else {
-          eventService.error(code = "ADMIN_OUT_OF_RANGE", description = "L'administrateur n'est pas dans son périmètre de responsabilité.")
+          eventService.log(AdminOutOfRange, description = "L'administrateur n'est pas dans son périmètre de responsabilité.")
           Unauthorized("Vous n'êtes pas en charge de la zone de ce groupe.")
         }
       }
@@ -55,51 +56,51 @@ object Operators {
 
     def withUser(userId: UUID, includeDisabled: Boolean = false)(payload: User => Result)(implicit request: RequestWithUserData[AnyContent]): Result = {
       userService.byId(userId, includeDisabled).fold({
-        eventService.error(code = "USER_NOT_FOUND", description = "Tentative d'accès à un utilisateur inexistant.")
+        eventService.log(UserNotFound, description = "Tentative d'accès à un utilisateur inexistant.")
         NotFound("Utilisateur inexistant.")
       })({ user: User =>
         payload(user)
       })
     }
 
-    def asAdmin(event: () => (String, String))(payload: () => play.api.mvc.Result)(implicit request: RequestWithUserData[AnyContent]): Result = {
+    def asAdmin(event: () => (EventType, String))(payload: () => play.api.mvc.Result)(implicit request: RequestWithUserData[AnyContent]): Result = {
       if (not(request.currentUser.admin)) {
-        val (code, description) = event()
-        eventService.warn(code, description = description)
+        val (eventType, description) = event()
+        eventService.log(eventType, description = description)
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
         payload()
       }
     }
 
-    def asAdminWhoSeesUsersOfArea(areaId: UUID)(event: () => (String, String))(payload: () => play.api.mvc.Result)(implicit request: RequestWithUserData[AnyContent]): Result = {
+    def asAdminWhoSeesUsersOfArea(areaId: UUID)(event: () => (EventType, String))(payload: () => play.api.mvc.Result)(implicit request: RequestWithUserData[AnyContent]): Result = {
       if (not(request.currentUser.admin) || not(request.currentUser.canSeeUsersInArea(areaId))) {
-        val (code, description) = event()
-        eventService.warn(code, description = description)
+        val (eventType, description) = event()
+        eventService.log(eventType, description = description)
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
         payload()
       }
     }
 
-    def asUserWhoSeesUsersOfArea(areaId: UUID)(event: () => (String, String))(payload: () => play.api.mvc.Result)(implicit request: RequestWithUserData[AnyContent]): Result = {
+    def asUserWhoSeesUsersOfArea(areaId: UUID)(event: () => (EventType, String))(payload: () => play.api.mvc.Result)(implicit request: RequestWithUserData[AnyContent]): Result = {
       if (not(request.currentUser.canSeeUsersInArea(areaId))) {
-        val (code, description) = event()
-        eventService.warn(code, description = description)
+        val (eventType, description) = event()
+        eventService.log(eventType, description = description)
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
         payload()
       }
     }
 
-    def asAdminOfUserZone(user: User)(event: () => (String, String))(payload: () => play.api.mvc.Result)(implicit request: RequestWithUserData[AnyContent]): play.api.mvc.Result = {
+    def asAdminOfUserZone(user: User)(event: () => (EventType, String))(payload: () => play.api.mvc.Result)(implicit request: RequestWithUserData[AnyContent]): play.api.mvc.Result = {
       if (not(request.currentUser.admin)) {
-        val (code, description) = event()
-        eventService.warn(code, description = description)
+        val (eventType, description) = event()
+        eventService.log(eventType, description = description)
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
         if (request.currentUser.areas.intersect(user.areas).isEmpty) {
-          eventService.error(code = "ADMIN_OUT_OF_RANGE", description = "L'administrateur n'est pas dans son périmètre de responsabilité.")
+          eventService.log(AdminOutOfRange, description = "L'administrateur n'est pas dans son périmètre de responsabilité.")
           Unauthorized("Vous n'êtes pas en charge de la zone de cet utilisateur.")
         } else {
           payload()
@@ -116,11 +117,11 @@ object Operators {
     def withApplication(applicationId: UUID)(payload: Application => Result)
                  (implicit request: RequestWithUserData[AnyContent]): Result = {
       applicationService.byId(applicationId, fromUserId = request.currentUser.id, anonymous = request.currentUser.admin).fold({
-        eventService.error(code = "INEXISTING_APPLICATION", description = "Tentative d'accès à une application inexistant.")
+        eventService.log(InexistingApplication, description = "Tentative d'accès à une application inexistant.")
         NotFound("Application inexistante.")
       })({ application: Application =>
         if(not(application.canBeShowedBy(request.currentUser))) {
-          eventService.error(code = "APPLICATION_UNAUTHORIZED", description = "Tentative d'accès à une application non autorisé.")
+          eventService.log(ApplicationUnauthorized, description = "Tentative d'accès à une application non autorisé.")
           Unauthorized(s"Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
         }
         else {

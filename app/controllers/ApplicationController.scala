@@ -19,7 +19,7 @@ import play.api.data.validation.Constraints._
 import play.api.mvc._
 import services._
 import extentions.BooleanHelper.not
-import models.EventType.{AddExpertCreated, AgentsAdded, AllApplicationsShowed, AllAsShowed, AllCSVShowed, AnswerCreated, ApplicationCreated, ApplicationCreationInvalid, ApplicationFormShowed, ApplicationShowed, FileOpened, MyApplicationsShowed, MyCSVShowed, StatsShowed, TerminateCompleted}
+import models.EventType.{AddExpertCreated, AddExpertNotCreated, AddExpertNotFound, AddExpertUnauthorized, AgentsAdded, AgentsNotAdded, AllApplicationsShowed, AllApplicationsUnauthorized, AllAsNotFound, AllAsShowed, AllAsUnauthorized, AllCSVShowed, AnswerCreated, AnswerNotCreated, ApplicationCreated, ApplicationCreationError, ApplicationCreationInvalid, ApplicationCreationUnauthorized, ApplicationFormShowed, ApplicationNotFound, ApplicationShowed, ApplicationUnauthorized, FileNotFound, FileOpened, FileUnauthorized, InviteNotCreated, MyApplicationsShowed, MyCSVShowed, StatsIncorrectSetup, StatsShowed, StatsUnauthorized, TerminateCompleted, TerminateError, TerminateIncompleted, TerminateNotFound, TerminateUnauthorized}
 
 import scala.concurrent.ExecutionContext
 
@@ -86,7 +86,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
   private def createPostBis(simplified: Boolean) = loginAction { implicit request =>
     request.currentUser.helper match {
        case false => {
-         eventService.warn("APPLICATION_CREATION_UNAUTHORIZED", s"L'utilisateur n'a pas de droit de créer une demande")
+         eventService.log(ApplicationCreationUnauthorized, s"L'utilisateur n'a pas de droit de créer une demande")
          Unauthorized(s"Vous n'avez pas les droits suffisants pour créer une demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
        }
        case true => {
@@ -142,7 +142,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
                eventService.log(ApplicationCreated, s"La demande ${application.id} a été créé", Some(application))
                Redirect(routes.ApplicationController.myApplications()).flashing("success" -> "Votre demande a bien été envoyée")
              }  else {
-               eventService.error("APPLICATION_CREATION_ERROR", s"La demande ${application.id} n'a pas pu être créé", Some(application))
+               eventService.log(ApplicationCreationError, s"La demande ${application.id} n'a pas pu être créé", Some(application))
                InternalServerError("Error Interne: Votre demande n'a pas pu être envoyé. Merci de rééssayer ou contacter l'administrateur")
              }
            }
@@ -182,7 +182,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
   def all(areaId: UUID) = loginAction { implicit request =>
     (request.currentUser.admin, request.currentUser.groupAdmin) match {
       case (false, false) =>
-        eventService.warn("ALL_APPLICATIONS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher toutes les demandes")
+        eventService.log(AllApplicationsUnauthorized, "L'utilisateur n'a pas de droit d'afficher toutes les demandes")
         Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
       case _ =>
         val area = Area.fromId(areaId).get
@@ -209,7 +209,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
   def stats = loginAction { implicit request =>
     (request.currentUser.admin || request.currentUser.groupAdmin) match {
       case false =>
-        eventService.warn("STATS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher les stats")
+        eventService.log(StatsUnauthorized, "L'utilisateur n'a pas de droit d'afficher les stats")
         Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
       case true =>
         val users = if(request.currentUser.admin) {
@@ -217,7 +217,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
         } else if(request.currentUser.groupAdmin) {
           userService.byGroupIds(request.currentUser.groupIds)
         } else {
-          eventService.warn("STATS_INCORRECT_SETUP", s"Erreur d'accès aux utilisateurs pour les stats")
+          eventService.log(StatsIncorrectSetup, "Erreur d'accès aux utilisateurs pour les stats")
           List()
         }
 
@@ -226,7 +226,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
         } else if(request.currentUser.groupAdmin) {
           applicationService.allForUserIds(users.map(_.id), true)
         } else {
-          eventService.warn("STATS_INCORRECT_SETUP", s"Erreur d'accès aux demandes pour les stats")
+          eventService.log(StatsIncorrectSetup, "Erreur d'accès aux demandes pour les stats")
           List()
         }
         val currentAreaOnly = request.getQueryString("currentAreaOnly").map(_.toBoolean).getOrElse(false)
@@ -244,7 +244,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
         }
         val today = DateTime.now(timeZone)
         val months = Time.monthsMap(firstDate, today)
-        eventService.log(StatsShowed, s"Visualise les stats")
+        eventService.log(StatsShowed, "Visualise les stats")
         Ok(views.html.stats(request.currentUser, request.currentArea)(months, applicationsByArea, users, currentAreaOnly))
     }
   }
@@ -253,10 +253,10 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
     val userOption = userService.byId(userId)
     (request.currentUser.admin, userOption)  match {
       case (false, Some(user)) =>
-        eventService.warn("ALL_AS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur $userId", user=Some(user))
+        eventService.log(AllAsUnauthorized, s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur $userId", user=Some(user))
         Unauthorized("Vous n'avez pas le droits de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
       case (true, Some(user)) if user.admin =>
-        eventService.warn("ALL_AS_UNAUTHORIZED", s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur admin $userId", user=Some(user))
+        eventService.log(AllAsUnauthorized, s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur admin $userId", user=Some(user))
         Unauthorized("Vous n'avez pas le droits de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
       case (true, Some(user)) if request.currentUser.areas.intersect(user.areas).nonEmpty =>
         val currentUserId = user.id
@@ -265,7 +265,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
         // Bug To Fix
         Ok(views.html.myApplications(user)(applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin), applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin), applicationsFromTheArea))
       case  _ =>
-        eventService.error("ALL_AS_NOT_FOUND", s"L'utilisateur $userId n'existe pas")
+        eventService.log(AllAsNotFound, s"L'utilisateur $userId n'existe pas")
         BadRequest("L'utilisateur n'existe pas ou vous n'avez pas le droit d'accèder à cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
     }
   }
@@ -325,7 +325,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
   def show(id: UUID) = loginAction { implicit request =>
     applicationService.byId(id, request.currentUser.id, request.currentUser.admin) match {
       case None =>
-        eventService.error("APPLICATION_NOT_FOUND", s"La demande $id n'existe pas")
+        eventService.log(ApplicationNotFound, s"La demande $id n'existe pas")
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
         if(application.canBeShowedBy(request.currentUser)) {
@@ -346,7 +346,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
             Ok(views.html.showApplication(request.currentUser)(groupsWithUsersThatCanBeInvited, renderedApplication, answerForm, openedTab))
         }
         else {
-          eventService.warn("APPLICATION_UNAUTHORIZED", s"L'accès à la demande $id n'est pas autorisé", Some(application))
+          eventService.log(ApplicationUnauthorized, s"L'accès à la demande $id n'est pas autorisé", Some(application))
           Unauthorized(s"Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
         }
     }
@@ -359,7 +359,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
   def file(applicationId: UUID, answerIdOption: Option[UUID], filename: String) = loginAction { implicit request =>
     (answerIdOption,applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin)) match {
       case (_, None) =>
-        eventService.error("APPLICATION_NOT_FOUND", s"La demande $applicationId n'existe pas")
+        eventService.log(ApplicationNotFound, s"La demande $applicationId n'existe pas")
         NotFound("Nous n'avons pas trouvé ce fichier")
       case (Some(answerId), Some(application)) if application.fileCanBeShowed(request.currentUser, answerId) =>
           application.answers.find(_.id == answerId) match {
@@ -367,7 +367,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
               eventService.log(FileOpened, s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert")
               Ok.sendPath(Paths.get(s"$filesPath/ans_$answerId-$filename"), true, { _: Path => filename })
             case _ =>
-              eventService.error("FILE_NOT_FOUND", s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas")
+              eventService.log(FileNotFound, s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas")
               NotFound("Nous n'avons pas trouvé ce fichier")
           }
       case (None, Some(application)) if application.fileCanBeShowed(request.currentUser) =>
@@ -375,11 +375,11 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
             eventService.log(FileOpened, s"Le fichier de la demande $applicationId a été ouvert")
             Ok.sendPath(Paths.get (s"$filesPath/app_$applicationId-$filename"), true, { _: Path => filename })
         } else {
-            eventService.error("FILE_NOT_FOUND", s"Le fichier de la demande $application sur la demande $applicationId n'existe pas")
+            eventService.log(FileNotFound, s"Le fichier de la demande $application sur la demande $applicationId n'existe pas")
             NotFound("Nous n'avons pas trouvé ce fichier")
         }
       case (_, Some(application)) =>
-          eventService.warn("FILE_UNAUTHORIZED", s"L'accès aux fichiers sur la demande $applicationId n'est pas autorisé", Some(application))
+          eventService.log(FileUnauthorized, s"L'accès aux fichiers sur la demande $applicationId n'est pas autorisé", Some(application))
           Unauthorized("Vous n'avez pas les droits suffisants pour voir les fichiers sur cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
 
     }
@@ -393,7 +393,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
       form.fold(
         formWithErrors => {
           val error = s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.message).mkString(", ")})."
-          eventService.error("ANSWER_NOT_CREATED", s"$error")
+          eventService.log(AnswerNotCreated, s"$error")
           Redirect(routes.ApplicationController.show(applicationId).withFragment("answer-error")).flashing("answer-error" -> error, "opened-tab" -> "anwser")
         },
         answerData => {
@@ -412,7 +412,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
             notificationsService.newAnswer(application, answer)
             Redirect(s"${routes.ApplicationController.show(applicationId)}#answer-${answer.id}").flashing("success" -> "Votre réponse a bien été envoyée")
           } else {
-            eventService.error("ANSWER_NOT_CREATED", s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
+            eventService.log(AnswerNotCreated, s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
             InternalServerError("Votre réponse n'a pas pu être envoyé")
           }
         }
@@ -433,7 +433,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
       inviteForm.bindFromRequest.fold(
         formWithErrors => {
           val error = s"Erreur dans le formulaire d'invitation (${formWithErrors.errors.map(_.message).mkString(", ")})."
-          eventService.error("INVITE_NOT_CREATED", s"$error")
+          eventService.log(InviteNotCreated, error)
           Redirect(routes.ApplicationController.show(applicationId).withFragment("answer-error")).flashing("answer-error" -> error, "opened-tab" -> "invite" )
         },
         inviteData => {
@@ -457,7 +457,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
             eventService.log(AgentsAdded, s"L'ajout d'utilisateur ${answer.id} a été créé sur la demande $applicationId", Some(application))
             Redirect(routes.ApplicationController.myApplications()).flashing ("success" -> "Les utilisateurs ont été invités sur la demande")
           } else {
-            eventService.error("AGENTS_NOT_ADDED", s"L'ajout d'utilisateur ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
+            eventService.log(AgentsNotAdded, s"L'ajout d'utilisateur ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
             InternalServerError("Les utilisateurs n'ont pas pu être invités")
           }
         })
@@ -467,7 +467,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
   def inviteExpert(applicationId: UUID) = loginAction { implicit request =>
     applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
       case None =>
-        eventService.error("ADD_EXPERT_NOT_FOUND", s"La demande $applicationId n'existe pas pour ajouter un expert")
+        eventService.log(AddExpertNotFound, s"La demande $applicationId n'existe pas pour ajouter un expert")
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
         if(application.canHaveExpertsInvitedBy(request.currentUser)) {
@@ -487,11 +487,11 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
             eventService.log(AddExpertCreated, s"La réponse ${answer.id} a été créé sur la demande $applicationId", Some(application))
             Redirect(routes.ApplicationController.myApplications()).flashing ("success" -> "Un expert a été invité sur la demande")
           } else {
-            eventService.error("ADD_EXPERT_NOT_CREATED", s"L'invitation d'experts ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
+            eventService.log(AddExpertNotCreated, s"L'invitation d'experts ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD", Some(application))
             InternalServerError("L'expert n'a pas pu être invité")
           }
         } else {
-          eventService.warn("ADD_EXPERT_UNAUTHORIZED", s"L'invitation d'experts pour la demande $applicationId n'est pas autorisé", Some(application))
+          eventService.log(AddExpertUnauthorized, s"L'invitation d'experts pour la demande $applicationId n'est pas autorisé", Some(application))
           Unauthorized("Vous n'avez pas les droits suffisants pour inviter des agents à cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
         }
     }
@@ -500,10 +500,10 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
   def terminate(applicationId: UUID) = loginAction {  implicit request =>
     (request.getQueryString("usefulness"), applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin)) match {
       case (_, None) =>
-        eventService.error("TERMINATE_NOT_FOUND", s"La demande $applicationId n'existe pas pour la clôturer")
+        eventService.log(TerminateNotFound, s"La demande $applicationId n'existe pas pour la clôturer")
         NotFound("Nous n'avons pas trouvé cette demande.")
       case (None, _) =>
-        eventService.error("TERMINATE_INCOMPLETED", s"La demande de clôture pour $applicationId est incompléte")
+        eventService.log(TerminateIncompleted, s"La demande de clôture pour $applicationId est incompléte")
         BadGateway("L'utilité de la demande n'est pas présente, il s'agit surement d'une erreur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
       case (Some(usefulness), Some(application)) =>
         val finalUsefulness = if(request.currentUser.id == application.creatorUserId) {
@@ -516,11 +516,11 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
             eventService.log(TerminateCompleted, s"La demande $applicationId est clôturé", Some(application))
             Redirect(routes.ApplicationController.myApplications()).flashing("success" -> "L'application a été indiqué comme clôturée")
           } else {
-            eventService.error("TERMINATE_ERROR", s"La demande $applicationId n'a pas pu être clôturé en BDD", Some(application))
+            eventService.log(TerminateError, s"La demande $applicationId n'a pas pu être clôturé en BDD", Some(application))
             InternalServerError("Erreur interne: l'application n'a pas pu être indiqué comme clôturée")
           }
         } else {
-          eventService.warn("TERMINATE_UNAUTHORIZED", s"L'utilisateur n'a pas le droit de clôturer la demande $applicationId", Some(application))
+          eventService.log(TerminateUnauthorized, s"L'utilisateur n'a pas le droit de clôturer la demande $applicationId", Some(application))
           Unauthorized("Seul le créateur de la demande ou un expert peut clôre la demande")
         }
     }

@@ -8,7 +8,7 @@ import play.api.mvc._
 import play.api.mvc.Results.TemporaryRedirect
 import services.{EventService, TokenService, UserService}
 import extentions.UUIDHelper
-import models.EventType.{AuthByKey, LoginByKey, ToCGURedirected, TryLoginByKey, UserAccessDisabled}
+import models.EventType.{AuthByKey, AuthWithDifferentIp, ExpiredToken, LoginByKey, ToCGURedirected, TryLoginByKey, UserAccessDisabled}
 import play.api.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -97,14 +97,14 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
         implicit val requestWithUserData = new RequestWithUserData(user, area, request)
 
         if(token.ipAddress != request.remoteAddress) {
-          eventService.warn("AUTH_WITH_DIFFERENT_IP", s"Utilisateur ${token.userId} à une adresse ip différente pour l'essai de connexion")
+          eventService.log(AuthWithDifferentIp, s"Utilisateur ${token.userId} à une adresse ip différente pour l'essai de connexion")
         }
         if(token.isActive){
           val url = request.path + queryToString(request.queryString - "key" - "token")
           eventService.log(AuthByKey, s"Identification par token")
           Left(TemporaryRedirect(Call(request.method, url).url).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
         } else {
-          eventService.warn("EXPIRED_TOKEN", s"Token expiré pour ${token.userId}")
+          eventService.log(ExpiredToken, s"Token expiré pour ${token.userId}")
           userNotLogged(s"Le lien que vous avez utilisez a expiré (il expire après $tokenExpirationInMinutes minutes), saisissez votre email pour vous reconnecter")
         }
     }
