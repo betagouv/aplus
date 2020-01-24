@@ -9,7 +9,7 @@ import play.api.mvc.Results._
 import play.api.mvc.{AnyContent, Result, Results}
 import services.{ApplicationService, EventService, UserGroupService, UserService}
 import BooleanHelper.not
-import models.EventType.{AdminOutOfRange, ApplicationUnauthorized, InexistingApplication, InexistingGroup, UserNotFound}
+import models.EventType.{AdminOutOfRange, ApplicationNotFound, ApplicationUnauthorized, UserGroupNotFound, UserNotFound}
 
 object Operators {
 
@@ -23,7 +23,7 @@ object Operators {
     def withGroup(groupId: UUID)(payload: UserGroup => Result)
                  (implicit request: RequestWithUserData[AnyContent]): Result = {
       groupService.groupById(groupId).fold({
-        eventService.log(InexistingGroup, description = "Tentative d'accès à un groupe inexistant.")
+        eventService.log(UserGroupNotFound, description = "Tentative d'accès à un groupe inexistant.")
         NotFound("Groupe inexistant.")
       })({ group: UserGroup =>
         payload(group)
@@ -117,7 +117,7 @@ object Operators {
     def withApplication(applicationId: UUID)(payload: Application => Result)
                  (implicit request: RequestWithUserData[AnyContent]): Result = {
       applicationService.byId(applicationId, fromUserId = request.currentUser.id, anonymous = request.currentUser.admin).fold({
-        eventService.log(InexistingApplication, description = "Tentative d'accès à une application inexistant.")
+        eventService.log(ApplicationNotFound, description = "Tentative d'accès à une application inexistant.")
         NotFound("Application inexistante.")
       })({ application: Application =>
         if(not(application.canBeShowedBy(request.currentUser))) {
