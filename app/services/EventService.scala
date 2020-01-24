@@ -33,9 +33,6 @@ class EventService @Inject()(db: Database) {
   def log[A](event: EventType, description: String, application: Option[Application] = None, user: Option[User] = None)(implicit request: RequestWithUserData[A])
   = register[A](event.level)(request.currentUser, request.currentArea, request.remoteAddress, event.code, description, application, user)
 
-  //def error[A](code: String, description: String, application: Option[Application] = None, user: Option[User] = None)(implicit request: RequestWithUserData[A])
-  //= register[A]("ERROR")(request.currentUser, request.currentArea, request.remoteAddress, code, description, application, user)
-
   val info = register("INFO") _
   val warn = register("WARN") _
   val error = register("ERROR") _
