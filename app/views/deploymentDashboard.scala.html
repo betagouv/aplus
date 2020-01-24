@@ -6,13 +6,21 @@
 }{
     <h5 class="title--addline">Nombre d'agents instructeurs par organisation</h5>
     <i>Les agents sont comptés double s'ils sont dans plusieurs départements. Les organisations manquantes ne sont pas affichées. Certains agents ne sont pas détecté comme faisant partie d'un organisation (Vous devez corriger le groupe dans ce cas)</i>
-    @for(organisationSet <- data.head._2.map(_._1)) {
-        <div class="mdl-cell mdl-cell--2-col">
-            <input type="checkbox" checked name="@{organisationSet.map(_.key).mkString}" onchange="table.toggleColumn('@{organisationSet.map(_.key).mkString}')">@{organisationSet.map(_.shortName).mkString("/")}</input>
-        </div>
-}
+    <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
+        @for(organisationSet <- data.head._2.map(_._1)) {
+            <div class="mdl-cell mdl-cell--2-col">
+                <label>
+                    <input type="checkbox" checked name="@{organisationSet.map(_.key).mkString}" onchange="table.toggleColumn('@{organisationSet.map(_.key).mkString}')">
+                    @{organisationSet.map(_.shortName).mkString("/")}
+                </label>
+            </div>
+        }
+    </div>
     <div id="table" class="mdl-cell mdl-cell--12-col"></div>
+    <div class="mdl-cell mdl-cell--12-col">
+        <button class="mdl-button mdl-button--raised" onclick="downloadCSV()">Télécharger CSV</button>
 
+    </div>
     <script>
        var tableData = [
            @for((area: Area, usersSumPerOrganisation: List[(Set[Organisation], Int)], total) <- data) {
@@ -24,7 +32,7 @@
                 },
            }
            {
-                area: "TOTAUX (nombre de structure)",
+                area: "TOTAUX (de structure)",
                 @for((organisations, count) <- organisationSetToCountOfCounts)  {
                     @{organisations.map(_.key).mkString} : @count,
                 }
@@ -33,7 +41,8 @@
        ]
 
        var columns = [
-           {title: "Département", field: "area", sorter:"string", width:150},
+           {title: "Département", field: "area", sorter:"string", width:150,
+               frozen:true},
            @for(organisations <- Organisation.organisationGrouping) {
                 {
                     title: "@{organisations.map(_.shortName).mkString("/")}",
@@ -42,7 +51,7 @@
                     headerVertical:true,
                     formatter: function(cell, formatterParams, onRendered) {
                         var value = cell.getValue();
-                        if (cell._cell.row.data.area == "TOTAUX (nombre de structure)") {
+                        if (cell._cell.row.data.area == "TOTAUX (de structure)") {
                             if (value < 1) {
                                 cell._cell.element.classList.add("mdl-color--red");
                             } else if (value <= 4) {
@@ -66,7 +75,7 @@
                 },
            },
            {
-                title: "TOTAUX (nombre de structure)",
+                title: "TOTAUX (de structure)",
                 field: "total",
                 sorter: "number",
                 headerVertical: true,
@@ -93,8 +102,14 @@
            movableColumns:true,      //allow column order to be changed
            resizableRows:true,       //allow row order to be changed
            initialSort: [],
-           columns: columns
+           columns: columns,
+           height: "85vh",
        });
+
+       function downloadCSV() {
+           var date = new Date().toISOString().replace(/:/g,'-');
+           table.download('csv', 'aplus-export-deploiement-'+date+'.csv');
+       }
 
     </script>
 }
