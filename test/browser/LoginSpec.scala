@@ -63,7 +63,7 @@ class gLoginSpec extends Specification with Tables with BaseSpec {
     "Use token without success"  in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {
       val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL(false, s"localhost:$port")
 
-      browser.goTo(s"$loginURL?token=90798798789798&path=/nouvelle-demande")
+      browser.goTo(s"$loginURL?token=90798798789798&path=/")
 
       eventually {
         browser.url must endWith(controllers.routes.LoginController.login().url.substring(1))

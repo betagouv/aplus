@@ -15,6 +15,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class RequestWithUserData[A](val currentUser: User, @deprecated val currentArea: Area, request: Request[A]) extends WrappedRequest[A](request)
 
+//TODO : this class is complicated. Maybe we can split the logic.
+
 @Singleton
 class LoginAction @Inject()(val parser: BodyParsers.Default,
                             userService: UserService,
@@ -60,19 +62,16 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
           eventService.log(UserAccessDisabled, s"Utilisateur désactivé essaye d'accèder à la page ${request.path}}")
           userNotLogged(s"Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème.")
         case _ =>
-          if (path != routes.HomeController.index().url) {
-            val message = request.getQueryString("token") match {
+           request.getQueryString("token") match {
               case Some(token) =>
                 eventService.info(User.systemUser, Area.notApplicable, request.remoteAddress, "UNKNOWN_TOKEN", s"Token $token est inconnue", None, None)
-                "Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé. Si cette erreur se répète, contactez l'équipe Administration+"
+                userNotLogged("Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé. Si cette erreur se répète, contactez l'équipe Administration+")
+              case None if path != routes.HomeController.index().url =>
+                userNotLoggedOnLoginPage
               case None =>
                 Logger.warn(s"Accès à la ${request.path} non autorisé")
-                "Vous devez vous identifier pour accèder à cette page."
+                userNotLogged("Vous devez vous identifier pour accèder à cette page.")
             }
-            userNotLogged(message)
-          } else {
-            userNotLoggedOnLoginPage
-          }
       }
     }
 
