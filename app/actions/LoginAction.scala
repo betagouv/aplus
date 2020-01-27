@@ -59,18 +59,20 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
           implicit val requestWithUserData = new RequestWithUserData(user, area, request)
           eventService.log(UserAccessDisabled, s"Utilisateur désactivé essaye d'accèder à la page ${request.path}}")
           userNotLogged(s"Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème.")
-        case _ if request.path == routes.HomeController.index().url =>
-          userNotLoggedOnLoginPage
         case _ =>
-          val message = request.getQueryString("token") match {
-            case Some(token) =>
-              eventService.info(User.systemUser, Area.notApplicable, request.remoteAddress, "UNKNOWN_TOKEN", s"Token $token est inconnue", None, None)
-              "Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé. Si cette erreur se répète, contactez l'équipe Administration+"
-            case None =>
-              Logger.warn(s"Accès à la ${request.path} non autorisé")
-              "Vous devez vous identifier pour accèder à cette page."
+          if (path == routes.HomeController.index().url) {
+            userNotLoggedOnLoginPage
+          } else {
+            val message = request.getQueryString("token") match {
+              case Some(token) =>
+                eventService.info(User.systemUser, Area.notApplicable, request.remoteAddress, "UNKNOWN_TOKEN", s"Token $token est inconnue", None, None)
+                "Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé. Si cette erreur se répète, contactez l'équipe Administration+"
+              case None =>
+                Logger.warn(s"Accès à la ${request.path} non autorisé")
+                "Vous devez vous identifier pour accèder à cette page."
+            }
+            userNotLogged(message)
           }
-          userNotLogged(message)
       }
     }
 
