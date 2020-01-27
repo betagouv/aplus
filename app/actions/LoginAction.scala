@@ -59,6 +59,8 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
           implicit val requestWithUserData = new RequestWithUserData(user, area, request)
           eventService.log(UserAccessDisabled, s"Utilisateur désactivé essaye d'accèder à la page ${request.path}}")
           userNotLogged(s"Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème.")
+        case _ if request.path == routes.HomeController.index().url =>
+          userNotLoggedOnLoginPage
         case _ =>
           val message = request.getQueryString("token") match {
             case Some(token) =>
@@ -112,6 +114,9 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
 
   private def userNotLogged[A](message: String)(implicit request: Request[A]) = Left(TemporaryRedirect(routes.LoginController.login().url)
     .withSession(request.session - "userId").flashing("error" -> message))
+
+  private def userNotLoggedOnLoginPage[A](implicit request: Request[A]) =
+    Left(TemporaryRedirect(routes.LoginController.login().url).withSession(request.session - "userId"))
 
   private def tokenById[A](implicit request: Request[A]) = request.getQueryString("token").flatMap(tokenService.byToken)
   private def userByKey[A](implicit request: Request[A]) = request.getQueryString("key").flatMap(userService.byKey)
