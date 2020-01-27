@@ -7,7 +7,7 @@ import extentions.BooleanHelper.not
 import extentions.Operators.{GroupOperators, UserOperators}
 import extentions.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
-import models.EventType.{UsersCreated, AllUserCsvShowed, AllUserIncorrectSetup, UsersShowed, CGUShowed, CGUValidated, UserEdited, EditUserShowed, EventsShowed, UserDeleted, UserShowed}
+import models.EventType.{AddUserError, AllUserCSVUnauthorized, AllUserCsvShowed, AllUserIncorrectSetup, AllUserUnauthorized, CGUShowed, CGUValidated, CGUValidationError, DeleteUserUnauthorized, EditUserError, EditUserShowed, EventsShowed, EventsUnauthorized, PostAddUserUnauthorized, PostEditUserUnauthorized, ShowAddUserUnauthorized, UserDeleted, UserEdited, UserIsUsed, UserNotFound, UserShowed, UsersCreated, UsersShowed, ViewUserUnauthorized}
 import models.{Area, EventType, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.postgresql.util.PSQLException
@@ -37,7 +37,7 @@ case class UserController @Inject()(loginAction: LoginAction,
 
   def all(areaId: UUID): Action[AnyContent] = loginAction { implicit request: RequestWithUserData[AnyContent] =>
     asUserWhoSeesUsersOfArea(areaId) { () =>
-      "ALL_USER_UNAUTHORIZED" -> "Accès non autorisé à l'admin des utilisateurs"
+      AllUserUnauthorized -> "Accès non autorisé à l'admin des utilisateurs"
     } { () =>
       val selectedArea = Area.fromId(areaId).get
       val users = (request.currentUser.admin, request.currentUser.groupAdmin, selectedArea.id == Area.allArea.id) match {
@@ -70,7 +70,7 @@ case class UserController @Inject()(loginAction: LoginAction,
 
   def allCSV(areaId: java.util.UUID): Action[AnyContent] = loginAction { implicit request: RequestWithUserData[AnyContent] =>
     asAdminWhoSeesUsersOfArea(areaId) { () =>
-      "ALL_USER_CSV_UNAUTHORIZED" -> "Accès non autorisé à l'export utilisateur"
+      AllUserCSVUnauthorized -> "Accès non autorisé à l'export utilisateur"
     } { () =>
       val area = Area.fromId(areaId).get
       val users = if (areaId == Area.allArea.id) userService.byAreas(request.currentUser.areas)
@@ -112,11 +112,11 @@ case class UserController @Inject()(loginAction: LoginAction,
 
   def editUser(userId: UUID): Action[AnyContent] = loginAction { implicit request: RequestWithUserData[AnyContent] =>
     asAdmin { () =>
-      "VIEW_USER_UNAUTHORIZED" -> s"Accès non autorisé pour voir $userId"
+      ViewUserUnauthorized -> s"Accès non autorisé pour voir $userId"
     } { () =>
       userService.byId(userId, includeDisabled = true) match {
         case None =>
-          eventService.error("USER_NOT_FOUND", s"L'utilisateur $userId n'existe pas")
+          eventService.log(UserNotFound, s"L'utilisateur $userId n'existe pas")
           NotFound("Nous n'avons pas trouvé cet utilisateur")
         case Some(user) if user.canBeEditedBy(request.currentUser) =>
           val form = userForm(Time.dateTimeZone).fill(user)
@@ -126,7 +126,7 @@ case class UserController @Inject()(loginAction: LoginAction,
           eventService.log(UserShowed, "Visualise la vue de modification l'utilisateur ", user = Some(user))
           Ok(views.html.editUser(request.currentUser)(form, userId, groups, unused, tokenName = tokenName, tokenValue = tokenValue))
         case _ =>
-          eventService.warn("VIEW_USER_UNAUTHORIZED", s"Accès non autorisé pour voir $userId")
+          eventService.log(ViewUserUnauthorized, s"Accès non autorisé pour voir $userId")
           Unauthorized("Vous n'avez pas le droit de faire ça")
       }
     }
@@ -139,10 +139,10 @@ case class UserController @Inject()(loginAction: LoginAction,
   def deleteUnusedUserById(userId: UUID): Action[AnyContent] = loginAction { implicit request =>
     withUser(userId, includeDisabled = true) { user: User =>
       asAdminOfUserZone(user) { () =>
-        "DELETE_USER_UNAUTHORIZED" -> s"Suppression de l'utilisateur $userId refusée."
+        DeleteUserUnauthorized  -> s"Suppression de l'utilisateur $userId refusée."
       } { () =>
         if (isAccountUsed(user)) {
-          eventService.error(code = "USER_IS_USED", description = s"Le compte ${user.id} est utilisé.")
+          eventService.log(UserIsUsed, description = s"Le compte ${user.id} est utilisé.")
           Unauthorized("User is not unused.")
         } else {
           userService.deleteById(userId)
@@ -156,12 +156,12 @@ case class UserController @Inject()(loginAction: LoginAction,
 
   def editUserPost(userId: UUID): Action[AnyContent] = loginAction { implicit request =>
     asAdmin { () =>
-      "POST_EDIT_USER_UNAUTHORIZED" -> s"Accès non autorisé à modifier $userId"
+      PostEditUserUnauthorized -> s"Accès non autorisé à modifier $userId"
     } { () =>
       userForm(Time.dateTimeZone).bindFromRequest.fold(
         formWithErrors => {
           val groups = groupService.allGroups
-          eventService.error("ADD_USER_ERROR", s"Essai de modification de l'tilisateur $userId avec des erreurs de validation")
+          eventService.log(AddUserError, s"Essai de modification de l'tilisateur $userId avec des erreurs de validation")
           BadRequest(views.html.editUser(request.currentUser)(formWithErrors, userId, groups))
         }, updatedUser => {
           withUser(updatedUser.id, includeDisabled = true) { user: User =>
@@ -173,7 +173,7 @@ case class UserController @Inject()(loginAction: LoginAction,
 
             if (not(user.canBeEditedBy(request.currentUser))
                 || areaIds.diff(request.currentUser.areas).nonEmpty) { // fail if in case an Admin try to manage an authorized area
-              eventService.warn("POST_EDIT_USER_UNAUTHORIZED", s"Accès non autorisé à modifier $userId")
+              eventService.log(PostEditUserUnauthorized, s"Accès non autorisé à modifier $userId")
               Unauthorized("Vous n'avez pas le droit de faire ça")
             } else if (userService.update(userToUpdate)) {
               eventService.log(UserEdited, s"Utilisateur $userId modifié", user = Some(updatedUser))
@@ -181,7 +181,7 @@ case class UserController @Inject()(loginAction: LoginAction,
             } else {
               val form = userForm(Time.dateTimeZone).fill(userToUpdate).withGlobalError(s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)")
               val groups = groupService.allGroups
-              eventService.error("EDIT_USER_ERROR", "Impossible de modifier l'utilisateur dans la BDD", user = Some(updatedUser))
+              eventService.log(EditUserError, "Impossible de modifier l'utilisateur dans la BDD", user = Some(updatedUser))
               InternalServerError(views.html.editUser(request.currentUser)(form, userId, groups))
             }
           }
@@ -195,18 +195,18 @@ case class UserController @Inject()(loginAction: LoginAction,
   def addPost(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
     withGroup(groupId) { group: UserGroup =>
       if (!group.canHaveUsersAddedBy(request.currentUser)) {
-        eventService.warn("POST_ADD_USER_UNAUTHORIZED", "Accès non autorisé à l'admin des utilisateurs")
+        eventService.log(PostAddUserUnauthorized, "Accès non autorisé à l'admin des utilisateurs")
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
         usersForm(Time.dateTimeZone, group.areaIds).bindFromRequest.fold({ formWithErrors =>
-          eventService.error("ADD_USER_ERROR", "Essai d'ajout d'utilisateurs avec des erreurs de validation")
+          eventService.log(AddUserError, "Essai d'ajout d'utilisateurs avec des erreurs de validation")
           BadRequest(views.html.editUsers(request.currentUser)(formWithErrors, 0, routes.UserController.addPost(groupId)))
         }, { users =>
           try {
             val userToInsert = users.map(_.copy(groupIds = List(groupId)))
             userService.add(userToInsert).fold({ error =>
               val errorMessage = s"Impossible d'ajouté les utilisateurs (Erreur interne 1) $error"
-              eventService.error("ADD_USER_ERROR", errorMessage)
+              eventService.log(AddUserError, errorMessage)
               val form = usersForm(Time.dateTimeZone, group.areaIds).fill(users).withGlobalError(errorMessage)
               InternalServerError(views.html.editUsers(request.currentUser)(form, users.length, routes.UserController.addPost(groupId)))
             }, { Unit =>
@@ -225,7 +225,7 @@ case class UserController @Inject()(loginAction: LoginAction,
                 case _ => "Erreur d'insertion dans la base de donnée : contacter l'administrateur."
               }
               val form = usersForm(Time.dateTimeZone, group.areaIds).fill(users).withGlobalError(errorMessage)
-              eventService.error("ADD_USER_ERROR", s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}")
+              eventService.log(AddUserError, s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}")
               BadRequest(views.html.editUsers(request.currentUser)(form, users.length, routes.UserController.addPost(groupId)))
           }
         })
@@ -240,7 +240,7 @@ case class UserController @Inject()(loginAction: LoginAction,
 
   def validateCGU(): Action[AnyContent] = loginAction { implicit request =>
     validateCGUForm.bindFromRequest.fold({ formWithErrors =>
-      eventService.error("CGU_VALIDATION_ERROR", "Erreur de formulaire dans la validation des CGU")
+      eventService.log(CGUValidationError, "Erreur de formulaire dans la validation des CGU")
       BadRequest(s"Formulaire invalide, prévenez l'administrateur du service. ${formWithErrors.errors.mkString(", ")}")
     }, { case (redirectOption, newsletter, validate) =>
       if (validate) {
@@ -265,7 +265,7 @@ case class UserController @Inject()(loginAction: LoginAction,
   def add(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
     withGroup(groupId) { group: UserGroup =>
       if (!group.canHaveUsersAddedBy(request.currentUser)) {
-        eventService.warn("SHOW_ADD_USER_UNAUTHORIZED", s"Accès non autorisé à l'admin des utilisateurs du groupe $groupId")
+        eventService.log(ShowAddUserUnauthorized, s"Accès non autorisé à l'admin des utilisateurs du groupe $groupId")
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
         val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
@@ -277,7 +277,7 @@ case class UserController @Inject()(loginAction: LoginAction,
 
   def allEvents: Action[AnyContent] = loginAction { implicit request =>
     asAdmin { () =>
-      "EVENTS_UNAUTHORIZED" -> "Accès non autorisé pour voir les événements"
+      EventsUnauthorized -> "Accès non autorisé pour voir les événements"
     } { () =>
       val limit = request.getQueryString("limit").map(_.toInt).getOrElse(500)
       val userId = request.getQueryString("fromUserId").flatMap(UUIDHelper.fromString)

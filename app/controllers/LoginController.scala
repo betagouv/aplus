@@ -2,7 +2,7 @@ package controllers
 
 import actions.RequestWithUserData
 import javax.inject.{Inject, Singleton}
-import models.EventType.GenerateToken
+import models.EventType.{GenerateToken, UnknownEmail}
 import models.{Area, LoginToken, User}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
@@ -26,7 +26,7 @@ class LoginController @Inject()(userService: UserService,
      } { email =>
        userService.byEmail(email).fold {
          implicit val requestWithUserData = new RequestWithUserData(User.systemUser, Area.notApplicable, request)
-         eventService.warn("UNKNOWN_EMAIL", s"Aucun compte actif à cette adresse mail $email")
+         eventService.log(UnknownEmail, s"Aucun compte actif à cette adresse mail $email")
          val message =
            """Aucun compte actif n'est associé à cette adresse e-mail.
              |Merci de vérifier qu'il s'agit bien de votre adresse professionnelle et nominative qui doit être sous la forme : prenom.nom@votre-structure.fr""".stripMargin
