@@ -60,9 +60,7 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
           eventService.log(UserAccessDisabled, s"Utilisateur désactivé essaye d'accèder à la page ${request.path}}")
           userNotLogged(s"Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème.")
         case _ =>
-          if (path == routes.HomeController.index().url) {
-            userNotLoggedOnLoginPage
-          } else {
+          if (path != routes.HomeController.index().url) {
             val message = request.getQueryString("token") match {
               case Some(token) =>
                 eventService.info(User.systemUser, Area.notApplicable, request.remoteAddress, "UNKNOWN_TOKEN", s"Token $token est inconnue", None, None)
@@ -72,6 +70,8 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
                 "Vous devez vous identifier pour accèder à cette page."
             }
             userNotLogged(message)
+          } else {
+            userNotLoggedOnLoginPage
           }
       }
     }
