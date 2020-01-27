@@ -1,4 +1,4 @@
-@(user: User)
+@(user: User, tokenExpirationInMinutes: Int)
 
 <!DOCTYPE html>
 <html>
@@ -69,7 +69,7 @@ border: 1px solid #eaeaea; padding: 15px; font-size: 14px"
         2. Rentrez votre adresse de messagerie professionnelle et nominative (@user.email). Un
         e-mail va vous être envoyé.<br />
         3. Cliquez sur le lien contenu dans l'e-mail. Pas besoin de mot de passe
-        ! Attention, ce lien n’est valable que 15 minutes.<br />
+        ! Attention, ce lien n’est valable que @tokenExpirationInMinutes minutes.<br />
         4. Acceptez les conditions d’utilisations (CGU) lors de votre première
         connexion.<br />
 
