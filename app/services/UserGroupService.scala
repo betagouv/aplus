@@ -6,7 +6,7 @@ import java.util.UUID
 import anorm._
 import extentions.{Hash, Time, UUIDHelper}
 import javax.inject.Inject
-import models.{User, UserGroup}
+import models.{Area, User, UserGroup}
 import play.api.db.Database
 import anorm.JodaParameterMetaData._
 import org.postgresql.util.PSQLException
@@ -111,11 +111,18 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
   }
 
   def contextualizedUserName(user: User): String = {
-    val groupsName = byIds(user.groupIds).map(_.name)
-    val context = if(groupsName.isEmpty)
-      user.qualite
+    val groups = byIds(user.groupIds)
+    val contexts = groups.flatMap({ userGroup: UserGroup =>
+      for {
+        areaInseeCode <- userGroup.areaIds.flatMap(Area.fromId).map(_.inseeCode).headOption
+        organisation <- userGroup.organisation
+      } yield {
+        s"($organisation - $areaInseeCode)"
+      }
+    })
+    if (contexts.isEmpty)
+      s"${user.name} ( ${user.qualite} )"
     else
-      groupsName.mkString(";")
-    s"${user.name} ( $context )"
+      s"${user.name} ${contexts.mkString(",")}"
   }
 }
