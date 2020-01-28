@@ -11,13 +11,12 @@ class HomeSpec extends Specification with Tables with BaseSpec {
   
   "Home" should {
     "Redirect to /login when disconnected" in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {
-      val loginURL = controllers.routes.HomeController.index().absoluteURL(false, s"localhost:$port")
+      val homeUrl = controllers.routes.HomeController.index().absoluteURL(false, s"localhost:$port")
 
-      browser.goTo(loginURL)
+      browser.goTo(homeUrl)
 
 
       browser.url must endWith(controllers.routes.LoginController.login().url.substring(1))
-      browser.pageSource must contain("Vous devez vous identifier pour accèder à cette page.")
     }
 
     "Status up" in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {

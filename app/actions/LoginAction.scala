@@ -15,6 +15,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class RequestWithUserData[A](val currentUser: User, @deprecated val currentArea: Area, request: Request[A]) extends WrappedRequest[A](request)
 
+//TODO : this class is complicated. Maybe we can split the logic.
+
 @Singleton
 class LoginAction @Inject()(val parser: BodyParsers.Default,
                             userService: UserService,
@@ -60,15 +62,16 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
           eventService.log(UserAccessDisabled, s"Utilisateur désactivé essaye d'accèder à la page ${request.path}}")
           userNotLogged(s"Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème.")
         case _ =>
-          val message = request.getQueryString("token") match {
-            case Some(token) =>
-              eventService.info(User.systemUser, Area.notApplicable, request.remoteAddress, "UNKNOWN_TOKEN", s"Token $token est inconnue", None, None)
-              "Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé. Si cette erreur se répète, contactez l'équipe Administration+"
-            case None =>
-              Logger.warn(s"Accès à la ${request.path} non autorisé")
-              "Vous devez vous identifier pour accèder à cette page."
-          }
-          userNotLogged(message)
+           request.getQueryString("token") match {
+              case Some(token) =>
+                eventService.info(User.systemUser, Area.notApplicable, request.remoteAddress, "UNKNOWN_TOKEN", s"Token $token est inconnue", None, None)
+                userNotLogged("Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé. Si cette erreur se répète, contactez l'équipe Administration+")
+              case None if path != routes.HomeController.index().url =>
+                userNotLoggedOnLoginPage
+              case None =>
+                Logger.warn(s"Accès à la ${request.path} non autorisé")
+                userNotLogged("Vous devez vous identifier pour accèder à cette page.")
+            }
       }
     }
 
@@ -112,6 +115,9 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
 
   private def userNotLogged[A](message: String)(implicit request: Request[A]) = Left(TemporaryRedirect(routes.LoginController.login().url)
     .withSession(request.session - "userId").flashing("error" -> message))
+
+  private def userNotLoggedOnLoginPage[A](implicit request: Request[A]) =
+    Left(TemporaryRedirect(routes.LoginController.login().url).withSession(request.session - "userId"))
 
   private def tokenById[A](implicit request: Request[A]) = request.getQueryString("token").flatMap(tokenService.byToken)
   private def userByKey[A](implicit request: Request[A]) = request.getQueryString("key").flatMap(userService.byKey)
