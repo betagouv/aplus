@@ -46,10 +46,12 @@ class UserService @Inject()(configuration: play.api.Configuration, db: Database)
     SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""").on('areaId -> areaId).as(simpleUser.*)
   }
 
+  @deprecated(message = "Areas associated to user aren't relevant anymore, please use UserGroup#byArea()", since = "v0.4.3")
   def byArea(areaId: UUID): List[User] = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""").on('areaId -> areaId).as(simpleUser.*)
   } ++ User.admins.filter( user => user.areas.contains(areaId))
 
+  @deprecated(message = "Areas associated to user aren't relevant anymore, please use UserGroup#byArea()", since = "v0.4.3")
   def byAreas(areaIds: List[UUID]): List[User] = db.withConnection { implicit connection =>
     SQL"""SELECT * FROM "user" WHERE ARRAY[$areaIds]::uuid[] && areas""".as(simpleUser.*)
   } ++ User.admins.filter( user => user.areas.intersect(areaIds).nonEmpty)
