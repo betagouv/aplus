@@ -154,9 +154,9 @@ dialog {
             <button type="button" disabled="disabled" class="mdl-button mdl-button--raised mdl-button--colored" id="close-dialog-terminate" onclick="confirmTerminate()">Clore</button>
         </div>
     </dialog>
-        <div class="mdl-cell  mdl-cell--2-col mdl-cell--10-offset-desktop mdl-cell--12-col-phone">
+        <div class="mdl-cell  mdl-cell--3-col mdl-cell--9-offset-desktop mdl-cell--12-col-phone">
             @if(application.canBeClosedBy(user) && application.closed == false) {
-                <button class="mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()" style="float: right">
+                <button class="mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()">
                     Clore la demande
                 </button>
             }
