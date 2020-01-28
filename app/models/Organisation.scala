@@ -9,9 +9,16 @@ case class Organisation(shortName: String,
 }
 
 object Organisation {
-  def fromShortName(shortName: String) = all.find(_.shortName == shortName)
 
-  def fromName(name: String) = all.find(_.name == name)
+  def fromShortName(shortName: String) = {
+    val standardShortName = shortName.canonize
+    all.find(_.shortName.canonize == standardShortName)
+  }
+
+  def fromName(name: String) = {
+    val standardName = name.canonize
+    all.find(_.name.canonize == standardName)
+  }
   
   val all = List(
     Organisation("A+", "Administration+"),  // Nationale
