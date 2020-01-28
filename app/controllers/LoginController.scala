@@ -22,7 +22,7 @@ class LoginController @Inject()(userService: UserService,
       .orElse(request.getQueryString("email"))
       .orElse(request.flash.get("email"))
     emailFromRequestOrQueryParamOrFlash.fold {
-       Ok(views.html.loginHome(Left(None)))
+       Ok(views.html.loginHome(Left(None), tokenExpirationInMinutes))
      } { email =>
        userService.byEmail(email).fold {
          implicit val requestWithUserData = new RequestWithUserData(User.systemUser, Area.notApplicable, request)
@@ -41,7 +41,7 @@ class LoginController @Inject()(userService: UserService,
          implicit val requestWithUserData = new RequestWithUserData(user, Area.notApplicable, request)
          eventService.log(GenerateToken, s"Génére un token pour une connexion par email body=${request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty}&flash=${request.flash.get("email").nonEmpty}")
 
-         Ok(views.html.loginHome(Left(Some(user)))).flashing("email" -> email)
+         Ok(views.html.loginHome(Left(Some(user)),tokenExpirationInMinutes)).flashing("email" -> email)
        }
      }
    }
@@ -49,7 +49,7 @@ class LoginController @Inject()(userService: UserService,
   def magicLinkAntiConsumptionPage() = Action { implicit request =>
     (request.getQueryString("token"),request.getQueryString("path")) match {
       case (Some(token), Some(path)) =>
-        Ok(views.html.loginHome(Right((token,path))))
+        Ok(views.html.loginHome(Right((token,path)), tokenExpirationInMinutes))
       case _ =>
         TemporaryRedirect(routes.LoginController.login().url).flashing("error" -> "Il y a une erreur dans votre lien de connexion. Merci de contacter l'équipe Administration+")
     }

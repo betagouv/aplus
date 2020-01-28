@@ -1,4 +1,4 @@
-@(userOrToken: Either[Option[User],(String,String)])(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil, request: RequestHeader)
+@(userOrToken: Either[Option[User],(String,String)], tokenExpirationInMinutes: Int)(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil, request: RequestHeader)
 
 <!doctype html>
 <html lang="fr">
@@ -76,7 +76,7 @@
                         <div class="mdl-typography--text-center">
                             <h3><i class="material-icons material-icons--36px">mail_outline</i><br>Consultez vos emails</h3>
                         </div>
-                         <p>Nous avons envoyé par e-mail un lien valable 15 minutes à l'adresse <b>@user.email</b>. Cliquez sur le lien contenu dans l'email pour accéder à Administration+.</p>
+                         <p>Nous avons envoyé par e-mail un lien valable @tokenExpirationInMinutes minutes à l'adresse <b>@user.email</b>. Cliquez sur le lien contenu dans l'email pour accéder à Administration+.</p>
 
                         <p><i>Vous n'avez pas reçu d'e-email ? Veuillez consulter vos courriers indésirables ou <a href="@routes.LoginController.login()">renvoyer un autre e-email</a></i><br></p>
                     }
