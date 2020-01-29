@@ -16,7 +16,7 @@ import org.joda.time.DateTime
 import helper.CsvHelper
 import helper.StringHelper._
 import extentions.Time
-import models.EventType.{UserCreated, UserGroupCreated, UsersImported}
+import models.EventType.{CSVImportFormError, CsvImportInputEmpty, ImportGroupUnauthorized, ImportUserError, ImportUserFormError, ImportUserUnauthorized, ImportUsersUnauthorized, UserCreated, UserGroupCreated, UsersImported}
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 
 case class CSVImportController @Inject()(loginAction: LoginAction,
@@ -35,7 +35,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
 
   def importUsersFromCSV: Action[AnyContent] = loginAction { implicit request =>
     asAdmin { () =>
-      "IMPORT_USER_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
+      ImportUserUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
       Ok(views.html.importUsersCSV(request.currentUser)(csvImportContentForm))
     }
@@ -132,17 +132,17 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
   def importUsersReview: Action[AnyContent] = {
     loginAction { implicit request =>
       asAdmin { () =>
-        "IMPORT_GROUP_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
+        ImportGroupUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
       } { () =>
         csvImportContentForm.bindFromRequest.fold({ csvImportContentFormWithError =>
-          eventService.warn(code = "CSV_IMPORT_INPUT_EMPTY", description = "Le champ d'import de CSV est vide ou le séparateur n'est pas défini.")
+          eventService.log(CsvImportInputEmpty, description = "Le champ d'import de CSV est vide ou le séparateur n'est pas défini.")
           BadRequest(views.html.importUsersCSV(request.currentUser)(csvImportContentFormWithError))
         }, { csvImportData =>
           val defaultAreas = csvImportData.areaIds.flatMap(Area.fromId)
           CsvHelper.csvLinesToUserGroupData(csvImportData.separator, defaultAreas, Time.now())(csvImportData.csvLines).fold({
             error: String =>
               val csvImportContentFormWithError = csvImportContentForm.fill(csvImportData).withGlobalError(error)
-              eventService.warn(code = "CSV_IMPORT_FORM_ERROR", description = "Erreur de formulaire Importation")
+              eventService.log(CSVImportFormError, description = "Erreur de formulaire Importation")
               BadRequest(views.html.importUsersCSV(request.currentUser)(csvImportContentFormWithError))
           }, {
             case (userNotImported: List[String], userGroupDataForm: List[UserGroupFormData]) =>
@@ -177,11 +177,11 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
 
   def importUsersReviewPost: Action[AnyContent] = loginAction { implicit request =>
     asAdmin { () =>
-      "IMPORT_USERS_UNAUTHORIZED" -> "Accès non autorisé pour importer les utilisateurs"
+      ImportUsersUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
       val currentDate = Time.now()
       importUsersReviewFrom(currentDate).bindFromRequest.fold({ importUsersReviewFromWithError =>
-        eventService.warn(code = "IMPORT_USER_FORM_ERROR", description = "Erreur de formulaire de review")
+        eventService.log(ImportUserFormError, description = "Erreur de formulaire de review")
         BadRequest(views.html.reviewUsersImport(request.currentUser)(importUsersReviewFromWithError))
       }, { userGroupDataForm: List[UserGroupFormData] =>
         val augmentedUserGroupInformation: List[UserGroupFormData] = userGroupDataForm.map(augmentUserGroupInformation)
@@ -193,7 +193,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
         groupService.add(groupsToInsert)
           .fold({ error: String =>
             val description = s"Impossible d'importer les groupes : $error"
-            eventService.error("IMPORT_USER_ERROR", description)
+            eventService.log(ImportUserError, description)
             val formWithError = importUsersReviewFrom(currentDate)
               .fill(augmentedUserGroupInformation)
               .withGlobalError(description)
@@ -211,7 +211,7 @@ case class CSVImportController @Inject()(loginAction: LoginAction,
 
             userService.add(usersToInsert).fold({ error: String =>
               val description = s"Impossible d'importer les utilisateurs : $error"
-              eventService.error("IMPORT_USER_ERROR", description)
+              eventService.log(ImportUserError, description)
               val formWithError = importUsersReviewFrom(currentDate)
                 .fill(augmentedUserGroupInformation)
                 .withGlobalError(description)

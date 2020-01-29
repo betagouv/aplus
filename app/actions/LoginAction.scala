@@ -8,12 +8,14 @@ import play.api.mvc._
 import play.api.mvc.Results.TemporaryRedirect
 import services.{EventService, TokenService, UserService}
 import extentions.UUIDHelper
-import models.EventType.{AuthByKey, LoginByKey, ToCGURedirected, TryLoginByKey, UserAccessDisabled}
+import models.EventType.{AuthByKey, AuthWithDifferentIp, ExpiredToken, LoginByKey, ToCGURedirected, TryLoginByKey, UserAccessDisabled}
 import play.api.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class RequestWithUserData[A](val currentUser: User, @deprecated val currentArea: Area, request: Request[A]) extends WrappedRequest[A](request)
+
+//TODO : this class is complicated. Maybe we can split the logic.
 
 @Singleton
 class LoginAction @Inject()(val parser: BodyParsers.Default,
@@ -60,15 +62,16 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
           eventService.log(UserAccessDisabled, s"Utilisateur désactivé essaye d'accèder à la page ${request.path}}")
           userNotLogged(s"Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème.")
         case _ =>
-          val message = request.getQueryString("token") match {
-            case Some(token) =>
-              eventService.info(User.systemUser, Area.notApplicable, request.remoteAddress, "UNKNOWN_TOKEN", s"Token $token est inconnue", None, None)
-              "Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé. Si cette erreur se répète, contactez l'équipe Administration+"
-            case None =>
-              Logger.warn(s"Accès à la ${request.path} non autorisé")
-              "Vous devez vous identifier pour accèder à cette page."
-          }
-          userNotLogged(message)
+           request.getQueryString("token") match {
+              case Some(token) =>
+                eventService.info(User.systemUser, Area.notApplicable, request.remoteAddress, "UNKNOWN_TOKEN", s"Token $token est inconnue", None, None)
+                userNotLogged("Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé. Si cette erreur se répète, contactez l'équipe Administration+")
+              case None if path != routes.HomeController.index().url =>
+                userNotLoggedOnLoginPage
+              case None =>
+                Logger.warn(s"Accès à la ${request.path} non autorisé")
+                userNotLogged("Vous devez vous identifier pour accèder à cette page.")
+            }
       }
     }
 
@@ -97,14 +100,14 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
         implicit val requestWithUserData = new RequestWithUserData(user, area, request)
 
         if(token.ipAddress != request.remoteAddress) {
-          eventService.warn("AUTH_WITH_DIFFERENT_IP", s"Utilisateur ${token.userId} à une adresse ip différente pour l'essai de connexion")
+          eventService.log(AuthWithDifferentIp, s"Utilisateur ${token.userId} à une adresse ip différente pour l'essai de connexion")
         }
         if(token.isActive){
           val url = request.path + queryToString(request.queryString - "key" - "token")
           eventService.log(AuthByKey, s"Identification par token")
           Left(TemporaryRedirect(Call(request.method, url).url).withSession(request.session - "userId" + ("userId" -> user.id.toString)))
         } else {
-          eventService.warn("EXPIRED_TOKEN", s"Token expiré pour ${token.userId}")
+          eventService.log(ExpiredToken, s"Token expiré pour ${token.userId}")
           userNotLogged(s"Le lien que vous avez utilisez a expiré (il expire après $tokenExpirationInMinutes minutes), saisissez votre email pour vous reconnecter")
         }
     }
@@ -112,6 +115,9 @@ class LoginAction @Inject()(val parser: BodyParsers.Default,
 
   private def userNotLogged[A](message: String)(implicit request: Request[A]) = Left(TemporaryRedirect(routes.LoginController.login().url)
     .withSession(request.session - "userId").flashing("error" -> message))
+
+  private def userNotLoggedOnLoginPage[A](implicit request: Request[A]) =
+    Left(TemporaryRedirect(routes.LoginController.login().url).withSession(request.session - "userId"))
 
   private def tokenById[A](implicit request: Request[A]) = request.getQueryString("token").flatMap(tokenService.byToken)
   private def userByKey[A](implicit request: Request[A]) = request.getQueryString("key").flatMap(userService.byKey)

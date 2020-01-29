@@ -33,12 +33,6 @@ class EventService @Inject()(db: Database) {
   def log[A](event: EventType, description: String, application: Option[Application] = None, user: Option[User] = None)(implicit request: RequestWithUserData[A])
   = register[A](event.level)(request.currentUser, request.currentArea, request.remoteAddress, event.code, description, application, user)
 
-  def warn[A](code: String, description: String, application: Option[Application] = None, user: Option[User] = None)(implicit request: RequestWithUserData[A])
-  = register[A]("WARN")(request.currentUser, request.currentArea, request.remoteAddress, code, description, application, user)
-
-  def error[A](code: String, description: String, application: Option[Application] = None, user: Option[User] = None)(implicit request: RequestWithUserData[A])
-  = register[A]("ERROR")(request.currentUser, request.currentArea, request.remoteAddress, code, description, application, user)
-
   val info = register("INFO") _
   val warn = register("WARN") _
   val error = register("ERROR") _
@@ -48,7 +42,7 @@ class EventService @Inject()(db: Database) {
       UUID.randomUUID(),
       level,
       code,
-      currentUser.nameWithQualite,
+      currentUser.name,
       currentUser.id,
       DateTime.now(Time.dateTimeZone),
       description,
@@ -94,7 +88,7 @@ class EventService @Inject()(db: Database) {
     fromUserId match {
       case Some(userId) =>
         SQL"""SELECT *, host(ip_address)::TEXT AS ip_address FROM "event" WHERE from_user_id = $userId::uuid OR to_user_id = $userId::uuid ORDER BY creation_date DESC LIMIT $limit""".as(simpleEvent.*)
-      case None => ""
+      case None =>
         SQL"""SELECT *, host(ip_address)::TEXT AS ip_address FROM "event" ORDER BY creation_date DESC LIMIT $limit""".as(simpleEvent.*)
     }
 

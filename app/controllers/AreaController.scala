@@ -7,7 +7,7 @@ import constants.Constants
 import extentions.Operators.UserOperators
 import extentions.UUIDHelper
 import javax.inject.{Inject, Singleton}
-import models.EventType.AreaChanged
+import models.EventType.{AllAreaUnauthorized, AreaChanged, ChangeAreaUnauthorized, DeploymentDashboardUnauthorized}
 import models.{Area, Organisation, User}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
@@ -26,7 +26,7 @@ case class AreaController @Inject()(loginAction: LoginAction,
   @deprecated
   def change(areaId: UUID) = loginAction { implicit request =>
     if (!request.currentUser.areas.contains(areaId)) {
-      eventService.warn("CHANGE_AREA_UNAUTHORIZED", s"Accès à la zone $areaId non autorisé")
+      eventService.log(ChangeAreaUnauthorized, s"Accès à la zone $areaId non autorisé")
       Unauthorized(s"Vous n'avez pas les droits suffisants pour accèder à cette zone. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
     } else {
       eventService.log(AreaChanged, s"Changement vers la zone $areaId")
@@ -38,7 +38,7 @@ case class AreaController @Inject()(loginAction: LoginAction,
 
   def all = loginAction { implicit request =>
     if (!request.currentUser.admin && !request.currentUser.groupAdmin) {
-      eventService.warn("ALL_AREA_UNAUTHORIZED", s"Accès non autorisé pour voir la page des territoires")
+      eventService.log(AllAreaUnauthorized, "Accès non autorisé pour voir la page des territoires")
       Unauthorized("Vous n'avez pas le droit de faire ça")
     } else {
       val userGroups = if (request.currentUser.admin) {
@@ -52,7 +52,7 @@ case class AreaController @Inject()(loginAction: LoginAction,
 
   def deploymentDashboard = loginAction {  implicit  request =>
     asAdmin { () =>
-      "DEPLOYMENT_DASHBOARD_UNAUTHORIZED" -> s"Accès non autorisé au dashboard de déploiement"
+      DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
       val userGroups = userGroupService.allGroups
       val users = userService.all
