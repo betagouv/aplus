@@ -21,7 +21,6 @@ object Organisation {
   }
   
   val all = List(
-    Organisation("A+", "Administration+"),  // Nationale
     Organisation("ANAH", "Agence nationale de l'habitat"),
     Organisation("ANTS", "Agence nationale des titres sécurisés"),
     Organisation("BDF", "Banque de France"),
