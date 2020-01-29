@@ -121,12 +121,12 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
            },
            applicationData => {
              val invitedUsers: Map[UUID, String] = applicationData.users.flatMap {  id =>
-               userService.byId(id).map(id -> _.nameWithQualite)
+               userService.byId(id).map(user => id -> userGroupService.contextualizedUserName(user))
              }.toMap
 
              val application = Application(applicationId,
                DateTime.now(timeZone),
-               request.currentUser.nameWithQualite,
+               userGroupService.contextualizedUserName(request.currentUser),
                request.currentUser.id,
                applicationData.subject,
                applicationData.description,
@@ -401,7 +401,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
               applicationId, DateTime.now(timeZone),
               answerData.message,
               request.currentUser.id,
-              request.currentUser.nameWithQualite,
+              userGroupService.contextualizedUserName(request.currentUser),
               Map(),
               answerData.privateToHelpers == false,
               answerData.applicationIsDeclaredIrrelevant,
@@ -440,14 +440,14 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
           val usersThatCanBeInvited = usersThatCanBeInvitedOn(application)
           val invitedUsers: Map[UUID, String] = usersThatCanBeInvited
             .filter(user => inviteData.invitedUsers.contains(user.id))
-            .map(user => (user.id,user.nameWithQualite)).toMap
+            .map(user => (user.id,userGroupService.contextualizedUserName(user))).toMap
 
           val answer = Answer(UUID.randomUUID(),
             applicationId,
             DateTime.now(timeZone),
             inviteData.message,
             request.currentUser.id,
-            request.currentUser.nameWithQualite,
+            userGroupService.contextualizedUserName(request.currentUser),
             invitedUsers,
             not(inviteData.privateToHelpers),
             false,
@@ -471,13 +471,13 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
         if(application.canHaveExpertsInvitedBy(request.currentUser)) {
-          val experts: Map[UUID, String] = User.admins.filter(_.expert).map(user => user.id -> user.nameWithQualite).toMap
+          val experts: Map[UUID, String] = User.admins.filter(_.expert).map(user => user.id -> userGroupService.contextualizedUserName(user)).toMap
           val answer = Answer(UUID.randomUUID(),
             applicationId,
             DateTime.now(timeZone),
             "J'ajoute un expert",
             request.currentUser.id,
-            request.currentUser.nameWithQualite,
+            userGroupService.contextualizedUserName(request.currentUser),
             experts,
             true,
             false,
