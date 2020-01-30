@@ -7,7 +7,7 @@ import extentions.Time
 import javax.inject.Inject
 import models._
 import org.joda.time.{DateTime, Period}
-import services.{ApplicationService, EventService, NotificationService}
+import services.{ApplicationService, EventService, NotificationService, UserGroupService}
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
@@ -16,7 +16,8 @@ import scala.concurrent.ExecutionContext
 class AutoAddExpertTask @Inject()(actorSystem: ActorSystem,
                                   applicationService: ApplicationService,
                                   eventService: EventService,
-                                  notificationService: NotificationService)(implicit executionContext: ExecutionContext) {
+                                  notificationService: NotificationService,
+                                  userGroupService: UserGroupService)(implicit executionContext: ExecutionContext) {
 
   val startAtHour = 8
   val startDate = Time.now().withTimeAtStartOfDay().plusDays(1).withHourOfDay(startAtHour)
@@ -42,7 +43,7 @@ class AutoAddExpertTask @Inject()(actorSystem: ActorSystem,
 
   private def inviteExpert(application: Application, days: Int): Unit = {
     val expertUsers = User.admins.filter(_.expert)
-    val experts = expertUsers.map(user => user.id -> user.nameWithQualite).toMap
+    val experts = expertUsers.map(user => user.id -> userGroupService.contextualizedUserName(user)).toMap
 
     expertUsers.headOption match {
       case Some(expert) =>
@@ -51,7 +52,7 @@ class AutoAddExpertTask @Inject()(actorSystem: ActorSystem,
           Time.now(),
           s"Je rejoins la conversation automatiquement comme expert(e) car le dernier message a plus de $days jours",
           expert.id,
-          expert.nameWithQualite,
+          userGroupService.contextualizedUserName(expert),
           experts,
           true,
           false,

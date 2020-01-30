@@ -42,7 +42,7 @@ class EventService @Inject()(db: Database) {
       UUID.randomUUID(),
       level,
       code,
-      currentUser.nameWithQualite,
+      currentUser.name,
       currentUser.id,
       DateTime.now(Time.dateTimeZone),
       description,

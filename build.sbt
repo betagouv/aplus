@@ -46,7 +46,7 @@ libraryDependencies ++= Seq(
   "org.webjars.bowergithub.olifolkerd" % "tabulator" % "4.5.2"
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.29"
+libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.30"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"

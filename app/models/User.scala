@@ -24,8 +24,9 @@ case class User(id: UUID,
                 cguAcceptationDate: Option[DateTime] = None,
                 newsletterAcceptationDate: Option[DateTime] = None,
                 phoneNumber: Option[String] = None) extends AgeModel {
+
   def nameWithQualite = s"$name ( $qualite )"
-  
+
   def canBeEditedBy(user: User): Boolean =
     user.admin && user.areas.intersect(user.areas).nonEmpty
 

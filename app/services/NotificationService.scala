@@ -17,6 +17,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
                                     userService: UserService,
                                     eventService: EventService,
                                     groupService: UserGroupService) {
+  private lazy val tokenExpirationInMinutes = configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
   private val host = configuration.underlying.getString("app.host")
   private val https = configuration.underlying.getString("app.https") == "true"
@@ -129,7 +130,7 @@ class NotificationService @Inject()(configuration: play.api.Configuration,
   }
 
   private def generateWelcomeEmail(user: User): Email = {
-    val bodyHtml = views.html.emails.welcome(user).toString()
+    val bodyHtml = views.html.emails.welcome(user, tokenExpirationInMinutes).toString()
     Email(subject = "[A+] Bienvenue sur Administration+",
       from = from,
       to = List(s"${user.name} <${user.email}>"),
