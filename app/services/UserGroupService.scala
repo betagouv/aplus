@@ -4,13 +4,12 @@ import java.sql.ResultSet
 import java.util.UUID
 
 import anorm._
-import extentions.{Hash, Time, UUIDHelper}
+import extentions.{Time, UUIDHelper}
 import javax.inject.Inject
 import models.{Area, User, UserGroup}
 import play.api.db.Database
 import anorm.JodaParameterMetaData._
 import org.postgresql.util.PSQLException
-import play.api.libs.json.Json
 
 @javax.inject.Singleton
 class UserGroupService @Inject()(configuration: play.api.Configuration, db: Database) {
@@ -108,6 +107,16 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
         rs.getInt("cardinality")
       })
     cardinality == 0
+  }
+
+  def byArea(areaId: UUID): List[UserGroup] = db.withConnection { implicit connection =>
+    SQL("""SELECT * FROM "user_group" WHERE area_ids @> ARRAY[{areaId}]::uuid[]""")
+      .on('areaId -> areaId)
+      .as(simpleUserGroup.*)
+  }
+
+  def byAreas(areaIds: List[UUID]): List[UserGroup] = db.withConnection { implicit connection =>
+    SQL"""SELECT * FROM "user_group" WHERE ARRAY[$areaIds]::uuid[] && area_ids""".as(simpleUserGroup.*)
   }
 
   def contextualizedUserName(user: User): String = {

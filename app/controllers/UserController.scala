@@ -41,8 +41,14 @@ case class UserController @Inject()(loginAction: LoginAction,
     } { () =>
       val selectedArea = Area.fromId(areaId).get
       val users = (request.currentUser.admin, request.currentUser.groupAdmin, selectedArea.id == Area.allArea.id) match {
-        case (true, _, false) => userService.byArea(areaId)
-        case (true, _, true) => userService.byAreas(request.currentUser.areas)
+        case (true, _, false) => {
+          val groupsOfArea = groupService.byArea(areaId)
+          userService.byGroupIds(groupsOfArea.map(_.id))
+        }
+        case (true, _, true) => {
+          val groupsOfArea = groupService.byAreas(request.currentUser.areas)
+          userService.byGroupIds(groupsOfArea.map(_.id))
+        }
         case (false, true, _) => userService.byGroupIds(request.currentUser.groupIds)
         case _ =>
           eventService.log(AllUserIncorrectSetup, "Erreur d'accès aux utilisateurs")
@@ -73,8 +79,13 @@ case class UserController @Inject()(loginAction: LoginAction,
       AllUserCSVUnauthorized -> "Accès non autorisé à l'export utilisateur"
     } { () =>
       val area = Area.fromId(areaId).get
-      val users = if (areaId == Area.allArea.id) userService.byAreas(request.currentUser.areas)
-      else userService.byArea(areaId)
+      val users = if (areaId == Area.allArea.id) {
+        val groupsOfArea = groupService.byAreas(request.currentUser.areas)
+        userService.byGroupIds(groupsOfArea.map(_.id))
+      } else {
+        val groupsOfArea = groupService.byArea(areaId)
+        userService.byGroupIds(groupsOfArea.map(_.id))
+      }
       val groups = groupService.allGroupByAreas(request.currentUser.areas)
       eventService.log(AllUserCsvShowed, "Visualise le CSV de tous les zones de l'utilisateur")
 
