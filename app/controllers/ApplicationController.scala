@@ -20,8 +20,10 @@ import play.api.mvc._
 import services._
 import extentions.BooleanHelper.not
 import models.EventType.{AddExpertCreated, AddExpertNotCreated, AddExpertNotFound, AddExpertUnauthorized, AgentsAdded, AgentsNotAdded, AllApplicationsShowed, AllApplicationsUnauthorized, AllAsNotFound, AllAsShowed, AllAsUnauthorized, AllCSVShowed, AnswerCreated, AnswerNotCreated, ApplicationCreated, ApplicationCreationError, ApplicationCreationInvalid, ApplicationCreationUnauthorized, ApplicationFormShowed, ApplicationNotFound, ApplicationShowed, ApplicationUnauthorized, FileNotFound, FileOpened, FileUnauthorized, InviteNotCreated, MyApplicationsShowed, MyCSVShowed, StatsIncorrectSetup, StatsShowed, StatsUnauthorized, TerminateCompleted, TerminateError, TerminateIncompleted, TerminateNotFound, TerminateUnauthorized}
+import play.api.cache.AsyncCacheApi
+import play.twirl.api.Html
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -29,6 +31,7 @@ import scala.concurrent.ExecutionContext
  */
 @Singleton
 case class ApplicationController @Inject()(loginAction: LoginAction,
+                                           cache: AsyncCacheApi,
                                       userService: UserService,
                                       applicationService: ApplicationService,
                                       notificationsService: NotificationService,
@@ -206,47 +209,63 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
 
-  def stats = loginAction { implicit request =>
-    (request.currentUser.admin || request.currentUser.groupAdmin) match {
-      case false =>
-        eventService.log(StatsUnauthorized, "L'utilisateur n'a pas de droit d'afficher les stats")
-        Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
-      case true =>
-        val users = if(request.currentUser.admin) {
-          userService.all
-        } else if(request.currentUser.groupAdmin) {
-          userService.byGroupIds(request.currentUser.groupIds)
-        } else {
-          eventService.log(StatsIncorrectSetup, "Erreur d'accès aux utilisateurs pour les stats")
-          List()
-        }
+  def stats = loginAction.async { implicit request =>
+    val currentAreaOnly = request.getQueryString("currentAreaOnly").map(_.toBoolean).getOrElse(false)
+      (request.currentUser.admin || request.currentUser.groupAdmin) match {
+        case false =>
+          eventService.log(StatsUnauthorized, "L'utilisateur n'a pas de droit d'afficher les stats")
+          Future(Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"))
+        case true =>
+          def generateStats(): Html = {
+            val users = if (request.currentUser.admin) {
+              userService.all
+            } else if (request.currentUser.groupAdmin) {
+              userService.byGroupIds(request.currentUser.groupIds)
+            } else {
+              eventService.log(StatsIncorrectSetup, "Erreur d'accès aux utilisateurs pour les stats")
+              List()
+            }
 
-        val allApplications = if(request.currentUser.admin) {
-          applicationService.allForAreas(request.currentUser.areas, true)
-        } else if(request.currentUser.groupAdmin) {
-          applicationService.allForUserIds(users.map(_.id), true)
-        } else {
-          eventService.log(StatsIncorrectSetup, "Erreur d'accès aux demandes pour les stats")
-          List()
-        }
-        val currentAreaOnly = request.getQueryString("currentAreaOnly").map(_.toBoolean).getOrElse(false)
+            val allApplications = if (request.currentUser.admin) {
+              applicationService.allForAreas(request.currentUser.areas, true)
+            } else if (request.currentUser.groupAdmin) {
+              applicationService.allForUserIds(users.map(_.id), true)
+            } else {
+              eventService.log(StatsIncorrectSetup, "Erreur d'accès aux demandes pour les stats")
+              List()
+            }
 
-        val applicationsByArea = (
-            if(currentAreaOnly) { allApplications.filter(_.area == request.currentArea.id) }
-            else { allApplications }
-          ).groupBy(_.area)
-            .map{ case (areaId: UUID, applications: Seq[Application]) => (Area.all.find(_.id == areaId).get, applications) }
+            val applicationsByArea = (
+              if (currentAreaOnly) {
+                allApplications.filter(_.area == request.currentArea.id)
+              }
+              else {
+                allApplications
+              }
+              ).groupBy(_.area)
+              .map { case (areaId: UUID, applications: Seq[Application]) => (Area.all.find(_.id == areaId).get, applications) }
 
-        val firstDate = if(allApplications.isEmpty) {
-          DateTime.now()
-        } else {
-          allApplications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
-        }
-        val today = DateTime.now(timeZone)
-        val months = Time.monthsMap(firstDate, today)
-        eventService.log(StatsShowed, "Visualise les stats")
-        Ok(views.html.stats(request.currentUser, request.currentArea)(months, applicationsByArea, users, currentAreaOnly))
-    }
+            val firstDate = if (allApplications.isEmpty) {
+              DateTime.now()
+            } else {
+              allApplications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
+            }
+            val today = DateTime.now(timeZone)
+            val months = Time.monthsMap(firstDate, today)
+            views.html.stats(request.currentUser, request.currentArea)(months, applicationsByArea, users, currentAreaOnly)
+          }
+
+          val cacheKey = if(currentAreaOnly)
+            s"stats.user_${request.currentUser.id}.area_${request.currentArea.id}"
+          else
+            s"stats.user_${request.currentUser.id}"
+
+          cache.getOrElseUpdate[Html](cacheKey)(Future(generateStats))
+            .map { html =>
+              eventService.log(StatsShowed, "Visualise les stats")
+              Ok(html)
+            }
+      }
   }
 
   def allAs(userId: UUID) = loginAction { implicit request =>

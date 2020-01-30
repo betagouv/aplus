@@ -12,7 +12,8 @@ scalaVersion := "2.12.8"
 libraryDependencies ++= Seq(
   ws,
   jdbc,
-  evolutions
+  evolutions,
+  ehcache
 )
 
 pipelineStages := Seq(rjs, digest, gzip)

@@ -2,6 +2,7 @@
 @import java.util.Locale
 @import extentions.Time.dateTimeOrdering
 @import extentions.Math
+@import extentions.Time
 @(user: User, area: Area)(months: ListMap[String, String], allApplications: Map[Area, Seq[Application]], users: List[User], currentAreaOnly: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 @main(user, Some(area))(s"Stats")  {
@@ -33,10 +34,11 @@
     @if(user.areas.length > 1) {
         <p class="mdl-cell mdl-cell--12-col">Stats de : @if(currentAreaOnly) { <b>@area.name</b> / <a href="@routes.ApplicationController.stats()?currentAreaOnly=false">Tous les territoires</a> } else {
             <a href="@routes.ApplicationController.stats()?currentAreaOnly=true">@area.name</a> / <b>Tous les territoires</b>
-        }  </p>
+        }
+            <br><span>Dernière mise à jour : @{Time.now().toString("dd MMM YYYY - HH:mm:ss", new Locale("fr"))}</span>
+        </p>
     }
     <!-- New Stats -->
-
     @defining(allApplications.flatMap(_._2)) { all =>
     <div class="mdl-cell mdl-cell--6-col mdl-shadow--2dp mdl-color--white" style="text-align: center">
         <h6>Total de demandes</h6>
