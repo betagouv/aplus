@@ -72,9 +72,7 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
     eventService.log(ApplicationFormShowed, "Visualise le formulaire simplifié de création de demande")
     val groupsOfArea = userGroupService.byArea(request.currentArea.id)
     val instructorsOfGroups = userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
-    val organismeGroups = groupsOfArea.filter({ userGroup =>
-      userGroup.organisationSetOrDeducted.nonEmpty && userGroup.areaIds.contains(request.currentArea.id)
-    })
+    val organismeGroups = groupsOfArea.filter({ userGroup => userGroup.organisationSetOrDeducted.nonEmpty })
     val categories = organisationService.categories
     Ok(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructorsOfGroups, organismeGroups, categories, None, applicationForm))
   }
