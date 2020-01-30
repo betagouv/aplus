@@ -117,6 +117,7 @@ class UserGroupService @Inject()(configuration: play.api.Configuration, db: Data
 
   def byAreas(areaIds: List[UUID]): List[UserGroup] = db.withConnection { implicit connection =>
     SQL"""SELECT * FROM "user_group" WHERE ARRAY[$areaIds]::uuid[] && area_ids""".as(simpleUserGroup.*)
+  }
 
   def contextualizedUserName(user: User): String = {
     val groups = byIds(user.groupIds)
