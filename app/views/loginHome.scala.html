@@ -82,9 +82,9 @@
                     }
                     case Right((token,path)) => {
                         <h3>Vous allez accéder automatiquement à Administration+</h3>
-                        <p>Si la page suivante ne se charge pas automatiquement, cliquez sur le bouton suivant :</p>
-                        <button id="validation-button" type="submit" class="mdl-button mdl-js-button mdl-button--raised" onclick="redirect();">Accéder à Administration+</button>
+                        <p>Si la page suivante ne se charge pas automatiquement, <em><a href="#" id="validation-button" onclick="redirect();">cliquez ici pour accéder à Administration+</a></em></p>
                         <br>
+                        <div id="p2" class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>
                         <script>
                             var redirected = false;
                             function redirect() {

@@ -21,8 +21,10 @@ import services._
 import extentions.BooleanHelper.not
 import extentions.CSVUtil.escape
 import models.EventType.{AddExpertCreated, AddExpertNotCreated, AddExpertNotFound, AddExpertUnauthorized, AgentsAdded, AgentsNotAdded, AllApplicationsShowed, AllApplicationsUnauthorized, AllAsNotFound, AllAsShowed, AllAsUnauthorized, AllCSVShowed, AnswerCreated, AnswerNotCreated, ApplicationCreated, ApplicationCreationError, ApplicationCreationInvalid, ApplicationCreationUnauthorized, ApplicationFormShowed, ApplicationNotFound, ApplicationShowed, ApplicationUnauthorized, FileNotFound, FileOpened, FileUnauthorized, InviteNotCreated, MyApplicationsShowed, MyCSVShowed, StatsIncorrectSetup, StatsShowed, StatsUnauthorized, TerminateCompleted, TerminateError, TerminateIncompleted, TerminateNotFound, TerminateUnauthorized}
+import play.api.cache.AsyncCacheApi
+import play.twirl.api.Html
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import helper.StringHelper.CanonizeString
 
 /**
@@ -31,6 +33,7 @@ import helper.StringHelper.CanonizeString
  */
 @Singleton
 case class ApplicationController @Inject()(loginAction: LoginAction,
+                                           cache: AsyncCacheApi,
                                       userService: UserService,
                                       applicationService: ApplicationService,
                                       notificationsService: NotificationService,
@@ -64,20 +67,19 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
   )
 
   def create = loginAction { implicit request =>
-    eventService.log(ApplicationFormShowed, s"Visualise le formulaire de création de demande")
-    val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
-    val groupIds = instructors.flatMap(_.groupIds).distinct
-    val organismeGroups = userGroupService.byIds(groupIds).filter(_.areaIds.contains(request.currentArea.id))
-    Ok(views.html.createApplication(request.currentUser,request.currentArea)(instructors, organismeGroups, applicationForm))
+    eventService.log(ApplicationFormShowed, "Visualise le formulaire de création de demande")
+    val groupsOfArea = userGroupService.byArea(request.currentArea.id)
+    val instructorsOfGroups = userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
+    Ok(views.html.createApplication(request.currentUser,request.currentArea)(instructorsOfGroups, groupsOfArea, applicationForm))
   }
 
   def createSimplified = loginAction { implicit request =>
-    eventService.log(ApplicationFormShowed, s"Visualise le formulaire simplifié de création de demande")
-    val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
-    val groupIds = instructors.flatMap(_.groupIds).distinct
-    val organismeGroups = userGroupService.byIds(groupIds).filter(userGroup => userGroup.organisationSetOrDeducted.nonEmpty && userGroup.areaIds.contains(request.currentArea.id))
+    eventService.log(ApplicationFormShowed, "Visualise le formulaire simplifié de création de demande")
+    val groupsOfArea = userGroupService.byArea(request.currentArea.id)
+    val instructorsOfGroups = userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
+    val organismeGroups = groupsOfArea.filter({ userGroup => userGroup.organisationSetOrDeducted.nonEmpty })
     val categories = organisationService.categories
-    Ok(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructors, organismeGroups, categories, None, applicationForm))
+    Ok(views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(instructorsOfGroups, organismeGroups, categories, None, applicationForm))
   }
 
   def createPost = createPostBis(false)
@@ -101,7 +103,8 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
          form.fold(
            formWithErrors => {
              // binding failure, you retrieve the form containing errors:
-             val instructors = userService.byArea(request.currentArea.id).filter(_.instructor)
+             val groupsOfArea = userGroupService.byArea(request.currentArea.id)
+             val instructors = userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
              eventService.log(ApplicationCreationInvalid, s"L'utilisateur essai de créé une demande invalide ${formWithErrors.errors.map(_.message)}")
              val groupIds = instructors.flatMap(_.groupIds).distinct
 
@@ -207,47 +210,63 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
   }
 
 
-  def stats = loginAction { implicit request =>
-    (request.currentUser.admin || request.currentUser.groupAdmin) match {
-      case false =>
-        eventService.log(StatsUnauthorized, "L'utilisateur n'a pas de droit d'afficher les stats")
-        Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
-      case true =>
-        val users = if(request.currentUser.admin) {
-          userService.all
-        } else if(request.currentUser.groupAdmin) {
-          userService.byGroupIds(request.currentUser.groupIds)
-        } else {
-          eventService.log(StatsIncorrectSetup, "Erreur d'accès aux utilisateurs pour les stats")
-          List()
-        }
+  def stats = loginAction.async { implicit request =>
+    val currentAreaOnly = request.getQueryString("currentAreaOnly").map(_.toBoolean).getOrElse(false)
+      (request.currentUser.admin || request.currentUser.groupAdmin) match {
+        case false =>
+          eventService.log(StatsUnauthorized, "L'utilisateur n'a pas de droit d'afficher les stats")
+          Future(Unauthorized("Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"))
+        case true =>
+          def generateStats(): Html = {
+            val users = if (request.currentUser.admin) {
+              userService.all
+            } else if (request.currentUser.groupAdmin) {
+              userService.byGroupIds(request.currentUser.groupIds)
+            } else {
+              eventService.log(StatsIncorrectSetup, "Erreur d'accès aux utilisateurs pour les stats")
+              List()
+            }
 
-        val allApplications = if(request.currentUser.admin) {
-          applicationService.allForAreas(request.currentUser.areas, true)
-        } else if(request.currentUser.groupAdmin) {
-          applicationService.allForUserIds(users.map(_.id), true)
-        } else {
-          eventService.log(StatsIncorrectSetup, "Erreur d'accès aux demandes pour les stats")
-          List()
-        }
-        val currentAreaOnly = request.getQueryString("currentAreaOnly").map(_.toBoolean).getOrElse(false)
+            val allApplications = if (request.currentUser.admin) {
+              applicationService.allForAreas(request.currentUser.areas, true)
+            } else if (request.currentUser.groupAdmin) {
+              applicationService.allForUserIds(users.map(_.id), true)
+            } else {
+              eventService.log(StatsIncorrectSetup, "Erreur d'accès aux demandes pour les stats")
+              List()
+            }
 
-        val applicationsByArea = (
-            if(currentAreaOnly) { allApplications.filter(_.area == request.currentArea.id) }
-            else { allApplications }
-          ).groupBy(_.area)
-            .map{ case (areaId: UUID, applications: Seq[Application]) => (Area.all.find(_.id == areaId).get, applications) }
+            val applicationsByArea = (
+              if (currentAreaOnly) {
+                allApplications.filter(_.area == request.currentArea.id)
+              }
+              else {
+                allApplications
+              }
+              ).groupBy(_.area)
+              .map { case (areaId: UUID, applications: Seq[Application]) => (Area.all.find(_.id == areaId).get, applications) }
 
-        val firstDate = if(allApplications.isEmpty) {
-          DateTime.now()
-        } else {
-          allApplications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
-        }
-        val today = DateTime.now(timeZone)
-        val months = Time.monthsMap(firstDate, today)
-        eventService.log(StatsShowed, "Visualise les stats")
-        Ok(views.html.stats(request.currentUser, request.currentArea)(months, applicationsByArea, users, currentAreaOnly))
-    }
+            val firstDate = if (allApplications.isEmpty) {
+              DateTime.now()
+            } else {
+              allApplications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
+            }
+            val today = DateTime.now(timeZone)
+            val months = Time.monthsMap(firstDate, today)
+            views.html.stats(request.currentUser, request.currentArea)(months, applicationsByArea, users, currentAreaOnly)
+          }
+
+          val cacheKey = if(currentAreaOnly)
+            s"stats.user_${request.currentUser.id}.area_${request.currentArea.id}"
+          else
+            s"stats.user_${request.currentUser.id}"
+
+          cache.getOrElseUpdate[Html](cacheKey)(Future(generateStats))
+            .map { html =>
+              eventService.log(StatsShowed, "Visualise les stats")
+              Ok(html)
+            }
+      }
   }
 
   def allAs(userId: UUID) = loginAction { implicit request =>
@@ -367,7 +386,8 @@ case class ApplicationController @Inject()(loginAction: LoginAction,
 
   def usersThatCanBeInvitedOn[A](application: Application)(implicit request: RequestWithUserData[A]) = {
     (if(request.currentUser.instructor || request.currentUser.expert) {
-      userService.byArea(application.area).filter(_.instructor)
+      val groupsOfArea = userGroupService.byArea(application.area)
+      userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
     } else if(request.currentUser.helper && application.creatorUserId == request.currentUser.id) {
       userService.byGroupIds(request.currentUser.groupIds).filter(_.helper)
     } else {
