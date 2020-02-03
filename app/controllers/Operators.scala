@@ -1,21 +1,15 @@
-package extentions
+package controllers
 
 import java.util.UUID
 
 import actions.RequestWithUserData
 import constants.Constants
+import helper.BooleanHelper.not
+import models.EventType._
 import models.{Application, EventType, User, UserGroup}
-import play.api.mvc.Results._
+import play.api.mvc.Results.{NotFound, Unauthorized}
 import play.api.mvc.{AnyContent, Result, Results}
 import services.{ApplicationService, EventService, UserGroupService, UserService}
-import helper.BooleanHelper.not
-import models.EventType.{
-  AdminOutOfRange,
-  ApplicationNotFound,
-  ApplicationUnauthorized,
-  UserGroupNotFound,
-  UserNotFound
-}
 
 object Operators {
 

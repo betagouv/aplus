@@ -6,7 +6,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit.DAYS
 
 import akka.actor.ActorSystem
-import extentions.Time
+import helper.Time
 import javax.inject.Inject
 import org.joda.time.Period
 

@@ -3,8 +3,7 @@ package controllers
 import java.util.UUID
 
 import actions.{LoginAction, RequestWithUserData}
-import extentions.Operators._
-import extentions.Time
+import Operators._
 import javax.inject.{Inject, Singleton}
 import models.{Area, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -16,6 +15,7 @@ import play.api.mvc.{Action, AnyContent, InjectedController}
 import play.libs.ws.WSClient
 import services._
 import helper.BooleanHelper.not
+import helper.Time
 import models.EventType.{
   AddGroupUnauthorized,
   AddUserGroupError,

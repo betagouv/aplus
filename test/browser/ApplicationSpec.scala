@@ -1,6 +1,6 @@
 package browser
 
-import extentions.{Time, UUIDHelper}
+import helper.{Time, UUIDHelper}
 import models.{Area, LoginToken, User, UserGroup}
 import org.joda.time.DateTime
 import org.junit.runner._

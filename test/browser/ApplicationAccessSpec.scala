@@ -1,6 +1,6 @@
 package browser
 
-import extentions.{Time, UUIDHelper}
+import helper.{Time, UUIDHelper}
 import models.{Application, Area, LoginToken, User, UserGroup}
 import org.junit.runner._
 import org.specs2.mutable._

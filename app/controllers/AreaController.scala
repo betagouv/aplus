@@ -4,7 +4,7 @@ import java.util.UUID
 
 import actions.LoginAction
 import constants.Constants
-import extentions.Operators.UserOperators
+import Operators.UserOperators
 import helper.UUIDHelper
 import javax.inject.{Inject, Singleton}
 import models.EventType.{

@@ -1,5 +1,5 @@
 @import models._
-@import extentions.MDLForms._
+@import _root_.helper.MDLForms._
 @import models.Organisation.Category
 @(user: User, currentArea: Area)(users: List[User], organisationGroups: List[UserGroup], categories: Seq[Category], selectedCategory: Option[String], applicationForm: Form[forms.Models.ApplicationData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 

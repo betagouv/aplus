@@ -1,5 +1,5 @@
 @import models._
-@import extentions.MDLForms._
+@import _root_.helper.MDLForms._
 @(user: User, area: Area)(users: List[User], organisationGroups: List[UserGroup], applicationForm: Form[forms.Models.ApplicationData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
 @main(user, Some(area))(s"Nouvelle demande")  {

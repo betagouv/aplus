@@ -1,14 +1,12 @@
-package extentions
+package serializers
 
 import java.util.UUID
 
 import anorm.Column.nonNull
-import anorm.{Column, MetaDataItem, RowParser, ToStatement, TypeDoesNotMatch}
-import play.api.libs.json.{JsValue, Json}
 import anorm.SqlParser.get
+import anorm.{Column, MetaDataItem, RowParser, ToStatement, TypeDoesNotMatch}
 import helper.UUIDHelper
-
-import scala.collection.GenTraversableOnce
+import play.api.libs.json.{JsValue, Json}
 
 object Anorm {
 

@@ -5,10 +5,9 @@ import java.util.{Locale, UUID}
 
 import actions._
 import constants.Constants
-import extentions.Time
-import extentions.Time.dateTimeOrdering
+import helper.Time.dateTimeOrdering
 import forms.FormsPlusMap
-import helper.AttachmentHelper
+import helper.Time
 import javax.inject.{Inject, Singleton}
 import models._
 import org.joda.time.DateTime
@@ -19,7 +18,7 @@ import play.api.data.validation.Constraints._
 import play.api.mvc._
 import services._
 import helper.BooleanHelper.not
-import extentions.CSVUtil.escape
+import helper.CSVUtil.escape
 import models.EventType.{
   AddExpertCreated,
   AddExpertNotCreated,
@@ -63,6 +62,7 @@ import play.twirl.api.Html
 
 import scala.concurrent.{ExecutionContext, Future}
 import helper.StringHelper.CanonizeString
+import serializers.AttachmentHelper
 
 /**
   * This controller creates an `Action` to handle HTTP requests to the
@@ -82,7 +82,7 @@ case class ApplicationController @Inject() (
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with play.api.i18n.I18nSupport
-    with extentions.Operators.ApplicationOperators {
+    with Operators.ApplicationOperators {
   import forms.Models._
 
   private implicit val timeZone = Time.dateTimeZone
