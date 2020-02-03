@@ -115,9 +115,9 @@ case class UserController @Inject()(loginAction: LoginAction,
         csv.USER_GROUP_MANAGER.prefixes(0), "Expert", "Admin", "Actif", "Commune INSEE", csv.GROUP_AREAS_IDS.prefixes(0),
         csv.GROUP_NAME.prefixes(0), "CGU", "Newsletter").mkString(";")
       val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
-      val date = DateTime.now(Time.dateTimeZone).toString("dd-MMM-YYY-HHhmm", new Locale("fr"))
+      val date = DateTime.now(Time.dateTimeZone).toString("dd-MMM-YYY-HH'h'mm", new Locale("fr"))
 
-      Ok(csvContent).withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-$date-users-${area.name.replace(" ", "-")}.csv"""")
+      Ok(csvContent).withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-$date-users-${area.name.replace(" ", "-")}.csv"""").as("text/csv")
     }
   }
 

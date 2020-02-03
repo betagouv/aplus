@@ -1,5 +1,0 @@
-@(applications: Seq[Application], user: User, users: List[User])"Id";"Etat";"Date";"Créateur";"Id Créateur";"Sujet";"Utilisateurs invités";"Administrations";"Territoire";"Date de clôture"@if(user.admin){;"Non Pertinente";"Utile"};"Délais de première réponse (Minutes)";"Délais de clôture (Minutes)"
-@import extentions.CSVUtil
-@for(a <- applications) {
-    @Html(CSVUtil.getCSVLineFor(a,users,user.admin))
-}
