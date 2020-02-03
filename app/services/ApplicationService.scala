@@ -9,15 +9,15 @@ import play.api.db.Database
 import play.api.libs.json.{Json, JsonConfiguration, JsonNaming}
 import anorm._
 import anorm.JodaParameterMetaData._
-import extentions.Time
+import helper.Time
 import org.joda.time.DateTime
 import play.api.libs.json.JodaReads._
 import play.api.libs.json.JodaWrites._
 
 @javax.inject.Singleton
 class ApplicationService @Inject() (db: Database) {
-  import extentions.Anorm._
-  import extentions.JsonFormats._
+  import serializers.Anorm._
+  import serializers.JsonFormats._
 
   private implicit val answerReads = Json.reads[Answer]
   private implicit val answerWrite = Json.writes[Answer]

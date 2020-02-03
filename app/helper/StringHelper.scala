@@ -6,7 +6,7 @@ object StringHelper {
 
   implicit class CanonizeString(string: String) {
 
-    def canonize: String =
+    def stripSpecialChars: String =
       StringUtils.stripAccents(string.toLowerCase().replaceAll("[-'’ +]", ""))
   }
 

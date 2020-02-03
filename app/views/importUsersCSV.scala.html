@@ -1,6 +1,7 @@
 @import models._
-@import extentions.MDLForms._
-@import forms.Models.CSVImportData
+@import _root_.helper.MDLForms._
+@import models.formModels.CSVImportData
+@import serializers.UserAndGroupCsvSerializer
 @(currentUser: User)(form: Form[CSVImportData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
 @main(currentUser, maxWidth = false)(s"Importer des utilisateurs") {
@@ -25,7 +26,7 @@
                 </select>
             </div>
             <em>Format de base attendu : </em>
-            <p>@csv.USER_HEADER@csv.SEPARATOR@csv.GROUP_HEADER</p>
+            <p>@UserAndGroupCsvSerializer.USER_HEADER@UserAndGroupCsvSerializer.SEPARATOR@UserAndGroupCsvSerializer.GROUP_HEADER</p>
             @if(form.errors.nonEmpty) {
                 <div style="color: red; font-weight: bold;">@form.errors.map(_.message)</div>
             }

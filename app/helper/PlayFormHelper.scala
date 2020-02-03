@@ -2,7 +2,7 @@ package helper
 
 import play.api.data.FormError
 
-object FormHelper {
+object PlayFormHelper {
 
   def prettifyFormError(formError: FormError): String = {
     val prettyKey = formError.key.split("\\.").lastOption.getOrElse("")

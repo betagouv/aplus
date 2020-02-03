@@ -3,8 +3,8 @@ package controllers
 import java.util.UUID
 
 import actions.LoginAction
-import extentions.Operators.{GroupOperators, UserOperators}
-import forms.Models.{CSVImportData, UserFormData, UserGroupFormData}
+import Operators.{GroupOperators, UserOperators}
+import models.formModels.{CSVImportData, UserFormData, UserGroupFormData}
 import javax.inject.Inject
 import models.{Area, Organisation, User, UserGroup}
 import org.webjars.play.WebJarsUtil
@@ -13,9 +13,8 @@ import play.api.data.Forms._
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import services.{EventService, NotificationService, UserGroupService, UserService}
 import org.joda.time.DateTime
-import helper.CsvHelper
+import helper.Time
 import helper.StringHelper._
-import extentions.Time
 import models.EventType.{
   CSVImportFormError,
   CsvImportInputEmpty,
@@ -29,6 +28,7 @@ import models.EventType.{
   UsersImported
 }
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
+import serializers.UserAndGroupCsvSerializer
 
 case class CSVImportController @Inject() (
     loginAction: LoginAction,
@@ -64,7 +64,7 @@ case class CSVImportController @Inject() (
     val alreadyExistingUsers = userService.byEmails(userEmails)
     val newUsersFormDataList = userGroupFormData.users.map { userDataForm =>
       alreadyExistingUsers
-        .find(_.email.canonize == userDataForm.user.email.canonize)
+        .find(_.email.stripSpecialChars == userDataForm.user.email.stripSpecialChars)
         .fold {
           userDataForm
         } { alreadyExistingUser =>
@@ -174,7 +174,7 @@ case class CSVImportController @Inject() (
             )
           }, { csvImportData =>
             val defaultAreas = csvImportData.areaIds.flatMap(Area.fromId)
-            CsvHelper
+            UserAndGroupCsvSerializer
               .csvLinesToUserGroupData(csvImportData.separator, defaultAreas, Time.now())(
                 csvImportData.csvLines
               )

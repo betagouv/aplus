@@ -2,7 +2,7 @@ package models
 
 import java.util.UUID
 
-import extentions.Time
+import helper.Time
 import org.joda.time.DateTime
 
 import scala.util.Random

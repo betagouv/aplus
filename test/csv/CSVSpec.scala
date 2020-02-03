@@ -1,13 +1,14 @@
 package csv
 
 import com.github.tototoshi.csv.DefaultCSVFormat
-import extentions.{CSVUtil, Time, UUIDHelper}
-import forms.Models
-import helper.CsvHelper
+import helper.UUIDHelper
+import models.formModels
+import helper.{CSVUtil, Time}
 import models.{Area, UserGroup}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
+import serializers.UserAndGroupCsvSerializer
 
 @RunWith(classOf[JUnitRunner])
 class CSVSpec extends Specification {
@@ -54,8 +55,8 @@ class CSVSpec extends Specification {
       override val delimiter: Char = ','
     }
     "be recognized" >> {
-      val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
-        CsvHelper.csvLinesToUserGroupData(
+      val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
+        UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ',',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
           Time.now()
@@ -99,8 +100,8 @@ class CSVSpec extends Specification {
     }
 
     "be recognized with proper organisation" >> {
-      val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
-        CsvHelper.csvLinesToUserGroupData(
+      val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
+        UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ',',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
           Time.now()
@@ -117,11 +118,11 @@ class CSVSpec extends Specification {
 
   "The failFile string should" >> {
     implicit object SemiConFormat extends DefaultCSVFormat {
-      override val delimiter: Char = csv.SEPARATOR.charAt(0)
+      override val delimiter: Char = ';'
     }
     "produce 1 errors" >> {
-      val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
-        CsvHelper.csvLinesToUserGroupData(
+      val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
+        UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ';',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
           Time.now()
@@ -144,12 +145,12 @@ class CSVSpec extends Specification {
 
   "The csvFile string should" >> {
     implicit object SemiConFormat extends DefaultCSVFormat {
-      override val delimiter: Char = csv.SEPARATOR.charAt(0)
+      override val delimiter: Char = ';'
     }
 
     "produce valid groups" >> {
-      val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
-        CsvHelper.csvLinesToUserGroupData(
+      val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
+        UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ';',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
           Time.now()
@@ -161,8 +162,8 @@ class CSVSpec extends Specification {
     }
 
     "produce a valid users" >> {
-      val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
-        CsvHelper.csvLinesToUserGroupData(
+      val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
+        UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ';',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
           Time.now()

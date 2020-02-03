@@ -1,4 +1,4 @@
-package extentions
+package helper
 
 object Math {
 

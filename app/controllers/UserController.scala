@@ -3,9 +3,9 @@ package controllers
 import java.util.{Locale, UUID}
 
 import actions.{LoginAction, RequestWithUserData}
-import extentions.BooleanHelper.not
-import extentions.Operators.{GroupOperators, UserOperators}
-import extentions.{Time, UUIDHelper}
+import helper.BooleanHelper.not
+import Operators.{GroupOperators, UserOperators}
+import helper.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
 import models.EventType.{
   AddUserError,
@@ -45,6 +45,7 @@ import play.api.mvc._
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
 import play.api.http.Status
+import serializers.UserAndGroupCsvSerializer
 import services._
 
 @Singleton
@@ -164,18 +165,18 @@ case class UserController @Inject() (
 
         val headers = List[String](
           "Id",
-          csv.USER_NAME.prefixes(0),
-          csv.USER_EMAIL.prefixes(0),
+          UserAndGroupCsvSerializer.USER_NAME.prefixes(0),
+          UserAndGroupCsvSerializer.USER_EMAIL.prefixes(0),
           "Création",
           "Aidant",
-          csv.USER_INSTRUCTOR.prefixes(0),
-          csv.USER_GROUP_MANAGER.prefixes(0),
+          UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes(0),
+          UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes(0),
           "Expert",
           "Admin",
           "Actif",
           "Commune INSEE",
-          csv.GROUP_AREAS_IDS.prefixes(0),
-          csv.GROUP_NAME.prefixes(0),
+          UserAndGroupCsvSerializer.GROUP_AREAS_IDS.prefixes(0),
+          UserAndGroupCsvSerializer.GROUP_NAME.prefixes(0),
           "CGU",
           "Newsletter"
         ).mkString(";")

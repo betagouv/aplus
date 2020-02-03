@@ -1,4 +1,4 @@
-package extentions
+package helper
 
 object UUIDHelper {
   def randomUUID = java.util.UUID.randomUUID

@@ -1,10 +1,9 @@
-package extentions
+package helper
 
 import java.util.Locale
 
 import org.joda.time.{DateTime, DateTimeZone}
 
-import extentions.Time.dateTimeOrdering
 import scala.collection.immutable.ListMap
 
 object Time {

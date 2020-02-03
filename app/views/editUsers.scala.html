@@ -1,5 +1,5 @@
 @import models._
-@import extentions.MDLForms._
+@import _root_.helper.MDLForms._
 @(user: User)(form: Form[(List[User])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 

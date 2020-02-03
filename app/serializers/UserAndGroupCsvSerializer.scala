@@ -1,19 +1,56 @@
-package helper
+package serializers
 
-import csv._
-import forms.Models.{UserFormData, UserGroupFormData}
+import java.util.UUID
+
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
+import models.formModels.{UserFormData, UserGroupFormData}
+import helper.{PlayFormHelper, UUIDHelper}
+import helper.StringHelper._
+import models.{Area, User, UserGroup}
+import org.joda.time.DateTime
+import play.api.data.Forms._
+import play.api.data.Mapping
 
 import scala.io.Source
-import org.joda.time.DateTime
-import models.{Area, User, UserGroup}
-import extentions.UUIDHelper
-import play.api.data.Mapping
-import play.api.data.Forms._
-import java.util.UUID
-import StringHelper.CanonizeString
 
-object CsvHelper {
+object UserAndGroupCsvSerializer {
+
+  case class Header(key: String, prefixes: List[String]) {
+    val lowerPrefixes = prefixes.map(_.toLowerCase())
+  }
+
+  val USER_NAME = Header("user.name", List("Nom", "PRENOM NOM"))
+  val USER_FIRST_NAME = Header("user.firstname", List("Prénom", "Prenom"))
+
+  val USER_EMAIL =
+    Header("user.email", List("Email", "Adresse e-mail", "Contact mail Agent", "MAIL"))
+  val USER_INSTRUCTOR = Header("user.instructor", List("Instructeur"))
+  val USER_GROUP_MANAGER = Header("user.admin-group", List("Responsable"))
+  val USER_QUALITY = Header("user.quality", List("Qualité"))
+  val USER_PHONE_NUMBER = Header("user.phone-number", List("Numéro de téléphone", "téléphone"))
+
+  val GROUP_AREAS_IDS = Header("group.area-ids", List("Territoire", "DEPARTEMENTS"))
+  val GROUP_ORGANISATION = Header("group.organisation", List("Organisation"))
+  val GROUP_NAME = Header("group.name", List("Groupe", "Opérateur partenaire")) // "Nom de la structure labellisable"
+  val GROUP_EMAIL = Header("group.email", List("Bal", "adresse mail générique"))
+
+  val SEPARATOR = ";"
+
+  val USER_HEADERS = List(
+    USER_PHONE_NUMBER,
+    USER_FIRST_NAME,
+    USER_NAME,
+    USER_EMAIL,
+    USER_INSTRUCTOR,
+    USER_GROUP_MANAGER
+  )
+  val USER_HEADER = USER_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
+
+  val GROUP_HEADERS = List(GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL, GROUP_AREAS_IDS)
+  val GROUP_HEADER = GROUP_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
+
+  type UUIDGenerator = () => UUID
+
   type LineNumber = Int
   type CSVMap = Map[String, String]
   type RawCSVLine = String
@@ -58,7 +95,7 @@ object CsvHelper {
       userGroupFormData: List[UserGroupFormData]
   ): List[UserGroupFormData] =
     userGroupFormData
-      .groupBy(_.group.name.canonize)
+      .groupBy(_.group.name.stripSpecialChars)
       .mapValues({
         case sameGroupNameList: List[UserGroupFormData] =>
           val group = sameGroupNameList.head
@@ -111,8 +148,8 @@ object CsvHelper {
           case (lineNumber: LineNumber, csvMap: CSVMap, rawCSVLine: RawCSVLine) =>
             csvMap.trimValues.csvCleanHeadersWithExpectedHeaders
               .convertAreasNameToAreaUUID(defaultAreas)
-              .convertBooleanValue(csv.USER_GROUP_MANAGER.key, "Responsable")
-              .convertBooleanValue(csv.USER_INSTRUCTOR.key, "Instructeur")
+              .convertBooleanValue(UserAndGroupCsvSerializer.USER_GROUP_MANAGER.key, "Responsable")
+              .convertBooleanValue(UserAndGroupCsvSerializer.USER_INSTRUCTOR.key, "Instructeur")
               .includeAreasNameInGroupName
               .fromCsvFieldNameToHtmlFieldName
               .includeFirstnameInLastName()
@@ -163,7 +200,7 @@ object CsvHelper {
     }
 
     def convertAreasNameToAreaUUID(defaultAreas: Seq[Area]): CSVMap = {
-      val newAreas: Seq[Area] = csvMap.get(csv.GROUP_AREAS_IDS.key) match {
+      val newAreas: Seq[Area] = csvMap.get(UserAndGroupCsvSerializer.GROUP_AREAS_IDS.key) match {
         case Some(areas) =>
           val inseeCodes = stringToInseeCodeList(areas)
 
@@ -180,7 +217,9 @@ object CsvHelper {
         case None =>
           defaultAreas
       }
-      csvMap + (csv.GROUP_AREAS_IDS.key -> newAreas.map(_.id.toString).mkString(","))
+      csvMap + (UserAndGroupCsvSerializer.GROUP_AREAS_IDS.key -> newAreas
+        .map(_.id.toString)
+        .mkString(","))
     }
 
     def convertBooleanValue(key: String, trueValue: String): CSVMap =
@@ -194,14 +233,14 @@ object CsvHelper {
 
     def includeAreasNameInGroupName(): CSVMap = {
       val optionalAreaNames: Option[List[String]] = csvMap
-        .get(csv.GROUP_AREAS_IDS.key)
+        .get(UserAndGroupCsvSerializer.GROUP_AREAS_IDS.key)
         .map({ ids: String =>
           ids.split(",").flatMap(UUIDHelper.fromString).flatMap(Area.fromId).toList.map(_.name)
         })
       // TODO: Only if the groupName dont include the area
-      (optionalAreaNames -> csvMap.get(csv.GROUP_NAME.key)) match {
+      (optionalAreaNames -> csvMap.get(UserAndGroupCsvSerializer.GROUP_NAME.key)) match {
         case (Some(areaNames), Some(initialGroupName)) =>
-          csvMap + (csv.GROUP_NAME.key -> s"$initialGroupName - ${areaNames.mkString("/")}")
+          csvMap + (UserAndGroupCsvSerializer.GROUP_NAME.key -> s"$initialGroupName - ${areaNames.mkString("/")}")
         case _ =>
           csvMap
       }
@@ -209,7 +248,7 @@ object CsvHelper {
 
     def fromCsvFieldNameToHtmlFieldName: CSVMap =
       csvMap
-        .get(csv.GROUP_AREAS_IDS.key)
+        .get(UserAndGroupCsvSerializer.GROUP_AREAS_IDS.key)
         .fold({
           csvMap
         })({ areasValue =>
@@ -218,28 +257,28 @@ object CsvHelper {
             .zipWithIndex
             .map({
               case (areaUuid, index) =>
-                s"${csv.GROUP_AREAS_IDS.key}[$index]" -> areaUuid
+                s"${GROUP_AREAS_IDS.key}[$index]" -> areaUuid
             })
-          (csvMap - csv.GROUP_AREAS_IDS.key) ++ newTuples
+          (csvMap - GROUP_AREAS_IDS.key) ++ newTuples
         })
 
     def includeFirstnameInLastName(): CSVMap =
-      (csvMap.get(csv.USER_FIRST_NAME.key), csvMap.get(csv.USER_NAME.key)) match {
+      (csvMap.get(USER_FIRST_NAME.key), csvMap.get(USER_NAME.key)) match {
         case (Some(firstName), Some(lastName)) =>
-          csvMap + (csv.USER_NAME.key -> s"${lastName} ${firstName}")
+          csvMap + (USER_NAME.key -> s"${lastName} ${firstName}")
         case _ =>
           csvMap
       }
 
     def setDefaultQualityIfNeeded(): CSVMap = {
-      val defaultUserQuality = csvMap.getOrElse(csv.GROUP_NAME.key, "")
+      val defaultUserQuality = csvMap.getOrElse(GROUP_NAME.key, "")
       csvMap
-        .get(csv.USER_QUALITY.key)
+        .get(USER_QUALITY.key)
         .fold {
-          csvMap + (csv.USER_QUALITY.key -> defaultUserQuality)
+          csvMap + (USER_QUALITY.key -> defaultUserQuality)
         } { quality =>
           if (quality.isEmpty)
-            csvMap + (csv.USER_QUALITY.key -> defaultUserQuality)
+            csvMap + (USER_QUALITY.key -> defaultUserQuality)
           else
             csvMap
         }
@@ -255,13 +294,13 @@ object CsvHelper {
         .bind(csvMap)
         .fold(
           { errors =>
-            Left(errors.map(FormHelper.prettifyFormError).mkString(", "))
+            Left(errors.map(PlayFormHelper.prettifyFormError).mkString(", "))
           }, { group =>
             userCSVMapping(currentDate)
               .bind(csvMap)
               .fold(
                 { errors =>
-                  Left(errors.map(FormHelper.prettifyFormError).mkString(", "))
+                  Left(errors.map(PlayFormHelper.prettifyFormError).mkString(", "))
                 }, { user =>
                   Right(
                     UserGroupFormData(

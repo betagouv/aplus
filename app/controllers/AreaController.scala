@@ -4,8 +4,8 @@ import java.util.UUID
 
 import actions.LoginAction
 import constants.Constants
-import extentions.Operators.UserOperators
-import extentions.UUIDHelper
+import Operators.UserOperators
+import helper.UUIDHelper
 import javax.inject.{Inject, Singleton}
 import models.EventType.{
   AllAreaUnauthorized,

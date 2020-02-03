@@ -1,6 +1,7 @@
 package browser
 
-import extentions.{Time, UUIDHelper}
+import helper.UUIDHelper
+import helper.Time
 import javax.inject.Inject
 import models.LoginToken
 import org.joda.time.DateTime

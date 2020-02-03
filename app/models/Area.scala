@@ -2,8 +2,8 @@ package models
 
 import java.util.UUID
 
-import extentions.UUIDHelper
 import helper.StringHelper.CanonizeString
+import helper.UUIDHelper
 
 case class Area(id: UUID, name: String, inseeCode: String) {
   override def toString(): String = s"$name ($inseeCode)"
@@ -19,8 +19,8 @@ object Area {
     }
 
   def searchFromName(name: String): Option[Area] = {
-    val area = name.canonize
-    Area.all.find(a => a.name.canonize == area)
+    val area = name.stripSpecialChars
+    Area.all.find(a => a.name.stripSpecialChars == area)
   }
 
   def fromInseeCode(inseeCode: String): Option[Area] = all.find(area => inseeCode == area.inseeCode)

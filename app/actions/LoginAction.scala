@@ -3,11 +3,11 @@ package actions
 import constants.Constants
 import javax.inject.{Inject, Singleton}
 import controllers.routes
+import helper.UUIDHelper
 import models._
 import play.api.mvc._
 import play.api.mvc.Results.TemporaryRedirect
 import services.{EventService, TokenService, UserService}
-import extentions.UUIDHelper
 import models.EventType.{
   AuthByKey,
   AuthWithDifferentIp,

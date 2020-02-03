@@ -9,7 +9,7 @@ import play.api.UnexpectedException
 
 @javax.inject.Singleton
 class TokenService @Inject() (configuration: play.api.Configuration, db: Database) {
-  import extentions.Anorm._
+  import serializers.Anorm._
 
   private val simpleLoginToken: RowParser[LoginToken] = Macro.parser[LoginToken](
     "token",
