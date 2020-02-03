@@ -83,7 +83,7 @@ case class ApplicationController @Inject() (
     extends InjectedController
     with play.api.i18n.I18nSupport
     with Operators.ApplicationOperators {
-  import forms.Models._
+  import formModels._
 
   private implicit val timeZone = Time.dateTimeZone
 

@@ -1,10 +1,8 @@
-package forms
+package models
 
 import java.util.UUID
 
-import models.{User, UserGroup}
-
-object Models {
+object formModels {
   // TOOD : rename Data -> FormData
 
   case class ApplicationData(

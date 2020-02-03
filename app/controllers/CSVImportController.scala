@@ -4,7 +4,7 @@ import java.util.UUID
 
 import actions.LoginAction
 import Operators.{GroupOperators, UserOperators}
-import forms.Models.{CSVImportData, UserFormData, UserGroupFormData}
+import models.formModels.{CSVImportData, UserFormData, UserGroupFormData}
 import javax.inject.Inject
 import models.{Area, Organisation, User, UserGroup}
 import org.webjars.play.WebJarsUtil

@@ -2,7 +2,7 @@ package csv
 
 import com.github.tototoshi.csv.DefaultCSVFormat
 import helper.UUIDHelper
-import forms.Models
+import forms.formModels
 import helper.{CSVUtil, Time}
 import models.{Area, UserGroup}
 import org.junit.runner.RunWith
@@ -55,7 +55,7 @@ class CSVSpec extends Specification {
       override val delimiter: Char = ','
     }
     "be recognized" >> {
-      val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
+      val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
         CsvHelper.csvLinesToUserGroupData(
           separator = ',',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
@@ -100,7 +100,7 @@ class CSVSpec extends Specification {
     }
 
     "be recognized with proper organisation" >> {
-      val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
+      val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
         CsvHelper.csvLinesToUserGroupData(
           separator = ',',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
@@ -121,7 +121,7 @@ class CSVSpec extends Specification {
       override val delimiter: Char = ';'
     }
     "produce 1 errors" >> {
-      val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
+      val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
         CsvHelper.csvLinesToUserGroupData(
           separator = ';',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
@@ -149,7 +149,7 @@ class CSVSpec extends Specification {
     }
 
     "produce valid groups" >> {
-      val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
+      val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
         CsvHelper.csvLinesToUserGroupData(
           separator = ';',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
@@ -162,7 +162,7 @@ class CSVSpec extends Specification {
     }
 
     "produce a valid users" >> {
-      val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
+      val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
         CsvHelper.csvLinesToUserGroupData(
           separator = ';',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,

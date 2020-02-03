@@ -4,7 +4,7 @@
 @import _root_.helper.BooleanHelper.not
 @import serializers.CsvHelper
 
-@import forms.Models.UserGroupFormData
+@import models.formModels.UserGroupFormData
 @(currentUser: User)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @display(section: Field, groupIndex: Int)(header: Html) = {

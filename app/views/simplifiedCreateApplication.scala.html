@@ -1,7 +1,7 @@
 @import models._
 @import _root_.helper.MDLForms._
 @import models.Organisation.Category
-@(user: User, currentArea: Area)(users: List[User], organisationGroups: List[UserGroup], categories: Seq[Category], selectedCategory: Option[String], applicationForm: Form[forms.Models.ApplicationData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(user: User, currentArea: Area)(users: List[User], organisationGroups: List[UserGroup], categories: Seq[Category], selectedCategory: Option[String], applicationForm: Form[models.formModels.ApplicationData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
 @main(user, Some(currentArea))(s"Nouvelle demande"){
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
