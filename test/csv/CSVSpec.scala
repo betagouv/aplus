@@ -8,7 +8,7 @@ import models.{Area, UserGroup}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
-import serializers.CsvHelper
+import serializers.UserAndGroupCsvSerializer
 
 @RunWith(classOf[JUnitRunner])
 class CSVSpec extends Specification {
@@ -56,7 +56,7 @@ class CSVSpec extends Specification {
     }
     "be recognized" >> {
       val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
-        CsvHelper.csvLinesToUserGroupData(
+        UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ',',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
           Time.now()
@@ -101,7 +101,7 @@ class CSVSpec extends Specification {
 
     "be recognized with proper organisation" >> {
       val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
-        CsvHelper.csvLinesToUserGroupData(
+        UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ',',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
           Time.now()
@@ -122,7 +122,7 @@ class CSVSpec extends Specification {
     }
     "produce 1 errors" >> {
       val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
-        CsvHelper.csvLinesToUserGroupData(
+        UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ';',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
           Time.now()
@@ -150,7 +150,7 @@ class CSVSpec extends Specification {
 
     "produce valid groups" >> {
       val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
-        CsvHelper.csvLinesToUserGroupData(
+        UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ';',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
           Time.now()
@@ -163,7 +163,7 @@ class CSVSpec extends Specification {
 
     "produce a valid users" >> {
       val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
-        CsvHelper.csvLinesToUserGroupData(
+        UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ';',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
           Time.now()

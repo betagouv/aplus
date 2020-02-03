@@ -28,7 +28,7 @@ import models.EventType.{
   UsersImported
 }
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
-import serializers.CsvHelper
+import serializers.UserAndGroupCsvSerializer
 
 case class CSVImportController @Inject() (
     loginAction: LoginAction,
@@ -174,7 +174,7 @@ case class CSVImportController @Inject() (
             )
           }, { csvImportData =>
             val defaultAreas = csvImportData.areaIds.flatMap(Area.fromId)
-            CsvHelper
+            UserAndGroupCsvSerializer
               .csvLinesToUserGroupData(csvImportData.separator, defaultAreas, Time.now())(
                 csvImportData.csvLines
               )

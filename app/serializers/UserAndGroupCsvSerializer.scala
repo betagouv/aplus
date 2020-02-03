@@ -13,7 +13,7 @@ import play.api.data.Mapping
 
 import scala.io.Source
 
-object CsvHelper {
+object UserAndGroupCsvSerializer {
 
   case class Header(key: String, prefixes: List[String]) {
     val lowerPrefixes = prefixes.map(_.toLowerCase())
@@ -148,8 +148,8 @@ object CsvHelper {
           case (lineNumber: LineNumber, csvMap: CSVMap, rawCSVLine: RawCSVLine) =>
             csvMap.trimValues.csvCleanHeadersWithExpectedHeaders
               .convertAreasNameToAreaUUID(defaultAreas)
-              .convertBooleanValue(CsvHelper.USER_GROUP_MANAGER.key, "Responsable")
-              .convertBooleanValue(CsvHelper.USER_INSTRUCTOR.key, "Instructeur")
+              .convertBooleanValue(UserAndGroupCsvSerializer.USER_GROUP_MANAGER.key, "Responsable")
+              .convertBooleanValue(UserAndGroupCsvSerializer.USER_INSTRUCTOR.key, "Instructeur")
               .includeAreasNameInGroupName
               .fromCsvFieldNameToHtmlFieldName
               .includeFirstnameInLastName()
@@ -200,7 +200,7 @@ object CsvHelper {
     }
 
     def convertAreasNameToAreaUUID(defaultAreas: Seq[Area]): CSVMap = {
-      val newAreas: Seq[Area] = csvMap.get(CsvHelper.GROUP_AREAS_IDS.key) match {
+      val newAreas: Seq[Area] = csvMap.get(UserAndGroupCsvSerializer.GROUP_AREAS_IDS.key) match {
         case Some(areas) =>
           val inseeCodes = stringToInseeCodeList(areas)
 
@@ -217,7 +217,9 @@ object CsvHelper {
         case None =>
           defaultAreas
       }
-      csvMap + (CsvHelper.GROUP_AREAS_IDS.key -> newAreas.map(_.id.toString).mkString(","))
+      csvMap + (UserAndGroupCsvSerializer.GROUP_AREAS_IDS.key -> newAreas
+        .map(_.id.toString)
+        .mkString(","))
     }
 
     def convertBooleanValue(key: String, trueValue: String): CSVMap =
@@ -231,14 +233,14 @@ object CsvHelper {
 
     def includeAreasNameInGroupName(): CSVMap = {
       val optionalAreaNames: Option[List[String]] = csvMap
-        .get(CsvHelper.GROUP_AREAS_IDS.key)
+        .get(UserAndGroupCsvSerializer.GROUP_AREAS_IDS.key)
         .map({ ids: String =>
           ids.split(",").flatMap(UUIDHelper.fromString).flatMap(Area.fromId).toList.map(_.name)
         })
       // TODO: Only if the groupName dont include the area
-      (optionalAreaNames -> csvMap.get(CsvHelper.GROUP_NAME.key)) match {
+      (optionalAreaNames -> csvMap.get(UserAndGroupCsvSerializer.GROUP_NAME.key)) match {
         case (Some(areaNames), Some(initialGroupName)) =>
-          csvMap + (CsvHelper.GROUP_NAME.key -> s"$initialGroupName - ${areaNames.mkString("/")}")
+          csvMap + (UserAndGroupCsvSerializer.GROUP_NAME.key -> s"$initialGroupName - ${areaNames.mkString("/")}")
         case _ =>
           csvMap
       }
@@ -246,7 +248,7 @@ object CsvHelper {
 
     def fromCsvFieldNameToHtmlFieldName: CSVMap =
       csvMap
-        .get(CsvHelper.GROUP_AREAS_IDS.key)
+        .get(UserAndGroupCsvSerializer.GROUP_AREAS_IDS.key)
         .fold({
           csvMap
         })({ areasValue =>
