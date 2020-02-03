@@ -3,19 +3,19 @@ package models
 import helper.StringHelper.CanonizeString
 
 case class Organisation(shortName: String, name: String) {
-  def key: String = shortName.canonize
+  def key: String = shortName.stripSpecialChars
 }
 
 object Organisation {
 
   def fromShortName(shortName: String) = {
-    val standardShortName = shortName.canonize
-    all.find(_.shortName.canonize == standardShortName)
+    val standardShortName = shortName.stripSpecialChars
+    all.find(_.shortName.stripSpecialChars == standardShortName)
   }
 
   def fromName(name: String) = {
-    val standardName = name.canonize
-    all.find(_.name.canonize == standardName)
+    val standardName = name.stripSpecialChars
+    all.find(_.name.stripSpecialChars == standardName)
   }
 
   val all = List(

@@ -19,8 +19,8 @@ object Area {
     }
 
   def searchFromName(name: String): Option[Area] = {
-    val area = name.canonize
-    Area.all.find(a => a.name.canonize == area)
+    val area = name.stripSpecialChars
+    Area.all.find(a => a.name.stripSpecialChars == area)
   }
 
   def fromInseeCode(inseeCode: String): Option[Area] = all.find(area => inseeCode == area.inseeCode)

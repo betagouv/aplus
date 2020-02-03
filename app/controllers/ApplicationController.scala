@@ -536,7 +536,7 @@ case class ApplicationController @Inject() (
     eventService.log(AllCSVShowed, s"Visualise un CSV pour la zone ${area}")
     Ok(csvContent)
       .withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-demandes-$date-${area
-        .map(_.name.canonize)
+        .map(_.name.stripSpecialChars)
         .getOrElse("tous")}.csv"""")
       .as("text/csv")
   }

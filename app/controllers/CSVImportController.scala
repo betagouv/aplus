@@ -64,7 +64,7 @@ case class CSVImportController @Inject() (
     val alreadyExistingUsers = userService.byEmails(userEmails)
     val newUsersFormDataList = userGroupFormData.users.map { userDataForm =>
       alreadyExistingUsers
-        .find(_.email.canonize == userDataForm.user.email.canonize)
+        .find(_.email.stripSpecialChars == userDataForm.user.email.stripSpecialChars)
         .fold {
           userDataForm
         } { alreadyExistingUser =>

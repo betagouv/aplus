@@ -95,7 +95,7 @@ object CsvHelper {
       userGroupFormData: List[UserGroupFormData]
   ): List[UserGroupFormData] =
     userGroupFormData
-      .groupBy(_.group.name.canonize)
+      .groupBy(_.group.name.stripSpecialChars)
       .mapValues({
         case sameGroupNameList: List[UserGroupFormData] =>
           val group = sameGroupNameList.head
