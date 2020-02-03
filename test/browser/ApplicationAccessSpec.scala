@@ -9,22 +9,23 @@ import play.api.test.Helpers._
 import play.api.test._
 import services._
 
-
 @RunWith(classOf[JUnitRunner])
 class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
 
   "Application" should {
-    "Access Application" in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {
+    "Access Application" in new WithBrowser(
+      webDriver = WebDriverFactory(HTMLUNIT),
+      app = applicationWithBrowser
+    ) {
 
-      "userCodeName"                  | "expectedError" |
-        "instructor-test"             ! false |
-        "instructor-test-unrelated"   ! true |
-        "helper-test"                 ! false |
-        "helper-test-friend"          ! false |
-        "helper-test-unrelated"       ! true |
-        "expert-test-unrelated"       ! true |
-        "helper-test-manager"         ! true |> { (userCodeName, shouldExpectAnError) =>
-
+      "userCodeName" | "expectedError" |
+        "instructor-test" ! false |
+        "instructor-test-unrelated" ! true |
+        "helper-test" ! false |
+        "helper-test-friend" ! false |
+        "helper-test-unrelated" ! true |
+        "expert-test-unrelated" ! true |
+        "helper-test-manager" ! true |> { (userCodeName, shouldExpectAnError) =>
         val tokenService = app.injector.instanceOf[TokenService]
         val userService = app.injector.instanceOf[UserService]
         val groupService = app.injector.instanceOf[UserGroupService]
@@ -38,7 +39,8 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
           description = None,
           inseeCode = List("0"),
           creationDate = Time.now(),
-          areaIds = area :: Nil)
+          areaIds = area :: Nil
+        )
         groupService.add(instructorGroup)
         val helperGroup = UserGroup(
           id = UUIDHelper.randomUUID,
@@ -46,7 +48,8 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
           description = None,
           inseeCode = List("0"),
           creationDate = Time.now(),
-          areaIds = area :: Nil)
+          areaIds = area :: Nil
+        )
         groupService.add(helperGroup)
 
         val instructorUser = User(
@@ -169,13 +172,15 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
           groupIds = List(helperGroup.id)
         )
 
-        val users = List(instructorUser,
+        val users = List(
+          instructorUser,
           unrelatedInstructorUser,
           helperUser,
           helperFriendUser,
           unrelatedHelperUser,
           unrelatedExpertUser,
-          managerUser)
+          managerUser
+        )
 
         val result = userService.add(users)
         result.isRight must beTrue
@@ -188,35 +193,44 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
           creatorUserId = helperUser.id,
           subject = s"Sujet de la demande $number",
           description = s"John a un problème $number",
-          userInfos = Map("Prénom" -> "John",
-            "Nom de famille" -> "Doe",
-            "Date de naissance" -> "1988"
+          userInfos =
+            Map("Prénom" -> "John", "Nom de famille" -> "Doe", "Date de naissance" -> "1988"),
+          invitedUsers = Map(
+            instructorUser.id -> instructorUser.nameWithQualite,
+            helperFriendUser.id -> helperFriendUser.nameWithQualite
           ),
-          invitedUsers = Map(instructorUser.id -> instructorUser.nameWithQualite,
-            helperFriendUser.id -> helperFriendUser.nameWithQualite),
           area = area,
           irrelevant = false
         )
         applicationService.createApplication(application)
 
         // Helper login
-        val loginToken = LoginToken.forUserId(UUIDHelper.namedFrom(s"$userCodeName$number"), 5, "127.0.0.1")
+        val loginToken =
+          LoginToken.forUserId(UUIDHelper.namedFrom(s"$userCodeName$number"), 5, "127.0.0.1")
         tokenService.create(loginToken)
 
-        val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL(false, s"localhost:$port")
+        val loginURL = controllers.routes.LoginController
+          .magicLinkAntiConsumptionPage()
+          .absoluteURL(false, s"localhost:$port")
 
         browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
 
         // Wait for login
         eventually {
-          browser.url must endWith(controllers.routes.ApplicationController.myApplications().url.substring(1))
+          browser.url must endWith(
+            controllers.routes.ApplicationController.myApplications().url.substring(1)
+          )
         }
 
-        val applicationURL = controllers.routes.ApplicationController.show(application.id).absoluteURL(false, s"localhost:$port")
+        val applicationURL = controllers.routes.ApplicationController
+          .show(application.id)
+          .absoluteURL(false, s"localhost:$port")
         browser.goTo(applicationURL)
 
-        if(shouldExpectAnError) {
-          browser.pageSource must contain("Vous n'avez pas les droits suffisants pour voir cette demande.")
+        if (shouldExpectAnError) {
+          browser.pageSource must contain(
+            "Vous n'avez pas les droits suffisants pour voir cette demande."
+          )
           browser.pageSource must not contain (application.subject)
           browser.pageSource must not contain (application.description)
           browser.pageSource must not contain (application.userInfos("Prénom"))
