@@ -54,21 +54,28 @@ class CSVSpec extends Specification {
       override val delimiter: Char = ','
     }
     "be recognized" >> {
-      val result: Either[String, (List[String], List[Models.UserGroupFormData])] = CsvHelper.csvLinesToUserGroupData(separator = ',', defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten, Time.now())(prefFormat)
+      val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
+        CsvHelper.csvLinesToUserGroupData(
+          separator = ',',
+          defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
+          Time.now()
+        )(prefFormat)
       result must beRight
 
       val (errors, data) = result.right.get
       errors must have size 1
       data must have size 9
 
-      val expectedUserGroup = UserGroup(id = UUIDHelper.namedFrom("id"),
+      val expectedUserGroup = UserGroup(
+        id = UUIDHelper.namedFrom("id"),
         name = "DGFIP - Ardennes",
         description = None,
         inseeCode = Nil,
         creationDate = Time.now(),
         areaIds = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten.map(_.id),
         organisation = None,
-        email = Some("sip.laon@dgfip.finances.gouv.fr"))
+        email = Some("sip.laon@dgfip.finances.gouv.fr")
+      )
 
       val dgfip = data.find(_.group.name == expectedUserGroup.name)
       dgfip must beSome
@@ -92,7 +99,12 @@ class CSVSpec extends Specification {
     }
 
     "be recognized with proper organisation" >> {
-      val result: Either[String, (List[String], List[Models.UserGroupFormData])] = CsvHelper.csvLinesToUserGroupData(separator = ',', defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten, Time.now())(organisationTest)
+      val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
+        CsvHelper.csvLinesToUserGroupData(
+          separator = ',',
+          defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
+          Time.now()
+        )(organisationTest)
       result must beRight
       val (errors, data) = result.right.get
       errors must have size 0
@@ -108,7 +120,12 @@ class CSVSpec extends Specification {
       override val delimiter: Char = csv.SEPARATOR.charAt(0)
     }
     "produce 1 errors" >> {
-      val result: Either[String, (List[String], List[Models.UserGroupFormData])] = CsvHelper.csvLinesToUserGroupData(separator = ';', defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten, Time.now())(failFile)
+      val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
+        CsvHelper.csvLinesToUserGroupData(
+          separator = ';',
+          defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
+          Time.now()
+        )(failFile)
       result must beRight
       val (errors, _) = result.right.get
       errors must have size 1
@@ -131,7 +148,12 @@ class CSVSpec extends Specification {
     }
 
     "produce valid groups" >> {
-      val result: Either[String, (List[String], List[Models.UserGroupFormData])] = CsvHelper.csvLinesToUserGroupData(separator = ';', defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten, Time.now())(csvFile)
+      val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
+        CsvHelper.csvLinesToUserGroupData(
+          separator = ';',
+          defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
+          Time.now()
+        )(csvFile)
       result must beRight
       val (errors, data) = result.right.get
       errors must have size 0
@@ -139,7 +161,12 @@ class CSVSpec extends Specification {
     }
 
     "produce a valid users" >> {
-      val result: Either[String, (List[String], List[Models.UserGroupFormData])] = CsvHelper.csvLinesToUserGroupData(separator = ';', defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten, Time.now())(csvFile)
+      val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
+        CsvHelper.csvLinesToUserGroupData(
+          separator = ';',
+          defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
+          Time.now()
+        )(csvFile)
       result must beRight
       val (errors, data) = result.right.get
       errors must have size 0

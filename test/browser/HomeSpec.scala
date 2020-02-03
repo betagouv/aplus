@@ -8,19 +8,25 @@ import play.api.test._
 
 @RunWith(classOf[JUnitRunner])
 class HomeSpec extends Specification with Tables with BaseSpec {
-  
+
   "Home" should {
-    "Redirect to /login when disconnected" in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {
+    "Redirect to /login when disconnected" in new WithBrowser(
+      webDriver = WebDriverFactory(HTMLUNIT),
+      app = applicationWithBrowser
+    ) {
       val homeUrl = controllers.routes.HomeController.index().absoluteURL(false, s"localhost:$port")
 
       browser.goTo(homeUrl)
 
-
       browser.url must endWith(controllers.routes.LoginController.login().url.substring(1))
     }
 
-    "Status up" in new WithBrowser(webDriver = WebDriverFactory(HTMLUNIT), app = applicationWithBrowser) {
-      val loginURL = controllers.routes.HomeController.status().absoluteURL(false, s"localhost:$port")
+    "Status up" in new WithBrowser(
+      webDriver = WebDriverFactory(HTMLUNIT),
+      app = applicationWithBrowser
+    ) {
+      val loginURL =
+        controllers.routes.HomeController.status().absoluteURL(false, s"localhost:$port")
 
       browser.goTo(loginURL)
 
