@@ -5,103 +5,110 @@
 
 @main(user, maxWidth = false)(s"Gestion des utilisateurs") {
     @webJarsUtil.locate("dialog-polyfill.css").css()
-  <style>
-          .pem-table {
-            width: 100%;
-          }
-          dialog {
-              position: fixed;
-              top: 50%;
-              transform: translate(0, -50%);
-          }
-          .smaller-textfield > .mdl-textfield {
-              width: 130px;
-          }
-          .mdl-dialog__content {
-              text-align: left;
-          }
-  </style>
+    <style>
+            .pem-table {
+                width: 100%;
+            }
+
+            dialog {
+                position: fixed;
+                top: 50%;
+                transform: translate(0, -50%);
+            }
+
+            .smaller-textfield > .mdl-textfield {
+                width: 130px;
+            }
+
+            .mdl-dialog__content {
+                text-align: left;
+            }
+    </style>
     @webJarsUtil.locate("dialog-polyfill.js").script()
     <script type='text/javascript'>
-        function registerDialog(index) {
-            var dialog = document.querySelector('#dialog-'+index);
-            var showDialogButton = document.querySelector('#show-dialog-'+index);
-            if (! dialog.showModal) {
-                dialogPolyfill.registerDialog(dialog);
+            function registerDialog(index) {
+                var dialog = document.querySelector('#dialog-' + index);
+                var showDialogButton = document.querySelector('#show-dialog-' + index);
+                if (!dialog.showModal) {
+                    dialogPolyfill.registerDialog(dialog);
+                }
+                showDialogButton.addEventListener('click', function () {
+                    dialog.showModal();
+                });
+                dialog.querySelector('#close-dialog-' + index).addEventListener('click', function () {
+                    dialog.close();
+                });
             }
-            showDialogButton.addEventListener('click', function() {
-                      dialog.showModal();
-                    });
-            dialog.querySelector('#close-dialog-'+index).addEventListener('click', function() {
-                      dialog.close();
-                    });
-        }
     </script>
-}{
-  <div class="mdl-cell mdl-cell--12-col">
-  @helper.form(action = action) {
-    @helper.CSRF.formField
-    @if(form.hasGlobalErrors) {
-      <div style="color: red; font-weight: bold;">@form.globalErrors.flatMap(_.messages).mkString(", ")</div>
-    }
-      <em>Instructeur : </em><a href="#" onclick="checkAllBySelector('.instructor')">Tous</a> / <a href="#" onclick="uncheckAllBySelector('.instructor')">Aucuns</a>
+} {
+    <div class="mdl-cell mdl-cell--12-col">
+    @helper.form(action = action) {
+        @helper.CSRF.formField
+        @if(form.hasGlobalErrors) {
+            <div style="color: red;
+                font-weight: bold;">@form.globalErrors.flatMap(_.messages).mkString(", ")</div>
+        }
+        <em>Instructeur : </em>
+        <a href="#" onclick="checkAllBySelector('.instructor')">Tous</a>
+        / <a href="#" onclick="uncheckAllBySelector('.instructor')">Aucuns</a>
 
-      <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table" style="white-space: normal;">
-      <thead>
-        <tr>
-          <th></th>
-          <th class="mdl-data-table__cell--non-numeric">Nom et prénom</th>
-          <th class="mdl-data-table__cell--non-numeric">Qualité</th>
-          <th class="mdl-data-table__cell--non-numeric">Email</th>
-          <th class="mdl-data-table__cell--non-numeric">Téléphone</th>
-          <th class="mdl-data-table__cell--non-numeric">Instructeur</th>
-          <th class="mdl-data-table__cell--non-numeric">Responsable</th>
-        </tr>
-      </thead>
-      <tbody>
-      @helper.repeatWithIndex(form("users"), min = min) { (userField, index) =>
-        <tr id="line_@index">
-          <td>@index
-            @helper.input(userField("id"), 'label -> "Id", 'class -> "hidden") { (id, name, value, args) =>
-              <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+        <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table" style="white-space: normal;">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th class="mdl-data-table__cell--non-numeric">Nom et prénom</th>
+                    <th class="mdl-data-table__cell--non-numeric">Qualité</th>
+                    <th class="mdl-data-table__cell--non-numeric">Email</th>
+                    <th class="mdl-data-table__cell--non-numeric">Téléphone</th>
+                    <th class="mdl-data-table__cell--non-numeric">Instructeur</th>
+                    <th class="mdl-data-table__cell--non-numeric">Responsable</th>
+                </tr>
+            </thead>
+            <tbody>
+            @helper.repeatWithIndex(form("users"), min = min) { (userField, index) =>
+                <tr id="line_@index">
+                    <td>@index
+                        @helper.input(userField("id"), 'label -> "Id", 'class -> "hidden") { (id, name, value, args) =>
+                            <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+                        }
+                    </td>
+                    <td class="mdl-data-table__cell--non-numeric smaller-textfield">
+                    @helper.input(userField("name"), 'label -> "Nom et prénom") { (id, name, value, args) =>
+                        <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+                    }
+                    </td>
+                    <td class="mdl-data-table__cell--non-numeric">
+                    @helper.input(userField("qualite"), 'label -> "Qualité") { (id, name, value, args) =>
+                        <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+                    }
+                    </td>
+                    <td class="mdl-data-table__cell--non-numeric">
+                    @helper.input(userField("email"), 'label -> "Email") { (id, name, value, args) =>
+                        <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+                    }
+                    </td>
+                    <td class="mdl-data-table__cell--non-numeric">
+                    @helper.input(userField("phone-number"), 'label -> "Téléphone") { (id, name, value, args) =>
+                        <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+                    }
+                    </td>
+                    <td>
+                    @helper.checkbox(userField("instructor"), 'type -> "checkbox", 'label -> "Instructeur", 'class -> "mdl-checkbox__input instructor")
+                    </td>
+                    <td>
+                    @helper.checkbox(userField("adminGroup"), 'type -> "checkbox", 'label -> "Responsable", 'class -> "mdl-checkbox__input")
+                    </td>
+                    <td>
+                        <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onclick="deleteElement('#line_@index')"><i class="material-icons">
+                            delete_forever</i></button>
+                    </td>
+                </tr>
             }
-          </td>
-          <td class="mdl-data-table__cell--non-numeric smaller-textfield">
-            @helper.input(userField("name"), 'label -> "Nom et prénom") { (id, name, value, args) =>
-              <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-            }
-          </td>
-          <td class="mdl-data-table__cell--non-numeric">
-            @helper.input(userField("qualite"), 'label -> "Qualité") { (id, name, value, args) =>
-              <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-            }
-          </td>
-          <td class="mdl-data-table__cell--non-numeric">
-            @helper.input(userField("email"), 'label -> "Email") { (id, name, value, args) =>
-              <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-            }
-          </td>
-          <td class="mdl-data-table__cell--non-numeric">
-            @helper.input(userField("phone-number"), 'label -> "Téléphone") { (id, name, value, args) =>
-                <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-            }
-          </td>
-          <td>
-            @helper.checkbox(userField("instructor"), 'type -> "checkbox", 'label -> "Instructeur", 'class -> "mdl-checkbox__input instructor")
-          </td>
-          <td>
-          @helper.checkbox(userField("adminGroup"), 'type -> "checkbox", 'label -> "Responsable", 'class -> "mdl-checkbox__input")
-          </td>
-        <td>
-            <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onclick="deleteElement('#line_@index')"><i class="material-icons">delete_forever</i></button>
-        </td>
-        </tr>
-      }
-      </tbody>
-    </table>
-    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
-      Sauvegarder les modifications
-    </button>
-  }
-  </div>
+            </tbody>
+        </table>
+        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
+            Sauvegarder les modifications
+        </button>
+    }
+    </div>
 }

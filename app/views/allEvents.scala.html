@@ -2,11 +2,12 @@
 @import java.util.Locale
 
 
-@main(user, maxWidth = false)(s"Evénements ($limit derniers)")  {
+@main(user, maxWidth = false)(s"Evénements ($limit derniers)") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("sortable/sortable.css")'>
     <script src="@routes.Assets.versioned("sortable/sortable.js")"></script>
-}{
-    <input class="mdl-cell mdl-cell--12-col" type="search" placeholder="Filtrer les événements (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
+} {
+    <input class="mdl-cell mdl-cell--12-col" type="search" placeholder="Filtrer les événements (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/>
+    <br>
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         <div class="mdl-cell mdl-cell--12-col pem-container">
             <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp sortable" style="white-space: normal;">
@@ -27,7 +28,8 @@
                 </thead>
                 <tfoot class="invisible">
                     <tr>
-                        <td class="mdl-data-table__cell--non-numeric" colspan="8" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les éléments</button></td>
+                        <td class="mdl-data-table__cell--non-numeric" colspan="8" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">
+                            Supprimer le filtre et afficher toutes les éléments</button></td>
                     </tr>
                 </tfoot>
                 <tbody>
@@ -42,20 +44,20 @@
                         <td class="mdl-data-table__cell--non-numeric">@event.code</td>
                         <td class="mdl-data-table__cell--non-numeric">@event.description</td>
                         <td class="mdl-data-table__cell--non-numeric">
-                            @event.toApplicationId match {
-                                case Some(applicationId) => {
-                                     <a href="@routes.ApplicationController.show(applicationId)">@applicationId</a>
-                                }
-                                case None => {}
-                             }
+                        @event.toApplicationId match {
+                            case Some(applicationId) => {
+                                <a href="@routes.ApplicationController.show(applicationId)">@applicationId</a>
+                            }
+                            case None => {}
+                        }
                         </td>
                         <td class="mdl-data-table__cell--non-numeric">
-                            @event.toUserId match {
-                                case Some(userId) => {
-                                    <a href="@routes.UserController.editUser(userId)">@userId</a>
-                                }
-                                case None => {}
+                        @event.toUserId match {
+                            case Some(userId) => {
+                                <a href="@routes.UserController.editUser(userId)">@userId</a>
                             }
+                            case None => {}
+                        }
                         </td>
                         <td class="mdl-data-table__cell--non-numeric">@event.ipAddress</td>
                         <td class="mdl-data-table__cell--non-numeric">@event.id</td>

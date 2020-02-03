@@ -1,124 +1,140 @@
-@(userOrToken: Either[Option[User],(String,String)], tokenExpirationInMinutes: Int)(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil, request: RequestHeader)
+@(userOrToken: Either[Option[User], (String, String)], tokenExpirationInMinutes: Int)(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil, request: RequestHeader)
 
 <!doctype html>
 <html lang="fr">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-    <title>A+</title>
-    @webJarsUtil.locate("roboto-fontface.css").css()
-    @webJarsUtil.locate("material-icons.css").css()
-    @webJarsUtil.locate("material.min.css").css()
-    <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/main.css")'>
-    <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/login.css")'>
-    <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/mdl-extensions.css")'>
-    <script src="@routes.Assets.versioned("javascripts/polyfills.js")"></script>
-    <meta name="robots" content="noindex" />
-     <!-- Piwik -->
-    <script type="text/javascript">
-      var _paq = _paq || [];
-      _paq.push(["setDomains", ["*.aplus.beta.gouv.fr"]]);
-      _paq.push(['trackPageView']);
-      _paq.push(['enableLinkTracking']);
-      (function() {
-        var u="//stats.data.gouv.fr/";
-        _paq.push(['setTrackerUrl', u+'piwik.php']);
-        _paq.push(['setSiteId', '42']);
-        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-        g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
-      })();
-    </script>
-    <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border:0;" alt="" /></p></noscript>
-    <!-- End Piwik Code -->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+        <title>A+</title>
+        @webJarsUtil.locate("roboto-fontface.css").css()
+        @webJarsUtil.locate("material-icons.css").css()
+        @webJarsUtil.locate("material.min.css").css()
+        <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/main.css")'>
+        <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/login.css")'>
+        <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/mdl-extensions.css")'>
+        <script src="@routes.Assets.versioned("javascripts/polyfills.js")"></script>
+        <meta name="robots" content="noindex" />
+            <!-- Piwik -->
+        <script type="text/javascript">
+                var _paq = _paq || [];
+                _paq.push(["setDomains", ["*.aplus.beta.gouv.fr"]]);
+                _paq.push(['trackPageView']);
+                _paq.push(['enableLinkTracking']);
+                (function () {
+                    var u = "//stats.data.gouv.fr/";
+                    _paq.push(['setTrackerUrl', u + 'piwik.php']);
+                    _paq.push(['setSiteId', '42']);
+                    var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
+                    g.type = 'text/javascript';
+                    g.async = true;
+                    g.defer = true;
+                    g.src = u + 'piwik.js';
+                    s.parentNode.insertBefore(g, s);
+                })();
+        </script>
+        <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border: 0;" alt="" /></p></noscript>
+            <!-- End Piwik Code -->
 
-</head>
-<body>
-    <div class="header__ribbon do-not-print mdl-color--pink-500" id="header__ribbon">
-    BETA
-    </div>
-<div class="mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--deep-purple-900">
-    <div class="mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100 demo-only invisible">
-        <div class="mdl-layout__header-row mdl-color--pink-500 mdl-color-text--white">
-            <span class="mdl-layout-title aplus-demo-header__title">
-                Version de démonstration d'Administration+
-            </span>
+        </head>
+    <body>
+        <div class="header__ribbon do-not-print mdl-color--pink-500" id="header__ribbon">
+            BETA
         </div>
-    </div>
-
-    <main class="login-main">
-        <div class="login-container mdl-grid">
-            <div class="mdl-cell mdl-cell--12-col mdl-typography--text-center ">
-                <img src='@routes.Assets.versioned("images/logo_small_150x160.png")' class="logo-login" alt="Administration+">
+        <div class="mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--deep-purple-900">
+            <div class="mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100 demo-only invisible">
+                <div class="mdl-layout__header-row mdl-color--pink-500 mdl-color-text--white">
+                    <span class="mdl-layout-title aplus-demo-header__title">
+                        Version de démonstration d'Administration+
+                    </span>
+                </div>
             </div>
-            <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
-            <div class="login-content mdl-color--grey-100 mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
-                @userOrToken match {
-                    case Left(None) => {
-                    <div class="mdl-typography--text-center">
-                        <h3>Se connecter à Administration+</h3>
-                    </div><br><br>
-                    <form action="@routes.LoginController.login()" method="post">
-                        @helper.CSRF.formField
-                        <label class="aplus-textfield__label" for="email">Saisir votre e-mail professionnel et nominatif :<br>
-                            <span class="aplus-textfield__label__example">Ex: prenom.nom@@votre-structure.fr</span>
-                        </label><br>
-                        <input class="aplus-textfield__input aplus-textfield__input--large" minlength="1" type="text" id="email" name="email" @for(email <- flash.get("email-value")) { value = "@email" }><br>
-                        <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary margin-top--10px" name="id">Envoyer</button>
-                    <br>   <br>
-                        @flash.get("error").map { message =>
-                            <div class="notification notification--error mdl-typography--text-prewrap" >@message</div>
-                        }
 
-                    </form>
-                    }
-                    case Left(Some(user)) => {
-                        <div class="mdl-typography--text-center">
-                            <h3><i class="material-icons material-icons--36px">mail_outline</i><br>Consultez vos emails</h3>
-                        </div>
-                         <p>Nous avons envoyé par e-mail un lien valable @tokenExpirationInMinutes minutes à l'adresse <b>@user.email</b>. Cliquez sur le lien contenu dans l'email pour accéder à Administration+.</p>
+            <main class="login-main">
+                <div class="login-container mdl-grid">
+                    <div class="mdl-cell mdl-cell--12-col mdl-typography--text-center ">
+                        <img src='@routes.Assets.versioned("images/logo_small_150x160.png")' class="logo-login" alt="Administration+">
+                    </div>
+                    <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
+                    <div class="login-content mdl-color--grey-100 mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
+                        @userOrToken match {
+                            case Left(None) => {
+                                <div class="mdl-typography--text-center">
+                                    <h3>Se connecter à Administration+</h3>
+                                </div>
+                                <br>
+                                <br>
+                                <form action="@routes.LoginController.login()" method="post">
+                                    @helper.CSRF.formField
+                                <label class="aplus-textfield__label" for="email">Saisir votre e-mail professionnel et nominatif :<br>
+                                    <span class="aplus-textfield__label__example">Ex: prenom.nom@@votre-structure.fr</span>
+                        </label>
+                                <br>
+                                <input class="aplus-textfield__input aplus-textfield__input--large" minlength="1" type="text" id="email" name="email"
+                                    @for(email <- flash.get("email-value")) { value = "@email" }><br>
+                                <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary margin-top--10px" name="id">Envoyer</button>
+                                <br>
+                                <br>
+                                    @flash.get("error").map { message =>
+                                        <div class="notification notification--error mdl-typography--text-prewrap" >@message</div>
+                                    }
 
-                        <p><i>Vous n'avez pas reçu d'e-email ? Veuillez consulter vos courriers indésirables ou <a href="@routes.LoginController.login()">renvoyer un autre e-email</a></i><br></p>
-                    }
-                    case Right((token,path)) => {
-                        <h3>Vous allez accéder automatiquement à Administration+</h3>
-                        <p>Si la page suivante ne se charge pas automatiquement, <em><a href="#" id="validation-button" onclick="redirect();">cliquez ici pour accéder à Administration+</a></em></p>
-                        <br>
-                        <div id="p2" class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>
-                        <script>
+                                </form>
+                            }
+                            case Left(Some(user)) => {
+                                <div class="mdl-typography--text-center">
+                                    <h3><i class="material-icons material-icons--36px">mail_outline</i>
+                                        <br>
+                                        Consultez vos emails</h3>
+                                </div>
+                                <p>Nous avons envoyé par e-mail un lien valable @tokenExpirationInMinutes minutes à l'adresse <b>@user.email</b>
+                                    . Cliquez sur le lien contenu dans l'email pour accéder à Administration+.</p>
+
+                                <p><i>Vous n'avez pas reçu d'e-email ? Veuillez consulter vos courriers indésirables ou <a href="@routes.LoginController.login()">renvoyer un autre e-email</a></i>
+                                    <br></p>
+                            }
+                            case Right((token, path)) => {
+                                <h3>Vous allez accéder automatiquement à Administration+</h3>
+                                <p>Si la page suivante ne se charge pas automatiquement, <em><a href="#" id="validation-button" onclick="redirect();">cliquez ici pour accéder à Administration+</a></em></p>
+                                <br>
+                                <div id="p2" class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>
+                                <script>
                             var redirected = false;
+
                             function redirect() {
-                                if(!redirected) {
+                                if (!redirected) {
                                     document.getElementById("validation-button").disabled = true;
                                     redirected = true;
-                                    window.location='@path?token=@token';
+                                    window.location = '@path?token=@token';
                                 }
                             }
-                            window.setTimeout(function(){
+
+                            window.setTimeout(function () {
                                 redirect();
                             }, 1500);
                         </script>
+                            }
+                        }
+                        <br>
+                        <br>
+                        <p class="margin-top--30px">Vous rencontrez des difficultés à vous connecter ?<br>
+                            Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Problème%20A+%20Connexion">@Constants.supportEmail</a>
+                            ou sur la Hotline (support): 01 84 80 88 12 (du lundi au vendredi de 9h à 17h)</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <script>
+                if (/localhost|demo/.test(window.location.hostname)) {
+                    document.getElementById("header__ribbon").innerText = "DEMO";
+                    var elements = document.getElementsByClassName("demo-only");
+                    for (var i = 0; i < elements.length; i++) {
+                        elements[i].classList.remove("invisible");
                     }
                 }
-                <br><br>
-                <p class="margin-top--30px">Vous rencontrez des difficultés à vous connecter ?<br>
-                    Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Problème%20A+%20Connexion">@Constants.supportEmail</a>
-                    ou sur la Hotline (support): 01 84 80 88 12 (du lundi au vendredi de 9h à 17h)</p>
-            </div>
-        </div>
-    </main>
-</div>
-
-<script>
-    if(/localhost|demo/.test(window.location.hostname)) {
-        document.getElementById("header__ribbon").innerText = "DEMO";
-        var elements = document.getElementsByClassName("demo-only");
-        for(var i=0; i < elements.length; i++) {
-            elements[i].classList.remove("invisible");
-        }
-    }
-</script>
-    @webJarsUtil.locate("material.min.js").script()
-</body>
+        </script>
+        @webJarsUtil.locate("material.min.js").script()
+    </body>
 </html>
 

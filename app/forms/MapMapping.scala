@@ -1,10 +1,10 @@
 package forms
 
-import play.api.data.{FormError, Mapping, RepeatedMapping}
 import play.api.data.validation.Constraint
-
+import play.api.data.{FormError, Mapping}
 
 object FormsPlusMap {
+
   /**
     * Defines a repeated mapping.
     * {{{
@@ -15,7 +15,7 @@ object FormsPlusMap {
     *
     * @param mapping The mapping to make repeated.
     */
-  def map[A](mapping: Mapping[A]): Mapping[Map[String,A]] = MapMapping(mapping)
+  def map[A](mapping: Mapping[A]): Mapping[Map[String, A]] = MapMapping(mapping)
 }
 
 object MapMapping {
@@ -24,7 +24,8 @@ object MapMapping {
     * Computes the available indexes for the given key in this set of data.
     */
   def indexes(key: String, data: Map[String, String]): Seq[String] = {
-    val KeyPattern = ("^" + java.util.regex.Pattern.quote(key) + """\[([ \p{L}0-9_-]+)\].*$""").r
+    val KeyPattern = ("^" + java.util.regex.Pattern
+      .quote(key) + """\[([ \p{L}0-9_-]+)\].*$""").r
     data.toSeq.collect { case (KeyPattern(index), _) => index }.sorted.distinct
   }
 
@@ -35,12 +36,20 @@ object MapMapping {
   *
   * @param wrapped The wrapped mapping
   */
-case class MapMapping[T](wrapped: Mapping[T], val key: String = "", val constraints: Seq[Constraint[Map[String,T]]] = Nil) extends Mapping[Map[String,T]] {
+case class MapMapping[T](wrapped: Mapping[T],
+                         val key: String = "",
+                         val constraints: Seq[Constraint[Map[String, T]]] = Nil)
+    extends Mapping[Map[String, T]] {
 
   /**
     * The Format expected for this field, if it exists.
     */
   override val format: Option[(String, Seq[Any])] = wrapped.format
+
+  /**
+    * Sub-mappings (these can be seen as sub-keys).
+    */
+  val mappings: Seq[Mapping[_]] = wrapped.mappings
 
   /**
     * Constructs a new Mapping based on this one, by adding new constraints.
@@ -56,7 +65,9 @@ case class MapMapping[T](wrapped: Mapping[T], val key: String = "", val constrai
     * @param addConstraints the constraints to add
     * @return the new mapping
     */
-  def verifying(addConstraints: Constraint[Map[String,T]]*): Mapping[Map[String,T]] = {
+  def verifying(
+    addConstraints: Constraint[Map[String, T]]*
+  ): Mapping[Map[String, T]] = {
     this.copy(constraints = constraints ++ addConstraints.toSeq)
   }
 
@@ -66,16 +77,19 @@ case class MapMapping[T](wrapped: Mapping[T], val key: String = "", val constrai
     * @param data the submitted data
     * @return either a concrete value of type `List[T]` or a set of errors, if the binding failed
     */
-  def bind(data: Map[String, String]): Either[Seq[FormError], Map[String,T]] = {
-    val allErrorsOrItems: Seq[Either[Seq[FormError], (String, T)]] = MapMapping.indexes(key, data).map {
-      i =>
+  def bind(
+    data: Map[String, String]
+  ): Either[Seq[FormError], Map[String, T]] = {
+    val allErrorsOrItems: Seq[Either[Seq[FormError], (String, T)]] =
+      MapMapping.indexes(key, data).map { i =>
         wrapped.withPrefix(key + "[" + i + "]").bind(data) match {
-          case Left(a) => Left(a)
-          case Right(b) => Right((i,b))
+          case Left(a)  => Left(a)
+          case Right(b) => Right((i, b))
+        }
       }
-    }
     if (allErrorsOrItems.forall(_.isRight)) {
-      Right(allErrorsOrItems.map(_.right.get).toMap).right.flatMap(applyConstraints)
+      Right(allErrorsOrItems.map(_.right.get).toMap).right
+        .flatMap(applyConstraints)
     } else {
       Left(allErrorsOrItems.collect { case Left(errors) => errors }.flatten)
     }
@@ -87,8 +101,10 @@ case class MapMapping[T](wrapped: Mapping[T], val key: String = "", val constrai
     * @param value the value to unbind
     * @return the plain data
     */
-  def unbind(value: Map[String,T]): Map[String, String] = {
-    val datas = value.map { case (k, v) => wrapped.withPrefix(key + "[" + k + "]").unbind(v) }
+  def unbind(value: Map[String, T]): Map[String, String] = {
+    val datas = value.map {
+      case (k, v) => wrapped.withPrefix(key + "[" + k + "]").unbind(v)
+    }
     datas.foldLeft(Map.empty[String, String])(_ ++ _)
   }
 
@@ -98,9 +114,17 @@ case class MapMapping[T](wrapped: Mapping[T], val key: String = "", val constrai
     * @param value the value to unbind
     * @return the plain data and any errors in the plain data
     */
-  def unbindAndValidate(value: Map[String,T]): (Map[String, String], Seq[FormError]) = {
-    val (datas, errors) = value.map { case (i, v) => wrapped.withPrefix(key + "[" + i + "]").unbindAndValidate(v) }.unzip
-    (datas.foldLeft(Map.empty[String, String])(_ ++ _), errors.flatten.toSeq ++ collectErrors(value))
+  def unbindAndValidate(
+    value: Map[String, T]
+  ): (Map[String, String], Seq[FormError]) = {
+    val (datas, errors) = value.map {
+      case (i, v) =>
+        wrapped.withPrefix(key + "[" + i + "]").unbindAndValidate(v)
+    }.unzip
+    (
+      datas.foldLeft(Map.empty[String, String])(_ ++ _),
+      errors.flatten.toSeq ++ collectErrors(value)
+    )
   }
 
   /**
@@ -109,13 +133,8 @@ case class MapMapping[T](wrapped: Mapping[T], val key: String = "", val constrai
     * @param prefix the prefix to add to the key
     * @return the same mapping, with only the key changed
     */
-  def withPrefix(prefix: String): Mapping[Map[String,T]] = {
+  def withPrefix(prefix: String): Mapping[Map[String, T]] = {
     addPrefix(prefix).map(newKey => this.copy(key = newKey)).getOrElse(this)
   }
-
-  /**
-    * Sub-mappings (these can be seen as sub-keys).
-    */
-  val mappings: Seq[Mapping[_]] = wrapped.mappings
 
 }

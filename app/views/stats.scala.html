@@ -1,8 +1,8 @@
-@import scala.collection.immutable.ListMap
 @import java.util.Locale
-@import extentions.Time.dateTimeOrdering
-@import extentions.Math
-@import extentions.Time
+
+import extentions.{Math, Time}
+
+import scala.collection.immutable.ListMap
 @(user: User, area: Area)(months: ListMap[String, String], allApplications: Map[Area, Seq[Application]], users: List[User], currentAreaOnly: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 @main(user, Some(area))(s"Stats")  {

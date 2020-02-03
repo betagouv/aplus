@@ -1,28 +1,30 @@
 @(user: User)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-@main(user)("Webinaire")  {
+@main(user)("Webinaire") {
 
-}{
-     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col --padding-20px">
-          <h4 class="mdl-cell mdl-cell--12-col">Administration+ en trois minutes</h4>
-          <iframe frameborder="0" width="480" height="270" src="https://www.dailymotion.com/embed/video/k3xYlJNjAD0JMrvkjL5?queue-enable=0&queue-autoplay-next=0&sharing-enable=0" allowfullscreen allow="autoplay"></iframe>
-     </div>
-     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col --padding-20px">
-          <h4>Agents d'accueil - Formation Administration+</h4>
-            <iframe frameborder="0" width="480" height="270" src="https://www.dailymotion.com/embed/video/k5dsJdS0WSm998vkjMm?queue-enable=0&queue-autoplay-next=0&sharing-enable=0" allowfullscreen allow="autoplay"></iframe>
-            <br><a href="@routes.Assets.versioned("pdf/MFS_Fiche_pratique_agent_France_Service.pdf")" target="_blank">Télécharger la fiche pratique Agents d'acceuil</a>
-     </div>
-     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col --padding-20px">
-          <h4 >Référents opérateurs - Formation Administration+</h4>
-          <iframe frameborder="0" width="480" height="270" src="https://www.dailymotion.com/embed/video/k5BrDZ2VbpxOfqvkjMn?queue-enable=0&queue-autoplay-next=0&sharing-enable=0" allowfullscreen allow="autoplay"></iframe>
-          <br><a href="@routes.Assets.versioned("pdf/MFS_Fiche_pratique_referent_operateur.pdf")" target="_blank">Télécharger la fiche pratique Référents opérateurs</a>
-     </div>
-     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col --padding-20px">
-          <h4>Contacter l'équipe Administration+</h4>
-          <p>Une question, un problème technique ? Contactez-nous :</p>
-          <ul>
-               <li>Par email : <a href="mailto:@Constants.supportEmail">@Constants.supportEmail</a></li>
-               <li>Sur la Hotline : 01 84 80 88 12 , du lundi au vendredi de 9h à 17h</li>
-          </ul>
-     </div>
+} {
+    <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col --padding-20px">
+        <h4 class="mdl-cell mdl-cell--12-col">Administration+ en trois minutes</h4>
+        <iframe frameborder="0" width="480" height="270" src="https://www.dailymotion.com/embed/video/k3xYlJNjAD0JMrvkjL5?queue-enable=0&queue-autoplay-next=0&sharing-enable=0" allowfullscreen allow="autoplay"></iframe>
+    </div>
+    <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col --padding-20px">
+        <h4>Agents d'accueil - Formation Administration+</h4>
+        <iframe frameborder="0" width="480" height="270" src="https://www.dailymotion.com/embed/video/k5dsJdS0WSm998vkjMm?queue-enable=0&queue-autoplay-next=0&sharing-enable=0" allowfullscreen allow="autoplay"></iframe>
+        <br><a href="@routes.Assets.versioned("pdf/MFS_Fiche_pratique_agent_France_Service.pdf")" target="_blank">
+        Télécharger la fiche pratique Agents d'acceuil</a>
+    </div>
+    <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col --padding-20px">
+        <h4 >Référents opérateurs - Formation Administration+</h4>
+        <iframe frameborder="0" width="480" height="270" src="https://www.dailymotion.com/embed/video/k5BrDZ2VbpxOfqvkjMn?queue-enable=0&queue-autoplay-next=0&sharing-enable=0" allowfullscreen allow="autoplay"></iframe>
+        <br><a href="@routes.Assets.versioned("pdf/MFS_Fiche_pratique_referent_operateur.pdf")" target="_blank">
+        Télécharger la fiche pratique Référents opérateurs</a>
+    </div>
+    <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col --padding-20px">
+        <h4>Contacter l'équipe Administration+</h4>
+        <p>Une question, un problème technique ? Contactez-nous :</p>
+        <ul>
+            <li>Par email : <a href="mailto:@Constants.supportEmail">@Constants.supportEmail</a></li>
+            <li>Sur la Hotline : 01 84 80 88 12 , du lundi au vendredi de 9h à 17h</li>
+        </ul>
+    </div>
 }

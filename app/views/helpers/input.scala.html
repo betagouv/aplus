@@ -1,26 +1,31 @@
 @(elements: helper.FieldElements)
 
 @defining(elements.args.getOrElse('type, "textfield")) {
-     case "checkbox" => {
-       <label class="mdl-checkbox mdl-js-checkbox">
-          @elements.input
-          <span class="mdl-checkbox__label">@elements.args.getOrElse('label, "")</span>
-       </label>
-     }
-     case fieldType: String => {
-       <div class="mdl-@fieldType mdl-js-@fieldType @if(fieldType == "textfield" && elements.args.getOrElse('floated, "Yes") == "Yes") { mdl-textfield--floating-label } @if(elements.hasErrors) {is-invalid} @elements.args.getOrElse('class, "")"
-          @elements.args.get('divId) match {
-             case Some(id) => { id="@id" }
-              case None => {}
+    case "checkbox" => {
+        <label class="mdl-checkbox mdl-js-checkbox">
+            @elements.input
+        <span class="mdl-checkbox__label">@elements.args.getOrElse('label, "")</span>
+        </label>
+    }
+    case fieldType: String => {
+        <div class="mdl-@fieldType mdl-js-@fieldType @if(fieldType == "textfield" && elements.args.getOrElse('floated, "Yes") == "Yes") { mdl-textfield--floating-label } @if(elements.hasErrors) {is-invalid} @elements.args.getOrElse('class, "")"
+            @elements.args.get('divId) match {
+                case Some(id) => {
+                    id="@id" }
+                case None => {}
             }
-       >
-         @elements.input
-         @for(label <- elements.args.get('label)) {
-           <label class="mdl-@{fieldType}__label" for="@elements.field.id">@label</label>
-         }
-         @if(elements.hasErrors) {
-           <span class="mdl-@{fieldType}__error">@elements.errors.mkString(", ")</span>
-         }
-       </div>
-     }
+        >
+            @elements.input
+            @for(label <- elements.args.get('label)) {
+                <label class="mdl-@{
+                    fieldType
+                }__label" for="@elements.field.id">@label</label>
+            }
+            @if(elements.hasErrors) {
+                <span class="mdl-@{
+                    fieldType
+                }__error">@elements.errors.mkString(", ")</span>
+            }
+        </div>
+    }
 }
