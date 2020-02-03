@@ -8,26 +8,30 @@ import play.api.mvc._
 import play.api.db.Database
 
 /**
- * This controller creates an `Action` to handle HTTP requests to the
- * application's home page.
- */
+  * This controller creates an `Action` to handle HTTP requests to the
+  * application's home page.
+  */
 @Singleton
-class HomeController @Inject()(loginAction: LoginAction, db: Database)(implicit webJarsUtil: WebJarsUtil) extends InjectedController {
+class HomeController @Inject() (loginAction: LoginAction, db: Database)(
+    implicit webJarsUtil: WebJarsUtil
+) extends InjectedController {
+
   def index = loginAction { implicit request =>
     Redirect(routes.ApplicationController.myApplications())
   }
 
   def status = Action { implicit request =>
-    val connectionValid = try {
-      db.withConnection {
-        _.isValid(1)
+    val connectionValid =
+      try {
+        db.withConnection {
+          _.isValid(1)
+        }
+      } catch {
+        case throwable: Throwable =>
+          Logger.error("Database check error", throwable)
+          false
       }
-    } catch {
-      case throwable: Throwable =>
-        Logger.error("Database check error", throwable)
-        false
-    }
-    if(connectionValid){
+    if (connectionValid) {
       Ok("OK")
     } else {
       ServiceUnavailable("Indisponible")
