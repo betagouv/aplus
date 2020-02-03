@@ -8,12 +8,16 @@ import scala.io.Source
 
 @javax.inject.Singleton
 class OrganisationService {
+
   object CustomYaml extends DefaultYamlProtocol {
+
     implicit object organisationFormat extends YamlFormat[Organisation] {
+
       def write(x: Organisation) = {
         require(x ne null)
         YamlString(x.shortName)
       }
+
       def read(value: YamlValue) = value match {
         case YamlString(x) => Organisation.fromShortName(x).get
         case x =>

@@ -5,142 +5,169 @@ import extentions.BooleanHelper.not
 
 import org.joda.time.{DateTime, Hours, Minutes}
 
-case class Application(id: UUID,
-                       creationDate: DateTime,
-                       creatorUserName: String,
-                       creatorUserId: UUID,
-                       subject: String,
-                       description: String,
-                       userInfos: Map[String, String],
-                       invitedUsers: Map[UUID, String],
-                       area: UUID,
-                       irrelevant: Boolean,
-                       answers: List[Answer] = List(),
-                       internalId: Int = -1,
-                       closed: Boolean = false,
-                       seenByUserIds: List[UUID] = List(),
-                       usefulness: Option[String] = None,
-                       closedDate: Option[DateTime] = None,
-                       expertInvited: Boolean = false,
-                       hasSelectedSubject: Boolean = false,
-                       category: Option[String] = None,
-                       files: Map[String, Long] = Map()) extends AgeModel {
+case class Application(
+    id: UUID,
+    creationDate: DateTime,
+    creatorUserName: String,
+    creatorUserId: UUID,
+    subject: String,
+    description: String,
+    userInfos: Map[String, String],
+    invitedUsers: Map[UUID, String],
+    area: UUID,
+    irrelevant: Boolean,
+    answers: List[Answer] = List(),
+    internalId: Int = -1,
+    closed: Boolean = false,
+    seenByUserIds: List[UUID] = List(),
+    usefulness: Option[String] = None,
+    closedDate: Option[DateTime] = None,
+    expertInvited: Boolean = false,
+    hasSelectedSubject: Boolean = false,
+    category: Option[String] = None,
+    files: Map[String, Long] = Map()
+) extends AgeModel {
 
-  lazy val filesAvailabilityLeftInDays: Option[Int] = if(ageInDays > 8 ) { None } else { Some(7 - ageInDays) }
-
-  lazy val allFiles: Map[String, Long] = {
-     files ++ answers.flatMap(_.files).flatten
-   }
-
-   lazy val searchData = {
-     val stripChars = "\"<>'"
-     s"${Area.fromId(area).map(_.name).getOrElse("")} ${creatorUserName.filterNot(stripChars contains _)} ${userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")} ${subject.filterNot(stripChars contains _)} ${description.filterNot(stripChars contains _)} ${invitedUsers.values.map(_.filterNot(stripChars contains _)).mkString(" ")} ${answers.map(_.message.filterNot(stripChars contains _)).mkString(" ")}"
-   }
-
-   def longStatus(user: User) = closed match {
-     case true => "Clôturée"
-     case _ if user.id == creatorUserId && answers.exists(_.creatorUserID != user.id) => "Répondu"
-     case _ if user.id == creatorUserId && seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty => "Consultée"
-     case _ if user.id == creatorUserId => "Envoyée"
-     case _ if answers.exists(_.creatorUserID == user.id) => "Répondu"
-     case _ if answers.exists(_.creatorUserName.contains(user.qualite)) => {
-       val username = answers.find(_.creatorUserName.contains(user.qualite))
-         .map(_.creatorUserName)
-         .getOrElse("un collègue")
-         .replaceAll("\\(.*\\)","")
-         .trim
-       s"Répondu par ${username}"
-     }
-     case _ if seenByUserIds.contains(user.id) => "Consultée"
-     case _ => "Nouvelle"
-   }
-
-  def status = closed match {
-    case true => "Clôturée"
-    case _ if answers.filterNot(_.creatorUserID != creatorUserId).nonEmpty => "Répondu"
-    case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty => "Consultée"
-    case _ => "Nouvelle"
+  lazy val filesAvailabilityLeftInDays: Option[Int] = if (ageInDays > 8) {
+    None
+  } else {
+    Some(7 - ageInDays)
   }
 
-   def invitedUsers(users: List[User]): List[User] = invitedUsers.keys.flatMap(userId => users.find(_.id == userId)).toList
+  lazy val allFiles: Map[String, Long] = {
+    files ++ answers.flatMap(_.files).flatten
+  }
 
-   def administrations(users: List[User]): List[String] = invitedUsers(users).map(_.qualite).distinct
+  lazy val searchData = {
+    val stripChars = "\"<>'"
+    s"${Area.fromId(area).map(_.name).getOrElse("")} ${creatorUserName.filterNot(
+      stripChars contains _
+    )} ${userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")} ${subject
+      .filterNot(stripChars contains _)} ${description.filterNot(stripChars contains _)} ${invitedUsers.values
+      .map(_.filterNot(stripChars contains _))
+      .mkString(" ")} ${answers.map(_.message.filterNot(stripChars contains _)).mkString(" ")}"
+  }
 
-   def creatorUserQualite(users: List[User]): Option[String] = users.find(_.id == creatorUserId).map(_.qualite)
+  def longStatus(user: User) = closed match {
+    case true                                                                        => "Clôturée"
+    case _ if user.id == creatorUserId && answers.exists(_.creatorUserID != user.id) => "Répondu"
+    case _
+        if user.id == creatorUserId && seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty =>
+      "Consultée"
+    case _ if user.id == creatorUserId                   => "Envoyée"
+    case _ if answers.exists(_.creatorUserID == user.id) => "Répondu"
+    case _ if answers.exists(_.creatorUserName.contains(user.qualite)) => {
+      val username = answers
+        .find(_.creatorUserName.contains(user.qualite))
+        .map(_.creatorUserName)
+        .getOrElse("un collègue")
+        .replaceAll("\\(.*\\)", "")
+        .trim
+      s"Répondu par ${username}"
+    }
+    case _ if seenByUserIds.contains(user.id) => "Consultée"
+    case _                                    => "Nouvelle"
+  }
 
-   def allUserInfos = userInfos ++ answers.flatMap(_.userInfos.getOrElse(Map()))
+  def status = closed match {
+    case true                                                              => "Clôturée"
+    case _ if answers.filterNot(_.creatorUserID != creatorUserId).nonEmpty => "Répondu"
+    case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty   => "Consultée"
+    case _                                                                 => "Nouvelle"
+  }
 
-   lazy val anonymousApplication = {
-       val newUsersInfo = userInfos.map{ case (key,value) => key -> s"**$key (${value.length})**" }
-       val newAnswers = answers.map{
-         answer =>
-           answer.copy(userInfos = answer.userInfos.map(_.map{ case (key,value) => key -> s"**$key (${value.length})**" }),
-             message = s"** Message de ${answer.message.length} caractères **")
-       }
-       val result = copy(userInfos = newUsersInfo,
-         description = s"** Description de ${description.length} caractères **",
-         answers = newAnswers)
-       if(hasSelectedSubject) {
-         result
-       } else {
-         result.copy(subject = s"** Sujet de ${subject.length} caractères **")
-       }
-   }
+  def invitedUsers(users: List[User]): List[User] =
+    invitedUsers.keys.flatMap(userId => users.find(_.id == userId)).toList
 
-   // Security
+  def administrations(users: List[User]): List[String] = invitedUsers(users).map(_.qualite).distinct
 
-   def canBeShowedBy(user: User) =  user.admin ||
-     ((user.instructor || user.helper) && not(user.expert) && invitedUsers.keys.toList.contains(user.id)) ||
-     (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)||
-     creatorUserId==user.id
+  def creatorUserQualite(users: List[User]): Option[String] =
+    users.find(_.id == creatorUserId).map(_.qualite)
 
-    def fileCanBeShowed(user: User, answer: UUID) =
-      answers.find(_.id == answer) match {
-        case None => false
-        case Some(answer) if answer.filesAvailabilityLeftInDays.isEmpty => false // You can't download expired file
-        case Some(answer) if answer.creatorUserID == user.id => false   // You can't download your own file
-        case _ =>
-          ((user.instructor || user.helper) && not(user.expert) && invitedUsers.keys.toList.contains(user.id)) ||
-            (user.helper && user.id == creatorUserId)
-      }
-  
-    def fileCanBeShowed(user: User) =
-      filesAvailabilityLeftInDays.nonEmpty && (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
-        (user.helper && user.id == creatorUserId)
-  
+  def allUserInfos = userInfos ++ answers.flatMap(_.userInfos.getOrElse(Map()))
 
-   def canHaveExpertsInvitedBy(user: User) =
-     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
-     creatorUserId==user.id
+  lazy val anonymousApplication = {
+    val newUsersInfo = userInfos.map { case (key, value) => key -> s"**$key (${value.length})**" }
+    val newAnswers = answers.map { answer =>
+      answer.copy(
+        userInfos = answer.userInfos.map(_.map {
+          case (key, value) => key -> s"**$key (${value.length})**"
+        }),
+        message = s"** Message de ${answer.message.length} caractères **"
+      )
+    }
+    val result = copy(
+      userInfos = newUsersInfo,
+      description = s"** Description de ${description.length} caractères **",
+      answers = newAnswers
+    )
+    if (hasSelectedSubject) {
+      result
+    } else {
+      result.copy(subject = s"** Sujet de ${subject.length} caractères **")
+    }
+  }
 
-   def canHaveAgentsInvitedBy(user: User) =
-     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
-       (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)
+  // Security
 
-   def canBeClosedBy(user: User) =
+  def canBeShowedBy(user: User) =
+    user.admin ||
+      ((user.instructor || user.helper) && not(user.expert) && invitedUsers.keys.toList
+        .contains(user.id)) ||
+      (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed) ||
+      creatorUserId == user.id
+
+  def fileCanBeShowed(user: User, answer: UUID) =
+    answers.find(_.id == answer) match {
+      case None => false
+      case Some(answer) if answer.filesAvailabilityLeftInDays.isEmpty =>
+        false // You can't download expired file
+      case Some(answer) if answer.creatorUserID == user.id =>
+        false // You can't download your own file
+      case _ =>
+        ((user.instructor || user.helper) && not(user.expert) && invitedUsers.keys.toList
+          .contains(user.id)) ||
+          (user.helper && user.id == creatorUserId)
+    }
+
+  def fileCanBeShowed(user: User) =
+    filesAvailabilityLeftInDays.nonEmpty && (user.instructor && invitedUsers.keys.toList
+      .contains(user.id)) ||
+      (user.helper && user.id == creatorUserId)
+
+  def canHaveExpertsInvitedBy(user: User) =
+    (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+      creatorUserId == user.id
+
+  def canHaveAgentsInvitedBy(user: User) =
+    (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+      (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)
+
+  def canBeClosedBy(user: User) =
     (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
-      creatorUserId==user.id || user.admin
+      creatorUserId == user.id || user.admin
 
-   def haveUserInvitedOn(user: User) = invitedUsers.keys.toList.contains(user.id)
+  def haveUserInvitedOn(user: User) = invitedUsers.keys.toList.contains(user.id)
 
+  // Stats
+  lazy val estimatedClosedDate = (closedDate, closed) match {
+    case (Some(date), _) => Some(date)
+    case (_, true)       => Some(answers.lastOption.map(_.creationDate).getOrElse(creationDate))
+    case _               => None
+  }
 
-   // Stats
-   lazy val estimatedClosedDate = (closedDate,closed) match {
-     case (Some(date), _)  => Some(date)
-     case (_,true) => Some(answers.lastOption.map(_.creationDate).getOrElse(creationDate))
-     case _ => None
-   }
+  lazy val resolutionTimeInMinutes: Option[Int] = if (closed) {
+    val lastDate = answers.lastOption.map(_.creationDate).orElse(closedDate).getOrElse(creationDate)
+    Some(Minutes.minutesBetween(creationDate, lastDate).getMinutes())
+  } else {
+    None
+  }
 
-   lazy val resolutionTimeInMinutes: Option[Int] = if(closed) {
-     val lastDate = answers.lastOption.map(_.creationDate).orElse(closedDate).getOrElse(creationDate)
-     Some(Minutes.minutesBetween(creationDate, lastDate).getMinutes())
-   } else {
-     None
-   }
+  lazy val firstAgentAnswerDate = answers.find(_.id != creatorUserId).map(_.creationDate)
 
-   lazy val firstAgentAnswerDate = answers.find(_.id != creatorUserId).map(_.creationDate)
-
-   lazy val firstAnswerTimeInMinutes = firstAgentAnswerDate.map{ firstAnswerDate => Minutes.minutesBetween(creationDate, firstAnswerDate).getMinutes }
+  lazy val firstAnswerTimeInMinutes = firstAgentAnswerDate.map { firstAnswerDate =>
+    Minutes.minutesBetween(creationDate, firstAnswerDate).getMinutes
+  }
 }
 
 object Application {

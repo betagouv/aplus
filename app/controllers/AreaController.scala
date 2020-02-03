@@ -7,7 +7,12 @@ import constants.Constants
 import extentions.Operators.UserOperators
 import extentions.UUIDHelper
 import javax.inject.{Inject, Singleton}
-import models.EventType.{AllAreaUnauthorized, AreaChanged, ChangeAreaUnauthorized, DeploymentDashboardUnauthorized}
+import models.EventType.{
+  AllAreaUnauthorized,
+  AreaChanged,
+  ChangeAreaUnauthorized,
+  DeploymentDashboardUnauthorized
+}
 import models.{Area, Organisation, User}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
@@ -16,21 +21,33 @@ import services.{EventService, UserGroupService, UserService}
 import scala.concurrent.ExecutionContext
 
 @Singleton
-case class AreaController @Inject()(loginAction: LoginAction,
-                               eventService: EventService,
-                               userService: UserService,
-                               userGroupService: UserGroupService,
-                               configuration: play.api.Configuration)(implicit val webJarsUtil: WebJarsUtil, ec: ExecutionContext) extends InjectedController with UserOperators {
-  private lazy val areasWithLoginByKey = configuration.underlying.getString("app.areasWithLoginByKey").split(",").flatMap(UUIDHelper.fromString)
+case class AreaController @Inject() (
+    loginAction: LoginAction,
+    eventService: EventService,
+    userService: UserService,
+    userGroupService: UserGroupService,
+    configuration: play.api.Configuration
+)(implicit val webJarsUtil: WebJarsUtil, ec: ExecutionContext)
+    extends InjectedController
+    with UserOperators {
+
+  private lazy val areasWithLoginByKey = configuration.underlying
+    .getString("app.areasWithLoginByKey")
+    .split(",")
+    .flatMap(UUIDHelper.fromString)
 
   @deprecated
   def change(areaId: UUID) = loginAction { implicit request =>
     if (!request.currentUser.areas.contains(areaId)) {
       eventService.log(ChangeAreaUnauthorized, s"Accès à la zone $areaId non autorisé")
-      Unauthorized(s"Vous n'avez pas les droits suffisants pour accèder à cette zone. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}")
+      Unauthorized(
+        s"Vous n'avez pas les droits suffisants pour accèder à cette zone. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+      )
     } else {
       eventService.log(AreaChanged, s"Changement vers la zone $areaId")
-      val redirect = request.getQueryString("redirect").map(url => Redirect(url))
+      val redirect = request
+        .getQueryString("redirect")
+        .map(url => Redirect(url))
         .getOrElse(Redirect(routes.ApplicationController.myApplications()))
       redirect.withSession(request.session - "areaId" + ("areaId" -> areaId.toString))
     }
@@ -43,7 +60,7 @@ case class AreaController @Inject()(loginAction: LoginAction,
     } else {
       val userGroups = if (request.currentUser.admin) {
         userGroupService.allGroupByAreas(request.currentUser.areas)
-      } else { 
+      } else {
         userGroupService.byIds(request.currentUser.groupIds)
       }
       Ok(views.html.allArea(request.currentUser)(Area.all, areasWithLoginByKey, userGroups))
@@ -53,38 +70,63 @@ case class AreaController @Inject()(loginAction: LoginAction,
   private val organisationGroupingAll: List[Set[Organisation]] = List(
     Set("DDFIP", "DRFIP").flatMap(Organisation.fromShortName),
     Set("CPAM", "CRAM", "CNAM").flatMap(Organisation.fromShortName),
-    Set("CARSAT", "CNAV").flatMap(Organisation.fromShortName)) ++
-    List("ANAH", "ANTS", "BDF", "CAF", "CCAS", "CDAD", "Département", "Hôpital",
-      "OFPRA", "La Poste", "Mairie", "MDPH", "MFS", "Mission locale", "MSA", "MSAP", "Pôle emploi", "Préf", "Sous-Préf",
-      "Sous-préfecture").flatMap(Organisation.fromShortName).map(organisation => Set(organisation))
+    Set("CARSAT", "CNAV").flatMap(Organisation.fromShortName)
+  ) ++
+    List(
+      "ANAH",
+      "ANTS",
+      "BDF",
+      "CAF",
+      "CCAS",
+      "CDAD",
+      "Département",
+      "Hôpital",
+      "OFPRA",
+      "La Poste",
+      "Mairie",
+      "MDPH",
+      "MFS",
+      "Mission locale",
+      "MSA",
+      "MSAP",
+      "Pôle emploi",
+      "Préf",
+      "Sous-Préf",
+      "Sous-préfecture"
+    ).flatMap(Organisation.fromShortName).map(organisation => Set(organisation))
 
   private val organisationGroupingFranceService: List[Set[Organisation]] = List(
     Set("DDFIP", "DRFIP").flatMap(Organisation.fromShortName),
     Set("CPAM", "CRAM", "CNAM").flatMap(Organisation.fromShortName),
     Set("CARSAT", "CNAV").flatMap(Organisation.fromShortName),
-    Set("ANTS", "Préf").flatMap(Organisation.fromShortName),
+    Set("ANTS", "Préf").flatMap(Organisation.fromShortName)
   ) ++
-    List("CAF", "CDAD", "La Poste", "MSA", "Pôle emploi").flatMap(Organisation.fromShortName).map(organisation => Set(organisation))
+    List("CAF", "CDAD", "La Poste", "MSA", "Pôle emploi")
+      .flatMap(Organisation.fromShortName)
+      .map(organisation => Set(organisation))
 
-
-  def deploymentDashboard = loginAction {  implicit  request =>
+  def deploymentDashboard = loginAction { implicit request =>
     asAdmin { () =>
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
       val userGroups = userGroupService.allGroups
       val users = userService.all
 
-      def usersIn(area: Area, organisationSet: Set[Organisation]): List[User] = for {
-        group <- userGroups.filter(group => group.areaIds.contains(area.id)
-          && organisationSet.map(_.shortName).exists(group.organisationSetOrDeducted.contains))
-        user <- users if user.groupIds.contains(group.id)
-      } yield user
+      def usersIn(area: Area, organisationSet: Set[Organisation]): List[User] =
+        for {
+          group <- userGroups.filter(group =>
+            group.areaIds.contains(area.id)
+              && organisationSet.map(_.shortName).exists(group.organisationSetOrDeducted.contains)
+          )
+          user <- users if user.groupIds.contains(group.id)
+        } yield user
 
-      val organisationGrouping = if(request.getQueryString("uniquement-fs").getOrElse("non") == "oui"){
-        organisationGroupingFranceService
-      } else {
-        organisationGroupingAll
-      }
+      val organisationGrouping =
+        if (request.getQueryString("uniquement-fs").getOrElse("non") == "oui") {
+          organisationGroupingFranceService
+        } else {
+          organisationGroupingAll
+        }
 
       val data = for {
         area <- request.currentUser.areas.flatMap(Area.fromId)
@@ -99,12 +141,20 @@ case class AreaController @Inject()(loginAction: LoginAction,
 
       val organisationSetToCountOfCounts: Map[Set[Organisation], Int] = {
         val organisationSetToCount: List[(Set[Organisation], Int)] = data.flatMap(_._2)
-        val countsGroupedByOrganisationSet: Map[Set[Organisation], List[(Set[Organisation], Int)]] = organisationSetToCount.groupBy(_._1)
-        val organisationSetToCountOfCounts: Map[Set[Organisation], Int] = countsGroupedByOrganisationSet.mapValues(_.map(_._2).count(_ > 0))
+        val countsGroupedByOrganisationSet: Map[Set[Organisation], List[(Set[Organisation], Int)]] =
+          organisationSetToCount.groupBy(_._1)
+        val organisationSetToCountOfCounts: Map[Set[Organisation], Int] =
+          countsGroupedByOrganisationSet.mapValues(_.map(_._2).count(_ > 0))
         organisationSetToCountOfCounts
       }
-      
-      Ok(views.html.deploymentDashboard(request.currentUser)(data, organisationSetToCountOfCounts, organisationGrouping))
+
+      Ok(
+        views.html.deploymentDashboard(request.currentUser)(
+          data,
+          organisationSetToCountOfCounts,
+          organisationGrouping
+        )
+      )
     }
   }
 }

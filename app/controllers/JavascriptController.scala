@@ -5,9 +5,8 @@ import play.api.http.MimeTypes
 import play.api.mvc.InjectedController
 import play.api.routing.JavaScriptReverseRouter
 
-
 @Singleton
-class JavascriptController() extends InjectedController{
+class JavascriptController() extends InjectedController {
 
   def javascriptRoutes = Action { implicit request =>
     Ok(

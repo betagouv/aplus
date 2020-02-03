@@ -14,7 +14,7 @@ import org.joda.time.DateTime
 import play.api.Logger
 
 @javax.inject.Singleton
-class EventService @Inject()(db: Database) {
+class EventService @Inject() (db: Database) {
 
   private val simpleEvent: RowParser[Event] = Macro.parser[Event](
     "id",
@@ -30,14 +30,35 @@ class EventService @Inject()(db: Database) {
     "ip_address"
   )
 
-  def log[A](event: EventType, description: String, application: Option[Application] = None, user: Option[User] = None)(implicit request: RequestWithUserData[A])
-  = register[A](event.level)(request.currentUser, request.currentArea, request.remoteAddress, event.code, description, application, user)
+  def log[A](
+      event: EventType,
+      description: String,
+      application: Option[Application] = None,
+      user: Option[User] = None
+  )(implicit request: RequestWithUserData[A]) =
+    register[A](event.level)(
+      request.currentUser,
+      request.currentArea,
+      request.remoteAddress,
+      event.code,
+      description,
+      application,
+      user
+    )
 
   val info = register("INFO") _
   val warn = register("WARN") _
   val error = register("ERROR") _
 
-  private def register[A](level: String)(currentUser: User, currentArea: Area, remoteAddress: String, code: String, description: String, application: Option[Application] = None, user: Option[User] = None): Unit = {
+  private def register[A](level: String)(
+      currentUser: User,
+      currentArea: Area,
+      remoteAddress: String,
+      code: String,
+      description: String,
+      application: Option[Application] = None,
+      user: Option[User] = None
+  ): Unit = {
     val event = Event(
       UUID.randomUUID(),
       level,
@@ -49,7 +70,8 @@ class EventService @Inject()(db: Database) {
       currentArea.id,
       application.map(_.id),
       user.map(_.id),
-      remoteAddress)
+      remoteAddress
+    )
     addEvent(event)
 
     val message = s"${currentUser.name}/${currentArea.name}/${description}"
@@ -64,7 +86,7 @@ class EventService @Inject()(db: Database) {
     }
   }
 
-  private def addEvent(event: Event): Unit = {
+  private def addEvent(event: Event): Unit =
     db.withConnection { implicit connection =>
       SQL"""
           INSERT INTO event VALUES (
@@ -82,15 +104,16 @@ class EventService @Inject()(db: Database) {
           )
       """.executeUpdate() == 1
     }
-  }
 
-  def all(limit: Int = 1000, fromUserId: Option[UUID] = None) = db.withConnection { implicit connection =>
-    fromUserId match {
-      case Some(userId) =>
-        SQL"""SELECT *, host(ip_address)::TEXT AS ip_address FROM "event" WHERE from_user_id = $userId::uuid OR to_user_id = $userId::uuid ORDER BY creation_date DESC LIMIT $limit""".as(simpleEvent.*)
-      case None =>
-        SQL"""SELECT *, host(ip_address)::TEXT AS ip_address FROM "event" ORDER BY creation_date DESC LIMIT $limit""".as(simpleEvent.*)
-    }
-
+  def all(limit: Int = 1000, fromUserId: Option[UUID] = None) = db.withConnection {
+    implicit connection =>
+      fromUserId match {
+        case Some(userId) =>
+          SQL"""SELECT *, host(ip_address)::TEXT AS ip_address FROM "event" WHERE from_user_id = $userId::uuid OR to_user_id = $userId::uuid ORDER BY creation_date DESC LIMIT $limit"""
+            .as(simpleEvent.*)
+        case None =>
+          SQL"""SELECT *, host(ip_address)::TEXT AS ip_address FROM "event" ORDER BY creation_date DESC LIMIT $limit"""
+            .as(simpleEvent.*)
+      }
   }
 }

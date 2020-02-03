@@ -5,26 +5,28 @@ import java.util.UUID
 import extentions.UUIDHelper
 import helper.StringHelper.CanonizeString
 
-
-case class Area(id: UUID, name: String, inseeCode: String){
+case class Area(id: UUID, name: String, inseeCode: String) {
   override def toString(): String = s"$name ($inseeCode)"
 }
 
 object Area {
-  def fromId(id: UUID): Option[Area] = if (id== allArea.id) {
-    Some(allArea)
-  } else {
-    all.find(_.id == id)
-  }
+
+  def fromId(id: UUID): Option[Area] =
+    if (id == allArea.id) {
+      Some(allArea)
+    } else {
+      all.find(_.id == id)
+    }
 
   def searchFromName(name: String): Option[Area] = {
-   val area = name.canonize
-   Area.all.find(a => a.name.canonize == area)
+    val area = name.canonize
+    Area.all.find(a => a.name.canonize == area)
   }
 
   def fromInseeCode(inseeCode: String): Option[Area] = all.find(area => inseeCode == area.inseeCode)
 
-  def apply(id: String, name: String, inseeCode: String): Area = Area(UUIDHelper.namedFrom(id), name, inseeCode)
+  def apply(id: String, name: String, inseeCode: String): Area =
+    Area(UUIDHelper.namedFrom(id), name, inseeCode)
 
   val all = List(
     Area("Ain", "Ain", "01"),
