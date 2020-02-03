@@ -1,5 +1,6 @@
 @import models._
-import views.html.helper.CSRF
+@import views.html.helper.CSRF
+
 @(currentUser: User)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean, zoneAsJson: String, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
