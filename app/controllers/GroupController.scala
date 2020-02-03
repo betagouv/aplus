@@ -41,8 +41,7 @@ case class GroupController @Inject()(loginAction: LoginAction,
         } else {
           groupService.deleteById(groupId)
           eventService.log(UserGroupDeleted, s"Suppression du groupe ${groupId}.")
-          val path = "/" + controllers.routes.AreaController.all.relativeTo("/")
-          Redirect(path, 303)
+          Redirect(routes.UserController.all(group.areaIds.headOption.getOrElse(Area.allArea.id)), 303)
         }
       }
     }

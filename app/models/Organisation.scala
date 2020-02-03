@@ -49,15 +49,6 @@ object Organisation {
     Organisation("Sous-Préf", "Sous-préfecture")
   )
 
-  val organisationGrouping: List[Set[Organisation]] = List(
-    Set("DDFIP", "DRFIP").flatMap(Organisation.fromShortName),
-    Set("CPAM", "CRAM", "CNAM").flatMap(Organisation.fromShortName),
-    Set("CARSAT", "CNAV").flatMap(Organisation.fromShortName)) ++
-    List("A+", "ANAH", "ANTS", "BDF", "CAF", "CCAS", "CDAD", "Caisse régionale d'assurance maladie", "Département", "Hôpital",
-      "OFPRA", "La Poste", "Mairie", "MDPH", "MFS", "Mission locale", "MSA", "MSAP", "Pôle emploi", "Préf", "Sous-Préf",
-      "Sous-préfecture").flatMap(Organisation.fromShortName).map(organisation => Set(organisation))
-
-
   case class Subject(subject: String, organisations: Seq[Organisation])
   case class Category(name: String, description: String, defaultOrganisations: Seq[Organisation], subjects: Seq[Subject])
 }

@@ -50,6 +50,23 @@ case class AreaController @Inject()(loginAction: LoginAction,
     }
   }
 
+  private val organisationGroupingAll: List[Set[Organisation]] = List(
+    Set("DDFIP", "DRFIP").flatMap(Organisation.fromShortName),
+    Set("CPAM", "CRAM", "CNAM").flatMap(Organisation.fromShortName),
+    Set("CARSAT", "CNAV").flatMap(Organisation.fromShortName)) ++
+    List("ANAH", "ANTS", "BDF", "CAF", "CCAS", "CDAD", "Département", "Hôpital",
+      "OFPRA", "La Poste", "Mairie", "MDPH", "MFS", "Mission locale", "MSA", "MSAP", "Pôle emploi", "Préf", "Sous-Préf",
+      "Sous-préfecture").flatMap(Organisation.fromShortName).map(organisation => Set(organisation))
+
+  private val organisationGroupingFranceService: List[Set[Organisation]] = List(
+    Set("DDFIP", "DRFIP").flatMap(Organisation.fromShortName),
+    Set("CPAM", "CRAM", "CNAM").flatMap(Organisation.fromShortName),
+    Set("CARSAT", "CNAV").flatMap(Organisation.fromShortName),
+    Set("ANTS", "Préf").flatMap(Organisation.fromShortName),
+  ) ++
+    List("CAF", "CDAD", "La Poste", "MSA", "Pôle emploi").flatMap(Organisation.fromShortName).map(organisation => Set(organisation))
+
+
   def deploymentDashboard = loginAction {  implicit  request =>
     asAdmin { () =>
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
@@ -63,11 +80,17 @@ case class AreaController @Inject()(loginAction: LoginAction,
         user <- users if user.groupIds.contains(group.id)
       } yield user
 
+      val organisationGrouping = if(request.getQueryString("uniquement-fs").getOrElse("non") == "oui"){
+        organisationGroupingFranceService
+      } else {
+        organisationGroupingAll
+      }
+
       val data = for {
         area <- request.currentUser.areas.flatMap(Area.fromId)
       } yield {
         val organisationMap: List[(Set[Organisation], Int)] = for {
-          organisations <- Organisation.organisationGrouping
+          organisations <- organisationGrouping
           users = usersIn(area, organisations)
           userSum = users.count(_.instructor)
         } yield organisations -> userSum
@@ -81,7 +104,7 @@ case class AreaController @Inject()(loginAction: LoginAction,
         organisationSetToCountOfCounts
       }
       
-      Ok(views.html.deploymentDashboard(request.currentUser)(data, organisationSetToCountOfCounts))
+      Ok(views.html.deploymentDashboard(request.currentUser)(data, organisationSetToCountOfCounts, organisationGrouping))
     }
   }
 }

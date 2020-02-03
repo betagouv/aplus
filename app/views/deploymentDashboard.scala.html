@@ -1,4 +1,4 @@
-@(currentUser: User)(data: List[(Area, List[(Set[Organisation],Int)], Int)], organisationSetToCountOfCounts: Map[Set[Organisation], Int])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User)(data: List[(Area, List[(Set[Organisation],Int)], Int)], organisationSetToCountOfCounts: Map[Set[Organisation], Int], organisationGrouping: List[Set[Organisation]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 @main(currentUser, maxWidth = false)(s"Tableau de suivie déploiement") {
     @webJarsUtil.locate("tabulator.min.css").css()
@@ -19,7 +19,7 @@
     <div id="table" class="mdl-cell mdl-cell--12-col"></div>
     <div class="mdl-cell mdl-cell--12-col">
         <button class="mdl-button mdl-button--raised" onclick="downloadCSV()">Télécharger CSV</button>
-
+        <a class="mdl-button mdl-button--raised" href="@routes.AreaController.deploymentDashboard()?uniquement-fs=oui">Uniquement France Service</a>
     </div>
     <script>
        var tableData = [
@@ -43,7 +43,7 @@
        var columns = [
            {title: "Département", field: "area", sorter:"string", width:150,
                frozen:true},
-           @for(organisations <- Organisation.organisationGrouping) {
+           @for(organisations <- organisationGrouping) {
                 {
                     title: "@{organisations.map(_.shortName).mkString("/")}",
                     field: "@{organisations.map(_.key).mkString}",
