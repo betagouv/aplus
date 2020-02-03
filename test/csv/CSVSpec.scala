@@ -118,7 +118,7 @@ class CSVSpec extends Specification {
 
   "The failFile string should" >> {
     implicit object SemiConFormat extends DefaultCSVFormat {
-      override val delimiter: Char = csv.SEPARATOR.charAt(0)
+      override val delimiter: Char = ';'
     }
     "produce 1 errors" >> {
       val result: Either[String, (List[String], List[Models.UserGroupFormData])] =
@@ -145,7 +145,7 @@ class CSVSpec extends Specification {
 
   "The csvFile string should" >> {
     implicit object SemiConFormat extends DefaultCSVFormat {
-      override val delimiter: Char = csv.SEPARATOR.charAt(0)
+      override val delimiter: Char = ';'
     }
 
     "produce valid groups" >> {
