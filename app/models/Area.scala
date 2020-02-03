@@ -2,8 +2,8 @@ package models
 
 import java.util.UUID
 
-import extentions.UUIDHelper
 import helper.StringHelper.CanonizeString
+import helper.UUIDHelper
 
 case class Area(id: UUID, name: String, inseeCode: String) {
   override def toString(): String = s"$name ($inseeCode)"

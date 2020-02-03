@@ -8,7 +8,7 @@ import models.{Application, EventType, User, UserGroup}
 import play.api.mvc.Results._
 import play.api.mvc.{AnyContent, Result, Results}
 import services.{ApplicationService, EventService, UserGroupService, UserService}
-import BooleanHelper.not
+import helper.BooleanHelper.not
 import models.EventType.{
   AdminOutOfRange,
   ApplicationNotFound,

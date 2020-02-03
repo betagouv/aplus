@@ -7,10 +7,10 @@ import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import scala.io.Source
 import org.joda.time.DateTime
 import models.{Area, User, UserGroup}
-import extentions.UUIDHelper
 import play.api.data.Mapping
 import play.api.data.Forms._
 import java.util.UUID
+
 import StringHelper.CanonizeString
 
 object CsvHelper {

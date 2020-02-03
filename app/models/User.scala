@@ -3,7 +3,8 @@ package models
 import java.util.UUID
 
 import constants.Constants
-import extentions.{Hash, UUIDHelper}
+import extentions.{Hash}
+import helper.UUIDHelper
 import org.joda.time.DateTime
 
 case class User(

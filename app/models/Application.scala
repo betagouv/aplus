@@ -1,7 +1,7 @@
 package models
 
 import java.util.UUID
-import extentions.BooleanHelper.not
+import helper.BooleanHelper.not
 
 import org.joda.time.{DateTime, Hours, Minutes}
 

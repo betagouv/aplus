@@ -15,7 +15,7 @@ import play.api.data.Forms.{boolean, email, ignored, list, mapping, optional, te
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import play.libs.ws.WSClient
 import services._
-import extentions.BooleanHelper.not
+import helper.BooleanHelper.not
 import models.EventType.{
   AddGroupUnauthorized,
   AddUserGroupError,

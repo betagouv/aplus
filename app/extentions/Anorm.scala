@@ -6,6 +6,7 @@ import anorm.Column.nonNull
 import anorm.{Column, MetaDataItem, RowParser, ToStatement, TypeDoesNotMatch}
 import play.api.libs.json.{JsValue, Json}
 import anorm.SqlParser.get
+import helper.UUIDHelper
 
 import scala.collection.GenTraversableOnce
 

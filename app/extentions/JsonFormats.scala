@@ -2,6 +2,7 @@ package extentions
 
 import java.util.UUID
 
+import helper.UUIDHelper
 import play.api.libs.json.Json._
 import play.api.libs.json._
 

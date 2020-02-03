@@ -1,7 +1,7 @@
 @import models._
 @import extentions.MDLForms._
-@import extentions.UUIDHelper
-@import extentions.BooleanHelper.not
+@import _root_.helper.UUIDHelper
+@import _root_.helper.BooleanHelper.not
 
 @import forms.Models.UserGroupFormData
 @(currentUser: User)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)

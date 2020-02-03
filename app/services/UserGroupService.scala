@@ -4,11 +4,12 @@ import java.sql.ResultSet
 import java.util.UUID
 
 import anorm._
-import extentions.{Time, UUIDHelper}
+import extentions.Time
 import javax.inject.Inject
 import models.{Area, User, UserGroup}
 import play.api.db.Database
 import anorm.JodaParameterMetaData._
+import helper.UUIDHelper
 import org.postgresql.util.PSQLException
 
 @javax.inject.Singleton

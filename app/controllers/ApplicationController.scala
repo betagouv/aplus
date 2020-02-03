@@ -18,7 +18,7 @@ import play.api.data._
 import play.api.data.validation.Constraints._
 import play.api.mvc._
 import services._
-import extentions.BooleanHelper.not
+import helper.BooleanHelper.not
 import extentions.CSVUtil.escape
 import models.EventType.{
   AddExpertCreated,
