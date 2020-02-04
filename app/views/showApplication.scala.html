@@ -216,7 +216,7 @@ dialog {
             <div class="mdl-list mdl-cell mdl-cell--12-col">
                 Créée par
                 <div class="mdl-list__item">
-                    <span class="mdl-list__item-primary-content">@Map("Aide A+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => application.creatorUserName.contains(a._1)) match {
+                    <span class="mdl-list__item-primary-content">@Map("A+" -> "aplus", "Pôle Emploi".toUpperCase() -> "pe", "MSA" -> "msa", "CPAM" -> "cpam", "CRAM" -> "cpam", "CPAM" -> "cpam", "CNAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "CARSAT" -> "cnav", "DGFIP" -> "dgfip", "DDFIP" -> "dgfip", "DRFIP" -> "dgfip",  "Défenseur des droits".toUpperCase() -> "ddd").find(a => application.creatorUserName.toUpperCase.contains(a._1)) match {
                         case Some((_,icon)) => {<img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
                         case None => {<i class="material-icons mdl-list__item-avatar">person</i> }
                     }
@@ -226,7 +226,7 @@ dialog {
                 Participants à la discussion
                 @for((userId, userName) <- application.invitedUsers) {
                     <div class="mdl-list__item">
-                        <span class="mdl-list__item-primary-content">@Map("Aide A+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => userName.contains(a._1)) match {
+                        <span class="mdl-list__item-primary-content">@Map("A+" -> "aplus", "Pôle Emploi".toUpperCase() -> "pe", "MSA" -> "msa", "CPAM" -> "cpam", "CRAM" -> "cpam", "CPAM" -> "cpam", "CNAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "CARSAT" -> "cnav", "DGFIP" -> "dgfip", "DDFIP" -> "dgfip", "DRFIP" -> "dgfip", "Défenseur des droits".toUpperCase() -> "ddd").find(a => userName.toUpperCase.contains(a._1)) match {
                             case Some((_,icon)) => {<img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
                             case None => {<i class="material-icons mdl-list__item-avatar">person</i> }
                         }
