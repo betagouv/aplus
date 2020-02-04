@@ -177,7 +177,7 @@ dialog {
                 }
             </div>
             <div class="mdl-card__supporting-text mdl-card--border vertical-align--middle">
-                <i class="material-icons icon--light">chat_bubble</i> <span class="application__anwsers"><b>@application.answers.length</b> messages </span> | <span class="application__age">Créée il y a @application.ageString</span>
+                <i class="material-icons icon--light">chat_bubble</i> <span class="application__anwsers"><b>@application.answers.length</b> messages </span> | <span class="application__age">Créée il y a @application.ageString (@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")))</span>
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
                 <div class="info-box">
@@ -260,12 +260,8 @@ dialog {
             @if(answer.invitedUsers) {
                 <div class="mdl-cell mdl-cell--12-col vertical-align--middle" style="text-align: center; color: #000000d6;	font-size: 14px;	font-weight: 600;	line-height: 16px;">
                     <i class="icon material-icons icon--light">people</i> @answer.creatorUserName a invité @answer.invitedUsers.values.mkString(", ") - <span id="date-inviteds-@answer.id" class="vertical-align--middle">
-                    <span class="application__age"> Il y a @answer.ageString</span>
-                    <i class="icon material-icons icon--light">info</i>
+                    <span class="application__age"> Il y a @answer.ageString (@answer.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")))</span>
                      </span>
-                    <div class="mdl-tooltip" data-mdl-for="date-inviteds-@answer.id">
-                        @answer.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))
-                    </div>
                 </div>
             }
             @if(user.instructor || user.admin || user.groupAdmin || answer.visibleByHelpers || answer.creatorUserID == user.id) {
@@ -308,11 +304,7 @@ dialog {
                                     </span>
                                     <span class="mdl-list__item-secondary-content">
                                         <div id="date-@answer.id" class="vertical-align--middle">
-                                            <span class="application__age">Il y a @answer.ageString</span>
-                                            <i class="icon material-icons icon--light">info</i>
-                                        </div>
-                                        <div class="mdl-tooltip" data-mdl-for="date-@answer.id">
-                                        @answer.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))
+                                            <span class="application__age">Il y a @answer.ageString (@answer.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")))</span>
                                         </div>
                                     </span>
                                 </div>

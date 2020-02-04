@@ -285,6 +285,7 @@ html, body {
 }
 .application__age {
     font-style: italic;
+    font-size: 13px;
 }
 .application__anwsers {
     font-size: 12px;
