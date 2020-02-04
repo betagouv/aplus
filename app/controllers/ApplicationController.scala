@@ -106,14 +106,24 @@ case class ApplicationController @Inject() (
     )(ApplicationData.apply)(ApplicationData.unapply)
   )
 
+  private def fetchGroupsWithInstructors(areaId: UUID): (List[UserGroup], List[User]) = {
+    val groupsOfArea = userGroupService.byArea(areaId)
+    val instructorsOfGroups = userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
+    // This could be optimized by doing only one SQL query
+    val groupIdsWithInstructors = instructorsOfGroups.flatMap(_.groupIds).toSet
+    val groupsOfAreaWithInstructor =
+      groupsOfArea.filter(user => groupIdsWithInstructors.contains(user.id))
+    (groupsOfAreaWithInstructor, instructorsOfGroups)
+  }
+
   def create = loginAction { implicit request =>
     eventService.log(ApplicationFormShowed, "Visualise le formulaire de création de demande")
-    val groupsOfArea = userGroupService.byArea(request.currentArea.id)
-    val instructorsOfGroups = userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
+    val (groupsOfAreaWithInstructor, instructorsOfGroups) =
+      fetchGroupsWithInstructors(request.currentArea.id)
     Ok(
       views.html.createApplication(request.currentUser, request.currentArea)(
         instructorsOfGroups,
-        groupsOfArea,
+        groupsOfAreaWithInstructor,
         applicationForm
       )
     )
@@ -122,16 +132,17 @@ case class ApplicationController @Inject() (
   def createSimplified = loginAction { implicit request =>
     eventService
       .log(ApplicationFormShowed, "Visualise le formulaire simplifié de création de demande")
-    val groupsOfArea = userGroupService.byArea(request.currentArea.id)
-    val instructorsOfGroups = userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
-    val organismeGroups = groupsOfArea.filter({ userGroup =>
-      userGroup.organisationSetOrDeducted.nonEmpty
+    val (groupsOfAreaWithInstructor, instructorsOfGroups) =
+      fetchGroupsWithInstructors(request.currentArea.id)
+    val groupsOfAreaWithInstructorWithOrganisationSet = groupsOfAreaWithInstructor.filter({
+      userGroup =>
+        userGroup.organisationSetOrDeducted.nonEmpty
     })
     val categories = organisationService.categories
     Ok(
       views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(
         instructorsOfGroups,
-        organismeGroups,
+        groupsOfAreaWithInstructorWithOrganisationSet,
         categories,
         None,
         applicationForm
@@ -144,121 +155,91 @@ case class ApplicationController @Inject() (
   def createSimplifiedPost = createPostBis(true)
 
   private def createPostBis(simplified: Boolean) = loginAction { implicit request =>
-    request.currentUser.helper match {
-      case false => {
+    val form = applicationForm.bindFromRequest
+    val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
+    val (pendingAttachments, newAttachments) =
+      AttachmentHelper.computeStoreAndRemovePendingAndNewApplicationAttachment(
+        applicationId,
+        form.data,
+        computeAttachmentsToStore(request),
+        filesPath
+      )
+    form.fold(
+      formWithErrors => {
+        // binding failure, you retrieve the form containing errors:
+        val (groupsOfAreaWithInstructor, instructorsOfGroups) =
+          fetchGroupsWithInstructors(request.currentArea.id)
         eventService.log(
-          ApplicationCreationUnauthorized,
-          s"L'utilisateur n'a pas de droit de créer une demande"
+          ApplicationCreationInvalid,
+          s"L'utilisateur essai de créé une demande invalide ${formWithErrors.errors.map(_.message)}"
         )
-        Unauthorized(
-          s"Vous n'avez pas les droits suffisants pour créer une demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-        )
-      }
-      case true => {
-        val form = applicationForm.bindFromRequest
-        val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
-        val (pendingAttachments, newAttachments) =
-          AttachmentHelper.computeStoreAndRemovePendingAndNewApplicationAttachment(
-            applicationId,
-            form.data,
-            computeAttachmentsToStore(request),
-            filesPath
+
+        if (simplified) {
+          val categories = organisationService.categories
+          val groupsOfAreaWithInstructorWithOrganisationSet =
+            groupsOfAreaWithInstructor.filter(_.organisationSetOrDeducted.nonEmpty)
+          BadRequest(
+            views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(
+              instructorsOfGroups,
+              groupsOfAreaWithInstructorWithOrganisationSet,
+              categories,
+              formWithErrors("category").value,
+              formWithErrors,
+              pendingAttachments.keys ++ newAttachments.keys
+            )
           )
-        form.fold(
-          formWithErrors => {
-            // binding failure, you retrieve the form containing errors:
-            val groupsOfArea = userGroupService.byArea(request.currentArea.id)
-            val instructors = userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
-            eventService.log(
-              ApplicationCreationInvalid,
-              s"L'utilisateur essai de créé une demande invalide ${formWithErrors.errors.map(_.message)}"
+        } else {
+          BadRequest(
+            views.html.createApplication(request.currentUser, request.currentArea)(
+              instructorsOfGroups,
+              groupsOfAreaWithInstructor,
+              formWithErrors,
+              pendingAttachments.keys ++ newAttachments.keys
             )
-            val groupIds = instructors.flatMap(_.groupIds).distinct
+          )
+        }
+      },
+      applicationData => {
+        val invitedUsers: Map[UUID, String] = applicationData.users.flatMap { id =>
+          userService.byId(id).map(user => id -> userGroupService.contextualizedUserName(user))
+        }.toMap
 
-            val formWithErrorsfinal =
-              if (request.body.asMultipartFormData.flatMap(_.file("file")).isEmpty) {
-                formWithErrors
-              } else {
-                formWithErrors.copy(
-                  errors = formWithErrors.errors :+ FormError(
-                    "file",
-                    "Vous aviez ajouté un fichier, il n'a pas pu être sauvegardé, vous devez le remettre."
-                  )
-                )
-              }
-            if (simplified) {
-              val categories = organisationService.categories
-              val organismeGroups = userGroupService
-                .byIds(groupIds)
-                .filter(userGroup =>
-                  userGroup.organisationSetOrDeducted.nonEmpty && userGroup.areaIds == request.currentArea.id
-                )
-              BadRequest(
-                views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(
-                  instructors,
-                  organismeGroups,
-                  categories,
-                  formWithErrors("category").value,
-                  formWithErrors,
-                  pendingAttachments.keys ++ newAttachments.keys
-                )
-              )
-            } else {
-              val organismeGroups =
-                userGroupService.byIds(groupIds).filter(_.areaIds.contains(request.currentArea.id))
-              BadRequest(
-                views.html.createApplication(request.currentUser, request.currentArea)(
-                  instructors,
-                  organismeGroups,
-                  formWithErrorsfinal,
-                  pendingAttachments.keys ++ newAttachments.keys
-                )
-              )
-            }
-          },
-          applicationData => {
-            val invitedUsers: Map[UUID, String] = applicationData.users.flatMap { id =>
-              userService.byId(id).map(user => id -> userGroupService.contextualizedUserName(user))
-            }.toMap
-
-            val application = Application(
-              applicationId,
-              DateTime.now(timeZone),
-              userGroupService.contextualizedUserName(request.currentUser),
-              request.currentUser.id,
-              applicationData.subject,
-              applicationData.description,
-              applicationData.infos,
-              invitedUsers,
-              request.currentArea.id,
-              false,
-              hasSelectedSubject = applicationData.selectedSubject.contains(applicationData.subject),
-              category = applicationData.category,
-              files = newAttachments ++ pendingAttachments
-            )
-            if (applicationService.createApplication(application)) {
-              notificationsService.newApplication(application)
-              eventService.log(
-                ApplicationCreated,
-                s"La demande ${application.id} a été créé",
-                Some(application)
-              )
-              Redirect(routes.ApplicationController.myApplications())
-                .flashing("success" -> "Votre demande a bien été envoyée")
-            } else {
-              eventService.log(
-                ApplicationCreationError,
-                s"La demande ${application.id} n'a pas pu être créé",
-                Some(application)
-              )
-              InternalServerError(
-                "Error Interne: Votre demande n'a pas pu être envoyé. Merci de rééssayer ou contacter l'administrateur"
-              )
-            }
-          }
+        val application = Application(
+          applicationId,
+          DateTime.now(timeZone),
+          userGroupService.contextualizedUserName(request.currentUser),
+          request.currentUser.id,
+          applicationData.subject,
+          applicationData.description,
+          applicationData.infos,
+          invitedUsers,
+          request.currentArea.id,
+          false,
+          hasSelectedSubject = applicationData.selectedSubject.contains(applicationData.subject),
+          category = applicationData.category,
+          files = newAttachments ++ pendingAttachments
         )
+        if (applicationService.createApplication(application)) {
+          notificationsService.newApplication(application)
+          eventService.log(
+            ApplicationCreated,
+            s"La demande ${application.id} a été créé",
+            Some(application)
+          )
+          Redirect(routes.ApplicationController.myApplications())
+            .flashing("success" -> "Votre demande a bien été envoyée")
+        } else {
+          eventService.log(
+            ApplicationCreationError,
+            s"La demande ${application.id} n'a pas pu être créé",
+            Some(application)
+          )
+          InternalServerError(
+            "Error Interne: Votre demande n'a pas pu être envoyé. Merci de rééssayer ou contacter l'administrateur"
+          )
+        }
       }
-    }
+    )
   }
 
   private def computeAttachmentsToStore(
