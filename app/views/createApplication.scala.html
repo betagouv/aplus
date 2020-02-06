@@ -33,7 +33,7 @@
                         
                         <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
                         @for(organisationGroup <- organisationGroups.sortBy(_.name)) {
-                            @defining(organisationGroup.organisationSetOrDeducted.flatMap(Organisation.fromShortName)) { organisation: Option[Organisation] =>
+                            @defining(organisationGroup.organisationSetOrDeducted) { organisation: Option[Organisation] =>
                                 <thead>
                                     <tr>
                                         <th class="mdl-data-table__cell--non-numeric" colspan="2">

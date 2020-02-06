@@ -4,7 +4,7 @@ import com.github.tototoshi.csv.DefaultCSVFormat
 import helper.UUIDHelper
 import models.formModels
 import helper.{CSVUtil, Time}
-import models.{Area, UserGroup}
+import models.{Area, Organisation, UserGroup}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
@@ -111,7 +111,7 @@ class CSVSpec extends Specification {
       errors must have size 0
       val group = data.find(_.group.name == "d’Aubigny sur Nère - Ardennes")
       group must beSome
-      group.get.group.organisation must beSome("MSAP")
+      group.get.group.organisation must beSome(Organisation.Id("MSAP"))
       data must have size 2
     }
   }

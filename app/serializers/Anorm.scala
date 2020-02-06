@@ -13,8 +13,6 @@ object Anorm {
   @inline def className(that: Any): String =
     if (that == null) "<null>" else that.getClass.getName
 
-  //LinkedHashMap
-
   implicit val fieldsMapStringParser: anorm.Column[Map[String, String]] =
     nonNull { (value, meta) =>
       val MetaDataItem(qualified, nullable, clazz) = meta
