@@ -34,7 +34,7 @@
 
 </head>
 <body>
-    <div class="header__ribbon do-not-print mdl-color--pink-500" id="header__ribbon">
+    <div class="header__ribbon do-not-print mdl-color--cyan-800 mdl-color-text--white" id="header__ribbon">
     BETA
     </div>
 <div class="mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--deep-purple-900">
@@ -111,7 +111,7 @@
 
 <script>
     if(/localhost|demo/.test(window.location.hostname)) {
-        document.getElementById("header__ribbon").innerText = "DEMO";
+        document.getElementById("header__ribbon").classList.add("invisible");
         var elements = document.getElementsByClassName("demo-only");
         for(var i=0; i < elements.length; i++) {
             elements[i].classList.remove("invisible");

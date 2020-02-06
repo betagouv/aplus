@@ -154,13 +154,11 @@ dialog {
             <button type="button" disabled="disabled" class="mdl-button mdl-button--raised mdl-button--colored" id="close-dialog-terminate" onclick="confirmTerminate()">Clore</button>
         </div>
     </dialog>
-        <div class="mdl-cell  mdl-cell--3-col mdl-cell--9-offset-desktop mdl-cell--12-col-phone">
-            @if(application.canBeClosedBy(user) && application.closed == false) {
-                <button class="mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()">
-                    Clore la demande
-                </button>
-            }
-        </div>
+        @if(application.canBeClosedBy(user) && application.closed == false) {
+            <button class="mdl-cell mdl-cell--3-col mdl-cell--9-offset-desktop mdl-cell--12-col-phone mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()">
+                Clore la demande
+            </button>
+        }
         <div class="mdl-card mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">
             <div class="mdl-card__title mdl-card--border">
                 <h2 class="mdl-card__title-text">@application.subject</h2>
@@ -179,7 +177,7 @@ dialog {
                 }
             </div>
             <div class="mdl-card__supporting-text mdl-card--border vertical-align--middle">
-                <i class="material-icons icon--light">chat_bubble</i> <span class="application__anwsers"><b>@application.answers.length</b> messages </span> | <span class="application__age">Créée il y a @application.ageString</span>
+                <i class="material-icons icon--light">chat_bubble</i> <span class="application__anwsers"><b>@application.answers.length</b> messages </span> | <span class="application__age">Créée il y a @application.ageString (@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")))</span>
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
                 <div class="info-box">
@@ -218,7 +216,7 @@ dialog {
             <div class="mdl-list mdl-cell mdl-cell--12-col">
                 Créée par
                 <div class="mdl-list__item">
-                    <span class="mdl-list__item-primary-content">@Map("Aide A+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => application.creatorUserName.contains(a._1)) match {
+                    <span class="mdl-list__item-primary-content">@Map("A+" -> "aplus", "Pôle Emploi".toUpperCase() -> "pe", "MSA" -> "msa", "CPAM" -> "cpam", "CRAM" -> "cpam", "CNAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "CARSAT" -> "cnav", "DGFIP" -> "dgfip", "DDFIP" -> "dgfip", "DRFIP" -> "dgfip",  "Défenseur des droits".toUpperCase() -> "ddd").find(a => application.creatorUserName.toUpperCase.contains(a._1)) match {
                         case Some((_,icon)) => {<img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
                         case None => {<i class="material-icons mdl-list__item-avatar">person</i> }
                     }
@@ -228,7 +226,7 @@ dialog {
                 Participants à la discussion
                 @for((userId, userName) <- application.invitedUsers) {
                     <div class="mdl-list__item">
-                        <span class="mdl-list__item-primary-content">@Map("Aide A+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => userName.contains(a._1)) match {
+                        <span class="mdl-list__item-primary-content">@Map("A+" -> "aplus", "Pôle Emploi".toUpperCase() -> "pe", "MSA" -> "msa", "CPAM" -> "cpam", "CRAM" -> "cpam", "CPAM" -> "cpam", "CNAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "CARSAT" -> "cnav", "DGFIP" -> "dgfip", "DDFIP" -> "dgfip", "DRFIP" -> "dgfip", "Défenseur des droits".toUpperCase() -> "ddd").find(a => userName.toUpperCase.contains(a._1)) match {
                             case Some((_,icon)) => {<img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
                             case None => {<i class="material-icons mdl-list__item-avatar">person</i> }
                         }
@@ -262,12 +260,8 @@ dialog {
             @if(answer.invitedUsers) {
                 <div class="mdl-cell mdl-cell--12-col vertical-align--middle" style="text-align: center; color: #000000d6;	font-size: 14px;	font-weight: 600;	line-height: 16px;">
                     <i class="icon material-icons icon--light">people</i> @answer.creatorUserName a invité @answer.invitedUsers.values.mkString(", ") - <span id="date-inviteds-@answer.id" class="vertical-align--middle">
-                    <span class="application__age"> Il y a @answer.ageString</span>
-                    <i class="icon material-icons icon--light">info</i>
+                    <span class="application__age"> Il y a @answer.ageString (@answer.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")))</span>
                      </span>
-                    <div class="mdl-tooltip" data-mdl-for="date-inviteds-@answer.id">
-                        @answer.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))
-                    </div>
                 </div>
             }
             @if(user.instructor || user.admin || user.groupAdmin || answer.visibleByHelpers || answer.creatorUserID == user.id) {
@@ -310,11 +304,7 @@ dialog {
                                     </span>
                                     <span class="mdl-list__item-secondary-content">
                                         <div id="date-@answer.id" class="vertical-align--middle">
-                                            <span class="application__age">Il y a @answer.ageString</span>
-                                            <i class="icon material-icons icon--light">info</i>
-                                        </div>
-                                        <div class="mdl-tooltip" data-mdl-for="date-@answer.id">
-                                        @answer.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))
+                                            <span class="application__age">Il y a @answer.ageString (@answer.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr")))</span>
                                         </div>
                                     </span>
                                 </div>
