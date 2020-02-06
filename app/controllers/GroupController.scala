@@ -5,12 +5,12 @@ import java.util.UUID
 import actions.{LoginAction, RequestWithUserData}
 import Operators._
 import javax.inject.{Inject, Singleton}
-import models.{Area, UserGroup}
+import models.{Area, Organisation, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
 import play.api.data.Form
-import play.api.data.Forms.{boolean, email, ignored, list, mapping, optional, text, uuid}
+import play.api.data.Forms.{boolean, email, ignored, list, mapping, of, optional, text, uuid}
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import play.libs.ws.WSClient
 import services._
@@ -180,7 +180,7 @@ case class GroupController @Inject() (
           areaIds => areaIds.forall(request.currentUser.areas.contains)
         )
         .verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
-      "organisation" -> optional(text),
+      "organisation" -> optional(of[Organisation.Id]),
       "email" -> optional(email)
     )(UserGroup.apply)(UserGroup.unapply)
   )

@@ -38,7 +38,7 @@ case class AreaController @Inject() (
 
   @deprecated
   def change(areaId: UUID) = loginAction { implicit request =>
-    if (!request.currentUser.areas.contains(areaId)) {
+    if (!request.currentUser.areas.contains[UUID](areaId)) {
       eventService.log(ChangeAreaUnauthorized, s"Accès à la zone $areaId non autorisé")
       Unauthorized(
         s"Vous n'avez pas les droits suffisants pour accèder à cette zone. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
@@ -67,43 +67,51 @@ case class AreaController @Inject() (
     }
   }
 
-  private val organisationGroupingAll: List[Set[Organisation]] = List(
-    Set("DDFIP", "DRFIP").flatMap(Organisation.fromShortName),
-    Set("CPAM", "CRAM", "CNAM").flatMap(Organisation.fromShortName),
-    Set("CARSAT", "CNAV").flatMap(Organisation.fromShortName)
-  ) ++
+  private val organisationGroupingAll: List[Set[Organisation]] = (
     List(
-      "ANAH",
-      "ANTS",
-      "BDF",
-      "CAF",
-      "CCAS",
-      "CDAD",
-      "Département",
-      "Hôpital",
-      "OFPRA",
-      "La Poste",
-      "Mairie",
-      "MDPH",
-      "MFS",
-      "Mission locale",
-      "MSA",
-      "MSAP",
-      "Pôle emploi",
-      "Préf",
-      "Sous-Préf",
-      "Sous-préfecture"
-    ).flatMap(Organisation.fromShortName).map(organisation => Set(organisation))
+      Set("DDFIP", "DRFIP"),
+      Set("CPAM", "CRAM", "CNAM"),
+      Set("CARSAT", "CNAV")
+    ) :::
+      List(
+        "ANAH",
+        "ANTS",
+        "BDF",
+        "CAF",
+        "CCAS",
+        "CDAD",
+        "Département",
+        "Hôpital",
+        "OFPRA",
+        "La Poste",
+        "Mairie",
+        "MDPH",
+        "MFS",
+        "Mission locale",
+        "MSA",
+        "MSAP",
+        "Pôle emploi",
+        "Préf",
+        "Sous-Préf"
+      ).map(Set(_))
+  ).map(_.flatMap(id => Organisation.byId(Organisation.Id(id))))
 
-  private val organisationGroupingFranceService: List[Set[Organisation]] = List(
-    Set("DDFIP", "DRFIP").flatMap(Organisation.fromShortName),
-    Set("CPAM", "CRAM", "CNAM").flatMap(Organisation.fromShortName),
-    Set("CARSAT", "CNAV").flatMap(Organisation.fromShortName),
-    Set("ANTS", "Préf").flatMap(Organisation.fromShortName)
-  ) ++
-    List("CAF", "CDAD", "La Poste", "MSA", "Pôle emploi")
-      .flatMap(Organisation.fromShortName)
-      .map(organisation => Set(organisation))
+  private val organisationGroupingFranceService: List[Set[Organisation]] = (
+    List(
+      Set("DDFIP", "DRFIP"),
+      Set("CPAM", "CRAM", "CNAM"),
+      Set("CARSAT", "CNAV"),
+      Set("ANTS", "Préf")
+    ) :::
+      List(
+        "CAF",
+        "CDAD",
+        "La Poste",
+        "MSA",
+        "Pôle emploi",
+        "Sous-Préf"
+      ).map(Set(_))
+  ).map(_.flatMap(id => Organisation.byId(Organisation.Id(id))))
 
   def deploymentDashboard = loginAction { implicit request =>
     asAdmin { () =>
@@ -115,10 +123,10 @@ case class AreaController @Inject() (
       def usersIn(area: Area, organisationSet: Set[Organisation]): List[User] =
         for {
           group <- userGroups.filter(group =>
-            group.areaIds.contains(area.id)
-              && organisationSet.map(_.shortName).exists(group.organisationSetOrDeducted.contains)
+            group.areaIds.contains[UUID](area.id)
+              && organisationSet.exists(group.organisationSetOrDeducted.contains[Organisation])
           )
-          user <- users if user.groupIds.contains(group.id)
+          user <- users if user.groupIds.contains[UUID](group.id)
         } yield user
 
       val organisationGrouping =

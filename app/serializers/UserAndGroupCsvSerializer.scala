@@ -6,7 +6,7 @@ import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import models.formModels.{UserFormData, UserGroupFormData}
 import helper.{PlayFormHelper, UUIDHelper}
 import helper.StringHelper._
-import models.{Area, User, UserGroup}
+import models.{Area, Organisation, User, UserGroup}
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data.Mapping
@@ -69,7 +69,7 @@ object UserAndGroupCsvSerializer {
   private val expectedGroupHeaders: List[Header] =
     List(GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL, GROUP_AREAS_IDS)
 
-  def filterAlreadyExistingUsersAndGenerateErrors(
+  private def filterAlreadyExistingUsersAndGenerateErrors(
       groups: List[UserGroupFormData]
   ): (List[String], List[UserGroupFormData]) = {
     def filterAlreadyExistingUsersAndGenerateErrors(
@@ -91,7 +91,7 @@ object UserAndGroupCsvSerializer {
     newErrors.reverse -> newGroups.reverse
   }
 
-  def userGroupDataListToUserGroupData(
+  private def userGroupDataListToUserGroupData(
       userGroupFormData: List[UserGroupFormData]
   ): List[UserGroupFormData] =
     userGroupFormData
@@ -105,7 +105,9 @@ object UserAndGroupCsvSerializer {
       .values
       .toList
 
-  def extractFromCSVToMap(separator: Char)(csvText: String): Either[String, CSVExtractResult] =
+  private def extractFromCSVToMap(
+      separator: Char
+  )(csvText: String): Either[String, CSVExtractResult] =
     try {
       implicit object SemiConFormat extends DefaultCSVFormat {
         override val delimiter: Char = separator
@@ -132,6 +134,10 @@ object UserAndGroupCsvSerializer {
         Left(s"Erreur lors de l'extraction du csv ${ex.getMessage}")
     }
 
+  /** Only public method.
+    * Returns a Right[(List[String], List[UserGroupFormData]))]
+    * where List[String] is a list of errors on the lines.
+    */
   def csvLinesToUserGroupData(separator: Char, defaultAreas: Seq[Area], currentDate: DateTime)(
       csvLines: String
   ): Either[String, (List[String], List[UserGroupFormData])] = {
@@ -337,7 +343,7 @@ object UserAndGroupCsvSerializer {
       "admin-group" -> boolean,
       "disabled" -> ignored(false),
       "expert" -> ignored(false),
-      "groupIds" -> default(list(uuid), List()),
+      "groupIds" -> default(list(uuid), Nil),
       "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
       "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
       "phone-number" -> optional(text)
@@ -358,7 +364,7 @@ object UserAndGroupCsvSerializer {
         "insee-code" -> list(text),
         "creationDate" -> ignored(currentDate),
         "area-ids" -> list(uuid),
-        "organisation" -> optional(text),
+        "organisation" -> optional(of[Organisation.Id]),
         "email" -> optional(email)
       )(UserGroup.apply)(UserGroup.unapply)
   )

@@ -2,21 +2,50 @@ package models
 
 import helper.StringHelper.CanonizeString
 
-case class Organisation(shortName: String, name: String) {
-  def key: String = shortName.stripSpecialChars
-}
+case class Organisation(id: Organisation.Id, shortName: String, name: String)
 
 object Organisation {
 
-  def fromShortName(shortName: String) = {
+  case class Id(id: String) extends AnyVal {
+    override def toString = id.stripSpecialChars
+  }
+
+  object Id {
+
+    import play.api.data.format.Formatter
+
+    implicit object OrganisationIdFormatter extends Formatter[Organisation.Id] {
+      import play.api.data.format.Formats._
+      override val format = Some(("format.organisation.id", Nil))
+
+      override def bind(key: String, data: Map[String, String]) =
+        parsing(Organisation.Id(_), "error.organisation.id", Nil)(key, data)
+
+      override def unbind(key: String, value: Organisation.Id) =
+        Map(key -> value.id)
+    }
+
+    implicit val organisationIdAnormParser: anorm.Column[Organisation.Id] =
+      implicitly[anorm.Column[String]].map(Organisation.Id.apply)
+
+  }
+
+  def apply(shortName: String, name: String): Organisation = Organisation(
+    id = Organisation.Id(shortName),
+    shortName = shortName,
+    name = name
+  )
+
+  def isValidId(id: Organisation.Id): Boolean =
+    byId(id).nonEmpty
+
+  def fromShortName(shortName: String): Option[Organisation] = {
     val standardShortName = shortName.stripSpecialChars
     all.find(_.shortName.stripSpecialChars == standardShortName)
   }
 
-  def fromName(name: String) = {
-    val standardName = name.stripSpecialChars
-    all.find(_.name.stripSpecialChars == standardName)
-  }
+  def byId(id: Id): Option[Organisation] =
+    all.find(org => (org.id: Id) == (id: Id))
 
   val all = List(
     Organisation("ANAH", "Agence nationale de l'habitat"),
@@ -38,7 +67,7 @@ object Organisation {
     Organisation("La Poste", "La Poste"),
     Organisation("Mairie", "Mairie"), //Ville
     Organisation("MDPH", "Maison départementale des personnes handicapées"),
-    Organisation("MFS", "Maison France Services"),
+    Organisation(Organisation.Id("MFS"), "FS", "France Services"),
     Organisation("Mission locale", "Mission locale"), //Ville
     Organisation("MSA", "Mutualité sociale agricole"),
     Organisation("MSAP", "Maison de services au public"), // Ville

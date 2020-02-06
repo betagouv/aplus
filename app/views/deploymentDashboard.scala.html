@@ -10,7 +10,7 @@
         @for(organisationSet <- data.head._2.map(_._1)) {
             <div class="mdl-cell mdl-cell--2-col">
                 <label>
-                    <input type="checkbox" checked name="@{organisationSet.map(_.key).mkString}" onchange="table.toggleColumn('@{organisationSet.map(_.key).mkString}')">
+                    <input type="checkbox" checked name="@{organisationSet.map(_.id.toString).mkString}" onchange="table.toggleColumn('@{organisationSet.map(_.id.toString).mkString}')">
                     @{organisationSet.map(_.shortName).mkString("/")}
                 </label>
             </div>
@@ -26,7 +26,7 @@
            @for((area: Area, usersSumPerOrganisation: List[(Set[Organisation], Int)], total) <- data) {
                 { area: "@area",
                     @for((organisations, userSum) <- usersSumPerOrganisation)  {
-                        @{organisations.map(_.key).mkString} : @userSum,
+                        @{organisations.map(_.id.toString).mkString} : @userSum,
                     }
                   total: "@total"
                 },
@@ -34,7 +34,7 @@
            {
                 area: "TOTAUX (de structure)",
                 @for((organisations, count) <- organisationSetToCountOfCounts)  {
-                    @{organisations.map(_.key).mkString} : @count,
+                    @{organisations.map(_.id.toString).mkString} : @count,
                 }
                 total: ""
            }
@@ -46,7 +46,7 @@
            @for(organisations <- organisationGrouping) {
                 {
                     title: "@{organisations.map(_.shortName).mkString("/")}",
-                    field: "@{organisations.map(_.key).mkString}",
+                    field: "@{organisations.map(_.id.toString).mkString}",
                     sorter:"number",
                     headerVertical:true,
                     formatter: function(cell, formatterParams, onRendered) {

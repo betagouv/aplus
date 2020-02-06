@@ -66,14 +66,14 @@
     @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data") {
         @helper.CSRF.formField
         <div class="mdl-grid">
-            @defining(categories.filter(_.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty)) { categories =>
+            @defining(categories.filter(_.defaultOrganisations.map(_.id).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted.map(_.id))).nonEmpty)) { categories =>
                 @if(categories.isEmpty) {
                     <h1>Le mode guidé n'est pas encore disponible dans votre territoire.</h1>
                 }
                 @for(category <- categories) {
                     <div class="mdl-cell mdl-cell--3-col mdl-cell--4-col-tablet mdl-cell--6-col-phone aplus-cat-button category-div @if(selectedCategory.contains(category.name)) { aplus-cat-button--selected }" onclick="onCategoryChange(this)" data-category="@category.name">
                         <h4>@category.name</h4>
-                        <span>@category.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).mkString("/")</span>
+                        <span>@category.defaultOrganisations.intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).map(_.shortName).mkString("/")</span>
                         <p>@category.description</p>
                     </div>
                 }
@@ -109,8 +109,8 @@
             <div id="form-problem" class="mdl-grid mdl-grid--no-spacing @if(selectedCategory.isEmpty){ invisible }">
                 <h5 class="mdl-cell mdl-cell--12-col mdl-grid">Nature du problème rencontré</h5>
                 <div class="aplus-subjects">
-                @for(category <- categories.filter(_.defaultOrganisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty)) {
-                        @for((subject,index) <- category.subjects.filter(_.organisations.map(_.shortName).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted)).nonEmpty).zipWithIndex) {
+                @for(category <- categories.filter(_.defaultOrganisations.map(_.id).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted.map(_.id))).nonEmpty)) {
+                        @for((subject,index) <- category.subjects.filter(_.organisations.map(_.id).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted.map(_.id))).nonEmpty).zipWithIndex) {
                             <label class="mdl-cell mdl-cell--12-col mdl-radio mdl-js-radio mdl-js-ripple-effect subject-label @if(selectedCategory.isEmpty || !selectedCategory.contains(category.name)){ invisible }" for="subject-@category.name-@index" data-category="@category.name">
                                 <input  type="radio"
                                         id="subject-@category.name-@index"
@@ -118,7 +118,7 @@
                                         name="selected-subject"
                                         value="@subject.subject"
                                         onchange="onSubjectChange(this)"
-                                        data-organisations="@subject.organisations.map(_.shortName).mkString(",")"
+                                        data-organisations="@subject.organisations.map(_.id.toString).mkString(",")"
                                         @if(selectedCategory.contains(category.name) && applicationForm("selected-subject").value.contains(subject.subject)){ checked }
                                 >
                                 <span class="mdl-radio__label">@subject.subject</span>
@@ -131,7 +131,7 @@
                                     name="selected-subject"
                                     value="other"
                                     onchange="onSubjectChange(this)"
-                                    data-organisations="@category.defaultOrganisations.map(_.shortName).mkString(",")"
+                                    data-organisations="@category.defaultOrganisations.map(_.id.toString).mkString(",")"
                                     @if(selectedCategory.contains(category.name) && applicationForm("selected-subject").value.contains("other")){ checked }
                             >
                             <span class="mdl-radio__label">Autre</span>
@@ -199,17 +199,17 @@
 
                     <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
                     @for(organisationGroup <- organisationGroups.filter(_.organisationSetOrDeducted.nonEmpty).sortBy(_.name)) {
-                        @defining(organisationGroup.organisationSetOrDeducted.flatMap(Organisation.fromShortName).get) { organisation: Organisation =>
-                            <thead class="organisation-row @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisation.shortName})){ invisible }" data-organisation="@organisation.shortName">
+                        @for(organisation <- organisationGroup.organisationSetOrDeducted) {
+                            <thead class="organisation-row @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisation.id.toString})){ invisible }" data-organisation="@organisation.id.toString">
                                 <tr>
                                     <th class="mdl-data-table__cell--non-numeric" colspan="2">
                                         <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                            <input type="checkbox" class="mdl-checkbox__input" value="@organisation.shortName" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisation.shortName})){ checked="checked" }>
+                                            <input type="checkbox" class="mdl-checkbox__input" value="@organisation.id.toString" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisation.id.toString})){ checked="checked" }>
                                             <span class="mdl-checkbox__label">@organisationGroup.name (@organisation.name) </span>
                                         </label></th>
                                 </tr>
                             </thead>
-                            <tbody class="organisation-row @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisation.shortName})){ invisible }" data-organisation="@organisation.shortName">
+                            <tbody class="organisation-row @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisation.id.toString})){ invisible }" data-organisation="@organisation.id.toString">
                                 @if(organisation.shortName.contains("CAF")) {
                                     <tr><td colspan="2" style="text-align: left; white-space: normal">
                                         <div class="info-box info-box--no-spacing">La CAF aura besoin du <b>numéro identifiant CAF</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>

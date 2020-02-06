@@ -42,7 +42,7 @@ case class CSVImportController @Inject() (
     with UserOperators
     with GroupOperators {
 
-  val csvImportContentForm: Form[CSVImportData] = Form(
+  private val csvImportContentForm: Form[CSVImportData] = Form(
     mapping(
       "csv-lines" -> nonEmptyText,
       "area-default-ids" -> list(uuid),
@@ -59,7 +59,10 @@ case class CSVImportController @Inject() (
     }
   }
 
-  def augmentUserGroupInformation(userGroupFormData: UserGroupFormData): UserGroupFormData = {
+  /** Checks with the DB if Users or UserGroups are already existing. */
+  private def augmentUserGroupInformation(
+      userGroupFormData: UserGroupFormData
+  ): UserGroupFormData = {
     val userEmails = userGroupFormData.users.map(_.user.email)
     val alreadyExistingUsers = userService.byEmails(userEmails)
     val newUsersFormDataList = userGroupFormData.users.map { userDataForm =>
@@ -89,7 +92,7 @@ case class CSVImportController @Inject() (
       .copy(users = newUsersFormDataList)
   }
 
-  def userImportMapping(date: DateTime): Mapping[User] =
+  private def userImportMapping(date: DateTime): Mapping[User] =
     mapping(
       "id" -> optional(uuid).transform[UUID]({
         case None     => UUID.randomUUID()
@@ -116,7 +119,7 @@ case class CSVImportController @Inject() (
       "phone-number" -> optional(text)
     )(User.apply)(User.unapply)
 
-  def groupImportMapping(date: DateTime): Mapping[UserGroup] =
+  private def groupImportMapping(date: DateTime): Mapping[UserGroup] =
     mapping(
       "id" -> optional(uuid).transform[UUID]({
         case None     => UUID.randomUUID()
@@ -130,9 +133,9 @@ case class CSVImportController @Inject() (
       "creationDate" -> ignored(date),
       "area-ids" -> list(uuid)
         .verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
-      "organisation" -> optional(text).verifying(
+      "organisation" -> optional(of[Organisation.Id]).verifying(
         "Vous devez sélectionner une organisation dans la liste",
-        organisation => organisation.flatMap(Organisation.fromShortName).isDefined
+        _.map(Organisation.isValidId).getOrElse(false)
       ),
       "email" -> optional(email)
     )(UserGroup.apply)(UserGroup.unapply)
@@ -158,6 +161,9 @@ case class CSVImportController @Inject() (
     )
   )
 
+  /** Action that reads the CSV file (CSV file was copy-paste in a web form)
+    *  and display possible errors.
+    */
   def importUsersReview: Action[AnyContent] =
     loginAction { implicit request =>
       asAdmin { () =>

@@ -41,7 +41,7 @@ class UserGroupService @Inject() (configuration: play.api.Configuration, db: Dat
          ${group.creationDate},
          ${UUIDHelper.namedFrom("deprecated")}::uuid,
          array[${group.areaIds}]::uuid[],
-         ${group.organisation},
+         ${group.organisation.map(_.id)},
          ${group.email})
       """.executeUpdate() == 1
         }
@@ -68,7 +68,7 @@ class UserGroupService @Inject() (configuration: play.api.Configuration, db: Dat
           name = ${group.name},
           description = ${group.description},
           insee_code = array[${group.inseeCode}]::character varying(5)[],
-          organisation = ${group.organisation},
+          organisation = ${group.organisation.map(_.id)},
           area_ids = array[${group.areaIds}]::uuid[],
           email = ${group.email}
           WHERE id = ${group.id}::uuid
@@ -126,19 +126,4 @@ class UserGroupService @Inject() (configuration: play.api.Configuration, db: Dat
     )
   }
 
-  def contextualizedUserName(user: User): String = {
-    val groups = byIds(user.groupIds)
-    val contexts = groups.flatMap({ userGroup: UserGroup =>
-      for {
-        areaInseeCode <- userGroup.areaIds.flatMap(Area.fromId).map(_.inseeCode).headOption
-        organisation <- userGroup.organisation
-      } yield {
-        s"($organisation - $areaInseeCode)"
-      }
-    })
-    if (contexts.isEmpty)
-      s"${user.name} ( ${user.qualite} )"
-    else
-      s"${user.name} ${contexts.mkString(",")}"
-  }
 }

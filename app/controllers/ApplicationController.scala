@@ -154,6 +154,25 @@ case class ApplicationController @Inject() (
 
   def createSimplifiedPost = createPostBis(true)
 
+  private def contextualizedUserName(user: User, currentAreaId: UUID): String = {
+    val groups = userGroupService.byIds(user.groupIds)
+    val contexts = groups
+      .filter(_.areaIds.contains[UUID](currentAreaId))
+      .flatMap({ userGroup: UserGroup =>
+        for {
+          areaInseeCode <- userGroup.areaIds.flatMap(Area.fromId).map(_.inseeCode).headOption
+          organisationId <- userGroup.organisation
+          organisation <- Organisation.byId(organisationId)
+        } yield {
+          s"($organisation - $areaInseeCode)"
+        }
+      })
+    if (contexts.isEmpty)
+      s"${user.name} ( ${user.qualite} )"
+    else
+      s"${user.name} ${contexts.mkString(",")}"
+  }
+
   private def createPostBis(simplified: Boolean) = loginAction { implicit request =>
     val form = applicationForm.bindFromRequest
     val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
@@ -200,14 +219,16 @@ case class ApplicationController @Inject() (
         }
       },
       applicationData => {
+        // Note: we will deprecate .currentArea as a variable stored in the cookies
+        val currentAreaId: UUID = request.currentArea.id
         val invitedUsers: Map[UUID, String] = applicationData.users.flatMap { id =>
-          userService.byId(id).map(user => id -> userGroupService.contextualizedUserName(user))
+          userService.byId(id).map(user => id -> contextualizedUserName(user, currentAreaId))
         }.toMap
 
         val application = Application(
           applicationId,
           DateTime.now(timeZone),
-          userGroupService.contextualizedUserName(request.currentUser),
+          contextualizedUserName(request.currentUser, currentAreaId),
           request.currentUser.id,
           applicationData.subject,
           applicationData.description,
@@ -668,13 +689,14 @@ case class ApplicationController @Inject() (
             .flashing("answer-error" -> error, "opened-tab" -> "anwser")
         },
         answerData => {
+          val currentAreaId = application.area
           val answer = Answer(
             answerId,
             applicationId,
             DateTime.now(timeZone),
             answerData.message,
             request.currentUser.id,
-            userGroupService.contextualizedUserName(request.currentUser),
+            contextualizedUserName(request.currentUser, currentAreaId),
             Map(),
             answerData.privateToHelpers == false,
             answerData.applicationIsDeclaredIrrelevant,
@@ -722,10 +744,11 @@ case class ApplicationController @Inject() (
             .flashing("answer-error" -> error, "opened-tab" -> "invite")
         },
         inviteData => {
+          val currentAreaId = application.area
           val usersThatCanBeInvited = usersThatCanBeInvitedOn(application)
           val invitedUsers: Map[UUID, String] = usersThatCanBeInvited
             .filter(user => inviteData.invitedUsers.contains(user.id))
-            .map(user => (user.id, userGroupService.contextualizedUserName(user)))
+            .map(user => (user.id, contextualizedUserName(user, currentAreaId)))
             .toMap
 
           val answer = Answer(
@@ -734,11 +757,11 @@ case class ApplicationController @Inject() (
             DateTime.now(timeZone),
             inviteData.message,
             request.currentUser.id,
-            userGroupService.contextualizedUserName(request.currentUser),
+            contextualizedUserName(request.currentUser, currentAreaId),
             invitedUsers,
             not(inviteData.privateToHelpers),
             false,
-            Some(Map())
+            Some(Map.empty)
           )
           if (applicationService.add(applicationId, answer) == 1) {
             notificationsService.newAnswer(application, answer)
@@ -770,10 +793,11 @@ case class ApplicationController @Inject() (
           .log(AddExpertNotFound, s"La demande $applicationId n'existe pas pour ajouter un expert")
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
+        val currentAreaId = application.area
         if (application.canHaveExpertsInvitedBy(request.currentUser)) {
           val experts: Map[UUID, String] = User.admins
             .filter(_.expert)
-            .map(user => user.id -> userGroupService.contextualizedUserName(user))
+            .map(user => user.id -> contextualizedUserName(user, currentAreaId))
             .toMap
           val answer = Answer(
             UUID.randomUUID(),
@@ -781,7 +805,7 @@ case class ApplicationController @Inject() (
             DateTime.now(timeZone),
             "J'ajoute un expert",
             request.currentUser.id,
-            userGroupService.contextualizedUserName(request.currentUser),
+            contextualizedUserName(request.currentUser, currentAreaId),
             experts,
             true,
             false,
