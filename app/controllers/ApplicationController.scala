@@ -236,7 +236,8 @@ case class ApplicationController @Inject() (
           invitedUsers,
           request.currentArea.id,
           false,
-          hasSelectedSubject = applicationData.selectedSubject.contains(applicationData.subject),
+          hasSelectedSubject =
+            applicationData.selectedSubject.contains[String](applicationData.subject),
           category = applicationData.category,
           files = newAttachments ++ pendingAttachments
         )
@@ -285,7 +286,7 @@ case class ApplicationController @Inject() (
         applicationService.allForUserIds(userIds, true)
       case (false, Some(area)) if user.groupAdmin =>
         val userGroupIds =
-          userGroupService.byIds(user.groupIds).filter(_.areaIds.contains(area.id)).map(_.id)
+          userGroupService.byIds(user.groupIds).filter(_.areaIds.contains[UUID](area.id)).map(_.id)
         val userIds = userService.byGroupIds(userGroupIds).map(_.id)
         applicationService.allForUserIds(userIds, true)
       case _ =>
@@ -460,7 +461,7 @@ case class ApplicationController @Inject() (
     def applicationToCSV(application: Application): String = {
       val creatorUser = users.find(_.id == application.creatorUserId)
       val invitedUsers =
-        users.filter(user => application.invitedUsers.keys.toList.contains(user.id))
+        users.filter(user => application.invitedUsers.keys.toList.contains[UUID](user.id))
       val creatorUserGroupNames = creatorUser.toList
         .flatMap(_.groupIds)
         .flatMap { groupId: UUID =>
@@ -576,9 +577,9 @@ case class ApplicationController @Inject() (
           val usersThatCanBeInvited = usersThatCanBeInvitedOn(application)
           val groups = userGroupService
             .byIds(usersThatCanBeInvited.flatMap(_.groupIds))
-            .filter(_.areaIds.contains(application.area))
+            .filter(_.areaIds.contains[UUID](application.area))
           val groupsWithUsersThatCanBeInvited = groups.map { group =>
-            group -> usersThatCanBeInvited.filter(_.groupIds.contains(group.id))
+            group -> usersThatCanBeInvited.filter(_.groupIds.contains[UUID](group.id))
           }
           val renderedApplication =
             if ((application
@@ -629,7 +630,7 @@ case class ApplicationController @Inject() (
         case (Some(answerId), Some(application))
             if application.fileCanBeShowed(request.currentUser, answerId) =>
           application.answers.find(_.id == answerId) match {
-            case Some(answer) if answer.files.getOrElse(Map()).contains(filename) =>
+            case Some(answer) if answer.files.getOrElse(Map.empty).contains(filename) =>
               eventService.log(
                 FileOpened,
                 s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert"
@@ -747,7 +748,7 @@ case class ApplicationController @Inject() (
           val currentAreaId = application.area
           val usersThatCanBeInvited = usersThatCanBeInvitedOn(application)
           val invitedUsers: Map[UUID, String] = usersThatCanBeInvited
-            .filter(user => inviteData.invitedUsers.contains(user.id))
+            .filter(user => inviteData.invitedUsers.contains[UUID](user.id))
             .map(user => (user.id, contextualizedUserName(user, currentAreaId)))
             .toMap
 

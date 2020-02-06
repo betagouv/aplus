@@ -177,7 +177,7 @@ case class GroupController @Inject() (
       "area-ids" -> list(uuid)
         .verifying(
           "Vous devez sélectionner les territoires sur lequel vous êtes admin",
-          areaIds => areaIds.forall(request.currentUser.areas.contains)
+          areaIds => areaIds.forall(request.currentUser.areas.contains[UUID])
         )
         .verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
       "organisation" -> optional(of[Organisation.Id]),
