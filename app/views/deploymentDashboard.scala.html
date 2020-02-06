@@ -3,6 +3,7 @@
 @main(currentUser, maxWidth = false)(s"Tableau de suivie déploiement") {
     @webJarsUtil.locate("tabulator.min.css").css()
     @webJarsUtil.locate("tabulator.min.js").script()
+    @webJarsUtil.locate("xlsx.full.min.js").script()
 }{
     <h5 class="title--addline">Nombre d'agents instructeurs par organisation</h5>
     <i>Les agents sont comptés double s'ils sont dans plusieurs départements. Les organisations manquantes ne sont pas affichées. Certains agents ne sont pas détecté comme faisant partie d'un organisation (Vous devez corriger le groupe dans ce cas)</i>
@@ -19,6 +20,7 @@
     <div id="table" class="mdl-cell mdl-cell--12-col"></div>
     <div class="mdl-cell mdl-cell--12-col">
         <button class="mdl-button mdl-button--raised" onclick="downloadCSV()">Télécharger CSV</button>
+        <button class="mdl-button mdl-button--raised" onclick="downloadXLSX()">Télécharger XLSX</button>
         <a class="mdl-button mdl-button--raised" href="@routes.AreaController.deploymentDashboard()?uniquement-fs=oui">Uniquement France Service</a>
     </div>
     <script>
@@ -109,6 +111,11 @@
        function downloadCSV() {
            var date = new Date().toISOString().replace(/:/g,'-');
            table.download('csv', 'aplus-export-deploiement-'+date+'.csv');
+       }
+
+       function downloadXLSX() {
+           var date = new Date().toISOString().replace(/:/g,'-');
+           table.download("xlsx", 'aplus-export-deploiement-'+date+'.xlsx', {sheetName:"Déploiement"});
        }
 
     </script>
