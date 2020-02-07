@@ -63,6 +63,7 @@ import play.twirl.api.Html
 import scala.concurrent.{ExecutionContext, Future}
 import helper.StringHelper.CanonizeString
 import serializers.AttachmentHelper
+import scala.concurrent.duration._
 
 /**
   * This controller creates an `Action` to handle HTTP requests to the
@@ -158,19 +159,24 @@ case class ApplicationController @Inject() (
     val groups = userGroupService.byIds(user.groupIds)
     val contexts = groups
       .filter(_.areaIds.contains[UUID](currentAreaId))
-      .flatMap({ userGroup: UserGroup =>
-        for {
-          areaInseeCode <- userGroup.areaIds.flatMap(Area.fromId).map(_.inseeCode).headOption
-          organisationId <- userGroup.organisation
-          organisation <- Organisation.byId(organisationId)
-        } yield {
-          s"($organisation - $areaInseeCode)"
+      .flatMap { userGroup: UserGroup =>
+        if (user.instructor) {
+          for {
+            areaInseeCode <- userGroup.areaIds.flatMap(Area.fromId).map(_.inseeCode).headOption
+            organisationId <- userGroup.organisation
+            organisation <- Organisation.byId(organisationId)
+          } yield {
+            s"(${organisation.name} - $areaInseeCode)"
+          }
+        } else {
+          List(s"(${userGroup.name})")
         }
-      })
+      }
+    val capitalizedUserName = user.name.split(' ').map(_.capitalize).mkString(" ")
     if (contexts.isEmpty)
-      s"${user.name} ( ${user.qualite} )"
+      s"${capitalizedUserName} ( ${user.qualite} )"
     else
-      s"${user.name} ${contexts.mkString(",")}"
+      s"${capitalizedUserName} ${contexts.mkString(",")}"
   }
 
   private def createPostBis(simplified: Boolean) = loginAction { implicit request =>
@@ -398,7 +404,7 @@ case class ApplicationController @Inject() (
             s"stats.user_${request.currentUser.id}"
 
         cache
-          .getOrElseUpdate[Html](cacheKey)(Future(generateStats))
+          .getOrElseUpdate[Html](cacheKey, 1 hours)(Future(generateStats))
           .map { html =>
             eventService.log(StatsShowed, "Visualise les stats")
             Ok(html)
@@ -597,7 +603,8 @@ case class ApplicationController @Inject() (
               groupsWithUsersThatCanBeInvited,
               renderedApplication,
               answerForm,
-              openedTab
+              openedTab,
+              request.currentArea
             )
           )
         } else {
