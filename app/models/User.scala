@@ -62,7 +62,7 @@ object User {
     User(
       UUIDHelper.namedFrom("zohra"),
       Hash.sha256(s"zohra"),
-      "Zohra LEBEL",
+      "LEBEL-SEDKI Zohra",
       "Experte A+",
       "zohra.lebel@beta.gouv.fr",
       true,
