@@ -37,7 +37,7 @@
                                     <i class="material-icons" style="vertical-align: middle;">edit</i>
                                 </a>
                             } Groupe : @userGroup.name @userGroup.organisationSetOrDeducted match {
-                            case Some(organisation) => { ( @organisation ) }
+                            case Some(organisation) => { ( @organisation.name ) }
                             case None => {}
                             }
                         </td>

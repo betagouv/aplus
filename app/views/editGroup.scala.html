@@ -59,7 +59,7 @@
                 <select id="organisation" name="organisation">
                     <option @if(userGroup.organisation.isEmpty){selected} style="font-weight: bold" value="">Organisme non-référencé</option>
                     @for(organisation <- Organisation.all) {
-                        <option value="@organisation.shortName" @if(userGroup.organisation.contains(organisation.shortName)){selected}>@organisation.shortName : @organisation.name</option>
+                        <option value="@organisation.id.id" @if(userGroup.organisation.contains[Organisation.Id](organisation.id)){selected}>@organisation.shortName : @organisation.name</option>
                     }
                 </select>
             </div>
