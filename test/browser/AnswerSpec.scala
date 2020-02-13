@@ -14,12 +14,11 @@ import services.{ApplicationService, EventService, TokenService, UserGroupServic
 @RunWith(classOf[JUnitRunner])
 class AnswerSpec extends Specification with Tables with BaseSpec {
 
-  def generateGroup(groupService: UserGroupService): UserGroup = {
-    val number = scala.util.Random.nextInt()
+  def generateGroup(testSeed: Int, groupService: UserGroupService): UserGroup = {
     val area = Area.all.head.id
     val group = UserGroup(
       id = UUIDHelper.randomUUID,
-      name = s"Group $number",
+      name = s"Group $testSeed",
       description = None,
       inseeCode = List("0"),
       creationDate = Time.now(),
@@ -29,52 +28,38 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
     group
   }
 
-  def generateHelper(group: UserGroup, userService: UserService): User = {
-    val email = "helper-test" +
-      group.name.toLowerCase.replaceAllLiterally(" ", "_") +
-      "@example.com"
-    val user = User(
-      id = UUIDHelper.randomUUID,
-      key = "key",
-      name = s"J'aide TEST ${group.name}",
-      qualite = s"Aidant Testeur (${group.name})",
-      email = email,
-      helper = true,
-      instructor = false,
-      admin = false,
-      areas = group.areaIds,
-      creationDate = Time.now(),
-      communeCode = "0",
-      groupAdmin = false,
-      disabled = false,
-      cguAcceptationDate = Some(Time.now()),
-      groupIds = List(group.id)
-    )
-    val result = userService.add(List(user))
-    result.isRight must beTrue
-    user
-  }
+  def userId(testSeed: Int, userSeed: String): UUID =
+    UUIDHelper.namedFrom(s"$userSeed$testSeed")
 
-  def generateInstructor(group: UserGroup, userService: UserService): User = {
-    val email = "instructor-test" +
-      group.name.toLowerCase.replaceAllLiterally(" ", "_") +
-      "@example.com"
+  def generateUser(
+      testSeed: Int,
+      userSeed: String,
+      userName: String,
+      userQualite: String,
+      isHelper: Boolean,
+      isInstructor: Boolean,
+      isExpert: Boolean,
+      groups: List[UserGroup],
+      userService: UserService
+  ): User = {
+    val email = userSeed + testSeed.toString + "@example.com"
     val user = User(
-      id = UUIDHelper.randomUUID,
+      id = userId(testSeed, userSeed),
       key = "key",
-      name = s"J'instruit ${group.name}",
-      qualite = s"Instructeur Testeur (${group.name})",
+      name = userName,
+      qualite = userQualite,
       email = email,
-      helper = true,
-      instructor = true,
+      helper = isHelper,
+      instructor = isInstructor,
       admin = false,
-      areas = group.areaIds,
+      areas = groups.flatMap(_.areaIds),
       creationDate = Time.now(),
       communeCode = "0",
       groupAdmin = false,
       disabled = false,
+      expert = isExpert,
       cguAcceptationDate = Some(Time.now()),
-      groupIds = List(group.id)
+      groupIds = groups.map(_.id)
     )
     val result = userService.add(List(user))
     result.isRight must beTrue
@@ -110,74 +95,111 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       webDriver = WebDriverFactory(HTMLUNIT),
       app = applicationWithBrowser
     ) {
-      val tokenService = app.injector.instanceOf[TokenService]
-      val userService = app.injector.instanceOf[UserService]
-      val groupService = app.injector.instanceOf[UserGroupService]
-      val eventService = app.injector.instanceOf[EventService]
-      val applicationService = app.injector.instanceOf[ApplicationService]
+      "userCodeName" | "expectedError" |
+        "instructor-test" ! false |
+        "helper-test" ! false |> { (userSeed, shouldExpectAnError) =>
+        val tokenService = app.injector.instanceOf[TokenService]
+        val userService = app.injector.instanceOf[UserService]
+        val groupService = app.injector.instanceOf[UserGroupService]
+        val eventService = app.injector.instanceOf[EventService]
+        val applicationService = app.injector.instanceOf[ApplicationService]
 
-      // Generate data and save in DB
-      val group = generateGroup(groupService)
-      val instructorUser = generateInstructor(group, userService)
-      val helperUser = generateHelper(group, userService)
-      val users = List(
-        instructorUser,
-        helperUser
-      )
-      users.forall(user => userService.acceptCGU(user.id, false))
-      val application =
-        generateApplication(helperUser, group, List(instructorUser), applicationService)
-
-      // Helper login
-      val loginToken =
-        LoginToken.forUserId(helperUser.id, 5, "127.0.0.1")
-      tokenService.create(loginToken)
-
-      val loginURL = controllers.routes.LoginController
-        .magicLinkAntiConsumptionPage()
-        .absoluteURL(false, s"localhost:$port")
-
-      browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
-
-      // Wait for login
-      eventually {
-        browser.url must endWith(
-          controllers.routes.ApplicationController.myApplications().url.substring(1)
+        // Generate data and save in DB
+        val testSeed = scala.util.Random.nextInt()
+        val group = generateGroup(testSeed, groupService)
+        val instructorUser = generateUser(
+          testSeed,
+          "instructor-test",
+          s"J'instruit $testSeed",
+          s"Instructeur Testeur $testSeed",
+          true,
+          true,
+          false,
+          List(group),
+          userService
         )
-      }
+        val expertUser = generateUser(
+          testSeed,
+          "expert-test",
+          s"Je suis un expert TEST $testSeed",
+          s"Expert $testSeed",
+          true,
+          false,
+          true,
+          List(group),
+          userService
+        )
+        val helperUser = generateUser(
+          testSeed,
+          "helper-test",
+          s"J'aide TEST $testSeed",
+          s"Aidant Testeur $testSeed",
+          true,
+          false,
+          false,
+          List(group),
+          userService
+        )
+        val users = List(
+          instructorUser,
+          expertUser,
+          helperUser
+        )
+        users.forall(user => userService.acceptCGU(user.id, false))
+        val application =
+          generateApplication(helperUser, group, List(instructorUser), applicationService)
 
-      // Submit answer
-      val applicationURL =
-        controllers.routes.ApplicationController
-          .show(application.id)
+        // Helper login
+        val answerUserId = userId(testSeed, userSeed)
+        val loginToken =
+          LoginToken.forUserId(answerUserId, 5, "127.0.0.1")
+        tokenService.create(loginToken)
+
+        val loginURL = controllers.routes.LoginController
+          .magicLinkAntiConsumptionPage()
           .absoluteURL(false, s"localhost:$port")
-      browser.goTo(applicationURL)
 
-      val answerMessage = "Il y a juste à faire ça!"
+        browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
 
-      browser.waitUntil(browser.el(s"textarea[name='message']").clickable())
-      browser.el("textarea[name='message']").fill().withText(answerMessage)
-      browser.el("button[id='review-validation']").click()
+        // Wait for login
+        eventually {
+          browser.url must endWith(
+            controllers.routes.ApplicationController.myApplications().url.substring(1)
+          )
+        }
 
-      // Wait for form submit
-      eventually {
-        browser.pageSource must contain(helperUser.name)
-      }
+        // Submit answer
+        val applicationURL =
+          controllers.routes.ApplicationController
+            .show(application.id)
+            .absoluteURL(false, s"localhost:$port")
+        browser.goTo(applicationURL)
 
-      val changedApplicationOption = applicationService
-        .allByArea(group.areaIds.head, false)
-        .find(app => (app.id: UUID) == (application.id: UUID))
+        val answerMessage = "Il y a juste à faire ça!"
 
-      changedApplicationOption mustNotEqual None
-      val changedApplication = changedApplicationOption.get
+        browser.waitUntil(browser.el(s"textarea[name='message']").clickable())
+        browser.el("textarea[name='message']").fill().withText(answerMessage)
+        browser.el("button[id='review-validation']").click()
 
-      val answer = changedApplication.answers.head
-      answer.message mustEqual answerMessage
-      answer.creatorUserID mustEqual helperUser.id
-      // Note: actually uses
+        // Wait for form submit
+        eventually {
+          browser.pageSource must contain(helperUser.name)
+        }
+
+        val changedApplicationOption = applicationService
+          .allByArea(group.areaIds.head, false)
+          .find(app => (app.id: UUID) == (application.id: UUID))
+
+        changedApplicationOption mustNotEqual None
+        val changedApplication = changedApplicationOption.get
+
+        val answer = changedApplication.answers.head
+        answer.message mustEqual answerMessage
+        answer.creatorUserID mustEqual answerUserId
+      // Note: answer.creatorUserName actually uses
       // contextualizedUserName(request.currentUser, currentAreaId)
-      answer.creatorUserName mustEqual s"${helperUser.name} (${group.name})"
 
+      }
     }
   }
 }
