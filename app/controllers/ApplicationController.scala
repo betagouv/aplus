@@ -339,77 +339,93 @@ case class ApplicationController @Inject() (
     Ok(views.html.myApplications(request.currentUser)(myOpenApplications, myClosedApplications))
   }
 
-  def stats = loginAction.async { implicit request =>
-    val currentAreaOnly =
-      request.getQueryString("currentAreaOnly").map(_.toBoolean).getOrElse(false)
-    (request.currentUser.admin || request.currentUser.groupAdmin) match {
-      case false =>
-        eventService.log(StatsUnauthorized, "L'utilisateur n'a pas de droit d'afficher les stats")
-        Future(
-          Unauthorized(
-            "Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+  private def generateStats(currentUser: User, selectedArea: Area, restrictToSelectedArea: Boolean)(
+      implicit webJarsUtil: org.webjars.play.WebJarsUtil,
+      flash: Flash,
+      request: RequestHeader
+  ): Html = {
+    // We prefilter `byAreaId` when `currentUser.admin` because an admin is not necessarily
+    // admin on all the areas
+    // An admin is implicitly in all groups
+    val (users, applications): (List[User], List[Application]) =
+      if (currentUser.admin) {
+        if (restrictToSelectedArea) {
+          (
+            userService.byAreaIds(List(selectedArea.id)),
+            applicationService.allForAreas(List(selectedArea.id), true)
           )
-        )
-      case true =>
-        def generateStats(): Html = {
-          val users = if (request.currentUser.admin) {
-            userService.all
-          } else if (request.currentUser.groupAdmin) {
-            userService.byGroupIds(request.currentUser.groupIds)
-          } else {
-            eventService.log(StatsIncorrectSetup, "Erreur d'accès aux utilisateurs pour les stats")
-            List()
-          }
-
-          val allApplications = if (request.currentUser.admin) {
-            applicationService.allForAreas(request.currentUser.areas, true)
-          } else if (request.currentUser.groupAdmin) {
-            applicationService.allForUserIds(users.map(_.id), true)
-          } else {
-            eventService.log(StatsIncorrectSetup, "Erreur d'accès aux demandes pour les stats")
-            List()
-          }
-
-          val applicationsByArea = (
-            if (currentAreaOnly) {
-              allApplications.filter(_.area == request.currentArea.id)
-            } else {
-              allApplications
-            }
-          ).groupBy(_.area)
-            .map {
-              case (areaId: UUID, applications: Seq[Application]) =>
-                (Area.all.find(_.id == areaId).get, applications)
-            }
-
-          val firstDate = if (allApplications.isEmpty) {
-            DateTime.now()
-          } else {
-            allApplications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
-          }
-          val today = DateTime.now(timeZone)
-          val months = Time.monthsMap(firstDate, today)
-          views.html.stats(request.currentUser, request.currentArea)(
-            months,
-            applicationsByArea,
-            users,
-            currentAreaOnly
+        } else {
+          val adminAreaIds: List[UUID] = currentUser.areas
+          (
+            userService.byAreaIds(adminAreaIds),
+            applicationService.allForAreas(adminAreaIds, true)
           )
         }
+      } else {
+        if (restrictToSelectedArea) {
+          val userGroups: List[UserGroup] = userGroupService.byIds(currentUser.groupIds)
+          val areaGroups = userGroups.filter(_.areaIds.contains[UUID](selectedArea.id))
+          val areaGroupsUsers = userService.byGroupIds(areaGroups.map(_.id))
+          (
+            areaGroupsUsers,
+            applicationService
+              .allForUserIds(areaGroupsUsers.map(_.id), true)
+              .filter(application => (application.area: UUID) == (selectedArea.id: UUID))
+          )
+        } else {
+          val sameGroupsUsers = userService.byGroupIds(currentUser.groupIds)
+          (
+            sameGroupsUsers,
+            applicationService.allForUserIds(sameGroupsUsers.map(_.id), true)
+          )
+        }
+      }
 
-        val cacheKey =
-          if (currentAreaOnly)
-            s"stats.user_${request.currentUser.id}.area_${request.currentArea.id}"
-          else
-            s"stats.user_${request.currentUser.id}"
+    val applicationsByArea: Map[Area, List[Application]] =
+      applications
+        .groupBy(_.area)
+        .flatMap {
+          case (areaId: UUID, applications: Seq[Application]) =>
+            Area.all
+              .find(area => (area.id: UUID) == (areaId: UUID))
+              .map(area => (area, applications))
+        }
 
-        cache
-          .getOrElseUpdate[Html](cacheKey, 1 hours)(Future(generateStats))
-          .map { html =>
-            eventService.log(StatsShowed, "Visualise les stats")
-            Ok(html)
-          }
+    val firstDate = if (applications.isEmpty) {
+      DateTime.now()
+    } else {
+      applications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
     }
+    val today = DateTime.now(timeZone)
+    val months = Time.monthsMap(firstDate, today)
+    views.html.stats(currentUser, selectedArea)(
+      months,
+      applicationsByArea,
+      users,
+      restrictToSelectedArea
+    )(webJarsUtil, flash, request)
+  }
+
+  def stats = loginAction.async { implicit request =>
+    val selectedAreaOnly: Boolean =
+      request.getQueryString("currentAreaOnly").map(_.toBoolean).getOrElse(false)
+    // Note: this is deprecated
+    val selectedArea = request.currentArea
+
+    val cacheKey =
+      if (selectedAreaOnly)
+        s"stats.user_${request.currentUser.id}.area_${selectedArea.id}"
+      else
+        s"stats.user_${request.currentUser.id}"
+
+    cache
+      .getOrElseUpdate[Html](cacheKey, 1 hours)(
+        Future(generateStats(request.currentUser, selectedArea, selectedAreaOnly))
+      )
+      .map { html =>
+        eventService.log(StatsShowed, "Visualise les stats")
+        Ok(html)
+      }
   }
 
   def allAs(userId: UUID) = loginAction { implicit request =>

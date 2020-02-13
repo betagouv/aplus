@@ -44,6 +44,11 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
     SQL("""SELECT * FROM "user"""").as(simpleUser.*)
   }
 
+  // Note: this is deprecated, should check via the UserGroup
+  def byAreaIds(areaIds: List[UUID]): List[User] = db.withConnection { implicit connection =>
+    SQL"""SELECT * FROM "user" WHERE ARRAY[$areaIds]::uuid[] && areas""".as(simpleUser.*)
+  }
+
   def allDBOnlybyArea(areaId: UUID) = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""")
       .on('areaId -> areaId)
