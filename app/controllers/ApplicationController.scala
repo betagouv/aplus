@@ -406,9 +406,7 @@ case class ApplicationController @Inject() (
     )(webJarsUtil, flash, request)
   }
 
-  def stats = filteredStats(None)
-
-  def filteredStats(restrictToArea: Option[UUID]) = loginAction.async { implicit request =>
+  def stats = loginAction.async { implicit request =>
     val selectedAreaOnly: Boolean =
       request.getQueryString("currentAreaOnly").map(_.toBoolean).getOrElse(false)
     // Note: this is deprecated
