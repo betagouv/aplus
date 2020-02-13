@@ -497,14 +497,7 @@ a {
     overflow-x: auto;
 }
 
-.aplus-btn-disconnect__container {
+.align-items-center {
     /* !important to work with the legacy order of .css :D */
     align-items: center !important;
-}
-
-.aplus-btn-disconnect__label {
-    /* Design specifications */
-    font-weight: 400;
-    opacity: 1;
-    letter-spacing: 0;
 }
