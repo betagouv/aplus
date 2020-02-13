@@ -496,3 +496,15 @@ a {
     height: calc(100% - 16px);
     overflow-x: auto;
 }
+
+.aplus-btn-disconnect__container {
+    /* !important to work with the legacy order of .css :D */
+    align-items: center !important;
+}
+
+.aplus-btn-disconnect__label {
+    /* Design specifications */
+    font-weight: 400;
+    opacity: 1;
+    letter-spacing: 0;
+}

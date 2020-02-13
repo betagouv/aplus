@@ -84,10 +84,11 @@
                                     <span>@currentUser.name</span>
                                     <span class="mdl-list__item-sub-title">@currentUser.email</span>
                                 </span>
-                                <span class="mdl-list__item-secondary-content">
+                                <span class="aplus-btn-disconnect__container mdl-list__item-secondary-content">
                                     <a class="mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" href="@routes.LoginController.disconnect()" title="Déconnexion">
                                         <i class="fas fa-sign-out-alt"></i>
                                     </a>
+                                    <span class="mdl-list__item-secondary-info"><a class="aplus-btn-disconnect__label mdl-color-text--grey-900 mdl-typography--text-nowrap" href="@routes.LoginController.disconnect()" title="Déconnexion">Se déconnecter</a></span>
                                 </span>
                             </li>
                         </ul>
