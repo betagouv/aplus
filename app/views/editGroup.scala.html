@@ -57,9 +57,9 @@
             </div>
             <div class="mdl-cell mdl-cell--12-col">
                 <select id="organisation" name="organisation">
-                    <option @if(userGroup.organisation.isEmpty){selected} style="font-weight: bold" value="">Organisme non-référencé</option>
+                    <option @if(userGroup.organisationSetOrDeducted.isEmpty){selected} style="font-weight: bold" value="">Organisme non-référencé</option>
                     @for(organisation <- Organisation.all) {
-                        <option value="@organisation.id.id" @if(userGroup.organisation.contains[Organisation.Id](organisation.id)){selected}>@organisation.shortName : @organisation.name</option>
+                        <option value="@organisation.id.id" @if(userGroup.organisationSetOrDeducted.map(_.id).contains[Organisation.Id](organisation.id)){selected}>@organisation.shortName : @organisation.name</option>
                     }
                 </select>
             </div>
@@ -67,7 +67,7 @@
                 <select id="area-ids" name="area-ids[]" multiple size="5" >
                     @for(area <- currentUser.areas.flatMap(Area.fromId)) {
                     <option value="@area.id" @if(userGroup.areaIds.contains(area.id)) { selected }>@area.name</option>
-            }                   
+            }
             </select>
             </div>
             @if(currentUser.admin) {

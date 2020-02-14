@@ -31,7 +31,9 @@ object UserGroup {
 
   def organisationDeductedFromName(name: String): Option[Organisation] = {
     val lowerCaseName = name.toLowerCase()
-    Organisation.all
+    // Hack: `.reverse` the orgs so we can match first MSAP before MSA and
+    // Sous-Préf before Préf
+    Organisation.all.reverse
       .find { organisation =>
         lowerCaseName.contains(organisation.shortName.toLowerCase()) ||
         lowerCaseName.contains(organisation.name.toLowerCase())
