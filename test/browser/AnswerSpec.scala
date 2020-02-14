@@ -14,11 +14,11 @@ import services.{ApplicationService, EventService, TokenService, UserGroupServic
 @RunWith(classOf[JUnitRunner])
 class AnswerSpec extends Specification with Tables with BaseSpec {
 
-  def generateGroup(testSeed: Int, groupService: UserGroupService): UserGroup = {
+  def generateGroup(testSeed: Int, groupSeed: String, groupService: UserGroupService): UserGroup = {
     val area = Area.all.head.id
     val group = UserGroup(
       id = UUIDHelper.randomUUID,
-      name = s"Group $testSeed",
+      name = s"Group $groupSeed$testSeed",
       description = None,
       inseeCode = List("0"),
       creationDate = Time.now(),
@@ -70,6 +70,7 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       user: User,
       group: UserGroup,
       invitedUsers: List[User],
+      expertInvited: Boolean,
       applicationService: ApplicationService
   ): Application = {
     // Create Application
@@ -83,7 +84,8 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       userInfos = Map("Prénom" -> "John", "Nom de famille" -> "Doe", "Date de naissance" -> "1988"),
       invitedUsers = invitedUsers.map(user => (user.id, user.nameWithQualite)).toMap,
       area = group.areaIds.head,
-      irrelevant = false
+      irrelevant = false,
+      expertInvited = true
     )
     val result = applicationService.createApplication(application)
     result must beTrue
@@ -97,6 +99,10 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
     ) {
       "userCodeName" | "expectedError" |
         "instructor-test" ! false |
+        "invited-expert-test" ! false |
+        "non-invited-expert-test" ! true |
+        "invited-user-test" ! false |
+        "non-invited-user-test" ! true |
         "helper-test" ! false |> { (userSeed, shouldExpectAnError) =>
         val tokenService = app.injector.instanceOf[TokenService]
         val userService = app.injector.instanceOf[UserService]
@@ -106,7 +112,9 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
 
         // Generate data and save in DB
         val testSeed = scala.util.Random.nextInt()
-        val group = generateGroup(testSeed, groupService)
+        val helperGroup = generateGroup(testSeed, "helper", groupService)
+        val answerGroup = generateGroup(testSeed, "answer", groupService)
+        val expertGroup = generateGroup(testSeed, "expert", groupService)
         val instructorUser = generateUser(
           testSeed,
           "instructor-test",
@@ -115,18 +123,51 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
           true,
           true,
           false,
-          List(group),
+          List(answerGroup),
           userService
         )
-        val expertUser = generateUser(
+        val invitedExpertUser = generateUser(
           testSeed,
-          "expert-test",
+          "invited-expert-test",
           s"Je suis un expert TEST $testSeed",
           s"Expert $testSeed",
           true,
           false,
           true,
-          List(group),
+          List(expertGroup),
+          userService
+        )
+        val nonInvitedExpertUser = generateUser(
+          testSeed,
+          "non-invited-expert-test",
+          s"Je suis un expert non invité TEST $testSeed",
+          s"Expert non invité $testSeed",
+          true,
+          false,
+          true,
+          List(expertGroup),
+          userService
+        )
+        val invitedUser = generateUser(
+          testSeed,
+          "invited-user-test",
+          s"Je suis un agent TEST $testSeed",
+          s"Agent $testSeed",
+          true,
+          false,
+          false,
+          List(answerGroup),
+          userService
+        )
+        val nonInvitedUser = generateUser(
+          testSeed,
+          "non-invited-user-test",
+          s"Je suis un agent non invité TEST $testSeed",
+          s"Agent $testSeed",
+          true,
+          false,
+          false,
+          List(answerGroup),
           userService
         )
         val helperUser = generateUser(
@@ -137,17 +178,34 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
           true,
           false,
           false,
-          List(group),
+          List(helperGroup),
           userService
         )
         val users = List(
           instructorUser,
-          expertUser,
+          invitedExpertUser,
+          nonInvitedExpertUser,
+          invitedUser,
+          nonInvitedUser,
           helperUser
         )
         users.forall(user => userService.acceptCGU(user.id, false))
+        val expertInvited = userSeed == "invited-expert-test"
+        val userInvited = userSeed == "invited-user-test"
+        val invitedUsers =
+          List(
+            Some(instructorUser),
+            if (expertInvited) Some(invitedExpertUser) else None,
+            if (userInvited) Some(invitedUser) else None
+          ).flatten
         val application =
-          generateApplication(helperUser, group, List(instructorUser), applicationService)
+          generateApplication(
+            helperUser,
+            helperGroup,
+            invitedUsers,
+            expertInvited,
+            applicationService
+          )
 
         // Helper login
         val answerUserId = userId(testSeed, userSeed)
@@ -175,30 +233,40 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
             .absoluteURL(false, s"localhost:$port")
         browser.goTo(applicationURL)
 
-        val answerMessage = "Il y a juste à faire ça!"
+        if (shouldExpectAnError) {
+          browser.pageSource must contain(
+            "Vous n'avez pas les droits suffisants pour voir cette demande."
+          )
+          browser.pageSource must not contain (application.subject)
+          browser.pageSource must not contain (application.description)
+          browser.pageSource must not contain (application.userInfos("Prénom"))
+          browser.pageSource must not contain (application.userInfos("Nom de famille"))
+          browser.pageSource must not contain (application.userInfos("Date de naissance"))
+        } else {
+          val answerMessage = "Il y a juste à faire ça!"
 
-        browser.waitUntil(browser.el(s"textarea[name='message']").clickable())
-        browser.el("textarea[name='message']").fill().withText(answerMessage)
-        browser.el("button[id='review-validation']").click()
+          browser.waitUntil(browser.el(s"textarea[name='message']").clickable())
+          browser.el("textarea[name='message']").fill().withText(answerMessage)
+          browser.el("button[id='review-validation']").click()
 
-        // Wait for form submit
-        eventually {
-          browser.pageSource must contain(helperUser.name)
+          // Wait for form submit
+          eventually {
+            browser.pageSource must contain(helperUser.name)
+          }
+
+          val changedApplicationOption = applicationService
+            .allByArea(helperGroup.areaIds.head, false)
+            .find(app => (app.id: UUID) == (application.id: UUID))
+
+          changedApplicationOption mustNotEqual None
+          val changedApplication = changedApplicationOption.get
+
+          val answer = changedApplication.answers.head
+          answer.message mustEqual answerMessage
+          answer.creatorUserID mustEqual answerUserId
+          // Note: answer.creatorUserName actually uses
+          // contextualizedUserName(request.currentUser, currentAreaId)
         }
-
-        val changedApplicationOption = applicationService
-          .allByArea(group.areaIds.head, false)
-          .find(app => (app.id: UUID) == (application.id: UUID))
-
-        changedApplicationOption mustNotEqual None
-        val changedApplication = changedApplicationOption.get
-
-        val answer = changedApplication.answers.head
-        answer.message mustEqual answerMessage
-        answer.creatorUserID mustEqual answerUserId
-      // Note: answer.creatorUserName actually uses
-      // contextualizedUserName(request.currentUser, currentAreaId)
-
       }
     }
   }
