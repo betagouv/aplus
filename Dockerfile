@@ -4,7 +4,7 @@
 #
 
 # Pull base image
-FROM openjdk:8u181
+FROM openjdk:8u242
 
 # Env variables
 ENV SCALA_VERSION 2.12.7
@@ -26,7 +26,7 @@ RUN \
   curl -L -o sbt-$SBT_VERSION.deb https://dl.bintray.com/sbt/debian/sbt-$SBT_VERSION.deb && \
   dpkg -i sbt-$SBT_VERSION.deb && \
   rm sbt-$SBT_VERSION.deb && \
-  apt-get update && \
+  apt-get update && \8u181
   apt-get install -y sbt && \
   sbt sbtVersion
 
