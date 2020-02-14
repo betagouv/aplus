@@ -313,7 +313,8 @@ object UserAndGroupCsvSerializer {
                       group,
                       List(UserFormData(user, lineNumber, alreadyExists = false)),
                       alreadyExists = false,
-                      doNotInsert = false
+                      doNotInsert = false,
+                      allUsersAlreadyExist = false
                     )
                   )
                 }

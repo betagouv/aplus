@@ -36,6 +36,7 @@ object formModels {
       users: List[UserFormData],
       alreadyExists: Boolean,
       doNotInsert: Boolean,
+      allUsersAlreadyExist: Boolean,
       alreadyExistingGroup: Option[UserGroup] = None
   )
 
