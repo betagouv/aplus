@@ -20,7 +20,11 @@ jobs:
          postgresql user: 'aplus'
          postgresql password: 'mysecretpassword'
     - name: Run test
-      run: sbt coverage test coverageReport codacyCoverage
+      run: sbt coverage test coverageReport 
+      env:
+        GEOPLUS_HOST: geoplus.aplus.beta.gouv.fr
+    - name: Upload Coverage to codacy
+      run: sbt codacyCoverage
+      if: secrets.CODACY_PROJECT_TOKEN != null
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        GEOPLUS_HOST: geoplus.aplus.beta.gouv.fr
