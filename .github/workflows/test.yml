@@ -25,6 +25,6 @@ jobs:
         GEOPLUS_HOST: geoplus.aplus.beta.gouv.fr
     - name: Upload Coverage to codacy
       run: sbt codacyCoverage
-      if: secrets.CODACY_PROJECT_TOKEN != null
+      if: ${{ secrets.CODACY_PROJECT_TOKEN != null }}
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
