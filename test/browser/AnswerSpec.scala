@@ -97,13 +97,11 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       webDriver = WebDriverFactory(HTMLUNIT),
       app = applicationWithBrowser
     ) {
-      "userCodeName" | "expectedError" |
-        "instructor-test" ! false |
-        "invited-expert-test" ! false |
-        "non-invited-expert-test" ! true |
-        "invited-user-test" ! false |
-        "non-invited-user-test" ! true |
-        "helper-test" ! false |> { (userSeed, shouldExpectAnError) =>
+      "userCodeName" |
+        "instructor-test" |
+        "invited-expert-test" |
+        "invited-user-test" |
+        "helper-test" |> { (userSeed: String) =>
         val tokenService = app.injector.instanceOf[TokenService]
         val userService = app.injector.instanceOf[UserService]
         val groupService = app.injector.instanceOf[UserGroupService]
@@ -137,32 +135,10 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
           List(expertGroup),
           userService
         )
-        val nonInvitedExpertUser = generateUser(
-          testSeed,
-          "non-invited-expert-test",
-          s"Je suis un expert non invité TEST $testSeed",
-          s"Expert non invité $testSeed",
-          true,
-          false,
-          true,
-          List(expertGroup),
-          userService
-        )
         val invitedUser = generateUser(
           testSeed,
           "invited-user-test",
           s"Je suis un agent TEST $testSeed",
-          s"Agent $testSeed",
-          true,
-          false,
-          false,
-          List(answerGroup),
-          userService
-        )
-        val nonInvitedUser = generateUser(
-          testSeed,
-          "non-invited-user-test",
-          s"Je suis un agent non invité TEST $testSeed",
           s"Agent $testSeed",
           true,
           false,
@@ -184,9 +160,7 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
         val users = List(
           instructorUser,
           invitedExpertUser,
-          nonInvitedExpertUser,
           invitedUser,
-          nonInvitedUser,
           helperUser
         )
         users.forall(user => userService.acceptCGU(user.id, false))
@@ -233,40 +207,29 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
             .absoluteURL(false, s"localhost:$port")
         browser.goTo(applicationURL)
 
-        if (shouldExpectAnError) {
-          browser.pageSource must contain(
-            "Vous n'avez pas les droits suffisants pour voir cette demande."
-          )
-          browser.pageSource must not contain (application.subject)
-          browser.pageSource must not contain (application.description)
-          browser.pageSource must not contain (application.userInfos("Prénom"))
-          browser.pageSource must not contain (application.userInfos("Nom de famille"))
-          browser.pageSource must not contain (application.userInfos("Date de naissance"))
-        } else {
-          val answerMessage = "Il y a juste à faire ça!"
+        val answerMessage = "Il y a juste à faire ça!"
 
-          browser.waitUntil(browser.el(s"textarea[name='message']").clickable())
-          browser.el("textarea[name='message']").fill().withText(answerMessage)
-          browser.el("button[id='review-validation']").click()
+        browser.waitUntil(browser.el(s"textarea[name='message']").clickable())
+        browser.el("textarea[name='message']").fill().withText(answerMessage)
+        browser.el("button[id='review-validation']").click()
 
-          // Wait for form submit
-          eventually {
-            browser.pageSource must contain(helperUser.name)
-          }
-
-          val changedApplicationOption = applicationService
-            .allByArea(helperGroup.areaIds.head, false)
-            .find(app => (app.id: UUID) == (application.id: UUID))
-
-          changedApplicationOption mustNotEqual None
-          val changedApplication = changedApplicationOption.get
-
-          val answer = changedApplication.answers.head
-          answer.message mustEqual answerMessage
-          answer.creatorUserID mustEqual answerUserId
-          // Note: answer.creatorUserName actually uses
-          // contextualizedUserName(request.currentUser, currentAreaId)
+        // Wait for form submit
+        eventually {
+          browser.pageSource must contain(helperUser.name)
         }
+
+        val changedApplicationOption = applicationService
+          .allByArea(helperGroup.areaIds.head, false)
+          .find(app => (app.id: UUID) == (application.id: UUID))
+
+        changedApplicationOption mustNotEqual None
+        val changedApplication = changedApplicationOption.get
+
+        val answer = changedApplication.answers.head
+        answer.message mustEqual answerMessage
+        answer.creatorUserID mustEqual answerUserId
+      // Note: answer.creatorUserName actually uses
+      // contextualizedUserName(request.currentUser, currentAreaId)
       }
     }
   }
