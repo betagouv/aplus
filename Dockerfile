@@ -26,7 +26,7 @@ RUN \
   curl -L -o sbt-$SBT_VERSION.deb https://dl.bintray.com/sbt/debian/sbt-$SBT_VERSION.deb && \
   dpkg -i sbt-$SBT_VERSION.deb && \
   rm sbt-$SBT_VERSION.deb && \
-  apt-get update && \8u181
+  apt-get update && \
   apt-get install -y sbt && \
   sbt sbtVersion
 
