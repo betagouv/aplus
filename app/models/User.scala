@@ -21,6 +21,9 @@ case class User(
     ) areas: List[UUID],
     creationDate: DateTime,
     communeCode: String,
+    // If true, this person is managing the groups it is in
+    // can see all users in its groups, and add new users in its groups
+    // cannot modify users, only admin can.
     groupAdmin: Boolean,
     disabled: Boolean,
     expert: Boolean = false,
