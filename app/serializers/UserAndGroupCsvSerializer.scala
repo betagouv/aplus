@@ -312,9 +312,8 @@ object UserAndGroupCsvSerializer {
                     UserGroupFormData(
                       group,
                       List(UserFormData(user, lineNumber, alreadyExists = false)),
-                      alreadyExists = false,
-                      doNotInsert = false,
-                      allUsersAlreadyExist = false
+                      alreadyExistsOrAllUsersAlreadyExist = false,
+                      doNotInsert = false
                     )
                   )
                 }

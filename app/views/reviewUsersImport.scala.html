@@ -8,8 +8,7 @@
 @(currentUser: User)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @groupWillNotBeInserted(group: Field) = @{
-  group("alreadyExists").value.exists(_ == "true") ||
-  group("allUsersAlreadyExist").value.exists(_ == "true")
+  group("alreadyExistsOrAllUsersAlreadyExist").value.exists(_ == "true")
 }
 
 @display(section: Field, groupIndex: Int)(header: Html) = {
@@ -123,7 +122,7 @@
             </h5>
 
 
-            @helper.input(group("alreadyExists"), 'label -> "", 'class -> "hidden") { (id, name, value, args) =>
+            @helper.input(group("alreadyExistsOrAllUsersAlreadyExist"), 'label -> "", 'class -> "hidden") { (id, name, value, args) =>
             <input type="text"
                    name="@name"
                    id="@id"
@@ -171,6 +170,17 @@
                   </option>
                 }
               </select>
+              @*** disabled select are never sent in a form, we need a hidden input. ***@
+              @if(groupWillNotBeInserted(group)) {
+                @helper.input(group("group")("organisation"), 'class -> "hidden") { (id, name, value, args) =>
+                  <input class="mdl-textfield__input input-import-user"
+                         type="hidden"
+                         name="@name"
+                         id="@id"
+                         value="@value"
+                         @toHtmlArgs(args)>
+                }
+              }
             </div>
             <div class="mdl-cell mdl-cell--4-col">
               Territoires :

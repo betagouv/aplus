@@ -78,21 +78,22 @@ case class CSVImportController @Inject() (
           )
         }
     }
-    groupService
+    val withGroup = groupService
       .groupByName(userGroupFormData.group.name)
       .fold {
         userGroupFormData
       } { alreadyExistingGroup =>
         userGroupFormData.copy(
           group = userGroupFormData.group.copy(id = alreadyExistingGroup.id),
-          alreadyExistingGroup = Some(alreadyExistingGroup),
-          alreadyExists = true
+          alreadyExistingGroup = Some(alreadyExistingGroup)
         )
       }
-      .copy(
-        users = newUsersFormDataList,
-        allUsersAlreadyExist = newUsersFormDataList.forall(_.alreadyExists)
-      )
+    withGroup.copy(
+      users = newUsersFormDataList,
+      alreadyExistsOrAllUsersAlreadyExist =
+        withGroup.alreadyExistingGroup.nonEmpty ||
+          newUsersFormDataList.forall(_.alreadyExists)
+    )
   }
 
   private def userImportMapping(date: DateTime): Mapping[User] =
@@ -156,9 +157,8 @@ case class CSVImportController @Inject() (
               "alreadyExistingUser" -> ignored(Option.empty[User])
             )(UserFormData.apply)(UserFormData.unapply)
           ),
-          "alreadyExists" -> boolean,
+          "alreadyExistsOrAllUsersAlreadyExist" -> boolean,
           "doNotInsert" -> boolean,
-          "allUsersAlreadyExist" -> boolean,
           "alreadyExistingGroup" -> ignored(Option.empty[UserGroup])
         )(UserGroupFormData.apply)(UserGroupFormData.unapply)
       )
@@ -256,8 +256,8 @@ case class CSVImportController @Inject() (
 
           val groupsToInsert = augmentedUserGroupInformation
             .filterNot(_.doNotInsert)
+            .filterNot(_.alreadyExistsOrAllUsersAlreadyExist)
             .filter(_.alreadyExistingGroup.isEmpty)
-            .filterNot(group => group.users.forall(_.alreadyExists))
             .map(_.group)
           groupService
             .add(groupsToInsert)
