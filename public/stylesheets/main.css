@@ -496,3 +496,8 @@ a {
     height: calc(100% - 16px);
     overflow-x: auto;
 }
+
+.align-items-center {
+    /* !important to work with the legacy order of .css :D */
+    align-items: center !important;
+}
