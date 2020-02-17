@@ -44,7 +44,7 @@ GET     /user/delete/unused/:userId             controllers.UserController.delet
 # Importation
 GET     /importation/utilisateurs-depuis-csv    controllers.CSVImportController.importUsersFromCSV
 POST    /importation/revue-import               controllers.CSVImportController.importUsersReview
-POST    /importation/import                     controllers.CSVImportController.importUsersReviewPost
+POST    /importation/import                     controllers.CSVImportController.importUsersAfterReview
 
 # Groups
 POST    /groups                         controllers.GroupController.addGroup

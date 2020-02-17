@@ -5,6 +5,7 @@ import play.api.data.Form
 import play.twirl.api.Html
 import views.html.helper.FieldConstructor
 
+/** Independent from the model. */
 object MDLForms {
   implicit val inputFields = FieldConstructor(views.html.helpers.input.f)
 
@@ -18,4 +19,5 @@ object MDLForms {
       indexes.map(i => fieldRenderer(field("[" + i + "]"), i))
     }
   }
+
 }

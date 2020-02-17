@@ -59,7 +59,7 @@ case class CSVImportController @Inject() (
     }
   }
 
-  /** Checks with the DB if Users or UserGroups are already existing. */
+  /** Checks with the DB if Users or UserGroups already exist. */
   private def augmentUserGroupInformation(
       userGroupFormData: UserGroupFormData
   ): UserGroupFormData = {
@@ -78,18 +78,22 @@ case class CSVImportController @Inject() (
           )
         }
     }
-    groupService
+    val withGroup = groupService
       .groupByName(userGroupFormData.group.name)
       .fold {
         userGroupFormData
       } { alreadyExistingGroup =>
         userGroupFormData.copy(
           group = userGroupFormData.group.copy(id = alreadyExistingGroup.id),
-          alreadyExistingGroup = Some(alreadyExistingGroup),
-          alreadyExists = true
+          alreadyExistingGroup = Some(alreadyExistingGroup)
         )
       }
-      .copy(users = newUsersFormDataList)
+    withGroup.copy(
+      users = newUsersFormDataList,
+      alreadyExistsOrAllUsersAlreadyExist =
+        withGroup.alreadyExistingGroup.nonEmpty ||
+          newUsersFormDataList.forall(_.alreadyExists)
+    )
   }
 
   private def userImportMapping(date: DateTime): Mapping[User] =
@@ -140,7 +144,7 @@ case class CSVImportController @Inject() (
       "email" -> optional(email)
     )(UserGroup.apply)(UserGroup.unapply)
 
-  def importUsersReviewFrom(date: DateTime): Form[List[UserGroupFormData]] = Form(
+  private def importUsersAfterReviewForm(date: DateTime): Form[List[UserGroupFormData]] = Form(
     single(
       "groups" -> list(
         mapping(
@@ -153,7 +157,7 @@ case class CSVImportController @Inject() (
               "alreadyExistingUser" -> ignored(Option.empty[User])
             )(UserFormData.apply)(UserFormData.unapply)
           ),
-          "alreadyExists" -> boolean,
+          "alreadyExistsOrAllUsersAlreadyExist" -> boolean,
           "doNotInsert" -> boolean,
           "alreadyExistingGroup" -> ignored(Option.empty[UserGroup])
         )(UserGroupFormData.apply)(UserGroupFormData.unapply)
@@ -202,7 +206,7 @@ case class CSVImportController @Inject() (
                       userGroupDataForm.map(augmentUserGroupInformation)
 
                     val currentDate = Time.now()
-                    val formWithData = importUsersReviewFrom(currentDate)
+                    val formWithData = importUsersAfterReviewForm(currentDate)
                       .fillAndValidate(augmentedUserGroupInformation)
 
                     val formWithError = if (userNotImported.nonEmpty) {
@@ -221,7 +225,7 @@ case class CSVImportController @Inject() (
       }
     }
 
-  def associateGroupToUsers(groupFormData: UserGroupFormData): UserGroupFormData = {
+  private def associateGroupToUsers(groupFormData: UserGroupFormData): UserGroupFormData = {
     val groupId = groupFormData.group.id
     val areasId = groupFormData.group.areaIds
     val newUsers = groupFormData.users.map({ userFormData =>
@@ -234,16 +238,17 @@ case class CSVImportController @Inject() (
     groupFormData.copy(users = newUsers)
   }
 
-  def importUsersReviewPost: Action[AnyContent] = loginAction { implicit request =>
+  /** Import the reviewed CSV. */
+  def importUsersAfterReview: Action[AnyContent] = loginAction { implicit request =>
     asAdmin { () =>
       ImportUsersUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
       val currentDate = Time.now()
-      importUsersReviewFrom(currentDate).bindFromRequest.fold(
-        { importUsersReviewFromWithError =>
+      importUsersAfterReviewForm(currentDate).bindFromRequest.fold(
+        { importUsersAfterReviewFormWithError =>
           eventService.log(ImportUserFormError, description = "Erreur de formulaire de review")
           BadRequest(
-            views.html.reviewUsersImport(request.currentUser)(importUsersReviewFromWithError)
+            views.html.reviewUsersImport(request.currentUser)(importUsersAfterReviewFormWithError)
           )
         }, { userGroupDataForm: List[UserGroupFormData] =>
           val augmentedUserGroupInformation: List[UserGroupFormData] =
@@ -251,6 +256,7 @@ case class CSVImportController @Inject() (
 
           val groupsToInsert = augmentedUserGroupInformation
             .filterNot(_.doNotInsert)
+            .filterNot(_.alreadyExistsOrAllUsersAlreadyExist)
             .filter(_.alreadyExistingGroup.isEmpty)
             .map(_.group)
           groupService
@@ -260,7 +266,7 @@ case class CSVImportController @Inject() (
                 error: String =>
                   val description = s"Impossible d'importer les groupes : $error"
                   eventService.log(ImportUserError, description)
-                  val formWithError = importUsersReviewFrom(currentDate)
+                  val formWithError = importUsersAfterReviewForm(currentDate)
                     .fill(augmentedUserGroupInformation)
                     .withGlobalError(description)
                   InternalServerError(
@@ -285,7 +291,7 @@ case class CSVImportController @Inject() (
                         error: String =>
                           val description = s"Impossible d'importer les utilisateurs : $error"
                           eventService.log(ImportUserError, description)
-                          val formWithError = importUsersReviewFrom(currentDate)
+                          val formWithError = importUsersAfterReviewForm(currentDate)
                             .fill(augmentedUserGroupInformation)
                             .withGlobalError(description)
                           InternalServerError(

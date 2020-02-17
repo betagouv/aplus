@@ -7,6 +7,10 @@
 @import models.formModels.UserGroupFormData
 @(currentUser: User)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
+@groupWillNotBeInserted(group: Field) = @{
+  group("alreadyExistsOrAllUsersAlreadyExist").value.exists(_ == "true")
+}
+
 @display(section: Field, groupIndex: Int)(header: Html) = {
   <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
 @header
@@ -97,7 +101,7 @@
   @webJarsUtil.locate("slimselect.min.css").css()
   @webJarsUtil.locate("slimselect.min.js").script()
 } {
-  @helper.form(routes.CSVImportController.importUsersReviewPost(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
+  @helper.form(routes.CSVImportController.importUsersAfterReview(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
   @helper.CSRF.formField
     @if(form.hasErrors) {
       <div class="notification notification--error">
@@ -118,7 +122,7 @@
             </h5>
 
 
-            @helper.input(group("alreadyExists"), 'label -> "", 'class -> "hidden") { (id, name, value, args) =>
+            @helper.input(group("alreadyExistsOrAllUsersAlreadyExist"), 'label -> "", 'class -> "hidden") { (id, name, value, args) =>
             <input type="text"
                    name="@name"
                    id="@id"
@@ -131,7 +135,7 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(group("alreadyExists").value.exists(_ == "true")) { readonly }
+                     @if(groupWillNotBeInserted(group)) { readonly }
                      value="@value"
                      @toHtmlArgs(args)>
             }
@@ -140,7 +144,7 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(group("alreadyExists").value.exists(_ == "true")) { readonly }
+                     @if(groupWillNotBeInserted(group)) { readonly }
                      value="@value" @toHtmlArgs(args)>
             }
             @helper.input(group("group")("email"), 'label -> UserAndGroupCsvSerializer.GROUP_EMAIL.prefixes(0), 'class -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
@@ -148,13 +152,15 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(group("alreadyExists").value.exists(_ == "true")) { readonly }
+                     @if(groupWillNotBeInserted(group)) { readonly }
                      value="@value" @toHtmlArgs(args)>
             }
 
             <div class="mdl-cell mdl-cell--4-col">
               Organisation :
-              <select id="@group("group")("organisation").id" name="@group("group")("organisation").name">
+              <select id="@group("group")("organisation").id"
+                      name="@group("group")("organisation").name"
+                      @if(groupWillNotBeInserted(group)) { disabled }>
                 <option style="font-weight: bold" value="">Organisme non-référencé</option>
                 @for(organisation <- Organisation.all) {
                   <option value="@organisation.shortName"
@@ -164,10 +170,24 @@
                   </option>
                 }
               </select>
+              @*** disabled select are never sent in a form, we need a hidden input. ***@
+              @if(groupWillNotBeInserted(group)) {
+                @helper.input(group("group")("organisation"), 'class -> "hidden") { (id, name, value, args) =>
+                  <input class="mdl-textfield__input input-import-user"
+                         type="hidden"
+                         name="@name"
+                         id="@id"
+                         value="@value"
+                         @toHtmlArgs(args)>
+                }
+              }
             </div>
             <div class="mdl-cell mdl-cell--4-col">
               Territoires :
-              <select id="area-ids-@groupIndex" name="@{group("group")("area-ids").name}[]" multiple>
+              <select id="area-ids-@groupIndex"
+                      name="@{group("group")("area-ids").name}[]"
+                      multiple
+                      @if(groupWillNotBeInserted(group)) { disabled }>
                 @for(areaId <- currentUser.areas) {
                   <option value="@areaId"
                           @if(form.data.filter(_._1.startsWith(s"groups[$groupIndex]")).values.toList.contains(areaId.toString)){ selected }>
@@ -177,11 +197,11 @@
               </select>
               <script>
                 var select_@groupIndex = new SlimSelect({ select: '#area-ids-@groupIndex' })
-                @if(group("alreadyExists").value.exists(_ == "true")) {
+                @if(groupWillNotBeInserted(group)) {
                   select_@{groupIndex}.disable();
                 }
               </script>
-              @if(group("alreadyExists").value.exists(_ == "true")) {
+              @if(groupWillNotBeInserted(group)) {
                 @helper.repeat(group("group")("area-ids")) { areaIdField =>
                   @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {
                     <input name="@areaIdField.name" value="@area.id" type="hidden" readonly>
@@ -189,7 +209,7 @@
                 }
               }
             </div>
-            <div class="mdl-cell mdl-cell--4-col @if(group("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
+            <div class="mdl-cell mdl-cell--4-col @if(groupWillNotBeInserted(group)){avoid-clicks}">
               @helper.checkbox(group("group")("doNotInsert"), 'type -> "checkbox", 'label -> "Ne pas insérer", 'class -> "mdl-checkbox__input")
             </div>
           </div>

@@ -34,7 +34,7 @@ object formModels {
   case class UserGroupFormData(
       group: UserGroup,
       users: List[UserFormData],
-      alreadyExists: Boolean,
+      alreadyExistsOrAllUsersAlreadyExist: Boolean,
       doNotInsert: Boolean,
       alreadyExistingGroup: Option[UserGroup] = None
   )
