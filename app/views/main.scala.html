@@ -195,6 +195,9 @@
         </div>
 
         <script>
+          // TODO: put this in main.js, and load main.js at the end of this file
+          setupProtectedForms();
+
                 if(/localhost|demo/.test(window.location.hostname)) {
                     document.getElementById("header__ribbon").classList.add("invisible");
                     var elements = document.getElementsByClassName("demo-only");

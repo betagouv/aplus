@@ -21,7 +21,7 @@
             </div>
             Besoin d'aide ? Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Aidez-moi%20avec%20Administration+">@Constants.supportEmail</a>
 
-            @helper.form(action = routes.ApplicationController.createPost(), 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data") {
+            @helper.form(action = routes.ApplicationController.createPost(), 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data", 'id -> "create-application-form", 'class -> "aplus-protected-form") {
                 @helper.CSRF.formField
                     <input type="hidden" name="application-id" readonly value="@applicationForm("application-id").value.getOrElse(java.util.UUID.randomUUID)">
                     <h5 class="title--addline">Sélectionnez les organismes concernés sur la zone @area.name</h5>

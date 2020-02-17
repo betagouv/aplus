@@ -377,7 +377,7 @@ dialog {
                         }
                     </div>
                     <div class="mdl-tabs__panel @if(openedTab =="answer"){ is-active  } " id="answer">
-                        <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('review-validation').disabled=true">
+                        <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing aplus-protected-form" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('review-validation').disabled=true">
                             @helper.CSRF.formField
                             <input type="hidden" name="answer-id" readonly value="@answerToAgentsForm("answer-id").value.getOrElse(java.util.UUID.randomUUID)">
                             <div class="mdl-cell mdl-cell--12-col mdl-grid">
@@ -439,7 +439,7 @@ dialog {
 
                     @if(groupsWithUsersThatCanBeInvited.nonEmpty) {
                         <div class="mdl-tabs__panel @if(openedTab =="invite"){ is-active }" id="invite">
-                            <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col mdl-grid" method="post">
+                            <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col mdl-grid aplus-protected-form" method="post">
                                 @helper.CSRF.formField
                                 <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" style="border: none;">
                                     <thead>
