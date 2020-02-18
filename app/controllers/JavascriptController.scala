@@ -11,6 +11,7 @@ class JavascriptController() extends InjectedController {
   def javascriptRoutes = Action { implicit request =>
     Ok(
       JavaScriptReverseRouter("jsRoutes")(
+        routes.javascript.ApiController.franceServiceDeployment,
         routes.javascript.GroupController.deleteUnusedGroupById,
         routes.javascript.ApplicationController.all,
         routes.javascript.UserController.all,

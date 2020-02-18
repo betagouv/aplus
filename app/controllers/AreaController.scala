@@ -165,4 +165,13 @@ case class AreaController @Inject() (
       )
     }
   }
+
+  def franceServiceDeploymentDashboard = loginAction { implicit request =>
+    asAdmin { () =>
+      DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
+    } { () =>
+      Ok(views.html.franceServiceDeploymentDashboard(request.currentUser))
+    }
+  }
+
 }

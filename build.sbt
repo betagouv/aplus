@@ -33,6 +33,7 @@ libraryDependencies ++= Seq(
   "com.github.tototoshi" %% "scala-csv" % "1.3.6",
   ws
 )
+
 // UI
 libraryDependencies ++= Seq(
   "org.webjars" %% "webjars-play" % "2.6.3",

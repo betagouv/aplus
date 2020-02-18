@@ -22,6 +22,7 @@
         <button class="mdl-button mdl-button--raised" onclick="downloadCSV()">Télécharger CSV</button>
         <button class="mdl-button mdl-button--raised" onclick="downloadXLSX()">Télécharger XLSX</button>
         <a class="mdl-button mdl-button--raised" href="@routes.AreaController.deploymentDashboard()?uniquement-fs=oui">Uniquement France Service</a>
+        <a class="mdl-button mdl-button--raised" href="@routes.AreaController.franceServiceDeploymentDashboard()">Tableau Déploiement France Service</a>
     </div>
     <script>
        var tableData = [
@@ -119,4 +120,5 @@
        }
 
     </script>
+}{
 }

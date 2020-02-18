@@ -135,4 +135,8 @@ object Area {
   val allArea = Area(UUIDHelper.namedFrom("all"), "tous les territoires", "0")
 
   val notApplicable = Area("notApplicable", "NotApplicable", "-1")
+
+  lazy val byInseeCode: Map[String, Area] =
+    all.map(area => (area.inseeCode, area)).toMap
+
 }
