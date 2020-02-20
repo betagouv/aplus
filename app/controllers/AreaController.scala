@@ -108,8 +108,7 @@ case class AreaController @Inject() (
         "CDAD",
         "La Poste",
         "MSA",
-        "Pôle emploi",
-        "Sous-Préf"
+        "Pôle emploi"
       ).map(Set(_))
   ).map(_.flatMap(id => Organisation.byId(Organisation.Id(id))))
 
@@ -137,7 +136,7 @@ case class AreaController @Inject() (
         }
 
       val data = for {
-        area <- request.currentUser.areas.flatMap(Area.fromId)
+        area <- request.currentUser.areas.flatMap(Area.fromId).filterNot(_.name == "Demo")
       } yield {
         val organisationMap: List[(Set[Organisation], Int)] = for {
           organisations <- organisationGrouping

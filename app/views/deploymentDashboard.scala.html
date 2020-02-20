@@ -34,12 +34,19 @@
                 },
            }
            {
-                area: "TOTAUX (de structure)",
+                area: "Couverture",
                 @for((organisations, count) <- organisationSetToCountOfCounts)  {
-                    @{organisations.map(_.id.toString).mkString} : @count,
+                    @{organisations.map(_.id.toString).mkString} : "@count",
                 }
-                total: ""
-           }
+                total: "",
+           },
+           {
+               area: "Avancement",
+               @for((organisations, count) <- organisationSetToCountOfCounts)  {
+                    @{organisations.map(_.id.toString).mkString} : "@(math.round(count*1000/data.length).toFloat/10) %",
+               }
+               total: "",
+           },
        ]
 
        var columns = [
@@ -53,7 +60,7 @@
                     headerVertical:true,
                     formatter: function(cell, formatterParams, onRendered) {
                         var value = cell.getValue();
-                        if (cell._cell.row.data.area == "TOTAUX (de structure)") {
+                        if (cell._cell.row.data.area == "Couverture") {
                             if (value < 1) {
                                 cell._cell.element.classList.add("mdl-color--red");
                             } else if (value <= 4) {
@@ -63,34 +70,40 @@
                             } else {
                                 cell._cell.element.classList.add("mdl-color--dark-green");
                             }
+                            value = value + ' / @data.length';
                             return value;
                         }
-                        if (value < 1) {
-                            cell._cell.element.classList.add("mdl-color--red");
-                        } else if (value >= 2) {
-                            cell._cell.element.classList.add("mdl-color--green");
-                        } else {
-                            cell._cell.element.classList.add("mdl-color--yellow");
+                        if (cell._cell.row.data.area !== "Avancement") {
+                            if (value < 1) {
+                                cell._cell.element.classList.add("mdl-color--red");
+                            } else if (value >= 2) {
+                                cell._cell.element.classList.add("mdl-color--green");
+                            } else {
+                                cell._cell.element.classList.add("mdl-color--yellow");
+                            }
                         }
                         return value;
                     }
                 },
            },
            {
-                title: "TOTAUX (de structure)",
+                title: "Couverture",
                 field: "total",
                 sorter: "number",
                 headerVertical: true,
                 formatter: function(cell, formatterParams, onRendered) {
                     var value = cell.getValue();
-                    if (value < 1) {
-                        cell._cell.element.classList.add("mdl-color--red");
-                    } else if (value <= 4) {
-                        cell._cell.element.classList.add("mdl-color--light-green");
-                    } else if (value <= 7){
-                        cell._cell.element.classList.add("mdl-color--medium-green");
-                    } else {
-                        cell._cell.element.classList.add("mdl-color--dark-green");
+                    if (value !== '') {
+                        if (value < 1) {
+                            cell._cell.element.classList.add("mdl-color--red");
+                        } else if (value <= 4) {
+                            cell._cell.element.classList.add("mdl-color--light-green");
+                        } else if (value <= 7){
+                            cell._cell.element.classList.add("mdl-color--medium-green");
+                        } else {
+                            cell._cell.element.classList.add("mdl-color--dark-green");
+                        }
+                        value = value + ' / @data.head._2.length';
                     }
                     return value;
                 }
