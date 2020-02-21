@@ -107,24 +107,35 @@ case class ApplicationController @Inject() (
     )(ApplicationData.apply)(ApplicationData.unapply)
   )
 
-  private def fetchGroupsWithInstructors(areaId: UUID): (List[UserGroup], List[User]) = {
+  private def fetchGroupsWithInstructors(
+      areaId: UUID,
+      currentUser: User
+  ): (List[UserGroup], List[User], List[User]) = {
     val groupsOfArea = userGroupService.byArea(areaId)
-    val instructorsOfGroups = userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
+    val usersInThoseGroups = userService.byGroupIds(groupsOfArea.map(_.id))
+    val instructorsOfGroups = usersInThoseGroups.filter(_.instructor)
+    // Note: we don't care about users who are in several areas
+    val coworkers = usersInThoseGroups
+      .filter(user =>
+        user.helper && user.groupIds.toSet.intersect(currentUser.groupIds.toSet).nonEmpty
+      )
+      .filterNot(user => (user.id: UUID) == (currentUser.id: UUID))
     // This could be optimized by doing only one SQL query
     val groupIdsWithInstructors = instructorsOfGroups.flatMap(_.groupIds).toSet
     val groupsOfAreaWithInstructor =
       groupsOfArea.filter(user => groupIdsWithInstructors.contains(user.id))
-    (groupsOfAreaWithInstructor, instructorsOfGroups)
+    (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers)
   }
 
   def create = loginAction { implicit request =>
     eventService.log(ApplicationFormShowed, "Visualise le formulaire de création de demande")
-    val (groupsOfAreaWithInstructor, instructorsOfGroups) =
-      fetchGroupsWithInstructors(request.currentArea.id)
+    val (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =
+      fetchGroupsWithInstructors(request.currentArea.id, request.currentUser)
     Ok(
       views.html.createApplication(request.currentUser, request.currentArea)(
         instructorsOfGroups,
         groupsOfAreaWithInstructor,
+        coworkers,
         applicationForm
       )
     )
@@ -133,8 +144,8 @@ case class ApplicationController @Inject() (
   def createSimplified = loginAction { implicit request =>
     eventService
       .log(ApplicationFormShowed, "Visualise le formulaire simplifié de création de demande")
-    val (groupsOfAreaWithInstructor, instructorsOfGroups) =
-      fetchGroupsWithInstructors(request.currentArea.id)
+    val (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =
+      fetchGroupsWithInstructors(request.currentArea.id, request.currentUser)
     val groupsOfAreaWithInstructorWithOrganisationSet = groupsOfAreaWithInstructor.filter({
       userGroup =>
         userGroup.organisationSetOrDeducted.nonEmpty
@@ -144,6 +155,7 @@ case class ApplicationController @Inject() (
       views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(
         instructorsOfGroups,
         groupsOfAreaWithInstructorWithOrganisationSet,
+        coworkers,
         categories,
         None,
         applicationForm
@@ -192,8 +204,8 @@ case class ApplicationController @Inject() (
     form.fold(
       formWithErrors => {
         // binding failure, you retrieve the form containing errors:
-        val (groupsOfAreaWithInstructor, instructorsOfGroups) =
-          fetchGroupsWithInstructors(request.currentArea.id)
+        val (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =
+          fetchGroupsWithInstructors(request.currentArea.id, request.currentUser)
         eventService.log(
           ApplicationCreationInvalid,
           s"L'utilisateur essai de créé une demande invalide ${formWithErrors.errors.map(_.message)}"
@@ -207,6 +219,7 @@ case class ApplicationController @Inject() (
             views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(
               instructorsOfGroups,
               groupsOfAreaWithInstructorWithOrganisationSet,
+              coworkers,
               categories,
               formWithErrors("category").value,
               formWithErrors,
@@ -218,6 +231,7 @@ case class ApplicationController @Inject() (
             views.html.createApplication(request.currentUser, request.currentArea)(
               instructorsOfGroups,
               groupsOfAreaWithInstructor,
+              coworkers,
               formWithErrors,
               pendingAttachments.keys ++ newAttachments.keys
             )

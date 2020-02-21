@@ -1,6 +1,6 @@
 @import models._
 @import _root_.helper.MDLForms._
-@(user: User, area: Area)(users: List[User], organisationGroups: List[UserGroup], applicationForm: Form[models.formModels.ApplicationData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(user: User, area: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], applicationForm: Form[models.formModels.ApplicationData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
 @main(user, Some(area))(s"Nouvelle demande")  {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
@@ -55,15 +55,15 @@
                                     </td></tr>
                                     }
 
-                                    @for(user <- users.filter(_.groupIds.contains(organisationGroup.id))) {
+                                    @for(instructor <- instructorsOfGroups.filter(_.groupIds.contains(organisationGroup.id))) {
                                         <tr class="invisible" >
                                             <td style="width: 95px">
                                                 <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
                                                 <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                    <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == user.id.toString})){ checked="checked" }>
+                                                    <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@instructor.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == instructor.id.toString})){ checked="checked" }>
                                                 </label>
                                             </td>
-                                            <td class="mdl-data-table__cell--non-numeric">@user.name</td>
+                                            <td class="mdl-data-table__cell--non-numeric">@instructor.name</td>
                                         </tr>
                                     }
                                 </tbody>
@@ -102,6 +102,27 @@
                             <li><input type="file" name="file[0]"></li>
                         </ul>
                     </div>  <br>
+
+
+                    @if(coworkers.nonEmpty) {
+                      <br>
+                      <br>
+                      <h5 class="title--addline">Ajouter des collègues à la demande</h5>
+                      <table>
+                      @for(coworker <- coworkers) {
+                        <tr>
+                          <td>
+                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                              <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@coworker.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == coworker.id.toString})){ checked="checked" }>
+                            </label>
+                          </td>
+                          <td class="mdl-data-table__cell--non-numeric">@coworker.name</td>
+                        </tr>
+                      }
+                      </table>
+                    }
+
+
                     <div style="margin-top: 60px; margin-bottom: 50px;">
                         <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-mandat" style="height: unset; margin-bottom: 10px;">
                             <input type="checkbox" id="checkbox-mandat" name="validate" class="mdl-checkbox__input" value="true">
