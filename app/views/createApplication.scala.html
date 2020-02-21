@@ -102,24 +102,25 @@
                             <li><input type="file" name="file[0]"></li>
                         </ul>
                     </div>  <br>
-                    <br>
-                    <br>
 
 
-                    <h5 class="title--addline">Ajouter des collègues à la demande</h5>
-                    <table>
-                    @for(coworker <- coworkers) {
-                      <tr>
-                        <td style="width: 95px">
-                          <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                            <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@coworker.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == coworker.id.toString})){ checked="checked" }>
-                          </label>
-                        </td>
-                        <td class="mdl-data-table__cell--non-numeric">@coworker.name</td>
-                      </tr>
+                    @if(coworkers.nonEmpty) {
+                      <br>
+                      <br>
+                      <h5 class="title--addline">Ajouter des collègues à la demande</h5>
+                      <table>
+                      @for(coworker <- coworkers) {
+                        <tr>
+                          <td>
+                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                              <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@coworker.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == coworker.id.toString})){ checked="checked" }>
+                            </label>
+                          </td>
+                          <td class="mdl-data-table__cell--non-numeric">@coworker.name</td>
+                        </tr>
+                      }
+                      </table>
                     }
-                    </table>
-
 
 
                     <div style="margin-top: 60px; margin-bottom: 50px;">
