@@ -79,7 +79,7 @@ var aplusFormHasBeenSubmitted = false;
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onbeforeunload
 function setupOnbeforeunload(event) {
-  var message = "En quittant la page, les données ne seront pas enregistrées.";
+  var message = "Merci de confirmer la fermeture de cette page, les données saisies ne seront pas enregistrées.";
   // Cancel the event (HTML Specification)
   event.preventDefault();
   // Chrome requires returnValue to be set
