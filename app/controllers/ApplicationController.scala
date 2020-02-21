@@ -196,7 +196,7 @@ case class ApplicationController @Inject() (
           fetchGroupsWithInstructors(request.currentArea.id)
         eventService.log(
           ApplicationCreationInvalid,
-          s"L'utilisateur essai de créé une demande invalide ${formWithErrors.errors.map(_.message)}"
+          s"L'utilisateur essaie de créer une demande invalide ${formWithErrors.errors.map(_.message)}"
         )
 
         if (simplified) {
@@ -251,7 +251,7 @@ case class ApplicationController @Inject() (
           notificationsService.newApplication(application)
           eventService.log(
             ApplicationCreated,
-            s"La demande ${application.id} a été créé",
+            s"La demande ${application.id} a été créée",
             Some(application)
           )
           Redirect(routes.ApplicationController.myApplications())
@@ -259,11 +259,11 @@ case class ApplicationController @Inject() (
         } else {
           eventService.log(
             ApplicationCreationError,
-            s"La demande ${application.id} n'a pas pu être créé",
+            s"La demande ${application.id} n'a pas pu être créée",
             Some(application)
           )
           InternalServerError(
-            "Error Interne: Votre demande n'a pas pu être envoyé. Merci de rééssayer ou contacter l'administrateur"
+            "Erreur Interne: Votre demande n'a pas pu être envoyée. Merci de réessayer ou de contacter l'administrateur"
           )
         }
       }
@@ -438,7 +438,7 @@ case class ApplicationController @Inject() (
           user = Some(user)
         )
         Unauthorized(
-          "Vous n'avez pas le droits de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          "Vous n'avez pas le droit de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
         )
       case (true, Some(user)) if user.admin =>
         eventService.log(
@@ -447,7 +447,7 @@ case class ApplicationController @Inject() (
           user = Some(user)
         )
         Unauthorized(
-          "Vous n'avez pas le droits de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          "Vous n'avez pas le droit de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
         )
       case (true, Some(user)) if request.currentUser.areas.intersect(user.areas).nonEmpty =>
         val currentUserId = user.id
@@ -465,7 +465,7 @@ case class ApplicationController @Inject() (
       case _ =>
         eventService.log(AllAsNotFound, s"L'utilisateur $userId n'existe pas")
         BadRequest(
-          "L'utilisateur n'existe pas ou vous n'avez pas le droit d'accèder à cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          "L'utilisateur n'existe pas ou vous n'avez pas le droit d'accéder à cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
         )
     }
   }
@@ -613,7 +613,7 @@ case class ApplicationController @Inject() (
             }
           val openedTab = request.flash.get("opened-tab").getOrElse("answer")
 
-          eventService.log(ApplicationShowed, s"Demande $id consulté", Some(application))
+          eventService.log(ApplicationShowed, s"Demande $id consultée", Some(application))
           Ok(
             views.html.showApplication(request.currentUser)(
               groupsWithUsersThatCanBeInvited,
@@ -730,7 +730,7 @@ case class ApplicationController @Inject() (
           if (applicationService.add(applicationId, answer) == 1) {
             eventService.log(
               AnswerCreated,
-              s"La réponse ${answer.id} a été créé sur la demande $applicationId",
+              s"La réponse ${answer.id} a été créée sur la demande $applicationId",
               Some(application)
             )
             notificationsService.newAnswer(application, answer)
@@ -739,10 +739,10 @@ case class ApplicationController @Inject() (
           } else {
             eventService.log(
               AnswerNotCreated,
-              s"La réponse ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD",
+              s"La réponse ${answer.id} n'a pas été créée sur la demande $applicationId : problème BDD",
               Some(application)
             )
-            InternalServerError("Votre réponse n'a pas pu être envoyé")
+            InternalServerError("Votre réponse n'a pas pu être envoyée")
           }
         }
       )
@@ -839,7 +839,7 @@ case class ApplicationController @Inject() (
             notificationsService.newAnswer(application, answer)
             eventService.log(
               AddExpertCreated,
-              s"La réponse ${answer.id} a été créé sur la demande $applicationId",
+              s"La réponse ${answer.id} a été créée sur la demande $applicationId",
               Some(application)
             )
             Redirect(routes.ApplicationController.myApplications())
@@ -847,7 +847,7 @@ case class ApplicationController @Inject() (
           } else {
             eventService.log(
               AddExpertNotCreated,
-              s"L'invitation d'experts ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD",
+              s"L'invitation d'experts ${answer.id} n'a pas été créée sur la demande $applicationId : problème BDD",
               Some(application)
             )
             InternalServerError("L'expert n'a pas pu être invité")
@@ -855,7 +855,7 @@ case class ApplicationController @Inject() (
         } else {
           eventService.log(
             AddExpertUnauthorized,
-            s"L'invitation d'experts pour la demande $applicationId n'est pas autorisé",
+            s"L'invitation d'experts pour la demande $applicationId n'est pas autorisée",
             Some(application)
           )
           Unauthorized(
@@ -876,9 +876,9 @@ case class ApplicationController @Inject() (
         NotFound("Nous n'avons pas trouvé cette demande.")
       case (None, _) =>
         eventService
-          .log(TerminateIncompleted, s"La demande de clôture pour $applicationId est incompléte")
+          .log(TerminateIncompleted, s"La demande de clôture pour $applicationId est incomplète")
         BadGateway(
-          "L'utilité de la demande n'est pas présente, il s'agit surement d'une erreur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          "L'utilité de la demande n'est pas présente, il s'agit sûrement d'une erreur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
         )
       case (Some(usefulness), Some(application)) =>
         val finalUsefulness = if (request.currentUser.id == application.creatorUserId) {
@@ -889,17 +889,17 @@ case class ApplicationController @Inject() (
         if (application.canBeClosedBy(request.currentUser)) {
           if (applicationService.close(applicationId, finalUsefulness, DateTime.now(timeZone))) {
             eventService
-              .log(TerminateCompleted, s"La demande $applicationId est clôturé", Some(application))
+              .log(TerminateCompleted, s"La demande $applicationId est clôturée", Some(application))
             Redirect(routes.ApplicationController.myApplications())
-              .flashing("success" -> "L'application a été indiqué comme clôturée")
+              .flashing("success" -> "L'application a été indiquée comme clôturée")
           } else {
             eventService.log(
               TerminateError,
-              s"La demande $applicationId n'a pas pu être clôturé en BDD",
+              s"La demande $applicationId n'a pas pu être clôturée en BDD",
               Some(application)
             )
             InternalServerError(
-              "Erreur interne: l'application n'a pas pu être indiqué comme clôturée"
+              "Erreur interne: l'application n'a pas pu être indiquée comme clôturée"
             )
           }
         } else {
@@ -908,7 +908,7 @@ case class ApplicationController @Inject() (
             s"L'utilisateur n'a pas le droit de clôturer la demande $applicationId",
             Some(application)
           )
-          Unauthorized("Seul le créateur de la demande ou un expert peut clôre la demande")
+          Unauthorized("Seul le créateur de la demande ou un expert peut clore la demande")
         }
     }
   }
