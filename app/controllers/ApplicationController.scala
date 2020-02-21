@@ -677,7 +677,7 @@ case class ApplicationController @Inject() (
           } else {
             eventService.log(
               FileNotFound,
-              s"Le fichier de la demande $application sur la demande $applicationId n'existe pas"
+              s"Le fichier de la demande $applicationId n'existe pas"
             )
             NotFound("Nous n'avons pas trouvé ce fichier")
           }
