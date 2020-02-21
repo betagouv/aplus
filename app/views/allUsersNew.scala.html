@@ -72,7 +72,7 @@
                 //plain text value
                 var uuid = cell.getRow().getData().id;
                 var url = jsRoutes.controllers.UserController.editUser(uuid).url;
-                return "<a href='"+url+"'><i class='fas fa-user-edit'></i></a>";
+                return "<a href='"+url+"' target=\"_blank\" ><i class='fas fa-user-edit'></i></a>";
             };
 
             var rawFormatter = function(row) {
@@ -113,6 +113,7 @@
                         frozen:true
                     },
                     { title: "Nom et Prénom", field: "name", headerFilter: "input", frozen:true, formatter:"html" },
+                    { title: "Groupes", field: "groups", headerFilter: "input" },
                     { title: "Email", field: "email", headerFilter: "input" },
                     { title: "Qualité", field: "qualite", headerFilter: "input" },
                     {
@@ -174,7 +175,6 @@
                             }
                         ]
                     },
-                    { title: "Groupes", field: "groups", headerFilter: "input" },
                     { title: "Départements", field: "areas", headerFilter: "input" },
                 ]
             });

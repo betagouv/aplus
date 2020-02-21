@@ -3,6 +3,7 @@ package models
 import java.util.UUID
 
 import org.joda.time.DateTime
+import helper.StringHelper.CanonizeString
 
 case class UserGroup(
     id: UUID,
@@ -29,15 +30,7 @@ case class UserGroup(
 
 object UserGroup {
 
-  def organisationDeductedFromName(name: String): Option[Organisation] = {
-    val lowerCaseName = name.toLowerCase()
-    // Hack: `.reverse` the orgs so we can match first MSAP before MSA and
-    // Sous-Préf before Préf
-    Organisation.all.reverse
-      .find { organisation =>
-        lowerCaseName.contains(organisation.shortName.toLowerCase()) ||
-        lowerCaseName.contains(organisation.name.toLowerCase())
-      }
-  }
+  def organisationDeductedFromName(name: String): Option[Organisation] =
+    Organisation.deductedFromName(name)
 
 }

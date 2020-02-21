@@ -163,9 +163,8 @@
                       @if(groupWillNotBeInserted(group)) { disabled }>
                 <option style="font-weight: bold" value="">Organisme non-référencé</option>
                 @for(organisation <- Organisation.all) {
-                  <option value="@organisation.shortName"
-                    @if(group("group")("organisation").value
-                          .exists(List(organisation.name, organisation.shortName).contains)) {selected}>
+                  <option value="@organisation.id.id"
+                    @if(group("group")("organisation").value.contains[String](organisation.id.id)) {selected}>
                     @organisation.shortName : @organisation.name
                   </option>
                 }
