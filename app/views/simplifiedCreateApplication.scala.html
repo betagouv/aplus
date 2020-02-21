@@ -258,25 +258,27 @@
                 }
                 Ajouter un ficher ( Facultatif, 5Mo maximum ) : <input type="file" name="file">
                 </p>
-                <br>
-                <br>
 
 
-                <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 20px">
-                <h5 class="title--addline">Ajouter des collègues à la demande</h5>
-                <table>
-                @for(coworker <- coworkers) {
-                  <tr>
-                    <td style="width: 95px">
-                      <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                        <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@coworker.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == coworker.id.toString})){ checked="checked" }>
-                      </label>
-                    </td>
-                    <td class="mdl-data-table__cell--non-numeric">@coworker.name</td>
-                  </tr>
+                @if(coworkers.nonEmpty) {
+                  <br>
+                  <br>
+                  <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 20px">
+                  <h5 class="title--addline">Ajouter des collègues à la demande</h5>
+                  <table>
+                  @for(coworker <- coworkers) {
+                    <tr>
+                      <td>
+                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                          <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@coworker.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == coworker.id.toString})){ checked="checked" }>
+                        </label>
+                      </td>
+                      <td class="mdl-data-table__cell--non-numeric">@coworker.name</td>
+                    </tr>
+                  }
+                  </table>
+                  </div>
                 }
-                </table>
-                </div>
 
 
                 <div>
