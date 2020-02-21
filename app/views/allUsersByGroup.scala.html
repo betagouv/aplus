@@ -111,7 +111,7 @@
               </a>
             }
             @userGroup.areaIds.flatMap(Area.fromId).map(_.name).sorted.mkString(", ") /
-            <b>@userGroup.name</b> / @(userGroup.organisation, UserGroup.organisationDeductedFromName(userGroup.name)) match {
+            <b>@userGroup.name</b> / @(userGroup.organisation, Organisation.deductedFromName(userGroup.name)) match {
               case (Some(organisation), _) => {
                 @organisation / }
               case (_, Some(organisation)) => { @organisation / }

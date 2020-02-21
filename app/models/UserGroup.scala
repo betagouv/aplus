@@ -24,13 +24,6 @@ case class UserGroup(
   lazy val organisationSetOrDeducted: Option[Organisation] =
     organisation
       .flatMap(Organisation.byId)
-      .orElse(UserGroup.organisationDeductedFromName(name))
-
-}
-
-object UserGroup {
-
-  def organisationDeductedFromName(name: String): Option[Organisation] =
-    Organisation.deductedFromName(name)
+      .orElse(Organisation.deductedFromName(name))
 
 }
