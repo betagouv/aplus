@@ -98,7 +98,7 @@ function setupOneProtectedForm(form) {
   console.log("Protection of the form will be activated.");
 
   var elem;
-  var changeableElems = document.querySelectorAll("input, textarea, select");
+  var changeableElems = form.querySelectorAll("input, textarea, select");
   for (var i = 0; i < changeableElems.length; i++) {
     elem = changeableElems[i];
     elem.addEventListener("input", function () {
