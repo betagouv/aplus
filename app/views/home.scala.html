@@ -20,15 +20,19 @@
                 _paq.push(["setDomains", ["*.aplus.beta.gouv.fr"]]);
                 _paq.push(['trackPageView']);
                 _paq.push(['enableLinkTracking']);
-                (function() {
-                    var u="//stats.data.gouv.fr/";
-                    _paq.push(['setTrackerUrl', u+'piwik.php']);
+                (function () {
+                    var u = "//stats.data.gouv.fr/";
+                    _paq.push(['setTrackerUrl', u + 'piwik.php']);
                     _paq.push(['setSiteId', '42']);
-                    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-                    g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+                    var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
+                    g.type = 'text/javascript';
+                    g.async = true;
+                    g.defer = true;
+                    g.src = u + 'piwik.js';
+                    s.parentNode.insertBefore(g, s);
                 })();
         </script>
-        <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border:0;" alt="" /></p></noscript>
+        <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border: 0;" alt="" /></p></noscript>
     </head>
 
     <body>
@@ -49,13 +53,13 @@
                     </div>
                     <div class="mdl-layout-spacer"></div>
                     <nav class="mdl-navigation mdl-layout--large-screen-only">
-                        <a class="mdl-navigation__link mdl-color-text--black" href="https://docs.aplus.beta.gouv.fr/faq"
+                        <a class="mdl-navigation__link aplus-color-text--black" href="https://docs.aplus.beta.gouv.fr/faq"
                         >FAQ
                             <i class="material-icons">
-                open_in_new
+                                open_in_new
                             </i></a
                         >
-                        <a class="mdl-navigation__link mdl-color-text--black" href="https://docs.aplus.beta.gouv.fr/"
+                        <a class="mdl-navigation__link aplus-color-text--black" href="https://docs.aplus.beta.gouv.fr/"
                         >Nous contacter</a
                         >
                     </nav>
@@ -79,8 +83,8 @@
                                 src="@routes.Assets.versioned("images/logo_full_500x397.png")"
                                 />
 
-                                <h5 class="mdl-typography--text-uppercase">
-                  Le service qui permet de résoudre les blocages administratifs
+                                <h5 class="mdl-typography--text-uppercase typography--text-line-height-1-3">
+                                    Le service qui permet de résoudre les blocages administratifs
                                     complexes et urgents
                                 </h5>
                             </div>
@@ -95,7 +99,7 @@
                                     <h3
                                     class="mdl-typography--text-uppercase mdl-typography--font-medium"
                                     >
-                    Connectez-vous
+                                        Connectez-vous
                                     </h3>
 
                                     <form action="@routes.LoginController.login()" method="post">
@@ -103,8 +107,10 @@
                                         <label class="aplus-textfield__label" for="email"
                                         >Saisir votre email professionnel pour recevoir un lien de
                                             connexion à Administration+<br />
-                                                <!-- <span class="aplus-textfield__label__example">Ex: prenom.nom@@votre-structure.fr</span> --> </label
-                                        ><br />
+                                                <!-- <span class="aplus-textfield__label__example">Ex: prenom.nom@@votre-structure.fr</span>
+                                            --> </label
+                                        >
+                                        <br />
                                         @flash.get("error").map { message =>
                                             <div class="notification notification--error mdl-typography--text-prewrap" >@message</div>
                                         }
@@ -114,14 +120,14 @@
                                         type="text"
                                         id="email"
                                         name="email"
-                                        /><br /><br />
+                                        />
+                                        <br />
+                                        <br />
                                         <button
                                         type="submit"
                                         class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary margin-top--10px aplus-color--blue mdl-color-text--white"
                                         name="id"
-                                        >
-                      Envoyez moi un e-mail de connexion
-                                        </button>
+                                        >Envoyez moi un e-mail de connexion</button>
                                     </form>
                                 </div>
                             </div>
@@ -137,10 +143,10 @@
                             class="mdl-cell mdl-cell--7-col mdl-cell--1-offset-desktop mdl-cell--12-col-mobile"
                             >
                                 <h4 class="mdl-typography--font-medium">
-                  Vous rencontrez des difficultés à vous connecter ?
+                                    Vous rencontrez des difficultés à vous connecter ?
                                 </h4>
                                 <h5 class="mdl-typography--font-regular">
-                  Contactez-nous, notre équipe est disponible pour vous
+                                    Contactez-nous, notre équipe est disponible pour vous
                                     renseigner et vous aider
                                 </h5>
                             </div>
@@ -149,16 +155,16 @@
                             class="mdl-cell mdl-cell--3-col-desktop mdl-cell--12-col mdl-cell--middle mdl-typography--text-nowrap"
                             >
                                 <span class="vertical-align--middle">
-                                <i class="material-icons material-icons--32px">email</i>
-                                <a
-                                href="mailto:@Constants.supportEmail"
-                                class="mdl-color-text--white"
-                                >@Constants.supportEmail</a
-                                >
+                                    <i class="material-icons material-icons--32px">email</i>
+                                    <a
+                                    href="mailto:@Constants.supportEmail"
+                                    class="mdl-color-text--white"
+                                    >@Constants.supportEmail</a
+                                    >
                                 </span><br>
                                 <span class="vertical-align--middle">
-                                <i class="material-icons material-icons--32px">phone</i> 01 84
-                                80 88 12
+                                    <i class="material-icons material-icons--32px">phone</i> 01 84
+                                    80 88 12
                                 </span>
                             </div>
                         </div>
@@ -171,7 +177,7 @@
                             >
                                 <h2 class="section__title">Administration +</h2>
                                 <h3 class="section__subtitle">Qu'est-ce que c'est ?</h3>
-                                <a href="#quoi" class="mdl-color-text--black"
+                                <a href="#quoi" class="aplus-color-text--black"
                                 ><i class="material-icons material-icons--48px"
                                 >keyboard_arrow_down</i
                                 ></a
@@ -179,85 +185,86 @@
                             </div>
                         </div>
                     </div>
+                    <div
+                    class="mdl-cell mdl-cell--12-col aplus-color--light-grey mdl-grid mdl-grid--no-spacing"
+                    >
                         <div
-                        class="mdl-cell mdl-cell--12-col aplus-color--light-grey mdl-grid mdl-grid--no-spacing"
-                        >
-                            <div
-                            class="mdl-cell mdl-cell--5-col-desktop mdl-cell--1-offset mdl-cell--0-offset-mobile mdl-cell--10-col-tablet mdl-cell--12-col"
-                            >
-                                <img
-                                class="mdl-cell--hide-phone mdl-cell--hide-tablet"
-                                src="@routes.Assets.versioned("images/home/Aplus-qu-est-ce-que-cest-desktop.svg")"
-                                style="max-width: 600px; display: block; margin: auto;"
-                                />
-                                <img
-                                class="mdl-cell--hide-desktop img--width-100"
-                                src="@routes.Assets.versioned("images/home/Aplus-qu-est-ce-que-cest-mobile.svg")"
-                                />
-                            </div>
-                            <div
-                            class="mdl-cell mdl-cell--5-col-desktop mdl-cell--middle mdl-typography--text-center mdl-cell--12-col"
-                            >
-                                <h4 class="remove-top-margin">
-                  Objectif : coopérer pour résoudre les blocages complexes ou
-                                    les demandes urgentes
-                                </h4>
-                                <p>
-                  Des agents dans chaque administration sont mobilisés pour
-                                    répondre aux urgences sociales.
-                                </p>
-                                <img src="@routes.Assets.versioned("images/home/Aplus-Success.svg")" class="img--max-height-290px"/>
-                                <br />
-                                <br />
-                            </div>
-                        </div>
-                        <div
-                        class="mdl-cell mdl-cell--12-col aplus-color--white mdl-grid mdl-grid--no-spacing"
-                        >
-                            <div
-                            class="mdl-cell mdl-cell--12-col mdl-typography--text-center"
-                            id="comment"
-                            >
-                                <h2 class="section__title">Administration +</h2>
-                                <h3 class="section__subtitle">Comment ça marche ?</h3>
-                                <a href="#comment" class="mdl-color-text--black"
-                                ><i class="material-icons material-icons--48px"
-                                >keyboard_arrow_down</i
-                                ></a
-                                >
-                            </div>
-                        </div>
-
-
-                        <div
-                        class="mdl-cell mdl-cell--10-col-desktop mdl-cell--1-offset-desktop mdl-cell--12-col mdl-color--white"
+                        class="mdl-cell mdl-cell--5-col-desktop mdl-cell--1-offset mdl-cell--0-offset-mobile mdl-cell--10-col-tablet mdl-cell--12-col"
                         >
                             <img
-                            class="mdl-cell--hide-phone mdl-cell--hide-tablet img--heigh-100"
-                            src="@routes.Assets.versioned("images/home/Aplus-comment-ca-marche-desktop.svg")"
+                            class="mdl-cell--hide-phone mdl-cell--hide-tablet"
+                            src="@routes.Assets.versioned("images/home/Aplus-qu-est-ce-que-cest-desktop.svg")"
+                            style="max-width: 600px;
+                                display: block;
+                                margin: auto;"
                             />
                             <img
                             class="mdl-cell--hide-desktop img--width-100"
-                            src="@routes.Assets.versioned("images/home/Aplus-comment-ca-marche-mobile.svg")"
+                            src="@routes.Assets.versioned("images/home/Aplus-qu-est-ce-que-cest-mobile.svg")"
                             />
-                            <br />
                         </div>
                         <div
-                        class="mdl-cell mdl-cell--12-col aplus-color--light-grey mdl-grid "
+                        class="mdl-cell mdl-cell--5-col-desktop mdl-cell--middle mdl-typography--text-center mdl-cell--12-col"
                         >
-                            <div
-                            class="mdl-cell mdl-cell--12-col mdl-typography--text-center mdl-grid--no-spacing"
-                            id="pourquoi"
-                            >
-                                <h2 class="section__title">Administration +</h2>
-                                <h3 class="section__subtitle">Pourquoi l'utiliser ?</h3>
-                                <a href="#pourquoi" class="mdl-color-text--black"
-                                ><i class="material-icons material-icons--48px"
-                                >keyboard_arrow_down</i
-                                ></a
-                                >
-                            </div>
+                            <h4 class="remove-top-margin">
+                                Objectif : coopérer pour résoudre les blocages complexes ou
+                                les demandes urgentes
+                            </h4>
+                            <p>
+                                Des agents dans chaque administration sont mobilisés pour
+                                répondre aux urgences sociales.
+                            </p>
+                            <img src="@routes.Assets.versioned("images/home/Aplus-Success.svg")" class="img--max-height-290px"/>
+                            <br />
+                            <br />
                         </div>
+                    </div>
+                    <div
+                    class="mdl-cell mdl-cell--12-col aplus-color--white mdl-grid mdl-grid--no-spacing"
+                    >
+                        <div
+                        class="mdl-cell mdl-cell--12-col mdl-typography--text-center"
+                        id="comment"
+                        >
+                            <h2 class="section__title">Administration +</h2>
+                            <h3 class="section__subtitle">Comment ça marche ?</h3>
+                            <a href="#comment" class="aplus-color-text--black"><i class="material-icons material-icons--48px"
+                            >keyboard_arrow_down</i
+                            ></a
+                            >
+                        </div>
+                    </div>
+
+
+                    <div
+                    class="mdl-cell mdl-cell--10-col-desktop mdl-cell--1-offset-desktop mdl-cell--12-col mdl-color--white"
+                    >
+                        <img
+                        class="mdl-cell--hide-phone mdl-cell--hide-tablet img--heigh-100"
+                        src="@routes.Assets.versioned("images/home/Aplus-comment-ca-marche-desktop.svg")"
+                        />
+                        <img
+                        class="mdl-cell--hide-desktop img--width-100"
+                        src="@routes.Assets.versioned("images/home/Aplus-comment-ca-marche-mobile.svg")"
+                        />
+                        <br />
+                    </div>
+                    <div
+                    class="mdl-cell mdl-cell--12-col aplus-color--light-grey mdl-grid "
+                    >
+                        <div
+                        class="mdl-cell mdl-cell--12-col mdl-typography--text-center mdl-grid--no-spacing"
+                        id="pourquoi"
+                        >
+                            <h2 class="section__title">Administration +</h2>
+                            <h3 class="section__subtitle">Pourquoi l'utiliser ?</h3>
+                            <a href="#pourquoi" class="aplus-color-text--black"
+                            ><i class="material-icons material-icons--48px"
+                            >keyboard_arrow_down</i
+                            ></a
+                            >
+                        </div>
+                    </div>
 
                     <div
                     class="mdl-cell mdl-cell--12-col aplus-color--light-grey mdl-grid"
@@ -268,14 +275,14 @@
                             <div
                             class="mdl-card__title mdl-card--expand mdl-color-text--white mdl-typography--text-center"
                             >
-                                    <h2>
-                    1
-                                    </h2>
-                                    <p>
-                    Sur A+ vous pouvez faire intervenir plusieurs opérateurs sur
-                                        une demande et les faire collaborer sur le fil de
-                                        discussion.
-                                    </p>
+                                <h2>
+                                    1
+                                </h2>
+                                <p>
+                                    Sur A+ vous pouvez faire intervenir plusieurs opérateurs sur
+                                    une demande et les faire collaborer sur le fil de
+                                    discussion.
+                                </p>
                             </div>
                         </div>
                         <div
@@ -284,13 +291,13 @@
                             <div
                             class="mdl-card__title mdl-card--expand mdl-color-text--white mdl-typography--text-center"
                             >
-                                    <h2>
-                    2
-                                    </h2>
-                                    <p>
-                    Sur A+ vous gardez une trace des échanges tant que la
-                                        demande est en cours.
-                                    </p>
+                                <h2>
+                                    2
+                                </h2>
+                                <p>
+                                    Sur A+ vous gardez une trace des échanges tant que la
+                                    demande est en cours.
+                                </p>
                             </div>
                         </div>
                         <div
@@ -299,13 +306,13 @@
                             <div
                             class="mdl-card__title mdl-card--expand mdl-color-text--white mdl-typography--text-center"
                             >
-                                    <h2>
-                    3
-                                    </h2>
-                                    <p>
-                    Sur A+ vous êtes en conformité par rapport à la
-                                        confidentialité des données.
-                                    </p>
+                                <h2>
+                                    3
+                                </h2>
+                                <p>
+                                    Sur A+ vous êtes en conformité par rapport à la
+                                    confidentialité des données.
+                                </p>
                             </div>
                         </div>
                         <div
@@ -314,13 +321,13 @@
                             <div
                             class="mdl-card__title mdl-card--expand mdl-color-text--white mdl-typography--text-center"
                             >
-                                    <h2>
-                    4
-                                    </h2>
-                                    <p>
-                    Les référents sont mobilisés et répondent habituellement au
-                                        plus tard sous 4 jours .
-                                    </p>
+                                <h2>
+                                    4
+                                </h2>
+                                <p>
+                                    Les référents sont mobilisés et répondent habituellement au
+                                    plus tard sous 4 jours .
+                                </p>
                             </div>
                         </div>
                         <div
@@ -329,7 +336,7 @@
                             <div
                             class="mdl-card__title mdl-card--expand mdl-color-text--white mdl-typography--text-center"
                             ><h2>5</h2>
-                                    <p>L’équipe d'A+ est disponible pour vous aider.</p>
+                                <p>L’équipe d'A+ est disponible pour vous aider.</p>
                             </div>
                         </div>
                         <div
@@ -338,13 +345,13 @@
                             <div
                             class="mdl-card__title mdl-card--expand mdl-color-text--white mdl-typography--text-center"
                             >
-                                    <h2>
-                    6
-                                    </h2>
-                                    <p>
-                    Sur A+ vous pouvez solliciter plusieurs administrations sur
-                                        une même demande.
-                                    </p>
+                                <h2>
+                                    6
+                                </h2>
+                                <p>
+                                    Sur A+ vous pouvez solliciter plusieurs administrations sur
+                                    une même demande.
+                                </p>
                             </div>
                         </div>
                         <div class="mdl-cell mdl-cell--12-col"><br /><br /></div>
