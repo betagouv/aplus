@@ -1,6 +1,6 @@
 @import helper._
 
-@(currentUser: User, currentArea: Option[Area] = None, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentArea: Option[Area] = None, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 <!doctype html>
 <html lang="fr">
@@ -207,6 +207,9 @@
                     }
                 }
         </script>
+
+        @bodyBottom
+
     </body>
 </html>
 

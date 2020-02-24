@@ -4,6 +4,12 @@ import org.apache.commons.lang3.StringUtils
 
 object StringHelper {
 
+  // Note: `.r` is supposed to compile the regex
+  val notLetterNorNumberRegex = """[^\p{L}\p{N}]+""".r
+
+  def stripEverythingButLettersAndNumbers(string: String): String =
+    StringUtils.stripAccents(notLetterNorNumberRegex.replaceAllIn(string, "").toLowerCase)
+
   implicit class CanonizeString(string: String) {
 
     def stripSpecialChars: String =
