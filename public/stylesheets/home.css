@@ -65,8 +65,8 @@ Images
     display: block;
 }
 
-.img--max-height-368px {
-    max-height: 368px;
+.img--max-height-290px {
+    max-height: 290px;
 }
 
 
@@ -74,7 +74,7 @@ Images
 Card
  */
 .usage-card {
-    height: 230px;
+    height: 210px;
 }
 
 .usage-card .mdl-card__title {
@@ -83,6 +83,12 @@ Card
 
 .usage-card p {
     display: block;
-    margin: auto;
     width: 100%;
+}
+
+/*****
+Margin
+ */
+.remove-top-margin {
+    margin-top: 0px;
 }
