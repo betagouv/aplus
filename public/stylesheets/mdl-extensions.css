@@ -5,3 +5,13 @@
 .mdl-typography--text-prewrap {
     white-space: pre-wrap;
 }
+
+.mdl-layout--fixed-drawer > .mdl-layout__footer {
+    margin-left: 240px;
+}
+
+@media screen and (max-width: 1024px) {
+    .mdl-layout--fixed-drawer > .mdl-layout__footer {
+        margin-left: 0;
+    }
+}

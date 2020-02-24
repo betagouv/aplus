@@ -413,7 +413,9 @@ a {
     padding: 20px;
 }
 
-
+/* https://github.com/etalab/template.data.gouv.fr/blob/master/src/css/components/notification.css
+ * https://github.com/etalab/template.data.gouv.fr/blob/master/src/css/base/theme.css
+ */
 .notification {
     background: #b4e1fa;
     border: 1px solid #006be6;
@@ -421,12 +423,25 @@ a {
     padding: 1em;
     margin-bottom: 1em;
     position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.notification--success {
+    background: #daf5e7;
+    border-color: #03bd5b;
 }
 
 .notification--error {
     background: rgba(239,172,166,0.45882);
     border-color: #d63626;
 }
+
+.notification__message {
+    flex-grow: 1;
+}
+
+
 
 .avoid-clicks {
     pointer-events: none;

@@ -127,3 +127,27 @@ function setupProtectedForms() {
     setupOneProtectedForm(forms[fi]);
   }
 }
+
+
+//
+// Notification Messages
+//
+
+// Will add onClick listeners on `.notification__close-btn` that remove the `.notification` element
+function setupNotificationMessages() {
+  var elems = document.querySelectorAll(".notification");
+  for (var i = 0; i < elems.length; i++) {
+    var closeBtn = elems[i].querySelector(".notification__close-btn");
+    if (closeBtn != null) {
+      onClickRemoveElement(closeBtn, elems[i])
+    }
+  }
+}
+
+function onClickRemoveElement(clickElement, elementToRemove) {
+  clickElement.addEventListener("click", function() {
+    // Cross browser
+    // https://stackoverflow.com/questions/3387427/remove-element-by-id
+    elementToRemove.outerHTML = ""
+  })
+}
