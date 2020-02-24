@@ -171,13 +171,14 @@
                 }
               </select>
               @*** disabled select are never sent in a form, we need a hidden input. ***@
+              @*** Also we put a valid dummy value in the field, to pass validation. ***@
               @if(groupWillNotBeInserted(group)) {
                 @helper.input(group("group")("organisation"), 'class -> "hidden") { (id, name, value, args) =>
                   <input class="mdl-textfield__input input-import-user"
                          type="hidden"
                          name="@name"
                          id="@id"
-                         value="@value"
+                         value="@Organisation.all.head.id.id"
                          @toHtmlArgs(args)>
                 }
               }
