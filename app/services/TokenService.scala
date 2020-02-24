@@ -9,7 +9,6 @@ import play.api.UnexpectedException
 
 @javax.inject.Singleton
 class TokenService @Inject() (configuration: play.api.Configuration, db: Database) {
-  import serializers.Anorm._
 
   private val simpleLoginToken: RowParser[LoginToken] = Macro.parser[LoginToken](
     "token",
@@ -19,7 +18,7 @@ class TokenService @Inject() (configuration: play.api.Configuration, db: Databas
     "ip_address"
   )
 
-  def create(loginToken: LoginToken) = db.withConnection { implicit connection =>
+  def create(loginToken: LoginToken): Boolean = db.withConnection { implicit connection =>
     SQL"""
       INSERT INTO login_token VALUES (
          ${loginToken.token},

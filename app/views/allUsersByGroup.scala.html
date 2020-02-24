@@ -1,15 +1,14 @@
 @import models._
 @(currentUser: User)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-  @display(users: Seq[User], id: Option[String] = None)(header: Html)(footer: Html = Html("")) = {
+  @display(users: Seq[User], id: Option[String] = None)(header: Html)(footer: Html) = {
       <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white" style="white-space: normal;" @if(id.isDefined){ id="@id.get" } >
         <thead>
           <th class="mdl-data-table__cell--non-numeric" colspan="6" style="font-size: 20px; text-align: left; color: black; font-weight: normal" >
             @header
           </th>
         </thead>
-        @if(footer != Html("")) {
-           <tfoot>
+        <tfoot>
               <tr>
                 <td class="mdl-data-table__cell--non-numeric" colspan="5">
                   @footer
@@ -19,8 +18,7 @@
                 <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
               </tr>
             </tfoot>
-            <tbody>
-        }
+        <tbody>
         @for(user <- users) {
             <tr class="searchable-row td--clear-border">
               @if(currentUser.admin) {

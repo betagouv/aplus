@@ -6,7 +6,7 @@ import akka.actor._
 import helper.Time
 import javax.inject.Inject
 import models._
-import org.joda.time.{DateTime, Period}
+import org.joda.time.Period
 import services.{ApplicationService, EventService, NotificationService, UserGroupService}
 
 import scala.concurrent.duration._
