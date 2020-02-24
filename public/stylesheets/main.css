@@ -501,3 +501,16 @@ a {
     /* !important to work with the legacy order of .css :D */
     align-items: center !important;
 }
+
+
+/****************
+Colors
+ */
+.aplus-color--blue {
+    background-color: #0053b3 !important;
+}
+
+.aplus-color--light-grey {
+    background-color: #ebeff3 !important;
+}
+

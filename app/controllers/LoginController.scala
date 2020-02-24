@@ -27,7 +27,7 @@ class LoginController @Inject() (
       .orElse(request.getQueryString("email"))
       .orElse(request.flash.get("email"))
     emailFromRequestOrQueryParamOrFlash.fold {
-      Ok(views.html.loginHome(Left(None), tokenExpirationInMinutes))
+      Ok(views.html.home())
     } { email =>
       userService
         .byEmail(email)
