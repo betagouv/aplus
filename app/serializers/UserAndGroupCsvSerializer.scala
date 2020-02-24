@@ -257,9 +257,7 @@ object UserAndGroupCsvSerializer {
       val optionOrganisation = csvMap
         .get(GROUP_ORGANISATION.key)
         .orElse(csvMap.get(GROUP_NAME.key))
-        .flatMap({ organisation: String =>
-          Organisation.deductedFromName(organisation)
-        })
+        .flatMap(Organisation.deductedFromName)
       optionOrganisation match {
         case Some(organisation) =>
           csvMap + (GROUP_ORGANISATION.key -> organisation.id.id)
