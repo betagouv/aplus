@@ -37,7 +37,9 @@ case class ApiController @Inject() (
       groups.find(group =>
         StringHelper
           .stripEverythingButLettersAndNumbers(group.name)
-          .contains(StringHelper.stripEverythingButLettersAndNumbers(franceServiceInstance.nomFranceService))
+          .contains(
+            StringHelper.stripEverythingButLettersAndNumbers(franceServiceInstance.nomFranceService)
+          )
       )
     def byCommune: Option[UserGroup] =
       groups.find(group =>

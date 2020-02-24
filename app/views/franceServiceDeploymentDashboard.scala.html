@@ -21,6 +21,16 @@
          href="@routes.AreaController.deploymentDashboard()"
          >Retour sur tout le déploiement</a>
     </div>
+    <div class="mdl-cell mdl-cell--12-col">
+      <p>
+        La correspondance entre une instance France Service et un Groupe est faite dans cet ordre:
+        <ol>
+          <li>Le champ "CONTACT MAIL" du tableau France Services correspond au champ "Email du groupe (BAL générique pour inscription et notification)" du groupe</li>
+          <li>Le champ "FRANCE SERVICE" (= le nom) du tableau France Services est écrit quelque part dans le champ "Nom du groupe" du groupe</li>
+          <li>Le champ "COMMUNE" du tableau France Services est écrit quelque part dans le champ "Nom du groupe" du groupe</li>
+        </ol>
+      </p>
+    </div>
 }{
     <script src="@routes.Assets.versioned("javascripts/admin.js")"></script>
 }
