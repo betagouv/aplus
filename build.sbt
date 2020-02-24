@@ -7,6 +7,15 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.12.8"
 
+// https://docs.scala-lang.org/overviews/compiler-options/index.html
+scalacOptions ++= Seq(
+  "-deprecation",
+  "-unchecked",
+  "-Xlint:adapted-args,nullary-unit,inaccessible,nullary-override,infer-any,missing-interpolator,private-shadow,type-parameter-shadow,poly-implicit-overload,option-implicit,package-object-classes,unused",
+  "-Ywarn-dead-code",
+  "-Ywarn-numeric-widen"
+)
+
 //libraryDependencies += filters
 
 libraryDependencies ++= Seq(
