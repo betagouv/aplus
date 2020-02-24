@@ -26,24 +26,24 @@ case class ApiController @Inject() (
   import OrganisationService.FranceServiceInstance
 
   private def matchFranceServiceInstance(
-      fsInstance: FranceServiceInstance,
+      franceServiceInstance: FranceServiceInstance,
       groups: List[UserGroup]
   ): Option[UserGroup] = {
     def byEmail: Option[UserGroup] =
-      fsInstance.contactMail.flatMap(email =>
+      franceServiceInstance.contactMail.flatMap(email =>
         groups.find(group => (group.email: Option[String]) == (Some(email): Option[String]))
       )
     def byName: Option[UserGroup] =
       groups.find(group =>
         StringHelper
           .stripEverythingButLettersAndNumbers(group.name)
-          .contains(StringHelper.stripEverythingButLettersAndNumbers(fsInstance.nomFranceService))
+          .contains(StringHelper.stripEverythingButLettersAndNumbers(franceServiceInstance.nomFranceService))
       )
     def byCommune: Option[UserGroup] =
       groups.find(group =>
         StringHelper
           .stripEverythingButLettersAndNumbers(group.name)
-          .contains(StringHelper.stripEverythingButLettersAndNumbers(fsInstance.commune))
+          .contains(StringHelper.stripEverythingButLettersAndNumbers(franceServiceInstance.commune))
       )
     byEmail.orElse(byName).orElse(byCommune)
   }
@@ -60,7 +60,7 @@ case class ApiController @Inject() (
             (
               instance,
               matchFranceServiceInstance(instance, userGroups),
-              Area.byInseeCode.get(instance.departementCode.code).getOrElse(Area.notApplicable)
+              Area.fromInseeCode(instance.departementCode.code).getOrElse(Area.notApplicable)
             )
           )
       val allGroupIds: List[UUID] = matches.flatMap(_._2).map(_.id)
@@ -72,17 +72,17 @@ case class ApiController @Inject() (
         .toMap
       val data: List[FranceServiceInstanceLine] = matches
         .map {
-          case (fsInstance, groupOpt, area) =>
+          case (franceServiceInstance, groupOpt, area) =>
             FranceServiceInstanceLine(
-              nomFranceService = fsInstance.nomFranceService,
-              commune = fsInstance.commune,
+              nomFranceService = franceServiceInstance.nomFranceService,
+              commune = franceServiceInstance.commune,
               departementName = area.name,
               departementCode = area.inseeCode,
               matchedGroup = groupOpt.map(_.name),
               groupSize = groupOpt.flatMap(group => groupSizes.get(group.id)).getOrElse(0),
               departementIsDone = false,
-              contactMail = fsInstance.contactMail,
-              phone = fsInstance.phone
+              contactMail = franceServiceInstance.contactMail,
+              phone = franceServiceInstance.phone
             )
         }
         .groupBy(_.departementCode)
