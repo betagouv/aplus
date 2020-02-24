@@ -16,7 +16,7 @@ import scala.io.Source
 object UserAndGroupCsvSerializer {
 
   case class Header(key: String, prefixes: List[String]) {
-    val lowerPrefixes = prefixes.map(_.toLowerCase())
+    val lowerPrefixes = prefixes.map(_.toLowerCase().stripSpecialChars)
   }
 
   val USER_NAME = Header("user.name", List("Nom", "PRENOM NOM"))
@@ -157,6 +157,7 @@ object UserAndGroupCsvSerializer {
               .convertBooleanValue(UserAndGroupCsvSerializer.USER_GROUP_MANAGER.key, "Responsable")
               .convertBooleanValue(UserAndGroupCsvSerializer.USER_INSTRUCTOR.key, "Instructeur")
               .includeAreasNameInGroupName
+              .matchOrganisationId
               .fromCsvFieldNameToHtmlFieldName
               .includeFirstnameInLastName()
               .setDefaultQualityIfNeeded()
@@ -185,7 +186,7 @@ object UserAndGroupCsvSerializer {
         values
           .map({
             case (key, value) =>
-              val lowerKey = key.trim.toLowerCase
+              val lowerKey = key.trim.toLowerCase.stripSpecialChars
               expectedHeaders
                 .find(expectedHeader => expectedHeader.lowerPrefixes.exists(lowerKey.startsWith))
                 .map(expectedHeader => expectedHeader.key -> value)
@@ -249,6 +250,19 @@ object UserAndGroupCsvSerializer {
           csvMap + (UserAndGroupCsvSerializer.GROUP_NAME.key -> s"$initialGroupName - ${areaNames.mkString("/")}")
         case _ =>
           csvMap
+      }
+    }
+
+    def matchOrganisationId: CSVMap = {
+      val optionOrganisation = csvMap
+        .get(GROUP_ORGANISATION.key)
+        .orElse(csvMap.get(GROUP_NAME.key))
+        .flatMap(Organisation.deductedFromName)
+      optionOrganisation match {
+        case Some(organisation) =>
+          csvMap + (GROUP_ORGANISATION.key -> organisation.id.id)
+        case None =>
+          csvMap - GROUP_ORGANISATION.key
       }
     }
 

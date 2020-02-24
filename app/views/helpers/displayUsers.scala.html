@@ -27,7 +27,7 @@
             <tr>
                 @if(currentUser.admin) {
                     <td class="mdl-data-table__cell--non-numeric">
-                        <a href="@routes.UserController.editUser(user.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                        <a href="@routes.UserController.editUser(user.id)" target="_blank" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                             <i class="material-icons">edit</i>
                         </a>
                     </td>

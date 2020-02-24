@@ -24,7 +24,7 @@
         @for(user <- users) {
             <tr class="searchable-row td--clear-border">
               @if(currentUser.admin) {
-                  <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size" style="width: 20px"><a href="@routes.UserController.editUser(user.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                  <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size" style="width: 20px"><a href="@routes.UserController.editUser(user.id)" target="_blank"  class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                     <i class="material-icons">edit</i>
                   </a></td>
               }
@@ -106,12 +106,12 @@
         @defining(allUsers.filter(_.groupIds.contains(userGroup.id))){ groupUsers =>
           @display(groupUsers.filter(_.groupIds.length == 1), Some(s"group-${userGroup.id}")){
             @if(currentUser.admin) {
-              <a href="@routes.GroupController.editGroup(userGroup.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+              <a href="@routes.GroupController.editGroup(userGroup.id)" target="_blank" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                 <i class="material-icons">edit</i>
               </a>
             }
             @userGroup.areaIds.flatMap(Area.fromId).map(_.name).sorted.mkString(", ") /
-            <b>@userGroup.name</b> / @(userGroup.organisation, UserGroup.organisationDeductedFromName(userGroup.name)) match {
+            <b>@userGroup.name</b> / @(userGroup.organisation, Organisation.deductedFromName(userGroup.name)) match {
               case (Some(organisation), _) => {
                 @organisation / }
               case (_, Some(organisation)) => { @organisation / }
@@ -122,7 +122,7 @@
             @if(groupUsers.exists(_.groupIds.length != 1)) {
               Et utilisateurs multigroupes :
               @for(user <- groupUsers.filter(_.groupIds.length != 1)) {
-                <a href="@routes.UserController.editUser(user.id)">@user.name (@user.qualite)</a> /
+                <a href="@routes.UserController.editUser(user.id)" target="_blank" >@user.name (@user.qualite)</a> /
               } <hr>
             }
             @helper.form(routes.UserController.add(userGroup.id), 'method -> "get") {
