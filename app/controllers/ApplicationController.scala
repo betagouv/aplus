@@ -904,8 +904,11 @@ case class ApplicationController @Inject() (
           if (applicationService.close(applicationId, finalUsefulness, DateTime.now(timeZone))) {
             eventService
               .log(TerminateCompleted, s"La demande $applicationId est clôturée", Some(application))
+            val successMessage =
+              s"""|La demande "${application.subject}" a bien été clôturée. 
+                  |Bravo et merci pour la résolution de cette demande !""".stripMargin
             Redirect(routes.ApplicationController.myApplications())
-              .flashing("success" -> "L'application a été indiquée comme clôturée")
+              .flashing("success" -> successMessage)
           } else {
             eventService.log(
               TerminateError,

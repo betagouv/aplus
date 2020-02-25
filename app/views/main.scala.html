@@ -15,6 +15,7 @@
         @webJarsUtil.locate("fontawesome.css").css()
         @webJarsUtil.locate("solid.css").css()
         <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/main.css")'>
+        <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/mdl-extensions.css")'>
 
         @header
         @webJarsUtil.locate("material.min.js").script()
@@ -148,7 +149,8 @@
             </div>
 
             <main class="mdl-layout__content mdl-color--grey-200">
-                <div class="mdl-grid main__grid" style="min-height: 800px; @if(maxWidth) { max-width: 960px; }">
+                <div class="mdl-grid main__grid" style="@if(maxWidth) { max-width: 960px; }">
+
                 @flash.get("error").map { error =>
                     <div class="mdl-cell mdl-cell--12-col" id="answer-error">
                         <div class="notification notification--error"><b>@error</b><br>
@@ -156,22 +158,40 @@
                         </div>
                     </div>
                 }
-                @content
-                </div>
-                <footer class="mdl-mega-footer do-not-print">
-                    <div class="mdl-mega-footer--bottom-section">
-                        <div class="mdl-logo">
-                            Administration+ @java.time.LocalDate.now().getYear() :
-                        </div>
-                        <ul class="mdl-mega-footer--link-list">
-                            <li><a href="@routes.HomeController.help()">Aide</a></li>
-                            <li><a href="@routes.UserController.showCGU()">CGU</a></li>
-                            <li><a href="@routes.ApplicationController.showExportMyApplicationsCSV()">Exporter mes demandes en CSV</a></li>
-                        </ul>
-                    </div>
-                </footer>
 
+
+                @flash.get("success").map { message =>
+                    <div class="mdl-cell mdl-cell--12-col">
+                      <div class="notification notification--success">
+                        <div class="notification__message">
+                          @message
+                        </div>
+                        <button class="notification__close-btn mdl-button mdl-js-button mdl-button--icon">
+                          <i class="material-icons">close</i>
+                        </button>
+                      </div>
+                    </div>
+                }
+
+                    @content
+                </div>
             </main>
+
+
+            <footer class="mdl-layout__footer mdl-mega-footer do-not-print">
+                <div class="mdl-mega-footer--bottom-section">
+                    <div class="mdl-logo">
+                        Administration+ @java.time.LocalDate.now().getYear() :
+                    </div>
+                    <ul class="mdl-mega-footer--link-list">
+                        <li><a href="@routes.HomeController.help()">Aide</a></li>
+                        <li><a href="@routes.UserController.showCGU()">CGU</a></li>
+                        <li><a href="@routes.ApplicationController.showExportMyApplicationsCSV()">Exporter mes demandes en CSV</a></li>
+                    </ul>
+                </div>
+            </footer>
+
+
             <div aria-live="assertive" aria-atomic="true" aria-relevant="text" class="mdl-snackbar mdl-js-snackbar">
                 <div class="mdl-snackbar__text"></div>
                 <button type="button" class="mdl-snackbar__action"></button>
@@ -198,6 +218,7 @@
         <script>
           // TODO: put this in main.js, and load main.js at the end of this file
           setupProtectedForms();
+          setupNotificationMessages();
 
                 if(/localhost|demo/.test(window.location.hostname)) {
                     document.getElementById("header__ribbon").classList.add("invisible");
@@ -212,4 +233,3 @@
 
     </body>
 </html>
-
