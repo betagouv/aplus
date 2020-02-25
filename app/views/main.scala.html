@@ -149,7 +149,7 @@
             </div>
 
             <main class="mdl-layout__content mdl-color--grey-200">
-                <div class="mdl-grid main__grid" style="@if(maxWidth) { max-width: 960px; }">
+                <div class="mdl-grid main__grid @if(maxWidth) { --max-width-960px }" >
 
                 @flash.get("error").map { error =>
                     <div class="mdl-cell mdl-cell--12-col" id="answer-error">
@@ -175,21 +175,21 @@
 
                     @content
                 </div>
+                <footer class="mdl-mega-footer do-not-print">
+                    <div class="mdl-mega-footer--bottom-section">
+                        <div class="mdl-logo">
+                            Administration+ @java.time.LocalDate.now().getYear() :
+                        </div>
+                        <ul class="mdl-mega-footer--link-list">
+                            <li><a href="@routes.HomeController.help()">Aide</a></li>
+                            <li><a href="@routes.UserController.showCGU()">CGU</a></li>
+                            <li><a href="@routes.ApplicationController.showExportMyApplicationsCSV()">Exporter mes demandes en CSV</a></li>
+                        </ul>
+                    </div>
+                </footer>
             </main>
 
 
-            <footer class="mdl-layout__footer mdl-mega-footer do-not-print">
-                <div class="mdl-mega-footer--bottom-section">
-                    <div class="mdl-logo">
-                        Administration+ @java.time.LocalDate.now().getYear() :
-                    </div>
-                    <ul class="mdl-mega-footer--link-list">
-                        <li><a href="@routes.HomeController.help()">Aide</a></li>
-                        <li><a href="@routes.UserController.showCGU()">CGU</a></li>
-                        <li><a href="@routes.ApplicationController.showExportMyApplicationsCSV()">Exporter mes demandes en CSV</a></li>
-                    </ul>
-                </div>
-            </footer>
 
 
             <div aria-live="assertive" aria-atomic="true" aria-relevant="text" class="mdl-snackbar mdl-js-snackbar">
