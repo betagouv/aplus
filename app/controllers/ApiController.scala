@@ -9,7 +9,7 @@ import javax.inject.{Inject, Singleton}
 import models.EventType.DeploymentDashboardUnauthorized
 import models.{Area, Organisation, User, UserGroup}
 import play.api.libs.json.Json
-import play.api.mvc.InjectedController
+import play.api.mvc._
 
 import scala.concurrent.ExecutionContext
 import serializers.ApiModel._
@@ -60,7 +60,7 @@ case class ApiController @Inject() (
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
       val userGroups = userGroupService.allGroups.filter(
-        _.organisationSetOrDeducted.id === Organisation.Id("MFS")
+        _.organisationSetOrDeducted.exists(_.id === Organisation.Id("MFS"))
       )
       val areas = Area.all
       val matches: List[(FranceServiceInstance, Option[UserGroup], Area)] =
