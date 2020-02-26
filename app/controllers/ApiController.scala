@@ -4,11 +4,13 @@ import actions.LoginAction
 import Operators.UserOperators
 import helper.StringHelper
 import java.util.UUID
+
 import javax.inject.{Inject, Singleton}
 import models.EventType.DeploymentDashboardUnauthorized
-import models.{Area, User, UserGroup}
+import models.{Area, Organisation, User, UserGroup}
 import play.api.libs.json.Json
 import play.api.mvc.InjectedController
+
 import scala.concurrent.ExecutionContext
 import serializers.ApiModel._
 import services.{EventService, OrganisationService, UserGroupService, UserService}
@@ -47,14 +49,19 @@ case class ApiController @Inject() (
           .stripEverythingButLettersAndNumbers(group.name)
           .contains(StringHelper.stripEverythingButLettersAndNumbers(franceServiceInstance.commune))
       )
-    byEmail.orElse(byName).orElse(byCommune)
+    byEmail.orElse(byName).orElse(byCommune).filter { userGroup =>
+      val areas: List[Area] = userGroup.areaIds.flatMap(Area.fromId)
+      areas.exists(_.inseeCode == franceServiceInstance.departementCode.code)
+    }
   }
 
-  def franceServiceDeployment = loginAction { implicit request =>
+  def franceServiceDeployment: Action[AnyContent] = loginAction { implicit request =>
     asAdmin { () =>
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
-      val userGroups = userGroupService.allGroups
+      val userGroups = userGroupService.allGroups.filter(
+        _.organisationSetOrDeducted.id === Organisation.Id("MFS")
+      )
       val areas = Area.all
       val matches: List[(FranceServiceInstance, Option[UserGroup], Area)] =
         organisationService.franceServiceInfos.instances
