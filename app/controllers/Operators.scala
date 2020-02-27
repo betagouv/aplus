@@ -135,7 +135,7 @@ object Operators {
         .byId(
           applicationId,
           fromUserId = request.currentUser.id,
-          anonymous = request.currentUser.admin
+          rights = request.currentUser.rights
         )
         .fold({
           eventService.log(

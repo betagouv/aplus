@@ -14,6 +14,7 @@ case class User(
     email: String,
     helper: Boolean,
     instructor: Boolean,
+    // TODO: `private[models]` so we cannot check it without going through authorization
     admin: Boolean,
     @deprecated(
       message = "User#areas is deprecated in favor of UserGroup#areaIds.",
@@ -34,8 +35,10 @@ case class User(
 ) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"
 
-  def canBeEditedBy(user: User): Boolean =
-    user.admin && user.areas.intersect(user.areas).nonEmpty
+  // Note: it might be a little bit trickier to make this work
+  // because of the administrated areas
+  // eg. by getting the `.currentUser` with multiple DB calls
+  lazy val rights = authorization.readUserRights(this)
 
   def canSeeUsersInArea(areaId: UUID): Boolean =
     (areaId == Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)

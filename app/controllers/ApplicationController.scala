@@ -604,11 +604,12 @@ case class ApplicationController @Inject() (
     )
 
   def show(id: UUID) = loginAction { implicit request =>
-    applicationService.byId(id, request.currentUser.id, request.currentUser.admin) match {
+    applicationService.byId(id, request.currentUser.id, request.currentUser.rights) match {
       case None =>
         eventService.log(ApplicationNotFound, s"La demande $id n'existe pas")
         NotFound("Nous n'avons pas trouvé cette demande")
       case Some(application) =>
+        // TODO: this check is done in the service, it might also be done in the action
         if (application.canBeShowedBy(request.currentUser)) {
           val usersThatCanBeInvited = usersThatCanBeInvitedOn(application)
           val groups = userGroupService
@@ -617,14 +618,15 @@ case class ApplicationController @Inject() (
           val groupsWithUsersThatCanBeInvited = groups.map { group =>
             group -> usersThatCanBeInvited.filter(_.groupIds.contains[UUID](group.id))
           }
-          val renderedApplication =
-            if ((application
+          // TODO: put this check in the service
+          val renderedApplication = application
+          /*if ((application
                   .haveUserInvitedOn(request.currentUser) || request.currentUser.id == application.creatorUserId) && request.currentUser.expert && request.currentUser.admin && !application.closed) {
               // If user is expert, admin and invited to the application we desanonymate
               applicationService.byId(id, request.currentUser.id, false).get
             } else {
               application
-            }
+            }*/
           val openedTab = request.flash.get("opened-tab").getOrElse("answer")
 
           eventService.log(ApplicationShowed, s"Demande $id consultée", Some(application))
@@ -659,7 +661,7 @@ case class ApplicationController @Inject() (
     implicit request =>
       (
         answerIdOption,
-        applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin)
+        applicationService.byId(applicationId, request.currentUser.id, request.currentUser.rights)
       ) match {
         case (_, None) =>
           eventService.log(ApplicationNotFound, s"La demande $applicationId n'existe pas")
@@ -825,7 +827,7 @@ case class ApplicationController @Inject() (
 
   def inviteExpert(applicationId: UUID) = loginAction { implicit request =>
     applicationService
-      .byId(applicationId, request.currentUser.id, request.currentUser.admin) match {
+      .byId(applicationId, request.currentUser.id, request.currentUser.rights) match {
       case None =>
         eventService
           .log(AddExpertNotFound, s"La demande $applicationId n'existe pas pour ajouter un expert")
@@ -882,7 +884,7 @@ case class ApplicationController @Inject() (
   def terminate(applicationId: UUID) = loginAction { implicit request =>
     (
       request.getQueryString("usefulness"),
-      applicationService.byId(applicationId, request.currentUser.id, request.currentUser.admin)
+      applicationService.byId(applicationId, request.currentUser.id, request.currentUser.rights)
     ) match {
       case (_, None) =>
         eventService
