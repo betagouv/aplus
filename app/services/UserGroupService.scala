@@ -2,6 +2,7 @@ package services
 
 import java.sql.ResultSet
 import java.util.UUID
+import scala.concurrent.Future
 
 import anorm._
 import javax.inject.Inject
@@ -12,7 +13,13 @@ import helper.{Time, UUIDHelper}
 import org.postgresql.util.PSQLException
 
 @javax.inject.Singleton
-class UserGroupService @Inject() (configuration: play.api.Configuration, db: Database) {
+class UserGroupService @Inject() (
+    configuration: play.api.Configuration,
+    db: Database,
+    dependencies: ServicesDependencies
+) {
+
+  import dependencies.databaseExecutionContext
 
   private val simpleUserGroup: RowParser[UserGroup] = Macro
     .parser[UserGroup](
@@ -114,10 +121,12 @@ class UserGroupService @Inject() (configuration: play.api.Configuration, db: Dat
     cardinality == 0
   }
 
-  def byArea(areaId: UUID): List[UserGroup] = db.withConnection { implicit connection =>
-    SQL("""SELECT * FROM "user_group" WHERE area_ids @> ARRAY[{areaId}]::uuid[]""")
-      .on('areaId -> areaId)
-      .as(simpleUserGroup.*)
+  def byArea(areaId: UUID): Future[List[UserGroup]] = Future {
+    db.withConnection { implicit connection =>
+      SQL("""SELECT * FROM "user_group" WHERE area_ids @> ARRAY[{areaId}]::uuid[]""")
+        .on('areaId -> areaId)
+        .as(simpleUserGroup.*)
+    }
   }
 
   def byAreas(areaIds: List[UUID]): List[UserGroup] = db.withConnection { implicit connection =>

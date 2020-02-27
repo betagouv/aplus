@@ -1,6 +1,7 @@
 package controllers
 
 import java.util.{Locale, UUID}
+import scala.concurrent.{ExecutionContext, Future}
 
 import actions.{LoginAction, RequestWithUserData}
 import helper.BooleanHelper.not
@@ -56,7 +57,7 @@ case class UserController @Inject() (
     notificationsService: NotificationService,
     configuration: Configuration,
     eventService: EventService
-)(implicit val webJarsUtil: WebJarsUtil)
+)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with play.api.i18n.I18nSupport
     with UserOperators
@@ -66,29 +67,30 @@ case class UserController @Inject() (
     TemporaryRedirect(controllers.routes.UserController.all(Area.allArea.id).url)
   }
 
-  def all(areaId: UUID): Action[AnyContent] = loginAction {
+  def all(areaId: UUID): Action[AnyContent] = loginAction.async {
     implicit request: RequestWithUserData[AnyContent] =>
       asUserWhoSeesUsersOfArea(areaId) { () =>
         AllUserUnauthorized -> "Accès non autorisé à l'admin des utilisateurs"
       } { () =>
         val selectedArea = Area.fromId(areaId).get
-        val users = (
+        val usersFuture: Future[List[User]] = (
           request.currentUser.admin,
           request.currentUser.groupAdmin,
           selectedArea.id == Area.allArea.id
         ) match {
           case (true, _, false) => {
-            val groupsOfArea = groupService.byArea(areaId)
-            userService.byGroupIds(groupsOfArea.map(_.id))
+            groupService.byArea(areaId).map { groupsOfArea =>
+              userService.byGroupIds(groupsOfArea.map(_.id))
+            }
           }
           case (true, _, true) => {
             val groupsOfArea = groupService.byAreas(request.currentUser.areas)
-            userService.byGroupIds(groupsOfArea.map(_.id))
+            Future(userService.byGroupIds(groupsOfArea.map(_.id)))
           }
-          case (false, true, _) => userService.byGroupIds(request.currentUser.groupIds)
+          case (false, true, _) => Future(userService.byGroupIds(request.currentUser.groupIds))
           case _ =>
             eventService.log(AllUserIncorrectSetup, "Erreur d'accès aux utilisateurs")
-            List()
+            Future(Nil)
         }
         val applications = applicationService.allByArea(selectedArea.id, anonymous = true)
         val groups: List[UserGroup] = (
@@ -104,40 +106,43 @@ case class UserController @Inject() (
             List()
         }
         eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
-        val result = request.getQueryString("vue").getOrElse("nouvelle") match {
-          case "nouvelle" if request.currentUser.admin =>
-            views.html.allUsersNew(request.currentUser)(
-              groups,
-              users,
-              applications,
-              selectedArea,
-              configuration.underlying.getString("geoplus.host")
-            )
-          case _ =>
-            views.html.allUsersByGroup(request.currentUser)(
-              groups,
-              users,
-              applications,
-              selectedArea,
-              configuration.underlying.getString("geoplus.host")
-            )
+        usersFuture.map { users =>
+          val result = request.getQueryString("vue").getOrElse("nouvelle") match {
+            case "nouvelle" if request.currentUser.admin =>
+              views.html.allUsersNew(request.currentUser)(
+                groups,
+                users,
+                applications,
+                selectedArea,
+                configuration.underlying.getString("geoplus.host")
+              )
+            case _ =>
+              views.html.allUsersByGroup(request.currentUser)(
+                groups,
+                users,
+                applications,
+                selectedArea,
+                configuration.underlying.getString("geoplus.host")
+              )
+          }
+          Ok(result)
         }
-        Ok(result)
       }
   }
 
-  def allCSV(areaId: java.util.UUID): Action[AnyContent] = loginAction {
+  def allCSV(areaId: java.util.UUID): Action[AnyContent] = loginAction.async {
     implicit request: RequestWithUserData[AnyContent] =>
       asAdminWhoSeesUsersOfArea(areaId) { () =>
         AllUserCSVUnauthorized -> "Accès non autorisé à l'export utilisateur"
       } { () =>
         val area = Area.fromId(areaId).get
-        val users = if (areaId == Area.allArea.id) {
+        val usersFuture: Future[List[User]] = if (areaId == Area.allArea.id) {
           val groupsOfArea = groupService.byAreas(request.currentUser.areas)
-          userService.byGroupIds(groupsOfArea.map(_.id))
+          Future(userService.byGroupIds(groupsOfArea.map(_.id)))
         } else {
-          val groupsOfArea = groupService.byArea(areaId)
-          userService.byGroupIds(groupsOfArea.map(_.id))
+          groupService.byArea(areaId).map { groupsOfArea =>
+            userService.byGroupIds(groupsOfArea.map(_.id))
+          }
         }
         val groups = groupService.allGroupByAreas(request.currentUser.areas)
         eventService.log(AllUserCsvShowed, "Visualise le CSV de tous les zones de l'utilisateur")
@@ -179,15 +184,19 @@ case class UserController @Inject() (
           "CGU",
           "Newsletter"
         ).mkString(";")
-        val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
-        val date = DateTime.now(Time.dateTimeZone).toString("dd-MMM-YYY-HH'h'mm", new Locale("fr"))
 
-        Ok(csvContent)
-          .withHeaders(
-            "Content-Disposition" -> s"""attachment; filename="aplus-$date-users-${area.name
-              .replace(" ", "-")}.csv""""
-          )
-          .as("text/csv")
+        usersFuture.map { users =>
+          val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
+          val date =
+            DateTime.now(Time.dateTimeZone).toString("dd-MMM-YYY-HH'h'mm", new Locale("fr"))
+
+          Ok(csvContent)
+            .withHeaders(
+              "Content-Disposition" -> s"""attachment; filename="aplus-$date-users-${area.name
+                .replace(" ", "-")}.csv""""
+            )
+            .as("text/csv")
+        }
       }
   }
 
