@@ -1,21 +1,15 @@
 @import _root_.helper.MDLForms._
 @(form: Form[_], mandatoryFields: List[String] = List())(implicit messagesProvider: MessagesProvider)
 
-<table class="mdl-data-table mdl-js-data-table" id="form__infos">
-    <tbody>
+<div id="form__infos">
         @repeatMap(form("infos"), form, mandatoryFields) {  (infoField, info) =>
-            <tr>
-                <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split">@info.capitalize</td>
-                <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split">
+            <div>@info.capitalize<br>
                 @helper.input(infoField, 'label -> s"Saisir $info de l'usager ici") { (id, name, value, args) =>
                     <input class="mdl-textfield__input mdl-color--white" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
                 }
-                </td>
-                <td></td>
-            </tr>
+            </div>
         }
-    <tr>
-        <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split">
+        <div id="other-div">
             <b>Ajouter une autre information :</b><br>
             <select id="types" onchange="newTypeSelected()">
                 <option disabled selected value="">Selectionnez une information à ajouter</option>
@@ -23,23 +17,19 @@
                     <option value="@info">@info</option>
                 }
             </select><br>
-            <div class="mdl-textfield mdl-js-textfield invisible">
+            <div class="mdl-textfield mdl-js-textfield invisible --margin-right-20px">
                 <label class="mdl-textfield__label" for="other-type">Saisissez le type d'information</label>
                 <input class="mdl-textfield__input mdl-color--white" name="other-type" type="text" id="other-type" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
             </div>
-        </td>
-        <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split">
-            <div class="mdl-textfield mdl-js-textfield invisible">
+            <div class="mdl-textfield mdl-js-textfield invisible --margin-right-20px">
                 <label class="mdl-textfield__label" for="other-type-value">Saisissez l'information </label>
                 <input class="mdl-textfield__input mdl-color--white" type="text" name="other-type-value" id="other-type-value" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
             </div>
-        </td>
-        <td class="mdl-data-table__cell--non-numeric"><button class="mdl-button mdl-js-button mdl-button--fab" type="button" id="add-infos__ok-button" onclick="addInfo();" disabled="disabled">
-            <i class="material-icons">add</i>
-        </button></td>
-    </tr>
-    </tbody>
-</table>
+            <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored invisible" type="button" id="add-infos__ok-button" onclick="addInfo();">
+            <i class="material-icons">add_circle</i>
+        </button>
+    </div>
+</div>
 <script type="application/javascript">
         function newTypeSelected() {
             var select = document.getElementById("types");
@@ -54,14 +44,14 @@
             }
             if(select.value !== "") {
                 document.getElementById("other-type-value").parentNode.classList.remove("invisible");
-                document.getElementById("add-infos__ok-button").disabled = false;
+                document.getElementById("add-infos__ok-button").classList.remove("invisible");
             }
             componentHandler.upgradeDom();
         }
         newTypeSelected();
 
         function removeInfo(elem) {
-            var row = elem.parentNode.parentNode;
+            var row = elem.parentNode;
             row.parentNode.removeChild(row);
         }
 
@@ -70,18 +60,18 @@
             var valueInput = document.getElementById("other-type-value");
             var infoName = inputInfoName.value;
             if(infoName === "" || valueInput.value === "") { return; }
-            var newNode = document.createElement('tr');
-            newNode.innerHTML = '<td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile">'+infoName+'</td> \
-                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--split-in-mobile"><div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label"> \
-                        <input class="mdl-textfield__input mdl-color--white" type="text" id="sample1" name="infos['+infoName+']" value="'+valueInput.value+'"> \
-                        <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+' de l\'usager ici</label> \
-                    </div></td> \
-                    <td class="mdl-data-table__cell--non-numeric"> \
-                    <button class="mdl-button mdl-js-button mdl-button--fab" type="button" onclick="removeInfo(this);"> \
-                        <i class="material-icons">remove</i> \
-                    </button></td>';
+            var newNode = document.createElement("div");
+            newNode.innerHTML = ''+infoName+'<br> \
+                       <div class="mdl-textfield mdl-js-textfield --margin-right-20px"> \
+                           <input class="mdl-textfield__input mdl-color--white" type="text" id="sample1" name="infos['+infoName+']" value="'+valueInput.value+'"> \
+                            <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+' de l\'usager ici</label> \
+                       </div> \
+                    <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" type="button" onclick="removeInfo(this);"> \
+                        <i class="material-icons">remove_circle</i> \
+                    </button>';
 
-            inputInfoName.parentNode.parentNode.parentNode.parentNode.insertBefore(newNode, inputInfoName.parentNode.parentNode.parentNode);
+            var otherDiv = document.getElementById("other-div");
+            otherDiv.parentNode.insertBefore(newNode, otherDiv);
             inputInfoName.value = "";
             inputInfoName.parentNode.classList.remove("is-dirty");
             inputInfoName.parentNode.classList.add("invisible");
@@ -94,6 +84,6 @@
             valueInput.value = "";
             valueInput.parentNode.classList.remove("is-dirty");
             valueInput.parentNode.classList.add("invisible");
-            document.getElementById("add-infos__ok-button").disabled = true;
+            document.getElementById("add-infos__ok-button").classList.add("invisible");
         }
 </script>
