@@ -7,7 +7,7 @@ import java.util.UUID
 
 import javax.inject.{Inject, Singleton}
 import models.EventType.DeploymentDashboardUnauthorized
-import models.{Area, Organisation, User, UserGroup}
+import models.{Area, Organisation, UserGroup}
 import play.api.libs.json.Json
 import play.api.mvc._
 
@@ -62,7 +62,6 @@ case class ApiController @Inject() (
       val userGroups = userGroupService.allGroups.filter(
         _.organisationSetOrDeducted.exists(_.id == Organisation.franceServicesId)
       )
-      val areas = Area.all
       val matches: List[(FranceServiceInstance, Option[UserGroup], Area)] =
         organisationService.franceServiceInfos.instances
           .map(instance =>

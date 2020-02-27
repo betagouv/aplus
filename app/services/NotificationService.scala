@@ -9,7 +9,6 @@ import models._
 import play.api.Logger
 import play.api.libs.mailer.MailerClient
 import play.api.libs.mailer.Email
-import play.api.mvc.{AnyContent, Request}
 
 @Singleton
 class NotificationService @Inject() (
@@ -66,7 +65,6 @@ class NotificationService @Inject() (
       .byIds(users.flatMap(_.groupIds))
       .filter(_.email.nonEmpty)
       .filter(_.areaIds.contains(application.area))
-    val groupIds = groups.map(_.id)
 
     // Send emails to users
     users
@@ -133,7 +131,7 @@ class NotificationService @Inject() (
 
   private def generateNotificationBALEmail(
       application: Application,
-      answerOption: Option[Answer] = None,
+      answerOption: Option[Answer],
       users: List[User]
   )(group: UserGroup): Email = {
     val (subject, url) = answerOption match {

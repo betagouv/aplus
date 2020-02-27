@@ -16,11 +16,11 @@ class HomeController @Inject() (loginAction: LoginAction, db: Database)(
     implicit webJarsUtil: WebJarsUtil
 ) extends InjectedController {
 
-  def index = loginAction { implicit request =>
+  def index = loginAction {
     Redirect(routes.ApplicationController.myApplications())
   }
 
-  def status = Action { implicit request =>
+  def status = Action {
     val connectionValid =
       try {
         db.withConnection {

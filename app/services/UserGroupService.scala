@@ -5,7 +5,7 @@ import java.util.UUID
 
 import anorm._
 import javax.inject.Inject
-import models.{Area, User, UserGroup}
+import models.UserGroup
 import play.api.db.Database
 import anorm.JodaParameterMetaData._
 import helper.{Time, UUIDHelper}

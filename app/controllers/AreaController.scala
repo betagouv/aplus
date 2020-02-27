@@ -18,8 +18,6 @@ import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
 import services.{EventService, UserGroupService, UserService}
 
-import scala.concurrent.ExecutionContext
-
 @Singleton
 case class AreaController @Inject() (
     loginAction: LoginAction,
@@ -27,7 +25,7 @@ case class AreaController @Inject() (
     userService: UserService,
     userGroupService: UserGroupService,
     configuration: play.api.Configuration
-)(implicit val webJarsUtil: WebJarsUtil, ec: ExecutionContext)
+)(implicit val webJarsUtil: WebJarsUtil)
     extends InjectedController
     with UserOperators {
 
@@ -36,7 +34,7 @@ case class AreaController @Inject() (
     .split(",")
     .flatMap(UUIDHelper.fromString)
 
-  @deprecated
+  @deprecated("You should not need area", "v0.1")
   def change(areaId: UUID) = loginAction { implicit request =>
     if (!request.currentUser.areas.contains[UUID](areaId)) {
       eventService.log(ChangeAreaUnauthorized, s"Accès à la zone $areaId non autorisé")

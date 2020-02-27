@@ -6,15 +6,8 @@
     white-space: pre-wrap;
 }
 
-/* Inspired by:
- * https://github.com/google/material-design-lite/blob/mdl-1.x/src/layout/_layout.scss#L449
- */
-.mdl-layout--fixed-drawer > .mdl-layout__footer {
-    margin-left: 240px;
-}
-
-@media screen and (max-width: 1024px) {
-    .mdl-layout--fixed-drawer > .mdl-layout__footer {
-        margin-left: 0;
-    }
+.mdl-tabs__tab-bar--align-left {
+    -webkit-justify-content: left;
+    -ms-flex-pack: left;
+    justify-content: left;
 }

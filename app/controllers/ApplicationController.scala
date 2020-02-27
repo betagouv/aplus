@@ -37,7 +37,6 @@ import models.EventType.{
   ApplicationCreated,
   ApplicationCreationError,
   ApplicationCreationInvalid,
-  ApplicationCreationUnauthorized,
   ApplicationFormShowed,
   ApplicationNotFound,
   ApplicationShowed,
@@ -48,9 +47,7 @@ import models.EventType.{
   InviteNotCreated,
   MyApplicationsShowed,
   MyCSVShowed,
-  StatsIncorrectSetup,
   StatsShowed,
-  StatsUnauthorized,
   TerminateCompleted,
   TerminateError,
   TerminateIncompleted,
@@ -321,7 +318,7 @@ case class ApplicationController @Inject() (
           "L'utilisateur n'a pas de droit d'afficher toutes les demandes"
         )
         Unauthorized(
-          "Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          s"Vous n'avez pas les droits suffisants pour voir cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
         )
       case _ =>
         val area = if (areaId == Area.allArea.id) None else Area.fromId(areaId)
@@ -452,7 +449,7 @@ case class ApplicationController @Inject() (
           user = Some(user)
         )
         Unauthorized(
-          "Vous n'avez pas le droit de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          s"Vous n'avez pas le droit de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
         )
       case (true, Some(user)) if user.admin =>
         eventService.log(
@@ -461,7 +458,7 @@ case class ApplicationController @Inject() (
           user = Some(user)
         )
         Unauthorized(
-          "Vous n'avez pas le droit de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          s"Vous n'avez pas le droit de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
         )
       case (true, Some(user)) if request.currentUser.areas.intersect(user.areas).nonEmpty =>
         val currentUserId = user.id
@@ -479,7 +476,7 @@ case class ApplicationController @Inject() (
       case _ =>
         eventService.log(AllAsNotFound, s"L'utilisateur $userId n'existe pas")
         BadRequest(
-          "L'utilisateur n'existe pas ou vous n'avez pas le droit d'accéder à cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          s"L'utilisateur n'existe pas ou vous n'avez pas le droit d'accéder à cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
         )
     }
   }
@@ -702,7 +699,7 @@ case class ApplicationController @Inject() (
             Some(application)
           )
           Unauthorized(
-            "Vous n'avez pas les droits suffisants pour voir les fichiers sur cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+            s"Vous n'avez pas les droits suffisants pour voir les fichiers sur cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
           )
       }
   }
@@ -873,7 +870,7 @@ case class ApplicationController @Inject() (
             Some(application)
           )
           Unauthorized(
-            "Vous n'avez pas les droits suffisants pour inviter des agents à cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+            s"Vous n'avez pas les droits suffisants pour inviter des agents à cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
           )
         }
     }
@@ -892,7 +889,7 @@ case class ApplicationController @Inject() (
         eventService
           .log(TerminateIncompleted, s"La demande de clôture pour $applicationId est incomplète")
         BadGateway(
-          "L'utilité de la demande n'est pas présente, il s'agit sûrement d'une erreur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          s"L'utilité de la demande n'est pas présente, il s'agit sûrement d'une erreur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
         )
       case (Some(usefulness), Some(application)) =>
         val finalUsefulness = if (request.currentUser.id == application.creatorUserId) {

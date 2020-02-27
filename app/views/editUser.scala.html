@@ -1,7 +1,5 @@
 @import models._
 @import _root_.helper.MDLForms._
-@import _root_.helper.UUIDHelper._
-@import _root_.helper.BooleanHelper
 @import java.util.UUID
 @(currentUser: User)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
