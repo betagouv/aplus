@@ -75,7 +75,7 @@ if (window.document.getElementById(franceServiceDeploymentTableTagId)) {
         }
       }
       var element = window.document.getElementById(franceServiceDeploymentTotalTagId);
-      element.textContent = "Nombre de déploiements (plus de 1 utilisateurs): " +
+      element.textContent = "Nombre de déploiements (plus de 1 utilisateur): " +
         nrOfDeployed + " ; Nombre total: " + totalNr
       return response; //return the response data to tabulator
     },
