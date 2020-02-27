@@ -14,6 +14,6 @@ class ServicesDependencies @Inject() (
     * https://www.playframework.com/documentation/2.8.x/ThreadPools#Many-specific-thread-pools
     */
   implicit val databaseExecutionContext: ExecutionContext =
-    actorSystem.dispatchers.lookup("aplus.contexts.blocking-db-queries")
+    actorSystem.dispatchers.lookup("contexts.blocking-db-queries")
 
 }
