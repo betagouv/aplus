@@ -38,7 +38,7 @@ case class User(
   // Note: it might be a little bit trickier to make this work
   // because of the administrated areas
   // eg. by getting the `.currentUser` with multiple DB calls
-  lazy val rights = authorization.readUserRights(this)
+  lazy val rights = Authorization.readUserRights(this)
 
   def canSeeUsersInArea(areaId: UUID): Boolean =
     (areaId == Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
