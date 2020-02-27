@@ -1,11 +1,11 @@
 @(currentUser: User)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-@main(currentUser, maxWidth = false)(s"Tableau de déploiement France Service") {
+@main(currentUser, maxWidth = false)(s"Tableau de déploiement France Services") {
     @webJarsUtil.locate("tabulator.min.css").css()
     @webJarsUtil.locate("tabulator.min.js").script()
     @webJarsUtil.locate("xlsx.full.min.js").script()
 }{
-    <h5 class="title--addline">Tableau de déploiement France Service</h5>
+    <h5 class="title--addline">Tableau de déploiement France Services</h5>
     <div id="aplus-admin-deployment-france-service-total" class="mdl-cell mdl-cell--12-col"></div>
     <div id="aplus-admin-deployment-france-service-table" class="mdl-cell mdl-cell--12-col"></div>
     <div class="mdl-cell mdl-cell--12-col">
