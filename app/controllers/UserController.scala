@@ -48,6 +48,8 @@ import play.api.http.Status
 import serializers.UserAndGroupCsvSerializer
 import services._
 
+import scala.concurrent.{ExecutionContext, Future}
+
 @Singleton
 case class UserController @Inject() (
     loginAction: LoginAction,
@@ -192,38 +194,85 @@ case class UserController @Inject() (
       }
   }
 
-  def editUser(userId: UUID): Action[AnyContent] = loginAction {
-    implicit request: RequestWithUserData[AnyContent] =>
-      asAdmin { () =>
-        ViewUserUnauthorized -> s"Accès non autorisé pour voir $userId"
-      } { () =>
-        userService.byId(userId, includeDisabled = true) match {
-          case None =>
-            eventService.log(UserNotFound, s"L'utilisateur $userId n'existe pas")
-            NotFound("Nous n'avons pas trouvé cet utilisateur")
-          case Some(user) if user.canBeEditedBy(request.currentUser) =>
-            val form = userForm(Time.dateTimeZone).fill(user)
-            val groups = groupService.allGroups
-            val unused = not(isAccountUsed(user))
-            val Token(tokenName, tokenValue) = CSRF.getToken.get
-            eventService
-              .log(UserShowed, "Visualise la vue de modification l'utilisateur ", user = Some(user))
-            Ok(
-              views.html.editUser(request.currentUser)(
-                form,
-                userId,
-                groups,
-                unused,
-                tokenName = tokenName,
-                tokenValue = tokenValue
-              )
-            )
-          case _ =>
-            eventService.log(ViewUserUnauthorized, s"Accès non autorisé pour voir $userId")
-            Unauthorized("Vous n'avez pas le droit de faire ça")
-        }
-      }
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  class UserRequest[A](val user: User, val request: RequestWithUserData[A])
+      extends WrappedRequest[A](request) {
+    def currentUser = request.currentUser
   }
+
+  object Authorization {
+
+    sealed trait UserRight
+
+    object UserRight {
+      case object Admin extends UserRight
+      case object CanSeeUsers extends UserRight
+    }
+  }
+
+  // Forcer cette méthode dans le login action ?
+  def HasRights(userRights: Authorization.UserRight*)(implicit ec: ExecutionContext) =
+    new ActionFilter[RequestWithUserData] {
+      def executionContext = ec
+
+      def filter[A](input: RequestWithUserData[A]) = Future.successful {
+        if (???)
+          Some(Forbidden)
+        else
+          None
+      }
+    }
+
+  def WithUser(userId: UUID)(implicit ec: ExecutionContext) =
+    new ActionRefiner[RequestWithUserData, UserRequest] {
+      def executionContext = ec
+
+      def refine[A](request: RequestWithUserData[A]) =
+        Future.successful {
+          userService
+            .byId(userId)
+            .fold[Either[UserRequest[A], Result]] {
+              // Mettre le log dans une autre action ?
+              eventService.log(UserNotFound, s"L'utilisateur $userId n'existe pas")(request)
+              Right(NotFound("Nous n'avons pas trouvé cet utilisateur"))
+            } { user: User =>
+              if (not(user.canBeEditedBy(request.currentUser))) {
+                eventService.log(ViewUserUnauthorized, s"Accès non autorisé pour voir $userId")(
+                  request
+                )
+                Right(Unauthorized("Vous n'avez pas le droit de faire ça"))
+              } else
+                Left(new UserRequest(user, request))
+            }
+        }
+    }
+
+  def editUser(userId: UUID) =
+    /** Il y a scalafmt qui rajoute des . et () */
+    loginAction.andThen(HasRights(Authorization.UserRight.Admin)).andThen(WithUser(userId)) {
+      implicit request =>
+        val form = userForm(Time.dateTimeZone).fill(request.user)
+        val groups = groupService.allGroups
+        val unused = not(isAccountUsed(request.user))
+        val Token(tokenName, tokenValue) = CSRF.getToken.get
+        eventService
+          .log(
+            UserShowed,
+            "Visualise la vue de modification l'utilisateur ",
+            user = Some(request.user)
+          )(request.request)
+        Ok(
+          views.html.editUser(request.currentUser)(
+            form,
+            userId,
+            groups,
+            unused,
+            tokenName = tokenName,
+            tokenValue = tokenValue
+          )
+        )
+    }
 
   def isAccountUsed(user: User): Boolean =
     applicationService.allForUserId(userId = user.id, anonymous = false).nonEmpty
