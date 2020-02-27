@@ -25,7 +25,9 @@ class RequestWithUserData[A](
     val currentUser: User,
     @deprecated val currentArea: Area,
     request: Request[A]
-) extends WrappedRequest[A](request)
+) extends WrappedRequest[A](request) {
+    val rights = Authorization.readUserRights(currentUser)
+}
 
 //TODO : this class is complicated. Maybe we can split the logic.
 

@@ -4,8 +4,8 @@ import java.util.UUID
 
 import javax.inject.Inject
 import anorm.Column.nonNull
-import models.{Answer, Application}
-import models.authorization.{policies, UserRights}
+import models.{Answer, Application, Error}
+import models.Authorization.UserRights
 import play.api.db.Database
 import play.api.libs.json.{Json, JsonConfiguration, JsonNaming}
 import anorm._
@@ -73,29 +73,24 @@ class ApplicationService @Inject() (db: Database) {
     )
 
   // TODO: return Either[Error, Application]
-  def byId(id: UUID, fromUserId: UUID, rights: UserRights): Option[Application] = {
-    val anonymous = policies.isAdmin(rights)
-    // TODO: if this check passes, then `anonymous = false`
-    // if ((application
-    //              .haveUserInvitedOn(request.currentUser) || request.currentUser.id == application.creatorUserId) && request.currentUser.expert && request.currentUser.admin && !application.closed) {
-
+  def byId(id: UUID, fromUserId: UUID, rights: UserRights): Either[Error, Application] = {
     db.withConnection { implicit connection =>
       val result = SQL(
         "UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *"
       ).on('id -> id, 'seen_by_user_id -> fromUserId)
         .as(simpleApplication.singleOpt)
       result match {
-        case None => None
+        case None => Left(Error.EntityNotFound)
         case Some(application) =>
-          if (policies.canSeeApplication(application)(rights)) {
-            if (anonymous) {
-              Some(application.anonymousApplication)
+          if (Autorisation.canSeeApplication(application).isAuthorized(rights)) {
+            if (Authorization.canSeePrivateDataOfApplication(application)(rights)) {
+              Right(application)
             } else {
-              Some(application)
+              Right(application.anonymousApplication)
             }
           } else {
             // TODO: AuthorizationError
-            None
+            Left(Error.Authorization(s"Accès non authorisé à la demande $id."))
           }
       }
     }
