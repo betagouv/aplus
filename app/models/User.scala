@@ -31,7 +31,8 @@ case class User(
     groupIds: List[UUID] = List(),
     cguAcceptationDate: Option[DateTime] = None,
     newsletterAcceptationDate: Option[DateTime] = None,
-    phoneNumber: Option[String] = None
+    phoneNumber: Option[String] = None,
+    observableOrganisationIds: List[UUID] = Nil
 ) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"
 

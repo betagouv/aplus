@@ -16,7 +16,7 @@ object Authorization {
         if (user.admin) Some(AdminOfAreas(user.areas.toSet)) else None,
         if (user.instructor) Some(InstructorOfGroups(user.groupIds.toSet)) else None,
         if (user.groupAdmin) Some(ManagerOfGroups(user.groupIds.toSet)) else None
-        // if (user.observableOrganisationIds.nonEmpty) Some(ObserverOfOrganisations(user.observableOrganisationIds)) else None
+        // if (user.observableOrganisationIds.nonEmpty) Some(ObserverOfOrganisations(user.observableOrganisationIds.toSet)) else None
       ).flatten
     )
   }
