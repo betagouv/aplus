@@ -34,7 +34,7 @@ import models.EventType.{
   UsersShowed,
   ViewUserUnauthorized
 }
-import models.{Area, EventType, User, UserGroup}
+import models.{authorization, Area, EventType, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
@@ -209,7 +209,8 @@ case class UserController @Inject() (
           case None =>
             eventService.log(UserNotFound, s"L'utilisateur $userId n'existe pas")
             NotFound("Nous n'avons pas trouvé cet utilisateur")
-          case Some(user) if user.canBeEditedBy(request.currentUser) =>
+          case Some(user)
+              if authorization.policies.canEditOtherUser(user)(request.currentUser.rights) =>
             val form = userForm(Time.dateTimeZone).fill(user)
             val groups = groupService.allGroups
             val unused = not(isAccountUsed(user))
@@ -275,11 +276,9 @@ case class UserController @Inject() (
             val userToUpdate = updatedUser.copy(
               areas = areaIds.intersect(request.currentUser.areas)
             ) // intersect is a safe gard (In case an Admin try to manage an authorized area)
+            val rights = request.currentUser.rights
 
-            if (not(user.canBeEditedBy(request.currentUser))
-                || areaIds
-                  .diff(request.currentUser.areas)
-                  .nonEmpty) { // fail if in case an Admin try to manage an authorized area
+            if (not(authorization.policies.canEditOtherUser(user)(rights))) {
               eventService.log(PostEditUserUnauthorized, s"Accès non autorisé à modifier $userId")
               Unauthorized("Vous n'avez pas le droit de faire ça")
             } else if (userService.update(userToUpdate)) {

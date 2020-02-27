@@ -5,6 +5,7 @@ import java.util.UUID
 import javax.inject.Inject
 import anorm.Column.nonNull
 import models.{Answer, Application}
+import models.authorization.{policies, UserRights}
 import play.api.db.Database
 import play.api.libs.json.Json
 import anorm._
@@ -71,18 +72,34 @@ class ApplicationService @Inject() (db: Database) {
       )
     )
 
-  def byId(id: UUID, fromUserId: UUID, anonymous: Boolean): Option[Application] =
+  // TODO: return Either[Error, Application]
+  def byId(id: UUID, fromUserId: UUID, rights: UserRights): Option[Application] = {
+    val anonymous = policies.isAdmin(rights)
+    // TODO: if this check passes, then `anonymous = false`
+    // if ((application
+    //              .haveUserInvitedOn(request.currentUser) || request.currentUser.id == application.creatorUserId) && request.currentUser.expert && request.currentUser.admin && !application.closed) {
+
     db.withConnection { implicit connection =>
       val result = SQL(
         "UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *"
       ).on('id -> id, 'seen_by_user_id -> fromUserId)
         .as(simpleApplication.singleOpt)
-      if (anonymous) {
-        result.map(_.anonymousApplication)
-      } else {
-        result
+      result match {
+        case None => None
+        case Some(application) =>
+          if (policies.canSeeApplication(application)(rights)) {
+            if (anonymous) {
+              Some(application.anonymousApplication)
+            } else {
+              Some(application)
+            }
+          } else {
+            // TODO: AuthorizationError
+            None
+          }
       }
     }
+  }
 
   def openAndOlderThan(day: Int) = db.withConnection { implicit connection =>
     SQL(
