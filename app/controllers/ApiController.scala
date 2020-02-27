@@ -60,7 +60,7 @@ case class ApiController @Inject() (
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
       val userGroups = userGroupService.allGroups.filter(
-        _.organisationSetOrDeducted.exists(_.id == Organisation.Id("MFS"))
+        _.organisationSetOrDeducted.exists(_.id == Organisation.franceServicesId)
       )
       val areas = Area.all
       val matches: List[(FranceServiceInstance, Option[UserGroup], Area)] =
