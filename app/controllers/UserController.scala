@@ -44,7 +44,6 @@ import play.api.data.{Form, Mapping}
 import play.api.mvc._
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
-import play.api.http.Status
 import serializers.UserAndGroupCsvSerializer
 import services._
 
@@ -63,7 +62,7 @@ case class UserController @Inject() (
     with UserOperators
     with GroupOperators {
 
-  def home = loginAction { implicit request =>
+  def home = loginAction {
     TemporaryRedirect(controllers.routes.UserController.all(Area.allArea.id).url)
   }
 

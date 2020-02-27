@@ -10,7 +10,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
 import play.api.data.Form
-import play.api.data.Forms.{boolean, email, ignored, list, mapping, of, optional, text, uuid}
+import play.api.data.Forms.{email, ignored, list, mapping, of, optional, text, uuid}
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import play.libs.ws.WSClient
 import services._

@@ -6,14 +6,12 @@ import javax.inject.Inject
 import anorm._
 import models.User
 import play.api.db.Database
-import play.api.libs.json.Json
 import anorm.JodaParameterMetaData._
 import helper.{Hash, Time}
 import org.postgresql.util.PSQLException
 
 @javax.inject.Singleton
 class UserService @Inject() (configuration: play.api.Configuration, db: Database) {
-  import serializers.Anorm._
 
   private lazy val cryptoSecret = configuration.underlying.getString("play.http.secret.key ")
 

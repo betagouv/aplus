@@ -3,7 +3,6 @@ package services
 import java.util.UUID
 
 import actions.RequestWithUserData
-import akka.http.scaladsl.model.RemoteAddress
 import javax.inject.Inject
 import models._
 import play.api.db.Database
@@ -56,8 +55,8 @@ class EventService @Inject() (db: Database) {
       remoteAddress: String,
       code: String,
       description: String,
-      application: Option[Application] = None,
-      user: Option[User] = None
+      application: Option[Application],
+      user: Option[User]
   ): Unit = {
     val event = Event(
       UUID.randomUUID(),

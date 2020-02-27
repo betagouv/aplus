@@ -1,6 +1,6 @@
 package forms
 
-import play.api.data.{FormError, Mapping, RepeatedMapping}
+import play.api.data.{FormError, Mapping}
 import play.api.data.validation.Constraint
 
 object FormsPlusMap {

@@ -3,7 +3,7 @@ package models
 import java.util.UUID
 import helper.BooleanHelper.not
 
-import org.joda.time.{DateTime, Hours, Minutes}
+import org.joda.time.{DateTime, Minutes}
 
 case class Application(
     id: UUID,
