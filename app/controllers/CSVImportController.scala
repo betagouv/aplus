@@ -120,7 +120,9 @@ case class CSVImportController @Inject() (
       "groupIds" -> default(list(uuid), List()),
       "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
       "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-      "phone-number" -> optional(text)
+      "phone-number" -> optional(text),
+      // TODO: put also in forms/imports?
+      "observableOrganisationIds" -> list(of[Organisation.Id])
     )(User.apply)(User.unapply)
 
   private def groupImportMapping(date: DateTime): Mapping[UserGroup] =

@@ -38,6 +38,7 @@ case class Application(
     files ++ answers.flatMap(_.files).flatten
   }
 
+  // TODO: triple quote the string?
   lazy val searchData = {
     val stripChars = "\"<>'"
     s"${Area.fromId(area).map(_.name).getOrElse("")} ${creatorUserName.filterNot(
@@ -110,13 +111,6 @@ case class Application(
 
   // Security
 
-  def canBeShowedBy(user: User) =
-    user.admin ||
-      ((user.instructor || user.helper) && not(user.expert) && invitedUsers.keys.toList
-        .contains(user.id)) ||
-      (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed) ||
-      creatorUserId == user.id
-
   def fileCanBeShowed(user: User, answer: UUID) =
     answers.find(_.id == answer) match {
       case None => false
@@ -147,6 +141,7 @@ case class Application(
     (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
       creatorUserId == user.id || user.admin
 
+// TODO: remove
   def haveUserInvitedOn(user: User) = invitedUsers.keys.toList.contains(user.id)
 
   // Stats

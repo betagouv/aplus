@@ -1,10 +1,11 @@
 package services
 
 import java.util.UUID
+import scala.concurrent.Future
 
 import javax.inject.Inject
 import anorm.Column.nonNull
-import models.{Answer, Application, Error}
+import models.{Answer, Application, Authorization, Error}
 import models.Authorization.UserRights
 import play.api.db.Database
 import play.api.libs.json.Json
@@ -16,7 +17,12 @@ import play.api.libs.json.JodaReads._
 import play.api.libs.json.JodaWrites._
 
 @javax.inject.Singleton
-class ApplicationService @Inject() (db: Database) {
+class ApplicationService @Inject() (
+    db: Database,
+    dependencies: ServicesDependencies
+) {
+  import dependencies.databaseExecutionContext
+
   import serializers.Anorm._
   import serializers.JsonFormats._
 
@@ -72,29 +78,28 @@ class ApplicationService @Inject() (db: Database) {
       )
     )
 
-  // TODO: return Either[Error, Application]
-  def byId(id: UUID, fromUserId: UUID, rights: UserRights): Either[Error, Application] = {
-    db.withConnection { implicit connection =>
-      val result = SQL(
-        "UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *"
-      ).on('id -> id, 'seen_by_user_id -> fromUserId)
-        .as(simpleApplication.singleOpt)
-      result match {
-        case None => Left(Error.EntityNotFound)
-        case Some(application) =>
-          if (Autorisation.canSeeApplication(application).isAuthorized(rights)) {
-            if (Authorization.canSeePrivateDataOfApplication(application)(rights)) {
-              Right(application)
+  def byId(id: UUID, fromUserId: UUID, rights: UserRights): Future[Either[Error, Application]] =
+    Future {
+      db.withConnection { implicit connection =>
+        val result = SQL(
+          "UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *"
+        ).on('id -> id, 'seen_by_user_id -> fromUserId)
+          .as(simpleApplication.singleOpt)
+        result match {
+          case None => Left(Error.EntityNotFound)
+          case Some(application) =>
+            if (Authorization.canSeeApplication(application)(rights)) {
+              if (Authorization.canSeePrivateDataOfApplication(application)(rights)) {
+                Right(application)
+              } else {
+                Right(application.anonymousApplication)
+              }
             } else {
-              Right(application.anonymousApplication)
+              Left(Error.Authorization)
             }
-          } else {
-            // TODO: AuthorizationError
-            Left(Error.Authorization(s"Accès non authorisé à la demande $id."))
-          }
+        }
       }
     }
-  }
 
   def openAndOlderThan(day: Int) = db.withConnection { implicit connection =>
     SQL(

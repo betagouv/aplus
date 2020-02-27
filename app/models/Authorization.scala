@@ -1,22 +1,23 @@
 package models
 
+import helper.BooleanHelper.not
 import java.util.UUID
 
-// TODO: rename file with upper case
 object Authorization {
 
-  // TODO:
-  // def readUserRights(user: User, adminAreas: List[Area]): UserRights
   def readUserRights(user: User): UserRights = {
     import UserRight._
     UserRights(
       Set[Option[UserRight]](
         Some(HasUserId(user.id)),
         if (user.helper) Some(Helper) else None,
+        if (user.expert) Some(Expert) else None,
         if (user.admin) Some(AdminOfAreas(user.areas.toSet)) else None,
         if (user.instructor) Some(InstructorOfGroups(user.groupIds.toSet)) else None,
-        if (user.groupAdmin) Some(ManagerOfGroups(user.groupIds.toSet)) else None
-        // if (user.observableOrganisationIds.nonEmpty) Some(ObserverOfOrganisations(user.observableOrganisationIds.toSet)) else None
+        if (user.groupAdmin) Some(ManagerOfGroups(user.groupIds.toSet)) else None,
+        if (user.observableOrganisationIds.nonEmpty)
+          Some(ObserverOfOrganisations(user.observableOrganisationIds.toSet))
+        else None
       ).flatten
     )
   }
@@ -24,12 +25,13 @@ object Authorization {
   private[Authorization] sealed trait UserRight
 
   object UserRight {
-    case class HasUserId(id: UUID)                                            extends UserRight
-    case object Helper                                                        extends UserRight
-    case class InstructorOfGroups(groupsManaged: Set[UUID])                   extends UserRight
-    case class AdminOfAreas(areasAdministrated: Set[UUID])                    extends UserRight
-    case class ManagerOfGroups(groupsManaged: Set[UUID])                      extends UserRight
-    case class ObserverOfOrganisations(organisations: Set[Organisation.Id])   extends UserRight
+    case class HasUserId(id: UUID) extends UserRight
+    case object Helper extends UserRight
+    case object Expert extends UserRight
+    case class InstructorOfGroups(groupsManaged: Set[UUID]) extends UserRight
+    case class AdminOfAreas(administeredAreas: Set[UUID]) extends UserRight
+    case class ManagerOfGroups(groupsManaged: Set[UUID]) extends UserRight
+    case class ObserverOfOrganisations(organisations: Set[Organisation.Id]) extends UserRight
   }
 
   /** Attached to a User
@@ -40,20 +42,40 @@ object Authorization {
       private[Authorization] rights: Set[UserRight]
   )
 
+  //
   // List of all possible authorization checks
-  // TODO: Maybe rename `checks` or `authorizationChecks`
- 
-  type Check = UserRights => Boolean
-  // Idea: nice authz messages
-  case class AuthorizationCheck(check: UserRights => Boolean, message: String)
+  //
 
-  //def isAdmin: Check =
-    // _.rights.contains(UserRight.Admin)
+  type Check = UserRights => Boolean
+
+  def isAdmin: Check =
+    _.rights.exists {
+      case UserRight.AdminOfAreas(_) => true
+      case _                         => false
+    }
 
   def isAdminOfArea(area: UUID): Check =
     _.rights.exists {
-      case UserRight.AdminOfAreas(administredAreas) if administredAreas.contains(area) => true
-      case _                                                                           => false
+      case UserRight.AdminOfAreas(administeredAreas) if administeredAreas.contains(area) => true
+      case _                                                                             => false
+    }
+
+  def isHelper: Check =
+    _.rights.exists {
+      case UserRight.Helper => true
+      case _                => false
+    }
+
+  def isExpert: Check =
+    _.rights.exists {
+      case UserRight.Expert => true
+      case _                => false
+    }
+
+  def isInstructor: Check =
+    _.rights.exists {
+      case UserRight.InstructorOfGroups(_) => true
+      case _                               => false
     }
 
   def isAdminOfOneOfAreas(areas: Set[UUID]): Check =
@@ -65,24 +87,36 @@ object Authorization {
   def canEditOtherUser(editedUser: User): Check =
     rights => isAdminOfOneOfAreas(editedUser.areas.toSet)(rights)
 
-  // TODO:
-  // real code is in Application.scala:
-  /*
-def canBeShowedBy(user: User) =
-  user.admin ||
-    ((user.instructor || user.helper) && not(user.expert) && invitedUsers.keys.toList
-      .contains(user.id)) ||
-    (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed) ||
-    creatorUserId == user.id
-    */
-  def canSeeApplication(application: Application): Check =
+  def isApplicationCreator(application: Application): Check =
+    _.rights.exists {
+      case UserRight.HasUserId(id) => (application.creatorUserId: UUID) == (id: UUID)
+      case _                       => false
+    }
+
+  def isInvitedOn(application: Application): Check =
     _.rights.exists {
       case UserRight.HasUserId(id) => application.invitedUsers.isDefinedAt(id)
       case _                       => false
     }
-  def canSeePrivateDataOfApplication(application: Application): Check = ???
-   // if ((application
-    //              .haveUserInvitedOn(request.currentUser) || request.currentUser.id == application.creatorUserId) && request.currentUser.expert && request.currentUser.admin && !application.closed) {
 
+  def canSeeApplication(application: Application): Check = rights => {
+    val validCase1 = isApplicationCreator(application)(rights)
+    val validCase2 = isAdmin(rights)
+    val validCase3 =
+      (isInstructor(rights) || isHelper(rights)) && not(isExpert(rights)) &&
+        isInvitedOn(application)(rights)
+    val validCase4 = isExpert(rights) && isInvitedOn(application)(rights) && not(application.closed)
+    validCase1 || validCase2 || validCase3 || validCase4
+  }
+
+  def canSeePrivateDataOfApplication(application: Application): Check = rights => {
+    val isCreatorOrIsInvited = isInvitedOn(application)(rights) || isApplicationCreator(
+      application
+    )(rights)
+    val validCase1 = isCreatorOrIsInvited && !isAdmin(rights)
+    // If user is expert, admin and invited to the application he can see the data
+    val validCase2 = isCreatorOrIsInvited && isExpert(rights) && isAdmin(rights) && !application.closed
+    validCase1 || validCase2
+  }
 
 }

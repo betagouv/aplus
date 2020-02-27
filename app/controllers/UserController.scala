@@ -34,7 +34,7 @@ import models.EventType.{
   UsersShowed,
   ViewUserUnauthorized
 }
-import models.{Authorization, Area, EventType, User, UserGroup}
+import models.{Area, Authorization, EventType, Organisation, User, UserGroup}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
@@ -209,8 +209,7 @@ case class UserController @Inject() (
           case None =>
             eventService.log(UserNotFound, s"L'utilisateur $userId n'existe pas")
             NotFound("Nous n'avons pas trouvé cet utilisateur")
-          case Some(user)
-              if Authorization.policies.canEditOtherUser(user)(request.currentUser.rights) =>
+          case Some(user) if Authorization.canEditOtherUser(user)(request.rights) =>
             val form = userForm(Time.dateTimeZone).fill(user)
             val groups = groupService.allGroups
             val unused = not(isAccountUsed(user))
@@ -276,9 +275,9 @@ case class UserController @Inject() (
             val userToUpdate = updatedUser.copy(
               areas = areaIds.intersect(request.currentUser.areas)
             ) // intersect is a safe gard (In case an Admin try to manage an authorized area)
-            val rights = request.currentUser.rights
+            val rights = request.rights
 
-            if (not(Authorization.policies.canEditOtherUser(user)(rights))) {
+            if (not(Authorization.canEditOtherUser(user)(rights))) {
               eventService.log(PostEditUserUnauthorized, s"Accès non autorisé à modifier $userId")
               Unauthorized("Vous n'avez pas le droit de faire ça")
             } else if (userService.update(userToUpdate)) {
@@ -485,7 +484,9 @@ case class UserController @Inject() (
           "groupIds" -> default(list(uuid), List()),
           "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
           "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-          "phone-number" -> optional(text)
+          "phone-number" -> optional(text),
+          // TODO: put forms
+          "observableOrganisationIds" -> list(of[Organisation.Id])
         )(User.apply)(User.unapply)
       )
     )
@@ -517,6 +518,8 @@ case class UserController @Inject() (
       "groupIds" -> default(list(uuid), List()),
       "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
       "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-      "phone-number" -> optional(text)
+      "phone-number" -> optional(text),
+      // TODO: put forms
+      "observableOrganisationIds" -> list(of[Organisation.Id])
     )(User.apply)(User.unapply)
 }

@@ -26,7 +26,8 @@ class RequestWithUserData[A](
     @deprecated("You should use area in queryString or url and not inside a cookie", "v0.1") val currentArea: Area,
     request: Request[A]
 ) extends WrappedRequest[A](request) {
-    val rights = Authorization.readUserRights(currentUser)
+  // Note: accessible here because we will need to make DB calls to create it (areas)
+  val rights = Authorization.readUserRights(currentUser)
 }
 
 //TODO : this class is complicated. Maybe we can split the logic.

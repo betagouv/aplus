@@ -7,19 +7,20 @@ trait EventType {
   val level: String
 }
 
-sealed trait Error extends EventType {
-  val level = "ERROR"
-}
-
-sealed trait Info extends EventType {
-  val level = "INFO"
-}
-
-sealed trait Warn extends EventType {
-  val level = "WARN"
-}
-
 object EventType {
+
+  sealed trait Error extends EventType {
+    val level = "ERROR"
+  }
+
+  sealed trait Info extends EventType {
+    val level = "INFO"
+  }
+
+  sealed trait Warn extends EventType {
+    val level = "WARN"
+  }
+
   object AddExpertCreated extends Info
   object AddExpertNotCreated extends Error
   object AddExpertNotFound extends Error

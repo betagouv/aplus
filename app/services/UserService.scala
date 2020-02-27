@@ -34,7 +34,8 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
       "group_ids",
       "cgu_acceptation_date",
       "newsletter_acceptation_date",
-      "phone_number"
+      "phone_number",
+      "observable_organisation_ids"
     )
     .map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
 

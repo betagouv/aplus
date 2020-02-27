@@ -4,7 +4,7 @@ sealed trait Error
 
 object Error {
 
-    case class Authorization(message: String) extends Error
-    case object EntityNotFound extends Error
+  case object Authorization extends Error
+  case object EntityNotFound extends Error
 
 }
