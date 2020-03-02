@@ -63,7 +63,7 @@ class OrganisationService {
     // To see what we extend, see:
     // https://github.com/tototoshi/scala-csv/blob/1.3.6/src/main/scala/com/github/tototoshi/csv/Formats.scala#L18
     val reader = CSVReader.open(
-      Source.fromFile("data/France_Services_CDC_Liste_des_France_Services_31012020_V0.csv")
+      Source.fromFile("data/France_Services_CDC_Liste_des_France_Services_02032020.csv")
     )
     def readNthField(line: List[String], nth: Int): Option[String] =
       line.lift(nth).flatMap { field =>
