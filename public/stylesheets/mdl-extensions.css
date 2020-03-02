@@ -27,3 +27,9 @@ Typography
 .mdl-typography--text-prewrap {
     white-space: pre-wrap;
 }
+
+.mdl-tabs__tab-bar--align-left {
+    -webkit-justify-content: left;
+    -ms-flex-pack: left;
+    justify-content: left;
+}

@@ -23,7 +23,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class RequestWithUserData[A](
     val currentUser: User,
-    @deprecated val currentArea: Area,
+    @deprecated("You should use area in queryString or url and not inside a cookie", "v0.1") val currentArea: Area,
     request: Request[A]
 ) extends WrappedRequest[A](request)
 

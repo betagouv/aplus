@@ -3,7 +3,6 @@ package models
 import java.util.UUID
 
 import org.joda.time.DateTime
-import helper.StringHelper.CanonizeString
 
 case class UserGroup(
     id: UUID,

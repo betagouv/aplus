@@ -37,7 +37,6 @@ import models.EventType.{
   ApplicationCreated,
   ApplicationCreationError,
   ApplicationCreationInvalid,
-  ApplicationCreationUnauthorized,
   ApplicationFormShowed,
   ApplicationNotFound,
   ApplicationShowed,
@@ -48,9 +47,7 @@ import models.EventType.{
   InviteNotCreated,
   MyApplicationsShowed,
   MyCSVShowed,
-  StatsIncorrectSetup,
   StatsShowed,
-  StatsUnauthorized,
   TerminateCompleted,
   TerminateError,
   TerminateIncompleted,
@@ -110,57 +107,61 @@ case class ApplicationController @Inject() (
   private def fetchGroupsWithInstructors(
       areaId: UUID,
       currentUser: User
-  ): (List[UserGroup], List[User], List[User]) = {
-    val groupsOfArea = userGroupService.byArea(areaId)
-    val usersInThoseGroups = userService.byGroupIds(groupsOfArea.map(_.id))
-    val instructorsOfGroups = usersInThoseGroups.filter(_.instructor)
-    // Note: we don't care about users who are in several areas
-    val coworkers = usersInThoseGroups
-      .filter(user =>
-        user.helper && user.groupIds.toSet.intersect(currentUser.groupIds.toSet).nonEmpty
-      )
-      .filterNot(user => (user.id: UUID) == (currentUser.id: UUID))
-    // This could be optimized by doing only one SQL query
-    val groupIdsWithInstructors = instructorsOfGroups.flatMap(_.groupIds).toSet
-    val groupsOfAreaWithInstructor =
-      groupsOfArea.filter(user => groupIdsWithInstructors.contains(user.id))
-    (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers)
+  ): Future[(List[UserGroup], List[User], List[User])] = {
+    val groupsOfAreaFuture = userGroupService.byArea(areaId)
+    groupsOfAreaFuture.map { groupsOfArea =>
+      val usersInThoseGroups = userService.byGroupIds(groupsOfArea.map(_.id))
+      val instructorsOfGroups = usersInThoseGroups.filter(_.instructor)
+      // Note: we don't care about users who are in several areas
+      val coworkers = usersInThoseGroups
+        .filter(user =>
+          user.helper && user.groupIds.toSet.intersect(currentUser.groupIds.toSet).nonEmpty
+        )
+        .filterNot(user => (user.id: UUID) == (currentUser.id: UUID))
+      // This could be optimized by doing only one SQL query
+      val groupIdsWithInstructors = instructorsOfGroups.flatMap(_.groupIds).toSet
+      val groupsOfAreaWithInstructor =
+        groupsOfArea.filter(user => groupIdsWithInstructors.contains(user.id))
+      (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers)
+    }
   }
 
-  def create = loginAction { implicit request =>
+  def create = loginAction.async { implicit request =>
     eventService.log(ApplicationFormShowed, "Visualise le formulaire de création de demande")
-    val (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =
-      fetchGroupsWithInstructors(request.currentArea.id, request.currentUser)
-    Ok(
-      views.html.createApplication(request.currentUser, request.currentArea)(
-        instructorsOfGroups,
-        groupsOfAreaWithInstructor,
-        coworkers,
-        applicationForm
-      )
-    )
+    fetchGroupsWithInstructors(request.currentArea.id, request.currentUser).map {
+      case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
+        Ok(
+          views.html.createApplication(request.currentUser, request.currentArea)(
+            instructorsOfGroups,
+            groupsOfAreaWithInstructor,
+            coworkers,
+            applicationForm
+          )
+        )
+    }
   }
 
-  def createSimplified = loginAction { implicit request =>
+  def createSimplified = loginAction.async { implicit request =>
     eventService
       .log(ApplicationFormShowed, "Visualise le formulaire simplifié de création de demande")
-    val (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =
-      fetchGroupsWithInstructors(request.currentArea.id, request.currentUser)
-    val groupsOfAreaWithInstructorWithOrganisationSet = groupsOfAreaWithInstructor.filter({
-      userGroup =>
-        userGroup.organisationSetOrDeducted.nonEmpty
-    })
-    val categories = organisationService.categories
-    Ok(
-      views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(
-        instructorsOfGroups,
-        groupsOfAreaWithInstructorWithOrganisationSet,
-        coworkers,
-        categories,
-        None,
-        applicationForm
-      )
-    )
+    fetchGroupsWithInstructors(request.currentArea.id, request.currentUser).map {
+      case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
+        val groupsOfAreaWithInstructorWithOrganisationSet = groupsOfAreaWithInstructor.filter({
+          userGroup =>
+            userGroup.organisationSetOrDeducted.nonEmpty
+        })
+        val categories = organisationService.categories
+        Ok(
+          views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(
+            instructorsOfGroups,
+            groupsOfAreaWithInstructorWithOrganisationSet,
+            coworkers,
+            categories,
+            None,
+            applicationForm
+          )
+        )
+    }
   }
 
   def createPost = createPostBis(false)
@@ -191,7 +192,7 @@ case class ApplicationController @Inject() (
       s"${capitalizedUserName} ${contexts.mkString(",")}"
   }
 
-  private def createPostBis(simplified: Boolean) = loginAction { implicit request =>
+  private def createPostBis(simplified: Boolean) = loginAction.async { implicit request =>
     val form = applicationForm.bindFromRequest
     val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
     val (pendingAttachments, newAttachments) =
@@ -202,85 +203,86 @@ case class ApplicationController @Inject() (
         filesPath
       )
     form.fold(
-      formWithErrors => {
+      formWithErrors =>
         // binding failure, you retrieve the form containing errors:
-        val (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =
-          fetchGroupsWithInstructors(request.currentArea.id, request.currentUser)
-        eventService.log(
-          ApplicationCreationInvalid,
-          s"L'utilisateur essaie de créer une demande invalide ${formWithErrors.errors.map(_.message)}"
-        )
-
-        if (simplified) {
-          val categories = organisationService.categories
-          val groupsOfAreaWithInstructorWithOrganisationSet =
-            groupsOfAreaWithInstructor.filter(_.organisationSetOrDeducted.nonEmpty)
-          BadRequest(
-            views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(
-              instructorsOfGroups,
-              groupsOfAreaWithInstructorWithOrganisationSet,
-              coworkers,
-              categories,
-              formWithErrors("category").value,
-              formWithErrors,
-              pendingAttachments.keys ++ newAttachments.keys
+        fetchGroupsWithInstructors(request.currentArea.id, request.currentUser).map {
+          case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
+            eventService.log(
+              ApplicationCreationInvalid,
+              s"L'utilisateur essaie de créer une demande invalide ${formWithErrors.errors.map(_.message)}"
             )
-          )
-        } else {
-          BadRequest(
-            views.html.createApplication(request.currentUser, request.currentArea)(
-              instructorsOfGroups,
-              groupsOfAreaWithInstructor,
-              coworkers,
-              formWithErrors,
-              pendingAttachments.keys ++ newAttachments.keys
-            )
-          )
-        }
-      },
-      applicationData => {
-        // Note: we will deprecate .currentArea as a variable stored in the cookies
-        val currentAreaId: UUID = request.currentArea.id
-        val invitedUsers: Map[UUID, String] = applicationData.users.flatMap { id =>
-          userService.byId(id).map(user => id -> contextualizedUserName(user, currentAreaId))
-        }.toMap
 
-        val application = Application(
-          applicationId,
-          DateTime.now(timeZone),
-          contextualizedUserName(request.currentUser, currentAreaId),
-          request.currentUser.id,
-          applicationData.subject,
-          applicationData.description,
-          applicationData.infos,
-          invitedUsers,
-          request.currentArea.id,
-          false,
-          hasSelectedSubject =
-            applicationData.selectedSubject.contains[String](applicationData.subject),
-          category = applicationData.category,
-          files = newAttachments ++ pendingAttachments
-        )
-        if (applicationService.createApplication(application)) {
-          notificationsService.newApplication(application)
-          eventService.log(
-            ApplicationCreated,
-            s"La demande ${application.id} a été créée",
-            Some(application)
+            if (simplified) {
+              val categories = organisationService.categories
+              val groupsOfAreaWithInstructorWithOrganisationSet =
+                groupsOfAreaWithInstructor.filter(_.organisationSetOrDeducted.nonEmpty)
+              BadRequest(
+                views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(
+                  instructorsOfGroups,
+                  groupsOfAreaWithInstructorWithOrganisationSet,
+                  coworkers,
+                  categories,
+                  formWithErrors("category").value,
+                  formWithErrors,
+                  pendingAttachments.keys ++ newAttachments.keys
+                )
+              )
+            } else {
+              BadRequest(
+                views.html.createApplication(request.currentUser, request.currentArea)(
+                  instructorsOfGroups,
+                  groupsOfAreaWithInstructor,
+                  coworkers,
+                  formWithErrors,
+                  pendingAttachments.keys ++ newAttachments.keys
+                )
+              )
+            }
+        },
+      applicationData =>
+        Future {
+          // Note: we will deprecate .currentArea as a variable stored in the cookies
+          val currentAreaId: UUID = request.currentArea.id
+          val invitedUsers: Map[UUID, String] = applicationData.users.flatMap { id =>
+            userService.byId(id).map(user => id -> contextualizedUserName(user, currentAreaId))
+          }.toMap
+
+          val application = Application(
+            applicationId,
+            DateTime.now(timeZone),
+            contextualizedUserName(request.currentUser, currentAreaId),
+            request.currentUser.id,
+            applicationData.subject,
+            applicationData.description,
+            applicationData.infos,
+            invitedUsers,
+            request.currentArea.id,
+            false,
+            hasSelectedSubject =
+              applicationData.selectedSubject.contains[String](applicationData.subject),
+            category = applicationData.category,
+            files = newAttachments ++ pendingAttachments
           )
-          Redirect(routes.ApplicationController.myApplications())
-            .flashing("success" -> "Votre demande a bien été envoyée")
-        } else {
-          eventService.log(
-            ApplicationCreationError,
-            s"La demande ${application.id} n'a pas pu être créée",
-            Some(application)
-          )
-          InternalServerError(
-            "Erreur Interne: Votre demande n'a pas pu être envoyée. Merci de réessayer ou de contacter l'administrateur"
-          )
+          if (applicationService.createApplication(application)) {
+            notificationsService.newApplication(application)
+            eventService.log(
+              ApplicationCreated,
+              s"La demande ${application.id} a été créée",
+              Some(application)
+            )
+            Redirect(routes.ApplicationController.myApplications())
+              .flashing("success" -> "Votre demande a bien été envoyée")
+          } else {
+            eventService.log(
+              ApplicationCreationError,
+              s"La demande ${application.id} n'a pas pu être créée",
+              Some(application)
+            )
+            InternalServerError(
+              "Erreur Interne: Votre demande n'a pas pu être envoyée. Merci de réessayer ou de contacter l'administrateur"
+            )
+          }
         }
-      }
     )
   }
 
@@ -321,7 +323,7 @@ case class ApplicationController @Inject() (
           "L'utilisateur n'a pas de droit d'afficher toutes les demandes"
         )
         Unauthorized(
-          "Vous n'avez pas les droits suffisants pour voir les statistiques. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          s"Vous n'avez pas les droits suffisants pour voir cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
         )
       case _ =>
         val area = if (areaId == Area.allArea.id) None else Area.fromId(areaId)
@@ -452,7 +454,7 @@ case class ApplicationController @Inject() (
           user = Some(user)
         )
         Unauthorized(
-          "Vous n'avez pas le droit de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          s"Vous n'avez pas le droit de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
         )
       case (true, Some(user)) if user.admin =>
         eventService.log(
@@ -461,7 +463,7 @@ case class ApplicationController @Inject() (
           user = Some(user)
         )
         Unauthorized(
-          "Vous n'avez pas le droit de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          s"Vous n'avez pas le droit de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
         )
       case (true, Some(user)) if request.currentUser.areas.intersect(user.areas).nonEmpty =>
         val currentUserId = user.id
@@ -479,7 +481,7 @@ case class ApplicationController @Inject() (
       case _ =>
         eventService.log(AllAsNotFound, s"L'utilisateur $userId n'existe pas")
         BadRequest(
-          "L'utilisateur n'existe pas ou vous n'avez pas le droit d'accéder à cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          s"L'utilisateur n'existe pas ou vous n'avez pas le droit d'accéder à cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
         )
     }
   }
@@ -589,62 +591,68 @@ case class ApplicationController @Inject() (
     )(AnswerData.apply)(AnswerData.unapply)
   )
 
-  def usersThatCanBeInvitedOn[A](
+  private def usersWhoCanBeInvitedOn[A](
       application: Application
-  )(implicit request: RequestWithUserData[A]) =
+  )(implicit request: RequestWithUserData[A]): Future[List[User]] =
     (if (request.currentUser.instructor || request.currentUser.expert) {
-       val groupsOfArea = userGroupService.byArea(application.area)
-       userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
+       userGroupService.byArea(application.area).map { groupsOfArea =>
+         userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
+       }
      } else if (request.currentUser.helper && application.creatorUserId == request.currentUser.id) {
-       userService.byGroupIds(request.currentUser.groupIds).filter(_.helper)
+       Future(userService.byGroupIds(request.currentUser.groupIds).filter(_.helper))
      } else {
-       List[User]()
-     }).filterNot(user =>
-      user.id == request.currentUser.id || application.invitedUsers.contains(user.id)
+       Future(List[User]())
+     }).map(
+      _.filterNot(user =>
+        user.id == request.currentUser.id || application.invitedUsers.contains(user.id)
+      )
     )
 
-  def show(id: UUID) = loginAction { implicit request =>
+  def show(id: UUID) = loginAction.async { implicit request =>
     applicationService.byId(id, request.currentUser.id, request.currentUser.admin) match {
       case None =>
         eventService.log(ApplicationNotFound, s"La demande $id n'existe pas")
-        NotFound("Nous n'avons pas trouvé cette demande")
+        Future(NotFound("Nous n'avons pas trouvé cette demande"))
       case Some(application) =>
         if (application.canBeShowedBy(request.currentUser)) {
-          val usersThatCanBeInvited = usersThatCanBeInvitedOn(application)
-          val groups = userGroupService
-            .byIds(usersThatCanBeInvited.flatMap(_.groupIds))
-            .filter(_.areaIds.contains[UUID](application.area))
-          val groupsWithUsersThatCanBeInvited = groups.map { group =>
-            group -> usersThatCanBeInvited.filter(_.groupIds.contains[UUID](group.id))
-          }
-          val renderedApplication =
-            if ((application
-                  .haveUserInvitedOn(request.currentUser) || request.currentUser.id == application.creatorUserId) && request.currentUser.expert && request.currentUser.admin && !application.closed) {
-              // If user is expert, admin and invited to the application we desanonymate
-              applicationService.byId(id, request.currentUser.id, false).get
-            } else {
-              application
+          usersWhoCanBeInvitedOn(application).map { usersWhoCanBeInvited =>
+            val groups = userGroupService
+              .byIds(usersWhoCanBeInvited.flatMap(_.groupIds))
+              .filter(_.areaIds.contains[UUID](application.area))
+            val groupsWithUsersThatCanBeInvited = groups.map { group =>
+              group -> usersWhoCanBeInvited.filter(_.groupIds.contains[UUID](group.id))
             }
-          val openedTab = request.flash.get("opened-tab").getOrElse("answer")
+            val renderedApplication =
+              if ((application
+                    .haveUserInvitedOn(request.currentUser) || request.currentUser.id == application.creatorUserId) && request.currentUser.expert && request.currentUser.admin && !application.closed) {
+                // If user is expert, admin and invited to the application we desanonymate
+                applicationService.byId(id, request.currentUser.id, false).get
+              } else {
+                application
+              }
+            val openedTab = request.flash.get("opened-tab").getOrElse("answer")
 
-          eventService.log(ApplicationShowed, s"Demande $id consultée", Some(application))
-          Ok(
-            views.html.showApplication(request.currentUser)(
-              groupsWithUsersThatCanBeInvited,
-              renderedApplication,
-              answerForm,
-              openedTab,
-              request.currentArea
+            eventService.log(ApplicationShowed, s"Demande $id consultée", Some(application))
+            Ok(
+              views.html.showApplication(request.currentUser)(
+                groupsWithUsersThatCanBeInvited,
+                renderedApplication,
+                answerForm,
+                openedTab,
+                request.currentArea
+              )
             )
-          )
+          }
         } else {
           eventService.log(
             ApplicationUnauthorized,
             s"L'accès à la demande $id n'est pas autorisé",
             Some(application)
           )
-          Unauthorized(
-            s"Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          Future(
+            Unauthorized(
+              s"Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+            )
           )
         }
     }
@@ -702,12 +710,12 @@ case class ApplicationController @Inject() (
             Some(application)
           )
           Unauthorized(
-            "Vous n'avez pas les droits suffisants pour voir les fichiers sur cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+            s"Vous n'avez pas les droits suffisants pour voir les fichiers sur cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
           )
       }
   }
 
-  def answer(applicationId: UUID) = loginAction { implicit request =>
+  def answer(applicationId: UUID) = loginAction.async { implicit request =>
     withApplication(applicationId) { application =>
       val form = answerForm.bindFromRequest
       val answerId = AttachmentHelper.retrieveOrGenerateAnswerId(form.data)
@@ -723,8 +731,10 @@ case class ApplicationController @Inject() (
           val error =
             s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.message).mkString(", ")})."
           eventService.log(AnswerNotCreated, s"$error")
-          Redirect(routes.ApplicationController.show(applicationId).withFragment("answer-error"))
-            .flashing("answer-error" -> error, "opened-tab" -> "anwser")
+          Future(
+            Redirect(routes.ApplicationController.show(applicationId).withFragment("answer-error"))
+              .flashing("answer-error" -> error, "opened-tab" -> "anwser")
+          )
         },
         answerData => {
           val currentAreaId = application.area
@@ -748,15 +758,17 @@ case class ApplicationController @Inject() (
               Some(application)
             )
             notificationsService.newAnswer(application, answer)
-            Redirect(s"${routes.ApplicationController.show(applicationId)}#answer-${answer.id}")
-              .flashing("success" -> "Votre réponse a bien été envoyée")
+            Future(
+              Redirect(s"${routes.ApplicationController.show(applicationId)}#answer-${answer.id}")
+                .flashing("success" -> "Votre réponse a bien été envoyée")
+            )
           } else {
             eventService.log(
               AnswerNotCreated,
               s"La réponse ${answer.id} n'a pas été créée sur la demande $applicationId : problème BDD",
               Some(application)
             )
-            InternalServerError("Votre réponse n'a pas pu être envoyée")
+            Future(InternalServerError("Votre réponse n'a pas pu être envoyée"))
           }
         }
       )
@@ -771,52 +783,57 @@ case class ApplicationController @Inject() (
     )(InvitationData.apply)(InvitationData.unapply)
   )
 
-  def invite(applicationId: UUID) = loginAction { implicit request =>
+  def invite(applicationId: UUID) = loginAction.async { implicit request =>
     withApplication(applicationId) { application =>
       inviteForm.bindFromRequest.fold(
         formWithErrors => {
           val error =
             s"Erreur dans le formulaire d'invitation (${formWithErrors.errors.map(_.message).mkString(", ")})."
           eventService.log(InviteNotCreated, error)
-          Redirect(routes.ApplicationController.show(applicationId).withFragment("answer-error"))
-            .flashing("answer-error" -> error, "opened-tab" -> "invite")
+          Future(
+            Redirect(routes.ApplicationController.show(applicationId).withFragment("answer-error"))
+              .flashing("answer-error" -> error, "opened-tab" -> "invite")
+          )
         },
         inviteData => {
           val currentAreaId = application.area
-          val usersThatCanBeInvited = usersThatCanBeInvitedOn(application)
-          val invitedUsers: Map[UUID, String] = usersThatCanBeInvited
-            .filter(user => inviteData.invitedUsers.contains[UUID](user.id))
-            .map(user => (user.id, contextualizedUserName(user, currentAreaId)))
-            .toMap
+          usersWhoCanBeInvitedOn(application).map {
+            usersWhoCanBeInvited =>
+              val invitedUsers: Map[UUID, String] = usersWhoCanBeInvited
+                .filter(user => inviteData.invitedUsers.contains[UUID](user.id))
+                .map(user => (user.id, contextualizedUserName(user, currentAreaId)))
+                .toMap
 
-          val answer = Answer(
-            UUID.randomUUID(),
-            applicationId,
-            DateTime.now(timeZone),
-            inviteData.message,
-            request.currentUser.id,
-            contextualizedUserName(request.currentUser, currentAreaId),
-            invitedUsers,
-            not(inviteData.privateToHelpers),
-            false,
-            Some(Map.empty)
-          )
-          if (applicationService.add(applicationId, answer) == 1) {
-            notificationsService.newAnswer(application, answer)
-            eventService.log(
-              AgentsAdded,
-              s"L'ajout d'utilisateur ${answer.id} a été créé sur la demande $applicationId",
-              Some(application)
-            )
-            Redirect(routes.ApplicationController.myApplications())
-              .flashing("success" -> "Les utilisateurs ont été invités sur la demande")
-          } else {
-            eventService.log(
-              AgentsNotAdded,
-              s"L'ajout d'utilisateur ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD",
-              Some(application)
-            )
-            InternalServerError("Les utilisateurs n'ont pas pu être invités")
+              val answer = Answer(
+                UUID.randomUUID(),
+                applicationId,
+                DateTime.now(timeZone),
+                inviteData.message,
+                request.currentUser.id,
+                contextualizedUserName(request.currentUser, currentAreaId),
+                invitedUsers,
+                not(inviteData.privateToHelpers),
+                false,
+                Some(Map.empty)
+              )
+
+              if (applicationService.add(applicationId, answer) == 1) {
+                notificationsService.newAnswer(application, answer)
+                eventService.log(
+                  AgentsAdded,
+                  s"L'ajout d'utilisateur ${answer.id} a été créé sur la demande $applicationId",
+                  Some(application)
+                )
+                Redirect(routes.ApplicationController.myApplications())
+                  .flashing("success" -> "Les utilisateurs ont été invités sur la demande")
+              } else {
+                eventService.log(
+                  AgentsNotAdded,
+                  s"L'ajout d'utilisateur ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD",
+                  Some(application)
+                )
+                InternalServerError("Les utilisateurs n'ont pas pu être invités")
+              }
           }
         }
       )
@@ -873,7 +890,7 @@ case class ApplicationController @Inject() (
             Some(application)
           )
           Unauthorized(
-            "Vous n'avez pas les droits suffisants pour inviter des agents à cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+            s"Vous n'avez pas les droits suffisants pour inviter des agents à cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
           )
         }
     }
@@ -892,7 +909,7 @@ case class ApplicationController @Inject() (
         eventService
           .log(TerminateIncompleted, s"La demande de clôture pour $applicationId est incomplète")
         BadGateway(
-          "L'utilité de la demande n'est pas présente, il s'agit sûrement d'une erreur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          s"L'utilité de la demande n'est pas présente, il s'agit sûrement d'une erreur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
         )
       case (Some(usefulness), Some(application)) =>
         val finalUsefulness = if (request.currentUser.id == application.creatorUserId) {
@@ -904,8 +921,11 @@ case class ApplicationController @Inject() (
           if (applicationService.close(applicationId, finalUsefulness, DateTime.now(timeZone))) {
             eventService
               .log(TerminateCompleted, s"La demande $applicationId est clôturée", Some(application))
+            val successMessage =
+              s"""|La demande "${application.subject}" a bien été clôturée. 
+                  |Bravo et merci pour la résolution de cette demande !""".stripMargin
             Redirect(routes.ApplicationController.myApplications())
-              .flashing("success" -> "L'application a été indiquée comme clôturée")
+              .flashing("success" -> successMessage)
           } else {
             eventService.log(
               TerminateError,

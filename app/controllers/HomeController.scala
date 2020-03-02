@@ -30,7 +30,7 @@ class HomeController @Inject() (loginAction: LoginAction, db: Database)(
       Ok(views.html.home())
   }
 
-  def status: Action[AnyContent] = Action { implicit request =>
+  def status: Action[AnyContent] = Action {
     val connectionValid =
       try {
         db.withConnection {

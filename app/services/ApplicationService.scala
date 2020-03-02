@@ -6,7 +6,7 @@ import javax.inject.Inject
 import anorm.Column.nonNull
 import models.{Answer, Application}
 import play.api.db.Database
-import play.api.libs.json.{Json, JsonConfiguration, JsonNaming}
+import play.api.libs.json.Json
 import anorm._
 import anorm.JodaParameterMetaData._
 import helper.Time

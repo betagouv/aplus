@@ -22,6 +22,7 @@
         <button class="mdl-button mdl-button--raised" onclick="downloadCSV()">Télécharger CSV</button>
         <button class="mdl-button mdl-button--raised" onclick="downloadXLSX()">Télécharger XLSX</button>
         <a class="mdl-button mdl-button--raised" href="@routes.AreaController.deploymentDashboard()?uniquement-fs=oui">Uniquement France Service</a>
+        <a class="mdl-button mdl-button--raised" href="@routes.AreaController.franceServiceDeploymentDashboard()">Tableau Déploiement France Service</a>
     </div>
     <script>
        var tableData = [
@@ -43,7 +44,10 @@
            {
                area: "Avancement",
                @for((organisations, count) <- organisationSetToCountOfCounts)  {
-                    @{organisations.map(_.id.toString).mkString} : "@(math.round(count*1000/data.length).toFloat/10) %",
+                    @{organisations.map(_.id.toString).mkString} : "@(math.round(count*1000/data.length)/10) %",
+                   @*********************
+                    * Hack to have 1 number after the "," *
+                    *********************@
                }
                total: "",
            },
@@ -60,26 +64,26 @@
                     headerVertical:true,
                     formatter: function(cell, formatterParams, onRendered) {
                         var value = cell.getValue();
-                        if (cell._cell.row.data.area == "Couverture") {
+                        if (cell.getRow()._row.data.area == "Couverture") {
                             if (value < 1) {
-                                cell._cell.element.classList.add("mdl-color--red");
+                                cell.getElement().classList.add("mdl-color--red");
                             } else if (value <= 4) {
-                                cell._cell.element.classList.add("mdl-color--light-green");
+                                cell.getElement().classList.add("mdl-color--light-green");
                             } else if (value <= 7) {
-                                cell._cell.element.classList.add("mdl-color--medium-green");
+                                cell.getElement().classList.add("mdl-color--medium-green");
                             } else {
-                                cell._cell.element.classList.add("mdl-color--dark-green");
+                                cell.getElement().classList.add("mdl-color--dark-green");
                             }
                             value = value + ' / @data.length';
                             return value;
                         }
-                        if (cell._cell.row.data.area !== "Avancement") {
+                        if (cell.getRow()._row.data.area !== "Avancement") {
                             if (value < 1) {
-                                cell._cell.element.classList.add("mdl-color--red");
+                                cell.getElement().classList.add("mdl-color--red");
                             } else if (value >= 2) {
-                                cell._cell.element.classList.add("mdl-color--green");
+                                cell.getElement().classList.add("mdl-color--green");
                             } else {
-                                cell._cell.element.classList.add("mdl-color--yellow");
+                                cell.getElement().classList.add("mdl-color--yellow");
                             }
                         }
                         return value;
@@ -95,13 +99,13 @@
                     var value = cell.getValue();
                     if (value !== '') {
                         if (value < 1) {
-                            cell._cell.element.classList.add("mdl-color--red");
+                            cell.getElement().classList.add("mdl-color--red");
                         } else if (value <= 4) {
-                            cell._cell.element.classList.add("mdl-color--light-green");
+                            cell.getElement().classList.add("mdl-color--light-green");
                         } else if (value <= 7){
-                            cell._cell.element.classList.add("mdl-color--medium-green");
+                            cell.getElement().classList.add("mdl-color--medium-green");
                         } else {
-                            cell._cell.element.classList.add("mdl-color--dark-green");
+                            cell.getElement().classList.add("mdl-color--dark-green");
                         }
                         value = value + ' / @data.head._2.length';
                     }
@@ -132,4 +136,5 @@
        }
 
     </script>
+}{
 }

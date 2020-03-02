@@ -75,8 +75,8 @@ html, body {
   -webkit-align-items: center;
       -ms-flex-align: center;
           align-items: center;
-  color: rgba(255, 255, 255, 0.56);
   font-weight: 500;
+    color: white;
 }
 .demo-layout .navigation .mdl-navigation__link:hover {
   background-color: #00BCD4;
@@ -84,7 +84,6 @@ html, body {
 }
 .navigation .mdl-navigation__link .material-icons {
   font-size: 24px;
-  color: rgba(255, 255, 255, 0.56);
   margin-right: 32px;
 }
 
@@ -414,7 +413,9 @@ a {
     padding: 20px;
 }
 
-
+/* https://github.com/etalab/template.data.gouv.fr/blob/master/src/css/components/notification.css
+ * https://github.com/etalab/template.data.gouv.fr/blob/master/src/css/base/theme.css
+ */
 .notification {
     background: #b4e1fa;
     border: 1px solid #006be6;
@@ -422,12 +423,25 @@ a {
     padding: 1em;
     margin-bottom: 1em;
     position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.notification--success {
+    background: #daf5e7;
+    border-color: #03bd5b;
 }
 
 .notification--error {
     background: rgba(239,172,166,0.45882);
     border-color: #d63626;
 }
+
+.notification__message {
+    flex-grow: 1;
+}
+
+
 
 .avoid-clicks {
     pointer-events: none;
@@ -493,9 +507,12 @@ a {
     margin-top: 30px;
 }
 
-.mdl-layout__content {
-    height: calc(100% - 16px);
-    overflow-x: auto;
+.main__grid {
+    min-height: calc(100% - 120px);
+}
+
+.--max-width-960px {
+    max-width: 960px;
 }
 
 .align-items-center {
@@ -503,6 +520,9 @@ a {
     align-items: center !important;
 }
 
+.--margin-right-20px {
+    margin-right: 20px;
+}
 
 /****************
 Colors

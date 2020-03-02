@@ -98,7 +98,7 @@ function setupOneProtectedForm(form) {
   console.log("Protection of the form will be activated.");
 
   var elem;
-  var changeableElems = document.querySelectorAll("input, textarea, select");
+  var changeableElems = form.querySelectorAll("input, textarea, select");
   for (var i = 0; i < changeableElems.length; i++) {
     elem = changeableElems[i];
     elem.addEventListener("input", function () {
@@ -126,4 +126,28 @@ function setupProtectedForms() {
   for (var fi = 0; fi < forms.length; fi++) {
     setupOneProtectedForm(forms[fi]);
   }
+}
+
+
+//
+// Notification Messages
+//
+
+// Will add onClick listeners on `.notification__close-btn` that remove the `.notification` element
+function setupNotificationMessages() {
+  var elems = document.querySelectorAll(".notification");
+  for (var i = 0; i < elems.length; i++) {
+    var closeBtn = elems[i].querySelector(".notification__close-btn");
+    if (closeBtn != null) {
+      onClickRemoveElement(closeBtn, elems[i])
+    }
+  }
+}
+
+function onClickRemoveElement(clickElement, elementToRemove) {
+  clickElement.addEventListener("click", function() {
+    // Cross browser
+    // https://stackoverflow.com/questions/3387427/remove-element-by-id
+    elementToRemove.outerHTML = ""
+  })
 }

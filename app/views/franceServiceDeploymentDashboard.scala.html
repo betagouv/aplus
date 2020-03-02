@@ -1,0 +1,34 @@
+@(currentUser: User)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+
+@main(currentUser, maxWidth = false)(s"Tableau de déploiement France Services") {
+    @webJarsUtil.locate("tabulator.min.css").css()
+    @webJarsUtil.locate("tabulator.min.js").script()
+    @webJarsUtil.locate("xlsx.full.min.js").script()
+}{
+    <h5 class="title--addline">Tableau de déploiement France Services</h5>
+    <div id="aplus-admin-deployment-france-service-total" class="mdl-cell mdl-cell--12-col"></div>
+    <div id="aplus-admin-deployment-france-service-table" class="mdl-cell mdl-cell--12-col"></div>
+    <div class="mdl-cell mdl-cell--12-col">
+      <button id="aplus-admin-deployment-france-service-download-btn-csv"
+              class="mdl-button mdl-button--raised"
+              >Télécharger CSV</button>
+      <button id="aplus-admin-deployment-france-service-download-btn-xlsx"
+              class="mdl-button mdl-button--raised"
+              >Télécharger XLSX</button>
+      <a class="mdl-button mdl-button--raised"
+         href="@routes.AreaController.deploymentDashboard()"
+         >Retour sur tout le déploiement</a>
+    </div>
+    <div class="mdl-cell mdl-cell--12-col">
+      <p>
+        La correspondance entre une instance France Service et un Groupe est faite dans cet ordre:
+        <ol>
+          <li>Le champ "CONTACT MAIL" du tableau France Services correspond au champ "Email du groupe (BAL générique pour inscription et notification)" du groupe</li>
+          <li>Le champ "FRANCE SERVICE" (= le nom) du tableau France Services est écrit quelque part dans le champ "Nom du groupe" du groupe</li>
+          <li>Le champ "COMMUNE" du tableau France Services est écrit quelque part dans le champ "Nom du groupe" du groupe</li>
+        </ol>
+      </p>
+    </div>
+}{
+    <script src="@routes.Assets.versioned("javascripts/admin.js")"></script>
+}

@@ -74,7 +74,7 @@ class LoginController @Inject() (
     }
   }
 
-  def disconnect() = Action { implicit request =>
+  def disconnect() = Action {
     Redirect(routes.LoginController.login()).withNewSession
   }
 }
