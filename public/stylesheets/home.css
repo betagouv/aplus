@@ -69,6 +69,11 @@ Images
     max-height: 290px;
 }
 
+.img--max-width-600px {
+    max-width: 600px;
+    display: block;
+    margin: auto;
+}
 
 /******
 Card

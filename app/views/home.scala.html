@@ -134,7 +134,7 @@
                         </div>
                     </div>
                     <div
-                    class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing mdl-color--white"
+                    class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing mdl-color--white" id="contact"
                     >
                         <div
                         class="mdl-cell mdl-cell--12-col aplus-color--blue mdl-grid mdl-color-text--white"
@@ -154,18 +154,18 @@
                             <div
                             class="mdl-cell mdl-cell--3-col-desktop mdl-cell--12-col mdl-cell--middle mdl-typography--text-nowrap"
                             >
-                                <span class="vertical-align--middle">
+                                <h4 class="vertical-align--middle">
                                     <i class="material-icons material-icons--32px">email</i>
                                     <a
                                     href="mailto:@Constants.supportEmail"
                                     class="mdl-color-text--white"
                                     >@Constants.supportEmail</a
                                     >
-                                </span><br>
-                                <span class="vertical-align--middle">
+                                </h4>
+                                <h4 class="vertical-align--middle">
                                     <i class="material-icons material-icons--32px">phone</i> 01 84
                                     80 88 12
-                                </span>
+                                </h4>
                             </div>
                         </div>
                         <div
@@ -192,11 +192,9 @@
                         class="mdl-cell mdl-cell--5-col-desktop mdl-cell--1-offset mdl-cell--0-offset-mobile mdl-cell--10-col-tablet mdl-cell--12-col"
                         >
                             <img
-                            class="mdl-cell--hide-phone mdl-cell--hide-tablet"
+                            class="mdl-cell--hide-phone mdl-cell--hide-tablet img--max-width-600px"
                             src="@routes.Assets.versioned("images/home/Aplus-qu-est-ce-que-cest-desktop.svg")"
-                            style="max-width: 600px;
-                                display: block;
-                                margin: auto;"
+
                             />
                             <img
                             class="mdl-cell--hide-desktop img--width-100"
@@ -204,7 +202,7 @@
                             />
                         </div>
                         <div
-                        class="mdl-cell mdl-cell--5-col-desktop mdl-cell--middle mdl-typography--text-center mdl-cell--12-col"
+                        class="mdl-cell mdl-cell--1-offset mdl-cell--4-col-desktop mdl-cell--middle mdl-typography--text-center mdl-cell--12-col"
                         >
                             <h4 class="remove-top-margin">
                                 Objectif : coopérer pour résoudre les blocages complexes ou
@@ -350,7 +348,6 @@
                                 </h2>
                                 <p>
                                     L’équipe d'Administration+ est disponible pour vous aider.
-                                   
                                 </p>
                             </div>
                         </div>
@@ -378,7 +375,7 @@
                     checked
                     />
                     <ul class="mdl-mega-footer__link-list">
-                        <li><a href="https://docs.aplus.beta.gouv.fr/">Contact</a></li>
+                        <li><a href="#contact">Contact</a></li>
                         <li><a href="https://docs.aplus.beta.gouv.fr/faq">FAQ</a></li>
                         <li><a href="@routes.Assets.versioned("html/CGU_13_mai_2019.html")">CGU</a></li>
                     </ul>
