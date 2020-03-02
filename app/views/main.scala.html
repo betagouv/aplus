@@ -188,31 +188,6 @@
                     </div>
                 </footer>
             </main>
-
-
-
-
-            <div aria-live="assertive" aria-atomic="true" aria-relevant="text" class="mdl-snackbar mdl-js-snackbar">
-                <div class="mdl-snackbar__text"></div>
-                <button type="button" class="mdl-snackbar__action"></button>
-            </div>
-            @flash.get("success").map { message =>
-                <script type="text/javascript">
-                        function showMessage(message) {
-                            var notification = document.querySelector('.mdl-js-snackbar');
-                            if(!notification.MaterialSnackbar) {
-                                setTimeout("showMessage('"+message+"')", 50);
-                                return;
-                            }
-                            var data = {
-                                message: message,
-                                timeout: 10000
-                            };
-                            notification.MaterialSnackbar.showSnackbar(data);
-                        }
-                        showMessage('@message');
-                </script>
-            }
         </div>
 
         <script>
