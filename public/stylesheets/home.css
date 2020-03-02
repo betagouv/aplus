@@ -94,3 +94,10 @@ Margin
     margin-top: 0px;
 }
 
+/*****
+Footer
+ */
+.footer__logo {
+    height: auto;
+    width: 100px;
+}
