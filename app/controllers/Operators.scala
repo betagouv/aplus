@@ -129,7 +129,7 @@ object Operators {
     def applicationService: ApplicationService
     def eventService: EventService
 
-    def logApplicationAccessError[A](id: UUID, error: Error)(
+    private def manageApplicationError[A](applicationId: UUID, error: Error)(
         implicit request: RequestWithUserData[A],
         ec: ExecutionContext
     ): Future[Result] =
@@ -137,13 +137,13 @@ object Operators {
         case Error.EntityNotFound =>
           eventService.log(
             ApplicationNotFound,
-            description = s"Tentative d'accès à une application inexistante: $id"
+            description = s"Tentative d'accès à une application inexistante: $applicationId"
           )
           Future(NotFound("Nous n'avons pas trouvé cette demande"))
         case Error.Authorization =>
           eventService.log(
             ApplicationUnauthorized,
-            description = s"Tentative d'accès à une application non autorisé: $id"
+            description = s"Tentative d'accès à une application non autorisé: $applicationId"
           )
           Future(
             Unauthorized(
@@ -164,7 +164,7 @@ object Operators {
           rights = request.rights
         )
         .flatMap(
-          _.fold(error => logApplicationAccessError(applicationId, error), {
+          _.fold(error => manageApplicationError(applicationId, error), {
             application: Application =>
               payload(application)
           })

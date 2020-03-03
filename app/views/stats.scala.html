@@ -6,29 +6,6 @@
 @(user: User, area: Area)(months: ListMap[String, String], allApplications: Map[Area, Seq[Application]], users: List[User], currentAreaOnly: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 @main(user, Some(area))(s"Stats")  {
-    <style xmlns="http://www.w3.org/1999/html">
-        td {
-            cursor: pointer;
-        }
-        #search-input {
-            font-size: 17px;
-            padding: 5px;
-        }
-        .usefulness__icon {
-            width: 20px;
-            height: 20px;
-            vertical-align: middle;
-        }
-        .mdl-data-table th {
-            white-space: initial !important;
-        }
-        .chart-container {
-            position: relative;
-            margin: auto;
-            height: 50vh;
-            width: 100%;
-        }
-    </style>
     @webJarsUtil.locate("Chart.bundle.min.js").script()
 }{
     @if(user.areas.length > 1) {
@@ -375,7 +352,7 @@
         <h6 style="text-align: center">Demandes par territoire</h6>
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
         @defining(allApplications.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
-            <table class="mdl-data-table mdl-js-data-table pem-table" style="white-space: normal;">
+            <table class="mdl-data-table mdl-data-table--initial-white-space mdl-js-data-table pem-table" style="white-space: normal;">
                 <thead>
                     <tr>
                         <th class="mdl-data-table__cell--non-numeric">Territoire</th>
@@ -522,7 +499,7 @@
                                         }
                                     });
                             </script>
-                            <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col">
+                            <table class="mdl-data-table mdl-data-table--initial-white-space  mdl-js-data-table mdl-cell mdl-cell--12-col">
                                         <thead>
                                             <tr>
                                                 <th class="mdl-data-table__cell--non-numeric">Semaine</th>
@@ -587,7 +564,7 @@
                                     }
                                 });
                         </script>
-                        <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col">
+                        <table class="mdl-data-table mdl-data-table--initial-white-space  mdl-js-data-table mdl-cell mdl-cell--12-col">
                             <thead>
                                 <tr>
                                     <th class="mdl-data-table__cell--non-numeric">Semaine</th>
@@ -613,7 +590,7 @@
                     </details>
                    <details class="mdl-cell mdl-cell--12-col">
                     <summary>Détail des demandes clôturées</summary>
-                    <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col">
+                    <table class="mdl-data-table mdl-data-table--initial-white-space  mdl-js-data-table mdl-cell mdl-cell--12-col">
                     <thead>
                         <tr>
                             <th class="mdl-data-table__cell--non-numeric">Semaine</th>

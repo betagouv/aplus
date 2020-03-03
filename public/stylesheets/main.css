@@ -523,3 +523,22 @@ a {
 .--margin-right-20px {
     margin-right: 20px;
 }
+
+
+.usefulness__icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+}
+
+
+.chart-container {
+    position: relative;
+    margin: auto;
+    height: 50vh;
+    width: 100%;
+}
+
+.application-row {
+    cursor: pointer;
+}

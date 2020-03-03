@@ -11,3 +11,7 @@
     -ms-flex-pack: left;
     justify-content: left;
 }
+
+.mdl-data-table--initial-white-space th {
+    white-space: initial !important;
+}
