@@ -48,7 +48,7 @@ object Organisation {
     all.find(org => (org.id: Id) == (id: Id))
 
   val franceServicesId = Organisation.Id("MFS")
-  
+
   val all = List(
     Organisation("ANAH", "Agence nationale de l'habitat"),
     Organisation("ANTS", "Agence nationale des titres sécurisés"),

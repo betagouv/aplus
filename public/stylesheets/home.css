@@ -1,0 +1,108 @@
+/*********
+Header
+ */
+
+.layout-title__logo {
+    margin-right: 0.8em;
+    height: 100%;
+}
+
+.layout-title__gouvfr {
+    height: 100%;
+}
+
+.layout-title__domain {
+    font-weight: 400;
+    color: #26353f;
+    font-size: 16px;
+}
+
+.logo_full--250x200 {
+    height: 200px;
+    width: 250px;
+}
+
+/**********
+Sections
+ */
+.heigh-min--95vh {
+    min-height: calc(70vh - 56px);
+}
+
+.section__title {
+    font-size: 32px;
+    font-weight: medium;
+    letter-spacing: 0;
+    color: #00234d;
+    text-transform: uppercase;
+    margin: 0px;
+    margin-top: 10px;
+}
+
+.section__subtitle {
+    font-size: 28px;
+    font-weight: medium;
+    letter-spacing: 0;
+    color: #00234d;
+    margin: 0px;
+}
+
+/******
+Images
+ */
+
+.img--heigh-100 {
+    width: auto;
+    max-width: 100%;
+    margin: auto;
+    display: block;
+}
+
+.img--width-100 {
+    height: auto;
+    width: 95%;
+    margin: auto;
+    display: block;
+}
+
+.img--max-height-290px {
+    max-height: 290px;
+}
+
+.img--max-width-600px {
+    max-width: 600px;
+    display: block;
+    margin: auto;
+}
+
+/******
+Card
+ */
+.usage-card {
+    min-height: 220px;
+}
+
+.usage-card .mdl-card__title {
+    flex-direction: column;
+}
+
+.usage-card p {
+    display: block;
+    width: 100%;
+    font-size: 16px;
+}
+
+/*****
+Margin
+ */
+.remove-top-margin {
+    margin-top: 0px;
+}
+
+/*****
+Footer
+ */
+.footer__logo {
+    height: auto;
+    width: 100px;
+}
