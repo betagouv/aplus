@@ -70,12 +70,12 @@ if (window.document.getElementById(franceServiceDeploymentTableTagId)) {
       var nrOfDeployed = 0;
       var totalNr = response.length;
       for (var i = 0; i < totalNr; i++) {
-        if (response[i].groupSize >= 2) {
+        if (response[i].groupSize >= 1) {
           nrOfDeployed++;
         }
       }
       var element = window.document.getElementById(franceServiceDeploymentTotalTagId);
-      element.textContent = "Nombre de déploiements (plus de 2 utilisateurs): " +
+      element.textContent = "Nombre de déploiements (plus de 1 utilisateur): " +
         nrOfDeployed + " ; Nombre total: " + totalNr
       return response; //return the response data to tabulator
     },
