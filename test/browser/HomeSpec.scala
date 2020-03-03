@@ -10,7 +10,7 @@ import play.api.test._
 class HomeSpec extends Specification with Tables with BaseSpec {
 
   "Home" should {
-    "Redirect to /login when disconnected" in new WithBrowser(
+    "Stay on / when disconnected" in new WithBrowser(
       webDriver = WebDriverFactory(HTMLUNIT),
       app = applicationWithBrowser
     ) {
@@ -18,7 +18,7 @@ class HomeSpec extends Specification with Tables with BaseSpec {
 
       browser.goTo(homeUrl)
 
-      browser.url must endWith(controllers.routes.LoginController.login().url.substring(1))
+      browser.url must endWith(controllers.routes.HomeController.index().url.substring(1))
     }
 
     "Status up" in new WithBrowser(

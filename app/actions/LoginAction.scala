@@ -6,7 +6,7 @@ import controllers.routes
 import helper.UUIDHelper
 import models._
 import play.api.mvc._
-import play.api.mvc.Results.TemporaryRedirect
+import play.api.mvc.Results.{Ok, TemporaryRedirect}
 import services.{EventService, TokenService, UserService}
 import models.EventType.{
   AuthByKey,
@@ -112,7 +112,7 @@ class LoginAction @Inject() (
               userNotLogged(
                 "Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé. Si cette erreur se répète, contactez l'équipe Administration+"
               )
-            case None if path != routes.HomeController.index().url =>
+            case None if routes.HomeController.index().url.contains(path) =>
               userNotLoggedOnLoginPage
             case None =>
               Logger.warn(s"Accès à la ${request.path} non autorisé")
@@ -184,7 +184,7 @@ class LoginAction @Inject() (
 
   private def userNotLoggedOnLoginPage[A](implicit request: Request[A]) =
     Left(
-      TemporaryRedirect(routes.LoginController.login().url).withSession(request.session - "userId")
+      TemporaryRedirect(routes.HomeController.index().url).withSession(request.session - "userId")
     )
 
   private def tokenById[A](implicit request: Request[A]) =
