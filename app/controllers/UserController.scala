@@ -84,7 +84,7 @@ case class UserController @Inject() (
             }
           }
           case (true, _, true) => {
-            val groupsOfArea = groupService.byAreas(request.currentUser.areas)
+            val groupsOfArea = groupService.byAreasToRemove(request.currentUser.areas)
             Future(userService.byGroupIds(groupsOfArea.map(_.id)))
           }
           case (false, true, _) => Future(userService.byGroupIds(request.currentUser.groupIds))
@@ -137,7 +137,7 @@ case class UserController @Inject() (
       } { () =>
         val area = Area.fromId(areaId).get
         val usersFuture: Future[List[User]] = if (areaId == Area.allArea.id) {
-          val groupsOfArea = groupService.byAreas(request.currentUser.areas)
+          val groupsOfArea = groupService.byAreasToRemove(request.currentUser.areas)
           Future(userService.byGroupIds(groupsOfArea.map(_.id)))
         } else {
           groupService.byArea(areaId).map { groupsOfArea =>

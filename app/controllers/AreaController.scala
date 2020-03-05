@@ -18,6 +18,9 @@ import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
 import services.{EventService, UserGroupService, UserService}
 
+import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.duration._
+
 @Singleton
 case class AreaController @Inject() (
     loginAction: LoginAction,
@@ -25,7 +28,7 @@ case class AreaController @Inject() (
     userService: UserService,
     userGroupService: UserGroupService,
     configuration: play.api.Configuration
-)(implicit val webJarsUtil: WebJarsUtil)
+)(implicit ec: ExecutionContext, val webJarsUtil: WebJarsUtil)
     extends InjectedController
     with UserOperators {
 
@@ -115,51 +118,53 @@ case class AreaController @Inject() (
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
       val userGroups = userGroupService.allGroups
-      val users = userService.all
+      val result = userService.all.map { users =>
+        def usersIn(area: Area, organisationSet: Set[Organisation]): List[User] =
+          for {
+            group <- userGroups.filter(group =>
+              group.areaIds.contains[UUID](area.id)
+                && organisationSet.exists(group.organisationSetOrDeducted.contains[Organisation])
+            )
+            user <- users if user.groupIds.contains[UUID](group.id)
+          } yield user
 
-      def usersIn(area: Area, organisationSet: Set[Organisation]): List[User] =
-        for {
-          group <- userGroups.filter(group =>
-            group.areaIds.contains[UUID](area.id)
-              && organisationSet.exists(group.organisationSetOrDeducted.contains[Organisation])
-          )
-          user <- users if user.groupIds.contains[UUID](group.id)
-        } yield user
+        val organisationGrouping =
+          if (request.getQueryString("uniquement-fs").getOrElse("non") == "oui") {
+            organisationGroupingFranceService
+          } else {
+            organisationGroupingAll
+          }
 
-      val organisationGrouping =
-        if (request.getQueryString("uniquement-fs").getOrElse("non") == "oui") {
-          organisationGroupingFranceService
-        } else {
-          organisationGroupingAll
+        val data = for {
+          area <- request.currentUser.areas.flatMap(Area.fromId).filterNot(_.name == "Demo")
+        } yield {
+          val organisationMap: List[(Set[Organisation], Int)] = for {
+            organisations <- organisationGrouping
+            users = usersIn(area, organisations)
+            userSum = users.count(_.instructor)
+          } yield organisations -> userSum
+          (area, organisationMap, organisationMap.count(_._2 > 0))
         }
 
-      val data = for {
-        area <- request.currentUser.areas.flatMap(Area.fromId).filterNot(_.name == "Demo")
-      } yield {
-        val organisationMap: List[(Set[Organisation], Int)] = for {
-          organisations <- organisationGrouping
-          users = usersIn(area, organisations)
-          userSum = users.count(_.instructor)
-        } yield organisations -> userSum
-        (area, organisationMap, organisationMap.count(_._2 > 0))
-      }
+        val organisationSetToCountOfCounts: Map[Set[Organisation], Int] = {
+          val organisationSetToCount: List[(Set[Organisation], Int)] = data.flatMap(_._2)
+          val countsGroupedByOrganisationSet
+              : Map[Set[Organisation], List[(Set[Organisation], Int)]] =
+            organisationSetToCount.groupBy(_._1)
+          val organisationSetToCountOfCounts: Map[Set[Organisation], Int] =
+            countsGroupedByOrganisationSet.mapValues(_.map(_._2).count(_ > 0))
+          organisationSetToCountOfCounts
+        }
 
-      val organisationSetToCountOfCounts: Map[Set[Organisation], Int] = {
-        val organisationSetToCount: List[(Set[Organisation], Int)] = data.flatMap(_._2)
-        val countsGroupedByOrganisationSet: Map[Set[Organisation], List[(Set[Organisation], Int)]] =
-          organisationSetToCount.groupBy(_._1)
-        val organisationSetToCountOfCounts: Map[Set[Organisation], Int] =
-          countsGroupedByOrganisationSet.mapValues(_.map(_._2).count(_ > 0))
-        organisationSetToCountOfCounts
-      }
-
-      Ok(
-        views.html.deploymentDashboard(request.currentUser)(
-          data,
-          organisationSetToCountOfCounts,
-          organisationGrouping
+        Ok(
+          views.html.deploymentDashboard(request.currentUser)(
+            data,
+            organisationSetToCountOfCounts,
+            organisationGrouping
+          )
         )
-      )
+      }
+      Await.result(result, 1 seconds)
     }
   }
 

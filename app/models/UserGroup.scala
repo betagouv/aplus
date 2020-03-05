@@ -26,3 +26,5 @@ case class UserGroup(
       .orElse(Organisation.deductedFromName(name))
 
 }
+
+object UserGroup {}

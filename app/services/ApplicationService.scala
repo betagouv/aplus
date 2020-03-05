@@ -138,17 +138,14 @@ class ApplicationService @Inject() (
     }
   }
 
-  def allForUserIds(userIds: List[UUID], anonymous: Boolean) = db.withConnection {
-    implicit connection =>
-      val result =
+  def allForUserIds(userIds: List[UUID]): Future[List[Application]] =
+    Future {
+      db.withConnection { implicit connection =>
         SQL"SELECT * FROM application WHERE ARRAY[$userIds]::uuid[] @> ARRAY[creator_user_id]::uuid[] OR ARRAY(select jsonb_object_keys(invited_users))::uuid[] && ARRAY[$userIds]::uuid[] ORDER BY creation_date DESC"
           .as(simpleApplication.*)
-      if (anonymous) {
-        result.map(_.anonymousApplication)
-      } else {
-        result
+          .map(_.anonymousApplication)
       }
-  }
+    }
 
   def allForCreatorUserId(creatorUserId: UUID, anonymous: Boolean) = db.withConnection {
     implicit connection =>
@@ -188,16 +185,19 @@ class ApplicationService @Inject() (
     }
   }
 
-  def allForAreas(areaIds: List[UUID], anonymous: Boolean) = db.withConnection {
-    implicit connection =>
-      val result =
+  def allForAreas(areaIds: List[UUID]): Future[List[Application]] =
+    Future {
+      db.withConnection { implicit connection =>
         SQL"""SELECT * FROM application WHERE ARRAY[$areaIds]::uuid[] @> ARRAY[area]::uuid[] ORDER BY creation_date DESC"""
           .as(simpleApplication.*)
-      if (anonymous) {
-        result.map(_.anonymousApplication)
-      } else {
-        result
+          .map(_.anonymousApplication)
       }
+    }
+
+  def all(): Future[List[Application]] = Future {
+    db.withConnection { implicit connection =>
+      SQL"""SELECT * FROM application""".as(simpleApplication.*).map(_.anonymousApplication)
+    }
   }
 
   def createApplication(newApplication: Application) = db.withConnection { implicit connection =>

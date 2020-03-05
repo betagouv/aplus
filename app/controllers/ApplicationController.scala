@@ -7,7 +7,7 @@ import actions._
 import constants.Constants
 import helper.Time.dateTimeOrdering
 import forms.FormsPlusMap
-import helper.Time
+import helper.{Hash, Time}
 import javax.inject.{Inject, Singleton}
 import models._
 import org.joda.time.DateTime
@@ -57,9 +57,11 @@ import models.EventType.{
 import play.api.cache.AsyncCacheApi
 import play.twirl.api.Html
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration._
 import helper.StringHelper.CanonizeString
 import serializers.AttachmentHelper
+
 import scala.concurrent.duration._
 
 /**
@@ -92,7 +94,7 @@ case class ApplicationController @Inject() (
     Files.createDirectories(dir)
   }
 
-  val applicationForm = Form(
+  private val applicationForm = Form(
     mapping(
       "subject" -> nonEmptyText.verifying(maxLength(150)),
       "description" -> nonEmptyText,
@@ -297,22 +299,22 @@ case class ApplicationController @Inject() (
         else Some(attachment.ref.path -> attachment.filename)
       })
 
-  def allApplicationVisibleByUserAdmin(user: User, areaOption: Option[Area]) =
+  private def allApplicationVisibleByUserAdmin(user: User, areaOption: Option[Area]) =
     (user.admin, areaOption) match {
       case (true, None) =>
-        applicationService.allForAreas(user.areas, true)
+        applicationService.allForAreas(user.areas)
       case (true, Some(area)) =>
-        applicationService.allForAreas(List(area.id), true)
+        applicationService.allForAreas(List(area.id))
       case (false, None) if user.groupAdmin =>
         val userIds = userService.byGroupIds(user.groupIds).map(_.id)
-        applicationService.allForUserIds(userIds, true)
+        applicationService.allForUserIds(userIds)
       case (false, Some(area)) if user.groupAdmin =>
         val userGroupIds =
           userGroupService.byIds(user.groupIds).filter(_.areaIds.contains[UUID](area.id)).map(_.id)
         val userIds = userService.byGroupIds(userGroupIds).map(_.id)
-        applicationService.allForUserIds(userIds, true)
+        applicationService.allForUserIds(userIds)
       case _ =>
-        List()
+        Future { List() }
     }
 
   def all(areaId: UUID): Action[AnyContent] = loginAction { implicit request =>
@@ -327,7 +329,8 @@ case class ApplicationController @Inject() (
         )
       case _ =>
         val area = if (areaId == Area.allArea.id) None else Area.fromId(areaId)
-        val applications = allApplicationVisibleByUserAdmin(request.currentUser, area)
+        val applications =
+          Await.result(allApplicationVisibleByUserAdmin(request.currentUser, area), 1 seconds)
         eventService.log(
           AllApplicationsShowed,
           s"Visualise la liste des applications de $areaId - taille = ${applications.size}"
@@ -355,92 +358,125 @@ case class ApplicationController @Inject() (
     Ok(views.html.myApplications(request.currentUser)(myOpenApplications, myClosedApplications))
   }
 
-  private def generateStats(currentUser: User, selectedArea: Area, restrictToSelectedArea: Boolean)(
+  private def generateStats[A](
+      areaIds: List[UUID],
+      organisationIds: List[Organisation.Id],
+      groupIds: List[UUID]
+  )(
       implicit webJarsUtil: org.webjars.play.WebJarsUtil,
-      flash: Flash,
-      request: RequestHeader
-  ): Html = {
-    // We prefilter `byAreaId` when `currentUser.admin` because an admin is not necessarily
-    // admin on all the areas
-    // An admin is implicitly in all groups
-    val (users, applications): (List[User], List[Application]) =
-      if (currentUser.admin) {
-        if (restrictToSelectedArea) {
-          (
-            userService.byAreaIds(List(selectedArea.id)),
-            applicationService.allForAreas(List(selectedArea.id), true)
-          )
+      request: RequestWithUserData[A]
+  ): Future[Html] = {
+
+    val (usersFuture, applicationsFuture, groupsFuture) =
+      if (areaIds.isEmpty && organisationIds.isEmpty && groupIds.isEmpty) {
+        (userService.all, applicationService.all, userGroupService.all)
+      } else if (areaIds.nonEmpty && groupIds.isEmpty) {
+        val groupsFuture = userGroupService.byAreas(areaIds)
+        if (organisationIds.isEmpty) {
+          val usersFuture = groupsFuture.flatMap { groups =>
+            val groupIds = groups.map(_.id)
+            userService.byGroupIdsAnonymous(groupIds)
+          }
+          (usersFuture, applicationService.allForAreas(areaIds), groupsFuture)
         } else {
-          val adminAreaIds: List[UUID] = currentUser.areas
-          (
-            userService.byAreaIds(adminAreaIds),
-            applicationService.allForAreas(adminAreaIds, true)
-          )
+          val groupsFuture = userGroupService.byOrganisationIds(organisationIds).map { groups =>
+            groups.filter(group => group.areaIds.intersect(areaIds).nonEmpty)
+          }
+          val usersFuture =
+            groupsFuture.flatMap(groups => userService.byGroupIdsAnonymous(groups.map(_.id)))
+          val applicationsFuture = usersFuture
+            .flatMap(users => applicationService.allForUserIds(users.map(_.id)))
+            .map(_.filter(application => areaIds.contains(application.area)))
+          (usersFuture, applicationsFuture, groupsFuture)
         }
+      } else if (organisationIds.nonEmpty) {
+        val groupsFuture = userGroupService.byOrganisationIds(organisationIds)
+        val usersFuture =
+          groupsFuture.flatMap(groups => userService.byGroupIdsAnonymous(groups.map(_.id)))
+        val applicationsFuture =
+          usersFuture.flatMap(users => applicationService.allForUserIds(users.map(_.id)))
+        (usersFuture, applicationsFuture, groupsFuture)
       } else {
-        if (restrictToSelectedArea) {
-          val userGroups: List[UserGroup] = userGroupService.byIds(currentUser.groupIds)
-          val areaGroups = userGroups.filter(_.areaIds.contains[UUID](selectedArea.id))
-          val areaGroupsUsers = userService.byGroupIds(areaGroups.map(_.id))
-          (
-            areaGroupsUsers,
-            applicationService
-              .allForUserIds(areaGroupsUsers.map(_.id), true)
-              .filter(application => (application.area: UUID) == (selectedArea.id: UUID))
-          )
-        } else {
-          val sameGroupsUsers = userService.byGroupIds(currentUser.groupIds)
-          (
-            sameGroupsUsers,
-            applicationService.allForUserIds(sameGroupsUsers.map(_.id), true)
-          )
-        }
+        val groupsFuture = userGroupService.byIdsFuture(groupIds)
+        val usersFuture =
+          groupsFuture.flatMap(groups => userService.byGroupIdsAnonymous(groups.map(_.id)))
+        val applicationsFuture =
+          usersFuture.flatMap(users => applicationService.allForUserIds(users.map(_.id)))
+        (usersFuture, applicationsFuture, groupsFuture)
       }
 
-    val applicationsByArea: Map[Area, List[Application]] =
-      applications
-        .groupBy(_.area)
-        .flatMap {
-          case (areaId: UUID, applications: Seq[Application]) =>
-            Area.all
-              .find(area => (area.id: UUID) == (areaId: UUID))
-              .map(area => (area, applications))
-        }
+    for {
+      users <- usersFuture
+      applications <- applicationsFuture
+      groups <- groupsFuture
+    } yield {
+      val applicationsByArea: Map[Area, List[Application]] =
+        applications
+          .groupBy(_.area)
+          .flatMap {
+            case (areaId: UUID, applications: Seq[Application]) =>
+              Area.all
+                .find(area => (area.id: UUID) == (areaId: UUID))
+                .map(area => (area, applications))
+          }
 
-    val firstDate = if (applications.isEmpty) {
-      DateTime.now()
-    } else {
-      applications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
+      val firstDate = if (applications.isEmpty) {
+        DateTime.now()
+      } else {
+        applications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
+      }
+      val today = DateTime.now(timeZone)
+      val months = Time.monthsMap(firstDate, today)
+      views.html.helpers.stats(request.currentUser.admin)(
+        months,
+        applicationsByArea,
+        users,
+        groups,
+        areaIds,
+        organisationIds,
+        groupIds
+      )
     }
-    val today = DateTime.now(timeZone)
-    val months = Time.monthsMap(firstDate, today)
-    views.html.stats(currentUser, selectedArea)(
-      months,
-      applicationsByArea,
-      users,
-      restrictToSelectedArea
-    )(webJarsUtil, flash, request)
   }
 
+  private val statsForm = Form(
+    tuple(
+      "areas" -> default(list(uuid), List()),
+      "organisations" -> default(list(of[Organisation.Id]), List()),
+      "groups" -> default(list(uuid), List())
+    )
+  )
+
   def stats: Action[AnyContent] = loginAction.async { implicit request =>
-    val selectedAreaOnly: Boolean =
-      request.getQueryString("currentAreaOnly").map(_.toBoolean).getOrElse(false)
-    // Note: this is deprecated
-    val selectedArea = request.currentArea
+    val (areaIds, organisationIds, groupIds) = statsForm.bindFromRequest.get
+
+    val observableOrganisationIds = if (request.currentUser.admin) {
+      organisationIds
+    } else {
+      organisationIds.intersect(request.currentUser.observableOrganisationIds)
+    }
+
+    val observableGroupIds = if (request.currentUser.admin) {
+      groupIds
+    } else {
+      groupIds.intersect(request.currentUser.groupIds)
+    }
 
     val cacheKey =
-      if (selectedAreaOnly)
-        s"stats.user_${request.currentUser.id}.area_${selectedArea.id}"
+      if (areaIds.isEmpty && organisationIds.isEmpty && groupIds.isEmpty)
+        s"stats.all"
+      else if (observableGroupIds.isEmpty)
+        s"stats.${Hash.sha256(areaIds.toString() + observableOrganisationIds.toString())}"
       else
-        s"stats.user_${request.currentUser.id}"
+        s"stats.${Hash.sha256(areaIds.toString() + observableOrganisationIds.toString() + observableGroupIds.toString())}"
 
     cache
       .getOrElseUpdate[Html](cacheKey, 1 hours)(
-        Future(generateStats(request.currentUser, selectedArea, selectedAreaOnly))
+        generateStats(areaIds, observableOrganisationIds, observableGroupIds)
       )
       .map { html =>
         eventService.log(StatsShowed, "Visualise les stats")
-        Ok(html)
+        Ok(views.html.stats(request.currentUser)(html, List(), areaIds, organisationIds, groupIds))
       }
   }
 
@@ -566,7 +602,7 @@ case class ApplicationController @Inject() (
   def allCSV(areaId: UUID): Action[AnyContent] = loginAction { implicit request =>
     val area = if (areaId == Area.allArea.id) None else Area.fromId(areaId)
     val exportedApplications = if (request.currentUser.admin || request.currentUser.groupAdmin) {
-      allApplicationVisibleByUserAdmin(request.currentUser, area)
+      Await.result(allApplicationVisibleByUserAdmin(request.currentUser, area), 1 seconds)
     } else {
       List()
     }

@@ -10,8 +10,15 @@ import anorm.JodaParameterMetaData._
 import helper.{Hash, Time}
 import org.postgresql.util.PSQLException
 
+import scala.concurrent.Future
+
 @javax.inject.Singleton
-class UserService @Inject() (configuration: play.api.Configuration, db: Database) {
+class UserService @Inject() (
+    configuration: play.api.Configuration,
+    db: Database,
+    dependencies: ServicesDependencies
+) {
+  import dependencies.databaseExecutionContext
 
   private lazy val cryptoSecret = configuration.underlying.getString("play.http.secret.key ")
 
@@ -39,8 +46,10 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
     )
     .map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
 
-  def all = db.withConnection { implicit connection =>
-    SQL("""SELECT * FROM "user"""").as(simpleUser.*)
+  def all: Future[List[User]] = Future {
+    db.withConnection { implicit connection =>
+      SQL("""SELECT *, '' as name, '' as email, '' as qualite FROM "user"""").as(simpleUser.*)
+    }
   }
 
   // Note: this is deprecated, should check via the UserGroup
@@ -56,6 +65,12 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
 
   def byGroupIds(ids: List[UUID]): List[User] = db.withConnection { implicit connection =>
     SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
+  }
+
+  def byGroupIdsAnonymous(ids: List[UUID]): Future[List[User]] = Future {
+    db.withConnection { implicit connection =>
+      SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
+    }
   }
 
   def byId(id: UUID, includeDisabled: Boolean = false): Option[User] = {
