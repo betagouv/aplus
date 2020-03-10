@@ -64,7 +64,10 @@ case class AreaController @Inject() (
       } else {
         userGroupService.byIds(request.currentUser.groupIds)
       }
-      Ok(views.html.allArea(request.currentUser)(Area.all, areasWithLoginByKey, userGroups))
+      Ok(
+        views.html
+          .allArea(request.currentUser, request.rights)(Area.all, areasWithLoginByKey, userGroups)
+      )
     }
   }
 
@@ -157,7 +160,7 @@ case class AreaController @Inject() (
         }
 
         Ok(
-          views.html.deploymentDashboard(request.currentUser)(
+          views.html.deploymentDashboard(request.currentUser, request.rights)(
             data,
             organisationSetToCountOfCounts,
             organisationGrouping
@@ -172,7 +175,7 @@ case class AreaController @Inject() (
     asAdmin { () =>
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
-      Ok(views.html.franceServiceDeploymentDashboard(request.currentUser))
+      Ok(views.html.franceServiceDeploymentDashboard(request.currentUser, request.rights))
     }
   }
 

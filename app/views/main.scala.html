@@ -1,6 +1,6 @@
 @import helper._
 
-@(currentUser: User, currentArea: Option[Area] = None, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Option[Area] = None, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 <!doctype html>
 <html lang="fr">
@@ -74,7 +74,7 @@
                         <a href="@routes.HomeController.index()"><img src='@routes.Assets.versioned("images/logo_small_150x160.png")' class="logo-header" alt="Administration+"></a>
                     </span>
                     <div class="invisible">
-                        <a class="mdl-button @if(title =="Mes demandes") { mdl-button--accent }" href="@routes.ApplicationController.myApplications()">Mes demandes</a>
+                        <a class="mdl-button @if(title == "Mes demandes") { mdl-button--accent }" href="@routes.ApplicationController.myApplications()">Mes demandes</a>
                     </div>
                         <!-- Add spacer, to align navigation to the right in desktop -->
                     <div class="mdl-layout-spacer"></div>
@@ -116,18 +116,22 @@
                 </header>
                 <nav class="navigation mdl-navigation mdl-color--deep-purple-900">
                     <a class="mdl-navigation__link" href="@routes.ApplicationController.myApplications()"><i class="material-icons" role="presentation">folder_open</i>Mes demandes</a>
-                    @if(currentUser.admin) {
+                    @if(Authorization.isAdmin(currentUserRights)) {
                         <a class="mdl-navigation__link" href="@routes.AreaController.all()"><i class="material-icons" role="presentation">place</i>Territoires</a>
                     }
-                    @if(currentUser.admin || currentUser.groupAdmin) {
+                    @if(Authorization.canSeeApplicationsAsAdmin(currentUserRights)) {
                         <a class="mdl-navigation__link" href="@routes.ApplicationController.all(Area.allArea.id)"><i class="material-icons" role="presentation">folder</i>Admin : demandes</a>
+                    }
+                    @if(Authorization.canSeeUsers(currentUserRights)) {
                         <a class="mdl-navigation__link" href="@routes.UserController.home"><i class="material-icons" role="presentation">people</i>Utilisateurs</a>
                     }
-                    @if(currentUser.admin) {
+                    @if(Authorization.canSeeDeployment(currentUserRights)) {
                         <a class="mdl-navigation__link" href="@routes.AreaController.deploymentDashboard()"><i class="material-icons" role="presentation">track_changes</i>Déploiement</a>
+                    }
+                    @if(Authorization.isAdmin(currentUserRights)) {
                         <a class="mdl-navigation__link" href="@routes.UserController.allEvents()"><i class="material-icons" role="presentation">event</i>Événements</a>
                     }
-                    @if(currentUser.admin || currentUser.groupAdmin) {
+                    @if(Authorization.canSeeStats(currentUserRights)) {
                         <a class="mdl-navigation__link" href="@routes.ApplicationController.stats()"><i class="material-icons" role="presentation">show_chart</i>Stats</a>
                     }
                     <a class="mdl-navigation__link" href="@routes.Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf")" target="_blank"><i class="material-icons" role="presentation">assignment</i>Mandat</a>

@@ -1,9 +1,9 @@
 @import models._
 @import views.html.helper.CSRF
-@(currentUser: User)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean, zoneAsJson: String, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean, zoneAsJson: String, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
-@main(currentUser)(s"Gestion du groupe ${userGroup.name} - ${userGroup.areaIds.flatMap(Area.fromId).map(_.name).mkString(", ")}") {
+@main(currentUser, currentUserRights)(s"Gestion du groupe ${userGroup.name} - ${userGroup.areaIds.flatMap(Area.fromId).map(_.name).mkString(", ")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
     <script src='@routes.Assets.versioned("javascripts/group.js")'></script>
 

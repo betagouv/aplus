@@ -22,7 +22,6 @@ import helper.CSVUtil.escape
 import models.EventType.{
   AddExpertCreated,
   AddExpertNotCreated,
-  AddExpertNotFound,
   AddExpertUnauthorized,
   AgentsAdded,
   AgentsNotAdded,
@@ -38,9 +37,7 @@ import models.EventType.{
   ApplicationCreationError,
   ApplicationCreationInvalid,
   ApplicationFormShowed,
-  ApplicationNotFound,
   ApplicationShowed,
-  ApplicationUnauthorized,
   FileNotFound,
   FileOpened,
   FileUnauthorized,
@@ -51,7 +48,6 @@ import models.EventType.{
   TerminateCompleted,
   TerminateError,
   TerminateIncompleted,
-  TerminateNotFound,
   TerminateUnauthorized
 }
 import play.api.cache.AsyncCacheApi
@@ -133,7 +129,7 @@ case class ApplicationController @Inject() (
     fetchGroupsWithInstructors(request.currentArea.id, request.currentUser).map {
       case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
         Ok(
-          views.html.createApplication(request.currentUser, request.currentArea)(
+          views.html.createApplication(request.currentUser, request.rights, request.currentArea)(
             instructorsOfGroups,
             groupsOfAreaWithInstructor,
             coworkers,
@@ -154,14 +150,15 @@ case class ApplicationController @Inject() (
         })
         val categories = organisationService.categories
         Ok(
-          views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(
-            instructorsOfGroups,
-            groupsOfAreaWithInstructorWithOrganisationSet,
-            coworkers,
-            categories,
-            None,
-            applicationForm
-          )
+          views.html
+            .simplifiedCreateApplication(request.currentUser, request.rights, request.currentArea)(
+              instructorsOfGroups,
+              groupsOfAreaWithInstructorWithOrganisationSet,
+              coworkers,
+              categories,
+              None,
+              applicationForm
+            )
         )
     }
   }
@@ -219,7 +216,11 @@ case class ApplicationController @Inject() (
               val groupsOfAreaWithInstructorWithOrganisationSet =
                 groupsOfAreaWithInstructor.filter(_.organisationSetOrDeducted.nonEmpty)
               BadRequest(
-                views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(
+                views.html.simplifiedCreateApplication(
+                  request.currentUser,
+                  request.rights,
+                  request.currentArea
+                )(
                   instructorsOfGroups,
                   groupsOfAreaWithInstructorWithOrganisationSet,
                   coworkers,
@@ -231,13 +232,14 @@ case class ApplicationController @Inject() (
               )
             } else {
               BadRequest(
-                views.html.createApplication(request.currentUser, request.currentArea)(
-                  instructorsOfGroups,
-                  groupsOfAreaWithInstructor,
-                  coworkers,
-                  formWithErrors,
-                  pendingAttachments.keys ++ newAttachments.keys
-                )
+                views.html
+                  .createApplication(request.currentUser, request.rights, request.currentArea)(
+                    instructorsOfGroups,
+                    groupsOfAreaWithInstructor,
+                    coworkers,
+                    formWithErrors,
+                    pendingAttachments.keys ++ newAttachments.keys
+                  )
               )
             }
         },
@@ -337,7 +339,10 @@ case class ApplicationController @Inject() (
         )
         Ok(
           views.html
-            .allApplications(request.currentUser)(applications, area.getOrElse(Area.allArea))
+            .allApplications(request.currentUser, request.rights)(
+              applications,
+              area.getOrElse(Area.allArea)
+            )
         )
     }
   }
@@ -355,7 +360,12 @@ case class ApplicationController @Inject() (
       MyApplicationsShowed,
       s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}"
     )
-    Ok(views.html.myApplications(request.currentUser)(myOpenApplications, myClosedApplications))
+    Ok(
+      views.html.myApplications(request.currentUser, request.rights)(
+        myOpenApplications,
+        myClosedApplications
+      )
+    )
   }
 
   private def generateStats[A](
@@ -478,11 +488,20 @@ case class ApplicationController @Inject() (
       )
       .map { html =>
         eventService.log(StatsShowed, "Visualise les stats")
-        Ok(views.html.stats(request.currentUser)(html, List(), areaIds, organisationIds, groupIds))
+        Ok(
+          views.html.stats(request.currentUser, request.rights)(
+            html,
+            List(),
+            areaIds,
+            organisationIds,
+            groupIds
+          )
+        )
       }
   }
 
-  def allAs(userId: UUID): Action[AnyContent] = loginAction { implicit request =>
+  def allAs(userId: UUID): Action[AnyContent] = loginAction.async { implicit request =>
+    if (Authorization.isAdmin(request.rights)) {}
     val userOption = userService.byId(userId)
     (request.currentUser.admin, userOption) match {
       case (false, Some(user)) =>
@@ -491,8 +510,10 @@ case class ApplicationController @Inject() (
           s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur $userId",
           user = Some(user)
         )
-        Unauthorized(
-          s"Vous n'avez pas le droit de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+        Future(
+          Unauthorized(
+            s"Vous n'avez pas le droit de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          )
         )
       case (true, Some(user)) if user.admin =>
         eventService.log(
@@ -500,32 +521,38 @@ case class ApplicationController @Inject() (
           s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur admin $userId",
           user = Some(user)
         )
-        Unauthorized(
-          s"Vous n'avez pas le droit de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-        )
-      case (true, Some(user)) if request.currentUser.areas.intersect(user.areas).nonEmpty =>
-        val currentUserId = user.id
-        val applicationsFromTheArea = List[Application]()
-        eventService
-          .log(AllAsShowed, s"Visualise la vue de l'utilisateur $userId", user = Some(user))
-        // Bug To Fix
-        Ok(
-          views.html.myApplications(user)(
-            applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin),
-            applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin),
-            applicationsFromTheArea
+        Future(
+          Unauthorized(
+            s"Vous n'avez pas le droit de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
           )
         )
+      case (true, Some(user)) if request.currentUser.areas.intersect(user.areas).nonEmpty =>
+        LoginAction.readUserRights(user).map { userRights =>
+          val currentUserId = user.id
+          val applicationsFromTheArea = List[Application]()
+          eventService
+            .log(AllAsShowed, s"Visualise la vue de l'utilisateur $userId", user = Some(user))
+          // Bug To Fix
+          Ok(
+            views.html.myApplications(user, userRights)(
+              applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin),
+              applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin),
+              applicationsFromTheArea
+            )
+          )
+        }
       case _ =>
         eventService.log(AllAsNotFound, s"L'utilisateur $userId n'existe pas")
-        BadRequest(
-          s"L'utilisateur n'existe pas ou vous n'avez pas le droit d'accéder à cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+        Future(
+          BadRequest(
+            s"L'utilisateur n'existe pas ou vous n'avez pas le droit d'accéder à cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          )
         )
     }
   }
 
   def showExportMyApplicationsCSV: Action[AnyContent] = loginAction { implicit request =>
-    Ok(views.html.CSVExport(request.currentUser))
+    Ok(views.html.CSVExport(request.currentUser, request.rights))
   }
 
   private def applicationsToCSV(applications: List[Application]): String = {
@@ -658,7 +685,7 @@ case class ApplicationController @Inject() (
         val openedTab = request.flash.get("opened-tab").getOrElse("answer")
         eventService.log(ApplicationShowed, s"Demande $id consultée", Some(application))
         Ok(
-          views.html.showApplication(request.currentUser)(
+          views.html.showApplication(request.currentUser, request.rights)(
             groupsWithUsersThatCanBeInvited,
             application,
             answerForm,

@@ -27,4 +27,4 @@ case class UserGroup(
 
 }
 
-object UserGroup {}
+//object UserGroup {}

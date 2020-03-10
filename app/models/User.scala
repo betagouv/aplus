@@ -32,6 +32,11 @@ case class User(
     cguAcceptationDate: Option[DateTime] = None,
     newsletterAcceptationDate: Option[DateTime] = None,
     phoneNumber: Option[String] = None,
+    // If this field is non empty, then the User
+    // is considered to be an observer:
+    // * can see stats+deployment of all areas,
+    // * can see all users,
+    // * can see one user but not edit it
     observableOrganisationIds: List[Organisation.Id] = Nil
 ) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"

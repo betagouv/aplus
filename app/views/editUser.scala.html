@@ -1,9 +1,9 @@
 @import models._
 @import _root_.helper.MDLForms._
 @import java.util.UUID
-@(currentUser: User)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
-@main(currentUser)(s"Utilisateur ${form("name").value.getOrElse("")}") {
+@main(currentUser, currentUserRights)(s"Utilisateur ${form("name").value.getOrElse("")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
     <script src='@routes.Assets.versioned("javascripts/dialog.js")'></script>
     @webJarsUtil.locate("slimselect.min.css").css()
@@ -81,9 +81,18 @@
                 </optgroup>
             }
           </select>
+          <b class="mdl-cell mdl-cell--12-col">Observateur des organisations:</b>
+          <select id="observableOrganisationIds" name="observableOrganisationIds[]" multiple>
+            @for(organisation <- Organisation.all) {
+                <option value="@{organisation.id.id}"
+                    @if(form.value.map(_.observableOrganisationIds.contains[Organisation.Id](organisation.id)).getOrElse(false)){ selected }
+                >@{organisation.shortName} - @{organisation.name}</option>
+            }
+          </select>
           <script>
             new SlimSelect({ select: '#area-ids' });
             new SlimSelect({ select: '#multiple' });
+            new SlimSelect({ select: '#observableOrganisationIds' });
           </script>
           @if(form("areas").hasErrors) {
             <p style="color: red; font-weight: bold;">@form("areas").errors.map(_.format).mkString(", ")</p>

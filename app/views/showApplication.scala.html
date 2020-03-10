@@ -1,7 +1,7 @@
-@(user: User)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(user: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 @import java.util.Locale
 
-@main(user, if(user.expert) { Some(currentArea)} else { None })(s"Demande de ${application.creatorUserName} - ${Area.fromId(application.area).get.name}")  {
+@main(user, currentUserRights, if(user.expert) { Some(currentArea)} else { None })(s"Demande de ${application.creatorUserName} - ${Area.fromId(application.area).get.name}")  {
 <style>
 .mdl-list__item-primary-content {
     font-weight: bold;

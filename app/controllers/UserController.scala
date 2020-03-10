@@ -109,7 +109,7 @@ case class UserController @Inject() (
         usersFuture.map { users =>
           val result = request.getQueryString("vue").getOrElse("nouvelle") match {
             case "nouvelle" if request.currentUser.admin =>
-              views.html.allUsersNew(request.currentUser)(
+              views.html.allUsersNew(request.currentUser, request.rights)(
                 groups,
                 users,
                 applications,
@@ -117,7 +117,7 @@ case class UserController @Inject() (
                 configuration.underlying.getString("geoplus.host")
               )
             case _ =>
-              views.html.allUsersByGroup(request.currentUser)(
+              views.html.allUsersByGroup(request.currentUser, request.rights)(
                 groups,
                 users,
                 applications,
@@ -217,7 +217,7 @@ case class UserController @Inject() (
             eventService
               .log(UserShowed, "Visualise la vue de modification l'utilisateur ", user = Some(user))
             Ok(
-              views.html.editUser(request.currentUser)(
+              views.html.editUser(request.currentUser, request.rights)(
                 form,
                 userId,
                 groups,
@@ -263,9 +263,11 @@ case class UserController @Inject() (
           val groups = groupService.allGroups
           eventService.log(
             AddUserError,
-            s"Essai de modification de l'tilisateur $userId avec des erreurs de validation"
+            s"Essai de modification de l'utilisateur $userId avec des erreurs de validation"
           )
-          BadRequest(views.html.editUser(request.currentUser)(formWithErrors, userId, groups))
+          BadRequest(
+            views.html.editUser(request.currentUser, request.rights)(formWithErrors, userId, groups)
+          )
         },
         updatedUser =>
           withUser(updatedUser.id, includeDisabled = true) { user: User =>
@@ -285,7 +287,7 @@ case class UserController @Inject() (
               Redirect(routes.UserController.editUser(userId))
                 .flashing("success" -> "Utilisateur modifié")
             } else {
-              val form = userForm(Time.dateTimeZone)
+              val form: Form[User] = userForm(Time.dateTimeZone)
                 .fill(userToUpdate)
                 .withGlobalError(
                   s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)"
@@ -296,7 +298,9 @@ case class UserController @Inject() (
                 "Impossible de modifier l'utilisateur dans la BDD",
                 user = Some(updatedUser)
               )
-              InternalServerError(views.html.editUser(request.currentUser)(form, userId, groups))
+              InternalServerError(
+                views.html.editUser(request.currentUser, request.rights)(form, userId, groups)
+              )
             }
           }
       )
@@ -314,7 +318,7 @@ case class UserController @Inject() (
             eventService
               .log(AddUserError, "Essai d'ajout d'utilisateurs avec des erreurs de validation")
             BadRequest(
-              views.html.editUsers(request.currentUser)(
+              views.html.editUsers(request.currentUser, request.rights)(
                 formWithErrors,
                 0,
                 routes.UserController.addPost(groupId)
@@ -335,7 +339,7 @@ case class UserController @Inject() (
                         .fill(users)
                         .withGlobalError(errorMessage)
                       InternalServerError(
-                        views.html.editUsers(request.currentUser)(
+                        views.html.editUsers(request.currentUser, request.rights)(
                           form,
                           users.length,
                           routes.UserController.addPost(groupId)
@@ -373,7 +377,7 @@ case class UserController @Inject() (
                   s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}"
                 )
                 BadRequest(
-                  views.html.editUsers(request.currentUser)(
+                  views.html.editUsers(request.currentUser, request.rights)(
                     form,
                     users.length,
                     routes.UserController.addPost(groupId)
@@ -388,7 +392,7 @@ case class UserController @Inject() (
 
   def showCGU(): Action[AnyContent] = loginAction { implicit request =>
     eventService.log(CGUShowed, "CGU visualisé")
-    Ok(views.html.showCGU(request.currentUser))
+    Ok(views.html.showCGU(request.currentUser, request.rights))
   }
 
   def validateCGU(): Action[AnyContent] = loginAction { implicit request =>
@@ -436,7 +440,7 @@ case class UserController @Inject() (
         val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
         eventService.log(EditUserShowed, "Visualise la vue d'ajouts des utilisateurs")
         Ok(
-          views.html.editUsers(request.currentUser)(
+          views.html.editUsers(request.currentUser, request.rights)(
             usersForm(Time.dateTimeZone, group.areaIds),
             rows,
             routes.UserController.addPost(groupId)
@@ -454,7 +458,7 @@ case class UserController @Inject() (
       val userId = request.getQueryString("fromUserId").flatMap(UUIDHelper.fromString)
       val events = eventService.all(limit, userId)
       eventService.log(EventsShowed, s"Affiche les événements")
-      Ok(views.html.allEvents(request.currentUser)(events, limit))
+      Ok(views.html.allEvents(request.currentUser, request.rights)(events, limit))
     }
   }
 
@@ -486,7 +490,16 @@ case class UserController @Inject() (
           "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
           "phone-number" -> optional(text),
           // TODO: put forms
-          "observableOrganisationIds" -> list(of[Organisation.Id])
+          "observableOrganisationIds" -> list(
+            of[Organisation.Id].verifying(
+              "Organisation non reconnue",
+              organisationId =>
+                Organisation.all
+                  .exists(organisation =>
+                    (organisation.id: Organisation.Id) == (organisationId: Organisation.Id)
+                  )
+            )
+          )
         )(User.apply)(User.unapply)
       )
     )

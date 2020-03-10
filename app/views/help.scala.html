@@ -1,6 +1,6 @@
-@(user: User)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(user: User, currentUserRights: Authorization.UserRights)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-@main(user)("Webinaire")  {
+@main(user, currentUserRights)("Webinaire")  {
 
 }{
      <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col --padding-20px">

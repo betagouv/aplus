@@ -48,6 +48,12 @@ object Authorization {
 
   type Check = UserRights => Boolean
 
+  def atLeastOneIsAuthorized(checks: Check*): Check =
+    rights => checks.exists(_(rights))
+
+  def allMustBeAuthorized(checks: Check*): Check =
+    rights => checks.forall(_(rights))
+
   def isAdmin: Check =
     _.rights.exists {
       case UserRight.AdminOfAreas(_) => true
@@ -78,6 +84,18 @@ object Authorization {
       case _                               => false
     }
 
+  def isManager: Check =
+    _.rights.exists {
+      case UserRight.ManagerOfGroups(_) => true
+      case _                            => false
+    }
+
+  def isObserver: Check =
+    _.rights.exists {
+      case UserRight.ObserverOfOrganisations(organisations) => organisations.nonEmpty
+      case _                                                => false
+    }
+
   def isAdminOfOneOfAreas(areas: Set[UUID]): Check =
     rights => areas.exists(area => isAdminOfArea(area)(rights))
 
@@ -86,6 +104,22 @@ object Authorization {
 
   def canEditOtherUser(editedUser: User): Check =
     rights => isAdminOfOneOfAreas(editedUser.areas.toSet)(rights)
+
+  def canSeeApplicationsAsAdmin: Check =
+    atLeastOneIsAuthorized(isAdmin, isManager)
+
+  def canSeeDeployment: Check =
+    atLeastOneIsAuthorized(isAdmin, isObserver)
+
+  def canSeeStats: Check =
+    atLeastOneIsAuthorized(isAdmin, isManager, isObserver)
+
+  def canSeeUsers: Check =
+    atLeastOneIsAuthorized(isAdmin, isManager, isObserver)
+
+  //
+  // Authorizations concerning Applications
+  //
 
   def isApplicationCreator(application: Application): Check =
     _.rights.exists {

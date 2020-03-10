@@ -5,7 +5,7 @@
 @import serializers.UserAndGroupCsvSerializer
 
 @import models.formModels.UserGroupFormData
-@(currentUser: User)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @groupWillNotBeInserted(group: Field) = @{
   group("alreadyExistsOrAllUsersAlreadyExist").value.exists(_ == "true")
@@ -95,7 +95,7 @@
   </div>
 }
 
-@main(currentUser, maxWidth = false)("Revue de votre import CSV") {
+@main(currentUser, currentUserRights, maxWidth = false)("Revue de votre import CSV") {
   <script src='@routes.Assets.versioned("javascripts/main.js")'></script>
   <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
   @webJarsUtil.locate("slimselect.min.css").css()

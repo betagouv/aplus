@@ -1,11 +1,12 @@
 package controllers
 
-import actions.RequestWithUserData
+import actions.{LoginAction, RequestWithUserData}
 import javax.inject.{Inject, Singleton}
 import models.EventType.{GenerateToken, UnknownEmail}
 import models.{Area, LoginToken, User}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
+import scala.concurrent.{ExecutionContext, Future}
 import services.{EventService, NotificationService, TokenService, UserService}
 
 @Singleton
@@ -15,50 +16,56 @@ class LoginController @Inject() (
     tokenService: TokenService,
     configuration: play.api.Configuration,
     eventService: EventService
-)(implicit val webJarsUtil: WebJarsUtil)
+)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController {
 
   private lazy val tokenExpirationInMinutes =
     configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
-  def login() = Action { implicit request =>
+  def login() = Action.async { implicit request =>
     val emailFromRequestOrQueryParamOrFlash: Option[String] = request.body.asFormUrlEncoded
       .flatMap(_.get("email").flatMap(_.headOption))
       .orElse(request.getQueryString("email"))
       .orElse(request.flash.get("email"))
     emailFromRequestOrQueryParamOrFlash.fold {
-      Ok(views.html.home())
+      Future(Ok(views.html.home()))
     } { email =>
       userService
         .byEmail(email)
         .fold {
-          implicit val requestWithUserData =
-            new RequestWithUserData(User.systemUser, Area.notApplicable, request)
-          eventService.log(UnknownEmail, s"Aucun compte actif à cette adresse mail $email")
-          val message =
-            """Aucun compte actif n'est associé à cette adresse e-mail.
+          // TODO: this should be removed
+          val user = User.systemUser
+          LoginAction.readUserRights(user).map { userRights =>
+            implicit val requestWithUserData =
+              new RequestWithUserData(user, userRights, Area.notApplicable, request)
+            eventService.log(UnknownEmail, s"Aucun compte actif à cette adresse mail $email")
+            val message =
+              """Aucun compte actif n'est associé à cette adresse e-mail.
              |Merci de vérifier qu'il s'agit bien de votre adresse professionnelle et nominative qui doit être sous la forme : prenom.nom@votre-structure.fr""".stripMargin
-          Redirect(routes.LoginController.login())
-            .flashing("error" -> message, "email-value" -> email)
+            Redirect(routes.LoginController.login())
+              .flashing("error" -> message, "email-value" -> email)
+          }
         } { user: User =>
-          val loginToken =
-            LoginToken.forUserId(user.id, tokenExpirationInMinutes, request.remoteAddress)
-          tokenService.create(loginToken)
-          val path = request.flash.get("path").getOrElse(routes.HomeController.index().url)
-          val url = routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL()
-          notificationService.newLoginRequest(url, path, user, loginToken)
+          LoginAction.readUserRights(user).map { userRights =>
+            val loginToken =
+              LoginToken.forUserId(user.id, tokenExpirationInMinutes, request.remoteAddress)
+            tokenService.create(loginToken)
+            val path = request.flash.get("path").getOrElse(routes.HomeController.index().url)
+            val url = routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL()
+            notificationService.newLoginRequest(url, path, user, loginToken)
 
-          implicit val requestWithUserData =
-            new RequestWithUserData(user, Area.notApplicable, request)
-          eventService.log(
-            GenerateToken,
-            s"Génére un token pour une connexion par email body=${request.body.asFormUrlEncoded
-              .flatMap(_.get("email"))
-              .nonEmpty}&flash=${request.flash.get("email").nonEmpty}"
-          )
+            implicit val requestWithUserData =
+              new RequestWithUserData(user, userRights, Area.notApplicable, request)
+            eventService.log(
+              GenerateToken,
+              s"Génére un token pour une connexion par email body=${request.body.asFormUrlEncoded
+                .flatMap(_.get("email"))
+                .nonEmpty}&flash=${request.flash.get("email").nonEmpty}"
+            )
 
-          Ok(views.html.loginHome(Left(Some(user)), tokenExpirationInMinutes))
-            .flashing("email" -> email)
+            Ok(views.html.loginHome(Left(Some(user)), tokenExpirationInMinutes))
+              .flashing("email" -> email)
+          }
         }
     }
   }

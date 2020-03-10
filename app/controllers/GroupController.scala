@@ -90,7 +90,15 @@ case class GroupController @Inject() (
         val zoneAsJson = areas
           .map({ case (code, name) => s"""{ "code": "$code", "name": "$name" }""" })
           .mkString("[", ",", "]")
-        Ok(views.html.editGroup(request.currentUser)(group, groupUsers, isEmpty, zoneAsJson, Host))
+        Ok(
+          views.html.editGroup(request.currentUser, request.rights)(
+            group,
+            groupUsers,
+            isEmpty,
+            zoneAsJson,
+            Host
+          )
+        )
       }
     }
   }

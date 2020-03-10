@@ -175,7 +175,9 @@ class UserService @Inject() (
           group_ids = array[${user.groupIds}]::uuid[],
           expert = ${user.expert},
           phone_number = ${user.phoneNumber},
-          disabled = ${user.disabled}
+          disabled = ${user.disabled},
+          observable_organisation_ids = array[${user.observableOrganisationIds
+      .map(_.id)}]::varchar[]
           WHERE id = ${user.id}::uuid
        """.executeUpdate() == 1
   }

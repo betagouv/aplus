@@ -1,4 +1,4 @@
-@(user: User)(myOpenApplications: Seq[Application], myClosedApplications: Seq[Application], applicationsFromTheArea: Seq[Application] = List())(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(user: User, currentUserRights: Authorization.UserRights)(myOpenApplications: Seq[Application], myClosedApplications: Seq[Application], applicationsFromTheArea: Seq[Application] = List())(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 @import java.util.Locale
 
 @display(applications: Seq[Application]) = {
@@ -47,7 +47,7 @@
     </div>
 }
 
-@main(user)(s"Mes demandes")  {
+@main(user, currentUserRights)(s"Mes demandes")  {
 <style>
     .pem-table {
         width: 100%;

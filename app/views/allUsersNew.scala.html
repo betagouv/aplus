@@ -1,8 +1,8 @@
 @import models._
-@(currentUser: User)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
-@main(currentUser, maxWidth = false)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
+@main(currentUser, currentUserRights, maxWidth = false)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
     @webJarsUtil.locate("tabulator.min.css").css()
     @webJarsUtil.locate("tabulator.min.js").script()
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>

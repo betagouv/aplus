@@ -40,7 +40,7 @@ class EventService @Inject() (db: Database) {
       request.currentArea,
       request.remoteAddress,
       event.code,
-      s"description. ${request.method} ${request.path}",
+      s"$description. ${request.method} ${request.path}",
       application,
       user
     )
