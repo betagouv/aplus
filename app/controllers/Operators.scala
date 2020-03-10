@@ -6,7 +6,7 @@ import actions.RequestWithUserData
 import constants.Constants
 import helper.BooleanHelper.not
 import models.EventType._
-import models.{Application, Error, EventType, User, UserGroup}
+import models.{Application, Authorization, Error, EventType, User, UserGroup}
 import play.api.mvc.Results.{NotFound, Unauthorized}
 import play.api.mvc.{AnyContent, Result, Results}
 import scala.concurrent.{ExecutionContext, Future}
@@ -72,6 +72,19 @@ object Operators {
           payload(user)
         })
 
+    def asUserWithAuthorization(authorizationCheck: Authorization.Check)(
+        event: () => (EventType, String)
+    )(
+        payload: () => Result
+    )(implicit request: RequestWithUserData[AnyContent]): Result =
+      if (not(authorizationCheck(request.rights))) {
+        val (eventType, description) = event()
+        eventService.log(eventType, description = description)
+        Unauthorized("Vous n'avez pas le droit de faire ça")
+      } else {
+        payload()
+      }
+
     def asAdmin(event: () => (EventType, String))(
         payload: () => Result
     )(implicit request: RequestWithUserData[AnyContent]): Result =
@@ -97,7 +110,11 @@ object Operators {
     def asUserWhoSeesUsersOfArea(areaId: UUID)(event: () => (EventType, String))(
         payload: () => Future[Result]
     )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
-      if (not(request.currentUser.canSeeUsersInArea(areaId))) {
+      // TODO: use only Authorization
+      if (not(
+            request.currentUser.canSeeUsersInArea(areaId) ||
+              Authorization.isObserver(request.rights)
+          )) {
         val (eventType, description) = event()
         eventService.log(eventType, description = description)
         Future(Unauthorized("Vous n'avez pas le droit de faire ça"))

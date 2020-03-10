@@ -99,11 +99,27 @@ object Authorization {
   def isAdminOfOneOfAreas(areas: Set[UUID]): Check =
     rights => areas.exists(area => isAdminOfArea(area)(rights))
 
+  def isAdminOrObserver: Check =
+    atLeastOneIsAuthorized(
+      isAdmin,
+      isObserver
+    )
+
+  // TODO: weird...
   def userCanBeEditedBy(editorUser: User): Check =
     _ => editorUser.admin && editorUser.areas.intersect(editorUser.areas).nonEmpty
 
+  def canSeeOtherUser(otherUser: User): Check =
+    atLeastOneIsAuthorized(
+      isObserver,
+      canEditOtherUser(otherUser)
+    )
+
   def canEditOtherUser(editedUser: User): Check =
     rights => isAdminOfOneOfAreas(editedUser.areas.toSet)(rights)
+
+  def canEditGroups: Check =
+    atLeastOneIsAuthorized(isAdmin, isManager)
 
   def canSeeApplicationsAsAdmin: Check =
     atLeastOneIsAuthorized(isAdmin, isManager)

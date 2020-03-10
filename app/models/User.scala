@@ -41,6 +41,7 @@ case class User(
 ) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"
 
+  // TODO: put this in Authorization
   def canSeeUsersInArea(areaId: UUID): Boolean =
     (areaId == Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
 }

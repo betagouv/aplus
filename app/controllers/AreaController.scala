@@ -13,7 +13,7 @@ import models.EventType.{
   ChangeAreaUnauthorized,
   DeploymentDashboardUnauthorized
 }
-import models.{Area, Organisation, User}
+import models.{Area, Authorization, Organisation, User}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
 import services.{EventService, UserGroupService, UserService}
@@ -117,7 +117,7 @@ case class AreaController @Inject() (
   ).map(_.flatMap(id => Organisation.byId(Organisation.Id(id))))
 
   def deploymentDashboard = loginAction { implicit request =>
-    asAdmin { () =>
+    asUserWithAuthorization(Authorization.canSeeDeployment) { () =>
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
       val userGroups = userGroupService.allGroups
@@ -172,7 +172,7 @@ case class AreaController @Inject() (
   }
 
   def franceServiceDeploymentDashboard = loginAction { implicit request =>
-    asAdmin { () =>
+    asUserWithAuthorization(Authorization.canSeeDeployment) { () =>
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
       Ok(views.html.franceServiceDeploymentDashboard(request.currentUser, request.rights))

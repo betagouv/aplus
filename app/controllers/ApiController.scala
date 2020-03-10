@@ -7,7 +7,7 @@ import java.util.UUID
 
 import javax.inject.{Inject, Singleton}
 import models.EventType.DeploymentDashboardUnauthorized
-import models.{Area, Organisation, UserGroup}
+import models.{Area, Authorization, Organisation, UserGroup}
 import play.api.libs.json.Json
 import play.api.mvc._
 
@@ -56,7 +56,7 @@ case class ApiController @Inject() (
   }
 
   def franceServiceDeployment: Action[AnyContent] = loginAction { implicit request =>
-    asAdmin { () =>
+    asUserWithAuthorization(Authorization.canSeeDeployment) { () =>
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
       val userGroups = userGroupService.allGroups.filter(

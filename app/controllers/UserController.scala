@@ -73,59 +73,49 @@ case class UserController @Inject() (
         AllUserUnauthorized -> "Accès non autorisé à l'admin des utilisateurs"
       } { () =>
         val selectedArea = Area.fromId(areaId).get
-        val usersFuture: Future[List[User]] = (
-          request.currentUser.admin,
-          request.currentUser.groupAdmin,
-          selectedArea.id == Area.allArea.id
-        ) match {
-          case (true, _, false) => {
-            groupService.byArea(areaId).map { groupsOfArea =>
-              userService.byGroupIds(groupsOfArea.map(_.id))
+
+        val groupsFuture: Future[List[UserGroup]] =
+          if (Authorization.isAdmin(request.rights)) {
+            if (selectedArea.id == Area.allArea.id) {
+              groupService.byAreas(request.currentUser.areas)
+            } else {
+              groupService.byArea(areaId)
             }
-          }
-          case (true, _, true) => {
-            val groupsOfArea = groupService.byAreasToRemove(request.currentUser.areas)
-            Future(userService.byGroupIds(groupsOfArea.map(_.id)))
-          }
-          case (false, true, _) => Future(userService.byGroupIds(request.currentUser.groupIds))
-          case _ =>
-            eventService.log(AllUserIncorrectSetup, "Erreur d'accès aux utilisateurs")
-            Future(Nil)
-        }
-        val applications = applicationService.allByArea(selectedArea.id, anonymous = true)
-        val groups: List[UserGroup] = (
-          request.currentUser.admin,
-          request.currentUser.groupAdmin,
-          selectedArea.id == Area.allArea.id
-        ) match {
-          case (true, _, false) => groupService.allGroupByAreas(List[UUID](areaId))
-          case (true, _, true)  => groupService.allGroupByAreas(request.currentUser.areas)
-          case (false, true, _) => groupService.byIds(request.currentUser.groupIds)
-          case _ =>
+          } else if (Authorization.isObserver(request.rights)) {
+            groupService.byOrganisationIds(request.currentUser.observableOrganisationIds)
+          } else if (Authorization.isManager(request.rights)) {
+            groupService.byIdsFuture(request.currentUser.groupIds)
+          } else {
             eventService.log(AllUserIncorrectSetup, "Erreur d'accès aux groupes")
-            List()
-        }
-        eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
-        usersFuture.map { users =>
-          val result = request.getQueryString("vue").getOrElse("nouvelle") match {
-            case "nouvelle" if request.currentUser.admin =>
-              views.html.allUsersNew(request.currentUser, request.rights)(
-                groups,
-                users,
-                applications,
-                selectedArea,
-                configuration.underlying.getString("geoplus.host")
-              )
-            case _ =>
-              views.html.allUsersByGroup(request.currentUser, request.rights)(
-                groups,
-                users,
-                applications,
-                selectedArea,
-                configuration.underlying.getString("geoplus.host")
-              )
+            Future(Nil)
           }
-          Ok(result)
+        val usersFuture: Future[List[User]] =
+          groupsFuture.map { groups =>
+            userService.byGroupIds(groups.map(_.id))
+          }
+        val applications = applicationService.allByArea(selectedArea.id, anonymous = true)
+
+        eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
+        usersFuture.zip(groupsFuture).map {
+          case (users, groups) =>
+            val result = request.getQueryString("vue").getOrElse("nouvelle") match {
+              case "nouvelle" if request.currentUser.admin =>
+                views.html.allUsersNew(request.currentUser, request.rights)(
+                  groups,
+                  users,
+                  selectedArea,
+                  configuration.underlying.getString("geoplus.host")
+                )
+              case _ =>
+                views.html.allUsersByGroup(request.currentUser, request.rights)(
+                  groups,
+                  users,
+                  applications,
+                  selectedArea,
+                  configuration.underlying.getString("geoplus.host")
+                )
+            }
+            Ok(result)
         }
       }
   }
@@ -202,14 +192,14 @@ case class UserController @Inject() (
 
   def editUser(userId: UUID): Action[AnyContent] = loginAction {
     implicit request: RequestWithUserData[AnyContent] =>
-      asAdmin { () =>
+      asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
         ViewUserUnauthorized -> s"Accès non autorisé pour voir $userId"
       } { () =>
         userService.byId(userId, includeDisabled = true) match {
           case None =>
             eventService.log(UserNotFound, s"L'utilisateur $userId n'existe pas")
             NotFound("Nous n'avons pas trouvé cet utilisateur")
-          case Some(user) if Authorization.canEditOtherUser(user)(request.rights) =>
+          case Some(user) if Authorization.canSeeOtherUser(user)(request.rights) =>
             val form = userForm(Time.dateTimeZone).fill(user)
             val groups = groupService.allGroups
             val unused = not(isAccountUsed(user))
