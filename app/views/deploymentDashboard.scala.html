@@ -5,6 +5,9 @@
     @webJarsUtil.locate("tabulator.min.js").script()
     @webJarsUtil.locate("xlsx.full.min.js").script()
 }{
+    <div class="mdl-cell mdl-cell--12-col">
+        <a class="mdl-button mdl-button--raised" href="@routes.AreaController.franceServiceDeploymentDashboard()">Tableau Déploiement France Services</a>
+    </div>
     <h5 class="title--addline">Nombre d'agents instructeurs par organisation</h5>
     <i>Les agents sont comptés double si ils sont dans plusieurs départements. Les organisations manquantes ne sont pas affichées. Certains agents ne sont pas détectés comme faisant partie d'un organisation (Vous devez corriger le groupe dans ce cas)</i>
     <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
@@ -19,10 +22,9 @@
     </div>
     <div id="table" class="mdl-cell mdl-cell--12-col"></div>
     <div class="mdl-cell mdl-cell--12-col">
+        <a class="mdl-button mdl-button--raised" href="@routes.AreaController.deploymentDashboard()?uniquement-fs=oui">Afficher uniquement France Services</a>
         <button class="mdl-button mdl-button--raised" onclick="downloadCSV()">Télécharger CSV</button>
         <button class="mdl-button mdl-button--raised" onclick="downloadXLSX()">Télécharger XLSX</button>
-        <a class="mdl-button mdl-button--raised" href="@routes.AreaController.deploymentDashboard()?uniquement-fs=oui">Uniquement France Service</a>
-        <a class="mdl-button mdl-button--raised" href="@routes.AreaController.franceServiceDeploymentDashboard()">Tableau Déploiement France Service</a>
     </div>
     <script>
        var tableData = [
