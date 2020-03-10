@@ -316,34 +316,36 @@ case class ApplicationController @Inject() (
         val userIds = userService.byGroupIds(userGroupIds).map(_.id)
         applicationService.allForUserIds(userIds)
       case _ =>
-        Future { List() }
+        Future(Nil)
     }
 
-  def all(areaId: UUID): Action[AnyContent] = loginAction { implicit request =>
+  def all(areaId: UUID): Action[AnyContent] = loginAction.async { implicit request =>
     (request.currentUser.admin, request.currentUser.groupAdmin) match {
       case (false, false) =>
         eventService.log(
           AllApplicationsUnauthorized,
           "L'utilisateur n'a pas de droit d'afficher toutes les demandes"
         )
-        Unauthorized(
-          s"Vous n'avez pas les droits suffisants pour voir cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+        Future(
+          Unauthorized(
+            s"Vous n'avez pas les droits suffisants pour voir cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          )
         )
       case _ =>
         val area = if (areaId == Area.allArea.id) None else Area.fromId(areaId)
-        val applications =
-          Await.result(allApplicationVisibleByUserAdmin(request.currentUser, area), 1 seconds)
-        eventService.log(
-          AllApplicationsShowed,
-          s"Visualise la liste des applications de $areaId - taille = ${applications.size}"
-        )
-        Ok(
-          views.html
-            .allApplications(request.currentUser, request.rights)(
-              applications,
-              area.getOrElse(Area.allArea)
-            )
-        )
+        allApplicationVisibleByUserAdmin(request.currentUser, area).map { applications =>
+          eventService.log(
+            AllApplicationsShowed,
+            s"Visualise la liste des applications de $areaId - taille = ${applications.size}"
+          )
+          Ok(
+            views.html
+              .allApplications(request.currentUser, request.rights)(
+                applications,
+                area.getOrElse(Area.allArea)
+              )
+          )
+        }
     }
   }
 
@@ -501,7 +503,6 @@ case class ApplicationController @Inject() (
   }
 
   def allAs(userId: UUID): Action[AnyContent] = loginAction.async { implicit request =>
-    if (Authorization.isAdmin(request.rights)) {}
     val userOption = userService.byId(userId)
     (request.currentUser.admin, userOption) match {
       case (false, Some(user)) =>
@@ -628,26 +629,30 @@ case class ApplicationController @Inject() (
       .as("text/csv")
   }
 
-  def allCSV(areaId: UUID): Action[AnyContent] = loginAction { implicit request =>
+  def allCSV(areaId: UUID): Action[AnyContent] = loginAction.async { implicit request =>
     val area = if (areaId == Area.allArea.id) None else Area.fromId(areaId)
-    val exportedApplications = if (request.currentUser.admin || request.currentUser.groupAdmin) {
-      Await.result(allApplicationVisibleByUserAdmin(request.currentUser, area), 1 seconds)
-    } else {
-      List()
+    val exportedApplicationsFuture =
+      if (request.currentUser.admin || request.currentUser.groupAdmin) {
+        allApplicationVisibleByUserAdmin(request.currentUser, area)
+      } else {
+        Future(Nil)
+      }
+
+    exportedApplicationsFuture.map { exportedApplications =>
+      val date = DateTime.now(Time.dateTimeZone).toString("YYY-MM-dd-HH'h'mm", new Locale("fr"))
+      val csvContent = applicationsToCSV(exportedApplications)
+
+      eventService.log(AllCSVShowed, s"Visualise un CSV pour la zone ${area}")
+      val filenameAreaPart: String = area.map(_.name.stripSpecialChars).getOrElse("tous")
+      Ok(csvContent)
+        .withHeaders(
+          "Content-Disposition" -> s"""attachment; filename="aplus-demandes-$date-${filenameAreaPart}.csv""""
+        )
+        .as("text/csv")
     }
-
-    val date = DateTime.now(Time.dateTimeZone).toString("YYY-MM-dd-HH'h'mm", new Locale("fr"))
-    val csvContent = applicationsToCSV(exportedApplications)
-
-    eventService.log(AllCSVShowed, s"Visualise un CSV pour la zone ${area}")
-    Ok(csvContent)
-      .withHeaders("Content-Disposition" -> s"""attachment; filename="aplus-demandes-$date-${area
-        .map(_.name.stripSpecialChars)
-        .getOrElse("tous")}.csv"""")
-      .as("text/csv")
   }
 
-  val answerForm = Form(
+  private val answerForm = Form(
     mapping(
       "message" -> nonEmptyText,
       "irrelevant" -> boolean,
