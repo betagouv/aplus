@@ -562,3 +562,18 @@ Typographie
 .typography--text-line-height-1-3 {
     line-height: 1.3;
 }
+.typography--text-align-center {
+    text-align: center;
+}
+
+/*************
+Chart
+ */
+.chart--default-size {
+    height: 300px;
+    width: 95%;
+}
+.chart--500px-height {
+    height: 500px;
+    width: 95%;
+}

@@ -427,7 +427,7 @@ case class ApplicationController @Inject() (
       }
       val today = DateTime.now(timeZone)
       val months = Time.monthsMap(firstDate, today)
-      views.html.helpers.stats(request.currentUser.admin)(
+      views.html.helpers.stats(Authorization.isAdmin(request.rights))(
         months,
         applicationsByArea,
         users,
@@ -450,13 +450,14 @@ case class ApplicationController @Inject() (
   def stats: Action[AnyContent] = loginAction.async { implicit request =>
     val (areaIds, organisationIds, groupIds) = statsForm.bindFromRequest.get
 
-    val observableOrganisationIds = if (request.currentUser.admin) {
+    val observableOrganisationIds = if (Authorization.isAdmin(request.rights)) {
       organisationIds
     } else {
+      //TODO : how to manage with Authorization ?
       organisationIds.intersect(request.currentUser.observableOrganisationIds)
     }
 
-    val observableGroupIds = if (request.currentUser.admin) {
+    val observableGroupIds = if (Authorization.isAdmin(request.rights)) {
       groupIds
     } else {
       groupIds.intersect(request.currentUser.groupIds)
@@ -464,11 +465,12 @@ case class ApplicationController @Inject() (
 
     val cacheKey =
       if (areaIds.isEmpty && organisationIds.isEmpty && groupIds.isEmpty)
-        s"stats.all"
+        s"${Authorization.isAdmin(request.rights)}.stats.all"
       else if (observableGroupIds.isEmpty)
-        s"stats.${Hash.sha256(areaIds.toString() + observableOrganisationIds.toString())}"
+        s"${Authorization.isAdmin(request.rights)}.stats.${Hash
+          .sha256(areaIds.toString() + observableOrganisationIds.toString())}"
       else
-        s"stats.${Hash.sha256(areaIds.toString() + observableOrganisationIds.toString() + observableGroupIds.toString())}"
+        s"${Authorization.isAdmin(request.rights)}.stats.${Hash.sha256(areaIds.toString() + observableOrganisationIds.toString() + observableGroupIds.toString())}"
 
     cache
       .getOrElseUpdate[Html](cacheKey, 1 hours)(

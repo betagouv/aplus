@@ -1,8 +1,8 @@
 @import java.util.UUID
 
-@(user: User)(result: Html, groups: List[UserGroup], selectedAreaIds: List[UUID], selectedOrganisationIds: List[Organisation.Id], selectedGroupIds: List[UUID])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User)(result: Html, groups: List[UserGroup], selectedAreaIds: List[UUID], selectedOrganisationIds: List[Organisation.Id], selectedGroupIds: List[UUID])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-@main(user)(s"Stats")  {
+@main(currentUser)(s"Stats")  {
     @webJarsUtil.locate("Chart.bundle.min.js").script()
 }{
     <div class="mdl-cell mdl-cell--12-col">
@@ -13,18 +13,18 @@
                 @for(area <- Area.all) {
                     <option value="@area.id" @if(selectedAreaIds.contains(area.id)) { selected }>@area</option>
                 }
-            </select>
-            @if(user.admin || user.observableOrganisationIds.nonEmpty) {
+            </select>user.admin
+            @if(currentUser.admin || currentUser.observableOrganisationIds.nonEmpty) {
                 <select id="organisation-selector" name="organisations[]">
                     <option @if(selectedOrganisationIds.isEmpty){ selected } value >Tous les organismes</option>
-                    @for(organisation <- if(user.admin){ Organisation.all } else { user.observableOrganisationIds.flatMap(Organisation.byId) }) {
+                    @for(organisation <- if(currentUser.admin){ Organisation.all } else { currentUser.observableOrganisationIds.flatMap(Organisation.byId) }) {
                         <option value="@organisation.id.id" @if(selectedOrganisationIds.contains(organisation.id)){ selected } >@organisation.name</option>
                     }
                 </select>
             } else {
                 <select id="groups-selector" name="groups[]">
                     <option @if(selectedGroupIds.isEmpty){ selected } value>Tous les groupes du département</option>
-                    @for(group <- user.groupIds.flatMap(id => groups.find(_.id == id))) {
+                    @for(group <- currentUser.groupIds.flatMap(id => groups.find(_.id == id))) {
                         <option value="@group.id" @if(selectedGroupIds.contains(group.id)){ selected }>@group.name</option>
                     }
                 </select>
