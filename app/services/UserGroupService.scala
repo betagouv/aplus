@@ -82,12 +82,6 @@ class UserGroupService @Inject() (
        """.executeUpdate() == 1
   }
 
-  // TODO: same as `byAreas`
-  def allGroupByAreas(areaIds: List[UUID]): List[UserGroup] = db.withConnection {
-    implicit connection =>
-      SQL"SELECT * FROM user_group WHERE ARRAY[$areaIds]::uuid[] && area_ids".as(simpleUserGroup.*)
-  }
-
   def allGroups: List[UserGroup] = db.withConnection { implicit connection =>
     SQL"SELECT * FROM user_group".as(simpleUserGroup.*)
   }
@@ -143,19 +137,11 @@ class UserGroupService @Inject() (
     }
   }
 
-  def byAreasToRemove(areaIds: List[UUID]): List[UserGroup] = db.withConnection {
-    implicit connection =>
-      SQL"""SELECT * FROM "user_group" WHERE ARRAY[$areaIds]::uuid[] && area_ids""".as(
-        simpleUserGroup.*
-      )
-  }
-
   def byAreas(areaIds: List[UUID]): Future[List[UserGroup]] =
     Future {
       db.withConnection { implicit connection =>
-        SQL"""SELECT * FROM "user_group" WHERE ARRAY[$areaIds]::uuid[] && area_ids""".as(
-          simpleUserGroup.*
-        )
+        SQL"""SELECT * FROM "user_group" WHERE ARRAY[$areaIds]::uuid[] && area_ids"""
+          .as(simpleUserGroup.*)
       }
     }
 

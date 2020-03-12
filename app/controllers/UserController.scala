@@ -127,65 +127,68 @@ case class UserController @Inject() (
       } { () =>
         val area = Area.fromId(areaId).get
         val usersFuture: Future[List[User]] = if (areaId == Area.allArea.id) {
-          val groupsOfArea = groupService.byAreasToRemove(request.currentUser.areas)
-          Future(userService.byGroupIds(groupsOfArea.map(_.id)))
+          groupService.byAreas(request.currentUser.areas).map { groupsOfArea =>
+            userService.byGroupIds(groupsOfArea.map(_.id))
+          }
         } else {
           groupService.byArea(areaId).map { groupsOfArea =>
             userService.byGroupIds(groupsOfArea.map(_.id))
           }
         }
-        val groups = groupService.allGroupByAreas(request.currentUser.areas)
+        val groupsFuture: Future[List[UserGroup]] =
+          groupService.byAreas(request.currentUser.areas)
         eventService.log(AllUserCsvShowed, "Visualise le CSV de tous les zones de l'utilisateur")
 
-        def userToCSV(user: User): String =
-          List[String](
-            user.id.toString,
-            user.name,
-            user.qualite,
-            user.email,
-            user.creationDate.toString("dd-MM-YYYY-HHhmm", new Locale("fr")),
-            if (user.helper) "Aidant" else " ",
-            if (user.instructor) "Instructeur" else " ",
-            if (user.groupAdmin) "Responsable" else " ",
-            if (user.expert) "Expert" else " ",
-            if (user.admin) "Admin" else " ",
-            if (user.disabled) "Désactivé" else " ",
-            user.communeCode,
-            user.areas.flatMap(Area.fromId).map(_.name).mkString(","),
-            user.groupIds.flatMap(id => groups.find(_.id == id)).map(_.name).mkString(","),
-            if (user.cguAcceptationDate.nonEmpty) "CGU Acceptées" else "",
-            if (user.newsletterAcceptationDate.nonEmpty) "Newsletter Acceptée" else ""
-          ).mkString(";")
+        usersFuture.zip(groupsFuture).map {
+          case (users, groups) =>
+            def userToCSV(user: User): String =
+              List[String](
+                user.id.toString,
+                user.name,
+                user.qualite,
+                user.email,
+                user.creationDate.toString("dd-MM-YYYY-HHhmm", new Locale("fr")),
+                if (user.helper) "Aidant" else " ",
+                if (user.instructor) "Instructeur" else " ",
+                if (user.groupAdmin) "Responsable" else " ",
+                if (user.expert) "Expert" else " ",
+                if (user.admin) "Admin" else " ",
+                if (user.disabled) "Désactivé" else " ",
+                user.communeCode,
+                user.areas.flatMap(Area.fromId).map(_.name).mkString(","),
+                user.groupIds.flatMap(id => groups.find(_.id == id)).map(_.name).mkString(","),
+                if (user.cguAcceptationDate.nonEmpty) "CGU Acceptées" else "",
+                if (user.newsletterAcceptationDate.nonEmpty) "Newsletter Acceptée" else ""
+              ).mkString(";")
 
-        val headers = List[String](
-          "Id",
-          UserAndGroupCsvSerializer.USER_NAME.prefixes(0),
-          UserAndGroupCsvSerializer.USER_EMAIL.prefixes(0),
-          "Création",
-          "Aidant",
-          UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes(0),
-          UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes(0),
-          "Expert",
-          "Admin",
-          "Actif",
-          "Commune INSEE",
-          UserAndGroupCsvSerializer.GROUP_AREAS_IDS.prefixes(0),
-          UserAndGroupCsvSerializer.GROUP_NAME.prefixes(0),
-          "CGU",
-          "Newsletter"
-        ).mkString(";")
+            val headers = List[String](
+              "Id",
+              UserAndGroupCsvSerializer.USER_NAME.prefixes(0),
+              UserAndGroupCsvSerializer.USER_EMAIL.prefixes(0),
+              "Création",
+              "Aidant",
+              UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes(0),
+              UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes(0),
+              "Expert",
+              "Admin",
+              "Actif",
+              "Commune INSEE",
+              UserAndGroupCsvSerializer.GROUP_AREAS_IDS.prefixes(0),
+              UserAndGroupCsvSerializer.GROUP_NAME.prefixes(0),
+              "CGU",
+              "Newsletter"
+            ).mkString(";")
 
-        usersFuture.map { users =>
-          val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
-          val date =
-            DateTime.now(Time.dateTimeZone).toString("dd-MMM-YYY-HH'h'mm", new Locale("fr"))
+            val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
+            val date =
+              DateTime.now(Time.dateTimeZone).toString("dd-MMM-YYY-HH'h'mm", new Locale("fr"))
 
-          Ok(csvContent)
-            .withHeaders(
-              "Content-Disposition" -> s"""attachment; filename="aplus-$date-users-${area.name
-                .replace(" ", "-")}.csv""""
-            )
-            .as("text/csv")
+            Ok(csvContent)
+              .withHeaders(
+                "Content-Disposition" -> s"""attachment; filename="aplus-$date-users-${area.name
+                  .replace(" ", "-")}.csv""""
+              )
+              .as("text/csv")
         }
       }
   }

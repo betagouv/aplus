@@ -13,7 +13,7 @@ import models.EventType.{
   ChangeAreaUnauthorized,
   DeploymentDashboardUnauthorized
 }
-import models.{Area, Authorization, Organisation, User}
+import models.{Area, Authorization, Organisation, User, UserGroup}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
 import services.{EventService, UserGroupService, UserService}
@@ -52,20 +52,22 @@ case class AreaController @Inject() (
     }
   }
 
-  def all = loginAction { implicit request =>
+  def all = loginAction.async { implicit request =>
     if (!request.currentUser.admin && !request.currentUser.groupAdmin) {
       eventService.log(AllAreaUnauthorized, "Accès non autorisé pour voir la page des territoires")
-      Unauthorized("Vous n'avez pas le droit de faire ça")
+      Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
     } else {
-      val userGroups = if (request.currentUser.admin) {
-        userGroupService.allGroupByAreas(request.currentUser.areas)
+      val userGroupsFuture: Future[List[UserGroup]] = if (request.currentUser.admin) {
+        userGroupService.byAreas(request.currentUser.areas)
       } else {
-        userGroupService.byIds(request.currentUser.groupIds)
+        Future(userGroupService.byIds(request.currentUser.groupIds))
       }
-      Ok(
-        views.html
-          .allArea(request.currentUser, request.rights)(Area.all, areasWithLoginByKey, userGroups)
-      )
+      userGroupsFuture.map { userGroups =>
+        Ok(
+          views.html
+            .allArea(request.currentUser, request.rights)(Area.all, areasWithLoginByKey, userGroups)
+        )
+      }
     }
   }
 

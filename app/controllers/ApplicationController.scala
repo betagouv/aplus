@@ -53,7 +53,7 @@ import models.EventType.{
 import play.api.cache.AsyncCacheApi
 import play.twirl.api.Html
 
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import helper.StringHelper.CanonizeString
 import serializers.AttachmentHelper
