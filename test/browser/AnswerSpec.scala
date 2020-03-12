@@ -3,7 +3,6 @@ package browser
 import helper.{Time, UUIDHelper}
 import java.util.UUID
 import models.{Application, Area, LoginToken, User, UserGroup}
-import org.joda.time.DateTime
 import org.junit.runner._
 import org.specs2.mutable._
 import org.specs2.runner._
@@ -21,7 +20,7 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       name = s"Group $groupSeed$testSeed",
       description = None,
       inseeCode = List("0"),
-      creationDate = Time.now(),
+      creationDate = Time.nowParis(),
       areaIds = area :: Nil
     )
     groupService.add(group)
@@ -53,12 +52,12 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       instructor = isInstructor,
       admin = false,
       areas = groups.flatMap(_.areaIds),
-      creationDate = Time.now(),
+      creationDate = Time.nowParis(),
       communeCode = "0",
       groupAdmin = false,
       disabled = false,
       expert = isExpert,
-      cguAcceptationDate = Some(Time.now()),
+      cguAcceptationDate = Some(Time.nowParis()),
       groupIds = groups.map(_.id)
     )
     val result = userService.add(List(user))
@@ -76,7 +75,7 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
     // Create Application
     val application = Application(
       UUIDHelper.randomUUID,
-      creationDate = Time.now(),
+      creationDate = Time.nowParis(),
       creatorUserName = user.nameWithQualite,
       creatorUserId = user.id,
       subject = s"Sujet de la demande (aidant ${user.name})",

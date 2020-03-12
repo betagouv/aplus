@@ -1,8 +1,7 @@
 package models
 
+import java.time.ZonedDateTime
 import java.util.UUID
-
-import org.joda.time.DateTime
 
 case class Event(
     id: UUID,
@@ -10,7 +9,7 @@ case class Event(
     code: String,
     fromUserName: String,
     fromUserId: UUID,
-    creationDate: DateTime,
+    creationDate: ZonedDateTime,
     description: String,
     area: UUID,
     toApplicationId: Option[UUID],

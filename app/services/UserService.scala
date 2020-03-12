@@ -6,7 +6,6 @@ import javax.inject.Inject
 import anorm._
 import models.User
 import play.api.db.Database
-import anorm.JodaParameterMetaData._
 import helper.{Hash, Time}
 import org.postgresql.util.PSQLException
 
@@ -36,7 +35,7 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
       "newsletter_acceptation_date",
       "phone_number"
     )
-    .map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
+    .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
 
   def all = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user"""").as(simpleUser.*)
@@ -166,7 +165,7 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
 
   def acceptCGU(userId: UUID, acceptNewsletter: Boolean) = db.withConnection {
     implicit connection =>
-      val now = Time.now()
+      val now = Time.nowParis()
       val resultCGUAcceptation = SQL"""
         UPDATE "user" SET
         cgu_acceptation_date = ${now}

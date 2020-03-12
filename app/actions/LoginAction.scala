@@ -6,7 +6,7 @@ import controllers.routes
 import helper.UUIDHelper
 import models._
 import play.api.mvc._
-import play.api.mvc.Results.{Ok, TemporaryRedirect}
+import play.api.mvc.Results.TemporaryRedirect
 import services.{EventService, TokenService, UserService}
 import models.EventType.{
   AuthByKey,

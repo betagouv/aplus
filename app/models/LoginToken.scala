@@ -1,20 +1,20 @@
 package models
 
+import java.time.ZonedDateTime
 import java.util.UUID
 
 import helper.Time
-import org.joda.time.DateTime
 
 import scala.util.Random
 
 case class LoginToken(
     token: String,
     userId: UUID,
-    creationDate: DateTime,
-    expirationDate: DateTime,
+    creationDate: ZonedDateTime,
+    expirationDate: ZonedDateTime,
     ipAddress: String
 ) {
-  lazy val isActive = expirationDate.isAfterNow
+  lazy val isActive = expirationDate.isAfter(Time.nowParis())
 }
 
 object LoginToken {
@@ -23,8 +23,8 @@ object LoginToken {
     new LoginToken(
       Random.alphanumeric.take(20).mkString,
       userId,
-      DateTime.now(Time.dateTimeZone),
-      DateTime.now(Time.dateTimeZone).plusMinutes(expirationInMinutes),
+      Time.nowParis(),
+      Time.nowParis().plusMinutes(expirationInMinutes),
       ipAddress
     )
 }

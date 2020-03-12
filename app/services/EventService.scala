@@ -7,9 +7,7 @@ import javax.inject.Inject
 import models._
 import play.api.db.Database
 import anorm._
-import anorm.JodaParameterMetaData._
 import helper.Time
-import org.joda.time.DateTime
 import play.api.Logger
 
 @javax.inject.Singleton
@@ -64,7 +62,7 @@ class EventService @Inject() (db: Database) {
       code,
       currentUser.name,
       currentUser.id,
-      DateTime.now(Time.dateTimeZone),
+      Time.nowParis(),
       description,
       currentArea.id,
       application.map(_.id),

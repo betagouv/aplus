@@ -1,13 +1,12 @@
 package models
 
+import java.time.ZonedDateTime
 import java.util.UUID
-
-import org.joda.time.DateTime
 
 case class Answer(
     id: UUID,
     applicationId: UUID,
-    creationDate: DateTime,
+    creationDate: ZonedDateTime,
     message: String,
     creatorUserID: UUID,
     creatorUserName: String,

@@ -1,16 +1,16 @@
 package controllers
 
 import java.nio.file.{Files, Path, Paths}
-import java.util.{Locale, UUID}
+import java.time.ZonedDateTime
+import java.util.UUID
 
 import actions._
 import constants.Constants
-import helper.Time.dateTimeOrdering
+import helper.Time.zonedDateTimeOrdering
 import forms.FormsPlusMap
 import helper.Time
 import javax.inject.{Inject, Singleton}
 import models._
-import org.joda.time.DateTime
 import org.webjars.play.WebJarsUtil
 import play.api.data.Forms._
 import play.api.data._
@@ -82,8 +82,6 @@ case class ApplicationController @Inject() (
     with play.api.i18n.I18nSupport
     with Operators.ApplicationOperators {
   import formModels._
-
-  private implicit val timeZone = Time.dateTimeZone
 
   private val filesPath = configuration.underlying.getString("app.filesPath")
 
@@ -249,7 +247,7 @@ case class ApplicationController @Inject() (
 
           val application = Application(
             applicationId,
-            DateTime.now(timeZone),
+            Time.nowParis(),
             contextualizedUserName(request.currentUser, currentAreaId),
             request.currentUser.id,
             applicationData.subject,
@@ -343,7 +341,7 @@ case class ApplicationController @Inject() (
     val myApplications = applicationService.allOpenOrRecentForUserId(
       request.currentUser.id,
       request.currentUser.admin,
-      DateTime.now(Time.dateTimeZone)
+      Time.nowParis()
     )
     val myOpenApplications = myApplications.filter(!_.closed)
     val myClosedApplications = myApplications.filter(_.closed)
@@ -407,12 +405,13 @@ case class ApplicationController @Inject() (
               .map(area => (area, applications))
         }
 
-    val firstDate = if (applications.isEmpty) {
-      DateTime.now()
+    val firstDate: ZonedDateTime = if (applications.isEmpty) {
+      Time.nowParis()
     } else {
-      applications.map(_.creationDate).min.weekOfWeekyear().roundFloorCopy()
+      val weekFieldISO = java.time.temporal.WeekFields.of(java.util.Locale.FRANCE).dayOfWeek()
+      applications.map(_.creationDate).min.`with`(weekFieldISO, 1)
     }
-    val today = DateTime.now(timeZone)
+    val today = Time.nowParis()
     val months = Time.monthsMap(firstDate, today)
     views.html.stats(currentUser, selectedArea)(
       months,
@@ -519,11 +518,12 @@ case class ApplicationController @Inject() (
       List[String](
         application.id.toString,
         application.status,
-        application.creationDate.toString("YYY-MM-dd"), // Precision limited for stats,
+        // Precision limited for stats
+        Time.formatPatternFr(application.creationDate, "YYY-MM-dd"),
         creatorUserGroupNames,
         invitedUserGroupNames,
         Area.all.find(_.id == application.area).map(_.name).head,
-        application.closedDate.map(_.toString("YYY-MM-dd")).getOrElse(""),
+        application.closedDate.map(date => Time.formatPatternFr(date, "YYY-MM-dd")).getOrElse(""),
         if (not(application.irrelevant)) "Oui" else "Non",
         application.usefulness.getOrElse("?"),
         application.firstAnswerTimeInMinutes.map(_.toString).getOrElse(""),
@@ -550,11 +550,11 @@ case class ApplicationController @Inject() (
   }
 
   def myCSV = loginAction { implicit request =>
-    val currentDate = DateTime.now(timeZone)
+    val currentDate = Time.nowParis()
     val exportedApplications = applicationService
       .allOpenOrRecentForUserId(request.currentUser.id, request.currentUser.admin, currentDate)
 
-    val date = currentDate.toString("YYY-MM-dd-HH'h'mm", new Locale("fr"))
+    val date = Time.formatPatternFr(currentDate, "YYY-MM-dd-HH'h'mm")
     val csvContent = applicationsToCSV(exportedApplications)
 
     eventService.log(MyCSVShowed, s"Visualise le CSV de mes demandes")
@@ -571,7 +571,7 @@ case class ApplicationController @Inject() (
       List()
     }
 
-    val date = DateTime.now(Time.dateTimeZone).toString("YYY-MM-dd-HH'h'mm", new Locale("fr"))
+    val date = Time.formatPatternFr(Time.nowParis(), "YYY-MM-dd-HH'h'mm")
     val csvContent = applicationsToCSV(exportedApplications)
 
     eventService.log(AllCSVShowed, s"Visualise un CSV pour la zone ${area}")
@@ -741,7 +741,7 @@ case class ApplicationController @Inject() (
           val answer = Answer(
             answerId,
             applicationId,
-            DateTime.now(timeZone),
+            Time.nowParis(),
             answerData.message,
             request.currentUser.id,
             contextualizedUserName(request.currentUser, currentAreaId),
@@ -807,7 +807,7 @@ case class ApplicationController @Inject() (
               val answer = Answer(
                 UUID.randomUUID(),
                 applicationId,
-                DateTime.now(timeZone),
+                Time.nowParis(),
                 inviteData.message,
                 request.currentUser.id,
                 contextualizedUserName(request.currentUser, currentAreaId),
@@ -857,7 +857,7 @@ case class ApplicationController @Inject() (
           val answer = Answer(
             UUID.randomUUID(),
             applicationId,
-            DateTime.now(timeZone),
+            Time.nowParis(),
             "J'ajoute un expert",
             request.currentUser.id,
             contextualizedUserName(request.currentUser, currentAreaId),
@@ -918,7 +918,7 @@ case class ApplicationController @Inject() (
           None
         }
         if (application.canBeClosedBy(request.currentUser)) {
-          if (applicationService.close(applicationId, finalUsefulness, DateTime.now(timeZone))) {
+          if (applicationService.close(applicationId, finalUsefulness, Time.nowParis())) {
             eventService
               .log(TerminateCompleted, s"La demande $applicationId est clôturée", Some(application))
             val successMessage =
