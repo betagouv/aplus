@@ -2,7 +2,6 @@ package browser
 
 import helper.{Time, UUIDHelper}
 import models.{Area, LoginToken, User, UserGroup}
-import org.joda.time.DateTime
 import org.junit.runner._
 import org.specs2.mutable._
 import org.specs2.runner._
@@ -31,7 +30,7 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
         name = s"Group $number",
         description = None,
         inseeCode = List("0"),
-        creationDate = Time.now(),
+        creationDate = Time.nowParis(),
         areaIds = area :: Nil
       )
       groupService.add(instructorGroup)
@@ -45,11 +44,11 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
         true,
         false,
         List(area),
-        Time.now(),
+        Time.nowParis(),
         "0",
         false,
         false,
-        cguAcceptationDate = Some(Time.now()),
+        cguAcceptationDate = Some(Time.nowParis()),
         groupIds = List(instructorGroup.id)
       )
       val helperUser = User(
@@ -62,11 +61,11 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
         false,
         false,
         List(area),
-        Time.now(),
+        Time.nowParis(),
         "0",
         false,
         false,
-        cguAcceptationDate = Some(Time.now())
+        cguAcceptationDate = Some(Time.nowParis())
       )
       userService.add(List(instructorUser, helperUser))
       userService.acceptCGU(helperUser.id, false)

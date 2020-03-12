@@ -4,7 +4,6 @@ import helper.UUIDHelper
 import helper.Time
 import javax.inject.Inject
 import models.LoginToken
-import org.joda.time.DateTime
 import org.specs2.mutable._
 import org.specs2.runner._
 import org.junit.runner._
@@ -63,7 +62,7 @@ class gLoginSpec extends Specification with Tables with BaseSpec {
       val tokenService = app.injector.instanceOf[TokenService]
       val loginToken = LoginToken
         .forUserId(UUIDHelper.namedFrom("julien"), 5, "127.0.0.1")
-        .copy(expirationDate = DateTime.now(Time.dateTimeZone).minusMinutes(5))
+        .copy(expirationDate = Time.nowParis().minusMinutes(5))
       tokenService.create(loginToken)
 
       val loginURL = controllers.routes.LoginController
