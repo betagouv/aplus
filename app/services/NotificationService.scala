@@ -19,6 +19,8 @@ class NotificationService @Inject() (
     groupService: UserGroupService
 ) {
 
+  private val log = Logger(classOf[NotificationService])
+
   private lazy val tokenExpirationInMinutes =
     configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
@@ -37,7 +39,7 @@ class NotificationService @Inject() (
       )
     )
     mailerClient.send(emailWithText)
-    Logger.info(s"Email sent to ${email.to.mkString(", ")}")
+    log.info(s"Email sent to ${email.to.mkString(", ")}")
   }
 
   def newApplication(application: Application): Unit = {

@@ -21,7 +21,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
       "userCodeName" | "expectedError" |
         "instructor-test" ! false |
         "instructor-test-unrelated" ! true |
-        "helper-test" ! false |
+//        "helper-test" ! false |
         "helper-test-friend" ! false |
         "helper-test-unrelated" ! true |
         "expert-test-unrelated" ! true |
