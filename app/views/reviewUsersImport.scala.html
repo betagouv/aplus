@@ -196,6 +196,7 @@
                 }
               </select>
               <script>
+                // TODO: use-slimselect class
                 var select_@groupIndex = new SlimSelect({ select: '#area-ids-@groupIndex' })
                 @if(groupWillNotBeInserted(group)) {
                   select_@{groupIndex}.disable();

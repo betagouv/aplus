@@ -117,6 +117,7 @@
           <b class="mdl-cell mdl-cell--12-col">Sélectionner des territoires</b>
           <select id="area-ids"
                   name="areas[]"
+                  class="use-slimselect"
                   @if(!canEditUser) { disabled }
                   multiple>
               @for(areaId <- currentUser.areas) {
@@ -126,8 +127,8 @@
               }
           </select>
           <b class="mdl-cell mdl-cell--12-col">Sélectionner les groupes</b>
-          <select id="multiple"
-                  name="groupIds[]"
+          <select name="groupIds[]"
+                  class="use-slimselect"
                   @if(!canEditUser) { disabled }
                   multiple>
             @for(area <- currentUser.areas.flatMap(Area.fromId)) {
@@ -141,8 +142,8 @@
             }
           </select>
           <b class="mdl-cell mdl-cell--12-col">Observateur des organisations:</b>
-          <select id="observableOrganisationIds"
-                  name="observableOrganisationIds[]"
+          <select name="observableOrganisationIds[]"
+                  class="use-slimselect"
                   @if(!canEditUser) { disabled }
                   multiple>
             @for(organisation <- Organisation.all) {
@@ -151,11 +152,6 @@
                 >@{organisation.shortName} - @{organisation.name}</option>
             }
           </select>
-          <script>
-            new SlimSelect({ select: '#area-ids' });
-            new SlimSelect({ select: '#multiple' });
-            new SlimSelect({ select: '#observableOrganisationIds' });
-          </script>
           @if(form("areas").hasErrors) {
             <p style="color: red; font-weight: bold;">@form("areas").errors.map(_.format).mkString(", ")</p>
           }
@@ -212,4 +208,5 @@
     }
 }
 }{
+    <script src="@routes.Assets.versioned("javascripts/main-page-bottom.js")"></script>
 }
