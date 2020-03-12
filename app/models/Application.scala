@@ -38,15 +38,26 @@ case class Application(
     files ++ answers.flatMap(_.files).flatten
   }
 
-  // TODO: triple quote the string?
   lazy val searchData = {
     val stripChars = "\"<>'"
-    s"${Area.fromId(area).map(_.name).getOrElse("")} ${creatorUserName.filterNot(
-      stripChars contains _
-    )} ${userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")} ${subject
-      .filterNot(stripChars contains _)} ${description.filterNot(stripChars contains _)} ${invitedUsers.values
-      .map(_.filterNot(stripChars contains _))
-      .mkString(" ")} ${answers.map(_.message.filterNot(stripChars contains _)).mkString(" ")}"
+    val areaName: String = Area.fromId(area).map(_.name).getOrElse("")
+    val creatorName: String = creatorUserName.filterNot(stripChars contains _)
+    val userInfosStripped: String =
+      userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")
+    val subjectStripped: String = subject.filterNot(stripChars contains _)
+    val descriptionStripped: String = description.filterNot(stripChars contains _)
+    val invitedUserNames: String =
+      invitedUsers.values.map(_.filterNot(stripChars contains _)).mkString(" ")
+    val answersStripped: String =
+      answers.map(_.message.filterNot(stripChars contains _)).mkString(" ")
+
+    (areaName + " " +
+      creatorName + " " +
+      userInfosStripped + " " +
+      subjectStripped + " " +
+      descriptionStripped + " " +
+      invitedUserNames + " " +
+      answersStripped)
   }
 
   def longStatus(user: User) = closed match {

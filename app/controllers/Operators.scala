@@ -75,12 +75,12 @@ object Operators {
     def asUserWithAuthorization(authorizationCheck: Authorization.Check)(
         event: () => (EventType, String)
     )(
-        payload: () => Result
-    )(implicit request: RequestWithUserData[AnyContent]): Result =
+        payload: () => Future[Result]
+    )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
       if (not(authorizationCheck(request.rights))) {
         val (eventType, description) = event()
         eventService.log(eventType, description = description)
-        Unauthorized("Vous n'avez pas le droit de faire ça")
+        Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
       } else {
         payload()
       }

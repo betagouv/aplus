@@ -17,9 +17,7 @@ import models.{Area, Authorization, Organisation, User}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
 import services.{EventService, UserGroupService, UserService}
-
-import scala.concurrent.{Await, ExecutionContext}
-import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 case class AreaController @Inject() (
@@ -116,12 +114,12 @@ case class AreaController @Inject() (
       ).map(Set(_))
   ).map(_.flatMap(id => Organisation.byId(Organisation.Id(id))))
 
-  def deploymentDashboard = loginAction { implicit request =>
+  def deploymentDashboard = loginAction.async { implicit request =>
     asUserWithAuthorization(Authorization.canSeeDeployment) { () =>
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
       val userGroups = userGroupService.allGroups
-      val result = userService.all.map { users =>
+      userService.all.map { users =>
         def usersIn(area: Area, organisationSet: Set[Organisation]): List[User] =
           for {
             group <- userGroups.filter(group =>
@@ -167,15 +165,14 @@ case class AreaController @Inject() (
           )
         )
       }
-      Await.result(result, 1 seconds)
     }
   }
 
-  def franceServiceDeploymentDashboard = loginAction { implicit request =>
+  def franceServiceDeploymentDashboard = loginAction.async { implicit request =>
     asUserWithAuthorization(Authorization.canSeeDeployment) { () =>
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
-      Ok(views.html.franceServiceDeploymentDashboard(request.currentUser, request.rights))
+      Future(Ok(views.html.franceServiceDeploymentDashboard(request.currentUser, request.rights)))
     }
   }
 

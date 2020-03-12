@@ -190,7 +190,7 @@ case class UserController @Inject() (
       }
   }
 
-  def editUser(userId: UUID): Action[AnyContent] = loginAction {
+  def editUser(userId: UUID): Action[AnyContent] = loginAction.async {
     implicit request: RequestWithUserData[AnyContent] =>
       asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
         ViewUserUnauthorized -> s"Accès non autorisé pour voir $userId"
@@ -198,7 +198,7 @@ case class UserController @Inject() (
         userService.byId(userId, includeDisabled = true) match {
           case None =>
             eventService.log(UserNotFound, s"L'utilisateur $userId n'existe pas")
-            NotFound("Nous n'avons pas trouvé cet utilisateur")
+            Future(NotFound("Nous n'avons pas trouvé cet utilisateur"))
           case Some(user) if Authorization.canSeeOtherUser(user)(request.rights) =>
             val form = userForm(Time.dateTimeZone).fill(user)
             val groups = groupService.allGroups
@@ -206,19 +206,21 @@ case class UserController @Inject() (
             val Token(tokenName, tokenValue) = CSRF.getToken.get
             eventService
               .log(UserShowed, "Visualise la vue de modification l'utilisateur ", user = Some(user))
-            Ok(
-              views.html.editUser(request.currentUser, request.rights)(
-                form,
-                userId,
-                groups,
-                unused,
-                tokenName = tokenName,
-                tokenValue = tokenValue
+            Future(
+              Ok(
+                views.html.editUser(request.currentUser, request.rights)(
+                  form,
+                  userId,
+                  groups,
+                  unused,
+                  tokenName = tokenName,
+                  tokenValue = tokenValue
+                )
               )
             )
           case _ =>
             eventService.log(ViewUserUnauthorized, s"Accès non autorisé pour voir $userId")
-            Unauthorized("Vous n'avez pas le droit de faire ça")
+            Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
         }
       }
   }
@@ -479,7 +481,6 @@ case class UserController @Inject() (
           "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
           "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
           "phone-number" -> optional(text),
-          // TODO: put forms
           "observableOrganisationIds" -> list(
             of[Organisation.Id].verifying(
               "Organisation non reconnue",
@@ -522,7 +523,6 @@ case class UserController @Inject() (
       "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
       "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
       "phone-number" -> optional(text),
-      // TODO: put forms
       "observableOrganisationIds" -> list(of[Organisation.Id])
     )(User.apply)(User.unapply)
 }

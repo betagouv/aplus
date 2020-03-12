@@ -161,6 +161,7 @@ class UserService @Inject() (
     }
 
   def update(user: User) = db.withConnection { implicit connection =>
+    val observableOrganisationIds = user.observableOrganisationIds.map(_.id)
     SQL"""
           UPDATE "user" SET
           name = ${user.name},
@@ -176,8 +177,7 @@ class UserService @Inject() (
           expert = ${user.expert},
           phone_number = ${user.phoneNumber},
           disabled = ${user.disabled},
-          observable_organisation_ids = array[${user.observableOrganisationIds
-      .map(_.id)}]::varchar[]
+          observable_organisation_ids = array[$observableOrganisationIds]::varchar[]
           WHERE id = ${user.id}::uuid
        """.executeUpdate() == 1
   }
