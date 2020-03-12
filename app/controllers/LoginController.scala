@@ -5,7 +5,7 @@ import javax.inject.{Inject, Singleton}
 import models.EventType.{GenerateToken, UnknownEmail}
 import models.{Area, LoginToken, User}
 import org.webjars.play.WebJarsUtil
-import play.api.mvc.InjectedController
+import play.api.mvc.{Action, AnyContent, InjectedController}
 import scala.concurrent.{ExecutionContext, Future}
 import services.{EventService, NotificationService, TokenService, UserService}
 
@@ -22,7 +22,7 @@ class LoginController @Inject() (
   private lazy val tokenExpirationInMinutes =
     configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
-  def login() = Action.async { implicit request =>
+  def login: Action[AnyContent] = Action.async { implicit request =>
     val emailFromRequestOrQueryParamOrFlash: Option[String] = request.body.asFormUrlEncoded
       .flatMap(_.get("email").flatMap(_.headOption))
       .orElse(request.getQueryString("email"))
@@ -42,7 +42,7 @@ class LoginController @Inject() (
             val message =
               """Aucun compte actif n'est associé à cette adresse e-mail.
              |Merci de vérifier qu'il s'agit bien de votre adresse professionnelle et nominative qui doit être sous la forme : prenom.nom@votre-structure.fr""".stripMargin
-            Redirect(routes.LoginController.login())
+            Redirect(routes.LoginController.login)
               .flashing("error" -> message, "email-value" -> email)
           }
         } { user: User =>
@@ -51,7 +51,7 @@ class LoginController @Inject() (
               LoginToken.forUserId(user.id, tokenExpirationInMinutes, request.remoteAddress)
             tokenService.create(loginToken)
             val path = request.flash.get("path").getOrElse(routes.HomeController.index().url)
-            val url = routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL()
+            val url = routes.LoginController.magicLinkAntiConsumptionPage.absoluteURL()
             notificationService.newLoginRequest(url, path, user, loginToken)
 
             implicit val requestWithUserData =
@@ -70,18 +70,18 @@ class LoginController @Inject() (
     }
   }
 
-  def magicLinkAntiConsumptionPage() = Action { implicit request =>
+  def magicLinkAntiConsumptionPage: Action[AnyContent] = Action { implicit request =>
     (request.getQueryString("token"), request.getQueryString("path")) match {
       case (Some(token), Some(path)) =>
         Ok(views.html.loginHome(Right((token, path)), tokenExpirationInMinutes))
       case _ =>
-        TemporaryRedirect(routes.LoginController.login().url).flashing(
+        TemporaryRedirect(routes.LoginController.login.url).flashing(
           "error" -> "Il y a une erreur dans votre lien de connexion. Merci de contacter l'équipe Administration+"
         )
     }
   }
 
-  def disconnect() = Action {
-    Redirect(routes.LoginController.login()).withNewSession
+  def disconnect: Action[AnyContent] = Action {
+    Redirect(routes.LoginController.login).withNewSession
   }
 }

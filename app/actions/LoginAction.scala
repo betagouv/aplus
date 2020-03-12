@@ -67,7 +67,7 @@ class LoginAction @Inject() (
     if (queryString.nonEmpty) "?" + queryString else ""
   }
 
-  override def refine[A](request: Request[A]) = {
+  override def refine[A](request: Request[A]): Future[Either[Result, RequestWithUserData[A]]] = {
     implicit val req = request
     val path = request.path + queryToString(request.queryString - "key" - "token")
     val url = "http" + (if (request.secure) "s" else "") + "://" + request.host + path
@@ -92,7 +92,7 @@ class LoginAction @Inject() (
           } else {
             eventService.log(TryLoginByKey, "Clé dans l'url, redirige vers la page de connexion")
             Left(
-              TemporaryRedirect(routes.LoginController.login().url)
+              TemporaryRedirect(routes.LoginController.login.url)
                 .flashing("email" -> user.email, "path" -> path)
             )
           }
@@ -201,7 +201,7 @@ class LoginAction @Inject() (
 
   private def userNotLogged[A](message: String)(implicit request: Request[A]) =
     Left(
-      TemporaryRedirect(routes.LoginController.login().url)
+      TemporaryRedirect(routes.LoginController.login.url)
         .withSession(request.session - "userId")
         .flashing("error" -> message)
     )
