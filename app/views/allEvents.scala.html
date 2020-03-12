@@ -1,6 +1,6 @@
-@(user: User)(events: Seq[Event], limit: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
-@import java.util.Locale
+@import _root_.helper.Time
 
+@(user: User)(events: Seq[Event], limit: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 @main(user, maxWidth = false)(s"Evénements ($limit derniers)")  {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("sortable/sortable.css")'>
@@ -33,7 +33,7 @@
                 <tbody>
                 @for(event <- events) {
                     <tr data-search="@event.searchData" class="searchable-row">
-                        <td class="mdl-data-table__cell--non-numeric">@event.creationDate.toString("dd/MM/YY-HH:mm", new Locale("fr"))</td>
+                        <td class="mdl-data-table__cell--non-numeric">@Time.formatPatternFr(event.creationDate, "dd/MM/YY-HH:mm")</td>
                         <td class="mdl-data-table__cell--non-numeric">@Area.fromId(event.area).map(_.name).getOrElse("N/A")</td>
                         <td class="mdl-data-table__cell--non-numeric">@event.level</td>
                         <td class="mdl-data-table__cell--non-numeric">

@@ -4,7 +4,6 @@ import anorm._
 import javax.inject.Inject
 import models.LoginToken
 import play.api.db.Database
-import anorm.JodaParameterMetaData._
 import play.api.UnexpectedException
 
 @javax.inject.Singleton

@@ -6,9 +6,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit.DAYS
 
 import akka.actor.ActorSystem
-import helper.Time
 import javax.inject.Inject
-import org.joda.time.Period
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
@@ -19,14 +17,15 @@ class RemoveExpiredFilesTask @Inject() (
 )(implicit executionContext: ExecutionContext) {
   private val filesPath = configuration.underlying.getString("app.filesPath")
 
-  private val filesExpirationInDays =
+  private val filesExpirationInDays: Int =
     configuration.underlying.getString("app.filesExpirationInDays").toInt
 
   val startAtHour = 5
-  val startDate = Time.now().withTimeAtStartOfDay().plusDays(1).withHourOfDay(startAtHour)
-  val initialDelay = (new Period(Time.now(), startDate).toStandardSeconds.getSeconds).seconds
+  val now = java.time.ZonedDateTime.now() // Machine Time
+  val startDate = now.toLocalDate.atStartOfDay(now.getZone).plusDays(1).withHour(startAtHour)
+  val initialDelay = java.time.Duration.between(now, startDate).getSeconds.seconds
 
-  actorSystem.scheduler.schedule(initialDelay = 0.seconds, interval = 24.hours) {
+  actorSystem.scheduler.schedule(initialDelay = initialDelay, interval = 24.hours) {
     removeExpiredFile
   }
 
@@ -38,7 +37,7 @@ class RemoveExpiredFilesTask @Inject() (
         .filter(_.isFile)
         .filter { file =>
           val instant = Files.getLastModifiedTime(file.toPath).toInstant
-          instant.plus(filesExpirationInDays + 1, DAYS).isBefore(Instant.now())
+          instant.plus(filesExpirationInDays.toLong + 1, DAYS).isBefore(Instant.now())
         }
       fileToDelete.forall(_.delete())
     }

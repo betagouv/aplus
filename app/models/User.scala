@@ -1,10 +1,10 @@
 package models
 
+import java.time.ZonedDateTime
 import java.util.UUID
 
 import constants.Constants
 import helper.{Hash, UUIDHelper}
-import org.joda.time.DateTime
 
 case class User(
     id: UUID,
@@ -19,7 +19,7 @@ case class User(
       message = "User#areas is deprecated in favor of UserGroup#areaIds.",
       since = "v0.4.3"
     ) areas: List[UUID],
-    creationDate: DateTime,
+    creationDate: ZonedDateTime,
     communeCode: String,
     // If true, this person is managing the groups it is in
     // can see all users in its groups, and add new users in its groups
@@ -27,9 +27,9 @@ case class User(
     groupAdmin: Boolean,
     disabled: Boolean,
     expert: Boolean = false,
-    groupIds: List[UUID] = List(),
-    cguAcceptationDate: Option[DateTime] = None,
-    newsletterAcceptationDate: Option[DateTime] = None,
+    groupIds: List[UUID] = Nil,
+    cguAcceptationDate: Option[ZonedDateTime] = None,
+    newsletterAcceptationDate: Option[ZonedDateTime] = None,
     phoneNumber: Option[String] = None
 ) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"
@@ -42,7 +42,7 @@ case class User(
 }
 
 object User {
-  private val date = DateTime.parse("2017-11-01T00:00+01:00")
+  private val date = ZonedDateTime.parse("2017-11-01T00:00+01:00")
 
   val systemUser = User(
     UUIDHelper.namedFrom("system"),

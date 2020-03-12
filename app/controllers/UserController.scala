@@ -1,6 +1,7 @@
 package controllers
 
-import java.util.{Locale, UUID}
+import java.time.{ZoneId, ZonedDateTime}
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 import actions.{LoginAction, RequestWithUserData}
@@ -35,7 +36,6 @@ import models.EventType.{
   ViewUserUnauthorized
 }
 import models.{Area, EventType, User, UserGroup}
-import org.joda.time.{DateTime, DateTimeZone}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
@@ -153,7 +153,7 @@ case class UserController @Inject() (
             user.name,
             user.qualite,
             user.email,
-            user.creationDate.toString("dd-MM-YYYY-HHhmm", new Locale("fr")),
+            Time.formatPatternFr(user.creationDate, "dd-MM-YYYY-HHhmm"),
             if (user.helper) "Aidant" else " ",
             if (user.instructor) "Instructeur" else " ",
             if (user.groupAdmin) "Responsable" else " ",
@@ -187,8 +187,7 @@ case class UserController @Inject() (
 
         usersFuture.map { users =>
           val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
-          val date =
-            DateTime.now(Time.dateTimeZone).toString("dd-MMM-YYY-HH'h'mm", new Locale("fr"))
+          val date = Time.formatPatternFr(Time.nowParis(), "dd-MMM-YYY-HH'h'mm")
 
           Ok(csvContent)
             .withHeaders(
@@ -210,7 +209,7 @@ case class UserController @Inject() (
             eventService.log(UserNotFound, s"L'utilisateur $userId n'existe pas")
             NotFound("Nous n'avons pas trouvé cet utilisateur")
           case Some(user) if user.canBeEditedBy(request.currentUser) =>
-            val form = userForm(Time.dateTimeZone).fill(user)
+            val form = userForm(Time.timeZoneParis).fill(user)
             val groups = groupService.allGroups
             val unused = not(isAccountUsed(user))
             val Token(tokenName, tokenValue) = CSRF.getToken.get
@@ -258,7 +257,7 @@ case class UserController @Inject() (
     asAdmin { () =>
       PostEditUserUnauthorized -> s"Accès non autorisé à modifier $userId"
     } { () =>
-      userForm(Time.dateTimeZone).bindFromRequest.fold(
+      userForm(Time.timeZoneParis).bindFromRequest.fold(
         formWithErrors => {
           val groups = groupService.allGroups
           eventService.log(
@@ -287,7 +286,7 @@ case class UserController @Inject() (
               Redirect(routes.UserController.editUser(userId))
                 .flashing("success" -> "Utilisateur modifié")
             } else {
-              val form = userForm(Time.dateTimeZone)
+              val form = userForm(Time.timeZoneParis)
                 .fill(userToUpdate)
                 .withGlobalError(
                   s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)"
@@ -311,7 +310,7 @@ case class UserController @Inject() (
         eventService.log(PostAddUserUnauthorized, "Accès non autorisé à l'admin des utilisateurs")
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
-        usersForm(Time.dateTimeZone, group.areaIds).bindFromRequest.fold(
+        usersForm(Time.timeZoneParis, group.areaIds).bindFromRequest.fold(
           { formWithErrors =>
             eventService
               .log(AddUserError, "Essai d'ajout d'utilisateurs avec des erreurs de validation")
@@ -333,7 +332,7 @@ case class UserController @Inject() (
                       val errorMessage =
                         s"Impossible d'ajouté les utilisateurs (Erreur interne 1) $error"
                       eventService.log(AddUserError, errorMessage)
-                      val form = usersForm(Time.dateTimeZone, group.areaIds)
+                      val form = usersForm(Time.timeZoneParis, group.areaIds)
                         .fill(users)
                         .withGlobalError(errorMessage)
                       InternalServerError(
@@ -367,7 +366,7 @@ case class UserController @Inject() (
                     case _ =>
                       "Erreur d'insertion dans la base de donnée : contacter l'administrateur."
                   }
-                val form = usersForm(Time.dateTimeZone, group.areaIds)
+                val form = usersForm(Time.timeZoneParis, group.areaIds)
                   .fill(users)
                   .withGlobalError(errorMessage)
                 eventService.log(
@@ -439,7 +438,7 @@ case class UserController @Inject() (
         eventService.log(EditUserShowed, "Visualise la vue d'ajouts des utilisateurs")
         Ok(
           views.html.editUsers(request.currentUser)(
-            usersForm(Time.dateTimeZone, group.areaIds),
+            usersForm(Time.timeZoneParis, group.areaIds),
             rows,
             routes.UserController.addPost(groupId)
           )
@@ -460,7 +459,7 @@ case class UserController @Inject() (
     }
   }
 
-  def usersForm(timeZone: DateTimeZone, areaIds: List[UUID]): Form[List[User]] = Form(
+  def usersForm(timeZone: ZoneId, areaIds: List[UUID]): Form[List[User]] = Form(
     single(
       "users" -> list(
         mapping(
@@ -478,23 +477,23 @@ case class UserController @Inject() (
           "instructor" -> boolean,
           "admin" -> ignored(false),
           "areas" -> ignored(areaIds),
-          "creationDate" -> ignored(DateTime.now(timeZone)),
+          "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
           "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
           "adminGroup" -> boolean,
           "disabled" -> ignored(false),
           "expert" -> ignored(false),
           "groupIds" -> default(list(uuid), List()),
-          "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
-          "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
+          "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
+          "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
           "phone-number" -> optional(text)
         )(User.apply)(User.unapply)
       )
     )
   )
 
-  def userForm(timeZone: DateTimeZone): Form[User] = Form(userMapping(timeZone))
+  def userForm(timeZone: ZoneId): Form[User] = Form(userMapping(timeZone))
 
-  private def userMapping(implicit timeZone: DateTimeZone): Mapping[User] =
+  private def userMapping(implicit timeZone: ZoneId): Mapping[User] =
     mapping(
       "id" -> optional(uuid).transform[UUID]({
         case None     => UUID.randomUUID()
@@ -510,14 +509,14 @@ case class UserController @Inject() (
       "instructor" -> boolean,
       "admin" -> boolean,
       "areas" -> list(uuid).verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
-      "creationDate" -> ignored(DateTime.now(timeZone)),
+      "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
       "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
       "adminGroup" -> boolean,
       "disabled" -> boolean,
       "expert" -> ignored(false),
-      "groupIds" -> default(list(uuid), List()),
-      "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
-      "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
+      "groupIds" -> default(list(uuid), Nil),
+      "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
+      "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "phone-number" -> optional(text)
     )(User.apply)(User.unapply)
 }

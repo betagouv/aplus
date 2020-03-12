@@ -8,7 +8,6 @@ import anorm._
 import javax.inject.Inject
 import models.UserGroup
 import play.api.db.Database
-import anorm.JodaParameterMetaData._
 import helper.{Time, UUIDHelper}
 import org.postgresql.util.PSQLException
 
@@ -32,7 +31,7 @@ class UserGroupService @Inject() (
       "organisation",
       "email"
     )
-    .map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
+    .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
 
   def add(groups: List[UserGroup]): Either[String, Unit] =
     try {

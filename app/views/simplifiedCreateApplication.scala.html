@@ -1,4 +1,3 @@
-@import models._
 @import _root_.helper.MDLForms._
 @import models.Organisation.Category
 @(user: User, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], categories: Seq[Category], selectedCategory: Option[String], applicationForm: Form[models.formModels.ApplicationData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)

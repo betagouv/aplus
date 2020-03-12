@@ -6,7 +6,6 @@ import akka.actor._
 import helper.Time
 import javax.inject.Inject
 import models._
-import org.joda.time.Period
 import services.{ApplicationService, EventService, NotificationService, UserGroupService}
 
 import scala.concurrent.duration._
@@ -20,8 +19,9 @@ class AutoAddExpertTask @Inject() (
     userGroupService: UserGroupService
 )(implicit executionContext: ExecutionContext) {
   val startAtHour = 8
-  val startDate = Time.now().withTimeAtStartOfDay().plusDays(1).withHourOfDay(startAtHour)
-  val initialDelay = (new Period(Time.now(), startDate).toStandardSeconds.getSeconds).seconds
+  val now = java.time.ZonedDateTime.now()
+  val startDate = now.toLocalDate.atStartOfDay(now.getZone).plusDays(1).withHour(startAtHour)
+  val initialDelay = java.time.Duration.between(now, startDate).getSeconds.seconds
 
   actorSystem.scheduler.schedule(initialDelay = initialDelay, interval = 24.hours) {
     inviteExpertsInApplication
@@ -51,7 +51,7 @@ class AutoAddExpertTask @Inject() (
       val answer = Answer(
         UUID.randomUUID(),
         application.id,
-        Time.now(),
+        Time.nowParis(),
         s"Je rejoins la conversation automatiquement comme expert(e) car le dernier message a plus de $days jours",
         expert.id,
         expert.nameWithQualite,
