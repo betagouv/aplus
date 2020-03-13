@@ -594,7 +594,11 @@ case class ApplicationController @Inject() (
   private def usersWhoCanBeInvitedOn[A](
       application: Application
   )(implicit request: RequestWithUserData[A]): Future[List[User]] =
-    (if (request.currentUser.instructor || request.currentUser.expert) {
+    (if (request.currentUser.expert) {
+       userGroupService.byArea(request.currentArea.id).map { groupsOfArea =>
+         userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
+       }
+     } else if (request.currentUser.instructor) {
        userGroupService.byArea(application.area).map { groupsOfArea =>
          userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
        }
