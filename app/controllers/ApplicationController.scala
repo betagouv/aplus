@@ -595,6 +595,7 @@ case class ApplicationController @Inject() (
       application: Application
   )(implicit request: RequestWithUserData[A]): Future[List[User]] =
     (if (request.currentUser.expert) {
+       //TODO : This is a temporary feature: enables the expert to invite someone in the currentArea. Will be permitted to every body later.
        userGroupService.byArea(request.currentArea.id).map { groupsOfArea =>
          userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
        }
