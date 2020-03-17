@@ -33,7 +33,8 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
       "group_ids",
       "cgu_acceptation_date",
       "newsletter_acceptation_date",
-      "phone_number"
+      "phone_number",
+      "shared_account"
     )
     .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
 
@@ -158,7 +159,8 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
           group_ids = array[${user.groupIds}]::uuid[],
           expert = ${user.expert},
           phone_number = ${user.phoneNumber},
-          disabled = ${user.disabled}
+          disabled = ${user.disabled},
+          shared_account = ${user.sharedAccount}
           WHERE id = ${user.id}::uuid
        """.executeUpdate() == 1
   }

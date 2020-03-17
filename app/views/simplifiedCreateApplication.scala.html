@@ -1,8 +1,8 @@
 @import _root_.helper.MDLForms._
 @import models.Organisation.Category
-@(user: User, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], categories: Seq[Category], selectedCategory: Option[String], applicationForm: Form[models.formModels.ApplicationData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(currentUser: User, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], categories: Seq[Category], selectedCategory: Option[String], applicationForm: Form[models.formModels.ApplicationFormData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
-@main(user, Some(currentArea))(s"Nouvelle demande"){
+@main(currentUser, Some(currentArea))(s"Nouvelle demande"){
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 
     <style>
@@ -243,6 +243,28 @@
                 <div class="info-box"><b>Soyez bref</b>, la personne qui vous lira vous en remerciera, la réponse en sera d'autant plus rapide.</div>
                 @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
                     <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
+                }
+
+                @if(currentUser.sharedAccount) {
+                    <div class="mdl-cell mdl-cell--12-col">
+                    Signature<span class="mdl-color-text--red">*</span> :
+                    </div>
+                    @helper.input(
+                        applicationForm("signature"),
+                        'label -> "Renseignez ici votre : Prénom, NOM, service",
+                        'class -> "mdl-textfield--large"
+                    ) { (id, name, value, args) =>
+                    <input class="mdl-textfield__input"
+                           type="text"
+                           name="@name"
+                           id="@id"
+                           @if(currentUser.sharedAccount && value.isEmpty) {
+                           value="@{userSignature.getOrElse(value)}"
+                           } else {
+                           value="@value"
+                           }
+                           @toHtmlArgs(args)>
+                    }<br>
                 }
 
 

@@ -47,6 +47,8 @@
     @helper.input(form("email"), 'label -> "Email") { (id, name, value, args) =>
     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
     }
+    @***** TODO: readonly for observers. *****@
+    @helper.checkbox(form("sharedAccount"), 'type -> "checkbox", 'label -> "Compte Partagé", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("instructor"), 'type -> "checkbox", 'label -> "Instructeur", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("helper"), 'type -> "checkbox", 'label -> "Aidant", 'class -> "mdl-checkbox__input")
     @helper.checkbox(form("adminGroup"), 'type -> "checkbox", 'label -> "Responsable de ces groupes", 'class -> "mdl-checkbox__input")

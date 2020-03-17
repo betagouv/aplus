@@ -120,7 +120,8 @@ case class CSVImportController @Inject() (
       "groupIds" -> default(list(uuid), List()),
       "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "phone-number" -> optional(text)
+      "phone-number" -> optional(text),
+      "sharedAccount" -> boolean
     )(User.apply)(User.unapply)
 
   private def groupImportMapping(date: ZonedDateTime): Mapping[UserGroup] =

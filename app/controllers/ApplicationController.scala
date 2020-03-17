@@ -10,7 +10,8 @@ import helper.Time.zonedDateTimeOrdering
 import forms.FormsPlusMap
 import helper.Time
 import javax.inject.{Inject, Singleton}
-import models._
+import models.{Answer, Application, Area, Organisation, User, UserGroup}
+import models.formModels.{AnswerFormData, ApplicationFormData, InvitationData}
 import org.webjars.play.WebJarsUtil
 import play.api.data.Forms._
 import play.api.data._
@@ -81,7 +82,6 @@ case class ApplicationController @Inject() (
     extends InjectedController
     with play.api.i18n.I18nSupport
     with Operators.ApplicationOperators {
-  import formModels._
 
   private val filesPath = configuration.underlying.getString("app.filesPath")
 
@@ -90,7 +90,7 @@ case class ApplicationController @Inject() (
     Files.createDirectories(dir)
   }
 
-  val applicationForm = Form(
+  private def applicationForm(currentUser: User) = Form(
     mapping(
       "subject" -> nonEmptyText.verifying(maxLength(150)),
       "description" -> nonEmptyText,
@@ -98,8 +98,13 @@ case class ApplicationController @Inject() (
       "users" -> list(uuid).verifying("Vous devez sélectionner au moins une structure", _.nonEmpty),
       "organismes" -> list(text),
       "category" -> optional(text),
-      "selected-subject" -> optional(text)
-    )(ApplicationData.apply)(ApplicationData.unapply)
+      "selected-subject" -> optional(text),
+      "signature" -> (
+        if (currentUser.sharedAccount)
+          nonEmptyText.transform[Option[String]](Some.apply, _.getOrElse(""))
+        else ignored(None: Option[String])
+      )
+    )(ApplicationFormData.apply)(ApplicationFormData.unapply)
   )
 
   private def fetchGroupsWithInstructors(
@@ -128,12 +133,14 @@ case class ApplicationController @Inject() (
     eventService.log(ApplicationFormShowed, "Visualise le formulaire de création de demande")
     fetchGroupsWithInstructors(request.currentArea.id, request.currentUser).map {
       case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
+        // TODO: extract signature from cookie, pass it to view
         Ok(
           views.html.createApplication(request.currentUser, request.currentArea)(
             instructorsOfGroups,
             groupsOfAreaWithInstructor,
             coworkers,
-            applicationForm
+            None, // TODO
+            applicationForm(request.currentUser)
           )
         )
     }
@@ -149,14 +156,16 @@ case class ApplicationController @Inject() (
             userGroup.organisationSetOrDeducted.nonEmpty
         })
         val categories = organisationService.categories
+        // TODO: extract signature from cookie, pass it to view
         Ok(
           views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(
             instructorsOfGroups,
             groupsOfAreaWithInstructorWithOrganisationSet,
             coworkers,
+            None, // TODO
             categories,
             None,
-            applicationForm
+            applicationForm(request.currentUser)
           )
         )
     }
@@ -191,7 +200,7 @@ case class ApplicationController @Inject() (
   }
 
   private def createPostBis(simplified: Boolean) = loginAction.async { implicit request =>
-    val form = applicationForm.bindFromRequest
+    val form = applicationForm(request.currentUser).bindFromRequest
     val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
     val (pendingAttachments, newAttachments) =
       AttachmentHelper.computeStoreAndRemovePendingAndNewApplicationAttachment(
@@ -219,6 +228,7 @@ case class ApplicationController @Inject() (
                   instructorsOfGroups,
                   groupsOfAreaWithInstructorWithOrganisationSet,
                   coworkers,
+                  None,
                   categories,
                   formWithErrors("category").value,
                   formWithErrors,
@@ -231,6 +241,7 @@ case class ApplicationController @Inject() (
                   instructorsOfGroups,
                   groupsOfAreaWithInstructor,
                   coworkers,
+                  None,
                   formWithErrors,
                   pendingAttachments.keys ++ newAttachments.keys
                 )
@@ -245,13 +256,18 @@ case class ApplicationController @Inject() (
             userService.byId(id).map(user => id -> contextualizedUserName(user, currentAreaId))
           }.toMap
 
+          val description: String =
+            applicationData.signature
+              .fold(applicationData.description)(signature =>
+                applicationData.description + "\n\n" + signature
+              )
           val application = Application(
             applicationId,
             Time.nowParis(),
             contextualizedUserName(request.currentUser, currentAreaId),
             request.currentUser.id,
             applicationData.subject,
-            applicationData.description,
+            description,
             applicationData.infos,
             invitedUsers,
             request.currentArea.id,
@@ -262,6 +278,7 @@ case class ApplicationController @Inject() (
             files = newAttachments ++ pendingAttachments
           )
           if (applicationService.createApplication(application)) {
+            // TODO: put signature in cookie here
             notificationsService.newApplication(application)
             eventService.log(
               ApplicationCreated,
@@ -582,13 +599,18 @@ case class ApplicationController @Inject() (
       .as("text/csv")
   }
 
-  val answerForm = Form(
+  private def answerForm(currentUser: User) = Form(
     mapping(
       "message" -> nonEmptyText,
       "irrelevant" -> boolean,
       "infos" -> FormsPlusMap.map(nonEmptyText.verifying(maxLength(30))),
-      "privateToHelpers" -> boolean
-    )(AnswerData.apply)(AnswerData.unapply)
+      "privateToHelpers" -> boolean,
+      "signature" -> (
+        if (currentUser.sharedAccount)
+          nonEmptyText.transform[Option[String]](Some.apply, _.getOrElse(""))
+        else ignored(None: Option[String])
+      )
+    )(AnswerFormData.apply)(AnswerFormData.unapply)
   )
 
   private def usersWhoCanBeInvitedOn[A](
@@ -636,14 +658,16 @@ case class ApplicationController @Inject() (
               }
             val openedTab = request.flash.get("opened-tab").getOrElse("answer")
 
+            // TODO: get signature from cookie
             eventService.log(ApplicationShowed, s"Demande $id consultée", Some(application))
             Ok(
               views.html.showApplication(request.currentUser)(
                 groupsWithUsersThatCanBeInvited,
                 renderedApplication,
-                answerForm,
+                answerForm(request.currentUser),
                 openedTab,
-                request.currentArea
+                request.currentArea,
+                None // TODO: signature
               )
             )
           }
@@ -721,7 +745,7 @@ case class ApplicationController @Inject() (
 
   def answer(applicationId: UUID) = loginAction.async { implicit request =>
     withApplication(applicationId) { application =>
-      val form = answerForm.bindFromRequest
+      val form = answerForm(request.currentUser).bindFromRequest
       val answerId = AttachmentHelper.retrieveOrGenerateAnswerId(form.data)
       val (pendingAttachments, newAttachments) =
         AttachmentHelper.computeStoreAndRemovePendingAndNewAnswerAttachment(
@@ -742,11 +766,15 @@ case class ApplicationController @Inject() (
         },
         answerData => {
           val currentAreaId = application.area
+          val message: String =
+            answerData.signature
+              .fold(answerData.message)(signature => answerData.message + "\n\n" + signature)
+          // TODO: put signature in cookie here
           val answer = Answer(
             answerId,
             applicationId,
             Time.nowParis(),
-            answerData.message,
+            message,
             request.currentUser.id,
             contextualizedUserName(request.currentUser, currentAreaId),
             Map(),

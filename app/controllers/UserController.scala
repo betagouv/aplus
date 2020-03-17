@@ -147,6 +147,7 @@ case class UserController @Inject() (
         val groups = groupService.allGroupByAreas(request.currentUser.areas)
         eventService.log(AllUserCsvShowed, "Visualise le CSV de tous les zones de l'utilisateur")
 
+        // TODO: add shared account
         def userToCSV(user: User): String =
           List[String](
             user.id.toString,
@@ -485,7 +486,8 @@ case class UserController @Inject() (
           "groupIds" -> default(list(uuid), List()),
           "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
           "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-          "phone-number" -> optional(text)
+          "phone-number" -> optional(text),
+          "sharedAccount" -> boolean
         )(User.apply)(User.unapply)
       )
     )
@@ -517,6 +519,7 @@ case class UserController @Inject() (
       "groupIds" -> default(list(uuid), Nil),
       "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "phone-number" -> optional(text)
+      "phone-number" -> optional(text),
+      "sharedAccount" -> boolean
     )(User.apply)(User.unapply)
 }

@@ -28,6 +28,7 @@ object UserAndGroupCsvSerializer {
   val USER_GROUP_MANAGER = Header("user.admin-group", List("Responsable"))
   val USER_QUALITY = Header("user.quality", List("Qualité"))
   val USER_PHONE_NUMBER = Header("user.phone-number", List("Numéro de téléphone", "téléphone"))
+  val USER_ACCOUNT_IS_SHARED = Header("user.account-is-shared", List("Compte Partagé"))
 
   val GROUP_AREAS_IDS = Header("group.area-ids", List("Territoire", "DEPARTEMENTS"))
   val GROUP_ORGANISATION = Header("group.organisation", List("Organisation"))
@@ -134,6 +135,10 @@ object UserAndGroupCsvSerializer {
               .convertAreasNameToAreaUUID(defaultAreas)
               .convertBooleanValue(UserAndGroupCsvSerializer.USER_GROUP_MANAGER.key, "Responsable")
               .convertBooleanValue(UserAndGroupCsvSerializer.USER_INSTRUCTOR.key, "Instructeur")
+              .convertBooleanValue(
+                UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.key,
+                "Compte Partagé"
+              )
               .includeAreasNameInGroupName
               .matchOrganisationId
               .fromCsvFieldNameToHtmlFieldName
@@ -213,6 +218,7 @@ object UserAndGroupCsvSerializer {
         .fold {
           csvMap
         } { value =>
+          // TODO: remove accents
           csvMap + (key -> (value.toLowerCase().contains(trueValue.toLowerCase())).toString)
         }
 
@@ -338,7 +344,8 @@ object UserAndGroupCsvSerializer {
       "groupIds" -> default(list(uuid), Nil),
       "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "phone-number" -> optional(text)
+      "phone-number" -> optional(text),
+      "sharedAccount" -> boolean
     )(User.apply)(User.unapply)
   )
 
