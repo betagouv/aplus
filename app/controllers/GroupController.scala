@@ -1,12 +1,12 @@
 package controllers
 
+import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 
 import actions.{LoginAction, RequestWithUserData}
 import Operators._
 import javax.inject.{Inject, Singleton}
 import models.{Area, Organisation, UserGroup}
-import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
 import play.api.data.Form
@@ -107,7 +107,7 @@ case class GroupController @Inject() (
     asAdmin { () =>
       AddGroupUnauthorized -> s"Accès non autorisé pour ajouter un groupe"
     } { () =>
-      addGroupForm(Time.dateTimeZone).bindFromRequest.fold(
+      addGroupForm(Time.timeZoneParis).bindFromRequest.fold(
         formWithErrors => {
           eventService
             .log(AddUserGroupError, s"Essai d'ajout d'un groupe avec des erreurs de validation")
@@ -148,7 +148,7 @@ case class GroupController @Inject() (
           )
           Unauthorized("Vous n'êtes pas authorisé à ajouter des utilisateurs à ce groupe.")
         } else {
-          addGroupForm(Time.dateTimeZone).bindFromRequest.fold(
+          addGroupForm(Time.timeZoneParis).bindFromRequest.fold(
             formWithError => {
               eventService.log(
                 EditUserGroupError,
@@ -175,13 +175,13 @@ case class GroupController @Inject() (
     }
   }
 
-  def addGroupForm[A](timeZone: DateTimeZone)(implicit request: RequestWithUserData[A]) = Form(
+  def addGroupForm[A](timeZone: ZoneId)(implicit request: RequestWithUserData[A]) = Form(
     mapping(
       "id" -> ignored(UUID.randomUUID()),
       "name" -> text(maxLength = 60),
       "description" -> optional(text),
       "insee-code" -> list(text),
-      "creationDate" -> ignored(DateTime.now(timeZone)),
+      "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
       "area-ids" -> list(uuid)
         .verifying(
           "Vous devez sélectionner les territoires sur lequel vous êtes admin",

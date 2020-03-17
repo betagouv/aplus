@@ -1,5 +1,6 @@
 package services
 
+import java.time.ZonedDateTime
 import java.util.UUID
 import scala.concurrent.Future
 
@@ -10,11 +11,7 @@ import models.Authorization.UserRights
 import play.api.db.Database
 import play.api.libs.json.Json
 import anorm._
-import anorm.JodaParameterMetaData._
 import helper.Time
-import org.joda.time.DateTime
-import play.api.libs.json.JodaReads._
-import play.api.libs.json.JodaWrites._
 
 @javax.inject.Singleton
 class ApplicationService @Inject() (
@@ -71,9 +68,9 @@ class ApplicationService @Inject() (
     )
     .map(application =>
       application.copy(
-        creationDate = application.creationDate.withZone(Time.dateTimeZone),
+        creationDate = application.creationDate.withZoneSameInstant(Time.timeZoneParis),
         answers = application.answers.map(answer =>
-          answer.copy(creationDate = answer.creationDate.withZone(Time.dateTimeZone))
+          answer.copy(creationDate = answer.creationDate.withZoneSameInstant(Time.timeZoneParis))
         )
       )
     )
@@ -110,7 +107,7 @@ class ApplicationService @Inject() (
   def allOpenOrRecentForUserId(
       userId: UUID,
       anonymous: Boolean,
-      referenceDate: DateTime
+      referenceDate: ZonedDateTime
   ): List[Application] =
     db.withConnection { implicit connection =>
       val result = SQL("""SELECT * FROM application
@@ -266,7 +263,7 @@ class ApplicationService @Inject() (
         .executeUpdate()
     }
 
-  def close(applicationId: UUID, usefulness: Option[String], closedDate: DateTime) =
+  def close(applicationId: UUID, usefulness: Option[String], closedDate: ZonedDateTime) =
     db.withTransaction { implicit connection =>
       SQL(
         """

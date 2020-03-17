@@ -1,13 +1,13 @@
 package models
 
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit.MINUTES
 import java.util.UUID
 import helper.BooleanHelper.not
 
-import org.joda.time.{DateTime, Minutes}
-
 case class Application(
     id: UUID,
-    creationDate: DateTime,
+    creationDate: ZonedDateTime,
     creatorUserName: String,
     creatorUserId: UUID,
     subject: String,
@@ -21,7 +21,7 @@ case class Application(
     closed: Boolean = false,
     seenByUserIds: List[UUID] = List(),
     usefulness: Option[String] = None,
-    closedDate: Option[DateTime] = None,
+    closedDate: Option[ZonedDateTime] = None,
     expertInvited: Boolean = false,
     hasSelectedSubject: Boolean = false,
     category: Option[String] = None,
@@ -164,15 +164,15 @@ case class Application(
 
   lazy val resolutionTimeInMinutes: Option[Int] = if (closed) {
     val lastDate = answers.lastOption.map(_.creationDate).orElse(closedDate).getOrElse(creationDate)
-    Some(Minutes.minutesBetween(creationDate, lastDate).getMinutes())
+    Some(MINUTES.between(creationDate, lastDate).toInt)
   } else {
     None
   }
 
   lazy val firstAgentAnswerDate = answers.find(_.id != creatorUserId).map(_.creationDate)
 
-  lazy val firstAnswerTimeInMinutes = firstAgentAnswerDate.map { firstAnswerDate =>
-    Minutes.minutesBetween(creationDate, firstAnswerDate).getMinutes
+  lazy val firstAnswerTimeInMinutes: Option[Int] = firstAgentAnswerDate.map { firstAnswerDate =>
+    MINUTES.between(creationDate, firstAnswerDate).toInt
   }
 }
 

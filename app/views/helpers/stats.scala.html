@@ -1,15 +1,13 @@
 @import scala.collection.immutable.ListMap
-@import java.util.Locale
 @import java.util.UUID
 
-@import _root_.helper.Time.dateTimeOrdering
 @import _root_.helper.{Math, Time}
 @(isAdmin: Boolean)(months: ListMap[String, String], allApplications: Map[Area, Seq[Application]], users: List[User], groups: List[UserGroup], selectedAreaIds: List[UUID], selectedOrganisationIds: List[Organisation.Id], selectedGroupIds: List[UUID])(implicit webJarsUtil: org.webjars.play.WebJarsUtil)
 
 
 
     <div class="mdl-cell mdl-cell--12-col">
-    <br><span>Dernière mise à jour : @{Time.now().toString("dd MMM YYYY - HH:mm:ss", new Locale("fr"))}</span>
+    <br><span>Dernière mise à jour : @{Time.formatPatternFr(Time.nowParis(), "dd MMM YYYY - HH:mm:ss")}</span>
     </div>
 
     <!-- New Stats -->
@@ -90,8 +88,8 @@
         </script>
         <h5>@all.count(a => a.ageInDays <= 30 && a.irrelevant) non pertinente sur les 30 derniers jours</h5>
     </div>
-    @defining(months.values.toSeq.map{ month:String => month -> all.filter(_.creationDate.toString("MMMM YYYY", new Locale("fr")) == month).toSeq  } ) { applicationsGroupByMonths: Seq[(String, Seq[Application])] =>
-        @defining(months.values.toSeq.map { month: String => month -> all.filter(a => a.estimatedClosedDate != None && a.estimatedClosedDate.get.toString("MMMM YYYY", new Locale("fr")) == month).toSeq }) { applicationsGroupByMonthsClosed: Seq[(String, Seq[Application])] =>
+    @defining(months.values.toSeq.map{ month:String => month -> all.filter(application => (Time.formatPatternFr(application.creationDate, "MMMM YYYY"): String) == (month: String)).toSeq  } ) { applicationsGroupByMonths: Seq[(String, Seq[Application])] =>
+        @defining(months.values.toSeq.map { month: String => month -> all.filter(a => a.estimatedClosedDate != None && (Time.formatPatternFr(a.estimatedClosedDate.get, "MMMM YYYY"): String) == (month: String)).toSeq }) { applicationsGroupByMonthsClosed: Seq[(String, Seq[Application])] =>
 
             <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
                 <h6>Est-ce que la réponse vous semble utile pour l'usager ?</h6>
@@ -381,9 +379,9 @@
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         @for((area, applications) <- allApplications) {
             <h4 class="mdl-cell mdl-cell--12-col">@area.name</h4>
-            @defining(months.keys.toSeq.map{ month:String => month -> applications.filter(a => a.estimatedClosedDate.isDefined && f"${a.estimatedClosedDate.get.getYear}/${a.estimatedClosedDate.get.getMonthOfYear}%02d" == month) }) { closedApplicationsPerMonth: Seq[(String, Seq[Application])] =>
+            @defining(months.keys.toSeq.map{ month:String => month -> applications.filter(a => a.estimatedClosedDate.isDefined && f"${a.estimatedClosedDate.get.getYear}/${a.estimatedClosedDate.get.getMonthValue}%02d" == month) }) { closedApplicationsPerMonth: Seq[(String, Seq[Application])] =>
 
-            @defining(months.keys.toSeq.map{ month:String => month -> applications.filter(a => f"${a.creationDate.getYear}/${a.creationDate.getMonthOfYear}%02d" == month) } ) { newApplicationsPerMonth: Seq[(String, Seq[Application])] =>
+            @defining(months.keys.toSeq.map{ month:String => month -> applications.filter(a => f"${a.creationDate.getYear}/${a.creationDate.getMonthValue}%02d" == month) } ) { newApplicationsPerMonth: Seq[(String, Seq[Application])] =>
                 <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white mdl-grid">
                     <canvas class="mdl-cell mdl-cell--12-col chart--default-size" id="application-chart-@area.id"></canvas>
                     <script>

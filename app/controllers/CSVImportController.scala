@@ -1,5 +1,6 @@
 package controllers
 
+import java.time.ZonedDateTime
 import java.util.UUID
 
 import actions.LoginAction
@@ -12,7 +13,6 @@ import play.api.data.{Form, Mapping}
 import play.api.data.Forms._
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import services.{EventService, NotificationService, UserGroupService, UserService}
-import org.joda.time.DateTime
 import helper.Time
 import helper.StringHelper._
 import models.EventType.{
@@ -96,7 +96,7 @@ case class CSVImportController @Inject() (
     )
   }
 
-  private def userImportMapping(date: DateTime): Mapping[User] =
+  private def userImportMapping(date: ZonedDateTime): Mapping[User] =
     mapping(
       "id" -> optional(uuid).transform[UUID]({
         case None     => UUID.randomUUID()
@@ -118,14 +118,14 @@ case class CSVImportController @Inject() (
       "disabled" -> boolean,
       "expert" -> ignored(false),
       "groupIds" -> default(list(uuid), List()),
-      "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
-      "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
+      "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
+      "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "phone-number" -> optional(text),
       // TODO: put also in forms/imports?
       "observableOrganisationIds" -> list(of[Organisation.Id])
     )(User.apply)(User.unapply)
 
-  private def groupImportMapping(date: DateTime): Mapping[UserGroup] =
+  private def groupImportMapping(date: ZonedDateTime): Mapping[UserGroup] =
     mapping(
       "id" -> optional(uuid).transform[UUID]({
         case None     => UUID.randomUUID()
@@ -146,7 +146,7 @@ case class CSVImportController @Inject() (
       "email" -> optional(email)
     )(UserGroup.apply)(UserGroup.unapply)
 
-  private def importUsersAfterReviewForm(date: DateTime): Form[List[UserGroupFormData]] = Form(
+  private def importUsersAfterReviewForm(date: ZonedDateTime): Form[List[UserGroupFormData]] = Form(
     single(
       "groups" -> list(
         mapping(
@@ -189,7 +189,7 @@ case class CSVImportController @Inject() (
           }, { csvImportData =>
             val defaultAreas = csvImportData.areaIds.flatMap(Area.fromId)
             UserAndGroupCsvSerializer
-              .csvLinesToUserGroupData(csvImportData.separator, defaultAreas, Time.now())(
+              .csvLinesToUserGroupData(csvImportData.separator, defaultAreas, Time.nowParis())(
                 csvImportData.csvLines
               )
               .fold(
@@ -211,7 +211,7 @@ case class CSVImportController @Inject() (
                     val augmentedUserGroupInformation: List[UserGroupFormData] =
                       userGroupDataForm.map(augmentUserGroupInformation)
 
-                    val currentDate = Time.now()
+                    val currentDate = Time.nowParis()
                     val formWithData = importUsersAfterReviewForm(currentDate)
                       .fillAndValidate(augmentedUserGroupInformation)
 
@@ -252,7 +252,7 @@ case class CSVImportController @Inject() (
     asAdmin { () =>
       ImportUsersUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
-      val currentDate = Time.now()
+      val currentDate = Time.nowParis()
       importUsersAfterReviewForm(currentDate).bindFromRequest.fold(
         { importUsersAfterReviewFormWithError =>
           eventService.log(ImportUserFormError, description = "Erreur de formulaire de review")

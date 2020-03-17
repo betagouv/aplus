@@ -38,7 +38,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
           name = s"Instructor Group $number",
           description = None,
           inseeCode = List("0"),
-          creationDate = Time.now(),
+          creationDate = Time.nowParis(),
           areaIds = area :: Nil
         )
         groupService.add(instructorGroup)
@@ -47,7 +47,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
           name = s"Helper Group $number",
           description = None,
           inseeCode = List("0"),
-          creationDate = Time.now(),
+          creationDate = Time.nowParis(),
           areaIds = area :: Nil
         )
         groupService.add(helperGroup)
@@ -62,11 +62,11 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
           true,
           false,
           List(area),
-          Time.now(),
+          Time.nowParis(),
           "0",
           false,
           false,
-          cguAcceptationDate = Some(Time.now()),
+          cguAcceptationDate = Some(Time.nowParis()),
           groupIds = List(instructorGroup.id)
         )
         val unrelatedInstructorUser = User(
@@ -79,11 +79,11 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
           true,
           false,
           List(area),
-          Time.now(),
+          Time.nowParis(),
           "0",
           false,
           false,
-          cguAcceptationDate = Some(Time.now()),
+          cguAcceptationDate = Some(Time.nowParis()),
           groupIds = Nil
         )
         val helperUser = User(
@@ -96,11 +96,11 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
           false,
           false,
           List(area),
-          Time.now(),
+          Time.nowParis(),
           "0",
           false,
           false,
-          cguAcceptationDate = Some(Time.now()),
+          cguAcceptationDate = Some(Time.nowParis()),
           groupIds = List(helperGroup.id)
         )
         val helperFriendUser = User(
@@ -113,11 +113,11 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
           false,
           false,
           List(area),
-          Time.now(),
+          Time.nowParis(),
           "0",
           false,
           false,
-          cguAcceptationDate = Some(Time.now()),
+          cguAcceptationDate = Some(Time.nowParis()),
           groupIds = List(helperGroup.id)
         )
         val unrelatedHelperUser = User(
@@ -130,11 +130,11 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
           false,
           false,
           List(area),
-          Time.now(),
+          Time.nowParis(),
           "0",
           false,
           false,
-          cguAcceptationDate = Some(Time.now()),
+          cguAcceptationDate = Some(Time.nowParis()),
           groupIds = List(helperGroup.id)
         )
         val unrelatedExpertUser = User(
@@ -147,11 +147,11 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
           false,
           false,
           List(area),
-          Time.now(),
+          Time.nowParis(),
           "0",
           false,
           false,
-          cguAcceptationDate = Some(Time.now()),
+          cguAcceptationDate = Some(Time.nowParis()),
           groupIds = List(helperGroup.id)
         )
         val managerUser = User(
@@ -164,11 +164,11 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
           instructor = false,
           admin = false,
           List(area),
-          Time.now(),
+          Time.nowParis(),
           "0",
           groupAdmin = false,
           disabled = false,
-          cguAcceptationDate = Some(Time.now()),
+          cguAcceptationDate = Some(Time.nowParis()),
           groupIds = List(helperGroup.id)
         )
 
@@ -188,7 +188,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
 
         val application = Application(
           UUIDHelper.randomUUID,
-          creationDate = Time.now(),
+          creationDate = Time.nowParis(),
           creatorUserName = helperUser.nameWithQualite,
           creatorUserId = helperUser.id,
           subject = s"Sujet de la demande $number",

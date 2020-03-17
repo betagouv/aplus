@@ -1,5 +1,6 @@
 package serializers
 
+import java.time.ZonedDateTime
 import java.util.UUID
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
@@ -7,7 +8,6 @@ import models.formModels.{UserFormData, UserGroupFormData}
 import helper.{PlayFormHelper, UUIDHelper}
 import helper.StringHelper._
 import models.{Area, Organisation, User, UserGroup}
-import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data.Mapping
 
@@ -116,7 +116,7 @@ object UserAndGroupCsvSerializer {
     * Returns a Right[(List[String], List[UserGroupFormData]))]
     * where List[String] is a list of errors on the lines.
     */
-  def csvLinesToUserGroupData(separator: Char, defaultAreas: Seq[Area], currentDate: DateTime)(
+  def csvLinesToUserGroupData(separator: Char, defaultAreas: Seq[Area], currentDate: ZonedDateTime)(
       csvLines: String
   ): Either[String, (List[String], List[UserGroupFormData])] = {
     def partition(
@@ -286,7 +286,7 @@ object UserAndGroupCsvSerializer {
 
     def toUserGroupData(
         lineNumber: LineNumber,
-        currentDate: DateTime
+        currentDate: ZonedDateTime
     ): Either[String, UserGroupFormData] =
       groupCSVMapping(currentDate)
         .bind(csvMap)
@@ -314,7 +314,7 @@ object UserAndGroupCsvSerializer {
         )
   }
 
-  private def userCSVMapping(currentDate: DateTime): Mapping[User] = single(
+  private def userCSVMapping(currentDate: ZonedDateTime): Mapping[User] = single(
     "user" -> mapping(
       "id" -> optional(uuid).transform[UUID]({
         case None     => UUID.randomUUID()
@@ -336,15 +336,15 @@ object UserAndGroupCsvSerializer {
       "disabled" -> ignored(false),
       "expert" -> ignored(false),
       "groupIds" -> default(list(uuid), Nil),
-      "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
-      "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
+      "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
+      "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "phone-number" -> optional(text),
       // TODO: put in CSV?
       "observableOrganisationIds" -> list(of[Organisation.Id])
     )(User.apply)(User.unapply)
   )
 
-  private def groupCSVMapping(currentDate: DateTime): Mapping[UserGroup] = single(
+  private def groupCSVMapping(currentDate: ZonedDateTime): Mapping[UserGroup] = single(
     "group" ->
       mapping(
         "id" -> optional(uuid).transform[UUID]({

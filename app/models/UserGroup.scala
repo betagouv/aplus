@@ -1,15 +1,14 @@
 package models
 
+import java.time.ZonedDateTime
 import java.util.UUID
-
-import org.joda.time.DateTime
 
 case class UserGroup(
     id: UUID,
     name: String,
     description: Option[String],
     inseeCode: List[String],
-    creationDate: DateTime,
+    creationDate: ZonedDateTime,
     areaIds: List[UUID],
     organisation: Option[Organisation.Id] = None,
     email: Option[String] = None

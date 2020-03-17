@@ -59,7 +59,7 @@ class CSVSpec extends Specification {
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ',',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
-          Time.now()
+          Time.nowParis()
         )(prefFormat)
       result must beRight
 
@@ -72,7 +72,7 @@ class CSVSpec extends Specification {
         name = "DGFIP - Ardennes",
         description = None,
         inseeCode = Nil,
-        creationDate = Time.now(),
+        creationDate = Time.nowParis(),
         areaIds = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten.map(_.id),
         organisation = None,
         email = Some("sip.laon@dgfip.finances.gouv.fr")
@@ -104,7 +104,7 @@ class CSVSpec extends Specification {
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ',',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
-          Time.now()
+          Time.nowParis()
         )(organisationTest)
       result must beRight
       val (errors, data) = result.right.get
@@ -125,7 +125,7 @@ class CSVSpec extends Specification {
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ';',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
-          Time.now()
+          Time.nowParis()
         )(failFile)
       result must beRight
       val (errors, _) = result.right.get
@@ -153,7 +153,7 @@ class CSVSpec extends Specification {
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ';',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
-          Time.now()
+          Time.nowParis()
         )(csvFile)
       result must beRight
       val (errors, data) = result.right.get
@@ -166,7 +166,7 @@ class CSVSpec extends Specification {
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ';',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
-          Time.now()
+          Time.nowParis()
         )(csvFile)
       result must beRight
       val (errors, data) = result.right.get

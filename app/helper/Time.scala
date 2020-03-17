@@ -1,37 +1,49 @@
 package helper
 
+import java.time.{ZoneId, ZonedDateTime}
+import java.time.format.DateTimeFormatter
 import java.util.Locale
-
-import org.joda.time.{DateTime, DateTimeZone}
-
 import scala.collection.immutable.ListMap
 
 object Time {
-  val timeZone = "Europe/Paris"
-  val dateTimeZone = DateTimeZone.forID(timeZone)
-  implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_.isBefore(_))
-  def now() = DateTime.now(dateTimeZone)
 
-  def weeksMap(fromDate: DateTime, toDate: DateTime): ListMap[String, String] = {
-    val weekDay = toDate.weekOfWeekyear().roundFloorCopy()
-    def recursion(date: DateTime): ListMap[String, String] =
+  private val timeZoneString = "Europe/Paris"
+  val timeZoneParis = ZoneId.of(timeZoneString)
+
+  implicit def zonedDateTimeOrdering: Ordering[ZonedDateTime] =
+    Ordering.fromLessThan(_.isBefore(_))
+
+  def nowParis() = ZonedDateTime.now(timeZoneParis)
+
+  def formatPatternFr(date: ZonedDateTime, pattern: String): String =
+    date.format(java.time.format.DateTimeFormatter.ofPattern(pattern, Locale.FRANCE))
+
+  def weeksMap(fromDate: ZonedDateTime, toDate: ZonedDateTime): ListMap[String, String] = {
+    val keyFormatter = DateTimeFormatter.ofPattern("YYYY/ww", Locale.FRANCE)
+    val valueFormatter = DateTimeFormatter.ofPattern("E dd MMM YYYY", Locale.FRANCE)
+    val weekFieldISO = java.time.temporal.WeekFields.of(Locale.FRANCE).dayOfWeek()
+    def recursion(date: ZonedDateTime): ListMap[String, String] =
       if (date.isBefore(fromDate)) {
         ListMap()
       } else {
-        recursion(date.minusWeeks(1)) + (f"${date.getYear}/${date.getWeekOfWeekyear}%02d" -> date
-          .toString("E dd MMM YYYY", new Locale("fr")))
+        recursion(date.minusWeeks(1)) +
+          (date.format(keyFormatter) -> date.format(valueFormatter))
       }
-    recursion(weekDay)
+    val toDateFirstDayOfWeek = toDate.`with`(weekFieldISO, 1)
+    recursion(toDateFirstDayOfWeek)
   }
 
-  def monthsMap(fromDate: DateTime, toDate: DateTime): ListMap[String, String] = {
-    def recursion(date: DateTime): ListMap[String, String] =
+  def monthsMap(fromDate: ZonedDateTime, toDate: ZonedDateTime): ListMap[String, String] = {
+    val keyFormatter = DateTimeFormatter.ofPattern("YYYY/MM", Locale.FRANCE)
+    val valueFormatter = DateTimeFormatter.ofPattern("MMMM YYYY", Locale.FRANCE)
+    def recursion(date: ZonedDateTime): ListMap[String, String] =
       if (date.isBefore(fromDate)) {
         ListMap()
       } else {
-        recursion(date.minusMonths(1)) + (f"${date.getYear}/${date.getMonthOfYear}%02d" -> date
-          .toString("MMMM YYYY", new Locale("fr")))
+        recursion(date.minusMonths(1)) +
+          (date.format(keyFormatter) -> date.format(valueFormatter))
       }
     recursion(toDate)
   }
+
 }
