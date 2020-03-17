@@ -74,7 +74,7 @@ case class UserController @Inject() (
       } { () =>
         val selectedArea = Area.fromId(areaId).get
 
-        val groupsFuture: Future[List[UserGroup]] =
+        val allAreasGroupsFuture: Future[List[UserGroup]] =
           if (Authorization.isAdmin(request.rights)) {
             if (selectedArea.id == Area.allArea.id) {
               groupService.byAreas(request.currentUser.areas)
@@ -89,6 +89,14 @@ case class UserController @Inject() (
             eventService.log(AllUserIncorrectSetup, "Erreur d'accès aux groupes")
             Future(Nil)
           }
+        val groupsFuture: Future[List[UserGroup]] =
+          allAreasGroupsFuture.map(groups =>
+            if (selectedArea.id == Area.allArea.id) {
+              groups
+            } else {
+              groups.filter(_.areaIds.contains[UUID](selectedArea.id))
+            }
+          )
         val usersFuture: Future[List[User]] =
           groupsFuture.map { groups =>
             userService.byGroupIds(groups.map(_.id))
