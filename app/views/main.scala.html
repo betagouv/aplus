@@ -125,7 +125,7 @@
                     @if(Authorization.canSeeUsers(currentUserRights)) {
                         <a class="mdl-navigation__link" href="@routes.UserController.home"><i class="material-icons" role="presentation">people</i>Utilisateurs</a>
                     }
-                    @if(Authorization.canSeeDeployment(currentUserRights)) {
+                    @if(Authorization.isAdminOrObserver(currentUserRights)) {
                         <a class="mdl-navigation__link" href="@routes.AreaController.deploymentDashboard()"><i class="material-icons" role="presentation">track_changes</i>Déploiement</a>
                     }
                     @if(Authorization.isAdmin(currentUserRights)) {

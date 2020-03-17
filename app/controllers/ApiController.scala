@@ -56,7 +56,7 @@ case class ApiController @Inject() (
   }
 
   def franceServiceDeployment: Action[AnyContent] = loginAction.async { implicit request =>
-    asUserWithAuthorization(Authorization.canSeeDeployment) { () =>
+    asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
       val userGroups = userGroupService.allGroups.filter(

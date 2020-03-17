@@ -117,7 +117,7 @@ case class AreaController @Inject() (
   ).map(_.flatMap(id => Organisation.byId(Organisation.Id(id))))
 
   def deploymentDashboard = loginAction.async { implicit request =>
-    asUserWithAuthorization(Authorization.canSeeDeployment) { () =>
+    asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
       val userGroups = userGroupService.allGroups
@@ -171,7 +171,7 @@ case class AreaController @Inject() (
   }
 
   def franceServiceDeploymentDashboard = loginAction.async { implicit request =>
-    asUserWithAuthorization(Authorization.canSeeDeployment) { () =>
+    asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
       Future(Ok(views.html.franceServiceDeploymentDashboard(request.currentUser, request.rights)))

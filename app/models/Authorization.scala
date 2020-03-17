@@ -131,9 +131,6 @@ object Authorization {
   def canSeeApplicationsAsAdmin: Check =
     atLeastOneIsAuthorized(isAdmin, isManager)
 
-  def canSeeDeployment: Check =
-    atLeastOneIsAuthorized(isAdmin, isObserver)
-
   def canSeeStats: Check =
     atLeastOneIsAuthorized(isAdmin, isManager, isObserver)
 
