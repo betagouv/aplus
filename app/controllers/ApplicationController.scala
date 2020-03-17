@@ -464,8 +464,7 @@ case class ApplicationController @Inject() (
     val observableOrganisationIds = if (Authorization.isAdmin(request.rights)) {
       organisationIds
     } else {
-      //TODO : how to manage with Authorization ?
-      organisationIds.intersect(request.currentUser.observableOrganisationIds)
+      organisationIds.filter(id => Authorization.canObserveOrganisation(id)(request.rights))
     }
 
     val observableGroupIds = if (Authorization.isAdmin(request.rights)) {

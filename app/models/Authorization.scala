@@ -105,6 +105,13 @@ object Authorization {
       isObserver
     )
 
+  def canObserveOrganisation(organisationId: Organisation.Id): Check =
+    _.rights.exists {
+      case UserRight.ObserverOfOrganisations(organisations) =>
+        organisations.contains(organisationId)
+      case _ => false
+    }
+
   // TODO: weird...
   def userCanBeEditedBy(editorUser: User): Check =
     _ => editorUser.admin && editorUser.areas.intersect(editorUser.areas).nonEmpty
