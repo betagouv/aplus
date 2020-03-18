@@ -45,7 +45,7 @@ import play.api.data.{Form, Mapping}
 import play.api.mvc._
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
-import serializers.UserAndGroupCsvSerializer
+import serializers.{Keys, UserAndGroupCsvSerializer}
 import services._
 
 @Singleton
@@ -487,7 +487,7 @@ case class UserController @Inject() (
           "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
           "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
           "phone-number" -> optional(text),
-          "sharedAccount" -> boolean
+          Keys.User.sharedAccount -> boolean
         )(User.apply)(User.unapply)
       )
     )
@@ -520,6 +520,6 @@ case class UserController @Inject() (
       "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "phone-number" -> optional(text),
-      "sharedAccount" -> boolean
+      Keys.User.sharedAccount -> boolean
     )(User.apply)(User.unapply)
 }

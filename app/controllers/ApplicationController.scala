@@ -133,13 +133,12 @@ case class ApplicationController @Inject() (
     eventService.log(ApplicationFormShowed, "Visualise le formulaire de création de demande")
     fetchGroupsWithInstructors(request.currentArea.id, request.currentUser).map {
       case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
-        // TODO: extract signature from cookie, pass it to view
         Ok(
           views.html.createApplication(request.currentUser, request.currentArea)(
             instructorsOfGroups,
             groupsOfAreaWithInstructor,
             coworkers,
-            None, // TODO
+            readSharedAccountUserSignature(request.session),
             applicationForm(request.currentUser)
           )
         )
@@ -156,13 +155,12 @@ case class ApplicationController @Inject() (
             userGroup.organisationSetOrDeducted.nonEmpty
         })
         val categories = organisationService.categories
-        // TODO: extract signature from cookie, pass it to view
         Ok(
           views.html.simplifiedCreateApplication(request.currentUser, request.currentArea)(
             instructorsOfGroups,
             groupsOfAreaWithInstructorWithOrganisationSet,
             coworkers,
-            None, // TODO
+            readSharedAccountUserSignature(request.session),
             categories,
             None,
             applicationForm(request.currentUser)
@@ -278,7 +276,6 @@ case class ApplicationController @Inject() (
             files = newAttachments ++ pendingAttachments
           )
           if (applicationService.createApplication(application)) {
-            // TODO: put signature in cookie here
             notificationsService.newApplication(application)
             eventService.log(
               ApplicationCreated,
@@ -286,6 +283,11 @@ case class ApplicationController @Inject() (
               Some(application)
             )
             Redirect(routes.ApplicationController.myApplications())
+              .withSession(
+                applicationData.signature.fold(removeSharedAccountUserSignature(request.session))(
+                  signature => saveSharedAccountUserSignature(request.session, signature)
+                )
+              )
               .flashing("success" -> "Votre demande a bien été envoyée")
           } else {
             eventService.log(
@@ -658,7 +660,6 @@ case class ApplicationController @Inject() (
               }
             val openedTab = request.flash.get("opened-tab").getOrElse("answer")
 
-            // TODO: get signature from cookie
             eventService.log(ApplicationShowed, s"Demande $id consultée", Some(application))
             Ok(
               views.html.showApplication(request.currentUser)(
@@ -667,7 +668,7 @@ case class ApplicationController @Inject() (
                 answerForm(request.currentUser),
                 openedTab,
                 request.currentArea,
-                None // TODO: signature
+                readSharedAccountUserSignature(request.session)
               )
             )
           }
@@ -769,7 +770,6 @@ case class ApplicationController @Inject() (
           val message: String =
             answerData.signature
               .fold(answerData.message)(signature => answerData.message + "\n\n" + signature)
-          // TODO: put signature in cookie here
           val answer = Answer(
             answerId,
             applicationId,
@@ -792,6 +792,11 @@ case class ApplicationController @Inject() (
             notificationsService.newAnswer(application, answer)
             Future(
               Redirect(s"${routes.ApplicationController.show(applicationId)}#answer-${answer.id}")
+                .withSession(
+                  answerData.signature.fold(removeSharedAccountUserSignature(request.session))(
+                    signature => saveSharedAccountUserSignature(request.session, signature)
+                  )
+                )
                 .flashing("success" -> "Votre réponse a bien été envoyée")
             )
           } else {
@@ -978,4 +983,25 @@ case class ApplicationController @Inject() (
         }
     }
   }
+
+  //
+  // Signature Cookie (for shared accounts)
+  //
+
+  private val sharedAccountUserSignatureKey = "sharedAccountUserSignature"
+
+  /** Note: using session because it is signed, other cookies are not signed */
+  private def readSharedAccountUserSignature(session: Session): Option[String] =
+    session.get(sharedAccountUserSignatureKey)
+
+  /** Does not save signatures that are too big (longer than 1000 chars) */
+  private def saveSharedAccountUserSignature[R](session: Session, signature: String): Session =
+    if (signature.size <= 1000)
+      session + (sharedAccountUserSignatureKey -> signature)
+    else
+      session
+
+  private def removeSharedAccountUserSignature(session: Session): Session =
+    session - sharedAccountUserSignatureKey
+
 }

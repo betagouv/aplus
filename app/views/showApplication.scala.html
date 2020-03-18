@@ -1,4 +1,5 @@
 @import _root_.helper.Time
+@import _root_.helper.MDLForms._
 
 @(currentUser: User)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
@@ -395,8 +396,10 @@ dialog {
                                     <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Votre réponse</label>
                                 </div>
                                 @if(currentUser.sharedAccount) {
-                                @** TODO: works but not pretty **@
-                                    Signature<span class="mdl-color-text--red">*</span> :<br>
+                                  <div class="mdl-cell mdl-cell--12-col">
+                                    Signature<span class="mdl-color-text--red">*</span> :
+                                  </div>
+                                  <div class="mdl-cell mdl-cell--12-col">
                                     @helper.input(
                                     answerToAgentsForm("signature"),
                                         'label -> "Renseignez ici votre : Prénom, NOM, service",
@@ -413,6 +416,7 @@ dialog {
                                            }
                                            @toHtmlArgs(args)>
                                     }
+                                  </div>
                                 }
                                 <div class="mdl-cell mdl-cell--12-col">
                                     <b>Ajouter un ficher ( 5Mo maximum ) :</b>

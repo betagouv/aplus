@@ -28,7 +28,7 @@ object UserAndGroupCsvSerializer {
   val USER_GROUP_MANAGER = Header("user.admin-group", List("Responsable"))
   val USER_QUALITY = Header("user.quality", List("Qualité"))
   val USER_PHONE_NUMBER = Header("user.phone-number", List("Numéro de téléphone", "téléphone"))
-  val USER_ACCOUNT_IS_SHARED = Header("user.account-is-shared", List("Compte Partagé"))
+  val USER_ACCOUNT_IS_SHARED = Header("user." + Keys.User.sharedAccount, List("Compte Partagé"))
 
   val GROUP_AREAS_IDS = Header("group.area-ids", List("Territoire", "DEPARTEMENTS"))
   val GROUP_ORGANISATION = Header("group.organisation", List("Organisation"))
@@ -43,7 +43,8 @@ object UserAndGroupCsvSerializer {
     USER_NAME,
     USER_EMAIL,
     USER_INSTRUCTOR,
-    USER_GROUP_MANAGER
+    USER_GROUP_MANAGER,
+    USER_ACCOUNT_IS_SHARED
   )
   val USER_HEADER = USER_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
 
@@ -64,7 +65,8 @@ object UserAndGroupCsvSerializer {
     USER_EMAIL,
     USER_INSTRUCTOR,
     USER_GROUP_MANAGER,
-    USER_QUALITY
+    USER_QUALITY,
+    USER_ACCOUNT_IS_SHARED
   )
 
   private val expectedGroupHeaders: List[Header] =
@@ -218,8 +220,9 @@ object UserAndGroupCsvSerializer {
         .fold {
           csvMap
         } { value =>
-          // TODO: remove accents
-          csvMap + (key -> (value.toLowerCase().contains(trueValue.toLowerCase())).toString)
+          csvMap + (key -> (value.toLowerCase.stripSpecialChars
+            .contains(trueValue.toLowerCase.stripSpecialChars))
+            .toString)
         }
 
     def includeAreasNameInGroupName(): CSVMap = {
@@ -345,7 +348,7 @@ object UserAndGroupCsvSerializer {
       "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "phone-number" -> optional(text),
-      "sharedAccount" -> boolean
+      Keys.User.sharedAccount -> boolean
     )(User.apply)(User.unapply)
   )
 

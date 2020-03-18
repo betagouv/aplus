@@ -111,7 +111,7 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
           assert(user.areas.nonEmpty)
           success && SQL"""
         INSERT INTO "user" (id, key, name, qualite, email, helper, instructor, admin, areas, creation_date,
-                            commune_code, group_admin, group_ids, expert, phone_number) VALUES (
+                            commune_code, group_admin, group_ids, expert, phone_number, shared_account) VALUES (
            ${user.id}::uuid,
            ${Hash.sha256(s"${user.id}$cryptoSecret")},
            ${user.name},
@@ -126,7 +126,8 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
            ${user.groupAdmin},
            array[${user.groupIds}]::uuid[],
            ${user.expert},
-           ${user.phoneNumber})
+           ${user.phoneNumber},
+           ${user.sharedAccount})
         """.executeUpdate() == 1
         }
       }
