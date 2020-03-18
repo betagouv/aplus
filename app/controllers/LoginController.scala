@@ -5,11 +5,13 @@ import javax.inject.{Inject, Singleton}
 import models.EventType.{GenerateToken, UnknownEmail}
 import models.{Area, LoginToken, User}
 import org.webjars.play.WebJarsUtil
-import play.api.mvc.InjectedController
+import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result}
+import play.filters.csrf.CSRFCheck
 import services.{EventService, NotificationService, TokenService, UserService}
 
 @Singleton
 class LoginController @Inject() (
+    checkToken: CSRFCheck,
     userService: UserService,
     notificationService: NotificationService,
     tokenService: TokenService,
@@ -21,13 +23,29 @@ class LoginController @Inject() (
   private lazy val tokenExpirationInMinutes =
     configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
-  def login() = Action { implicit request =>
+  def login(): Action[AnyContent] = Action { implicit request =>
+    innerLogin(None)
+  }
+
+  // Security: we check the CSRF token when the email is in the query here because play
+  // only checks CSRF by default on POST actions
+  // See also
+  // https://github.com/playframework/playframework/blob/2.8.x/web/play-filters-helpers/src/main/scala/views/html/helper/CSRF.scala#L27
+  def loginWithEmailInQueryString(): Action[AnyContent] = checkToken(
+    Action { implicit request =>
+      innerLogin(request.getQueryString("email"))
+    }
+  )
+
+  private def innerLogin(
+      emailFromQuery: Option[String]
+  )(implicit request: Request[AnyContent]): Result = {
     val emailFromRequestOrQueryParamOrFlash: Option[String] = request.body.asFormUrlEncoded
       .flatMap(_.get("email").flatMap(_.headOption))
-      .orElse(request.getQueryString("email"))
+      .orElse(emailFromQuery)
       .orElse(request.flash.get("email"))
     emailFromRequestOrQueryParamOrFlash.fold {
-      Ok(views.html.home())
+      Ok(views.html.home(HomeController.HomeInnerPage.ConnectionForm))
     } { email =>
       userService
         .byEmail(email)
@@ -37,7 +55,7 @@ class LoginController @Inject() (
           eventService.log(UnknownEmail, s"Aucun compte actif à cette adresse mail $email")
           val message =
             """Aucun compte actif n'est associé à cette adresse e-mail.
-             |Merci de vérifier qu'il s'agit bien de votre adresse professionnelle et nominative qui doit être sous la forme : prenom.nom@votre-structure.fr""".stripMargin
+              |Merci de vérifier qu'il s'agit bien de votre adresse professionnelle et nominative qui doit être sous la forme : prenom.nom@votre-structure.fr""".stripMargin
           Redirect(routes.LoginController.login())
             .flashing("error" -> message, "email-value" -> email)
         } { user: User =>
@@ -50,15 +68,27 @@ class LoginController @Inject() (
 
           implicit val requestWithUserData =
             new RequestWithUserData(user, Area.notApplicable, request)
+          val emailInBody = request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty
+          val emailInFlash = request.flash.get("email").nonEmpty
           eventService.log(
             GenerateToken,
-            s"Génére un token pour une connexion par email body=${request.body.asFormUrlEncoded
-              .flatMap(_.get("email"))
-              .nonEmpty}&flash=${request.flash.get("email").nonEmpty}"
+            s"Génère un token pour une connexion par email body=${emailInBody}&flash=${emailInFlash}"
           )
 
-          Ok(views.html.loginHome(Left(Some(user)), tokenExpirationInMinutes))
-            .flashing("email" -> email)
+          val successMessage = request
+            .getQueryString("action")
+            .flatMap(actionName =>
+              if (actionName == "sendemailback")
+                Some("Un nouveau lien de connexion vient de vous être envoyé par e-mail.")
+              else
+                None
+            )
+          Ok(
+            views.html.home(
+              HomeController.HomeInnerPage
+                .EmailSentFeedback(user, tokenExpirationInMinutes, successMessage)
+            )
+          )
         }
     }
   }

@@ -1,0 +1,24 @@
+@import views.html.helper.CSRF
+
+@(infos: HomeController.HomeInnerPage.EmailSentFeedback)(implicit flash: Flash, request: RequestHeader)
+
+<div class="mdl-cell mdl-cell--12-col mdl-cell--middle">
+    <h3 class="mdl-typography--text-uppercase mdl-typography--font-medium">
+        Consultez vos E-Mails
+    </h3>
+
+    <p>
+        Nous avons envoyé par e-mail un lien de connexion valable @infos.tokenExpirationInMinutes minutes
+        à l'adresse <b>@infos.user.email</b>.
+        Cliquez sur le lien contenu dans l'e-mail pour accéder à Administration+.
+    </p>
+
+    <p><i>
+        Vous n'avez pas reçu d'e-mail ? Veuillez consulter vos courriers indésirables
+        ou <a href="@CSRF(routes.LoginController.loginWithEmailInQueryString())&email=@infos.user.email&action=sendemailback">renvoyer un autre e-email</a>
+    </i></p>
+
+    @infos.successMessage.map { message =>
+    <div class="notification notification--success mdl-typography--text-prewrap" >@message</div>
+    }
+</div>

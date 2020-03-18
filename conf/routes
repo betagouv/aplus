@@ -24,11 +24,12 @@ GET      /toutes-les-demandes/:applicationId/fichiers/:filename    controllers.A
 GET      /toutes-les-demandes/:applicationId/messages/:answerId/fichiers/:filename    controllers.ApplicationController.answerFile(applicationId: java.util.UUID, answerId: java.util.UUID, filename: String)
 
 
-# Stats
+# Stats
 GET     /stats                       controllers.ApplicationController.stats
 
 # Login
 GET    /login                        controllers.LoginController.login
+GET    /login-magic                  controllers.LoginController.loginWithEmailInQueryString
 POST   /login                        controllers.LoginController.login
 GET    /login/disconnect             controllers.LoginController.disconnect
 GET    /validation-connexion         controllers.LoginController.magicLinkAntiConsumptionPage
