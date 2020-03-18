@@ -151,7 +151,6 @@ case class UserController @Inject() (
           List[String](
             user.id.toString,
             user.name,
-            user.qualite,
             user.email,
             Time.formatPatternFr(user.creationDate, "dd-MM-YYYY-HHhmm"),
             if (user.sharedAccount) "Compte Partagé" else " ",
@@ -171,7 +170,6 @@ case class UserController @Inject() (
         val headers = List[String](
           "Id",
           UserAndGroupCsvSerializer.USER_NAME.prefixes(0),
-          "Qualité",
           UserAndGroupCsvSerializer.USER_EMAIL.prefixes(0),
           "Création",
           UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes(0),

@@ -247,7 +247,7 @@
 
                 @if(currentUser.sharedAccount) {
                     <div class="mdl-cell mdl-cell--12-col">
-                    Signature<span class="mdl-color-text--red">*</span> :
+                        Signature<span class="mdl-color-text--red">*</span> :
                     </div>
                     @helper.input(
                         applicationForm("signature"),
@@ -259,13 +259,13 @@
                            name="@name"
                            id="@id"
                            @if(currentUser.sharedAccount && value.isEmpty) {
-                           value="@{userSignature.getOrElse(value)}"
+                               value="@{userSignature.getOrElse(value)}"
                            } else {
-                           value="@value"
+                               value="@value"
                            }
                            @toHtmlArgs(args)>
                     }<br>
-                }
+                    }
 
 
                 <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 20px">

@@ -396,28 +396,28 @@ dialog {
                                     <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Votre réponse</label>
                                 </div>
                                 @if(currentUser.sharedAccount) {
-                                  <div class="mdl-cell mdl-cell--12-col">
-                                    Signature<span class="mdl-color-text--red">*</span> :
-                                  </div>
-                                  <div class="mdl-cell mdl-cell--12-col">
-                                    @helper.input(
-                                    answerToAgentsForm("signature"),
-                                        'label -> "Renseignez ici votre : Prénom, NOM, service",
-                                        'class -> "mdl-textfield--large"
-                                    ) { (id, name, value, args) =>
-                                    <input class="mdl-textfield__input"
-                                           type="text"
-                                           name="@name"
-                                           id="@id"
-                                           @if(currentUser.sharedAccount && value.isEmpty) {
-                                           value="@{userSignature.getOrElse(value)}"
-                                           } else {
-                                           value="@value"
-                                           }
-                                           @toHtmlArgs(args)>
+                                    <div class="mdl-cell mdl-cell--12-col">
+                                        Signature<span class="mdl-color-text--red">*</span> :
+                                    </div>
+                                    <div class="mdl-cell mdl-cell--12-col">
+                                        @helper.input(
+                                            answerToAgentsForm("signature"),
+                                            'label -> "Renseignez ici votre : Prénom, NOM, service",
+                                            'class -> "mdl-textfield--large"
+                                        ) { (id, name, value, args) =>
+                                        <input class="mdl-textfield__input"
+                                               type="text"
+                                               name="@name"
+                                               id="@id"
+                                               @if(currentUser.sharedAccount && value.isEmpty) {
+                                                   value="@{userSignature.getOrElse(value)}"
+                                               } else {
+                                                   value="@value"
+                                               }
+                                               @toHtmlArgs(args)>
+                                        }
+                                    </div>
                                     }
-                                  </div>
-                                }
                                 <div class="mdl-cell mdl-cell--12-col">
                                     <b>Ajouter un ficher ( 5Mo maximum ) :</b>
                                     <ul>

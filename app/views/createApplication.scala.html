@@ -89,6 +89,7 @@
                         @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-textfield--large", 'label -> "Rédigez une description rapide du problème ...") { (id, name, value, args) =>
                             <textarea class="mdl-textfield__input textfield__input--no-height-constraint" type="text" rows= "5" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
                         }<br>
+
                         @if(currentUser.sharedAccount) {
                             Signature<span class="mdl-color-text--red">*</span> :<br>
                             @helper.input(
@@ -96,18 +97,19 @@
                                 'label -> "Renseignez ici votre : Prénom, NOM, service",
                                 'class -> "mdl-textfield--large"
                             ) { (id, name, value, args) =>
-                            <input class="mdl-textfield__input"
-                                   type="text"
-                                   name="@name"
-                                   id="@id"
-                                   @if(currentUser.sharedAccount && value.isEmpty) {
-                                   value="@{userSignature.getOrElse(value)}"
-                                   } else {
-                                   value="@value"
-                                   }
-                                   @toHtmlArgs(args)>
+                                <input class="mdl-textfield__input"
+                                       type="text"
+                                       name="@name"
+                                       id="@id"
+                                       @if(currentUser.sharedAccount && value.isEmpty) {
+                                           value="@{userSignature.getOrElse(value)}"
+                                       } else {
+                                           value="@value"
+                                       }
+                                       @toHtmlArgs(args)>
                             }<br>
                         }
+
                         @if(applicationForm("file").hasErrors) {
                             <span style="color: red; font-weight: bold;">@applicationForm("file").errors.map(_.format).mkString(", ")</span><br>
                         }
