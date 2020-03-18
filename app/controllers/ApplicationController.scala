@@ -994,7 +994,7 @@ case class ApplicationController @Inject() (
   private def readSharedAccountUserSignature(session: Session): Option[String] =
     session.get(sharedAccountUserSignatureKey)
 
-  /** Does not save signatures that are too big (longer than 1000 chars) */
+  /** Security: does not save signatures that are too big (longer than 1000 chars) */
   private def saveSharedAccountUserSignature[R](session: Session, signature: String): Session =
     if (signature.size <= 1000)
       session + (sharedAccountUserSignatureKey -> signature)
