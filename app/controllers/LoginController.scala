@@ -33,7 +33,7 @@ class LoginController @Inject() (
   // See also
   // https://github.com/playframework/playframework/blob/2.8.x/web/play-filters-helpers/src/main/scala/views/html/helper/CSRF.scala#L27
   def loginWithEmailInQueryString(): Action[AnyContent] = checkToken(
-    Action { implicit request =>
+    Action.async { implicit request =>
       innerLogin(request.getQueryString("email"))
     }
   )
@@ -73,7 +73,7 @@ class LoginController @Inject() (
             notificationService.newLoginRequest(url, path, user, loginToken)
 
             implicit val requestWithUserData =
-              new RequestWithUserData(user, Area.notApplicable, request)
+              new RequestWithUserData(user, userRights, Area.notApplicable, request)
             val emailInBody = request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty
             val emailInFlash = request.flash.get("email").nonEmpty
             eventService.log(
