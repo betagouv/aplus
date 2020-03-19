@@ -1,5 +1,5 @@
 @import models._
-@(currentUser: User)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
   @display(users: Seq[User], id: Option[String] = None)(header: Html)(footer: Html) = {
       <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white" style="white-space: normal;" @if(id.isDefined){ id="@id.get" } >
@@ -65,7 +65,7 @@
         </tbody>
       </table>
   }
-@main(currentUser)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
+@main(currentUser, currentUserRights)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 
   <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/auto-complete.css")'>
@@ -123,16 +123,18 @@
                 <a href="@routes.UserController.editUser(user.id)" target="_blank" >@user.name (@user.qualite)</a> /
               } <hr>
             }
-            @helper.form(routes.UserController.add(userGroup.id), 'method -> "get") {
-              @helper.CSRF.formField
-              <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="rows" name="rows" value="1">
-                <label class="mdl-textfield__label" for="rows">Nombre d'utilisateur à ajouter</label>
-                <span class="mdl-textfield__error">Ce n'est pas un nombre</span>
-              </div>
-              <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
-                Ajouter des utilisateurs dans le groupe
-              </button>
+            @if(Authorization.canEditGroups(currentUserRights)) {
+              @helper.form(routes.UserController.add(userGroup.id), 'method -> "get") {
+                @helper.CSRF.formField
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                  <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="rows" name="rows" value="1">
+                  <label class="mdl-textfield__label" for="rows">Nombre d'utilisateur à ajouter</label>
+                  <span class="mdl-textfield__error">Ce n'est pas un nombre</span>
+                </div>
+                <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
+                  Ajouter des utilisateurs dans le groupe
+                </button>
+              }
             }
           }
         }

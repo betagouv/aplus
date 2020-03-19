@@ -7,11 +7,11 @@ import java.util.UUID
 
 import javax.inject.{Inject, Singleton}
 import models.EventType.DeploymentDashboardUnauthorized
-import models.{Area, Organisation, UserGroup}
+import models.{Area, Authorization, Organisation, UserGroup}
 import play.api.libs.json.Json
 import play.api.mvc._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import serializers.ApiModel._
 import services.{EventService, OrganisationService, UserGroupService, UserService}
 
@@ -55,8 +55,8 @@ case class ApiController @Inject() (
     }
   }
 
-  def franceServiceDeployment: Action[AnyContent] = loginAction { implicit request =>
-    asAdmin { () =>
+  def franceServiceDeployment: Action[AnyContent] = loginAction.async { implicit request =>
+    asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
       val userGroups = userGroupService.allGroups.filter(
@@ -101,7 +101,7 @@ case class ApiController @Inject() (
         }
         .toList
         .sortBy(line => (line.departementCode, line.nomFranceService))
-      Ok(Json.toJson(data))
+      Future(Ok(Json.toJson(data)))
     }
   }
 

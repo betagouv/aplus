@@ -1,9 +1,9 @@
 @import models._
 @import _root_.helper.MDLForms._
-@(user: User)(form: Form[(List[User])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(user: User, currentUserRights: Authorization.UserRights)(form: Form[(List[User])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
-@main(user, maxWidth = false)(s"Gestion des utilisateurs") {
+@main(user, currentUserRights, maxWidth = false)(s"Gestion des utilisateurs") {
     @webJarsUtil.locate("dialog-polyfill.css").css()
   <style>
           .pem-table {

@@ -524,6 +524,23 @@ a {
     margin-right: 20px;
 }
 
+.usefulness__icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+}
+
+.chart-container {
+    position: relative;
+    margin: auto;
+    height: 50vh;
+    width: 100%;
+}
+
+.application-row {
+    cursor: pointer;
+}
+
 /****************
 Colors
 */
@@ -554,4 +571,20 @@ Typographie
  */
 .typography--text-line-height-1-3 {
     line-height: 1.3;
+}
+
+.typography--text-align-center {
+    text-align: center;
+}
+
+/*************
+Chart
+ */
+.chart--default-size {
+    height: 300px;
+    width: 95%;
+}
+.chart--500px-height {
+    height: 500px;
+    width: 95%;
 }

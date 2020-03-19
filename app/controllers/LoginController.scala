@@ -1,12 +1,13 @@
 package controllers
 
-import actions.RequestWithUserData
+import actions.{LoginAction, RequestWithUserData}
 import javax.inject.{Inject, Singleton}
 import models.EventType.{GenerateToken, UnknownEmail}
 import models.{Area, LoginToken, User}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result}
 import play.filters.csrf.CSRFCheck
+import scala.concurrent.{ExecutionContext, Future}
 import services.{EventService, NotificationService, TokenService, UserService}
 
 @Singleton
@@ -17,13 +18,13 @@ class LoginController @Inject() (
     tokenService: TokenService,
     configuration: play.api.Configuration,
     eventService: EventService
-)(implicit val webJarsUtil: WebJarsUtil)
+)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController {
 
   private lazy val tokenExpirationInMinutes =
     configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
-  def login(): Action[AnyContent] = Action { implicit request =>
+  def login: Action[AnyContent] = Action.async { implicit request =>
     innerLogin(None)
   }
 
@@ -39,32 +40,37 @@ class LoginController @Inject() (
 
   private def innerLogin(
       emailFromQuery: Option[String]
-  )(implicit request: Request[AnyContent]): Result = {
+  )(implicit request: Request[AnyContent]): Future[Result] = {
     val emailFromRequestOrQueryParamOrFlash: Option[String] = request.body.asFormUrlEncoded
       .flatMap(_.get("email").flatMap(_.headOption))
       .orElse(emailFromQuery)
       .orElse(request.flash.get("email"))
     emailFromRequestOrQueryParamOrFlash.fold {
-      Ok(views.html.home(HomeController.HomeInnerPage.ConnectionForm))
+      Future(Ok(views.html.home(HomeController.HomeInnerPage.ConnectionForm)))
     } { email =>
       userService
         .byEmail(email)
         .fold {
-          implicit val requestWithUserData =
-            new RequestWithUserData(User.systemUser, Area.notApplicable, request)
-          eventService.log(UnknownEmail, s"Aucun compte actif à cette adresse mail $email")
-          val message =
-            """Aucun compte actif n'est associé à cette adresse e-mail.
-              |Merci de vérifier qu'il s'agit bien de votre adresse professionnelle et nominative qui doit être sous la forme : prenom.nom@votre-structure.fr""".stripMargin
-          Redirect(routes.LoginController.login())
-            .flashing("error" -> message, "email-value" -> email)
+          // TODO: this should be removed
+          val user = User.systemUser
+          LoginAction.readUserRights(user).map { userRights =>
+            implicit val requestWithUserData =
+              new RequestWithUserData(user, userRights, Area.notApplicable, request)
+            eventService.log(UnknownEmail, s"Aucun compte actif à cette adresse mail $email")
+            val message =
+              """Aucun compte actif n'est associé à cette adresse e-mail.
+                |Merci de vérifier qu'il s'agit bien de votre adresse professionnelle et nominative qui doit être sous la forme : prenom.nom@votre-structure.fr""".stripMargin
+            Redirect(routes.LoginController.login)
+              .flashing("error" -> message, "email-value" -> email)
+          }
         } { user: User =>
-          val loginToken =
-            LoginToken.forUserId(user.id, tokenExpirationInMinutes, request.remoteAddress)
-          tokenService.create(loginToken)
-          val path = request.flash.get("path").getOrElse(routes.HomeController.index().url)
-          val url = routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL()
-          notificationService.newLoginRequest(url, path, user, loginToken)
+          LoginAction.readUserRights(user).map { userRights =>
+            val loginToken =
+              LoginToken.forUserId(user.id, tokenExpirationInMinutes, request.remoteAddress)
+            tokenService.create(loginToken)
+            val path = request.flash.get("path").getOrElse(routes.HomeController.index().url)
+            val url = routes.LoginController.magicLinkAntiConsumptionPage.absoluteURL()
+            notificationService.newLoginRequest(url, path, user, loginToken)
 
           implicit val requestWithUserData =
             new RequestWithUserData(user, Area.notApplicable, request)
@@ -89,22 +95,23 @@ class LoginController @Inject() (
                 .EmailSentFeedback(user, tokenExpirationInMinutes, successMessage)
             )
           )
+          }
         }
     }
   }
 
-  def magicLinkAntiConsumptionPage() = Action { implicit request =>
+  def magicLinkAntiConsumptionPage: Action[AnyContent] = Action { implicit request =>
     (request.getQueryString("token"), request.getQueryString("path")) match {
       case (Some(token), Some(path)) =>
         Ok(views.html.loginHome(Right((token, path)), tokenExpirationInMinutes))
       case _ =>
-        TemporaryRedirect(routes.LoginController.login().url).flashing(
+        TemporaryRedirect(routes.LoginController.login.url).flashing(
           "error" -> "Il y a une erreur dans votre lien de connexion. Merci de contacter l'équipe Administration+"
         )
     }
   }
 
-  def disconnect() = Action {
-    Redirect(routes.LoginController.login()).withNewSession
+  def disconnect: Action[AnyContent] = Action {
+    Redirect(routes.LoginController.login).withNewSession
   }
 }

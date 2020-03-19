@@ -338,7 +338,9 @@ object UserAndGroupCsvSerializer {
       "groupIds" -> default(list(uuid), Nil),
       "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "phone-number" -> optional(text)
+      "phone-number" -> optional(text),
+      // TODO: put in CSV?
+      "observableOrganisationIds" -> list(of[Organisation.Id])
     )(User.apply)(User.unapply)
   )
 

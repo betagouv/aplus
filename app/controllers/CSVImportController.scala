@@ -55,7 +55,7 @@ case class CSVImportController @Inject() (
     asAdmin { () =>
       ImportUserUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
-      Ok(views.html.importUsersCSV(request.currentUser)(csvImportContentForm))
+      Ok(views.html.importUsersCSV(request.currentUser, request.rights)(csvImportContentForm))
     }
   }
 
@@ -120,7 +120,9 @@ case class CSVImportController @Inject() (
       "groupIds" -> default(list(uuid), List()),
       "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "phone-number" -> optional(text)
+      "phone-number" -> optional(text),
+      // TODO: put also in forms/imports?
+      "observableOrganisationIds" -> list(of[Organisation.Id])
     )(User.apply)(User.unapply)
 
   private def groupImportMapping(date: ZonedDateTime): Mapping[UserGroup] =
@@ -180,7 +182,9 @@ case class CSVImportController @Inject() (
               description = "Le champ d'import de CSV est vide ou le séparateur n'est pas défini."
             )
             BadRequest(
-              views.html.importUsersCSV(request.currentUser)(csvImportContentFormWithError)
+              views.html.importUsersCSV(request.currentUser, request.rights)(
+                csvImportContentFormWithError
+              )
             )
           }, { csvImportData =>
             val defaultAreas = csvImportData.areaIds.flatMap(Area.fromId)
@@ -195,7 +199,9 @@ case class CSVImportController @Inject() (
                   eventService
                     .log(CSVImportFormError, description = "Erreur de formulaire Importation")
                   BadRequest(
-                    views.html.importUsersCSV(request.currentUser)(csvImportContentFormWithError)
+                    views.html.importUsersCSV(request.currentUser, request.rights)(
+                      csvImportContentFormWithError
+                    )
                   )
                 }, {
                   case (
@@ -217,7 +223,10 @@ case class CSVImportController @Inject() (
                     } else {
                       formWithData
                     }
-                    Ok(views.html.reviewUsersImport(request.currentUser)(formWithError))
+                    Ok(
+                      views.html
+                        .reviewUsersImport(request.currentUser, request.rights)(formWithError)
+                    )
                 }
               )
           }
@@ -248,7 +257,9 @@ case class CSVImportController @Inject() (
         { importUsersAfterReviewFormWithError =>
           eventService.log(ImportUserFormError, description = "Erreur de formulaire de review")
           BadRequest(
-            views.html.reviewUsersImport(request.currentUser)(importUsersAfterReviewFormWithError)
+            views.html.reviewUsersImport(request.currentUser, request.rights)(
+              importUsersAfterReviewFormWithError
+            )
           )
         }, { userGroupDataForm: List[UserGroupFormData] =>
           val augmentedUserGroupInformation: List[UserGroupFormData] =
@@ -270,7 +281,7 @@ case class CSVImportController @Inject() (
                     .fill(augmentedUserGroupInformation)
                     .withGlobalError(description)
                   InternalServerError(
-                    views.html.reviewUsersImport(request.currentUser)(formWithError)
+                    views.html.reviewUsersImport(request.currentUser, request.rights)(formWithError)
                   )
               }, {
                 _ =>
@@ -295,7 +306,8 @@ case class CSVImportController @Inject() (
                             .fill(augmentedUserGroupInformation)
                             .withGlobalError(description)
                           InternalServerError(
-                            views.html.reviewUsersImport(request.currentUser)(formWithError)
+                            views.html
+                              .reviewUsersImport(request.currentUser, request.rights)(formWithError)
                           )
                       }, {
                         _ =>
