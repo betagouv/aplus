@@ -243,7 +243,7 @@ case class ApplicationController @Inject() (
                     instructorsOfGroups,
                     groupsOfAreaWithInstructor,
                     coworkers,
-                  None,
+                    None,
                     formWithErrors,
                     pendingAttachments.keys ++ newAttachments.keys
                   )
