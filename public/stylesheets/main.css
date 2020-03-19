@@ -526,7 +526,7 @@ a {
 
 /****************
 Colors
- */
+*/
 .aplus-color--blue {
     background-color: #0053b3 !important;
 }
@@ -537,6 +537,16 @@ Colors
 
 .aplus-color-text--black {
     color: #00234d !important;
+}
+
+/* from --blue: #0053b3;
+ * https://github.com/etalab/template.data.gouv.fr/blob/master/src/css/base/theme.css#L5
+ *
+ * Usage:
+ * - links
+ */
+.--data-gouv-text--blue {
+    color: #0053b3;
 }
 
 /*************

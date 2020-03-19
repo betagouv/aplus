@@ -15,7 +15,7 @@
 
     <p><i>
         Vous n'avez pas reçu d'e-mail ? Veuillez consulter vos courriers indésirables
-        ou <a href="@CSRF(routes.LoginController.loginWithEmailInQueryString())&email=@infos.user.email&action=sendemailback">renvoyer un autre e-mail</a>
+        ou <a class="--data-gouv-text--blue" href="@CSRF(routes.LoginController.loginWithEmailInQueryString())&email=@infos.user.email&action=sendemailback">renvoyer un autre e-mail</a>
     </i></p>
 
     @infos.successMessage.map { message =>
