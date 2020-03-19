@@ -24,26 +24,14 @@ class LoginController @Inject() (
   private lazy val tokenExpirationInMinutes =
     configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
+  /** Security Note:
+    * when the email is in the query "?email=xxx", we do not check the CSRF token
+    * because the API is used externally.
+     */
   def login: Action[AnyContent] = Action.async { implicit request =>
-    innerLogin(None)
-  }
-
-  // Security: we check the CSRF token when the email is in the query here because play
-  // only checks CSRF by default on POST actions
-  // See also
-  // https://github.com/playframework/playframework/blob/2.8.x/web/play-filters-helpers/src/main/scala/views/html/helper/CSRF.scala#L27
-  def loginWithEmailInQueryString(): Action[AnyContent] = checkToken(
-    Action.async { implicit request =>
-      innerLogin(request.getQueryString("email"))
-    }
-  )
-
-  private def innerLogin(
-      emailFromQuery: Option[String]
-  )(implicit request: Request[AnyContent]): Future[Result] = {
     val emailFromRequestOrQueryParamOrFlash: Option[String] = request.body.asFormUrlEncoded
       .flatMap(_.get("email").flatMap(_.headOption))
-      .orElse(emailFromQuery)
+      .orElse(request.getQueryString("email"))
       .orElse(request.flash.get("email"))
     emailFromRequestOrQueryParamOrFlash.fold {
       Future(Ok(views.html.home(HomeController.HomeInnerPage.ConnectionForm)))

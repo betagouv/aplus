@@ -31,7 +31,6 @@ POST     /stats                       controllers.ApplicationController.stats
 
 # Login
 GET    /login                        controllers.LoginController.login
-GET    /login-magic                  controllers.LoginController.loginWithEmailInQueryString
 POST   /login                        controllers.LoginController.login
 GET    /login/disconnect             controllers.LoginController.disconnect
 GET    /validation-connexion         controllers.LoginController.magicLinkAntiConsumptionPage

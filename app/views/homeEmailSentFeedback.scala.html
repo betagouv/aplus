@@ -1,5 +1,3 @@
-@import views.html.helper.CSRF
-
 @(infos: HomeController.HomeInnerPage.EmailSentFeedback)(implicit flash: Flash, request: RequestHeader)
 
 <div class="mdl-cell mdl-cell--12-col mdl-cell--middle">
@@ -15,7 +13,7 @@
 
     <p><i>
         Vous n'avez pas reçu d'e-mail ? Veuillez consulter vos courriers indésirables
-        ou <a class="aplus-color-text--blue" href="@CSRF(routes.LoginController.loginWithEmailInQueryString())&email=@infos.user.email&action=sendemailback">renvoyer un autre e-mail</a>
+        ou <a class="aplus-color-text--blue" href="@routes.LoginController.login()?email=@infos.user.email&action=sendemailback">renvoyer un autre e-mail</a>
     </i></p>
 
     @infos.successMessage.map { message =>
