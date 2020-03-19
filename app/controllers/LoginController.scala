@@ -9,6 +9,7 @@ import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result}
 import play.filters.csrf.CSRFCheck
 import scala.concurrent.{ExecutionContext, Future}
 import services.{EventService, NotificationService, TokenService, UserService}
+import views.HomeInnerPage
 
 @Singleton
 class LoginController @Inject() (
@@ -27,14 +28,14 @@ class LoginController @Inject() (
   /** Security Note:
     * when the email is in the query "?email=xxx", we do not check the CSRF token
     * because the API is used externally.
-     */
+    */
   def login: Action[AnyContent] = Action.async { implicit request =>
     val emailFromRequestOrQueryParamOrFlash: Option[String] = request.body.asFormUrlEncoded
       .flatMap(_.get("email").flatMap(_.headOption))
       .orElse(request.getQueryString("email"))
       .orElse(request.flash.get("email"))
     emailFromRequestOrQueryParamOrFlash.fold {
-      Future(Ok(views.html.home(HomeController.HomeInnerPage.ConnectionForm)))
+      Future(Ok(views.html.home(HomeInnerPage.ConnectionForm)))
     } { email =>
       userService
         .byEmail(email)
@@ -79,8 +80,7 @@ class LoginController @Inject() (
               )
             Ok(
               views.html.home(
-                HomeController.HomeInnerPage
-                  .EmailSentFeedback(user, tokenExpirationInMinutes, successMessage)
+                HomeInnerPage.EmailSentFeedback(user, tokenExpirationInMinutes, successMessage)
               )
             )
           }

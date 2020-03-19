@@ -7,20 +7,7 @@ import org.webjars.play.WebJarsUtil
 import play.api.Logger
 import play.api.mvc._
 import play.api.db.Database
-
-object HomeController {
-  sealed trait HomeInnerPage
-
-  object HomeInnerPage {
-    case object ConnectionForm extends HomeInnerPage
-
-    case class EmailSentFeedback(
-        user: User,
-        tokenExpirationInMinutes: Int,
-        successMessage: Option[String]
-    ) extends HomeInnerPage
-  }
-}
+import views.HomeInnerPage
 
 /**
   * This controller creates an `Action` to handle HTTP requests to the
@@ -42,7 +29,7 @@ class HomeController @Inject() (loginAction: LoginAction, db: Database)(
         s"${routes.ApplicationController.myApplications()}?${request.rawQueryString}"
       )
     else
-      Ok(views.html.home(HomeController.HomeInnerPage.ConnectionForm))
+      Ok(views.html.home(HomeInnerPage.ConnectionForm))
   }
 
   def status: Action[AnyContent] = Action {

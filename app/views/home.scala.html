@@ -1,4 +1,6 @@
-@(innerPage: HomeController.HomeInnerPage)(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil, request: RequestHeader)
+@import views.HomeInnerPage
+
+@(innerPage: HomeInnerPage)(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil, request: RequestHeader)
 
 <!DOCTYPE html>
 <html itemscope itemtype="http://schema.org/WebPage" lang="fr">
@@ -96,10 +98,10 @@
                                 class="mdl-cell mdl-cell--middle mdl-cell--10-col mdl-cell--1-offset-desktop mdl-grid"
                             >
                                 @innerPage match {
-                                    case HomeController.HomeInnerPage.ConnectionForm => {
+                                    case HomeInnerPage.ConnectionForm => {
                                         @homeConnectionForm()
                                     }
-                                    case infos: HomeController.HomeInnerPage.EmailSentFeedback => {
+                                    case infos: HomeInnerPage.EmailSentFeedback => {
                                         @homeEmailSentFeedback(infos)
                                     }
                                 }
