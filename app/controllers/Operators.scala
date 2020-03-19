@@ -6,7 +6,7 @@ import actions.RequestWithUserData
 import constants.Constants
 import helper.BooleanHelper.not
 import models.EventType._
-import models.{Application, EventType, User, UserGroup}
+import models.{Application, Authorization, Error, EventType, User, UserGroup}
 import play.api.mvc.Results.{NotFound, Unauthorized}
 import play.api.mvc.{AnyContent, Result, Results}
 import scala.concurrent.{ExecutionContext, Future}
@@ -72,6 +72,19 @@ object Operators {
           payload(user)
         })
 
+    def asUserWithAuthorization(authorizationCheck: Authorization.Check)(
+        event: () => (EventType, String)
+    )(
+        payload: () => Future[Result]
+    )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
+      if (not(authorizationCheck(request.rights))) {
+        val (eventType, description) = event()
+        eventService.log(eventType, description = description)
+        Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
+      } else {
+        payload()
+      }
+
     def asAdmin(event: () => (EventType, String))(
         payload: () => Result
     )(implicit request: RequestWithUserData[AnyContent]): Result =
@@ -97,7 +110,11 @@ object Operators {
     def asUserWhoSeesUsersOfArea(areaId: UUID)(event: () => (EventType, String))(
         payload: () => Future[Result]
     )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
-      if (not(request.currentUser.canSeeUsersInArea(areaId))) {
+      // TODO: use only Authorization
+      if (not(
+            request.currentUser.canSeeUsersInArea(areaId) ||
+              Authorization.isObserver(request.rights)
+          )) {
         val (eventType, description) = event()
         eventService.log(eventType, description = description)
         Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
@@ -129,6 +146,29 @@ object Operators {
     def applicationService: ApplicationService
     def eventService: EventService
 
+    private def manageApplicationError[A](applicationId: UUID, error: Error)(
+        implicit request: RequestWithUserData[A],
+        ec: ExecutionContext
+    ): Future[Result] =
+      error match {
+        case Error.EntityNotFound =>
+          eventService.log(
+            ApplicationNotFound,
+            description = s"Tentative d'accès à une application inexistante: $applicationId"
+          )
+          Future(NotFound("Nous n'avons pas trouvé cette demande"))
+        case Error.Authorization =>
+          eventService.log(
+            ApplicationUnauthorized,
+            description = s"Tentative d'accès à une application non autorisé: $applicationId"
+          )
+          Future(
+            Unauthorized(
+              s"Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+            )
+          )
+      }
+
     def withApplication(
         applicationId: UUID
     )(
@@ -138,29 +178,14 @@ object Operators {
         .byId(
           applicationId,
           fromUserId = request.currentUser.id,
-          anonymous = request.currentUser.admin
+          rights = request.rights
         )
-        .fold({
-          eventService.log(
-            ApplicationNotFound,
-            description = "Tentative d'accès à une application inexistante."
-          )
-          Future(NotFound("Application inexistante."))
-        })({ application: Application =>
-          if (not(application.canBeShowedBy(request.currentUser))) {
-            eventService.log(
-              ApplicationUnauthorized,
-              description = "Tentative d'accès à une application non autorisé."
-            )
-            Future(
-              Unauthorized(
-                s"Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-              )
-            )
-          } else {
-            payload(application)
-          }
-        })
-
+        .flatMap(
+          _.fold(error => manageApplicationError(applicationId, error), {
+            application: Application =>
+              payload(application)
+          })
+        )
   }
+
 }

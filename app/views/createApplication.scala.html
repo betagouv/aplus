@@ -1,8 +1,8 @@
 @import models._
 @import _root_.helper.MDLForms._
-@(user: User, area: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], applicationForm: Form[models.formModels.ApplicationData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(user: User, currentUserRights: Authorization.UserRights, area: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], applicationForm: Form[models.formModels.ApplicationData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
-@main(user, Some(area))(s"Nouvelle demande")  {
+@main(user, currentUserRights, Some(area))(s"Nouvelle demande")  {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
     <script src='@routes.Assets.versioned("javascripts/application-attachment.js")'></script>
     <style>

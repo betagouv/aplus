@@ -35,7 +35,7 @@ import models.EventType.{
   UsersShowed,
   ViewUserUnauthorized
 }
-import models.{Area, EventType, User, UserGroup}
+import models.{Area, Authorization, EventType, Organisation, User, UserGroup}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
@@ -73,59 +73,57 @@ case class UserController @Inject() (
         AllUserUnauthorized -> "Accès non autorisé à l'admin des utilisateurs"
       } { () =>
         val selectedArea = Area.fromId(areaId).get
-        val usersFuture: Future[List[User]] = (
-          request.currentUser.admin,
-          request.currentUser.groupAdmin,
-          selectedArea.id == Area.allArea.id
-        ) match {
-          case (true, _, false) => {
-            groupService.byArea(areaId).map { groupsOfArea =>
-              userService.byGroupIds(groupsOfArea.map(_.id))
+
+        val allAreasGroupsFuture: Future[List[UserGroup]] =
+          if (Authorization.isAdmin(request.rights)) {
+            if (selectedArea.id == Area.allArea.id) {
+              groupService.byAreas(request.currentUser.areas)
+            } else {
+              groupService.byArea(areaId)
             }
-          }
-          case (true, _, true) => {
-            val groupsOfArea = groupService.byAreas(request.currentUser.areas)
-            Future(userService.byGroupIds(groupsOfArea.map(_.id)))
-          }
-          case (false, true, _) => Future(userService.byGroupIds(request.currentUser.groupIds))
-          case _ =>
-            eventService.log(AllUserIncorrectSetup, "Erreur d'accès aux utilisateurs")
-            Future(Nil)
-        }
-        val applications = applicationService.allByArea(selectedArea.id, anonymous = true)
-        val groups: List[UserGroup] = (
-          request.currentUser.admin,
-          request.currentUser.groupAdmin,
-          selectedArea.id == Area.allArea.id
-        ) match {
-          case (true, _, false) => groupService.allGroupByAreas(List[UUID](areaId))
-          case (true, _, true)  => groupService.allGroupByAreas(request.currentUser.areas)
-          case (false, true, _) => groupService.byIds(request.currentUser.groupIds)
-          case _ =>
+          } else if (Authorization.isObserver(request.rights)) {
+            groupService.byOrganisationIds(request.currentUser.observableOrganisationIds)
+          } else if (Authorization.isManager(request.rights)) {
+            groupService.byIdsFuture(request.currentUser.groupIds)
+          } else {
             eventService.log(AllUserIncorrectSetup, "Erreur d'accès aux groupes")
-            List()
-        }
-        eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
-        usersFuture.map { users =>
-          val result = request.getQueryString("vue").getOrElse("nouvelle") match {
-            case "nouvelle" if request.currentUser.admin =>
-              views.html.allUsersNew(request.currentUser)(
-                groups,
-                users,
-                applications,
-                selectedArea,
-                configuration.underlying.getString("geoplus.host")
-              )
-            case _ =>
-              views.html.allUsersByGroup(request.currentUser)(
-                groups,
-                users,
-                applications,
-                selectedArea,
-                configuration.underlying.getString("geoplus.host")
-              )
+            Future(Nil)
           }
-          Ok(result)
+        val groupsFuture: Future[List[UserGroup]] =
+          allAreasGroupsFuture.map(groups =>
+            if (selectedArea.id == Area.allArea.id) {
+              groups
+            } else {
+              groups.filter(_.areaIds.contains[UUID](selectedArea.id))
+            }
+          )
+        val usersFuture: Future[List[User]] =
+          groupsFuture.map { groups =>
+            userService.byGroupIds(groups.map(_.id))
+          }
+        val applications = applicationService.allByArea(selectedArea.id, anonymous = true)
+
+        eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
+        usersFuture.zip(groupsFuture).map {
+          case (users, groups) =>
+            val result = request.getQueryString("vue").getOrElse("nouvelle") match {
+              case "nouvelle" if request.currentUser.admin =>
+                views.html.allUsersNew(request.currentUser, request.rights)(
+                  groups,
+                  users,
+                  selectedArea,
+                  configuration.underlying.getString("geoplus.host")
+                )
+              case _ =>
+                views.html.allUsersByGroup(request.currentUser, request.rights)(
+                  groups,
+                  users,
+                  applications,
+                  selectedArea,
+                  configuration.underlying.getString("geoplus.host")
+                )
+            }
+            Ok(result)
         }
       }
   }
@@ -137,97 +135,102 @@ case class UserController @Inject() (
       } { () =>
         val area = Area.fromId(areaId).get
         val usersFuture: Future[List[User]] = if (areaId == Area.allArea.id) {
-          val groupsOfArea = groupService.byAreas(request.currentUser.areas)
-          Future(userService.byGroupIds(groupsOfArea.map(_.id)))
+          groupService.byAreas(request.currentUser.areas).map { groupsOfArea =>
+            userService.byGroupIds(groupsOfArea.map(_.id))
+          }
         } else {
           groupService.byArea(areaId).map { groupsOfArea =>
             userService.byGroupIds(groupsOfArea.map(_.id))
           }
         }
-        val groups = groupService.allGroupByAreas(request.currentUser.areas)
+        val groupsFuture: Future[List[UserGroup]] =
+          groupService.byAreas(request.currentUser.areas)
         eventService.log(AllUserCsvShowed, "Visualise le CSV de tous les zones de l'utilisateur")
 
-        def userToCSV(user: User): String =
-          List[String](
-            user.id.toString,
-            user.name,
-            user.qualite,
-            user.email,
-            Time.formatPatternFr(user.creationDate, "dd-MM-YYYY-HHhmm"),
-            if (user.helper) "Aidant" else " ",
-            if (user.instructor) "Instructeur" else " ",
-            if (user.groupAdmin) "Responsable" else " ",
-            if (user.expert) "Expert" else " ",
-            if (user.admin) "Admin" else " ",
-            if (user.disabled) "Désactivé" else " ",
-            user.communeCode,
-            user.areas.flatMap(Area.fromId).map(_.name).mkString(","),
-            user.groupIds.flatMap(id => groups.find(_.id == id)).map(_.name).mkString(","),
-            if (user.cguAcceptationDate.nonEmpty) "CGU Acceptées" else "",
-            if (user.newsletterAcceptationDate.nonEmpty) "Newsletter Acceptée" else ""
-          ).mkString(";")
+        usersFuture.zip(groupsFuture).map {
+          case (users, groups) =>
+            def userToCSV(user: User): String =
+              List[String](
+                user.id.toString,
+                user.name,
+                user.qualite,
+                user.email,
+                Time.formatPatternFr(user.creationDate, "dd-MM-YYYY-HHhmm"),
+                if (user.helper) "Aidant" else " ",
+                if (user.instructor) "Instructeur" else " ",
+                if (user.groupAdmin) "Responsable" else " ",
+                if (user.expert) "Expert" else " ",
+                if (user.admin) "Admin" else " ",
+                if (user.disabled) "Désactivé" else " ",
+                user.communeCode,
+                user.areas.flatMap(Area.fromId).map(_.name).mkString(","),
+                user.groupIds.flatMap(id => groups.find(_.id == id)).map(_.name).mkString(","),
+                if (user.cguAcceptationDate.nonEmpty) "CGU Acceptées" else "",
+                if (user.newsletterAcceptationDate.nonEmpty) "Newsletter Acceptée" else ""
+              ).mkString(";")
 
-        val headers = List[String](
-          "Id",
-          UserAndGroupCsvSerializer.USER_NAME.prefixes(0),
-          UserAndGroupCsvSerializer.USER_EMAIL.prefixes(0),
-          "Création",
-          "Aidant",
-          UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes(0),
-          UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes(0),
-          "Expert",
-          "Admin",
-          "Actif",
-          "Commune INSEE",
-          UserAndGroupCsvSerializer.GROUP_AREAS_IDS.prefixes(0),
-          UserAndGroupCsvSerializer.GROUP_NAME.prefixes(0),
-          "CGU",
-          "Newsletter"
-        ).mkString(";")
+            val headers = List[String](
+              "Id",
+              UserAndGroupCsvSerializer.USER_NAME.prefixes(0),
+              UserAndGroupCsvSerializer.USER_EMAIL.prefixes(0),
+              "Création",
+              "Aidant",
+              UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes(0),
+              UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes(0),
+              "Expert",
+              "Admin",
+              "Actif",
+              "Commune INSEE",
+              UserAndGroupCsvSerializer.GROUP_AREAS_IDS.prefixes(0),
+              UserAndGroupCsvSerializer.GROUP_NAME.prefixes(0),
+              "CGU",
+              "Newsletter"
+            ).mkString(";")
 
-        usersFuture.map { users =>
-          val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
-          val date = Time.formatPatternFr(Time.nowParis(), "dd-MMM-YYY-HH'h'mm")
+            val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
+            val date = Time.formatPatternFr(Time.nowParis(), "dd-MMM-YYY-HH'h'mm")
 
-          Ok(csvContent)
-            .withHeaders(
-              "Content-Disposition" -> s"""attachment; filename="aplus-$date-users-${area.name
-                .replace(" ", "-")}.csv""""
-            )
-            .as("text/csv")
+            Ok(csvContent)
+              .withHeaders(
+                "Content-Disposition" -> s"""attachment; filename="aplus-$date-users-${area.name
+                  .replace(" ", "-")}.csv""""
+              )
+              .as("text/csv")
         }
       }
   }
 
-  def editUser(userId: UUID): Action[AnyContent] = loginAction {
+  def editUser(userId: UUID): Action[AnyContent] = loginAction.async {
     implicit request: RequestWithUserData[AnyContent] =>
-      asAdmin { () =>
+      asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
         ViewUserUnauthorized -> s"Accès non autorisé pour voir $userId"
       } { () =>
         userService.byId(userId, includeDisabled = true) match {
           case None =>
             eventService.log(UserNotFound, s"L'utilisateur $userId n'existe pas")
-            NotFound("Nous n'avons pas trouvé cet utilisateur")
-          case Some(user) if user.canBeEditedBy(request.currentUser) =>
+            Future(NotFound("Nous n'avons pas trouvé cet utilisateur"))
+          case Some(user) if Authorization.canSeeOtherUser(user)(request.rights) =>
             val form = userForm(Time.timeZoneParis).fill(user)
             val groups = groupService.allGroups
             val unused = not(isAccountUsed(user))
             val Token(tokenName, tokenValue) = CSRF.getToken.get
             eventService
               .log(UserShowed, "Visualise la vue de modification l'utilisateur ", user = Some(user))
-            Ok(
-              views.html.editUser(request.currentUser)(
-                form,
-                userId,
-                groups,
-                unused,
-                tokenName = tokenName,
-                tokenValue = tokenValue
+            Future(
+              Ok(
+                views.html.editUser(request.currentUser, request.rights)(
+                  form,
+                  userId,
+                  groups,
+                  unused,
+                  tokenName = tokenName,
+                  tokenValue = tokenValue
+                )
               )
             )
           case _ =>
             eventService.log(ViewUserUnauthorized, s"Accès non autorisé pour voir $userId")
-            Unauthorized("Vous n'avez pas le droit de faire ça")
+            Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
         }
       }
   }
@@ -262,9 +265,11 @@ case class UserController @Inject() (
           val groups = groupService.allGroups
           eventService.log(
             AddUserError,
-            s"Essai de modification de l'tilisateur $userId avec des erreurs de validation"
+            s"Essai de modification de l'utilisateur $userId avec des erreurs de validation"
           )
-          BadRequest(views.html.editUser(request.currentUser)(formWithErrors, userId, groups))
+          BadRequest(
+            views.html.editUser(request.currentUser, request.rights)(formWithErrors, userId, groups)
+          )
         },
         updatedUser =>
           withUser(updatedUser.id, includeDisabled = true) { user: User =>
@@ -274,11 +279,9 @@ case class UserController @Inject() (
             val userToUpdate = updatedUser.copy(
               areas = areaIds.intersect(request.currentUser.areas)
             ) // intersect is a safe gard (In case an Admin try to manage an authorized area)
+            val rights = request.rights
 
-            if (not(user.canBeEditedBy(request.currentUser))
-                || areaIds
-                  .diff(request.currentUser.areas)
-                  .nonEmpty) { // fail if in case an Admin try to manage an authorized area
+            if (not(Authorization.canEditOtherUser(user)(rights))) {
               eventService.log(PostEditUserUnauthorized, s"Accès non autorisé à modifier $userId")
               Unauthorized("Vous n'avez pas le droit de faire ça")
             } else if (userService.update(userToUpdate)) {
@@ -286,7 +289,7 @@ case class UserController @Inject() (
               Redirect(routes.UserController.editUser(userId))
                 .flashing("success" -> "Utilisateur modifié")
             } else {
-              val form = userForm(Time.timeZoneParis)
+              val form: Form[User] = userForm(Time.timeZoneParis)
                 .fill(userToUpdate)
                 .withGlobalError(
                   s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)"
@@ -297,7 +300,9 @@ case class UserController @Inject() (
                 "Impossible de modifier l'utilisateur dans la BDD",
                 user = Some(updatedUser)
               )
-              InternalServerError(views.html.editUser(request.currentUser)(form, userId, groups))
+              InternalServerError(
+                views.html.editUser(request.currentUser, request.rights)(form, userId, groups)
+              )
             }
           }
       )
@@ -315,7 +320,7 @@ case class UserController @Inject() (
             eventService
               .log(AddUserError, "Essai d'ajout d'utilisateurs avec des erreurs de validation")
             BadRequest(
-              views.html.editUsers(request.currentUser)(
+              views.html.editUsers(request.currentUser, request.rights)(
                 formWithErrors,
                 0,
                 routes.UserController.addPost(groupId)
@@ -336,7 +341,7 @@ case class UserController @Inject() (
                         .fill(users)
                         .withGlobalError(errorMessage)
                       InternalServerError(
-                        views.html.editUsers(request.currentUser)(
+                        views.html.editUsers(request.currentUser, request.rights)(
                           form,
                           users.length,
                           routes.UserController.addPost(groupId)
@@ -374,7 +379,7 @@ case class UserController @Inject() (
                   s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}"
                 )
                 BadRequest(
-                  views.html.editUsers(request.currentUser)(
+                  views.html.editUsers(request.currentUser, request.rights)(
                     form,
                     users.length,
                     routes.UserController.addPost(groupId)
@@ -389,7 +394,7 @@ case class UserController @Inject() (
 
   def showCGU(): Action[AnyContent] = loginAction { implicit request =>
     eventService.log(CGUShowed, "CGU visualisé")
-    Ok(views.html.showCGU(request.currentUser))
+    Ok(views.html.showCGU(request.currentUser, request.rights))
   }
 
   def validateCGU(): Action[AnyContent] = loginAction { implicit request =>
@@ -437,7 +442,7 @@ case class UserController @Inject() (
         val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
         eventService.log(EditUserShowed, "Visualise la vue d'ajouts des utilisateurs")
         Ok(
-          views.html.editUsers(request.currentUser)(
+          views.html.editUsers(request.currentUser, request.rights)(
             usersForm(Time.timeZoneParis, group.areaIds),
             rows,
             routes.UserController.addPost(groupId)
@@ -455,7 +460,7 @@ case class UserController @Inject() (
       val userId = request.getQueryString("fromUserId").flatMap(UUIDHelper.fromString)
       val events = eventService.all(limit, userId)
       eventService.log(EventsShowed, s"Affiche les événements")
-      Ok(views.html.allEvents(request.currentUser)(events, limit))
+      Ok(views.html.allEvents(request.currentUser, request.rights)(events, limit))
     }
   }
 
@@ -485,7 +490,17 @@ case class UserController @Inject() (
           "groupIds" -> default(list(uuid), List()),
           "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
           "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-          "phone-number" -> optional(text)
+          "phone-number" -> optional(text),
+          "observableOrganisationIds" -> list(
+            of[Organisation.Id].verifying(
+              "Organisation non reconnue",
+              organisationId =>
+                Organisation.all
+                  .exists(organisation =>
+                    (organisation.id: Organisation.Id) == (organisationId: Organisation.Id)
+                  )
+            )
+          )
         )(User.apply)(User.unapply)
       )
     )
@@ -517,6 +532,7 @@ case class UserController @Inject() (
       "groupIds" -> default(list(uuid), Nil),
       "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "phone-number" -> optional(text)
+      "phone-number" -> optional(text),
+      "observableOrganisationIds" -> list(of[Organisation.Id])
     )(User.apply)(User.unapply)
 }

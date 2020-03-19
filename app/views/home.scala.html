@@ -102,7 +102,7 @@
                                         Connectez-vous
                                     </h3>
 
-                                    <form action="@routes.LoginController.login()" method="post">
+                                    <form action="@routes.LoginController.login" method="post">
                                         @helper.CSRF.formField
                                         <label class="aplus-textfield__label" for="email"
                                         >Saisir votre email professionnel pour recevoir un lien de

@@ -9,8 +9,15 @@ import play.api.db.Database
 import helper.{Hash, Time}
 import org.postgresql.util.PSQLException
 
+import scala.concurrent.Future
+
 @javax.inject.Singleton
-class UserService @Inject() (configuration: play.api.Configuration, db: Database) {
+class UserService @Inject() (
+    configuration: play.api.Configuration,
+    db: Database,
+    dependencies: ServicesDependencies
+) {
+  import dependencies.databaseExecutionContext
 
   private lazy val cryptoSecret = configuration.underlying.getString("play.http.secret.key ")
 
@@ -33,12 +40,15 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
       "group_ids",
       "cgu_acceptation_date",
       "newsletter_acceptation_date",
-      "phone_number"
+      "phone_number",
+      "observable_organisation_ids"
     )
     .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
 
-  def all = db.withConnection { implicit connection =>
-    SQL("""SELECT * FROM "user"""").as(simpleUser.*)
+  def all: Future[List[User]] = Future {
+    db.withConnection { implicit connection =>
+      SQL("""SELECT *, '' as name, '' as email, '' as qualite FROM "user"""").as(simpleUser.*)
+    }
   }
 
   // Note: this is deprecated, should check via the UserGroup
@@ -54,6 +64,12 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
 
   def byGroupIds(ids: List[UUID]): List[User] = db.withConnection { implicit connection =>
     SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
+  }
+
+  def byGroupIdsAnonymous(ids: List[UUID]): Future[List[User]] = Future {
+    db.withConnection { implicit connection =>
+      SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
+    }
   }
 
   def byId(id: UUID, includeDisabled: Boolean = false): Option[User] = {
@@ -144,6 +160,7 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
     }
 
   def update(user: User) = db.withConnection { implicit connection =>
+    val observableOrganisationIds = user.observableOrganisationIds.map(_.id)
     SQL"""
           UPDATE "user" SET
           name = ${user.name},
@@ -158,7 +175,8 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
           group_ids = array[${user.groupIds}]::uuid[],
           expert = ${user.expert},
           phone_number = ${user.phoneNumber},
-          disabled = ${user.disabled}
+          disabled = ${user.disabled},
+          observable_organisation_ids = array[$observableOrganisationIds]::varchar[]
           WHERE id = ${user.id}::uuid
        """.executeUpdate() == 1
   }

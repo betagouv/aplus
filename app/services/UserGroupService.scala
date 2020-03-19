@@ -2,11 +2,11 @@ package services
 
 import java.sql.ResultSet
 import java.util.UUID
-import scala.concurrent.Future
 
+import scala.concurrent.Future
 import anorm._
 import javax.inject.Inject
-import models.UserGroup
+import models.{Organisation, UserGroup}
 import play.api.db.Database
 import helper.{Time, UUIDHelper}
 import org.postgresql.util.PSQLException
@@ -81,19 +81,28 @@ class UserGroupService @Inject() (
        """.executeUpdate() == 1
   }
 
-  def allGroupByAreas(areaIds: List[UUID]): List[UserGroup] = db.withConnection {
-    implicit connection =>
-      SQL"SELECT * FROM user_group WHERE ARRAY[$areaIds]::uuid[] && area_ids".as(simpleUserGroup.*)
-  }
-
   def allGroups: List[UserGroup] = db.withConnection { implicit connection =>
     SQL"SELECT * FROM user_group".as(simpleUserGroup.*)
+  }
+
+  def all: Future[List[UserGroup]] = Future {
+    db.withConnection { implicit connection =>
+      SQL"SELECT * FROM user_group".as(simpleUserGroup.*)
+    }
   }
 
   def byIds(groupIds: List[UUID]): List[UserGroup] = db.withConnection { implicit connection =>
     SQL"SELECT * FROM user_group WHERE ARRAY[$groupIds]::uuid[] @> ARRAY[id]::uuid[]".as(
       simpleUserGroup.*
     )
+  }
+
+  def byIdsFuture(groupIds: List[UUID]): Future[List[UserGroup]] = Future {
+    db.withConnection { implicit connection =>
+      SQL"SELECT * FROM user_group WHERE ARRAY[$groupIds]::uuid[] @> ARRAY[id]::uuid[]".as(
+        simpleUserGroup.*
+      )
+    }
   }
 
   def groupById(groupId: UUID): Option[UserGroup] = db.withConnection { implicit connection =>
@@ -122,16 +131,25 @@ class UserGroupService @Inject() (
 
   def byArea(areaId: UUID): Future[List[UserGroup]] = Future {
     db.withConnection { implicit connection =>
-      SQL("""SELECT * FROM "user_group" WHERE area_ids @> ARRAY[{areaId}]::uuid[]""")
-        .on('areaId -> areaId)
+      SQL"""SELECT * FROM "user_group" WHERE area_ids @> ARRAY[$areaId]::uuid[]"""
         .as(simpleUserGroup.*)
     }
   }
 
-  def byAreas(areaIds: List[UUID]): List[UserGroup] = db.withConnection { implicit connection =>
-    SQL"""SELECT * FROM "user_group" WHERE ARRAY[$areaIds]::uuid[] && area_ids""".as(
-      simpleUserGroup.*
-    )
+  def byAreas(areaIds: List[UUID]): Future[List[UserGroup]] =
+    Future {
+      db.withConnection { implicit connection =>
+        SQL"""SELECT * FROM "user_group" WHERE ARRAY[$areaIds]::uuid[] && area_ids"""
+          .as(simpleUserGroup.*)
+      }
+    }
+
+  def byOrganisationIds(organisationIds: List[Organisation.Id]): Future[List[UserGroup]] = Future {
+    db.withConnection { implicit connection =>
+      val organisationIdStrings = organisationIds.map(_.id)
+      SQL"""SELECT * FROM "user_group" WHERE ARRAY[$organisationIdStrings] @> ARRAY[organisation]"""
+        .as(simpleUserGroup.*)
+    }
   }
 
 }
