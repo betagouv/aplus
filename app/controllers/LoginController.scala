@@ -72,29 +72,29 @@ class LoginController @Inject() (
             val url = routes.LoginController.magicLinkAntiConsumptionPage.absoluteURL()
             notificationService.newLoginRequest(url, path, user, loginToken)
 
-          implicit val requestWithUserData =
-            new RequestWithUserData(user, Area.notApplicable, request)
-          val emailInBody = request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty
-          val emailInFlash = request.flash.get("email").nonEmpty
-          eventService.log(
-            GenerateToken,
-            s"Génère un token pour une connexion par email body=${emailInBody}&flash=${emailInFlash}"
-          )
+            implicit val requestWithUserData =
+              new RequestWithUserData(user, Area.notApplicable, request)
+            val emailInBody = request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty
+            val emailInFlash = request.flash.get("email").nonEmpty
+            eventService.log(
+              GenerateToken,
+              s"Génère un token pour une connexion par email body=${emailInBody}&flash=${emailInFlash}"
+            )
 
-          val successMessage = request
-            .getQueryString("action")
-            .flatMap(actionName =>
-              if (actionName == "sendemailback")
-                Some("Un nouveau lien de connexion vient de vous être envoyé par e-mail.")
-              else
-                None
+            val successMessage = request
+              .getQueryString("action")
+              .flatMap(actionName =>
+                if (actionName == "sendemailback")
+                  Some("Un nouveau lien de connexion vient de vous être envoyé par e-mail.")
+                else
+                  None
+              )
+            Ok(
+              views.html.home(
+                HomeController.HomeInnerPage
+                  .EmailSentFeedback(user, tokenExpirationInMinutes, successMessage)
+              )
             )
-          Ok(
-            views.html.home(
-              HomeController.HomeInnerPage
-                .EmailSentFeedback(user, tokenExpirationInMinutes, successMessage)
-            )
-          )
           }
         }
     }
