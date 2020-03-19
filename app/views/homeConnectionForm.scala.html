@@ -7,12 +7,10 @@
 
     <form action="@routes.LoginController.login" method="post">
         @helper.CSRF.formField
-        <label class="aplus-textfield__label" for="email"
-        >Saisir votre e-mail professionnel pour recevoir un lien de
+        <label class="aplus-textfield__label" for="email">
+            Saisir votre e-mail professionnel pour recevoir un lien de
             connexion à Administration+<br />
-            <!-- <span class="aplus-textfield__label__example">Ex: prenom.nom@@votre-structure.fr</span>
-            --> </label
-                >
+        </label>
         <br />
         @flash.get("error").map { message =>
         <div class="notification notification--error mdl-typography--text-prewrap" >@message</div>
