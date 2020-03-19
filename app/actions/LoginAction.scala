@@ -83,7 +83,7 @@ class LoginAction @Inject() (
             // areasWithLoginByKey is an insecure setting for demo usage and transition only
             eventService.log(
               LoginByKey,
-              s"Connexion par clé réussi (Transition ne doit pas être maintenu en prod)"
+              s"Connexion par clé réussie (Transition ne doit pas être maintenu en prod)"
             )
             Left(
               TemporaryRedirect(Call(request.method, url).url)
@@ -108,7 +108,7 @@ class LoginAction @Inject() (
             new RequestWithUserData(user, userRights, area, request)
           eventService.log(
             UserAccessDisabled,
-            s"Utilisateur désactivé essaye d'accèder à la page ${request.path}}"
+            s"Utilisateur désactivé essaye d'accéder à la page ${request.path}}"
           )
           userNotLogged(
             s"Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème."
@@ -122,7 +122,7 @@ class LoginAction @Inject() (
               Area.notApplicable,
               request.remoteAddress,
               "UNKNOWN_TOKEN",
-              s"Token $token est inconnue",
+              s"Token $token est inconnu",
               None,
               None
             )
@@ -135,7 +135,7 @@ class LoginAction @Inject() (
             Future(userNotLoggedOnLoginPage)
           case None =>
             Logger.warn(s"Accès à la ${request.path} non autorisé")
-            Future(userNotLogged("Vous devez vous identifier pour accèder à cette page."))
+            Future(userNotLogged("Vous devez vous identifier pour accéder à cette page."))
         }
     }
   }
@@ -191,8 +191,9 @@ class LoginAction @Inject() (
             )
           } else {
             eventService.log(ExpiredToken, s"Token expiré pour ${token.userId}")
-            userNotLogged(
-              s"Le lien que vous avez utilisez a expiré (il expire après $tokenExpirationInMinutes minutes), saisissez votre email pour vous reconnecter"
+            redirectToHomeWithEmailSendbackButton(
+              user.email,
+              s"Votre lien de connexion a expiré, il est valable $tokenExpirationInMinutes minutes à réception."
             )
           }
         }
@@ -206,18 +207,27 @@ class LoginAction @Inject() (
         .flashing("error" -> message)
     )
 
+  private def redirectToHomeWithEmailSendbackButton[A](email: String, message: String)(
+      implicit request: Request[A]
+  ) =
+    Left(
+      TemporaryRedirect(routes.HomeController.index.url)
+        .withSession(request.session - "userId")
+        .flashing("email" -> email, "error" -> message)
+    )
+
   private def userNotLoggedOnLoginPage[A](implicit request: Request[A]) =
     Left(
       TemporaryRedirect(routes.HomeController.index().url).withSession(request.session - "userId")
     )
 
-  private def tokenById[A](implicit request: Request[A]) =
+  private def tokenById[A](implicit request: Request[A]): Option[LoginToken] =
     request.getQueryString("token").flatMap(tokenService.byToken)
 
-  private def userByKey[A](implicit request: Request[A]) =
+  private def userByKey[A](implicit request: Request[A]): Option[User] =
     request.getQueryString("key").flatMap(userService.byKey)
 
-  private def userBySession[A](implicit request: Request[A]) =
+  private def userBySession[A](implicit request: Request[A]): Option[User] =
     request.session
       .get("userId")
       .flatMap(UUIDHelper.fromString)

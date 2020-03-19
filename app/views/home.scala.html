@@ -101,6 +101,9 @@
                                     case HomeInnerPage.ConnectionForm => {
                                         @homeConnectionForm()
                                     }
+                                    case infos: HomeInnerPage.SendbackEmailForm => {
+                                        @homeSendbackEmailForm(infos)
+                                    }
                                     case infos: HomeInnerPage.EmailSentFeedback => {
                                         @homeEmailSentFeedback(infos)
                                     }

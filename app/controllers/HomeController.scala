@@ -2,7 +2,6 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 import actions.LoginAction
-import models.User
 import org.webjars.play.WebJarsUtil
 import play.api.Logger
 import play.api.mvc._
@@ -20,16 +19,22 @@ class HomeController @Inject() (loginAction: LoginAction, db: Database)(
     with play.api.i18n.I18nSupport {
 
   def index: Action[AnyContent] = Action { implicit request =>
-    if (request.session
-          .get("userId")
-          .orElse(request.queryString.get("token"))
-          .orElse(request.queryString.get("key"))
-          .isDefined)
+    val needsRedirect = request.session
+      .get("userId")
+      .orElse(request.queryString.get("token"))
+      .orElse(request.queryString.get("key"))
+      .isDefined
+    if (needsRedirect)
       TemporaryRedirect(
         s"${routes.ApplicationController.myApplications()}?${request.rawQueryString}"
       )
     else
-      Ok(views.html.home(HomeInnerPage.ConnectionForm))
+      request.flash.get("email") match {
+        case None =>
+          Ok(views.html.home(HomeInnerPage.ConnectionForm))
+        case Some(email) =>
+          Ok(views.html.home(HomeInnerPage.SendbackEmailForm(email, request.flash.get("error"))))
+      }
   }
 
   def status: Action[AnyContent] = Action {
