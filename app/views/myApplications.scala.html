@@ -1,6 +1,6 @@
 @import _root_.helper.Time
 
-@(user: User)(myOpenApplications: Seq[Application], myClosedApplications: Seq[Application], applicationsFromTheArea: Seq[Application] = List())(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(user: User, currentUserRights: Authorization.UserRights)(myOpenApplications: Seq[Application], myClosedApplications: Seq[Application], applicationsFromTheArea: Seq[Application] = List())(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 @display(applications: Seq[Application]) = {
     <div class="mdl-cell mdl-cell--12-col pem-container">
@@ -48,7 +48,7 @@
     </div>
 }
 
-@main(user)(s"Mes demandes")  {
+@main(user, currentUserRights)(s"Mes demandes")  {
 <style>
     .pem-table {
         width: 100%;

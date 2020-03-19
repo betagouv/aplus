@@ -58,7 +58,7 @@
                     <div class="mdl-typography--text-center">
                         <h3>Se connecter à Administration+</h3>
                     </div><br><br>
-                    <form action="@routes.LoginController.login()" method="post">
+                    <form action="@routes.LoginController.login" method="post">
                         @helper.CSRF.formField
                         <label class="aplus-textfield__label" for="email">Saisir votre e-mail professionnel et nominatif :<br>
                             <span class="aplus-textfield__label__example">Ex: prenom.nom@@votre-structure.fr</span>
@@ -78,7 +78,7 @@
                         </div>
                          <p>Nous avons envoyé par e-mail un lien de connexion valable @tokenExpirationInMinutes minutes à l'adresse <b>@user.email</b>. Cliquez sur le lien contenu dans l'email pour accéder à Administration+.</p>
 
-                        <p><i>Vous n'avez pas reçu d'e-email ? Veuillez consulter vos courriers indésirables ou <a href="@routes.LoginController.login()">renvoyer un autre e-email</a></i><br></p>
+                        <p><i>Vous n'avez pas reçu d'e-email ? Veuillez consulter vos courriers indésirables ou <a href="@routes.LoginController.login">renvoyer un autre e-email</a></i><br></p>
                     }
                     case Right((token,path)) => {
                         <h3>Vous allez accéder automatiquement à Administration+</h3>

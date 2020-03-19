@@ -1,8 +1,8 @@
 @import models._
 @import _root_.helper.MDLForms._
-@(user: User)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(user: User, currentUserRights: Authorization.UserRights)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
-@main(user)("Conditions générales d'utilisations")  {
+@main(user, currentUserRights)("Conditions générales d'utilisations")  {
 <style>
     .mdl-data-table td {
         padding: 0px 18px;

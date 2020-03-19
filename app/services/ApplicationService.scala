@@ -2,17 +2,24 @@ package services
 
 import java.time.ZonedDateTime
 import java.util.UUID
+import scala.concurrent.Future
 
 import javax.inject.Inject
 import anorm.Column.nonNull
-import models.{Answer, Application}
+import models.{Answer, Application, Authorization, Error}
+import models.Authorization.UserRights
 import play.api.db.Database
 import play.api.libs.json.Json
 import anorm._
 import helper.Time
 
 @javax.inject.Singleton
-class ApplicationService @Inject() (db: Database) {
+class ApplicationService @Inject() (
+    db: Database,
+    dependencies: ServicesDependencies
+) {
+  import dependencies.databaseExecutionContext
+
   import serializers.Anorm._
   import serializers.JsonFormats._
 
@@ -68,16 +75,26 @@ class ApplicationService @Inject() (db: Database) {
       )
     )
 
-  def byId(id: UUID, fromUserId: UUID, anonymous: Boolean): Option[Application] =
-    db.withConnection { implicit connection =>
-      val result = SQL(
-        "UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *"
-      ).on('id -> id, 'seen_by_user_id -> fromUserId)
-        .as(simpleApplication.singleOpt)
-      if (anonymous) {
-        result.map(_.anonymousApplication)
-      } else {
-        result
+  def byId(id: UUID, fromUserId: UUID, rights: UserRights): Future[Either[Error, Application]] =
+    Future {
+      db.withConnection { implicit connection =>
+        val result = SQL(
+          "UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *"
+        ).on('id -> id, 'seen_by_user_id -> fromUserId)
+          .as(simpleApplication.singleOpt)
+        result match {
+          case None => Left(Error.EntityNotFound)
+          case Some(application) =>
+            if (Authorization.canSeeApplication(application)(rights)) {
+              if (Authorization.canSeePrivateDataOfApplication(application)(rights)) {
+                Right(application)
+              } else {
+                Right(application.anonymousApplication)
+              }
+            } else {
+              Left(Error.Authorization)
+            }
+        }
       }
     }
 
@@ -118,17 +135,14 @@ class ApplicationService @Inject() (db: Database) {
     }
   }
 
-  def allForUserIds(userIds: List[UUID], anonymous: Boolean) = db.withConnection {
-    implicit connection =>
-      val result =
+  def allForUserIds(userIds: List[UUID]): Future[List[Application]] =
+    Future {
+      db.withConnection { implicit connection =>
         SQL"SELECT * FROM application WHERE ARRAY[$userIds]::uuid[] @> ARRAY[creator_user_id]::uuid[] OR ARRAY(select jsonb_object_keys(invited_users))::uuid[] && ARRAY[$userIds]::uuid[] ORDER BY creation_date DESC"
           .as(simpleApplication.*)
-      if (anonymous) {
-        result.map(_.anonymousApplication)
-      } else {
-        result
+          .map(_.anonymousApplication)
       }
-  }
+    }
 
   def allForCreatorUserId(creatorUserId: UUID, anonymous: Boolean) = db.withConnection {
     implicit connection =>
@@ -168,16 +182,19 @@ class ApplicationService @Inject() (db: Database) {
     }
   }
 
-  def allForAreas(areaIds: List[UUID], anonymous: Boolean) = db.withConnection {
-    implicit connection =>
-      val result =
+  def allForAreas(areaIds: List[UUID]): Future[List[Application]] =
+    Future {
+      db.withConnection { implicit connection =>
         SQL"""SELECT * FROM application WHERE ARRAY[$areaIds]::uuid[] @> ARRAY[area]::uuid[] ORDER BY creation_date DESC"""
           .as(simpleApplication.*)
-      if (anonymous) {
-        result.map(_.anonymousApplication)
-      } else {
-        result
+          .map(_.anonymousApplication)
       }
+    }
+
+  def all(): Future[List[Application]] = Future {
+    db.withConnection { implicit connection =>
+      SQL"""SELECT * FROM application""".as(simpleApplication.*).map(_.anonymousApplication)
+    }
   }
 
   def createApplication(newApplication: Application) = db.withConnection { implicit connection =>

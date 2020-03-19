@@ -1,10 +1,9 @@
 @import _root_.helper.Time
 @import _root_.helper.MDLForms._
 
-@(currentUser: User)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
-@main(currentUser, if(currentUser.expert) { Some(currentArea)} else { None })(s"Demande de ${application.creatorUserName} - ${Area.fromId(application.area).get.name}")  {
-
+@main(currentUser, currentUserRights, if(currentUser.expert) { Some(currentArea)} else { None })(s"Demande de ${application.creatorUserName} - ${Area.fromId(application.area).get.name}")  {
 <style>
 .mdl-list__item-primary-content {
     font-weight: bold;

@@ -1,8 +1,8 @@
 @import _root_.helper.Time
 
-@(currentUser: User)(applications: Seq[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(applications: Seq[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-@main(currentUser, maxWidth = false)(s"Demandes")  {
+@main(currentUser, currentUserRights, maxWidth = false)(s"Demandes")  {
 <style>
     .pem-table {
         width: 100%;

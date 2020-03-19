@@ -14,6 +14,7 @@ case class User(
     email: String,
     helper: Boolean,
     instructor: Boolean,
+    // TODO: `private[models]` so we cannot check it without going through authorization
     admin: Boolean,
     @deprecated(
       message = "User#areas is deprecated in favor of UserGroup#areaIds.",
@@ -31,13 +32,17 @@ case class User(
     cguAcceptationDate: Option[ZonedDateTime] = None,
     newsletterAcceptationDate: Option[ZonedDateTime] = None,
     phoneNumber: Option[String] = None,
+    // If this field is non empty, then the User
+    // is considered to be an observer:
+    // * can see stats+deployment of all areas,
+    // * can see all users,
+    // * can see one user but not edit it
+    observableOrganisationIds: List[Organisation.Id] = Nil,
     sharedAccount: Boolean = false
 ) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"
 
-  def canBeEditedBy(user: User): Boolean =
-    user.admin && user.areas.intersect(user.areas).nonEmpty
-
+  // TODO: put this in Authorization
   def canSeeUsersInArea(areaId: UUID): Boolean =
     (areaId == Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
 }
