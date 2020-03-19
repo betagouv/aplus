@@ -6,14 +6,12 @@ import models.EventType.{GenerateToken, UnknownEmail}
 import models.{Area, LoginToken, User}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result}
-import play.filters.csrf.CSRFCheck
 import scala.concurrent.{ExecutionContext, Future}
 import services.{EventService, NotificationService, TokenService, UserService}
 import views.HomeInnerPage
 
 @Singleton
 class LoginController @Inject() (
-    checkToken: CSRFCheck,
     userService: UserService,
     notificationService: NotificationService,
     tokenService: TokenService,
