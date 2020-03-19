@@ -20,7 +20,7 @@ class gLoginSpec extends Specification with Tables with BaseSpec {
       app = applicationWithBrowser
     ) {
       "email" | "result" |
-        "julien.dauphant" + "@beta.gouv.fr" ! "Consultez vos emails" |
+        "julien.dauphant" + "@beta.gouv.fr" ! "Consultez vos e-mails" |
         "wrong@beta.gouv.fr" ! "Aucun compte actif n'est associé à cette adresse e-mail." |
         "simon.pineau" + "@beta.gouv.fr" ! "Aucun compte actif n'est associé à cette adresse e-mail." |> {
         (email, expected) =>
