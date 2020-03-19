@@ -45,7 +45,7 @@ import play.api.data.{Form, Mapping}
 import play.api.mvc._
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
-import serializers.UserAndGroupCsvSerializer
+import serializers.{Keys, UserAndGroupCsvSerializer}
 import services._
 
 @Singleton
@@ -153,9 +153,9 @@ case class UserController @Inject() (
               List[String](
                 user.id.toString,
                 user.name,
-                user.qualite,
                 user.email,
                 Time.formatPatternFr(user.creationDate, "dd-MM-YYYY-HHhmm"),
+                if (user.sharedAccount) "Compte Partagé" else " ",
                 if (user.helper) "Aidant" else " ",
                 if (user.instructor) "Instructeur" else " ",
                 if (user.groupAdmin) "Responsable" else " ",
@@ -174,6 +174,7 @@ case class UserController @Inject() (
               UserAndGroupCsvSerializer.USER_NAME.prefixes(0),
               UserAndGroupCsvSerializer.USER_EMAIL.prefixes(0),
               "Création",
+              UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes(0),
               "Aidant",
               UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes(0),
               UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes(0),
@@ -189,12 +190,10 @@ case class UserController @Inject() (
 
             val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
             val date = Time.formatPatternFr(Time.nowParis(), "dd-MMM-YYY-HH'h'mm")
+            val filename = "aplus-" + date + "-users-" + area.name.replace(" ", "-") + ".csv"
 
             Ok(csvContent)
-              .withHeaders(
-                "Content-Disposition" -> s"""attachment; filename="aplus-$date-users-${area.name
-                  .replace(" ", "-")}.csv""""
-              )
+              .withHeaders("Content-Disposition" -> s"""attachment; filename="$filename"""")
               .as("text/csv")
         }
       }
@@ -500,7 +499,8 @@ case class UserController @Inject() (
                     (organisation.id: Organisation.Id) == (organisationId: Organisation.Id)
                   )
             )
-          )
+          ),
+          Keys.User.sharedAccount -> boolean
         )(User.apply)(User.unapply)
       )
     )
@@ -533,6 +533,7 @@ case class UserController @Inject() (
       "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "phone-number" -> optional(text),
-      "observableOrganisationIds" -> list(of[Organisation.Id])
+      "observableOrganisationIds" -> list(of[Organisation.Id]),
+      Keys.User.sharedAccount -> boolean
     )(User.apply)(User.unapply)
 }

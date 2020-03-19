@@ -41,7 +41,8 @@ class UserService @Inject() (
       "cgu_acceptation_date",
       "newsletter_acceptation_date",
       "phone_number",
-      "observable_organisation_ids"
+      "observable_organisation_ids",
+      "shared_account"
     )
     .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
 
@@ -126,7 +127,7 @@ class UserService @Inject() (
           assert(user.areas.nonEmpty)
           success && SQL"""
         INSERT INTO "user" (id, key, name, qualite, email, helper, instructor, admin, areas, creation_date,
-                            commune_code, group_admin, group_ids, expert, phone_number) VALUES (
+                            commune_code, group_admin, group_ids, expert, phone_number, shared_account) VALUES (
            ${user.id}::uuid,
            ${Hash.sha256(s"${user.id}$cryptoSecret")},
            ${user.name},
@@ -141,7 +142,8 @@ class UserService @Inject() (
            ${user.groupAdmin},
            array[${user.groupIds}]::uuid[],
            ${user.expert},
-           ${user.phoneNumber})
+           ${user.phoneNumber},
+           ${user.sharedAccount})
         """.executeUpdate() == 1
         }
       }
@@ -176,7 +178,8 @@ class UserService @Inject() (
           expert = ${user.expert},
           phone_number = ${user.phoneNumber},
           disabled = ${user.disabled},
-          observable_organisation_ids = array[$observableOrganisationIds]::varchar[]
+          observable_organisation_ids = array[$observableOrganisationIds]::varchar[],
+          shared_account = ${user.sharedAccount}
           WHERE id = ${user.id}::uuid
        """.executeUpdate() == 1
   }

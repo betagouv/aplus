@@ -28,7 +28,7 @@ import models.EventType.{
   UsersImported
 }
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
-import serializers.UserAndGroupCsvSerializer
+import serializers.{Keys, UserAndGroupCsvSerializer}
 
 case class CSVImportController @Inject() (
     loginAction: LoginAction,
@@ -122,7 +122,8 @@ case class CSVImportController @Inject() (
       "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
       "phone-number" -> optional(text),
       // TODO: put also in forms/imports?
-      "observableOrganisationIds" -> list(of[Organisation.Id])
+      "observableOrganisationIds" -> list(of[Organisation.Id]),
+      Keys.User.sharedAccount -> boolean
     )(User.apply)(User.unapply)
 
   private def groupImportMapping(date: ZonedDateTime): Mapping[UserGroup] =

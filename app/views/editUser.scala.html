@@ -1,6 +1,7 @@
 @import models._
 @import _root_.helper.MDLForms._
 @import java.util.UUID
+@import serializers.Keys
 @(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @main(currentUser, currentUserRights)(s"Utilisateur ${form("name").value.getOrElse("")}") {
@@ -74,6 +75,12 @@
                @if(!canEditUser) { readonly }
                @toHtmlArgs(args)>
     }
+    @helper.checkbox(form(Keys.User.sharedAccount), List(
+        Some('type -> "checkbox"),
+        Some('label -> "Compte Partagé"),
+        Some('class -> "mdl-checkbox__input"),
+        if (canEditUser) None else Some('disabled -> "")
+    ).flatten: _*)
     @helper.checkbox(form("instructor"), List(
         Some('type -> "checkbox"),
         Some('label -> "Instructeur"),

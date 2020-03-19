@@ -1,8 +1,9 @@
 @import _root_.helper.Time
+@import _root_.helper.MDLForms._
 
-@(user: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
-@main(user, currentUserRights, if(user.expert) { Some(currentArea)} else { None })(s"Demande de ${application.creatorUserName} - ${Area.fromId(application.area).get.name}")  {
+@main(currentUser, currentUserRights, if(currentUser.expert) { Some(currentArea)} else { None })(s"Demande de ${application.creatorUserName} - ${Area.fromId(application.area).get.name}")  {
 <style>
 .mdl-list__item-primary-content {
     font-weight: bold;
@@ -155,7 +156,7 @@ dialog {
             <button type="button" disabled="disabled" class="mdl-button mdl-button--raised mdl-button--colored" id="close-dialog-terminate" onclick="confirmTerminate()">Clore</button>
         </div>
     </dialog>
-        @if(application.canBeClosedBy(user) && application.closed == false) {
+        @if(application.canBeClosedBy(currentUser) && application.closed == false) {
             <button class="mdl-cell mdl-cell--3-col mdl-cell--9-offset-desktop mdl-cell--12-col-phone mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()">
                 Clore la demande
             </button>
@@ -171,7 +172,7 @@ dialog {
                 </div>
             </div>
             <div class="mdl-card__supporting-text mdl-card--border do-not-print">
-                @if(user.admin) {
+                @if(currentUser.admin) {
                     <span style="font-weight: bold; color:red" class="do-not-print">Reférence interne pour les administrateurs: @application.internalId</span>
                 } else {
                     <span class="do-not-print"><i class="material-icons" style="vertical-align: middle;">help_outline</i> Besoin d'aide ? Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Aidez-moi%20avec%20Administration+">@Constants.supportEmail</a></span>
@@ -199,14 +200,14 @@ dialog {
                             font-weight: 600;
                             line-height: 16px;">
                             <i class="icon material-icons icon--light">attach_file</i>
-                            @application.creatorUserName a ajouté le fichier @if(application.fileCanBeShowed(user)) { <a href="@routes.ApplicationController.applicationFile(application.id, filename)" target="_blank">@filename</a> } else { @filename }
+                            @application.creatorUserName a ajouté le fichier @if(application.fileCanBeShowed(currentUser)) { <a href="@routes.ApplicationController.applicationFile(application.id, filename)" target="_blank">@filename</a> } else { @filename }
                             @application.filesAvailabilityLeftInDays match {
                                 case None => { ( Fichier expiré et supprimé ) }
                                 case Some(expirationInDays) => { ( Suppression du fichier dans @expirationInDays jours ) }
                             }
                         </div> <br>
                 }
-                @if(application.canBeClosedBy(user) && application.closed == false) {
+                @if(application.canBeClosedBy(currentUser) && application.closed == false) {
                     <button class="mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()" style="margin-right: 10px;">
                         Clore la demande
                     </button>
@@ -245,7 +246,7 @@ dialog {
                         </span>
                     </div>
                 }
-                @if(application.canHaveExpertsInvitedBy(user) && application.closed == false && application.expertInvited == false) {
+                @if(application.canHaveExpertsInvitedBy(currentUser) && application.closed == false && application.expertInvited == false) {
                     <div class="mdl-list__item">
                         <span class="mdl-list__item-primary-content">
                             <button class="mdl-button mdl-button--raised mdl-js-button do-not-print" onclick="document.location = '@routes.ApplicationController.inviteExpert(application.id)'" style="margin-right: 10px;">
@@ -265,7 +266,7 @@ dialog {
                      </span>
                 </div>
             }
-            @if(user.instructor || user.admin || user.groupAdmin || answer.visibleByHelpers || answer.creatorUserID == user.id) {
+            @if(currentUser.instructor || currentUser.admin || currentUser.groupAdmin || answer.visibleByHelpers || answer.creatorUserID == currentUser.id) {
                 @if(answer.files.getOrElse(Map()).nonEmpty) {
                     @for((filename, fileSize) <- answer.files.getOrElse(Map())) {
                         <div class="mdl-cell mdl-cell--12-col vertical-align--middle" style="text-align: center;
@@ -274,7 +275,7 @@ dialog {
                             font-weight: 600;
                             line-height: 16px;">
                             <i class="icon material-icons icon--light">attach_file</i>
-                            @answer.creatorUserName a ajouté le fichier @if(application.fileCanBeShowed(user, answer.id)) { <a href="@routes.ApplicationController.answerFile(application.id, answer.id, filename)" target="_blank">@filename</a> } else { @filename }
+                            @answer.creatorUserName a ajouté le fichier @if(application.fileCanBeShowed(currentUser, answer.id)) { <a href="@routes.ApplicationController.answerFile(application.id, answer.id, filename)" target="_blank">@filename</a> } else { @filename }
                             @answer.filesAvailabilityLeftInDays match {
                                 case None => { ( Fichier expiré et supprimé ) }
                                 case Some(expirationInDays) => { ( Suppression du fichier dans @expirationInDays jours ) }
@@ -283,7 +284,7 @@ dialog {
                     }
                 }
                 @if(answer.message.nonEmpty) {
-                    <div class="mdl-card mdl-cell mdl-cell--10-col mdl-cell--12-col-phone @if(answer.creatorUserID == user.id){ mdl-cell--2-offset mdl-cell--0-offset-phone } answer" id="answer-@answer.id">
+                    <div class="mdl-card mdl-cell mdl-cell--10-col mdl-cell--12-col-phone @if(answer.creatorUserID == currentUser.id){ mdl-cell--2-offset mdl-cell--0-offset-phone } answer" id="answer-@answer.id">
                         <div class="mdl-card__supporting-text mdl-card--border @if(!answer.visibleByHelpers){ mdl-color--grey-50 }" >
                             @if(!answer.visibleByHelpers) {
                                 <div id="reserved-@answer.id" class="vertical-align--middle">Réponse réservée aux instructeurs
@@ -300,7 +301,7 @@ dialog {
                                             case Some((_,icon)) => { <img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
                                             case None => { <i class="material-icons mdl-list__item-avatar">person</i> }
                                         }
-                                        <span>@answer.creatorUserName</span>@if(user.admin){ <span style="font-weight: bold; color:red" class="do-not-print"> <a href="@routes.UserController.editUser(answer.creatorUserID)"> Voir fiche utilisateur</a></span>}
+                                        <span>@answer.creatorUserName</span>@if(currentUser.admin){ <span style="font-weight: bold; color:red" class="do-not-print"> <a href="@routes.UserController.editUser(answer.creatorUserID)"> Voir fiche utilisateur</a></span>}
                                         <span class="mdl-list__item-sub-title"></span>
                                     </span>
                                     <span class="mdl-list__item-secondary-content">
@@ -322,7 +323,7 @@ dialog {
                                 </ul>
                             }
                             <p class="application__message">@answer.message</p>
-                            @if(application.answers.last == answer && application.creatorUserId == user.id && !application.closed && answer.creatorUserID != user.id) {
+                            @if(application.answers.last == answer && application.creatorUserId == currentUser.id && !application.closed && answer.creatorUserID != currentUser.id) {
                                 <div class="info-box do-not-print">
                                 Si l'instructeur a répondu à votre demande, vous pouvez clore la demande:<br><br>
                                 <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="showDialog()" >
@@ -337,7 +338,7 @@ dialog {
             }
         }
 
-    @if(application.answers.isEmpty && user.instructor){
+    @if(application.answers.isEmpty && currentUser.instructor){
         <div class="mdl-card mdl-cell mdl-cell--12-col">
             <div class="mdl-card__supporting-text mdl-card--border">
 
@@ -382,10 +383,10 @@ dialog {
                             @helper.CSRF.formField
                             <input type="hidden" name="answer-id" readonly value="@answerToAgentsForm("answer-id").value.getOrElse(java.util.UUID.randomUUID)">
                             <div class="mdl-cell mdl-cell--12-col mdl-grid">
-                                @if(user.instructor) {
+                                @if(currentUser.instructor) {
                                     <div class="info-box">Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName et les personnes invitées sur la demande. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. <b>Merci d'utiliser vos outils habituels pour continuer une instruction.</b></div>
                                 }
-                                @if(user.id == application.creatorUserId) {
+                                @if(currentUser.id == application.creatorUserId) {
                                     <h5 class="mdl-cell mdl-cell--12-col">Ajouter informations concernant l'usager</h5>
                                     @helpers.usersInformations(answerToAgentsForm)
                                 }
@@ -393,6 +394,29 @@ dialog {
                                     <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
                                     <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Votre réponse</label>
                                 </div>
+                                @if(currentUser.sharedAccount) {
+                                    <div class="mdl-cell mdl-cell--12-col">
+                                        Signature :
+                                    </div>
+                                    <div class="mdl-cell mdl-cell--12-col">
+                                        @helper.input(
+                                            answerToAgentsForm("signature"),
+                                            'label -> "Renseignez ici votre : Prénom, NOM, service",
+                                            'class -> "mdl-textfield--large"
+                                        ) { (id, name, value, args) =>
+                                        <input class="mdl-textfield__input"
+                                               type="text"
+                                               name="@name"
+                                               id="@id"
+                                               @if(currentUser.sharedAccount && value.isEmpty) {
+                                                   value="@{userSignature.getOrElse(value)}"
+                                               } else {
+                                                   value="@value"
+                                               }
+                                               @toHtmlArgs(args)>
+                                        }
+                                    </div>
+                                    }
                                 <div class="mdl-cell mdl-cell--12-col">
                                     <b>Ajouter un ficher ( 5Mo maximum ) :</b>
                                     <ul>
@@ -406,7 +430,7 @@ dialog {
                                         <li><input type="file" name="file[0]"></li>
                                     </ul>
                                 </div>
-                                @if(user.instructor) {
+                                @if(currentUser.instructor) {
                                     <div id="invalide-choice" class="mdl-cell mdl-cell--12-col">
                                         <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
                                             <input type="checkbox" class="mdl-checkbox__input" name="irrelevant" value="true">
@@ -417,7 +441,7 @@ dialog {
                                         La demande sera classée comme non-pertinente dans les statistiques d'usage. L'équipe recontactera l'aidant pour l'aider à la création des demandes.
                                     </div>
                                 }
-                                @if(user.instructor || user.expert) {
+                                @if(currentUser.instructor || currentUser.expert) {
                                     <div id="private-answer" class="mdl-cell mdl-cell--12-col">
                                         <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
                                             <input type="checkbox" class="mdl-checkbox__input" name="privateToHelpers" value="true">
@@ -472,7 +496,7 @@ dialog {
                                     <textarea class="mdl-textfield__input" type="text" rows= "5" id="agents-invitation-message" style="width: 100%;" name="message"></textarea>
                                     <label class="mdl-textfield__label" for="agents-invitation-message"><i class="material-icons" style="vertical-align: middle;">message</i> Laisser ici un message pour l'invitation...</label>
                                 </div>
-                                @if(user.instructor || user.expert) {
+                                @if(currentUser.instructor || currentUser.expert) {
                                     <div id="private-invitation">
                                         <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
                                             <input type="checkbox" class="mdl-checkbox__input" name="privateToHelpers" value="true">
