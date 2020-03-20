@@ -1,0 +1,83 @@
+@(user: User)(implicit request: RequestHeader)
+
+<div class="mdl-grid">
+
+    <div class="mdl-cell mdl-cell--12-col">
+        <h4> Bonjour et bienvenue dans la communauté Administration+ </h4>
+        <p class="--font-size-16px">
+            Merci d’avance de vous mobiliser et de coopérer pour répondre aux urgences sociales
+            et résoudre les blocages complexes !
+        </p>
+        <p class="--font-size-16px">
+            Toute l’équipe d’Administration+ est à votre disposition, n’hésitez pas à nous solliciter.
+        </p>
+        <div class="mdl-grid justify-content-center">
+            <div class="mdl-cell">
+                <img class="--max-width-184px"
+                     src="@routes.Assets.versioned("images/home/Aplus-Success.svg")" />
+            </div>
+        </div>
+        @if(user.newsletterAcceptationDate.isEmpty) {
+            @helper.form(action = routes.UserController.subscribeNewsletter,
+                         args = 'class -> "mdl-grid") {
+                @helper.CSRF.formField
+                <div class="mdl-cell mdl-cell--12-col">
+                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect"
+                           for="aplus-welcome-page-newsletter-checkbox" style="height: unset;">
+                        <input type="checkbox"
+                               id="aplus-welcome-page-newsletter-checkbox"
+                               name="newsletter"
+                               class="mdl-checkbox__input"
+                               value="true">
+                        <span class="mdl-checkbox__label">
+                            J’accepte de recevoir la newsletter mensuelle d’Administration+ sur l’évolution
+                            de l’outil et de l’élargissement de la communauté.
+                        </span>
+                    </label>
+                </div>
+                <div class="mdl-cell mdl-cell--12-col">
+                    <button id="aplus-welcome-page-newsletter-submit"
+                            class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary"
+                            disabled>
+                        Valider l’inscription
+                    </button>
+                </div>
+            }
+        }
+    </div>
+
+
+    <div class="mdl-cell mdl-cell--12-col">
+        <h4>
+            Vous souhaitez créer une demande dans Administration+ pour résoudre
+            un blocage administratif complexe et urgent ?
+        </h4>
+        <p class="--font-size-16px">
+            Vous devez répondre à au moins 1 de ces 2 critères pour utiliser le service Administration+ :
+        </p>
+
+        <div class="mdl-grid align-items-center">
+            <div class="mdl-cell width-unset">
+                <div class="aplus-colored-circle">1</div>
+            </div>
+            <div class="mdl-cell flex-grow-1 --font-size-16px">
+                Vous avez entamé les démarches habituelles mais vous n’arrivez pas
+                à résoudre la situation administrative qui est bloquée.
+            </div>
+        </div>
+        <div class="mdl-grid align-items-center">
+            <div class="mdl-cell width-unset">
+                <div class="aplus-colored-circle">2</div>
+            </div>
+            <div class="mdl-cell flex-grow-1 --font-size-16px">
+                Il y a urgence sociale : la vie quotidienne de l’usager est en péril.
+            </div>
+        </div>
+        <br>
+        <a href="@routes.ApplicationController.create()"
+           class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary ">
+            Créer une demande
+        </a>
+    </div>
+
+</div>

@@ -77,6 +77,8 @@ object EventType {
   object InviteNotCreated extends Error
   object MyApplicationsShowed extends Info
   object MyCSVShowed extends Info
+  object NewsletterSubscribed extends Info
+  object NewsletterSubscriptionError extends Error
   object PostAddUserUnauthorized extends Warn
   object PostEditUserUnauthorized extends Warn
   object ShowAddUserUnauthorized extends Warn

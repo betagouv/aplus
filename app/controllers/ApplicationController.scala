@@ -372,8 +372,7 @@ case class ApplicationController @Inject() (
       request.currentUser.admin,
       Time.nowParis()
     )
-    val myOpenApplications = myApplications.filter(!_.closed)
-    val myClosedApplications = myApplications.filter(_.closed)
+    val (myClosedApplications, myOpenApplications) = myApplications.partition(_.closed)
 
     eventService.log(
       MyApplicationsShowed,

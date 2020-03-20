@@ -23,6 +23,8 @@ import models.EventType.{
   EditUserShowed,
   EventsShowed,
   EventsUnauthorized,
+  NewsletterSubscribed,
+  NewsletterSubscriptionError,
   PostAddUserUnauthorized,
   PostEditUserUnauthorized,
   ShowAddUserUnauthorized,
@@ -421,13 +423,39 @@ case class UserController @Inject() (
     )
   }
 
-  val validateCGUForm: Form[(Option[String], Boolean, Boolean)] = Form(
+  private val validateCGUForm: Form[(Option[String], Boolean, Boolean)] = Form(
     tuple(
       "redirect" -> optional(text),
       "newsletter" -> boolean,
       "validate" -> boolean
     )
   )
+
+  private val subscribeNewsletterForm: Form[Boolean] = Form(
+    "newsletter" -> boolean
+  )
+
+  def subscribeNewsletter: Action[AnyContent] = loginAction { implicit request =>
+    subscribeNewsletterForm.bindFromRequest.fold(
+      { formWithErrors =>
+        eventService.log(
+          NewsletterSubscriptionError,
+          "Erreur de formulaire dans la souscription à la newletter"
+        )
+        BadRequest(
+          s"Formulaire invalide, prévenez l'administrateur du service. ${formWithErrors.errors.mkString(", ")}"
+        )
+      }, { newsletter =>
+        if (newsletter) {
+          // Note: CGU are not used anymore
+          userService.acceptCGU(request.currentUser.id, newsletter)
+        }
+        eventService.log(NewsletterSubscribed, "Newletter subscribed")
+        Redirect(routes.ApplicationController.myApplications())
+          .flashing("success" -> "Merci d’avoir terminé votre inscription")
+      }
+    )
+  }
 
   def add(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
     withGroup(groupId) { group: UserGroup =>

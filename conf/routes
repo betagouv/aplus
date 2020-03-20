@@ -63,6 +63,9 @@ GET     /events                     controllers.UserController.allEvents
 GET     /cgu                      controllers.UserController.showCGU
 POST    /cgu                      controllers.UserController.validateCGU
 
+# Newsletter
+POST    /newsletter                      controllers.UserController.subscribeNewsletter
+
 # Areas
 GET     /territoires                            controllers.AreaController.all
 GET     /territoires/deploiement                controllers.AreaController.deploymentDashboard

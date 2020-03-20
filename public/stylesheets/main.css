@@ -499,6 +499,17 @@ a {
     width: 440px;
 }
 
+.aplus-colored-circle {
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    padding: 10px;
+    background: #29B6F6;
+    color: #FFFFFF;
+    text-align: center;
+    font-size: 24px;
+}
+
 .margin-top--10px {
     margin-top: 10px;
 }
@@ -511,6 +522,10 @@ a {
     min-height: calc(100% - 120px);
 }
 
+.--max-width-184px {
+    max-width: 184px;
+}
+
 .--max-width-960px {
     max-width: 960px;
 }
@@ -520,8 +535,26 @@ a {
     align-items: center !important;
 }
 
+.justify-content-center {
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+}
+
+.width-unset {
+    width: unset;
+}
+
+.flex-grow-1 {
+    flex-grow: 1;
+}
+
 .--margin-right-20px {
     margin-right: 20px;
+}
+
+.--font-size-16px {
+    font-size: 16px;
 }
 
 .usefulness__icon {
