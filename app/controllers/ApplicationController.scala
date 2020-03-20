@@ -149,8 +149,7 @@ case class ApplicationController @Inject() (
     fetchGroupsWithInstructors(request.currentArea.id, request.currentUser).map {
       case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
         val groupsOfAreaWithInstructorWithOrganisationSet = groupsOfAreaWithInstructor.filter({
-          userGroup =>
-            userGroup.organisationSetOrDeducted.nonEmpty
+          userGroup => userGroup.organisationSetOrDeducted.nonEmpty
         })
         val categories = organisationService.categories
         Ok(
@@ -585,17 +584,13 @@ case class ApplicationController @Inject() (
         users.filter(user => application.invitedUsers.keys.toList.contains[UUID](user.id))
       val creatorUserGroupNames = creatorUser.toList
         .flatMap(_.groupIds)
-        .flatMap { groupId: UUID =>
-          groups.filter(group => group.id == groupId)
-        }
+        .flatMap { groupId: UUID => groups.filter(group => group.id == groupId) }
         .map(_.name)
         .mkString(",")
       val invitedUserGroupNames = invitedUsers
         .flatMap(_.groupIds)
         .distinct
-        .flatMap { groupId: UUID =>
-          groups.filter(group => group.id == groupId)
-        }
+        .flatMap { groupId: UUID => groups.filter(group => group.id == groupId) }
         .map(_.name)
         .mkString(",")
 
@@ -749,8 +744,7 @@ case class ApplicationController @Inject() (
                   s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert"
                 )
                 Future(Ok.sendPath(Paths.get(s"$filesPath/ans_$answerId-$filename"), true, {
-                  _: Path =>
-                    filename
+                  _: Path => filename
                 }))
               case _ =>
                 eventService.log(
@@ -764,8 +758,7 @@ case class ApplicationController @Inject() (
               eventService
                 .log(FileOpened, s"Le fichier de la demande $applicationId a été ouvert")
               Future(Ok.sendPath(Paths.get(s"$filesPath/app_$applicationId-$filename"), true, {
-                _: Path =>
-                  filename
+                _: Path => filename
               }))
             } else {
               eventService.log(

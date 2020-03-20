@@ -29,9 +29,7 @@ object Operators {
           eventService
             .log(UserGroupNotFound, description = "Tentative d'accès à un groupe inexistant.")
           NotFound("Groupe inexistant.")
-        })({ group: UserGroup =>
-          payload(group)
-        })
+        })({ group: UserGroup => payload(group) })
 
     def asAdminOfGroupZone(group: UserGroup)(event: () => (EventType, String))(
         payload: () => Result
@@ -68,9 +66,7 @@ object Operators {
           eventService
             .log(UserNotFound, description = "Tentative d'accès à un utilisateur inexistant.")
           NotFound("Utilisateur inexistant.")
-        })({ user: User =>
-          payload(user)
-        })
+        })({ user: User => payload(user) })
 
     def asUserWithAuthorization(authorizationCheck: Authorization.Check)(
         event: () => (EventType, String)
@@ -182,8 +178,7 @@ object Operators {
         )
         .flatMap(
           _.fold(error => manageApplicationError(applicationId, error), {
-            application: Application =>
-              payload(application)
+            application: Application => payload(application)
           })
         )
   }
