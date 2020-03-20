@@ -104,9 +104,7 @@ case class GroupController @Inject() (
   }
 
   def addGroup(): Action[AnyContent] = loginAction { implicit request =>
-    asAdmin { () =>
-      AddGroupUnauthorized -> s"Accès non autorisé pour ajouter un groupe"
-    } { () =>
+    asAdmin(() => AddGroupUnauthorized -> s"Accès non autorisé pour ajouter un groupe") { () =>
       addGroupForm(Time.timeZoneParis).bindFromRequest.fold(
         formWithErrors => {
           eventService
@@ -137,41 +135,42 @@ case class GroupController @Inject() (
   }
 
   def editGroupPost(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
-    asAdmin { () =>
-      EditGroupUnauthorized -> s"Accès non autorisé à l'edition de ce groupe"
-    } { () =>
-      withGroup(groupId) { currentGroup: UserGroup =>
-        if (not(currentGroup.canHaveUsersAddedBy(request.currentUser))) {
-          eventService.log(
-            AddUserToGroupUnauthorized,
-            s"L'utilisateur ${request.currentUser.id} n'est pas authorisé à ajouter des utilisateurs au groupe ${currentGroup.id}."
-          )
-          Unauthorized("Vous n'êtes pas authorisé à ajouter des utilisateurs à ce groupe.")
-        } else {
-          addGroupForm(Time.timeZoneParis).bindFromRequest.fold(
-            formWithError => {
-              eventService.log(
-                EditUserGroupError,
-                s"Essai d'edition d'un groupe avec des erreurs de validation"
-              )
-              Redirect(routes.GroupController.editGroup(groupId)).flashing(
-                "error" -> s"Impossible de modifier le groupe (erreur de formulaire) : ${formWithError.errors.mkString}"
-              )
-            },
-            group =>
-              if (groupService.edit(group.copy(id = groupId))) {
-                eventService.log(UserGroupEdited, s"Groupe édité")
-                Redirect(routes.GroupController.editGroup(groupId))
-                  .flashing("success" -> "Groupe modifié")
-              } else {
-                eventService
-                  .log(EditUserGroupError, s"Impossible de modifier le groupe dans la BDD")
-                Redirect(routes.GroupController.editGroup(groupId))
-                  .flashing("error" -> "Impossible de modifier le groupe: erreur en base de donnée")
-              }
-          )
+    asAdmin(() => EditGroupUnauthorized -> s"Accès non autorisé à l'edition de ce groupe") {
+      () =>
+        withGroup(groupId) { currentGroup: UserGroup =>
+          if (not(currentGroup.canHaveUsersAddedBy(request.currentUser))) {
+            eventService.log(
+              AddUserToGroupUnauthorized,
+              s"L'utilisateur ${request.currentUser.id} n'est pas authorisé à ajouter des utilisateurs au groupe ${currentGroup.id}."
+            )
+            Unauthorized("Vous n'êtes pas authorisé à ajouter des utilisateurs à ce groupe.")
+          } else {
+            addGroupForm(Time.timeZoneParis).bindFromRequest.fold(
+              formWithError => {
+                eventService.log(
+                  EditUserGroupError,
+                  s"Essai d'edition d'un groupe avec des erreurs de validation"
+                )
+                Redirect(routes.GroupController.editGroup(groupId)).flashing(
+                  "error" -> s"Impossible de modifier le groupe (erreur de formulaire) : ${formWithError.errors.mkString}"
+                )
+              },
+              group =>
+                if (groupService.edit(group.copy(id = groupId))) {
+                  eventService.log(UserGroupEdited, s"Groupe édité")
+                  Redirect(routes.GroupController.editGroup(groupId))
+                    .flashing("success" -> "Groupe modifié")
+                } else {
+                  eventService
+                    .log(EditUserGroupError, s"Impossible de modifier le groupe dans la BDD")
+                  Redirect(routes.GroupController.editGroup(groupId))
+                    .flashing(
+                      "error" -> "Impossible de modifier le groupe: erreur en base de donnée"
+                    )
+                }
+            )
+          }
         }
-      }
     }
   }
 
