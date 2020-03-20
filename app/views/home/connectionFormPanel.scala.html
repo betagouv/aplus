@@ -1,0 +1,33 @@
+@()(implicit flash: Flash, request: RequestHeader)
+
+<div class="mdl-cell mdl-cell--12-col mdl-cell--middle">
+    <h3 class="mdl-typography--text-uppercase mdl-typography--font-medium">
+        Connectez-vous
+    </h3>
+
+    <form action="@routes.LoginController.login" method="post">
+        @helper.CSRF.formField
+        <label class="aplus-textfield__label" for="email">
+            Saisir votre e-mail professionnel pour recevoir un lien de
+            connexion à Administration+<br />
+        </label>
+        <br />
+        @flash.get("error").map { message =>
+        <div class="notification notification--error mdl-typography--text-prewrap" >@message</div>
+        }
+        <input
+            class="aplus-textfield__input aplus-textfield__input--large"
+            minlength="1"
+            type="text"
+            id="email"
+            name="email"
+        />
+        <br />
+        <br />
+        <button
+            type="submit"
+            class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary margin-top--10px aplus-color--blue mdl-color-text--white"
+            name="id"
+        >Envoyez moi un e-mail de connexion</button>
+    </form>
+</div>
