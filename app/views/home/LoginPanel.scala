@@ -1,15 +1,15 @@
-package views
+package views.home
 
 import models.User
 
-sealed trait HomeInnerPage
+sealed trait LoginPanel
 
-object HomeInnerPage {
-  case object ConnectionForm extends HomeInnerPage
+object LoginPanel {
+  case object ConnectionForm extends LoginPanel
 
   case class EmailSentFeedback(
       user: User,
       tokenExpirationInMinutes: Int,
       successMessage: Option[String]
-  ) extends HomeInnerPage
+  ) extends LoginPanel
 }

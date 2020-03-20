@@ -8,7 +8,7 @@ import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result}
 import scala.concurrent.{ExecutionContext, Future}
 import services.{EventService, NotificationService, TokenService, UserService}
-import views.HomeInnerPage
+import views.home.LoginPanel
 
 @Singleton
 class LoginController @Inject() (
@@ -33,7 +33,7 @@ class LoginController @Inject() (
       .orElse(request.getQueryString("email"))
       .orElse(request.flash.get("email"))
     emailFromRequestOrQueryParamOrFlash.fold {
-      Future(Ok(views.html.home(HomeInnerPage.ConnectionForm)))
+      Future(Ok(views.html.home.page(LoginPanel.ConnectionForm)))
     } { email =>
       userService
         .byEmail(email)
@@ -77,8 +77,8 @@ class LoginController @Inject() (
                   None
               )
             Ok(
-              views.html.home(
-                HomeInnerPage.EmailSentFeedback(user, tokenExpirationInMinutes, successMessage)
+              views.html.home.page(
+                LoginPanel.EmailSentFeedback(user, tokenExpirationInMinutes, successMessage)
               )
             )
           }
