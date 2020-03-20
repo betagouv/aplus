@@ -1,9 +1,9 @@
 @import models._
 @import java.util.UUID
-@(user: User)(areas: Seq[Area], areasWithLoginByKey: Seq[UUID], userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(user: User, currentUserRights: Authorization.UserRights)(areas: Seq[Area], areasWithLoginByKey: Seq[UUID], userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
-@main(user)(s"Gestion des territoires"){
+@main(user, currentUserRights)(s"Gestion des territoires"){
 
 }{
     <div class="mdl-cell mdl-cell--12-col pem-container mdl-grid">
@@ -47,4 +47,5 @@
         </table>
         }
     </div>
+}{
 }

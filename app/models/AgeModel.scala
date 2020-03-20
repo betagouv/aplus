@@ -1,29 +1,32 @@
 package models
 
-import helper.Time
-import org.joda.time.{DateTime, Days, Period}
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit.{DAYS, HOURS, MINUTES, MONTHS, WEEKS, YEARS}
 
 trait AgeModel {
-  val creationDate: DateTime
+  val creationDate: ZonedDateTime
 
-  lazy val ageInDays = Days.daysBetween(creationDate, DateTime.now(Time.dateTimeZone)).getDays
-  lazy val age = new Period(creationDate, DateTime.now(Time.dateTimeZone))
+  def ageInMinutes: Int = MINUTES.between(creationDate, ZonedDateTime.now()).toInt
+  def ageInHours: Int = HOURS.between(creationDate, ZonedDateTime.now()).toInt
+  def ageInDays: Int = DAYS.between(creationDate, ZonedDateTime.now()).toInt
+  def ageInWeeks: Int = WEEKS.between(creationDate, ZonedDateTime.now()).toInt
+  def ageInMonths: Int = MONTHS.between(creationDate, ZonedDateTime.now()).toInt
+  def ageInYears: Int = YEARS.between(creationDate, ZonedDateTime.now()).toInt
 
-  lazy val ageString = {
-    if (age.getYears > 0) {
-      s"${age.getYears} années"
-    } else if (age.getMonths > 0) {
-      s"${age.getMonths} mois"
-    } else if (age.getWeeks > 0) {
-      s"${age.getWeeks} semaines"
-    } else if (age.getDays > 0) {
-      s"${age.getDays} jours"
-    } else if (age.getHours > 0) {
-      s"${age.getHours} heures"
-    } else if (age.getMinutes > 0) {
-      s"${age.getMinutes} minutes"
+  def ageString =
+    if (ageInYears > 0) {
+      s"$ageInYears années"
+    } else if (ageInMonths > 0) {
+      s"$ageInMonths mois"
+    } else if (ageInWeeks > 0) {
+      s"$ageInWeeks semaines"
+    } else if (ageInDays > 0) {
+      s"$ageInDays jours"
+    } else if (ageInHours > 0) {
+      s"$ageInHours heures"
+    } else if (ageInMinutes > 0) {
+      s"$ageInMinutes minutes"
     } else {
       s"quelques secondes"
     }
-  }
 }

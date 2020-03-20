@@ -1,5 +1,6 @@
-@(user: User)(myOpenApplications: Seq[Application], myClosedApplications: Seq[Application], applicationsFromTheArea: Seq[Application] = List())(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
-@import java.util.Locale
+@import _root_.helper.Time
+
+@(user: User, currentUserRights: Authorization.UserRights)(myOpenApplications: Seq[Application], myClosedApplications: Seq[Application], applicationsFromTheArea: Seq[Application] = List())(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 @display(applications: Seq[Application]) = {
     <div class="mdl-cell mdl-cell--12-col pem-container">
@@ -22,7 +23,7 @@
                             <i class="icon material-icons icon--light">info</i>
                         </div>
                         <div class="mdl-tooltip" data-mdl-for="date-@application.id">
-                        @application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))
+                        @{Time.formatPatternFr(application.creationDate, "dd MMM YYYY - HH:mm")}
                         </div>
                     </td>
                     <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size hidden--small-screen">
@@ -32,7 +33,7 @@
                         </div>
                         <div class="mdl-tooltip" for="answers-@application.id">
                         @for(answer <- application.answers) {
-                            @answer.creationDate.toString("dd MMM YYYY", new Locale("fr")) : @answer.creatorUserName.split("\\(").head<br>
+                            @{Time.formatPatternFr(answer.creationDate, "dd MMM YYYY")} : @answer.creatorUserName.split("\\(").head<br>
                             }
                         </div>
                     </td>
@@ -47,7 +48,7 @@
     </div>
 }
 
-@main(user)(s"Mes demandes")  {
+@main(user, currentUserRights)(s"Mes demandes")  {
 <style>
     .pem-table {
         width: 100%;
@@ -132,4 +133,5 @@
     }
 
     </div>
+}{
 }

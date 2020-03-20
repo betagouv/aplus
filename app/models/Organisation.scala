@@ -47,6 +47,8 @@ object Organisation {
   def byId(id: Id): Option[Organisation] =
     all.find(org => (org.id: Id) == (id: Id))
 
+  val franceServicesId = Organisation.Id("MFS")
+
   val all = List(
     Organisation("ANAH", "Agence nationale de l'habitat"),
     Organisation("ANTS", "Agence nationale des titres sécurisés"),
@@ -67,7 +69,7 @@ object Organisation {
     Organisation("La Poste", "La Poste"),
     Organisation("Mairie", "Mairie"), //Ville
     Organisation("MDPH", "Maison départementale des personnes handicapées"),
-    Organisation(Organisation.Id("MFS"), "FS", "France Services"),
+    Organisation(franceServicesId, "FS", "France Services"),
     Organisation("Mission locale", "Mission locale"), //Ville
     Organisation("MSA", "Mutualité sociale agricole"),
     Organisation("MSAP", "Maison de services au public"), // Ville
@@ -84,4 +86,15 @@ object Organisation {
       defaultOrganisations: Seq[Organisation],
       subjects: Seq[Subject]
   )
+
+  def deductedFromName(name: String): Option[Organisation] = {
+    val lowerCaseName = name.toLowerCase().stripSpecialChars
+    // Hack: `.reverse` the orgs so we can match first MSAP before MSA and
+    // Sous-Préf before Préf
+    all.reverse
+      .find { organisation =>
+        lowerCaseName.contains(organisation.shortName.toLowerCase().stripSpecialChars) ||
+        lowerCaseName.contains(organisation.name.toLowerCase().stripSpecialChars)
+      }
+  }
 }

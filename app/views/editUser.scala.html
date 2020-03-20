@@ -1,16 +1,16 @@
 @import models._
 @import _root_.helper.MDLForms._
-@import _root_.helper.UUIDHelper._
-@import _root_.helper.BooleanHelper
 @import java.util.UUID
-@(currentUser: User)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@import serializers.Keys
+@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
-@main(currentUser)(s"Utilisateur ${form("name").value.getOrElse("")}") {
+@main(currentUser, currentUserRights)(s"Utilisateur ${form("name").value.getOrElse("")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
     <script src='@routes.Assets.versioned("javascripts/dialog.js")'></script>
     @webJarsUtil.locate("slimselect.min.css").css()
     @webJarsUtil.locate("slimselect.min.js").script()
 }{
+@defining(form.value.map(user => Authorization.canEditOtherUser(user)(currentUserRights)).getOrElse(false)) { canEditUser =>
     @helper.form(action = routes.UserController.editUserPost(userId), 'class -> "mdl-grid mdl-cell mdl-cell--12-col") {
         @for(user <- form.value) {
             @for((area, group) <- user.areas.headOption.flatMap(Area.fromId).zip(user.groupIds.headOption.flatMap(groupId => userGroups.find(_.id == groupId)))) {
@@ -20,11 +20,13 @@
                     Utilisateur : @form("name").value.getOrElse("") </span>
             }
         }
-    <div class="mdl-cell mdl-cell--12-col">
-        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
-            Sauvegarder
-        </button>
-    </div>
+    @if(canEditUser) {
+      <div class="mdl-cell mdl-cell--12-col">
+          <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
+              Sauvegarder
+          </button>
+      </div>
+    }
     <div class="mdl-cell mdl-cell--6-col-desktop mdl-cell--12-col">
     @helper.CSRF.formField
 
@@ -35,36 +37,96 @@
         <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
     }
     @helper.input(form("name"), 'label -> "Nom et prénom") { (id, name, value, args) =>
-    <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+        <input class="mdl-textfield__input"
+               type="text"
+               name="@name"
+               id="@id"
+               value="@value"
+               @if(!canEditUser) { readonly }
+               @toHtmlArgs(args)>
     } <br>
     @helper.input(form("qualite"), 'label -> "Qualité") { (id, name, value, args) =>
-    <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+        <input class="mdl-textfield__input"
+               type="text"
+               name="@name"
+               id="@id"
+               value="@value"
+               @if(!canEditUser) { readonly }
+               @toHtmlArgs(args)>
     } <br>
     @helper.input(form("phone-number"), 'label -> "Numéro de téléphone") { (id, name, value, args) =>
-       <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+        <input class="mdl-textfield__input"
+               type="text"
+               name="@name"
+               id="@id"
+               value="@value"
+               @if(!canEditUser) { readonly }
+               @toHtmlArgs(args)>
      } <br>
     @helper.input(form("communeCode"), 'label -> "Code INSEE commune") { (id, name, value, args) =>
     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) disabled>
     } <br>
     @helper.input(form("email"), 'label -> "Email") { (id, name, value, args) =>
-    <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+        <input class="mdl-textfield__input"
+               type="text"
+               name="@name"
+               id="@id"
+               value="@value"
+               @if(!canEditUser) { readonly }
+               @toHtmlArgs(args)>
     }
-    @helper.checkbox(form("instructor"), 'type -> "checkbox", 'label -> "Instructeur", 'class -> "mdl-checkbox__input")
-    @helper.checkbox(form("helper"), 'type -> "checkbox", 'label -> "Aidant", 'class -> "mdl-checkbox__input")
-    @helper.checkbox(form("adminGroup"), 'type -> "checkbox", 'label -> "Responsable de ces groupes", 'class -> "mdl-checkbox__input")
-    @helper.checkbox(form("disabled"), 'type -> "checkbox", 'label -> "Désactiver l'utilisateur", 'class -> "mdl-checkbox__input")
+    @helper.checkbox(form(Keys.User.sharedAccount), List(
+        Some('type -> "checkbox"),
+        Some('label -> "Compte Partagé"),
+        Some('class -> "mdl-checkbox__input"),
+        if (canEditUser) None else Some('disabled -> "")
+    ).flatten: _*)
+    @helper.checkbox(form("instructor"), List(
+        Some('type -> "checkbox"),
+        Some('label -> "Instructeur"),
+        Some('class -> "mdl-checkbox__input"),
+        if (canEditUser) None else Some('disabled -> "")
+    ).flatten:_*)
+    @helper.checkbox(form("helper"), List(
+        Some('type -> "checkbox"),
+        Some('label -> "Aidant"),
+        Some('class -> "mdl-checkbox__input"),
+        if (canEditUser) None else Some('disabled -> "")
+    ).flatten:_*)
+    @helper.checkbox(form("adminGroup"), List(
+        Some('type -> "checkbox"),
+        Some('label -> "Responsable de ces groupes"),
+        Some('class -> "mdl-checkbox__input"),
+        if (canEditUser) None else Some('disabled -> "")
+    ).flatten:_*)
+    @helper.checkbox(form("disabled"), List(
+        Some('type -> "checkbox"),
+        Some('label -> "Désactiver l'utilisateur"),
+        Some('class -> "mdl-checkbox__input"),
+        if (canEditUser) None else Some('disabled -> "")
+    ).flatten:_*)
 
-    @if(unused) {
+    @if(unused && canEditUser) {
       <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="showDialog(document.querySelector('#dialog-delete-user'))">Supprimer cet utilisateur inutilisé.</button>
       <br>
     }
     <br>
-    <b style="color: red">@helper.checkbox(form("admin"), 'type -> "checkbox", 'label -> "Admin de la zone", 'class -> "mdl-checkbox__input")</b>
+    <b style="color: red">@helper.checkbox(form("admin"), List(
+        Some('type -> "checkbox"),
+        Some('label -> "Admin de la zone"),
+        Some('class -> "mdl-checkbox__input"),
+        if (canEditUser) None else Some('disabled -> "")
+      ).flatten:_*)
+    </b>
   </div>
   <div class="mdl-grid mdl-cell--6-col-desktop mdl-cell--12-col">
       <div class="mdl-cell mdl-cell--12-col-desktop mdl-cell--12-col">
           <b class="mdl-cell mdl-cell--12-col">Sélectionner des territoires</b>
-          <select id="area-ids" name="areas[]" multiple>
+          <select id="area-ids"
+                  name="areas[]"
+                  class="use-slimselect"
+                  @if(!canEditUser) { disabled }
+                  multiple>
               @for(areaId <- currentUser.areas) {
                     <option value="@areaId"
                         @if(form.data.values.toList.contains(areaId.toString)){ selected }
@@ -72,7 +134,10 @@
               }
           </select>
           <b class="mdl-cell mdl-cell--12-col">Sélectionner les groupes</b>
-          <select id="multiple" name="groupIds[]" multiple>
+          <select name="groupIds[]"
+                  class="use-slimselect"
+                  @if(!canEditUser) { disabled }
+                  multiple>
             @for(area <- currentUser.areas.flatMap(Area.fromId)) {
                 <optgroup label="@{area}">
                     @for(userGroup <- userGroups.filter(group => group.areaIds.contains(area.id))) {
@@ -83,16 +148,24 @@
                 </optgroup>
             }
           </select>
-          <script>
-            new SlimSelect({ select: '#area-ids' });
-            new SlimSelect({ select: '#multiple' });
-          </script>
+          <b class="mdl-cell mdl-cell--12-col">Observateur des organisations:</b>
+          <select name="observableOrganisationIds[]"
+                  class="use-slimselect"
+                  @if(!canEditUser) { disabled }
+                  multiple>
+            @for(organisation <- Organisation.all) {
+                <option value="@{organisation.id.id}"
+                    @if(form.value.map(_.observableOrganisationIds.contains[Organisation.Id](organisation.id)).getOrElse(false)){ selected }
+                >@{organisation.shortName} - @{organisation.name}</option>
+            }
+          </select>
           @if(form("areas").hasErrors) {
             <p style="color: red; font-weight: bold;">@form("areas").errors.map(_.format).mkString(", ")</p>
           }
       </div>
   </div>
 
+    @if(canEditUser) {
     <div class="mdl-cell mdl-cell--12-col">
         <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
             Sauvegarder
@@ -139,4 +212,8 @@
             document.location = '@routes.UserController.deleteUnusedUserById(userId)';
         }
     </script>
+    }
+}
+}{
+    <script src="@routes.Assets.versioned("javascripts/main-page-bottom.js")"></script>
 }

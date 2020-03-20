@@ -1,5 +1,6 @@
 package serializers
 
+import java.time.ZonedDateTime
 import java.util.UUID
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
@@ -7,7 +8,6 @@ import models.formModels.{UserFormData, UserGroupFormData}
 import helper.{PlayFormHelper, UUIDHelper}
 import helper.StringHelper._
 import models.{Area, Organisation, User, UserGroup}
-import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data.Mapping
 
@@ -16,7 +16,7 @@ import scala.io.Source
 object UserAndGroupCsvSerializer {
 
   case class Header(key: String, prefixes: List[String]) {
-    val lowerPrefixes = prefixes.map(_.toLowerCase())
+    val lowerPrefixes = prefixes.map(_.toLowerCase().stripSpecialChars)
   }
 
   val USER_NAME = Header("user.name", List("Nom", "PRENOM NOM"))
@@ -28,6 +28,7 @@ object UserAndGroupCsvSerializer {
   val USER_GROUP_MANAGER = Header("user.admin-group", List("Responsable"))
   val USER_QUALITY = Header("user.quality", List("Qualité"))
   val USER_PHONE_NUMBER = Header("user.phone-number", List("Numéro de téléphone", "téléphone"))
+  val USER_ACCOUNT_IS_SHARED = Header("user." + Keys.User.sharedAccount, List("Compte Partagé"))
 
   val GROUP_AREAS_IDS = Header("group.area-ids", List("Territoire", "DEPARTEMENTS"))
   val GROUP_ORGANISATION = Header("group.organisation", List("Organisation"))
@@ -42,7 +43,8 @@ object UserAndGroupCsvSerializer {
     USER_NAME,
     USER_EMAIL,
     USER_INSTRUCTOR,
-    USER_GROUP_MANAGER
+    USER_GROUP_MANAGER,
+    USER_ACCOUNT_IS_SHARED
   )
   val USER_HEADER = USER_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
 
@@ -63,33 +65,12 @@ object UserAndGroupCsvSerializer {
     USER_EMAIL,
     USER_INSTRUCTOR,
     USER_GROUP_MANAGER,
-    USER_QUALITY
+    USER_QUALITY,
+    USER_ACCOUNT_IS_SHARED
   )
 
   private val expectedGroupHeaders: List[Header] =
     List(GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL, GROUP_AREAS_IDS)
-
-  private def filterAlreadyExistingUsersAndGenerateErrors(
-      groups: List[UserGroupFormData]
-  ): (List[String], List[UserGroupFormData]) = {
-    def filterAlreadyExistingUsersAndGenerateErrors(
-        accu: (List[String], List[UserGroupFormData]),
-        group: UserGroupFormData
-    ): (List[String], List[UserGroupFormData]) = {
-      val (newUsers, existingUsers) = group.users.partition(_.alreadyExistingUser.isEmpty)
-      val errors = existingUsers.map { (existingUser: UserFormData) =>
-        s"${existingUser.user.name} (${existingUser.user.email}) existe déjà."
-      }
-      val newGroup = group.copy(users = newUsers)
-      (errors ++ accu._1) -> (newGroup :: accu._2)
-    }
-
-    val (newErrors, newGroups) =
-      groups.foldLeft((List.empty[String], List.empty[UserGroupFormData])) {
-        filterAlreadyExistingUsersAndGenerateErrors
-      }
-    newErrors.reverse -> newGroups.reverse
-  }
 
   private def userGroupDataListToUserGroupData(
       userGroupFormData: List[UserGroupFormData]
@@ -138,7 +119,7 @@ object UserAndGroupCsvSerializer {
     * Returns a Right[(List[String], List[UserGroupFormData]))]
     * where List[String] is a list of errors on the lines.
     */
-  def csvLinesToUserGroupData(separator: Char, defaultAreas: Seq[Area], currentDate: DateTime)(
+  def csvLinesToUserGroupData(separator: Char, defaultAreas: Seq[Area], currentDate: ZonedDateTime)(
       csvLines: String
   ): Either[String, (List[String], List[UserGroupFormData])] = {
     def partition(
@@ -156,7 +137,12 @@ object UserAndGroupCsvSerializer {
               .convertAreasNameToAreaUUID(defaultAreas)
               .convertBooleanValue(UserAndGroupCsvSerializer.USER_GROUP_MANAGER.key, "Responsable")
               .convertBooleanValue(UserAndGroupCsvSerializer.USER_INSTRUCTOR.key, "Instructeur")
+              .convertBooleanValue(
+                UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.key,
+                "Compte Partagé"
+              )
               .includeAreasNameInGroupName
+              .matchOrganisationId
               .fromCsvFieldNameToHtmlFieldName
               .includeFirstnameInLastName()
               .setDefaultQualityIfNeeded()
@@ -185,7 +171,7 @@ object UserAndGroupCsvSerializer {
         values
           .map({
             case (key, value) =>
-              val lowerKey = key.trim.toLowerCase
+              val lowerKey = key.trim.toLowerCase.stripSpecialChars
               expectedHeaders
                 .find(expectedHeader => expectedHeader.lowerPrefixes.exists(lowerKey.startsWith))
                 .map(expectedHeader => expectedHeader.key -> value)
@@ -234,7 +220,9 @@ object UserAndGroupCsvSerializer {
         .fold {
           csvMap
         } { value =>
-          csvMap + (key -> (value.toLowerCase().contains(trueValue.toLowerCase())).toString)
+          csvMap + (key -> (value.toLowerCase.stripSpecialChars
+            .contains(trueValue.toLowerCase.stripSpecialChars))
+            .toString)
         }
 
     def includeAreasNameInGroupName(): CSVMap = {
@@ -249,6 +237,19 @@ object UserAndGroupCsvSerializer {
           csvMap + (UserAndGroupCsvSerializer.GROUP_NAME.key -> s"$initialGroupName - ${areaNames.mkString("/")}")
         case _ =>
           csvMap
+      }
+    }
+
+    def matchOrganisationId: CSVMap = {
+      val optionOrganisation = csvMap
+        .get(GROUP_ORGANISATION.key)
+        .orElse(csvMap.get(GROUP_NAME.key))
+        .flatMap(Organisation.deductedFromName)
+      optionOrganisation match {
+        case Some(organisation) =>
+          csvMap + (GROUP_ORGANISATION.key -> organisation.id.id)
+        case None =>
+          csvMap - GROUP_ORGANISATION.key
       }
     }
 
@@ -294,7 +295,7 @@ object UserAndGroupCsvSerializer {
 
     def toUserGroupData(
         lineNumber: LineNumber,
-        currentDate: DateTime
+        currentDate: ZonedDateTime
     ): Either[String, UserGroupFormData] =
       groupCSVMapping(currentDate)
         .bind(csvMap)
@@ -322,7 +323,7 @@ object UserAndGroupCsvSerializer {
         )
   }
 
-  private def userCSVMapping(currentDate: DateTime): Mapping[User] = single(
+  private def userCSVMapping(currentDate: ZonedDateTime): Mapping[User] = single(
     "user" -> mapping(
       "id" -> optional(uuid).transform[UUID]({
         case None     => UUID.randomUUID()
@@ -344,13 +345,16 @@ object UserAndGroupCsvSerializer {
       "disabled" -> ignored(false),
       "expert" -> ignored(false),
       "groupIds" -> default(list(uuid), Nil),
-      "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
-      "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-      "phone-number" -> optional(text)
+      "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
+      "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
+      "phone-number" -> optional(text),
+      // TODO: put in CSV?
+      "observableOrganisationIds" -> list(of[Organisation.Id]),
+      Keys.User.sharedAccount -> boolean
     )(User.apply)(User.unapply)
   )
 
-  private def groupCSVMapping(currentDate: DateTime): Mapping[UserGroup] = single(
+  private def groupCSVMapping(currentDate: ZonedDateTime): Mapping[UserGroup] = single(
     "group" ->
       mapping(
         "id" -> optional(uuid).transform[UUID]({

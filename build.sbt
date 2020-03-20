@@ -7,6 +7,15 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.12.8"
 
+// https://docs.scala-lang.org/overviews/compiler-options/index.html
+scalacOptions ++= Seq(
+  "-deprecation",
+  "-unchecked",
+  "-Xlint:adapted-args,nullary-unit,inaccessible,nullary-override,infer-any,missing-interpolator,private-shadow,type-parameter-shadow,poly-implicit-overload,option-implicit,package-object-classes,unused",
+  "-Ywarn-dead-code",
+  "-Ywarn-numeric-widen"
+)
+
 //libraryDependencies += filters
 
 libraryDependencies ++= Seq(
@@ -22,17 +31,17 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.2.10",
+  "org.postgresql" % "postgresql" % "42.2.11",
   "org.playframework.anorm" %% "anorm" % "2.6.5",
   "com.typesafe.play" %% "play-mailer" % "7.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "com.typesafe.play" %% "play-mailer-guice" % "7.0.1",
-  "com.typesafe.play" %% "play-json-joda" % "2.8.1",
   "net.jcazevedo" %% "moultingyaml" % "0.4.0",
   "com.google.guava" % "guava" % "28.1-jre",
   "com.github.tototoshi" %% "scala-csv" % "1.3.6",
   ws
 )
+
 // UI
 libraryDependencies ++= Seq(
   "org.webjars" %% "webjars-play" % "2.6.3",

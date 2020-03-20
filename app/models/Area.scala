@@ -12,18 +12,16 @@ case class Area(id: UUID, name: String, inseeCode: String) {
 object Area {
 
   def fromId(id: UUID): Option[Area] =
-    if (id == allArea.id) {
+    if ((id: UUID) == (allArea.id: UUID)) {
       Some(allArea)
     } else {
-      all.find(_.id == id)
+      all.find(area => (area.id: UUID) == (id: UUID))
     }
 
   def searchFromName(name: String): Option[Area] = {
-    val area = name.stripSpecialChars
-    Area.all.find(a => a.name.stripSpecialChars == area)
+    val strippedName = name.stripSpecialChars
+    Area.all.find(area => (area.name.stripSpecialChars: String) == (strippedName: String))
   }
-
-  def fromInseeCode(inseeCode: String): Option[Area] = all.find(area => inseeCode == area.inseeCode)
 
   def apply(id: String, name: String, inseeCode: String): Area =
     Area(UUIDHelper.namedFrom(id), name, inseeCode)
@@ -135,4 +133,10 @@ object Area {
   val allArea = Area(UUIDHelper.namedFrom("all"), "tous les territoires", "0")
 
   val notApplicable = Area("notApplicable", "NotApplicable", "-1")
+
+  private lazy val inseeCodeToAreaMap: Map[String, Area] =
+    all.map(area => (area.inseeCode, area)).toMap
+
+  def fromInseeCode(inseeCode: String): Option[Area] = inseeCodeToAreaMap.get(inseeCode)
+
 }

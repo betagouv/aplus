@@ -58,7 +58,7 @@
                     <div class="mdl-typography--text-center">
                         <h3>Se connecter à Administration+</h3>
                     </div><br><br>
-                    <form action="@routes.LoginController.login()" method="post">
+                    <form action="@routes.LoginController.login" method="post">
                         @helper.CSRF.formField
                         <label class="aplus-textfield__label" for="email">Saisir votre e-mail professionnel et nominatif :<br>
                             <span class="aplus-textfield__label__example">Ex: prenom.nom@@votre-structure.fr</span>
@@ -76,9 +76,9 @@
                         <div class="mdl-typography--text-center">
                             <h3><i class="material-icons material-icons--36px">mail_outline</i><br>Consultez vos emails</h3>
                         </div>
-                         <p>Nous avons envoyé par e-mail un lien valable @tokenExpirationInMinutes minutes à l'adresse <b>@user.email</b>. Cliquez sur le lien contenu dans l'email pour accéder à Administration+.</p>
+                         <p>Nous avons envoyé par e-mail un lien de connexion valable @tokenExpirationInMinutes minutes à l'adresse <b>@user.email</b>. Cliquez sur le lien contenu dans l'email pour accéder à Administration+.</p>
 
-                        <p><i>Vous n'avez pas reçu d'e-email ? Veuillez consulter vos courriers indésirables ou <a href="@routes.LoginController.login()">renvoyer un autre e-email</a></i><br></p>
+                        <p><i>Vous n'avez pas reçu d'e-email ? Veuillez consulter vos courriers indésirables ou <a href="@routes.LoginController.login">renvoyer un autre e-email</a></i><br></p>
                     }
                     case Right((token,path)) => {
                         <h3>Vous allez accéder automatiquement à Administration+</h3>
@@ -108,16 +108,6 @@
         </div>
     </main>
 </div>
-
-<script>
-    if(/localhost|demo/.test(window.location.hostname)) {
-        document.getElementById("header__ribbon").classList.add("invisible");
-        var elements = document.getElementsByClassName("demo-only");
-        for(var i=0; i < elements.length; i++) {
-            elements[i].classList.remove("invisible");
-        }
-    }
-</script>
     @webJarsUtil.locate("material.min.js").script()
 </body>
 </html>

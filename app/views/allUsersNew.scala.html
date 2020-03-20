@@ -1,8 +1,8 @@
 @import models._
-@(currentUser: User)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], selectedArea: Area, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
-@main(currentUser, maxWidth = false)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
+@main(currentUser, currentUserRights, maxWidth = false)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
     @webJarsUtil.locate("tabulator.min.css").css()
     @webJarsUtil.locate("tabulator.min.js").script()
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
@@ -72,7 +72,7 @@
                 //plain text value
                 var uuid = cell.getRow().getData().id;
                 var url = jsRoutes.controllers.UserController.editUser(uuid).url;
-                return "<a href='"+url+"'><i class='fas fa-user-edit'></i></a>";
+                return "<a href='"+url+"' target=\"_blank\" ><i class='fas fa-user-edit'></i></a>";
             };
 
             var rawFormatter = function(row) {
@@ -113,6 +113,7 @@
                         frozen:true
                     },
                     { title: "Nom et Prénom", field: "name", headerFilter: "input", frozen:true, formatter:"html" },
+                    { title: "Groupes", field: "groups", headerFilter: "input" },
                     { title: "Email", field: "email", headerFilter: "input" },
                     { title: "Qualité", field: "qualite", headerFilter: "input" },
                     {
@@ -174,7 +175,6 @@
                             }
                         ]
                     },
-                    { title: "Groupes", field: "groups", headerFilter: "input" },
                     { title: "Départements", field: "areas", headerFilter: "input" },
                 ]
             });
@@ -219,6 +219,7 @@
                     }
                     </select>
                     <script>
+                            // TODO: use-slimselect class
                             new SlimSelect({ select: '#area-ids' });
                     </script>
                 </div>
@@ -228,4 +229,5 @@
             }
         </div>
     }
+}{
 }

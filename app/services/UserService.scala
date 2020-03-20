@@ -6,14 +6,18 @@ import javax.inject.Inject
 import anorm._
 import models.User
 import play.api.db.Database
-import play.api.libs.json.Json
-import anorm.JodaParameterMetaData._
 import helper.{Hash, Time}
 import org.postgresql.util.PSQLException
 
+import scala.concurrent.Future
+
 @javax.inject.Singleton
-class UserService @Inject() (configuration: play.api.Configuration, db: Database) {
-  import serializers.Anorm._
+class UserService @Inject() (
+    configuration: play.api.Configuration,
+    db: Database,
+    dependencies: ServicesDependencies
+) {
+  import dependencies.databaseExecutionContext
 
   private lazy val cryptoSecret = configuration.underlying.getString("play.http.secret.key ")
 
@@ -36,12 +40,16 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
       "group_ids",
       "cgu_acceptation_date",
       "newsletter_acceptation_date",
-      "phone_number"
+      "phone_number",
+      "observable_organisation_ids",
+      "shared_account"
     )
-    .map(a => a.copy(creationDate = a.creationDate.withZone(Time.dateTimeZone)))
+    .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
 
-  def all = db.withConnection { implicit connection =>
-    SQL("""SELECT * FROM "user"""").as(simpleUser.*)
+  def all: Future[List[User]] = Future {
+    db.withConnection { implicit connection =>
+      SQL("""SELECT *, '' as name, '' as email, '' as qualite FROM "user"""").as(simpleUser.*)
+    }
   }
 
   // Note: this is deprecated, should check via the UserGroup
@@ -57,6 +65,12 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
 
   def byGroupIds(ids: List[UUID]): List[User] = db.withConnection { implicit connection =>
     SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
+  }
+
+  def byGroupIdsAnonymous(ids: List[UUID]): Future[List[User]] = Future {
+    db.withConnection { implicit connection =>
+      SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
+    }
   }
 
   def byId(id: UUID, includeDisabled: Boolean = false): Option[User] = {
@@ -113,7 +127,7 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
           assert(user.areas.nonEmpty)
           success && SQL"""
         INSERT INTO "user" (id, key, name, qualite, email, helper, instructor, admin, areas, creation_date,
-                            commune_code, group_admin, group_ids, expert, phone_number) VALUES (
+                            commune_code, group_admin, group_ids, expert, phone_number, shared_account) VALUES (
            ${user.id}::uuid,
            ${Hash.sha256(s"${user.id}$cryptoSecret")},
            ${user.name},
@@ -128,7 +142,8 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
            ${user.groupAdmin},
            array[${user.groupIds}]::uuid[],
            ${user.expert},
-           ${user.phoneNumber})
+           ${user.phoneNumber},
+           ${user.sharedAccount})
         """.executeUpdate() == 1
         }
       }
@@ -147,6 +162,7 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
     }
 
   def update(user: User) = db.withConnection { implicit connection =>
+    val observableOrganisationIds = user.observableOrganisationIds.map(_.id)
     SQL"""
           UPDATE "user" SET
           name = ${user.name},
@@ -161,14 +177,16 @@ class UserService @Inject() (configuration: play.api.Configuration, db: Database
           group_ids = array[${user.groupIds}]::uuid[],
           expert = ${user.expert},
           phone_number = ${user.phoneNumber},
-          disabled = ${user.disabled}
+          disabled = ${user.disabled},
+          observable_organisation_ids = array[$observableOrganisationIds]::varchar[],
+          shared_account = ${user.sharedAccount}
           WHERE id = ${user.id}::uuid
        """.executeUpdate() == 1
   }
 
   def acceptCGU(userId: UUID, acceptNewsletter: Boolean) = db.withConnection {
     implicit connection =>
-      val now = Time.now()
+      val now = Time.nowParis()
       val resultCGUAcceptation = SQL"""
         UPDATE "user" SET
         cgu_acceptation_date = ${now}

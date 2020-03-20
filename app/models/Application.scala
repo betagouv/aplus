@@ -1,13 +1,13 @@
 package models
 
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit.MINUTES
 import java.util.UUID
 import helper.BooleanHelper.not
 
-import org.joda.time.{DateTime, Hours, Minutes}
-
 case class Application(
     id: UUID,
-    creationDate: DateTime,
+    creationDate: ZonedDateTime,
     creatorUserName: String,
     creatorUserId: UUID,
     subject: String,
@@ -21,7 +21,7 @@ case class Application(
     closed: Boolean = false,
     seenByUserIds: List[UUID] = List(),
     usefulness: Option[String] = None,
-    closedDate: Option[DateTime] = None,
+    closedDate: Option[ZonedDateTime] = None,
     expertInvited: Boolean = false,
     hasSelectedSubject: Boolean = false,
     category: Option[String] = None,
@@ -40,12 +40,24 @@ case class Application(
 
   lazy val searchData = {
     val stripChars = "\"<>'"
-    s"${Area.fromId(area).map(_.name).getOrElse("")} ${creatorUserName.filterNot(
-      stripChars contains _
-    )} ${userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")} ${subject
-      .filterNot(stripChars contains _)} ${description.filterNot(stripChars contains _)} ${invitedUsers.values
-      .map(_.filterNot(stripChars contains _))
-      .mkString(" ")} ${answers.map(_.message.filterNot(stripChars contains _)).mkString(" ")}"
+    val areaName: String = Area.fromId(area).map(_.name).getOrElse("")
+    val creatorName: String = creatorUserName.filterNot(stripChars contains _)
+    val userInfosStripped: String =
+      userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")
+    val subjectStripped: String = subject.filterNot(stripChars contains _)
+    val descriptionStripped: String = description.filterNot(stripChars contains _)
+    val invitedUserNames: String =
+      invitedUsers.values.map(_.filterNot(stripChars contains _)).mkString(" ")
+    val answersStripped: String =
+      answers.map(_.message.filterNot(stripChars contains _)).mkString(" ")
+
+    (areaName + " " +
+      creatorName + " " +
+      userInfosStripped + " " +
+      subjectStripped + " " +
+      descriptionStripped + " " +
+      invitedUserNames + " " +
+      answersStripped)
   }
 
   def longStatus(user: User) = closed match {
@@ -110,13 +122,6 @@ case class Application(
 
   // Security
 
-  def canBeShowedBy(user: User) =
-    user.admin ||
-      ((user.instructor || user.helper) && not(user.expert) && invitedUsers.keys.toList
-        .contains(user.id)) ||
-      (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed) ||
-      creatorUserId == user.id
-
   def fileCanBeShowed(user: User, answer: UUID) =
     answers.find(_.id == answer) match {
       case None => false
@@ -147,6 +152,7 @@ case class Application(
     (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
       creatorUserId == user.id || user.admin
 
+// TODO: remove
   def haveUserInvitedOn(user: User) = invitedUsers.keys.toList.contains(user.id)
 
   // Stats
@@ -158,15 +164,15 @@ case class Application(
 
   lazy val resolutionTimeInMinutes: Option[Int] = if (closed) {
     val lastDate = answers.lastOption.map(_.creationDate).orElse(closedDate).getOrElse(creationDate)
-    Some(Minutes.minutesBetween(creationDate, lastDate).getMinutes())
+    Some(MINUTES.between(creationDate, lastDate).toInt)
   } else {
     None
   }
 
   lazy val firstAgentAnswerDate = answers.find(_.id != creatorUserId).map(_.creationDate)
 
-  lazy val firstAnswerTimeInMinutes = firstAgentAnswerDate.map { firstAnswerDate =>
-    Minutes.minutesBetween(creationDate, firstAnswerDate).getMinutes
+  lazy val firstAnswerTimeInMinutes: Option[Int] = firstAgentAnswerDate.map { firstAnswerDate =>
+    MINUTES.between(creationDate, firstAnswerDate).toInt
   }
 }
 

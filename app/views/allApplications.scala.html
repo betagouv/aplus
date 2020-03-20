@@ -1,7 +1,8 @@
-@(currentUser: User)(applications: Seq[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
-@import java.util.Locale
+@import _root_.helper.Time
 
-@main(currentUser, maxWidth = false)(s"Demandes")  {
+@(currentUser: User, currentUserRights: Authorization.UserRights)(applications: Seq[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+
+@main(currentUser, currentUserRights, maxWidth = false)(s"Demandes")  {
 <style>
     .pem-table {
         width: 100%;
@@ -92,7 +93,7 @@
                     @for((application) <- applications) {
                         <tr @if(currentUser.admin){ onclick="window.document.location='@routes.ApplicationController.show(application.id)';" class="searchable-row" } else { style="cursor: none" } data-search="@application.searchData" >
                         @if(currentUser.admin){ <td class="mdl-data-table__cell--non-numeric" style="font-weight: bold; color: red;">@application.internalId</td>}
-                            <td class="mdl-data-table__cell--non-numeric">@application.creationDate.toString("dd MMM YYYY - HH:mm", new Locale("fr"))</td>
+                            <td class="mdl-data-table__cell--non-numeric">@Time.formatPatternFr(application.creationDate, "dd MMM YYYY - HH:mm")</td>
                             @if(currentUser.admin) {
                                 <td class="mdl-data-table__cell--non-numeric">@Area.fromId(application.area).get.name</td>
                             }
@@ -122,4 +123,5 @@
                 </table>
             </div>
         </div>
+}{
 }

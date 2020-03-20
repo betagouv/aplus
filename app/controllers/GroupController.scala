@@ -1,16 +1,16 @@
 package controllers
 
+import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 
 import actions.{LoginAction, RequestWithUserData}
 import Operators._
 import javax.inject.{Inject, Singleton}
 import models.{Area, Organisation, UserGroup}
-import org.joda.time.{DateTime, DateTimeZone}
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
 import play.api.data.Form
-import play.api.data.Forms.{boolean, email, ignored, list, mapping, of, optional, text, uuid}
+import play.api.data.Forms.{email, ignored, list, mapping, of, optional, text, uuid}
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import play.libs.ws.WSClient
 import services._
@@ -90,7 +90,15 @@ case class GroupController @Inject() (
         val zoneAsJson = areas
           .map({ case (code, name) => s"""{ "code": "$code", "name": "$name" }""" })
           .mkString("[", ",", "]")
-        Ok(views.html.editGroup(request.currentUser)(group, groupUsers, isEmpty, zoneAsJson, Host))
+        Ok(
+          views.html.editGroup(request.currentUser, request.rights)(
+            group,
+            groupUsers,
+            isEmpty,
+            zoneAsJson,
+            Host
+          )
+        )
       }
     }
   }
@@ -99,7 +107,7 @@ case class GroupController @Inject() (
     asAdmin { () =>
       AddGroupUnauthorized -> s"Accès non autorisé pour ajouter un groupe"
     } { () =>
-      addGroupForm(Time.dateTimeZone).bindFromRequest.fold(
+      addGroupForm(Time.timeZoneParis).bindFromRequest.fold(
         formWithErrors => {
           eventService
             .log(AddUserGroupError, s"Essai d'ajout d'un groupe avec des erreurs de validation")
@@ -140,7 +148,7 @@ case class GroupController @Inject() (
           )
           Unauthorized("Vous n'êtes pas authorisé à ajouter des utilisateurs à ce groupe.")
         } else {
-          addGroupForm(Time.dateTimeZone).bindFromRequest.fold(
+          addGroupForm(Time.timeZoneParis).bindFromRequest.fold(
             formWithError => {
               eventService.log(
                 EditUserGroupError,
@@ -167,13 +175,13 @@ case class GroupController @Inject() (
     }
   }
 
-  def addGroupForm[A](timeZone: DateTimeZone)(implicit request: RequestWithUserData[A]) = Form(
+  def addGroupForm[A](timeZone: ZoneId)(implicit request: RequestWithUserData[A]) = Form(
     mapping(
       "id" -> ignored(UUID.randomUUID()),
       "name" -> text(maxLength = 60),
       "description" -> optional(text),
       "insee-code" -> list(text),
-      "creationDate" -> ignored(DateTime.now(timeZone)),
+      "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
       "area-ids" -> list(uuid)
         .verifying(
           "Vous devez sélectionner les territoires sur lequel vous êtes admin",

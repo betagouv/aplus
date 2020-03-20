@@ -2,10 +2,10 @@
 @import _root_.helper.MDLForms._
 @import _root_.helper.UUIDHelper
 @import _root_.helper.BooleanHelper.not
-@import serializers.UserAndGroupCsvSerializer
+@import serializers.{Keys, UserAndGroupCsvSerializer}
 
 @import models.formModels.UserGroupFormData
-@(currentUser: User)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @groupWillNotBeInserted(group: Field) = @{
   group("alreadyExistsOrAllUsersAlreadyExist").value.exists(_ == "true")
@@ -81,6 +81,13 @@
           <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
             @helper.checkbox(user("user")("adminGroup"), 'type -> "checkbox", 'label -> UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
           </td>
+          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
+            @helper.checkbox(
+              user("user")(Keys.User.sharedAccount),
+              'type -> "checkbox",
+              'label -> UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes(0),
+              'class -> "mdl-checkbox__input")
+          </td>
           <td>
             @if(user("alreadyExists").value.exists(_ == "true")) {
               <a target="_blank" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" title="Voir fiche utilisateur" href="@routes.UserController.editUser(user("user")("id").value.flatMap(UUIDHelper.fromString).get)"><i class='fas fa-user-edit'></i></a>
@@ -95,7 +102,7 @@
   </div>
 }
 
-@main(currentUser, maxWidth = false)("Revue de votre import CSV") {
+@main(currentUser, currentUserRights, maxWidth = false)("Revue de votre import CSV") {
   <script src='@routes.Assets.versioned("javascripts/main.js")'></script>
   <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
   @webJarsUtil.locate("slimselect.min.css").css()
@@ -163,21 +170,21 @@
                       @if(groupWillNotBeInserted(group)) { disabled }>
                 <option style="font-weight: bold" value="">Organisme non-référencé</option>
                 @for(organisation <- Organisation.all) {
-                  <option value="@organisation.shortName"
-                    @if(group("group")("organisation").value
-                          .exists(List(organisation.name, organisation.shortName).contains)) {selected}>
+                  <option value="@organisation.id.id"
+                    @if(group("group")("organisation").value.contains[String](organisation.id.id)) {selected}>
                     @organisation.shortName : @organisation.name
                   </option>
                 }
               </select>
               @*** disabled select are never sent in a form, we need a hidden input. ***@
+              @*** Also we put a valid dummy value in the field, to pass validation. ***@
               @if(groupWillNotBeInserted(group)) {
                 @helper.input(group("group")("organisation"), 'class -> "hidden") { (id, name, value, args) =>
                   <input class="mdl-textfield__input input-import-user"
                          type="hidden"
                          name="@name"
                          id="@id"
-                         value="@value"
+                         value="@Organisation.all.head.id.id"
                          @toHtmlArgs(args)>
                 }
               }
@@ -196,6 +203,7 @@
                 }
               </select>
               <script>
+                // TODO: use-slimselect class
                 var select_@groupIndex = new SlimSelect({ select: '#area-ids-@groupIndex' })
                 @if(groupWillNotBeInserted(group)) {
                   select_@{groupIndex}.disable();
@@ -217,4 +225,5 @@
     }
     <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell" onsubmit="Main.disableEventTarget(this)">Importer</button>
   }
+}{
 }

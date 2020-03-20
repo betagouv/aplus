@@ -1,15 +1,14 @@
 @import models._
-@(currentUser: User)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-  @display(users: Seq[User], id: Option[String] = None)(header: Html)(footer: Html = Html("")) = {
+  @display(users: Seq[User], id: Option[String] = None)(header: Html)(footer: Html) = {
       <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white" style="white-space: normal;" @if(id.isDefined){ id="@id.get" } >
         <thead>
           <th class="mdl-data-table__cell--non-numeric" colspan="6" style="font-size: 20px; text-align: left; color: black; font-weight: normal" >
             @header
           </th>
         </thead>
-        @if(footer != Html("")) {
-           <tfoot>
+        <tfoot>
               <tr>
                 <td class="mdl-data-table__cell--non-numeric" colspan="5">
                   @footer
@@ -19,12 +18,11 @@
                 <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
               </tr>
             </tfoot>
-            <tbody>
-        }
+        <tbody>
         @for(user <- users) {
             <tr class="searchable-row td--clear-border">
               @if(currentUser.admin) {
-                  <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size" style="width: 20px"><a href="@routes.UserController.editUser(user.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                  <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size" style="width: 20px"><a href="@routes.UserController.editUser(user.id)" target="_blank"  class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                     <i class="material-icons">edit</i>
                   </a></td>
               }
@@ -67,7 +65,7 @@
         </tbody>
       </table>
   }
-@main(currentUser)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
+@main(currentUser, currentUserRights)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 
   <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/auto-complete.css")'>
@@ -106,12 +104,12 @@
         @defining(allUsers.filter(_.groupIds.contains(userGroup.id))){ groupUsers =>
           @display(groupUsers.filter(_.groupIds.length == 1), Some(s"group-${userGroup.id}")){
             @if(currentUser.admin) {
-              <a href="@routes.GroupController.editGroup(userGroup.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+              <a href="@routes.GroupController.editGroup(userGroup.id)" target="_blank" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                 <i class="material-icons">edit</i>
               </a>
             }
             @userGroup.areaIds.flatMap(Area.fromId).map(_.name).sorted.mkString(", ") /
-            <b>@userGroup.name</b> / @(userGroup.organisation, UserGroup.organisationDeductedFromName(userGroup.name)) match {
+            <b>@userGroup.name</b> / @(userGroup.organisation, Organisation.deductedFromName(userGroup.name)) match {
               case (Some(organisation), _) => {
                 @organisation / }
               case (_, Some(organisation)) => { @organisation / }
@@ -122,19 +120,21 @@
             @if(groupUsers.exists(_.groupIds.length != 1)) {
               Et utilisateurs multigroupes :
               @for(user <- groupUsers.filter(_.groupIds.length != 1)) {
-                <a href="@routes.UserController.editUser(user.id)">@user.name (@user.qualite)</a> /
+                <a href="@routes.UserController.editUser(user.id)" target="_blank" >@user.name (@user.qualite)</a> /
               } <hr>
             }
-            @helper.form(routes.UserController.add(userGroup.id), 'method -> "get") {
-              @helper.CSRF.formField
-              <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="rows" name="rows" value="1">
-                <label class="mdl-textfield__label" for="rows">Nombre d'utilisateur à ajouter</label>
-                <span class="mdl-textfield__error">Ce n'est pas un nombre</span>
-              </div>
-              <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
-                Ajouter des utilisateurs dans le groupe
-              </button>
+            @if(Authorization.canEditGroups(currentUserRights)) {
+              @helper.form(routes.UserController.add(userGroup.id), 'method -> "get") {
+                @helper.CSRF.formField
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                  <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="rows" name="rows" value="1">
+                  <label class="mdl-textfield__label" for="rows">Nombre d'utilisateur à ajouter</label>
+                  <span class="mdl-textfield__error">Ce n'est pas un nombre</span>
+                </div>
+                <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
+                  Ajouter des utilisateurs dans le groupe
+                </button>
+              }
             }
           }
         }
@@ -194,4 +194,5 @@
         }
       </div>
     }
-  }
+}{
+}

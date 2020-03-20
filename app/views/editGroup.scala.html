@@ -1,22 +1,23 @@
 @import models._
 @import views.html.helper.CSRF
-@(currentUser: User)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean, zoneAsJson: String, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean, zoneAsJson: String, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
-@main(currentUser)(s"Gestion du groupe ${userGroup.name} - ${userGroup.areaIds.flatMap(Area.fromId).map(_.name).mkString(", ")}") {
+@main(currentUser, currentUserRights)(s"Gestion du groupe ${userGroup.name} - ${userGroup.areaIds.flatMap(Area.fromId).map(_.name).mkString(", ")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
     <script src='@routes.Assets.versioned("javascripts/group.js")'></script>
 
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/auto-complete.css")'>
     <script src='@routes.Assets.versioned("javascripts/auto-complete.min.js")'></script>
     <script src='@routes.Assets.versioned("javascripts/group-autocomplete.js")'></script>
-
+    @webJarsUtil.locate("slimselect.min.css").css()
+    @webJarsUtil.locate("slimselect.min.js").script()
       <script>
                 function sendLoginMail(sender, email) {
                     var request = new XMLHttpRequest();
                     var parent = sender.parentNode;
                     parent.innerHTML = "<span style='font-weight: bold;'>En cours</span> <img src='@routes.Assets.versioned("images/spin.gif")'>";
-                    request.open('POST', '@CSRF(routes.LoginController.login())', true);
+                    request.open('POST', '@CSRF(routes.LoginController.login)', true);
                     request.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
                     request.onload = function() {
                         if (request.status === 200) {
@@ -69,6 +70,11 @@
                     <option value="@area.id" @if(userGroup.areaIds.contains(area.id)) { selected }>@area.name</option>
             }
             </select>
+
+                <script>
+                        // TODO: use-slimselect class
+                        new SlimSelect({ select: '#area-ids' });
+                </script>
             </div>
             @if(currentUser.admin) {
                 <div class="mdl-cell mdl-cell--12-col">
@@ -107,4 +113,5 @@
             <button type="button" class="mdl-button mdl-button" id="dialog-delete-group-confirm" onclick="Group.confirmRemovalDialog('@userGroup.id')">Confirmer</button>
         </div>
     </dialog>
+}{
 }

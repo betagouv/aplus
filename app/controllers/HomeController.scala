@@ -14,13 +14,23 @@ import play.api.db.Database
 @Singleton
 class HomeController @Inject() (loginAction: LoginAction, db: Database)(
     implicit webJarsUtil: WebJarsUtil
-) extends InjectedController {
+) extends InjectedController
+    with play.api.i18n.I18nSupport {
 
-  def index = loginAction { implicit request =>
-    Redirect(routes.ApplicationController.myApplications())
+  def index: Action[AnyContent] = Action { implicit request =>
+    if (request.session
+          .get("userId")
+          .orElse(request.queryString.get("token"))
+          .orElse(request.queryString.get("key"))
+          .isDefined)
+      TemporaryRedirect(
+        s"${routes.ApplicationController.myApplications()}?${request.rawQueryString}"
+      )
+    else
+      Ok(views.html.home())
   }
 
-  def status = Action { implicit request =>
+  def status: Action[AnyContent] = Action {
     val connectionValid =
       try {
         db.withConnection {
@@ -38,7 +48,7 @@ class HomeController @Inject() (loginAction: LoginAction, db: Database)(
     }
   }
 
-  def help = loginAction { implicit request =>
-    Ok(views.html.help(request.currentUser))
+  def help: Action[AnyContent] = loginAction { implicit request =>
+    Ok(views.html.help(request.currentUser, request.rights))
   }
 }

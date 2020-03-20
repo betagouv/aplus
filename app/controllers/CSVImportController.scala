@@ -1,5 +1,6 @@
 package controllers
 
+import java.time.ZonedDateTime
 import java.util.UUID
 
 import actions.LoginAction
@@ -12,7 +13,6 @@ import play.api.data.{Form, Mapping}
 import play.api.data.Forms._
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import services.{EventService, NotificationService, UserGroupService, UserService}
-import org.joda.time.DateTime
 import helper.Time
 import helper.StringHelper._
 import models.EventType.{
@@ -28,7 +28,7 @@ import models.EventType.{
   UsersImported
 }
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
-import serializers.UserAndGroupCsvSerializer
+import serializers.{Keys, UserAndGroupCsvSerializer}
 
 case class CSVImportController @Inject() (
     loginAction: LoginAction,
@@ -55,7 +55,7 @@ case class CSVImportController @Inject() (
     asAdmin { () =>
       ImportUserUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
-      Ok(views.html.importUsersCSV(request.currentUser)(csvImportContentForm))
+      Ok(views.html.importUsersCSV(request.currentUser, request.rights)(csvImportContentForm))
     }
   }
 
@@ -96,7 +96,7 @@ case class CSVImportController @Inject() (
     )
   }
 
-  private def userImportMapping(date: DateTime): Mapping[User] =
+  private def userImportMapping(date: ZonedDateTime): Mapping[User] =
     mapping(
       "id" -> optional(uuid).transform[UUID]({
         case None     => UUID.randomUUID()
@@ -118,12 +118,15 @@ case class CSVImportController @Inject() (
       "disabled" -> boolean,
       "expert" -> ignored(false),
       "groupIds" -> default(list(uuid), List()),
-      "cguAcceptationDate" -> ignored(Option.empty[DateTime]),
-      "newsletterAcceptationDate" -> ignored(Option.empty[DateTime]),
-      "phone-number" -> optional(text)
+      "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
+      "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
+      "phone-number" -> optional(text),
+      // TODO: put also in forms/imports?
+      "observableOrganisationIds" -> list(of[Organisation.Id]),
+      Keys.User.sharedAccount -> boolean
     )(User.apply)(User.unapply)
 
-  private def groupImportMapping(date: DateTime): Mapping[UserGroup] =
+  private def groupImportMapping(date: ZonedDateTime): Mapping[UserGroup] =
     mapping(
       "id" -> optional(uuid).transform[UUID]({
         case None     => UUID.randomUUID()
@@ -144,7 +147,7 @@ case class CSVImportController @Inject() (
       "email" -> optional(email)
     )(UserGroup.apply)(UserGroup.unapply)
 
-  private def importUsersAfterReviewForm(date: DateTime): Form[List[UserGroupFormData]] = Form(
+  private def importUsersAfterReviewForm(date: ZonedDateTime): Form[List[UserGroupFormData]] = Form(
     single(
       "groups" -> list(
         mapping(
@@ -180,12 +183,14 @@ case class CSVImportController @Inject() (
               description = "Le champ d'import de CSV est vide ou le séparateur n'est pas défini."
             )
             BadRequest(
-              views.html.importUsersCSV(request.currentUser)(csvImportContentFormWithError)
+              views.html.importUsersCSV(request.currentUser, request.rights)(
+                csvImportContentFormWithError
+              )
             )
           }, { csvImportData =>
             val defaultAreas = csvImportData.areaIds.flatMap(Area.fromId)
             UserAndGroupCsvSerializer
-              .csvLinesToUserGroupData(csvImportData.separator, defaultAreas, Time.now())(
+              .csvLinesToUserGroupData(csvImportData.separator, defaultAreas, Time.nowParis())(
                 csvImportData.csvLines
               )
               .fold(
@@ -195,7 +200,9 @@ case class CSVImportController @Inject() (
                   eventService
                     .log(CSVImportFormError, description = "Erreur de formulaire Importation")
                   BadRequest(
-                    views.html.importUsersCSV(request.currentUser)(csvImportContentFormWithError)
+                    views.html.importUsersCSV(request.currentUser, request.rights)(
+                      csvImportContentFormWithError
+                    )
                   )
                 }, {
                   case (
@@ -205,7 +212,7 @@ case class CSVImportController @Inject() (
                     val augmentedUserGroupInformation: List[UserGroupFormData] =
                       userGroupDataForm.map(augmentUserGroupInformation)
 
-                    val currentDate = Time.now()
+                    val currentDate = Time.nowParis()
                     val formWithData = importUsersAfterReviewForm(currentDate)
                       .fillAndValidate(augmentedUserGroupInformation)
 
@@ -217,7 +224,10 @@ case class CSVImportController @Inject() (
                     } else {
                       formWithData
                     }
-                    Ok(views.html.reviewUsersImport(request.currentUser)(formWithError))
+                    Ok(
+                      views.html
+                        .reviewUsersImport(request.currentUser, request.rights)(formWithError)
+                    )
                 }
               )
           }
@@ -243,12 +253,14 @@ case class CSVImportController @Inject() (
     asAdmin { () =>
       ImportUsersUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
     } { () =>
-      val currentDate = Time.now()
+      val currentDate = Time.nowParis()
       importUsersAfterReviewForm(currentDate).bindFromRequest.fold(
         { importUsersAfterReviewFormWithError =>
           eventService.log(ImportUserFormError, description = "Erreur de formulaire de review")
           BadRequest(
-            views.html.reviewUsersImport(request.currentUser)(importUsersAfterReviewFormWithError)
+            views.html.reviewUsersImport(request.currentUser, request.rights)(
+              importUsersAfterReviewFormWithError
+            )
           )
         }, { userGroupDataForm: List[UserGroupFormData] =>
           val augmentedUserGroupInformation: List[UserGroupFormData] =
@@ -270,7 +282,7 @@ case class CSVImportController @Inject() (
                     .fill(augmentedUserGroupInformation)
                     .withGlobalError(description)
                   InternalServerError(
-                    views.html.reviewUsersImport(request.currentUser)(formWithError)
+                    views.html.reviewUsersImport(request.currentUser, request.rights)(formWithError)
                   )
               }, {
                 _ =>
@@ -295,7 +307,8 @@ case class CSVImportController @Inject() (
                             .fill(augmentedUserGroupInformation)
                             .withGlobalError(description)
                           InternalServerError(
-                            views.html.reviewUsersImport(request.currentUser)(formWithError)
+                            views.html
+                              .reviewUsersImport(request.currentUser, request.rights)(formWithError)
                           )
                       }, {
                         _ =>

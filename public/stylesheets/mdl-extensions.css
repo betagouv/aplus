@@ -1,7 +1,45 @@
-.material-icons--36px {
-    font-size: 36px;
+
+/****************
+Icons
+ */
+.material-icons--32px {
+    font-size: 32px;
 }
 
+.material-icons--48px {
+    font-size: 48px;
+}
+
+/****************
+Layout
+ */
+.mdl-layout-title--plus {
+    align-items: center;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+    display: flex;
+    height: 40px;
+}
+
+/***************
+Typography
+ */
 .mdl-typography--text-prewrap {
     white-space: pre-wrap;
+}
+
+.mdl-tabs__tab-bar--align-left {
+    -webkit-justify-content: left;
+    -ms-flex-pack: left;
+    justify-content: left;
+}
+
+/***************
+Data Table
+ */
+.mdl-data-table--initial-white-space th {
+    white-space: initial !important;
+}
+.mdl-data-table--normal-white-space {
+    white-space: normal;
 }

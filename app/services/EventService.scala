@@ -3,14 +3,11 @@ package services
 import java.util.UUID
 
 import actions.RequestWithUserData
-import akka.http.scaladsl.model.RemoteAddress
 import javax.inject.Inject
 import models._
 import play.api.db.Database
 import anorm._
-import anorm.JodaParameterMetaData._
 import helper.Time
-import org.joda.time.DateTime
 import play.api.Logger
 
 @javax.inject.Singleton
@@ -41,7 +38,7 @@ class EventService @Inject() (db: Database) {
       request.currentArea,
       request.remoteAddress,
       event.code,
-      description,
+      s"$description. ${request.method} ${request.path}",
       application,
       user
     )
@@ -56,8 +53,8 @@ class EventService @Inject() (db: Database) {
       remoteAddress: String,
       code: String,
       description: String,
-      application: Option[Application] = None,
-      user: Option[User] = None
+      application: Option[Application],
+      user: Option[User]
   ): Unit = {
     val event = Event(
       UUID.randomUUID(),
@@ -65,7 +62,7 @@ class EventService @Inject() (db: Database) {
       code,
       currentUser.name,
       currentUser.id,
-      DateTime.now(Time.dateTimeZone),
+      Time.nowParis(),
       description,
       currentArea.id,
       application.map(_.id),
