@@ -10,7 +10,8 @@ import helper.Time.zonedDateTimeOrdering
 import forms.FormsPlusMap
 import helper.{Hash, Time}
 import javax.inject.{Inject, Singleton}
-import models._
+import models.{Answer, Application, Area, Authorization, Organisation, User, UserGroup}
+import models.formModels.{AnswerFormData, ApplicationFormData, InvitationData}
 import org.webjars.play.WebJarsUtil
 import play.api.data.Forms._
 import play.api.data._
@@ -79,7 +80,6 @@ case class ApplicationController @Inject() (
     extends InjectedController
     with play.api.i18n.I18nSupport
     with Operators.ApplicationOperators {
-  import formModels._
 
   private val filesPath = configuration.underlying.getString("app.filesPath")
 
@@ -88,7 +88,7 @@ case class ApplicationController @Inject() (
     Files.createDirectories(dir)
   }
 
-  private val applicationForm = Form(
+  private def applicationForm(currentUser: User) = Form(
     mapping(
       "subject" -> nonEmptyText.verifying(maxLength(150)),
       "description" -> nonEmptyText,
@@ -96,8 +96,13 @@ case class ApplicationController @Inject() (
       "users" -> list(uuid).verifying("Vous devez sélectionner au moins une structure", _.nonEmpty),
       "organismes" -> list(text),
       "category" -> optional(text),
-      "selected-subject" -> optional(text)
-    )(ApplicationData.apply)(ApplicationData.unapply)
+      "selected-subject" -> optional(text),
+      "signature" -> (
+        if (currentUser.sharedAccount)
+          nonEmptyText.transform[Option[String]](Some.apply, _.getOrElse(""))
+        else ignored(None: Option[String])
+      )
+    )(ApplicationFormData.apply)(ApplicationFormData.unapply)
   )
 
   private def fetchGroupsWithInstructors(
@@ -131,7 +136,8 @@ case class ApplicationController @Inject() (
             instructorsOfGroups,
             groupsOfAreaWithInstructor,
             coworkers,
-            applicationForm
+            readSharedAccountUserSignature(request.session),
+            applicationForm(request.currentUser)
           )
         )
     }
@@ -143,8 +149,7 @@ case class ApplicationController @Inject() (
     fetchGroupsWithInstructors(request.currentArea.id, request.currentUser).map {
       case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
         val groupsOfAreaWithInstructorWithOrganisationSet = groupsOfAreaWithInstructor.filter({
-          userGroup =>
-            userGroup.organisationSetOrDeducted.nonEmpty
+          userGroup => userGroup.organisationSetOrDeducted.nonEmpty
         })
         val categories = organisationService.categories
         Ok(
@@ -153,9 +158,10 @@ case class ApplicationController @Inject() (
               instructorsOfGroups,
               groupsOfAreaWithInstructorWithOrganisationSet,
               coworkers,
+              readSharedAccountUserSignature(request.session),
               categories,
               None,
-              applicationForm
+              applicationForm(request.currentUser)
             )
         )
     }
@@ -190,7 +196,7 @@ case class ApplicationController @Inject() (
   }
 
   private def createPostBis(simplified: Boolean) = loginAction.async { implicit request =>
-    val form = applicationForm.bindFromRequest
+    val form = applicationForm(request.currentUser).bindFromRequest
     val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
     val (pendingAttachments, newAttachments) =
       AttachmentHelper.computeStoreAndRemovePendingAndNewApplicationAttachment(
@@ -222,6 +228,7 @@ case class ApplicationController @Inject() (
                   instructorsOfGroups,
                   groupsOfAreaWithInstructorWithOrganisationSet,
                   coworkers,
+                  None,
                   categories,
                   formWithErrors("category").value,
                   formWithErrors,
@@ -235,6 +242,7 @@ case class ApplicationController @Inject() (
                     instructorsOfGroups,
                     groupsOfAreaWithInstructor,
                     coworkers,
+                    None,
                     formWithErrors,
                     pendingAttachments.keys ++ newAttachments.keys
                   )
@@ -249,13 +257,18 @@ case class ApplicationController @Inject() (
             userService.byId(id).map(user => id -> contextualizedUserName(user, currentAreaId))
           }.toMap
 
+          val description: String =
+            applicationData.signature
+              .fold(applicationData.description)(signature =>
+                applicationData.description + "\n\n" + signature
+              )
           val application = Application(
             applicationId,
             Time.nowParis(),
             contextualizedUserName(request.currentUser, currentAreaId),
             request.currentUser.id,
             applicationData.subject,
-            applicationData.description,
+            description,
             applicationData.infos,
             invitedUsers,
             request.currentArea.id,
@@ -273,6 +286,11 @@ case class ApplicationController @Inject() (
               Some(application)
             )
             Redirect(routes.ApplicationController.myApplications())
+              .withSession(
+                applicationData.signature.fold(removeSharedAccountUserSignature(request.session))(
+                  signature => saveSharedAccountUserSignature(request.session, signature)
+                )
+              )
               .flashing("success" -> "Votre demande a bien été envoyée")
           } else {
             eventService.log(
@@ -566,17 +584,13 @@ case class ApplicationController @Inject() (
         users.filter(user => application.invitedUsers.keys.toList.contains[UUID](user.id))
       val creatorUserGroupNames = creatorUser.toList
         .flatMap(_.groupIds)
-        .flatMap { groupId: UUID =>
-          groups.filter(group => group.id == groupId)
-        }
+        .flatMap { groupId: UUID => groups.filter(group => group.id == groupId) }
         .map(_.name)
         .mkString(",")
       val invitedUserGroupNames = invitedUsers
         .flatMap(_.groupIds)
         .distinct
-        .flatMap { groupId: UUID =>
-          groups.filter(group => group.id == groupId)
-        }
+        .flatMap { groupId: UUID => groups.filter(group => group.id == groupId) }
         .map(_.name)
         .mkString(",")
 
@@ -651,13 +665,18 @@ case class ApplicationController @Inject() (
     }
   }
 
-  private val answerForm = Form(
+  private def answerForm(currentUser: User) = Form(
     mapping(
       "message" -> nonEmptyText,
       "irrelevant" -> boolean,
       "infos" -> FormsPlusMap.map(nonEmptyText.verifying(maxLength(30))),
-      "privateToHelpers" -> boolean
-    )(AnswerData.apply)(AnswerData.unapply)
+      "privateToHelpers" -> boolean,
+      "signature" -> (
+        if (currentUser.sharedAccount)
+          nonEmptyText.transform[Option[String]](Some.apply, _.getOrElse(""))
+        else ignored(None: Option[String])
+      )
+    )(AnswerFormData.apply)(AnswerFormData.unapply)
   )
 
   private def usersWhoCanBeInvitedOn[A](
@@ -697,9 +716,10 @@ case class ApplicationController @Inject() (
           views.html.showApplication(request.currentUser, request.rights)(
             groupsWithUsersThatCanBeInvited,
             application,
-            answerForm,
+            answerForm(request.currentUser),
             openedTab,
-            request.currentArea
+            request.currentArea,
+            readSharedAccountUserSignature(request.session)
           )
         )
       }
@@ -724,8 +744,7 @@ case class ApplicationController @Inject() (
                   s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert"
                 )
                 Future(Ok.sendPath(Paths.get(s"$filesPath/ans_$answerId-$filename"), true, {
-                  _: Path =>
-                    filename
+                  _: Path => filename
                 }))
               case _ =>
                 eventService.log(
@@ -739,8 +758,7 @@ case class ApplicationController @Inject() (
               eventService
                 .log(FileOpened, s"Le fichier de la demande $applicationId a été ouvert")
               Future(Ok.sendPath(Paths.get(s"$filesPath/app_$applicationId-$filename"), true, {
-                _: Path =>
-                  filename
+                _: Path => filename
               }))
             } else {
               eventService.log(
@@ -766,7 +784,7 @@ case class ApplicationController @Inject() (
 
   def answer(applicationId: UUID): Action[AnyContent] = loginAction.async { implicit request =>
     withApplication(applicationId) { application =>
-      val form = answerForm.bindFromRequest
+      val form = answerForm(request.currentUser).bindFromRequest
       val answerId = AttachmentHelper.retrieveOrGenerateAnswerId(form.data)
       val (pendingAttachments, newAttachments) =
         AttachmentHelper.computeStoreAndRemovePendingAndNewAnswerAttachment(
@@ -787,11 +805,14 @@ case class ApplicationController @Inject() (
         },
         answerData => {
           val currentAreaId = application.area
+          val message: String =
+            answerData.signature
+              .fold(answerData.message)(signature => answerData.message + "\n\n" + signature)
           val answer = Answer(
             answerId,
             applicationId,
             Time.nowParis(),
-            answerData.message,
+            message,
             request.currentUser.id,
             contextualizedUserName(request.currentUser, currentAreaId),
             Map(),
@@ -809,6 +830,11 @@ case class ApplicationController @Inject() (
             notificationsService.newAnswer(application, answer)
             Future(
               Redirect(s"${routes.ApplicationController.show(applicationId)}#answer-${answer.id}")
+                .withSession(
+                  answerData.signature.fold(removeSharedAccountUserSignature(request.session))(
+                    signature => saveSharedAccountUserSignature(request.session, signature)
+                  )
+                )
                 .flashing("success" -> "Votre réponse a bien été envoyée")
             )
           } else {
@@ -1005,5 +1031,25 @@ case class ApplicationController @Inject() (
       }
     }
   }
+
+  //
+  // Signature Cookie (for shared accounts)
+  //
+
+  private val sharedAccountUserSignatureKey = "sharedAccountUserSignature"
+
+  /** Note: using session because it is signed, other cookies are not signed */
+  private def readSharedAccountUserSignature(session: Session): Option[String] =
+    session.get(sharedAccountUserSignatureKey)
+
+  /** Security: does not save signatures that are too big (longer than 1000 chars) */
+  private def saveSharedAccountUserSignature[R](session: Session, signature: String): Session =
+    if (signature.size <= 1000)
+      session + (sharedAccountUserSignatureKey -> signature)
+    else
+      session
+
+  private def removeSharedAccountUserSignature(session: Session): Session =
+    session - sharedAccountUserSignatureKey
 
 }

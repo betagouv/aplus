@@ -86,9 +86,7 @@ class UserGroupService @Inject() (
   }
 
   def all: Future[List[UserGroup]] = Future {
-    db.withConnection { implicit connection =>
-      SQL"SELECT * FROM user_group".as(simpleUserGroup.*)
-    }
+    db.withConnection(implicit connection => SQL"SELECT * FROM user_group".as(simpleUserGroup.*))
   }
 
   def byIds(groupIds: List[UUID]): List[UserGroup] = db.withConnection { implicit connection =>

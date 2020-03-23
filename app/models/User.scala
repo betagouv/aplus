@@ -37,7 +37,8 @@ case class User(
     // * can see stats+deployment of all areas,
     // * can see all users,
     // * can see one user but not edit it
-    observableOrganisationIds: List[Organisation.Id] = Nil
+    observableOrganisationIds: List[Organisation.Id] = Nil,
+    sharedAccount: Boolean = false
 ) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"
 

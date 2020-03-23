@@ -5,21 +5,23 @@ import java.util.UUID
 object formModels {
   // TOOD : rename Data -> FormData
 
-  case class ApplicationData(
+  case class ApplicationFormData(
       subject: String,
       description: String,
       infos: Map[String, String],
       users: List[UUID],
       organismes: List[String],
       category: Option[String],
-      selectedSubject: Option[String]
+      selectedSubject: Option[String],
+      signature: Option[String]
   )
 
-  case class AnswerData(
+  case class AnswerFormData(
       message: String,
       applicationIsDeclaredIrrelevant: Boolean,
       infos: Map[String, String],
-      privateToHelpers: Boolean
+      privateToHelpers: Boolean,
+      signature: Option[String]
   )
 
   case class InvitationData(message: String, invitedUsers: List[UUID], privateToHelpers: Boolean)

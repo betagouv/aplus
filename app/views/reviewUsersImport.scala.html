@@ -2,7 +2,7 @@
 @import _root_.helper.MDLForms._
 @import _root_.helper.UUIDHelper
 @import _root_.helper.BooleanHelper.not
-@import serializers.UserAndGroupCsvSerializer
+@import serializers.{Keys, UserAndGroupCsvSerializer}
 
 @import models.formModels.UserGroupFormData
 @(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
@@ -80,6 +80,13 @@
           </td>
           <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
             @helper.checkbox(user("user")("adminGroup"), 'type -> "checkbox", 'label -> UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
+          </td>
+          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
+            @helper.checkbox(
+              user("user")(Keys.User.sharedAccount),
+              'type -> "checkbox",
+              'label -> UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes(0),
+              'class -> "mdl-checkbox__input")
           </td>
           <td>
             @if(user("alreadyExists").value.exists(_ == "true")) {

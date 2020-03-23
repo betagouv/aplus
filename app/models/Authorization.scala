@@ -171,9 +171,10 @@ object Authorization {
     )(rights)
     val validCase1 = isCreatorOrIsInvited && !isAdmin(rights)
     // If user is expert, admin and invited to the application he can see the data
-    val validCase2 = isCreatorOrIsInvited && isExpert(application.area)(rights) && isAdmin(rights) && not(
-      application.closed
-    )
+    val validCase2 =
+      isCreatorOrIsInvited && isExpert(application.area)(rights) && isAdmin(rights) && not(
+        application.closed
+      )
     validCase1 || validCase2
   }
 

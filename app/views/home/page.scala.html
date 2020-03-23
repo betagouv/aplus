@@ -1,6 +1,6 @@
-@import views.HomeInnerPage
+@import views.home.LoginPanel
 
-@(innerPage: HomeInnerPage)(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil, request: RequestHeader)
+@(innerPage: LoginPanel)(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil, request: RequestHeader)
 
 <!DOCTYPE html>
 <html itemscope itemtype="http://schema.org/WebPage" lang="fr">
@@ -98,14 +98,14 @@
                                 class="mdl-cell mdl-cell--middle mdl-cell--10-col mdl-cell--1-offset-desktop mdl-grid"
                             >
                                 @innerPage match {
-                                    case HomeInnerPage.ConnectionForm => {
-                                        @homeConnectionForm()
+                                    case LoginPanel.ConnectionForm => {
+                                        @connectionFormPanel()
                                     }
-                                    case infos: HomeInnerPage.SendbackEmailForm => {
-                                        @homeSendbackEmailForm(infos)
+                                    case infos: LoginPanel.SendbackEmailForm => {
+                                        @sendbackEmailForm(infos)
                                     }
-                                    case infos: HomeInnerPage.EmailSentFeedback => {
-                                        @homeEmailSentFeedback(infos)
+                                    case infos: LoginPanel.EmailSentFeedback => {
+                                        @emailSentFeedbackPanel(infos)
                                     }
                                 }
                             </div>
