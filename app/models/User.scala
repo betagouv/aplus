@@ -119,23 +119,6 @@ object User {
       cguAcceptationDate = Some(date)
     ),
     User(
-      UUIDHelper.namedFrom("laurent"),
-      Hash.sha256(s"laurent"),
-      "Laurent COURTOIS-COURRET",
-      "Expert A+",
-      "laurent.courtois-courret@beta.gouv.fr",
-      true,
-      false,
-      true,
-      Area.all.map(_.id),
-      date,
-      "75056",
-      true,
-      disabled = false,
-      expert = false,
-      cguAcceptationDate = Some(date)
-    ),
-    User(
       id = UUIDHelper.namedFrom("dunia"),
       key = Hash.sha256("dunia"),
       name = "Dunia El Achcar",
