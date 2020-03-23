@@ -300,15 +300,13 @@ object UserAndGroupCsvSerializer {
       groupCSVMapping(currentDate)
         .bind(csvMap)
         .fold(
-          { errors =>
-            Left(errors.map(PlayFormHelper.prettifyFormError).mkString(", "))
-          }, { group =>
+          errors => Left(errors.map(PlayFormHelper.prettifyFormError).mkString(", ")),
+          group =>
             userCSVMapping(currentDate)
               .bind(csvMap)
               .fold(
-                { errors =>
-                  Left(errors.map(PlayFormHelper.prettifyFormError).mkString(", "))
-                }, { user =>
+                errors => Left(errors.map(PlayFormHelper.prettifyFormError).mkString(", ")),
+                user =>
                   Right(
                     UserGroupFormData(
                       group,
@@ -317,9 +315,7 @@ object UserAndGroupCsvSerializer {
                       doNotInsert = false
                     )
                   )
-                }
               )
-          }
         )
   }
 
@@ -328,9 +324,7 @@ object UserAndGroupCsvSerializer {
       "id" -> optional(uuid).transform[UUID]({
         case None     => UUID.randomUUID()
         case Some(id) => id
-      }, {
-        Some(_)
-      }),
+      }, Some(_)),
       "key" -> ignored("key"),
       "name" -> nonEmptyText,
       "quality" -> default(text, ""),
@@ -360,9 +354,7 @@ object UserAndGroupCsvSerializer {
         "id" -> optional(uuid).transform[UUID]({
           case None     => UUID.randomUUID()
           case Some(id) => id
-        }, {
-          Some(_)
-        }),
+        }, Some(_)),
         "name" -> text,
         "description" -> optional(text),
         "insee-code" -> list(text),

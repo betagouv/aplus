@@ -1,4 +1,6 @@
-@()(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil, request: RequestHeader)
+@import views.home.LoginPanel
+
+@(innerPage: LoginPanel)(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil, request: RequestHeader)
 
 <!DOCTYPE html>
 <html itemscope itemtype="http://schema.org/WebPage" lang="fr">
@@ -93,43 +95,16 @@
                         class="mdl-cell mdl-cell--6-col-desktop mdl-typography--text-center mdl-cell--12-col aplus-color--light-grey mdl-grid"
                         >
                             <div
-                            class="mdl-cell mdl-cell--middle mdl-cell--10-col mdl-cell--1-offset-desktop mdl-grid"
+                                class="mdl-cell mdl-cell--middle mdl-cell--10-col mdl-cell--1-offset-desktop mdl-grid"
                             >
-                                <div class="mdl-cell mdl-cell--12-col mdl-cell--middle">
-                                    <h3
-                                    class="mdl-typography--text-uppercase mdl-typography--font-medium"
-                                    >
-                                        Connectez-vous
-                                    </h3>
-
-                                    <form action="@routes.LoginController.login" method="post">
-                                        @helper.CSRF.formField
-                                        <label class="aplus-textfield__label" for="email"
-                                        >Saisir votre email professionnel pour recevoir un lien de
-                                            connexion à Administration+<br />
-                                                <!-- <span class="aplus-textfield__label__example">Ex: prenom.nom@@votre-structure.fr</span>
-                                            --> </label
-                                        >
-                                        <br />
-                                        @flash.get("error").map { message =>
-                                            <div class="notification notification--error mdl-typography--text-prewrap" >@message</div>
-                                        }
-                                        <input
-                                        class="aplus-textfield__input aplus-textfield__input--large"
-                                        minlength="1"
-                                        type="text"
-                                        id="email"
-                                        name="email"
-                                        />
-                                        <br />
-                                        <br />
-                                        <button
-                                        type="submit"
-                                        class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary margin-top--10px aplus-color--blue mdl-color-text--white"
-                                        name="id"
-                                        >Envoyez moi un e-mail de connexion</button>
-                                    </form>
-                                </div>
+                                @innerPage match {
+                                    case LoginPanel.ConnectionForm => {
+                                        @connectionFormPanel()
+                                    }
+                                    case infos: LoginPanel.EmailSentFeedback => {
+                                        @emailSentFeedbackPanel(infos)
+                                    }
+                                }
                             </div>
                         </div>
                     </div>

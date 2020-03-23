@@ -100,9 +100,7 @@ case class UserController @Inject() (
             }
           )
         val usersFuture: Future[List[User]] =
-          groupsFuture.map { groups =>
-            userService.byGroupIds(groups.map(_.id))
-          }
+          groupsFuture.map(groups => userService.byGroupIds(groups.map(_.id)))
         val applications = applicationService.allByArea(selectedArea.id, anonymous = true)
 
         eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
@@ -258,9 +256,7 @@ case class UserController @Inject() (
   }
 
   def editUserPost(userId: UUID): Action[AnyContent] = loginAction { implicit request =>
-    asAdmin { () =>
-      PostEditUserUnauthorized -> s"Accès non autorisé à modifier $userId"
-    } { () =>
+    asAdmin(() => PostEditUserUnauthorized -> s"Accès non autorisé à modifier $userId") { () =>
       userForm(Time.timeZoneParis).bindFromRequest.fold(
         formWithErrors => {
           val groups = groupService.allGroups
@@ -327,7 +323,8 @@ case class UserController @Inject() (
                 routes.UserController.addPost(groupId)
               )
             )
-          }, { users =>
+          },
+          users =>
             try {
               val userToInsert = users.map(_.copy(groupIds = List(groupId)))
               userService
@@ -387,7 +384,6 @@ case class UserController @Inject() (
                   )
                 )
             }
-          }
         )
       }
     }
@@ -480,9 +476,7 @@ case class UserController @Inject() (
   }
 
   def allEvents: Action[AnyContent] = loginAction { implicit request =>
-    asAdmin { () =>
-      EventsUnauthorized -> "Accès non autorisé pour voir les événements"
-    } { () =>
+    asAdmin(() => EventsUnauthorized -> "Accès non autorisé pour voir les événements") { () =>
       val limit = request.getQueryString("limit").map(_.toInt).getOrElse(500)
       val userId = request.getQueryString("fromUserId").flatMap(UUIDHelper.fromString)
       val events = eventService.all(limit, userId)
@@ -498,9 +492,7 @@ case class UserController @Inject() (
           "id" -> optional(uuid).transform[UUID]({
             case None     => UUID.randomUUID()
             case Some(id) => id
-          }, {
-            Some(_)
-          }),
+          }, Some(_)),
           "key" -> ignored("key"),
           "name" -> nonEmptyText.verifying(maxLength(100)),
           "qualite" -> text.verifying(maxLength(100)),
@@ -541,9 +533,7 @@ case class UserController @Inject() (
       "id" -> optional(uuid).transform[UUID]({
         case None     => UUID.randomUUID()
         case Some(id) => id
-      }, {
-        Some(_)
-      }),
+      }, Some(_)),
       "key" -> ignored("key"),
       "name" -> nonEmptyText.verifying(maxLength(100)),
       "qualite" -> text.verifying(maxLength(100)),

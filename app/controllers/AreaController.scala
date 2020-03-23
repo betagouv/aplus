@@ -132,7 +132,7 @@ case class AreaController @Inject() (
           } yield user
 
         val organisationGrouping =
-          if (request.getQueryString("uniquement-fs").getOrElse("non") == "oui") {
+          if (request.getQueryString("uniquement-fs").getOrElse("oui") == "oui") {
             organisationGroupingFranceService
           } else {
             organisationGroupingAll
