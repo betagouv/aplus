@@ -2,7 +2,6 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 import actions.LoginAction
-import models.User
 import org.webjars.play.WebJarsUtil
 import play.api.Logger
 import play.api.mvc._

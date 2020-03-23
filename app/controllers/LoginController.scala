@@ -42,7 +42,7 @@ class LoginController @Inject() (
           val user = User.systemUser
           LoginAction.readUserRights(user).map { userRights =>
             implicit val requestWithUserData =
-              new RequestWithUserData(user, userRights, Area.notApplicable, request)
+              new RequestWithUserData(user, userRights, request)
             eventService.log(UnknownEmail, s"Aucun compte actif à cette adresse mail $email")
             val message =
               """Aucun compte actif n'est associé à cette adresse e-mail.
@@ -60,7 +60,7 @@ class LoginController @Inject() (
             notificationService.newLoginRequest(url, path, user, loginToken)
 
             implicit val requestWithUserData =
-              new RequestWithUserData(user, userRights, Area.notApplicable, request)
+              new RequestWithUserData(user, userRights, request)
             val emailInBody = request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty
             val emailInFlash = request.flash.get("email").nonEmpty
             eventService.log(

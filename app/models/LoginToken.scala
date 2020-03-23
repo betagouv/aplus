@@ -24,7 +24,7 @@ object LoginToken {
       Random.alphanumeric.take(20).mkString,
       userId,
       Time.nowParis(),
-      Time.nowParis().plusMinutes(expirationInMinutes),
+      Time.nowParis().plusMinutes(expirationInMinutes.toLong),
       ipAddress
     )
 }

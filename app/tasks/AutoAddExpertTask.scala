@@ -30,7 +30,7 @@ class AutoAddExpertTask @Inject() (
   val dayWithoutAgentAnswer = 5
   val daySinceLastAgentAnswer = 15
 
-  def inviteExpertsInApplication =
+  def inviteExpertsInApplication() =
     applicationService.openAndOlderThan(dayWithoutAgentAnswer).foreach { application =>
       application.answers.filter(_.creatorUserID != application.creatorUserId).lastOption match {
         case None => // No answer for someone else the creator
@@ -64,7 +64,6 @@ class AutoAddExpertTask @Inject() (
         notificationService.newAnswer(application, answer)
         eventService.info(
           User.systemUser,
-          Area.fromId(application.area).get,
           "0.0.0.0",
           "ADD_EXPERT_CREATED",
           s"Les experts ont été automatiquement ajoutés ${answer.id} sur la demande ${application.id}",
@@ -74,7 +73,6 @@ class AutoAddExpertTask @Inject() (
       } else {
         eventService.error(
           User.systemUser,
-          Area.fromId(application.area).get,
           "0.0.0.0",
           "ANSWER_NOT_CREATED",
           s"Les experts n'ont pas pu être automatiquement ajoutés ${answer.id} sur la demande ${application.id} : problème BDD",
