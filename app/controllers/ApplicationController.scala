@@ -456,9 +456,49 @@ case class ApplicationController @Inject() (
       }
       val today = Time.nowParis()
       val months = Time.monthsMap(firstDate, today)
+      val allApplications = applicationsByArea.flatMap(_._2).toList
+      val allApplicationsByArea = applicationsByArea.map {
+        case (area, applications) =>
+          views.stats.StatsData.AreaAggregates(
+            area = area,
+            applications = applications,
+            closedApplicationsPerMonth = months.keys.toList.map { month: String =>
+              month -> applications.filter(application =>
+                application.estimatedClosedDate.isDefined && f"${application.estimatedClosedDate.get.getYear}/${application.estimatedClosedDate.get.getMonthValue}%02d" == month
+              )
+            },
+            newApplicationsPerMonth = months.keys.toList.map { month: String =>
+              month -> applications.filter(application =>
+                f"${application.creationDate.getYear}/${application.creationDate.getMonthValue}%02d" == month
+              )
+            }
+          )
+      }.toList
+      val data = views.stats.StatsData(
+        allApplications = allApplications,
+        areaAggregates = allApplicationsByArea,
+        applicationsGroupByMonths = months.values.toList.map { month: String =>
+          month -> allApplications
+            .filter(application =>
+              (Time
+                .formatPatternFr(application.creationDate, "MMMM YYYY"): String) == (month: String)
+            )
+            .toList
+        },
+        applicationsGroupByMonthsClosed = months.values.toList.map { month: String =>
+          month -> allApplications
+            .filter(application =>
+              application.estimatedClosedDate != None && (Time.formatPatternFr(
+                application.estimatedClosedDate.get,
+                "MMMM YYYY"
+              ): String) == (month: String)
+            )
+            .toList
+        }
+      )
       views.html.helpers.stats(Authorization.isAdmin(request.rights))(
+        data,
         months,
-        applicationsByArea,
         users,
         groups,
         areaIds,
