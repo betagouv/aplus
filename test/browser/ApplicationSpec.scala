@@ -90,7 +90,7 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
       // Submit an application
       val createApplicationURL =
         controllers.routes.ApplicationController.create().absoluteURL(false, s"localhost:$port")
-/*      browser.goTo(createApplicationURL)
+      browser.goTo(createApplicationURL)
 
       val subject = s"Sujet de la demande $number"
       val firstName = "John"
@@ -140,7 +140,7 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
       application.creatorUserName mustEqual helperUser.nameWithQualite
       application.invitedUsers mustEqual Map(
         instructorUser.id -> instructorUser.nameWithQualite
-      )*/
+      )
     }
   }
 }
