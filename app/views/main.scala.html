@@ -85,7 +85,7 @@
                                     <span>@currentUser.name</span>
                                     <span class="mdl-list__item-sub-title">@currentUser.email</span>
                                 </span>
-                                <span class="mdl-list__item-secondary-content align-items-center">
+                                <span class="mdl-list__item-secondary-content single--align-items-center-important">
                                     <a class="mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" href="@routes.LoginController.disconnect" title="Déconnexion">
                                         <i class="fas fa-sign-out-alt"></i>
                                     </a>
@@ -153,7 +153,7 @@
             </div>
 
             <main class="mdl-layout__content mdl-color--grey-200">
-                <div class="mdl-grid main__grid @if(maxWidth) { --max-width-960px }" >
+                <div class="mdl-grid main__grid @if(maxWidth) { single--max-width-960px }" >
 
                 @flash.get("error").map { error =>
                     <div class="mdl-cell mdl-cell--12-col" id="answer-error">

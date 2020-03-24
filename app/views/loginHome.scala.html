@@ -64,7 +64,7 @@
                             <span class="aplus-textfield__label__example">Ex: prenom.nom@@votre-structure.fr</span>
                         </label><br>
                         <input class="aplus-textfield__input aplus-textfield__input--large" minlength="1" type="text" id="email" name="email" @for(email <- flash.get("email-value")) { value = "@email" }><br>
-                        <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary margin-top--10px" name="id">Envoyer</button>
+                        <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary single--margin-top-10px" name="id">Envoyer</button>
                     <br>   <br>
                         @flash.get("error").map { message =>
                             <div class="notification notification--error mdl-typography--text-prewrap" >@message</div>
@@ -101,7 +101,7 @@
                     }
                 }
                 <br><br>
-                <p class="margin-top--30px">Vous rencontrez des difficultés à vous connecter ?<br>
+                <p class="single--margin-top-30px">Vous rencontrez des difficultés à vous connecter ?<br>
                     Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Problème%20A+%20Connexion">@Constants.supportEmail</a>
                     ou sur la Hotline (support): 01 84 80 88 12 (du lundi au vendredi de 9h à 17h)</p>
             </div>

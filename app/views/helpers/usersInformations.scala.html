@@ -17,11 +17,11 @@
                     <option value="@info">@info</option>
                 }
             </select><br>
-            <div class="mdl-textfield mdl-js-textfield invisible --margin-right-20px">
+            <div class="mdl-textfield mdl-js-textfield invisible single--margin-right-20px">
                 <label class="mdl-textfield__label" for="other-type">Saisissez le type d'information</label>
                 <input class="mdl-textfield__input mdl-color--white" name="other-type" type="text" id="other-type" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
             </div>
-            <div class="mdl-textfield mdl-js-textfield invisible --margin-right-20px">
+            <div class="mdl-textfield mdl-js-textfield invisible single--margin-right-20px">
                 <label class="mdl-textfield__label" for="other-type-value">Saisissez l'information </label>
                 <input class="mdl-textfield__input mdl-color--white" type="text" name="other-type-value" id="other-type-value" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
             </div>
@@ -62,7 +62,7 @@
             if(infoName === "" || valueInput.value === "") { return; }
             var newNode = document.createElement("div");
             newNode.innerHTML = ''+infoName+'<br> \
-                       <div class="mdl-textfield mdl-js-textfield --margin-right-20px"> \
+                       <div class="mdl-textfield mdl-js-textfield single--margin-right-20px"> \
                            <input class="mdl-textfield__input mdl-color--white" type="text" id="sample1" name="infos['+infoName+']" value="'+valueInput.value+'"> \
                             <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+' de l\'usager ici</label> \
                        </div> \
