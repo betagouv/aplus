@@ -1,13 +1,11 @@
 @(currentArea: Area, selectableAreas: List[Area])
 
-<div>
-    Territoire : <select id="area" name="area" onchange="changeArea()">
+<select id="area" name="area" onchange="changeArea()">
     @for(area <- selectableAreas) {
         <option value="@area.id"
         @if(area.id == currentArea.id) { selected }>@area</option>
     }
-    </select>
-</div>
+</select>
 <script>
     function changeArea() {
         var areaSelected = document.getElementById("area").value;

@@ -467,8 +467,11 @@ dialog {
                     @if(groupsWithUsersThatCanBeInvited.nonEmpty || currentUser.expert) {
                         <div class="mdl-tabs__panel @if(openedTab =="invite"){ is-active }" id="invite">                         
                             <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col mdl-grid aplus-protected-form" method="post">
-                                @if(currentUser.expert) { 
+                                @if(currentUser.expert) {
+                                    <div>
+                                        Territoire concerné :
                                     @helpers.changeArea(currentArea, currentUser.areas.flatMap(Area.fromId))
+                                    </div>
                                 }
                                 @helper.CSRF.formField
                                 <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" style="border: none;">

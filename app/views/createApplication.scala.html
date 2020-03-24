@@ -14,19 +14,22 @@
 }{
         <div class="mdl-cell mdl-cell--12-col">
             <div style="margin-bottom: 20px"><a href="@routes.ApplicationController.myApplications()">Mes demandes</a> <span style="margin: 0 10px 0 10px"> > </span> Nouvelle Demande</div>
-            @if(currentUser.areas.nonEmpty) {
-                @helpers.changeArea(currentArea, currentUser.areas.flatMap(Area.fromId))
-            }
+      
             <div class="mdl-grid mdl-grid--no-spacing">
                 <h4 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h4>
                 <a class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.createSimplified()">
                     Mode Guidé
                 </a>
             </div>
-
             @helper.form(action = routes.ApplicationController.createPost(), 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data", 'id -> "create-application-form", 'class -> "aplus-protected-form") {
                 @helper.CSRF.formField
                     <input type="hidden" name="application-id" readonly value="@applicationForm("application-id").value.getOrElse(java.util.UUID.randomUUID)">
+                    @if(currentUser.areas.nonEmpty) {
+                        <h5 class="title--addline">Territoire concerné</h5>
+                        <div>
+                            @helpers.changeArea(currentArea, currentUser.areas.flatMap(Area.fromId))
+                        </div>
+                    }
                     <h5 class="title--addline">Sélectionnez les organismes concernés sur la zone @currentArea.name</h5>
 
                     <div class="mdl-grid mdl-grid--no-spacing">
