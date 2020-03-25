@@ -3,28 +3,58 @@ package browser
 import helper.{Time, UUIDHelper}
 import models.{Application, Area, LoginToken, User, UserGroup}
 import org.junit.runner._
+import org.specs2.matcher.MatchResult
 import org.specs2.mutable._
 import org.specs2.runner._
 import play.api.test.Helpers._
 import play.api.test._
 import services._
 
+/** Tests are broken as unit instead of using tables to allow the
+  * CI to pass those tests (doesn't work otherwise).
+  */
 @RunWith(classOf[JUnitRunner])
 class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
 
   "Application" should {
-    "Access Application (Part 1)" in new WithBrowser(
+    "Allow the instructor to access an Application" in new WithBrowser(
       webDriver = WebDriverFactory(HTMLUNIT),
       app = applicationWithBrowser
     ) {
+      applicationAccessTest(app, browser, port, "instructor-test", shouldExpectAnError = false)
+    }
+  }
 
-      "userCodeName" | "expectedError" |
-        "instructor-test" ! false |
-        "instructor-test-unrelated" ! true |
-        "helper-test" ! false |
-        "helper-test-friend" ! false |> { (userCodeName: String, shouldExpectAnError: Boolean) =>
-        applicationAccessTest(app, browser, port, userCodeName, shouldExpectAnError)
-      }
+  "Application" should {
+    "Not Allow an unrelated instructor to access an Application" in new WithBrowser(
+      webDriver = WebDriverFactory(HTMLUNIT),
+      app = applicationWithBrowser
+    ) {
+      applicationAccessTest(
+        app,
+        browser,
+        port,
+        "instructor-test-unrelated",
+        shouldExpectAnError = true
+      )
+    }
+  }
+
+  "Application" should {
+    "Allow the helper to access an Application" in new WithBrowser(
+      webDriver = WebDriverFactory(HTMLUNIT),
+      app = applicationWithBrowser
+    ) {
+      applicationAccessTest(app, browser, port, "helper-test", shouldExpectAnError = false)
+    }
+  }
+
+  "Application" should {
+    "Allow an related helper to access an Application" in new WithBrowser(
+      webDriver = WebDriverFactory(HTMLUNIT),
+      app = applicationWithBrowser
+    ) {
+      applicationAccessTest(app, browser, port, "helper-test-friend", shouldExpectAnError = false)
     }
   }
 
@@ -33,7 +63,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
       webDriver = WebDriverFactory(HTMLUNIT),
       app = applicationWithBrowser
     ) {
-      applicationAccessTest(app, browser, port, "helper-test-unrelated", true)
+      applicationAccessTest(app, browser, port, "helper-test-unrelated", shouldExpectAnError = true)
     }
   }
 
@@ -42,7 +72,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
       webDriver = WebDriverFactory(HTMLUNIT),
       app = applicationWithBrowser
     ) {
-      applicationAccessTest(app, browser, port, "expert-test-unrelated", true)
+      applicationAccessTest(app, browser, port, "expert-test-unrelated", shouldExpectAnError = true)
     }
   }
 
@@ -51,17 +81,17 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
       webDriver = WebDriverFactory(HTMLUNIT),
       app = applicationWithBrowser
     ) {
-      applicationAccessTest(app, browser, port, "helper-test-manager", true)
+      applicationAccessTest(app, browser, port, "helper-test-manager", shouldExpectAnError = true)
     }
   }
 
   def applicationAccessTest(
       app: play.api.Application,
-      browser: play.api.test.TestBrowser,
+      browser: TestBrowser,
       port: Int,
       userCodeName: String,
       shouldExpectAnError: Boolean
-  ): org.specs2.matcher.MatchResult[String] = {
+  ): MatchResult[String] = {
     val tokenService = app.injector.instanceOf[TokenService]
     val userService = app.injector.instanceOf[UserService]
     val groupService = app.injector.instanceOf[UserGroupService]
