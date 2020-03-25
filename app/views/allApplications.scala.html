@@ -116,12 +116,4 @@
              }
          }
         </script>
-        <script>
-         function changeAreaApps() {
-             var areaSelected = document.getElementById("area-apps").value;
-             if(areaSelected != "@selectedArea.id") {
-                 document.location = jsRoutes.controllers.ApplicationController.all(areaSelected).url;
-             }
-         }
-        </script>
 }
