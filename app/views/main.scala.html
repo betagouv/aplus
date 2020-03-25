@@ -1,6 +1,6 @@
 @import helper._
 
-@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Option[Area] = None, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 <!doctype html>
 <html lang="fr">
@@ -93,16 +93,6 @@
                     <p style="line-height: 1.2; text-align: center;">
                         <img src='@routes.Assets.versioned("images/logo_full_500x397.png")' class="logo">
                     </p>
-                    <div>
-                        @if(currentArea.nonEmpty && currentUser.areas.length > 1) {
-                            <select id="area" name="area" onchange="changeArea()">
-                            @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-                                <option value="@area.id"
-                                @if(area.id == currentArea.get.id) { selected }>@area</option>
-                            }
-                            </select>
-                        }
-                    </div>
                 </header>
                 <nav class="navigation mdl-navigation mdl-color--deep-purple-900">
                     <a class="mdl-navigation__link" href="@routes.ApplicationController.myApplications()"><i class="material-icons" role="presentation">folder_open</i>Mes demandes</a>

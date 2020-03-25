@@ -2,7 +2,7 @@ package services
 
 import akka.actor.ActorSystem
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class ServicesDependencies @Inject() (
     actorSystem: ActorSystem

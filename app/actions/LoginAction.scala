@@ -25,7 +25,6 @@ class RequestWithUserData[A](
     val currentUser: User,
     // Note: accessible here because we will need to make DB calls to create it (areas)
     val rights: Authorization.UserRights,
-    @deprecated("You should use area in queryString or url and not inside a cookie", "v0.1") val currentArea: Area,
     request: Request[A]
 ) extends WrappedRequest[A](request)
 
@@ -78,9 +77,11 @@ class LoginAction @Inject() (
         Future(Left(TemporaryRedirect(Call(request.method, url).url)))
       case (_, Some(user), None) =>
         LoginAction.readUserRights(user).map { userRights =>
-          val area = areaFromContext(user)
+          val area = user.areas.headOption
+                    .flatMap(Area.fromId)
+                    .getOrElse(Area.all.head)
           implicit val requestWithUserData =
-            new RequestWithUserData(user, userRights, area, request)
+            new RequestWithUserData(user, userRights, request)
           if (areasWithLoginByKey.contains(area.id) && !user.admin) {
             // areasWithLoginByKey is an insecure setting for demo usage and transition only
             eventService.log(
@@ -105,9 +106,8 @@ class LoginAction @Inject() (
         manageUserLogged(user)
       case (Some(user), None, None) if user.disabled == true =>
         LoginAction.readUserRights(user).map { userRights =>
-          val area = areaFromContext(user)
           implicit val requestWithUserData =
-            new RequestWithUserData(user, userRights, area, request)
+            new RequestWithUserData(user, userRights, request)
           eventService.log(
             UserAccessDisabled,
             s"Utilisateur désactivé essaye d'accèder à la page ${request.path}}"
@@ -121,7 +121,6 @@ class LoginAction @Inject() (
           case Some(token) =>
             eventService.info(
               User.systemUser,
-              Area.notApplicable,
               request.remoteAddress,
               "UNKNOWN_TOKEN",
               s"Token $token est inconnue",
@@ -144,8 +143,7 @@ class LoginAction @Inject() (
 
   private def manageUserLogged[A](user: User)(implicit request: Request[A]) =
     LoginAction.readUserRights(user).map { userRights =>
-      val area = areaFromContext(user)
-      implicit val requestWithUserData = new RequestWithUserData(user, userRights, area, request)
+      implicit val requestWithUserData = new RequestWithUserData(user, userRights, request)
       if (user.cguAcceptationDate.nonEmpty || request.path.contains("cgu")) {
         Right(requestWithUserData)
       } else {
@@ -157,14 +155,6 @@ class LoginAction @Inject() (
       }
     }
 
-  private def areaFromContext[A](user: User)(implicit request: Request[A]) =
-    request.session
-      .get("areaId")
-      .flatMap(UUIDHelper.fromString)
-      .orElse(user.areas.headOption)
-      .flatMap(id => Area.all.find(_.id == id))
-      .getOrElse(Area.all.head)
-
   private def manageToken[A](token: LoginToken)(implicit request: Request[A]) = {
     val userOption = userService.byId(token.userId)
     userOption match {
@@ -174,9 +164,8 @@ class LoginAction @Inject() (
       case Some(user) =>
         LoginAction.readUserRights(user).map { userRights =>
           //hack: we need RequestWithUserData to call the logger
-          val area = areaFromContext(user)
           implicit val requestWithUserData =
-            new RequestWithUserData(user, userRights, area, request)
+            new RequestWithUserData(user, userRights, request)
 
           if (token.ipAddress != request.remoteAddress) {
             eventService.log(

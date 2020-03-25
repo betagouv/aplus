@@ -37,7 +37,6 @@ class EventService @Inject() (db: Database) {
   )(implicit request: RequestWithUserData[A]) =
     register[A](event.level)(
       request.currentUser,
-      request.currentArea,
       request.remoteAddress,
       event.code,
       s"$description. ${request.method} ${request.path}",
@@ -51,7 +50,6 @@ class EventService @Inject() (db: Database) {
 
   private def register[A](level: String)(
       currentUser: User,
-      currentArea: Area,
       remoteAddress: String,
       code: String,
       description: String,
@@ -66,14 +64,14 @@ class EventService @Inject() (db: Database) {
       currentUser.id,
       Time.nowParis(),
       description,
-      currentArea.id,
+      Area.notApplicable.id,
       application.map(_.id),
       user.map(_.id),
       remoteAddress
     )
     addEvent(event)
 
-    val message = s"${currentUser.name}/${currentArea.name}/${description}"
+    val message = s"${currentUser.name}/${description}"
     level match {
       case "INFO" =>
         logger.info(message)
