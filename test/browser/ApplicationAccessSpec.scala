@@ -29,17 +29,29 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
   }
 
   "Application" should {
-    "Access Application (Part 2)" in new WithBrowser(
+    "Not Allow an unrelated helper to access an Application" in new WithBrowser(
       webDriver = WebDriverFactory(HTMLUNIT),
       app = applicationWithBrowser
     ) {
+      applicationAccessTest(app, browser, port, "helper-test-unrelated", true)
+    }
+  }
 
-      "userCodeName" | "expectedError" |
-        "helper-test-unrelated" ! true |
-        "expert-test-unrelated" ! true |
-        "helper-test-manager" ! true |> { (userCodeName: String, shouldExpectAnError: Boolean) =>
-        applicationAccessTest(app, browser, port, userCodeName, shouldExpectAnError)
-      }
+  "Application" should {
+    "Not Allow an unrelated expert to access an Application" in new WithBrowser(
+      webDriver = WebDriverFactory(HTMLUNIT),
+      app = applicationWithBrowser
+    ) {
+      applicationAccessTest(app, browser, port, "expert-test-unrelated", true)
+    }
+  }
+
+  "Application" should {
+    "Not Allow a manager to access an Application" in new WithBrowser(
+      webDriver = WebDriverFactory(HTMLUNIT),
+      app = applicationWithBrowser
+    ) {
+      applicationAccessTest(app, browser, port, "helper-test-manager", true)
     }
   }
 
