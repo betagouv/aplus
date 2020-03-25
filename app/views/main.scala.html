@@ -174,17 +174,6 @@
             </main>
         </div>
 
-        @if(currentArea.nonEmpty) {
-            <script>
-             function changeArea() {
-                 var areaSelected = document.getElementById("area").value;
-                 if(areaSelected != "@currentArea.get.id") {
-                     document.location = "@routes.AreaController.all()/"+areaSelected+"?redirect="+window.location.href;
-                 }
-             }
-            </script>
-        }
-
         @bodyBottom
 
     </body>
