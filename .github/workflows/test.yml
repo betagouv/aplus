@@ -19,9 +19,9 @@ jobs:
          postgresql db: 'aplus'
          postgresql user: 'aplus'
          postgresql password: 'mysecretpassword'
-    - name: Compile test
-      run: sbt compile:test
-    - name: Run test
+    - name: Compile tests
+      run: "sbt test:compile"
+    - name: Run tests
       run: sbt coverage test coverageReport
       env:
         GEOPLUS_HOST: geoplus.aplus.beta.gouv.fr
