@@ -18,6 +18,8 @@ class HomeController @Inject() (loginAction: LoginAction, db: Database)(
 ) extends InjectedController
     with play.api.i18n.I18nSupport {
 
+  private val log = Logger(classOf[HomeController])
+
   def index: Action[AnyContent] = Action { implicit request =>
     if (request.session
           .get("userId")
@@ -39,7 +41,7 @@ class HomeController @Inject() (loginAction: LoginAction, db: Database)(
         }
       } catch {
         case throwable: Throwable =>
-          Logger.error("Database check error", throwable)
+          log.error("Database check error", throwable)
           false
       }
     if (connectionValid) {

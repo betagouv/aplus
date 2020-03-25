@@ -69,14 +69,6 @@
         vertical-align: middle;
     }
 </style>
-<link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("sortable/sortable.css")'>
-<script src="@routes.Assets.versioned("sortable/sortable.js")"></script>
-<script>
-    function showClosedApplications() {
-        document.getElementById("show-closed-applications").classList.add("invisible");
-        document.getElementById("closed-applications").classList.remove("invisible");
-    }
-</script>
 }{
     <div class="mdl-cell mdl-cell--12-col">
     @if(myOpenApplications.isEmpty) {
@@ -134,4 +126,10 @@
 
     </div>
 }{
+    <script>
+     function showClosedApplications() {
+         document.getElementById("show-closed-applications").classList.add("invisible");
+         document.getElementById("closed-applications").classList.remove("invisible");
+     }
+    </script>
 }

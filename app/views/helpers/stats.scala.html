@@ -2,7 +2,7 @@
 @import java.util.UUID
 
 @import _root_.helper.{Math, Time}
-@(isAdmin: Boolean)(months: ListMap[String, String], allApplications: Map[Area, Seq[Application]], users: List[User], groups: List[UserGroup], selectedAreaIds: List[UUID], selectedOrganisationIds: List[Organisation.Id], selectedGroupIds: List[UUID])(implicit webJarsUtil: org.webjars.play.WebJarsUtil)
+@(isAdmin: Boolean)(data: views.stats.StatsData, months: ListMap[String, String], users: List[User], groups: List[UserGroup], selectedAreaIds: List[UUID], selectedOrganisationIds: List[Organisation.Id], selectedGroupIds: List[UUID])(implicit webJarsUtil: org.webjars.play.WebJarsUtil)
 
 
 
@@ -11,11 +11,10 @@
     </div>
 
     <!-- New Stats -->
-    @defining(allApplications.flatMap(_._2)) { all =>
     <div class="mdl-cell mdl-cell--6-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
         <h6>Total de demandes</h6>
-        <h1>@all.size</h1>
-        <h5>@all.count(_.ageInDays <= 30) sur les 30 derniers jours</h5>
+        <h1>@data.allApplications.size</h1>
+        <h5>@data.allApplications.count(_.ageInDays <= 30) sur les 30 derniers jours</h5>
     </div>
     <div class="mdl-cell mdl-cell--6-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
         <h6>Total d'utilisateurs</h6>
@@ -31,10 +30,10 @@
 
                     // The data for our dataset
                     data: {
-                        labels: [@Html(all.groupBy(_.status).map(s => s"'${s._1} (${s._2.size})'").mkString(", "))],
+                        labels: [@Html(data.allApplications.groupBy(_.status).map(s => s"'${s._1} (${s._2.size})'").mkString(", "))],
                         datasets: [{
                             label: "Status",
-                            data: [@Html(all.groupBy(_.status).map(_._2.size).mkString(", "))],
+                            data: [@Html(data.allApplications.groupBy(_.status).map(_._2.size).mkString(", "))],
                             backgroundColor: [
                                 "rgba(61, 149, 236, 1)",
                                 "rgba(113, 176, 239, 1)",
@@ -54,7 +53,7 @@
                     }
                 });
         </script>
-        <h5>@all.count(a => a.ageInDays <= 30 && a.closed) clôturé sur les 30 derniers jours</h5>
+        <h5>@data.allApplications.count(a => a.ageInDays <= 30 && a.closed) clôturé sur les 30 derniers jours</h5>
     </div>
     <div class="mdl-cell mdl-cell--6-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
         <h6>Pertinences des demandes</h6>
@@ -68,7 +67,7 @@
                         labels: ['Pertinente', 'Non Pertinente'],
                         datasets: [{
                             label: "Status",
-                            data: [@all.count(!_.irrelevant),@all.count(_.irrelevant)],
+                            data: [@data.allApplications.count(!_.irrelevant),@data.allApplications.count(_.irrelevant)],
                             backgroundColor: [
                                 "rgba(61, 149, 236, 1)",
                                 "red"
@@ -86,10 +85,8 @@
                     }
                 });
         </script>
-        <h5>@all.count(a => a.ageInDays <= 30 && a.irrelevant) non pertinente sur les 30 derniers jours</h5>
+        <h5>@data.allApplications.count(a => a.ageInDays <= 30 && a.irrelevant) non pertinente sur les 30 derniers jours</h5>
     </div>
-    @defining(months.values.toSeq.map{ month:String => month -> all.filter(application => (Time.formatPatternFr(application.creationDate, "MMMM YYYY"): String) == (month: String)).toSeq  } ) { applicationsGroupByMonths: Seq[(String, Seq[Application])] =>
-        @defining(months.values.toSeq.map { month: String => month -> all.filter(a => a.estimatedClosedDate != None && (Time.formatPatternFr(a.estimatedClosedDate.get, "MMMM YYYY"): String) == (month: String)).toSeq }) { applicationsGroupByMonthsClosed: Seq[(String, Seq[Application])] =>
 
             <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
                 <h6>Est-ce que la réponse vous semble utile pour l'usager ?</h6>
@@ -100,23 +97,23 @@
 
                             // The data for our dataset
                             data: {
-                                labels: [@Html(applicationsGroupByMonthsClosed.map(s => s"'${s._1}'").mkString(", "))],
+                                labels: [@Html(data.applicationsGroupByMonthsClosed.map(s => s"'${s._1}'").mkString(", "))],
                                 datasets: [{
-                                    data: [@Html(applicationsGroupByMonthsClosed.map(a => if(a._2.count(_.usefulness.isDefined) == 0) { 0 } else { (a._2.count(_.usefulness.contains("Non"))*100)/a._2.count(_.usefulness.isDefined) }).mkString(", "))],
+                                    data: [@Html(data.applicationsGroupByMonthsClosed.map(a => if(a._2.count(_.usefulness.isDefined) == 0) { 0 } else { (a._2.count(_.usefulness.contains("Non"))*100)/a._2.count(_.usefulness.isDefined) }).mkString(", "))],
                                     label: "Non",
                                     backgroundColor: "red",
                                     borderColor: "red",
                                     stack: 'useful',
                                     fill: false
                                 }, {
-                                    data: [@Html(applicationsGroupByMonthsClosed.map(a => if(a._2.count(_.usefulness.isDefined) == 0) { 0 } else { (a._2.count(_.usefulness.contains("Je ne sais pas"))*100)/a._2.count(_.usefulness.isDefined) }).mkString(", "))],
+                                    data: [@Html(data.applicationsGroupByMonthsClosed.map(a => if(a._2.count(_.usefulness.isDefined) == 0) { 0 } else { (a._2.count(_.usefulness.contains("Je ne sais pas"))*100)/a._2.count(_.usefulness.isDefined) }).mkString(", "))],
                                     label: "Je ne sais pas",
                                     backgroundColor: "orange",
                                     borderColor: "orange",
                                     stack: 'useful',
                                     fill: false
                                 }, {
-                                    data: [@Html(applicationsGroupByMonthsClosed.map(a => if(a._2.count(_.usefulness.isDefined) == 0) { 0 } else { (a._2.count(_.usefulness.contains("Oui"))*100)/a._2.count(_.usefulness.isDefined) }).mkString(", "))],
+                                    data: [@Html(data.applicationsGroupByMonthsClosed.map(a => if(a._2.count(_.usefulness.isDefined) == 0) { 0 } else { (a._2.count(_.usefulness.contains("Oui"))*100)/a._2.count(_.usefulness.isDefined) }).mkString(", "))],
                                     label: 'Oui',
                                     backgroundColor: "green",
                                     borderColor: "green",
@@ -150,9 +147,9 @@
 
                             // The data for our dataset
                             data: {
-                                labels: [@Html(applicationsGroupByMonthsClosed.map(s => s"'${s._1}'").mkString(", "))],
+                                labels: [@Html(data.applicationsGroupByMonthsClosed.map(s => s"'${s._1}'").mkString(", "))],
                                 datasets: [{
-                                    data: [@Html(applicationsGroupByMonthsClosed.map{ apps =>
+                                    data: [@Html(data.applicationsGroupByMonthsClosed.map{ apps =>
                                         if(apps._2.isEmpty) {
                                            0D
                                         } else {
@@ -166,7 +163,7 @@
                                     borderColor: "black",
                                     fill: false
                                 }, {
-                                    data: [@Html(applicationsGroupByMonthsClosed.map{ apps =>
+                                    data: [@Html(data.applicationsGroupByMonthsClosed.map{ apps =>
                                         if(apps._2.isEmpty) {
                                            0D
                                         } else {
@@ -177,7 +174,7 @@
                                     label: "Temps de résolution moyen (Jour)",
                                     backgroundColor: "rgba(113, 176, 239, 1)"
                                 }, {
-                                    data: [@Html(applicationsGroupByMonthsClosed.map{ apps =>
+                                    data: [@Html(data.applicationsGroupByMonthsClosed.map{ apps =>
                                         if(apps._2.isEmpty) {
                                            0D
                                         } else {
@@ -221,14 +218,14 @@
 
                             // The data for our dataset
                             data: {
-                                labels: [@Html(applicationsGroupByMonths.map(s => s"'${s._1}'").mkString(", "))],
-                                datasets: [@for((area, apps) <- allApplications) {
+                                labels: [@Html(data.applicationsGroupByMonths.map(s => s"'${s._1}'").mkString(", "))],
+                                datasets: [@for(areaData <- data.areaAggregates) {
                                         {
-                                            label: "@area.name",
+                                            label: "@areaData.area.name",
                                             lineTension: 0,
                                             borderColor: adminReceivedColors.pop(),
                                             backgroundColor: adminReceivedColors.pop(),
-                                            data: [@Html(applicationsGroupByMonths.map(_._2.count(_.area == area.id)).mkString(", "))]
+                                            data: [@Html(data.applicationsGroupByMonths.map(_._2.count(_.area == areaData.area.id)).mkString(", "))]
                                         },
                                     }]
                             },
@@ -263,9 +260,9 @@
 
                             // The data for our dataset
                             data: {
-                                labels: [@Html(applicationsGroupByMonths.map(s => s"'${s._1}'").mkString(", "))],
+                                labels: [@Html(data.applicationsGroupByMonths.map(s => s"'${s._1}'").mkString(", "))],
                                 datasets: [{
-                                    data: [@Html(applicationsGroupByMonthsClosed.map(_._2.count(_.closed)).mkString(", "))],
+                                    data: [@Html(data.applicationsGroupByMonthsClosed.map(_._2.count(_.closed)).mkString(", "))],
                                     label: "Demandes clôturées",
                                     backgroundColor: "black",
                                     type: 'line',
@@ -299,7 +296,7 @@
                 <script>
 
                         var adminReceivedColors = ["#caff70","#8b8970","#a2cd5a","#eea2ad","#666666","#7a7a7a","#87ceff","#6ca6cd","#eedd82","#ee6a50","#ee7942","#ff83fa","#c9c9c9","#919191","#cd5c5c","#454545","#eee9bf",];
-                        @defining(applicationsGroupByMonths.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
+                        @defining(data.applicationsGroupByMonths.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
                             new Chart(document.getElementById('applications-per-admin-chart'), {
                                 type: 'pie',
                                 // The data for our dataset
@@ -315,7 +312,7 @@
                                                     }
                                                 ],
                                                 lineTension: 0,
-                                                data: [@admins.map(admin => all.count(_.administrations(users).contains(admin))).mkString(",")]
+                                                data: [@admins.map(admin => data.allApplications.count(_.administrations(users).contains(admin))).mkString(",")]
                                             },
                                     ]
                                 },
@@ -333,16 +330,13 @@
                 </script>
             </div>
                 }
-            }
-        }
-    }
 
     @if(isAdmin) {
     <!-- all -->
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing mdl-shadow--2dp mdl-color--white">
         <h6>Demandes par territoire</h6>
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
-        @defining(allApplications.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
+        @defining(data.allApplications.flatMap(_.administrations(users)).toSet.toList) { admins =>
             <table class="mdl-data-table mdl-data-table--initial-white-space mdl-js-data-table pem-table mdl-data-table--normal-white-space">
                 <thead>
                     <tr>
@@ -357,16 +351,16 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for((area, applications) <- allApplications) {
+                    @for(areaData <- data.areaAggregates) {
                         <tr class="application-row">
-                            <td class="mdl-data-table__cell--non-numeric">@area.name</td>
-                            <td>@applications.length</td>
-                            <td>@applications.count(_.closed)</td>
-                            <td>@applications.count(_.irrelevant)</td>
-                            <td>@applications.count(_.usefulness.contains("Oui")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"></td>
-                            <td>@applications.count(_.usefulness.contains("Je ne sais pas")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"></td>
-                            <td>@applications.count(_.usefulness.contains("Non")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f61e.svg").url.get"></td>
-                            <td>@applications.count(_.usefulness.isEmpty) ?</td>
+                            <td class="mdl-data-table__cell--non-numeric">@areaData.area.name</td>
+                            <td>@areaData.applications.length</td>
+                            <td>@areaData.applications.count(_.closed)</td>
+                            <td>@areaData.applications.count(_.irrelevant)</td>
+                            <td>@areaData.applications.count(_.usefulness.contains("Oui")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"></td>
+                            <td>@areaData.applications.count(_.usefulness.contains("Je ne sais pas")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"></td>
+                            <td>@areaData.applications.count(_.usefulness.contains("Non")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f61e.svg").url.get"></td>
+                            <td>@areaData.applications.count(_.usefulness.isEmpty) ?</td>
                         </tr>
                     }
                 </tbody>
@@ -377,57 +371,54 @@
 
     <!-- Old Stats -->
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
-        @for((area, applications) <- allApplications) {
-            <h4 class="mdl-cell mdl-cell--12-col">@area.name</h4>
-            @defining(months.keys.toSeq.map{ month:String => month -> applications.filter(a => a.estimatedClosedDate.isDefined && f"${a.estimatedClosedDate.get.getYear}/${a.estimatedClosedDate.get.getMonthValue}%02d" == month) }) { closedApplicationsPerMonth: Seq[(String, Seq[Application])] =>
-
-            @defining(months.keys.toSeq.map{ month:String => month -> applications.filter(a => f"${a.creationDate.getYear}/${a.creationDate.getMonthValue}%02d" == month) } ) { newApplicationsPerMonth: Seq[(String, Seq[Application])] =>
+        @for(areaData <- data.areaAggregates) {
+            <h4 class="mdl-cell mdl-cell--12-col">@areaData.area.name</h4>
                 <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white mdl-grid">
-                    <canvas class="mdl-cell mdl-cell--12-col chart--default-size" id="application-chart-@area.id"></canvas>
+                    <canvas class="mdl-cell mdl-cell--12-col chart--default-size" id="application-chart-@areaData.area.id"></canvas>
                     <script>
-                        new Chart(document.getElementById('application-chart-@area.id'), {
+                        new Chart(document.getElementById('application-chart-@areaData.area.id'), {
                             // The type of chart we want to create
                             type: 'bar',
 
                             // The data for our dataset
                             data: {
-                                labels: [@Html(newApplicationsPerMonth.map(_._1).flatMap(months.get).map(day => s"'$day'").mkString(", "))],
+                                labels: [@Html(areaData.newApplicationsPerMonth.map(_._1).flatMap(months.get).map(day => s"'$day'").mkString(", "))],
                                 datasets: [{
                                     label: "Nouvelles demandes",
                                     backgroundColor: '#3f51b5',
                                     borderColor: '#3f51b5',
                                     stack: 'new',
-                                    data: [@Html(newApplicationsPerMonth.map(_._2.length).mkString(", "))]
+                                    data: [@Html(areaData.newApplicationsPerMonth.map(_._2.length).mkString(", "))]
                                 }, {
                                     label: "Demandes clôturées non évalué",
                                     backgroundColor: 'gray',
                                     borderColor: 'gray',
                                     stack: 'useful',
-                                    data: [@Html(closedApplicationsPerMonth.map(_._2.count(_.usefulness.isEmpty)).mkString(", "))],
+                                    data: [@Html(areaData.closedApplicationsPerMonth.map(_._2.count(_.usefulness.isEmpty)).mkString(", "))],
                                 },{
                                     label: "Demandes clôturées non utiles",
                                     backgroundColor: 'orange',
                                     borderColor: 'orange',
                                     stack: 'useful',
-                                    data: [@Html(closedApplicationsPerMonth.map(_._2.count(_.usefulness.contains("Non"))).mkString(", "))],
+                                    data: [@Html(areaData.closedApplicationsPerMonth.map(_._2.count(_.usefulness.contains("Non"))).mkString(", "))],
                                 }, {
                                     label: "Demandes clôturées utilité inconnue",
                                     backgroundColor: 'yellow',
                                     borderColor: 'yellow',
                                     stack: 'useful',
-                                    data: [@Html(closedApplicationsPerMonth.map(_._2.count(_.usefulness.contains("Je ne sais pas"))).mkString(", "))],
+                                    data: [@Html(areaData.closedApplicationsPerMonth.map(_._2.count(_.usefulness.contains("Je ne sais pas"))).mkString(", "))],
                                 },{
                                     label: "Demandes clôturées utiles",
                                     backgroundColor: 'green',
                                     borderColor: 'green',
                                     stack: 'useful',
-                                    data: [@Html(closedApplicationsPerMonth.map(_._2.count(_.usefulness.contains("Oui"))).mkString(", "))]
+                                    data: [@Html(areaData.closedApplicationsPerMonth.map(_._2.count(_.usefulness.contains("Oui"))).mkString(", "))]
                                 }, {
                                     label: "Demandes clôturées non pertinentes",
                                     backgroundColor: 'red',
                                     borderColor: 'red',
                                     stack: 'irrelevant',
-                                    data: [@Html(closedApplicationsPerMonth.map(_._2.count(_.irrelevant)).mkString(", "))]
+                                    data: [@Html(areaData.closedApplicationsPerMonth.map(_._2.count(_.irrelevant)).mkString(", "))]
                                 }]
                             },
 
@@ -453,18 +444,18 @@
                     <details class="mdl-cell mdl-cell--12-col">
                         <summary>Détail des demandes reçues par les instructeurs d'administrations </summary>
 
-                        @defining(newApplicationsPerMonth.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
+                        @defining(areaData.newApplicationsPerMonth.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
                             <div class="chart-container">
-                                <canvas id="admin-received-chart-@area.id"></canvas>
+                                <canvas id="admin-received-chart-@areaData.area.id"></canvas>
                             </div>
                             <script>
                                     var adminReceivedColors = ["#caff70","#caff70","#8b8970","#8b8970","#a2cd5a","#a2cd5a","#eea2ad","#eea2ad","#666666","#666666","#7a7a7a","#7a7a7a","#87ceff","#87ceff","#6ca6cd","#6ca6cd","#eedd82","#eedd82","#ee6a50","#ee6a50","#ee7942","#ee7942","#ff83fa","#ff83fa","#c9c9c9","#c9c9c9","#919191","#919191","#cd5c5c","#cd5c5c","#454545","#454545","#eee9bf","#eee9bf",];
-                                    new Chart(document.getElementById('admin-received-chart-@area.id'), {
+                                    new Chart(document.getElementById('admin-received-chart-@areaData.area.id'), {
                                         // The type of chart we want to create
                                         type: 'line',
                                         // The data for our dataset
                                         data: {
-                                            labels: [@Html(newApplicationsPerMonth.map(_._1).flatMap(months.get).map(day => s"'$day'").mkString(", "))],
+                                            labels: [@Html(areaData.newApplicationsPerMonth.map(_._1).flatMap(months.get).map(day => s"'$day'").mkString(", "))],
                                             datasets: [
                                                 @for(admin: String <- admins) {
                                                 {
@@ -473,7 +464,7 @@
                                                     borderColor: adminReceivedColors.pop(),
                                                     backgroundColor: adminReceivedColors.pop(),
                                                     lineTension: 0,
-                                                    data: [@Html(newApplicationsPerMonth.map(_._2.count(_.administrations(users).contains(admin))).mkString(", "))]
+                                                    data: [@Html(areaData.newApplicationsPerMonth.map(_._2.count(_.administrations(users).contains(admin))).mkString(", "))]
                                                 },
                                                 }
                                             ]
@@ -501,7 +492,7 @@
                                                 </tr>
                                         </thead>
                                         <tbody>
-                                        @for((month, applications) <- newApplicationsPerMonth.reverse) {
+                                        @for((month, applications) <- areaData.newApplicationsPerMonth.reverse) {
                                             <tr class="application-row">
                                                 <td class="mdl-data-table__cell--non-numeric">@months(month) (@month)</td>
                                                 <td>@applications.length</td>
@@ -517,18 +508,18 @@
                     </details>
                     <details class="mdl-cell mdl-cell--12-col">
                         <summary>Détail des demandes faites par des structures aidantes</summary>
-                        @defining(newApplicationsPerMonth.flatMap(_._2).flatMap(_.creatorUserQualite(users)).toSet.toList) { admins =>
+                        @defining(areaData.newApplicationsPerMonth.flatMap(_._2).flatMap(_.creatorUserQualite(users)).toSet.toList) { admins =>
                         <div class="chart-container">
-                            <canvas id="helper-admin-chart-@area.id"></canvas>
+                            <canvas id="helper-admin-chart-@areaData.area.id"></canvas>
                         </div>
                         <script>
                                 var adminReceivedColors = ["#caff70","#caff70","#8b8970","#8b8970","#a2cd5a","#a2cd5a","#eea2ad","#eea2ad","#666666","#666666","#7a7a7a","#7a7a7a","#87ceff","#87ceff","#6ca6cd","#6ca6cd","#eedd82","#eedd82","#ee6a50","#ee6a50","#ee7942","#ee7942","#ff83fa","#ff83fa","#c9c9c9","#c9c9c9","#919191","#919191","#cd5c5c","#cd5c5c","#454545","#454545","#eee9bf","#eee9bf",];
-                                new Chart(document.getElementById('helper-admin-chart-@area.id'), {
+                                new Chart(document.getElementById('helper-admin-chart-@areaData.area.id'), {
                                     // The type of chart we want to create
                                     type: 'line',
                                     // The data for our dataset
                                     data: {
-                                        labels: [@Html(newApplicationsPerMonth.map(_._1).flatMap(months.get).map(day => s"'$day'").mkString(", "))],
+                                        labels: [@Html(areaData.newApplicationsPerMonth.map(_._1).flatMap(months.get).map(day => s"'$day'").mkString(", "))],
                                         datasets: [
                                             @for(admin: String <- admins) {
                                             {
@@ -537,7 +528,7 @@
                                                 lineTension: 0,
                                                 borderColor: adminReceivedColors.pop(),
                                                 backgroundColor: adminReceivedColors.pop(),
-                                                data: [@Html(newApplicationsPerMonth.map(_._2.count(_.creatorUserQualite(users).contains(admin))).mkString(", "))]
+                                                data: [@Html(areaData.newApplicationsPerMonth.map(_._2.count(_.creatorUserQualite(users).contains(admin))).mkString(", "))]
                                             },
                                             }
                                         ]
@@ -566,7 +557,7 @@
                                     </tr>
                             </thead>
                             <tbody>
-                            @for((month, applications) <- newApplicationsPerMonth.reverse) {
+                            @for((month, applications) <- areaData.newApplicationsPerMonth.reverse) {
                                 <tr class="application-row">
                                     <td class="mdl-data-table__cell--non-numeric">@months(month) (@month)</td>
                                     <td>@applications.length</td>
@@ -594,7 +585,7 @@
                             </tr>
                     </thead>
                     <tbody>
-                    @for((month, applications) <- closedApplicationsPerMonth.reverse) {
+                    @for((month, applications) <- areaData.closedApplicationsPerMonth.reverse) {
                         <tr class="application-row">
                             <td class="mdl-data-table__cell--non-numeric">@months(month) (@month)</td>
                             <td>@applications.length</td>
@@ -609,8 +600,6 @@
                     </table>
                    </details>
                 </div>
-            }
-            }
         }
     </div>
     }

@@ -52,6 +52,8 @@ class LoginAction @Inject() (
     with ActionRefiner[Request, RequestWithUserData] {
   def executionContext = ec
 
+  private val log = Logger(classOf[LoginAction])
+
   private lazy val areasWithLoginByKey = configuration.underlying
     .getString("app.areasWithLoginByKey")
     .split(",")
@@ -133,7 +135,7 @@ class LoginAction @Inject() (
           case None if routes.HomeController.index().url.contains(path) =>
             Future(userNotLoggedOnLoginPage)
           case None =>
-            Logger.warn(s"Accès à la ${request.path} non autorisé")
+            log.warn(s"Accès à la ${request.path} non autorisé")
             Future(userNotLogged("Vous devez vous identifier pour accèder à cette page."))
         }
     }
@@ -157,7 +159,7 @@ class LoginAction @Inject() (
     val userOption = userService.byId(token.userId)
     userOption match {
       case None =>
-        Logger.error(s"Try to login by token ${token.token} for an unknown user : ${token.userId}")
+        log.error(s"Try to login by token ${token.token} for an unknown user : ${token.userId}")
         Future(userNotLogged("Une erreur s'est produite, votre utilisateur n'existe plus"))
       case Some(user) =>
         LoginAction.readUserRights(user).map { userRights =>
