@@ -2,7 +2,7 @@
 @import models.Organisation.Category
 @(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], categories: Seq[Category], selectedCategory: Option[String], applicationForm: Form[models.formModels.ApplicationFormData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
-@main(currentUser, currentUserRights, Some(currentArea))(s"Nouvelle demande"){
+@main(currentUser, currentUserRights)(s"Nouvelle demande"){
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 
     <style>
@@ -55,15 +55,23 @@
 </style>
 }{
     <div class="mdl-cell mdl-cell--12-col">
+        <div style="margin-bottom: 20px"><a href="@routes.ApplicationController.myApplications()">Mes demandes</a> <span style="margin: 0 10px 0 10px"> > </span> Nouvelle Demande Guidée</div>
         <div class="mdl-grid mdl-grid--no-spacing">
             <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h3>
             <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.create()">
                 Mode Avancé
             </a>
-            <span>Besoin d'aide ? Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Aidez-moi%20avec%20Administration+">@Constants.supportEmail</a></span>
         </div>
     @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data", 'class -> "aplus-protected-form") {
         @helper.CSRF.formField
+        @if(currentUser.areas.nonEmpty) {
+            <h5 class="title--addline">Territoire concerné</h5>
+            <div>
+            @helpers.changeArea(currentArea, currentUser.areas.flatMap(Area.fromId))
+            </div>
+            <h5 class="title--addline">Thématique principale</h5>
+        }
+
         <div class="mdl-grid">
             @defining(categories.filter(_.defaultOrganisations.map(_.id).intersect(organisationGroups.flatMap(_.organisationSetOrDeducted.map(_.id))).nonEmpty)) { categories =>
                 @if(categories.isEmpty) {

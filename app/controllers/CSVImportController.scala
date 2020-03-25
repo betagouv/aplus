@@ -318,7 +318,7 @@ case class CSVImportController @Inject() (
                             }
                             eventService
                               .log(UsersImported, "Utilisateurs ajoutés par l'importation")
-                            Redirect(routes.UserController.all(request.currentArea.id))
+                            Redirect(routes.UserController.all(Area.allArea.id))
                               .flashing("success" -> "Utilisateurs importés.")
                         }
                       )

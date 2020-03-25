@@ -2,7 +2,6 @@ package browser
 
 import helper.UUIDHelper
 import helper.Time
-import javax.inject.Inject
 import models.LoginToken
 import org.specs2.mutable._
 import org.specs2.runner._
