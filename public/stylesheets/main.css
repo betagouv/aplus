@@ -65,6 +65,13 @@ html, body {
       -ms-flex-positive: 1;
           flex-grow: 1;
 }
+
+.mdl-navigation__active-link {
+    background-color: #00BCD4;
+    /** !important because overridden by .demo-layout .navigation .mdl-navigation__link */
+    color: #37474F !important;
+}
+
 .demo-layout .navigation .mdl-navigation__link {
   display: -webkit-flex !important;
   display: -ms-flexbox !important;

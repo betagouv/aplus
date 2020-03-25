@@ -96,33 +96,7 @@
                         <img src='@routes.Assets.versioned("images/logo_full_500x397.png")' class="logo">
                     </p>
                 </header>
-                <nav class="navigation mdl-navigation mdl-color--deep-purple-900">
-                    <a class="mdl-navigation__link" href="@routes.ApplicationController.myApplications()"><i class="material-icons" role="presentation">folder_open</i>Mes demandes</a>
-                    @if(Authorization.isAdmin(currentUserRights)) {
-                        <a class="mdl-navigation__link" href="@routes.AreaController.all()"><i class="material-icons" role="presentation">place</i>Territoires</a>
-                    }
-                    @if(Authorization.canSeeApplicationsAsAdmin(currentUserRights)) {
-                        <a class="mdl-navigation__link" href="@routes.ApplicationController.all(Area.allArea.id)"><i class="material-icons" role="presentation">folder</i>Admin : demandes</a>
-                    }
-                    @if(Authorization.canSeeUsers(currentUserRights)) {
-                        <a class="mdl-navigation__link" href="@routes.UserController.home"><i class="material-icons" role="presentation">people</i>Utilisateurs</a>
-                    }
-                    @if(Authorization.isAdminOrObserver(currentUserRights)) {
-                        <a class="mdl-navigation__link" href="@routes.AreaController.deploymentDashboard()"><i class="material-icons" role="presentation">track_changes</i>Déploiement</a>
-                    }
-                    @if(Authorization.isAdmin(currentUserRights)) {
-                        <a class="mdl-navigation__link" href="@routes.UserController.allEvents()"><i class="material-icons" role="presentation">event</i>Événements</a>
-                    }
-                    @if(Authorization.canSeeStats(currentUserRights)) {
-                        <a class="mdl-navigation__link" href="@routes.ApplicationController.stats()"><i class="material-icons" role="presentation">show_chart</i>Stats</a>
-                    }
-                    <a class="mdl-navigation__link" href="@routes.Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf")" target="_blank"><i class="material-icons" role="presentation">assignment</i>Mandat</a>
-                    <a class="mdl-navigation__link" href="https://docs.aplus.beta.gouv.fr/faq" target="_blank"><i class="material-icons" role="presentation">help</i>FAQ
-                        <i class="material-icons material-icons--small-postfix">
-                            open_in_new
-                        </i></a>
-
-                </nav>
+                @helpers.menuNav(currentUserRights)
                 <div class="mdl-layout-spacer mdl-color--deep-purple-900"></div>
                 <footer class="drawer-footer mdl-color--deep-purple-900">
                     <img src='@routes.Assets.versioned("images/contact_phone_104x104.png")' class="contact-phone-icon">

@@ -1,0 +1,71 @@
+@(currentUserRights: Authorization.UserRights)(implicit request: RequestHeader)
+
+@linkAttrs(route: Call) = {
+    @if((request.path: String) == (route.path: String)) {
+        class="mdl-navigation__link mdl-navigation__active-link"
+    } else {
+        class="mdl-navigation__link"
+    }
+    href="@route.path()"
+}
+
+<nav class="navigation mdl-navigation mdl-color--deep-purple-900">
+
+    <a @linkAttrs(routes.ApplicationController.myApplications)>
+        <i class="material-icons" role="presentation">folder_open</i>Mes demandes
+    </a>
+
+
+    @if(Authorization.isAdmin(currentUserRights)) {
+        <a @linkAttrs(routes.AreaController.all)>
+            <i class="material-icons" role="presentation">place</i>Territoires
+        </a>
+    }
+
+    @if(Authorization.canSeeApplicationsAsAdmin(currentUserRights)) {
+        <a @linkAttrs(routes.ApplicationController.all(Area.allArea.id))>
+            <i class="material-icons" role="presentation">folder</i>Admin : demandes
+        </a>
+    }
+
+    @if(Authorization.canSeeUsers(currentUserRights)) {
+        <a @linkAttrs(routes.UserController.all(Area.allArea.id))>
+            <i class="material-icons" role="presentation">people</i>Utilisateurs
+        </a>
+    }
+
+    @if(Authorization.isAdminOrObserver(currentUserRights)) {
+        <a @linkAttrs(routes.AreaController.deploymentDashboard)>
+            <i class="material-icons" role="presentation">track_changes</i>Déploiement
+        </a>
+    }
+
+    @if(Authorization.isAdmin(currentUserRights)) {
+        <a @linkAttrs(routes.UserController.allEvents)>
+            <i class="material-icons" role="presentation">event</i>Evénements
+        </a>
+    }
+
+    @if(Authorization.canSeeStats(currentUserRights)) {
+        <a @linkAttrs(routes.ApplicationController.stats)>
+            <i class="material-icons" role="presentation">show_chart</i>Stats
+        </a>
+    }
+
+
+    <a class="mdl-navigation__link"
+       href="@routes.Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf")"
+       target="_blank"
+       rel="noopener noreferrer">
+        <i class="material-icons" role="presentation">assignment</i>Mandat
+    </a>
+
+    <a class="mdl-navigation__link"
+       href="https://docs.aplus.beta.gouv.fr/faq"
+       target="_blank"
+       rel="noopener noreferrer">
+        <i class="material-icons" role="presentation">help</i>FAQ
+        <i class="material-icons material-icons--small-postfix">open_in_new</i>
+    </a>
+
+</nav>
