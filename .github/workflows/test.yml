@@ -19,8 +19,10 @@ jobs:
          postgresql db: 'aplus'
          postgresql user: 'aplus'
          postgresql password: 'mysecretpassword'
+    - name: Compile test
+      run: sbt compile:test
     - name: Run test
-      run: sbt coverage test coverageReport 
+      run: sbt coverage test coverageReport
       env:
         GEOPLUS_HOST: geoplus.aplus.beta.gouv.fr
     - name: Upload Coverage to codacy
