@@ -152,12 +152,12 @@ function onClickRemoveElement(clickElement, elementToRemove) {
   })
 }
 
-
+/*
 window.document.addEventListener("DOMContentLoaded", function(event) {
   //setupProtectedForms();
   setupNotificationMessages();
 }, false);
-
+*/
 if(/localhost|demo/.test(window.location.hostname)) {
   var ribon = document.getElementById("header__ribbon");
   if(ribon) {

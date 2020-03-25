@@ -1,5 +1,5 @@
 ApplicationAttachment = {};
-
+/*
 window.document.addEventListener("DOMContentLoaded", function (event) {
   "use strict";
   var attachmentList = document.getElementById("attachment-list");
@@ -33,3 +33,4 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     });
   }
 }, false);
+*/
