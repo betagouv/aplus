@@ -29,11 +29,17 @@ case class ApiController @Inject() (
 
   private def matchFranceServiceInstance(
       franceServiceInstance: FranceServiceInstance,
-      groups: List[UserGroup]
+      groups: List[UserGroup],
+      doNotMatchTheseEmails: List[String]
   ): Option[UserGroup] = {
     def byEmail: Option[UserGroup] =
       franceServiceInstance.contactMail.flatMap(email =>
-        groups.find(group => (group.email: Option[String]) == (Some(email): Option[String]))
+        if (doNotMatchTheseEmails.contains(email)) {
+          println(s"no ${email}")
+          None
+        } else {
+          groups.find(group => (group.email: Option[String]) == (Some(email): Option[String]))
+        }
       )
     def byName: Option[UserGroup] =
       groups.find(group =>
@@ -62,12 +68,21 @@ case class ApiController @Inject() (
       val userGroups = userGroupService.allGroups.filter(
         _.organisationSetOrDeducted.exists(_.id == Organisation.franceServicesId)
       )
+      val franceServiceInstances = organisationService.franceServiceInfos.instances
+      val doNotMatchTheseEmails =
+        franceServiceInstances
+          .flatMap(_.contactMail)
+          .groupBy(identity)
+          .filter(_._2.length > 1)
+          .keys
+          .toList
+      println(doNotMatchTheseEmails)
       val matches: List[(FranceServiceInstance, Option[UserGroup], Area)] =
-        organisationService.franceServiceInfos.instances
+        franceServiceInstances
           .map(instance =>
             (
               instance,
-              matchFranceServiceInstance(instance, userGroups),
+              matchFranceServiceInstance(instance, userGroups, doNotMatchTheseEmails),
               Area.fromInseeCode(instance.departementCode.code).getOrElse(Area.notApplicable)
             )
           )
