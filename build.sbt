@@ -39,7 +39,8 @@ libraryDependencies ++= Seq(
   "net.jcazevedo" %% "moultingyaml" % "0.4.0",
   "com.google.guava" % "guava" % "28.1-jre",
   "com.github.tototoshi" %% "scala-csv" % "1.3.6",
-  ws
+  ws,
+  "org.seleniumhq.selenium" % "htmlunit-driver" % "2.27"
 )
 
 // UI
