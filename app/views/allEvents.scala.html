@@ -1,7 +1,6 @@
 @import _root_.helper.Time
-@(user: User, currentUserRights: Authorization.UserRights)(events: Seq[Event], limit: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-@(user: User)(events: Seq[Event], limit: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(user: User, currentUserRights: Authorization.UserRights)(events: Seq[Event], limit: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 @main(user, currentUserRights, maxWidth = false)(s"Evénements ($limit derniers)")  {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("sortable/sortable.css")'>

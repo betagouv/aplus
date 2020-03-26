@@ -2,7 +2,6 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 import actions.LoginAction
-import models.User
 import org.webjars.play.WebJarsUtil
 import play.api.Logger
 import play.api.mvc._
@@ -18,6 +17,8 @@ class HomeController @Inject() (loginAction: LoginAction, db: Database)(
     implicit webJarsUtil: WebJarsUtil
 ) extends InjectedController
     with play.api.i18n.I18nSupport {
+
+  private val log = Logger(classOf[HomeController])
 
   def index: Action[AnyContent] = Action { implicit request =>
     val needsRedirect = request.session
@@ -46,7 +47,7 @@ class HomeController @Inject() (loginAction: LoginAction, db: Database)(
         }
       } catch {
         case throwable: Throwable =>
-          Logger.error("Database check error", throwable)
+          log.error("Database check error", throwable)
           false
       }
     if (connectionValid) {

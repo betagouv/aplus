@@ -11,7 +11,7 @@
 - Gérer les erreurs immédiatement, écrire l'action ensuite
 - Utiliser le router de Play pour la gestion des URLs : https://www.playframework.com/documentation/2.7.x/ScalaRouting
 - Les urls publiques de l'applications sont en francais (/utilisateurs), le reste est en anglais.
-- Il y a des migrations à faire au fur et à mesure
+- Il y a des migrations, les faire au fur et à mesure
 - Privilégier la definition d'une méthode avec `def` plutôt que sur une `var`
 - Les services ne peuvent être utiliser que depuis les controlleurs
 - Les arguments boolean doivent être nommé
@@ -39,7 +39,7 @@
 - Privilégier le Javascript Vanille
 - Utiliser le router Javascript de Play : https://www.playframework.com/documentation/2.7.x/ScalaJavascriptRouting
 - Place le code javascript dans un fichier `.js`
-- Utiliser les attributs html `onchange`, `onclick`, etc  pour configurer les événements quand c'est possible
+   - Ne pas utiliser les attributs html `onchange`, `onclick
 - Ecrire des fonctions javascript réutilisable si c'est possible
 
 ## Git
@@ -63,7 +63,7 @@
 ## Infos
 ### Demo
 - Version de demo sur : http://demo-aplus.beta.gouv.fr
-- Les emails de la démo arrive sur : https://debugmail.io
+- Les emails de la démo arrive sur : https://mailspons.com/
 - La démo est hébergé sur Heroku
 - Les exceptions en demo sont renvoyé sur sentry.io
 ### Prod
