@@ -53,7 +53,7 @@ class UserGroupService @Inject() (
         }
       }
       if (result)
-        Right(Unit)
+        Right(())
       else
         Left("Aucun groupe n'a été ajouté")
     } catch {

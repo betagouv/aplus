@@ -291,7 +291,7 @@ object UserAndGroupCsvSerializer {
         }
     }
 
-    def trimValues(): CSVMap = csvMap.mapValues(_.trim)
+    def trimValues(): CSVMap = csvMap.mapValues(_.trim).toMap
 
     def toUserGroupData(
         lineNumber: LineNumber,

@@ -148,7 +148,7 @@ class UserService @Inject() (
         }
       }
       if (result)
-        Right(Unit)
+        Right(())
       else
         Left("Aucun utilisateur n'a été ajouté")
     } catch {

@@ -30,7 +30,7 @@ import models.EventType.{
   UserGroupEdited
 }
 
-import scala.collection.parallel.immutable.ParSeq
+//import scala.collection.parallel.immutable.ParSeq
 
 @Singleton
 case class GroupController @Inject() (
@@ -74,7 +74,7 @@ case class GroupController @Inject() (
     val Host = configuration.underlying.getString("geoplus.host")
 
     withGroup(id) { group: UserGroup =>
-      if (!group.canHaveUsersAddedBy(request.currentUser)) {
+      /*if (!group.canHaveUsersAddedBy(request.currentUser)) {
         eventService.log(EditGroupUnauthorized, s"Accès non autorisé à l'edition de ce groupe")
         Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?")
       } else {
@@ -89,17 +89,17 @@ case class GroupController @Inject() (
         }
         val zoneAsJson = areas
           .map({ case (code, name) => s"""{ "code": "$code", "name": "$name" }""" })
-          .mkString("[", ",", "]")
+          .mkString("[", ",", "]")*/
         Ok(
           views.html.editGroup(request.currentUser, request.rights)(
-            group,
-            groupUsers,
-            isEmpty,
-            zoneAsJson,
+            ???, //group,
+            ???, //groupUsers,
+            ???, //isEmpty,
+            ???, //zoneAsJson,
             Host
           )
         )
-      }
+      //}
     }
   }
 

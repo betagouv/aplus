@@ -155,7 +155,7 @@ case class AreaController @Inject() (
               : Map[Set[Organisation], List[(Set[Organisation], Int)]] =
             organisationSetToCount.groupBy(_._1)
           val organisationSetToCountOfCounts: Map[Set[Organisation], Int] =
-            countsGroupedByOrganisationSet.mapValues(_.map(_._2).count(_ > 0))
+            countsGroupedByOrganisationSet.mapValues(_.map(_._2).count(_ > 0)).toMap
           organisationSetToCountOfCounts
         }
 
