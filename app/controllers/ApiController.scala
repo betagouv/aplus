@@ -30,7 +30,7 @@ case class ApiController @Inject() (
   private def matchFranceServiceInstance(
       franceServiceInstance: FranceServiceInstance,
       groups: List[UserGroup],
-      doNotMatchTheseEmails: List[String]
+      doNotMatchTheseEmails: Set[String]
   ): Option[UserGroup] = {
     def byEmail: Option[UserGroup] =
       franceServiceInstance.contactMail.flatMap(email =>
