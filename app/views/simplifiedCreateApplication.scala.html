@@ -57,6 +57,13 @@
     <div class="mdl-cell mdl-cell--12-col">
         <div style="margin-bottom: 20px"><a href="@routes.ApplicationController.myApplications()">Mes demandes</a> <span style="margin: 0 10px 0 10px"> > </span> Nouvelle Demande Guidée</div>
         <div class="mdl-grid mdl-grid--no-spacing">
+            @if(applicationForm.hasErrors) {
+                <div class="mdl-cell mdl-cell--12-col">
+                    <div class="notification notification--error">
+                        Merci de renseigner les champs obligatoires et d’envoyer à nouveau votre demande.
+                    </div>
+                </div>
+            }
             <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h3>
             <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.create()">
                 Mode Avancé
