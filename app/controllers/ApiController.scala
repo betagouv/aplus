@@ -35,7 +35,6 @@ case class ApiController @Inject() (
     def byEmail: Option[UserGroup] =
       franceServiceInstance.contactMail.flatMap(email =>
         if (doNotMatchTheseEmails.contains(email)) {
-          println(s"no ${email}")
           None
         } else {
           groups.find(group => (group.email: Option[String]) == (Some(email): Option[String]))
@@ -75,8 +74,7 @@ case class ApiController @Inject() (
           .groupBy(identity)
           .filter(_._2.length > 1)
           .keys
-          .toList
-      println(doNotMatchTheseEmails)
+          .toSet
       val matches: List[(FranceServiceInstance, Option[UserGroup], Area)] =
         franceServiceInstances
           .map(instance =>
