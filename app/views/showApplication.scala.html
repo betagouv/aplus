@@ -1,7 +1,33 @@
 @import _root_.helper.Time
 @import _root_.helper.MDLForms._
 
+
 @(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+
+
+@organisationIcon(creatorUserName: String) = {
+    @Map("A+" -> "aplus",
+         "Pôle Emploi".toUpperCase() -> "pe",
+         "MSA" -> "msa", "CPAM" -> "cpam",
+         "CRAM" -> "cpam",
+         "CNAM" -> "cpam",
+         "CAF" -> "caf",
+         "CNAV" -> "cnav",
+         "CARSAT" -> "cnav",
+         "DGFIP" -> "dgfip",
+         "DDFIP" -> "dgfip",
+         "DRFIP" -> "dgfip",
+         "Défenseur des droits".toUpperCase() -> "ddd"
+    ).find(a => creatorUserName.toUpperCase.contains(a._1)) match {
+        case Some((_,icon)) => {
+            <img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")">
+        }
+        case None => {
+            <i class="material-icons mdl-list__item-avatar">person</i>
+        }
+    }
+}
+
 
 @main(currentUser, currentUserRights)(s"Demande de ${application.creatorUserName} - ${Area.fromId(application.area).get.name}")  {
 <style>
@@ -219,32 +245,28 @@ dialog {
             <div class="mdl-list mdl-cell mdl-cell--12-col">
                 Créée par
                 <div class="mdl-list__item">
-                    <span class="mdl-list__item-primary-content">@Map("A+" -> "aplus", "Pôle Emploi".toUpperCase() -> "pe", "MSA" -> "msa", "CPAM" -> "cpam", "CRAM" -> "cpam", "CNAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "CARSAT" -> "cnav", "DGFIP" -> "dgfip", "DDFIP" -> "dgfip", "DRFIP" -> "dgfip",  "Défenseur des droits".toUpperCase() -> "ddd").find(a => application.creatorUserName.toUpperCase.contains(a._1)) match {
-                        case Some((_,icon)) => {<img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
-                        case None => {<i class="material-icons mdl-list__item-avatar">person</i> }
-                    }
+                    <div class="mdl-list__item-primary-content">
+                        @organisationIcon(application.creatorUserName)
                         <span>@application.creatorUserName</span>
-                    </span>
+                    </div>
                 </div>
                 Participants à la discussion
                 @for((userId, userName) <- application.invitedUsers) {
                     <div class="mdl-list__item">
-                        <span class="mdl-list__item-primary-content">@Map("A+" -> "aplus", "Pôle Emploi".toUpperCase() -> "pe", "MSA" -> "msa", "CPAM" -> "cpam", "CRAM" -> "cpam", "CPAM" -> "cpam", "CNAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "CARSAT" -> "cnav", "DGFIP" -> "dgfip", "DDFIP" -> "dgfip", "DRFIP" -> "dgfip", "Défenseur des droits".toUpperCase() -> "ddd").find(a => userName.toUpperCase.contains(a._1)) match {
-                            case Some((_,icon)) => {<img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
-                            case None => {<i class="material-icons mdl-list__item-avatar">person</i> }
-                        }
-                        <span>@userName</span>
-                        <span class="mdl-list__item-secondary-content">
-                        @if(application.seenByUserIds.contains(userId)){
-                            <div id="seen-@userId" class="vertical-align--middle">
-                                <i class="material-icons icon--light">remove_red_eye</i>
-                            </div>
-                            <div class="mdl-tooltip" for="seen-@userId">
-                                Consultée par l'utilisateur
-                            </div>
-                        }
-                        </span>
-                        </span>
+                        <div class="mdl-list__item-primary-content">
+                            @organisationIcon(userName)
+                            <span>@userName</span>
+                        </div>
+                        <div class="mdl-list__item-secondary-content">
+                            @if(application.seenByUserIds.contains(userId)){
+                                <div id="seen-@userId" class="vertical-align--middle">
+                                    <i class="material-icons icon--light">remove_red_eye</i>
+                                </div>
+                                <div class="mdl-tooltip" for="seen-@userId">
+                                    Consultée par l'utilisateur
+                                </div>
+                            }
+                        </div>
                     </div>
                 }
                 @if(application.canHaveExpertsInvitedBy(currentUser) && application.closed == false && application.expertInvited == false) {
@@ -297,19 +319,16 @@ dialog {
                             }
                             <div class="mdl-list">
                                 <div class="mdl-list__item">
-                                    <span class="mdl-list__item-primary-content">
-                                        @Map("A\\+" -> "aplus", "Pôle Emploi" -> "pe", "CPAM" -> "cpam", "CAF" -> "caf", "CNAV" -> "cnav", "DGFIP" -> "dgfip", "Défenseur des droits" -> "ddd").find(a => answer.creatorUserName.contains(a._1)) match {
-                                            case Some((_,icon)) => { <img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")"> }
-                                            case None => { <i class="material-icons mdl-list__item-avatar">person</i> }
-                                        }
+                                    <div class="mdl-list__item-primary-content">
+                                        @organisationIcon(answer.creatorUserName)
                                         <span>@answer.creatorUserName</span>@if(currentUser.admin){ <span style="font-weight: bold; color:red" class="do-not-print"> <a href="@routes.UserController.editUser(answer.creatorUserID)"> Voir fiche utilisateur</a></span>}
                                         <span class="mdl-list__item-sub-title"></span>
-                                    </span>
-                                    <span class="mdl-list__item-secondary-content">
+                                    </div>
+                                    <div class="mdl-list__item-secondary-content">
                                         <div id="date-@answer.id" class="vertical-align--middle">
                                             <span class="application__age">Il y a @answer.ageString (@Time.formatPatternFr(answer.creationDate, "dd MMM YYYY - HH:mm"))</span>
                                         </div>
-                                    </span>
+                                    </div>
                                 </div>
                             </div>
 
