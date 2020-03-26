@@ -1,0 +1,20 @@
+@(infos: views.home.LoginPanel.SendbackEmailForm)(implicit request: RequestHeader)
+
+<div class="mdl-cell mdl-cell--12-col mdl-cell--middle">
+    <h3 class="mdl-typography--text-uppercase mdl-typography--font-medium">
+        Se connecter à Administration+
+    </h3>
+
+    <form action="@routes.LoginController.login" method="post">
+        @helper.CSRF.formField
+        @infos.errorMessage.map { message =>
+        <div class="notification notification--error mdl-typography--text-prewrap" >@message</div>
+        }
+        <input id="email" type="hidden" name="email" value="@infos.email" />
+        <button
+            type="submit"
+            class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary margin-top--10px aplus-color--blue mdl-color-text--white">
+            Me renvoyer un autre lien par e-mail
+        </button>
+    </form>
+</div>

@@ -21,16 +21,22 @@ class HomeController @Inject() (loginAction: LoginAction, db: Database)(
   private val log = Logger(classOf[HomeController])
 
   def index: Action[AnyContent] = Action { implicit request =>
-    if (request.session
-          .get("userId")
-          .orElse(request.queryString.get("token"))
-          .orElse(request.queryString.get("key"))
-          .isDefined)
+    val needsRedirect = request.session
+      .get("userId")
+      .orElse(request.queryString.get("token"))
+      .orElse(request.queryString.get("key"))
+      .isDefined
+    if (needsRedirect)
       TemporaryRedirect(
         s"${routes.ApplicationController.myApplications()}?${request.rawQueryString}"
       )
     else
-      Ok(views.html.home.page(LoginPanel.ConnectionForm))
+      request.flash.get("email") match {
+        case None =>
+          Ok(views.html.home.page(LoginPanel.ConnectionForm))
+        case Some(email) =>
+          Ok(views.html.home.page(LoginPanel.SendbackEmailForm(email, request.flash.get("error"))))
+      }
   }
 
   def status: Action[AnyContent] = Action {

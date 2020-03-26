@@ -71,8 +71,8 @@ class gLoginSpec extends Specification with Tables with BaseSpec {
       browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
 
       eventually {
-        browser.url must endWith(controllers.routes.LoginController.login().url.substring(1))
-        browser.pageSource must contain("Le lien que vous avez utilisez a expiré (il expire après")
+        browser.url must endWith(controllers.routes.HomeController.index().url.substring(1))
+        browser.pageSource must contain("Votre lien de connexion a expiré, il est valable")
       }
     }
     "Use token without success" in new WithBrowser(

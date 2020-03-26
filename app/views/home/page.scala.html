@@ -101,6 +101,9 @@
                                     case LoginPanel.ConnectionForm => {
                                         @connectionFormPanel()
                                     }
+                                    case infos: LoginPanel.SendbackEmailForm => {
+                                        @sendbackEmailForm(infos)
+                                    }
                                     case infos: LoginPanel.EmailSentFeedback => {
                                         @emailSentFeedbackPanel(infos)
                                     }
