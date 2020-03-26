@@ -22,10 +22,7 @@ jobs:
     # We compile the tests here so the test command can run faster
     - name: Compile tests
       run: "sbt test:compile"
-    # Doing tests a first time and throwing out the output
-    # because HTMLUnit throws spurious errors on first runs
-    - name: Warmup Tests
-      run: "sbt test || true"
+
     - name: Run tests
       run: sbt coverage test coverageReport
       env:

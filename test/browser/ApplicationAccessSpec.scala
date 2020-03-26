@@ -18,7 +18,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
 
   "Application" should {
     "Allow the instructor to access an Application" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = WebDriverFactory(defaultBrowser),
       app = applicationWithBrowser
     ) {
       applicationAccessTest(app, browser, port, "instructor-test", shouldExpectAnError = false)
@@ -27,7 +27,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
 
   "Application" should {
     "Not Allow an unrelated instructor to access an Application" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = WebDriverFactory(defaultBrowser),
       app = applicationWithBrowser
     ) {
       applicationAccessTest(
@@ -42,7 +42,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
 
   "Application" should {
     "Allow the helper to access an Application" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = WebDriverFactory(defaultBrowser),
       app = applicationWithBrowser
     ) {
       applicationAccessTest(app, browser, port, "helper-test", shouldExpectAnError = false)
@@ -51,7 +51,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
 
   "Application" should {
     "Allow an related helper to access an Application" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = WebDriverFactory(defaultBrowser),
       app = applicationWithBrowser
     ) {
       applicationAccessTest(app, browser, port, "helper-test-friend", shouldExpectAnError = false)
@@ -60,7 +60,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
 
   "Application" should {
     "Not Allow an unrelated helper to access an Application" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = WebDriverFactory(defaultBrowser),
       app = applicationWithBrowser
     ) {
       applicationAccessTest(app, browser, port, "helper-test-unrelated", shouldExpectAnError = true)
@@ -69,7 +69,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
 
   "Application" should {
     "Not Allow an unrelated expert to access an Application" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = WebDriverFactory(defaultBrowser),
       app = applicationWithBrowser
     ) {
       applicationAccessTest(app, browser, port, "expert-test-unrelated", shouldExpectAnError = true)
@@ -78,7 +78,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
 
   "Application" should {
     "Not Allow a manager to access an Application" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = WebDriverFactory(defaultBrowser),
       app = applicationWithBrowser
     ) {
       applicationAccessTest(app, browser, port, "helper-test-manager", shouldExpectAnError = true)

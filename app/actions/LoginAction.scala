@@ -78,8 +78,8 @@ class LoginAction @Inject() (
       case (_, Some(user), None) =>
         LoginAction.readUserRights(user).map { userRights =>
           val area = user.areas.headOption
-                    .flatMap(Area.fromId)
-                    .getOrElse(Area.all.head)
+            .flatMap(Area.fromId)
+            .getOrElse(Area.all.head)
           implicit val requestWithUserData =
             new RequestWithUserData(user, userRights, request)
           if (areasWithLoginByKey.contains(area.id) && !user.admin) {

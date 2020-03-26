@@ -15,7 +15,7 @@ class gLoginSpec extends Specification with Tables with BaseSpec {
 
   "Login" should {
     "Login with valid or invalid emails" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = WebDriverFactory(defaultBrowser),
       app = applicationWithBrowser
     ) {
       "email" | "result" |
@@ -35,7 +35,7 @@ class gLoginSpec extends Specification with Tables with BaseSpec {
     }
 
     "Use token with success" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = WebDriverFactory(defaultBrowser),
       app = applicationWithBrowser
     ) {
       val tokenService = app.injector.instanceOf[TokenService]
@@ -55,7 +55,7 @@ class gLoginSpec extends Specification with Tables with BaseSpec {
       }
     }
     "Use expired token without success" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = WebDriverFactory(defaultBrowser),
       app = applicationWithBrowser
     ) {
       val tokenService = app.injector.instanceOf[TokenService]
@@ -76,7 +76,7 @@ class gLoginSpec extends Specification with Tables with BaseSpec {
       }
     }
     "Use token without success" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = WebDriverFactory(defaultBrowser),
       app = applicationWithBrowser
     ) {
       val loginURL = controllers.routes.LoginController

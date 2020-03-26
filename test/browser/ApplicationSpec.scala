@@ -14,7 +14,7 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
 
   "Application" should {
     "Create Application with success" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = WebDriverFactory(defaultBrowser),
       app = applicationWithBrowser
     ) {
       val tokenService = app.injector.instanceOf[TokenService]
