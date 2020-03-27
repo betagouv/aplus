@@ -3,7 +3,16 @@ organization := "fr.gouv.beta"
 
 version := "1.0-SNAPSHOT"
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala)
+lazy val root = (project in file("."))
+  .enablePlugins(PlayScala)
+  .enablePlugins(BuildInfoPlugin)
+  .settings(
+    buildInfoKeys := Seq[BuildInfoKey](
+      "gitHeadCommit" -> git.gitHeadCommit.value,
+      "gitHeadCommitDate" -> git.gitHeadCommitDate.value
+    ),
+    buildInfoPackage := "constants"
+  )
 
 scalaVersion := "2.12.8"
 
