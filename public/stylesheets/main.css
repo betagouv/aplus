@@ -541,6 +541,10 @@ a {
     cursor: pointer;
 }
 
+.single-overflow-auto {
+    overflow: auto;
+}
+
 /****************
 Colors
 */
