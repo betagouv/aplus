@@ -2,13 +2,22 @@
 @(form: Form[_], mandatoryFields: List[String] = List())(implicit messagesProvider: MessagesProvider)
 
 <div id="form__infos">
-        @repeatMap(form("infos"), form, mandatoryFields) {  (infoField, info) =>
-            <div>@info.capitalize<br>
-                @helper.input(infoField, 'label -> s"Saisir $info de l'usager ici") { (id, name, value, args) =>
-                    <input class="mdl-textfield__input mdl-color--white" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-                }
-            </div>
+    @repeatMap(form("infos"), form, mandatoryFields) {  (infoField, info) =>
+
+    <div>@info.capitalize @if(mandatoryFields.contains[String](info)) { <span class="mdl-color-text--red-500">*</span> }
+        <br>
+        @helper.input(infoField,
+                      'label -> s"Saisir $info de l'usager ici"
+        ) { (id, name, value, args) =>
+        <input class="mdl-textfield__input mdl-color--white"
+               type="text"
+               name="@name"
+               id="@id"
+               value="@value"
+               @toHtmlArgs(args)>
         }
+    </div>
+    }
         <div id="other-div">
             <b>Ajouter une autre information :</b><br>
             <select id="types" onchange="newTypeSelected()">

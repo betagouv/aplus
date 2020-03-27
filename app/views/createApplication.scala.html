@@ -27,6 +27,10 @@
                     Mode Guidé
                 </a>
             </div>
+            <div>
+                Les champs marqués d'un <span class="mdl-color-text--red-500">*</span> sont obligatoires
+            </div>
+
             @helper.form(action = routes.ApplicationController.createPost(), 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data", 'id -> "create-application-form", 'class -> "aplus-protected-form") {
                 @helper.CSRF.formField
                     <input type="hidden" name="application-id" readonly value="@applicationForm("application-id").value.getOrElse(java.util.UUID.randomUUID)">
@@ -36,7 +40,9 @@
                             @helpers.changeArea(currentArea, currentUser.areas.flatMap(Area.fromId))
                         </div>
                     }
-                    <h5 class="title--addline">Sélectionnez les organismes concernés sur la zone @currentArea.name</h5>
+                        <h5 class="title--addline">
+                            Sélectionnez les organismes concernés sur la zone @currentArea.name
+                        </h5>
 
                     <div class="mdl-grid mdl-grid--no-spacing">
                         @if(applicationForm("users").hasErrors) {
@@ -84,9 +90,22 @@
                         </table>
                     </div>
                     <br>
-                    <h5 class="title--addline">Sujet</h5>
-                     @helper.input(applicationForm("subject"), 'label -> "Saisir le sujet de votre demande...", 'class -> "mdl-textfield--large") { (id, name, value, args) =>
-                        <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+                    <h5 class="title--addline">
+                        Sujet de la demande
+                    </h5>
+                    Saisir le titre de la demande <span class="mdl-color-text--red-500">*</span>
+                    <br>
+
+                    @helper.input(applicationForm("subject"),
+                                  'label -> "Saisir le sujet de votre demande...",
+                                  'class -> "mdl-textfield--large"
+                    ) { (id, name, value, args) =>
+                    <input class="mdl-textfield__input"
+                           type="text"
+                           name="@name"
+                           id="@id"
+                           value="@value"
+                           @toHtmlArgs(args)>
                     }
                     <br>
 
@@ -95,7 +114,10 @@
                     @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"))
                     <br>
                     <br>
-                    <h5 class="title--addline">Description du problème</h5>
+                    <h5 class="title--addline">
+                        Description du problème
+                        <span class="mdl-color-text--red-500">*</span>
+                    </h5>
 
                     <div>
                         @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-textfield--large", 'label -> "Rédigez une description rapide du problème ...") { (id, name, value, args) =>
