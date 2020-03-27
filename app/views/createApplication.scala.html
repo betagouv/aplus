@@ -31,7 +31,7 @@
                 Les champs marqués d’un <span class="mdl-color-text--red-500">*</span> sont obligatoires
             </div>
 
-            @helper.form(action = routes.ApplicationController.createPost(), 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data", 'id -> "create-application-form", 'class -> "aplus-protected-form") {
+            @helper.form(action = routes.ApplicationController.createPost(), 'enctype -> "multipart/form-data", 'id -> "create-application-form", 'class -> "aplus-protected-form") {
                 @helper.CSRF.formField
                     <input type="hidden" name="application-id" readonly value="@applicationForm("application-id").value.getOrElse(java.util.UUID.randomUUID)">
                     @if(currentUser.areas.nonEmpty) {
@@ -56,7 +56,7 @@
                                     <tr>
                                         <th class="mdl-data-table__cell--non-numeric" colspan="2">
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);" value="@organisationGroup.name" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisationGroup.name})){ checked="checked" }>
+                                                <input type="checkbox" class="mdl-checkbox__input aplus-application-form-group" value="@organisationGroup.name" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisationGroup.name})){ checked="checked" }>
                                                 <span class="mdl-checkbox__label">@organisationGroup.name @if(organisation.nonEmpty){ (@organisation.get.name) }</span>
                                                 <span id="span-group-description">@organisationGroup.description</span>
                                             </label></th>
@@ -111,7 +111,7 @@
 
 
                     <h5 class="title--addline">Informations concernant l'usager</h5>
-                    @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"))
+                    @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"), true)
                     <br>
                     <br>
                     <h5 class="title--addline">
@@ -190,38 +190,4 @@
         </div>
 }{
         <script src="@routes.Assets.versioned("javascripts/application-attachment.js")"></script>
-        <script type="text/javascript">
-         function showHideUsers(sender) {
-             var thead = sender.parentNode.parentNode.parentNode.parentNode;
-             var tbody = thead.nextElementSibling;
-             var inputs = tbody.querySelectorAll("[type=checkbox]");
-             if(sender.checked) {
-                 for(var i = 0; i < inputs.length; i++){
-                     var input = inputs[i];
-                     input.checked = true;
-                     input.parentNode.classList.add("is-checked");
-                     componentHandler.upgradeElements(input);
-                 }
-                 tbody.classList.remove("invisible");
-             } else {
-                 for(var i = 0; i < inputs.length; i++){
-                     var input = inputs[i];
-                     input.checked = false;
-                     input.parentNode.classList.remove("is-checked");
-                     componentHandler.upgradeElements(input);
-                 }
-                 tbody.classList.add("invisible");
-             }
-
-         }
-         var checkbox = document.querySelector("#checkbox-mandat");
-
-         checkbox.addEventListener('click', function() {
-             if(checkbox.checked) {
-                 document.querySelector("#review-validation").disabled = false;
-             } else {
-                 document.querySelector("#review-validation").disabled = true;
-             }
-         });
-        </script>
 }
