@@ -22,12 +22,10 @@ jobs:
     # We compile the tests here so the test command can run faster
     - name: Compile tests
       run: "sbt test:compile"
-    # Doing tests a first time and throwing out the output
-    # because HTMLUnit throws spurious errors on first runs
-    - name: Warmup Tests
-      run: "sbt test || true"
+    # Due to transient errors thrown by HTMLUnit, we try
+    # to run the tests a few times
     - name: Run tests
-      run: sbt coverage test coverageReport
+      run: "sbt coverage test coverageReport || sbt coverage test coverageReport || sbt coverage test coverageReport"
       env:
         GEOPLUS_HOST: geoplus.aplus.beta.gouv.fr
     - name: Upload Coverage to codacy
