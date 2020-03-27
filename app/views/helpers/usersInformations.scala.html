@@ -7,7 +7,7 @@
     <div>@info.capitalize @if(mandatoryFields.contains[String](info)) { <span class="mdl-color-text--red-500">*</span> }
         <br>
         @helper.input(infoField,
-                      'label -> s"Saisir $info de l'usager ici"
+                      'label -> s"Saisir $info de l’usager ici"
         ) { (id, name, value, args) =>
         <input class="mdl-textfield__input mdl-color--white"
                type="text"
