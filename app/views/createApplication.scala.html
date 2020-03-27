@@ -28,7 +28,7 @@
                 </a>
             </div>
             <div>
-                Les champs marqués d'un <span class="mdl-color-text--red-500">*</span> sont obligatoires
+                Les champs marqués d’un <span class="mdl-color-text--red-500">*</span> sont obligatoires
             </div>
 
             @helper.form(action = routes.ApplicationController.createPost(), 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data", 'id -> "create-application-form", 'class -> "aplus-protected-form") {
@@ -41,7 +41,7 @@
                         </div>
                     }
                         <h5 class="title--addline">
-                            Sélectionnez les organismes concernés sur la zone @currentArea.name
+                            Sélectionnez les organismes concernés sur la zone @currentArea.name&nbsp;<span class="mdl-color-text--red-500">*</span>
                         </h5>
 
                     <div class="mdl-grid mdl-grid--no-spacing">
@@ -115,8 +115,7 @@
                     <br>
                     <br>
                     <h5 class="title--addline">
-                        Description du problème
-                        <span class="mdl-color-text--red-500">*</span>
+                        Description du problème&nbsp;<span class="mdl-color-text--red-500">*</span>
                     </h5>
 
                     <div>
