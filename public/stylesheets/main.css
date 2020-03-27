@@ -82,10 +82,6 @@ html, body {
   background-color: #00BCD4;
   color: #37474F;
 }
-.navigation .mdl-navigation__link .material-icons {
-  font-size: 24px;
-  margin-right: 32px;
-}
 
 .demo-content {
   max-width: 1080px;
@@ -291,13 +287,6 @@ html, body {
     font-size: 12px;
     font-weight: bold;
     line-height: 14px;
-}
-
-/* Remove Icons for IE10 and IE11 */
-@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
-    .material-icons {
-        display: none;
-    }
 }
 
 .text--strikethrough {
@@ -541,6 +530,10 @@ a {
     cursor: pointer;
 }
 
+.single-overflow-auto {
+    overflow: auto;
+}
+
 /****************
 Colors
 */
@@ -587,4 +580,25 @@ Chart
 .chart--500px-height {
     height: 500px;
     width: 95%;
+}
+
+/********
+Icons
+ */
+
+.material-icons--small-postfix {
+    font-size: 20px;
+    margin-left: 5px;
+}
+
+/* Remove Icons for IE10 and IE11 */
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+    .material-icons {
+        display: none;
+    }
+}
+
+.navigation .mdl-navigation__link .material-icons:first-of-type {
+    font-size: 24px;
+    margin-right: 32px;
 }

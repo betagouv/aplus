@@ -69,6 +69,10 @@
                 Mode Avancé
             </a>
         </div>
+        <div>
+            Les champs marqués d'un <span class="mdl-color-text--red-500">*</span> sont obligatoires
+        </div>
+
     @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data", 'class -> "aplus-protected-form") {
         @helper.CSRF.formField
         @if(currentUser.areas.nonEmpty) {
@@ -254,7 +258,10 @@
 
                 <br>
                 <br>
-                <h5 class="mdl-cell mdl-cell--12-col">Description de la demande</h5>
+                <h5 class="mdl-cell mdl-cell--12-col">
+                    Description de la demande
+                    <span class="mdl-color-text--red-500">*</span>
+                </h5>
                 <div class="info-box"><b>Soyez bref</b>, la personne qui vous lira vous en remerciera, la réponse en sera d'autant plus rapide.</div>
                 @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
                     <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
