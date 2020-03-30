@@ -45,7 +45,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-mailer" % "7.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "com.typesafe.play" %% "play-mailer-guice" % "7.0.1",
-  "net.jcazevedo" %% "moultingyaml" % "0.4.0",
+  "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   "com.google.guava" % "guava" % "28.1-jre",
   "com.github.tototoshi" %% "scala-csv" % "1.3.6",
   ws
