@@ -17,6 +17,14 @@ html, body {
     height: 52px;
 }
 
+.body__container {
+    position: absolute;
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+    width: 100%;
+}
+
 .demo-layout .mdl-layout__header .mdl-layout__drawer-button {
   color: rgba(0, 0, 0, 0.54);
 }
@@ -111,6 +119,31 @@ html, body {
     font-size: 10px;
     font-weight: 700;
     z-index: 10;
+}
+
+.header__ie-warning {
+    background: #F50057;
+}
+
+.header__ie-warning-text {
+    color: white;
+    padding: 8px 48px;
+}
+
+.header__ie-warning-text a {
+    color: white;
+}
+
+/** We wrap it in a flexbox to allow a warning header. */
+.mdl-layout__container {
+    position: unset;
+}
+
+/* Note: the mdl footer has too much padding at the bottom and demands a
+ * mandatory scroll
+ */
+.mdl-mega-footer-fix {
+    padding-bottom: 4px;
 }
 
 .mdl-card__supporting-text {

@@ -37,6 +37,17 @@
         <div class="header__ribbon do-not-print mdl-color--cyan-800  mdl-color-text--white" id="header__ribbon">
             BETA
         </div>
+
+        <div class="body__container">
+
+            @if(_root_.helper.RequestHelper.userAgentIsInternetExplorer(request)) {
+            <div class="header__ie-warning">
+                <div class="header__ie-warning-text">
+                    Nous avons détecté que vous utilisiez le navigateur Internet Explorer ! Microsoft conseille depuis février 2019 de ne plus utiliser son navigateur qui n’est plus mis à jour depuis la sortie de Edge en 2015 et ne supporte donc plus les standards actuels du Web. <a href="https://docs.aplus.beta.gouv.fr/faq/pourquoi-ne-plus-utiliser-le-navigateur-internet-explorer-de-microsoft">Pour en savoir plus</a>
+                </div>
+            </div>
+            }
+
         <div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-header mdl-layout--fixed-drawer">
             <div class="mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 do-not-print">
                 <div class="mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100 demo-only invisible">
@@ -123,7 +134,7 @@
 
                     @content
                 </div>
-                <footer class="mdl-mega-footer do-not-print">
+                <footer class="mdl-mega-footer mdl-mega-footer-fix do-not-print">
                     <div class="mdl-mega-footer--bottom-section">
                         <div class="mdl-logo">
                             Administration+ @java.time.LocalDate.now().getYear() :
@@ -136,6 +147,7 @@
                     </div>
                 </footer>
             </main>
+        </div>
         </div>
 
             <!-- Piwik -->
