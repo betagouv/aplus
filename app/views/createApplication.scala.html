@@ -93,9 +93,11 @@
                     <h5 class="title--addline">
                         Sujet de la demande
                     </h5>
-                    Saisir le titre de la demande <span class="mdl-color-text--red-500">*</span>
-                    <br>
 
+                    Résumer la nature du problème rencontré <span class="mdl-color-text--red-500">*</span>
+
+                    <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+                        <div>
                     @helper.input(applicationForm("subject"),
                                   'label -> "Saisir le sujet de votre demande...",
                                   'class -> "mdl-textfield--large"
@@ -107,8 +109,21 @@
                            value="@value"
                            @toHtmlArgs(args)>
                     }
-                    <br>
-
+                        </div>
+                        <!-- min-width is set so the tooltip is always visible (can wrap) -->
+                        <div>
+                            <i id="subject-help"
+                               class="icon material-icons"
+                               aria-describedby="subject-help-description">help</i>
+                            <span id="subject-help-description"
+                                  role="tooltip"
+                                  class="mdl-tooltip mdl-tooltip--right mdl-tooltip--large"
+                                  for="subject-help"
+                                  aria-hidden="true">
+                                Ce résumé ne doit pas comporter de données personnelles
+                            </span>
+                        </div>
+                    </div>
 
                     <h5 class="title--addline">Informations concernant l'usager</h5>
                     @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"))
@@ -189,6 +204,7 @@
             }
         </div>
 }{
+        <script src="@routes.Assets.versioned("javascripts/main-page-bottom.js")"></script>
         <script src="@routes.Assets.versioned("javascripts/application-attachment.js")"></script>
         <script type="text/javascript">
          function showHideUsers(sender) {
