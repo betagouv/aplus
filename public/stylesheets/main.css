@@ -530,7 +530,7 @@ a {
     cursor: pointer;
 }
 
-.single-overflow-auto {
+.single--overflow-auto {
     overflow: auto;
 }
 
