@@ -1,10 +1,10 @@
 @import _root_.helper.MDLForms._
-@(form: Form[_], mandatoryFields: List[String] = List())(implicit messagesProvider: MessagesProvider)
+@(form: Form[_], mandatoryFields: List[String], isCreationForm: Boolean)(implicit messagesProvider: MessagesProvider)
 
 <div id="form__infos">
     @repeatMap(form("infos"), form, mandatoryFields) {  (infoField, info) =>
 
-    <div>@info.capitalize @if(mandatoryFields.contains[String](info)) { <span class="mdl-color-text--red-500">*</span> }
+    <div>@info.capitalize @if(mandatoryFields.contains[String](info)) { <span class="mdl-color-text--red-500">*</span> } else { (facultatif) }
         <br>
         @helper.input(infoField,
                       'label -> s"Saisir $info de l’usager ici"
@@ -18,81 +18,32 @@
         }
     </div>
     }
+
+    @if(isCreationForm) {
+        <h5 class="title--addline">Autres informations utiles pour traiter la demande&nbsp;<em class="mdl-typography--body-1">(facultatif)</em></h5>
+    }
         <div id="other-div">
-            <b>Ajouter une autre information :</b><br>
-            <select id="types" onchange="newTypeSelected()">
+            @if(isCreationForm) {
+                Ajouter une autre information (facultatif)<br><br>
+            } else {
+                <b>Ajouter une autre information :</b><br>
+            }
+            <select id="aplus-application-form-user-infos-types-select-id">
                 <option disabled selected value="">Selectionnez une information à ajouter</option>
                 @for(info <- List("Prénom", "Nom de famille", "Date de naissance", "Numéro de sécurité sociale", "Identifiant CAF", "Numéro de dossier", "Nom de Naissance", "Autre").filter(!mandatoryFields.contains(_))) {
                     <option value="@info">@info</option>
                 }
             </select><br>
             <div class="mdl-textfield mdl-js-textfield invisible --margin-right-20px">
-                <label class="mdl-textfield__label" for="other-type">Saisissez le type d'information</label>
-                <input class="mdl-textfield__input mdl-color--white" name="other-type" type="text" id="other-type" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
+                <label class="mdl-textfield__label" for="other-type">Saisissez le type d’information</label>
+                <input class="mdl-textfield__input mdl-color--white aplus-application-form-user-infos-input" name="other-type" type="text" id="other-type">
             </div>
             <div class="mdl-textfield mdl-js-textfield invisible --margin-right-20px">
-                <label class="mdl-textfield__label" for="other-type-value">Saisissez l'information </label>
-                <input class="mdl-textfield__input mdl-color--white" type="text" name="other-type-value" id="other-type-value" onkeydown="if (event.keyCode === 13) { addInfo(); return false;}">
+                <label class="mdl-textfield__label" for="other-type-value">Saisissez l’information </label>
+                <input class="mdl-textfield__input mdl-color--white aplus-application-form-user-infos-input" type="text" name="other-type-value" id="other-type-value">
             </div>
-            <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored invisible" type="button" id="add-infos__ok-button" onclick="addInfo();">
+            <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored invisible aplus-application-form-user-infos-add-button" type="button" id="add-infos__ok-button">
             <i class="material-icons">add_circle</i>
         </button>
     </div>
 </div>
-<script type="application/javascript">
-        function newTypeSelected() {
-            var select = document.getElementById("types");
-            var otherTypeElement = document.getElementById("other-type");
-            if(select.value === "Autre") {
-                otherTypeElement.value = "";
-                otherTypeElement.parentNode.classList.remove("invisible");
-                //componentHandler.upgradeElements(otherTypeElem.parentNode.parentNode.getElementsByTagName("*"));
-            } else {
-                otherTypeElement.parentNode.classList.add("invisible");
-                otherTypeElement.value = select.value;
-            }
-            if(select.value !== "") {
-                document.getElementById("other-type-value").parentNode.classList.remove("invisible");
-                document.getElementById("add-infos__ok-button").classList.remove("invisible");
-            }
-            componentHandler.upgradeDom();
-        }
-        newTypeSelected();
-
-        function removeInfo(elem) {
-            var row = elem.parentNode;
-            row.parentNode.removeChild(row);
-        }
-
-        function addInfo() {
-            var inputInfoName = document.getElementById("other-type");
-            var valueInput = document.getElementById("other-type-value");
-            var infoName = inputInfoName.value;
-            if(infoName === "" || valueInput.value === "") { return; }
-            var newNode = document.createElement("div");
-            newNode.innerHTML = ''+infoName+'<br> \
-                       <div class="mdl-textfield mdl-js-textfield --margin-right-20px"> \
-                           <input class="mdl-textfield__input mdl-color--white" type="text" id="sample1" name="infos['+infoName+']" value="'+valueInput.value+'"> \
-                            <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+' de l\'usager ici</label> \
-                       </div> \
-                    <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" type="button" onclick="removeInfo(this);"> \
-                        <i class="material-icons">remove_circle</i> \
-                    </button>';
-
-            var otherDiv = document.getElementById("other-div");
-            otherDiv.parentNode.insertBefore(newNode, otherDiv);
-            inputInfoName.value = "";
-            inputInfoName.parentNode.classList.remove("is-dirty");
-            inputInfoName.parentNode.classList.add("invisible");
-            componentHandler.upgradeElements(newNode);
-            var select = document.getElementById("types");
-            if(select.value !== "Autre") {
-                select.removeChild(select[select.selectedIndex]);
-            }
-            select.value = "";
-            valueInput.value = "";
-            valueInput.parentNode.classList.remove("is-dirty");
-            valueInput.parentNode.classList.add("invisible");
-            document.getElementById("add-infos__ok-button").classList.add("invisible");
-        }
-</script>

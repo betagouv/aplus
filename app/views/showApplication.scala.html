@@ -410,7 +410,7 @@ dialog {
                                 }
                                 @if(currentUser.id == application.creatorUserId) {
                                     <h5 class="mdl-cell mdl-cell--12-col">Ajouter informations concernant l'usager</h5>
-                                    @helpers.usersInformations(answerToAgentsForm)
+                                    @helpers.usersInformations(answerToAgentsForm, Nil, false)
                                 }
                                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                     <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
@@ -575,5 +575,5 @@ dialog {
     We use twemoji for emoji : https://github.com/twitter/twemoji
     -->
 }{
-    <script src='@routes.Assets.versioned("javascripts/application-attachment.js")'></script>
+    <script type="application/javascript" src="'@routes.Assets.versioned("javascripts/application-attachment.js")"></script>
 }
