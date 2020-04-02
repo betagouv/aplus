@@ -153,6 +153,11 @@ function onClickRemoveElement(clickElement, elementToRemove) {
 }
 
 
+//
+// Functions executed by the script
+//
+
+
 window.document.addEventListener("DOMContentLoaded", function(event) {
   setupProtectedForms();
   setupNotificationMessages();

@@ -73,7 +73,7 @@
             Les champs marqués d’un <span class="mdl-color-text--red-500">*</span> sont obligatoires
         </div>
 
-    @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data", 'class -> "aplus-protected-form") {
+    @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'id -> "create-application-form", 'enctype -> "multipart/form-data", 'class -> "aplus-protected-form") {
         @helper.CSRF.formField
         @if(currentUser.areas.nonEmpty) {
             <h5 class="title--addline">Territoire concerné</h5>
@@ -291,7 +291,7 @@
 
                 <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 20px">
                 <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
-                @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"))
+                @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"), true)
                 <br>
                 </div>
                 <p>
@@ -335,16 +335,5 @@
             </div>
     }
     </div>
-    <script type="text/javascript">
-        var checkbox = document.querySelector("#checkbox-mandat");
-
-        checkbox.addEventListener('click', function() {
-            if(checkbox.checked) {
-                document.querySelector("#review-validation").disabled = false;
-            } else {
-                document.querySelector("#review-validation").disabled = true;
-            }
-        });
-    </script>
 }{
 }
