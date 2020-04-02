@@ -100,7 +100,7 @@
                         <div>
                     @helper.input(applicationForm("subject"),
                                   'label -> "Saisir le sujet de votre demande...",
-                                  'class -> "mdl-textfield--large"
+                                  'class -> "mdl-textfield--large mdl-textfield--large-fix"
                     ) { (id, name, value, args) =>
                     <input class="mdl-textfield__input"
                            type="text"
@@ -204,6 +204,5 @@
             }
         </div>
 }{
-        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/main-page-bottom.js")"></script>
         <script type="application/javascript" src="@routes.Assets.versioned("javascripts/application-attachment.js")"></script>
 }
