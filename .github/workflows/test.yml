@@ -19,8 +19,13 @@ jobs:
          postgresql db: 'aplus'
          postgresql user: 'aplus'
          postgresql password: 'mysecretpassword'
-    - name: Run test
-      run: sbt coverage test coverageReport 
+    # We compile the tests here so the test command can run faster
+    - name: Compile tests
+      run: "sbt test:compile"
+    # Due to transient errors thrown by HTMLUnit, we try
+    # to run the tests a few times
+    - name: Run tests
+      run: "sbt coverage test coverageReport || sbt coverage test coverageReport || sbt coverage test coverageReport"
       env:
         GEOPLUS_HOST: geoplus.aplus.beta.gouv.fr
     - name: Upload Coverage to codacy

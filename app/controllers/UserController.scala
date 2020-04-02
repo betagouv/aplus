@@ -357,7 +357,7 @@ case class UserController @Inject() (
                       }
                       eventService.log(UsersCreated, "Utilisateurs ajoutés")
                       Redirect(routes.GroupController.editGroup(groupId))
-                        .flashing("success" -> "Utilisateurs ajouté")
+                        .flashing("success" -> "Utilisateurs ajoutés")
                   }
                 )
             } catch {

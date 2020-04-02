@@ -1,6 +1,6 @@
 @import helper._
 
-@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Option[Area] = None, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 <!doctype html>
 <html lang="fr">
@@ -8,6 +8,8 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+        @helpers.buildInfoMeta()
+        <link rel="icon" type="image/png" href="@routes.Assets.versioned("images/favicon.png")">
         <title>Administration+ - @title</title>
         @webJarsUtil.locate("material.min.css").css()
         @webJarsUtil.locate("roboto-fontface.css").css()
@@ -19,8 +21,8 @@
 
         @header
         @webJarsUtil.locate("material.min.js").script()
-        <script src="@routes.Assets.versioned("javascripts/polyfills.js")"></script>
-        <script src="@routes.Assets.versioned("javascripts/main.js")"></script>
+        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/polyfills.js")"></script>
+        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/main.js")"></script>
         @webJarsUtil.locate("dialog-polyfill.css").css()
         @webJarsUtil.locate("dialog-polyfill.js").script()
         <script type="text/javascript" src="@routes.JavascriptController.javascriptRoutes"></script>
@@ -30,31 +32,6 @@
                     overflow-x: hidden;
                 }
         </style>
-            <!-- Piwik -->
-        <script type="text/javascript">
-                var _paq = _paq || [];
-                _paq.push(["setDomains", ["*.aplus.beta.gouv.fr"]]);
-                _paq.push(['trackPageView']);
-                (function() {
-                    var u="//stats.data.gouv.fr/";
-                    _paq.push(['setTrackerUrl', u+'piwik.php']);
-                    _paq.push(['setSiteId', '42']);
-                    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-                    g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
-                })();
-        </script>
-        <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border:0;" alt="" /></p></noscript>
-            <!-- End Piwik Code -->
-        <script>
-                @if(currentArea.nonEmpty) {
-                    function changeArea() {
-                        var areaSelected = document.getElementById("area").value;
-                        if(areaSelected != "@currentArea.get.id") {
-                            document.location = "@routes.AreaController.all()/"+areaSelected+"?redirect="+window.location.href;
-                        }
-                    }
-                }
-        </script>
     </head>
     <body>
         <div class="header__ribbon do-not-print mdl-color--cyan-800  mdl-color-text--white" id="header__ribbon">
@@ -103,46 +80,13 @@
                     <p style="line-height: 1.2; text-align: center;">
                         <img src='@routes.Assets.versioned("images/logo_full_500x397.png")' class="logo">
                     </p>
-                    <div>
-                        @if(currentArea.nonEmpty && currentUser.areas.length > 1) {
-                            <select id="area" name="area" onchange="changeArea()">
-                            @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-                                <option value="@area.id"
-                                @if(area.id == currentArea.get.id) { selected }>@area</option>
-                            }
-                            </select>
-                        }
-                    </div>
                 </header>
-                <nav class="navigation mdl-navigation mdl-color--deep-purple-900">
-                    <a class="mdl-navigation__link" href="@routes.ApplicationController.myApplications()"><i class="material-icons" role="presentation">folder_open</i>Mes demandes</a>
-                    @if(Authorization.isAdmin(currentUserRights)) {
-                        <a class="mdl-navigation__link" href="@routes.AreaController.all()"><i class="material-icons" role="presentation">place</i>Territoires</a>
-                    }
-                    @if(Authorization.canSeeApplicationsAsAdmin(currentUserRights)) {
-                        <a class="mdl-navigation__link" href="@routes.ApplicationController.all(Area.allArea.id)"><i class="material-icons" role="presentation">folder</i>Admin : demandes</a>
-                    }
-                    @if(Authorization.canSeeUsers(currentUserRights)) {
-                        <a class="mdl-navigation__link" href="@routes.UserController.home"><i class="material-icons" role="presentation">people</i>Utilisateurs</a>
-                    }
-                    @if(Authorization.isAdminOrObserver(currentUserRights)) {
-                        <a class="mdl-navigation__link" href="@routes.AreaController.deploymentDashboard()"><i class="material-icons" role="presentation">track_changes</i>Déploiement</a>
-                    }
-                    @if(Authorization.isAdmin(currentUserRights)) {
-                        <a class="mdl-navigation__link" href="@routes.UserController.allEvents()"><i class="material-icons" role="presentation">event</i>Événements</a>
-                    }
-                    @if(Authorization.canSeeStats(currentUserRights)) {
-                        <a class="mdl-navigation__link" href="@routes.ApplicationController.stats()"><i class="material-icons" role="presentation">show_chart</i>Stats</a>
-                    }
-                    <a class="mdl-navigation__link" href="@routes.Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf")" target="_blank"><i class="material-icons" role="presentation">assignment</i>Mandat</a>
-                    <a class="mdl-navigation__link" href="@routes.HomeController.help()"><i class="material-icons" role="presentation">help</i>Webinaire</a>
-
-                </nav>
+                @helpers.menuNav(currentUserRights)
                 <div class="mdl-layout-spacer mdl-color--deep-purple-900"></div>
                 <footer class="drawer-footer mdl-color--deep-purple-900">
                     <img src='@routes.Assets.versioned("images/contact_phone_104x104.png")' class="contact-phone-icon">
 
-                    <p><span class="mdl-typography--subhead">Besoin d'aide ?</span> <br>
+                    <p><span class="mdl-typography--subhead">Besoin d’aide ?</span> <br>
                        Contactez-nous: <br>
                         <br>
                         <a href="mailto:@Constants.supportEmail" class="mdl-color-text--cyan-600">@Constants.supportEmail</a>  <br>
@@ -194,6 +138,24 @@
             </main>
         </div>
 
+            <!-- Piwik -->
+        <script type="text/javascript">
+                var _paq = _paq || [];
+                _paq.push(["setDomains", ["*.aplus.beta.gouv.fr"]]);
+                _paq.push(['trackPageView']);
+                (function() {
+                    var u="//stats.data.gouv.fr/";
+                    _paq.push(['setTrackerUrl', u+'piwik.php']);
+                    _paq.push(['setSiteId', '42']);
+                    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+                    g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+                })();
+        </script>
+        <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border:0;" alt="" /></p></noscript>
+            <!-- End Piwik Code -->
+
+        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/mdl-extensions.js")"></script>
+        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/main-page-bottom.js")"></script>
         @bodyBottom
 
     </body>

@@ -13,6 +13,8 @@ import play.api.Logger
 @javax.inject.Singleton
 class EventService @Inject() (db: Database) {
 
+  private val logger = Logger(classOf[EventService])
+
   private val simpleEvent: RowParser[Event] = Macro.parser[Event](
     "id",
     "level",
@@ -35,7 +37,6 @@ class EventService @Inject() (db: Database) {
   )(implicit request: RequestWithUserData[A]) =
     register[A](event.level)(
       request.currentUser,
-      request.currentArea,
       request.remoteAddress,
       event.code,
       s"$description. ${request.method} ${request.path}",
@@ -49,7 +50,6 @@ class EventService @Inject() (db: Database) {
 
   private def register[A](level: String)(
       currentUser: User,
-      currentArea: Area,
       remoteAddress: String,
       code: String,
       description: String,
@@ -64,21 +64,21 @@ class EventService @Inject() (db: Database) {
       currentUser.id,
       Time.nowParis(),
       description,
-      currentArea.id,
+      Area.notApplicable.id,
       application.map(_.id),
       user.map(_.id),
       remoteAddress
     )
     addEvent(event)
 
-    val message = s"${currentUser.name}/${currentArea.name}/${description}"
+    val message = s"${currentUser.name}/${description}"
     level match {
       case "INFO" =>
-        Logger.info(message)
+        logger.info(message)
       case "WARN" =>
-        Logger.warn(message)
+        logger.warn(message)
       case "ERROR" =>
-        Logger.error(message)
+        logger.error(message)
       case _ =>
     }
   }

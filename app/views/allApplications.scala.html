@@ -24,8 +24,10 @@
     }
 </style>
 <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("sortable/sortable.css")'>
-<script src="@routes.Assets.versioned("sortable/sortable.js")"></script>
 }{
+
+<h4>Liste des demandes du groupe</h4>
+
    <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
        @if(currentUser.areas.length > 1) {
            <p class="mdl-cell mdl-cell--12-col">Afficher :
@@ -35,31 +37,20 @@
                        <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area</option>
                    }
                </select>
-               <script>
-                       function changeSelectedArea() {
-                           var areaSelected = document.getElementById("area-selector").value;
-                           if(areaSelected != "@selectedArea.id") {
-                               document.location = jsRoutes.controllers.ApplicationController.all(areaSelected).url;
-                           }
-                       }
-               </script>
            </p>
        }
-       <script>
-           function changeAreaApps() {
-               var areaSelected = document.getElementById("area-apps").value;
-               if(areaSelected != "@selectedArea.id") {
-                   document.location = jsRoutes.controllers.ApplicationController.all(areaSelected).url;
-               }
-           }
-       </script>
-            <button class="mdl-button mdl-js-button mdl-button--raised" onclick="document.location='@routes.ApplicationController.allCSV(selectedArea.id)'">
-                Télécharger export CSV
-            </button>
 
-       <input class="mdl-cell mdl-cell--12-col" type="search" placeholder="Filtrer les demandes (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
+           <button class="mdl-button mdl-js-button mdl-button--raised" onclick="document.location='@routes.ApplicationController.allCSV(selectedArea.id)'">
+                Télécharger la liste / export CSV
+           </button>
+           <br>
+           <br>
 
-       <div class="mdl-cell mdl-cell--12-col pem-container">
+
+           <input class="mdl-cell mdl-cell--6-col" type="search" placeholder="Filtrer les demandes (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/>
+           <br>
+
+       <div class="mdl-cell mdl-cell--12-col pem-container single--overflow-auto">
                 Total : @applications.size ( @applications.groupBy(_.status).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
                 <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp sortable" style="white-space: normal;">
                     <thead>
@@ -124,4 +115,13 @@
             </div>
         </div>
 }{
+        <script src="@routes.Assets.versioned("sortable/sortable.js")"></script>
+        <script>
+         function changeSelectedArea() {
+             var areaSelected = document.getElementById("area-selector").value;
+             if(areaSelected != "@selectedArea.id") {
+                 document.location = jsRoutes.controllers.ApplicationController.all(areaSelected).url;
+             }
+         }
+        </script>
 }

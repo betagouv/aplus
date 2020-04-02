@@ -16,10 +16,8 @@ case class User(
     instructor: Boolean,
     // TODO: `private[models]` so we cannot check it without going through authorization
     admin: Boolean,
-    @deprecated(
-      message = "User#areas is deprecated in favor of UserGroup#areaIds.",
-      since = "v0.4.3"
-    ) areas: List[UUID],
+    // TODO: remove usage of areas to more specific AdministratedAreaIds
+    areas: List[UUID],
     creationDate: ZonedDateTime,
     communeCode: String,
     // If true, this person is managing the groups it is in
@@ -107,23 +105,6 @@ object User {
       "Thibault DESJARDINS",
       "Expert A+",
       "thibault.desjardins@beta.gouv.fr",
-      true,
-      false,
-      true,
-      Area.all.map(_.id),
-      date,
-      "75056",
-      true,
-      disabled = false,
-      expert = false,
-      cguAcceptationDate = Some(date)
-    ),
-    User(
-      UUIDHelper.namedFrom("laurent"),
-      Hash.sha256(s"laurent"),
-      "Laurent COURTOIS-COURRET",
-      "Expert A+",
-      "laurent.courtois-courret@beta.gouv.fr",
       true,
       false,
       true,

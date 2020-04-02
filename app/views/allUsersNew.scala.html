@@ -48,6 +48,7 @@
                         name: "@user.name",
                         email: "@user.email",
                         qualite: "@user.qualite",
+                        phoneNumber: "@{user.phoneNumber.getOrElse("")}",
                         helper: @user.helper,
                         instructor: @user.instructor,
                         areas: [
@@ -116,6 +117,7 @@
                     { title: "Groupes", field: "groups", headerFilter: "input" },
                     { title: "Email", field: "email", headerFilter: "input" },
                     { title: "Qualité", field: "qualite", headerFilter: "input" },
+                    { title: "Téléphone", field: "phoneNumber", headerFilter: "input" },
                     {
                         title: "Droits",
                         columns: [

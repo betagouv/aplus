@@ -3,6 +3,7 @@ package controllers
 import java.nio.file.{Files, Path, Paths}
 import java.time.ZonedDateTime
 import java.util.UUID
+import helper.UUIDHelper
 
 import actions._
 import constants.Constants
@@ -127,12 +128,20 @@ case class ApplicationController @Inject() (
     }
   }
 
+  private def currentArea(implicit request: RequestWithUserData[_]): Area =
+    request.session
+      .get("areaId")
+      .flatMap(UUIDHelper.fromString)
+      .orElse(request.currentUser.areas.headOption)
+      .flatMap(Area.fromId)
+      .getOrElse(Area.all.head)
+
   def create: Action[AnyContent] = loginAction.async { implicit request =>
     eventService.log(ApplicationFormShowed, "Visualise le formulaire de création de demande")
-    fetchGroupsWithInstructors(request.currentArea.id, request.currentUser).map {
+    fetchGroupsWithInstructors(currentArea.id, request.currentUser).map {
       case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
         Ok(
-          views.html.createApplication(request.currentUser, request.rights, request.currentArea)(
+          views.html.createApplication(request.currentUser, request.rights, currentArea)(
             instructorsOfGroups,
             groupsOfAreaWithInstructor,
             coworkers,
@@ -146,7 +155,7 @@ case class ApplicationController @Inject() (
   def createSimplified: Action[AnyContent] = loginAction.async { implicit request =>
     eventService
       .log(ApplicationFormShowed, "Visualise le formulaire simplifié de création de demande")
-    fetchGroupsWithInstructors(request.currentArea.id, request.currentUser).map {
+    fetchGroupsWithInstructors(currentArea.id, request.currentUser).map {
       case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
         val groupsOfAreaWithInstructorWithOrganisationSet = groupsOfAreaWithInstructor.filter({
           userGroup => userGroup.organisationSetOrDeducted.nonEmpty
@@ -154,7 +163,7 @@ case class ApplicationController @Inject() (
         val categories = organisationService.categories
         Ok(
           views.html
-            .simplifiedCreateApplication(request.currentUser, request.rights, request.currentArea)(
+            .simplifiedCreateApplication(request.currentUser, request.rights, currentArea)(
               instructorsOfGroups,
               groupsOfAreaWithInstructorWithOrganisationSet,
               coworkers,
@@ -208,7 +217,7 @@ case class ApplicationController @Inject() (
     form.fold(
       formWithErrors =>
         // binding failure, you retrieve the form containing errors:
-        fetchGroupsWithInstructors(request.currentArea.id, request.currentUser).map {
+        fetchGroupsWithInstructors(currentArea.id, request.currentUser).map {
           case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
             eventService.log(
               ApplicationCreationInvalid,
@@ -223,7 +232,7 @@ case class ApplicationController @Inject() (
                 views.html.simplifiedCreateApplication(
                   request.currentUser,
                   request.rights,
-                  request.currentArea
+                  currentArea
                 )(
                   instructorsOfGroups,
                   groupsOfAreaWithInstructorWithOrganisationSet,
@@ -238,7 +247,7 @@ case class ApplicationController @Inject() (
             } else {
               BadRequest(
                 views.html
-                  .createApplication(request.currentUser, request.rights, request.currentArea)(
+                  .createApplication(request.currentUser, request.rights, currentArea)(
                     instructorsOfGroups,
                     groupsOfAreaWithInstructor,
                     coworkers,
@@ -252,7 +261,7 @@ case class ApplicationController @Inject() (
       applicationData =>
         Future {
           // Note: we will deprecate .currentArea as a variable stored in the cookies
-          val currentAreaId: UUID = request.currentArea.id
+          val currentAreaId: UUID = currentArea.id
           val invitedUsers: Map[UUID, String] = applicationData.users.flatMap { id =>
             userService.byId(id).map(user => id -> contextualizedUserName(user, currentAreaId))
           }.toMap
@@ -271,7 +280,7 @@ case class ApplicationController @Inject() (
             description,
             applicationData.infos,
             invitedUsers,
-            request.currentArea.id,
+            currentArea.id,
             false,
             hasSelectedSubject =
               applicationData.selectedSubject.contains[String](applicationData.subject),
@@ -455,9 +464,49 @@ case class ApplicationController @Inject() (
       }
       val today = Time.nowParis()
       val months = Time.monthsMap(firstDate, today)
+      val allApplications = applicationsByArea.flatMap(_._2).toList
+      val allApplicationsByArea = applicationsByArea.map {
+        case (area, applications) =>
+          views.stats.StatsData.AreaAggregates(
+            area = area,
+            applications = applications,
+            closedApplicationsPerMonth = months.keys.toList.map { month: String =>
+              month -> applications.filter(application =>
+                application.estimatedClosedDate.isDefined && f"${application.estimatedClosedDate.get.getYear}/${application.estimatedClosedDate.get.getMonthValue}%02d" == month
+              )
+            },
+            newApplicationsPerMonth = months.keys.toList.map { month: String =>
+              month -> applications.filter(application =>
+                f"${application.creationDate.getYear}/${application.creationDate.getMonthValue}%02d" == month
+              )
+            }
+          )
+      }.toList
+      val data = views.stats.StatsData(
+        allApplications = allApplications,
+        areaAggregates = allApplicationsByArea,
+        applicationsGroupByMonths = months.values.toList.map { month: String =>
+          month -> allApplications
+            .filter(application =>
+              (Time
+                .formatPatternFr(application.creationDate, "MMMM YYYY"): String) == (month: String)
+            )
+            .toList
+        },
+        applicationsGroupByMonthsClosed = months.values.toList.map { month: String =>
+          month -> allApplications
+            .filter(application =>
+              application.estimatedClosedDate != None && (Time.formatPatternFr(
+                application.estimatedClosedDate.get,
+                "MMMM YYYY"
+              ): String) == (month: String)
+            )
+            .toList
+        }
+      )
       views.html.helpers.stats(Authorization.isAdmin(request.rights))(
+        data,
         months,
-        applicationsByArea,
         users,
         groups,
         areaIds,
@@ -683,7 +732,7 @@ case class ApplicationController @Inject() (
   )(implicit request: RequestWithUserData[A]): Future[List[User]] =
     (if (request.currentUser.expert) {
        //TODO : This is a temporary feature: enables the expert to invite someone in the currentArea. Will be permitted to every body later.
-       userGroupService.byArea(request.currentArea.id).map { groupsOfArea =>
+       userGroupService.byArea(currentArea.id).map { groupsOfArea =>
          userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
        }
      } else if (request.currentUser.instructor) {
@@ -717,7 +766,7 @@ case class ApplicationController @Inject() (
             application,
             answerForm(request.currentUser),
             openedTab,
-            request.currentArea,
+            currentArea,
             readSharedAccountUserSignature(request.session)
           )
         )

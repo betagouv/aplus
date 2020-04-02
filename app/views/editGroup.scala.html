@@ -91,7 +91,7 @@
             }
         }
     </div>
-    <div>
+    <div class="single--overflow-auto">
         @helpers.displayUsers(groupUsers)(currentUser)
         @helper.form(routes.UserController.add(userGroup.id), 'method -> "get") {
             @helper.CSRF.formField

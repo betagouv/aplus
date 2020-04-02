@@ -1,0 +1,16 @@
+@(currentArea: Area, selectableAreas: List[Area])
+
+<select id="area" name="area" onchange="changeArea()">
+    @for(area <- selectableAreas) {
+        <option value="@area.id"
+        @if(area.id == currentArea.id) { selected }>@area</option>
+    }
+</select>
+<script>
+    function changeArea() {
+        var areaSelected = document.getElementById("area").value;
+        if(areaSelected != "@currentArea.id") {
+            document.location = "@routes.AreaController.all()/"+areaSelected+"?redirect="+window.location.href;
+        }
+    }
+</script>
