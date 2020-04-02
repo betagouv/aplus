@@ -541,6 +541,24 @@ a {
     overflow: auto;
 }
 
+.single--display-flex {
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+}
+
+.single--align-items-center {
+    align-items: center;
+}
+
+.single--flex-wrap-wrap {
+    flex-wrap: wrap;
+}
+
+
+
 /****************
 Colors
 */
