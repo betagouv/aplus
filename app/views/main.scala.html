@@ -78,7 +78,9 @@
             <div class="mdl-layout__drawer mdl-color--white do-not-print mdl-color-text--white">
                 <header class="drawer-header" >
                     <p style="line-height: 1.2; text-align: center;">
-                        <img src='@routes.Assets.versioned("images/logo_full_500x397.png")' class="logo">
+                        <a href="@routes.HomeController.welcome">
+                            <img src="@routes.Assets.versioned("images/logo_full_500x397.png")" alt="Logo Administration+" class="logo">
+                        </a>
                     </p>
                 </header>
                 @helpers.menuNav(currentUserRights)

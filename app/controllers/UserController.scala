@@ -399,7 +399,7 @@ case class UserController @Inject() (
       { formWithErrors =>
         eventService.log(CGUValidationError, "Erreur de formulaire dans la validation des CGU")
         BadRequest(
-          s"Formulaire invalide, prévenez l'administrateur du service. ${formWithErrors.errors.mkString(", ")}"
+          s"Formulaire invalide, prévenez l’administrateur du service. ${formWithErrors.errors.mkString(", ")}"
         )
       }, {
         case (redirectOption, newsletter, validate) =>
@@ -407,14 +407,14 @@ case class UserController @Inject() (
             userService.acceptCGU(request.currentUser.id, newsletter)
           }
           eventService.log(CGUValidated, "CGU validées")
-          redirectOption match {
-            case Some(redirect) =>
-              Redirect(Call("GET", redirect))
-                .flashing("success" -> "Merci d\'avoir accepté les CGU")
+          val route = redirectOption match {
+            case Some(redirect)
+                if (redirect: String) != (routes.ApplicationController.myApplications.url: String) =>
+              Call("GET", redirect)
             case _ =>
-              Redirect(routes.ApplicationController.myApplications())
-                .flashing("success" -> "Merci d\'avoir accepté les CGU")
+              routes.HomeController.welcome
           }
+          Redirect(route).flashing("success" -> "Merci d’avoir accepté les CGU")
       }
     )
   }
@@ -447,7 +447,7 @@ case class UserController @Inject() (
           userService.acceptCGU(request.currentUser.id, newsletter)
         }
         eventService.log(NewsletterSubscribed, "Newletter subscribed")
-        Redirect(routes.ApplicationController.myApplications())
+        Redirect(routes.HomeController.welcome)
           .flashing("success" -> "Merci d’avoir terminé votre inscription")
       }
     )

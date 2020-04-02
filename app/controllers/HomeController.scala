@@ -60,4 +60,9 @@ class HomeController @Inject() (loginAction: LoginAction, db: Database)(
   def help: Action[AnyContent] = loginAction { implicit request =>
     Ok(views.html.help(request.currentUser, request.rights))
   }
+
+  def welcome: Action[AnyContent] = loginAction { implicit request =>
+    Ok(views.html.welcome(request.currentUser, request.rights))
+  }
+
 }
