@@ -57,12 +57,23 @@
     <div class="mdl-cell mdl-cell--12-col">
         <div style="margin-bottom: 20px"><a href="@routes.ApplicationController.myApplications()">Mes demandes</a> <span style="margin: 0 10px 0 10px"> > </span> Nouvelle Demande Guidée</div>
         <div class="mdl-grid mdl-grid--no-spacing">
+            @if(applicationForm.hasErrors) {
+                <div class="mdl-cell mdl-cell--12-col">
+                    <div class="notification notification--error">
+                        Merci de renseigner les champs obligatoires et d’envoyer à nouveau votre demande.
+                    </div>
+                </div>
+            }
             <h3 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h3>
             <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.create()">
                 Mode Avancé
             </a>
         </div>
-    @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data", 'class -> "aplus-protected-form") {
+        <div>
+            Les champs marqués d’un <span class="mdl-color-text--red-500">*</span> sont obligatoires
+        </div>
+
+    @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'id -> "create-application-form", 'enctype -> "multipart/form-data", 'class -> "aplus-protected-form") {
         @helper.CSRF.formField
         @if(currentUser.areas.nonEmpty) {
             <h5 class="title--addline">Territoire concerné</h5>
@@ -247,7 +258,9 @@
 
                 <br>
                 <br>
-                <h5 class="mdl-cell mdl-cell--12-col">Description de la demande</h5>
+                <h5 class="mdl-cell mdl-cell--12-col">
+                    Description de la demande&nbsp;<span class="mdl-color-text--red-500">*</span>
+                </h5>
                 <div class="info-box"><b>Soyez bref</b>, la personne qui vous lira vous en remerciera, la réponse en sera d'autant plus rapide.</div>
                 @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
                     <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
@@ -278,7 +291,7 @@
 
                 <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin-bottom: 20px">
                 <h5 class="mdl-cell mdl-cell--12-col">Informations concernant l'usager</h5>
-                @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"))
+                @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"), true)
                 <br>
                 </div>
                 <p>
@@ -322,16 +335,5 @@
             </div>
     }
     </div>
-    <script type="text/javascript">
-        var checkbox = document.querySelector("#checkbox-mandat");
-
-        checkbox.addEventListener('click', function() {
-            if(checkbox.checked) {
-                document.querySelector("#review-validation").disabled = false;
-            } else {
-                document.querySelector("#review-validation").disabled = true;
-            }
-        });
-    </script>
 }{
 }

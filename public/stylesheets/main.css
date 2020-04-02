@@ -65,6 +65,13 @@ html, body {
       -ms-flex-positive: 1;
           flex-grow: 1;
 }
+
+.mdl-navigation__link--active {
+    background-color: #00BCD4;
+    /** !important because overridden by .demo-layout .navigation .mdl-navigation__link */
+    color: #37474F !important;
+}
+
 .demo-layout .navigation .mdl-navigation__link {
   display: -webkit-flex !important;
   display: -ms-flexbox !important;
@@ -81,10 +88,6 @@ html, body {
 .demo-layout .navigation .mdl-navigation__link:hover {
   background-color: #00BCD4;
   color: #37474F;
-}
-.navigation .mdl-navigation__link .material-icons {
-  font-size: 24px;
-  margin-right: 32px;
 }
 
 .demo-content {
@@ -291,13 +294,6 @@ html, body {
     font-size: 12px;
     font-weight: bold;
     line-height: 14px;
-}
-
-/* Remove Icons for IE10 and IE11 */
-@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
-    .material-icons {
-        display: none;
-    }
 }
 
 .text--strikethrough {
@@ -541,6 +537,28 @@ a {
     cursor: pointer;
 }
 
+.single--overflow-auto {
+    overflow: auto;
+}
+
+.single--display-flex {
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+}
+
+.single--align-items-center {
+    align-items: center;
+}
+
+.single--flex-wrap-wrap {
+    flex-wrap: wrap;
+}
+
+
+
 /****************
 Colors
 */
@@ -587,4 +605,25 @@ Chart
 .chart--500px-height {
     height: 500px;
     width: 95%;
+}
+
+/********
+Icons
+ */
+
+.material-icons--small-postfix {
+    font-size: 20px;
+    margin-left: 5px;
+}
+
+/* Remove Icons for IE10 and IE11 */
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+    .material-icons {
+        display: none;
+    }
+}
+
+.navigation .mdl-navigation__link .material-icons:first-of-type {
+    font-size: 24px;
+    margin-right: 32px;
 }
