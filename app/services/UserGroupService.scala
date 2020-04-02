@@ -73,12 +73,12 @@ class UserGroupService @Inject() (
           UPDATE user_group SET
           name = ${group.name},
           description = ${group.description},
-          insee_code = array[${group.inseeCode}]::character varying(5)[],
           organisation = ${group.organisation.map(_.id)},
           area_ids = array[${group.areaIds}]::uuid[],
           email = ${group.email}
           WHERE id = ${group.id}::uuid
        """.executeUpdate() == 1
+  //TODO: insee_code = array[${group.inseeCode}]::character varying(5)[], have been remove temporary
   }
 
   def allGroups: List[UserGroup] = db.withConnection { implicit connection =>
