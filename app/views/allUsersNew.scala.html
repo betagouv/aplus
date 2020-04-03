@@ -6,8 +6,6 @@
     @webJarsUtil.locate("tabulator.min.css").css()
     @webJarsUtil.locate("tabulator.min.js").script()
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
-    @webJarsUtil.locate("slimselect.min.css").css()
-    @webJarsUtil.locate("slimselect.min.js").script()
     <style>
             .row--disabled {
                 background-color: grey !important;
@@ -210,15 +208,11 @@
                     </select>
                 </div>
                 <div class="mdl-cell mdl-cell--12-col">
-                    <select id="area-ids" name="area-ids[]" multiple size="5" >
+                    <select class="use-slimselect" id="area-ids" name="area-ids[]" multiple size="5" >
                     @for(area <- currentUser.areas.flatMap(Area.fromId)) {
                         <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area.name</option>
                     }
                     </select>
-                    <script>
-                            // TODO: use-slimselect class
-                            new SlimSelect({ select: '#area-ids' });
-                    </script>
                 </div>
                 <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
                     Ajouter le groupe

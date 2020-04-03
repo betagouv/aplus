@@ -103,10 +103,7 @@
 }
 
 @main(currentUser, currentUserRights, maxWidth = false)("Revue de votre import CSV") {
-  <script src='@routes.Assets.versioned("javascripts/main.js")'></script>
   <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
-  @webJarsUtil.locate("slimselect.min.css").css()
-  @webJarsUtil.locate("slimselect.min.js").script()
 } {
   @helper.form(routes.CSVImportController.importUsersAfterReview(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
   @helper.CSRF.formField
@@ -191,7 +188,7 @@
             </div>
             <div class="mdl-cell mdl-cell--4-col">
               Territoires :
-              <select id="area-ids-@groupIndex"
+              <select class="use-slimselect" id="area-ids-@groupIndex"
                       name="@{group("group")("area-ids").name}[]"
                       multiple
                       @if(groupWillNotBeInserted(group)) { disabled }>
@@ -202,13 +199,6 @@
                   </option>
                 }
               </select>
-              <script>
-                // TODO: use-slimselect class
-                var select_@groupIndex = new SlimSelect({ select: '#area-ids-@groupIndex' })
-                @if(groupWillNotBeInserted(group)) {
-                  select_@{groupIndex}.disable();
-                }
-              </script>
               @if(groupWillNotBeInserted(group)) {
                 @helper.repeat(group("group")("area-ids")) { areaIdField =>
                   @for(area <- areaIdField.value.flatMap(UUIDHelper.fromString).flatMap(Area.fromId)) {

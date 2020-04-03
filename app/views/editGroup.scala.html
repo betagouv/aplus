@@ -6,8 +6,6 @@
 @main(currentUser, currentUserRights)(s"Gestion du groupe ${userGroup.name} - ${userGroup.areaIds.flatMap(Area.fromId).map(_.name).mkString(", ")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/auto-complete.css")'>
-    @webJarsUtil.locate("slimselect.min.css").css()
-
 }{
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         <span class="mdl-cell mdl-cell--12-col ariane">Territoires : @for(areaId <- userGroup.areaIds) {
@@ -86,5 +84,4 @@
     </dialog>
 }{
     <script src='@routes.Assets.versioned("javascripts/auto-complete.min.js")'></script>
-    @webJarsUtil.locate("slimselect.min.js").script()
 }

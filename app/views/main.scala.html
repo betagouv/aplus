@@ -18,6 +18,7 @@
         @webJarsUtil.locate("solid.css").css()
         <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/main.css")'>
         <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/mdl-extensions.css")'>
+        @webJarsUtil.locate("slimselect.min.css").css()
 
         @header
         @webJarsUtil.locate("material.min.js").script()
@@ -153,7 +154,7 @@
         </script>
         <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border:0;" alt="" /></p></noscript>
             <!-- End Piwik Code -->
-
+        @webJarsUtil.locate("slimselect.min.js").script()
         <script type="application/javascript" src="@routes.Assets.versioned("javascripts/mdl-extensions.js")"></script>
         <script type="application/javascript" src="@routes.Assets.versioned("javascripts/main-page-bottom.js")"></script>
         @bodyBottom
