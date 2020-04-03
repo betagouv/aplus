@@ -138,10 +138,10 @@
                         }<br>
 
                         @if(currentUser.sharedAccount) {
-                            Signature :<br>
+                            Signature :<br>
                             @helper.input(
                                 applicationForm("signature"),
-                                'label -> "Renseignez ici votre : Prénom, NOM, service",
+                                'label -> "Renseignez ici votre : Prénom, NOM, service",
                                 'class -> "mdl-textfield--large"
                             ) { (id, name, value, args) =>
                                 <input class="mdl-textfield__input"
@@ -160,7 +160,7 @@
                         @if(applicationForm("file").hasErrors) {
                             <span style="color: red; font-weight: bold;">@applicationForm("file").errors.map(_.format).mkString(", ")</span><br>
                         }
-                        Ajouter un ou plusieurs fichiers ( 5Mo maximum au total ) :
+                        Ajouter un ou plusieurs fichiers ( 5Mo maximum au total ) :
                         <ul>
                             @for((attachment,index) <- attachments.zipWithIndex) {
                                 <li>@attachment</li>

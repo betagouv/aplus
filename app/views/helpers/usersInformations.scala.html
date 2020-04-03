@@ -33,11 +33,12 @@
                           class="mdl-tooltip mdl-tooltip--right mdl-tooltip--large"
                           for="birth-help"
                           aria-hidden="true">
-                        Format recommandé: jj/mm/aaaa
+                        Format recommandé : jj/mm/aaaa
                     </span>
                 </div>
             }
         </div>
+    </div>
     }
 
     @if(isCreationForm) {
@@ -47,7 +48,7 @@
             @if(isCreationForm) {
                 Ajouter une autre information (facultatif)<br><br>
             } else {
-                <b>Ajouter une autre information :</b><br>
+                <b>Ajouter une autre information :</b><br>
             }
             <select id="aplus-application-form-user-infos-types-select-id">
                 <option disabled selected value="">Selectionnez une information à ajouter</option>
@@ -65,6 +66,7 @@
             </div>
             <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored invisible aplus-application-form-user-infos-add-button" type="button" id="add-infos__ok-button">
             <i class="material-icons">add_circle</i>
-        </button>
-    </div>
+            </button>
+        </div>
+
 </div>
