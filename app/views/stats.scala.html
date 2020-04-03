@@ -6,7 +6,7 @@
     @webJarsUtil.locate("Chart.bundle.min.js").script()
 }{
     <div class="mdl-cell mdl-cell--12-col">
-        @helper.form(routes.ApplicationController.stats(), 'method -> "post") {
+        @helper.form(routes.ApplicationController.stats(), "method" -> "post") {
             Département :
             <select id="area-selector" name="areas[]">
                 <option @if(selectedAreaIds.isEmpty) { selected } value>Tous les départements</option>

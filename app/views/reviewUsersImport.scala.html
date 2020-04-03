@@ -24,7 +24,7 @@
             <input name="@user("user")("id").name" value="@user("user")("id").value" type="hidden">
             <input name="@user("user")("qualite").name" value="@user("user")("qualite").value" type="hidden">
 
-            @helper.input(user("alreadyExists"), 'label -> "", 'class -> "hidden") { (id, name, value, args) =>
+            @helper.input(user("alreadyExists"), "label" -> "", "class" -> "hidden") { (id, name, value, args) =>
             <input type="text"
                    name="@name"
                    id="@id"
@@ -32,7 +32,7 @@
                    @toHtmlArgs(args)>
             }
 
-            @helper.input(user("user")("name"), 'label -> "Nom et prénom", 'class -> "input-import-user") { (id, name, value, args) =>
+            @helper.input(user("user")("name"), "label" -> "Nom et prénom", "class" -> "input-import-user") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user"
                      type="text"
                      name="@name"
@@ -43,7 +43,7 @@
             }
           </td>
           <td class="mdl-data-table__cell--non-numeric cell-import-user">
-            @helper.input(user("user")("email"), 'label -> "Email", 'class -> "input-import-user") { (id, name, value, args) =>
+            @helper.input(user("user")("email"), "label" -> "Email", "class" -> "input-import-user") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user"
                      type="text"
                      name="@name"
@@ -54,7 +54,7 @@
             }
           </td>
           <td class="mdl-data-table__cell--non-numeric cell-import-user">
-            @helper.input(user("user")("phone-number"), 'label -> "Numéro de téléphone", 'class -> "input-import-user") { (id, name, value, args) =>
+            @helper.input(user("user")("phone-number"), "label" -> "Numéro de téléphone", "class" -> "input-import-user") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user"
                      type="text"
                      name="@name"
@@ -65,7 +65,7 @@
             }
           </td>
           <td class="mdl-data-table__cell--non-numeric cell-import-user">
-            @helper.input(user("user")("quality"), 'label -> "Qualité", 'class -> "input-import-user") { (id, name, value, args) =>
+            @helper.input(user("user")("quality"), "label" -> "Qualité", "class" -> "input-import-user") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user"
                      type="text"
                      name="@name"
@@ -76,17 +76,17 @@
             }
           </td>
           <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
-            @helper.checkbox(user("user")("instructor"), 'type -> "checkbox", 'label -> UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes(0), 'class -> "mdl-checkbox__input instructor")
+            @helper.checkbox(user("user")("instructor"), "type" -> "checkbox", "label" -> UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes(0), "class" -> "mdl-checkbox__input instructor")
           </td>
           <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
-            @helper.checkbox(user("user")("adminGroup"), 'type -> "checkbox", 'label -> UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes(0), 'class -> "mdl-checkbox__input")
+            @helper.checkbox(user("user")("adminGroup"), "type" -> "checkbox", "label" -> UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes(0), "class" -> "mdl-checkbox__input")
           </td>
           <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
             @helper.checkbox(
               user("user")(Keys.User.sharedAccount),
-              'type -> "checkbox",
-              'label -> UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes(0),
-              'class -> "mdl-checkbox__input")
+              "type" -> "checkbox",
+              "label" -> UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes(0),
+              "class" -> "mdl-checkbox__input")
           </td>
           <td>
             @if(user("alreadyExists").value.exists(_ == "true")) {
@@ -105,7 +105,7 @@
 @main(currentUser, currentUserRights, maxWidth = false)("Revue de votre import CSV") {
   <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 } {
-  @helper.form(routes.CSVImportController.importUsersAfterReview(), 'method -> "post", 'class -> "mdl-cell mdl-cell--12-col") {
+  @helper.form(routes.CSVImportController.importUsersAfterReview(), "method" -> "post", "class" -> "mdl-cell mdl-cell--12-col") {
   @helper.CSRF.formField
     @if(form.hasErrors) {
       <div class="notification notification--error">
@@ -126,7 +126,7 @@
             </h5>
 
 
-            @helper.input(group("alreadyExistsOrAllUsersAlreadyExist"), 'label -> "", 'class -> "hidden") { (id, name, value, args) =>
+            @helper.input(group("alreadyExistsOrAllUsersAlreadyExist"), "label" -> "", "class" -> "hidden") { (id, name, value, args) =>
             <input type="text"
                    name="@name"
                    id="@id"
@@ -134,7 +134,7 @@
                    @toHtmlArgs(args)>
             }
 
-            @helper.input(group("group")("id"), 'label -> "Id", 'class -> "hidden") { (id, name, value, args) =>
+            @helper.input(group("group")("id"), "label" -> "Id", "class" -> "hidden") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user"
                      type="text"
                      name="@name"
@@ -143,7 +143,7 @@
                      value="@value"
                      @toHtmlArgs(args)>
             }
-            @helper.input(group("group")("name"), 'label -> "Nom du groupe", 'class -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
+            @helper.input(group("group")("name"), "label" -> "Nom du groupe", "class" -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user"
                      type="text"
                      name="@name"
@@ -151,7 +151,7 @@
                      @if(groupWillNotBeInserted(group)) { readonly }
                      value="@value" @toHtmlArgs(args)>
             }
-            @helper.input(group("group")("email"), 'label -> UserAndGroupCsvSerializer.GROUP_EMAIL.prefixes(0), 'class -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
+            @helper.input(group("group")("email"), "label" -> UserAndGroupCsvSerializer.GROUP_EMAIL.prefixes(0), "class" -> "mdl-cell mdl-cell--4-col") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user"
                      type="text"
                      name="@name"
@@ -176,7 +176,7 @@
               @*** disabled select are never sent in a form, we need a hidden input. ***@
               @*** Also we put a valid dummy value in the field, to pass validation. ***@
               @if(groupWillNotBeInserted(group)) {
-                @helper.input(group("group")("organisation"), 'class -> "hidden") { (id, name, value, args) =>
+                @helper.input(group("group")("organisation"), "class" -> "hidden") { (id, name, value, args) =>
                   <input class="mdl-textfield__input input-import-user"
                          type="hidden"
                          name="@name"
@@ -208,7 +208,7 @@
               }
             </div>
             <div class="mdl-cell mdl-cell--4-col @if(groupWillNotBeInserted(group)){avoid-clicks}">
-              @helper.checkbox(group("group")("doNotInsert"), 'type -> "checkbox", 'label -> "Ne pas insérer", 'class -> "mdl-checkbox__input")
+              @helper.checkbox(group("group")("doNotInsert"), "type" -> "checkbox", "label" -> "Ne pas insérer", "class" -> "mdl-checkbox__input")
             </div>
           </div>
       }
