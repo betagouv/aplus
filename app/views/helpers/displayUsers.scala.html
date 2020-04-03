@@ -19,9 +19,6 @@
                 }
                 <th class="mdl-data-table__cell--non-numeric">Aidant</th>
                 <th class="mdl-data-table__cell--non-numeric">CGU validé</th>
-                @if(currentUser.admin) {
-                    <th class="mdl-data-table__cell--non-numeric">Email de login</th>
-                }
             </tr>
         </thead>
         <tbody>
@@ -77,12 +74,6 @@
                     <span class="mdl-checkbox__label">CGU</span>
                 </label>
             </td>
-                @if(currentUser.admin) {
-            <td class="mdl-data-table__cell--non-numeric">
-                <button type="button" class="mdl-button mdl-js-button mdl-button--raised" onclick="sendLoginMail(this,'@user.email');">Envoyer email (Valable 15mins)</button>
-            </td>
-                }
-            </tr>
         }
         </tbody>
     </table>

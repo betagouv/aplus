@@ -329,19 +329,6 @@ dialog.dialog--50percent-width {
     width: 50%;
 }
 
-ul#group-area-container {
-    list-style: none;
-    padding-left: 0;
-}
-
-ul#group-area-container li {
-    display: inline-block;
-    padding: 0.5em;
-    margin: 0 0.1em;
-    border-radius: 1em;
-    background-color: white;
-}
-
 a {
    color: initial;
 }

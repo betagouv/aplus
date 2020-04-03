@@ -1,37 +1,11 @@
 @import models._
 @import views.html.helper.CSRF
-@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean, zoneAsJson: String, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
 @main(currentUser, currentUserRights)(s"Gestion du groupe ${userGroup.name} - ${userGroup.areaIds.flatMap(Area.fromId).map(_.name).mkString(", ")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
-    <script src='@routes.Assets.versioned("javascripts/group.js")'></script>
-
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/auto-complete.css")'>
-    <script src='@routes.Assets.versioned("javascripts/auto-complete.min.js")'></script>
-    <script src='@routes.Assets.versioned("javascripts/group-autocomplete.js")'></script>
-    @webJarsUtil.locate("slimselect.min.css").css()
-    @webJarsUtil.locate("slimselect.min.js").script()
-      <script>
-                function sendLoginMail(sender, email) {
-                    var request = new XMLHttpRequest();
-                    var parent = sender.parentNode;
-                    parent.innerHTML = "<span style='font-weight: bold;'>En cours</span> <img src='@routes.Assets.versioned("images/spin.gif")'>";
-                    request.open('POST', '@CSRF(routes.LoginController.login)', true);
-                    request.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
-                    request.onload = function() {
-                        if (request.status === 200) {
-                            parent.innerHTML = "<span style='color: green; font-weight: bold;'>Ok !</span>";
-                        } else {
-                            parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
-                        }
-                    };
-                    request.onerror = function() {
-                        parent.innerHTML = "<span style='color: red; font-weight: bold;'>Erreur !</span>";
-                    };
-                    request.send("email="+email);
-                }
-      </script>
 }{
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         <span class="mdl-cell mdl-cell--12-col ariane">Territoires : @for(areaId <- userGroup.areaIds) {
@@ -47,11 +21,11 @@
                 <input class="mdl-textfield__input" type="text" id="description" name="description" value="@userGroup.description" @if(!currentUser.admin) { disabled }>
                 <label class="mdl-textfield__label" for="description">Description du groupe</label>
             </div>
-            <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" id="insee-code" data-langname="@geoplusHost" data-lang="@zoneAsJson" @if(!currentUser.admin) { disabled }>
-                <label class="mdl-textfield__label" for="insee-code">Région(s), Arrondissement(s), Département(s), Commune(s) par nom ou code INSEE</label>
-                <ul id="group-area-container"></ul>
-            </div>
+            @if(userGroup.inseeCode.nonEmpty) {
+                <div class="mdl-cell mdl-cell--12-col">
+                    <b>Code INSEE</b> (non utilisé pour le moment) : @userGroup.inseeCode.mkString(", ")
+                </div>
+            }
             <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                 <input class="mdl-textfield__input" type="text" id="email" name="email" value="@userGroup.email.getOrElse("")" @if(!currentUser.admin) { disabled } maxlength="200">
                 <label class="mdl-textfield__label" for="email">Email du groupe (BAL générique pour inscription et notifications)</label>
@@ -65,16 +39,11 @@
                 </select>
             </div>
             <div class="mdl-cell mdl-cell--12-col">
-                <select id="area-ids" name="area-ids[]" multiple size="5" >
+                <select id="area-ids" name="area-ids[]" multiple size="5" class="use-slimselect">
                     @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-                    <option value="@area.id" @if(userGroup.areaIds.contains(area.id)) { selected }>@area.name</option>
-            }
-            </select>
-
-                <script>
-                        // TODO: use-slimselect class
-                        new SlimSelect({ select: '#area-ids' });
-                </script>
+                        <option value="@area.id" @if(userGroup.areaIds.contains(area.id)) { selected }>@area.name</option>
+                    }
+                </select>
             </div>
             @if(currentUser.admin) {
                 <div class="mdl-cell mdl-cell--12-col">
@@ -83,7 +52,7 @@
                     </button>
                     <br>
                     @if(isEmpty) {
-                        <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="Group.showGroupRemovalDialog()">
+                        <button class="mdl-button mdl-js-button mdl-button--raised" id="dialog-delete-group-show" type="button">
                             Supprimer le groupe
                         </button>
                     }
@@ -109,9 +78,10 @@
     <dialog class="mdl-dialog dialog--50percent-width" id="dialog-delete-group">
         <h4 class="mdl-dialog__title">Veuillez confirmer la suppression du groupe.</h4>
         <div class="mdl-dialog__actions">
-            <button type="button" class="mdl-button mdl-button" id="dialog-delete-group-cancel" onclick="Group.closeGroupRemovalDialog()">Annuler</button>
-            <button type="button" class="mdl-button mdl-button" id="dialog-delete-group-confirm" onclick="Group.confirmRemovalDialog('@userGroup.id')">Confirmer</button>
+            <button type="button" class="mdl-button mdl-button" id="dialog-delete-group-cancel">Annuler</button>
+            <button type="button" class="mdl-button mdl-button" id="dialog-delete-group-confirm" data-uuid="@userGroup.id">Confirmer</button>
         </div>
     </dialog>
 }{
+    <script src='@routes.Assets.versioned("javascripts/auto-complete.min.js")'></script>
 }

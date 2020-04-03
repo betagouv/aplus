@@ -7,8 +7,6 @@
 @main(currentUser, currentUserRights)(s"Utilisateur ${form("name").value.getOrElse("")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
     <script src='@routes.Assets.versioned("javascripts/dialog.js")'></script>
-    @webJarsUtil.locate("slimselect.min.css").css()
-    @webJarsUtil.locate("slimselect.min.js").script()
 }{
 @defining(form.value.map(user => Authorization.canEditOtherUser(user)(currentUserRights)).getOrElse(false)) { canEditUser =>
     @helper.form(action = routes.UserController.editUserPost(userId), 'class -> "mdl-grid mdl-cell mdl-cell--12-col") {
