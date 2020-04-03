@@ -99,7 +99,7 @@
                                 case Some("Oui") => {<img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"> Oui}
                                 case Some("Je ne sais pas") => {<img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"> Je ne sais pas}
                                 case Some("Non") => {<img class="usefulness__icon" src="@webJarsUtil.locate("1f61e.svg").url.get"> Non}
-                                case None => { ? }
+                                case _ => { ? }
                             }</b></td>
                             <td class="mdl-data-table__cell--non-numeric">@if(application.irrelevant) { <span style="color: red; font-weight: bold;">Oui</span> } else { Non } </td>
                             <td class="mdl-data-table__cell--non-numeric">@application.subject</td>

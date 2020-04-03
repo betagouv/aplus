@@ -21,11 +21,12 @@ class AutoAddExpertTask @Inject() (
   val startAtHour = 8
   val now = java.time.ZonedDateTime.now()
   val startDate = now.toLocalDate.atStartOfDay(now.getZone).plusDays(1).withHour(startAtHour)
-  val initialDelay = java.time.Duration.between(now, startDate).getSeconds.seconds
+  val initialDelay: FiniteDuration = java.time.Duration.between(now, startDate).getSeconds.seconds
 
-  actorSystem.scheduler.schedule(initialDelay = initialDelay, interval = 24.hours) {
-    inviteExpertsInApplication
-  }
+  // https://github.com/akka/akka/blob/v2.6.4/akka-actor/src/main/scala/akka/actor/Scheduler.scala#L403
+  actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = 24.hours)(
+    new Runnable { override def run(): Unit = inviteExpertsInApplication }
+  )
 
   val dayWithoutAgentAnswer = 5
   val daySinceLastAgentAnswer = 15
