@@ -59,7 +59,7 @@ libraryDependencies ++= Seq(
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
   "org.webjars.npm" % "slim-select" % "1.24.0",
   "org.webjars.npm" % "dialog-polyfill" % "0.4.10",
-  "org.webjars.npm" % "twemoji" % "2.5.1",
+  "org.webjars.npm" % "twemoji" % "12.1.5",
   "org.webjars" % "chartjs" % "2.9.3",
   "org.webjars" % "font-awesome" % "5.12.0",
   "org.webjars.bowergithub.olifolkerd" % "tabulator" % "4.5.3",
