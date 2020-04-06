@@ -14,7 +14,7 @@ lazy val root = (project in file("."))
     buildInfoPackage := "constants"
   )
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.13.1"
 
 // https://docs.scala-lang.org/overviews/compiler-options/index.html
 scalacOptions ++= Seq(
