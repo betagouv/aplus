@@ -77,7 +77,7 @@ case class MapMapping[T](
         }
       }
     if (allErrorsOrItems.forall(_.isRight)) {
-      Right(allErrorsOrItems.map(_.right.get).toMap).right.flatMap(applyConstraints)
+      Right(allErrorsOrItems.flatMap(_.toOption).toMap).flatMap(applyConstraints)
     } else {
       Left(allErrorsOrItems.collect { case Left(errors) => errors }.flatten)
     }

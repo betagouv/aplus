@@ -51,7 +51,7 @@
            <br>
 
        <div class="mdl-cell mdl-cell--12-col pem-container single--overflow-auto">
-                Total : @applications.size ( @applications.groupBy(_.status).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
+                Total : @applications.size ( @applications.groupBy(_.status).view.mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
                 <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp sortable" style="white-space: normal;">
                     <thead>
                         <tr>

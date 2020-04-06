@@ -30,10 +30,11 @@ case class AreaController @Inject() (
     extends InjectedController
     with UserOperators {
 
-  private lazy val areasWithLoginByKey = configuration.underlying
+  private lazy val areasWithLoginByKey: List[UUID] = configuration.underlying
     .getString("app.areasWithLoginByKey")
     .split(",")
     .flatMap(UUIDHelper.fromString)
+    .toList
 
   @deprecated("You should not need area", "v0.1")
   def change(areaId: UUID) = loginAction { implicit request =>
@@ -155,7 +156,7 @@ case class AreaController @Inject() (
               : Map[Set[Organisation], List[(Set[Organisation], Int)]] =
             organisationSetToCount.groupBy(_._1)
           val organisationSetToCountOfCounts: Map[Set[Organisation], Int] =
-            countsGroupedByOrganisationSet.mapValues(_.map(_._2).count(_ > 0)).toMap
+            countsGroupedByOrganisationSet.view.mapValues(_.map(_._2).count(_ > 0)).toMap
           organisationSetToCountOfCounts
         }
 
