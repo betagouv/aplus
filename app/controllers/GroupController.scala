@@ -30,8 +30,6 @@ import models.EventType.{
   UserGroupEdited
 }
 
-//import scala.collection.parallel.immutable.ParSeq
-
 @Singleton
 case class GroupController @Inject() (
     loginAction: LoginAction,
