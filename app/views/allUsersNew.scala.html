@@ -185,7 +185,7 @@
     @if(currentUser.admin) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
             <h4 class="mdl-cell mdl-cell--12-col">Ajouter un groupe</h4> <br>
-            @helper.form(routes.GroupController.addGroup(), 'method -> "post", 'class -> "mdl-cell mdl-cell--9-col") {
+            @helper.form(routes.GroupController.addGroup(), "method" -> "post", "class" -> "mdl-cell mdl-cell--9-col") {
                 @helper.CSRF.formField
                 <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                     <input class="mdl-textfield__input" type="text" id="name" name="name" maxlength="50">

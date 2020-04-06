@@ -11,7 +11,7 @@
         <span class="mdl-cell mdl-cell--12-col ariane">Territoires : @for(areaId <- userGroup.areaIds) {
             <a href="@routes.UserController.all(areaId)#group-@userGroup.id">@{Area.fromId(areaId).get.name}</a>
         } / Groupe :  @userGroup.name </span>
-        @helper.form(routes.GroupController.editGroupPost(userGroup.id), 'method -> "post") {
+        @helper.form(routes.GroupController.editGroupPost(userGroup.id), "method" -> "post") {
             @helper.CSRF.formField
             <div class="mdl-cell mdl-cell--12-col  mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                 <input class="mdl-textfield__input" type="text" id="name" name="name" value="@userGroup.name" @if(!currentUser.admin) { disabled } maxlength="60">
@@ -62,7 +62,7 @@
     </div>
     <div class="single--overflow-auto">
         @helpers.displayUsers(groupUsers)(currentUser)
-        @helper.form(routes.UserController.add(userGroup.id), 'method -> "get") {
+        @helper.form(routes.UserController.add(userGroup.id), "method" -> "get") {
             @helper.CSRF.formField
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                 <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="rows" name="rows" value="1">
