@@ -109,16 +109,14 @@ case class UserController @Inject() (
                 views.html.allUsersNew(request.currentUser, request.rights)(
                   groups,
                   users,
-                  selectedArea,
-                  configuration.underlying.getString("geoplus.host")
+                  selectedArea
                 )
               case _ =>
                 views.html.allUsersByGroup(request.currentUser, request.rights)(
                   groups,
                   users,
                   applications,
-                  selectedArea,
-                  configuration.underlying.getString("geoplus.host")
+                  selectedArea
                 )
             }
             Ok(result)

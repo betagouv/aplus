@@ -27,7 +27,11 @@
                     Mode Guidé
                 </a>
             </div>
-            @helper.form(action = routes.ApplicationController.createPost(), 'onsubmit -> "addInfo();", 'enctype -> "multipart/form-data", 'id -> "create-application-form", 'class -> "aplus-protected-form") {
+            <div>
+                Les champs marqués d’un <span class="mdl-color-text--red-500">*</span> sont obligatoires
+            </div>
+
+            @helper.form(action = routes.ApplicationController.createPost(), 'enctype -> "multipart/form-data", 'id -> "create-application-form", 'class -> "aplus-protected-form") {
                 @helper.CSRF.formField
                     <input type="hidden" name="application-id" readonly value="@applicationForm("application-id").value.getOrElse(java.util.UUID.randomUUID)">
                     @if(currentUser.areas.nonEmpty) {
@@ -36,7 +40,9 @@
                             @helpers.changeArea(currentArea, currentUser.areas.flatMap(Area.fromId))
                         </div>
                     }
-                    <h5 class="title--addline">Sélectionnez les organismes concernés sur la zone @currentArea.name</h5>
+                        <h5 class="title--addline">
+                            Sélectionnez les organismes concernés sur la zone @currentArea.name&nbsp;<span class="mdl-color-text--red-500">*</span>
+                        </h5>
 
                     <div class="mdl-grid mdl-grid--no-spacing">
                         @if(applicationForm("users").hasErrors) {
@@ -50,7 +56,7 @@
                                     <tr>
                                         <th class="mdl-data-table__cell--non-numeric" colspan="2">
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                <input type="checkbox" class="mdl-checkbox__input" onclick="showHideUsers(this);" value="@organisationGroup.name" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisationGroup.name})){ checked="checked" }>
+                                                <input type="checkbox" class="mdl-checkbox__input aplus-application-form-group" value="@organisationGroup.name" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisationGroup.name})){ checked="checked" }>
                                                 <span class="mdl-checkbox__label">@organisationGroup.name @if(organisation.nonEmpty){ (@organisation.get.name) }</span>
                                                 <span id="span-group-description">@organisationGroup.description</span>
                                             </label></th>
@@ -84,18 +90,47 @@
                         </table>
                     </div>
                     <br>
-                    <h5 class="title--addline">Sujet</h5>
-                     @helper.input(applicationForm("subject"), 'label -> "Saisir le sujet de votre demande...", 'class -> "mdl-textfield--large") { (id, name, value, args) =>
-                        <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-                    }
-                    <br>
+                    <h5 class="title--addline">
+                        Sujet de la demande
+                    </h5>
 
+                    Résumer la nature du problème rencontré <span class="mdl-color-text--red-500">*</span>
+
+                    <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+                        <div>
+                    @helper.input(applicationForm("subject"),
+                                  'label -> "Saisir le sujet de votre demande...",
+                                  'class -> "mdl-textfield--large mdl-textfield--large-fix"
+                    ) { (id, name, value, args) =>
+                    <input class="mdl-textfield__input"
+                           type="text"
+                           name="@name"
+                           id="@id"
+                           value="@value"
+                           @toHtmlArgs(args)>
+                    }
+                        </div>
+                        <div class="mdl-tooltip__container">
+                            <i id="subject-help"
+                               class="icon material-icons"
+                               aria-describedby="subject-help-description">help</i>
+                            <span id="subject-help-description"
+                                  role="tooltip"
+                                  class="mdl-tooltip mdl-tooltip--right mdl-tooltip--large"
+                                  for="subject-help"
+                                  aria-hidden="true">
+                                Ce résumé ne doit pas comporter de données personnelles
+                            </span>
+                        </div>
+                    </div>
 
                     <h5 class="title--addline">Informations concernant l'usager</h5>
-                    @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"))
+                    @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"), true)
                     <br>
                     <br>
-                    <h5 class="title--addline">Description du problème</h5>
+                    <h5 class="title--addline">
+                        Description du problème&nbsp;<span class="mdl-color-text--red-500">*</span>
+                    </h5>
 
                     <div>
                         @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-textfield--large", 'label -> "Rédigez une description rapide du problème ...") { (id, name, value, args) =>
@@ -103,10 +138,10 @@
                         }<br>
 
                         @if(currentUser.sharedAccount) {
-                            Signature :<br>
+                            Signature :<br>
                             @helper.input(
                                 applicationForm("signature"),
-                                'label -> "Renseignez ici votre : Prénom, NOM, service",
+                                'label -> "Renseignez ici votre : Prénom, NOM, service",
                                 'class -> "mdl-textfield--large"
                             ) { (id, name, value, args) =>
                                 <input class="mdl-textfield__input"
@@ -125,7 +160,7 @@
                         @if(applicationForm("file").hasErrors) {
                             <span style="color: red; font-weight: bold;">@applicationForm("file").errors.map(_.format).mkString(", ")</span><br>
                         }
-                        Ajouter un/des ficher(s) ( Facultatif, 5Mo maximum ) :
+                        Ajouter un ou plusieurs fichiers ( 5Mo maximum au total ) :
                         <ul>
                             @for((attachment,index) <- attachments.zipWithIndex) {
                                 <li>@attachment</li>
@@ -168,39 +203,5 @@
             }
         </div>
 }{
-        <script src="@routes.Assets.versioned("javascripts/application-attachment.js")"></script>
-        <script type="text/javascript">
-         function showHideUsers(sender) {
-             var thead = sender.parentNode.parentNode.parentNode.parentNode;
-             var tbody = thead.nextElementSibling;
-             var inputs = tbody.querySelectorAll("[type=checkbox]");
-             if(sender.checked) {
-                 for(var i = 0; i < inputs.length; i++){
-                     var input = inputs[i];
-                     input.checked = true;
-                     input.parentNode.classList.add("is-checked");
-                     componentHandler.upgradeElements(input);
-                 }
-                 tbody.classList.remove("invisible");
-             } else {
-                 for(var i = 0; i < inputs.length; i++){
-                     var input = inputs[i];
-                     input.checked = false;
-                     input.parentNode.classList.remove("is-checked");
-                     componentHandler.upgradeElements(input);
-                 }
-                 tbody.classList.add("invisible");
-             }
-
-         }
-         var checkbox = document.querySelector("#checkbox-mandat");
-
-         checkbox.addEventListener('click', function() {
-             if(checkbox.checked) {
-                 document.querySelector("#review-validation").disabled = false;
-             } else {
-                 document.querySelector("#review-validation").disabled = true;
-             }
-         });
-        </script>
+        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/application-attachment.js")"></script>
 }

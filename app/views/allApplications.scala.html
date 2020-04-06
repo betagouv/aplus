@@ -25,6 +25,9 @@
 </style>
 <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("sortable/sortable.css")'>
 }{
+
+<h4>Liste des demandes du groupe</h4>
+
    <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
        @if(currentUser.areas.length > 1) {
            <p class="mdl-cell mdl-cell--12-col">Afficher :
@@ -36,13 +39,18 @@
                </select>
            </p>
        }
-            <button class="mdl-button mdl-js-button mdl-button--raised" onclick="document.location='@routes.ApplicationController.allCSV(selectedArea.id)'">
-                Télécharger export CSV
-            </button>
 
-       <input class="mdl-cell mdl-cell--12-col" type="search" placeholder="Filtrer les demandes (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
+           <button class="mdl-button mdl-js-button mdl-button--raised" onclick="document.location='@routes.ApplicationController.allCSV(selectedArea.id)'">
+                Télécharger la liste / export CSV
+           </button>
+           <br>
+           <br>
 
-       <div class="mdl-cell mdl-cell--12-col pem-container">
+
+           <input class="mdl-cell mdl-cell--6-col" type="search" placeholder="Filtrer les demandes (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/>
+           <br>
+
+       <div class="mdl-cell mdl-cell--12-col pem-container single--overflow-auto">
                 Total : @applications.size ( @applications.groupBy(_.status).mapValues(_.size).map{case (k,v) => @k : @v}.mkString(" / ") )
                 <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp sortable" style="white-space: normal;">
                     <thead>
@@ -91,7 +99,7 @@
                                 case Some("Oui") => {<img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"> Oui}
                                 case Some("Je ne sais pas") => {<img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"> Je ne sais pas}
                                 case Some("Non") => {<img class="usefulness__icon" src="@webJarsUtil.locate("1f61e.svg").url.get"> Non}
-                                case None => { ? }
+                                case _ => { ? }
                             }</b></td>
                             <td class="mdl-data-table__cell--non-numeric">@if(application.irrelevant) { <span style="color: red; font-weight: bold;">Oui</span> } else { Non } </td>
                             <td class="mdl-data-table__cell--non-numeric">@application.subject</td>

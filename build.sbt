@@ -3,7 +3,16 @@ organization := "fr.gouv.beta"
 
 version := "1.0-SNAPSHOT"
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala)
+lazy val root = (project in file("."))
+  .enablePlugins(PlayScala)
+  .enablePlugins(BuildInfoPlugin)
+  .settings(
+    buildInfoKeys := Seq[BuildInfoKey](
+      "gitHeadCommit" -> git.gitHeadCommit.value,
+      "gitHeadCommitDate" -> git.gitHeadCommitDate.value
+    ),
+    buildInfoPackage := "constants"
+  )
 
 scalaVersion := "2.13.1"
 
@@ -31,12 +40,12 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.2.11",
+  "org.postgresql" % "postgresql" % "42.2.12",
   "org.playframework.anorm" %% "anorm" % "2.6.5",
   "com.typesafe.play" %% "play-mailer" % "7.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "com.typesafe.play" %% "play-mailer-guice" % "7.0.1",
-  "net.jcazevedo" %% "moultingyaml" % "0.4.1",
+  "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   "com.google.guava" % "guava" % "28.1-jre",
   "com.github.tototoshi" %% "scala-csv" % "1.3.6",
   ws
@@ -44,7 +53,7 @@ libraryDependencies ++= Seq(
 
 // UI
 libraryDependencies ++= Seq(
-  "org.webjars" %% "webjars-play" % "2.7.3",
+  "org.webjars" %% "webjars-play" % "2.8.0",
   "org.webjars.bower" % "material-design-lite" % "1.3.0",
   "org.webjars" % "material-design-icons" % "3.0.1",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",

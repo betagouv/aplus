@@ -5,7 +5,6 @@ import java.time.ZonedDateTime
 import java.util.UUID
 import helper.UUIDHelper
 
-
 import actions._
 import constants.Constants
 import helper.Time.zonedDateTimeOrdering
@@ -129,7 +128,8 @@ case class ApplicationController @Inject() (
     }
   }
 
-  private def currentArea(implicit request: RequestWithUserData[_]): Area = request.session
+  private def currentArea(implicit request: RequestWithUserData[_]): Area =
+    request.session
       .get("areaId")
       .flatMap(UUIDHelper.fromString)
       .orElse(request.currentUser.areas.headOption)
@@ -139,8 +139,7 @@ case class ApplicationController @Inject() (
   def create: Action[AnyContent] = loginAction.async { implicit request =>
     eventService.log(ApplicationFormShowed, "Visualise le formulaire de création de demande")
     fetchGroupsWithInstructors(currentArea.id, request.currentUser).map {
-      case
- (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
+      case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
         Ok(
           views.html.createApplication(request.currentUser, request.rights, currentArea)(
             instructorsOfGroups,
@@ -794,7 +793,7 @@ case class ApplicationController @Inject() (
                   s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert"
                 )
                 Future(Ok.sendPath(Paths.get(s"$filesPath/ans_$answerId-$filename"), true, {
-                  _: Path => filename
+                  _: Path => Some(filename)
                 }))
               case _ =>
                 eventService.log(
@@ -808,7 +807,7 @@ case class ApplicationController @Inject() (
               eventService
                 .log(FileOpened, s"Le fichier de la demande $applicationId a été ouvert")
               Future(Ok.sendPath(Paths.get(s"$filesPath/app_$applicationId-$filename"), true, {
-                _: Path => filename
+                _: Path => Some(filename)
               }))
             } else {
               eventService.log(

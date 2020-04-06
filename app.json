@@ -4,12 +4,6 @@
     "postdeploy": "bin/init_database.sh"
   },
   "env": {
-    "HEROKU_APP_NAME": {
-      "required": true
-    },
-    "HEROKU_PARENT_APP_NAME": {
-      "required": true
-    },
     "STAGING_DATABASE_URL": {
       "required": true
     },
@@ -26,9 +20,6 @@
       "required": true
     },
     "EVOLUTIONS_AUTOAPPLY": {
-      "required": true
-    },
-    "GEOPLUS_HOST": {
       "required": true
     },
     "MAIL_HOST": {

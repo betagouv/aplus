@@ -10,16 +10,15 @@
                 <th class="mdl-data-table__cell--non-numeric">Qualité</th>
                 <th class="mdl-data-table__cell--non-numeric">Commune</th>
                 <th class="mdl-data-table__cell--non-numeric">Email</th>
+                <th class="mdl-data-table__cell--non-numeric">Téléphone</th>
+                <th class="mdl-data-table__cell--non-numeric">Compte Partagé</th>
+                <th class="mdl-data-table__cell--non-numeric">Instructeur</th>
+                <th class="mdl-data-table__cell--non-numeric">Responsable groupe</th>
                 @if(currentUser.admin) {
                     <th class="mdl-data-table__cell--non-numeric">Admin de zone</th>
                 }
-                <th class="mdl-data-table__cell--non-numeric">Responsable groupe</th>
-                <th class="mdl-data-table__cell--non-numeric">Instructeur</th>
                 <th class="mdl-data-table__cell--non-numeric">Aidant</th>
                 <th class="mdl-data-table__cell--non-numeric">CGU validé</th>
-                @if(currentUser.admin) {
-                    <th class="mdl-data-table__cell--non-numeric">Email de login</th>
-                }
             </tr>
         </thead>
         <tbody>
@@ -32,22 +31,15 @@
                         </a>
                     </td>
                 }
-            <td class="mdl-data-table__cell--non-numeric">@user.name</td>
+            <td class="mdl-data-table__cell--non-numeric @if(user.disabled){ text--strikethrough }">@user.name</td>
             <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
             <td class="mdl-data-table__cell--non-numeric">@user.communeCode</td>
-            <td class="mdl-data-table__cell--non-numeric">@user.email</td>
-                @if(currentUser.admin) {
-                    <td class="mdl-data-table__cell--non-numeric">
-                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                            <input type="checkbox" class="mdl-checkbox__input" @if(user.admin){ checked } disabled>
-                            <span class="mdl-checkbox__label">Admin</span>
-                        </label>
-                    </td>
-                }
+            <td class="mdl-data-table__cell--non-numeric @if(user.disabled){ text--strikethrough }">@user.email</td>
+            <td class="mdl-data-table__cell--non-numeric">@user.phoneNumber</td>
             <td class="mdl-data-table__cell--non-numeric">
                 <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                    <input type="checkbox" class="mdl-checkbox__input" @if(user.groupAdmin){ checked } disabled>
-                    <span class="mdl-checkbox__label">Responsable</span>
+                    <input type="checkbox" class="mdl-checkbox__input" @if(user.sharedAccount){ checked } disabled>
+                    <span class="mdl-checkbox__label">Compte Partagé</span>
                 </label>
             </td>
             <td class="mdl-data-table__cell--non-numeric">
@@ -56,6 +48,20 @@
                     <span class="mdl-checkbox__label">Instructeur</span>
                 </label>
             </td>
+            <td class="mdl-data-table__cell--non-numeric">
+                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                    <input type="checkbox" class="mdl-checkbox__input" @if(user.groupAdmin){ checked } disabled>
+                    <span class="mdl-checkbox__label">Responsable</span>
+                </label>
+            </td>
+                @if(currentUser.admin) {
+                    <td class="mdl-data-table__cell--non-numeric">
+                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
+                            <input type="checkbox" class="mdl-checkbox__input" @if(user.admin){ checked } disabled>
+                            <span class="mdl-checkbox__label">Admin</span>
+                        </label>
+                    </td>
+                }
             <td class="mdl-data-table__cell--non-numeric">
                 <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
                     <input type="checkbox" class="mdl-checkbox__input" @if(user.helper){ checked } disabled>
@@ -68,12 +74,6 @@
                     <span class="mdl-checkbox__label">CGU</span>
                 </label>
             </td>
-                @if(currentUser.admin) {
-            <td class="mdl-data-table__cell--non-numeric">
-                <button type="button" class="mdl-button mdl-js-button mdl-button--raised" onclick="sendLoginMail(this,'@user.email');">Envoyer email (Valable 15mins)</button>
-            </td>
-                }
-            </tr>
         }
         </tbody>
     </table>
