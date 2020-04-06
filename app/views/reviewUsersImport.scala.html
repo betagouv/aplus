@@ -20,6 +20,11 @@
     @helper.repeatWithIndex(section("users")) { (user, index) =>
         <tr class="searchable-row td--clear-border" id="line_@{groupIndex}_@{index}">
           <td class="mdl-data-table__cell--non-numeric cell-import-user">
+
+              @if(user("isInMoreThanOneGroup").value == Some("true")) {
+                  <i class="material-icons mdl-color-text--orange-500">warning</i>
+              }
+
             <input name="@user("line").name" value="@user("line").value" type="hidden">
             <input name="@user("user")("id").name" value="@user("user")("id").value" type="hidden">
             <input name="@user("user")("qualite").name" value="@user("user")("qualite").value" type="hidden">

@@ -30,7 +30,8 @@ object formModels {
       user: User,
       line: Int,
       alreadyExists: Boolean,
-      alreadyExistingUser: Option[User] = None
+      alreadyExistingUser: Option[User] = None,
+      isInMoreThanOneGroup: Option[Boolean] = None
   )
 
   case class UserGroupFormData(
