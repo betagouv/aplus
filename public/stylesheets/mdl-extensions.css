@@ -44,6 +44,20 @@ Data Table
 }
 
 /***************
+Chip
+*/
+
+.mdl-chip:focus {
+    box-shadow: none !important;
+}
+
+.mdl-chip--active {
+    background-color: #d0cece;
+    box-shadow: none !important;
+}
+
+
+/***************
 Misc
  */
 

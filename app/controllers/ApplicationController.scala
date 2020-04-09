@@ -140,12 +140,14 @@ case class ApplicationController @Inject() (
     eventService.log(ApplicationFormShowed, "Visualise le formulaire de création de demande")
     fetchGroupsWithInstructors(currentArea.id, request.currentUser).map {
       case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
+        val categories = organisationService.categories
         Ok(
           views.html.createApplication(request.currentUser, request.rights, currentArea)(
             instructorsOfGroups,
             groupsOfAreaWithInstructor,
             coworkers,
             readSharedAccountUserSignature(request.session),
+            categories,
             applicationForm(request.currentUser)
           )
         )
@@ -252,6 +254,7 @@ case class ApplicationController @Inject() (
                     groupsOfAreaWithInstructor,
                     coworkers,
                     None,
+                    organisationService.categories,
                     formWithErrors,
                     pendingAttachments.keys ++ newAttachments.keys
                   )

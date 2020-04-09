@@ -1,7 +1,8 @@
-@import models._
 @import _root_.helper.MDLForms._
+@import models.Organisation.Category
+@import play.api.libs.json.Json
 
-@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], applicationForm: Form[models.formModels.ApplicationFormData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], categories: List[Category], applicationForm: Form[models.formModels.ApplicationFormData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
 @main(currentUser, currentUserRights)(s"Nouvelle demande")  {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
@@ -41,8 +42,30 @@
                         </div>
                     }
                         <h5 class="title--addline">
-                            Sélectionnez les organismes concernés sur la zone @currentArea.name&nbsp;<span class="mdl-color-text--red-500">*</span>
+                            Sélectionnez les organismes concernés sur la zone @currentArea.name <span class="mdl-color-text--red-500">*</span>
                         </h5>
+
+
+                        <div style="display: flex; flex-direction: column;">
+                            <div style="margin: 4px 8px;">Filtrer par :</div>
+                            <div style="display: flex; flex-wrap: nowrap; margin: 4px 8px;">
+                                <div style="margin-right: 8px;">
+                                <div class="mdl-button aplus-application-form-remove-category-filter-button" style="white-space: nowrap;">
+                                    Tout afficher
+                                </div>
+                                </div>
+                                <div style="display: flex; flex-wrap: wrap;">
+                                    @for(category <- categories) {
+                                        <button type="button"
+                                                class="mdl-chip aplus-application-form-category-filter-button"
+                                                style="margin: 4px;"
+                                                data-organisations="@Json.stringify(Json.toJson(category.defaultOrganisations.map(_.shortName)))">
+                                            <span class="mdl-chip__text">@category.name</span>
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
 
                     <div class="mdl-grid mdl-grid--no-spacing">
                         @if(applicationForm("users").hasErrors) {
