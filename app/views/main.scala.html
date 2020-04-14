@@ -40,11 +40,14 @@
         </div>
         <div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-header mdl-layout--fixed-drawer">
             <div class="mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 do-not-print">
-                <div class="mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100 demo-only invisible">
-                    <div class="mdl-layout__header-row mdl-color--pink-500 mdl-color-text--white">
+                <div class="mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100">
+                    <div class="mdl-layout__header-row mdl-color--pink-500 mdl-color-text--white invisible demo-only">
                         <span class="mdl-layout-title aplus-demo-header__title">
                             Version de démonstration d’Administration+
                         </span>
+                    </div>
+                    <div class="mdl-layout__header-row mdl-color--pink-500 mdl-color-text--white">
+                        France services et Administration+ se mobilisent pendant le confinement. Merci de votre implication si nécessaire en cette période. Des milliers de nouveaux blocages risquent de survenir. Remportons ce combat ! Bon courage à tous.
                     </div>
                 </div>
                 <div class="mdl-layout__header-row">
@@ -126,7 +129,7 @@
 
                     @content
                 </div>
-                <footer class="mdl-mega-footer do-not-print">
+                <footer class="mdl-mega-footer mdl-mega-footer-fix do-not-print">
                     <div class="mdl-mega-footer--bottom-section">
                         <div class="mdl-logo">
                             Administration+ @java.time.LocalDate.now().getYear() :
