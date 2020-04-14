@@ -549,7 +549,7 @@ case class ApplicationController @Inject() (
         s"${Authorization.isAdmin(request.rights)}.stats.${Hash.sha256(areaIds.toString() + observableOrganisationIds.toString() + observableGroupIds.toString())}"
 
     cache
-      .getOrElseUpdate[Html](cacheKey, 1 hours)(
+      .getOrElseUpdate[Html](cacheKey, 1.hours)(
         generateStats(areaIds, observableOrganisationIds, observableGroupIds)
       )
       .map { html =>

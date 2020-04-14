@@ -15,6 +15,26 @@ function querySelectorAllForEach(selector, exec) {
 
 
 //
+// Header ribbon (demo)
+//
+
+function setupDemoBanner() {
+  if(/localhost|demo/.test(window.location.hostname)) {
+    var ribon = document.getElementById("header__ribbon");
+    if(ribon) {
+      ribon.classList.add("invisible");
+    }
+    var elements = document.getElementsByClassName("demo-only");
+    for (var i = 0; i < elements.length; i++) {
+      elements[i].classList.remove("invisible");
+    }
+  }
+}
+
+setupDemoBanner();
+
+
+//
 // Application form
 //
 
@@ -220,16 +240,60 @@ function setupApplicationForm() {
 
 setupApplicationForm();
 
+var dialogDeleteGroupId = "dialog-delete-group";
+var dialogDeleteGroupButtonShowId = "dialog-delete-group-show";
+var dialogDeleteGroupButtonCancelId = "dialog-delete-group-cancel";
+var dialogDeleteGroupButtonConfirmId = "dialog-delete-group-confirm";
+function setupDialog() {
+  var dialog = document.getElementById(dialogDeleteGroupId);
 
+  if (dialog) {
+    if (!dialog.showModal) {
+      dialogPolyfill.registerDialog(dialog);
+    }
+
+    querySelectorAllForEach(
+        "#" + dialogDeleteGroupButtonCancelId,
+        function (element) {
+          element.addEventListener('click', function(event) {
+            dialog.close();
+          });
+        }
+    );
+
+    querySelectorAllForEach(
+        "#" + dialogDeleteGroupButtonShowId,
+        function (element) {
+          element.addEventListener('click', function(event) {
+            dialog.showModal();
+          });
+        }
+    );
+
+    querySelectorAllForEach(
+        "#" + dialogDeleteGroupButtonConfirmId,
+        function (element) {
+          element.addEventListener('click', function(event) {
+            var uuid = element.dataset.uuid;
+            var url = jsRoutes.controllers.GroupController.deleteUnusedGroupById(uuid).url;
+            window.location = url;
+          });
+        }
+    );
+  }
+}
+
+
+setupDialog();
 
 //
 // Transform <select> with SlimSelect
 //
 
-var slimSelectClass = "use-slimselect"
+var slimSelectClass = "use-slimselect";
 
 Array.from(document.querySelectorAll("." + slimSelectClass)).forEach(function (select) {
-  new SlimSelect({ select: select })
+  new SlimSelect({ select: select, selectByGroup: true, closeOnSelect: false});
 });
 
 

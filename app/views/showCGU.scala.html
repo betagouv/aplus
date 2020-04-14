@@ -17,7 +17,7 @@
     @if(user.cguAcceptationDate.isEmpty) { <p>Pour accéder à la plateforme Administration+, vous devez valider les CGU suivantes : (si elles ne s’affichent pas, vous pouvez les télécharger plus bas sur cette page)</p>}
     <iframe src="@routes.Assets.versioned("html/CGU_11_mars_2020.html")" width="100%" height="400px"></iframe>
         @if(user.cguAcceptationDate.isEmpty) {
-            @helper.form(action = routes.UserController.validateCGU(), args = 'class -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
+            @helper.form(action = routes.UserController.validateCGU(), args = "class" -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
                 @helper.CSRF.formField
                 @flash.get("redirect").map { redirect =>
                     <input name="redirect" value="@redirect"  style="display: none">

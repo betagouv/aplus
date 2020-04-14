@@ -1,13 +1,13 @@
 @import models._
 @import java.util.UUID
-@(user: User, currentUserRights: Authorization.UserRights)(areas: Seq[Area], areasWithLoginByKey: Seq[UUID], userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(user: User, currentUserRights: Authorization.UserRights)(areas: List[Area], areasWithLoginByKey: List[UUID], userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
 @main(user, currentUserRights)(s"Gestion des territoires"){
 
 }{
     <div class="mdl-cell mdl-cell--12-col pem-container mdl-grid">
-        @for(area <- Area.all.filter(area => user.areas.contains(area.id))) {
+        @for(area <- Area.all.filter(area => user.areas.contains[UUID](area.id))) {
         <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
             <thead>
                 <tr>
@@ -15,7 +15,7 @@
                         @area.name
                         @if(user.admin) { /
                             @area.id /
-                            @if(areasWithLoginByKey.contains(area.id)) {
+                            @if(areasWithLoginByKey.contains[UUID](area.id)) {
                                 <i class="material-icons">warning</i> Login par clé possible<i class="material-icons">warning</i> /
                             }
                             <a href="@routes.ApplicationController.all(area.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--raised">
@@ -29,7 +29,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for(userGroup <- userGroups.filter(_.areaIds.contains(area.id)).sortBy(_.name)) {
+                @for(userGroup <- userGroups.filter(_.areaIds.contains[UUID](area.id)).sortBy(_.name)) {
                     <tr>
                         <td class="mdl-data-table__cell--non-numeric">
                             @if(user.admin){

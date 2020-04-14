@@ -23,7 +23,7 @@
         </div>
         @if(user.newsletterAcceptationDate.isEmpty) {
             @helper.form(action = routes.UserController.subscribeNewsletter,
-                         args = 'class -> "mdl-grid") {
+                         args = "class" -> "mdl-grid") {
                 @helper.CSRF.formField
                 <div class="mdl-cell mdl-cell--12-col">
                     <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect"

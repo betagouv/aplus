@@ -22,9 +22,6 @@
     "EVOLUTIONS_AUTOAPPLY": {
       "required": true
     },
-    "GEOPLUS_HOST": {
-      "required": true
-    },
     "MAIL_HOST": {
       "required": true
     },

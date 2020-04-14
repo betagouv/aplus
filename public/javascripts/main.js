@@ -152,7 +152,6 @@ function onClickRemoveElement(clickElement, elementToRemove) {
   })
 }
 
-
 //
 // Functions executed by the script
 //
@@ -162,14 +161,3 @@ window.document.addEventListener("DOMContentLoaded", function(event) {
   setupProtectedForms();
   setupNotificationMessages();
 }, false);
-
-if(/localhost|demo/.test(window.location.hostname)) {
-  var ribon = document.getElementById("header__ribbon");
-  if(ribon) {
-    ribon.classList.add("invisible");
-  }
-  var elements = document.getElementsByClassName("demo-only");
-  for (var i = 0; i < elements.length; i++) {
-    elements[i].classList.remove("invisible");
-  }
-}
