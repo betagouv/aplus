@@ -23,6 +23,8 @@ import models.EventType.{
   EditUserShowed,
   EventsShowed,
   EventsUnauthorized,
+  NewsletterSubscribed,
+  NewsletterSubscriptionError,
   PostAddUserUnauthorized,
   PostEditUserUnauthorized,
   ShowAddUserUnauthorized,
@@ -395,7 +397,7 @@ case class UserController @Inject() (
       { formWithErrors =>
         eventService.log(CGUValidationError, "Erreur de formulaire dans la validation des CGU")
         BadRequest(
-          s"Formulaire invalide, prévenez l'administrateur du service. ${formWithErrors.errors.mkString(", ")}"
+          s"Formulaire invalide, prévenez l’administrateur du service. ${formWithErrors.errors.mkString(", ")}"
         )
       }, {
         case (redirectOption, newsletter, validate) =>
@@ -403,25 +405,51 @@ case class UserController @Inject() (
             userService.acceptCGU(request.currentUser.id, newsletter)
           }
           eventService.log(CGUValidated, "CGU validées")
-          redirectOption match {
-            case Some(redirect) =>
-              Redirect(Call("GET", redirect))
-                .flashing("success" -> "Merci d\'avoir accepté les CGU")
+          val route = redirectOption match {
+            case Some(redirect)
+                if (redirect: String) != (routes.ApplicationController.myApplications.url: String) =>
+              Call("GET", redirect)
             case _ =>
-              Redirect(routes.ApplicationController.myApplications())
-                .flashing("success" -> "Merci d\'avoir accepté les CGU")
+              routes.HomeController.welcome
           }
+          Redirect(route).flashing("success" -> "Merci d’avoir accepté les CGU")
       }
     )
   }
 
-  val validateCGUForm: Form[(Option[String], Boolean, Boolean)] = Form(
+  private val validateCGUForm: Form[(Option[String], Boolean, Boolean)] = Form(
     tuple(
       "redirect" -> optional(text),
       "newsletter" -> boolean,
       "validate" -> boolean
     )
   )
+
+  private val subscribeNewsletterForm: Form[Boolean] = Form(
+    "newsletter" -> boolean
+  )
+
+  def subscribeNewsletter: Action[AnyContent] = loginAction { implicit request =>
+    subscribeNewsletterForm.bindFromRequest.fold(
+      { formWithErrors =>
+        eventService.log(
+          NewsletterSubscriptionError,
+          "Erreur de formulaire dans la souscription à la newletter"
+        )
+        BadRequest(
+          s"Formulaire invalide, prévenez l'administrateur du service. ${formWithErrors.errors.mkString(", ")}"
+        )
+      }, { newsletter =>
+        if (newsletter) {
+          // Note: CGU are not used anymore
+          userService.acceptCGU(request.currentUser.id, newsletter)
+        }
+        eventService.log(NewsletterSubscribed, "Newletter subscribed")
+        Redirect(routes.HomeController.welcome)
+          .flashing("success" -> "Merci d’avoir terminé votre inscription")
+      }
+    )
+  }
 
   def add(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
     withGroup(groupId) { group: UserGroup =>
