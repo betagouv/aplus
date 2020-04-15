@@ -46,28 +46,22 @@
                         </h5>
 
 
-                        <div style="display: flex; flex-direction: column;">
-                            <div style="margin: 4px 8px;">Filtrer par :</div>
-                            <div style="display: flex; flex-wrap: nowrap; margin: 4px 8px;">
-                                <div style="margin-right: 8px;">
-                                <div class="mdl-button aplus-application-form-remove-category-filter-button" style="white-space: nowrap;">
-                                    Tout afficher
-                                </div>
-                                </div>
-                                <div style="display: flex; flex-wrap: wrap;">
-                                    @for(category <- categories) {
-                                        <button type="button"
-                                                class="mdl-chip aplus-application-form-category-filter-button"
-                                                style="margin: 4px;"
-                                                data-organisations="@Json.stringify(Json.toJson(category.defaultOrganisations.map(_.shortName)))">
-                                            <span class="mdl-chip__text">@category.name</span>
-                                        </button>
-                                    }
-                                </div>
+                        <div style="display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
+                            <div style="margin-right: 16px; white-space: nowrap;">FILTRER PAR :</div>
+                            <div class="aplus-application-form-remove-category-filter-button" style="cursor: pointer; white-space: nowrap; color: black; text-decoration: underline; margin-right: 16px;">
+                                Tout afficher
                             </div>
+                            @for(category <- categories) {
+                                <button type="button"
+                                        class="mdl-chip aplus-application-form-category-filter-button"
+                                        style="margin: 4px; cursor: pointer;"
+                                        data-organisations="@Json.stringify(Json.toJson(category.defaultOrganisations.map(_.shortName)))">
+                                    <span class="mdl-chip__text">@category.name</span>
+                                </button>
+                            }
                         </div>
 
-                    <div class="mdl-grid mdl-grid--no-spacing">
+                    <div class="mdl-grid mdl-grid--no-spacing" style="background-color: white;">
                         @if(applicationForm("users").hasErrors) {
                             <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
                         }
@@ -80,7 +74,7 @@
                                         <th class="mdl-data-table__cell--non-numeric" colspan="2">
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
                                                 <input type="checkbox" class="mdl-checkbox__input aplus-application-form-group" value="@organisationGroup.name" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisationGroup.name})){ checked="checked" }>
-                                                <span class="mdl-checkbox__label">@organisationGroup.name @if(organisation.nonEmpty){ (@organisation.get.name) }</span>
+                                                <span class="mdl-checkbox__label" style="color: black; font-weight: 400;"><b>@organisationGroup.name</b> @if(organisation.nonEmpty){ <em>(@organisation.get.name)</em> }</span>
                                                 <span id="span-group-description">@organisationGroup.description</span>
                                             </label></th>
                                     </tr>
