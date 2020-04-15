@@ -31,7 +31,7 @@
                 Les champs marqués d’un <span class="mdl-color-text--red-500">*</span> sont obligatoires
             </div>
 
-            @helper.form(action = routes.ApplicationController.createPost(), 'enctype -> "multipart/form-data", 'id -> "create-application-form", 'class -> "aplus-protected-form") {
+            @helper.form(action = routes.ApplicationController.createPost(), "enctype" -> "multipart/form-data", "id" -> "create-application-form", "class" -> "aplus-protected-form") {
                 @helper.CSRF.formField
                     <input type="hidden" name="application-id" readonly value="@applicationForm("application-id").value.getOrElse(java.util.UUID.randomUUID)">
                     @if(currentUser.areas.nonEmpty) {
@@ -99,8 +99,8 @@
                     <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
                         <div>
                     @helper.input(applicationForm("subject"),
-                                  'label -> "Saisir le sujet de votre demande...",
-                                  'class -> "mdl-textfield--large mdl-textfield--large-fix"
+                                  "label" -> "Saisir le sujet de votre demande...",
+                                  "class" -> "mdl-textfield--large mdl-textfield--large-fix"
                     ) { (id, name, value, args) =>
                     <input class="mdl-textfield__input"
                            type="text"
@@ -133,16 +133,16 @@
                     </h5>
 
                     <div>
-                        @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-textfield--large", 'label -> "Rédigez une description rapide du problème ...") { (id, name, value, args) =>
+                        @helper.input(applicationForm("description"), "class" -> "mdl-textfield--floating-label mdl-textfield--large", "label" -> "Rédigez une description rapide du problème ...") { (id, name, value, args) =>
                             <textarea class="mdl-textfield__input textfield__input--no-height-constraint" type="text" rows= "5" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
                         }<br>
 
                         @if(currentUser.sharedAccount) {
-                            Signature :<br>
+                            Signature :<br>
                             @helper.input(
                                 applicationForm("signature"),
-                                'label -> "Renseignez ici votre : Prénom, NOM, service",
-                                'class -> "mdl-textfield--large"
+                                "label" -> "Renseignez ici votre : Prénom, NOM, service",
+                                "class" -> "mdl-textfield--large"
                             ) { (id, name, value, args) =>
                                 <input class="mdl-textfield__input"
                                        type="text"
@@ -160,7 +160,7 @@
                         @if(applicationForm("file").hasErrors) {
                             <span style="color: red; font-weight: bold;">@applicationForm("file").errors.map(_.format).mkString(", ")</span><br>
                         }
-                        Ajouter un/des ficher(s) ( Facultatif, 5Mo maximum ) :
+                        Ajouter un ou plusieurs fichiers ( 5Mo maximum au total ) :
                         <ul>
                             @for((attachment,index) <- attachments.zipWithIndex) {
                                 <li>@attachment</li>

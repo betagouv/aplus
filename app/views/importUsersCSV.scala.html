@@ -9,7 +9,7 @@
 } {
 
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
-        @helper.form(routes.CSVImportController.importUsersReview(), 'method -> "post") {
+        @helper.form(routes.CSVImportController.importUsersReview(), "method" -> "post") {
             @helper.CSRF.formField
             <h2 class="mdl-cell mdl-cell--12-col">Importer un contenu CSV</h2>
             <div>
@@ -31,7 +31,7 @@
                 <div style="color: red; font-weight: bold;">@form.errors.map(_.message)</div>
             }
 
-            @helper.input(form("csv-lines"), 'class -> "mdl-textfield--floating-label mdl-textfield--large", 'label -> "Contenu du CSV ...") { (id, name, value, args) =>
+            @helper.input(form("csv-lines"), "class" -> "mdl-textfield--floating-label mdl-textfield--large", "label" -> "Contenu du CSV ...") { (id, name, value, args) =>
                 <textarea class="mdl-textfield__input textfield__input--no-height-constraint" type="text" rows= "20" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
             }
 

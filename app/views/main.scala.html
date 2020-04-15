@@ -18,6 +18,7 @@
         @webJarsUtil.locate("solid.css").css()
         <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/main.css")'>
         <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/mdl-extensions.css")'>
+        @webJarsUtil.locate("slimselect.min.css").css()
 
         @header
         @webJarsUtil.locate("material.min.js").script()
@@ -50,11 +51,14 @@
 
         <div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-header mdl-layout--fixed-drawer">
             <div class="mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 do-not-print">
-                <div class="mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100 demo-only invisible">
-                    <div class="mdl-layout__header-row mdl-color--pink-500 mdl-color-text--white">
+                <div class="mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100">
+                    <div class="mdl-layout__header-row mdl-color--pink-500 mdl-color-text--white invisible demo-only">
                         <span class="mdl-layout-title aplus-demo-header__title">
-                            Version de démonstration d'Administration+
+                            Version de démonstration d’Administration+
                         </span>
+                    </div>
+                    <div class="mdl-layout__header-row mdl-color--pink-500 mdl-color-text--white">
+                        France Services et Administration+ se mobilisent pendant le confinement. Merci de votre implication si nécessaire en cette période. Des milliers de nouveaux blocages risquent de survenir. Remportons ce combat ! Bon courage à tous.
                     </div>
                 </div>
                 <div class="mdl-layout__header-row">
@@ -73,7 +77,7 @@
                                     <span>@currentUser.name</span>
                                     <span class="mdl-list__item-sub-title">@currentUser.email</span>
                                 </span>
-                                <span class="mdl-list__item-secondary-content align-items-center">
+                                <span class="mdl-list__item-secondary-content single--align-items-center-important">
                                     <a class="mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" href="@routes.LoginController.disconnect" title="Déconnexion">
                                         <i class="fas fa-sign-out-alt"></i>
                                     </a>
@@ -89,7 +93,9 @@
             <div class="mdl-layout__drawer mdl-color--white do-not-print mdl-color-text--white">
                 <header class="drawer-header" >
                     <p style="line-height: 1.2; text-align: center;">
-                        <img src='@routes.Assets.versioned("images/logo_full_500x397.png")' class="logo">
+                        <a href="@routes.HomeController.welcome">
+                            <img src="@routes.Assets.versioned("images/logo_full_500x397.png")" alt="Logo Administration+" class="logo">
+                        </a>
                     </p>
                 </header>
                 @helpers.menuNav(currentUserRights)
@@ -108,7 +114,7 @@
             </div>
 
             <main class="mdl-layout__content mdl-color--grey-200">
-                <div class="mdl-grid main__grid @if(maxWidth) { --max-width-960px }" >
+                <div class="mdl-grid main__grid single--align-content-flex-start @if(maxWidth) { single--max-width-960px }" >
 
                 @flash.get("error").map { error =>
                     <div class="mdl-cell mdl-cell--12-col" id="answer-error">
@@ -165,7 +171,7 @@
         </script>
         <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border:0;" alt="" /></p></noscript>
             <!-- End Piwik Code -->
-
+        @webJarsUtil.locate("slimselect.min.js").script()
         <script type="application/javascript" src="@routes.Assets.versioned("javascripts/mdl-extensions.js")"></script>
         <script type="application/javascript" src="@routes.Assets.versioned("javascripts/main-page-bottom.js")"></script>
         @bodyBottom

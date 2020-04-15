@@ -29,7 +29,9 @@ class NotificationService @Inject() (
 
   private val from = s"Administration+ <${Constants.supportEmail}>"
 
-  private def sendMail(email: Email) {
+  // TODO: seems to be blocking
+  // https://github.com/playframework/play-mailer/blob/7.0.x/play-mailer/src/main/scala/play/api/libs/mailer/MailerClient.scala#L15
+  private def sendMail(email: Email): Unit = {
     val emailWithText = email.copy(
       bodyText = email.bodyHtml.map(_.replaceAll("<[^>]*>", "")),
       headers = email.headers ++ Set(

@@ -1,13 +1,11 @@
 @import models._
-@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], selectedArea: Area, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
 @main(currentUser, currentUserRights, maxWidth = false)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
     @webJarsUtil.locate("tabulator.min.css").css()
     @webJarsUtil.locate("tabulator.min.js").script()
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
-    @webJarsUtil.locate("slimselect.min.css").css()
-    @webJarsUtil.locate("slimselect.min.js").script()
     <style>
             .row--disabled {
                 background-color: grey !important;
@@ -187,7 +185,7 @@
     @if(currentUser.admin) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
             <h4 class="mdl-cell mdl-cell--12-col">Ajouter un groupe</h4> <br>
-            @helper.form(routes.GroupController.addGroup(), 'method -> "post", 'class -> "mdl-cell mdl-cell--9-col") {
+            @helper.form(routes.GroupController.addGroup(), "method" -> "post", "class" -> "mdl-cell mdl-cell--9-col") {
                 @helper.CSRF.formField
                 <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                     <input class="mdl-textfield__input" type="text" id="name" name="name" maxlength="50">
@@ -196,11 +194,6 @@
                 <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                     <input class="mdl-textfield__input" type="text" id="description" name="description">
                     <label class="mdl-textfield__label" for="description">Description du groupe</label>
-                </div>
-                <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="text" id="insee-code" data-langname="@geoplusHost">
-                    <label class="mdl-textfield__label" for="insee-code">Région(s), Arrondissement(s), Département(s), Commune(s) par nom ou code INSEE</label>
-                    <ul id="group-area-container"></ul>
                 </div>
                 <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                     <input class="mdl-textfield__input" type="text" id="email" name="email" maxlength="200">
@@ -215,15 +208,11 @@
                     </select>
                 </div>
                 <div class="mdl-cell mdl-cell--12-col">
-                    <select id="area-ids" name="area-ids[]" multiple size="5" >
+                    <select class="use-slimselect" id="area-ids" name="area-ids[]" multiple size="5" >
                     @for(area <- currentUser.areas.flatMap(Area.fromId)) {
                         <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area.name</option>
                     }
                     </select>
-                    <script>
-                            // TODO: use-slimselect class
-                            new SlimSelect({ select: '#area-ids' });
-                    </script>
                 </div>
                 <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
                     Ajouter le groupe

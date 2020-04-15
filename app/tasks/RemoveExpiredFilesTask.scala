@@ -25,9 +25,9 @@ class RemoveExpiredFilesTask @Inject() (
   val startDate = now.toLocalDate.atStartOfDay(now.getZone).plusDays(1).withHour(startAtHour)
   val initialDelay = java.time.Duration.between(now, startDate).getSeconds.seconds
 
-  actorSystem.scheduler.schedule(initialDelay = initialDelay, interval = 24.hours) {
-    removeExpiredFile
-  }
+  actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = 24.hours)(
+    new Runnable { override def run(): Unit = removeExpiredFile }
+  )
 
   def removeExpiredFile(): Unit = {
     val dir = new File(filesPath)

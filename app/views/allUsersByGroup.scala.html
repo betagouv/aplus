@@ -1,24 +1,14 @@
 @import models._
-@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area, geoplusHost: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-  @display(users: Seq[User], id: Option[String] = None)(header: Html)(footer: Html) = {
-      <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp mdl-color--white" style="white-space: normal;" @if(id.isDefined){ id="@id.get" } >
-        <thead>
-          <th class="mdl-data-table__cell--non-numeric" colspan="6" style="font-size: 20px; text-align: left; color: black; font-weight: normal" >
-            @header
-          </th>
-        </thead>
-        <tfoot>
-              <tr>
-                <td class="mdl-data-table__cell--non-numeric" colspan="5">
-                  @footer
-                </td>
-              </tr>
-              <tr class="invisible">
-                <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
-              </tr>
-            </tfoot>
-        <tbody>
+@display(users: Seq[User], id: Option[String] = None)(header: Html)(footer: Html) = {
+    <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white" style="padding: 24px;" @if(id.isDefined){ id="@id.get" } >
+        <div>
+            <div style="font-size: 20px; color: black;" >
+                @header
+            </div>
+        </div>
+        <table class="mdl-data-table mdl-js-data-table" style="border: none; border-spacing: 0px; border-collapse: unset; white-space: normal;">
         @for(user <- users) {
             <tr class="searchable-row td--clear-border">
               @if(currentUser.admin) {
@@ -61,16 +51,27 @@
               </td>
               <td class="mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size"></td>
             </tr>
-            }
-        </tbody>
-      </table>
-  }
+        }
+        </table>
+        <div style="margin-top: 24px; margin-bottom: -24px;">
+            <div>
+                @footer
+            </div>
+            <div class="invisible">
+                <div style="text-align: center;">
+                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
 @main(currentUser, currentUserRights)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 
   <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/auto-complete.css")'>
   <script src='@routes.Assets.versioned("javascripts/auto-complete.min.js")'></script>
-  <script src='@routes.Assets.versioned("javascripts/group-autocomplete.js")'></script>
 }{
 
   @if(currentUser.admin) {
@@ -124,9 +125,9 @@
               } <hr>
             }
             @if(Authorization.canEditGroups(currentUserRights)) {
-              @helper.form(routes.UserController.add(userGroup.id), 'method -> "get") {
+              @helper.form(routes.UserController.add(userGroup.id), "method" -> "get") {
                 @helper.CSRF.formField
-                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width: unset; margin-right: 24px;">
                   <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="rows" name="rows" value="1">
                   <label class="mdl-textfield__label" for="rows">Nombre d'utilisateur à ajouter</label>
                   <span class="mdl-textfield__error">Ce n'est pas un nombre</span>
@@ -154,7 +155,7 @@
     @if(currentUser.admin) {
       <div class="mdl-cell mdl-cell--12-col  mdl-grid">
         <h4 class="mdl-cell mdl-cell--12-col">Ajouter un groupe</h4> <br>
-        @helper.form(routes.GroupController.addGroup(), 'method -> "post", 'class -> "mdl-cell mdl-cell--9-col") {
+        @helper.form(routes.GroupController.addGroup(), "method" -> "post", "class" -> "mdl-cell mdl-cell--9-col") {
           @helper.CSRF.formField
           <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
             <input class="mdl-textfield__input" type="text" id="name" name="name" maxlength="50">
@@ -163,11 +164,6 @@
           <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
             <input class="mdl-textfield__input" type="text" id="description" name="description">
             <label class="mdl-textfield__label" for="description">Description du groupe</label>
-          </div>
-          <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="mdl-textfield__input" type="text" id="insee-code" data-langname="@geoplusHost">
-            <label class="mdl-textfield__label" for="insee-code">Région(s), Arrondissement(s), Département(s), Commune(s) par nom ou code INSEE</label>
-            <ul id="group-area-container"></ul>
           </div>
           <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
             <input class="mdl-textfield__input" type="text" id="email" name="email" maxlength="200">

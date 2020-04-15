@@ -11,8 +11,8 @@
 
             <div>
                 @helper.input(infoField,
-                              'label -> s"Saisir $info de l’usager ici",
-                              'class -> "mdl-textfield--fix"
+                              "label" -> s"Saisir $info de l’usager ici",
+                              "class" -> "mdl-textfield--fix"
                 ) { (id, name, value, args) =>
                 <input class="mdl-textfield__input mdl-color--white"
                        type="text"
@@ -33,11 +33,12 @@
                           class="mdl-tooltip mdl-tooltip--right mdl-tooltip--large"
                           for="birth-help"
                           aria-hidden="true">
-                        Format recommandé: jj/mm/aaaa
+                        Format recommandé : jj/mm/aaaa
                     </span>
                 </div>
             }
         </div>
+    </div>
     }
 
     @if(isCreationForm) {
@@ -47,7 +48,7 @@
             @if(isCreationForm) {
                 Ajouter une autre information (facultatif)<br><br>
             } else {
-                <b>Ajouter une autre information :</b><br>
+                <b>Ajouter une autre information :</b><br>
             }
             <select id="aplus-application-form-user-infos-types-select-id">
                 <option disabled selected value="">Selectionnez une information à ajouter</option>
@@ -55,16 +56,17 @@
                     <option value="@info">@info</option>
                 }
             </select><br>
-            <div class="mdl-textfield mdl-js-textfield invisible --margin-right-20px">
+            <div class="mdl-textfield mdl-js-textfield invisible single--margin-right-20px">
                 <label class="mdl-textfield__label" for="other-type">Saisissez le type d’information</label>
                 <input class="mdl-textfield__input mdl-color--white aplus-application-form-user-infos-input" name="other-type" type="text" id="other-type">
             </div>
-            <div class="mdl-textfield mdl-js-textfield invisible --margin-right-20px">
+            <div class="mdl-textfield mdl-js-textfield invisible single--margin-right-20px">
                 <label class="mdl-textfield__label" for="other-type-value">Saisissez l’information </label>
                 <input class="mdl-textfield__input mdl-color--white aplus-application-form-user-infos-input" type="text" name="other-type-value" id="other-type-value">
             </div>
             <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored invisible aplus-application-form-user-infos-add-button" type="button" id="add-infos__ok-button">
             <i class="material-icons">add_circle</i>
-        </button>
-    </div>
+            </button>
+        </div>
+
 </div>

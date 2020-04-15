@@ -14,7 +14,7 @@ lazy val root = (project in file("."))
     buildInfoPackage := "constants"
   )
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.13.1"
 
 // https://docs.scala-lang.org/overviews/compiler-options/index.html
 scalacOptions ++= Seq(
@@ -53,7 +53,7 @@ libraryDependencies ++= Seq(
 
 // UI
 libraryDependencies ++= Seq(
-  "org.webjars" %% "webjars-play" % "2.7.3",
+  "org.webjars" %% "webjars-play" % "2.8.0",
   "org.webjars.bower" % "material-design-lite" % "1.3.0",
   "org.webjars" % "material-design-icons" % "3.0.1",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
@@ -61,7 +61,7 @@ libraryDependencies ++= Seq(
   "org.webjars.npm" % "dialog-polyfill" % "0.4.10",
   "org.webjars.npm" % "twemoji" % "2.5.1",
   "org.webjars" % "chartjs" % "2.9.3",
-  "org.webjars" % "font-awesome" % "5.12.0",
+  "org.webjars" % "font-awesome" % "5.13.0",
   "org.webjars.bowergithub.olifolkerd" % "tabulator" % "4.5.3",
   "org.webjars.npm" % "xlsx" % "0.15.5"
 )
@@ -70,6 +70,7 @@ libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.30"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
+TwirlKeys.templateImports += "_root_.helper.TwirlImports._"
 
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "fr.gouv.beta.binders._"

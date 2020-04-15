@@ -22,6 +22,7 @@
   <!-- OFF some noisy logs for tests -->
   <logger name="com.gargoylesoftware.htmlunit.DefaultCssErrorHandler" level="OFF" />
   <logger name="com.zaxxer.hikari.HikariDataSource" level="OFF" />
+  <logger name="io.github.classgraph.ClassGraph" level="OFF" />
 
 
 

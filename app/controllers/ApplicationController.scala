@@ -380,8 +380,7 @@ case class ApplicationController @Inject() (
       request.currentUser.admin,
       Time.nowParis()
     )
-    val myOpenApplications = myApplications.filter(!_.closed)
-    val myClosedApplications = myApplications.filter(_.closed)
+    val (myClosedApplications, myOpenApplications) = myApplications.partition(_.closed)
 
     eventService.log(
       MyApplicationsShowed,
@@ -550,7 +549,7 @@ case class ApplicationController @Inject() (
         s"${Authorization.isAdmin(request.rights)}.stats.${Hash.sha256(areaIds.toString() + observableOrganisationIds.toString() + observableGroupIds.toString())}"
 
     cache
-      .getOrElseUpdate[Html](cacheKey, 1 hours)(
+      .getOrElseUpdate[Html](cacheKey, 1.hours)(
         generateStats(areaIds, observableOrganisationIds, observableGroupIds)
       )
       .map { html =>
@@ -793,7 +792,7 @@ case class ApplicationController @Inject() (
                   s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert"
                 )
                 Future(Ok.sendPath(Paths.get(s"$filesPath/ans_$answerId-$filename"), true, {
-                  _: Path => filename
+                  _: Path => Some(filename)
                 }))
               case _ =>
                 eventService.log(
@@ -807,7 +806,7 @@ case class ApplicationController @Inject() (
               eventService
                 .log(FileOpened, s"Le fichier de la demande $applicationId a été ouvert")
               Future(Ok.sendPath(Paths.get(s"$filesPath/app_$applicationId-$filename"), true, {
-                _: Path => filename
+                _: Path => Some(filename)
               }))
             } else {
               eventService.log(

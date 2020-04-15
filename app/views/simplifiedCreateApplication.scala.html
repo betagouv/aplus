@@ -73,7 +73,7 @@
             Les champs marqués d’un <span class="mdl-color-text--red-500">*</span> sont obligatoires
         </div>
 
-    @helper.form(action = routes.ApplicationController.createSimplifiedPost(), 'id -> "create-application-form", 'enctype -> "multipart/form-data", 'class -> "aplus-protected-form") {
+    @helper.form(action = routes.ApplicationController.createSimplifiedPost(), "id" -> "create-application-form", "enctype" -> "multipart/form-data", "class" -> "aplus-protected-form") {
         @helper.CSRF.formField
         @if(currentUser.areas.nonEmpty) {
             <h5 class="title--addline">Territoire concerné</h5>
@@ -156,7 +156,7 @@
                         </label>
                     }
 
-                    @helper.input(applicationForm("subject"), 'label -> "Précisez ici une autre raison", 'floated -> "No", 'class -> s"${if(applicationForm("selected-subject").value.contains("other")){""}else{"invisible"}} mdl-textfield--no-padding margin-left-30px", 'divId -> "form-other-subject") { (id, name, value, args) =>
+                    @helper.input(applicationForm("subject"), "label" -> "Précisez ici une autre raison", "floated" -> "No", "class" -> s"${if(applicationForm("selected-subject").value.contains("other")){""}else{"invisible"}} mdl-textfield--no-padding margin-left-30px", "divId" -> "form-other-subject") { (id, name, value, args) =>
                         <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) onkeyup="showEndOfForm()">
                     }
                 </div>
@@ -262,7 +262,7 @@
                     Description de la demande&nbsp;<span class="mdl-color-text--red-500">*</span>
                 </h5>
                 <div class="info-box"><b>Soyez bref</b>, la personne qui vous lira vous en remerciera, la réponse en sera d'autant plus rapide.</div>
-                @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", 'label -> "Détaillez votre demande ...") { (id, name, value, args) =>
+                @helper.input(applicationForm("description"), "class" -> "mdl-textfield--floating-label mdl-cell mdl-cell--12-col", "label" -> "Détaillez votre demande ...") { (id, name, value, args) =>
                     <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
                 }
 
@@ -272,8 +272,8 @@
                     </div>
                     @helper.input(
                         applicationForm("signature"),
-                        'label -> "Renseignez ici votre : Prénom, NOM, service",
-                        'class -> "mdl-textfield--large"
+                        "label" -> "Renseignez ici votre : Prénom, NOM, service",
+                        "class" -> "mdl-textfield--large"
                     ) { (id, name, value, args) =>
                     <input class="mdl-textfield__input"
                            type="text"

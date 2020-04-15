@@ -30,8 +30,6 @@ import models.EventType.{
   UserGroupEdited
 }
 
-import scala.collection.parallel.immutable.ParSeq
-
 @Singleton
 case class GroupController @Inject() (
     loginAction: LoginAction,
@@ -71,8 +69,6 @@ case class GroupController @Inject() (
   }
 
   def editGroup(id: UUID): Action[AnyContent] = loginAction { implicit request =>
-    val Host = configuration.underlying.getString("geoplus.host")
-
     withGroup(id) { group: UserGroup =>
       if (!group.canHaveUsersAddedBy(request.currentUser)) {
         eventService.log(EditGroupUnauthorized, s"Accès non autorisé à l'edition de ce groupe")
@@ -81,22 +77,11 @@ case class GroupController @Inject() (
         val groupUsers = userService.byGroupIds(List(id))
         eventService.log(EditGroupShowed, s"Visualise la vue de modification du groupe")
         val isEmpty = groupService.isGroupEmpty(group.id)
-        val areas: ParSeq[(String, String)] = for {
-          code <- group.inseeCode.par
-        } yield {
-          val url = s"https://${Host}/bycode/?code=$code"
-          code -> ws.url(url).get().toCompletableFuture.get().getBody
-        }
-        val zoneAsJson = areas
-          .map({ case (code, name) => s"""{ "code": "$code", "name": "$name" }""" })
-          .mkString("[", ",", "]")
         Ok(
           views.html.editGroup(request.currentUser, request.rights)(
             group,
             groupUsers,
-            isEmpty,
-            zoneAsJson,
-            Host
+            isEmpty
           )
         )
       }
