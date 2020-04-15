@@ -28,7 +28,7 @@ class ApplicationService @Inject() (
 
   implicit val answerListParser: anorm.Column[List[Answer]] =
     nonNull { (value, meta) =>
-      val MetaDataItem(qualified, nullable, clazz) = meta
+      val MetaDataItem(qualified, _, _) = meta
       value match {
         case json: org.postgresql.util.PGobject =>
           Right(Json.parse(json.getValue).as[List[Answer]])

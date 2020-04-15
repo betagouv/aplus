@@ -39,7 +39,7 @@ class RemoveExpiredFilesTask @Inject() (
           val instant = Files.getLastModifiedTime(file.toPath).toInstant
           instant.plus(filesExpirationInDays.toLong + 1, DAYS).isBefore(Instant.now())
         }
-      fileToDelete.forall(_.delete())
+      fileToDelete.foreach(_.delete())
     }
   }
 }
