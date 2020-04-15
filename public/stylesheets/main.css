@@ -548,6 +548,10 @@ a {
     max-width: 960px;
 }
 
+.single--color-white {
+    color: white;
+}
+
 .single--align-items-center-important {
     /* !important to work with the legacy order of .css :D */
     align-items: center !important;
@@ -599,6 +603,11 @@ a {
 .single--flex-wrap-wrap {
     -ms-flex-wrap: wrap;
         flex-wrap: wrap;
+}
+
+.single--flex-shrink-initial {
+    -ms-flex-negative: initial;
+        flex-shrink: initial;
 }
 
 
