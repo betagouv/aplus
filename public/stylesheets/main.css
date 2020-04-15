@@ -573,18 +573,24 @@ a {
 
 .single--display-flex {
     display: -webkit-box;
-    display: -moz-box;
     display: -ms-flexbox;
-    display: -webkit-flex;
     display: flex;
 }
 
 .single--align-items-center {
-    align-items: center;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+}
+
+.single--align-content-flex-start {
+    -ms-flex-line-pack: start;
+        align-content: flex-start;
 }
 
 .single--flex-wrap-wrap {
-    flex-wrap: wrap;
+    -ms-flex-wrap: wrap;
+        flex-wrap: wrap;
 }
 
 

@@ -103,7 +103,7 @@
             </div>
 
             <main class="mdl-layout__content mdl-color--grey-200">
-                <div class="mdl-grid main__grid @if(maxWidth) { single--max-width-960px }" >
+                <div class="mdl-grid main__grid single--align-content-flex-start @if(maxWidth) { single--max-width-960px }" >
 
                 @flash.get("error").map { error =>
                     <div class="mdl-cell mdl-cell--12-col" id="answer-error">
