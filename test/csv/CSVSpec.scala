@@ -1,6 +1,5 @@
 package csv
 
-import com.github.tototoshi.csv.DefaultCSVFormat
 import helper.UUIDHelper
 import models.formModels
 import helper.{CSVUtil, Time}
@@ -51,9 +50,6 @@ class CSVSpec extends Specification {
   }
 
   "The format of from the prefecture should" >> {
-    implicit object SemiConFormat extends DefaultCSVFormat {
-      override val delimiter: Char = ','
-    }
     "be recognized" >> {
       val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
@@ -63,7 +59,7 @@ class CSVSpec extends Specification {
         )(prefFormat)
       result must beRight
 
-      val (errors, data) = result.right.get
+      val (errors, data) = result.toOption.get
       errors must have size 1
       data must have size 9
 
@@ -107,7 +103,7 @@ class CSVSpec extends Specification {
           Time.nowParis()
         )(organisationTest)
       result must beRight
-      val (errors, data) = result.right.get
+      val (errors, data) = result.toOption.get
       errors must have size 0
       val group = data.find(_.group.name == "d’Aubigny sur Nère - Ardennes")
       group must beSome
@@ -117,9 +113,6 @@ class CSVSpec extends Specification {
   }
 
   "The failFile string should" >> {
-    implicit object SemiConFormat extends DefaultCSVFormat {
-      override val delimiter: Char = ';'
-    }
     "produce 1 errors" >> {
       val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
@@ -128,7 +121,7 @@ class CSVSpec extends Specification {
           Time.nowParis()
         )(failFile)
       result must beRight
-      val (errors, _) = result.right.get
+      val (errors, _) = result.toOption.get
       errors must have size 1
     }
   }
@@ -144,10 +137,6 @@ class CSVSpec extends Specification {
       |;;;;;;;;;""".stripMargin
 
   "The csvFile string should" >> {
-    implicit object SemiConFormat extends DefaultCSVFormat {
-      override val delimiter: Char = ';'
-    }
-
     "produce valid groups" >> {
       val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
@@ -156,7 +145,7 @@ class CSVSpec extends Specification {
           Time.nowParis()
         )(csvFile)
       result must beRight
-      val (errors, data) = result.right.get
+      val (errors, data) = result.toOption.get
       errors must have size 0
       data must have size 5
     }
@@ -169,7 +158,7 @@ class CSVSpec extends Specification {
           Time.nowParis()
         )(csvFile)
       result must beRight
-      val (errors, data) = result.right.get
+      val (errors, data) = result.toOption.get
       errors must have size 0
       data.flatMap(_.users.map(_.user)) must have size 6
     }

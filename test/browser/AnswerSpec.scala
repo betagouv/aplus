@@ -8,7 +8,7 @@ import org.specs2.mutable._
 import org.specs2.runner._
 import play.api.test.Helpers._
 import play.api.test._
-import services.{ApplicationService, EventService, TokenService, UserGroupService, UserService}
+import services.{ApplicationService, TokenService, UserGroupService, UserService}
 
 @RunWith(classOf[JUnitRunner])
 class AnswerSpec extends Specification with Tables with BaseSpec {
@@ -104,7 +104,6 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
         val tokenService = app.injector.instanceOf[TokenService]
         val userService = app.injector.instanceOf[UserService]
         val groupService = app.injector.instanceOf[UserGroupService]
-        val eventService = app.injector.instanceOf[EventService]
         val applicationService = app.injector.instanceOf[ApplicationService]
 
         // Generate data and save in DB
