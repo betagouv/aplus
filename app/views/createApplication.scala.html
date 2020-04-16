@@ -46,15 +46,19 @@
                         </h5>
 
 
-                        <div style="display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
-                            <div style="margin-right: 16px; white-space: nowrap;">FILTRER PAR :</div>
-                            <div class="aplus-application-form-remove-category-filter-button" style="cursor: pointer; white-space: nowrap; color: black; text-decoration: underline; margin-right: 16px;">
+                        <div class="single--display-flex single--align-items-center single--flex-wrap-wrap single--margin-bottom-16px">
+                            <div class="single--margin-right-16px single--white-space-nowrap">FILTRER PAR :</div>
+                            <div class="aplus-application-form-remove-category-filter-button
+                                        single--cursor-pointer
+                                        single--white-space-nowrap
+                                        mdl-color-text--black
+                                        single--text-decoration-underline
+                                        single--margin-right-16px">
                                 Tout afficher
                             </div>
                             @for(category <- categories) {
                                 <button type="button"
-                                        class="mdl-chip aplus-application-form-category-filter-button"
-                                        style="margin: 4px; cursor: pointer;"
+                                        class="mdl-chip aplus-application-form-category-filter-button single--margin-4px single--cursor-pointer"
                                         data-organisations="@Json.stringify(Json.toJson(category.defaultOrganisations.map(_.shortName)))">
                                     <span class="mdl-chip__text">@category.name</span>
                                 </button>
