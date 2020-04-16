@@ -392,57 +392,86 @@ dialog {
             </div>
         </div>
     }
-    <div class="mdl-card mdl-cell mdl-cell--12-col do-not-print">
-                <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
-                    <div class="mdl-tabs__tab-bar mdl-tabs__tab-bar--align-left">
-                        <a href="#answer" class="mdl-tabs__tab mdl-color-text--primary @if(openedTab =="answer"){ is-active  } "><i class="material-icons">
-                                reply_all</i> Ajouter une réponse</a>
-                        @if(groupsWithUsersThatCanBeInvited.nonEmpty || currentUser.expert) {
-                            <a href="#invite" class="mdl-tabs__tab mdl-color-text--primary @if(openedTab =="invite"){ is-active }"><i class="material-icons">
-                                person_add</i> Inviter une personne</a>
-                        }
+
+<div class="mdl-card mdl-cell mdl-cell--12-col do-not-print">
+    <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect" style="margin: 0px; width: 100%;">
+        <div class="mdl-tabs__tab-bar mdl-tabs__tab-bar--align-left mdl-color--grey-200">
+            <a href="#answer" class="mdl-tabs__tab mdl-color-text--primary @if(openedTab =="answer"){ is-active  } " style="display: flex; align-items: center;">
+                <i class="material-icons" style="margin-right: 8px;">reply_all</i>
+                Ajouter une réponse
+            </a>
+
+            @if(groupsWithUsersThatCanBeInvited.nonEmpty || currentUser.expert) {
+                <a href="#invite" class="mdl-tabs__tab mdl-color-text--primary @if(openedTab =="invite"){ is-active }" style="display: flex; align-items: center;">
+                    <i class="material-icons" style="margin-right: 8px;">person_add</i>
+                    Inviter une personne
+                </a>
+            }
+
+            <span style="flex-grow: 1;"></span>
+
+            @if(application.canBeClosedBy(currentUser) && not(application.closed)) {
+                <button class="mdl-button mdl-button--raised mdl-button--primary mdl-js-button do-not-print" onclick="showDialog()" style="align-self: center;">
+                    Clore la demande
+                </button>
+            }
+
+        </div>
+
+        <div class="mdl-tabs__panel @if(openedTab =="answer"){ is-active  } " id="answer">
+            <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing aplus-protected-form" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('review-validation').disabled=true" style="margin: 0px; width: 100%;">
+
+                @helper.CSRF.formField
+                <input type="hidden" name="answer-id" readonly value="@answerToAgentsForm("answer-id").value.getOrElse(java.util.UUID.randomUUID)">
+
+                <div class="mdl-cell mdl-cell--12-col mdl-grid">
+                    @if(currentUser.instructor) {
+                        <div class="info-box">Votre réponse permet d’indiquer le statut des démarches et procédures en cours pour l’aidant @application.creatorUserName et les personnes invitées sur la demande. L’aidant est en contact direct avec l’usager et pourra lui transmettre les informations. <b>Merci d’utiliser vos outils habituels pour continuer une instruction.</b></div>
+                    }
+                    @if(currentUser.id == application.creatorUserId) {
+                        <h5 class="mdl-cell mdl-cell--12-col">Ajouter des informations concernant l’usager :</h5>
+                        <div class="mdl-cell mdl-cell--12-col">
+                            @helpers.usersInformations(answerToAgentsForm, Nil, false)
+                        </div>
+                    }
+
+                </div>
+
+                <hr style="width: 100%;">
+
+                <div class="mdl-cell mdl-cell--12-col mdl-grid">
+                    <h5 class="mdl-cell mdl-cell--12-col">Votre réponse :</h5>
+
+                    <div class="mdl-textfield mdl-js-textfield mdl-cell mdl-cell--12-col" style="padding: 0px;">
+                        <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
                     </div>
-                    <div class="mdl-tabs__panel @if(openedTab =="answer"){ is-active  } " id="answer">
-                        <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing aplus-protected-form" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('review-validation').disabled=true">
-                            @helper.CSRF.formField
-                            <input type="hidden" name="answer-id" readonly value="@answerToAgentsForm("answer-id").value.getOrElse(java.util.UUID.randomUUID)">
-                            <div class="mdl-cell mdl-cell--12-col mdl-grid">
-                                @if(currentUser.instructor) {
-                                    <div class="info-box">Votre réponse permet d’indiquer le statut des démarches et procédures en cours pour l’aidant @application.creatorUserName et les personnes invitées sur la demande. L’aidant est en contact direct avec l’usager et pourra lui transmettre les informations. <b>Merci d’utiliser vos outils habituels pour continuer une instruction.</b></div>
-                                }
-                                @if(currentUser.id == application.creatorUserId) {
-                                    <h5 class="mdl-cell mdl-cell--12-col">Ajouter des informations concernant l’usager</h5>
-                                    @helpers.usersInformations(answerToAgentsForm, Nil, false)
-                                }
-                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
-                                    <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
-                                    <label class="mdl-textfield__label" for="helper-answer-message"><i class="material-icons" style="vertical-align: middle;">message</i> Votre réponse</label>
-                                </div>
-                                @if(currentUser.sharedAccount) {
-                                    <div class="mdl-cell mdl-cell--12-col">
-                                        Signature :
-                                    </div>
-                                    <div class="mdl-cell mdl-cell--12-col">
-                                        @helper.input(
-                                            answerToAgentsForm("signature"),
-                                            "label" -> "Renseignez ici votre : Prénom, NOM, service",
-                                            "class" -> "mdl-textfield--large"
-                                        ) { (id, name, value, args) =>
-                                        <input class="mdl-textfield__input"
-                                               type="text"
-                                               name="@name"
-                                               id="@id"
-                                               @if(currentUser.sharedAccount && value.isEmpty) {
-                                                   value="@{userSignature.getOrElse(value)}"
-                                               } else {
-                                                   value="@value"
-                                               }
-                                               @toHtmlArgs(args)>
-                                        }
-                                    </div>
-                                    }
+
+                    @if(currentUser.sharedAccount) {
+                        <div class="mdl-cell mdl-cell--12-col">
+                            Signature :
+                        </div>
+                        <div class="mdl-cell mdl-cell--12-col">
+                            @helper.input(
+                                answerToAgentsForm("signature"),
+                                "label" -> "Renseignez ici votre : Prénom, NOM, service",
+                                "class" -> "mdl-textfield--large"
+                            ) { (id, name, value, args) =>
+                            <input class="mdl-textfield__input"
+                                   type="text"
+                                   name="@name"
+                                   id="@id"
+                                   @if(currentUser.sharedAccount && value.isEmpty) {
+                                       value="@{userSignature.getOrElse(value)}"
+                                   } else {
+                                       value="@value"
+                                   }
+                                   @toHtmlArgs(args)>
+                            }
+                        </div>
+                    }
+
                                 <div class="mdl-cell mdl-cell--12-col">
-                                    <b>Ajouter un ou plusieurs fichiers ( 5Mo maximum au total ) :</b>
+                                    <b>Ajouter un ou plusieurs fichiers ( 5Mo maximum au total ) :</b>
                                     <ul>
                                         @for((attachment,index) <- attachments.zipWithIndex) {
                                         <li>
@@ -482,9 +511,9 @@ dialog {
                                         Répondre
                                     </button>
                                 </div>
-                            </div>
-                        </form>
-                    </div>
+                </div>
+            </form>
+        </div>
 
                     @if(groupsWithUsersThatCanBeInvited.nonEmpty || currentUser.expert) {
                         <div class="mdl-tabs__panel @if(openedTab =="invite"){ is-active }" id="invite">
