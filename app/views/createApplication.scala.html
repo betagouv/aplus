@@ -74,7 +74,7 @@
                                         <th class="mdl-data-table__cell--non-numeric" colspan="2">
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
                                                 <input type="checkbox" class="mdl-checkbox__input aplus-application-form-group" value="@organisationGroup.name" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisationGroup.name})){ checked="checked" }>
-                                                <span class="mdl-checkbox__label" style="color: black; font-weight: 400;"><b>@organisationGroup.name</b> @if(organisation.nonEmpty){ <em>(@organisation.get.name)</em> }</span>
+                                                <span class="mdl-checkbox__label aplus-color-text--black mdl-typography--font-regular" ><b>@organisationGroup.name</b> @if(organisation.nonEmpty){ <em>(@organisation.get.name)</em> }</span>
                                                 <span id="span-group-description">@organisationGroup.description</span>
                                             </label></th>
                                     </tr>
