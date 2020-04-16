@@ -111,7 +111,7 @@ class UserGroupService @Inject() (
     SQL"SELECT * FROM user_group WHERE name = $groupName".as(simpleUserGroup.singleOpt)
   }
 
-  def deleteById(groupId: UUID): Unit = db.withConnection { implicit connection =>
+  def deleteById(groupId: UUID): Boolean = db.withConnection { implicit connection =>
     SQL"""DELETE FROM "user_group" WHERE id = $groupId::uuid""".execute()
   }
 

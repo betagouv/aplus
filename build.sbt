@@ -18,14 +18,48 @@ scalaVersion := "2.13.1"
 
 // https://docs.scala-lang.org/overviews/compiler-options/index.html
 scalacOptions ++= Seq(
+  "-feature",
   "-deprecation",
   "-unchecked",
-  "-Xlint:adapted-args,nullary-unit,inaccessible,nullary-override,infer-any,missing-interpolator,private-shadow,type-parameter-shadow,poly-implicit-overload,option-implicit,package-object-classes,unused",
-  "-Ywarn-dead-code",
-  "-Ywarn-numeric-widen"
+  "-Xlint:adapted-args",
+  "-Xlint:nullary-unit",
+  "-Xlint:inaccessible",
+  "-Xlint:nullary-override",
+  "-Xlint:infer-any",
+  "-Xlint:missing-interpolator",
+  "-Xlint:doc-detached",
+  "-Xlint:private-shadow",
+  "-Xlint:type-parameter-shadow",
+  "-Xlint:poly-implicit-overload",
+  "-Xlint:option-implicit",
+  "-Xlint:delayedinit-select",
+  "-Xlint:package-object-classes",
+  "-Xlint:stars-align",
+  "-Xlint:constant",
+  // Note: -Xlint:unused cannot work with twirl
+  // "-Xlint:unused",
+  "-Xlint:nonlocal-return",
+  "-Xlint:implicit-not-found",
+  "-Xlint:serial",
+  "-Xlint:valpattern",
+  "-Xlint:eta-zero",
+  "-Xlint:eta-sam",
+  "-Xlint:deprecation",
+  "-Wdead-code",
+  "-Wextra-implicit",
+  "-Wmacros:before",
+  "-Wnumeric-widen",
+  "-Woctal-literal",
+  // "-Wself-implicit", // Warns about too much useful constructs
+  // Note: -Wunused:imports cannot work with twirl
+  // "-Wunused:imports",
+  "-Wunused:patvars",
+  "-Wunused:privates",
+  "-Wunused:locals",
+  // "-Wunused:explicits", TODO: lot of warnings, enable later
+  "-Wunused:implicits",
+  "-Wvalue-discard",
 )
-
-//libraryDependencies += filters
 
 libraryDependencies ++= Seq(
   ws,

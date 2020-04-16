@@ -1,5 +1,7 @@
 package helper
 
+import scala.language.implicitConversions
+
 object TwirlImports {
 
   /** This fixes the fact that a lot of twirl helpers take `(Symbol, String)` and

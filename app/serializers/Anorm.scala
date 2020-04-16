@@ -15,7 +15,7 @@ object Anorm {
 
   implicit val fieldsMapStringParser: anorm.Column[Map[String, String]] =
     nonNull { (value, meta) =>
-      val MetaDataItem(qualified, nullable, clazz) = meta
+      val MetaDataItem(qualified, _, _) = meta
       value match {
         case json: org.postgresql.util.PGobject =>
           Right(Json.parse(json.getValue).as[Map[String, String]])
@@ -32,7 +32,7 @@ object Anorm {
 
   implicit val fieldsMapLongParser: anorm.Column[Map[String, Long]] =
     nonNull { (value, meta) =>
-      val MetaDataItem(qualified, nullable, clazz) = meta
+      val MetaDataItem(qualified, _, _) = meta
       value match {
         case json: org.postgresql.util.PGobject =>
           Right(Json.parse(json.getValue).as[Map[String, Long]])
@@ -55,7 +55,7 @@ object Anorm {
 
   implicit val fieldsMapUUIDParser: anorm.Column[Map[UUID, String]] =
     nonNull { (value, meta) =>
-      val MetaDataItem(qualified, nullable, clazz) = meta
+      val MetaDataItem(qualified, _, _) = meta
       value match {
         case json: org.postgresql.util.PGobject =>
           Right(convertStringMapToUUIDMap(Json.parse(json.getValue).as[Map[String, String]]))
