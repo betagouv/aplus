@@ -52,7 +52,8 @@ Chip
 }
 
 .mdl-chip--active {
-    background-color: #d0cece;
+    color: white;
+    background-color: #757575;
     box-shadow: none !important;
 }
 
