@@ -1,5 +1,6 @@
 @import _root_.helper.Time
 @import _root_.helper.MDLForms._
+@import _root_.helper.BooleanHelper.not
 
 
 @(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
@@ -166,7 +167,7 @@ dialog {
 </style>
 }{
     <dialog class="mdl-dialog" id="dialog-terminate">
-        <h4 class="mdl-dialog__title">Est-ce que la réponse vous semble utile pour l'usager ?</h4>
+        <h4 class="mdl-dialog__title">Est-ce que la réponse vous semble utile pour l'usager ?</h4>
         <div class="mdl-dialog__content">
             <div class="inputs--row">
             <input id="yes" class="input--sweet" type="radio" name="usefulness" value="Oui" onchange="enableYes()">
@@ -176,14 +177,14 @@ dialog {
             <input id="no" class="input--sweet" type="radio" name="usefulness" value="Non" onchange="enableYes()">
             <label for="no"><img class="input__icon" src="@webJarsUtil.locate("1f61e.svg").url.get">Non</label>
             </div><br>
-            <b>Vous devez sélectionnez une réponse pour clore la demande.</b>
+            <b>Vous devez sélectionner une réponse pour clore la demande.</b>
         </div>
         <div class="mdl-dialog__actions">
             <button type="button" class="mdl-button mdl-button--raised" onclick="closeDialog()">Quitter</button>
             <button type="button" disabled="disabled" class="mdl-button mdl-button--raised mdl-button--colored" id="close-dialog-terminate" onclick="confirmTerminate()">Clore</button>
         </div>
     </dialog>
-        @if(application.canBeClosedBy(currentUser) && application.closed == false) {
+        @if(application.canBeClosedBy(currentUser) && not(application.closed)) {
             <button class="mdl-cell mdl-cell--3-col mdl-cell--9-offset-desktop mdl-cell--12-col-phone mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()">
                 Clore la demande
             </button>
@@ -201,7 +202,7 @@ dialog {
             @if(currentUser.admin) {
                 <div class="mdl-card__supporting-text mdl-card--border do-not-print">
                     <span style="font-weight: bold; color:red" class="do-not-print">
-                        Reférence interne pour les administrateurs: @application.internalId
+                        Référence interne pour les administrateurs : @application.internalId
                     </span>
                 </div>
             }
@@ -236,7 +237,7 @@ dialog {
                             }
                         </div> <br>
                 }
-                @if(application.canBeClosedBy(currentUser) && application.closed == false) {
+                @if(application.canBeClosedBy(currentUser) && not(application.closed)) {
                     <button class="mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()" style="margin-right: 10px;">
                         Clore la demande
                     </button>
@@ -265,17 +266,18 @@ dialog {
                                     <i class="material-icons icon--light">remove_red_eye</i>
                                 </div>
                                 <div class="mdl-tooltip" for="seen-@userId">
-                                    Consultée par l'utilisateur
+                                    Consultée par l’utilisateur
                                 </div>
                             }
                         </div>
                     </div>
                 }
-                @if(application.canHaveExpertsInvitedBy(currentUser) && application.closed == false && application.expertInvited == false) {
+                @if(application.canHaveExpertsInvitedBy(currentUser) &&
+                    not(application.closed) && not(application.expertInvited)) {
                     <div class="mdl-list__item">
                         <span class="mdl-list__item-primary-content">
                             <button class="mdl-button mdl-button--raised mdl-js-button do-not-print" onclick="document.location = '@routes.ApplicationController.inviteExpert(application.id)'" style="margin-right: 10px;">
-                                Inviter un expert de l'équipe A+
+                                Inviter un expert de l’équipe A+
                             </button>
                         </span>
                     </div>
@@ -285,7 +287,7 @@ dialog {
 
         @for(answer <- application.answers){
             @if(answer.invitedUsers) {
-                <div class="mdl-cell mdl-cell--12-col vertical-align--middle" style="text-align: center; color: #000000d6;	font-size: 14px;	font-weight: 600;	line-height: 16px;">
+                <div class="mdl-cell mdl-cell--12-col vertical-align--middle" style="text-align: center; color: #000000d6; font-size: 14px; font-weight: 600; line-height: 16px;">
                     <i class="icon material-icons icon--light">people</i> @answer.creatorUserName a invité @answer.invitedUsers.values.mkString(", ") - <span id="date-inviteds-@answer.id" class="vertical-align--middle">
                     <span class="application__age"> Il y a @answer.ageString (@Time.formatPatternFr(answer.creationDate, "dd MMM YYYY - HH:mm"))</span>
                      </span>
@@ -316,7 +318,7 @@ dialog {
                                     <i class="icon material-icons icon--light">info</i>
                                 </div>
                                 <div class="mdl-tooltip" for="reserved-@answer.id">
-                                     L'aidant ne voit pas ce message
+                                     L’aidant ne voit pas ce message
                                  </div>
                             }
                             <div class="mdl-list">
@@ -335,7 +337,7 @@ dialog {
                             </div>
 
                             @if(answer.declareApplicationHasIrrelevant) {
-                                <div class="info-box info-box--orange do-not-print">@answer.creatorUserName a indiqué qu'<b>il existe une procédure standard que vous pouvez utiliser pour cette demande</b>, vous aurez plus de détails dans sa réponse.</div>
+                                <div class="info-box info-box--orange do-not-print">@answer.creatorUserName a indiqué qu’<b>il existe une procédure standard que vous pouvez utiliser pour cette demande</b>, vous aurez plus de détails dans sa réponse.</div>
                             }
                             @if(answer.userInfos.getOrElse(Map()).nonEmpty) {
                                 <ul>
@@ -347,11 +349,11 @@ dialog {
                             <p class="application__message">@answer.message</p>
                             @if(application.answers.last == answer && application.creatorUserId == currentUser.id && !application.closed && answer.creatorUserID != currentUser.id) {
                                 <div class="info-box do-not-print">
-                                Si l'instructeur a répondu à votre demande, vous pouvez clore la demande:<br><br>
+                                Si l’instructeur a répondu à votre demande, vous pouvez clore la demande :<br><br>
                                 <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="showDialog()" >
                                         Clore la demande
                                 </button> <br><br>
-                                Sinon n'hésitez à recontacter la personne en utilisant </i><b>Ajouter une réponse</b> ci-dessous.
+                                Sinon n’hésitez pas à recontacter la personne en utilisant </i><b>Ajouter une réponse</b> ci-dessous.
                                 </div>
                             }
                         </div>
@@ -366,10 +368,10 @@ dialog {
 
                 <form class="do-not-print" action="@routes.ApplicationController.answer(application.id)" method="post">
                     @helper.CSRF.formField
-                    Réponse rapide à l'aidant :                 <br>
+                    Réponse rapide à l’aidant :                 <br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-1">
                         <input type="radio" id="option-1" class="mdl-radio__button" name="message" value="Je m'en occupe" checked>
-                        <span class="mdl-radio__label" style="font-weight: bold;">Je m'en occupe</span>
+                        <span class="mdl-radio__label" style="font-weight: bold;">Je m’en occupe</span>
                     </label>            <br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-2">
                         <input type="radio" id="option-2" class="mdl-radio__button" name="message" value="Je ne suis pas le bon interlocuteur">
@@ -386,7 +388,7 @@ dialog {
     @flash.get("answer-error").map { error =>
         <div class="mdl-cell mdl-cell--12-col" id="answer-error">
             <div class="notification notification--error"><b>@error</b><br>
-                Si l'erreur persiste vous pouvez contacter l'équipe A+ : <a href="mailto:@Constants.supportEmail?subject=@error">@Constants.supportEmail</a>
+                Si l’erreur persiste vous pouvez contacter l’équipe A+ : <a href="mailto:@Constants.supportEmail?subject=@error">@Constants.supportEmail</a>
             </div>
         </div>
     }
@@ -406,10 +408,10 @@ dialog {
                             <input type="hidden" name="answer-id" readonly value="@answerToAgentsForm("answer-id").value.getOrElse(java.util.UUID.randomUUID)">
                             <div class="mdl-cell mdl-cell--12-col mdl-grid">
                                 @if(currentUser.instructor) {
-                                    <div class="info-box">Votre réponse permet d'indiquer le statut des démarches et procédures en cours pour l'aidant @application.creatorUserName et les personnes invitées sur la demande. L'aidant est en contact direct avec l'usager et pourra lui transmettre les informations. <b>Merci d'utiliser vos outils habituels pour continuer une instruction.</b></div>
+                                    <div class="info-box">Votre réponse permet d’indiquer le statut des démarches et procédures en cours pour l’aidant @application.creatorUserName et les personnes invitées sur la demande. L’aidant est en contact direct avec l’usager et pourra lui transmettre les informations. <b>Merci d’utiliser vos outils habituels pour continuer une instruction.</b></div>
                                 }
                                 @if(currentUser.id == application.creatorUserId) {
-                                    <h5 class="mdl-cell mdl-cell--12-col">Ajouter informations concernant l'usager</h5>
+                                    <h5 class="mdl-cell mdl-cell--12-col">Ajouter des informations concernant l’usager</h5>
                                     @helpers.usersInformations(answerToAgentsForm, Nil, false)
                                 }
                                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
@@ -418,7 +420,7 @@ dialog {
                                 </div>
                                 @if(currentUser.sharedAccount) {
                                     <div class="mdl-cell mdl-cell--12-col">
-                                        Signature :
+                                        Signature :
                                     </div>
                                     <div class="mdl-cell mdl-cell--12-col">
                                         @helper.input(
@@ -456,11 +458,11 @@ dialog {
                                     <div id="invalide-choice" class="mdl-cell mdl-cell--12-col">
                                         <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
                                             <input type="checkbox" class="mdl-checkbox__input" name="irrelevant" value="true">
-                                            <span class="mdl-checkbox__label">Cette demande dispose d'une procédure standard que l'aidant aurait pu utiliser</span> <i class="icon material-icons icon--light">info</i>
+                                            <span class="mdl-checkbox__label">Cette demande dispose d’une procédure standard que l’aidant aurait pu utiliser</span> <i class="icon material-icons icon--light">info</i>
                                         </label>
                                     </div>
                                     <div class="mdl-tooltip" for="invalide-choice">
-                                        La demande sera classée comme non-pertinente dans les statistiques d'usage. L'équipe recontactera l'aidant pour l'aider à la création des demandes.
+                                        La demande sera classée comme non-pertinente dans les statistiques d’usage. L’équipe recontactera l’aidant pour l’aider à la création des demandes.j
                                     </div>
                                 }
                                 @if(currentUser.instructor || currentUser.expert) {
@@ -471,7 +473,7 @@ dialog {
                                         </label>
                                     </div>
                                     <div class="mdl-tooltip" for="private-answer">
-                                        Le message ne sera pas visible par l'aidant.
+                                        Le message ne sera pas visible par l’aidant.
                                     </div>
 
                                 }
@@ -485,11 +487,11 @@ dialog {
                     </div>
 
                     @if(groupsWithUsersThatCanBeInvited.nonEmpty || currentUser.expert) {
-                        <div class="mdl-tabs__panel @if(openedTab =="invite"){ is-active }" id="invite">                         
+                        <div class="mdl-tabs__panel @if(openedTab =="invite"){ is-active }" id="invite">
                             <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col mdl-grid aplus-protected-form" method="post">
                                 @if(currentUser.expert) {
                                     <div>
-                                        Territoire concerné :
+                                        Territoire concerné :
                                     @helpers.changeArea(currentArea, currentUser.areas.flatMap(Area.fromId))
                                     </div>
                                 }
@@ -522,22 +524,22 @@ dialog {
                                 </table>
                                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
                                     <textarea class="mdl-textfield__input" type="text" rows= "5" id="agents-invitation-message" style="width: 100%;" name="message"></textarea>
-                                    <label class="mdl-textfield__label" for="agents-invitation-message"><i class="material-icons" style="vertical-align: middle;">message</i> Laisser ici un message pour l'invitation...</label>
+                                    <label class="mdl-textfield__label" for="agents-invitation-message"><i class="material-icons" style="vertical-align: middle;">message</i> Laisser ici un message pour l’invitation...</label>
                                 </div>
                                 @if(currentUser.instructor || currentUser.expert) {
                                     <div id="private-invitation">
                                         <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
                                             <input type="checkbox" class="mdl-checkbox__input" name="privateToHelpers" value="true">
-                                            <span class="mdl-checkbox__label"></span>Restreindre le message d'invitation aux Agents Administration+ <i class="icon material-icons icon--light">info</i>
+                                            <span class="mdl-checkbox__label"></span>Restreindre le message d’invitation aux Agents Administration+ <i class="icon material-icons icon--light">info</i>
                                         </label>
                                     </div>
                                     <div class="mdl-tooltip" for="private-invitation">
-                                        Le message d'invitation ne sera pas visible par l'aidant.
+                                        Le message d’invitation ne sera pas visible par l’aidant.
                                     </div>
                                 } else {
                                     <br>
                                 }
-                                <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Inviter les personnes sélectionnés</button>
+                                <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Inviter les personnes sélectionnées</button>
                             </form>
                         </div>
                     }
