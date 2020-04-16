@@ -22,6 +22,26 @@ function findAncestor (el, check) {
 
 
 //
+// Header ribbon (demo)
+//
+
+function setupDemoBanner() {
+  if(/localhost|demo/.test(window.location.hostname)) {
+    var ribon = document.getElementById("header__ribbon");
+    if(ribon) {
+      ribon.classList.add("invisible");
+    }
+    var elements = document.getElementsByClassName("demo-only");
+    for (var i = 0; i < elements.length; i++) {
+      elements[i].classList.remove("invisible");
+    }
+  }
+}
+
+setupDemoBanner();
+
+
+//
 // Application form
 //
 
@@ -117,7 +137,7 @@ function removeInfo(elem) {
 function addOptionalInfoRow(infoName, infoValue) {
   var newNode = document.createElement("div");
   newNode.innerHTML = ''+infoName+' (facultatif)'+'<br> \
-                       <div class="mdl-textfield mdl-js-textfield --margin-right-20px"> \
+                       <div class="mdl-textfield mdl-js-textfield single--margin-right-20px"> \
                            <input class="mdl-textfield__input mdl-color--white" type="text" id="sample1" name="infos['+infoName+']" value="'+infoValue+'"> \
                             <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+' de l\'usager ici</label> \
                        </div> \
@@ -379,3 +399,22 @@ var slimSelectClass = "use-slimselect";
 Array.from(document.querySelectorAll("." + slimSelectClass)).forEach(function (select) {
   new SlimSelect({ select: select, selectByGroup: true, closeOnSelect: false});
 });
+
+
+
+//
+// Welcome Page
+//
+
+var welcomePageNewletterCheckboxTagId = "aplus-welcome-page-newsletter-checkbox"
+var welcomePageNewletterSubmitTagId = "aplus-welcome-page-newsletter-submit"
+var welcomePageNewletterCheckbox = document.querySelector("#" + welcomePageNewletterCheckboxTagId);
+if (welcomePageNewletterCheckbox != null) {
+  welcomePageNewletterCheckbox.addEventListener('click', function() {
+    if (welcomePageNewletterCheckbox.checked) {
+      document.querySelector("#" + welcomePageNewletterSubmitTagId).disabled = false;
+    } else {
+      document.querySelector("#" + welcomePageNewletterSubmitTagId).disabled = true;
+    }
+  });
+}

@@ -116,7 +116,7 @@ class UserService @Inject() (
     }.toList ++ (User.admins.filter(user => lowerCaseEmails.contains(user.email.toLowerCase)))
   }
 
-  def deleteById(userId: UUID): Unit = db.withTransaction { implicit connection =>
+  def deleteById(userId: UUID): Boolean = db.withTransaction { implicit connection =>
     SQL"""DELETE FROM "user" WHERE id = ${userId}::uuid""".execute()
   }
 

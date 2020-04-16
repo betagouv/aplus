@@ -113,6 +113,13 @@ html, body {
     z-index: 10;
 }
 
+/* Note: the mdl footer has too much padding at the bottom and demands a
+ * mandatory scroll
+ */
+.mdl-mega-footer-fix {
+    padding-bottom: 4px;
+}
+
 .mdl-card__supporting-text {
     width: 100% !important;
     box-sizing: border-box;
@@ -482,29 +489,19 @@ a {
     width: 440px;
 }
 
-.margin-top--10px {
-    margin-top: 10px;
-}
-
-.margin-top--30px {
-    margin-top: 30px;
+.aplus-colored-circle {
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    padding: 10px;
+    background: #29B6F6;
+    color: #FFFFFF;
+    text-align: center;
+    font-size: 24px;
 }
 
 .main__grid {
     min-height: calc(100% - 120px);
-}
-
-.--max-width-960px {
-    max-width: 960px;
-}
-
-.align-items-center {
-    /* !important to work with the legacy order of .css :D */
-    align-items: center !important;
-}
-
-.--margin-right-20px {
-    margin-right: 20px;
 }
 
 .usefulness__icon {
@@ -524,24 +521,76 @@ a {
     cursor: pointer;
 }
 
+
+
+/** List of classes with only 1 property (prefixed by `single--`) **/
+.single--margin-top-10px {
+    margin-top: 10px;
+}
+
+.single--margin-top-30px {
+    margin-top: 30px;
+}
+
+.single--max-width-184px {
+    max-width: 184px;
+}
+
+.single--max-width-960px {
+    max-width: 960px;
+}
+
+.single--align-items-center-important {
+    /* !important to work with the legacy order of .css :D */
+    align-items: center !important;
+}
+
+.single--justify-content-center {
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+}
+
+.single--width-unset {
+    width: unset;
+}
+
+.single--flex-grow-1 {
+    flex-grow: 1;
+}
+
+.single--margin-right-20px {
+    margin-right: 20px;
+}
+
+.single--font-size-16px {
+    font-size: 16px;
+}
+
 .single--overflow-auto {
     overflow: auto;
 }
 
 .single--display-flex {
     display: -webkit-box;
-    display: -moz-box;
     display: -ms-flexbox;
-    display: -webkit-flex;
     display: flex;
 }
 
 .single--align-items-center {
-    align-items: center;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+}
+
+.single--align-content-flex-start {
+    -ms-flex-line-pack: start;
+        align-content: flex-start;
 }
 
 .single--flex-wrap-wrap {
-    flex-wrap: wrap;
+    -ms-flex-wrap: wrap;
+        flex-wrap: wrap;
 }
 
 

@@ -103,7 +103,7 @@ case class CSVImportController @Inject() (
     val multiGroupUserEmails = groups
       .filterNot(_.doNotInsert)
       .flatMap(group => group.users.map(user => (group.group.id, user.user.email)))
-      .groupBy { case (groupId, userEmail) => userEmail }
+      .groupBy { case (_, userEmail) => userEmail }
       .collect { case (userEmail, groups) if groups.size > 1 => userEmail }
       .toSet
     groups.map(group => augmentUserGroupInformation(group, multiGroupUserEmails))
