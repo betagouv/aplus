@@ -59,7 +59,8 @@ case class CSVImportController @Inject() (
 
   /** Checks with the DB if Users or UserGroups already exist. */
   private def augmentUserGroupInformation(
-      userGroupFormData: UserGroupFormData
+      userGroupFormData: UserGroupFormData,
+      multiGroupUserEmails: Set[String]
   ): UserGroupFormData = {
     val userEmails = userGroupFormData.users.map(_.user.email)
     val alreadyExistingUsers = userService.byEmails(userEmails)
@@ -67,7 +68,9 @@ case class CSVImportController @Inject() (
       alreadyExistingUsers
         .find(_.email.stripSpecialChars == userDataForm.user.email.stripSpecialChars)
         .fold {
-          userDataForm
+          userDataForm.copy(
+            isInMoreThanOneGroup = Some(multiGroupUserEmails.contains(userDataForm.user.email))
+          )
         } { alreadyExistingUser =>
           userDataForm.copy(
             user = userDataForm.user.copy(id = alreadyExistingUser.id),
@@ -92,6 +95,18 @@ case class CSVImportController @Inject() (
         withGroup.alreadyExistingGroup.nonEmpty ||
           newUsersFormDataList.forall(_.alreadyExists)
     )
+  }
+
+  private def augmentUserGroupsInformation(
+      groups: List[UserGroupFormData]
+  ): List[UserGroupFormData] = {
+    val multiGroupUserEmails = groups
+      .filterNot(_.doNotInsert)
+      .flatMap(group => group.users.map(user => (group.group.id, user.user.email)))
+      .groupBy { case (_, userEmail) => userEmail }
+      .collect { case (userEmail, groups) if groups.size > 1 => userEmail }
+      .toSet
+    groups.map(group => augmentUserGroupInformation(group, multiGroupUserEmails))
   }
 
   private def userImportMapping(date: ZonedDateTime): Mapping[User] =
@@ -151,7 +166,8 @@ case class CSVImportController @Inject() (
               "user" -> userImportMapping(date),
               "line" -> number,
               "alreadyExists" -> boolean,
-              "alreadyExistingUser" -> ignored(Option.empty[User])
+              "alreadyExistingUser" -> ignored(Option.empty[User]),
+              "isInMoreThanOneGroup" -> optional(boolean)
             )(UserFormData.apply)(UserFormData.unapply)
           ),
           "alreadyExistsOrAllUsersAlreadyExist" -> boolean,
@@ -204,7 +220,7 @@ case class CSVImportController @Inject() (
                       userGroupDataForm: List[UserGroupFormData]
                       ) =>
                     val augmentedUserGroupInformation: List[UserGroupFormData] =
-                      userGroupDataForm.map(augmentUserGroupInformation)
+                      augmentUserGroupsInformation(userGroupDataForm)
 
                     val currentDate = Time.nowParis()
                     val formWithData = importUsersAfterReviewForm(currentDate)
@@ -257,7 +273,7 @@ case class CSVImportController @Inject() (
             )
           }, { userGroupDataForm: List[UserGroupFormData] =>
             val augmentedUserGroupInformation: List[UserGroupFormData] =
-              userGroupDataForm.map(augmentUserGroupInformation)
+              augmentUserGroupsInformation(userGroupDataForm)
 
             val groupsToInsert = augmentedUserGroupInformation
               .filterNot(_.doNotInsert)
@@ -289,6 +305,21 @@ case class CSVImportController @Inject() (
                       .flatMap(_.users)
                       .filter(_.alreadyExistingUser.isEmpty)
                       .map(_.user)
+                      // Here we will group users by email, so we can put them in multiple groups
+                      .groupBy(_.email)
+                      .map {
+                        case (_, entitiesWithSameEmail) =>
+                          // Note: users appear in the same order as given in the import
+                          // Safe due to groupBy
+                          val repr: User = entitiesWithSameEmail.head
+                          val groupIds: List[UUID] = entitiesWithSameEmail.flatMap(_.groupIds)
+                          val areas: List[UUID] = entitiesWithSameEmail.flatMap(_.areas)
+                          repr.copy(
+                            areas = areas,
+                            groupIds = groupIds
+                          )
+                      }
+                      .toList
 
                     userService
                       .add(usersToInsert)

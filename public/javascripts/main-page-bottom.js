@@ -13,6 +13,33 @@ function querySelectorAllForEach(selector, exec) {
   }
 }
 
+function findAncestor (el, check) {
+  while ((el = el.parentElement) && !check(el));
+  return el;
+}
+
+
+
+
+//
+// Header ribbon (demo)
+//
+
+function setupDemoBanner() {
+  if(/localhost|demo/.test(window.location.hostname)) {
+    var ribon = document.getElementById("header__ribbon");
+    if(ribon) {
+      ribon.classList.add("invisible");
+    }
+    var elements = document.getElementsByClassName("demo-only");
+    for (var i = 0; i < elements.length; i++) {
+      elements[i].classList.remove("invisible");
+    }
+  }
+}
+
+setupDemoBanner();
+
 
 //
 // Application form
@@ -110,7 +137,7 @@ function removeInfo(elem) {
 function addOptionalInfoRow(infoName, infoValue) {
   var newNode = document.createElement("div");
   newNode.innerHTML = ''+infoName+' (facultatif)'+'<br> \
-                       <div class="mdl-textfield mdl-js-textfield --margin-right-20px"> \
+                       <div class="mdl-textfield mdl-js-textfield single--margin-right-20px"> \
                            <input class="mdl-textfield__input mdl-color--white" type="text" id="sample1" name="infos['+infoName+']" value="'+infoValue+'"> \
                             <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+' de l\'usager ici</label> \
                        </div> \
@@ -157,6 +184,85 @@ function addInfo() {
   if (infoName === "" || infoValue === "") { return; }
   addOptionalInfoRow(infoName, infoValue);
 }
+
+
+
+
+// <button>
+var applicationFormCategoryFilterClass = "aplus-application-form-category-filter-button";
+var applicationFormRemoveCategoryFilterClass = "aplus-application-form-remove-category-filter-button";
+
+function applyCategoryFilters() {
+  // Get all activated categories organisations
+  var selectedCategories = [];
+  var parsedOrganisations = []; // local var
+  var categoryButtons = document.querySelectorAll(".mdl-chip." + applicationFormCategoryFilterClass);
+  for (var i = 0; i < categoryButtons.length; i++) {
+    if (categoryButtons[i].classList.contains("mdl-chip--active")) {
+      if (categoryButtons[i].dataset.organisations) {
+        parsedOrganisations = JSON.parse(categoryButtons[i].dataset.organisations);
+        for (var j = 0; j < parsedOrganisations.length; j++) {
+          if (selectedCategories.indexOf(parsedOrganisations[j]) === -1) {
+            selectedCategories.push(parsedOrganisations[j]);
+          }
+        }
+      }
+    }
+  }
+  console.log("Selected organisations: ", selectedCategories);
+
+  // Show / Hide Checkboxes
+  var organisationCheckboxes = document.querySelectorAll(
+    "." + applicationFormGroupCheckboxClass);
+  var shouldBeFilteredOut = true;
+  var thead;
+  for (var i = 0; i < organisationCheckboxes.length; i++) {
+    if (selectedCategories.length === 0) {
+      shouldBeFilteredOut = false;
+    }
+    // .exists()
+    for (var j = 0; j < selectedCategories.length; j++) {
+      if (organisationCheckboxes[i].value.toLowerCase()
+          .indexOf(selectedCategories[j].toLowerCase()) !== -1) {
+        shouldBeFilteredOut = false;
+      }
+    }
+
+    thead = findAncestor(organisationCheckboxes[i], function(el) {
+      return el.nodeName === "THEAD";
+    });
+    if (shouldBeFilteredOut) {
+      thead.classList.add("invisible");
+    } else {
+      thead.classList.remove("invisible");
+    }
+    shouldBeFilteredOut = true;
+  }
+}
+
+function onClickFilterButton(button) {
+  // Activate or deactivate button
+  if (button.classList.contains("mdl-chip--active")) {
+    button.classList.remove("mdl-chip--active");
+  } else {
+    button.classList.add("mdl-chip--active");
+  }
+
+  applyCategoryFilters()
+}
+
+function onClickRemoveFilter(button) {
+  var selectedCategories = document.querySelectorAll(
+    ".mdl-chip.aplus-application-form-remove-category-filter-button");
+  var categoryButtons = document.querySelectorAll(".mdl-chip." + applicationFormCategoryFilterClass);
+  for (var i = 0; i < categoryButtons.length; i++) {
+    categoryButtons[i].classList.remove("mdl-chip--active");
+  }
+
+  applyCategoryFilters()
+}
+
+
 
 
 function setupApplicationForm() {
@@ -216,18 +322,99 @@ function setupApplicationForm() {
       });
     }
   );
+
+  querySelectorAllForEach(
+    "." + applicationFormCategoryFilterClass,
+    function (element) {
+      element.addEventListener('click', function(event) {
+        onClickFilterButton(element);
+      });
+    }
+  );
+
+  querySelectorAllForEach(
+    "." + applicationFormRemoveCategoryFilterClass,
+    function (element) {
+      element.addEventListener('click', function(event) {
+        onClickRemoveFilter(element);
+      });
+    }
+  );
 }
 
 setupApplicationForm();
 
+var dialogDeleteGroupId = "dialog-delete-group";
+var dialogDeleteGroupButtonShowId = "dialog-delete-group-show";
+var dialogDeleteGroupButtonCancelId = "dialog-delete-group-cancel";
+var dialogDeleteGroupButtonConfirmId = "dialog-delete-group-confirm";
+function setupDialog() {
+  var dialog = document.getElementById(dialogDeleteGroupId);
 
+  if (dialog) {
+    if (!dialog.showModal) {
+      dialogPolyfill.registerDialog(dialog);
+    }
+
+    querySelectorAllForEach(
+        "#" + dialogDeleteGroupButtonCancelId,
+        function (element) {
+          element.addEventListener('click', function(event) {
+            dialog.close();
+          });
+        }
+    );
+
+    querySelectorAllForEach(
+        "#" + dialogDeleteGroupButtonShowId,
+        function (element) {
+          element.addEventListener('click', function(event) {
+            dialog.showModal();
+          });
+        }
+    );
+
+    querySelectorAllForEach(
+        "#" + dialogDeleteGroupButtonConfirmId,
+        function (element) {
+          element.addEventListener('click', function(event) {
+            var uuid = element.dataset.uuid;
+            var url = jsRoutes.controllers.GroupController.deleteUnusedGroupById(uuid).url;
+            window.location = url;
+          });
+        }
+    );
+  }
+}
+
+
+setupDialog();
 
 //
 // Transform <select> with SlimSelect
 //
 
-var slimSelectClass = "use-slimselect"
+var slimSelectClass = "use-slimselect";
 
 Array.from(document.querySelectorAll("." + slimSelectClass)).forEach(function (select) {
-  new SlimSelect({ select: select })
+  new SlimSelect({ select: select, selectByGroup: true, closeOnSelect: false});
 });
+
+
+
+//
+// Welcome Page
+//
+
+var welcomePageNewletterCheckboxTagId = "aplus-welcome-page-newsletter-checkbox"
+var welcomePageNewletterSubmitTagId = "aplus-welcome-page-newsletter-submit"
+var welcomePageNewletterCheckbox = document.querySelector("#" + welcomePageNewletterCheckboxTagId);
+if (welcomePageNewletterCheckbox != null) {
+  welcomePageNewletterCheckbox.addEventListener('click', function() {
+    if (welcomePageNewletterCheckbox.checked) {
+      document.querySelector("#" + welcomePageNewletterSubmitTagId).disabled = false;
+    } else {
+      document.querySelector("#" + welcomePageNewletterSubmitTagId).disabled = true;
+    }
+  });
+}

@@ -53,7 +53,7 @@ class UserGroupService @Inject() (
         }
       }
       if (result)
-        Right(Unit)
+        Right(())
       else
         Left("Aucun groupe n'a été ajouté")
     } catch {
@@ -73,12 +73,12 @@ class UserGroupService @Inject() (
           UPDATE user_group SET
           name = ${group.name},
           description = ${group.description},
-          insee_code = array[${group.inseeCode}]::character varying(5)[],
           organisation = ${group.organisation.map(_.id)},
           area_ids = array[${group.areaIds}]::uuid[],
           email = ${group.email}
           WHERE id = ${group.id}::uuid
        """.executeUpdate() == 1
+  //TODO: insee_code = array[${group.inseeCode}]::character varying(5)[], have been remove temporary
   }
 
   def allGroups: List[UserGroup] = db.withConnection { implicit connection =>
@@ -111,7 +111,7 @@ class UserGroupService @Inject() (
     SQL"SELECT * FROM user_group WHERE name = $groupName".as(simpleUserGroup.singleOpt)
   }
 
-  def deleteById(groupId: UUID): Unit = db.withConnection { implicit connection =>
+  def deleteById(groupId: UUID): Boolean = db.withConnection { implicit connection =>
     SQL"""DELETE FROM "user_group" WHERE id = $groupId::uuid""".execute()
   }
 

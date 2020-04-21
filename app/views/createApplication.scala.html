@@ -1,7 +1,8 @@
-@import models._
 @import _root_.helper.MDLForms._
+@import models.Organisation.Category
+@import play.api.libs.json.Json
 
-@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], applicationForm: Form[models.formModels.ApplicationFormData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], categories: List[Category], applicationForm: Form[models.formModels.ApplicationFormData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
 @main(currentUser, currentUserRights)(s"Nouvelle demande")  {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
@@ -31,7 +32,7 @@
                 Les champs marqués d’un <span class="mdl-color-text--red-500">*</span> sont obligatoires
             </div>
 
-            @helper.form(action = routes.ApplicationController.createPost(), 'enctype -> "multipart/form-data", 'id -> "create-application-form", 'class -> "aplus-protected-form") {
+            @helper.form(action = routes.ApplicationController.createPost(), "enctype" -> "multipart/form-data", "id" -> "create-application-form", "class" -> "aplus-protected-form") {
                 @helper.CSRF.formField
                     <input type="hidden" name="application-id" readonly value="@applicationForm("application-id").value.getOrElse(java.util.UUID.randomUUID)">
                     @if(currentUser.areas.nonEmpty) {
@@ -41,10 +42,30 @@
                         </div>
                     }
                         <h5 class="title--addline">
-                            Sélectionnez les organismes concernés sur la zone @currentArea.name&nbsp;<span class="mdl-color-text--red-500">*</span>
+                            Sélectionnez les organismes concernés sur la zone @currentArea.name <span class="mdl-color-text--red-500">*</span>
                         </h5>
 
-                    <div class="mdl-grid mdl-grid--no-spacing">
+
+                        <div class="single--display-flex single--align-items-center single--flex-wrap-wrap single--margin-bottom-16px">
+                            <div class="single--margin-right-16px single--white-space-nowrap">FILTRER PAR :</div>
+                            <div class="aplus-application-form-remove-category-filter-button
+                                        single--cursor-pointer
+                                        single--white-space-nowrap
+                                        mdl-color-text--black
+                                        single--text-decoration-underline
+                                        single--margin-right-16px">
+                                Tout afficher
+                            </div>
+                            @for(category <- categories) {
+                                <button type="button"
+                                        class="mdl-chip aplus-application-form-category-filter-button single--margin-4px single--cursor-pointer"
+                                        data-organisations="@Json.stringify(Json.toJson(category.defaultOrganisations.map(_.shortName)))">
+                                    <span class="mdl-chip__text">@category.name</span>
+                                </button>
+                            }
+                        </div>
+
+                    <div class="mdl-grid mdl-grid--no-spacing" style="background-color: white;">
                         @if(applicationForm("users").hasErrors) {
                             <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
                         }
@@ -57,7 +78,7 @@
                                         <th class="mdl-data-table__cell--non-numeric" colspan="2">
                                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
                                                 <input type="checkbox" class="mdl-checkbox__input aplus-application-form-group" value="@organisationGroup.name" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisationGroup.name})){ checked="checked" }>
-                                                <span class="mdl-checkbox__label">@organisationGroup.name @if(organisation.nonEmpty){ (@organisation.get.name) }</span>
+                                                <span class="mdl-checkbox__label aplus-color-text--black mdl-typography--font-regular" ><b>@organisationGroup.name</b> @if(organisation.nonEmpty){ <em>(@organisation.get.name)</em> }</span>
                                                 <span id="span-group-description">@organisationGroup.description</span>
                                             </label></th>
                                     </tr>
@@ -99,8 +120,8 @@
                     <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
                         <div>
                     @helper.input(applicationForm("subject"),
-                                  'label -> "Saisir le sujet de votre demande...",
-                                  'class -> "mdl-textfield--large mdl-textfield--large-fix"
+                                  "label" -> "Saisir le sujet de votre demande...",
+                                  "class" -> "mdl-textfield--large mdl-textfield--large-fix"
                     ) { (id, name, value, args) =>
                     <input class="mdl-textfield__input"
                            type="text"
@@ -133,7 +154,7 @@
                     </h5>
 
                     <div>
-                        @helper.input(applicationForm("description"), 'class -> "mdl-textfield--floating-label mdl-textfield--large", 'label -> "Rédigez une description rapide du problème ...") { (id, name, value, args) =>
+                        @helper.input(applicationForm("description"), "class" -> "mdl-textfield--floating-label mdl-textfield--large", "label" -> "Rédigez une description rapide du problème ...") { (id, name, value, args) =>
                             <textarea class="mdl-textfield__input textfield__input--no-height-constraint" type="text" rows= "5" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
                         }<br>
 
@@ -141,8 +162,8 @@
                             Signature :<br>
                             @helper.input(
                                 applicationForm("signature"),
-                                'label -> "Renseignez ici votre : Prénom, NOM, service",
-                                'class -> "mdl-textfield--large"
+                                "label" -> "Renseignez ici votre : Prénom, NOM, service",
+                                "class" -> "mdl-textfield--large"
                             ) { (id, name, value, args) =>
                                 <input class="mdl-textfield__input"
                                        type="text"

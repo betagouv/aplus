@@ -7,11 +7,9 @@
 @main(currentUser, currentUserRights)(s"Utilisateur ${form("name").value.getOrElse("")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
     <script src='@routes.Assets.versioned("javascripts/dialog.js")'></script>
-    @webJarsUtil.locate("slimselect.min.css").css()
-    @webJarsUtil.locate("slimselect.min.js").script()
 }{
 @defining(form.value.map(user => Authorization.canEditOtherUser(user)(currentUserRights)).getOrElse(false)) { canEditUser =>
-    @helper.form(action = routes.UserController.editUserPost(userId), 'class -> "mdl-grid mdl-cell mdl-cell--12-col") {
+    @helper.form(action = routes.UserController.editUserPost(userId), "class" -> "mdl-grid mdl-cell mdl-cell--12-col") {
         @for(user <- form.value) {
             @for((area, group) <- user.areas.headOption.flatMap(Area.fromId).zip(user.groupIds.headOption.flatMap(groupId => userGroups.find(_.id == groupId)))) {
                 <span class="mdl-cell mdl-cell--12-col ariane">
@@ -33,10 +31,10 @@
     @if(form.hasGlobalErrors) {
       <div style="color: red; font-weight: bold;">@form.globalErrors.mkString(", ")</div>
     }
-    @helper.input(form("id"), 'label -> "Id", 'class -> "hidden") { (id, name, value, args) =>
+    @helper.input(form("id"), "label" -> "Id", "class" -> "hidden") { (id, name, value, args) =>
         <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
     }
-    @helper.input(form("name"), 'label -> "Nom et prénom") { (id, name, value, args) =>
+    @helper.input(form("name"), "label" -> "Nom et prénom") { (id, name, value, args) =>
         <input class="mdl-textfield__input"
                type="text"
                name="@name"
@@ -45,7 +43,7 @@
                @if(!canEditUser) { readonly }
                @toHtmlArgs(args)>
     } <br>
-    @helper.input(form("qualite"), 'label -> "Qualité") { (id, name, value, args) =>
+    @helper.input(form("qualite"), "label" -> "Qualité") { (id, name, value, args) =>
         <input class="mdl-textfield__input"
                type="text"
                name="@name"
@@ -54,7 +52,7 @@
                @if(!canEditUser) { readonly }
                @toHtmlArgs(args)>
     } <br>
-    @helper.input(form("phone-number"), 'label -> "Numéro de téléphone") { (id, name, value, args) =>
+    @helper.input(form("phone-number"), "label" -> "Numéro de téléphone") { (id, name, value, args) =>
         <input class="mdl-textfield__input"
                type="text"
                name="@name"
@@ -63,10 +61,10 @@
                @if(!canEditUser) { readonly }
                @toHtmlArgs(args)>
      } <br>
-    @helper.input(form("communeCode"), 'label -> "Code INSEE commune") { (id, name, value, args) =>
+    @helper.input(form("communeCode"), "label" -> "Code INSEE commune") { (id, name, value, args) =>
     <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) disabled>
     } <br>
-    @helper.input(form("email"), 'label -> "Email") { (id, name, value, args) =>
+    @helper.input(form("email"), "label" -> "Email") { (id, name, value, args) =>
         <input class="mdl-textfield__input"
                type="text"
                name="@name"
@@ -75,35 +73,35 @@
                @if(!canEditUser) { readonly }
                @toHtmlArgs(args)>
     }
-    @helper.checkbox(form(Keys.User.sharedAccount), List(
-        Some('type -> "checkbox"),
-        Some('label -> "Compte Partagé"),
-        Some('class -> "mdl-checkbox__input"),
-        if (canEditUser) None else Some('disabled -> "")
+    @helper.checkbox(form(Keys.User.sharedAccount), List[Option[(Symbol, String)]](
+        Some("type" -> "checkbox"),
+        Some("label" -> "Compte Partagé"),
+        Some("class" -> "mdl-checkbox__input"),
+        if (canEditUser) None else Some("disabled" -> "")
     ).flatten: _*)
-    @helper.checkbox(form("instructor"), List(
-        Some('type -> "checkbox"),
-        Some('label -> "Instructeur"),
-        Some('class -> "mdl-checkbox__input"),
-        if (canEditUser) None else Some('disabled -> "")
+    @helper.checkbox(form("instructor"), List[Option[(Symbol, String)]](
+        Some("type" -> "checkbox"),
+        Some("label" -> "Instructeur"),
+        Some("class" -> "mdl-checkbox__input"),
+        if (canEditUser) None else Some("disabled" -> "")
     ).flatten:_*)
-    @helper.checkbox(form("helper"), List(
-        Some('type -> "checkbox"),
-        Some('label -> "Aidant"),
-        Some('class -> "mdl-checkbox__input"),
-        if (canEditUser) None else Some('disabled -> "")
+    @helper.checkbox(form("helper"), List[Option[(Symbol, String)]](
+        Some("type" -> "checkbox"),
+        Some("label" -> "Aidant"),
+        Some("class" -> "mdl-checkbox__input"),
+        if (canEditUser) None else Some("disabled" -> "")
     ).flatten:_*)
-    @helper.checkbox(form("adminGroup"), List(
-        Some('type -> "checkbox"),
-        Some('label -> "Responsable de ces groupes"),
-        Some('class -> "mdl-checkbox__input"),
-        if (canEditUser) None else Some('disabled -> "")
+    @helper.checkbox(form("adminGroup"), List[Option[(Symbol, String)]](
+        Some("type" -> "checkbox"),
+        Some("label" -> "Responsable de ces groupes"),
+        Some("class" -> "mdl-checkbox__input"),
+        if (canEditUser) None else Some("disabled" -> "")
     ).flatten:_*)
-    @helper.checkbox(form("disabled"), List(
-        Some('type -> "checkbox"),
-        Some('label -> "Désactiver l'utilisateur"),
-        Some('class -> "mdl-checkbox__input"),
-        if (canEditUser) None else Some('disabled -> "")
+    @helper.checkbox(form("disabled"), List[Option[(Symbol, String)]](
+        Some("type" -> "checkbox"),
+        Some("label" -> "Désactiver l'utilisateur"),
+        Some("class" -> "mdl-checkbox__input"),
+        if (canEditUser) None else Some("disabled" -> "")
     ).flatten:_*)
 
     @if(unused && canEditUser) {
@@ -111,11 +109,11 @@
       <br>
     }
     <br>
-    <b style="color: red">@helper.checkbox(form("admin"), List(
-        Some('type -> "checkbox"),
-        Some('label -> "Admin de la zone"),
-        Some('class -> "mdl-checkbox__input"),
-        if (canEditUser) None else Some('disabled -> "")
+    <b style="color: red">@helper.checkbox(form("admin"), List[Option[(Symbol, String)]](
+        Some("type" -> "checkbox"),
+        Some("label" -> "Admin de la zone"),
+        Some("class" -> "mdl-checkbox__input"),
+        if (canEditUser) None else Some("disabled" -> "")
       ).flatten:_*)
     </b>
   </div>

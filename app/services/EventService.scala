@@ -83,7 +83,7 @@ class EventService @Inject() (db: Database) {
     }
   }
 
-  private def addEvent(event: Event): Unit =
+  private def addEvent(event: Event): Boolean =
     db.withConnection { implicit connection =>
       SQL"""
           INSERT INTO event VALUES (

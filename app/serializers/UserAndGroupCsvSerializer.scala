@@ -77,6 +77,7 @@ object UserAndGroupCsvSerializer {
   ): List[UserGroupFormData] =
     userGroupFormData
       .groupBy(_.group.name.stripSpecialChars)
+      .view
       .mapValues({
         case sameGroupNameList: List[UserGroupFormData] =>
           val group = sameGroupNameList.head
@@ -126,7 +127,7 @@ object UserAndGroupCsvSerializer {
         list: List[Either[String, UserGroupFormData]]
     ): (List[String], List[UserGroupFormData]) = {
       val (errors, successes) = list.partition(_.isLeft)
-      errors.map(_.left.get) -> successes.map(_.right.get)
+      errors.flatMap(_.swap.toOption) -> successes.flatMap(_.toOption)
     }
 
     extractFromCSVToMap(separator)(csvLines)
@@ -196,10 +197,10 @@ object UserAndGroupCsvSerializer {
         case Some(areas) =>
           val inseeCodes = stringToInseeCodeList(areas)
 
-          val detectedAreas: Seq[Area] = if (inseeCodes.nonEmpty) {
+          val detectedAreas: List[Area] = if (inseeCodes.nonEmpty) {
             inseeCodes.flatMap(Area.fromInseeCode).toList
           } else {
-            areas.split(",").flatMap(_.split(";")).flatMap(Area.searchFromName)
+            areas.split(",").flatMap(_.split(";")).flatMap(Area.searchFromName).toList
           }.distinct
 
           if (detectedAreas.isEmpty)
@@ -291,7 +292,7 @@ object UserAndGroupCsvSerializer {
         }
     }
 
-    def trimValues(): CSVMap = csvMap.mapValues(_.trim)
+    def trimValues(): CSVMap = csvMap.view.mapValues(_.trim).toMap
 
     def toUserGroupData(
         lineNumber: LineNumber,

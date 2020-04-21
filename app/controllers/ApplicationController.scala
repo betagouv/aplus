@@ -140,12 +140,14 @@ case class ApplicationController @Inject() (
     eventService.log(ApplicationFormShowed, "Visualise le formulaire de création de demande")
     fetchGroupsWithInstructors(currentArea.id, request.currentUser).map {
       case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
+        val categories = organisationService.categories
         Ok(
           views.html.createApplication(request.currentUser, request.rights, currentArea)(
             instructorsOfGroups,
             groupsOfAreaWithInstructor,
             coworkers,
             readSharedAccountUserSignature(request.session),
+            categories,
             applicationForm(request.currentUser)
           )
         )
@@ -252,6 +254,7 @@ case class ApplicationController @Inject() (
                     groupsOfAreaWithInstructor,
                     coworkers,
                     None,
+                    organisationService.categories,
                     formWithErrors,
                     pendingAttachments.keys ++ newAttachments.keys
                   )
@@ -380,8 +383,7 @@ case class ApplicationController @Inject() (
       request.currentUser.admin,
       Time.nowParis()
     )
-    val myOpenApplications = myApplications.filter(!_.closed)
-    val myClosedApplications = myApplications.filter(_.closed)
+    val (myClosedApplications, myOpenApplications) = myApplications.partition(_.closed)
 
     eventService.log(
       MyApplicationsShowed,
@@ -550,7 +552,7 @@ case class ApplicationController @Inject() (
         s"${Authorization.isAdmin(request.rights)}.stats.${Hash.sha256(areaIds.toString() + observableOrganisationIds.toString() + observableGroupIds.toString())}"
 
     cache
-      .getOrElseUpdate[Html](cacheKey, 1 hours)(
+      .getOrElseUpdate[Html](cacheKey, 1.hours)(
         generateStats(areaIds, observableOrganisationIds, observableGroupIds)
       )
       .map { html =>

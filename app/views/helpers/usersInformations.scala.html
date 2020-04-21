@@ -11,8 +11,8 @@
 
             <div>
                 @helper.input(infoField,
-                              'label -> s"Saisir $info de l’usager ici",
-                              'class -> "mdl-textfield--fix"
+                              "label" -> s"Saisir $info de l’usager ici",
+                              "class" -> "mdl-textfield--fix"
                 ) { (id, name, value, args) =>
                 <input class="mdl-textfield__input mdl-color--white"
                        type="text"
@@ -56,11 +56,11 @@
                     <option value="@info">@info</option>
                 }
             </select><br>
-            <div class="mdl-textfield mdl-js-textfield invisible --margin-right-20px">
+            <div class="mdl-textfield mdl-js-textfield invisible single--margin-right-20px">
                 <label class="mdl-textfield__label" for="other-type">Saisissez le type d’information</label>
                 <input class="mdl-textfield__input mdl-color--white aplus-application-form-user-infos-input" name="other-type" type="text" id="other-type">
             </div>
-            <div class="mdl-textfield mdl-js-textfield invisible --margin-right-20px">
+            <div class="mdl-textfield mdl-js-textfield invisible single--margin-right-20px">
                 <label class="mdl-textfield__label" for="other-type-value">Saisissez l’information </label>
                 <input class="mdl-textfield__input mdl-color--white aplus-application-form-user-infos-input" type="text" name="other-type-value" id="other-type-value">
             </div>

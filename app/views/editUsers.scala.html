@@ -63,38 +63,38 @@
       @helper.repeatWithIndex(form("users"), min = min) { (userField, index) =>
         <tr id="line_@index">
           <td>@index
-            @helper.input(userField("id"), 'label -> "Id", 'class -> "hidden") { (id, name, value, args) =>
+            @helper.input(userField("id"), "label" -> "Id", "class" -> "hidden") { (id, name, value, args) =>
               <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
             }
           </td>
           <td class="mdl-data-table__cell--non-numeric smaller-textfield">
-            @helper.input(userField("name"), 'label -> "Nom et prénom") { (id, name, value, args) =>
+            @helper.input(userField("name"), "label" -> "Nom et prénom") { (id, name, value, args) =>
               <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
             }
           </td>
           <td class="mdl-data-table__cell--non-numeric">
-            @helper.input(userField("qualite"), 'label -> "Qualité") { (id, name, value, args) =>
+            @helper.input(userField("qualite"), "label" -> "Qualité") { (id, name, value, args) =>
               <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
             }
           </td>
           <td class="mdl-data-table__cell--non-numeric">
-            @helper.input(userField("email"), 'label -> "Email") { (id, name, value, args) =>
+            @helper.input(userField("email"), "label" -> "Email") { (id, name, value, args) =>
               <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
             }
           </td>
           <td class="mdl-data-table__cell--non-numeric">
-            @helper.input(userField("phone-number"), 'label -> "Téléphone") { (id, name, value, args) =>
+            @helper.input(userField("phone-number"), "label" -> "Téléphone") { (id, name, value, args) =>
                 <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
             }
           </td>
           <td>
-            @helper.checkbox(userField("instructor"), 'type -> "checkbox", 'label -> "Instructeur", 'class -> "mdl-checkbox__input instructor")
+            @helper.checkbox(userField("instructor"), "type" -> "checkbox", "label" -> "Instructeur", "class" -> "mdl-checkbox__input instructor")
           </td>
           <td>
-          @helper.checkbox(userField("adminGroup"), 'type -> "checkbox", 'label -> "Responsable", 'class -> "mdl-checkbox__input")
+          @helper.checkbox(userField("adminGroup"), "type" -> "checkbox", "label" -> "Responsable", "class" -> "mdl-checkbox__input")
           </td>
           <td>
-          @helper.checkbox(userField("sharedAccount"), 'type -> "checkbox", 'label -> "Compte Partagé", 'class -> "mdl-checkbox__input")
+          @helper.checkbox(userField("sharedAccount"), "type" -> "checkbox", "label" -> "Compte Partagé", "class" -> "mdl-checkbox__input")
           </td>
         <td>
             <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onclick="deleteElement('#line_@index')"><i class="material-icons">delete_forever</i></button>

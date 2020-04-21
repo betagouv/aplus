@@ -59,7 +59,7 @@ class UserService @Inject() (
 
   def allDBOnlybyArea(areaId: UUID) = db.withConnection { implicit connection =>
     SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""")
-      .on('areaId -> areaId)
+      .on("areaId" -> areaId)
       .as(simpleUser.*)
   }
 
@@ -87,14 +87,14 @@ class UserService @Inject() (
         "AND disabled = false"
       }
       SQL(s"""SELECT * FROM "user" WHERE ARRAY[{ids}]::uuid[] @> ARRAY[id]::uuid[] $disabledSQL""")
-        .on('ids -> ids)
+        .on("ids" -> ids)
         .as(simpleUser.*)
     } ++ User.admins.filter(user => ids.contains(user.id)).filter(!_.disabled || includeDisabled)
 
   def byKey(key: String): Option[User] =
     db.withConnection { implicit connection =>
         SQL("""SELECT * FROM "user" WHERE key = {key} AND disabled = false""")
-          .on('key -> key)
+          .on("key" -> key)
           .as(simpleUser.singleOpt)
       }
       .orElse(User.admins.find(_.key == key))
@@ -102,7 +102,7 @@ class UserService @Inject() (
   def byEmail(email: String): Option[User] =
     db.withConnection { implicit connection =>
         SQL("""SELECT * FROM "user" WHERE lower(email) = {email} AND disabled = false""")
-          .on('email -> email.toLowerCase())
+          .on("email" -> email.toLowerCase)
           .as(simpleUser.singleOpt)
       }
       .orElse(User.admins.find(_.email.toLowerCase() == email.toLowerCase()))
@@ -116,7 +116,7 @@ class UserService @Inject() (
     }.toList ++ (User.admins.filter(user => lowerCaseEmails.contains(user.email.toLowerCase)))
   }
 
-  def deleteById(userId: UUID): Unit = db.withTransaction { implicit connection =>
+  def deleteById(userId: UUID): Boolean = db.withTransaction { implicit connection =>
     SQL"""DELETE FROM "user" WHERE id = ${userId}::uuid""".execute()
   }
 
@@ -148,7 +148,7 @@ class UserService @Inject() (
         }
       }
       if (result)
-        Right(Unit)
+        Right(())
       else
         Left("Aucun utilisateur n'a été ajouté")
     } catch {

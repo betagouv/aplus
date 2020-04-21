@@ -28,7 +28,7 @@ class ApplicationService @Inject() (
 
   implicit val answerListParser: anorm.Column[List[Answer]] =
     nonNull { (value, meta) =>
-      val MetaDataItem(qualified, nullable, clazz) = meta
+      val MetaDataItem(qualified, _, _) = meta
       value match {
         case json: org.postgresql.util.PGobject =>
           Right(Json.parse(json.getValue).as[List[Answer]])
@@ -80,7 +80,7 @@ class ApplicationService @Inject() (
       db.withConnection { implicit connection =>
         val result = SQL(
           "UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *"
-        ).on('id -> id, 'seen_by_user_id -> fromUserId)
+        ).on("id" -> id, "seen_by_user_id" -> fromUserId)
           .as(simpleApplication.singleOpt)
         result match {
           case None => Left(Error.EntityNotFound)
@@ -114,7 +114,7 @@ class ApplicationService @Inject() (
           |WHERE (creator_user_id = {userId}::uuid OR invited_users ?? {userId}) AND
           |  (closed = FALSE OR DATE_PART('day', {referenceDate} - closed_date) < 30)
           |ORDER BY creation_date DESC""".stripMargin)
-        .on('userId -> userId, 'referenceDate -> referenceDate)
+        .on("userId" -> userId, "referenceDate" -> referenceDate)
         .as(simpleApplication.*)
       if (anonymous) {
         result.map(_.anonymousApplication)
@@ -126,7 +126,7 @@ class ApplicationService @Inject() (
   def allForUserId(userId: UUID, anonymous: Boolean) = db.withConnection { implicit connection =>
     val result = SQL(
       "SELECT * FROM application WHERE creator_user_id = {userId}::uuid OR invited_users ?? {userId} ORDER BY creation_date DESC"
-    ).on('userId -> userId)
+    ).on("userId" -> userId)
       .as(simpleApplication.*)
     if (anonymous) {
       result.map(_.anonymousApplication)
@@ -148,7 +148,7 @@ class ApplicationService @Inject() (
     implicit connection =>
       val result = SQL(
         "SELECT * FROM application WHERE creator_user_id = {creatorUserId}::uuid ORDER BY creation_date DESC"
-      ).on('creatorUserId -> creatorUserId)
+      ).on("creatorUserId" -> creatorUserId)
         .as(simpleApplication.*)
       if (anonymous) {
         result.map(_.anonymousApplication)
@@ -161,7 +161,7 @@ class ApplicationService @Inject() (
     implicit connection =>
       val result = SQL(
         "SELECT * FROM application WHERE invited_users ?? {invitedUserId} ORDER BY creation_date DESC"
-      ).on('invitedUserId -> invitedUserId)
+      ).on("invitedUserId" -> invitedUserId)
         .as(simpleApplication.*)
       if (anonymous) {
         result.map(_.anonymousApplication)
@@ -173,7 +173,7 @@ class ApplicationService @Inject() (
   def allByArea(areaId: UUID, anonymous: Boolean) = db.withConnection { implicit connection =>
     val result =
       SQL("SELECT * FROM application WHERE area = {areaId}::uuid ORDER BY creation_date DESC")
-        .on('areaId -> areaId)
+        .on("areaId" -> areaId)
         .as(simpleApplication.*)
     if (anonymous) {
       result.map(_.anonymousApplication)
@@ -256,9 +256,9 @@ class ApplicationService @Inject() (
           WHERE id = {id}::uuid
        """
       ).on(
-          'id -> applicationId,
-          'answer -> Json.toJson(answer),
-          'invited_users -> invitedUserJson
+          "id" -> applicationId,
+          "answer" -> Json.toJson(answer),
+          "invited_users" -> invitedUserJson
         )
         .executeUpdate()
     }
@@ -271,9 +271,9 @@ class ApplicationService @Inject() (
           WHERE id = {id}::uuid
        """
       ).on(
-          'id -> applicationId,
-          'usefulness -> usefulness,
-          'closed_date -> closedDate
+          "id" -> applicationId,
+          "usefulness" -> usefulness,
+          "closed_date" -> closedDate
         )
         .executeUpdate() == 1
     }

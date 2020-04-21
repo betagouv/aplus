@@ -3,9 +3,9 @@ package controllers
 import actions.{LoginAction, RequestWithUserData}
 import javax.inject.{Inject, Singleton}
 import models.EventType.{GenerateToken, UnknownEmail}
-import models.{Area, LoginToken, User}
+import models.{Authorization, LoginToken, User}
 import org.webjars.play.WebJarsUtil
-import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result}
+import play.api.mvc.{Action, AnyContent, InjectedController}
 import scala.concurrent.{ExecutionContext, Future}
 import services.{EventService, NotificationService, TokenService, UserService}
 import views.home.LoginPanel
@@ -55,7 +55,20 @@ class LoginController @Inject() (
             val loginToken =
               LoginToken.forUserId(user.id, tokenExpirationInMinutes, request.remoteAddress)
             tokenService.create(loginToken)
-            val path = request.flash.get("path").getOrElse(routes.HomeController.index().url)
+            // Here we want to redirect some users to more useful pages:
+            // observer => /stats
+            val path: String = {
+              val tmpPath = request.flash.get("path").getOrElse(routes.HomeController.index.url)
+              val shouldChangeObserverPath: Boolean =
+                Authorization.isObserver(userRights) &&
+                  user.cguAcceptationDate.nonEmpty &&
+                  ((tmpPath: String) == (routes.HomeController.index.url: String))
+              if (shouldChangeObserverPath) {
+                routes.ApplicationController.stats.url
+              } else {
+                tmpPath
+              }
+            }
             val url = routes.LoginController.magicLinkAntiConsumptionPage.absoluteURL()
             notificationService.newLoginRequest(url, path, user, loginToken)
 
