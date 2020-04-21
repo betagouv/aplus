@@ -102,7 +102,9 @@ case class ApplicationController @Inject() (
         if (currentUser.sharedAccount)
           nonEmptyText.transform[Option[String]](Some.apply, _.getOrElse(""))
         else ignored(None: Option[String])
-      )
+      ),
+      "mandatType" -> text,
+      "mandatDate" -> nonEmptyText
     )(ApplicationFormData.apply)(ApplicationFormData.unapply)
   )
 
@@ -288,7 +290,10 @@ case class ApplicationController @Inject() (
             hasSelectedSubject =
               applicationData.selectedSubject.contains[String](applicationData.subject),
             category = applicationData.category,
-            files = newAttachments ++ pendingAttachments
+            files = newAttachments ++ pendingAttachments,
+            mandatType =
+              Application.MandatType.dataModelDeserialization(applicationData.mandatType),
+            mandatDate = Some(applicationData.mandatDate)
           )
           if (applicationService.createApplication(application)) {
             notificationsService.newApplication(application)

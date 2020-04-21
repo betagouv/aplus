@@ -212,25 +212,74 @@
                     }
 
 
-                    <div style="display: flex">
+                    <div class="single--display-flex single--align-items-center">
 
-                        <div style="margin-top: 60px; margin-bottom: 50px;">
-                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-mandat" style="height: unset; margin-bottom: 10px;">
+                        <div class="single--margin-top-30px single--margin-bottom-40px">
+                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-mandat">
                             <input type="checkbox" id="checkbox-mandat" name="validate" class="mdl-checkbox__input" value="true">
-                            <span class="mdl-checkbox__label">Je confirme que l'usager m'a donné mandat pour effectuer cette demande.</span>
-                        </label> <br>
+                            <span class="mdl-checkbox__label">J’atteste avoir recueilli l’autorisation de l’usager</span>
+                            </label>
+
+
+                            @helper.input(
+                                applicationForm("mandatType"),
+                                "class" -> "single--width-100pc",
+                                Symbol("_error") -> applicationForm("mandatType").error.map(_.withMessage("Veuillez sélectionner un type de mandat"))
+                            ) { (id, name, value, args) =>
+
+                            @defining((
+                                if (currentArea.name == "Calvados") List(
+                                    Application.MandatType.Sms -> "par sms",
+                                    Application.MandatType.Phone -> "par téléphone (à l’oral)",
+                                    Application.MandatType.Paper -> "par mandat signé"
+                                ) else List(
+                                    Application.MandatType.Sms -> "par sms",
+                                    Application.MandatType.Paper -> "par mandat signé"
+                                )
+                            ).map(option => (Application.MandatType.dataModelSerialization(option._1), option._2))) { options =>
+                                @options.map { case (optionValue, optionLabel) =>
+                                <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect single--margin-right-20px"
+                                       for="@(id)_@optionValue">
+                                    <input type="radio"
+                                           id="@(id)_@optionValue"
+                                           class="mdl-radio__button"
+                                           name="@name"
+                                           value="@optionValue"
+                                           @if(value == Some(optionValue)){checked="checked"}
+                                           @toHtmlArgs(args)/>
+                                    <span class="mdl-radio__label">@optionLabel</span>
+                                </label>
+                                }
+                                }
+
+                            }
+
+                                <br>
+                      Date et heure <span class="mdl-color-text--red-500">*</span> :
+                                <br>
+
+                    @helper.input(applicationForm("mandatDate")) { (id, name, value, args) =>
+                    <input class="mdl-textfield__input"
+                           type="text"
+                           name="@name"
+                           id="@id"
+                           value="@value"
+                           @toHtmlArgs(args)>
+                    }
+                    <br>
+
                         <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" disabled>
                             Envoyer ma demande
                         </button>
                         </div>
 
-                        <div style="background-color: white; color: #F50057; border: 1px solid #F50057; max-width: 160px; padding: 16px 28px; margin: 16px; text-align: center;">
-                            <div style="margin-bottom: 8px"><b>COVID19</b></div>
+                        <div class="covid19-help">
+                            <div class="single--margin-bottom-8px"><b>COVID19</b></div>
                             Dans le contexte de confinement actuel,
-                            <a href="https://docs.aplus.beta.gouv.fr/faq"
-                               style="color: #F50057;"
+                            <a href="https://docs.aplus.beta.gouv.fr/faq/comment-creer-un-mandat-dans-le-contexte-de-confinement-lie-a-lepidemie-covid"
+                               class="mdl-color-text--pink-A400"
                                target="_blank"
-                               rel="noopener noreferrer">trouver ici une alternative au mandat papier <i class="material-icons material-icons--small-postfix">open_in_new</i></a>
+                               rel="noopener noreferrer">retrouvez ici la procédure à respecter pour recueillir l’autorisation de l’usager par sms ou téléphone <i class="material-icons material-icons--small-postfix">open_in_new</i></a>
                         </div>
                     </div>
             }

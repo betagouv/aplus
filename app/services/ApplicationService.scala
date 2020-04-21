@@ -64,7 +64,9 @@ class ApplicationService @Inject() (
       "expert_invited",
       "has_selected_subject",
       "category",
-      "files"
+      "files",
+      "mandat_type",
+      "mandat_date"
     )
     .map(application =>
       application.copy(
@@ -215,7 +217,9 @@ class ApplicationService @Inject() (
             area,
             has_selected_subject,
             category,
-            files
+            files,
+            mandat_type,
+            mandat_date
             ) VALUES (
             ${newApplication.id}::uuid,
             ${newApplication.creationDate},
@@ -228,7 +232,9 @@ class ApplicationService @Inject() (
             ${newApplication.area}::uuid,
             ${newApplication.hasSelectedSubject},
             ${newApplication.category},
-            ${Json.toJson(newApplication.files)}::jsonb
+            ${Json.toJson(newApplication.files)}::jsonb,
+            ${newApplication.mandatType.map(Application.MandatType.dataModelSerialization)},
+            ${newApplication.mandatDate}
           )
       """.executeUpdate() == 1
   }

@@ -521,6 +521,15 @@ a {
     cursor: pointer;
 }
 
+.covid19-help {
+    background-color: white;
+    color: #F50057;
+    border: 1px solid #F50057;
+    max-width: 160px;
+    padding: 16px 28px;
+    margin: 16px;
+    text-align: center;
+}
 
 
 /** List of classes with only 1 property (prefixed by `single--`) **/
@@ -532,8 +541,16 @@ a {
     margin-top: 30px;
 }
 
+.single--margin-bottom-8px {
+    margin-bottom: 8px;
+}
+
 .single--margin-bottom-16px {
     margin-bottom: 16px;
+}
+
+.single--margin-bottom-40px {
+    margin-bottom: 40px;
 }
 
 .single--margin-right-16px {
@@ -569,6 +586,10 @@ a {
 
 .single--width-unset {
     width: unset;
+}
+
+.single--width-100pc {
+    width: 100%;
 }
 
 .single--flex-grow-1 {
