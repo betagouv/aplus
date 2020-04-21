@@ -114,6 +114,9 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
 
       browser.waitUntil(browser.el("input[name='validate']").selected)
 
+      browser.el("#mandatType_paper").click()
+      browser.el("input[name='mandatDate']").fill().withText(java.time.ZonedDateTime.now().toString)
+
       browser.el("form").submit()
 
       // Wait for form submit

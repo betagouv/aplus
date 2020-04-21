@@ -265,7 +265,9 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
         helperFriendUser.id -> helperFriendUser.nameWithQualite
       ),
       area = area,
-      irrelevant = false
+      irrelevant = false,
+      mandatType = Some(Application.MandatType.Paper),
+      mandatDate = Some(java.time.ZonedDateTime.now().toString)
     )
     applicationService.createApplication(application)
 
