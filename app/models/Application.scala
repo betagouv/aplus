@@ -186,27 +186,6 @@ object Application {
     case object Sms extends MandatType
     case object Phone extends MandatType
     case object Paper extends MandatType
-
-    // Note:
-    // anorm.Column[String] => anorm.Column[Option[MandatType]] does not work
-    // throws exception "AnormException: 'mandat_type' not found, available columns: ..."
-    implicit val mandatTypeAnormParser: anorm.Column[Option[MandatType]] =
-      implicitly[anorm.Column[Option[String]]].map(_.flatMap(dataModelDeserialization))
-
-    def dataModelSerialization(entity: MandatType): String =
-      entity match {
-        case Sms   => "sms"
-        case Phone => "phone"
-        case Paper => "paper"
-      }
-
-    def dataModelDeserialization(raw: String): Option[MandatType] =
-      raw match {
-        case "sms"   => Some(Sms)
-        case "phone" => Some(Phone)
-        case "paper" => Some(Paper)
-        case _       => None
-      }
   }
 
   val USER_FIRST_NAME_KEY = "Prénom"

@@ -58,7 +58,7 @@ import play.twirl.api.Html
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import helper.StringHelper.CanonizeString
-import serializers.AttachmentHelper
+import serializers.{AttachmentHelper, DataModel}
 
 import scala.concurrent.duration._
 
@@ -149,6 +149,7 @@ case class ApplicationController @Inject() (
             groupsOfAreaWithInstructor,
             coworkers,
             readSharedAccountUserSignature(request.session),
+            canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
             categories,
             applicationForm(request.currentUser)
           )
@@ -256,6 +257,7 @@ case class ApplicationController @Inject() (
                     groupsOfAreaWithInstructor,
                     coworkers,
                     None,
+                    canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
                     organisationService.categories,
                     formWithErrors,
                     pendingAttachments.keys ++ newAttachments.keys
@@ -292,7 +294,7 @@ case class ApplicationController @Inject() (
             category = applicationData.category,
             files = newAttachments ++ pendingAttachments,
             mandatType =
-              Application.MandatType.dataModelDeserialization(applicationData.mandatType),
+              DataModel.Application.MandatType.dataModelDeserialization(applicationData.mandatType),
             mandatDate = Some(applicationData.mandatDate)
           )
           if (applicationService.createApplication(application)) {
