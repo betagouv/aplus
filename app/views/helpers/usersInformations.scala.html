@@ -48,30 +48,30 @@
             @if(isCreationForm) {
                 Ajouter une autre information (facultatif)<br><br>
             }
-            <div style="display: flex; align-items: center;">
-            <select id="aplus-application-form-user-infos-types-select-id" style="font-size: 14px;">
-                <option disabled selected value="">Selectionnez une information à ajouter</option>
-                @for(info <- List("Prénom", "Nom de famille", "Date de naissance", "Numéro de sécurité sociale", "Identifiant CAF", "Numéro de dossier", "Nom de Naissance", "Autre").filter(!mandatoryFields.contains(_))) {
-                    <option value="@info">@info</option>
-                }
-            </select>
+            <div class="single--display-flex single--align-items-center">
+                <select id="aplus-application-form-user-infos-types-select-id" class="single--font-size-14px">
+                    <option disabled selected value="">Selectionnez une information à ajouter</option>
+                    @for(info <- List("Prénom", "Nom de famille", "Date de naissance", "Numéro de sécurité sociale", "Identifiant CAF", "Numéro de dossier", "Nom de Naissance", "Autre").filter(!mandatoryFields.contains(_))) {
+                        <option value="@info">@info</option>
+                    }
+                </select>
 
-            <div class="mdl-textfield mdl-js-textfield invisible single--margin-right-20px" style="margin-left: 24px;">
-                <label class="mdl-textfield__label" for="other-type">Saisissez le type d’information</label>
-                <input class="mdl-textfield__input mdl-color--white aplus-application-form-user-infos-input" name="other-type" type="text" id="other-type">
-            </div>
+                <div class="mdl-textfield mdl-js-textfield invisible single--margin-right-20px single--margin-left-24px">
+                    <label class="mdl-textfield__label" for="other-type">Saisissez le type d’information</label>
+                    <input class="mdl-textfield__input mdl-color--white aplus-application-form-user-infos-input" name="other-type" type="text" id="other-type">
+                </div>
 
-            <div class="mdl-textfield mdl-js-textfield invisible single--margin-right-20px" style="margin-left: 24px;">
-                <label class="mdl-textfield__label" for="other-type-value">Saisissez l’information </label>
-                <input class="mdl-textfield__input mdl-color--white aplus-application-form-user-infos-input" type="text" name="other-type-value" id="other-type-value">
-            </div>
+                <div class="mdl-textfield mdl-js-textfield invisible single--margin-right-20px single--margin-left-24px">
+                    <label class="mdl-textfield__label" for="other-type-value">Saisissez l’information </label>
+                    <input class="mdl-textfield__input mdl-color--white aplus-application-form-user-infos-input" type="text" name="other-type-value" id="other-type-value">
+                </div>
 
-            <div id="add-infos__ok-button" class="invisible aplus-application-form-user-infos-add-button" style="display: flex; align-items: center;">
-            <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" type="button" >
-            <i class="material-icons">add_circle</i>
-            </button>
-            <span style="cursor: pointer; text-decoration: underline; margin-left: 2px;">Ajouter</span>
-            </div>
+                <div id="add-infos__ok-button" class="invisible aplus-application-form-user-infos-add-button single--display-flex single--align-items-center">
+                    <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" type="button" >
+                        <i class="material-icons">add_circle</i>
+                    </button>
+                    <span class="single--cursor-pointer single--text-decoration-underline single--margin-left-2px">Ajouter</span>
+                </div>
             </div>
         </div>
 

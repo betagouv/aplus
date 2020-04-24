@@ -544,6 +544,18 @@ a {
     margin-right: 20px;
 }
 
+.single--margin-right-24px {
+    margin-right: 24px;
+}
+
+.single--margin-left-2px {
+    margin-left: 2px;
+}
+
+.single--margin-left-24px {
+    margin-left: 24px;
+}
+
 .single--margin-4px {
     margin: 4px;
 }
@@ -575,6 +587,10 @@ a {
     -webkit-box-flex: 1;
         -ms-flex-positive: 1;
             flex-grow: 1;
+}
+
+.single--font-size-14px {
+    font-size: 14px;
 }
 
 .single--font-size-16px {
@@ -617,6 +633,10 @@ a {
 
 .single--text-decoration-underline {
     text-decoration: underline;
+}
+
+.single--list-style-type-none {
+    list-style-type: none;
 }
 
 

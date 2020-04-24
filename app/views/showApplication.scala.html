@@ -411,7 +411,7 @@ dialog {
             <span style="flex-grow: 1;"></span>
 
             @if(application.canBeClosedBy(currentUser) && not(application.closed)) {
-                <button class="mdl-button mdl-button--raised mdl-button--primary mdl-js-button do-not-print" onclick="showDialog()" style="align-self: center;">
+                <button class="mdl-button mdl-button--raised mdl-button--primary mdl-js-button do-not-print" onclick="showDialog()">
                     Clore la demande
                 </button>
             }
@@ -472,7 +472,7 @@ dialog {
 
                                 <div class="mdl-cell mdl-cell--12-col">
                                     <b>Ajouter un ou plusieurs fichiers ( 5Mo maximum au total ) :</b>
-                                    <ul>
+                                    <ul class="single--list-style-type-none">
                                         @for((attachment,index) <- attachments.zipWithIndex) {
                                         <li>
                                             <input type="checkbox" checked value="@attachment" id="pending-file[@index]" name="pending-file[@index]"><label for="pending-file[@index]">@attachment</label>
