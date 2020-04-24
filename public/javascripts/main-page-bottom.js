@@ -13,6 +13,13 @@ function querySelectorAllForEach(selector, exec) {
   }
 }
 
+function findAncestor (el, check) {
+  while ((el = el.parentElement) && !check(el));
+  return el;
+}
+
+
+
 
 //
 // Header ribbon (demo)
@@ -179,6 +186,85 @@ function addInfo() {
 }
 
 
+
+
+// <button>
+var applicationFormCategoryFilterClass = "aplus-application-form-category-filter-button";
+var applicationFormRemoveCategoryFilterClass = "aplus-application-form-remove-category-filter-button";
+
+function applyCategoryFilters() {
+  // Get all activated categories organisations
+  var selectedCategories = [];
+  var parsedOrganisations = []; // local var
+  var categoryButtons = document.querySelectorAll(".mdl-chip." + applicationFormCategoryFilterClass);
+  for (var i = 0; i < categoryButtons.length; i++) {
+    if (categoryButtons[i].classList.contains("mdl-chip--active")) {
+      if (categoryButtons[i].dataset.organisations) {
+        parsedOrganisations = JSON.parse(categoryButtons[i].dataset.organisations);
+        for (var j = 0; j < parsedOrganisations.length; j++) {
+          if (selectedCategories.indexOf(parsedOrganisations[j]) === -1) {
+            selectedCategories.push(parsedOrganisations[j]);
+          }
+        }
+      }
+    }
+  }
+  console.log("Selected organisations: ", selectedCategories);
+
+  // Show / Hide Checkboxes
+  var organisationCheckboxes = document.querySelectorAll(
+    "." + applicationFormGroupCheckboxClass);
+  var shouldBeFilteredOut = true;
+  var thead;
+  for (var i = 0; i < organisationCheckboxes.length; i++) {
+    if (selectedCategories.length === 0) {
+      shouldBeFilteredOut = false;
+    }
+    // .exists()
+    for (var j = 0; j < selectedCategories.length; j++) {
+      if (organisationCheckboxes[i].value.toLowerCase()
+          .indexOf(selectedCategories[j].toLowerCase()) !== -1) {
+        shouldBeFilteredOut = false;
+      }
+    }
+
+    thead = findAncestor(organisationCheckboxes[i], function(el) {
+      return el.nodeName === "THEAD";
+    });
+    if (shouldBeFilteredOut) {
+      thead.classList.add("invisible");
+    } else {
+      thead.classList.remove("invisible");
+    }
+    shouldBeFilteredOut = true;
+  }
+}
+
+function onClickFilterButton(button) {
+  // Activate or deactivate button
+  if (button.classList.contains("mdl-chip--active")) {
+    button.classList.remove("mdl-chip--active");
+  } else {
+    button.classList.add("mdl-chip--active");
+  }
+
+  applyCategoryFilters()
+}
+
+function onClickRemoveFilter(button) {
+  var selectedCategories = document.querySelectorAll(
+    ".mdl-chip.aplus-application-form-remove-category-filter-button");
+  var categoryButtons = document.querySelectorAll(".mdl-chip." + applicationFormCategoryFilterClass);
+  for (var i = 0; i < categoryButtons.length; i++) {
+    categoryButtons[i].classList.remove("mdl-chip--active");
+  }
+
+  applyCategoryFilters()
+}
+
+
+
+
 function setupApplicationForm() {
   querySelectorAllForEach(
     "." + applicationFormGroupCheckboxClass,
@@ -233,6 +319,24 @@ function setupApplicationForm() {
     function (element) {
       element.addEventListener('click', function(event) {
         addInfo();
+      });
+    }
+  );
+
+  querySelectorAllForEach(
+    "." + applicationFormCategoryFilterClass,
+    function (element) {
+      element.addEventListener('click', function(event) {
+        onClickFilterButton(element);
+      });
+    }
+  );
+
+  querySelectorAllForEach(
+    "." + applicationFormRemoveCategoryFilterClass,
+    function (element) {
+      element.addEventListener('click', function(event) {
+        onClickRemoveFilter(element);
       });
     }
   );

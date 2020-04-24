@@ -532,6 +532,22 @@ a {
     margin-top: 30px;
 }
 
+.single--margin-bottom-16px {
+    margin-bottom: 16px;
+}
+
+.single--margin-right-16px {
+    margin-right: 16px;
+}
+
+.single--margin-right-20px {
+    margin-right: 20px;
+}
+
+.single--margin-4px {
+    margin: 4px;
+}
+
 .single--max-width-184px {
     max-width: 184px;
 }
@@ -556,11 +572,9 @@ a {
 }
 
 .single--flex-grow-1 {
-    flex-grow: 1;
-}
-
-.single--margin-right-20px {
-    margin-right: 20px;
+    -webkit-box-flex: 1;
+        -ms-flex-positive: 1;
+            flex-grow: 1;
 }
 
 .single--font-size-16px {
@@ -591,6 +605,18 @@ a {
 .single--flex-wrap-wrap {
     -ms-flex-wrap: wrap;
         flex-wrap: wrap;
+}
+
+.single--white-space-nowrap {
+    white-space: nowrap;
+}
+
+.single--cursor-pointer {
+    cursor: pointer;
+}
+
+.single--text-decoration-underline {
+    text-decoration: underline;
 }
 
 
