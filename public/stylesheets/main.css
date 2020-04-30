@@ -521,6 +521,15 @@ a {
     cursor: pointer;
 }
 
+.covid19-help {
+    background-color: white;
+    color: #F50057;
+    border: 1px solid #F50057;
+    max-width: 160px;
+    padding: 16px 28px;
+    margin: 16px;
+    text-align: center;
+}
 
 
 /** List of classes with only 1 property (prefixed by `single--`) **/
@@ -532,8 +541,16 @@ a {
     margin-top: 30px;
 }
 
+.single--margin-bottom-8px {
+    margin-bottom: 8px;
+}
+
 .single--margin-bottom-16px {
     margin-bottom: 16px;
+}
+
+.single--margin-bottom-40px {
+    margin-bottom: 40px;
 }
 
 .single--margin-right-16px {
@@ -546,6 +563,18 @@ a {
 
 .single--margin-4px {
     margin: 4px;
+}
+
+.single--padding-top-8px {
+    padding-top: 8px;
+}
+
+.single--padding-bottom-8px {
+    padding-bottom: 8px;
+}
+
+.single--padding-bottom-16px {
+    padding-bottom: 16px;
 }
 
 .single--max-width-184px {
@@ -571,10 +600,18 @@ a {
     width: unset;
 }
 
+.single--width-100pc {
+    width: 100%;
+}
+
 .single--flex-grow-1 {
     -webkit-box-flex: 1;
         -ms-flex-positive: 1;
             flex-grow: 1;
+}
+
+.single--font-size-14px {
+    font-size: 14px;
 }
 
 .single--font-size-16px {

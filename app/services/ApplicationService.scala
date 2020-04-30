@@ -12,6 +12,7 @@ import play.api.db.Database
 import play.api.libs.json.Json
 import anorm._
 import helper.Time
+import serializers.DataModel
 
 @javax.inject.Singleton
 class ApplicationService @Inject() (
@@ -22,6 +23,13 @@ class ApplicationService @Inject() (
 
   import serializers.Anorm._
   import serializers.JsonFormats._
+
+  // Note:
+  // anorm.Column[String] => anorm.Column[Option[Application.MandatType]] does not work
+  // throws exception "AnormException: 'mandat_type' not found, available columns: ..."
+  implicit val mandatTypeAnormParser: anorm.Column[Option[Application.MandatType]] =
+    implicitly[anorm.Column[Option[String]]]
+      .map(_.flatMap(DataModel.Application.MandatType.dataModelDeserialization))
 
   private implicit val answerReads = Json.reads[Answer]
   private implicit val answerWrite = Json.writes[Answer]
@@ -64,7 +72,9 @@ class ApplicationService @Inject() (
       "expert_invited",
       "has_selected_subject",
       "category",
-      "files"
+      "files",
+      "mandat_type",
+      "mandat_date"
     )
     .map(application =>
       application.copy(
@@ -202,6 +212,8 @@ class ApplicationService @Inject() (
       case (key, value) =>
         key.toString -> value
     })
+    val mandatType =
+      newApplication.mandatType.map(DataModel.Application.MandatType.dataModelSerialization)
     SQL"""
           INSERT INTO application (
             id,
@@ -215,7 +227,9 @@ class ApplicationService @Inject() (
             area,
             has_selected_subject,
             category,
-            files
+            files,
+            mandat_type,
+            mandat_date
             ) VALUES (
             ${newApplication.id}::uuid,
             ${newApplication.creationDate},
@@ -228,7 +242,9 @@ class ApplicationService @Inject() (
             ${newApplication.area}::uuid,
             ${newApplication.hasSelectedSubject},
             ${newApplication.category},
-            ${Json.toJson(newApplication.files)}::jsonb
+            ${Json.toJson(newApplication.files)}::jsonb,
+            $mandatType,
+            ${newApplication.mandatDate}
           )
       """.executeUpdate() == 1
   }

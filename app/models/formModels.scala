@@ -13,7 +13,9 @@ object formModels {
       organismes: List[String],
       category: Option[String],
       selectedSubject: Option[String],
-      signature: Option[String]
+      signature: Option[String],
+      mandatType: String,
+      mandatDate: String
   )
 
   case class AnswerFormData(
