@@ -58,7 +58,7 @@ import play.twirl.api.Html
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import helper.StringHelper.CanonizeString
-import serializers.AttachmentHelper
+import serializers.{AttachmentHelper, DataModel}
 
 import scala.concurrent.duration._
 
@@ -102,7 +102,9 @@ case class ApplicationController @Inject() (
         if (currentUser.sharedAccount)
           nonEmptyText.transform[Option[String]](Some.apply, _.getOrElse(""))
         else ignored(None: Option[String])
-      )
+      ),
+      "mandatType" -> text,
+      "mandatDate" -> nonEmptyText
     )(ApplicationFormData.apply)(ApplicationFormData.unapply)
   )
 
@@ -147,6 +149,7 @@ case class ApplicationController @Inject() (
             groupsOfAreaWithInstructor,
             coworkers,
             readSharedAccountUserSignature(request.session),
+            canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
             categories,
             applicationForm(request.currentUser)
           )
@@ -254,6 +257,7 @@ case class ApplicationController @Inject() (
                     groupsOfAreaWithInstructor,
                     coworkers,
                     None,
+                    canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
                     organisationService.categories,
                     formWithErrors,
                     pendingAttachments.keys ++ newAttachments.keys
@@ -288,7 +292,10 @@ case class ApplicationController @Inject() (
             hasSelectedSubject =
               applicationData.selectedSubject.contains[String](applicationData.subject),
             category = applicationData.category,
-            files = newAttachments ++ pendingAttachments
+            files = newAttachments ++ pendingAttachments,
+            mandatType =
+              DataModel.Application.MandatType.dataModelDeserialization(applicationData.mandatType),
+            mandatDate = Some(applicationData.mandatDate)
           )
           if (applicationService.createApplication(application)) {
             notificationsService.newApplication(application)

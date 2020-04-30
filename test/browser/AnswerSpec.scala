@@ -84,7 +84,9 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       invitedUsers = invitedUsers.map(user => (user.id, user.nameWithQualite)).toMap,
       area = group.areaIds.head,
       irrelevant = false,
-      expertInvited = true
+      expertInvited = true,
+      mandatType = Some(Application.MandatType.Paper),
+      mandatDate = Some(java.time.ZonedDateTime.now().toString)
     )
     val result = applicationService.createApplication(application)
     result must beTrue

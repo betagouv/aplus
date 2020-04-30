@@ -223,6 +223,23 @@ dialog {
                     }
                 </div>
                 <p class="application__message">@application.description</p>
+                @for(mandatType <- application.mandatType) {
+                    <span>
+                        J’atteste avoir recueilli l’autorisation de l’usager
+                        @mandatType match {
+                            case Application.MandatType.Sms => {
+                                par sms
+                            }
+                            case Application.MandatType.Phone => {
+                                par téléphone (à l’oral)
+                            }
+                            case Application.MandatType.Paper => {
+                                par mandat signé
+                            }
+                        }
+                        @for(mandatDate <- application.mandatDate) { (@mandatDate) }
+                    </span>
+                }
                 @for((filename, fileSize) <- application.files) {
                         <div class="vertical-align--middle" style="
                             color: #000000d6;

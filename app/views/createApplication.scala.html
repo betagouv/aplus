@@ -1,8 +1,9 @@
 @import _root_.helper.MDLForms._
 @import models.Organisation.Category
 @import play.api.libs.json.Json
+@import serializers.DataModel
 
-@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], categories: List[Category], applicationForm: Form[models.formModels.ApplicationFormData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], canCreatePhoneMandat: Boolean, categories: List[Category], applicationForm: Form[models.formModels.ApplicationFormData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
 @main(currentUser, currentUserRights)(s"Nouvelle demande")  {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
@@ -150,7 +151,7 @@
                     <br>
                     <br>
                     <h5 class="title--addline">
-                        Description du problème&nbsp;<span class="mdl-color-text--red-500">*</span>
+                        Description du problème <span class="mdl-color-text--red-500">*</span>
                     </h5>
 
                     <div>
@@ -194,8 +195,6 @@
 
 
                     @if(coworkers.nonEmpty) {
-                      <br>
-                      <br>
                       <h5 class="title--addline">Ajouter des collègues à la demande</h5>
                       <table>
                       @for(coworker <- coworkers) {
@@ -209,17 +208,93 @@
                         </tr>
                       }
                       </table>
+                      <br>
                     }
 
+                    <br><br>
+                    <div class="single--display-flex single--align-items-center">
 
-                    <div style="margin-top: 60px; margin-bottom: 50px;">
-                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-mandat" style="height: unset; margin-bottom: 10px;">
+                        <div class="single--margin-top-30px single--margin-bottom-40px">
+                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-mandat">
                             <input type="checkbox" id="checkbox-mandat" name="validate" class="mdl-checkbox__input" value="true">
-                            <span class="mdl-checkbox__label">Je confirme que l'usager m'a donné mandat pour effectuer cette demande.</span>
-                        </label> <br>
+                            <span class="mdl-checkbox__label single--font-size-14px">J’atteste avoir recueilli l’autorisation de l’usager <span class="mdl-color-text--red-500">*</span> :</span>
+                            </label>
+
+
+                            @helper.input(
+                                applicationForm("mandatType"),
+                                "class" -> "single--width-100pc single--padding-top-8px single--padding-bottom-8px",
+                                Symbol("_error") -> applicationForm("mandatType").error.map(_.withMessage("Veuillez sélectionner un type de mandat"))
+                            ) { (id, name, value, args) =>
+
+                            @defining((
+                                if (canCreatePhoneMandat) List(
+                                    Application.MandatType.Sms -> "par sms",
+                                    Application.MandatType.Phone -> "par téléphone (à l’oral)",
+                                    Application.MandatType.Paper -> "par mandat signé"
+                                ) else List(
+                                    Application.MandatType.Sms -> "par sms",
+                                    Application.MandatType.Paper -> "par mandat signé"
+                                )
+                            ).map(option => (DataModel.Application.MandatType.dataModelSerialization(option._1), option._2))) { options =>
+                                @options.map { case (optionValue, optionLabel) =>
+                                <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect single--margin-right-20px single--font-size-14px"
+                                       for="@(id)_@optionValue">
+                                    <input type="radio"
+                                           id="@(id)_@optionValue"
+                                           class="mdl-radio__button"
+                                           name="@name"
+                                           value="@optionValue"
+                                           @if(value == Some(optionValue)){checked="checked"}
+                                           @toHtmlArgs(args)/>
+                                    <span class="mdl-radio__label">@optionLabel</span>
+                                </label>
+                                }
+                                }
+
+                            }
+
+                                <br>
+                      Date et heure <span class="mdl-color-text--red-500">*</span> :
+                                <br>
+
+                    @helper.input(applicationForm("mandatDate"),
+                                  "class" -> " single--padding-top-8px") { (id, name, value, args) =>
+                    <input class="mdl-textfield__input"
+                           type="text"
+                           name="@name"
+                           id="@id"
+                           value="@value"
+                           @toHtmlArgs(args)>
+                    }
+                    <br>
+
                         <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" disabled>
                             Envoyer ma demande
                         </button>
+                        </div>
+
+                        <div class="covid19-help">
+                            <div class="single--margin-bottom-8px"><b>COVID19</b></div>
+                            Dans le contexte de confinement actuel,
+                            <a @if(canCreatePhoneMandat) {
+                                href="https://docs.aplus.beta.gouv.fr/mandat/experimentation-calvados-creer-un-mandat-a-distance-dans-le-contexte-de-confinement"
+                               } else {
+                                href="https://docs.aplus.beta.gouv.fr/mandat/comment-creer-un-mandat-dans-le-contexte-de-confinement-lie-a-lepidemie-covid"
+                               }
+                               class="mdl-color-text--pink-A400"
+                               target="_blank"
+                               rel="noopener noreferrer">
+                                retrouvez ici la procédure à respecter pour recueillir
+                                l’autorisation de l’usager
+                                @if(canCreatePhoneMandat) {
+                                    par sms ou téléphone
+                                } else {
+                                    par sms
+                                }
+                                <i class="material-icons material-icons--small-postfix">open_in_new</i>
+                            </a>
+                        </div>
                     </div>
             }
         </div>

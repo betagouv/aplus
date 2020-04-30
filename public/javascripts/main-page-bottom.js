@@ -267,6 +267,44 @@ function onClickRemoveFilter(button) {
   applyCategoryFilters()
 }
 
+function mandatFieldsAreFilled() {
+  // 1. Checkbox
+  var checkbox = document.getElementById("checkbox-mandat");
+  if (checkbox) {
+    if (!checkbox.checked) {
+      return false;
+    }
+  }
+
+  // 2. Radios
+  var radios = document.querySelectorAll("[id^=mandatType]");
+  // Note: same as oneRadioIsChecked = radios.exists(r => r.checked)
+  var oneRadioIsChecked = false;
+  for (var i = 0; i < radios.length; i++) {
+    if (radios[i].checked) {
+      oneRadioIsChecked = true;
+    }
+  }
+  if (!oneRadioIsChecked) {
+    return false;
+  }
+
+  // 3. Date input
+  var dateInput = document.getElementById("mandatDate");
+  if (!dateInput.value) {
+    return false;
+  }
+
+  return true;
+}
+
+function onMandatFieldChange() {
+  if (mandatFieldsAreFilled()) {
+    document.querySelector("#review-validation").disabled = false;
+  } else {
+    document.querySelector("#review-validation").disabled = true;
+  }
+}
 
 
 
@@ -280,17 +318,23 @@ function setupApplicationForm() {
     }
   );
 
+  // Mandat
   var checkboxMandat = document.getElementById("checkbox-mandat");
-
+  var radiosMandat = document.querySelectorAll("[id^=mandatType]");
+  var dateMandat = document.getElementById("mandatDate");
   if (checkboxMandat) {
-    checkboxMandat.addEventListener('click', function() {
-      if(checkboxMandat.checked) {
-        document.querySelector("#review-validation").disabled = false;
-      } else {
-        document.querySelector("#review-validation").disabled = true;
-      }
-    });
+    checkboxMandat.addEventListener('change', onMandatFieldChange);
   }
+  for (var i = 0; i < radiosMandat.length; i++) {
+    radiosMandat[i].addEventListener('change', onMandatFieldChange);
+  }
+  if (dateMandat) {
+    dateMandat.addEventListener('change', onMandatFieldChange);
+    dateMandat.addEventListener('keyup', onMandatFieldChange);
+    dateMandat.addEventListener('paste', onMandatFieldChange);
+    dateMandat.addEventListener('input', onMandatFieldChange);
+  }
+
 
   var userInfosTypesSelect = document.getElementById(applicationFormUserInfosTypesSelectId);
   if (userInfosTypesSelect) {
