@@ -51,20 +51,20 @@
                 <br>
                 <br>
             }
-            <div class="single--display-flex single--align-items-center">
-                <select id="aplus-application-form-user-infos-types-select-id" class="single--font-size-14px">
+            <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+                <select id="aplus-application-form-user-infos-types-select-id" class="single--margin-top-16px single--margin-bottom-16px single--margin-right-24px single--font-size-14px">
                     <option disabled selected value="">Selectionnez une information à ajouter</option>
                     @for(info <- List("Prénom", "Nom de famille", "Date de naissance", "Numéro de sécurité sociale", "Identifiant CAF", "Numéro de dossier", "Nom de Naissance", "Autre").filter(!mandatoryFields.contains(_))) {
                         <option value="@info">@info</option>
                     }
                 </select>
 
-                <div class="mdl-textfield mdl-js-textfield invisible single--margin-right-20px single--margin-left-24px">
+                <div class="mdl-textfield mdl-js-textfield invisible single--margin-right-24px">
                     <label class="mdl-textfield__label" for="other-type">Saisissez le type d’information</label>
                     <input class="mdl-textfield__input mdl-color--white aplus-application-form-user-infos-input" name="other-type" type="text" id="other-type">
                 </div>
 
-                <div class="mdl-textfield mdl-js-textfield invisible single--margin-right-20px single--margin-left-24px">
+                <div class="mdl-textfield mdl-js-textfield invisible single--margin-right-24px">
                     <label class="mdl-textfield__label" for="other-type-value">Saisissez l’information </label>
                     <input class="mdl-textfield__input mdl-color--white aplus-application-form-user-infos-input" type="text" name="other-type-value" id="other-type-value">
                 </div>

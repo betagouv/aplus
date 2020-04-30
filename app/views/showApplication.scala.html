@@ -394,32 +394,34 @@ dialog {
     }
 
 <div class="mdl-card mdl-cell mdl-cell--12-col do-not-print">
-    <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect" style="margin: 0px; width: 100%;">
-        <div class="mdl-tabs__tab-bar mdl-tabs__tab-bar--align-left mdl-color--grey-200">
-            <a href="#answer" class="mdl-tabs__tab mdl-color-text--primary @if(openedTab =="answer"){ is-active  } " style="display: flex; align-items: center;">
-                <i class="material-icons" style="margin-right: 8px;">reply_all</i>
-                Ajouter une réponse
+    <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect single--margin-0px single--width-100pc">
+        <div class="mdl-tabs__tab-bar mdl-tabs__tab-bar--align-left mdl-tabs__tab-bar--multiline-text mdl-color--grey-200">
+            <a href="#answer" class="mdl-tabs__tab mdl-tabs__tab--multiline-text mdl-color-text--primary single--display-flex single--align-items-center @if(openedTab =="answer"){ is-active  }">
+                <i class="material-icons single--margin-right-8px">reply_all</i>
+                Ajouter une réponse
             </a>
 
             @if(groupsWithUsersThatCanBeInvited.nonEmpty || currentUser.expert) {
-                <a href="#invite" class="mdl-tabs__tab mdl-color-text--primary @if(openedTab =="invite"){ is-active }" style="display: flex; align-items: center;">
-                    <i class="material-icons" style="margin-right: 8px;">person_add</i>
+                <a href="#invite" class="mdl-tabs__tab mdl-tabs__tab--multiline-text mdl-color-text--primary single--display-flex single--align-items-center @if(openedTab =="invite"){ is-active }">
+                    <i class="material-icons single--margin-right-8px">person_add</i>
                     Inviter une personne
                 </a>
             }
 
-            <span style="flex-grow: 1;"></span>
+            <span class="single--flex-grow-1"></span>
 
             @if(application.canBeClosedBy(currentUser) && not(application.closed)) {
-                <button class="mdl-button mdl-button--raised mdl-button--primary mdl-js-button do-not-print" onclick="showDialog()">
-                    Clore la demande
-                </button>
+                <div>
+                    <button class="mdl-button mdl-button--raised mdl-button--primary mdl-button--multiline-text mdl-js-button do-not-print" onclick="showDialog()">
+                        Clore la demande
+                    </button>
+                </div>
             }
 
         </div>
 
         <div class="mdl-tabs__panel @if(openedTab =="answer"){ is-active  } " id="answer">
-            <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing aplus-protected-form" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('review-validation').disabled=true" style="margin: 0px; width: 100%;">
+            <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing single--margin-0px single--width-100pc aplus-protected-form" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('review-validation').disabled=true">
 
                 @helper.CSRF.formField
                 <input type="hidden" name="answer-id" readonly value="@answerToAgentsForm("answer-id").value.getOrElse(java.util.UUID.randomUUID)">
@@ -437,12 +439,12 @@ dialog {
 
                 </div>
 
-                <hr style="width: 100%;">
+                <hr class="single--width-100pc">
 
                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
                     <h5 class="mdl-cell mdl-cell--12-col">Votre réponse :</h5>
 
-                    <div class="mdl-textfield mdl-js-textfield mdl-cell mdl-cell--12-col" style="padding: 0px;">
+                    <div class="mdl-textfield mdl-js-textfield mdl-cell mdl-cell--12-col single--padding-0px">
                         <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
                     </div>
 
