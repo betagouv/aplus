@@ -1,6 +1,6 @@
 @import _root_.helper.Math
 
-@(data: views.stats.StatsData)
+@(data: views.stats.StatsData.ApplicationAggregates)
 
 <canvas id="resolution-time-chart" class="chart--default-size"></canvas>
 <script>
@@ -9,9 +9,9 @@
 
       // The data for our dataset
       data: {
-          labels: [@Html(data.applicationsGroupByMonthsClosed.map(s => s"'${s._1}'").mkString(", "))],
+          labels: [@Html(data.closedApplicationsGroupedByMonth.map(s => s"'${s._1}'").mkString(", "))],
           datasets: [{
-              data: [@Html(data.applicationsGroupByMonthsClosed.map{ apps =>
+              data: [@Html(data.closedApplicationsGroupedByMonth.map{ apps =>
                      if(apps._2.isEmpty) {
                          0D
                      } else {
@@ -25,7 +25,7 @@
               borderColor: "black",
               fill: false
           }, {
-              data: [@Html(data.applicationsGroupByMonthsClosed.map{ apps =>
+              data: [@Html(data.closedApplicationsGroupedByMonth.map{ apps =>
                      if(apps._2.isEmpty) {
                          0D
                      } else {
@@ -36,7 +36,7 @@
               label: "Temps moyen de résolution (Jour)",
               backgroundColor: "rgba(113, 176, 239, 1)"
           }, {
-              data: [@Html(data.applicationsGroupByMonthsClosed.map{ apps =>
+              data: [@Html(data.closedApplicationsGroupedByMonth.map{ apps =>
                      if(apps._2.isEmpty) {
                          0D
                      } else {

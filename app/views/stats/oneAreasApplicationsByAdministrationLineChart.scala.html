@@ -1,6 +1,4 @@
-@import scala.collection.immutable.ListMap
-
-@(areaData: views.stats.StatsData.AreaAggregates, months: ListMap[String, String], users: List[User], admins: List[String])
+@(areaData: views.stats.StatsData.AreaAggregates, users: List[User], admins: List[String])
 
 <canvas id="admin-received-chart-@areaData.area.id"></canvas>
 <script>
@@ -10,7 +8,7 @@
       type: 'line',
       // The data for our dataset
       data: {
-          labels: [@Html(areaData.aggregates.newApplicationsPerMonth.map(_._1).flatMap(months.get).map(day => s"'$day'").mkString(", "))],
+          labels: [@Html(areaData.aggregates.applicationsGroupedByMonth.map(_._1).map(day => s"'$day'").mkString(", "))],
           datasets: [
               @for(admin: String <- admins) {
                   {
@@ -19,7 +17,7 @@
                       borderColor: adminReceivedColors.pop(),
                       backgroundColor: adminReceivedColors.pop(),
                       lineTension: 0,
-                      data: [@Html(areaData.aggregates.newApplicationsPerMonth.map(_._2.count(_.administrations(users).contains(admin))).mkString(", "))]
+                      data: [@Html(areaData.aggregates.applicationsGroupedByMonth.map(_._2.count(_.administrations(users).contains(admin))).mkString(", "))]
                   },
               }
           ]

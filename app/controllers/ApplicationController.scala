@@ -410,6 +410,7 @@ case class ApplicationController @Inject() (
       users: List[User],
       groups: List[UserGroup]
   ): StatsData = {
+    val now = Time.nowParis()
     val applicationsByArea: Map[Area, List[Application]] =
       applications
         .groupBy(_.area)
@@ -421,12 +422,12 @@ case class ApplicationController @Inject() (
         }
 
     val firstDate: ZonedDateTime = if (applications.isEmpty) {
-      Time.nowParis()
+      now
     } else {
       val weekFieldISO = java.time.temporal.WeekFields.of(java.util.Locale.FRANCE).dayOfWeek()
       applications.map(_.creationDate).min.`with`(weekFieldISO, 1)
     }
-    val today = Time.nowParis()
+    val today = now
     val months = Time.monthsMap(firstDate, today)
     val allApplications = applicationsByArea.flatMap(_._2).toList
     val allApplicationsByArea = applicationsByArea.map {
@@ -435,45 +436,16 @@ case class ApplicationController @Inject() (
           area = area,
           StatsData.ApplicationAggregates(
             applications = applications,
-            closedApplicationsPerMonth = months.keys.toList.map { month: String =>
-              month -> applications.filter(application =>
-                application.estimatedClosedDate.isDefined && f"${application.estimatedClosedDate.get.getYear}/${application.estimatedClosedDate.get.getMonthValue}%02d" == month
-              )
-            },
-            newApplicationsPerMonth = months.keys.toList.map { month: String =>
-              month -> applications.filter(application =>
-                f"${application.creationDate.getYear}/${application.creationDate.getMonthValue}%02d" == month
-              )
-            }
+            months = months
           )
         )
     }.toList
     val data = StatsData(
       all = StatsData.ApplicationAggregates(
         applications = allApplications,
-        closedApplicationsPerMonth = Nil,
-        newApplicationsPerMonth = Nil
+        months = months
       ),
-      allApplications = allApplications,
-      aggregatesByArea = allApplicationsByArea,
-      applicationsGroupByMonths = months.values.toList.map { month: String =>
-        month -> allApplications
-          .filter(application =>
-            (Time
-              .formatPatternFr(application.creationDate, "MMMM YYYY"): String) == (month: String)
-          )
-          .toList
-      },
-      applicationsGroupByMonthsClosed = months.values.toList.map { month: String =>
-        month -> allApplications
-          .filter(application =>
-            application.estimatedClosedDate != None && (Time.formatPatternFr(
-              application.estimatedClosedDate.get,
-              "MMMM YYYY"
-            ): String) == (month: String)
-          )
-          .toList
-      }
+      aggregatesByArea = allApplicationsByArea
     )
     data
   }
@@ -529,24 +501,10 @@ case class ApplicationController @Inject() (
       users <- usersFuture
       applications <- applicationsFuture
       groups <- groupsFuture
-    } yield {
-      // TODO: dup
-      val firstDate: ZonedDateTime = if (applications.isEmpty) {
-        Time.nowParis()
-      } else {
-        val weekFieldISO = java.time.temporal.WeekFields.of(java.util.Locale.FRANCE).dayOfWeek()
-        applications.map(_.creationDate).min.`with`(weekFieldISO, 1)
-      }
-      // TODO: dup
-      val today = Time.nowParis()
-      // TODO: dup
-      val months = Time.monthsMap(firstDate, today)
-      views.html.stats.charts(Authorization.isAdmin(request.rights))(
-        statsAggregates(applications, users, groups),
-        months,
-        users
-      )
-    }
+    } yield views.html.stats.charts(Authorization.isAdmin(request.rights))(
+      statsAggregates(applications, users, groups),
+      users
+    )
   }
 
   private val statsForm = Form(

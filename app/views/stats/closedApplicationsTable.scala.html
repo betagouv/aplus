@@ -1,6 +1,4 @@
-@import scala.collection.immutable.ListMap
-
-@(areaData: views.stats.StatsData.AreaAggregates, months: ListMap[String, String])(implicit webJarsUtil: org.webjars.play.WebJarsUtil)
+@(data: views.stats.StatsData.ApplicationAggregates)(implicit webJarsUtil: org.webjars.play.WebJarsUtil)
 
 <table class="mdl-data-table mdl-data-table--initial-white-space  mdl-js-data-table mdl-cell mdl-cell--12-col">
     <thead>
@@ -15,9 +13,9 @@
         </tr>
     </thead>
     <tbody>
-        @for((month, applications) <- areaData.aggregates.closedApplicationsPerMonth.reverse) {
+        @for((month, applications) <- data.closedApplicationsGroupedByMonth.reverse) {
             <tr class="application-row">
-                <td class="mdl-data-table__cell--non-numeric">@months(month) (@month)</td>
+                <td class="mdl-data-table__cell--non-numeric">@month</td>
                 <td>@applications.length</td>
                 <td class="mdl-color-text--red mdl-typography--font-bold">@applications.count(_.irrelevant)</td>
                 <td>@applications.count(_.usefulness.contains("Oui")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"></td>

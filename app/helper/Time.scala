@@ -33,6 +33,7 @@ object Time {
     recursion(toDateFirstDayOfWeek)
   }
 
+  /** Example `ListMap(2018/02 -> février 2018, 2018/03 -> mars 2018)` */
   def monthsMap(fromDate: ZonedDateTime, toDate: ZonedDateTime): ListMap[String, String] = {
     val keyFormatter = DateTimeFormatter.ofPattern("YYYY/MM", Locale.FRANCE)
     val valueFormatter = DateTimeFormatter.ofPattern("MMMM YYYY", Locale.FRANCE)

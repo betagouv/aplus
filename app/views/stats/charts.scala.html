@@ -1,8 +1,7 @@
-@import scala.collection.immutable.ListMap
 @import java.util.UUID
 
-@import _root_.helper.{Math, Time}
-@(isAdmin: Boolean)(data: views.stats.StatsData, months: ListMap[String, String], users: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil)
+@import _root_.helper.Time
+@(isAdmin: Boolean)(data: views.stats.StatsData, users: List[User])(implicit webJarsUtil: org.webjars.play.WebJarsUtil)
 
 
 <div class="mdl-cell mdl-cell--12-col">
@@ -23,38 +22,36 @@
 </div>
 <div class="mdl-cell mdl-cell--6-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
     <h6>Répartition des demandes</h6>
-    @applicationsStatusPieChart(data)
-    <h5>@data.allApplications.count(a => a.ageInDays <= 30 && a.closed) clôturées sur les 30 derniers jours</h5>
+    @applicationsStatusPieChart(data.all)
+    <h5>@data.all.countClosedLast30Days clôturées sur les 30 derniers jours</h5>
 </div>
 <div class="mdl-cell mdl-cell--6-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
     <h6>Pertinence des demandes</h6>
-    @applicationsRelevantPieChart(data)
-    <h5>@data.allApplications.count(a => a.ageInDays <= 30 && a.irrelevant) non pertinentes sur les 30 derniers jours</h5>
+    @applicationsRelevantPieChart(data.all)
+    <h5>@data.all.countIrrelevantLast30Days non pertinentes sur les 30 derniers jours</h5>
 </div>
 
 <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
     <h6>Est-ce que la réponse vous semble utile pour l’usager ?</h6>
-    @applicationsUsefulnessFeedbackBarChart(data)
+    @applicationsUsefulnessFeedbackBarChart(data.all)
 </div>
 
 <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
     <h6>Temps de résolution</h6>
-    @applicationsResolutionTimeBarChart(data)
+    @applicationsResolutionTimeBarChart(data.all)
 </div>
 
 <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
-    <h6>Demandes déposées</h6>
-    @newApplicationsLineChart(data)
-</div>
-<div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
-    <h6>Demandes clôturées</h6>
-    @closedApplicationsLineChart(data)
+    <h6>Demandes déposées et clôturées</h6>
+    <div class="single--margin-right-16px">
+        @newAndClosedApplicationsBarChart(data.all, "all")
+    </div>
 </div>
 
 @if(isAdmin) {
     <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
         <h6>Demande par administration réceptrice (Beta)</h6>
-        @applicationsByAdministrationPieChart(data, users)
+        @applicationsByAdministrationPieChart(data.all, users)
     </div>
 }
 
@@ -72,34 +69,34 @@
         @for(areaData <- data.aggregatesByArea) {
             <h4 class="mdl-cell mdl-cell--12-col">@areaData.area.name</h4>
             <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white mdl-grid">
-                @stats.oneAreasClosedApplicationsBarChart(areaData, months)
+                @stats.newAndClosedApplicationsBarChart(areaData.aggregates, areaData.area.id.toString)
                 <details class="mdl-cell mdl-cell--12-col">
                     <summary>Détail des demandes reçues par les instructeurs d’administrations</summary>
 
-                    @defining(areaData.aggregates.newApplicationsPerMonth.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
+                    @defining(areaData.aggregates.applicationsGroupedByMonth.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
 
                     <div class="chart-container">
-                        @oneAreasApplicationsByAdministrationLineChart(areaData, months, users, admins)
+                        @oneAreasApplicationsByAdministrationLineChart(areaData, users, admins)
                     </div>
-                    @oneAreasApplicationsByAdministrationTable(areaData, months, users, admins)
+                    @oneAreasApplicationsByAdministrationTable(areaData, users, admins)
 
                     }
                 </details>
 
                 <details class="mdl-cell mdl-cell--12-col">
                     <summary>Détail des demandes faites par des structures aidantes</summary>
-                    @defining(areaData.aggregates.newApplicationsPerMonth.flatMap(_._2).flatMap(_.creatorUserQualite(users)).toSet.toList) { admins =>
+                    @defining(areaData.aggregates.applicationsGroupedByMonth.flatMap(_._2).flatMap(_.creatorUserQualite(users)).toSet.toList) { admins =>
 
                     <div class="chart-container">
-                        @oneAreasApplicationsByCreatorQualiteLineChart(areaData, months, users, admins)
+                        @oneAreasApplicationsByCreatorQualiteLineChart(areaData, users, admins)
                     </div>
-                    @oneAreasApplicationsByCreatorQualiteTable(areaData, months, users, admins)
+                    @oneAreasApplicationsByCreatorQualiteTable(areaData, users, admins)
 
                     }
                 </details>
                 <details class="mdl-cell mdl-cell--12-col">
                     <summary>Détail des demandes clôturées</summary>
-                    @oneAreasClosedApplicationsTable(areaData, months)
+                    @closedApplicationsTable(areaData.aggregates)
                 </details>
             </div>
         }
