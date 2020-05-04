@@ -1,0 +1,30 @@
+@(data: views.stats.StatsData)
+
+<canvas id="applications-relevant-chart" class="chart--default-size"></canvas>
+<script>
+  new Chart(document.getElementById('applications-relevant-chart'), {
+      type: 'pie',
+
+      // The data for our dataset
+      data: {
+          labels: ['Pertinente', 'Non Pertinente'],
+          datasets: [{
+              label: "Status",
+              data: [@data.allApplications.count(!_.irrelevant),@data.allApplications.count(_.irrelevant)],
+              backgroundColor: [
+                  "rgba(61, 149, 236, 1)",
+                  "red"
+              ]
+          }]
+      },
+
+      // Configuration options go here
+      options: {
+          tooltips: {
+              mode: 'index',
+              intersect: false
+          },
+          responsive: true
+      }
+  });
+</script>

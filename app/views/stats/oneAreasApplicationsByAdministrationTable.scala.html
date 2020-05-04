@@ -1,0 +1,26 @@
+@import scala.collection.immutable.ListMap
+
+@(areaData: views.stats.StatsData.AreaAggregates, months: ListMap[String, String], users: List[User], admins: List[String])
+
+<table class="mdl-data-table mdl-data-table--initial-white-space  mdl-js-data-table mdl-cell mdl-cell--12-col">
+    <thead>
+        <tr>
+            <th class="mdl-data-table__cell--non-numeric">Semaine</th>
+            <th>Nouvelle</th>
+            @for(admin: String <- admins) {
+                <th>@admin</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @for((month, applications) <- areaData.aggregates.newApplicationsPerMonth.reverse) {
+            <tr class="application-row">
+                <td class="mdl-data-table__cell--non-numeric">@months(month) (@month)</td>
+                <td>@applications.length</td>
+                @for(admin: String <- admins) {
+                    <td>@applications.count(_.administrations(users).contains(admin))</td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>

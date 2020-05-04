@@ -541,7 +541,7 @@ case class ApplicationController @Inject() (
       val today = Time.nowParis()
       // TODO: dup
       val months = Time.monthsMap(firstDate, today)
-      views.html.helpers.stats(Authorization.isAdmin(request.rights))(
+      views.html.stats.charts(Authorization.isAdmin(request.rights))(
         statsAggregates(applications, users, groups),
         months,
         users
@@ -594,7 +594,7 @@ case class ApplicationController @Inject() (
       .map { html =>
         eventService.log(StatsShowed, "Visualise les stats")
         Ok(
-          views.html.stats(request.currentUser, request.rights)(
+          views.html.stats.page(request.currentUser, request.rights)(
             html,
             List(),
             areaIds,

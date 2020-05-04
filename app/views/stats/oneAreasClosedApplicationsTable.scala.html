@@ -1,0 +1,30 @@
+@import scala.collection.immutable.ListMap
+
+@(areaData: views.stats.StatsData.AreaAggregates, months: ListMap[String, String])(implicit webJarsUtil: org.webjars.play.WebJarsUtil)
+
+<table class="mdl-data-table mdl-data-table--initial-white-space  mdl-js-data-table mdl-cell mdl-cell--12-col">
+    <thead>
+        <tr>
+            <th class="mdl-data-table__cell--non-numeric">Semaine</th>
+            <th>Clôturé</th>
+            <th>Non Pertinente</th>
+            <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"> Oui</th>
+            <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"> Je ne sais pas</th>
+            <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f61e.svg").url.get"> Non</th>
+            <th>?</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for((month, applications) <- areaData.aggregates.closedApplicationsPerMonth.reverse) {
+            <tr class="application-row">
+                <td class="mdl-data-table__cell--non-numeric">@months(month) (@month)</td>
+                <td>@applications.length</td>
+                <td class="mdl-color-text--red mdl-typography--font-bold">@applications.count(_.irrelevant)</td>
+                <td>@applications.count(_.usefulness.contains("Oui")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"></td>
+                <td>@applications.count(_.usefulness.contains("Je ne sais pas")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"></td>
+                <td>@applications.count(_.usefulness.contains("Non")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f61e.svg").url.get"></td>
+                <td>@applications.count(_.usefulness.isEmpty) ?</td>
+            </tr>
+        }
+    </tbody>
+</table>
