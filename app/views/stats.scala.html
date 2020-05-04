@@ -13,7 +13,7 @@
                 @for(area <- Area.all) {
                     <option value="@area.id" @if(selectedAreaIds.contains(area.id)) { selected }>@area</option>
                 }
-            </select>user.admin
+            </select>
             @if(currentUser.admin || currentUser.observableOrganisationIds.nonEmpty) {
                 <select id="organisation-selector" name="organisations[]">
                     <option @if(selectedOrganisationIds.isEmpty){ selected } value >Tous les organismes</option>

@@ -54,6 +54,7 @@ import models.EventType.{
 }
 import play.api.cache.AsyncCacheApi
 import play.twirl.api.Html
+import views.stats.StatsData
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
@@ -404,6 +405,79 @@ case class ApplicationController @Inject() (
     )
   }
 
+  private def statsAggregates(
+      applications: List[Application],
+      users: List[User],
+      groups: List[UserGroup]
+  ): StatsData = {
+    val applicationsByArea: Map[Area, List[Application]] =
+      applications
+        .groupBy(_.area)
+        .flatMap {
+          case (areaId: UUID, applications: Seq[Application]) =>
+            Area.all
+              .find(area => (area.id: UUID) == (areaId: UUID))
+              .map(area => (area, applications))
+        }
+
+    val firstDate: ZonedDateTime = if (applications.isEmpty) {
+      Time.nowParis()
+    } else {
+      val weekFieldISO = java.time.temporal.WeekFields.of(java.util.Locale.FRANCE).dayOfWeek()
+      applications.map(_.creationDate).min.`with`(weekFieldISO, 1)
+    }
+    val today = Time.nowParis()
+    val months = Time.monthsMap(firstDate, today)
+    val allApplications = applicationsByArea.flatMap(_._2).toList
+    val allApplicationsByArea = applicationsByArea.map {
+      case (area, applications) =>
+        StatsData.AreaAggregates(
+          area = area,
+          StatsData.ApplicationAggregates(
+            applications = applications,
+            closedApplicationsPerMonth = months.keys.toList.map { month: String =>
+              month -> applications.filter(application =>
+                application.estimatedClosedDate.isDefined && f"${application.estimatedClosedDate.get.getYear}/${application.estimatedClosedDate.get.getMonthValue}%02d" == month
+              )
+            },
+            newApplicationsPerMonth = months.keys.toList.map { month: String =>
+              month -> applications.filter(application =>
+                f"${application.creationDate.getYear}/${application.creationDate.getMonthValue}%02d" == month
+              )
+            }
+          )
+        )
+    }.toList
+    val data = StatsData(
+      all = StatsData.ApplicationAggregates(
+        applications = allApplications,
+        closedApplicationsPerMonth = Nil,
+        newApplicationsPerMonth = Nil
+      ),
+      allApplications = allApplications,
+      aggregatesByArea = allApplicationsByArea,
+      applicationsGroupByMonths = months.values.toList.map { month: String =>
+        month -> allApplications
+          .filter(application =>
+            (Time
+              .formatPatternFr(application.creationDate, "MMMM YYYY"): String) == (month: String)
+          )
+          .toList
+      },
+      applicationsGroupByMonthsClosed = months.values.toList.map { month: String =>
+        month -> allApplications
+          .filter(application =>
+            application.estimatedClosedDate != None && (Time.formatPatternFr(
+              application.estimatedClosedDate.get,
+              "MMMM YYYY"
+            ): String) == (month: String)
+          )
+          .toList
+      }
+    )
+    data
+  }
+
   private def generateStats[A](
       areaIds: List[UUID],
       organisationIds: List[Organisation.Id],
@@ -456,72 +530,21 @@ case class ApplicationController @Inject() (
       applications <- applicationsFuture
       groups <- groupsFuture
     } yield {
-      val applicationsByArea: Map[Area, List[Application]] =
-        applications
-          .groupBy(_.area)
-          .flatMap {
-            case (areaId: UUID, applications: Seq[Application]) =>
-              Area.all
-                .find(area => (area.id: UUID) == (areaId: UUID))
-                .map(area => (area, applications))
-          }
-
+      // TODO: dup
       val firstDate: ZonedDateTime = if (applications.isEmpty) {
         Time.nowParis()
       } else {
         val weekFieldISO = java.time.temporal.WeekFields.of(java.util.Locale.FRANCE).dayOfWeek()
         applications.map(_.creationDate).min.`with`(weekFieldISO, 1)
       }
+      // TODO: dup
       val today = Time.nowParis()
+      // TODO: dup
       val months = Time.monthsMap(firstDate, today)
-      val allApplications = applicationsByArea.flatMap(_._2).toList
-      val allApplicationsByArea = applicationsByArea.map {
-        case (area, applications) =>
-          views.stats.StatsData.AreaAggregates(
-            area = area,
-            applications = applications,
-            closedApplicationsPerMonth = months.keys.toList.map { month: String =>
-              month -> applications.filter(application =>
-                application.estimatedClosedDate.isDefined && f"${application.estimatedClosedDate.get.getYear}/${application.estimatedClosedDate.get.getMonthValue}%02d" == month
-              )
-            },
-            newApplicationsPerMonth = months.keys.toList.map { month: String =>
-              month -> applications.filter(application =>
-                f"${application.creationDate.getYear}/${application.creationDate.getMonthValue}%02d" == month
-              )
-            }
-          )
-      }.toList
-      val data = views.stats.StatsData(
-        allApplications = allApplications,
-        areaAggregates = allApplicationsByArea,
-        applicationsGroupByMonths = months.values.toList.map { month: String =>
-          month -> allApplications
-            .filter(application =>
-              (Time
-                .formatPatternFr(application.creationDate, "MMMM YYYY"): String) == (month: String)
-            )
-            .toList
-        },
-        applicationsGroupByMonthsClosed = months.values.toList.map { month: String =>
-          month -> allApplications
-            .filter(application =>
-              application.estimatedClosedDate != None && (Time.formatPatternFr(
-                application.estimatedClosedDate.get,
-                "MMMM YYYY"
-              ): String) == (month: String)
-            )
-            .toList
-        }
-      )
       views.html.helpers.stats(Authorization.isAdmin(request.rights))(
-        data,
+        statsAggregates(applications, users, groups),
         months,
-        users,
-        groups,
-        areaIds,
-        organisationIds,
-        groupIds
+        users
       )
     }
   }
@@ -535,7 +558,8 @@ case class ApplicationController @Inject() (
   )
 
   def stats: Action[AnyContent] = loginAction.async { implicit request =>
-    val (areaIds, organisationIds, groupIds) = statsForm.bindFromRequest.get
+    // TODO
+    val (areaIds, organisationIds, groupIds) = statsForm.bindFromRequest.value.get
 
     val observableOrganisationIds = if (Authorization.isAdmin(request.rights)) {
       organisationIds
@@ -553,10 +577,15 @@ case class ApplicationController @Inject() (
       if (areaIds.isEmpty && organisationIds.isEmpty && groupIds.isEmpty)
         s"${Authorization.isAdmin(request.rights)}.stats.all"
       else if (observableGroupIds.isEmpty)
-        s"${Authorization.isAdmin(request.rights)}.stats.${Hash
-          .sha256(areaIds.toString() + observableOrganisationIds.toString())}"
+        (Authorization.isAdmin(request.rights).toString +
+          ".stats." +
+          Hash.sha256(areaIds.toString + observableOrganisationIds.toString))
       else
-        s"${Authorization.isAdmin(request.rights)}.stats.${Hash.sha256(areaIds.toString() + observableOrganisationIds.toString() + observableGroupIds.toString())}"
+        (Authorization.isAdmin(request.rights).toString +
+          ".stats." +
+          Hash.sha256(
+            areaIds.toString + observableOrganisationIds.toString + observableGroupIds.toString
+          ))
 
     cache
       .getOrElseUpdate[Html](cacheKey, 1.hours)(
