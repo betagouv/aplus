@@ -19,7 +19,7 @@
                          Math.median(resolutionTimes)/24D / 60D
                      }
                      }.mkString(", "))],
-              label: "Temps de résolution median (Jour)",
+              label: "Temps median de résolution (Jour)",
               backgroundColor: "black",
               type: 'line',
               borderColor: "black",
@@ -33,7 +33,7 @@
                          resolutionTimes.sum.toDouble / resolutionTimes.size.toDouble / 24D / 60D
                      }
                      }.mkString(", "))],
-              label: "Temps de résolution moyen (Jour)",
+              label: "Temps moyen de résolution (Jour)",
               backgroundColor: "rgba(113, 176, 239, 1)"
           }, {
               data: [@Html(data.applicationsGroupByMonthsClosed.map{ apps =>
@@ -44,7 +44,7 @@
                          resolutionTimes.sum.toDouble / resolutionTimes.size.toDouble / 24D / 60D
                      }
                      }.mkString(", "))],
-              label: "Temps pour la première réponse moyen (Jour)",
+              label: "Temps moyen pour la première réponse (Jour)",
               backgroundColor: "Blue"
           },
           ]

@@ -7,7 +7,7 @@
 }{
     <div class="mdl-cell mdl-cell--12-col">
         @helper.form(routes.ApplicationController.stats(), "method" -> "post") {
-            Département :
+            Département :
             <select id="area-selector" name="areas[]">
                 <option @if(selectedAreaIds.isEmpty) { selected } value>Tous les départements</option>
                 @for(area <- Area.all) {
