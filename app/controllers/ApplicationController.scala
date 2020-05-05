@@ -1,7 +1,7 @@
 package controllers
 
 import java.nio.file.{Files, Path, Paths}
-import java.time.ZonedDateTime
+import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 import helper.UUIDHelper
 
@@ -421,14 +421,9 @@ case class ApplicationController @Inject() (
               .map(area => (area, applications))
         }
 
-    val firstDate: ZonedDateTime = if (applications.isEmpty) {
-      now
-    } else {
-      val weekFieldISO = java.time.temporal.WeekFields.of(java.util.Locale.FRANCE).dayOfWeek()
-      applications.map(_.creationDate).min.`with`(weekFieldISO, 1)
-    }
-    val today = now
-    val months = Time.monthsMap(firstDate, today)
+    val firstDate: ZonedDateTime =
+      if (applications.isEmpty) now else applications.map(_.creationDate).min
+    val months = Time.monthsMap(firstDate, now)
     val allApplications = applicationsByArea.flatMap(_._2).toList
     val allApplicationsByArea = applicationsByArea.map {
       case (area, applications) =>
@@ -436,14 +431,16 @@ case class ApplicationController @Inject() (
           area = area,
           StatsData.ApplicationAggregates(
             applications = applications,
-            months = months
+            months = months,
+            usersRelatedToApplications = users
           )
         )
     }.toList
     val data = StatsData(
       all = StatsData.ApplicationAggregates(
         applications = allApplications,
-        months = months
+        months = months,
+        usersRelatedToApplications = users
       ),
       aggregatesByArea = allApplicationsByArea
     )
@@ -453,13 +450,15 @@ case class ApplicationController @Inject() (
   private def generateStats[A](
       areaIds: List[UUID],
       organisationIds: List[Organisation.Id],
-      groupIds: List[UUID]
+      groupIds: List[UUID],
+      creationMinDate: Option[LocalDate],
+      creationMaxDate: Option[LocalDate]
   )(
       implicit webJarsUtil: org.webjars.play.WebJarsUtil,
       request: RequestWithUserData[A]
   ): Future[Html] = {
 
-    val (usersFuture, applicationsFuture, groupsFuture) =
+    val (usersFuture, applicationsFutureNoDateFilter, groupsFuture) =
       if (areaIds.isEmpty && organisationIds.isEmpty && groupIds.isEmpty) {
         (userService.all, applicationService.all, userGroupService.all)
       } else if (areaIds.nonEmpty && groupIds.isEmpty) {
@@ -497,12 +496,42 @@ case class ApplicationController @Inject() (
         (usersFuture, applicationsFuture, groupsFuture)
       }
 
+    // Filter creation dates
+    def isBeforeOrEqual(d1: LocalDate, d2: LocalDate): Boolean = !d1.isAfter(d2)
+    val applicationsFuture = applicationsFutureNoDateFilter.map { applications =>
+      (creationMinDate, creationMaxDate) match {
+        case (Some(minDate), Some(maxDate)) =>
+          applications.filter(application =>
+            isBeforeOrEqual(minDate, application.creationDate.toLocalDate) &&
+              isBeforeOrEqual(application.creationDate.toLocalDate, maxDate)
+          )
+        case (Some(minDate), None) =>
+          applications.filter(application =>
+            isBeforeOrEqual(minDate, application.creationDate.toLocalDate)
+          )
+        case (None, Some(maxDate)) =>
+          applications.filter(application =>
+            isBeforeOrEqual(application.creationDate.toLocalDate, maxDate)
+          )
+        case (None, None) => applications
+      }
+    }
+
+    // Users whose id is in the `Application`
+    val relatedUsersFuture = applicationsFuture.map { applications =>
+      val ids: List[UUID] = applications.flatMap { application =>
+        application.creatorUserId :: application.invitedUsers.keys.toList
+      }
+      userService.byIds(ids, includeDisabled = true)
+    }
+
     for {
       users <- usersFuture
       applications <- applicationsFuture
       groups <- groupsFuture
+      relatedUsers <- relatedUsersFuture
     } yield views.html.stats.charts(Authorization.isAdmin(request.rights))(
-      statsAggregates(applications, users, groups),
+      statsAggregates(applications, relatedUsers, groups),
       users
     )
   }
@@ -511,13 +540,16 @@ case class ApplicationController @Inject() (
     tuple(
       "areas" -> default(list(uuid), List()),
       "organisations" -> default(list(of[Organisation.Id]), List()),
-      "groups" -> default(list(uuid), List())
+      "groups" -> default(list(uuid), List()),
+      "creationMinDate" -> optional(localDate),
+      "creationMaxDate" -> optional(localDate)
     )
   )
 
   def stats: Action[AnyContent] = loginAction.async { implicit request =>
     // TODO
-    val (areaIds, organisationIds, groupIds) = statsForm.bindFromRequest.value.get
+    val (areaIds, organisationIds, groupIds, creationMinDate, creationMaxDate) =
+      statsForm.bindFromRequest.value.get
 
     val observableOrganisationIds = if (Authorization.isAdmin(request.rights)) {
       organisationIds
@@ -532,22 +564,22 @@ case class ApplicationController @Inject() (
     }
 
     val cacheKey =
-      if (areaIds.isEmpty && organisationIds.isEmpty && groupIds.isEmpty)
-        s"${Authorization.isAdmin(request.rights)}.stats.all"
-      else if (observableGroupIds.isEmpty)
-        (Authorization.isAdmin(request.rights).toString +
-          ".stats." +
-          Hash.sha256(areaIds.toString + observableOrganisationIds.toString))
-      else
-        (Authorization.isAdmin(request.rights).toString +
-          ".stats." +
-          Hash.sha256(
-            areaIds.toString + observableOrganisationIds.toString + observableGroupIds.toString
-          ))
+      (Authorization.isAdmin(request.rights).toString +
+        ".stats." +
+        Hash.sha256(
+          areaIds.toString + observableOrganisationIds.toString + observableGroupIds.toString +
+            creationMinDate.toString + creationMaxDate.toString
+        ))
 
     cache
       .getOrElseUpdate[Html](cacheKey, 1.hours)(
-        generateStats(areaIds, observableOrganisationIds, observableGroupIds)
+        generateStats(
+          areaIds,
+          observableOrganisationIds,
+          observableGroupIds,
+          creationMinDate,
+          creationMaxDate
+        )
       )
       .map { html =>
         eventService.log(StatsShowed, "Visualise les stats")
@@ -557,7 +589,9 @@ case class ApplicationController @Inject() (
             List(),
             areaIds,
             organisationIds,
-            groupIds
+            groupIds,
+            creationMinDate,
+            creationMaxDate
           )
         )
       }

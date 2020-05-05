@@ -37,8 +37,9 @@ object Time {
   def monthsMap(fromDate: ZonedDateTime, toDate: ZonedDateTime): ListMap[String, String] = {
     val keyFormatter = DateTimeFormatter.ofPattern("YYYY/MM", Locale.FRANCE)
     val valueFormatter = DateTimeFormatter.ofPattern("MMMM YYYY", Locale.FRANCE)
+    val beginning = fromDate.withDayOfMonth(1)
     def recursion(date: ZonedDateTime): ListMap[String, String] =
-      if (date.isBefore(fromDate)) {
+      if (date.isBefore(beginning)) {
         ListMap()
       } else {
         recursion(date.minusMonths(1)) +

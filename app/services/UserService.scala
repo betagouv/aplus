@@ -46,6 +46,7 @@ class UserService @Inject() (
     )
     .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
 
+  // TODO: rename `allNoNameNoEmail`, because it generates bugs
   def all: Future[List[User]] = Future {
     db.withConnection { implicit connection =>
       SQL("""SELECT *, '' as name, '' as email, '' as qualite FROM "user"""").as(simpleUser.*)

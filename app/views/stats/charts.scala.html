@@ -51,7 +51,7 @@
 @if(isAdmin) {
     <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
         <h6>Demande par administration réceptrice (Beta)</h6>
-        @applicationsByAdministrationPieChart(data.all, users)
+        @applicationsByAdministrationPieChart(data.all)
     </div>
 }
 
@@ -60,7 +60,7 @@
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing mdl-shadow--2dp mdl-color--white">
         <h6>Demandes par territoire</h6>
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
-            @applicationsByAreaTable(data, users)
+            @applicationsByAreaTable(data)
         </div>
     </div>
 
@@ -72,27 +72,32 @@
                 @stats.newAndClosedApplicationsBarChart(areaData.aggregates, areaData.area.id.toString)
                 <details class="mdl-cell mdl-cell--12-col">
                     <summary>Détail des demandes reçues par les instructeurs d’administrations</summary>
-
-                    @defining(areaData.aggregates.applicationsGroupedByMonth.flatMap(_._2).flatMap(_.administrations(users)).toSet.toList) { admins =>
-
                     <div class="chart-container">
-                        @oneAreasApplicationsByAdministrationLineChart(areaData, users, admins)
+                        @conditionalTimeSeriesPlot(
+                            areaData.aggregates.applicationsCountGroupedByAdministrationThenByMonth,
+                            s"toto-admin-received-chart-${areaData.area.id}"
+                        )
                     </div>
-                    @oneAreasApplicationsByAdministrationTable(areaData, users, admins)
-
-                    }
+                    @conditionalTimeSeriesTransposedTable(
+                        areaData.aggregates.applicationsCountGroupedByAdministrationThenByMonth,
+                        "Mois",
+                        "Total"
+                    )
                 </details>
 
                 <details class="mdl-cell mdl-cell--12-col">
                     <summary>Détail des demandes faites par des structures aidantes</summary>
-                    @defining(areaData.aggregates.applicationsGroupedByMonth.flatMap(_._2).flatMap(_.creatorUserQualite(users)).toSet.toList) { admins =>
-
                     <div class="chart-container">
-                        @oneAreasApplicationsByCreatorQualiteLineChart(areaData, users, admins)
+                        @conditionalTimeSeriesPlot(
+                            areaData.aggregates.applicationsCountGroupedByCreatorQualiteThenByMonth,
+                            s"toto-helper-admin-chart-${areaData.area.id}"
+                        )
                     </div>
-                    @oneAreasApplicationsByCreatorQualiteTable(areaData, users, admins)
-
-                    }
+                    @conditionalTimeSeriesTransposedTable(
+                        areaData.aggregates.applicationsCountGroupedByCreatorQualiteThenByMonth,
+                        "Mois",
+                        "Total"
+                    )
                 </details>
                 <details class="mdl-cell mdl-cell--12-col">
                     <summary>Détail des demandes clôturées</summary>
