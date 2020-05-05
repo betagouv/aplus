@@ -414,13 +414,13 @@ dialog {
     <div class="mdl-cell mdl-cell--12-col mdl-tabs mdl-js-tabs mdl-js-ripple-effect single--margin-0px single--width-100pc">
         <div class="mdl-tabs__tab-bar mdl-tabs__tab-bar--align-left mdl-tabs__tab-bar--multiline-text mdl-color--grey-200">
             <a href="#answer" class="mdl-tabs__tab mdl-tabs__tab--multiline-text mdl-color-text--primary single--display-flex single--align-items-center @if(openedTab =="answer"){ is-active  }">
-                <i class="material-icons single--margin-right-8px">reply_all</i>
-                Ajouter une réponse
+                <i class="material-icons single--margin-right-8px single--hidden-phone">reply_all</i>
+                Ajouter une réponse
             </a>
 
             @if(groupsWithUsersThatCanBeInvited.nonEmpty || currentUser.expert) {
                 <a href="#invite" class="mdl-tabs__tab mdl-tabs__tab--multiline-text mdl-color-text--primary single--display-flex single--align-items-center @if(openedTab =="invite"){ is-active }">
-                    <i class="material-icons single--margin-right-8px">person_add</i>
+                    <i class="material-icons single--margin-right-8px single--hidden-phone">person_add</i>
                     Inviter une personne
                 </a>
             }
