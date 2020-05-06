@@ -537,6 +537,10 @@ a {
     margin-top: 10px;
 }
 
+.single--margin-top-16px {
+    margin-top: 16px;
+}
+
 .single--margin-top-30px {
     margin-top: 30px;
 }
@@ -553,6 +557,10 @@ a {
     margin-bottom: 40px;
 }
 
+.single--margin-right-8px {
+    margin-right: 8px;
+}
+
 .single--margin-right-16px {
     margin-right: 16px;
 }
@@ -561,8 +569,29 @@ a {
     margin-right: 20px;
 }
 
+.single--margin-right-24px {
+    margin-right: 24px;
+}
+
+.single--margin-left-2px {
+    margin-left: 2px;
+}
+
+.single--margin-left-24px {
+    margin-left: 24px;
+}
+
+.single--margin-0px {
+    margin: 0px;
+}
+
 .single--margin-4px {
     margin: 4px;
+}
+
+
+.single--padding-0px {
+    padding: 0px;
 }
 
 .single--padding-top-8px {
@@ -594,6 +623,10 @@ a {
     -webkit-justify-content: center;
     -ms-flex-pack: center;
     justify-content: center;
+}
+
+.single--width-100pc {
+    width: 100%;
 }
 
 .single--width-unset {
@@ -656,6 +689,16 @@ a {
     text-decoration: underline;
 }
 
+.single--list-style-type-none {
+    list-style-type: none;
+}
+
+
+@media (max-width: 479px) {
+    .single--hidden-phone {
+        display: none;
+    }
+}
 
 
 /****************
@@ -725,4 +768,12 @@ Icons
 .navigation .mdl-navigation__link .material-icons:first-of-type {
     font-size: 24px;
     margin-right: 32px;
+}
+
+/*************
+Tabs
+ */
+
+.mdl-tabs__tab.is-active {
+    background: white;
 }

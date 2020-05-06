@@ -136,14 +136,19 @@ function removeInfo(elem) {
 
 function addOptionalInfoRow(infoName, infoValue) {
   var newNode = document.createElement("div");
-  newNode.innerHTML = ''+infoName+' (facultatif)'+'<br> \
-                       <div class="mdl-textfield mdl-js-textfield single--margin-right-20px"> \
-                           <input class="mdl-textfield__input mdl-color--white" type="text" id="sample1" name="infos['+infoName+']" value="'+infoValue+'"> \
-                            <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+' de l\'usager ici</label> \
-                       </div> \
-                    <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored '+applicationFormUserInfosRemoveButtonClass+'" type="button"> \
-                        <i class="material-icons">remove_circle</i> \
-                    </button>';
+  newNode.innerHTML = '<div class="single--display-flex single--align-items-center">'+
+    '<div class="single--margin-right-24px single--font-size-14px">'+infoName+' (facultatif)</div> \
+     <div class="mdl-textfield mdl-js-textfield mdl-textfield--no-label single--margin-right-24px"> \
+         <input class="mdl-textfield__input mdl-color--white" type="text" id="sample1" name="infos['+infoName+']" value="'+infoValue+'"> \
+         <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+' de l’usager ici</label> \
+     </div> \
+     <div class="'+applicationFormUserInfosRemoveButtonClass+' single--display-flex single--align-items-center"> \
+         <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" type="button"> \
+             <i class="material-icons">remove_circle</i> \
+         </button> \
+         <span class="single--cursor-pointer single--text-decoration-underline single--margin-left-2px">Retirer</span> \
+     </div> \
+  </div>';
 
   var otherDiv = document.getElementById("other-div");
   otherDiv.parentNode.insertBefore(newNode, otherDiv);

@@ -78,7 +78,35 @@ Misc
     max-width: calc(100% - 26px);
 }
 
+/** mdl-textfield have 20px padding top and bottom, this is a lot when there are no labels. */
+.mdl-textfield--no-label {
+    padding: 8px 0;
+}
+
+/** :after is the underline animation. */
+.mdl-textfield--no-label .mdl-textfield__label:after {
+    bottom: 8px;
+}
+
 .mdl-tooltip__container {
     /** min-width is set so the tooltip is always visible (can wrap) */
     min-width: 150px;
+}
+
+.mdl-tabs__tab-bar--multiline-text {
+    align-items: stretch;
+    height: unset;
+    min-height: 48px;
+}
+
+.mdl-tabs__tab--multiline-text {
+    height: unset;
+    min-height: 48px;
+    line-height: normal;
+}
+
+.mdl-button--multiline-text {
+    height: unset;
+    min-height: 36px;
+    line-height: normal;
 }
