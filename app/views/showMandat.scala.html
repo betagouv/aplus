@@ -1,0 +1,45 @@
+@import _root_.helper.Time
+
+@(user: User, currentUserRights: Authorization.UserRights)(mandat: models.mandat.Mandat)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+
+@main(user, currentUserRights)(s"""Mandat du ${Time.formatPatternFr(mandat.initiationDate, "dd MMM YYYY - HH:mm")}""")  {
+
+}{
+
+<div class="mdl-grid">
+
+    <div class="mdl-cell mdl-cell--12-col">
+        <h4>Mandat du @{Time.formatPatternFr(mandat.initiationDate, "dd MMM YYYY - HH:mm")}</h4>
+        <div class="mdl-grid">
+            @mandat.applicationId.map { applicationId =>
+            <div class="mdl-cell mdl-cell--12-col">
+                <a href="@routes.ApplicationController.show(applicationId)">Demande liée</a>
+            </div>
+            }
+
+            <div class="mdl-cell mdl-cell--12-col">
+                Prénom : @mandat.enduserPrenom
+            </div>
+            <div class="mdl-cell mdl-cell--12-col">
+                Nom : @mandat.enduserNom
+            </div>
+            <div class="mdl-cell mdl-cell--12-col">
+                Date de naissance : @mandat.enduserBirthDate
+            </div>
+            <div class="mdl-cell mdl-cell--12-col">
+                Téléphone : @mandat.enduserPhoneLocal
+            </div>
+            @for(sms <- mandat.typedSmsThread) {
+            <div class="mdl-cell mdl-cell--12-col">
+                Message du : @{Time.formatPatternFr(sms.createdDatetime, "dd MMM YYYY - HH:mm")}
+                <br>
+                @sms.body
+            </div>
+            }
+        </div>
+    </div>
+
+</div>
+
+}{
+}

@@ -1,6 +1,6 @@
 package helper
 
-import java.time.{ZoneId, ZonedDateTime}
+import java.time.{LocalDate, ZoneId, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import scala.collection.immutable.ListMap
@@ -16,6 +16,9 @@ object Time {
   def nowParis() = ZonedDateTime.now(timeZoneParis)
 
   def formatPatternFr(date: ZonedDateTime, pattern: String): String =
+    date.format(java.time.format.DateTimeFormatter.ofPattern(pattern, Locale.FRANCE))
+
+  def formatPatternFr(date: LocalDate, pattern: String): String =
     date.format(java.time.format.DateTimeFormatter.ofPattern(pattern, Locale.FRANCE))
 
   def weeksMap(fromDate: ZonedDateTime, toDate: ZonedDateTime): ListMap[String, String] = {

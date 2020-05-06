@@ -15,7 +15,8 @@ object formModels {
       selectedSubject: Option[String],
       signature: Option[String],
       mandatType: String,
-      mandatDate: String
+      mandatDate: String,
+      linkedMandat: Option[UUID]
   )
 
   case class AnswerFormData(

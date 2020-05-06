@@ -44,6 +44,7 @@ class UserService @Inject() (
       "observable_organisation_ids",
       "shared_account"
     )
+    // TODO: usefulness?
     .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
 
   // TODO: rename `allNoNameNoEmail`, because it generates bugs

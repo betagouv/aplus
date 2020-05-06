@@ -1,0 +1,34 @@
+@import _root_.helper.MDLForms._
+@(infoField: play.api.data.Field, info: String)(implicit messagesProvider: MessagesProvider)
+
+<div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+
+    <div>
+        @helper.input(infoField,
+                      "label" -> s"Saisir $info de l’usager ici",
+                      "class" -> "mdl-textfield--fix"
+        ) { (id, name, value, args) =>
+        <input class="mdl-textfield__input mdl-color--white"
+               type="text"
+               name="@name"
+               id="@id"
+               value="@value"
+               @toHtmlArgs(args)>
+        }
+    </div>
+
+    @if(info == "Date de naissance") {
+        <div class="mdl-tooltip__container mdl-tooltip__container--has-space-desktop">
+            <i id="birth-help"
+               class="icon material-icons"
+               aria-describedby="birth-help-description">help</i>
+            <span id="birth-help-description"
+                  role="tooltip"
+                  class="mdl-tooltip mdl-tooltip--right mdl-tooltip--large"
+                  for="birth-help"
+                  aria-hidden="true">
+                Format recommandé : jj/mm/aaaa
+            </span>
+        </div>
+    }
+</div>

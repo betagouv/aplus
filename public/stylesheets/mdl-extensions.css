@@ -93,6 +93,15 @@ Misc
     min-width: 150px;
 }
 
+@media (min-width: 840px) {
+    /* To use when there are space on the right because there is an element
+     * on which the tooltip can be displayed
+     */
+    .mdl-tooltip__container--has-space-desktop {
+        min-width: 20px !important;
+    }
+}
+
 .mdl-tabs__tab-bar--multiline-text {
     align-items: stretch;
     height: unset;

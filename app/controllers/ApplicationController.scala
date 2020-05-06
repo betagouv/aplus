@@ -13,6 +13,7 @@ import helper.{Hash, Time}
 import javax.inject.{Inject, Singleton}
 import models.{Answer, Application, Area, Authorization, Organisation, User, UserGroup}
 import models.formModels.{AnswerFormData, ApplicationFormData, InvitationData}
+import models.mandat.Mandat
 import org.webjars.play.WebJarsUtil
 import play.api.data.Forms._
 import play.api.data._
@@ -75,6 +76,7 @@ case class ApplicationController @Inject() (
     applicationService: ApplicationService,
     notificationsService: NotificationService,
     eventService: EventService,
+    mandatService: MandatService,
     organisationService: OrganisationService,
     userGroupService: UserGroupService,
     configuration: play.api.Configuration
@@ -105,7 +107,8 @@ case class ApplicationController @Inject() (
         else ignored(None: Option[String])
       ),
       "mandatType" -> text,
-      "mandatDate" -> nonEmptyText
+      "mandatDate" -> nonEmptyText,
+      "linkedMandat" -> optional(uuid)
     )(ApplicationFormData.apply)(ApplicationFormData.unapply)
   )
 
@@ -305,6 +308,12 @@ case class ApplicationController @Inject() (
               s"La demande ${application.id} a été créée",
               Some(application)
             )
+            applicationData.linkedMandat.foreach { mandatId =>
+              // TODO: log
+              mandatService
+                .linkApplication(Mandat.Id(mandatId), applicationId)
+                .onComplete(x => println("LINKED MANDAT+APPLICATION " + x))
+            }
             Redirect(routes.ApplicationController.myApplications())
               .withSession(
                 applicationData.signature.fold(removeSharedAccountUserSignature(request.session))(

@@ -125,6 +125,11 @@ html, body {
     box-sizing: border-box;
 }
 
+.mdl-card--resizable {
+    width: unset;
+    max-width: 400px;
+}
+
 @media print {
     .mdl-layout--fixed-drawer > .mdl-layout__content {
         margin-left: 0px !important;
@@ -606,6 +611,10 @@ a {
     padding-bottom: 16px;
 }
 
+.single--padding-left-16px {
+    padding-left: 16px;
+}
+
 .single--max-width-184px {
     max-width: 184px;
 }
@@ -649,6 +658,10 @@ a {
 
 .single--font-size-16px {
     font-size: 16px;
+}
+
+.single--font-size-20px {
+    font-size: 20px;
 }
 
 .single--overflow-auto {
