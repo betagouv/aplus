@@ -451,8 +451,8 @@ case class ApplicationController @Inject() (
       areaIds: List[UUID],
       organisationIds: List[Organisation.Id],
       groupIds: List[UUID],
-      creationMinDate: Option[LocalDate],
-      creationMaxDate: Option[LocalDate]
+      creationMinDate: LocalDate,
+      creationMaxDate: LocalDate
   )(
       implicit webJarsUtil: org.webjars.play.WebJarsUtil,
       request: RequestWithUserData[A]
@@ -499,22 +499,10 @@ case class ApplicationController @Inject() (
     // Filter creation dates
     def isBeforeOrEqual(d1: LocalDate, d2: LocalDate): Boolean = !d1.isAfter(d2)
     val applicationsFuture = applicationsFutureNoDateFilter.map { applications =>
-      (creationMinDate, creationMaxDate) match {
-        case (Some(minDate), Some(maxDate)) =>
-          applications.filter(application =>
-            isBeforeOrEqual(minDate, application.creationDate.toLocalDate) &&
-              isBeforeOrEqual(application.creationDate.toLocalDate, maxDate)
-          )
-        case (Some(minDate), None) =>
-          applications.filter(application =>
-            isBeforeOrEqual(minDate, application.creationDate.toLocalDate)
-          )
-        case (None, Some(maxDate)) =>
-          applications.filter(application =>
-            isBeforeOrEqual(application.creationDate.toLocalDate, maxDate)
-          )
-        case (None, None) => applications
-      }
+      applications.filter(application =>
+        isBeforeOrEqual(creationMinDate, application.creationDate.toLocalDate) &&
+          isBeforeOrEqual(application.creationDate.toLocalDate, creationMaxDate)
+      )
     }
 
     // Users whose id is in the `Application`
@@ -525,6 +513,8 @@ case class ApplicationController @Inject() (
       userService.byIds(ids, includeDisabled = true)
     }
 
+    // Note: `users` are Users on which we make stats (count, ...)
+    // `relatedUsers` are Users to help Applications stats (linked orgs, ...)
     for {
       users <- usersFuture
       applications <- applicationsFuture
@@ -536,18 +526,19 @@ case class ApplicationController @Inject() (
     )
   }
 
-  private val statsForm = Form(
+  // A `def` for the LocalDate.now()
+  private def statsForm = Form(
     tuple(
       "areas" -> default(list(uuid), List()),
       "organisations" -> default(list(of[Organisation.Id]), List()),
       "groups" -> default(list(uuid), List()),
-      "creationMinDate" -> optional(localDate),
-      "creationMaxDate" -> optional(localDate)
+      "creationMinDate" -> default(localDate, LocalDate.of(2017, 12, 15)),
+      "creationMaxDate" -> default(localDate, LocalDate.now())
     )
   )
 
   def stats: Action[AnyContent] = loginAction.async { implicit request =>
-    // TODO
+    // TODO: remove `.get`
     val (areaIds, organisationIds, groupIds, creationMinDate, creationMaxDate) =
       statsForm.bindFromRequest.value.get
 

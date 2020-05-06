@@ -1,7 +1,7 @@
 @import java.time.LocalDate
 @import java.util.UUID
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(result: Html, groups: List[UserGroup], selectedAreaIds: List[UUID], selectedOrganisationIds: List[Organisation.Id], selectedGroupIds: List[UUID], creationMinDate: Option[LocalDate], creationMaxDate: Option[LocalDate])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(result: Html, groups: List[UserGroup], selectedAreaIds: List[UUID], selectedOrganisationIds: List[Organisation.Id], selectedGroupIds: List[UUID], creationMinDate: LocalDate, creationMaxDate: LocalDate)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 @main(currentUser, currentUserRights)(s"Stats")  {
     @webJarsUtil.locate("Chart.bundle.min.js").script()
@@ -31,8 +31,8 @@
                 </select>
             }
             <br>
-            Création après : <input name="creationMinDate" value="@creationMinDate" type="date">
-            avant : <input name="creationMaxDate" value="@creationMaxDate" type="date">
+            Création des demandes entre le : <input name="creationMinDate" value="@creationMinDate" type="date">
+            et le : <input name="creationMaxDate" value="@creationMaxDate" type="date">
             <button>Filtrer</button>
         }
     </div>

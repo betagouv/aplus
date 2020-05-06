@@ -20,12 +20,13 @@ object StatsData {
         (
           timePoint.label,
           series.map {
-            case (condition, timeSeries) =>
+            case (condition, singleTimeSeries) =>
               (
                 condition.label,
-                timeSeries.points
+                singleTimeSeries.points
                   .find(t => (t._1: Label) == (timePoint: Label))
                   .map(_._2)
+                  // not pretty, maybe figure out how to have some Option / NaN
                   .getOrElse[Int](0)
               )
           }
@@ -39,7 +40,7 @@ object StatsData {
   case class ApplicationAggregates(
       applications: List[Application],
       months: ListMap[String, String],
-      usersRelatedToApplications: List[User]
+      private val usersRelatedToApplications: List[User]
   ) {
     def count: Int = applications.size
     lazy val countLast30Days: Int = applications.count(_.ageInDays <= 30)
@@ -144,7 +145,7 @@ object StatsData {
 
 }
 
-/** This class (and its subclasses) should have all "rendering" methods,
+/** This class (and its subclasses) should have all "computation" methods,
   * such that the template do not have calculations in it.
   */
 case class StatsData(
