@@ -1,0 +1,30 @@
+@(data: views.stats.StatsData)(implicit webJarsUtil: org.webjars.play.WebJarsUtil)
+
+<table class="mdl-data-table mdl-data-table--initial-white-space mdl-js-data-table pem-table mdl-data-table--normal-white-space">
+    <thead>
+        <tr>
+            <th class="mdl-data-table__cell--non-numeric">Territoire</th>
+            <th>Total</th>
+            <th>Total clôturées</th>
+            <th>Total non pertinentes</th>
+            <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"> Oui</th>
+            <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"> Je ne sais pas</th>
+            <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f61e.svg").url.get"> Non</th>
+            <th>?</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for(areaData <- data.aggregatesByArea) {
+            <tr class="application-row">
+                <td class="mdl-data-table__cell--non-numeric">@areaData.area.name</td>
+                <td>@areaData.aggregates.applications.length</td>
+                <td>@areaData.aggregates.applications.count(_.closed)</td>
+                <td>@areaData.aggregates.applications.count(_.irrelevant)</td>
+                <td>@areaData.aggregates.applications.count(_.usefulness.contains("Oui")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"></td>
+                <td>@areaData.aggregates.applications.count(_.usefulness.contains("Je ne sais pas")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"></td>
+                <td>@areaData.aggregates.applications.count(_.usefulness.contains("Non")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f61e.svg").url.get"></td>
+                <td>@areaData.aggregates.applications.count(_.usefulness.isEmpty) ?</td>
+            </tr>
+            }
+    </tbody>
+</table>
