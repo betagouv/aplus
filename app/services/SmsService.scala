@@ -105,7 +105,9 @@ class SmsService @Inject() (
 
   //private val apiKey = configuration.underlying.getString("app.smsApiKey")
   private val requestTimeout = 2.seconds
-  private val serverPort = configuration.underlying.getInt("play.server.http.port")
+  private val serverPort: String =
+    Option(System.getProperty("http.port"))
+      .getOrElse(configuration.underlying.getInt("play.server.http.port").toString)
 
   // TODO: handle error cases
 
