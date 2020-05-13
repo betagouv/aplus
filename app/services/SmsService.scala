@@ -105,6 +105,7 @@ class SmsService @Inject() (
 
   //private val apiKey = configuration.underlying.getString("app.smsApiKey")
   private val requestTimeout = 2.seconds
+  private val serverPort = configuration.underlying.getInt("play.server.http.port")
 
   // TODO: handle error cases
 
@@ -197,7 +198,7 @@ class SmsService @Inject() (
     // TODO: route from controller routes
     futures
       .delayed(10.seconds)(
-        ws.url("http://localhost:9000/mandats/sms/webhook")
+        ws.url(s"http://localhost:$serverPort/mandats/sms/webhook")
           .post(
             Json.toJson(
               ApiSms(
