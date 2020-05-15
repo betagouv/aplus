@@ -6,6 +6,7 @@ import actions.RequestWithUserData
 import javax.inject.Inject
 import models._
 import play.api.db.Database
+import play.api.mvc.Request
 import anorm._
 import helper.Time
 import play.api.Logger
@@ -33,28 +34,64 @@ class EventService @Inject() (db: Database) {
       event: EventType,
       description: String,
       application: Option[Application] = None,
-      user: Option[User] = None
+      /** Not the logged-in `User`, but if the op is about some other `User`. */
+      involvesUser: Option[User] = None,
+      /** If the warn/error has an exception as cause. */
+      underlyingException: Option[Throwable] = None
   )(implicit request: RequestWithUserData[A]) =
-    register[A](event.level)(
+    register(event.level)(
       request.currentUser,
       request.remoteAddress,
       event.code,
       s"$description. ${request.method} ${request.path}",
       application,
-      user
+      involvesUser,
+      underlyingException
+    )
+
+  def logError[A](
+      error: models.Error,
+      application: Option[Application] = None,
+      involvesUser: Option[User] = None
+  )(implicit request: RequestWithUserData[A]) =
+    log(
+      event = error.eventType,
+      description = error.description,
+      application = application,
+      involvesUser = involvesUser,
+      underlyingException = error.underlyingException
     )
 
   val info = register("INFO") _
   val warn = register("WARN") _
   val error = register("ERROR") _
 
-  private def register[A](level: String)(
+  /** When there are no logged in user */
+  def logSystem(
+      event: EventType,
+      description: String,
+      application: Option[Application] = None,
+      involvesUser: Option[User] = None,
+      underlyingException: Option[Throwable] = None
+  )(implicit request: Request[_]): Unit =
+    register(event.level)(
+      currentUser = User.systemUser,
+      request.remoteAddress,
+      event.code,
+      s"$description. ${request.method} ${request.path}",
+      application = application,
+      involvesUser = involvesUser,
+      underlyingException = underlyingException
+    )
+
+  private def register(level: String)(
       currentUser: User,
       remoteAddress: String,
       code: String,
       description: String,
       application: Option[Application],
-      user: Option[User]
+      involvesUser: Option[User],
+      underlyingException: Option[Throwable]
   ): Unit = {
     val event = Event(
       UUID.randomUUID(),
@@ -66,7 +103,7 @@ class EventService @Inject() (db: Database) {
       description,
       Area.notApplicable.id,
       application.map(_.id),
-      user.map(_.id),
+      involvesUser.map(_.id),
       remoteAddress
     )
     addEvent(event)
@@ -74,11 +111,11 @@ class EventService @Inject() (db: Database) {
     val message = s"${currentUser.name}/${description}"
     level match {
       case "INFO" =>
-        logger.info(message)
+        underlyingException.fold(logger.info(message))(e => logger.info(message, e))
       case "WARN" =>
-        logger.warn(message)
+        underlyingException.fold(logger.warn(message))(e => logger.warn(message, e))
       case "ERROR" =>
-        logger.error(message)
+        underlyingException.fold(logger.error(message))(e => logger.error(message, e))
       case _ =>
     }
   }

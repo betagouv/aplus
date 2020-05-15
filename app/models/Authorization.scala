@@ -2,6 +2,7 @@ package models
 
 import helper.BooleanHelper.not
 import java.util.UUID
+import models.mandat.Mandat
 
 object Authorization {
 
@@ -175,6 +176,18 @@ object Authorization {
       isCreatorOrIsInvited && isExpert(application.area)(rights) && isAdmin(rights) && not(
         application.closed
       )
+    validCase1 || validCase2
+  }
+
+  def canSeePrivateDataOfMandat(mandat: Mandat): Check =
+    _.rights.exists {
+      case UserRight.HasUserId(id) => (mandat.userId: UUID) == (id: UUID)
+      case _                       => false
+    }
+
+  def canSeeMandat(mandat: Mandat): Check = rights => {
+    val validCase1 = canSeePrivateDataOfMandat(mandat)(rights)
+    val validCase2 = isAdmin(rights)
     validCase1 || validCase2
   }
 

@@ -4,6 +4,7 @@ import java.nio.file.{Files, Path, Paths}
 import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 import helper.UUIDHelper
+import scala.util.{Failure, Success}
 
 import actions._
 import constants.Constants
@@ -40,6 +41,8 @@ import models.EventType.{
   ApplicationCreationError,
   ApplicationCreationInvalid,
   ApplicationFormShowed,
+  ApplicationLinkedToMandat,
+  ApplicationLinkedToMandatError,
   ApplicationShowed,
   FileNotFound,
   FileOpened,
@@ -308,11 +311,27 @@ case class ApplicationController @Inject() (
               s"La demande ${application.id} a été créée",
               Some(application)
             )
-            applicationData.linkedMandat.foreach { mandatId =>
-              // TODO: log
-              mandatService
-                .linkApplication(Mandat.Id(mandatId), applicationId)
-                .onComplete(x => println("LINKED MANDAT+APPLICATION " + x))
+            applicationData.linkedMandat.foreach {
+              mandatId =>
+                mandatService
+                  .linkApplication(Mandat.Id(mandatId), applicationId)
+                  .onComplete {
+                    case Failure(error) =>
+                      eventService.log(
+                        ApplicationLinkedToMandatError,
+                        s"Erreur pour faire le lien entre le mandat $mandatId et la demande $applicationId",
+                        Some(application),
+                        underlyingException = Some(error)
+                      )
+                    case Success(Left(error)) =>
+                      eventService.logError(error, application = Some(application))
+                    case Success(Right(_)) =>
+                      eventService.log(
+                        ApplicationLinkedToMandat,
+                        s"La demande ${application.id} a été liée au mandat $mandatId",
+                        Some(application)
+                      )
+                  }
             }
             Redirect(routes.ApplicationController.myApplications())
               .withSession(
@@ -604,7 +623,7 @@ case class ApplicationController @Inject() (
         eventService.log(
           AllAsUnauthorized,
           s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur $userId",
-          user = Some(user)
+          involvesUser = Some(user)
         )
         Future(
           Unauthorized(
@@ -615,7 +634,7 @@ case class ApplicationController @Inject() (
         eventService.log(
           AllAsUnauthorized,
           s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur admin $userId",
-          user = Some(user)
+          involvesUser = Some(user)
         )
         Future(
           Unauthorized(
@@ -627,7 +646,11 @@ case class ApplicationController @Inject() (
           val currentUserId = user.id
           val applicationsFromTheArea = List[Application]()
           eventService
-            .log(AllAsShowed, s"Visualise la vue de l'utilisateur $userId", user = Some(user))
+            .log(
+              AllAsShowed,
+              s"Visualise la vue de l'utilisateur $userId",
+              involvesUser = Some(user)
+            )
           // Bug To Fix
           Ok(
             views.html.myApplications(user, userRights)(
@@ -874,6 +897,7 @@ case class ApplicationController @Inject() (
         )
       form.fold(
         formWithErrors => {
+          // TODO: check if formWithErrors.errors can leak personal data
           val error =
             s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.message).mkString(", ")})."
           eventService.log(AnswerNotCreated, s"$error")

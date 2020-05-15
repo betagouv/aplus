@@ -475,6 +475,11 @@ function setupMandatSmsForm() {
       };
       xhr.open("POST", "/mandats/sms", true);
       xhr.setRequestHeader("Content-Type", "application/json");
+      // Play recommends putting the CSRF token, even for AJAX request
+      // and cites browser plugins as culprits
+      // https://www.playframework.com/documentation/2.8.x/ScalaCsrf#Plays-CSRF-protection
+      var token = document.querySelector("input[name=csrfToken]").value;
+      xhr.setRequestHeader("Csrf-Token", token);
       xhr.send(JSON.stringify(data));
     } catch (error) {
       console.error(error);

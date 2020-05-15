@@ -6,7 +6,7 @@ import constants.Constants
 import javax.inject.{Inject, Singleton}
 import controllers.routes
 import models._
-import play.api.Logger
+import play.api.{Environment, Logger}
 import play.api.libs.mailer.MailerClient
 import play.api.libs.mailer.Email
 import play.api.libs.ws._
@@ -19,7 +19,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scala.util.Try
 
-case class SmsSendRequest(originator: String, body: String, recipients: List[String])
+case class SmsSendRequest(body: String, recipients: List[String])
 
 object SmsSendRequest {
   implicit val writes = Json.writes[SmsSendRequest]
@@ -97,6 +97,7 @@ case class CompleteSms(sms: ApiSms, json: JsValue)
 @Singleton
 class SmsService @Inject() (
     configuration: play.api.Configuration,
+    environment: Environment,
     eventService: EventService,
     futures: play.api.libs.concurrent.Futures,
     groupService: UserGroupService,
@@ -105,12 +106,14 @@ class SmsService @Inject() (
 
   //private val apiKey = configuration.underlying.getString("app.smsApiKey")
   private val requestTimeout = 2.seconds
+
   private val serverPort: String =
     Option(System.getProperty("http.port"))
       .getOrElse(configuration.underlying.getInt("play.server.http.port").toString)
 
   // TODO: handle error cases
 
+  // TODO: should we check if the SMS is correctly sent (status)?
   // https://en.wikipedia.org/wiki/GSM_03.38
   // https://developers.messagebird.com/api/#authentication
   /*
@@ -128,6 +131,7 @@ class SmsService @Inject() (
 
   // Callback verification:
   // https://developers.messagebird.com/api/#verifying-http-requests
+   // TODO: use EventType.SmsCallbackError for error
   def smsReceivedCallback(request: Request[AnyContent]): Future[Either[Error, CompleteSms]] = {
     // TODO: verif
     val json = request.body.asJson.get // throws

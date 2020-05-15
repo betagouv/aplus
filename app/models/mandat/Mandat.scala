@@ -25,12 +25,21 @@ case class Mandat(
     smsThreadClosed: Boolean
 ) {
 
-  import play.api.libs.json.Json
+  import play.api.libs.json.{JsArray, Json}
   import scala.util.Try
 
   // Note: maybe return a Either?
   lazy val typedSmsThread: List[ApiSms] =
     Json.fromJson[List[ApiSms]](smsThread).asOpt.toList.flatten
+
+  lazy val anonymous: Mandat =
+    copy(
+      enduserPrenom = enduserPrenom.map(_ => "** Prénom anonyme **"),
+      enduserNom = enduserNom.map(_ => "** Nom anonyme **"),
+      enduserBirthDate = enduserBirthDate.map(_ => "** Date de naissance anonyme **"),
+      enduserPhoneLocal = enduserPhoneLocal.map(phone => phone.map(_ => '*')),
+      smsThread = JsArray.empty
+    )
 
 }
 

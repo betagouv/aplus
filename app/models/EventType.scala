@@ -2,6 +2,10 @@ package models
 
 import helper.StringHelper
 
+/** Note: `EventType` is used for logging, and logging is an orthogonal concern.
+  *       ie it shows up everywhere in an application. So we expect `EventType` to show up
+  *       at any level in the the code (wherever the best information to log is known).
+  */
 trait EventType {
   val code = StringHelper.camelToUnderscoresUpperCase(this.getClass.getSimpleName)
   val level: String
@@ -49,6 +53,8 @@ object EventType {
   object ApplicationCreationError extends Error
   object ApplicationCreationUnauthorized extends Warn
   object ApplicationFormShowed extends Info
+  object ApplicationLinkedToMandat extends Info
+  object ApplicationLinkedToMandatError extends Info
   object ApplicationNotFound extends Error
   object ApplicationShowed extends Info
   object ApplicationUnauthorized extends Warn
@@ -75,6 +81,14 @@ object EventType {
   object ImportUserUnauthorized extends Warn
   object ImportUsersUnauthorized extends Warn
   object InviteNotCreated extends Error
+  object MandatInitiationBySmsInvalid extends Error
+  object MandatInitiationBySmsWarn extends Warn
+  object MandatInitiationBySmsDone extends Info
+  object MandatBySmsResponseSaved extends Info
+  object MandatShowed extends Info
+  object MandatError extends Error
+  object MandatNotFound extends Error
+  object MandatUnauthorized extends Warn
   object MyApplicationsShowed extends Info
   object MyCSVShowed extends Info
   object NewsletterSubscribed extends Info
@@ -82,6 +96,7 @@ object EventType {
   object PostAddUserUnauthorized extends Warn
   object PostEditUserUnauthorized extends Warn
   object ShowAddUserUnauthorized extends Warn
+  object SmsCallbackError extends Error
   object StatsShowed extends Info
   object StatsUnauthorized extends Warn
   object TerminateCompleted extends Info

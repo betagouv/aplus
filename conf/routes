@@ -28,8 +28,6 @@ GET      /toutes-les-demandes/:applicationId/messages/:answerId/fichiers/:filena
 
 # Mandat
 GET      /mandats/:id                controllers.MandatController.mandat(id: java.util.UUID)
-# TODO: remove
-+nocsrf
 POST     /mandats/sms                controllers.MandatController.beginMandatSms
 +nocsrf
 POST     /mandats/sms/webhook        controllers.MandatController.webhookSmsReceived

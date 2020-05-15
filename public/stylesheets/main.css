@@ -538,6 +538,10 @@ a {
 
 
 /** List of classes with only 1 property (prefixed by `single--`) **/
+.single--margin-top-8px {
+    margin-top: 8px;
+}
+
 .single--margin-top-10px {
     margin-top: 10px;
 }
