@@ -2,7 +2,7 @@ package models.mandat
 
 import java.util.UUID
 import java.time.ZonedDateTime
-import play.api.libs.json.JsValue
+import play.api.libs.json.{Json, JsArray, JsValue}
 import services.ApiSms
 
 object Mandat {
@@ -25,9 +25,6 @@ case class Mandat(
     smsThreadClosed: Boolean
 ) {
 
-  import play.api.libs.json.{JsArray, Json}
-  import scala.util.Try
-
   // Note: maybe return a Either?
   lazy val typedSmsThread: List[ApiSms] =
     Json.fromJson[List[ApiSms]](smsThread).asOpt.toList.flatten
@@ -42,10 +39,3 @@ case class Mandat(
     )
 
 }
-
-case class SmsMandatInitiation(
-    enduserPrenom: String,
-    enduserNom: String,
-    enduserBirthDate: String,
-    enduserPhoneLocal: String
-)

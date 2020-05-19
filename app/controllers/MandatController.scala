@@ -126,7 +126,7 @@ case class MandatController @Inject() (
                   Future(jsonInternalServerError)
                 },
                 mandat => {
-                  val groups = userGroupService
+                  val franceServiceGroups = userGroupService
                     .byIds(request.currentUser.groupIds)
                     .filter(group =>
                       (group.organisation: Option[Organisation.Id]) ==
@@ -138,23 +138,23 @@ case class MandatController @Inject() (
                       mandat.enduserBirthDate.getOrElse("")
                   val userInfos: String = request.currentUser.name
                   val groupInfos: String =
-                    if (groups.size <= 0) {
+                    if (franceServiceGroups.size <= 0) {
                       eventService.log(
                         EventType.MandatInitiationBySmsWarn,
                         s"Lors de la création du SMS, l'utilisateur ${request.currentUser.id} " +
                           s"n'a pas de groupe FS."
                       )
                       ""
-                    } else if (groups.size == 1) {
-                      " de la structure " + groups.map(_.name).mkString(", ")
-                    } else if (groups.size <= 3) {
-                      " des structures " + groups.map(_.name).mkString(", ")
+                    } else if (franceServiceGroups.size == 1) {
+                      " de la structure " + franceServiceGroups.map(_.name).mkString(", ")
+                    } else if (franceServiceGroups.size <= 3) {
+                      " des structures " + franceServiceGroups.map(_.name).mkString(", ")
                     } else {
                       eventService.log(
                         EventType.MandatInitiationBySmsWarn,
                         s"Lors de la création du SMS, l'utilisateur ${request.currentUser.id} " +
-                          s"est dans trop de groupes (${groups.size}) pour les inclure dans " +
-                          "le SMS."
+                          s"est dans trop de groupes (${franceServiceGroups.size}) " +
+                          "pour les inclure dans le SMS."
                       )
                       ""
                     }
@@ -220,7 +220,6 @@ case class MandatController @Inject() (
               error.description,
               underlyingException = error.underlyingException
             )
-            // If we are in the branch, then our parser is bugged. So:
             Future(InternalServerError)
           },
           sms =>
@@ -241,8 +240,9 @@ case class MandatController @Inject() (
                   EventType.SmsCallbackError,
                   errorMessage
                 )
-                // If we are in the branch, then our parser is bugged. So:
-                Future(Ok)
+                // If we are in this branch, then our parser is bugged.
+                // So, we will try to push a fix before the next webhook:
+                Future(InternalServerError)
               }
               case Some(localPhone) =>
                 mandatService

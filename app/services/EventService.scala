@@ -30,7 +30,7 @@ class EventService @Inject() (db: Database) {
     "ip_address"
   )
 
-  def log[A](
+  def log(
       event: EventType,
       description: String,
       application: Option[Application] = None,
@@ -38,7 +38,7 @@ class EventService @Inject() (db: Database) {
       involvesUser: Option[User] = None,
       /** If the warn/error has an exception as cause. */
       underlyingException: Option[Throwable] = None
-  )(implicit request: RequestWithUserData[A]) =
+  )(implicit request: RequestWithUserData[_]) =
     register(event.level)(
       request.currentUser,
       request.remoteAddress,
@@ -49,11 +49,11 @@ class EventService @Inject() (db: Database) {
       underlyingException
     )
 
-  def logError[A](
+  def logError(
       error: models.Error,
       application: Option[Application] = None,
       involvesUser: Option[User] = None
-  )(implicit request: RequestWithUserData[A]) =
+  )(implicit request: RequestWithUserData[_]) =
     log(
       event = error.eventType,
       description = error.description,

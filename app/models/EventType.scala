@@ -54,7 +54,7 @@ object EventType {
   object ApplicationCreationUnauthorized extends Warn
   object ApplicationFormShowed extends Info
   object ApplicationLinkedToMandat extends Info
-  object ApplicationLinkedToMandatError extends Info
+  object ApplicationLinkedToMandatError extends Error
   object ApplicationNotFound extends Error
   object ApplicationShowed extends Info
   object ApplicationUnauthorized extends Warn
