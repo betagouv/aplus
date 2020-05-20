@@ -2,8 +2,8 @@ package models.mandat
 
 import java.util.UUID
 import java.time.ZonedDateTime
-import play.api.libs.json.{Json, JsArray, JsValue}
-import services.ApiSms
+import play.api.libs.json.{JsArray, JsValue, Json}
+import serializers.ApiModel.ApiSms
 
 object Mandat {
   case class Id(underlying: UUID)

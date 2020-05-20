@@ -10,6 +10,7 @@ import models.mandat.{Mandat, SmsMandatInitiation}
 import play.api.db.Database
 import scala.concurrent.Future
 import scala.util.Try
+import serializers.ApiModel.CompleteSms
 
 /** This is a "low-level" component, akin to Java's "repositories".
   * This component does not represent the actual business level model.

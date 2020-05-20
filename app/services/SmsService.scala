@@ -1,94 +1,21 @@
 package services
 
-import java.util.UUID
-
-import constants.Constants
+import helper.Time
+import java.nio.charset.StandardCharsets.UTF_8
+import java.security.MessageDigest
+import java.time.Instant
+import java.util.Base64
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 import javax.inject.{Inject, Singleton}
-import controllers.routes
-import models._
-import play.api.{Environment, Logger}
-import play.api.libs.mailer.MailerClient
-import play.api.libs.mailer.Email
-import play.api.libs.ws._
+import models.{Error, EventType, User}
+import play.api.libs.json.{JsPath, JsValue, Json}
+import play.api.libs.ws.WSClient
+import play.api.mvc.Request
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
-import play.api.libs.json.{Json, Reads}
-import play.api.mvc.{AnyContent, Request}
-
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
 import scala.util.Try
-
-case class SmsSendRequest(body: String, recipients: List[String])
-
-object SmsSendRequest {
-  implicit val writes = Json.writes[SmsSendRequest]
-
-//  def create():
-}
-
-case class JsonApiError(code: Int, description: String, parameter: Option[String])
-
-object JsonApiError {
-  implicit val reads = Json.reads[JsonApiError]
-}
-
-case class ApiError(errors: List[JsonApiError])
-
-object ApiError {
-  implicit val reads = Json.reads[ApiError]
-}
-
-case class SmsId(underlying: String)
-
-object SmsId {
-  implicit val reads = implicitly[Reads[String]].map(SmsId.apply)
-  implicit val writes = implicitly[Writes[String]].contramap((id: SmsId) => id.underlying)
-}
-
-import java.time.ZonedDateTime
-
-// TODO: put in models
-// https://developers.messagebird.com/api/sms-messaging/#the-message-object
-case class ApiSms(
-    id: SmsId,
-    originator: String,
-    body: String,
-    createdDatetime: ZonedDateTime,
-    recipients: List[ApiSms.Recipient]
-)
-
-object ApiSms {
-
-  case class RecipientItem(
-      recipient: Long,
-      status: String,
-      statusDatetime: ZonedDateTime,
-      messagePartCount: Int
-  )
-  case class Recipient(items: List[RecipientItem])
-
-  implicit val itemFormats = Json.format[RecipientItem]
-  implicit val recipientFormats = Json.format[Recipient]
-  implicit val reads = Json.reads[ApiSms]
-  implicit val writes = Json.writes[ApiSms]
-
-  /** Example: (31612345678: Long) => ("0612345678": String) */
-  def internationalToLocalPhone(international: Long): String =
-    "0" + (international % 1000000000L)
-
-  /** Example: ("31612345678": String) => ("0612345678": String) */
-  def internationalToLocalPhone(international: String): Option[String] =
-    Try(international.toLong).toOption.map(internationalToLocalPhone)
-
-  /** Example: ("0612345678": String) => ("31612345678": String)  */
-  def localPhoneFranceToInternational(local: String): String =
-    "33" + local.drop(1)
-
-}
-
-/** Keep the JsValue for tracability. */
-case class CompleteSms(sms: ApiSms, json: JsValue)
+import serializers.ApiModel.{ApiSms, CompleteSms, SmsSendRequest}
 
 /** Various infos:
   * https://support.messagebird.com/hc/en-us/articles/208015009-France
@@ -96,131 +23,256 @@ case class CompleteSms(sms: ApiSms, json: JsValue)
   */
 @Singleton
 class SmsService @Inject() (
+    bodyParsers: play.api.mvc.PlayBodyParsers,
     configuration: play.api.Configuration,
-    environment: Environment,
     eventService: EventService,
     futures: play.api.libs.concurrent.Futures,
-    groupService: UserGroupService,
     ws: WSClient
 )(implicit ec: ExecutionContext) {
 
-  //private val apiKey = configuration.underlying.getString("app.smsApiKey")
+  private val useLiveApi: Boolean = configuration
+    .getOptional[Boolean]("app.smsUseLiveApi")
+    .getOrElse(false)
+
+  private val apiKey: String =
+    if (useLiveApi) configuration.get[String]("app.smsApiKey") else ""
+
+  private val signingKey: String =
+    if (useLiveApi) configuration.get[String]("app.smsSigningKey") else ""
+
+  private val aplusPhoneNumber: String =
+    if (useLiveApi) configuration.get[String]("app.smsPhoneNumber") else ""
+
   private val requestTimeout = 2.seconds
 
   private val serverPort: String =
     Option(System.getProperty("http.port"))
       .getOrElse(configuration.underlying.getInt("play.server.http.port").toString)
 
-  // TODO: handle error cases
+  def sendSms(body: String, recipients: List[String]): Future[Either[Error, CompleteSms]] =
+    if (useLiveApi)
+      liveSendSms(body, recipients)
+    else
+      fakeSendSms(body, recipients)
 
-  // TODO: should we check if the SMS is correctly sent (status)?
-  // https://en.wikipedia.org/wiki/GSM_03.38
-  // https://developers.messagebird.com/api/#authentication
-  /*
-  /** https://developers.messagebird.com/api/sms-messaging/#send-outbound-sms
-   */
-  def sendSms(request: SmsSendRequest): Future[Either[Error, CompleteSms]] = {
-      ws.url("https://rest.messagebird.com/messages")
-        .addHttpHeaders(
-          "Accept" -> "application/json",
-          "Authorization" -> s"AccessKey $apiKey")
-        .withRequestTimeout(requestTimeout)
-        .post(Json.toJson(request))
-        .map(response => Right(response.json.as[ApiSms].id))
+  def smsReceivedCallback(request: Request[String]): Future[Either[Error, CompleteSms]] =
+    if (useLiveApi)
+      liveSmsReceivedCallback(request)
+    else
+      fakeSmsReceivedCallback(request)
+
+  //
+  // Live API for review and prod
+  //
+
+  /** API Doc:
+    * https://developers.messagebird.com/api/sms-messaging/#send-outbound-sms
+    */
+  private def liveSendSms(
+      body: String,
+      recipients: List[String]
+  ): Future[Either[Error, CompleteSms]] = {
+    val request = SmsSendRequest(
+      originator = aplusPhoneNumber,
+      body = body,
+      recipients = recipients
+    )
+    ws.url("https://rest.messagebird.com/messages")
+      .addHttpHeaders("Accept" -> "application/json", "Authorization" -> s"AccessKey $apiKey")
+      .withRequestTimeout(requestTimeout)
+      .post(Json.toJson(request))
+      .map { response =>
+        if ((response.status: Int) == 201) {
+          val json = response.body[JsValue]
+          Right(CompleteSms(json.as[ApiSms], json))
+        } else {
+          throw new Exception(
+            s"Unknown response from MB server (status ${response.status})" +
+              s": $response - ${response.body}"
+          )
+        }
+      }
+      .recover {
+        case (e: Throwable) =>
+          Left(
+            Error.MiscException(
+              EventType.SmsSendError,
+              s"Impossible d'envoyer un SMS à partir du numéro $aplusPhoneNumber",
+              e
+            )
+          )
+      }
   }
 
-  // Callback verification:
-  // https://developers.messagebird.com/api/#verifying-http-requests
-   // TODO: use EventType.SmsCallbackError for error
-  def smsReceivedCallback(request: Request[AnyContent]): Future[Either[Error, CompleteSms]] = {
-    // TODO: verif
-    val json = request.body.asJson.get // throws
-    val id = (JsPath \ "id").read[String].reads(json).get
-    fetchSmsById(SmsId(id))
+  /** https://developers.messagebird.com/api/#verifying-http-requests */
+  private def checkMessageBirdSignature(
+      key: String,
+      signature: String,
+      timestamp: String,
+      queryString: String,
+      body: String
+  ): Boolean = {
+    val secretKey = new SecretKeySpec(key.getBytes(UTF_8), "HmacSHA256")
+    val expectedSignature: List[Byte] = Base64.getDecoder().decode(signature).toList
+    val blobToHmacPart1: String = timestamp + "\n" + queryString + "\n"
+    val bodyHash: List[Byte] =
+      MessageDigest.getInstance("SHA-256").digest(body.getBytes(UTF_8)).toList
+    val blobToHmac: List[Byte] = blobToHmacPart1.getBytes(UTF_8).toList ::: bodyHash
+    val mac = Mac.getInstance("HmacSHA256");
+    mac.init(secretKey);
+    val requestSignature: List[Byte] = mac.doFinal(blobToHmac.toArray).toList
+    (requestSignature: List[Byte]) == (expectedSignature: List[Byte])
   }
 
+  private def checkSignature(request: Request[String]): Boolean = {
+    val mbTimestamp = request.headers
+      .get("MessageBird-Request-Timestamp")
+      .getOrElse(
+        throw new Exception(s"Cannot read webhook request header MessageBird-Request-Timestamp")
+      )
+    val mbSignature = request.headers
+      .get("MessageBird-Signature")
+      .getOrElse(throw new Exception(s"Cannot read webhook request header MessageBird-Signature"))
 
-  // https://developers.messagebird.com/api/sms-messaging/#view-an-sms
-  private def fetchSmsById(id: SmsId): Future[Either[Error, CompleteSms]] = {
-      ws.url(s"https://rest.messagebird.com/messages/${id.underlying}")
-        .addHttpHeaders(
-          "Accept" -> "application/json",
-          "Authorization" -> s"AccessKey $apiKey")
-        .withRequestTimeout(requestTimeout)
-        .get()
-        .map(response => Right(CompleteSms(response.json.as[ApiSms], response.json)))
+    val requestTimestampInSecs: Long = mbTimestamp.toLong
+    val nowInSecs: Long = Instant.now().toEpochMilli / 1000
+    val timestampIsWithing1d: Boolean =
+      scala.math.abs(nowInSecs - requestTimestampInSecs) < 60 * 60 * 24
+    if (!timestampIsWithing1d)
+      throw new Exception(s"MB Timestamp is too old ($requestTimestampInSecs)")
+
+    checkMessageBirdSignature(
+      key = signingKey,
+      signature = mbSignature,
+      timestamp = mbTimestamp,
+      queryString = request.rawQueryString,
+      body = request.body
+    )
   }
 
-  /** https://developers.messagebird.com/api/sms-messaging/#available-http-methods
-   */
- def deleteSms(id: SmsId): Future[Either[Error, Unit]] = {
-      ws.url(s"https://rest.messagebird.com/messages/${id.underlying}")
-        .addHttpHeaders(
-          "Accept" -> "application/json",
-          "Authorization" -> s"AccessKey $apiKey")
-        .withRequestTimeout(requestTimeout)
-        .delete()
-        .map(response => Right(()))
-  }
-   */
+  private def liveSmsReceivedCallback(
+      request: Request[String]
+  ): Future[Either[Error, CompleteSms]] =
+    Try {
+      val signatureChecks = checkSignature(request)
+      if (!signatureChecks) throw new Exception(s"Callback signature invalid")
+      val json = Json.parse(request.body)
+      val id = (JsPath \ "id")
+        .read[String]
+        .reads(json)
+        .getOrElse(throw new Exception(s"Cannot read 'id' field of webhook request"))
+      ApiSms.Id(id)
+    }.fold(
+      e =>
+        Future(
+          Left(
+            Error.MiscException(
+              EventType.SmsCallbackError,
+              s"Impossible de lire le callback",
+              e
+            )
+          )
+        ),
+      liveFetchSmsById
+    )
 
-  def sendSms(request: SmsSendRequest): Future[Either[Error, CompleteSms]] =
-    fakeSendSms(request)
+  /** API Doc:
+    * https://developers.messagebird.com/api/sms-messaging/#view-an-sms
+    */
+  private def liveFetchSmsById(id: ApiSms.Id): Future[Either[Error, CompleteSms]] =
+    ws.url(s"https://rest.messagebird.com/messages/${id.underlying}")
+      .addHttpHeaders("Accept" -> "application/json", "Authorization" -> s"AccessKey $apiKey")
+      .withRequestTimeout(requestTimeout)
+      .get()
+      .map { response =>
+        if (response.status == 200) {
+          val json = response.body[JsValue]
+          Right(CompleteSms(json.as[ApiSms], json))
+        } else {
+          throw new Exception(s"Unknown response from MB server (status ${response.status})")
+        }
+      }
+      .recover {
+        case (e: Throwable) =>
+          Left(
+            Error.MiscException(
+              EventType.SmsReadError,
+              s"Impossible de lire le SMS ${id.underlying} chez le provider distant",
+              e
+            )
+          )
+      }
 
-  def smsReceivedCallback(request: Request[AnyContent]): Future[Either[Error, CompleteSms]] =
-    fakeSmsReceivedCallback(request)
+  /** API Doc:
+    * https://developers.messagebird.com/api/sms-messaging/#available-http-methods
+    */
+  private def liveDeleteSms(id: ApiSms.Id): Future[Either[Error, Unit]] =
+    ws.url(s"https://rest.messagebird.com/messages/${id.underlying}")
+      .addHttpHeaders("Accept" -> "application/json", "Authorization" -> s"AccessKey $apiKey")
+      .withRequestTimeout(requestTimeout)
+      .delete()
+      .map { response =>
+        if (response.status == 200)
+          Right(())
+        else
+          throw new Exception(s"Unknown response from MB server (status ${response.status})")
+      }
+      .recover {
+        case (e: Throwable) =>
+          Left(
+            Error.MiscException(
+              EventType.SmsDeleteError,
+              s"Impossible de supprimer le SMS ${id.underlying} chez le provider distant",
+              e
+            )
+          )
+      }
 
   //
   // Fake API for dev and test
   //
 
-  import helper.Time
   val fakePhoneNumber = "33600000000"
 
-  def fakeSendSms(request: SmsSendRequest): Future[Either[Error, CompleteSms]] = {
-    val id = SmsId(scala.util.Random.nextBytes(16).toList.map("%02x".format(_)).mkString)
-    val phone = request.recipients.head
-    val warn =
-      "(ATTENTION ! Ce message n'a pas été envoyé ! Si vous le voyez, un bug c'est produit)"
+  def fakeSendSms(body: String, recipients: List[String]): Future[Either[Error, CompleteSms]] = {
+    val id = ApiSms.Id(scala.util.Random.nextBytes(16).toList.map("%02x".format(_)).mkString)
+    val recipient = recipients.head
+    val warn = "(ATTENTION ! CE MESSAGE N'A PAS ETE ENVOYE !)"
     val apiSms = ApiSms(
       id = id,
       originator = fakePhoneNumber,
-      body = request.body + " " + warn,
+      body = body + " " + warn,
       createdDatetime = Time.nowParis(),
-      recipients = List(
-        ApiSms.Recipient(
-          items = List(
-            ApiSms.RecipientItem(
-              recipient = ApiSms.localPhoneFranceToInternational(phone).toLong,
-              status = "sent",
-              statusDatetime = Time.nowParis(),
-              messagePartCount = 1
-            )
+      recipients = ApiSms.Recipients(
+        items = List(
+          ApiSms.RecipientItem(
+            recipient = ApiSms.localPhoneFranceToInternational(recipient).toLong,
+            status = "sent",
+            statusDatetime = Time.nowParis(),
+            messagePartCount = 1
           )
         )
       )
     )
     val completeSms = CompleteSms(apiSms, Json.toJson(apiSms))
-    // TODO: route from controller routes
     futures
       .delayed(10.seconds)(
-        ws.url(s"http://localhost:$serverPort/mandats/sms/webhook")
+        // Not using the reverse router as this would create a cyclic dependency
+        ws.url(s"http://0.0.0.0:$serverPort/mandats/sms/webhook")
           .post(
             Json.toJson(
               ApiSms(
                 id = id,
-                originator = phone,
-                body = "J'accepte " + warn,
+                originator = recipient,
+                body = "OUI " + warn,
                 createdDatetime = Time.nowParis(),
-                recipients = List(
-                  ApiSms.Recipient(
-                    items = List(
-                      ApiSms.RecipientItem(
-                        recipient = fakePhoneNumber.toLong,
-                        status = "delivered",
-                        statusDatetime = Time.nowParis(),
-                        messagePartCount = 1
-                      )
+                recipients = ApiSms.Recipients(
+                  items = List(
+                    ApiSms.RecipientItem(
+                      recipient = fakePhoneNumber.toLong,
+                      status = "delivered",
+                      statusDatetime = Time.nowParis(),
+                      messagePartCount = 1
                     )
                   )
                 )
@@ -228,12 +280,35 @@ class SmsService @Inject() (
             )
           )
       )
-      .onComplete(x => println("FAKE WEBHOOK POST: " + x)) // TODO: log that
+      .onComplete(
+        _.fold(
+          e =>
+            eventService.error(
+              User.systemUser,
+              "",
+              EventType.SmsCallbackError.code,
+              s"Impossible d'envoyer un message de test (faux webhook). SMS id: ${id.underlying}",
+              None,
+              None,
+              Some(e)
+            ),
+          _ =>
+            eventService.warn(
+              User.systemUser,
+              "",
+              EventType.SmsCallbackError.code,
+              s"Un message de test (faux webhook) a été envoyé. SMS id: ${id.underlying}",
+              None,
+              None,
+              None
+            )
+        )
+      )
     Future(Right(completeSms))
   }
 
-  def fakeSmsReceivedCallback(request: Request[AnyContent]): Future[Either[Error, CompleteSms]] = {
-    val json = request.body.asJson.get // TODO: throws
+  def fakeSmsReceivedCallback(request: Request[String]): Future[Either[Error, CompleteSms]] = {
+    val json = Json.parse(request.body)
     Future(Right(CompleteSms(json.as[ApiSms], json)))
   }
 

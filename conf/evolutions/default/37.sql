@@ -9,13 +9,11 @@ CREATE TABLE mandat (
     -- 100 for an "letters only" date
     enduser_birth_date varchar(100) NOT NULL,
     enduser_phone_local varchar(20) NULL,
--- NOT NULL because it is annoying and error prone to deal with NULL and empty arrays
+    -- NOT NULL because it is annoying and error prone to deal with NULL and empty arrays
     sms_thread jsonb NOT NULL DEFAULT '[]'::jsonb,
-    sms_thread_closed boolean NOT NULL DEFAULT false
+    sms_thread_closed boolean NOT NULL DEFAULT false,
+    CONSTRAINT one_mandat_per_application UNIQUE(application_id)
 );
-
-
--- application_id UNIQUE
 
 # --- !Downs
 DROP TABLE mandat;

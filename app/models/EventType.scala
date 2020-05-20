@@ -96,6 +96,9 @@ object EventType {
   object PostAddUserUnauthorized extends Warn
   object PostEditUserUnauthorized extends Warn
   object ShowAddUserUnauthorized extends Warn
+  object SmsReadError extends Error
+  object SmsSendError extends Error
+  object SmsDeleteError extends Error
   object SmsCallbackError extends Error
   object StatsShowed extends Info
   object StatsUnauthorized extends Warn
