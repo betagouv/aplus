@@ -53,7 +53,7 @@ class MandatService @Inject() (
         .map(e =>
           Error.SqlException(
             EventType.MandatError,
-            s"Impossible d'accéder au mandat ${id.underlying}.",
+            s"Impossible d'accéder au mandat ${id.underlying}",
             e
           )
         )
@@ -62,7 +62,7 @@ class MandatService @Inject() (
             Left(
               Error.EntityNotFound(
                 EventType.MandatNotFound,
-                s"Tentative d'accès à un mandat non existant: ${id.underlying}."
+                s"Tentative d'accès à un mandat non existant: ${id.underlying}"
               )
             )
           case Some(mandat) => Right(mandat)
@@ -145,7 +145,7 @@ class MandatService @Inject() (
               Error.SqlException(
                 EventType.MandatError,
                 s"Impossible de créer un mandat par l'utilisateur ${user.id} " +
-                  s"après $maxIterNr essais avec des UUID différentes.",
+                  s"après $maxIterNr essais avec des UUID différentes",
                 error
               )
             )
@@ -156,7 +156,7 @@ class MandatService @Inject() (
           Left(
             Error.SqlException(
               EventType.MandatError,
-              s"Impossible de créer un mandat par l'utilisateur ${user.id}.",
+              s"Impossible de créer un mandat par l'utilisateur ${user.id}",
               error
             )
           )
@@ -193,7 +193,7 @@ class MandatService @Inject() (
             Error.Database(
               EventType.ApplicationLinkedToMandatError,
               s"Impossible de faire le lien entre le mandat $id et la demande $applicationId : " +
-                s"nombre de lignes mises à jour incorrect ($nrOfRows)."
+                s"nombre de lignes mises à jour incorrect ($nrOfRows)"
             )
           )
     )
@@ -213,7 +213,7 @@ class MandatService @Inject() (
       Error.SqlException(
         EventType.MandatError,
         s"Impossible d'ajouter le SMS ${remoteSms.sms.id.underlying} " +
-          s"créé à ${remoteSms.sms.createdDatetime} au mandat $id.",
+          s"créé à ${remoteSms.sms.createdDatetime} au mandat $id",
         e
       )
     )
@@ -235,7 +235,7 @@ class MandatService @Inject() (
                 Error.Database(
                   EventType.MandatNotFound,
                   s"Le SMS ${remoteSms.sms.id} émis à ${remoteSms.sms.createdDatetime} " +
-                    s"n'a pas de mandat en cours de validation toujours ouvert."
+                    s"n'a pas de mandat en cours de validation toujours ouvert"
                 )
               )
             case Some(mandat) =>
@@ -254,7 +254,7 @@ class MandatService @Inject() (
           Error.SqlException(
             EventType.MandatError,
             s"Impossible d'ajouter le SMS ${remoteSms.sms.id} " +
-              s"émis à ${remoteSms.sms.createdDatetime} à un mandat en cours.",
+              s"émis à ${remoteSms.sms.createdDatetime} à un mandat en cours",
             e
           )
         )

@@ -232,8 +232,8 @@ case class MandatController @Inject() (
                     "Impossible de lire le numéro de téléphone ayant envoyé " +
                       s"le SMS ${sms.sms.id.underlying}, créé le ${sms.sms.createdDatetime}." +
                       s"Caractéristiques du numéro: $nrOfChars caractères, commençant par $first2Chars " +
-                      (if (isDigitsOnly) "et ne comportant que des chiffres."
-                       else "et composé d'autre chose que des chiffres.")
+                      (if (isDigitsOnly) "et ne comportant que des chiffres"
+                       else "et composé d'autre chose que des chiffres")
                   eventService.logSystem(
                     EventType.SmsCallbackError,
                     errorMessage
