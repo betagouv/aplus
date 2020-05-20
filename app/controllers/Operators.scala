@@ -155,7 +155,7 @@ object Operators {
               s"Vous n'avez pas les droits suffisants pour voir cette demande. " +
                 s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
             )
-          case _: Error.Database | _: Error.SqlException =>
+          case _: Error.Database | _: Error.SqlException | _: Error.MiscException =>
             InternalServerError(
               s"Une erreur s'est produite sur le serveur. " +
                 s"Si cette erreur persiste, " +
