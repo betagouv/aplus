@@ -6,7 +6,7 @@ import scala.concurrent.Future
 
 import javax.inject.Inject
 import anorm.Column.nonNull
-import models.{Answer, Application, Authorization, Error}
+import models.{Answer, Application, Authorization, Error, EventType}
 import models.Authorization.UserRights
 import play.api.db.Database
 import play.api.libs.json.Json
@@ -93,7 +93,13 @@ class ApplicationService @Inject() (
         ).on("id" -> id, "seen_by_user_id" -> fromUserId)
           .as(simpleApplication.singleOpt)
         result match {
-          case None => Left(Error.EntityNotFound)
+          case None =>
+            Left(
+              Error.EntityNotFound(
+                EventType.ApplicationNotFound,
+                s"Tentative d'accès à une application inexistante: $id"
+              )
+            )
           case Some(application) =>
             if (Authorization.canSeeApplication(application)(rights)) {
               if (Authorization.canSeePrivateDataOfApplication(application)(rights)) {
@@ -102,7 +108,12 @@ class ApplicationService @Inject() (
                 Right(application.anonymousApplication)
               }
             } else {
-              Left(Error.Authorization)
+              Left(
+                Error.Authorization(
+                  EventType.ApplicationUnauthorized,
+                  s"Tentative d'accès à une application non autorisé: $id"
+                )
+              )
             }
         }
       }

@@ -1,5 +1,6 @@
 package helper
 
+import java.text.Normalizer
 import org.apache.commons.lang3.StringUtils
 
 object StringHelper {
@@ -22,4 +23,28 @@ object StringHelper {
       .map(_.group(0).toLowerCase)
       .mkString("_")
       .toUpperCase()
+
+  val oneOrMoreSpacesRegex = """\p{Z}+""".r
+
+  def stripSpaces(string: String): String =
+    oneOrMoreSpacesRegex.replaceAllIn(string, "")
+
+  /** "  " => " " */
+  def mergeSpacesToOne(string: String): String =
+    oneOrMoreSpacesRegex.replaceAllIn(string, " ")
+
+  /** Notably: will merge letter+accent together (C in NFKC) and convert some weird unicode
+    * letters to compatible letters (K in NFKC).
+    */
+  def normalizeNFKC(string: String): String =
+    Normalizer.normalize(string, Normalizer.Form.NFKC)
+
+  /** This is a "common" normalization for untrusted inputs.
+    * 1. Unicode NFKC
+    * 2. Merge multiple spaces in one
+    * 3. Trim left an right whitespaces
+    */
+  def commonStringInputNormalization(string: String): String =
+    mergeSpacesToOne(normalizeNFKC(string)).trim
+
 }

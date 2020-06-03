@@ -344,7 +344,7 @@ case class CSVImportController @Inject() (
                               eventService.log(
                                 UserCreated,
                                 s"Ajout de l'utilisateur ${user.name} ${user.email}",
-                                user = Some(user)
+                                involvesUser = Some(user)
                               )
                             }
                             eventService

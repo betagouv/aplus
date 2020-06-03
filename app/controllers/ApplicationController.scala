@@ -4,6 +4,7 @@ import java.nio.file.{Files, Path, Paths}
 import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 import helper.UUIDHelper
+import scala.util.{Failure, Success}
 
 import actions._
 import constants.Constants
@@ -595,7 +596,7 @@ case class ApplicationController @Inject() (
         eventService.log(
           AllAsUnauthorized,
           s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur $userId",
-          user = Some(user)
+          involvesUser = Some(user)
         )
         Future(
           Unauthorized(
@@ -606,7 +607,7 @@ case class ApplicationController @Inject() (
         eventService.log(
           AllAsUnauthorized,
           s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur admin $userId",
-          user = Some(user)
+          involvesUser = Some(user)
         )
         Future(
           Unauthorized(
@@ -618,7 +619,11 @@ case class ApplicationController @Inject() (
           val currentUserId = user.id
           val applicationsFromTheArea = List[Application]()
           eventService
-            .log(AllAsShowed, s"Visualise la vue de l'utilisateur $userId", user = Some(user))
+            .log(
+              AllAsShowed,
+              s"Visualise la vue de l'utilisateur $userId",
+              involvesUser = Some(user)
+            )
           // Bug To Fix
           Ok(
             views.html.myApplications(user, userRights)(
@@ -865,6 +870,7 @@ case class ApplicationController @Inject() (
         )
       form.fold(
         formWithErrors => {
+          // TODO: check if formWithErrors.errors can leak personal data
           val error =
             s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.message).mkString(", ")})."
           eventService.log(AnswerNotCreated, s"$error")
