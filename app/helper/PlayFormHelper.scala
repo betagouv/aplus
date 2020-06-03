@@ -9,4 +9,5 @@ object PlayFormHelper {
     val prettyMessages = formError.messages.flatMap(_.split("\\.").lastOption).mkString(", ")
     s"($prettyKey : $prettyMessages)"
   }
+
 }

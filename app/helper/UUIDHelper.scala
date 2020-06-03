@@ -6,4 +6,5 @@ object UUIDHelper {
 
   def fromString(string: String) =
     scala.util.control.Exception.allCatch.opt(java.util.UUID.fromString(string))
+
 }

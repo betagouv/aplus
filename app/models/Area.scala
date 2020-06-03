@@ -132,6 +132,7 @@ object Area {
     Area("Yvelines", "Yvelines", "78"),
     Area("exemple", "Demo", "-1")
   )
+
   val allArea = Area(UUIDHelper.namedFrom("all"), "tous les territoires", "0")
 
   val notApplicable = Area("notApplicable", "NotApplicable", "-1")

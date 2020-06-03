@@ -16,6 +16,7 @@ object JsonFormats {
         case (k, v) =>
           UUIDHelper.fromString(k).get -> v.asInstanceOf[String]
       })
+
   }
 
   implicit val mapUUIDWrites = new Writes[Map[UUID, String]] {
@@ -26,6 +27,7 @@ object JsonFormats {
           val ret: (String, JsValueWrapper) = s.toString -> JsString(o)
           ret
       }.toSeq: _*)
+
   }
 
   implicit val mapUUIDFormat = Format(mapUUIDReads, mapUUIDWrites)

@@ -43,6 +43,7 @@ case class User(
   // TODO: put this in Authorization
   def canSeeUsersInArea(areaId: UUID): Boolean =
     (areaId == Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
+
 }
 
 object User {
@@ -133,4 +134,5 @@ object User {
       cguAcceptationDate = Some(date)
     )
   )
+
 }

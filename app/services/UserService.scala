@@ -47,32 +47,37 @@ class UserService @Inject() (
     .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
 
   // TODO: rename `allNoNameNoEmail`, because it generates bugs
-  def all: Future[List[User]] = Future {
-    db.withConnection { implicit connection =>
-      SQL("""SELECT *, '' as name, '' as email, '' as qualite FROM "user"""").as(simpleUser.*)
+  def all: Future[List[User]] =
+    Future {
+      db.withConnection { implicit connection =>
+        SQL("""SELECT *, '' as name, '' as email, '' as qualite FROM "user"""").as(simpleUser.*)
+      }
     }
-  }
 
   // Note: this is deprecated, should check via the UserGroup
-  def byAreaIds(areaIds: List[UUID]): List[User] = db.withConnection { implicit connection =>
-    SQL"""SELECT * FROM "user" WHERE ARRAY[$areaIds]::uuid[] && areas""".as(simpleUser.*)
-  }
+  def byAreaIds(areaIds: List[UUID]): List[User] =
+    db.withConnection { implicit connection =>
+      SQL"""SELECT * FROM "user" WHERE ARRAY[$areaIds]::uuid[] && areas""".as(simpleUser.*)
+    }
 
-  def allDBOnlybyArea(areaId: UUID) = db.withConnection { implicit connection =>
-    SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""")
-      .on("areaId" -> areaId)
-      .as(simpleUser.*)
-  }
+  def allDBOnlybyArea(areaId: UUID) =
+    db.withConnection { implicit connection =>
+      SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""")
+        .on("areaId" -> areaId)
+        .as(simpleUser.*)
+    }
 
-  def byGroupIds(ids: List[UUID]): List[User] = db.withConnection { implicit connection =>
-    SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
-  }
-
-  def byGroupIdsAnonymous(ids: List[UUID]): Future[List[User]] = Future {
+  def byGroupIds(ids: List[UUID]): List[User] =
     db.withConnection { implicit connection =>
       SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
     }
-  }
+
+  def byGroupIdsAnonymous(ids: List[UUID]): Future[List[User]] =
+    Future {
+      db.withConnection { implicit connection =>
+        SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
+      }
+    }
 
   def byId(id: UUID, includeDisabled: Boolean = false): Option[User] = {
     val results = byIds(List(id), includeDisabled)
@@ -117,9 +122,10 @@ class UserService @Inject() (
     }.toList ++ (User.admins.filter(user => lowerCaseEmails.contains(user.email.toLowerCase)))
   }
 
-  def deleteById(userId: UUID): Boolean = db.withTransaction { implicit connection =>
-    SQL"""DELETE FROM "user" WHERE id = ${userId}::uuid""".execute()
-  }
+  def deleteById(userId: UUID): Boolean =
+    db.withTransaction { implicit connection =>
+      SQL"""DELETE FROM "user" WHERE id = ${userId}::uuid""".execute()
+    }
 
   def add(users: List[User]): Either[String, Unit] =
     try {
@@ -154,7 +160,8 @@ class UserService @Inject() (
         Left("Aucun utilisateur n'a été ajouté")
     } catch {
       case ex: PSQLException =>
-        val EmailErrorPattern = """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
+        val EmailErrorPattern =
+          """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
         val errorMessage = EmailErrorPattern.findFirstIn(ex.getServerErrorMessage.toString) match {
           case Some(email) => s"Un utilisateur avec l'adresse $email existe déjà."
           case _           => s"SQL Erreur : ${ex.getServerErrorMessage.toString}"
@@ -162,9 +169,10 @@ class UserService @Inject() (
         Left(errorMessage)
     }
 
-  def update(user: User) = db.withConnection { implicit connection =>
-    val observableOrganisationIds = user.observableOrganisationIds.map(_.id)
-    SQL"""
+  def update(user: User) =
+    db.withConnection { implicit connection =>
+      val observableOrganisationIds = user.observableOrganisationIds.map(_.id)
+      SQL"""
           UPDATE "user" SET
           name = ${user.name},
           qualite = ${user.qualite},
@@ -183,10 +191,10 @@ class UserService @Inject() (
           shared_account = ${user.sharedAccount}
           WHERE id = ${user.id}::uuid
        """.executeUpdate() == 1
-  }
+    }
 
-  def acceptCGU(userId: UUID, acceptNewsletter: Boolean) = db.withConnection {
-    implicit connection =>
+  def acceptCGU(userId: UUID, acceptNewsletter: Boolean) =
+    db.withConnection { implicit connection =>
       val now = Time.nowParis()
       val resultCGUAcceptation = SQL"""
         UPDATE "user" SET
@@ -203,5 +211,6 @@ class UserService @Inject() (
         true
       }
       resultCGUAcceptation && resultNewsletterAcceptation
-  }
+    }
+
 }

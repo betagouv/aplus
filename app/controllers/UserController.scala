@@ -65,12 +65,13 @@ case class UserController @Inject() (
     with UserOperators
     with GroupOperators {
 
-  def home = loginAction {
-    TemporaryRedirect(controllers.routes.UserController.all(Area.allArea.id).url)
-  }
+  def home =
+    loginAction {
+      TemporaryRedirect(controllers.routes.UserController.all(Area.allArea.id).url)
+    }
 
-  def all(areaId: UUID): Action[AnyContent] = loginAction.async {
-    implicit request: RequestWithUserData[AnyContent] =>
+  def all(areaId: UUID): Action[AnyContent] =
+    loginAction.async { implicit request: RequestWithUserData[AnyContent] =>
       asUserWhoSeesUsersOfArea(areaId) { () =>
         AllUserUnauthorized -> "Accès non autorisé à l'admin des utilisateurs"
       } { () =>
@@ -124,10 +125,10 @@ case class UserController @Inject() (
             Ok(result)
         }
       }
-  }
+    }
 
-  def allCSV(areaId: java.util.UUID): Action[AnyContent] = loginAction.async {
-    implicit request: RequestWithUserData[AnyContent] =>
+  def allCSV(areaId: java.util.UUID): Action[AnyContent] =
+    loginAction.async { implicit request: RequestWithUserData[AnyContent] =>
       asAdminWhoSeesUsersOfArea(areaId) { () =>
         AllUserCSVUnauthorized -> "Accès non autorisé à l'export utilisateur"
       } { () =>
@@ -195,10 +196,10 @@ case class UserController @Inject() (
               .as("text/csv")
         }
       }
-  }
+    }
 
-  def editUser(userId: UUID): Action[AnyContent] = loginAction.async {
-    implicit request: RequestWithUserData[AnyContent] =>
+  def editUser(userId: UUID): Action[AnyContent] =
+    loginAction.async { implicit request: RequestWithUserData[AnyContent] =>
       asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
         ViewUserUnauthorized -> s"Accès non autorisé pour voir $userId"
       } { () =>
@@ -230,192 +231,202 @@ case class UserController @Inject() (
             Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
         }
       }
-  }
+    }
 
   def isAccountUsed(user: User): Boolean =
     applicationService.allForUserId(userId = user.id, anonymous = false).nonEmpty
 
-  def deleteUnusedUserById(userId: UUID): Action[AnyContent] = loginAction { implicit request =>
-    withUser(userId, includeDisabled = true) { user: User =>
-      asAdminOfUserZone(user) { () =>
-        DeleteUserUnauthorized -> s"Suppression de l'utilisateur $userId refusée."
-      } { () =>
-        if (isAccountUsed(user)) {
-          eventService.log(UserIsUsed, description = s"Le compte ${user.id} est utilisé.")
-          Unauthorized("User is not unused.")
-        } else {
-          userService.deleteById(userId)
-          val message = s"Utilisateur $userId / ${user.email} a été supprimé"
-          eventService.log(UserDeleted, message, user = Some(user))
-          Redirect(controllers.routes.UserController.home).flashing("success" -> message)
+  def deleteUnusedUserById(userId: UUID): Action[AnyContent] =
+    loginAction { implicit request =>
+      withUser(userId, includeDisabled = true) { user: User =>
+        asAdminOfUserZone(user) { () =>
+          DeleteUserUnauthorized -> s"Suppression de l'utilisateur $userId refusée."
+        } { () =>
+          if (isAccountUsed(user)) {
+            eventService.log(UserIsUsed, description = s"Le compte ${user.id} est utilisé.")
+            Unauthorized("User is not unused.")
+          } else {
+            userService.deleteById(userId)
+            val message = s"Utilisateur $userId / ${user.email} a été supprimé"
+            eventService.log(UserDeleted, message, user = Some(user))
+            Redirect(controllers.routes.UserController.home).flashing("success" -> message)
+          }
         }
       }
     }
-  }
 
-  def editUserPost(userId: UUID): Action[AnyContent] = loginAction { implicit request =>
-    asAdmin(() => PostEditUserUnauthorized -> s"Accès non autorisé à modifier $userId") { () =>
-      userForm(Time.timeZoneParis).bindFromRequest.fold(
-        formWithErrors => {
-          val groups = groupService.allGroups
-          eventService.log(
-            AddUserError,
-            s"Essai de modification de l'utilisateur $userId avec des erreurs de validation"
-          )
-          BadRequest(
-            views.html.editUser(request.currentUser, request.rights)(formWithErrors, userId, groups)
-          )
-        },
-        updatedUser =>
-          withUser(updatedUser.id, includeDisabled = true) { user: User =>
-            // Ensure that user include all areas of his group
-            val groups = groupService.byIds(updatedUser.groupIds)
-            val areaIds = (updatedUser.areas ++ groups.flatMap(_.areaIds)).distinct
-            val userToUpdate = updatedUser.copy(
-              areas = areaIds.intersect(request.currentUser.areas)
-            ) // intersect is a safe gard (In case an Admin try to manage an authorized area)
-            val rights = request.rights
-
-            if (not(Authorization.canEditOtherUser(user)(rights))) {
-              eventService.log(PostEditUserUnauthorized, s"Accès non autorisé à modifier $userId")
-              Unauthorized("Vous n'avez pas le droit de faire ça")
-            } else if (userService.update(userToUpdate)) {
-              eventService.log(UserEdited, s"Utilisateur $userId modifié", user = Some(updatedUser))
-              Redirect(routes.UserController.editUser(userId))
-                .flashing("success" -> "Utilisateur modifié")
-            } else {
-              val form: Form[User] = userForm(Time.timeZoneParis)
-                .fill(userToUpdate)
-                .withGlobalError(
-                  s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)"
-                )
-              val groups = groupService.allGroups
-              eventService.log(
-                EditUserError,
-                "Impossible de modifier l'utilisateur dans la BDD",
-                user = Some(updatedUser)
-              )
-              InternalServerError(
-                views.html.editUser(request.currentUser, request.rights)(form, userId, groups)
-              )
-            }
-          }
-      )
-    }
-  }
-
-  def addPost(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
-    withGroup(groupId) { group: UserGroup =>
-      if (!group.canHaveUsersAddedBy(request.currentUser)) {
-        eventService.log(PostAddUserUnauthorized, "Accès non autorisé à l'admin des utilisateurs")
-        Unauthorized("Vous n'avez pas le droit de faire ça")
-      } else {
-        usersForm(Time.timeZoneParis, group.areaIds).bindFromRequest.fold(
-          { formWithErrors =>
-            eventService
-              .log(AddUserError, "Essai d'ajout d'utilisateurs avec des erreurs de validation")
+  def editUserPost(userId: UUID): Action[AnyContent] =
+    loginAction { implicit request =>
+      asAdmin(() => PostEditUserUnauthorized -> s"Accès non autorisé à modifier $userId") { () =>
+        userForm(Time.timeZoneParis).bindFromRequest.fold(
+          formWithErrors => {
+            val groups = groupService.allGroups
+            eventService.log(
+              AddUserError,
+              s"Essai de modification de l'utilisateur $userId avec des erreurs de validation"
+            )
             BadRequest(
-              views.html.editUsers(request.currentUser, request.rights)(
-                formWithErrors,
-                0,
-                routes.UserController.addPost(groupId)
-              )
+              views.html
+                .editUser(request.currentUser, request.rights)(formWithErrors, userId, groups)
             )
           },
-          users =>
-            try {
-              val userToInsert = users.map(_.copy(groupIds = List(groupId)))
-              userService
-                .add(userToInsert)
-                .fold(
-                  {
-                    error =>
-                      val errorMessage =
-                        s"Impossible d'ajouté les utilisateurs (Erreur interne 1) $error"
-                      eventService.log(AddUserError, errorMessage)
-                      val form = usersForm(Time.timeZoneParis, group.areaIds)
-                        .fill(users)
-                        .withGlobalError(errorMessage)
-                      InternalServerError(
-                        views.html.editUsers(request.currentUser, request.rights)(
-                          form,
-                          users.length,
-                          routes.UserController.addPost(groupId)
-                        )
-                      )
-                  }, {
-                    Unit =>
-                      users.foreach { user =>
-                        notificationsService.newUser(user)
-                        eventService.log(
-                          EventType.UserCreated,
-                          s"Ajout de l'utilisateur ${user.name} ${user.email}",
-                          user = Some(user)
-                        )
-                      }
-                      eventService.log(UsersCreated, "Utilisateurs ajoutés")
-                      Redirect(routes.GroupController.editGroup(groupId))
-                        .flashing("success" -> "Utilisateurs ajoutés")
-                  }
-                )
-            } catch {
-              case ex: PSQLException =>
-                val EmailErrorPattern = """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
-                val errorMessage =
-                  EmailErrorPattern.findFirstIn(ex.getServerErrorMessage.toString) match {
-                    case Some(email) => s"Un utilisateur avec l'adresse $email existe déjà."
-                    case _ =>
-                      "Erreur d'insertion dans la base de donnée : contacter l'administrateur."
-                  }
-                val form = usersForm(Time.timeZoneParis, group.areaIds)
-                  .fill(users)
-                  .withGlobalError(errorMessage)
-                eventService.log(
-                  AddUserError,
-                  s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}"
-                )
-                BadRequest(
-                  views.html.editUsers(request.currentUser, request.rights)(
-                    form,
-                    users.length,
-                    routes.UserController.addPost(groupId)
+          updatedUser =>
+            withUser(updatedUser.id, includeDisabled = true) { user: User =>
+              // Ensure that user include all areas of his group
+              val groups = groupService.byIds(updatedUser.groupIds)
+              val areaIds = (updatedUser.areas ++ groups.flatMap(_.areaIds)).distinct
+              val userToUpdate = updatedUser.copy(
+                areas = areaIds.intersect(request.currentUser.areas)
+              ) // intersect is a safe gard (In case an Admin try to manage an authorized area)
+              val rights = request.rights
+
+              if (not(Authorization.canEditOtherUser(user)(rights))) {
+                eventService.log(PostEditUserUnauthorized, s"Accès non autorisé à modifier $userId")
+                Unauthorized("Vous n'avez pas le droit de faire ça")
+              } else if (userService.update(userToUpdate)) {
+                eventService
+                  .log(UserEdited, s"Utilisateur $userId modifié", user = Some(updatedUser))
+                Redirect(routes.UserController.editUser(userId))
+                  .flashing("success" -> "Utilisateur modifié")
+              } else {
+                val form: Form[User] = userForm(Time.timeZoneParis)
+                  .fill(userToUpdate)
+                  .withGlobalError(
+                    s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)"
                   )
+                val groups = groupService.allGroups
+                eventService.log(
+                  EditUserError,
+                  "Impossible de modifier l'utilisateur dans la BDD",
+                  user = Some(updatedUser)
                 )
+                InternalServerError(
+                  views.html.editUser(request.currentUser, request.rights)(form, userId, groups)
+                )
+              }
             }
         )
       }
     }
-  }
 
-  def showCGU(): Action[AnyContent] = loginAction { implicit request =>
-    eventService.log(CGUShowed, "CGU visualisé")
-    Ok(views.html.showCGU(request.currentUser, request.rights))
-  }
-
-  def validateCGU(): Action[AnyContent] = loginAction { implicit request =>
-    validateCGUForm.bindFromRequest.fold(
-      { formWithErrors =>
-        eventService.log(CGUValidationError, "Erreur de formulaire dans la validation des CGU")
-        BadRequest(
-          s"Formulaire invalide, prévenez l’administrateur du service. ${formWithErrors.errors.mkString(", ")}"
-        )
-      }, {
-        case (redirectOption, newsletter, validate) =>
-          if (validate) {
-            userService.acceptCGU(request.currentUser.id, newsletter)
-          }
-          eventService.log(CGUValidated, "CGU validées")
-          val route = redirectOption match {
-            case Some(redirect)
-                if (redirect: String) != (routes.ApplicationController.myApplications.url: String) =>
-              Call("GET", redirect)
-            case _ =>
-              routes.HomeController.welcome
-          }
-          Redirect(route).flashing("success" -> "Merci d’avoir accepté les CGU")
+  def addPost(groupId: UUID): Action[AnyContent] =
+    loginAction { implicit request =>
+      withGroup(groupId) { group: UserGroup =>
+        if (!group.canHaveUsersAddedBy(request.currentUser)) {
+          eventService.log(PostAddUserUnauthorized, "Accès non autorisé à l'admin des utilisateurs")
+          Unauthorized("Vous n'avez pas le droit de faire ça")
+        } else {
+          usersForm(Time.timeZoneParis, group.areaIds).bindFromRequest.fold(
+            { formWithErrors =>
+              eventService
+                .log(AddUserError, "Essai d'ajout d'utilisateurs avec des erreurs de validation")
+              BadRequest(
+                views.html.editUsers(request.currentUser, request.rights)(
+                  formWithErrors,
+                  0,
+                  routes.UserController.addPost(groupId)
+                )
+              )
+            },
+            users =>
+              try {
+                val userToInsert = users.map(_.copy(groupIds = List(groupId)))
+                userService
+                  .add(userToInsert)
+                  .fold(
+                    {
+                      error =>
+                        val errorMessage =
+                          s"Impossible d'ajouté les utilisateurs (Erreur interne 1) $error"
+                        eventService.log(AddUserError, errorMessage)
+                        val form = usersForm(Time.timeZoneParis, group.areaIds)
+                          .fill(users)
+                          .withGlobalError(errorMessage)
+                        InternalServerError(
+                          views.html.editUsers(request.currentUser, request.rights)(
+                            form,
+                            users.length,
+                            routes.UserController.addPost(groupId)
+                          )
+                        )
+                    },
+                    {
+                      Unit =>
+                        users.foreach { user =>
+                          notificationsService.newUser(user)
+                          eventService.log(
+                            EventType.UserCreated,
+                            s"Ajout de l'utilisateur ${user.name} ${user.email}",
+                            user = Some(user)
+                          )
+                        }
+                        eventService.log(UsersCreated, "Utilisateurs ajoutés")
+                        Redirect(routes.GroupController.editGroup(groupId))
+                          .flashing("success" -> "Utilisateurs ajoutés")
+                    }
+                  )
+              } catch {
+                case ex: PSQLException =>
+                  val EmailErrorPattern =
+                    """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
+                  val errorMessage =
+                    EmailErrorPattern.findFirstIn(ex.getServerErrorMessage.toString) match {
+                      case Some(email) => s"Un utilisateur avec l'adresse $email existe déjà."
+                      case _ =>
+                        "Erreur d'insertion dans la base de donnée : contacter l'administrateur."
+                    }
+                  val form = usersForm(Time.timeZoneParis, group.areaIds)
+                    .fill(users)
+                    .withGlobalError(errorMessage)
+                  eventService.log(
+                    AddUserError,
+                    s"Impossible d'ajouter des utilisateurs dans la BDD : ${ex.getServerErrorMessage}"
+                  )
+                  BadRequest(
+                    views.html.editUsers(request.currentUser, request.rights)(
+                      form,
+                      users.length,
+                      routes.UserController.addPost(groupId)
+                    )
+                  )
+              }
+          )
+        }
       }
-    )
-  }
+    }
+
+  def showCGU(): Action[AnyContent] =
+    loginAction { implicit request =>
+      eventService.log(CGUShowed, "CGU visualisé")
+      Ok(views.html.showCGU(request.currentUser, request.rights))
+    }
+
+  def validateCGU(): Action[AnyContent] =
+    loginAction { implicit request =>
+      validateCGUForm.bindFromRequest.fold(
+        { formWithErrors =>
+          eventService.log(CGUValidationError, "Erreur de formulaire dans la validation des CGU")
+          BadRequest(
+            s"Formulaire invalide, prévenez l’administrateur du service. ${formWithErrors.errors.mkString(", ")}"
+          )
+        },
+        {
+          case (redirectOption, newsletter, validate) =>
+            if (validate) {
+              userService.acceptCGU(request.currentUser.id, newsletter)
+            }
+            eventService.log(CGUValidated, "CGU validées")
+            val route = redirectOption match {
+              case Some(redirect)
+                  if (redirect: String) != (routes.ApplicationController.myApplications.url: String) =>
+                Call("GET", redirect)
+              case _ =>
+                routes.HomeController.welcome
+            }
+            Redirect(route).flashing("success" -> "Merci d’avoir accepté les CGU")
+        }
+      )
+    }
 
   private val validateCGUForm: Form[(Option[String], Boolean, Boolean)] = Form(
     tuple(
@@ -429,109 +440,120 @@ case class UserController @Inject() (
     "newsletter" -> boolean
   )
 
-  def subscribeNewsletter: Action[AnyContent] = loginAction { implicit request =>
-    subscribeNewsletterForm.bindFromRequest.fold(
-      { formWithErrors =>
-        eventService.log(
-          NewsletterSubscriptionError,
-          "Erreur de formulaire dans la souscription à la newletter"
-        )
-        BadRequest(
-          s"Formulaire invalide, prévenez l'administrateur du service. ${formWithErrors.errors.mkString(", ")}"
-        )
-      }, { newsletter =>
-        if (newsletter) {
-          // Note: CGU are not used anymore
-          userService.acceptCGU(request.currentUser.id, newsletter)
-        }
-        eventService.log(NewsletterSubscribed, "Newletter subscribed")
-        Redirect(routes.HomeController.welcome)
-          .flashing("success" -> "Merci d’avoir terminé votre inscription")
-      }
-    )
-  }
-
-  def add(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
-    withGroup(groupId) { group: UserGroup =>
-      if (!group.canHaveUsersAddedBy(request.currentUser)) {
-        eventService.log(
-          ShowAddUserUnauthorized,
-          s"Accès non autorisé à l'admin des utilisateurs du groupe $groupId"
-        )
-        Unauthorized("Vous n'avez pas le droit de faire ça")
-      } else {
-        val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
-        eventService.log(EditUserShowed, "Visualise la vue d'ajouts des utilisateurs")
-        Ok(
-          views.html.editUsers(request.currentUser, request.rights)(
-            usersForm(Time.timeZoneParis, group.areaIds),
-            rows,
-            routes.UserController.addPost(groupId)
+  def subscribeNewsletter: Action[AnyContent] =
+    loginAction { implicit request =>
+      subscribeNewsletterForm.bindFromRequest.fold(
+        { formWithErrors =>
+          eventService.log(
+            NewsletterSubscriptionError,
+            "Erreur de formulaire dans la souscription à la newletter"
           )
-        )
+          BadRequest(
+            s"Formulaire invalide, prévenez l'administrateur du service. ${formWithErrors.errors.mkString(", ")}"
+          )
+        },
+        { newsletter =>
+          if (newsletter) {
+            // Note: CGU are not used anymore
+            userService.acceptCGU(request.currentUser.id, newsletter)
+          }
+          eventService.log(NewsletterSubscribed, "Newletter subscribed")
+          Redirect(routes.HomeController.welcome)
+            .flashing("success" -> "Merci d’avoir terminé votre inscription")
+        }
+      )
+    }
+
+  def add(groupId: UUID): Action[AnyContent] =
+    loginAction { implicit request =>
+      withGroup(groupId) { group: UserGroup =>
+        if (!group.canHaveUsersAddedBy(request.currentUser)) {
+          eventService.log(
+            ShowAddUserUnauthorized,
+            s"Accès non autorisé à l'admin des utilisateurs du groupe $groupId"
+          )
+          Unauthorized("Vous n'avez pas le droit de faire ça")
+        } else {
+          val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
+          eventService.log(EditUserShowed, "Visualise la vue d'ajouts des utilisateurs")
+          Ok(
+            views.html.editUsers(request.currentUser, request.rights)(
+              usersForm(Time.timeZoneParis, group.areaIds),
+              rows,
+              routes.UserController.addPost(groupId)
+            )
+          )
+        }
       }
     }
-  }
 
-  def allEvents: Action[AnyContent] = loginAction { implicit request =>
-    asAdmin(() => EventsUnauthorized -> "Accès non autorisé pour voir les événements") { () =>
-      val limit = request.getQueryString("limit").map(_.toInt).getOrElse(500)
-      val userId = request.getQueryString("fromUserId").flatMap(UUIDHelper.fromString)
-      val events = eventService.all(limit, userId)
-      eventService.log(EventsShowed, s"Affiche les événements")
-      Ok(views.html.allEvents(request.currentUser, request.rights)(events, limit))
+  def allEvents: Action[AnyContent] =
+    loginAction { implicit request =>
+      asAdmin(() => EventsUnauthorized -> "Accès non autorisé pour voir les événements") { () =>
+        val limit = request.getQueryString("limit").map(_.toInt).getOrElse(500)
+        val userId = request.getQueryString("fromUserId").flatMap(UUIDHelper.fromString)
+        val events = eventService.all(limit, userId)
+        eventService.log(EventsShowed, s"Affiche les événements")
+        Ok(views.html.allEvents(request.currentUser, request.rights)(events, limit))
+      }
     }
-  }
 
-  def usersForm(timeZone: ZoneId, areaIds: List[UUID]): Form[List[User]] = Form(
-    single(
-      "users" -> list(
-        mapping(
-          "id" -> optional(uuid).transform[UUID]({
-            case None     => UUID.randomUUID()
-            case Some(id) => id
-          }, Some(_)),
-          "key" -> ignored("key"),
-          "name" -> nonEmptyText.verifying(maxLength(100)),
-          "qualite" -> text.verifying(maxLength(100)),
-          "email" -> email.verifying(maxLength(200), nonEmpty),
-          "helper" -> ignored(true),
-          "instructor" -> boolean,
-          "admin" -> ignored(false),
-          "areas" -> ignored(areaIds),
-          "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
-          "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
-          "adminGroup" -> boolean,
-          "disabled" -> ignored(false),
-          "expert" -> ignored(false),
-          "groupIds" -> default(list(uuid), List()),
-          "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-          "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-          "phone-number" -> optional(text),
-          "observableOrganisationIds" -> list(
-            of[Organisation.Id].verifying(
-              "Organisation non reconnue",
-              organisationId =>
-                Organisation.all
-                  .exists(organisation =>
-                    (organisation.id: Organisation.Id) == (organisationId: Organisation.Id)
-                  )
-            )
-          ),
-          Keys.User.sharedAccount -> boolean
-        )(User.apply)(User.unapply)
+  def usersForm(timeZone: ZoneId, areaIds: List[UUID]): Form[List[User]] =
+    Form(
+      single(
+        "users" -> list(
+          mapping(
+            "id" -> optional(uuid).transform[UUID](
+              {
+                case None     => UUID.randomUUID()
+                case Some(id) => id
+              },
+              Some(_)
+            ),
+            "key" -> ignored("key"),
+            "name" -> nonEmptyText.verifying(maxLength(100)),
+            "qualite" -> text.verifying(maxLength(100)),
+            "email" -> email.verifying(maxLength(200), nonEmpty),
+            "helper" -> ignored(true),
+            "instructor" -> boolean,
+            "admin" -> ignored(false),
+            "areas" -> ignored(areaIds),
+            "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
+            "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
+            "adminGroup" -> boolean,
+            "disabled" -> ignored(false),
+            "expert" -> ignored(false),
+            "groupIds" -> default(list(uuid), List()),
+            "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
+            "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
+            "phone-number" -> optional(text),
+            "observableOrganisationIds" -> list(
+              of[Organisation.Id].verifying(
+                "Organisation non reconnue",
+                organisationId =>
+                  Organisation.all
+                    .exists(organisation =>
+                      (organisation.id: Organisation.Id) == (organisationId: Organisation.Id)
+                    )
+              )
+            ),
+            Keys.User.sharedAccount -> boolean
+          )(User.apply)(User.unapply)
+        )
       )
     )
-  )
 
   def userForm(timeZone: ZoneId): Form[User] = Form(userMapping(timeZone))
 
   private def userMapping(implicit timeZone: ZoneId): Mapping[User] =
     mapping(
-      "id" -> optional(uuid).transform[UUID]({
-        case None     => UUID.randomUUID()
-        case Some(id) => id
-      }, Some(_)),
+      "id" -> optional(uuid).transform[UUID](
+        {
+          case None     => UUID.randomUUID()
+          case Some(id) => id
+        },
+        Some(_)
+      ),
       "key" -> ignored("key"),
       "name" -> nonEmptyText.verifying(maxLength(100)),
       "qualite" -> text.verifying(maxLength(100)),
@@ -552,4 +574,5 @@ case class UserController @Inject() (
       "observableOrganisationIds" -> list(of[Organisation.Id]),
       Keys.User.sharedAccount -> boolean
     )(User.apply)(User.unapply)
+
 }

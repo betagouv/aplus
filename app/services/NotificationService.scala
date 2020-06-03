@@ -179,8 +179,8 @@ class NotificationService @Inject() (
     val bodyHtml = s"""Bonjour ${invitedUser.name},<br>
                       |<br>
                       |<p>${answer
-                        .map(_.creatorUserName)
-                        .getOrElse(application.creatorUserName)} a besoin de vous.<br>
+      .map(_.creatorUserName)
+      .getOrElse(application.creatorUserName)} a besoin de vous.<br>
                       |Cette personne vous a invité sur la demande suivante : "${application.subject}"
                       |Vous pouvez voir la demande et y répondre en suivant ce lien : <br>
                       |<a href="${url}">${url}</a><br>
@@ -218,4 +218,5 @@ class NotificationService @Inject() (
       bodyHtml = Some(bodyHtml)
     )
   }
+
 }

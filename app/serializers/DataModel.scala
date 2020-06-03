@@ -23,6 +23,9 @@ object DataModel {
           case "paper" => Some(Paper)
           case _       => None
         }
+
     }
+
   }
+
 }

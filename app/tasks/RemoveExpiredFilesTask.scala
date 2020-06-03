@@ -42,4 +42,5 @@ class RemoveExpiredFilesTask @Inject() (
       fileToDelete.foreach(_.delete())
     }
   }
+
 }

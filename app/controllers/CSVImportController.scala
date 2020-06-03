@@ -51,11 +51,13 @@ case class CSVImportController @Inject() (
     )(CSVImportData.apply)(CSVImportData.unapply)
   )
 
-  def importUsersFromCSV: Action[AnyContent] = loginAction { implicit request =>
-    asAdmin(() => ImportUserUnauthorized -> "Accès non autorisé pour importer les utilisateurs") {
-      () => Ok(views.html.importUsersCSV(request.currentUser, request.rights)(csvImportContentForm))
+  def importUsersFromCSV: Action[AnyContent] =
+    loginAction { implicit request =>
+      asAdmin(() => ImportUserUnauthorized -> "Accès non autorisé pour importer les utilisateurs") {
+        () =>
+          Ok(views.html.importUsersCSV(request.currentUser, request.rights)(csvImportContentForm))
+      }
     }
-  }
 
   /** Checks with the DB if Users or UserGroups already exist. */
   private def augmentUserGroupInformation(
@@ -111,10 +113,13 @@ case class CSVImportController @Inject() (
 
   private def userImportMapping(date: ZonedDateTime): Mapping[User] =
     mapping(
-      "id" -> optional(uuid).transform[UUID]({
-        case None     => UUID.randomUUID()
-        case Some(id) => id
-      }, Some(_)),
+      "id" -> optional(uuid).transform[UUID](
+        {
+          case None     => UUID.randomUUID()
+          case Some(id) => id
+        },
+        Some(_)
+      ),
       "key" -> ignored("key"),
       "name" -> nonEmptyText.verifying(maxLength(100)),
       "quality" -> default(text, ""),
@@ -139,10 +144,13 @@ case class CSVImportController @Inject() (
 
   private def groupImportMapping(date: ZonedDateTime): Mapping[UserGroup] =
     mapping(
-      "id" -> optional(uuid).transform[UUID]({
-        case None     => UUID.randomUUID()
-        case Some(id) => id
-      }, Some(_)),
+      "id" -> optional(uuid).transform[UUID](
+        {
+          case None     => UUID.randomUUID()
+          case Some(id) => id
+        },
+        Some(_)
+      ),
       "name" -> text(maxLength = 60),
       "description" -> optional(text),
       "insee-code" -> list(text),
@@ -156,27 +164,28 @@ case class CSVImportController @Inject() (
       "email" -> optional(email)
     )(UserGroup.apply)(UserGroup.unapply)
 
-  private def importUsersAfterReviewForm(date: ZonedDateTime): Form[List[UserGroupFormData]] = Form(
-    single(
-      "groups" -> list(
-        mapping(
-          "group" -> groupImportMapping(date),
-          "users" -> list(
-            mapping(
-              "user" -> userImportMapping(date),
-              "line" -> number,
-              "alreadyExists" -> boolean,
-              "alreadyExistingUser" -> ignored(Option.empty[User]),
-              "isInMoreThanOneGroup" -> optional(boolean)
-            )(UserFormData.apply)(UserFormData.unapply)
-          ),
-          "alreadyExistsOrAllUsersAlreadyExist" -> boolean,
-          "doNotInsert" -> boolean,
-          "alreadyExistingGroup" -> ignored(Option.empty[UserGroup])
-        )(UserGroupFormData.apply)(UserGroupFormData.unapply)
+  private def importUsersAfterReviewForm(date: ZonedDateTime): Form[List[UserGroupFormData]] =
+    Form(
+      single(
+        "groups" -> list(
+          mapping(
+            "group" -> groupImportMapping(date),
+            "users" -> list(
+              mapping(
+                "user" -> userImportMapping(date),
+                "line" -> number,
+                "alreadyExists" -> boolean,
+                "alreadyExistingUser" -> ignored(Option.empty[User]),
+                "isInMoreThanOneGroup" -> optional(boolean)
+              )(UserFormData.apply)(UserFormData.unapply)
+            ),
+            "alreadyExistsOrAllUsersAlreadyExist" -> boolean,
+            "doNotInsert" -> boolean,
+            "alreadyExistingGroup" -> ignored(Option.empty[UserGroup])
+          )(UserGroupFormData.apply)(UserGroupFormData.unapply)
+        )
       )
     )
-  )
 
   /** Action that reads the CSV file (CSV file was copy-paste in a web form)
     *  and display possible errors.
@@ -197,7 +206,8 @@ case class CSVImportController @Inject() (
                 csvImportContentFormWithError
               )
             )
-          }, { csvImportData =>
+          },
+          { csvImportData =>
             val defaultAreas = csvImportData.areaIds.flatMap(Area.fromId)
             UserAndGroupCsvSerializer
               .csvLinesToUserGroupData(csvImportData.separator, defaultAreas, Time.nowParis())(
@@ -214,10 +224,11 @@ case class CSVImportController @Inject() (
                       csvImportContentFormWithError
                     )
                   )
-                }, {
+                },
+                {
                   case (
-                      userNotImported: List[String],
-                      userGroupDataForm: List[UserGroupFormData]
+                        userNotImported: List[String],
+                        userGroupDataForm: List[UserGroupFormData]
                       ) =>
                     val augmentedUserGroupInformation: List[UserGroupFormData] =
                       augmentUserGroupsInformation(userGroupDataForm)
@@ -259,9 +270,11 @@ case class CSVImportController @Inject() (
   }
 
   /** Import the reviewed CSV. */
-  def importUsersAfterReview: Action[AnyContent] = loginAction { implicit request =>
-    asAdmin(() => ImportUsersUnauthorized -> "Accès non autorisé pour importer les utilisateurs") {
-      () =>
+  def importUsersAfterReview: Action[AnyContent] =
+    loginAction { implicit request =>
+      asAdmin(() =>
+        ImportUsersUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
+      ) { () =>
         val currentDate = Time.nowParis()
         importUsersAfterReviewForm(currentDate).bindFromRequest.fold(
           { importUsersAfterReviewFormWithError =>
@@ -271,7 +284,8 @@ case class CSVImportController @Inject() (
                 importUsersAfterReviewFormWithError
               )
             )
-          }, { userGroupDataForm: List[UserGroupFormData] =>
+          },
+          { userGroupDataForm: List[UserGroupFormData] =>
             val augmentedUserGroupInformation: List[UserGroupFormData] =
               augmentUserGroupsInformation(userGroupDataForm)
 
@@ -294,7 +308,8 @@ case class CSVImportController @Inject() (
                       views.html
                         .reviewUsersImport(request.currentUser, request.rights)(formWithError)
                     )
-                }, {
+                },
+                {
                   _ =>
                     groupsToInsert.foreach { userGroup =>
                       eventService.log(UserGroupCreated, s"Groupe ${userGroup.id} ajouté")
@@ -337,7 +352,8 @@ case class CSVImportController @Inject() (
                                   formWithError
                                 )
                             )
-                        }, {
+                        },
+                        {
                           _ =>
                             usersToInsert.foreach { user =>
                               notificationsService.newUser(user)
@@ -357,6 +373,7 @@ case class CSVImportController @Inject() (
               )
           }
         )
+      }
     }
-  }
+
 }

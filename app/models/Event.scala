@@ -23,4 +23,5 @@ case class Event(
       s"${description.filterNot(stripChars contains _)} ${ipAddress} ${id} ${fromUserId} ${toApplicationId
         .getOrElse("")} ${toUserId.getOrElse("")}"
   }
+
 }
