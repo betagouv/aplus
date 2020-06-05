@@ -314,7 +314,7 @@ case class ApplicationController @Inject() (
             applicationData.linkedMandat.foreach {
               mandatId =>
                 mandatService
-                  .linkApplication(Mandat.Id(mandatId), applicationId)
+                  .linkToApplication(Mandat.Id(mandatId), applicationId)
                   .onComplete {
                     case Failure(error) =>
                       eventService.log(

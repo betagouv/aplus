@@ -167,7 +167,7 @@ class MandatService @Inject() (
     Future(iter(1, 5))
   }
 
-  def linkApplication(id: Mandat.Id, applicationId: UUID): Future[Either[Error, Unit]] = Future(
+  def linkToApplication(id: Mandat.Id, applicationId: UUID): Future[Either[Error, Unit]] = Future(
     Try(
       db.withConnection { implicit connection =>
         SQL"""UPDATE mandat
