@@ -132,10 +132,10 @@ case class MandatController @Inject() (
                       (group.organisation: Option[Organisation.Id]) ==
                         (Some(Organisation.franceServicesId): Option[Organisation.Id])
                     )
-                  val enduserInfos: String =
-                    mandat.enduserPrenom.getOrElse("") + " " +
-                      mandat.enduserNom.getOrElse("") + " " +
-                      mandat.enduserBirthDate.getOrElse("")
+                  val usagerInfos: String =
+                    mandat.usagerPrenom.getOrElse("") + " " +
+                      mandat.usagerNom.getOrElse("") + " " +
+                      mandat.usagerBirthDate.getOrElse("")
                   val userInfos: String = request.currentUser.name
                   val groupInfos: String =
                     if (franceServiceGroups.size <= 0) {
@@ -160,11 +160,11 @@ case class MandatController @Inject() (
                     }
 
                   val body =
-                    s"En répondant OUI, vous assurez sur l’honneur que les informations communiquées ($enduserInfos) sont exactes et vous autorisez $userInfos$groupInfos, à utiliser vos données personnelles dans le cadre d’une demande et pour la durée d’instruction de celle-ci. Conformément aux conditions générales d’utilisation de la plateforme Adminitration+."
+                    s"En répondant OUI, vous assurez sur l’honneur que les informations communiquées ($usagerInfos) sont exactes et vous autorisez $userInfos$groupInfos, à utiliser vos données personnelles dans le cadre d’une demande et pour la durée d’instruction de celle-ci. Conformément aux conditions générales d’utilisation de la plateforme Adminitration+."
                   smsService
                     .sendSms(
                       body = body,
-                      recipients = mandat.enduserPhoneLocal.toList
+                      recipients = mandat.usagerPhoneLocal.toList
                         .map(ApiSms.localPhoneFranceToInternational)
                     )
                     .flatMap(
@@ -205,7 +205,7 @@ case class MandatController @Inject() (
   /** This is an `Action[String]` because we need to parse both as bytes and json.
     * Also, this is a webhook, only the returned status code is useful
     */
-  // TODO: What if enduser send an incorrect response the first time? close sms_thread only after some time has passed?
+  // TODO: What if usager send an incorrect response the first time? close sms_thread only after some time has passed?
   def webhookSmsReceived: Action[String] = Action(bodyParsers.tolerantText).async {
     implicit request =>
       smsService

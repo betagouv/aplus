@@ -34,10 +34,10 @@ class MandatService @Inject() (
       "user_id",
       "initiation_date",
       "application_id",
-      "enduser_prenom",
-      "enduser_nom",
-      "enduser_birth_date",
-      "enduser_phone_local",
+      "usager_prenom",
+      "usager_nom",
+      "usager_birth_date",
+      "usager_phone_local",
       "sms_thread",
       "sms_thread_closed"
     )
@@ -114,18 +114,18 @@ class MandatService @Inject() (
             id,
             user_id,
             initiation_date,
-            enduser_prenom,
-            enduser_nom,
-            enduser_birth_date,
-            enduser_phone_local
+            usager_prenom,
+            usager_nom,
+            usager_birth_date,
+            usager_phone_local
           ) VALUES (
             ${id}::uuid,
             ${user.id}::uuid,
             $now,
-            ${initiation.enduserPrenom},
-            ${initiation.enduserNom},
-            ${initiation.enduserBirthDate},
-            ${initiation.enduserPhoneLocal}
+            ${initiation.usagerPrenom},
+            ${initiation.usagerNom},
+            ${initiation.usagerBirthDate},
+            ${initiation.usagerPhoneLocal}
           )
         """.executeInsert(SqlParser.scalar[UUID].singleOpt)
 
@@ -225,7 +225,7 @@ class MandatService @Inject() (
         db.withTransaction { implicit connection =>
           // Check if a thread is open
           val allOpenMandats = SQL"""SELECT * FROM mandat
-                                WHERE enduser_phone_local = $localPhone
+                                WHERE usager_phone_local = $localPhone
                                 AND sms_thread_closed = false
                              """
             .as(mandatRowParser.*)
@@ -242,7 +242,7 @@ class MandatService @Inject() (
               SQL"""UPDATE mandat
                     SET sms_thread = sms_thread || ${remoteSms.json}::jsonb,
                         sms_thread_closed = true
-                    WHERE enduser_phone_local = $localPhone
+                    WHERE usager_phone_local = $localPhone
                     AND sms_thread_closed = false
                  """
                 .executeUpdate()

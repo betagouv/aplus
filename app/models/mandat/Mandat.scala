@@ -14,11 +14,11 @@ case class Mandat(
     userId: UUID,
     initiationDate: ZonedDateTime,
     applicationId: Option[UUID],
-    enduserPrenom: Option[String],
-    enduserNom: Option[String],
-    enduserBirthDate: Option[String],
+    usagerPrenom: Option[String],
+    usagerNom: Option[String],
+    usagerBirthDate: Option[String],
     // FR local phone number, example "0612345678"
-    enduserPhoneLocal: Option[String],
+    usagerPhoneLocal: Option[String],
     // Messages as given by the remote API, should be a JSON array
     // Note: phone numbers are integers in international form (without `+`)
     smsThread: JsValue,
@@ -31,10 +31,10 @@ case class Mandat(
 
   lazy val anonymous: Mandat =
     copy(
-      enduserPrenom = enduserPrenom.map(_ => "** Prénom anonyme **"),
-      enduserNom = enduserNom.map(_ => "** Nom anonyme **"),
-      enduserBirthDate = enduserBirthDate.map(_ => "** Date de naissance anonyme **"),
-      enduserPhoneLocal = enduserPhoneLocal.map(phone => phone.map(_ => '*')),
+      usagerPrenom = usagerPrenom.map(_ => "** Prénom anonyme **"),
+      usagerNom = usagerNom.map(_ => "** Nom anonyme **"),
+      usagerBirthDate = usagerBirthDate.map(_ => "** Date de naissance anonyme **"),
+      usagerPhoneLocal = usagerPhoneLocal.map(phone => phone.map(_ => '*')),
       smsThread = JsArray.empty
     )
 
