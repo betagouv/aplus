@@ -1,8 +1,6 @@
 package serializers
 
-import java.time.ZonedDateTime
 import play.api.libs.json._
-import scala.util.Try
 
 object ApiModel {
 
