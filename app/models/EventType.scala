@@ -2,6 +2,10 @@ package models
 
 import helper.StringHelper
 
+/** Note: `EventType` is used for logging, and logging is an orthogonal concern.
+  *       ie it shows up everywhere in an application. So we expect `EventType` to show up
+  *       at any level in the the code (wherever the best information to log is known).
+  */
 trait EventType {
   val code = StringHelper.camelToUnderscoresUpperCase(this.getClass.getSimpleName)
   val level: String

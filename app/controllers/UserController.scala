@@ -212,7 +212,11 @@ case class UserController @Inject() (
             val unused = not(isAccountUsed(user))
             val Token(tokenName, tokenValue) = CSRF.getToken.get
             eventService
-              .log(UserShowed, "Visualise la vue de modification l'utilisateur ", user = Some(user))
+              .log(
+                UserShowed,
+                "Visualise la vue de modification l'utilisateur ",
+                involvesUser = Some(user)
+              )
             Future(
               Ok(
                 views.html.editUser(request.currentUser, request.rights)(
@@ -246,7 +250,7 @@ case class UserController @Inject() (
         } else {
           userService.deleteById(userId)
           val message = s"Utilisateur $userId / ${user.email} a été supprimé"
-          eventService.log(UserDeleted, message, user = Some(user))
+          eventService.log(UserDeleted, message, involvesUser = Some(user))
           Redirect(controllers.routes.UserController.home).flashing("success" -> message)
         }
       }
@@ -280,7 +284,8 @@ case class UserController @Inject() (
               eventService.log(PostEditUserUnauthorized, s"Accès non autorisé à modifier $userId")
               Unauthorized("Vous n'avez pas le droit de faire ça")
             } else if (userService.update(userToUpdate)) {
-              eventService.log(UserEdited, s"Utilisateur $userId modifié", user = Some(updatedUser))
+              eventService
+                .log(UserEdited, s"Utilisateur $userId modifié", involvesUser = Some(updatedUser))
               Redirect(routes.UserController.editUser(userId))
                 .flashing("success" -> "Utilisateur modifié")
             } else {
@@ -293,7 +298,7 @@ case class UserController @Inject() (
               eventService.log(
                 EditUserError,
                 "Impossible de modifier l'utilisateur dans la BDD",
-                user = Some(updatedUser)
+                involvesUser = Some(updatedUser)
               )
               InternalServerError(
                 views.html.editUser(request.currentUser, request.rights)(form, userId, groups)
@@ -350,7 +355,7 @@ case class UserController @Inject() (
                         eventService.log(
                           EventType.UserCreated,
                           s"Ajout de l'utilisateur ${user.name} ${user.email}",
-                          user = Some(user)
+                          involvesUser = Some(user)
                         )
                       }
                       eventService.log(UsersCreated, "Utilisateurs ajoutés")

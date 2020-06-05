@@ -7,7 +7,7 @@ import constants.Constants
 import helper.BooleanHelper.not
 import models.EventType._
 import models.{Application, Authorization, Error, EventType, User, UserGroup}
-import play.api.mvc.Results.{NotFound, Unauthorized}
+import play.api.mvc.Results.{InternalServerError, NotFound, Unauthorized}
 import play.api.mvc.{AnyContent, Result, Results}
 import scala.concurrent.{ExecutionContext, Future}
 import services.{ApplicationService, EventService, UserGroupService, UserService}
@@ -145,25 +145,26 @@ object Operators {
     private def manageApplicationError[A](applicationId: UUID, error: Error)(
         implicit request: RequestWithUserData[A],
         ec: ExecutionContext
-    ): Future[Result] =
-      error match {
-        case Error.EntityNotFound =>
-          eventService.log(
-            ApplicationNotFound,
-            description = s"Tentative d'accès à une application inexistante: $applicationId"
-          )
-          Future(NotFound("Nous n'avons pas trouvé cette demande"))
-        case Error.Authorization =>
-          eventService.log(
-            ApplicationUnauthorized,
-            description = s"Tentative d'accès à une application non autorisé: $applicationId"
-          )
-          Future(
+    ): Future[Result] = {
+      val result =
+        error match {
+          case _: Error.EntityNotFound =>
+            NotFound("Nous n'avons pas trouvé cette demande")
+          case _: Error.Authorization =>
             Unauthorized(
-              s"Vous n'avez pas les droits suffisants pour voir cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+              s"Vous n'avez pas les droits suffisants pour voir cette demande. " +
+                s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
             )
-          )
-      }
+          case _: Error.Database | _: Error.SqlException | _: Error.MiscException =>
+            InternalServerError(
+              s"Une erreur s'est produite sur le serveur. " +
+                s"Si cette erreur persiste, " +
+                s"vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+            )
+        }
+      eventService.logError(error)
+      Future(result)
+    }
 
     def withApplication(
         applicationId: UUID
