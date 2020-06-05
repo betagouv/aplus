@@ -29,9 +29,9 @@
             <div class="mdl-cell mdl-cell--12-col">
                 Téléphone : @mandat.usagerPhoneLocal
             </div>
-            @for(sms <- mandat.typedSmsThread) {
+            @for(sms <- mandat.smsThread) {
             <div class="mdl-cell mdl-cell--12-col">
-                Message du : @{Time.formatPatternFr(sms.createdDatetime, "dd MMM YYYY - HH:mm")}
+                Message du : @{Time.formatPatternFr(sms.creationDate, "dd MMM YYYY - HH:mm")}
                 <br>
                 @sms.body
             </div>

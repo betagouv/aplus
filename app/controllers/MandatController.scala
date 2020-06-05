@@ -5,14 +5,13 @@ import constants.Constants
 import helper.StringHelper
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import models.{Error, EventType, Organisation}
+import models.{Error, EventType, Organisation, Sms}
 import models.mandat.{Mandat, SmsMandatInitiation}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Action, AnyContent, InjectedController, PlayBodyParsers}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scala.concurrent.{ExecutionContext, Future}
-import serializers.ApiModel.ApiSms
 import services.{
   EventService,
   MandatService,
@@ -38,6 +37,7 @@ case class MandatController @Inject() (
 )(implicit val ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with UserOperators {
+  import serializers.DataModel.SmsFormats._
 
   implicit val mandatIdReads: Reads[Mandat.Id] =
     implicitly[Reads[UUID]].map(Mandat.Id.apply)
@@ -160,12 +160,11 @@ case class MandatController @Inject() (
                     }
 
                   val body =
-                    s"En répondant OUI, vous assurez sur l’honneur que les informations communiquées ($usagerInfos) sont exactes et vous autorisez $userInfos$groupInfos, à utiliser vos données personnelles dans le cadre d’une demande et pour la durée d’instruction de celle-ci. Conformément aux conditions générales d’utilisation de la plateforme Adminitration+."
+                    s"En répondant OUI, vous assurez sur l'honneur que les informations communiquées ($usagerInfos) sont exactes et vous autorisez $userInfos$groupInfos, à utiliser vos données personnelles dans le cadre d'une demande et pour la durée d'instruction de celle-ci. Conformément aux conditions générales d'utilisation de la plateforme Adminitration+."
                   smsService
                     .sendSms(
                       body = body,
-                      recipients = mandat.usagerPhoneLocal.toList
-                        .map(ApiSms.localPhoneFranceToInternational)
+                      recipient = Sms.PhoneNumber.fromLocalPhoneFrance(entity.usagerPhoneLocal)
                     )
                     .flatMap(
                       _.fold(
@@ -186,7 +185,7 @@ case class MandatController @Inject() (
                                   eventService.log(
                                     EventType.MandatInitiationBySmsDone,
                                     s"Le mandat par SMS ${mandat.id.underlying} a été créé. " +
-                                      s"Le SMS de demande ${sms.sms.id.underlying} a été envoyé"
+                                      s"Le SMS de demande ${sms.apiId.underlying} a été envoyé"
                                   )
                                   notificationsService.mandatSmsSent(mandat.id, request.currentUser)
                                   Ok(Json.toJson(mandat))
@@ -221,76 +220,53 @@ case class MandatController @Inject() (
               Future(InternalServerError)
             },
             sms =>
-              ApiSms.internationalToLocalPhone(sms.sms.originator) match {
-                case None => {
-                  // The phone number could not be parsed:
-                  // we log enough info to debug, but we avoid logging personal infos
-                  val nrOfChars: Int = sms.sms.originator.size
-                  val first2Chars: String = sms.sms.originator.take(2).toString
-                  val isDigitsOnly: Boolean = """\d+""".r.matches(sms.sms.originator)
-                  val errorMessage: String =
-                    "Impossible de lire le numéro de téléphone ayant envoyé " +
-                      s"le SMS ${sms.sms.id.underlying}, créé le ${sms.sms.createdDatetime}." +
-                      s"Caractéristiques du numéro: $nrOfChars caractères, commençant par $first2Chars " +
-                      (if (isDigitsOnly) "et ne comportant que des chiffres"
-                       else "et composé d'autre chose que des chiffres")
-                  eventService.logSystem(
-                    EventType.SmsCallbackError,
-                    errorMessage
-                  )
-                  // If we are in this branch, then our parser is bugged.
-                  // So, we will try to push a fix before the next webhook:
-                  Future(InternalServerError)
-                }
-                case Some(localPhone) =>
-                  mandatService
-                    .addSmsResponse(localPhone, sms)
-                    .flatMap(
-                      _.fold(
-                        error => {
-                          eventService.logSystem(
-                            error.eventType,
-                            error.description,
-                            underlyingException = error.underlyingException
-                          )
-                          if (error.eventType == EventType.MandatNotFound)
-                            Future(Ok)
-                          else
-                            Future(InternalServerError)
-                        },
-                        mandatId =>
-                          mandatService
-                            .byIdAnonymous(mandatId)
-                            .map(
-                              _.fold(
-                                error => {
-                                  eventService.logSystem(
-                                    error.eventType,
-                                    (s"Après ajout de la réponse par SMS ${sms.sms.id.underlying}. " +
-                                      error.description),
-                                    underlyingException = error.underlyingException
-                                  )
-                                  Ok
-                                },
-                                mandat => {
-                                  eventService.logSystem(
-                                    EventType.MandatBySmsResponseSaved,
-                                    s"Le mandat par SMS ${mandat.id.underlying} a reçu la réponse " +
-                                      s"${sms.sms.id.underlying}"
-                                  )
-
-                                  userService
-                                    .byId(mandat.userId)
-                                    .foreach(user =>
-                                      notificationsService.mandatSmsClosed(mandatId, user)
-                                    )
-                                  Ok
-                                }
-                              )
-                            )
+              mandatService
+                .addSmsResponse(sms)
+                .flatMap(
+                  _.fold(
+                    error => {
+                      eventService.logSystem(
+                        error.eventType,
+                        error.description,
+                        underlyingException = error.underlyingException
                       )
-                    )
-              }
+                      if (error.eventType == EventType.MandatNotFound)
+                        Future(Ok)
+                      else
+                        Future(InternalServerError)
+                    },
+                    mandatId =>
+                      mandatService
+                        .byIdAnonymous(mandatId)
+                        .map(
+                          _.fold(
+                            error => {
+                              eventService.logSystem(
+                                error.eventType,
+                                (s"Après ajout de la réponse par SMS ${sms.apiId.underlying}. " +
+                                  error.description),
+                                underlyingException = error.underlyingException
+                              )
+                              Ok
+                            },
+                            mandat => {
+                              eventService.logSystem(
+                                EventType.MandatBySmsResponseSaved,
+                                s"Le mandat par SMS ${mandat.id.underlying} a reçu la réponse " +
+                                  s"${sms.apiId.underlying}"
+                              )
+
+                              userService
+                                .byId(mandat.userId)
+                                .foreach(user =>
+                                  notificationsService.mandatSmsClosed(mandatId, user)
+                                )
+                              Ok
+                            }
+                          )
+                        )
+                  )
+                )
           )
         )
   }

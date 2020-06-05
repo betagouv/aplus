@@ -1,16 +1,17 @@
 package services
 
 import anorm._
-import helper.Time
+import helper.{PlayFormHelper, Time}
 import java.util.UUID
 import javax.inject.Inject
-import models.{Authorization, Error, EventType, User}
+import models.{Authorization, Error, EventType, Sms, User}
 import models.Authorization.UserRights
 import models.mandat.{Mandat, SmsMandatInitiation}
 import play.api.db.Database
+import play.api.libs.json.{JsValue, Json}
 import scala.concurrent.Future
 import scala.util.Try
-import serializers.ApiModel.CompleteSms
+import serializers.DataModel.SmsFormats._
 
 /** This is a "low-level" component, akin to Java's "repositories".
   * This component does not represent the actual business level model.
@@ -27,6 +28,15 @@ class MandatService @Inject() (
 
   implicit val mandatIdAnormParser: anorm.Column[Mandat.Id] =
     implicitly[anorm.Column[UUID]].map(Mandat.Id.apply)
+
+  implicit val smsListParser: anorm.Column[List[Sms]] =
+    implicitly[anorm.Column[JsValue]].mapResult(
+      _.validate[List[Sms]].asEither.left.map(errors =>
+        SqlMappingError(
+          s"Cannot parse JSON as List[Sms]: ${PlayFormHelper.prettifyJsonFormInvalidErrors(errors)}"
+        )
+      )
+    )
 
   private val mandatRowParser: RowParser[Mandat] = Macro
     .parser[Mandat](
@@ -168,11 +178,12 @@ class MandatService @Inject() (
     )
   )
 
-  def addSmsToMandat(id: Mandat.Id, remoteSms: CompleteSms): Future[Either[Error, Unit]] = Future(
+  def addSmsToMandat(id: Mandat.Id, sms: Sms): Future[Either[Error, Unit]] = Future(
     Try(
       db.withConnection { implicit connection =>
+        val smsJson: JsValue = Json.toJson(sms)
         SQL"""UPDATE mandat
-            SET sms_thread = sms_thread || ${remoteSms.json}::jsonb
+            SET sms_thread = sms_thread || ${smsJson}::jsonb
             WHERE id = ${id.underlying}::uuid
          """
           .executeUpdate()
@@ -181,21 +192,22 @@ class MandatService @Inject() (
     ).toEither.left.map(e =>
       Error.SqlException(
         EventType.MandatError,
-        s"Impossible d'ajouter le SMS ${remoteSms.sms.id.underlying} " +
-          s"créé à ${remoteSms.sms.createdDatetime} au mandat $id",
+        s"Impossible d'ajouter le SMS ${sms.apiId.underlying} " +
+          s"créé à ${sms.creationDate} au mandat $id",
         e
       )
     )
   )
 
-  def addSmsResponse(localPhone: String, remoteSms: CompleteSms): Future[Either[Error, Mandat.Id]] =
+  def addSmsResponse(sms: Sms.Incoming): Future[Either[Error, Mandat.Id]] =
     Future(
       Try(
         db.withTransaction { implicit connection =>
+          val localPhone = sms.originator.toLocalPhoneFrance
           // Check if a thread is open
           val allOpenMandats = SQL"""SELECT * FROM mandat
-                                WHERE usager_phone_local = $localPhone
-                                AND sms_thread_closed = false
+                                     WHERE usager_phone_local = $localPhone
+                                     AND sms_thread_closed = false
                              """
             .as(mandatRowParser.*)
           allOpenMandats.headOption match {
@@ -203,13 +215,14 @@ class MandatService @Inject() (
               Left(
                 Error.Database(
                   EventType.MandatNotFound,
-                  s"Le SMS ${remoteSms.sms.id} émis à ${remoteSms.sms.createdDatetime} " +
+                  s"Le SMS ${sms.apiId.underlying} émis à ${sms.creationDate} " +
                     s"n'a pas de mandat en cours de validation toujours ouvert"
                 )
               )
             case Some(mandat) =>
+              val smsJson = Json.toJson(sms)
               SQL"""UPDATE mandat
-                    SET sms_thread = sms_thread || ${remoteSms.json}::jsonb,
+                    SET sms_thread = sms_thread || ${smsJson}::jsonb,
                         sms_thread_closed = true
                     WHERE usager_phone_local = $localPhone
                     AND sms_thread_closed = false
@@ -222,8 +235,8 @@ class MandatService @Inject() (
         .map(e =>
           Error.SqlException(
             EventType.MandatError,
-            s"Impossible d'ajouter le SMS ${remoteSms.sms.id} " +
-              s"émis à ${remoteSms.sms.createdDatetime} à un mandat en cours",
+            s"Impossible d'ajouter le SMS ${sms.apiId.underlying} " +
+              s"émis à ${sms.creationDate} à un mandat en cours",
             e
           )
         )
