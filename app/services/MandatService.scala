@@ -92,24 +92,17 @@ class MandatService @Inject() (
       )
     )
 
-  /** `error.getMessage` example:
-    * org.postgresql.util.PSQLException: ERROR: duplicate key value violates unique constraint "mandat_pkey"
-    * Detail: Key (id)=(2254c6ca-0002-456f-9377-2ebb48e4d48c) already exists.
-    */
-  private def checkUniqueKeyConstraintViolation(error: Throwable, fieldValue: String): Boolean =
-    error.getMessage.contains("duplicate key value violates unique constraint") &&
-      error.getMessage.contains(fieldValue) &&
-      error.getMessage.contains("already exists")
-
   /** Initiate a `Mandat` using SMS */
   def createSmsMandat(
       initiation: SmsMandatInitiation,
       user: User
-  ): Future[Either[Error, Mandat]] = {
-    def tryInsert(id: UUID): Try[Mandat] = Try {
-      val now = Time.nowParis()
-      db.withTransaction { implicit connection =>
-        SQL"""
+  ): Future[Either[Error, Mandat]] =
+    Future {
+      Try {
+        val id = UUID.randomUUID
+        val now = Time.nowParis()
+        db.withTransaction { implicit connection =>
+          SQL"""
           INSERT INTO mandat (
             id,
             user_id,
@@ -129,43 +122,19 @@ class MandatService @Inject() (
           )
         """.executeInsert(SqlParser.scalar[UUID].singleOpt)
 
-        SQL"""SELECT * FROM mandat WHERE id = $id::uuid"""
-          .as(mandatRowParser.singleOpt)
-          // `.get` is OK here, we want to rollback if we cannot get back the entity
-          .get
-      }
-    }
-
-    def iter(loopNr: Int, maxIterNr: Int): Either[Error, Mandat] = {
-      val id = UUID.randomUUID
-      tryInsert(id).toEither.left.flatMap { error =>
-        if (checkUniqueKeyConstraintViolation(error, id.toString)) {
-          if (loopNr >= maxIterNr) {
-            Left(
-              Error.SqlException(
-                EventType.MandatError,
-                s"Impossible de créer un mandat par l'utilisateur ${user.id} " +
-                  s"après $maxIterNr essais avec des UUID différentes",
-                error
-              )
-            )
-          } else {
-            iter(loopNr + 1, maxIterNr)
-          }
-        } else {
-          Left(
-            Error.SqlException(
-              EventType.MandatError,
-              s"Impossible de créer un mandat par l'utilisateur ${user.id}",
-              error
-            )
-          )
+          SQL"""SELECT * FROM mandat WHERE id = $id::uuid"""
+            .as(mandatRowParser.singleOpt)
+            // `.get` is OK here, we want to rollback if we cannot get back the entity
+            .get
         }
+      }.toEither.left.map { error =>
+        Error.SqlException(
+          EventType.MandatError,
+          s"Impossible de créer un mandat par l'utilisateur ${user.id}",
+          error
+        )
       }
     }
-
-    Future(iter(1, 5))
-  }
 
   def linkToApplication(id: Mandat.Id, applicationId: UUID): Future[Either[Error, Unit]] = Future(
     Try(
