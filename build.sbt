@@ -14,7 +14,8 @@ lazy val root = (project in file("."))
     buildInfoPackage := "constants"
   )
 
-scalaVersion := "2.13.1"
+// TODO: when upgrading the version, remove "-Wconf:msg=Octal:s"
+scalaVersion := "2.13.2"
 
 // https://docs.scala-lang.org/overviews/compiler-options/index.html
 scalacOptions ++= Seq(
@@ -50,6 +51,9 @@ scalacOptions ++= Seq(
   "-Wmacros:before",
   "-Wnumeric-widen",
   "-Woctal-literal",
+  // Fixes a regression in 2.13.2:
+  // https://github.com/scala/bug/issues/11950
+  "-Wconf:msg=Octal:s",
   // "-Wself-implicit", // Warns about too much useful constructs
   // Note: -Wunused:imports cannot work with twirl
   // "-Wunused:imports",
@@ -74,11 +78,11 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.2.12",
+  "org.postgresql" % "postgresql" % "42.2.13",
   "org.playframework.anorm" %% "anorm" % "2.6.5",
-  "com.typesafe.play" %% "play-mailer" % "7.0.1",
+  "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
-  "com.typesafe.play" %% "play-mailer-guice" % "7.0.1",
+  "com.typesafe.play" %% "play-mailer-guice" % "8.0.1",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   "com.google.guava" % "guava" % "28.1-jre",
   "com.github.tototoshi" %% "scala-csv" % "1.3.6",
@@ -98,7 +102,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "chartjs" % "2.9.3",
   "org.webjars" % "font-awesome" % "5.13.0",
   "org.webjars.bowergithub.olifolkerd" % "tabulator" % "4.5.3",
-  "org.webjars.npm" % "xlsx" % "0.15.5"
+  "org.webjars.npm" % "xlsx" % "0.15.6"
 )
 // Crash
 libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.30"
