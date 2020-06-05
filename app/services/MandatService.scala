@@ -32,7 +32,7 @@ class MandatService @Inject() (
     .parser[Mandat](
       "id",
       "user_id",
-      "initiation_date",
+      "creation_date",
       "application_id",
       "usager_prenom",
       "usager_nom",
@@ -113,7 +113,7 @@ class MandatService @Inject() (
           INSERT INTO mandat (
             id,
             user_id,
-            initiation_date,
+            creation_date,
             usager_prenom,
             usager_nom,
             usager_birth_date,

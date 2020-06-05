@@ -12,7 +12,7 @@ object Mandat {
 case class Mandat(
     id: Mandat.Id,
     userId: UUID,
-    initiationDate: ZonedDateTime,
+    creationDate: ZonedDateTime,
     applicationId: Option[UUID],
     usagerPrenom: Option[String],
     usagerNom: Option[String],

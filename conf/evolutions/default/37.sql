@@ -2,7 +2,7 @@
 CREATE TABLE mandat (
     id uuid PRIMARY KEY,
     user_id uuid NOT NULL,
-    initiation_date timestamp with time zone NOT NULL,
+    creation_date timestamp with time zone NOT NULL,
     application_id uuid NULL DEFAULT NULL,
     usager_prenom varchar(255) NOT NULL,
     usager_nom varchar(255) NOT NULL,
