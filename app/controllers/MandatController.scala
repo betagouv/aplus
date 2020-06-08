@@ -4,7 +4,7 @@ import actions.LoginAction
 import constants.Constants
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import models.{Error, EventType, Organisation, Sms}
+import models.{Error, EventType, Sms}
 import models.mandat.{Mandat, SmsMandatInitiation}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Action, AnyContent, InjectedController, PlayBodyParsers}
@@ -77,46 +77,10 @@ case class MandatController @Inject() (
                   Future(jsonInternalServerError)
                 },
                 mandat => {
-                  val franceServiceGroups = userGroupService
-                    .byIds(request.currentUser.groupIds)
-                    .filter(group =>
-                      (group.organisation: Option[Organisation.Id]) ==
-                        (Some(Organisation.franceServicesId): Option[Organisation.Id])
-                    )
-                  val usagerInfos: String =
-                    mandat.usagerPrenom.getOrElse("") + " " +
-                      mandat.usagerNom.getOrElse("") + " " +
-                      mandat.usagerBirthDate.getOrElse("")
-                  val userInfos: String = request.currentUser.name
-                  val groupInfos: String =
-                    if (franceServiceGroups.size <= 0) {
-                      eventService.log(
-                        EventType.MandatInitiationBySmsWarn,
-                        s"Lors de la création du SMS, l'utilisateur ${request.currentUser.id} " +
-                          s"n'a pas de groupe FS"
-                      )
-                      ""
-                    } else if (franceServiceGroups.size == 1) {
-                      " de la structure " + franceServiceGroups.map(_.name).mkString(", ")
-                    } else if (franceServiceGroups.size <= 3) {
-                      " des structures " + franceServiceGroups.map(_.name).mkString(", ")
-                    } else {
-                      eventService.log(
-                        EventType.MandatInitiationBySmsWarn,
-                        s"Lors de la création du SMS, l'utilisateur ${request.currentUser.id} " +
-                          s"est dans trop de groupes (${franceServiceGroups.size}) " +
-                          "pour les inclure dans le SMS"
-                      )
-                      ""
-                    }
-
-                  val body =
-                    s"En répondant OUI, vous assurez sur l'honneur que les informations communiquées ($usagerInfos) sont exactes et vous autorisez $userInfos$groupInfos, à utiliser vos données personnelles dans le cadre d'une demande et pour la durée d'instruction de celle-ci. Conformément aux conditions générales d'utilisation de la plateforme Adminitration+."
+                  val userGroups = userGroupService.byIds(request.currentUser.groupIds)
+                  val recipient = Sms.PhoneNumber.fromLocalPhoneFrance(entity.usagerPhoneLocal)
                   smsService
-                    .sendSms(
-                      body = body,
-                      recipient = Sms.PhoneNumber.fromLocalPhoneFrance(entity.usagerPhoneLocal)
-                    )
+                    .sendMandatSms(recipient, mandat, request.currentUser, userGroups)
                     .flatMap(
                       _.fold(
                         error => {
