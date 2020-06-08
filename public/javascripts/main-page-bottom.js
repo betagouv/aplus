@@ -414,6 +414,7 @@ function setupMandatSmsForm() {
   var serverErrorMessage = document.getElementById(mandatSmsErrorServerId);
   var browserErrorMessage = document.getElementById(mandatSmsErrorBrowserId);
   var linkedMandatInput = document.getElementById(linkedMandatInputId);
+  var mandatTypeSmsRadio = document.getElementById("mandatType_sms");
 
   // Returns null|string
   function validateNonEmptyInput(input) {
@@ -505,6 +506,8 @@ function setupMandatSmsForm() {
             link.href = "/mandats/" + mandat.id;
             linkedMandatInput.value = mandat.id;
             successMessage.classList.remove("hidden");
+            // Note: mandatTypeSmsRadio.checked = true does not show the radio as checked
+            mandatTypeSmsRadio.click();
           },
           // Server error (= logged by Sentry)
           function() {
