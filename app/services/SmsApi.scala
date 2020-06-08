@@ -1,6 +1,6 @@
 package services
 
-import helper.Time
+import helper.{MessageBirdApi, Time}
 import java.time.ZonedDateTime
 import models.{Error, EventType, Sms, User}
 import play.api.Configuration
