@@ -28,9 +28,9 @@ object SmsApi {
       ws: WSClient,
       implicit val executionContext: ExecutionContext
   ) extends SmsApi {
-    private val apiKey: String = configuration.get[String]("app.smsApiKey")
-    private val signingKey: String = configuration.get[String]("app.smsSigningKey")
-    private val aplusPhoneNumber: String = configuration.get[String]("app.smsPhoneNumber")
+    private val apiKey: String = configuration.get[String]("app.messageBirdApiKey")
+    private val signingKey: String = configuration.get[String]("app.messageBirdSigningKey")
+    private val aplusPhoneNumber: String = configuration.get[String]("app.messageBirdPhoneNumber")
     private val requestTimeout = 5.seconds
 
     private val api = new MessageBirdApi(

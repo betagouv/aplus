@@ -1,5 +1,5 @@
 @import _root_.helper.MDLForms._
-@(form: Form[_], mandatoryFields: List[String], isCreationForm: Boolean)(implicit messagesProvider: MessagesProvider)
+@(form: Form[_], mandatoryFields: List[String], isCreationForm: Boolean, featureMandatSms: Boolean)(implicit messagesProvider: MessagesProvider)
 
 <div class="mdl-grid mdl-grid--no-spacing">
     <div @if(isCreationForm) { class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet" }>
@@ -18,7 +18,7 @@
     }
     </div>
 
-    @if(isCreationForm) {
+    @if(isCreationForm && featureMandatSms) {
         <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet">
             @smsMandatAjaxForm()
         </div>

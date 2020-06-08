@@ -89,6 +89,7 @@ case class ApplicationController @Inject() (
     with Operators.ApplicationOperators {
 
   private val filesPath = configuration.underlying.getString("app.filesPath")
+  private val featureMandatSms: Boolean = configuration.get[Boolean]("app.features.smsMandat")
 
   private val dir = Paths.get(s"$filesPath")
   if (!Files.isDirectory(dir)) {
@@ -157,6 +158,7 @@ case class ApplicationController @Inject() (
             coworkers,
             readSharedAccountUserSignature(request.session),
             canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
+            featureMandatSms = featureMandatSms,
             categories,
             applicationForm(request.currentUser)
           )
@@ -180,6 +182,7 @@ case class ApplicationController @Inject() (
               groupsOfAreaWithInstructorWithOrganisationSet,
               coworkers,
               readSharedAccountUserSignature(request.session),
+              featureMandatSms = featureMandatSms,
               categories,
               None,
               applicationForm(request.currentUser)
@@ -250,6 +253,7 @@ case class ApplicationController @Inject() (
                   groupsOfAreaWithInstructorWithOrganisationSet,
                   coworkers,
                   None,
+                  featureMandatSms = featureMandatSms,
                   categories,
                   formWithErrors("category").value,
                   formWithErrors,
@@ -265,6 +269,7 @@ case class ApplicationController @Inject() (
                     coworkers,
                     None,
                     canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
+                    featureMandatSms = featureMandatSms,
                     organisationService.categories,
                     formWithErrors,
                     pendingAttachments.keys ++ newAttachments.keys
