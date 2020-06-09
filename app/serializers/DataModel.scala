@@ -37,8 +37,10 @@ object DataModel {
 
     implicit val smsPhoneNumberWrites =
       implicitly[Writes[String]].contramap((id: Sms.PhoneNumber) => id.internationalPhoneNumber)
-    implicit val smsOutgoingFormat = Json.format[Sms.Outgoing]
-    implicit val smsIncomingFormat = Json.format[Sms.Incoming]
+
+    // Not implicits, so they are not picked as serializers/deserializers of `Sms`
+    private val smsOutgoingFormat = Json.format[Sms.Outgoing]
+    private val smsIncomingFormat = Json.format[Sms.Incoming]
 
     implicit val smsApiReads: Reads[Sms] =
       (JsPath \ "tag").read[String].flatMap {

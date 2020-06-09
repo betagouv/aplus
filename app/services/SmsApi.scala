@@ -1,6 +1,7 @@
 package services
 
-import helper.{MessageBirdApi, Time}
+import akka.stream.Materializer
+import helper.{MessageBirdApi, OvhApi, Time}
 import java.time.ZonedDateTime
 import models.{Error, EventType, Sms, User}
 import play.api.Configuration
@@ -10,6 +11,7 @@ import play.api.libs.ws.WSClient
 import play.api.mvc.{PlayBodyParsers, Request}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.util.Try
 
 /** Higher level API that fuses live APIs and fake APIs. */
 trait SmsApi {
@@ -75,6 +77,91 @@ object SmsApi {
       api.deleteSms(MessageBirdApi.Sms.Id(id.underlying))
   }
 
+  final class OvhSmsApi(
+      bodyParsers: PlayBodyParsers,
+      configuration: Configuration,
+      ws: WSClient,
+      implicit val executionContext: ExecutionContext,
+      implicit val materializer: Materializer
+  ) extends SmsApi {
+
+    private val serviceName: String = configuration.get[String]("app.ovhServiceName")
+    private val applicationKey: String = configuration.get[String]("app.ovhApplicationKey")
+    private val applicationSecret: String = configuration.get[String]("app.ovhApplicationSecret")
+    private val consumerKey: String = configuration.get[String]("app.ovhConsumerKey")
+    private val requestTimeout = 5.seconds
+
+    private val api = new OvhApi(
+      bodyParsers,
+      ws,
+      serviceName,
+      applicationKey,
+      applicationSecret,
+      consumerKey,
+      requestTimeout,
+      executionContext,
+      materializer
+    )
+
+    def sendSms(body: String, recipient: Sms.PhoneNumber): Future[Either[Error, Sms.Outgoing]] =
+      api
+        .sendSms(body, recipient.internationalPhoneNumber)
+        .map(
+          _.map(smsId =>
+            Sms.Outgoing(
+              apiId = Sms.ApiId(smsId.underlying.toString),
+              // Note: not the exact same date as the remote object, though it should not be a problem
+              creationDate = ZonedDateTime.now(),
+              recipient = recipient,
+              body = body
+            )
+          )
+        )
+
+    def smsReceivedCallback(request: Request[String]): Future[Either[Error, Sms.Incoming]] =
+      api
+        .smsReceivedCallback(request)
+        .map(_.map { apiSms =>
+          Sms.Incoming(
+            apiId = Sms.ApiId(apiSms.id.underlying.toString),
+            creationDate = apiSms.creationDatetime,
+            originator = Sms.PhoneNumber(apiSms.sender),
+            body = apiSms.message
+          )
+        })
+
+    def deleteSms(id: Sms.ApiId): Future[Either[Error, Unit]] =
+      Try(OvhApi.SmsId(id.underlying.toLong))
+        .fold(
+          e =>
+            Future(
+              Left(
+                Error.MiscException(
+                  EventType.SmsDeleteError,
+                  s"Impossible d'utiliser l'id ${id.underlying} sur l'api OVH.",
+                  e
+                )
+              )
+            ),
+          id =>
+            api.deleteOutgoingSms(id).zip(api.deleteIncomingSms(id)).map {
+              case (outResult, inResult) =>
+                if (outResult.isRight || inResult.isRight)
+                  Right(())
+                else
+                  Left(
+                    Error.MiscException(
+                      EventType.SmsDeleteError,
+                      s"Impossible de supprimer le SMS ${id.underlying} sur l'api OVH.",
+                      new Exception(
+                        s"Cannot delete OVH SMS. Outgoing: $outResult / Incoming: $inResult"
+                      )
+                    )
+                  )
+            }
+        )
+  }
+
   /** Fake API for dev and test */
   final class FakeSmsApi(
       configuration: Configuration,
@@ -112,7 +199,7 @@ object SmsApi {
                   creationDate = Time.nowParis(),
                   originator = recipient,
                   body = "OUI " + warn
-                )
+                ): Sms
               )
             )
         )
@@ -145,7 +232,8 @@ object SmsApi {
 
     def smsReceivedCallback(request: Request[String]): Future[Either[Error, Sms.Incoming]] = {
       val json = Json.parse(request.body)
-      Future(Right(json.as[Sms.Incoming]))
+      // Fake API, we don't care
+      Future(Right(json.as[Sms].asInstanceOf[Sms.Incoming]))
     }
 
     def deleteSms(id: Sms.ApiId): Future[Either[Error, Unit]] = Future(Right(()))
