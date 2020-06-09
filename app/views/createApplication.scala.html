@@ -3,7 +3,7 @@
 @import play.api.libs.json.Json
 @import serializers.DataModel
 
-@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], canCreatePhoneMandat: Boolean, categories: List[Category], applicationForm: Form[models.formModels.ApplicationFormData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], canCreatePhoneMandat: Boolean, featureMandatSms: Boolean, categories: List[Category], applicationForm: Form[models.formModels.ApplicationFormData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
 @main(currentUser, currentUserRights)(s"Nouvelle demande")  {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
@@ -147,7 +147,7 @@
                     </div>
 
                     <h5 class="title--addline">Informations concernant l'usager</h5>
-                    @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"), true)
+                    @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"), true, featureMandatSms)
                     <br>
                     <br>
                     <h5 class="title--addline">
@@ -269,9 +269,12 @@
                     }
                     <br>
 
-                        <button id="review-validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" disabled>
-                            Envoyer ma demande
-                        </button>
+                    @* Use a <input type="submit"> because there is another <button> *@
+                        <input type="submit"
+                               id="review-validation"
+                               class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
+                               value="Envoyer ma demande"
+                               disabled>
                         </div>
 
                         <div class="covid19-help">

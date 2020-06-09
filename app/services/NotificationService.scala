@@ -6,6 +6,7 @@ import constants.Constants
 import javax.inject.{Inject, Singleton}
 import controllers.routes
 import models._
+import models.mandat.Mandat
 import play.api.Logger
 import play.api.libs.mailer.MailerClient
 import play.api.libs.mailer.Email
@@ -125,6 +126,12 @@ class NotificationService @Inject() (
     sendMail(email)
   }
 
+  def mandatSmsSent(mandatId: Mandat.Id, user: User): Unit =
+    sendMail(generateMandatSmsSentEmail(mandatId, user))
+
+  def mandatSmsClosed(mandatId: Mandat.Id, user: User): Unit =
+    sendMail(generateMandatSmsClosedEmail(mandatId, user))
+
   private def generateFooter(user: User): String =
     s"""<br><br>
        |<b>Ne transférez pas cet email et n'y répondez pas directement.</b><br><i>
@@ -218,4 +225,50 @@ class NotificationService @Inject() (
       bodyHtml = Some(bodyHtml)
     )
   }
+
+  // TODO: footer
+  import scalatags.Text.all._
+
+  private def generateMandatSmsSentEmail(
+      mandatId: Mandat.Id,
+      user: User
+  ): Email = {
+    val url: String =
+      routes.MandatController.mandat(mandatId.underlying).absoluteURL(https, host)
+    val subject = s"[A+] Mandat initié par SMS"
+    val bodyHtml =
+      span(
+        "Le SMS a bien été envoyé ! Vous recevrez un e-mail dès que l’usager aura répondu. ",
+        "Vous pouvez suivre l’échange en cliquant sur ce lien : ",
+        a(href := url, url)
+      )
+    Email(
+      subject = subject,
+      from = from,
+      to = List(s"${user.name} <${user.email}>"),
+      bodyHtml = Some(bodyHtml.toString)
+    )
+  }
+
+  private def generateMandatSmsClosedEmail(
+      mandatId: Mandat.Id,
+      user: User
+  ): Email = {
+    val url: String =
+      routes.MandatController.mandat(mandatId.underlying).absoluteURL(https, host)
+    val subject = s"[A+] Vous avez reçu une réponse par SMS à votre mandat"
+    val bodyHtml =
+      span(
+        "L’usager a répondu à votre demande de mandat. ",
+        "L’échange est disponible en cliquant sur ce lien : ",
+        a(href := url, url)
+      )
+    Email(
+      subject = subject,
+      from = from,
+      to = List(s"${user.name} <${user.email}>"),
+      bodyHtml = Some(bodyHtml.toString)
+    )
+  }
+
 }

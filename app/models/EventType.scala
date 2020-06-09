@@ -53,6 +53,8 @@ object EventType {
   object ApplicationCreationError extends Error
   object ApplicationCreationUnauthorized extends Warn
   object ApplicationFormShowed extends Info
+  object ApplicationLinkedToMandat extends Info
+  object ApplicationLinkedToMandatError extends Error
   object ApplicationNotFound extends Error
   object ApplicationShowed extends Info
   object ApplicationUnauthorized extends Warn
@@ -79,6 +81,14 @@ object EventType {
   object ImportUserUnauthorized extends Warn
   object ImportUsersUnauthorized extends Warn
   object InviteNotCreated extends Error
+  object MandatInitiationBySmsInvalid extends Error
+  object MandatInitiationBySmsWarn extends Warn
+  object MandatInitiationBySmsDone extends Info
+  object MandatBySmsResponseSaved extends Info
+  object MandatShowed extends Info
+  object MandatError extends Error
+  object MandatNotFound extends Error
+  object MandatUnauthorized extends Warn
   object MyApplicationsShowed extends Info
   object MyCSVShowed extends Info
   object NewsletterSubscribed extends Info
@@ -86,6 +96,10 @@ object EventType {
   object PostAddUserUnauthorized extends Warn
   object PostEditUserUnauthorized extends Warn
   object ShowAddUserUnauthorized extends Warn
+  object SmsReadError extends Error
+  object SmsSendError extends Error
+  object SmsDeleteError extends Error
+  object SmsCallbackError extends Error
   object StatsShowed extends Info
   object StatsUnauthorized extends Warn
   object TerminateCompleted extends Info

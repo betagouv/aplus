@@ -12,6 +12,7 @@ case class Application(
     creatorUserId: UUID,
     subject: String,
     description: String,
+    // TODO: rename `userInfos` => `usagerInfos`
     userInfos: Map[String, String],
     invitedUsers: Map[UUID, String],
     area: UUID,

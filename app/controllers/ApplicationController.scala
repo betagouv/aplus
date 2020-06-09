@@ -14,6 +14,7 @@ import helper.{Hash, Time}
 import javax.inject.{Inject, Singleton}
 import models.{Answer, Application, Area, Authorization, Organisation, User, UserGroup}
 import models.formModels.{AnswerFormData, ApplicationFormData, InvitationData}
+import models.mandat.Mandat
 import org.webjars.play.WebJarsUtil
 import play.api.data.Forms._
 import play.api.data._
@@ -40,6 +41,8 @@ import models.EventType.{
   ApplicationCreationError,
   ApplicationCreationInvalid,
   ApplicationFormShowed,
+  ApplicationLinkedToMandat,
+  ApplicationLinkedToMandatError,
   ApplicationShowed,
   FileNotFound,
   FileOpened,
@@ -76,6 +79,7 @@ case class ApplicationController @Inject() (
     applicationService: ApplicationService,
     notificationsService: NotificationService,
     eventService: EventService,
+    mandatService: MandatService,
     organisationService: OrganisationService,
     userGroupService: UserGroupService,
     configuration: play.api.Configuration
@@ -85,6 +89,7 @@ case class ApplicationController @Inject() (
     with Operators.ApplicationOperators {
 
   private val filesPath = configuration.underlying.getString("app.filesPath")
+  private val featureMandatSms: Boolean = configuration.get[Boolean]("app.features.smsMandat")
 
   private val dir = Paths.get(s"$filesPath")
   if (!Files.isDirectory(dir)) {
@@ -106,7 +111,8 @@ case class ApplicationController @Inject() (
         else ignored(None: Option[String])
       ),
       "mandatType" -> text,
-      "mandatDate" -> nonEmptyText
+      "mandatDate" -> nonEmptyText,
+      "linkedMandat" -> optional(uuid)
     )(ApplicationFormData.apply)(ApplicationFormData.unapply)
   )
 
@@ -152,6 +158,7 @@ case class ApplicationController @Inject() (
             coworkers,
             readSharedAccountUserSignature(request.session),
             canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
+            featureMandatSms = featureMandatSms,
             categories,
             applicationForm(request.currentUser)
           )
@@ -175,6 +182,7 @@ case class ApplicationController @Inject() (
               groupsOfAreaWithInstructorWithOrganisationSet,
               coworkers,
               readSharedAccountUserSignature(request.session),
+              featureMandatSms = featureMandatSms,
               categories,
               None,
               applicationForm(request.currentUser)
@@ -245,6 +253,7 @@ case class ApplicationController @Inject() (
                   groupsOfAreaWithInstructorWithOrganisationSet,
                   coworkers,
                   None,
+                  featureMandatSms = featureMandatSms,
                   categories,
                   formWithErrors("category").value,
                   formWithErrors,
@@ -260,6 +269,7 @@ case class ApplicationController @Inject() (
                     coworkers,
                     None,
                     canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
+                    featureMandatSms = featureMandatSms,
                     organisationService.categories,
                     formWithErrors,
                     pendingAttachments.keys ++ newAttachments.keys
@@ -306,6 +316,28 @@ case class ApplicationController @Inject() (
               s"La demande ${application.id} a été créée",
               Some(application)
             )
+            applicationData.linkedMandat.foreach {
+              mandatId =>
+                mandatService
+                  .linkToApplication(Mandat.Id(mandatId), applicationId)
+                  .onComplete {
+                    case Failure(error) =>
+                      eventService.log(
+                        ApplicationLinkedToMandatError,
+                        s"Erreur pour faire le lien entre le mandat $mandatId et la demande $applicationId",
+                        Some(application),
+                        underlyingException = Some(error)
+                      )
+                    case Success(Left(error)) =>
+                      eventService.logError(error, application = Some(application))
+                    case Success(Right(_)) =>
+                      eventService.log(
+                        ApplicationLinkedToMandat,
+                        s"La demande ${application.id} a été liée au mandat $mandatId",
+                        Some(application)
+                      )
+                  }
+            }
             Redirect(routes.ApplicationController.myApplications())
               .withSession(
                 applicationData.signature.fold(removeSharedAccountUserSignature(request.session))(

@@ -26,6 +26,13 @@ GET      /toutes-les-demandes/:applicationId/fichiers/:filename    controllers.A
 GET      /toutes-les-demandes/:applicationId/messages/:answerId/fichiers/:filename    controllers.ApplicationController.answerFile(applicationId: java.util.UUID, answerId: java.util.UUID, filename: String)
 
 
+# Mandat
+GET      /mandats/:id                controllers.MandatController.mandat(id: java.util.UUID)
+POST     /mandats/sms                controllers.MandatController.beginMandatSms
++nocsrf
+POST     /mandats/sms/webhook        controllers.MandatController.webhookSmsReceived
+
+
 # Stats
 GET     /stats                       controllers.ApplicationController.stats
 POST     /stats                       controllers.ApplicationController.stats
