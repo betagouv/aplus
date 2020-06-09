@@ -86,7 +86,12 @@ libraryDependencies ++= Seq(
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   "com.google.guava" % "guava" % "28.1-jre",
   "com.github.tototoshi" %% "scala-csv" % "1.3.6",
-  ws
+  ws,
+  // To ensure that the version of jackson that do not have
+  // known security vulnerabilities is used
+  // It is also compatible with play-json
+  // https://github.com/playframework/play-json/blob/master/build.sbt#L20
+  "com.fasterxml.jackson.core" % "jackson-databind" % "2.10.4"
 )
 
 // UI
