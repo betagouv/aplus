@@ -106,7 +106,7 @@ case class UserController @Inject() (
         eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
         usersFuture.zip(groupsFuture).map {
           case (users, groups) =>
-            val result = request.getQueryString("vue").getOrElse("nouvelle") match {
+            val result = request.getQueryString(Keys.UrlQuery.vue).getOrElse("nouvelle") match {
               case "nouvelle" if request.currentUser.admin =>
                 views.html.allUsersNew(request.currentUser, request.rights)(
                   groups,
@@ -465,7 +465,7 @@ case class UserController @Inject() (
         )
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
-        val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
+        val rows = request.getQueryString(Keys.UrlQuery.rows).map(_.toInt).getOrElse(1)
         eventService.log(EditUserShowed, "Visualise la vue d'ajouts des utilisateurs")
         Ok(
           views.html.editUsers(request.currentUser, request.rights)(
@@ -480,8 +480,8 @@ case class UserController @Inject() (
 
   def allEvents: Action[AnyContent] = loginAction { implicit request =>
     asAdmin(() => EventsUnauthorized -> "Accès non autorisé pour voir les événements") { () =>
-      val limit = request.getQueryString("limit").map(_.toInt).getOrElse(500)
-      val userId = request.getQueryString("fromUserId").flatMap(UUIDHelper.fromString)
+      val limit = request.getQueryString(Keys.UrlQuery.limit).map(_.toInt).getOrElse(500)
+      val userId = request.getQueryString(Keys.UrlQuery.fromUserId).flatMap(UUIDHelper.fromString)
       val events = eventService.all(limit, userId)
       eventService.log(EventsShowed, s"Affiche les événements")
       Ok(views.html.allEvents(request.currentUser, request.rights)(events, limit))

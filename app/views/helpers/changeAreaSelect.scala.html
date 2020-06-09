@@ -1,0 +1,13 @@
+@import serializers.Keys
+
+@(currentArea: Area, selectableAreas: List[Area], redirectUrlPath: Call)
+
+<select id="changeAreaSelect"
+        name="area"
+        data-current-area="@{currentArea.id}"
+        data-redirect-url-prefix="@redirectUrlPath?@{Keys.UrlQuery.areaId}=">
+    @for(area <- selectableAreas) {
+        <option value="@area.id"
+        @if(area.id == currentArea.id) { selected }>@area</option>
+    }
+</select>

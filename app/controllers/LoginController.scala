@@ -7,6 +7,7 @@ import models.{Authorization, LoginToken, User}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import scala.concurrent.{ExecutionContext, Future}
+import serializers.Keys
 import services.{EventService, NotificationService, TokenService, UserService}
 import views.home.LoginPanel
 
@@ -30,7 +31,7 @@ class LoginController @Inject() (
   def login: Action[AnyContent] = Action.async { implicit request =>
     val emailFromRequestOrQueryParamOrFlash: Option[String] = request.body.asFormUrlEncoded
       .flatMap(_.get("email").flatMap(_.headOption))
-      .orElse(request.getQueryString("email"))
+      .orElse(request.getQueryString(Keys.UrlQuery.email))
       .orElse(request.flash.get("email"))
     emailFromRequestOrQueryParamOrFlash.fold {
       Future(Ok(views.html.home.page(LoginPanel.ConnectionForm)))
@@ -82,7 +83,7 @@ class LoginController @Inject() (
             )
 
             val successMessage = request
-              .getQueryString("action")
+              .getQueryString(Keys.UrlQuery.action)
               .flatMap(actionName =>
                 if (actionName == "sendemailback")
                   Some("Un nouveau lien de connexion vient de vous être envoyé par e-mail.")
@@ -100,7 +101,7 @@ class LoginController @Inject() (
   }
 
   def magicLinkAntiConsumptionPage: Action[AnyContent] = Action { implicit request =>
-    (request.getQueryString("token"), request.getQueryString("path")) match {
+    (request.getQueryString(Keys.UrlQuery.token), request.getQueryString(Keys.UrlQuery.path)) match {
       case (Some(token), Some(path)) =>
         Ok(views.html.loginHome(Right((token, path)), tokenExpirationInMinutes))
       case _ =>

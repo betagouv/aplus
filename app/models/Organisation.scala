@@ -49,6 +49,9 @@ object Organisation {
 
   val franceServicesId = Organisation.Id("MFS")
 
+  val franceServices = Organisation(franceServicesId, "FS", "France Services")
+  val msap = Organisation("MSAP", "Maison de services au public")
+
   val all = List(
     Organisation("ANAH", "Agence nationale de l'habitat"),
     Organisation("ANTS", "Agence nationale des titres sécurisés"),
@@ -77,6 +80,11 @@ object Organisation {
     Organisation("Préf", "Préfecture"), //Département
     Organisation("Sous-Préf", "Sous-préfecture")
   )
+
+  val organismesAidants: List[Organisation] = List(franceServices, msap)
+
+  val organismesOperateurs: List[Organisation] =
+    all.filter(!organismesAidants.contains[Organisation](_))
 
   case class Subject(subject: String, organisations: Seq[Organisation])
 

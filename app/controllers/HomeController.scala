@@ -6,6 +6,7 @@ import org.webjars.play.WebJarsUtil
 import play.api.Logger
 import play.api.mvc._
 import play.api.db.Database
+import serializers.Keys
 import views.home.LoginPanel
 
 /**
@@ -22,9 +23,9 @@ class HomeController @Inject() (loginAction: LoginAction, db: Database)(
 
   def index: Action[AnyContent] = Action { implicit request =>
     val needsRedirect = request.session
-      .get("userId")
-      .orElse(request.queryString.get("token"))
-      .orElse(request.queryString.get("key"))
+      .get(Keys.Session.userId)
+      .orElse(request.queryString.get(Keys.UrlQuery.token))
+      .orElse(request.queryString.get(Keys.UrlQuery.key))
       .isDefined
     if (needsRedirect)
       TemporaryRedirect(
