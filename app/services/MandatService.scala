@@ -220,7 +220,7 @@ class MandatService @Inject() (
                 )
               )
             case Some(mandat) =>
-              val smsJson = Json.toJson(sms)
+              val smsJson = Json.toJson(sms: Sms)
               SQL"""UPDATE mandat
                     SET sms_thread = sms_thread || ${smsJson}::jsonb,
                         sms_thread_closed = true

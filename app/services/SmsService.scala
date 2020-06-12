@@ -4,16 +4,19 @@ import actions.RequestWithUserData
 import javax.inject.{Inject, Singleton}
 import models.{Error, EventType, Organisation, Sms, User, UserGroup}
 import models.mandat.Mandat
+import play.api.Configuration
+import play.api.libs.concurrent.{Futures, MaterializerProvider}
 import play.api.libs.ws.WSClient
-import play.api.mvc.Request
+import play.api.mvc.{PlayBodyParsers, Request}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SmsService @Inject() (
-    bodyParsers: play.api.mvc.PlayBodyParsers,
-    configuration: play.api.Configuration,
+    bodyParsers: PlayBodyParsers,
+    configuration: Configuration,
     eventService: EventService,
-    futures: play.api.libs.concurrent.Futures,
+    futures: Futures,
+    materializer: MaterializerProvider,
     ws: WSClient
 )(implicit ec: ExecutionContext) {
 
@@ -22,7 +25,7 @@ class SmsService @Inject() (
     .getOrElse(false)
 
   private val api: SmsApi =
-    if (useLiveApi) new SmsApi.MessageBirdSmsApi(bodyParsers, configuration, ws, ec)
+    if (useLiveApi) new SmsApi.OvhSmsApi(bodyParsers, configuration, ws, ec, materializer.get)
     else new SmsApi.FakeSmsApi(configuration, eventService, futures, ws, ec)
 
   def sendMandatSms(
