@@ -49,6 +49,11 @@ object Organisation {
 
   val franceServicesId = Organisation.Id("MFS")
 
+  /** Note: checklist when adding an `Organisation`
+    * - alphabetical order
+    * - when one name contains another, there is a 'hack' in `deductedFromName`
+    *   (check for failing cases)
+    */
   val all = List(
     Organisation("ANAH", "Agence nationale de l'habitat"),
     Organisation("ANTS", "Agence nationale des titres sécurisés"),
@@ -73,6 +78,7 @@ object Organisation {
     Organisation("Mission locale", "Mission locale"), //Ville
     Organisation("MSA", "Mutualité sociale agricole"),
     Organisation("MSAP", "Maison de services au public"), // Ville
+    Organisation("MSD", "Maisons des solidarités départementales"),
     Organisation("Pôle emploi", "Pôle emploi"),
     Organisation("Préf", "Préfecture"), //Département
     Organisation("Sous-Préf", "Sous-préfecture")
