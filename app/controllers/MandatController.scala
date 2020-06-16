@@ -1,6 +1,8 @@
 package controllers
 
 import actions.LoginAction
+import cats.data.EitherT
+import cats.implicits._
 import constants.Constants
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
@@ -68,47 +70,31 @@ case class MandatController @Inject() (
           // Note: we create the `Mandat` first in DB due to failure cases:
           // OK: creating the entity in DB, then failing to send the SMS
           // NOT OK: sending the SMS, but failing to save the entity
-          mandatService
-            .createSmsMandat(entity, request.currentUser)
-            .flatMap(
+          (
+            for {
+              mandat <- EitherT(mandatService.createSmsMandat(entity, request.currentUser))
+              userGroups = userGroupService.byIds(request.currentUser.groupIds)
+              recipient = Sms.PhoneNumber.fromLocalPhoneFrance(entity.usagerPhoneLocal)
+              sms <- EitherT(
+                smsService.sendMandatSms(recipient, mandat, request.currentUser, userGroups)
+              )
+              _ <- EitherT(mandatService.addSmsToMandat(mandat.id, sms))
+            } yield (mandat, sms)
+          ).value
+            .map(
               _.fold(
                 error => {
                   eventService.logError(error)
-                  Future(jsonInternalServerError)
-                },
-                mandat => {
-                  val userGroups = userGroupService.byIds(request.currentUser.groupIds)
-                  val recipient = Sms.PhoneNumber.fromLocalPhoneFrance(entity.usagerPhoneLocal)
-                  smsService
-                    .sendMandatSms(recipient, mandat, request.currentUser, userGroups)
-                    .flatMap(
-                      _.fold(
-                        error => {
-                          eventService.logError(error)
-                          Future(jsonInternalServerError)
-                        },
-                        sms =>
-                          mandatService
-                            .addSmsToMandat(mandat.id, sms)
-                            .map(
-                              _.fold(
-                                error => {
-                                  eventService.logError(error)
-                                  jsonInternalServerError
-                                },
-                                _ => {
-                                  eventService.log(
-                                    EventType.MandatInitiationBySmsDone,
-                                    s"Le mandat par SMS ${mandat.id.underlying} a été créé. " +
-                                      s"Le SMS de demande ${sms.apiId.underlying} a été envoyé"
-                                  )
-                                  notificationsService.mandatSmsSent(mandat.id, request.currentUser)
-                                  Ok(Json.toJson(mandat))
-                                }
-                              )
-                            )
-                      )
+                  jsonInternalServerError
+                }, {
+                  case (mandat, sms) =>
+                    eventService.log(
+                      EventType.MandatInitiationBySmsDone,
+                      s"Le mandat par SMS ${mandat.id.underlying} a été créé. " +
+                        s"Le SMS de demande ${sms.apiId.underlying} a été envoyé"
                     )
+                    notificationsService.mandatSmsSent(mandat.id, request.currentUser)
+                    Ok(Json.toJson(mandat))
                 }
               )
             )
