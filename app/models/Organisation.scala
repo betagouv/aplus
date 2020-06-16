@@ -81,7 +81,11 @@ object Organisation {
     Organisation("MSD", "Maisons des solidarités départementales"),
     Organisation("Pôle emploi", "Pôle emploi"),
     Organisation("Préf", "Préfecture"), //Département
-    Organisation("Sous-Préf", "Sous-préfecture")
+    Organisation("Sous-Préf", "Sous-préfecture"),
+    Organisation(
+      "URSSAF",
+      "Unions de Recouvrement des cotisations de Sécurité Sociale et d’Allocations Familiales"
+    )
   )
 
   case class Subject(subject: String, organisations: Seq[Organisation])
