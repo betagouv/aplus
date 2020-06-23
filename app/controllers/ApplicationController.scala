@@ -648,7 +648,7 @@ case class ApplicationController @Inject() (
         )
       case (true, Some(user)) if request.currentUser.areas.intersect(user.areas).nonEmpty =>
         LoginAction.readUserRights(user).map { userRights =>
-          val currentUserId = user.id
+          val targetUserId = user.id
           val applicationsFromTheArea = List[Application]()
           eventService
             .log(
@@ -656,12 +656,16 @@ case class ApplicationController @Inject() (
               s"Visualise la vue de l'utilisateur $userId",
               involvesUser = Some(user)
             )
-          // Bug To Fix
+          val applications = applicationService.allForUserId(
+            userId = targetUserId,
+            anonymous = request.currentUser.admin
+          )
+          val (closedApplications, openApplications) = applications.partition(_.closed)
           Ok(
             views.html.myApplications(user, userRights)(
-              applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin),
-              applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin),
-              applicationsFromTheArea
+              myOpenApplications = openApplications,
+              myClosedApplications = closedApplications,
+              applicationsFromTheArea = applicationsFromTheArea
             )
           )
         }
