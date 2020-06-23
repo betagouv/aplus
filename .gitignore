@@ -23,3 +23,5 @@ server.pid
 .*
 !.scalafmt.conf
 files
+node_modules/
+/public/dist/
