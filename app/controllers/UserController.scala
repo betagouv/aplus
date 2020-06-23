@@ -3,6 +3,7 @@ package controllers
 import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 import actions.{LoginAction, RequestWithUserData}
 import helper.BooleanHelper.not
@@ -465,7 +466,8 @@ case class UserController @Inject() (
         )
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
-        val rows = request.getQueryString("rows").map(_.toInt).getOrElse(1)
+        val rows =
+          request.getQueryString("rows").flatMap(rows => Try(rows.toInt).toOption).getOrElse(1)
         eventService.log(EditUserShowed, "Visualise la vue d'ajouts des utilisateurs")
         Ok(
           views.html.editUsers(request.currentUser, request.rights)(
