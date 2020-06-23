@@ -78,7 +78,6 @@ object Organisation {
     Organisation("Mission locale", "Mission locale"), //Ville
     Organisation("MSA", "Mutualité sociale agricole"),
     Organisation("MSAP", "Maison de services au public"), // Ville
-    Organisation("MSD", "Maisons des solidarités départementales"),
     Organisation("Pôle emploi", "Pôle emploi"),
     Organisation("Préf", "Préfecture"), //Département
     Organisation("Sous-Préf", "Sous-préfecture"),
