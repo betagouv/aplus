@@ -166,35 +166,6 @@ case class ApplicationController @Inject() (
     }
   }
 
-  def createSimplified: Action[AnyContent] = loginAction.async { implicit request =>
-    eventService
-      .log(ApplicationFormShowed, "Visualise le formulaire simplifié de création de demande")
-    fetchGroupsWithInstructors(currentArea.id, request.currentUser).map {
-      case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
-        val groupsOfAreaWithInstructorWithOrganisationSet = groupsOfAreaWithInstructor.filter({
-          userGroup => userGroup.organisationSetOrDeducted.nonEmpty
-        })
-        val categories = organisationService.categories
-        Ok(
-          views.html
-            .simplifiedCreateApplication(request.currentUser, request.rights, currentArea)(
-              instructorsOfGroups,
-              groupsOfAreaWithInstructorWithOrganisationSet,
-              coworkers,
-              readSharedAccountUserSignature(request.session),
-              featureMandatSms = featureMandatSms,
-              categories,
-              None,
-              applicationForm(request.currentUser)
-            )
-        )
-    }
-  }
-
-  def createPost: Action[AnyContent] = createPostBis(false)
-
-  def createSimplifiedPost: Action[AnyContent] = createPostBis(true)
-
   private def contextualizedUserName(user: User, currentAreaId: UUID): String = {
     val groups = userGroupService.byIds(user.groupIds)
     val contexts = groups
@@ -219,7 +190,7 @@ case class ApplicationController @Inject() (
       s"${capitalizedUserName} ${contexts.mkString(",")}"
   }
 
-  private def createPostBis(simplified: Boolean) = loginAction.async { implicit request =>
+  def createPost: Action[AnyContent] = loginAction.async { implicit request =>
     val form = applicationForm(request.currentUser).bindFromRequest
     val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
     val (pendingAttachments, newAttachments) =
@@ -239,43 +210,20 @@ case class ApplicationController @Inject() (
               s"L'utilisateur essaie de créer une demande invalide ${formWithErrors.errors.map(_.message)}"
             )
 
-            if (simplified) {
-              val categories = organisationService.categories
-              val groupsOfAreaWithInstructorWithOrganisationSet =
-                groupsOfAreaWithInstructor.filter(_.organisationSetOrDeducted.nonEmpty)
-              BadRequest(
-                views.html.simplifiedCreateApplication(
-                  request.currentUser,
-                  request.rights,
-                  currentArea
-                )(
+            BadRequest(
+              views.html
+                .createApplication(request.currentUser, request.rights, currentArea)(
                   instructorsOfGroups,
-                  groupsOfAreaWithInstructorWithOrganisationSet,
+                  groupsOfAreaWithInstructor,
                   coworkers,
                   None,
+                  canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
                   featureMandatSms = featureMandatSms,
-                  categories,
-                  formWithErrors("category").value,
+                  organisationService.categories,
                   formWithErrors,
                   pendingAttachments.keys ++ newAttachments.keys
                 )
-              )
-            } else {
-              BadRequest(
-                views.html
-                  .createApplication(request.currentUser, request.rights, currentArea)(
-                    instructorsOfGroups,
-                    groupsOfAreaWithInstructor,
-                    coworkers,
-                    None,
-                    canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
-                    featureMandatSms = featureMandatSms,
-                    organisationService.categories,
-                    formWithErrors,
-                    pendingAttachments.keys ++ newAttachments.keys
-                  )
-              )
-            }
+            )
         },
       applicationData =>
         Future {
