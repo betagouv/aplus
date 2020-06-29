@@ -48,10 +48,14 @@ object Organisation {
     all.find(org => (org.id: Id) == (id: Id))
 
   val franceServicesId = Organisation.Id("MFS")
-
   val franceServices = Organisation(franceServicesId, "FS", "France Services")
   val msap = Organisation("MSAP", "Maison de services au public")
 
+  /** Note: checklist when adding an `Organisation`
+    * - alphabetical order
+    * - when one name contains another, there is a 'hack' in `deductedFromName`
+    *   (check for failing cases)
+    */
   val all = List(
     Organisation("ANAH", "Agence nationale de l'habitat"),
     Organisation("ANTS", "Agence nationale des titres sécurisés"),
@@ -72,13 +76,17 @@ object Organisation {
     Organisation("La Poste", "La Poste"),
     Organisation("Mairie", "Mairie"), //Ville
     Organisation("MDPH", "Maison départementale des personnes handicapées"),
-    Organisation(franceServicesId, "FS", "France Services"),
+    franceServices,
     Organisation("Mission locale", "Mission locale"), //Ville
     Organisation("MSA", "Mutualité sociale agricole"),
-    Organisation("MSAP", "Maison de services au public"), // Ville
+    msap, // Ville
     Organisation("Pôle emploi", "Pôle emploi"),
     Organisation("Préf", "Préfecture"), //Département
-    Organisation("Sous-Préf", "Sous-préfecture")
+    Organisation("Sous-Préf", "Sous-préfecture"),
+    Organisation(
+      "URSSAF",
+      "Unions de Recouvrement des cotisations de Sécurité Sociale et d’Allocations Familiales"
+    )
   )
 
   val organismesAidants: List[Organisation] = List(franceServices, msap)

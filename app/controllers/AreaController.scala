@@ -75,34 +75,17 @@ case class AreaController @Inject() (
     }
   }
 
-  private val organisationGroupingAll: List[Set[Organisation]] = (
-    List(
+  private val organisationGroupingAll: List[Set[Organisation]] = {
+    val groups: List[Set[Organisation]] = List(
       Set("DDFIP", "DRFIP"),
       Set("CPAM", "CRAM", "CNAM"),
       Set("CARSAT", "CNAV")
-    ) :::
-      List(
-        "ANAH",
-        "ANTS",
-        "BDF",
-        "CAF",
-        "CCAS",
-        "CDAD",
-        "Département",
-        "Hôpital",
-        "OFPRA",
-        "La Poste",
-        "Mairie",
-        "MDPH",
-        "MFS",
-        "Mission locale",
-        "MSA",
-        "MSAP",
-        "Pôle emploi",
-        "Préf",
-        "Sous-Préf"
-      ).map(Set(_))
-  ).map(_.flatMap(id => Organisation.byId(Organisation.Id(id))))
+    ).map(_.flatMap(id => Organisation.byId(Organisation.Id(id))))
+    val groupedSet: Set[Organisation.Id] = groups.flatMap(_.map(_.id)).toSet
+    val nonGrouped: List[Organisation] =
+      Organisation.all.filterNot(org => groupedSet.contains(org.id))
+    groups ::: nonGrouped.map(Set(_))
+  }
 
   private val organisationGroupingFranceService: List[Set[Organisation]] = (
     List(

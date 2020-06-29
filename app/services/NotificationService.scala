@@ -5,6 +5,7 @@ import java.util.UUID
 import constants.Constants
 import javax.inject.{Inject, Singleton}
 import controllers.routes
+import helper.EmailHelper.quoteEmailPhrase
 import models._
 import models.mandat.Mandat
 import play.api.Logger
@@ -120,7 +121,7 @@ class NotificationService @Inject() (
     val email = play.api.libs.mailer.Email(
       s"Connexion à Administration+",
       from = from,
-      Seq(s"${user.name} <${user.email}>"),
+      Seq(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
       bodyHtml = Some(bodyHtml)
     )
     sendMail(email)
@@ -162,7 +163,7 @@ class NotificationService @Inject() (
     Email(
       subject = subject,
       from = from,
-      to = List(s"${group.name} <${group.email.get}>"),
+      to = List(s"${quoteEmailPhrase(group.name)} <${group.email.get}>"),
       bodyHtml = Some(bodyHtml)
     )
   }
@@ -172,7 +173,7 @@ class NotificationService @Inject() (
     Email(
       subject = "[A+] Bienvenue sur Administration+",
       from = from,
-      to = List(s"${user.name} <${user.email}>"),
+      to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
       bodyHtml = Some(bodyHtml)
     )
   }
@@ -196,7 +197,7 @@ class NotificationService @Inject() (
     Email(
       subject = s"[A+] Nouvelle demande d'aide : ${application.subject}",
       from = from,
-      to = List(s"${invitedUser.name} <${invitedUser.email}>"),
+      to = List(s"${quoteEmailPhrase(invitedUser.name)} <${invitedUser.email}>"),
       bodyHtml = Some(bodyHtml)
     )
   }
@@ -221,7 +222,7 @@ class NotificationService @Inject() (
     Email(
       subject = s"[A+] Nouvelle réponse pour : ${application.subject}",
       from = from,
-      to = List(s"${user.name} <${user.email}>"),
+      to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
       bodyHtml = Some(bodyHtml)
     )
   }
@@ -245,7 +246,7 @@ class NotificationService @Inject() (
     Email(
       subject = subject,
       from = from,
-      to = List(s"${user.name} <${user.email}>"),
+      to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
       bodyHtml = Some(bodyHtml.toString)
     )
   }
@@ -266,7 +267,7 @@ class NotificationService @Inject() (
     Email(
       subject = subject,
       from = from,
-      to = List(s"${user.name} <${user.email}>"),
+      to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
       bodyHtml = Some(bodyHtml.toString)
     )
   }

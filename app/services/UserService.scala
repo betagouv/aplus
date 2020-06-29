@@ -137,11 +137,11 @@ class UserService @Inject() (
            ${user.helper},
            ${user.instructor},
            ${user.admin},
-           array[${user.areas}]::uuid[],
+           array[${user.areas.distinct}]::uuid[],
            ${user.creationDate},
            ${user.communeCode},
            ${user.groupAdmin},
-           array[${user.groupIds}]::uuid[],
+           array[${user.groupIds.distinct}]::uuid[],
            ${user.expert},
            ${user.phoneNumber},
            ${user.sharedAccount})
@@ -172,14 +172,14 @@ class UserService @Inject() (
           helper = ${user.helper},
           instructor = ${user.instructor},
           admin = ${user.admin},
-          areas = array[${user.areas}]::uuid[],
+          areas = array[${user.areas.distinct}]::uuid[],
           commune_code = ${user.communeCode},
           group_admin = ${user.groupAdmin},
-          group_ids = array[${user.groupIds}]::uuid[],
+          group_ids = array[${user.groupIds.distinct}]::uuid[],
           expert = ${user.expert},
           phone_number = ${user.phoneNumber},
           disabled = ${user.disabled},
-          observable_organisation_ids = array[$observableOrganisationIds]::varchar[],
+          observable_organisation_ids = array[${observableOrganisationIds.distinct}]::varchar[],
           shared_account = ${user.sharedAccount}
           WHERE id = ${user.id}::uuid
        """.executeUpdate() == 1

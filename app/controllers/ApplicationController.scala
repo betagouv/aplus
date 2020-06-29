@@ -210,37 +210,6 @@ case class ApplicationController @Inject() (
     )
   }
 
-  def createSimplified: Action[AnyContent] = loginAction.async { implicit request =>
-    eventService
-      .log(ApplicationFormShowed, "Visualise le formulaire simplifié de création de demande")
-    currentArea.flatMap(currentArea =>
-      fetchGroupsWithInstructors(currentArea.id, request.currentUser, request.rights).map {
-        case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
-          val groupsOfAreaWithInstructorWithOrganisationSet = groupsOfAreaWithInstructor.filter({
-            userGroup => userGroup.organisationSetOrDeducted.nonEmpty
-          })
-          val categories = organisationService.categories
-          Ok(
-            views.html
-              .simplifiedCreateApplication(request.currentUser, request.rights, currentArea)(
-                instructorsOfGroups,
-                groupsOfAreaWithInstructorWithOrganisationSet,
-                coworkers,
-                readSharedAccountUserSignature(request.session),
-                featureMandatSms = featureMandatSms,
-                categories,
-                None,
-                applicationForm(request.currentUser)
-              )
-          )
-      }
-    )
-  }
-
-  def createPost: Action[AnyContent] = createPostBis(false)
-
-  def createSimplifiedPost: Action[AnyContent] = createPostBis(true)
-
   private def contextualizedUserName(user: User, currentAreaId: UUID): String = {
     val groups = userGroupService.byIds(user.groupIds)
     val contexts = groups
@@ -265,7 +234,7 @@ case class ApplicationController @Inject() (
       s"${capitalizedUserName} ${contexts.mkString(",")}"
   }
 
-  private def createPostBis(simplified: Boolean) = loginAction.async { implicit request =>
+  def createPost: Action[AnyContent] = loginAction.async { implicit request =>
     val form = applicationForm(request.currentUser).bindFromRequest
     val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
 
@@ -292,43 +261,20 @@ case class ApplicationController @Inject() (
               s"L'utilisateur essaie de créer une demande invalide ${formWithErrors.errors.map(_.message)}"
             )
 
-            if (simplified) {
-              val categories = organisationService.categories
-              val groupsOfAreaWithInstructorWithOrganisationSet =
-                groupsOfAreaWithInstructor.filter(_.organisationSetOrDeducted.nonEmpty)
-              BadRequest(
-                views.html.simplifiedCreateApplication(
-                  request.currentUser,
-                  request.rights,
-                  currentArea
-                )(
+            BadRequest(
+              views.html
+                .createApplication(request.currentUser, request.rights, currentArea)(
                   instructorsOfGroups,
-                  groupsOfAreaWithInstructorWithOrganisationSet,
+                  groupsOfAreaWithInstructor,
                   coworkers,
                   None,
+                  canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
                   featureMandatSms = featureMandatSms,
-                  categories,
-                  formWithErrors("category").value,
+                  organisationService.categories,
                   formWithErrors,
                   pendingAttachments.keys ++ newAttachments.keys
                 )
-              )
-            } else {
-              BadRequest(
-                views.html
-                  .createApplication(request.currentUser, request.rights, currentArea)(
-                    instructorsOfGroups,
-                    groupsOfAreaWithInstructor,
-                    coworkers,
-                    None,
-                    canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
-                    featureMandatSms = featureMandatSms,
-                    organisationService.categories,
-                    formWithErrors,
-                    pendingAttachments.keys ++ newAttachments.keys
-                  )
-              )
-            }
+            )
         },
       applicationData =>
         Future {
@@ -701,7 +647,7 @@ case class ApplicationController @Inject() (
         )
       case (true, Some(user)) if request.currentUser.areas.intersect(user.areas).nonEmpty =>
         LoginAction.readUserRights(user).map { userRights =>
-          val currentUserId = user.id
+          val targetUserId = user.id
           val applicationsFromTheArea = List[Application]()
           eventService
             .log(
@@ -709,12 +655,16 @@ case class ApplicationController @Inject() (
               s"Visualise la vue de l'utilisateur $userId",
               involvesUser = Some(user)
             )
-          // Bug To Fix
+          val applications = applicationService.allForUserId(
+            userId = targetUserId,
+            anonymous = request.currentUser.admin
+          )
+          val (closedApplications, openApplications) = applications.partition(_.closed)
           Ok(
             views.html.myApplications(user, userRights)(
-              applicationService.allForCreatorUserId(currentUserId, request.currentUser.admin),
-              applicationService.allForInvitedUserId(currentUserId, request.currentUser.admin),
-              applicationsFromTheArea
+              myOpenApplications = openApplications,
+              myClosedApplications = closedApplications,
+              applicationsFromTheArea = applicationsFromTheArea
             )
           )
         }

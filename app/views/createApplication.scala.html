@@ -25,9 +25,6 @@
                     </div>
                 }
                 <h4 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Nouvelle demande</h4>
-                <a class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.ApplicationController.createSimplified()">
-                    Mode Guidé
-                </a>
             </div>
             <div>
                 Les champs marqués d’un <span class="mdl-color-text--red-500">*</span> sont obligatoires
@@ -213,10 +210,13 @@
                       <br>
                     }
 
-                    <br><br>
-                    <div class="single--display-flex single--align-items-center">
+                    <h5 class="title--addline">
+                        Autorisation de l’usager <span class="mdl-color-text--red-500">*</span>
+                    </h5>
 
-                        <div class="single--margin-top-30px single--margin-bottom-40px">
+                    <div class="single--align-items-center mdl-grid mdl-grid--no-spacing">
+
+                        <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet single--margin-top-30px single--margin-bottom-40px">
                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-mandat">
                             <input type="checkbox" id="checkbox-mandat" name="validate" class="mdl-checkbox__input" value="true">
                             <span class="mdl-checkbox__label single--font-size-14px">J’atteste avoir recueilli l’autorisation de l’usager <span class="mdl-color-text--red-500">*</span> :</span>
@@ -277,8 +277,15 @@
                                class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
                                value="Envoyer ma demande"
                                disabled>
+                        <br>
+                        <br>
                         </div>
 
+                        @if(featureMandatSms) {
+                            <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet">
+                                @helpers.smsMandatAjaxForm()
+                            </div>
+                        } else {
                         <div class="covid19-help">
                             <div class="single--margin-bottom-8px"><b>COVID19</b></div>
                             Dans le contexte de confinement actuel,
@@ -300,6 +307,7 @@
                                 <i class="material-icons material-icons--small-postfix">open_in_new</i>
                             </a>
                         </div>
+                        }
                     </div>
             }
         </div>
