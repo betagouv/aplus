@@ -118,3 +118,49 @@ TwirlKeys.templateImports += "_root_.helper.TwirlImports._"
 
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "fr.gouv.beta.binders._"
+
+
+/** Add a hook to the Play sbt plugin,
+  * so `npm run watch` is runned when using the sbt command `run`
+  *
+  * See documentation:
+  * https://www.playframework.com/documentation/2.8.x/sbtCookbook#Hooking-into-Plays-dev-mode
+  * https://github.com/playframework/playframework/blob/2.8.x/documentation/manual/working/commonGuide/build/code/runhook.sbt
+  */
+def NpmWatch(base: File) = {
+  import play.sbt.PlayRunHook
+  import sbt._
+  import scala.sys.process.Process
+
+  object NpmWatch {
+    def apply(base: File): PlayRunHook = {
+
+      val tsDirectory: File = base / "typescript"
+
+      object NpmProcess extends PlayRunHook {
+
+        var watchProcess: Option[Process] = None
+
+        override def beforeStarted(): Unit = {
+          Process("npm install", tsDirectory).run
+        }
+
+        override def afterStarted(): Unit = {
+          watchProcess = Some(Process("npm run watch", tsDirectory).run)
+        }
+
+        override def afterStopped(): Unit = {
+          watchProcess.map(p => p.destroy())
+          watchProcess = None
+        }
+
+      }
+
+      NpmProcess
+    }
+  }
+
+  NpmWatch(base)
+}
+
+PlayKeys.playRunHooks += NpmWatch(baseDirectory.value)
