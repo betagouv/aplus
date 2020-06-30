@@ -387,7 +387,10 @@ case class ApplicationController @Inject() (
         else Some(attachment.ref.path -> attachment.filename)
       })
 
-  private def allApplicationVisibleByUserAdmin(user: User, areaOption: Option[Area]) =
+  private def allApplicationVisibleByUserAdmin(
+      user: User,
+      areaOption: Option[Area]
+  ): Future[List[Application]] =
     (user.admin, areaOption) match {
       case (true, None) =>
         applicationService.allForAreas(user.areas)
@@ -419,15 +422,20 @@ case class ApplicationController @Inject() (
         )
       case _ =>
         val area = if (areaId == Area.allArea.id) None else Area.fromId(areaId)
-        allApplicationVisibleByUserAdmin(request.currentUser, area).map { applications =>
+        allApplicationVisibleByUserAdmin(request.currentUser, area).map { unfilteredApplications =>
+          val filteredApplications =
+            request.getQueryString(Keys.QueryParam.filterIsOpen) match {
+              case Some(_) => unfilteredApplications.filterNot(_.closed)
+              case None    => unfilteredApplications
+            }
           eventService.log(
             AllApplicationsShowed,
-            s"Visualise la liste des applications de $areaId - taille = ${applications.size}"
+            s"Visualise la liste des demandes de $areaId - taille = ${filteredApplications.size}"
           )
           Ok(
             views.html
               .allApplications(request.currentUser, request.rights)(
-                applications,
+                filteredApplications,
                 area.getOrElse(Area.allArea)
               )
           )

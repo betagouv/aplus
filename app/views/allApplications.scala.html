@@ -1,4 +1,5 @@
 @import _root_.helper.Time
+@import serializers.Keys
 
 @(currentUser: User, currentUserRights: Authorization.UserRights)(applications: Seq[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
@@ -43,6 +44,9 @@
            <button class="mdl-button mdl-js-button mdl-button--raised" onclick="document.location='@routes.ApplicationController.allCSV(selectedArea.id)'">
                 Télécharger la liste / export CSV
            </button>
+           <a class="mdl-button mdl-js-button mdl-button--raised" href="@routes.ApplicationController.all(selectedArea.id)?@{Keys.QueryParam.filterIsOpen}">
+             Filtre demande ouvertes
+           </a>
            <br>
            <br>
 
