@@ -63,7 +63,7 @@ import views.stats.StatsData
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import helper.StringHelper.CanonizeString
-import serializers.{AttachmentHelper, DataModel}
+import serializers.{AttachmentHelper, DataModel, Keys}
 
 import scala.concurrent.duration._
 
@@ -91,6 +91,9 @@ case class ApplicationController @Inject() (
   private val filesPath = configuration.underlying.getString("app.filesPath")
   private val featureMandatSms: Boolean = configuration.get[Boolean]("app.features.smsMandat")
 
+  private val featureCanSendApplicationsAnywhere: Boolean =
+    configuration.get[Boolean]("app.features.canSendApplicationsAnywhere")
+
   private val dir = Paths.get(s"$filesPath")
   if (!Files.isDirectory(dir)) {
     Files.createDirectories(dir)
@@ -116,14 +119,49 @@ case class ApplicationController @Inject() (
     )(ApplicationFormData.apply)(ApplicationFormData.unapply)
   )
 
+  private def filterVisibleGroups(areaId: UUID, user: User, rights: Authorization.UserRights)(
+      groups: List[UserGroup]
+  ): List[UserGroup] =
+    if (Authorization.isAdmin(rights) || user.areas.contains[UUID](areaId)) {
+      groups
+    } else {
+      // This case is a weird political restriction:
+      // Users are basically segmented between 2 overall types or `Organisation`
+      // `Organisation.organismesAidants` & `Organisation.organismesOperateurs`
+      val visibleOrganisations: Set[Organisation.Id] =
+        groups
+          .flatMap(
+            _.organisation match {
+              case None => Nil
+              case Some(organisationId) =>
+                if (Organisation.organismesAidants
+                      .map(_.id)
+                      .contains[Organisation.Id](organisationId)) {
+                  Organisation.organismesAidants
+                } else {
+                  Organisation.organismesOperateurs
+                }
+            }
+          )
+          .map(_.id)
+          .toSet
+      groups.filter(group =>
+        group.organisation match {
+          case None     => false
+          case Some(id) => visibleOrganisations.contains(id)
+        }
+      )
+    }
+
   private def fetchGroupsWithInstructors(
       areaId: UUID,
-      currentUser: User
+      currentUser: User,
+      rights: Authorization.UserRights
   ): Future[(List[UserGroup], List[User], List[User])] = {
     val groupsOfAreaFuture = userGroupService.byArea(areaId)
     groupsOfAreaFuture.map { groupsOfArea =>
-      val usersInThoseGroups = userService.byGroupIds(groupsOfArea.map(_.id))
-      val instructorsOfGroups = usersInThoseGroups.filter(_.instructor)
+      val visibleGroups = filterVisibleGroups(areaId, currentUser, rights)(groupsOfArea)
+      val usersInThoseGroups = userService.byGroupIds(visibleGroups.map(_.id))
       // Note: we don't care about users who are in several areas
       val coworkers = usersInThoseGroups
         .filter(user =>
@@ -131,39 +169,61 @@ case class ApplicationController @Inject() (
         )
         .filterNot(user => (user.id: UUID) == (currentUser.id: UUID))
       // This could be optimized by doing only one SQL query
+      val instructorsOfGroups = usersInThoseGroups.filter(_.instructor)
       val groupIdsWithInstructors = instructorsOfGroups.flatMap(_.groupIds).toSet
       val groupsOfAreaWithInstructor =
-        groupsOfArea.filter(user => groupIdsWithInstructors.contains(user.id))
+        visibleGroups.filter(user => groupIdsWithInstructors.contains(user.id))
       (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers)
     }
   }
 
-  private def currentArea(implicit request: RequestWithUserData[_]): Area =
+  // We want to ultimately remove the use of `request.currentUser.areas` for the
+  // prefered linked `UserGroup.areaIds`
+  private def currentAreaLegacy(implicit request: RequestWithUserData[_]): Area =
     request.session
-      .get("areaId")
+      .get(Keys.Session.areaId)
       .flatMap(UUIDHelper.fromString)
       .orElse(request.currentUser.areas.headOption)
       .flatMap(Area.fromId)
       .getOrElse(Area.all.head)
 
+  // Note: `defaultArea` is not stateful between pages,
+  // because changing area is considered to be a special case.
+  // This might change in the future depending on user feedback.
+  private def defaultArea(user: User): Future[Area] =
+    userGroupService
+      .byIdsFuture(user.groupIds)
+      .map(_.flatMap(_.areaIds).flatMap(Area.fromId).headOption.getOrElse(Area.ain))
+
+  private def currentArea(implicit request: RequestWithUserData[_]): Future[Area] =
+    request
+      .getQueryString(Keys.QueryParam.areaId)
+      .flatMap(UUIDHelper.fromString)
+      .flatMap(Area.fromId)
+      .map(Future(_))
+      .getOrElse(defaultArea(request.currentUser))
+
   def create: Action[AnyContent] = loginAction.async { implicit request =>
     eventService.log(ApplicationFormShowed, "Visualise le formulaire de création de demande")
-    fetchGroupsWithInstructors(currentArea.id, request.currentUser).map {
-      case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
-        val categories = organisationService.categories
-        Ok(
-          views.html.createApplication(request.currentUser, request.rights, currentArea)(
-            instructorsOfGroups,
-            groupsOfAreaWithInstructor,
-            coworkers,
-            readSharedAccountUserSignature(request.session),
-            canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
-            featureMandatSms = featureMandatSms,
-            categories,
-            applicationForm(request.currentUser)
+    currentArea.flatMap(currentArea =>
+      fetchGroupsWithInstructors(currentArea.id, request.currentUser, request.rights).map {
+        case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
+          val categories = organisationService.categories
+          Ok(
+            views.html.createApplication(request.currentUser, request.rights, currentArea)(
+              instructorsOfGroups,
+              groupsOfAreaWithInstructor,
+              coworkers,
+              readSharedAccountUserSignature(request.session),
+              canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
+              featureMandatSms = featureMandatSms,
+              featureCanSendApplicationsAnywhere = featureCanSendApplicationsAnywhere,
+              categories,
+              applicationForm(request.currentUser)
+            )
           )
-        )
-    }
+      }
+    )
   }
 
   private def contextualizedUserName(user: User, currentAreaId: UUID): String = {
@@ -193,6 +253,14 @@ case class ApplicationController @Inject() (
   def createPost: Action[AnyContent] = loginAction.async { implicit request =>
     val form = applicationForm(request.currentUser).bindFromRequest
     val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
+
+    // Get `areaId` from the form, to avoid losing it in case of errors
+    val currentArea: Area = form.data
+      .get(Keys.Application.areaId)
+      .map(UUID.fromString)
+      .flatMap(Area.fromId)
+      .getOrElse(throw new Exception("No key 'areaId' in the Application creation form."))
+
     val (pendingAttachments, newAttachments) =
       AttachmentHelper.computeStoreAndRemovePendingAndNewApplicationAttachment(
         applicationId,
@@ -203,7 +271,7 @@ case class ApplicationController @Inject() (
     form.fold(
       formWithErrors =>
         // binding failure, you retrieve the form containing errors:
-        fetchGroupsWithInstructors(currentArea.id, request.currentUser).map {
+        fetchGroupsWithInstructors(currentArea.id, request.currentUser, request.rights).map {
           case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
             eventService.log(
               ApplicationCreationInvalid,
@@ -219,6 +287,7 @@ case class ApplicationController @Inject() (
                   None,
                   canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
                   featureMandatSms = featureMandatSms,
+                  featureCanSendApplicationsAnywhere = featureCanSendApplicationsAnywhere,
                   organisationService.categories,
                   formWithErrors,
                   pendingAttachments.keys ++ newAttachments.keys
@@ -743,7 +812,7 @@ case class ApplicationController @Inject() (
   )(implicit request: RequestWithUserData[A]): Future[List[User]] =
     (if (request.currentUser.expert) {
        //TODO : This is a temporary feature: enables the expert to invite someone in the currentArea. Will be permitted to every body later.
-       userGroupService.byArea(currentArea.id).map { groupsOfArea =>
+       userGroupService.byArea(currentAreaLegacy.id).map { groupsOfArea =>
          userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
        }
      } else if (request.currentUser.instructor) {
@@ -777,7 +846,7 @@ case class ApplicationController @Inject() (
             application,
             answerForm(request.currentUser),
             openedTab,
-            currentArea,
+            currentAreaLegacy,
             readSharedAccountUserSignature(request.session)
           )
         )
@@ -1032,7 +1101,7 @@ case class ApplicationController @Inject() (
 
   def terminate(applicationId: UUID): Action[AnyContent] = loginAction.async { implicit request =>
     withApplication(applicationId) { application: Application =>
-      request.getQueryString("usefulness") match {
+      request.getQueryString(Keys.QueryParam.usefulness) match {
         case None =>
           eventService
             .log(

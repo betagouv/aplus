@@ -7,6 +7,7 @@ import helper.UUIDHelper
 import models._
 import play.api.mvc._
 import play.api.mvc.Results.TemporaryRedirect
+import serializers.Keys
 import services.{EventService, TokenService, UserService}
 import models.EventType.{
   AuthByKey,
@@ -18,7 +19,6 @@ import models.EventType.{
   UserAccessDisabled
 }
 import play.api.Logger
-
 import scala.concurrent.{ExecutionContext, Future}
 
 class RequestWithUserData[A](
@@ -70,7 +70,10 @@ class LoginAction @Inject() (
 
   override def refine[A](request: Request[A]): Future[Either[Result, RequestWithUserData[A]]] = {
     implicit val req = request
-    val path = request.path + queryToString(request.queryString - "key" - "token")
+    val path =
+      request.path + queryToString(
+        request.queryString - Keys.QueryParam.key - Keys.QueryParam.token
+      )
     val url = "http" + (if (request.secure) "s" else "") + "://" + request.host + path
     (userBySession, userByKey, tokenById) match {
       case (Some(userSession), Some(userKey), None) if userSession.id == userKey.id =>
@@ -90,7 +93,9 @@ class LoginAction @Inject() (
             )
             Left(
               TemporaryRedirect(Call(request.method, url).url)
-                .withSession(request.session - "userId" + ("userId" -> user.id.toString))
+                .withSession(
+                  request.session - Keys.Session.userId + (Keys.Session.userId -> user.id.toString)
+                )
             )
           } else {
             eventService.log(TryLoginByKey, "Clé dans l'url, redirige vers la page de connexion")
@@ -117,7 +122,7 @@ class LoginAction @Inject() (
           )
         }
       case _ =>
-        request.getQueryString("token") match {
+        request.getQueryString(Keys.QueryParam.token) match {
           case Some(token) =>
             eventService.info(
               User.systemUser,
@@ -175,11 +180,15 @@ class LoginAction @Inject() (
             )
           }
           if (token.isActive) {
-            val url = request.path + queryToString(request.queryString - "key" - "token")
+            val url = request.path + queryToString(
+              request.queryString - Keys.QueryParam.key - Keys.QueryParam.token
+            )
             eventService.log(AuthByKey, s"Identification par token")
             Left(
               TemporaryRedirect(Call(request.method, url).url)
-                .withSession(request.session - "userId" + ("userId" -> user.id.toString))
+                .withSession(
+                  request.session - Keys.Session.userId + (Keys.Session.userId -> user.id.toString)
+                )
             )
           } else {
             eventService.log(ExpiredToken, s"Token expiré pour ${token.userId}")
@@ -195,7 +204,7 @@ class LoginAction @Inject() (
   private def userNotLogged[A](message: String)(implicit request: Request[A]) =
     Left(
       TemporaryRedirect(routes.LoginController.login.url)
-        .withSession(request.session - "userId")
+        .withSession(request.session - Keys.Session.userId)
         .flashing("error" -> message)
     )
 
@@ -204,24 +213,25 @@ class LoginAction @Inject() (
   ) =
     Left(
       TemporaryRedirect(routes.HomeController.index.url)
-        .withSession(request.session - "userId")
+        .withSession(request.session - Keys.Session.userId)
         .flashing("email" -> email, "error" -> message)
     )
 
   private def userNotLoggedOnLoginPage[A](implicit request: Request[A]) =
     Left(
-      TemporaryRedirect(routes.HomeController.index().url).withSession(request.session - "userId")
+      TemporaryRedirect(routes.HomeController.index().url)
+        .withSession(request.session - Keys.Session.userId)
     )
 
   private def tokenById[A](implicit request: Request[A]): Option[LoginToken] =
-    request.getQueryString("token").flatMap(tokenService.byToken)
+    request.getQueryString(Keys.QueryParam.token).flatMap(tokenService.byToken)
 
   private def userByKey[A](implicit request: Request[A]): Option[User] =
-    request.getQueryString("key").flatMap(userService.byKey)
+    request.getQueryString(Keys.QueryParam.key).flatMap(userService.byKey)
 
   private def userBySession[A](implicit request: Request[A]): Option[User] =
     request.session
-      .get("userId")
+      .get(Keys.Session.userId)
       .flatMap(UUIDHelper.fromString)
       .flatMap(id => userService.byId(id, true))
 }

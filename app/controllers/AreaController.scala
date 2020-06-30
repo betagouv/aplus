@@ -16,6 +16,7 @@ import models.EventType.{
 import models.{Area, Authorization, Organisation, User, UserGroup}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
+import serializers.Keys
 import services.{EventService, UserGroupService, UserService}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -49,7 +50,9 @@ case class AreaController @Inject() (
         .getQueryString("redirect")
         .map(url => Redirect(url))
         .getOrElse(Redirect(routes.ApplicationController.myApplications()))
-      redirect.withSession(request.session - "areaId" + ("areaId" -> areaId.toString))
+      redirect.withSession(
+        request.session - Keys.Session.areaId + (Keys.Session.areaId -> areaId.toString)
+      )
     }
   }
 
@@ -116,7 +119,7 @@ case class AreaController @Inject() (
           } yield user
 
         val organisationGrouping =
-          if (request.getQueryString("uniquement-fs").getOrElse("oui") == "oui") {
+          if (request.getQueryString(Keys.QueryParam.uniquementFs).getOrElse("oui") == "oui") {
             organisationGroupingFranceService
           } else {
             organisationGroupingAll

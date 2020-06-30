@@ -17,6 +17,7 @@ case class User(
     // TODO: `private[models]` so we cannot check it without going through authorization
     admin: Boolean,
     // TODO: remove usage of areas to more specific AdministratedAreaIds
+    // Note: `areas` is used to give "full access" to someone to multiple areas
     areas: List[UUID],
     creationDate: ZonedDateTime,
     communeCode: String,
