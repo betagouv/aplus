@@ -91,6 +91,9 @@ case class ApplicationController @Inject() (
   private val filesPath = configuration.underlying.getString("app.filesPath")
   private val featureMandatSms: Boolean = configuration.get[Boolean]("app.features.smsMandat")
 
+  private val featureCanSendApplicationsAnywhere: Boolean =
+    configuration.get[Boolean]("app.features.canSendApplicationsAnywhere")
+
   private val dir = Paths.get(s"$filesPath")
   if (!Files.isDirectory(dir)) {
     Files.createDirectories(dir)
@@ -126,17 +129,22 @@ case class ApplicationController @Inject() (
       // Users are basically segmented between 2 overall types or `Organisation`
       // `Organisation.organismesAidants` & `Organisation.organismesOperateurs`
       val visibleOrganisations: Set[Organisation.Id] =
-        groups.flatMap(
-          _.organisation match {
-            case None => Nil
-            case Some(organisationId) =>
-              if (Organisation.organismesAidants.map(_.id).contains[Organisation.Id](organisationId)) {
-                Organisation.organismesAidants
-              } else {
-                Organisation.organismesOperateurs
-              }
-          }
-        ).map(_.id).toSet
+        groups
+          .flatMap(
+            _.organisation match {
+              case None => Nil
+              case Some(organisationId) =>
+                if (Organisation.organismesAidants
+                      .map(_.id)
+                      .contains[Organisation.Id](organisationId)) {
+                  Organisation.organismesAidants
+                } else {
+                  Organisation.organismesOperateurs
+                }
+            }
+          )
+          .map(_.id)
+          .toSet
       groups.filter(group =>
         group.organisation match {
           case None     => false
@@ -209,6 +217,7 @@ case class ApplicationController @Inject() (
               readSharedAccountUserSignature(request.session),
               canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
               featureMandatSms = featureMandatSms,
+              featureCanSendApplicationsAnywhere = featureCanSendApplicationsAnywhere,
               categories,
               applicationForm(request.currentUser)
             )
@@ -278,6 +287,7 @@ case class ApplicationController @Inject() (
                   None,
                   canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
                   featureMandatSms = featureMandatSms,
+                  featureCanSendApplicationsAnywhere = featureCanSendApplicationsAnywhere,
                   organisationService.categories,
                   formWithErrors,
                   pendingAttachments.keys ++ newAttachments.keys

@@ -3,7 +3,7 @@
 @import play.api.libs.json.Json
 @import serializers.{DataModel, Keys}
 
-@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], canCreatePhoneMandat: Boolean, featureMandatSms: Boolean, categories: List[Category], applicationForm: Form[models.formModels.ApplicationFormData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], canCreatePhoneMandat: Boolean, featureMandatSms: Boolean, featureCanSendApplicationsAnywhere: Boolean, categories: List[Category], applicationForm: Form[models.formModels.ApplicationFormData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
 @main(currentUser, currentUserRights)(s"Nouvelle demande")  {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
@@ -30,11 +30,18 @@
                 Les champs marqués d’un <span class="mdl-color-text--red-500">*</span> sont obligatoires
             </div>
 
-            <h5 class="title--addline">Territoire concerné</h5>
-            <div>
-              @helpers.changeAreaSelect(currentArea, Area.all, routes.ApplicationController.create())
-              <em>(Le changement de territoire est une fonctionalité est expérimentale)</em>
-            </div>
+            @if(featureCanSendApplicationsAnywhere) {
+              <h5 class="title--addline">Territoire concerné</h5>
+              <div>
+                @helpers.changeAreaSelect(currentArea, Area.all, routes.ApplicationController.create())
+                <em>(Le changement de territoire est une fonctionalité est expérimentale)</em>
+              </div>
+            } else if (currentUser.areas.nonEmpty) {
+              <h5 class="title--addline">Territoire concerné</h5>
+              <div>
+                @helpers.changeAreaSelect(currentArea, currentUser.areas.flatMap(Area.fromId), routes.ApplicationController.create())
+              </div>
+            }
 
             @helper.form(action = routes.ApplicationController.createPost(), "enctype" -> "multipart/form-data", "id" -> "create-application-form", "class" -> "aplus-protected-form") {
                 @helper.CSRF.formField

@@ -467,7 +467,10 @@ case class UserController @Inject() (
         Unauthorized("Vous n'avez pas le droit de faire ça")
       } else {
         val rows =
-          request.getQueryString(Keys.UrlQuery.rows).flatMap(rows => Try(rows.toInt).toOption).getOrElse(1)
+          request
+            .getQueryString(Keys.UrlQuery.rows)
+            .flatMap(rows => Try(rows.toInt).toOption)
+            .getOrElse(1)
         eventService.log(EditUserShowed, "Visualise la vue d'ajouts des utilisateurs")
         Ok(
           views.html.editUsers(request.currentUser, request.rights)(
