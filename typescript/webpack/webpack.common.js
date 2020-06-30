@@ -9,7 +9,7 @@ module.exports = {
     index: path.join(__dirname, '../src/index.ts')
   },
   output: {
-    path: path.join(__dirname, '../../public/dist/js'),
+    path: path.join(__dirname, '../../public/generated-js'),
     filename: '[name].js'
   },
   module: {

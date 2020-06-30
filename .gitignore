@@ -25,4 +25,4 @@ server.pid
 files
 /typescript/package-lock.json
 node_modules/
-/public/dist/
+/public/generated-js/
