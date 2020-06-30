@@ -116,25 +116,27 @@ case class ApplicationController @Inject() (
     )(ApplicationFormData.apply)(ApplicationFormData.unapply)
   )
 
-  private def groupCanSeeOrganismes(userGroup: UserGroup): List[Organisation] =
-    userGroup.organisation match {
-      case None => Nil
-      case Some(organisationId) =>
-        if (Organisation.organismesAidants.map(_.id).contains[Organisation.Id](organisationId)) {
-          Organisation.organismesAidants
-        } else {
-          Organisation.organismesOperateurs
-        }
-    }
-
   private def filterVisibleGroups(areaId: UUID, user: User, rights: Authorization.UserRights)(
       groups: List[UserGroup]
   ): List[UserGroup] =
     if (Authorization.isAdmin(rights) || user.areas.contains[UUID](areaId)) {
       groups
     } else {
+      // This case is a weird political restriction:
+      // Users are basically segmented between 2 overall types or `Organisation`
+      // `Organisation.organismesAidants` & `Organisation.organismesOperateurs`
       val visibleOrganisations: Set[Organisation.Id] =
-        groups.flatMap(groupCanSeeOrganismes).map(_.id).toSet
+        groups.flatMap(
+          _.organisation match {
+            case None => Nil
+            case Some(organisationId) =>
+              if (Organisation.organismesAidants.map(_.id).contains[Organisation.Id](organisationId)) {
+                Organisation.organismesAidants
+              } else {
+                Organisation.organismesOperateurs
+              }
+          }
+        ).map(_.id).toSet
       groups.filter(group =>
         group.organisation match {
           case None     => false
@@ -167,6 +169,8 @@ case class ApplicationController @Inject() (
     }
   }
 
+  // We want to ultimately remove the use of `request.currentUser.areas` for the
+  // prefered linked `UserGroup.areaIds`
   private def currentAreaLegacy(implicit request: RequestWithUserData[_]): Area =
     request.session
       .get(Keys.Session.areaId)
@@ -175,6 +179,9 @@ case class ApplicationController @Inject() (
       .flatMap(Area.fromId)
       .getOrElse(Area.all.head)
 
+  // Note: `defaultArea` is not stateful between pages,
+  // because changing area is considered to be a special case.
+  // This might change in the future depending on user feedback.
   private def defaultArea(user: User): Future[Area] =
     userGroupService
       .byIdsFuture(user.groupIds)
@@ -238,6 +245,7 @@ case class ApplicationController @Inject() (
     val form = applicationForm(request.currentUser).bindFromRequest
     val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
 
+    // Get `areaId` from the form, to avoid losing it in case of errors
     val currentArea: Area = form.data
       .get(Keys.Application.areaId)
       .map(UUID.fromString)

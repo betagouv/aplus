@@ -50,6 +50,7 @@ object Organisation {
   val franceServicesId = Organisation.Id("MFS")
   val franceServices = Organisation(franceServicesId, "FS", "France Services")
   val msap = Organisation("MSAP", "Maison de services au public")
+  val hopital = Organisation("Hôpital", "Hôpital")
 
   /** Note: checklist when adding an `Organisation`
     * - alphabetical order
@@ -89,7 +90,7 @@ object Organisation {
     )
   )
 
-  val organismesAidants: List[Organisation] = List(franceServices, msap)
+  val organismesAidants: List[Organisation] = List(franceServices, msap, hopital)
 
   val organismesOperateurs: List[Organisation] =
     all.filter(!organismesAidants.contains[Organisation](_))
