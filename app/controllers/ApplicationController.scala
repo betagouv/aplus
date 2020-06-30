@@ -197,7 +197,7 @@ case class ApplicationController @Inject() (
 
   private def currentArea(implicit request: RequestWithUserData[_]): Future[Area] =
     request
-      .getQueryString(Keys.UrlQuery.areaId)
+      .getQueryString(Keys.QueryParam.areaId)
       .flatMap(UUIDHelper.fromString)
       .flatMap(Area.fromId)
       .map(Future(_))
@@ -1101,7 +1101,7 @@ case class ApplicationController @Inject() (
 
   def terminate(applicationId: UUID): Action[AnyContent] = loginAction.async { implicit request =>
     withApplication(applicationId) { application: Application =>
-      request.getQueryString(Keys.UrlQuery.usefulness) match {
+      request.getQueryString(Keys.QueryParam.usefulness) match {
         case None =>
           eventService
             .log(

@@ -71,7 +71,9 @@ class LoginAction @Inject() (
   override def refine[A](request: Request[A]): Future[Either[Result, RequestWithUserData[A]]] = {
     implicit val req = request
     val path =
-      request.path + queryToString(request.queryString - Keys.UrlQuery.key - Keys.UrlQuery.token)
+      request.path + queryToString(
+        request.queryString - Keys.QueryParam.key - Keys.QueryParam.token
+      )
     val url = "http" + (if (request.secure) "s" else "") + "://" + request.host + path
     (userBySession, userByKey, tokenById) match {
       case (Some(userSession), Some(userKey), None) if userSession.id == userKey.id =>
@@ -120,7 +122,7 @@ class LoginAction @Inject() (
           )
         }
       case _ =>
-        request.getQueryString(Keys.UrlQuery.token) match {
+        request.getQueryString(Keys.QueryParam.token) match {
           case Some(token) =>
             eventService.info(
               User.systemUser,
@@ -179,7 +181,7 @@ class LoginAction @Inject() (
           }
           if (token.isActive) {
             val url = request.path + queryToString(
-              request.queryString - Keys.UrlQuery.key - Keys.UrlQuery.token
+              request.queryString - Keys.QueryParam.key - Keys.QueryParam.token
             )
             eventService.log(AuthByKey, s"Identification par token")
             Left(
@@ -222,10 +224,10 @@ class LoginAction @Inject() (
     )
 
   private def tokenById[A](implicit request: Request[A]): Option[LoginToken] =
-    request.getQueryString(Keys.UrlQuery.token).flatMap(tokenService.byToken)
+    request.getQueryString(Keys.QueryParam.token).flatMap(tokenService.byToken)
 
   private def userByKey[A](implicit request: Request[A]): Option[User] =
-    request.getQueryString(Keys.UrlQuery.key).flatMap(userService.byKey)
+    request.getQueryString(Keys.QueryParam.key).flatMap(userService.byKey)
 
   private def userBySession[A](implicit request: Request[A]): Option[User] =
     request.session

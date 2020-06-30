@@ -28,7 +28,7 @@ object Keys {
   }
 
   //.queryString .getQueryString
-  object UrlQuery {
+  object QueryParam {
 
     // Login
 

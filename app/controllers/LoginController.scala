@@ -31,7 +31,7 @@ class LoginController @Inject() (
   def login: Action[AnyContent] = Action.async { implicit request =>
     val emailFromRequestOrQueryParamOrFlash: Option[String] = request.body.asFormUrlEncoded
       .flatMap(_.get("email").flatMap(_.headOption))
-      .orElse(request.getQueryString(Keys.UrlQuery.email))
+      .orElse(request.getQueryString(Keys.QueryParam.email))
       .orElse(request.flash.get("email"))
     emailFromRequestOrQueryParamOrFlash.fold {
       Future(Ok(views.html.home.page(LoginPanel.ConnectionForm)))
@@ -83,7 +83,7 @@ class LoginController @Inject() (
             )
 
             val successMessage = request
-              .getQueryString(Keys.UrlQuery.action)
+              .getQueryString(Keys.QueryParam.action)
               .flatMap(actionName =>
                 if (actionName == "sendemailback")
                   Some("Un nouveau lien de connexion vient de vous être envoyé par e-mail.")
@@ -101,7 +101,7 @@ class LoginController @Inject() (
   }
 
   def magicLinkAntiConsumptionPage: Action[AnyContent] = Action { implicit request =>
-    (request.getQueryString(Keys.UrlQuery.token), request.getQueryString(Keys.UrlQuery.path)) match {
+    (request.getQueryString(Keys.QueryParam.token), request.getQueryString(Keys.QueryParam.path)) match {
       case (Some(token), Some(path)) =>
         Ok(views.html.loginHome(Right((token, path)), tokenExpirationInMinutes))
       case _ =>

@@ -24,8 +24,8 @@ class HomeController @Inject() (loginAction: LoginAction, db: Database)(
   def index: Action[AnyContent] = Action { implicit request =>
     val needsRedirect = request.session
       .get(Keys.Session.userId)
-      .orElse(request.queryString.get(Keys.UrlQuery.token))
-      .orElse(request.queryString.get(Keys.UrlQuery.key))
+      .orElse(request.queryString.get(Keys.QueryParam.token))
+      .orElse(request.queryString.get(Keys.QueryParam.key))
       .isDefined
     if (needsRedirect)
       TemporaryRedirect(

@@ -5,7 +5,7 @@
 <select id="changeAreaSelect"
         name="area"
         data-current-area="@{currentArea.id}"
-        data-redirect-url-prefix="@redirectUrlPath?@{Keys.UrlQuery.areaId}=">
+        data-redirect-url-prefix="@redirectUrlPath?@{Keys.QueryParam.areaId}=">
     @for(area <- selectableAreas) {
         <option value="@area.id"
         @if(area.id == currentArea.id) { selected }>@area</option>
