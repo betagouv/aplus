@@ -1,0 +1,16 @@
+name: Lint Code Base
+
+on:
+  push:
+    branches-ignore:
+      - master
+      - prod
+
+jobs:
+  lint-scala:
+    name: Lint Scala
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Formatting
+        run: sbt scalafmtSbtCheck scalafmtCheck test:scalafmtCheck

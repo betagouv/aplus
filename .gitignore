@@ -22,4 +22,5 @@ server.pid
 .cache
 .*
 !.scalafmt.conf
+!.github/
 files

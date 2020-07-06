@@ -62,7 +62,7 @@ scalacOptions ++= Seq(
   "-Wunused:locals",
   // "-Wunused:explicits", TODO: lot of warnings, enable later
   "-Wunused:implicits",
-  "-Wvalue-discard",
+  "-Wvalue-discard"
 )
 
 libraryDependencies ++= Seq(
