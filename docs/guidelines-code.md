@@ -15,6 +15,7 @@
 - Privilégier la definition d'une méthode avec `def` plutôt que sur une `var`
 - Les services ne peuvent être utiliser que depuis les controlleurs
 - Les arguments boolean doivent être nommé
+- Lancer scalafmt avant de push
 
 ## Concept de développement
 - Utiliser un maximum de fonction pure
@@ -35,12 +36,15 @@
 - Place le code css dans un fichier `.css`
 - Ecrire du css réutilisable si c'est possible
 
-## Javascript
+## Javascript/Typescript
 - Privilégier le Javascript Vanille
 - Utiliser le router Javascript de Play : https://www.playframework.com/documentation/2.7.x/ScalaJavascriptRouting
 - Place le code javascript dans un fichier `.js`
-   - Ne pas utiliser les attributs html `onchange`, `onclick
+   - Ne pas utiliser les attributs html `onchange`, `onclick`
 - Ecrire des fonctions javascript réutilisable si c'est possible
+- Les dépendances dans `package.json` sont données avec une version exacte (pas de `^` ou `~`)
+- Le `package-lock.json` n'est pas commit, du à la difficulté de vérifier ce qu'il y a à l'intérieur
+
 
 ## Git
 - Branche
