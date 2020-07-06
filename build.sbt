@@ -79,7 +79,7 @@ libraryDependencies += guice
 
 libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.2.14",
-  "org.playframework.anorm" %% "anorm" % "2.6.5",
+  "org.playframework.anorm" %% "anorm" % "2.6.7",
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "com.typesafe.play" %% "play-mailer-guice" % "8.0.1",
