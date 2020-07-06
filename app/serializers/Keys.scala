@@ -50,6 +50,7 @@ object Keys {
     val rows: String = "rows"
     val limit: String = "limit"
     val fromUserId: String = "fromUserId"
+    val date: String = "date"
   }
 
 }

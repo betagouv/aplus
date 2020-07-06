@@ -29,6 +29,7 @@ import models.EventType.{
 }
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import serializers.{Keys, UserAndGroupCsvSerializer}
+import scala.concurrent.{ExecutionContext, Future}
 
 case class CSVImportController @Inject() (
     loginAction: LoginAction,
@@ -36,7 +37,7 @@ case class CSVImportController @Inject() (
     groupService: UserGroupService,
     notificationsService: NotificationService,
     eventService: EventService
-)(implicit val webJarsUtil: WebJarsUtil)
+)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with play.api.i18n.I18nSupport
     with UserOperators
@@ -51,9 +52,12 @@ case class CSVImportController @Inject() (
     )(CSVImportData.apply)(CSVImportData.unapply)
   )
 
-  def importUsersFromCSV: Action[AnyContent] = loginAction { implicit request =>
+  def importUsersFromCSV: Action[AnyContent] = loginAction.async { implicit request =>
     asAdmin(() => ImportUserUnauthorized -> "Accès non autorisé pour importer les utilisateurs") {
-      () => Ok(views.html.importUsersCSV(request.currentUser, request.rights)(csvImportContentForm))
+      () =>
+        Future(
+          Ok(views.html.importUsersCSV(request.currentUser, request.rights)(csvImportContentForm))
+        )
     }
   }
 
@@ -182,7 +186,7 @@ case class CSVImportController @Inject() (
     *  and display possible errors.
     */
   def importUsersReview: Action[AnyContent] =
-    loginAction { implicit request =>
+    loginAction.async { implicit request =>
       asAdmin { () =>
         ImportGroupUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
       } { () =>
@@ -192,9 +196,11 @@ case class CSVImportController @Inject() (
               CsvImportInputEmpty,
               description = "Le champ d'import de CSV est vide ou le séparateur n'est pas défini."
             )
-            BadRequest(
-              views.html.importUsersCSV(request.currentUser, request.rights)(
-                csvImportContentFormWithError
+            Future(
+              BadRequest(
+                views.html.importUsersCSV(request.currentUser, request.rights)(
+                  csvImportContentFormWithError
+                )
               )
             )
           }, { csvImportData =>
@@ -204,16 +210,19 @@ case class CSVImportController @Inject() (
                 csvImportData.csvLines
               )
               .fold(
-                { error: String =>
-                  val csvImportContentFormWithError =
-                    csvImportContentForm.fill(csvImportData).withGlobalError(error)
-                  eventService
-                    .log(CSVImportFormError, description = "Erreur de formulaire Importation")
-                  BadRequest(
-                    views.html.importUsersCSV(request.currentUser, request.rights)(
-                      csvImportContentFormWithError
+                {
+                  error: String =>
+                    val csvImportContentFormWithError =
+                      csvImportContentForm.fill(csvImportData).withGlobalError(error)
+                    eventService
+                      .log(CSVImportFormError, description = "Erreur de formulaire Importation")
+                    Future(
+                      BadRequest(
+                        views.html.importUsersCSV(request.currentUser, request.rights)(
+                          csvImportContentFormWithError
+                        )
+                      )
                     )
-                  )
                 }, {
                   case (
                       userNotImported: List[String],
@@ -234,9 +243,11 @@ case class CSVImportController @Inject() (
                     } else {
                       formWithData
                     }
-                    Ok(
-                      views.html
-                        .reviewUsersImport(request.currentUser, request.rights)(formWithError)
+                    Future(
+                      Ok(
+                        views.html
+                          .reviewUsersImport(request.currentUser, request.rights)(formWithError)
+                      )
                     )
                 }
               )
@@ -259,16 +270,18 @@ case class CSVImportController @Inject() (
   }
 
   /** Import the reviewed CSV. */
-  def importUsersAfterReview: Action[AnyContent] = loginAction { implicit request =>
+  def importUsersAfterReview: Action[AnyContent] = loginAction.async { implicit request =>
     asAdmin(() => ImportUsersUnauthorized -> "Accès non autorisé pour importer les utilisateurs") {
       () =>
         val currentDate = Time.nowParis()
         importUsersAfterReviewForm(currentDate).bindFromRequest.fold(
           { importUsersAfterReviewFormWithError =>
             eventService.log(ImportUserFormError, description = "Erreur de formulaire de review")
-            BadRequest(
-              views.html.reviewUsersImport(request.currentUser, request.rights)(
-                importUsersAfterReviewFormWithError
+            Future(
+              BadRequest(
+                views.html.reviewUsersImport(request.currentUser, request.rights)(
+                  importUsersAfterReviewFormWithError
+                )
               )
             )
           }, { userGroupDataForm: List[UserGroupFormData] =>
@@ -290,9 +303,11 @@ case class CSVImportController @Inject() (
                     val formWithError = importUsersAfterReviewForm(currentDate)
                       .fill(augmentedUserGroupInformation)
                       .withGlobalError(description)
-                    InternalServerError(
-                      views.html
-                        .reviewUsersImport(request.currentUser, request.rights)(formWithError)
+                    Future(
+                      InternalServerError(
+                        views.html
+                          .reviewUsersImport(request.currentUser, request.rights)(formWithError)
+                      )
                     )
                 }, {
                   _ =>
@@ -331,11 +346,13 @@ case class CSVImportController @Inject() (
                             val formWithError = importUsersAfterReviewForm(currentDate)
                               .fill(augmentedUserGroupInformation)
                               .withGlobalError(description)
-                            InternalServerError(
-                              views.html
-                                .reviewUsersImport(request.currentUser, request.rights)(
-                                  formWithError
-                                )
+                            Future(
+                              InternalServerError(
+                                views.html
+                                  .reviewUsersImport(request.currentUser, request.rights)(
+                                    formWithError
+                                  )
+                              )
                             )
                         }, {
                           _ =>
@@ -349,8 +366,10 @@ case class CSVImportController @Inject() (
                             }
                             eventService
                               .log(UsersImported, "Utilisateurs ajoutés par l'importation")
-                            Redirect(routes.UserController.all(Area.allArea.id))
-                              .flashing("success" -> "Utilisateurs importés.")
+                            Future(
+                              Redirect(routes.UserController.all(Area.allArea.id))
+                                .flashing("success" -> "Utilisateurs importés.")
+                            )
                         }
                       )
                 }
