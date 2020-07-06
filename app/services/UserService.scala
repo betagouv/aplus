@@ -133,7 +133,7 @@ class UserService @Inject() (
            ${Hash.sha256(s"${user.id}$cryptoSecret")},
            ${user.name},
            ${user.qualite},
-           ${user.email},
+           ${user.email.toLowerCase},
            ${user.helper},
            ${user.instructor},
            ${user.admin},
@@ -168,7 +168,7 @@ class UserService @Inject() (
           UPDATE "user" SET
           name = ${user.name},
           qualite = ${user.qualite},
-          email = ${user.email},
+          email = ${user.email.toLowerCase},
           helper = ${user.helper},
           instructor = ${user.instructor},
           admin = ${user.admin},

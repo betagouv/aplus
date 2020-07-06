@@ -48,7 +48,7 @@ class UserGroupService @Inject() (
          ${UUIDHelper.namedFrom("deprecated")}::uuid,
          array[${group.areaIds}]::uuid[],
          ${group.organisation.map(_.id)},
-         ${group.email})
+         ${group.email.map(_.toLowerCase)})
       """.executeUpdate() == 1
         }
       }
@@ -75,7 +75,7 @@ class UserGroupService @Inject() (
           description = ${group.description},
           organisation = ${group.organisation.map(_.id)},
           area_ids = array[${group.areaIds}]::uuid[],
-          email = ${group.email}
+          email = ${group.email.map(_.toLowerCase)}
           WHERE id = ${group.id}::uuid
        """.executeUpdate() == 1
   //TODO: insee_code = array[${group.inseeCode}]::character varying(5)[], have been remove temporary
