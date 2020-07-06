@@ -1,4 +1,4 @@
-name: Lint Code Base
+name: Lint
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint-scala:
-    name: Lint Scala
+    name: Scala
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
