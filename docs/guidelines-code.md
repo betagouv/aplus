@@ -39,9 +39,9 @@
 ## Javascript/Typescript
 - Privilégier le Javascript Vanille
 - Utiliser le router Javascript de Play : https://www.playframework.com/documentation/2.7.x/ScalaJavascriptRouting
-- Place le code javascript dans un fichier `.js`
+- Placer le code javascript dans un fichier `.js`
    - Ne pas utiliser les attributs html `onchange`, `onclick`
-- Ecrire des fonctions javascript réutilisable si c'est possible
+- Ecrire des fonctions javascript réutilisables si c'est possible
 - Les dépendances dans `package.json` sont données avec une version exacte (pas de `^` ou `~`)
 - Le `package-lock.json` n'est pas commit, du à la difficulté de vérifier ce qu'il y a à l'intérieur
 
