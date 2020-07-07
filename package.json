@@ -1,0 +1,8 @@
+{
+  "name": "aplus-heroku",
+  "version": "1.0.0",
+  "description": "Top level package.json to launch the npm build on Heroku",
+  "scripts": {
+    "postinstall": "npm install --prefix typescript && npm run build --prefix typescript"
+  }
+}
