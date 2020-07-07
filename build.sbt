@@ -62,7 +62,7 @@ scalacOptions ++= Seq(
   "-Wunused:locals",
   // "-Wunused:explicits", TODO: lot of warnings, enable later
   "-Wunused:implicits",
-  "-Wvalue-discard",
+  "-Wvalue-discard"
 )
 
 libraryDependencies ++= Seq(
@@ -119,6 +119,23 @@ TwirlKeys.templateImports += "_root_.helper.TwirlImports._"
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "fr.gouv.beta.binders._"
 
+/////////////////////////////////////
+// Task and Hook for the TS build  //
+/////////////////////////////////////
+
+/** This task will run `npm install` and `npm run build`
+  * in the typescript/ directory.
+  * This will generate the JS production bundle in public/generate-js/index.js
+  */
+lazy val npmBuild = taskKey[Unit]("Run npm run build.")
+
+npmBuild := {
+  import scala.sys.process.Process
+  val tsDirectory = baseDirectory.value / "typescript"
+  println("Running npm install in directory " + tsDirectory)
+  Process("npm install", tsDirectory).!
+  Process("npm run build", tsDirectory).!
+}
 
 /** Add a hook to the Play sbt plugin,
   * so `npm run watch` is runned when using the sbt command `run`
@@ -141,13 +158,11 @@ def NpmWatch(base: File) = {
 
         var watchProcess: Option[Process] = None
 
-        override def beforeStarted(): Unit = {
+        override def beforeStarted(): Unit =
           Process("npm install", tsDirectory).run
-        }
 
-        override def afterStarted(): Unit = {
+        override def afterStarted(): Unit =
           watchProcess = Some(Process("npm run watch", tsDirectory).run)
-        }
 
         override def afterStopped(): Unit = {
           watchProcess.map(p => p.destroy())
