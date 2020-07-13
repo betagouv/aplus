@@ -29,6 +29,7 @@ import models.EventType.{
   UserGroupDeletionUnauthorized,
   UserGroupEdited
 }
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 case class GroupController @Inject() (
@@ -39,63 +40,70 @@ case class GroupController @Inject() (
     configuration: Configuration,
     ws: WSClient,
     userService: UserService
-)(implicit val webJarsUtil: WebJarsUtil)
+)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with GroupOperators
     with UserOperators {
 
-  def deleteUnusedGroupById(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
-    withGroup(groupId) { group: UserGroup =>
-      asAdminOfGroupZone(group) { () =>
-        GroupDeletionUnauthorized -> s"Droits insuffisants pour la suppression du groupe ${groupId}."
-      } { () =>
-        val empty = groupService.isGroupEmpty(group.id)
-        if (not(empty)) {
-          eventService.log(
-            UserGroupDeletionUnauthorized,
-            description = "Tentative de suppression d'un groupe utilisé."
-          )
-          Unauthorized("Group is not unused.")
-        } else {
-          groupService.deleteById(groupId)
-          eventService.log(UserGroupDeleted, s"Suppression du groupe ${groupId}.")
-          Redirect(
-            routes.UserController.all(group.areaIds.headOption.getOrElse(Area.allArea.id)),
-            303
-          )
+  def deleteUnusedGroupById(groupId: UUID): Action[AnyContent] = loginAction.async {
+    implicit request =>
+      withGroup(groupId) { group: UserGroup =>
+        asAdminOfGroupZone(group) { () =>
+          GroupDeletionUnauthorized -> s"Droits insuffisants pour la suppression du groupe ${groupId}."
+        } { () =>
+          val empty = groupService.isGroupEmpty(group.id)
+          if (not(empty)) {
+            eventService.log(
+              UserGroupDeletionUnauthorized,
+              description = "Tentative de suppression d'un groupe utilisé."
+            )
+            Future(Unauthorized("Group is not unused."))
+          } else {
+            groupService.deleteById(groupId)
+            eventService.log(UserGroupDeleted, s"Suppression du groupe ${groupId}.")
+            Future(
+              Redirect(
+                routes.UserController.all(group.areaIds.headOption.getOrElse(Area.allArea.id)),
+                303
+              )
+            )
+          }
         }
       }
-    }
   }
 
-  def editGroup(id: UUID): Action[AnyContent] = loginAction { implicit request =>
+  def editGroup(id: UUID): Action[AnyContent] = loginAction.async { implicit request =>
     withGroup(id) { group: UserGroup =>
       if (!group.canHaveUsersAddedBy(request.currentUser)) {
         eventService.log(EditGroupUnauthorized, s"Accès non autorisé à l'edition de ce groupe")
-        Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?")
+        Future(Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?"))
       } else {
         val groupUsers = userService.byGroupIds(List(id))
         eventService.log(EditGroupShowed, s"Visualise la vue de modification du groupe")
         val isEmpty = groupService.isGroupEmpty(group.id)
-        Ok(
-          views.html.editGroup(request.currentUser, request.rights)(
-            group,
-            groupUsers,
-            isEmpty
+        Future(
+          Ok(
+            views.html.editGroup(request.currentUser, request.rights)(
+              group,
+              groupUsers,
+              isEmpty
+            )
           )
         )
       }
     }
   }
 
-  def addGroup(): Action[AnyContent] = loginAction { implicit request =>
+  def addGroup(): Action[AnyContent] = loginAction.async { implicit request =>
     asAdmin(() => AddGroupUnauthorized -> s"Accès non autorisé pour ajouter un groupe") { () =>
       addGroupForm(Time.timeZoneParis).bindFromRequest.fold(
         formWithErrors => {
           eventService
             .log(AddUserGroupError, s"Essai d'ajout d'un groupe avec des erreurs de validation")
-          Redirect(routes.UserController.home).flashing(
-            "error" -> s"Impossible d'ajouter le groupe : ${formWithErrors.errors.mkString}"
+          Future(
+            Redirect(routes.UserController.home).flashing(
+              "error" -> s"Impossible d'ajouter le groupe : ${formWithErrors.errors.mkString}"
+            )
           )
         },
         group =>
@@ -104,22 +112,26 @@ case class GroupController @Inject() (
             .fold(
               { error: String =>
                 eventService.log(AddUserGroupError, s"Impossible d'ajouter le groupe dans la BDD")
-                Redirect(routes.UserController.home)
-                  .flashing("error" -> s"Impossible d'ajouter le groupe : $error")
-              }, { Unit =>
+                Future(
+                  Redirect(routes.UserController.home)
+                    .flashing("error" -> s"Impossible d'ajouter le groupe : $error")
+                )
+              }, { _ =>
                 eventService.log(
                   UserGroupCreated,
                   s"Groupe ${group.name} (id : ${group.id}) ajouté par l'utilisateur d'id ${request.currentUser.id}"
                 )
-                Redirect(routes.GroupController.editGroup(group.id))
-                  .flashing("success" -> "Groupe ajouté")
+                Future(
+                  Redirect(routes.GroupController.editGroup(group.id))
+                    .flashing("success" -> "Groupe ajouté")
+                )
               }
             )
       )
     }
   }
 
-  def editGroupPost(groupId: UUID): Action[AnyContent] = loginAction { implicit request =>
+  def editGroupPost(groupId: UUID): Action[AnyContent] = loginAction.async { implicit request =>
     asAdmin(() => EditGroupUnauthorized -> s"Accès non autorisé à l'edition de ce groupe") { () =>
       withGroup(groupId) { currentGroup: UserGroup =>
         if (not(currentGroup.canHaveUsersAddedBy(request.currentUser))) {
@@ -127,7 +139,7 @@ case class GroupController @Inject() (
             AddUserToGroupUnauthorized,
             s"L'utilisateur ${request.currentUser.id} n'est pas authorisé à ajouter des utilisateurs au groupe ${currentGroup.id}."
           )
-          Unauthorized("Vous n'êtes pas authorisé à ajouter des utilisateurs à ce groupe.")
+          Future(Unauthorized("Vous n'êtes pas authorisé à ajouter des utilisateurs à ce groupe."))
         } else {
           addGroupForm(Time.timeZoneParis).bindFromRequest.fold(
             formWithError => {
@@ -135,22 +147,28 @@ case class GroupController @Inject() (
                 EditUserGroupError,
                 s"Essai d'edition d'un groupe avec des erreurs de validation"
               )
-              Redirect(routes.GroupController.editGroup(groupId)).flashing(
-                "error" -> s"Impossible de modifier le groupe (erreur de formulaire) : ${formWithError.errors.mkString}"
+              Future(
+                Redirect(routes.GroupController.editGroup(groupId)).flashing(
+                  "error" -> s"Impossible de modifier le groupe (erreur de formulaire) : ${formWithError.errors.mkString}"
+                )
               )
             },
             group =>
               if (groupService.edit(group.copy(id = groupId))) {
                 eventService.log(UserGroupEdited, s"Groupe édité")
-                Redirect(routes.GroupController.editGroup(groupId))
-                  .flashing("success" -> "Groupe modifié")
+                Future(
+                  Redirect(routes.GroupController.editGroup(groupId))
+                    .flashing("success" -> "Groupe modifié")
+                )
               } else {
                 eventService
                   .log(EditUserGroupError, s"Impossible de modifier le groupe dans la BDD")
-                Redirect(routes.GroupController.editGroup(groupId))
-                  .flashing(
-                    "error" -> "Impossible de modifier le groupe: erreur en base de donnée"
-                  )
+                Future(
+                  Redirect(routes.GroupController.editGroup(groupId))
+                    .flashing(
+                      "error" -> "Impossible de modifier le groupe: erreur en base de donnée"
+                    )
+                )
               }
           )
         }

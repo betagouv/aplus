@@ -3,6 +3,7 @@ package services
 import java.util.UUID
 
 import actions.RequestWithUserData
+import java.time.LocalDate
 import javax.inject.Inject
 import models._
 import play.api.db.Database
@@ -10,9 +11,11 @@ import play.api.mvc.Request
 import anorm._
 import helper.Time
 import play.api.Logger
+import scala.concurrent.Future
 
 @javax.inject.Singleton
-class EventService @Inject() (db: Database) {
+class EventService @Inject() (db: Database, dependencies: ServicesDependencies) {
+  import dependencies.databaseExecutionContext
 
   private val logger = Logger(classOf[EventService])
 
@@ -139,15 +142,39 @@ class EventService @Inject() (db: Database) {
       """.executeUpdate() == 1
     }
 
-  def all(limit: Int = 1000, fromUserId: Option[UUID] = None) = db.withConnection {
-    implicit connection =>
-      fromUserId match {
-        case Some(userId) =>
-          SQL"""SELECT *, host(ip_address)::TEXT AS ip_address FROM "event" WHERE from_user_id = $userId::uuid OR to_user_id = $userId::uuid ORDER BY creation_date DESC LIMIT $limit"""
-            .as(simpleEvent.*)
-        case None =>
-          SQL"""SELECT *, host(ip_address)::TEXT AS ip_address FROM "event" ORDER BY creation_date DESC LIMIT $limit"""
-            .as(simpleEvent.*)
+  def all(limit: Int, fromUserId: Option[UUID], date: Option[LocalDate]): Future[List[Event]] =
+    Future {
+      db.withConnection { implicit connection =>
+        (fromUserId, date) match {
+          case (Some(userId), Some(date)) =>
+            SQL"""SELECT *, host(ip_address)::TEXT AS ip_address
+                FROM "event"
+                WHERE (from_user_id = $userId::uuid OR to_user_id = $userId::uuid)
+                AND date_trunc('day',creation_date) = $date
+                ORDER BY creation_date DESC
+                LIMIT $limit"""
+              .as(simpleEvent.*)
+          case (None, Some(date)) =>
+            SQL"""SELECT *, host(ip_address)::TEXT AS ip_address
+                FROM "event"
+                WHERE date_trunc('day',creation_date) = $date
+                ORDER BY creation_date DESC
+                LIMIT $limit"""
+              .as(simpleEvent.*)
+          case (Some(userId), None) =>
+            SQL"""SELECT *, host(ip_address)::TEXT AS ip_address
+                FROM "event"
+                WHERE from_user_id = $userId::uuid OR to_user_id = $userId::uuid
+                ORDER BY creation_date DESC
+                LIMIT $limit"""
+              .as(simpleEvent.*)
+          case (None, None) =>
+            SQL"""SELECT *, host(ip_address)::TEXT AS ip_address
+                FROM "event"
+                ORDER BY creation_date DESC
+                LIMIT $limit"""
+              .as(simpleEvent.*)
+        }
       }
-  }
+    }
 }
