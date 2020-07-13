@@ -40,6 +40,25 @@ function setupDemoBanner() {
 
 setupDemoBanner();
 
+//
+// Area Change Select
+//
+
+function setupChangeAreaSelect() {
+  var select = document.getElementById("changeAreaSelect");
+  if (select) {
+    var currentArea = select.dataset["currentArea"];
+    var redirectUrlPrefix = select.dataset["redirectUrlPrefix"];
+    select.addEventListener('change', function() {
+      var selectedArea = select.value;
+      if(selectedArea != currentArea) {
+        document.location = redirectUrlPrefix+selectedArea;
+      }
+    });
+  }
+}
+
+setupChangeAreaSelect()
 
 //
 // Application form

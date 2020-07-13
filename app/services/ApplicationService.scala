@@ -165,32 +165,6 @@ class ApplicationService @Inject() (
       }
     }
 
-  def allForCreatorUserId(creatorUserId: UUID, anonymous: Boolean) = db.withConnection {
-    implicit connection =>
-      val result = SQL(
-        "SELECT * FROM application WHERE creator_user_id = {creatorUserId}::uuid ORDER BY creation_date DESC"
-      ).on("creatorUserId" -> creatorUserId)
-        .as(simpleApplication.*)
-      if (anonymous) {
-        result.map(_.anonymousApplication)
-      } else {
-        result
-      }
-  }
-
-  def allForInvitedUserId(invitedUserId: UUID, anonymous: Boolean) = db.withConnection {
-    implicit connection =>
-      val result = SQL(
-        "SELECT * FROM application WHERE invited_users ?? {invitedUserId} ORDER BY creation_date DESC"
-      ).on("invitedUserId" -> invitedUserId)
-        .as(simpleApplication.*)
-      if (anonymous) {
-        result.map(_.anonymousApplication)
-      } else {
-        result
-      }
-  }
-
   def allByArea(areaId: UUID, anonymous: Boolean) = db.withConnection { implicit connection =>
     val result =
       SQL("SELECT * FROM application WHERE area = {areaId}::uuid ORDER BY creation_date DESC")

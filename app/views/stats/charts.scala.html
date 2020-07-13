@@ -50,6 +50,13 @@
 
 @if(isAdmin) {
     <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
+        <h6>Demandes déposées par type de mandat</h6>
+        <div class="single--margin-right-16px">
+            @mandatTypeBarChart(data.all, "mandat-type")
+        </div>
+    </div>
+
+    <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
         <h6>Demande par administration réceptrice (Beta)</h6>
         @applicationsByAdministrationPieChart(data.all)
     </div>
