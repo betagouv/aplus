@@ -24,6 +24,6 @@ server.pid
 !.scalafmt.conf
 !.github/
 files
-/typescript/package-lock.json
+package-lock.json
 node_modules/
 /public/generated-js/
