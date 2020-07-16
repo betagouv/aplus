@@ -18,4 +18,4 @@
 
 - Pour lancer le serveur sans docker `sbt run` (Vous pouvez regarder les variables d'environnement indispensables dans le `docker-compose.yml` et la liste des variables dans le `application.conf`)
 
-- Les commandes pour le frontend sont dans `typescript/package.json` : `npm run watch` (dev), `npm run clean` (supprime ce qui a été installé par `npm install`), `npm run build` (bundle prod)
+- Les commandes pour le frontend sont dans `package.json` : `npm run watch` (dev), `npm run clean` (supprime ce qui a été installé par `npm install`), `npm run build` (bundle prod)

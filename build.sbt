@@ -131,7 +131,7 @@ lazy val npmBuild = taskKey[Unit]("Run npm run build.")
 
 npmBuild := {
   import scala.sys.process.Process
-  val tsDirectory = baseDirectory.value / "typescript"
+  val tsDirectory = baseDirectory.value
   println("Running npm install in directory " + tsDirectory)
   Process("npm install", tsDirectory).!
   Process("npm run build", tsDirectory).!
@@ -152,17 +152,15 @@ def NpmWatch(base: File) = {
   object NpmWatch {
     def apply(base: File): PlayRunHook = {
 
-      val tsDirectory: File = base / "typescript"
-
       object NpmProcess extends PlayRunHook {
 
         var watchProcess: Option[Process] = None
 
         override def beforeStarted(): Unit =
-          Process("npm install", tsDirectory).run
+          Process("npm install", base).run
 
         override def afterStarted(): Unit =
-          watchProcess = Some(Process("npm run watch", tsDirectory).run)
+          watchProcess = Some(Process("npm run watch", base).run)
 
         override def afterStopped(): Unit = {
           watchProcess.map(p => p.destroy())
