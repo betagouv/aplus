@@ -2,8 +2,9 @@
 # Builder image for the TS pipeline
 #
 FROM node:10-buster AS tsbuilder
+COPY package.json /var/www/aplus/package.json
 COPY typescript /var/www/aplus/typescript/
-WORKDIR /var/www/aplus/typescript/
+WORKDIR /var/www/aplus/
 RUN npm install
 RUN npm run build
 
