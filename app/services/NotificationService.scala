@@ -1,16 +1,19 @@
 package services
 
-import java.util.UUID
-
+import akka.stream.{ActorAttributes, Materializer, Supervision}
+import akka.stream.scaladsl.{Sink, Source}
 import constants.Constants
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import controllers.routes
 import helper.EmailHelper.quoteEmailPhrase
 import models._
 import models.mandat.Mandat
 import play.api.Logger
+import play.api.libs.concurrent.MaterializerProvider
 import play.api.libs.mailer.MailerClient
 import play.api.libs.mailer.Email
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class NotificationService @Inject() (
@@ -18,8 +21,11 @@ class NotificationService @Inject() (
     mailerClient: MailerClient,
     userService: UserService,
     eventService: EventService,
-    groupService: UserGroupService
-) {
+    groupService: UserGroupService,
+    materializerProvider: MaterializerProvider,
+)(implicit executionContext: ExecutionContext) {
+
+  implicit val materializer: Materializer = materializerProvider.get
 
   private val log = Logger(classOf[NotificationService])
 
@@ -148,6 +154,8 @@ class NotificationService @Inject() (
 
   def mandatSmsClosed(mandatId: Mandat.Id, user: User): Unit =
     sendMail(generateMandatSmsClosedEmail(mandatId, user))
+
+  def weeklyEmail(): Unit = {}
 
   private def generateFooter(user: User): String =
     s"""<br><br>
@@ -286,6 +294,23 @@ class NotificationService @Inject() (
       to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
       bodyHtml = Some(bodyHtml.toString)
     )
+  }
+
+  def weeklyEmails(): Future[Unit] =
+    Source
+      .future(userService.allNotDisabled)
+      .mapConcat(identity)
+      .mapAsync(parallelism = 1)(sendWeeklyEmail)
+      .withAttributes(ActorAttributes.supervisionStrategy(Supervision.resumingDecider))
+      .runWith(Sink.ignore)
+      .map { _: akka.Done =>
+        // TODO: log
+        ()
+      }
+
+  private def sendWeeklyEmail(user: User): Future[Unit] = {
+    // TODO
+    Future(())
   }
 
 }

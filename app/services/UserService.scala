@@ -53,6 +53,12 @@ class UserService @Inject() (
     }
   }
 
+  def allNotDisabled: Future[List[User]] = Future {
+    db.withConnection { implicit connection =>
+      SQL("""SELECT * FROM "user" WHERE NOT disabled""").as(simpleUser.*)
+    }
+  }
+
   // Note: this is deprecated, should check via the UserGroup
   def byAreaIds(areaIds: List[UUID]): List[User] = db.withConnection { implicit connection =>
     SQL"""SELECT * FROM "user" WHERE ARRAY[$areaIds]::uuid[] && areas""".as(simpleUser.*)
