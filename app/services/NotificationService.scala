@@ -26,7 +26,16 @@ class NotificationService @Inject() (
   private lazy val tokenExpirationInMinutes =
     configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
-  private val host = configuration.underlying.getString("app.host")
+  private val host: String = {
+    val appHost = configuration.underlying.getString("app.host")
+    if (appHost.contains("invalid"))
+      configuration.get[Option[String]]("app.herokuAppName")
+        .map(app => s"${app}.herokuapp.com")
+        .getOrElse(appHost)
+    else
+      appHost
+  }
+
   private val https = configuration.underlying.getString("app.https") == "true"
 
   private val from = s"Administration+ <${Constants.supportEmail}>"
