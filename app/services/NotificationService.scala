@@ -27,13 +27,20 @@ class NotificationService @Inject() (
     configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
   private val host: String = {
-    val appHost = configuration.underlying.getString("app.host")
-    if (appHost.contains("invalid"))
-      configuration.get[Option[String]]("app.herokuAppName")
-        .map(app => s"${app}.herokuapp.com")
-        .getOrElse(appHost)
-    else
-      appHost
+    def readHerokuAppNameOrThrow: String =
+      configuration.get[Option[String]]("app.herokuAppName") match {
+        case None =>
+          throw new Exception(
+            "Impossible de lire l'une des variables APP_HOST ou HEROKU_APP_NAME"
+          )
+        case Some(herokuAppName) => s"${herokuAppName}.herokuapp.com"
+      }
+    configuration.get[Option[String]]("app.host") match {
+      case None => readHerokuAppNameOrThrow
+      // Temporary check, remove when APP_HOST is not mandatory on Heroku
+      case Some(appHost) if appHost.contains("invalid") => readHerokuAppNameOrThrow
+      case Some(appHost)                                => appHost
+    }
   }
 
   private val https = configuration.underlying.getString("app.https") == "true"
