@@ -3,10 +3,11 @@ name: Tests
 on: [push, pull_request]
 
 jobs:
-  build:
+  scala-build:
+    name: Scala Build
 
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v1
     - name: Set up JDK 1.8
@@ -33,3 +34,17 @@ jobs:
          fi
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+
+  ts-build:
+    name: TypeScript Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Node 10
+      uses: actions/setup-node@v2
+      with:
+        node-version: '10.x'
+    - name: Install npm dependencies
+      run: npm install
+    - name: Build the JS blob
+      run: npm run build
