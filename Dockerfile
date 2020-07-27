@@ -1,4 +1,15 @@
 #
+# Builder image for the TS pipeline
+#
+FROM node:10-buster AS tsbuilder
+COPY package.json /var/www/aplus/package.json
+COPY typescript /var/www/aplus/typescript/
+WORKDIR /var/www/aplus/
+RUN npm install
+RUN npm run build
+
+
+#
 # Scala and sbt Dockerfile part based on
 # https://github.com/hseeberger/scala-sbt
 #
@@ -34,6 +45,7 @@ COPY build.sbt $PLAY_APP_DIR/
 COPY app $PLAY_APP_DIR/app/
 COPY conf $PLAY_APP_DIR/conf/
 COPY public $PLAY_APP_DIR/public/
+COPY --from=tsbuilder /var/www/aplus/public/generated-js $PLAY_APP_DIR/public/generated-js/
 COPY data $PLAY_APP_DIR/data/
 COPY project/*.properties project/*.sbt project/*.scala $PLAY_APP_DIR/project/
 
