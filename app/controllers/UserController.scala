@@ -148,7 +148,8 @@ case class UserController @Inject() (
 
         usersFuture.zip(groupsFuture).map {
           case (users, groups) =>
-            def userToCSV(user: User): String =
+            def userToCSV(user: User): String = {
+              val userGroups = user.groupIds.flatMap(id => groups.find(_.id == id))
               List[String](
                 user.id.toString,
                 user.name,
@@ -162,11 +163,17 @@ case class UserController @Inject() (
                 if (user.admin) "Admin" else " ",
                 if (user.disabled) "Désactivé" else " ",
                 user.communeCode,
-                user.areas.flatMap(Area.fromId).map(_.name).mkString(","),
-                user.groupIds.flatMap(id => groups.find(_.id == id)).map(_.name).mkString(","),
+                user.areas.flatMap(Area.fromId).map(_.name).mkString(", "),
+                userGroups.map(_.name).mkString(", "),
+                userGroups
+                  .flatMap(_.organisation)
+                  .flatMap(Organisation.byId)
+                  .map(_.shortName)
+                  .mkString(", "),
                 if (user.cguAcceptationDate.nonEmpty) "CGU Acceptées" else "",
                 if (user.newsletterAcceptationDate.nonEmpty) "Newsletter Acceptée" else ""
               ).mkString(";")
+            }
 
             val headers = List[String](
               "Id",
@@ -183,6 +190,7 @@ case class UserController @Inject() (
               "Commune INSEE",
               UserAndGroupCsvSerializer.GROUP_AREAS_IDS.prefixes(0),
               UserAndGroupCsvSerializer.GROUP_NAME.prefixes(0),
+              UserAndGroupCsvSerializer.GROUP_ORGANISATION.prefixes(0),
               "CGU",
               "Newsletter"
             ).mkString(";")
