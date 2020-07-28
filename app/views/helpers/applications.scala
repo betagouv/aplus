@@ -9,15 +9,15 @@ object applications {
     val status: String = application.longStatus(user)
     val classes: String = status match {
       case "Clôturée" =>
-        "tag mdl-color--blue-500 mdl-color-text--black"
+        "tag mdl-color--grey-200 mdl-color-text--black"
       case "Nouvelle" =>
-        "tag mdl-color--purple-600 mdl-color-text--white"
-      case someStatus if status.contains("Répondu") =>
-        "tag mdl-color--pink-700 mdl-color-text--white"
+        "tag mdl-color--pink-400 mdl-color-text--white"
+      case someStatus if someStatus.contains("Répondu") =>
+        "tag mdl-color--light-blue-300 mdl-color-text--black"
       case "Consultée" =>
-        "tag mdl-color--green-A400 mdl-color-text--black"
+        "tag mdl-color--light-blue-50 mdl-color-text--black"
       case "Envoyée" =>
-        "tag mdl-color--purple-200 mdl-color-text--black"
+        "tag mdl-color--deep-purple-100 mdl-color-text--black"
       case _ =>
         "tag"
     }
