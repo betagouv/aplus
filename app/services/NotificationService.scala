@@ -128,7 +128,7 @@ class NotificationService @Inject() (
     val url = s"${absoluteUrl}?token=${loginToken.token}&path=$path"
     val bodyHtml = s"""Bonjour ${user.name},<br>
                       |<br>
-                      |Vous pouvez maintenant accèder au service Administration+ en cliquant sur le lien suivant :<br>
+                      |Vous pouvez maintenant accéder au service Administration+ en cliquant sur le lien suivant :<br>
                       |<a href="${url}">${url}</a>
                       |<br>
                       |<br>
@@ -292,6 +292,7 @@ class NotificationService @Inject() (
         br,
         "Cette personne vous a invité sur la demande suivante : ",
         application.subject,
+        br,
         "Vous pouvez voir la demande et y répondre en suivant ce lien : ",
         br,
         a(
@@ -313,7 +314,6 @@ class NotificationService @Inject() (
     val irrelevantDefaultText: List[Modifier] =
       if (answer.declareApplicationHasIrrelevant)
         List[Modifier](
-          br,
           answer.creatorUserName.split('(').headOption.getOrElse[String]("L'agent"),
           " a indiqué qu'",
           b("il existe une procédure standard que vous pouvez utiliser pour cette demande"),
@@ -329,8 +329,9 @@ class NotificationService @Inject() (
       br,
       p(
         answer.creatorUserName,
-        " a donné une réponse sur la demande: ",
+        " a donné une réponse sur la demande : ",
         application.subject,
+        br,
         irrelevantDefaultText,
         "Vous pouvez consulter la réponse, y répondre ou la clôturer en suivant le lien suivant: ",
         br,
