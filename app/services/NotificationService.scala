@@ -149,14 +149,6 @@ class NotificationService @Inject() (
   def mandatSmsClosed(mandatId: Mandat.Id, user: User): Unit =
     sendMail(generateMandatSmsClosedEmail(mandatId, user))
 
-  private def generateFooter(user: User): String =
-    s"""<br><br>
-       |<b>Ne transférez pas cet email et n'y répondez pas directement.</b><br><i>
-       |
-       |- Vous pouvez transférer la demande à un autre utilisateur en ouvrant le lien ci-dessus<br>
-       |- Si vous avez un problème ou besoin d'aide à propos de l'outil Administration+, contactez-nous sur <a href="mailto:${Constants.supportEmail}">${Constants.supportEmail}</a></i>
-     """.stripMargin
-
   private def generateNotificationBALEmail(
       application: Application,
       answerOption: Option[Answer],
@@ -196,54 +188,22 @@ class NotificationService @Inject() (
 
   private def generateInvitationEmail(application: Application, answer: Option[Answer] = None)(
       invitedUser: User
-  ): Email = {
-    val url =
-      s"${routes.ApplicationController.show(application.id).absoluteURL(https, host)}?key=${invitedUser.key}"
-    val footer = generateFooter(invitedUser)
-    val bodyHtml = s"""Bonjour ${invitedUser.name},<br>
-                      |<br>
-                      |<p>${answer
-                        .map(_.creatorUserName)
-                        .getOrElse(application.creatorUserName)} a besoin de vous.<br>
-                      |Cette personne vous a invité sur la demande suivante : "${application.subject}"
-                      |Vous pouvez voir la demande et y répondre en suivant ce lien : <br>
-                      |<a href="${url}">${url}</a><br>
-                      |$footer
-                      """.stripMargin
+  ): Email =
     Email(
       subject = s"[A+] Nouvelle demande d'aide : ${application.subject}",
       from = from,
       to = List(s"${quoteEmailPhrase(invitedUser.name)} <${invitedUser.email}>"),
-      bodyHtml = Some(bodyHtml)
+      bodyHtml = Some(renderEmail(invitationEmailBody(application, answer, invitedUser)))
     )
-  }
 
-  private def generateAnswerEmail(application: Application, answer: Answer)(user: User): Email = {
-    val url =
-      s"${routes.ApplicationController.show(application.id).absoluteURL(https, host)}?key=${user.key}#answer-${answer.id}"
-    val footer = generateFooter(user)
-    val defaultProcessText = if (answer.declareApplicationHasIrrelevant) {
-      s"<br>${answer.creatorUserName.split('(').headOption.getOrElse("L'agent")} a indiqué qu'<b>il existe une procédure standard que vous pouvez utiliser pour cette demande</b>, vous aurez plus de détails dans sa réponse.<br><br>"
-    } else {
-      ""
-    }
-    val bodyHtml = s"""Bonjour ${user.name},<br>
-                      |<br>
-                      |<p>${answer.creatorUserName} a donné une réponse sur la demande: "${application.subject}"
-                      |${defaultProcessText}
-                      |Vous pouvez consulter la réponse, y répondre ou la clôturer en suivant le lien suivant: <br>
-                      |<a href="${url}">${url}</a>
-                      |$footer
-                      """.stripMargin
+  private def generateAnswerEmail(application: Application, answer: Answer)(user: User): Email =
     Email(
       subject = s"[A+] Nouvelle réponse pour : ${application.subject}",
       from = from,
       to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
-      bodyHtml = Some(bodyHtml)
+      bodyHtml = Some(renderEmail(answerEmailBody(application, answer, user)))
     )
-  }
 
-  // TODO: footer
   import scalatags.Text.all._
 
   private def generateMandatSmsSentEmail(
@@ -253,17 +213,19 @@ class NotificationService @Inject() (
     val url: String =
       routes.MandatController.mandat(mandatId.underlying).absoluteURL(https, host)
     val subject = s"[A+] Mandat initié par SMS"
-    val bodyHtml =
-      span(
-        "Le SMS a bien été envoyé ! Vous recevrez un e-mail dès que l’usager aura répondu. ",
-        "Vous pouvez suivre l’échange en cliquant sur ce lien : ",
-        a(href := url, url)
-      )
+    val bodyInner =
+      List[Modifier](
+        span(
+          "Le SMS a bien été envoyé ! Vous recevrez un e-mail dès que l’usager aura répondu. ",
+          "Vous pouvez suivre l’échange en cliquant sur ce lien : ",
+          a(href := url, url)
+        )
+      ) ::: applicationEmailFooter
     Email(
       subject = subject,
       from = from,
       to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
-      bodyHtml = Some(bodyHtml.toString)
+      bodyHtml = Some(renderEmail(bodyInner))
     )
   }
 
@@ -274,18 +236,127 @@ class NotificationService @Inject() (
     val url: String =
       routes.MandatController.mandat(mandatId.underlying).absoluteURL(https, host)
     val subject = s"[A+] Vous avez reçu une réponse par SMS à votre mandat"
-    val bodyHtml =
-      span(
-        "L’usager a répondu à votre demande de mandat. ",
-        "L’échange est disponible en cliquant sur ce lien : ",
-        a(href := url, url)
-      )
+    val bodyInner =
+      List[Modifier](
+        span(
+          "L’usager a répondu à votre demande de mandat. ",
+          "L’échange est disponible en cliquant sur ce lien : ",
+          a(href := url, url)
+        )
+      ) ::: applicationEmailFooter
     Email(
       subject = subject,
       from = from,
       to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
-      bodyHtml = Some(bodyHtml.toString)
+      bodyHtml = Some(renderEmail(bodyInner))
     )
   }
+
+  private def applicationEmailFooter: List[Modifier] =
+    List(
+      br,
+      br,
+      b("Ne transférez pas cet email et n’y répondez pas directement."),
+      br,
+      i(
+        "- Vous pouvez transférer la demande à un autre utilisateur en ouvrant le lien ci-dessus",
+        br,
+        "- Si vous avez un problème ou besoin d’aide à propos de l’outil Administration+, contactez-nous sur ",
+        a(
+          href := s"mailto:${Constants.supportEmail}",
+          s"${Constants.supportEmail}"
+        ),
+        br,
+        "- Le navigateur Internet Explorer peut rencontrer des difficultés à accéder au site. Microsoft conseille depuis février 2019 de ne plus utiliser son navigateur qui n’est plus mis à jour depuis la sortie de Edge en 2015 et ne supporte donc plus les standards actuels du Web. ",
+        a(
+          href := "https://docs.aplus.beta.gouv.fr/faq/pourquoi-ne-plus-utiliser-le-navigateur-internet-explorer-de-microsoft",
+          "Pour en savoir plus"
+        )
+      )
+    )
+
+  private def invitationEmailBody(
+      application: Application,
+      answer: Option[Answer],
+      invitedUser: User
+  ): List[Modifier] = {
+    val url =
+      s"${routes.ApplicationController.show(application.id).absoluteURL(https, host)}?key=${invitedUser.key}"
+    List[Modifier](
+      s"Bonjour ${invitedUser.name},",
+      br,
+      br,
+      p(
+        answer.map(_.creatorUserName).getOrElse[String](application.creatorUserName),
+        " a besoin de vous.",
+        br,
+        "Cette personne vous a invité sur la demande suivante : ",
+        application.subject,
+        "Vous pouvez voir la demande et y répondre en suivant ce lien : ",
+        br,
+        a(
+          href := url,
+          url
+        ),
+        br
+      )
+    ) ::: applicationEmailFooter
+  }
+
+  private def answerEmailBody(
+      application: Application,
+      answer: Answer,
+      user: User
+  ): List[Modifier] = {
+    val url =
+      s"${routes.ApplicationController.show(application.id).absoluteURL(https, host)}?key=${user.key}#answer-${answer.id}"
+    val irrelevantDefaultText: List[Modifier] =
+      if (answer.declareApplicationHasIrrelevant)
+        List[Modifier](
+          br,
+          answer.creatorUserName.split('(').headOption.getOrElse[String]("L'agent"),
+          " a indiqué qu'",
+          b("il existe une procédure standard que vous pouvez utiliser pour cette demande"),
+          " vous aurez plus de détails dans sa réponse.",
+          br,
+          br
+        )
+      else
+        Nil
+    List[Modifier](
+      s"Bonjour ${user.name},",
+      br,
+      br,
+      p(
+        answer.creatorUserName,
+        " a donné une réponse sur la demande: ",
+        application.subject,
+        irrelevantDefaultText,
+        "Vous pouvez consulter la réponse, y répondre ou la clôturer en suivant le lien suivant: ",
+        br,
+        a(
+          href := url,
+          url
+        )
+      )
+    ) ::: applicationEmailFooter
+  }
+
+  private def renderEmail(inner: List[Modifier]): String =
+    "<!DOCTYPE html>" + html(
+      head(
+        meta(
+          name := "viewport",
+          content := "width=device-width"
+        ),
+        meta(
+          httpEquiv := "Content-Type",
+          content := "text/html; charset=UTF-8"
+        )
+      ),
+      body(
+        inner: _*
+      )
+    )
 
 }
