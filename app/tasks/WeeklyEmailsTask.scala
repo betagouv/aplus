@@ -13,7 +13,7 @@ import services.NotificationService
 class WeeklyEmailsTask @Inject() (
     actorSystem: ActorSystem,
     configuration: Configuration,
-    notificationService: NotificationService,
+    notificationService: NotificationService
 )(implicit executionContext: ExecutionContext) {
 
   val initialDelay: FiniteDuration = {
@@ -21,7 +21,7 @@ class WeeklyEmailsTask @Inject() (
     val nextTick = now.plusHours(1).truncatedTo(ChronoUnit.HOURS)
     // +1 to be sure we will be the next hour (the Akka scheduler has a 100ms resolution)
     val intervalInSeconds: Long = ChronoUnit.SECONDS.between(now, nextTick) + 1
-    10.seconds // TODO
+    intervalInSeconds.seconds
   }
 
   // The akka scheduler will tick every hour,
@@ -30,10 +30,10 @@ class WeeklyEmailsTask @Inject() (
   val delay: FiniteDuration = 1.hour
 
   actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = delay)(
-    new Runnable { override def run(): Unit = checkIfItIsTimeToSendAndSendEmails() }
+    new Runnable { override def run(): Unit = checkIfItIsTimeToSendThenSendEmails() }
   )
 
-  def checkIfItIsTimeToSendAndSendEmails(): Unit =
+  def checkIfItIsTimeToSendThenSendEmails(): Unit =
     if (checkIfItIsTimeToAct()) {
       notificationService.weeklyEmails()
       ()

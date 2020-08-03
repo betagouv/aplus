@@ -1,12 +1,13 @@
 package services
 
 import akka.stream.{ActorAttributes, Materializer, Supervision}
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.scaladsl.{RestartSource, Sink, Source}
 import constants.Constants
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import controllers.routes
 import helper.EmailHelper.quoteEmailPhrase
+import helper.Time
 import models._
 import models.mandat.Mandat
 import play.api.Logger
@@ -14,16 +15,24 @@ import play.api.libs.concurrent.MaterializerProvider
 import play.api.libs.mailer.MailerClient
 import play.api.libs.mailer.Email
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
+
+object NotificationService {
+  case class WeeklyEmailInfos(user: User, applicationsThatShouldBeClosed: List[Application])
+}
 
 @Singleton
 class NotificationService @Inject() (
+    applicationService: ApplicationService,
     configuration: play.api.Configuration,
-    mailerClient: MailerClient,
-    userService: UserService,
+    dependencies: ServicesDependencies,
     eventService: EventService,
     groupService: UserGroupService,
+    mailerClient: MailerClient,
     materializerProvider: MaterializerProvider,
+    userService: UserService
 )(implicit executionContext: ExecutionContext) {
+  import NotificationService._
 
   implicit val materializer: Materializer = materializerProvider.get
 
@@ -31,6 +40,13 @@ class NotificationService @Inject() (
 
   private lazy val tokenExpirationInMinutes =
     configuration.underlying.getInt("app.tokenExpirationInMinutes")
+
+  private val daySinceLastAgentAnswerForApplicationsThatShouldBeClosed = 15
+
+  private val maxNrOfWeeklyEmails: Long =
+    configuration
+      .get[Option[Long]]("app.weeklyEmailsMaxNr")
+      .getOrElse(5) // Small default to avoid demo throttle and prod problems
 
   private val host: String = {
     def readHerokuAppNameOrThrow: String =
@@ -67,6 +83,28 @@ class NotificationService @Inject() (
     mailerClient.send(emailWithText)
     log.info(s"Email sent to ${email.to.mkString(", ")}")
   }
+
+  // Non blocking, will apply a backoff if the `Future` is `Failed`
+  // (ie if `mailerClient.send` throws)
+  //
+  // Doc for the exponential backoff
+  // https://doc.akka.io/docs/akka/current/stream/stream-error.html#delayed-restarts-with-a-backoff-operator
+  //
+  // Note: we might want to use an queue as the inner source, and enqueue emails in it.
+  private def sendEmail(email: Email): Future[Unit] =
+    RestartSource
+      .onFailuresWithBackoff(
+        minBackoff = 3.seconds,
+        maxBackoff = 30.seconds,
+        randomFactor = 0.2,
+        maxRestarts = 5
+      ) { () =>
+        Source.future {
+          // `sendMail` is executed on the `dependencies.mailerExecutionContext` thread pool
+          Future(sendMail(email))(dependencies.mailerExecutionContext)
+        }
+      }
+      .runWith(Sink.last)
 
   def newApplication(application: Application): Unit = {
     val userIds = (application.invitedUsers).keys
@@ -154,8 +192,6 @@ class NotificationService @Inject() (
 
   def mandatSmsClosed(mandatId: Mandat.Id, user: User): Unit =
     sendMail(generateMandatSmsClosedEmail(mandatId, user))
-
-  def weeklyEmail(): Unit = {}
 
   private def generateFooter(user: User): String =
     s"""<br><br>
@@ -299,18 +335,92 @@ class NotificationService @Inject() (
   def weeklyEmails(): Future[Unit] =
     Source
       .future(userService.allNotDisabled)
+      // Stream[List[User]] => Stream[User]
       .mapConcat(identity)
+      // Sequential
+      .mapAsync(parallelism = 1)(fetchWeeklyEmailInfos)
+      .filter(infos => infos.applicationsThatShouldBeClosed.nonEmpty)
+      .take(maxNrOfWeeklyEmails)
       .mapAsync(parallelism = 1)(sendWeeklyEmail)
+      // On `Failure` continue with next element
       .withAttributes(ActorAttributes.supervisionStrategy(Supervision.resumingDecider))
-      .runWith(Sink.ignore)
-      .map { _: akka.Done =>
-        // TODO: log
-        ()
+      // Count
+      .runWith(Sink.fold(0)((acc, _) => acc + 1))
+      .map { count: Int =>
+        eventService.info(
+          User.systemUser,
+          "",
+          EventType.WeeklyEmailsSent.code,
+          s"Les emails hebdomadaires ont été envoyés ($count)",
+          None,
+          None,
+          None
+        )
       }
 
-  private def sendWeeklyEmail(user: User): Future[Unit] = {
-    // TODO
-    Future(())
+  private def sendWeeklyEmail(infos: WeeklyEmailInfos): Future[Unit] = {
+    val subject = "[A+] Votre récapitulatif hebdomadaire"
+    val datePattern = "EEEE dd MMMM YYYY HH'h'mm"
+    val bodyInner =
+      List[Modifier](
+        s"Bonjour ${infos.user.name},",
+        br,
+        br,
+        p(
+          s"Vous avez ${infos.applicationsThatShouldBeClosed.size} ",
+          (
+            if (infos.applicationsThatShouldBeClosed.size <= 1)
+              "demande qui a reçu une réponse il y a "
+            else
+              "demandes qui ont reçu une réponse il y a ",
+          ),
+          s"plus de $daySinceLastAgentAnswerForApplicationsThatShouldBeClosed jours. ",
+          "Si votre échange est terminé, n’hésitez pas à ",
+          (
+            if (infos.applicationsThatShouldBeClosed.size <= 1)
+              "la clore, "
+            else
+              "les clore, "
+          ),
+          """en appuyant sur le bouton "Clore la demande"."""
+        ),
+        ul(
+          infos.applicationsThatShouldBeClosed.map(application =>
+            li(
+              a(
+                href := routes.ApplicationController.show(application.id).absoluteURL(https, host),
+                s"Demande du ${Time.formatPatternFr(application.creationDate, datePattern)}"
+              )
+            )
+          )
+        )
+      )
+    val email = Email(
+      subject = subject,
+      from = from,
+      to = List(s"${quoteEmailPhrase(infos.user.name)} <${infos.user.email}>"),
+      bodyHtml = Some(div(bodyInner).toString)
+    )
+    sendEmail(email)
   }
+
+  private def fetchWeeklyEmailInfos(user: User): Future[WeeklyEmailInfos] =
+    applicationService.allOpenAndCreatedByUserIdAnonymous(user.id).map { opened =>
+      val applicationsThatShouldBeClosed = opened.filter(application =>
+        application.answers.lastOption match {
+          case None => false
+          case Some(lastAnswer) =>
+            if ((lastAnswer.creatorUserID: UUID) == (user.id: UUID)) {
+              false
+            } else {
+              lastAnswer.ageInDays > daySinceLastAgentAnswerForApplicationsThatShouldBeClosed
+            }
+        }
+      )
+      WeeklyEmailInfos(
+        user = user,
+        applicationsThatShouldBeClosed = applicationsThatShouldBeClosed
+      )
+    }
 
 }
