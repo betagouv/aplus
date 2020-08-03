@@ -1,6 +1,8 @@
 package helper
 
+import play.twirl.api.Html
 import scala.language.implicitConversions
+import scalatags.Text.all.Frag
 
 object TwirlImports {
 
@@ -9,5 +11,7 @@ object TwirlImports {
     */
   implicit def stringStringToSymbolString(couple: (String, String)): (Symbol, String) =
     (Symbol(couple._1), couple._2)
+
+  implicit def toHtml(frag: Frag): Html = Html(frag.render)
 
 }
