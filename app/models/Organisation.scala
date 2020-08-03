@@ -72,7 +72,7 @@ object Organisation {
     Organisation("DDFIP", "Direction départementale des Finances publiques"), //Département
     Organisation("Département", "Conseil départemental"),
     Organisation("DRFIP", "Direction régionale des Finances publiques"), //Région
-    Organisation("Hôpital", "Hôpital"), //Ville
+    hopital, //Ville
     Organisation("OFPRA", "Office français de protection des réfugiés et apatrides"), //Nationale
     Organisation("La Poste", "La Poste"),
     Organisation("Mairie", "Mairie"), //Ville

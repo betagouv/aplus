@@ -34,10 +34,13 @@ class SmsService @Inject() (
       currentUser: User,
       userGroups: List[UserGroup]
   )(implicit request: RequestWithUserData[_]): Future[Either[Error, Sms.Outgoing]] = {
-    val franceServiceGroups = userGroups
+    val franceServiceGroups: List[UserGroup] = userGroups
       .filter(group =>
-        (group.organisation: Option[Organisation.Id]) ==
-          (Some(Organisation.franceServicesId): Option[Organisation.Id])
+        group.organisation
+          .map(organisationId =>
+            Organisation.organismesAidants.map(_.id).toSet.contains(organisationId: Organisation.Id)
+          )
+          .getOrElse(false)
       )
     val usagerInfos: String =
       mandat.usagerPrenom.getOrElse("") + " " +
