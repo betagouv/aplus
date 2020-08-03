@@ -1057,40 +1057,39 @@ case class ApplicationController @Inject() (
       withApplication(applicationId) { application: Application =>
         val currentAreaId = application.area
         if (application.canHaveExpertsInvitedBy(request.currentUser)) {
-          val experts: Map[UUID, String] = User.admins
-            .filter(_.expert)
-            .map(user => user.id -> contextualizedUserName(user, currentAreaId))
-            .toMap
-          val answer = Answer(
-            UUID.randomUUID(),
-            applicationId,
-            Time.nowParis(),
-            "J'ajoute un expert",
-            request.currentUser.id,
-            contextualizedUserName(request.currentUser, currentAreaId),
-            experts,
-            true,
-            false,
-            Some(Map())
-          )
-          if (applicationService.add(applicationId, answer, true) == 1) {
-            notificationsService.newAnswer(application, answer)
-            eventService.log(
-              AddExpertCreated,
-              s"La réponse ${answer.id} a été créée sur la demande $applicationId",
-              Some(application)
+          userService.allExperts.map { expertUsers =>
+            val experts: Map[UUID, String] = expertUsers
+              .map(user => user.id -> contextualizedUserName(user, currentAreaId))
+              .toMap
+            val answer = Answer(
+              UUID.randomUUID(),
+              applicationId,
+              Time.nowParis(),
+              "J'ajoute un expert",
+              request.currentUser.id,
+              contextualizedUserName(request.currentUser, currentAreaId),
+              experts,
+              true,
+              false,
+              Some(Map())
             )
-            Future(
+            if (applicationService.add(applicationId, answer, true) == 1) {
+              notificationsService.newAnswer(application, answer)
+              eventService.log(
+                AddExpertCreated,
+                s"La réponse ${answer.id} a été créée sur la demande $applicationId",
+                Some(application)
+              )
               Redirect(routes.ApplicationController.myApplications())
                 .flashing("success" -> "Un expert a été invité sur la demande")
-            )
-          } else {
-            eventService.log(
-              AddExpertNotCreated,
-              s"L'invitation d'experts ${answer.id} n'a pas été créée sur la demande $applicationId : problème BDD",
-              Some(application)
-            )
-            Future(InternalServerError("L'expert n'a pas pu être invité"))
+            } else {
+              eventService.log(
+                AddExpertNotCreated,
+                s"L'invitation d'experts ${answer.id} n'a pas été créée sur la demande $applicationId : problème BDD",
+                Some(application)
+              )
+              InternalServerError("L'expert n'a pas pu être invité")
+            }
           }
         } else {
           eventService.log(

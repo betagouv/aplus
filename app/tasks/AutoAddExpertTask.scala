@@ -6,17 +6,24 @@ import akka.actor._
 import helper.Time
 import javax.inject.Inject
 import models._
-import services.{ApplicationService, EventService, NotificationService, UserGroupService}
+import services.{
+  ApplicationService,
+  EventService,
+  NotificationService,
+  UserGroupService,
+  UserService
+}
 
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class AutoAddExpertTask @Inject() (
     actorSystem: ActorSystem,
     applicationService: ApplicationService,
     eventService: EventService,
     notificationService: NotificationService,
-    userGroupService: UserGroupService
+    userGroupService: UserGroupService,
+    userService: UserService
 )(implicit executionContext: ExecutionContext) {
   val startAtHour = 8
   val now = java.time.ZonedDateTime.now()
@@ -43,46 +50,47 @@ class AutoAddExpertTask @Inject() (
       }
     }
 
-  private def inviteExpert(application: Application, days: Int): Unit = {
-    val expertUsers = User.admins.filter(_.expert)
-    val experts =
-      expertUsers.map(user => user.id -> user.nameWithQualite).toMap
+  private def inviteExpert(application: Application, days: Int): Future[Unit] =
+    userService.allExperts.map { expertUsers =>
+      val experts =
+        expertUsers.map(user => user.id -> user.nameWithQualite).toMap
 
-    expertUsers.headOption.foreach { expert =>
-      val answer = Answer(
-        UUID.randomUUID(),
-        application.id,
-        Time.nowParis(),
-        s"Je rejoins la conversation automatiquement comme expert(e) car le dernier message a plus de $days jours",
-        expert.id,
-        expert.nameWithQualite,
-        experts,
-        true,
-        false,
-        Some(Map())
-      )
-      if (applicationService.add(application.id, answer, true) == 1) {
-        notificationService.newAnswer(application, answer)
-        eventService.info(
-          User.systemUser,
-          "0.0.0.0",
-          "ADD_EXPERT_CREATED",
-          s"Les experts ont été automatiquement ajoutés ${answer.id} sur la demande ${application.id}",
-          Some(application),
-          None,
-          None
+      expertUsers.headOption.foreach { expert =>
+        val answer = Answer(
+          UUID.randomUUID(),
+          application.id,
+          Time.nowParis(),
+          s"Je rejoins la conversation automatiquement comme expert(e) car le dernier message a plus de $days jours",
+          expert.id,
+          expert.nameWithQualite,
+          experts,
+          true,
+          false,
+          Some(Map())
         )
-      } else {
-        eventService.error(
-          User.systemUser,
-          "0.0.0.0",
-          "ANSWER_NOT_CREATED",
-          s"Les experts n'ont pas pu être automatiquement ajoutés ${answer.id} sur la demande ${application.id} : problème BDD",
-          Some(application),
-          None,
-          None
-        )
+        if (applicationService.add(application.id, answer, true) == 1) {
+          notificationService.newAnswer(application, answer)
+          eventService.info(
+            User.systemUser,
+            "0.0.0.0",
+            "ADD_EXPERT_CREATED",
+            s"Les experts ont été automatiquement ajoutés ${answer.id} sur la demande ${application.id}",
+            Some(application),
+            None,
+            None
+          )
+        } else {
+          eventService.error(
+            User.systemUser,
+            "0.0.0.0",
+            "ANSWER_NOT_CREATED",
+            s"Les experts n'ont pas pu être automatiquement ajoutés ${answer.id} sur la demande ${application.id} : problème BDD",
+            Some(application),
+            None,
+            None
+          )
+        }
       }
     }
-  }
+
 }
