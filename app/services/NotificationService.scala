@@ -44,9 +44,7 @@ class NotificationService @Inject() (
   private val daySinceLastAgentAnswerForApplicationsThatShouldBeClosed = 15
 
   private val maxNrOfWeeklyEmails: Long =
-    configuration
-      .get[Option[Long]]("app.weeklyEmailsMaxNr")
-      .getOrElse(5) // Small default to avoid demo throttle and prod problems
+    configuration.get[Long]("app.weeklyEmailsMaxNr")
 
   private val host: String = {
     def readHerokuAppNameOrThrow: String =
