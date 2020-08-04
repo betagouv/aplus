@@ -26,7 +26,7 @@ class WeeklyEmailsTask @Inject() (
 
   // The akka scheduler will tick every hour,
   // but then we choose to act or not depending on the config
-  // (hourly for demo / weekly fo prod)
+  // (hourly for demo / weekly for prod)
   val delay: FiniteDuration = 1.hour
 
   actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = delay)(
