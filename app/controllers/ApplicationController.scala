@@ -103,7 +103,10 @@ case class ApplicationController @Inject() (
     mapping(
       "subject" -> nonEmptyText.verifying(maxLength(150)),
       "description" -> nonEmptyText,
-      "infos" -> FormsPlusMap.map(nonEmptyText.verifying(maxLength(30))),
+      "usagerPrenom" -> nonEmptyText.verifying(maxLength(30)),
+      "usagerNom" -> nonEmptyText.verifying(maxLength(30)),
+      "usagerBirthDate" -> nonEmptyText.verifying(maxLength(30)),
+      "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(30))),
       "users" -> list(uuid).verifying("Vous devez sélectionner au moins une structure", _.nonEmpty),
       "organismes" -> list(text),
       "category" -> optional(text),
@@ -307,6 +310,15 @@ case class ApplicationController @Inject() (
               .fold(applicationData.description)(signature =>
                 applicationData.description + "\n\n" + signature
               )
+          val usagerInfos: Map[String, String] =
+            Map(
+              "Prénom" -> applicationData.usagerPrenom,
+              "Nom de famille" -> applicationData.usagerNom,
+              "Date de naissance" -> applicationData.usagerBirthDate
+            ) ++ applicationData.usagerOptionalInfos
+              .map { case (infoName, infoValue) => (infoName.trim, infoValue.trim) }
+              .filter(_._1.nonEmpty)
+              .filter(_._2.nonEmpty)
           val application = Application(
             applicationId,
             Time.nowParis(),
@@ -314,7 +326,7 @@ case class ApplicationController @Inject() (
             request.currentUser.id,
             applicationData.subject,
             description,
-            applicationData.infos,
+            usagerInfos,
             invitedUsers,
             currentArea.id,
             false,
@@ -805,7 +817,7 @@ case class ApplicationController @Inject() (
     mapping(
       "message" -> nonEmptyText,
       "irrelevant" -> boolean,
-      "infos" -> FormsPlusMap.map(nonEmptyText.verifying(maxLength(30))),
+      "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(30))),
       "privateToHelpers" -> boolean,
       "signature" -> (
         if (currentUser.sharedAccount)
@@ -955,7 +967,12 @@ case class ApplicationController @Inject() (
             Map(),
             answerData.privateToHelpers == false,
             answerData.applicationIsDeclaredIrrelevant,
-            Some(answerData.infos),
+            Some(
+              answerData.usagerOptionalInfos
+                .map { case (infoName, infoValue) => (infoName.trim, infoValue.trim) }
+                .filter(_._1.nonEmpty)
+                .filter(_._2.nonEmpty)
+            ),
             files = Some(newAttachments ++ pendingAttachments)
           )
           if (applicationService.add(applicationId, answer) == 1) {

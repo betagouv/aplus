@@ -20,25 +20,4 @@ object MDLForms {
     }
   }
 
-  /** First filters by keys, then same as `repeatMap`. */
-  object repeatMapKeeping {
-
-    def apply(field: play.api.data.Field, form: Form[_], keepThoseKeys: List[String])(
-        fieldRenderer: (play.api.data.Field, String) => Html
-    ): Seq[Html] =
-      keepThoseKeys.map(i => fieldRenderer(field("[" + i + "]"), i))
-
-  }
-
-  object repeatMapSkipping {
-
-    def apply(field: play.api.data.Field, form: Form[_], skipThoseKeys: Set[String])(
-        fieldRenderer: (play.api.data.Field, String) => Html
-    ): Seq[Html] = {
-      val includeIndexes = MapMapping.indexes(field.name, form.data)
-      val indexes = includeIndexes.filter(!skipThoseKeys.contains(_))
-      indexes.map(i => fieldRenderer(field("[" + i + "]"), i))
-    }
-  }
-
 }

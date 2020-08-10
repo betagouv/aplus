@@ -154,7 +154,28 @@
                     </div>
 
                     <h5 class="title--addline">Informations concernant l'usager</h5>
-                    @helpers.usersInformations(applicationForm, List("Prénom", "Nom de famille", "Date de naissance"), true, featureMandatSms)
+
+                    <div class="mdl-grid mdl-grid--no-spacing">
+                      <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet">
+                        <div>Prénom <span class="mdl-color-text--red-500">*</span>
+                          <br>
+                          @helpers.usersInformationsInput(applicationForm("usagerPrenom"), "Prénom")
+                        </div>
+                        <div>Nom de famille <span class="mdl-color-text--red-500">*</span>
+                          <br>
+                          @helpers.usersInformationsInput(applicationForm("usagerNom"), "Nom de famille")
+                        </div>
+                        <div>Date de naissance <span class="mdl-color-text--red-500">*</span>
+                          <br>
+                          @helpers.usersInformationsInput(applicationForm("usagerBirthDate"), "Date de naissance")
+                        </div>
+                      </div>
+                    </div>
+
+                    <h5 class="title--addline">Autres informations utiles pour traiter la demande <em class="mdl-typography--body-1">(facultatif)</em></h5>
+
+                    @helpers.usersInformations(applicationForm, Nil, true)
+
                     <br>
                     <br>
                     <h5 class="title--addline">

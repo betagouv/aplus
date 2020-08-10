@@ -1,16 +1,9 @@
 @import _root_.helper.MDLForms._
-@(form: Form[_], mandatoryFields: List[String], isCreationForm: Boolean, featureMandatSms: Boolean)(implicit messagesProvider: MessagesProvider)
+@(form: Form[_], mandatoryFields: List[String], isCreationForm: Boolean)(implicit messagesProvider: MessagesProvider)
 
 <div class="mdl-grid mdl-grid--no-spacing">
     <div @if(isCreationForm) { class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet" }>
-    @repeatMapKeeping(form("infos"), form, mandatoryFields) {  (infoField, info) =>
-        <div>@info.capitalize <span class="mdl-color-text--red-500">*</span>
-            <br>
-            @usersInformationsInput(infoField, info)
-        </div>
-    }
-
-    @repeatMapSkipping(form("infos"), form, mandatoryFields.toSet) {  (infoField, info) =>
+    @repeatMap(form("usagerOptionalInfos"), form) {  (infoField, info) =>
         <div>@info.capitalize (facultatif)
             <br>
             @usersInformationsInput(infoField, info)
@@ -19,10 +12,6 @@
     </div>
 
 </div>
-
-@if(isCreationForm) {
-    <h5 class="title--addline">Autres informations utiles pour traiter la demande <em class="mdl-typography--body-1">(facultatif)</em></h5>
-}
 
 <div>
     @usersInformationsDynamicForm(form, mandatoryFields, isCreationForm)
