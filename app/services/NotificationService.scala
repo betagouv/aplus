@@ -392,6 +392,8 @@ class NotificationService @Inject() (
             )
           )
         ),
+        br,
+        br,
         p(
           "Comment avez-vous trouvé cet email ? ",
           "Nous expérimentons. ",
@@ -401,6 +403,8 @@ class NotificationService @Inject() (
             "https://startupdetat.typeform.com/to/PicUnQx4"
           )
         ),
+        br,
+        br,
         p(
           i(
             "Si vous avez un problème ou besoin d’aide à propos de l’outil Administration+, contactez-nous sur ",
