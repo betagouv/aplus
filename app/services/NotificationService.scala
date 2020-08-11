@@ -41,7 +41,7 @@ class NotificationService @Inject() (
   private lazy val tokenExpirationInMinutes =
     configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
-  private val daySinceLastAgentAnswerForApplicationsThatShouldBeClosed = 7
+  private val daySinceLastAgentAnswerForApplicationsThatShouldBeClosed = 10
 
   private val maxNumberOfWeeklyEmails: Long =
     configuration.get[Long]("app.weeklyEmailsMaxNumber")
@@ -92,10 +92,10 @@ class NotificationService @Inject() (
   private def sendEmail(email: Email): Future[Unit] =
     RestartSource
       .onFailuresWithBackoff(
-        minBackoff = 3.seconds,
-        maxBackoff = 30.seconds,
+        minBackoff = 10.seconds,
+        maxBackoff = 40.seconds,
         randomFactor = 0.2,
-        maxRestarts = 5
+        maxRestarts = 3
       ) { () =>
         Source.future {
           // `sendMail` is executed on the `dependencies.mailerExecutionContext` thread pool
@@ -391,6 +391,24 @@ class NotificationService @Inject() (
               )
             )
           )
+        ),
+        p(
+          "Comment avez-vous trouvé cet email ? ",
+          "Nous expérimentons. ",
+          "Pour nous aider : vous pouvez répondre à ce questionnaire : ",
+          a(
+            href := "https://startupdetat.typeform.com/to/PicUnQx4",
+            "https://startupdetat.typeform.com/to/PicUnQx4"
+          )
+        ),
+        p(
+          i(
+            "Si vous avez un problème ou besoin d’aide à propos de l’outil Administration+, contactez-nous sur ",
+            a(
+              href := s"mailto:${Constants.supportEmail}",
+              s"${Constants.supportEmail}"
+            )
+          )
         )
       )
     val email = Email(
@@ -403,6 +421,7 @@ class NotificationService @Inject() (
   }
 
   private def fetchWeeklyEmailInfos(user: User): Future[WeeklyEmailInfos] =
+    // All Application created by this User that are still open
     applicationService.allOpenAndCreatedByUserIdAnonymous(user.id).map { opened =>
       val applicationsThatShouldBeClosed = opened.filter(application =>
         application.answers.lastOption match {
