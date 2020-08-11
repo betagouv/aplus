@@ -41,7 +41,7 @@ class NotificationService @Inject() (
   private lazy val tokenExpirationInMinutes =
     configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
-  private val daySinceLastAgentAnswerForApplicationsThatShouldBeClosed = 15
+  private val daySinceLastAgentAnswerForApplicationsThatShouldBeClosed = 7
 
   private val maxNumberOfWeeklyEmails: Long =
     configuration.get[Long]("app.weeklyEmailsMaxNumber")
