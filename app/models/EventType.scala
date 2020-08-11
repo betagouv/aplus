@@ -124,6 +124,7 @@ object EventType {
   object UsersImported extends Info
   object UsersShowed extends Info
   object ViewUserUnauthorized extends Warn
+  object WeeklyEmailsSent extends Info
 
   object ApplicationCreationInvalid extends Info
   object AuthByKey extends Info

@@ -144,6 +144,20 @@ class ApplicationService @Inject() (
       }
     }
 
+  def allOpenAndCreatedByUserIdAnonymous(userId: UUID): Future[List[Application]] =
+    Future {
+      db.withConnection { implicit connection =>
+        val result = SQL(
+          """SELECT * FROM application
+             WHERE creator_user_id = {userId}::uuid
+             AND closed = false
+             ORDER BY creation_date DESC"""
+        ).on("userId" -> userId)
+          .as(simpleApplication.*)
+        result.map(_.anonymousApplication)
+      }
+    }
+
   def allForUserId(userId: UUID, anonymous: Boolean) = db.withConnection { implicit connection =>
     val result = SQL(
       "SELECT * FROM application WHERE creator_user_id = {userId}::uuid OR invited_users ?? {userId} ORDER BY creation_date DESC"

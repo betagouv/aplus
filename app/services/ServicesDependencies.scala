@@ -16,4 +16,7 @@ class ServicesDependencies @Inject() (
   implicit val databaseExecutionContext: ExecutionContext =
     actorSystem.dispatchers.lookup("contexts.blocking-db-queries")
 
+  implicit val mailerExecutionContext: ExecutionContext =
+    actorSystem.dispatchers.lookup("contexts.blocking-mailer-connections")
+
 }

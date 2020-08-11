@@ -53,6 +53,12 @@ class UserService @Inject() (
     }
   }
 
+  def allNotDisabled: Future[List[User]] = Future {
+    db.withConnection { implicit connection =>
+      SQL("""SELECT * FROM "user" WHERE NOT disabled""").as(simpleUser.*)
+    }
+  }
+
   def allExperts: Future[List[User]] = Future {
     db.withConnection { implicit connection =>
       SQL"""SELECT * FROM "user" WHERE expert = true AND disabled = false"""
