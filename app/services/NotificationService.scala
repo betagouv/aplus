@@ -43,8 +43,8 @@ class NotificationService @Inject() (
 
   private val daySinceLastAgentAnswerForApplicationsThatShouldBeClosed = 15
 
-  private val maxNrOfWeeklyEmails: Long =
-    configuration.get[Long]("app.weeklyEmailsMaxNr")
+  private val maxNumberOfWeeklyEmails: Long =
+    configuration.get[Long]("app.weeklyEmailsMaxNumber")
 
   private val host: String = {
     def readHerokuAppNameOrThrow: String =
@@ -88,7 +88,7 @@ class NotificationService @Inject() (
   // Doc for the exponential backoff
   // https://doc.akka.io/docs/akka/current/stream/stream-error.html#delayed-restarts-with-a-backoff-operator
   //
-  // Note: we might want to use an queue as the inner source, and enqueue emails in it.
+  // Note: we might want to use a queue as the inner source, and enqueue emails in it.
   private def sendEmail(email: Email): Future[Unit] =
     RestartSource
       .onFailuresWithBackoff(
@@ -338,7 +338,7 @@ class NotificationService @Inject() (
       // Sequential
       .mapAsync(parallelism = 1)(fetchWeeklyEmailInfos)
       .filter(infos => infos.applicationsThatShouldBeClosed.nonEmpty)
-      .take(maxNrOfWeeklyEmails)
+      .take(maxNumberOfWeeklyEmails)
       .mapAsync(parallelism = 1)(sendWeeklyEmail)
       // On `Failure` continue with next element
       .withAttributes(ActorAttributes.supervisionStrategy(Supervision.resumingDecider))

@@ -44,7 +44,7 @@ class WeeklyEmailsTask @Inject() (
   // This decision can be reassessed.
   private def checkIfItIsTimeToAct(): Boolean =
     if (configuration.get[Boolean]("app.features.weeklyEmails")) {
-      if (configuration.get[Boolean]("app.weeklyEmailsSendHourly")) {
+      if (configuration.get[Boolean]("app.weeklyEmailsDebugSendHourly")) {
         true
       } else {
         val scheduledDay =
