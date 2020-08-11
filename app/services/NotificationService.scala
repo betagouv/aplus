@@ -395,7 +395,7 @@ class NotificationService @Inject() (
         p(
           "Comment avez-vous trouvé cet email ? ",
           "Nous expérimentons. ",
-          "Pour nous aider : vous pouvez répondre à ce questionnaire : ",
+          "Pour nous aider, vous pouvez répondre à ce questionnaire : ",
           a(
             href := "https://startupdetat.typeform.com/to/PicUnQx4",
             "https://startupdetat.typeform.com/to/PicUnQx4"
