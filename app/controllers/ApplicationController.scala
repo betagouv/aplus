@@ -590,7 +590,7 @@ case class ApplicationController @Inject() (
       "areas" -> default(list(uuid), List()),
       "organisations" -> default(list(of[Organisation.Id]), List()),
       "groups" -> default(list(uuid), List()),
-      "creationMinDate" -> default(localDate, LocalDate.of(2017, 12, 15)),
+      "creationMinDate" -> default(localDate, LocalDate.of(2020, 1, 1)),
       "creationMaxDate" -> default(localDate, LocalDate.now())
     )
   )
