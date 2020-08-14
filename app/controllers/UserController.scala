@@ -134,8 +134,13 @@ case class UserController @Inject() (
       } { () =>
         val area = Area.fromId(areaId).get
         val usersFuture: Future[List[User]] = if (areaId == Area.allArea.id) {
-          groupService.byAreas(request.currentUser.areas).map { groupsOfArea =>
-            userService.byGroupIds(groupsOfArea.map(_.id))
+          if (Authorization.isAdmin(request.rights)) {
+            // Includes users without any group for debug purpose
+            userService.all
+          } else {
+            groupService.byAreas(request.currentUser.areas).map { groupsOfArea =>
+              userService.byGroupIds(groupsOfArea.map(_.id))
+            }
           }
         } else {
           groupService.byArea(areaId).map { groupsOfArea =>

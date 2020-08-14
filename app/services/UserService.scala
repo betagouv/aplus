@@ -46,11 +46,14 @@ class UserService @Inject() (
     )
     .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
 
-  // TODO: rename `allNoNameNoEmail`, because it generates bugs
-  def all: Future[List[User]] = Future {
+  def allNoNameNoEmail: Future[List[User]] = Future {
     db.withConnection { implicit connection =>
       SQL("""SELECT *, '' as name, '' as email, '' as qualite FROM "user"""").as(simpleUser.*)
     }
+  }
+
+  def all: Future[List[User]] = Future {
+    db.withConnection(implicit connection => SQL("""SELECT * FROM "user"""").as(simpleUser.*))
   }
 
   def allNotDisabled: Future[List[User]] = Future {
@@ -81,9 +84,13 @@ class UserService @Inject() (
     SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
   }
 
+  // Note: this function is used in the stats,
+  // pseudonymization is possible (removing name, etc.)
   def byGroupIdsAnonymous(ids: List[UUID]): Future[List[User]] = Future {
     db.withConnection { implicit connection =>
-      SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
+      SQL"""SELECT *, '' as name, '' as email, '' as qualite
+            FROM "user"
+            WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
     }
   }
 

@@ -518,7 +518,7 @@ case class ApplicationController @Inject() (
 
     val (usersFuture, applicationsFutureNoDateFilter, groupsFuture) =
       if (areaIds.isEmpty && organisationIds.isEmpty && groupIds.isEmpty) {
-        (userService.all, applicationService.all, userGroupService.all)
+        (userService.allNoNameNoEmail, applicationService.all, userGroupService.all)
       } else if (areaIds.nonEmpty && groupIds.isEmpty) {
         val groupsFuture = userGroupService.byAreas(areaIds)
         if (organisationIds.isEmpty) {

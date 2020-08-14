@@ -108,7 +108,7 @@ case class AreaController @Inject() (
       DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
     } { () =>
       val userGroups = userGroupService.allGroups
-      userService.all.map { users =>
+      userService.allNoNameNoEmail.map { users =>
         def usersIn(area: Area, organisationSet: Set[Organisation]): List[User] =
           for {
             group <- userGroups.filter(group =>
