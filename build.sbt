@@ -97,7 +97,7 @@ libraryDependencies ++= Seq(
 
 // UI
 libraryDependencies ++= Seq(
-  "org.webjars" %% "webjars-play" % "2.8.0",
+  "org.webjars" %% "webjars-play" % "2.8.0-1",
   "org.webjars.bower" % "material-design-lite" % "1.3.0",
   "org.webjars" % "material-design-icons" % "3.0.1",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
@@ -105,7 +105,7 @@ libraryDependencies ++= Seq(
   "org.webjars.npm" % "dialog-polyfill" % "0.4.10",
   "org.webjars.npm" % "twemoji" % "2.5.1",
   "org.webjars" % "chartjs" % "2.9.3",
-  "org.webjars" % "font-awesome" % "5.13.1",
+  "org.webjars" % "font-awesome" % "5.14.0",
   "org.webjars.bowergithub.olifolkerd" % "tabulator" % "4.5.3",
   "org.webjars.npm" % "xlsx" % "0.15.6"
 )

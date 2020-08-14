@@ -5,6 +5,7 @@ on:
     branches-ignore:
       - master
       - prod
+  pull_request:
 
 jobs:
   lint-scala:

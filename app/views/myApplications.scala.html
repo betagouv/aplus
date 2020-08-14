@@ -14,7 +14,7 @@
             <tbody>
             @for((application) <- applications.sortBy(_.closed)) {
                 <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="searchable-row @if(application.longStatus(user) == "Nouvelle") {td--important-border} else {td--clear-border}">
-                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size"><span class="tag @if(application.longStatus(user) == "Nouvelle") { tag--important } @if(application.closed){ tag--closed } ">@application.longStatus(user)</span></td>
+                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">@toHtml(views.helpers.applications.statusTag(application, user))</td>
                     <td class="mdl-data-table__cell--non-numeric"><span class="application__name">@application.userInfos.get(Application.USER_LAST_NAME_KEY) @application.userInfos.get(Application.USER_FIRST_NAME_KEY)</span><i>@application.userInfos.get(Application.USER_CAF_NUMBER_KEY).map(caf => s" (Num. CAF: $caf)")@application.userInfos.get(Application.USER_SOCIAL_SECURITY_NUMBER_KEY).map(nir => s" (NIR: $nir)")</i>
                     <br><span class="application__subject">@application.subject</span></td>
                     <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
