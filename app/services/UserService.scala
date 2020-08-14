@@ -175,28 +175,27 @@ class UserService @Inject() (
         Left(errorMessage)
     }
 
-  def update(user: User) = db.withConnection { implicit connection =>
-    val observableOrganisationIds = user.observableOrganisationIds.map(_.id)
-    SQL"""
+  def update(user: User): Future[Boolean] =
+    Future(db.withConnection { implicit connection =>
+      val observableOrganisationIds = user.observableOrganisationIds.map(_.id)
+      SQL"""
           UPDATE "user" SET
           name = ${user.name},
           qualite = ${user.qualite},
           email = ${user.email},
           helper = ${user.helper},
           instructor = ${user.instructor},
-          admin = ${user.admin},
           areas = array[${user.areas.distinct}]::uuid[],
           commune_code = ${user.communeCode},
           group_admin = ${user.groupAdmin},
           group_ids = array[${user.groupIds.distinct}]::uuid[],
-          expert = ${user.expert},
           phone_number = ${user.phoneNumber},
           disabled = ${user.disabled},
           observable_organisation_ids = array[${observableOrganisationIds.distinct}]::varchar[],
           shared_account = ${user.sharedAccount}
           WHERE id = ${user.id}::uuid
        """.executeUpdate() == 1
-  }
+    })
 
   def acceptCGU(userId: UUID, acceptNewsletter: Boolean) = db.withConnection {
     implicit connection =>

@@ -296,30 +296,35 @@ case class UserController @Inject() (
             if (not(Authorization.canEditOtherUser(user)(rights))) {
               eventService.log(PostEditUserUnauthorized, s"Accès non autorisé à modifier $userId")
               Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
-            } else if (userService.update(userToUpdate)) {
-              eventService
-                .log(UserEdited, s"Utilisateur $userId modifié", involvesUser = Some(updatedUser))
-              Future(
-                Redirect(routes.UserController.editUser(userId))
-                  .flashing("success" -> "Utilisateur modifié")
-              )
             } else {
-              val form: Form[User] = userForm(Time.timeZoneParis)
-                .fill(userToUpdate)
-                .withGlobalError(
-                  s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)"
-                )
-              val groups = groupService.allGroups
-              eventService.log(
-                EditUserError,
-                "Impossible de modifier l'utilisateur dans la BDD",
-                involvesUser = Some(updatedUser)
-              )
-              Future(
-                InternalServerError(
-                  views.html.editUser(request.currentUser, request.rights)(form, userId, groups)
-                )
-              )
+              userService.update(userToUpdate).map {
+                updateHasBeenDone =>
+                  if (updateHasBeenDone) {
+                    eventService
+                      .log(
+                        UserEdited,
+                        s"Utilisateur $userId modifié",
+                        involvesUser = Some(updatedUser)
+                      )
+                    Redirect(routes.UserController.editUser(userId))
+                      .flashing("success" -> "Utilisateur modifié")
+                  } else {
+                    val form: Form[User] = userForm(Time.timeZoneParis)
+                      .fill(userToUpdate)
+                      .withGlobalError(
+                        s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)"
+                      )
+                    val groups = groupService.allGroups
+                    eventService.log(
+                      EditUserError,
+                      "Impossible de modifier l'utilisateur dans la BDD",
+                      involvesUser = Some(updatedUser)
+                    )
+                    InternalServerError(
+                      views.html.editUser(request.currentUser, request.rights)(form, userId, groups)
+                    )
+                  }
+              }
             }
           }
       )
