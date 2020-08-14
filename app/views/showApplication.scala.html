@@ -267,7 +267,16 @@ dialog {
                 <div class="mdl-list__item">
                     <div class="mdl-list__item-primary-content">
                         @organisationIcon(application.creatorUserName)
-                        <span>@application.creatorUserName</span>
+                        <span>
+                          @application.creatorUserName
+                          @if(Authorization.isAdmin(currentUserRights)) {
+                            <a class="mdl-navigation__link"
+                               href="@routes.UserController.editUser(application.creatorUserId)"
+                               target="_blank">
+                              <i class="material-icons material-icons--small-postfix">open_in_new</i>
+                            </a>
+                          }
+                        </span>
                     </div>
                 </div>
                 Participants à la discussion
@@ -276,12 +285,13 @@ dialog {
                         <div class="mdl-list__item-primary-content">
                             @organisationIcon(userName)
                             <span>
+                              @userName
                               @if(Authorization.isAdmin(currentUserRights)) {
-                                <a href="@routes.UserController.editUser(userId)">
-                                  @userName
+                                <a class="mdl-navigation__link"
+                                   href="@routes.UserController.editUser(userId)"
+                                   target="_blank">
+                                  <i class="material-icons material-icons--small-postfix">open_in_new</i>
                                 </a>
-                              } else {
-                                @userName
                               }
                             </span>
                         </div>
