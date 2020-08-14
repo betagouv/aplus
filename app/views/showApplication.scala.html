@@ -275,7 +275,15 @@ dialog {
                     <div class="mdl-list__item">
                         <div class="mdl-list__item-primary-content">
                             @organisationIcon(userName)
-                            <span>@userName</span>
+                            <span>
+                              @if(Authorization.isAdmin(currentUserRights)) {
+                                <a href="@routes.UserController.editUser(userId)">
+                                  @userName
+                                </a>
+                              } else {
+                                @userName
+                              }
+                            </span>
                         </div>
                         <div class="mdl-list__item-secondary-content">
                             @if(application.seenByUserIds.contains(userId)){
