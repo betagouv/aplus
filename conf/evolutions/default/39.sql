@@ -24,7 +24,7 @@ FROM application;
 
 -- Due to changes in json's datetime serializer, some dates are like this
 -- 2019-08-12T15:52:51.526+02:00
--- other are like this
+-- others are like this
 -- 2020-08-04T17:05:21.675+02:00[Europe/Paris]
 -- we use text here, subsequent users should be careful
 CREATE VIEW answer_metadata AS
