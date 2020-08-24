@@ -101,7 +101,12 @@ case class UserController @Inject() (
             }
           )
         val usersFuture: Future[List[User]] =
-          groupsFuture.map(groups => userService.byGroupIds(groups.map(_.id)))
+          if (Authorization.isAdmin(request.rights) && areaId == Area.allArea.id) {
+            // Includes users without any group for debug purpose
+            userService.all
+          } else {
+            groupsFuture.map(groups => userService.byGroupIds(groups.map(_.id)))
+          }
         val applications = applicationService.allByArea(selectedArea.id, anonymous = true)
 
         eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
@@ -134,8 +139,13 @@ case class UserController @Inject() (
       } { () =>
         val area = Area.fromId(areaId).get
         val usersFuture: Future[List[User]] = if (areaId == Area.allArea.id) {
-          groupService.byAreas(request.currentUser.areas).map { groupsOfArea =>
-            userService.byGroupIds(groupsOfArea.map(_.id))
+          if (Authorization.isAdmin(request.rights)) {
+            // Includes users without any group for debug purpose
+            userService.all
+          } else {
+            groupService.byAreas(request.currentUser.areas).map { groupsOfArea =>
+              userService.byGroupIds(groupsOfArea.map(_.id))
+            }
           }
         } else {
           groupService.byArea(areaId).map { groupsOfArea =>
