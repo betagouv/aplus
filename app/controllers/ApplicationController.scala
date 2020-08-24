@@ -172,7 +172,7 @@ case class ApplicationController @Inject() (
         )
         .filterNot(user => (user.id: UUID) == (currentUser.id: UUID))
       // This could be optimized by doing only one SQL query
-      val instructorsOfGroups = usersInThoseGroups.filter(_.instructor)
+      val instructorsOfGroups = usersInThoseGroups.filter(user => user.instructor && !user.disabled)
       val groupIdsWithInstructors = instructorsOfGroups.flatMap(_.groupIds).toSet
       val groupsOfAreaWithInstructor =
         visibleGroups.filter(user => groupIdsWithInstructors.contains(user.id))
