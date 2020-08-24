@@ -101,7 +101,12 @@ case class UserController @Inject() (
             }
           )
         val usersFuture: Future[List[User]] =
-          groupsFuture.map(groups => userService.byGroupIds(groups.map(_.id)))
+          if (Authorization.isAdmin(request.rights) && areaId == Area.allArea.id) {
+            // Includes users without any group for debug purpose
+            userService.all
+          } else {
+            groupsFuture.map(groups => userService.byGroupIds(groups.map(_.id)))
+          }
         val applications = applicationService.allByArea(selectedArea.id, anonymous = true)
 
         eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
