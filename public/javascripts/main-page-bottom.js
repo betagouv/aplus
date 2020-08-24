@@ -71,7 +71,7 @@ var applicationFormGroupCheckboxClass = "aplus-application-form-group";
 
 function applicationFormAddSelectedGroupInfos(groupName) {
   function checkDoesNotExist(name) {
-    var existingInfos = document.querySelectorAll("input[name^='infos[']");
+    var existingInfos = document.querySelectorAll("input[name^='usagerOptionalInfos[']");
     for (var i = 0; i < existingInfos.length; i++) {
       if (existingInfos[i].name.indexOf(name) !== -1) {
         return false;
@@ -158,7 +158,7 @@ function addOptionalInfoRow(infoName, infoValue) {
   newNode.innerHTML = '<div class="single--display-flex single--align-items-center">'+
     '<div class="single--margin-right-24px single--font-size-14px">'+infoName+' (facultatif)</div> \
      <div class="mdl-textfield mdl-js-textfield mdl-textfield--no-label single--margin-right-24px"> \
-         <input class="mdl-textfield__input mdl-color--white" type="text" id="sample1" name="infos['+infoName+']" value="'+infoValue+'"> \
+         <input class="mdl-textfield__input mdl-color--white" type="text" id="sample1" name="usagerOptionalInfos['+infoName+']" value="'+infoValue+'"> \
          <label class="mdl-textfield__label info__label" for="sample1">Saisir '+infoName+' de l’usager ici</label> \
      </div> \
      <div class="'+applicationFormUserInfosRemoveButtonClass+' single--display-flex single--align-items-center"> \
@@ -423,9 +423,9 @@ var mandatSmsErrorBrowserId = "mandat-sms-error-browser"
 var linkedMandatInputId = "linkedMandat"
 
 function setupMandatSmsForm() {
-  var inputPrenom = document.getElementById("infos_Prénom");
-  var inputNom = document.getElementById("infos_Nom de famille");
-  var inputBirthDate = document.getElementById("infos_Date de naissance");
+  var inputPrenom = document.getElementById("usagerPrenom");
+  var inputNom = document.getElementById("usagerNom");
+  var inputBirthDate = document.getElementById("usagerBirthDate");
   var inputPhoneNumber = document.getElementById(mandatSmsPhoneInputName);
   var sendButton = document.getElementById(mandatSmsSendButtonId);
   var successMessage = document.getElementById(mandatSmsSuccessId);

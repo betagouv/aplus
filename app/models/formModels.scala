@@ -8,7 +8,10 @@ object formModels {
   case class ApplicationFormData(
       subject: String,
       description: String,
-      infos: Map[String, String],
+      usagerPrenom: String,
+      usagerNom: String,
+      usagerBirthDate: String,
+      usagerOptionalInfos: Map[String, String],
       users: List[UUID],
       organismes: List[String],
       category: Option[String],
@@ -22,7 +25,7 @@ object formModels {
   case class AnswerFormData(
       message: String,
       applicationIsDeclaredIrrelevant: Boolean,
-      infos: Map[String, String],
+      usagerOptionalInfos: Map[String, String],
       privateToHelpers: Boolean,
       signature: Option[String]
   )
