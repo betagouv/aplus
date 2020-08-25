@@ -60,7 +60,7 @@ SELECT
   application_id,
   sms_thread_closed,
   jsonb_array_length(sms_thread) AS sms_thread_size,
-  array(SELECT jsonb_extract_path_text(value::jsonb, 'tag') FROM jsonb_array_elements(sms_thread))
+  array(SELECT jsonb_extract_path_text(value::jsonb, 'tag') FROM jsonb_array_elements(sms_thread)) AS sms_thread_tags
 FROM mandat;
 
 
