@@ -63,33 +63,37 @@ case class Application(
       answersStripped)
   }
 
-  def longStatus(user: User) = closed match {
-    case true                                                                        => "Clôturée"
-    case _ if user.id == creatorUserId && answers.exists(_.creatorUserID != user.id) => "Répondu"
-    case _
-        if user.id == creatorUserId && seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty =>
-      "Consultée"
-    case _ if user.id == creatorUserId                   => "Envoyée"
-    case _ if answers.exists(_.creatorUserID == user.id) => "Répondu"
-    case _ if answers.exists(_.creatorUserName.contains(user.qualite)) => {
-      val username = answers
-        .find(_.creatorUserName.contains(user.qualite))
-        .map(_.creatorUserName)
-        .getOrElse("un collègue")
-        .replaceAll("\\(.*\\)", "")
-        .trim
-      s"Répondu par ${username}"
+  def longStatus(user: User) =
+    closed match {
+      case true                                                                        => "Clôturée"
+      case _ if user.id == creatorUserId && answers.exists(_.creatorUserID != user.id) => "Répondu"
+      case _
+          if user.id == creatorUserId && seenByUserIds
+            .intersect(invitedUsers.keys.toList)
+            .nonEmpty =>
+        "Consultée"
+      case _ if user.id == creatorUserId                   => "Envoyée"
+      case _ if answers.exists(_.creatorUserID == user.id) => "Répondu"
+      case _ if answers.exists(_.creatorUserName.contains(user.qualite)) => {
+        val username = answers
+          .find(_.creatorUserName.contains(user.qualite))
+          .map(_.creatorUserName)
+          .getOrElse("un collègue")
+          .replaceAll("\\(.*\\)", "")
+          .trim
+        s"Répondu par ${username}"
+      }
+      case _ if seenByUserIds.contains(user.id) => "Consultée"
+      case _                                    => "Nouvelle"
     }
-    case _ if seenByUserIds.contains(user.id) => "Consultée"
-    case _                                    => "Nouvelle"
-  }
 
-  def status = closed match {
-    case true                                                              => "Clôturée"
-    case _ if answers.filterNot(_.creatorUserID != creatorUserId).nonEmpty => "Répondu"
-    case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty   => "Consultée"
-    case _                                                                 => "Nouvelle"
-  }
+  def status =
+    closed match {
+      case true                                                              => "Clôturée"
+      case _ if answers.filterNot(_.creatorUserID != creatorUserId).nonEmpty => "Répondu"
+      case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty   => "Consultée"
+      case _                                                                 => "Nouvelle"
+    }
 
   def invitedUsers(users: List[User]): List[User] =
     invitedUsers.keys.flatMap(userId => users.find(_.id == userId)).toList
@@ -177,6 +181,7 @@ case class Application(
   lazy val firstAnswerTimeInMinutes: Option[Int] = firstAgentAnswerDate.map { firstAnswerDate =>
     MINUTES.between(creationDate, firstAnswerDate).toInt
   }
+
 }
 
 object Application {

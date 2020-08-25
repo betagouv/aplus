@@ -18,12 +18,15 @@ object OrganisationService {
         YamlString(x.shortName)
       }
 
-      def read(value: YamlValue) = value match {
-        case YamlString(x) => Organisation.fromShortName(x).get
-        case x =>
-          deserializationError("Expected String as YamlString, but got " + x)
-      }
+      def read(value: YamlValue) =
+        value match {
+          case YamlString(x) => Organisation.fromShortName(x).get
+          case x =>
+            deserializationError("Expected String as YamlString, but got " + x)
+        }
+
     }
+
     implicit val subjectFormat = yamlFormat2(Subject.apply)
     implicit val categoryFormat = yamlFormat4(Category.apply)
   }
@@ -44,6 +47,7 @@ object OrganisationService {
       contactMail: Option[String],
       phone: Option[String]
   )
+
   case class FranceServiceInfos(instances: List[FranceServiceInstance])
 
 }

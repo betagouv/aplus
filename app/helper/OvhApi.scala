@@ -129,7 +129,6 @@ final class OvhApi(
     *
     * API:
     * Content-Type: application/x-www-form-urlencoded
-    *
     */
   def smsReceivedCallback(request: Request[String]): Future[Either[Error, IncomingSms]] =
     bodyParsers

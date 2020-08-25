@@ -45,8 +45,8 @@ case class GroupController @Inject() (
     with GroupOperators
     with UserOperators {
 
-  def deleteUnusedGroupById(groupId: UUID): Action[AnyContent] = loginAction.async {
-    implicit request =>
+  def deleteUnusedGroupById(groupId: UUID): Action[AnyContent] =
+    loginAction.async { implicit request =>
       withGroup(groupId) { group: UserGroup =>
         asAdminOfGroupZone(group) { () =>
           GroupDeletionUnauthorized -> s"Droits insuffisants pour la suppression du groupe ${groupId}."
@@ -70,127 +70,137 @@ case class GroupController @Inject() (
           }
         }
       }
-  }
-
-  def editGroup(id: UUID): Action[AnyContent] = loginAction.async { implicit request =>
-    withGroup(id) { group: UserGroup =>
-      if (!group.canHaveUsersAddedBy(request.currentUser)) {
-        eventService.log(EditGroupUnauthorized, s"Accès non autorisé à l'edition de ce groupe")
-        Future(Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?"))
-      } else {
-        val groupUsers = userService.byGroupIds(List(id))
-        eventService.log(EditGroupShowed, s"Visualise la vue de modification du groupe")
-        val isEmpty = groupService.isGroupEmpty(group.id)
-        Future(
-          Ok(
-            views.html.editGroup(request.currentUser, request.rights)(
-              group,
-              groupUsers,
-              isEmpty
-            )
-          )
-        )
-      }
     }
-  }
 
-  def addGroup(): Action[AnyContent] = loginAction.async { implicit request =>
-    asAdmin(() => AddGroupUnauthorized -> s"Accès non autorisé pour ajouter un groupe") { () =>
-      addGroupForm(Time.timeZoneParis).bindFromRequest.fold(
-        formWithErrors => {
-          eventService
-            .log(AddUserGroupError, s"Essai d'ajout d'un groupe avec des erreurs de validation")
+  def editGroup(id: UUID): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      withGroup(id) { group: UserGroup =>
+        if (!group.canHaveUsersAddedBy(request.currentUser)) {
+          eventService.log(EditGroupUnauthorized, s"Accès non autorisé à l'edition de ce groupe")
           Future(
-            Redirect(routes.UserController.home).flashing(
-              "error" -> s"Impossible d'ajouter le groupe : ${formWithErrors.errors.mkString}"
-            )
+            Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?")
           )
-        },
-        group =>
-          groupService
-            .add(group)
-            .fold(
-              { error: String =>
-                eventService.log(AddUserGroupError, s"Impossible d'ajouter le groupe dans la BDD")
-                Future(
-                  Redirect(routes.UserController.home)
-                    .flashing("error" -> s"Impossible d'ajouter le groupe : $error")
-                )
-              }, { _ =>
-                eventService.log(
-                  UserGroupCreated,
-                  s"Groupe ${group.name} (id : ${group.id}) ajouté par l'utilisateur d'id ${request.currentUser.id}"
-                )
-                Future(
-                  Redirect(routes.GroupController.editGroup(group.id))
-                    .flashing("success" -> "Groupe ajouté")
-                )
-              }
-            )
-      )
-    }
-  }
-
-  def editGroupPost(groupId: UUID): Action[AnyContent] = loginAction.async { implicit request =>
-    asAdmin(() => EditGroupUnauthorized -> s"Accès non autorisé à l'edition de ce groupe") { () =>
-      withGroup(groupId) { currentGroup: UserGroup =>
-        if (not(currentGroup.canHaveUsersAddedBy(request.currentUser))) {
-          eventService.log(
-            AddUserToGroupUnauthorized,
-            s"L'utilisateur ${request.currentUser.id} n'est pas authorisé à ajouter des utilisateurs au groupe ${currentGroup.id}."
-          )
-          Future(Unauthorized("Vous n'êtes pas authorisé à ajouter des utilisateurs à ce groupe."))
         } else {
-          addGroupForm(Time.timeZoneParis).bindFromRequest.fold(
-            formWithError => {
-              eventService.log(
-                EditUserGroupError,
-                s"Essai d'edition d'un groupe avec des erreurs de validation"
+          val groupUsers = userService.byGroupIds(List(id))
+          eventService.log(EditGroupShowed, s"Visualise la vue de modification du groupe")
+          val isEmpty = groupService.isGroupEmpty(group.id)
+          Future(
+            Ok(
+              views.html.editGroup(request.currentUser, request.rights)(
+                group,
+                groupUsers,
+                isEmpty
               )
-              Future(
-                Redirect(routes.GroupController.editGroup(groupId)).flashing(
-                  "error" -> s"Impossible de modifier le groupe (erreur de formulaire) : ${formWithError.errors.mkString}"
-                )
-              )
-            },
-            group =>
-              if (groupService.edit(group.copy(id = groupId))) {
-                eventService.log(UserGroupEdited, s"Groupe édité")
-                Future(
-                  Redirect(routes.GroupController.editGroup(groupId))
-                    .flashing("success" -> "Groupe modifié")
-                )
-              } else {
-                eventService
-                  .log(EditUserGroupError, s"Impossible de modifier le groupe dans la BDD")
-                Future(
-                  Redirect(routes.GroupController.editGroup(groupId))
-                    .flashing(
-                      "error" -> "Impossible de modifier le groupe: erreur en base de donnée"
-                    )
-                )
-              }
+            )
           )
         }
       }
     }
-  }
 
-  def addGroupForm[A](timeZone: ZoneId)(implicit request: RequestWithUserData[A]) = Form(
-    mapping(
-      "id" -> ignored(UUID.randomUUID()),
-      "name" -> text(maxLength = 60),
-      "description" -> optional(text),
-      "insee-code" -> list(text),
-      "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
-      "area-ids" -> list(uuid)
-        .verifying(
-          "Vous devez sélectionner les territoires sur lequel vous êtes admin",
-          areaIds => areaIds.forall(request.currentUser.areas.contains[UUID])
+  def addGroup(): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      asAdmin(() => AddGroupUnauthorized -> s"Accès non autorisé pour ajouter un groupe") { () =>
+        addGroupForm(Time.timeZoneParis).bindFromRequest.fold(
+          formWithErrors => {
+            eventService
+              .log(AddUserGroupError, s"Essai d'ajout d'un groupe avec des erreurs de validation")
+            Future(
+              Redirect(routes.UserController.home).flashing(
+                "error" -> s"Impossible d'ajouter le groupe : ${formWithErrors.errors.mkString}"
+              )
+            )
+          },
+          group =>
+            groupService
+              .add(group)
+              .fold(
+                { error: String =>
+                  eventService.log(AddUserGroupError, s"Impossible d'ajouter le groupe dans la BDD")
+                  Future(
+                    Redirect(routes.UserController.home)
+                      .flashing("error" -> s"Impossible d'ajouter le groupe : $error")
+                  )
+                },
+                { _ =>
+                  eventService.log(
+                    UserGroupCreated,
+                    s"Groupe ${group.name} (id : ${group.id}) ajouté par l'utilisateur d'id ${request.currentUser.id}"
+                  )
+                  Future(
+                    Redirect(routes.GroupController.editGroup(group.id))
+                      .flashing("success" -> "Groupe ajouté")
+                  )
+                }
+              )
         )
-        .verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
-      "organisation" -> optional(of[Organisation.Id]),
-      "email" -> optional(email)
-    )(UserGroup.apply)(UserGroup.unapply)
-  )
+      }
+    }
+
+  def editGroupPost(groupId: UUID): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      asAdmin(() => EditGroupUnauthorized -> s"Accès non autorisé à l'edition de ce groupe") { () =>
+        withGroup(groupId) { currentGroup: UserGroup =>
+          if (not(currentGroup.canHaveUsersAddedBy(request.currentUser))) {
+            eventService.log(
+              AddUserToGroupUnauthorized,
+              s"L'utilisateur ${request.currentUser.id} n'est pas authorisé à ajouter des utilisateurs au groupe ${currentGroup.id}."
+            )
+            Future(
+              Unauthorized("Vous n'êtes pas authorisé à ajouter des utilisateurs à ce groupe.")
+            )
+          } else {
+            addGroupForm(Time.timeZoneParis).bindFromRequest.fold(
+              formWithError => {
+                eventService.log(
+                  EditUserGroupError,
+                  s"Essai d'edition d'un groupe avec des erreurs de validation"
+                )
+                Future(
+                  Redirect(routes.GroupController.editGroup(groupId)).flashing(
+                    "error" -> s"Impossible de modifier le groupe (erreur de formulaire) : ${formWithError.errors.mkString}"
+                  )
+                )
+              },
+              group =>
+                if (groupService.edit(group.copy(id = groupId))) {
+                  eventService.log(UserGroupEdited, s"Groupe édité")
+                  Future(
+                    Redirect(routes.GroupController.editGroup(groupId))
+                      .flashing("success" -> "Groupe modifié")
+                  )
+                } else {
+                  eventService
+                    .log(EditUserGroupError, s"Impossible de modifier le groupe dans la BDD")
+                  Future(
+                    Redirect(routes.GroupController.editGroup(groupId))
+                      .flashing(
+                        "error" -> "Impossible de modifier le groupe: erreur en base de donnée"
+                      )
+                  )
+                }
+            )
+          }
+        }
+      }
+    }
+
+  def addGroupForm[A](timeZone: ZoneId)(implicit request: RequestWithUserData[A]) =
+    Form(
+      mapping(
+        "id" -> ignored(UUID.randomUUID()),
+        "name" -> text(maxLength = 60),
+        "description" -> optional(text),
+        "insee-code" -> list(text),
+        "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
+        "area-ids" -> list(uuid)
+          .verifying(
+            "Vous devez sélectionner les territoires sur lequel vous êtes admin",
+            areaIds => areaIds.forall(request.currentUser.areas.contains[UUID])
+          )
+          .verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
+        "organisation" -> optional(of[Organisation.Id]),
+        "email" -> optional(email)
+      )(UserGroup.apply)(UserGroup.unapply)
+    )
+
 }

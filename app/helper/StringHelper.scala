@@ -15,6 +15,7 @@ object StringHelper {
 
     def stripSpecialChars: String =
       StringUtils.stripAccents(string.toLowerCase().replaceAll("[-'’ +]", ""))
+
   }
 
   def camelToUnderscoresUpperCase(name: String) =

@@ -48,6 +48,7 @@ object MessageBirdApi {
         statusDatetime: ZonedDateTime,
         messagePartCount: Int
     )
+
     case class Recipients(items: List[RecipientItem])
 
     implicit val itemFormats = Json.format[RecipientItem]

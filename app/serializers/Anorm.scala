@@ -78,6 +78,7 @@ object Anorm {
       jsonObject.setValue(Json.stringify(v))
       s.setObject(index, jsonObject)
     }
+
   }
 
   implicit val columnToJson: Column[JsValue] = Column.nonNull { (value, meta) =>

@@ -24,6 +24,7 @@ object UserAndGroupCsvSerializer {
 
   val USER_EMAIL =
     Header("user.email", List("Email", "Adresse e-mail", "Contact mail Agent", "MAIL"))
+
   val USER_INSTRUCTOR = Header("user.instructor", List("Instructeur"))
   val USER_GROUP_MANAGER = Header("user.admin-group", List("Responsable"))
   val USER_QUALITY = Header("user.quality", List("Qualité"))
@@ -32,7 +33,12 @@ object UserAndGroupCsvSerializer {
 
   val GROUP_AREAS_IDS = Header("group.area-ids", List("Territoire", "DEPARTEMENTS"))
   val GROUP_ORGANISATION = Header("group.organisation", List("Organisation"))
-  val GROUP_NAME = Header("group.name", List("Groupe", "Opérateur partenaire")) // "Nom de la structure labellisable"
+
+  val GROUP_NAME =
+    Header(
+      "group.name",
+      List("Groupe", "Opérateur partenaire")
+    ) // "Nom de la structure labellisable"
   val GROUP_EMAIL = Header("group.email", List("Bal", "adresse mail générique"))
 
   val SEPARATOR = ";"
@@ -46,6 +52,7 @@ object UserAndGroupCsvSerializer {
     USER_GROUP_MANAGER,
     USER_ACCOUNT_IS_SHARED
   )
+
   val USER_HEADER = USER_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
 
   val GROUP_HEADERS = List(GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL, GROUP_AREAS_IDS)
@@ -318,51 +325,61 @@ object UserAndGroupCsvSerializer {
                   )
               )
         )
+
   }
 
-  private def userCSVMapping(currentDate: ZonedDateTime): Mapping[User] = single(
-    "user" -> mapping(
-      "id" -> optional(uuid).transform[UUID]({
-        case None     => UUID.randomUUID()
-        case Some(id) => id
-      }, Some(_)),
-      "key" -> ignored("key"),
-      "name" -> nonEmptyText,
-      "quality" -> default(text, ""),
-      "email" -> nonEmptyText,
-      "helper" -> ignored(true),
-      "instructor" -> boolean,
-      "admin" -> ignored(false),
-      "area-ids" -> ignored(List.empty[UUID]),
-      "creationDate" -> ignored(currentDate),
-      "communeCode" -> ignored("0"),
-      "admin-group" -> boolean,
-      "disabled" -> ignored(false),
-      "expert" -> ignored(false),
-      "groupIds" -> default(list(uuid), Nil),
-      "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "phone-number" -> optional(text),
-      // TODO: put in CSV?
-      "observableOrganisationIds" -> list(of[Organisation.Id]),
-      Keys.User.sharedAccount -> boolean
-    )(User.apply)(User.unapply)
-  )
-
-  private def groupCSVMapping(currentDate: ZonedDateTime): Mapping[UserGroup] = single(
-    "group" ->
-      mapping(
-        "id" -> optional(uuid).transform[UUID]({
-          case None     => UUID.randomUUID()
-          case Some(id) => id
-        }, Some(_)),
-        "name" -> text,
-        "description" -> optional(text),
-        "insee-code" -> list(text),
+  private def userCSVMapping(currentDate: ZonedDateTime): Mapping[User] =
+    single(
+      "user" -> mapping(
+        "id" -> optional(uuid).transform[UUID](
+          {
+            case None     => UUID.randomUUID()
+            case Some(id) => id
+          },
+          Some(_)
+        ),
+        "key" -> ignored("key"),
+        "name" -> nonEmptyText,
+        "quality" -> default(text, ""),
+        "email" -> nonEmptyText,
+        "helper" -> ignored(true),
+        "instructor" -> boolean,
+        "admin" -> ignored(false),
+        "area-ids" -> ignored(List.empty[UUID]),
         "creationDate" -> ignored(currentDate),
-        "area-ids" -> list(uuid),
-        "organisation" -> optional(of[Organisation.Id]),
-        "email" -> optional(email)
-      )(UserGroup.apply)(UserGroup.unapply)
-  )
+        "communeCode" -> ignored("0"),
+        "admin-group" -> boolean,
+        "disabled" -> ignored(false),
+        "expert" -> ignored(false),
+        "groupIds" -> default(list(uuid), Nil),
+        "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
+        "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
+        "phone-number" -> optional(text),
+        // TODO: put in CSV?
+        "observableOrganisationIds" -> list(of[Organisation.Id]),
+        Keys.User.sharedAccount -> boolean
+      )(User.apply)(User.unapply)
+    )
+
+  private def groupCSVMapping(currentDate: ZonedDateTime): Mapping[UserGroup] =
+    single(
+      "group" ->
+        mapping(
+          "id" -> optional(uuid).transform[UUID](
+            {
+              case None     => UUID.randomUUID()
+              case Some(id) => id
+            },
+            Some(_)
+          ),
+          "name" -> text,
+          "description" -> optional(text),
+          "insee-code" -> list(text),
+          "creationDate" -> ignored(currentDate),
+          "area-ids" -> list(uuid),
+          "organisation" -> optional(of[Organisation.Id]),
+          "email" -> optional(email)
+        )(UserGroup.apply)(UserGroup.unapply)
+    )
+
 }

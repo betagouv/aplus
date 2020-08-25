@@ -27,6 +27,7 @@ object MapMapping {
     val KeyPattern = ("^" + java.util.regex.Pattern.quote(key) + """\[([ \p{L}0-9_-]+)\].*$""").r
     data.toSeq.collect { case (KeyPattern(index), _) => index }.sorted.distinct
   }
+
 }
 
 /**

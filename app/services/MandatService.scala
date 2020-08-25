@@ -146,58 +146,60 @@ class MandatService @Inject() (
       }
     }
 
-  def linkToApplication(id: Mandat.Id, applicationId: UUID): Future[Either[Error, Unit]] = Future(
-    Try(
-      db.withConnection { implicit connection =>
-        SQL"""UPDATE mandat
+  def linkToApplication(id: Mandat.Id, applicationId: UUID): Future[Either[Error, Unit]] =
+    Future(
+      Try(
+        db.withConnection { implicit connection =>
+          SQL"""UPDATE mandat
                 SET application_id = ${applicationId}::uuid
                 WHERE id = ${id.underlying}::uuid
              """
-          .executeUpdate()
-      }
-    ).fold(
-      e =>
-        Left(
-          Error.SqlException(
-            EventType.ApplicationLinkedToMandatError,
-            s"Impossible de faire le lien entre le mandat $id et la demande $applicationId",
-            e
-          )
-        ),
-      (nrOfRows: Int) =>
-        if (nrOfRows == 1)
-          Right(())
-        else
+            .executeUpdate()
+        }
+      ).fold(
+        e =>
           Left(
-            Error.Database(
+            Error.SqlException(
               EventType.ApplicationLinkedToMandatError,
-              s"Impossible de faire le lien entre le mandat $id et la demande $applicationId : " +
-                s"nombre de lignes mises à jour incorrect ($nrOfRows)"
+              s"Impossible de faire le lien entre le mandat $id et la demande $applicationId",
+              e
             )
-          )
+          ),
+        (nrOfRows: Int) =>
+          if (nrOfRows == 1)
+            Right(())
+          else
+            Left(
+              Error.Database(
+                EventType.ApplicationLinkedToMandatError,
+                s"Impossible de faire le lien entre le mandat $id et la demande $applicationId : " +
+                  s"nombre de lignes mises à jour incorrect ($nrOfRows)"
+              )
+            )
+      )
     )
-  )
 
-  def addSmsToMandat(id: Mandat.Id, sms: Sms): Future[Either[Error, Unit]] = Future(
-    Try(
-      db.withConnection { implicit connection =>
-        val smsJson: JsValue = Json.toJson(sms)
-        SQL"""UPDATE mandat
+  def addSmsToMandat(id: Mandat.Id, sms: Sms): Future[Either[Error, Unit]] =
+    Future(
+      Try(
+        db.withConnection { implicit connection =>
+          val smsJson: JsValue = Json.toJson(sms)
+          SQL"""UPDATE mandat
             SET sms_thread = sms_thread || ${smsJson}::jsonb
             WHERE id = ${id.underlying}::uuid
          """
-          .executeUpdate()
-        ()
-      }
-    ).toEither.left.map(e =>
-      Error.SqlException(
-        EventType.MandatError,
-        s"Impossible d'ajouter le SMS ${sms.apiId.underlying} " +
-          s"créé à ${sms.creationDate} au mandat $id",
-        e
+            .executeUpdate()
+          ()
+        }
+      ).toEither.left.map(e =>
+        Error.SqlException(
+          EventType.MandatError,
+          s"Impossible d'ajouter le SMS ${sms.apiId.underlying} " +
+            s"créé à ${sms.creationDate} au mandat $id",
+          e
+        )
       )
     )
-  )
 
   def addSmsResponse(sms: Sms.Incoming): Future[Either[Error, Mandat.Id]] =
     Future(

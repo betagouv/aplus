@@ -17,8 +17,9 @@ class TokenService @Inject() (configuration: play.api.Configuration, db: Databas
     "ip_address"
   )
 
-  def create(loginToken: LoginToken): Boolean = db.withConnection { implicit connection =>
-    SQL"""
+  def create(loginToken: LoginToken): Boolean =
+    db.withConnection { implicit connection =>
+      SQL"""
       INSERT INTO login_token VALUES (
          ${loginToken.token},
          ${loginToken.userId}::uuid,
@@ -26,17 +27,21 @@ class TokenService @Inject() (configuration: play.api.Configuration, db: Databas
          ${loginToken.expirationDate},
          ${loginToken.ipAddress}::inet)
       """.executeUpdate() == 1
-  }
-
-  def byToken(token: String) = db.withTransaction { implicit connection =>
-    val result =
-      SQL"""SELECT token, user_id, creation_date, expiration_date, host(ip_address) AS ip_address FROM login_token WHERE token = $token"""
-        .as(simpleLoginToken.singleOpt)
-    // To be sure the token is used only once, we remove it from the database
-    if (result.nonEmpty && SQL"""DELETE FROM login_token WHERE token = $token"""
-          .executeUpdate() != 1) {
-      throw UnexpectedException(Some(s"loginToken $token can't be removed on byToken"))
     }
-    result
-  }
+
+  def byToken(token: String) =
+    db.withTransaction { implicit connection =>
+      val result =
+        SQL"""SELECT token, user_id, creation_date, expiration_date, host(ip_address) AS ip_address FROM login_token WHERE token = $token"""
+          .as(simpleLoginToken.singleOpt)
+      // To be sure the token is used only once, we remove it from the database
+      if (
+        result.nonEmpty && SQL"""DELETE FROM login_token WHERE token = $token"""
+          .executeUpdate() != 1
+      ) {
+        throw UnexpectedException(Some(s"loginToken $token can't be removed on byToken"))
+      }
+      result
+    }
+
 }

@@ -119,11 +119,12 @@ class ApplicationService @Inject() (
       }
     }
 
-  def openAndOlderThan(day: Int) = db.withConnection { implicit connection =>
-    SQL(
-      s"SELECT * FROM application WHERE closed = false AND age(creation_date) > '$day days' AND expert_invited = false"
-    ).as(simpleApplication.*)
-  }
+  def openAndOlderThan(day: Int) =
+    db.withConnection { implicit connection =>
+      SQL(
+        s"SELECT * FROM application WHERE closed = false AND age(creation_date) > '$day days' AND expert_invited = false"
+      ).as(simpleApplication.*)
+    }
 
   def allOpenOrRecentForUserId(
       userId: UUID,
@@ -158,17 +159,18 @@ class ApplicationService @Inject() (
       }
     }
 
-  def allForUserId(userId: UUID, anonymous: Boolean) = db.withConnection { implicit connection =>
-    val result = SQL(
-      "SELECT * FROM application WHERE creator_user_id = {userId}::uuid OR invited_users ?? {userId} ORDER BY creation_date DESC"
-    ).on("userId" -> userId)
-      .as(simpleApplication.*)
-    if (anonymous) {
-      result.map(_.anonymousApplication)
-    } else {
-      result
+  def allForUserId(userId: UUID, anonymous: Boolean) =
+    db.withConnection { implicit connection =>
+      val result = SQL(
+        "SELECT * FROM application WHERE creator_user_id = {userId}::uuid OR invited_users ?? {userId} ORDER BY creation_date DESC"
+      ).on("userId" -> userId)
+        .as(simpleApplication.*)
+      if (anonymous) {
+        result.map(_.anonymousApplication)
+      } else {
+        result
+      }
     }
-  }
 
   def allForUserIds(userIds: List[UUID]): Future[List[Application]] =
     Future {
@@ -179,17 +181,18 @@ class ApplicationService @Inject() (
       }
     }
 
-  def allByArea(areaId: UUID, anonymous: Boolean) = db.withConnection { implicit connection =>
-    val result =
-      SQL("SELECT * FROM application WHERE area = {areaId}::uuid ORDER BY creation_date DESC")
-        .on("areaId" -> areaId)
-        .as(simpleApplication.*)
-    if (anonymous) {
-      result.map(_.anonymousApplication)
-    } else {
-      result
+  def allByArea(areaId: UUID, anonymous: Boolean) =
+    db.withConnection { implicit connection =>
+      val result =
+        SQL("SELECT * FROM application WHERE area = {areaId}::uuid ORDER BY creation_date DESC")
+          .on("areaId" -> areaId)
+          .as(simpleApplication.*)
+      if (anonymous) {
+        result.map(_.anonymousApplication)
+      } else {
+        result
+      }
     }
-  }
 
   def allForAreas(areaIds: List[UUID]): Future[List[Application]] =
     Future {
@@ -200,20 +203,22 @@ class ApplicationService @Inject() (
       }
     }
 
-  def all(): Future[List[Application]] = Future {
-    db.withConnection { implicit connection =>
-      SQL"""SELECT * FROM application""".as(simpleApplication.*).map(_.anonymousApplication)
+  def all(): Future[List[Application]] =
+    Future {
+      db.withConnection { implicit connection =>
+        SQL"""SELECT * FROM application""".as(simpleApplication.*).map(_.anonymousApplication)
+      }
     }
-  }
 
-  def createApplication(newApplication: Application) = db.withConnection { implicit connection =>
-    val invitedUserJson = Json.toJson(newApplication.invitedUsers.map {
-      case (key, value) =>
-        key.toString -> value
-    })
-    val mandatType =
-      newApplication.mandatType.map(DataModel.Application.MandatType.dataModelSerialization)
-    SQL"""
+  def createApplication(newApplication: Application) =
+    db.withConnection { implicit connection =>
+      val invitedUserJson = Json.toJson(newApplication.invitedUsers.map {
+        case (key, value) =>
+          key.toString -> value
+      })
+      val mandatType =
+        newApplication.mandatType.map(DataModel.Application.MandatType.dataModelSerialization)
+      SQL"""
           INSERT INTO application (
             id,
             creation_date,
@@ -246,7 +251,7 @@ class ApplicationService @Inject() (
             ${newApplication.mandatDate}
           )
       """.executeUpdate() == 1
-  }
+    }
 
   def add(applicationId: UUID, answer: Answer, expertInvited: Boolean = false) =
     db.withTransaction { implicit connection =>
@@ -271,11 +276,10 @@ class ApplicationService @Inject() (
           WHERE id = {id}::uuid
        """
       ).on(
-          "id" -> applicationId,
-          "answer" -> Json.toJson(answer),
-          "invited_users" -> invitedUserJson
-        )
-        .executeUpdate()
+        "id" -> applicationId,
+        "answer" -> Json.toJson(answer),
+        "invited_users" -> invitedUserJson
+      ).executeUpdate()
     }
 
   def close(applicationId: UUID, usefulness: Option[String], closedDate: ZonedDateTime) =
@@ -286,10 +290,10 @@ class ApplicationService @Inject() (
           WHERE id = {id}::uuid
        """
       ).on(
-          "id" -> applicationId,
-          "usefulness" -> usefulness,
-          "closed_date" -> closedDate
-        )
-        .executeUpdate() == 1
+        "id" -> applicationId,
+        "usefulness" -> usefulness,
+        "closed_date" -> closedDate
+      ).executeUpdate() == 1
     }
+
 }

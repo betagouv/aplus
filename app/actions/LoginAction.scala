@@ -208,8 +208,8 @@ class LoginAction @Inject() (
         .flashing("error" -> message)
     )
 
-  private def redirectToHomeWithEmailSendbackButton[A](email: String, message: String)(
-      implicit request: Request[A]
+  private def redirectToHomeWithEmailSendbackButton[A](email: String, message: String)(implicit
+      request: Request[A]
   ) =
     Left(
       TemporaryRedirect(routes.HomeController.index.url)
@@ -234,4 +234,5 @@ class LoginAction @Inject() (
       .get(Keys.Session.userId)
       .flatMap(UUIDHelper.fromString)
       .flatMap(id => userService.byId(id, true))
+
 }

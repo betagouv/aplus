@@ -177,4 +177,5 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
         }
       }
     }
+
 }

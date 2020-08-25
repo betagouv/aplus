@@ -154,30 +154,33 @@ object Authorization {
       case _                       => false
     }
 
-  def canSeeApplication(application: Application): Check = rights => {
-    val validCase1 = isApplicationCreator(application)(rights)
-    val validCase2 = isAdmin(rights)
-    val validCase3 =
-      (isInstructor(rights) || isHelper(rights)) && not(isExpert(application.area)(rights)) &&
-        isInvitedOn(application)(rights)
-    val validCase4 = isExpert(application.area)(rights) && isInvitedOn(application)(rights) && not(
-      application.closed
-    )
-    validCase1 || validCase2 || validCase3 || validCase4
-  }
+  def canSeeApplication(application: Application): Check =
+    rights => {
+      val validCase1 = isApplicationCreator(application)(rights)
+      val validCase2 = isAdmin(rights)
+      val validCase3 =
+        (isInstructor(rights) || isHelper(rights)) && not(isExpert(application.area)(rights)) &&
+          isInvitedOn(application)(rights)
+      val validCase4 =
+        isExpert(application.area)(rights) && isInvitedOn(application)(rights) && not(
+          application.closed
+        )
+      validCase1 || validCase2 || validCase3 || validCase4
+    }
 
-  def canSeePrivateDataOfApplication(application: Application): Check = rights => {
-    val isCreatorOrIsInvited = isInvitedOn(application)(rights) || isApplicationCreator(
-      application
-    )(rights)
-    val validCase1 = isCreatorOrIsInvited && !isAdmin(rights)
-    // If user is expert, admin and invited to the application he can see the data
-    val validCase2 =
-      isCreatorOrIsInvited && isExpert(application.area)(rights) && isAdmin(rights) && not(
-        application.closed
-      )
-    validCase1 || validCase2
-  }
+  def canSeePrivateDataOfApplication(application: Application): Check =
+    rights => {
+      val isCreatorOrIsInvited = isInvitedOn(application)(rights) || isApplicationCreator(
+        application
+      )(rights)
+      val validCase1 = isCreatorOrIsInvited && !isAdmin(rights)
+      // If user is expert, admin and invited to the application he can see the data
+      val validCase2 =
+        isCreatorOrIsInvited && isExpert(application.area)(rights) && isAdmin(rights) && not(
+          application.closed
+        )
+      validCase1 || validCase2
+    }
 
   def canSeePrivateDataOfMandat(mandat: Mandat): Check =
     _.rights.exists {
@@ -185,10 +188,11 @@ object Authorization {
       case _                       => false
     }
 
-  def canSeeMandat(mandat: Mandat): Check = rights => {
-    val validCase1 = canSeePrivateDataOfMandat(mandat)(rights)
-    val validCase2 = isAdmin(rights)
-    validCase1 || validCase2
-  }
+  def canSeeMandat(mandat: Mandat): Check =
+    rights => {
+      val validCase1 = canSeePrivateDataOfMandat(mandat)(rights)
+      val validCase2 = isAdmin(rights)
+      validCase1 || validCase2
+    }
 
 }

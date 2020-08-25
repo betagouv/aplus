@@ -58,7 +58,8 @@ class UserGroupService @Inject() (
         Left("Aucun groupe n'a été ajouté")
     } catch {
       case ex: PSQLException =>
-        val EmailErrorPattern = """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
+        val EmailErrorPattern =
+          """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
         val errorMessage = EmailErrorPattern.findFirstIn(ex.getServerErrorMessage.toString) match {
           case Some(email) => s"Un groupe avec l'adresse $email existe déjà."
           case _           => s"SQL Erreur : ${ex.getServerErrorMessage.toString}"
@@ -68,8 +69,9 @@ class UserGroupService @Inject() (
 
   def add(group: UserGroup): Either[String, Unit] = add(List(group))
 
-  def edit(group: UserGroup): Boolean = db.withConnection { implicit connection =>
-    SQL"""
+  def edit(group: UserGroup): Boolean =
+    db.withConnection { implicit connection =>
+      SQL"""
           UPDATE user_group SET
           name = ${group.name},
           description = ${group.description},
@@ -78,61 +80,70 @@ class UserGroupService @Inject() (
           email = ${group.email}
           WHERE id = ${group.id}::uuid
        """.executeUpdate() == 1
-  //TODO: insee_code = array[${group.inseeCode}]::character varying(5)[], have been remove temporary
-  }
+    //TODO: insee_code = array[${group.inseeCode}]::character varying(5)[], have been remove temporary
+    }
 
-  def allGroups: List[UserGroup] = db.withConnection { implicit connection =>
-    SQL"SELECT * FROM user_group".as(simpleUserGroup.*)
-  }
+  def allGroups: List[UserGroup] =
+    db.withConnection { implicit connection =>
+      SQL"SELECT * FROM user_group".as(simpleUserGroup.*)
+    }
 
-  def all: Future[List[UserGroup]] = Future {
-    db.withConnection(implicit connection => SQL"SELECT * FROM user_group".as(simpleUserGroup.*))
-  }
+  def all: Future[List[UserGroup]] =
+    Future {
+      db.withConnection(implicit connection => SQL"SELECT * FROM user_group".as(simpleUserGroup.*))
+    }
 
-  def byIds(groupIds: List[UUID]): List[UserGroup] = db.withConnection { implicit connection =>
-    SQL"SELECT * FROM user_group WHERE ARRAY[$groupIds]::uuid[] @> ARRAY[id]::uuid[]".as(
-      simpleUserGroup.*
-    )
-  }
-
-  def byIdsFuture(groupIds: List[UUID]): Future[List[UserGroup]] = Future {
+  def byIds(groupIds: List[UUID]): List[UserGroup] =
     db.withConnection { implicit connection =>
       SQL"SELECT * FROM user_group WHERE ARRAY[$groupIds]::uuid[] @> ARRAY[id]::uuid[]".as(
         simpleUserGroup.*
       )
     }
-  }
 
-  def groupById(groupId: UUID): Option[UserGroup] = db.withConnection { implicit connection =>
-    SQL"SELECT * FROM user_group WHERE id = $groupId::uuid".as(simpleUserGroup.singleOpt)
-  }
-
-  def groupByName(groupName: String): Option[UserGroup] = db.withConnection { implicit connection =>
-    SQL"SELECT * FROM user_group WHERE name = $groupName".as(simpleUserGroup.singleOpt)
-  }
-
-  def deleteById(groupId: UUID): Boolean = db.withConnection { implicit connection =>
-    SQL"""DELETE FROM "user_group" WHERE id = $groupId::uuid""".execute()
-  }
-
-  def isGroupEmpty(groupId: UUID): Boolean = db.withConnection { implicit connection =>
-    val cardinality: Int =
-      SQL"""SELECT COUNT(id) as cardinality FROM "user" WHERE group_ids @> ARRAY[$groupId]::uuid[]"""
-        .executeQuery()
-        .resultSet
-        .apply[Int]({ rs: ResultSet =>
-          rs.next()
-          rs.getInt("cardinality")
-        })
-    cardinality == 0
-  }
-
-  def byArea(areaId: UUID): Future[List[UserGroup]] = Future {
-    db.withConnection { implicit connection =>
-      SQL"""SELECT * FROM "user_group" WHERE area_ids @> ARRAY[$areaId]::uuid[]"""
-        .as(simpleUserGroup.*)
+  def byIdsFuture(groupIds: List[UUID]): Future[List[UserGroup]] =
+    Future {
+      db.withConnection { implicit connection =>
+        SQL"SELECT * FROM user_group WHERE ARRAY[$groupIds]::uuid[] @> ARRAY[id]::uuid[]".as(
+          simpleUserGroup.*
+        )
+      }
     }
-  }
+
+  def groupById(groupId: UUID): Option[UserGroup] =
+    db.withConnection { implicit connection =>
+      SQL"SELECT * FROM user_group WHERE id = $groupId::uuid".as(simpleUserGroup.singleOpt)
+    }
+
+  def groupByName(groupName: String): Option[UserGroup] =
+    db.withConnection { implicit connection =>
+      SQL"SELECT * FROM user_group WHERE name = $groupName".as(simpleUserGroup.singleOpt)
+    }
+
+  def deleteById(groupId: UUID): Boolean =
+    db.withConnection { implicit connection =>
+      SQL"""DELETE FROM "user_group" WHERE id = $groupId::uuid""".execute()
+    }
+
+  def isGroupEmpty(groupId: UUID): Boolean =
+    db.withConnection { implicit connection =>
+      val cardinality: Int =
+        SQL"""SELECT COUNT(id) as cardinality FROM "user" WHERE group_ids @> ARRAY[$groupId]::uuid[]"""
+          .executeQuery()
+          .resultSet
+          .apply[Int]({ rs: ResultSet =>
+            rs.next()
+            rs.getInt("cardinality")
+          })
+      cardinality == 0
+    }
+
+  def byArea(areaId: UUID): Future[List[UserGroup]] =
+    Future {
+      db.withConnection { implicit connection =>
+        SQL"""SELECT * FROM "user_group" WHERE area_ids @> ARRAY[$areaId]::uuid[]"""
+          .as(simpleUserGroup.*)
+      }
+    }
 
   def byAreas(areaIds: List[UUID]): Future[List[UserGroup]] =
     Future {
@@ -142,12 +153,13 @@ class UserGroupService @Inject() (
       }
     }
 
-  def byOrganisationIds(organisationIds: List[Organisation.Id]): Future[List[UserGroup]] = Future {
-    db.withConnection { implicit connection =>
-      val organisationIdStrings = organisationIds.map(_.id)
-      SQL"""SELECT * FROM "user_group" WHERE ARRAY[$organisationIdStrings] @> ARRAY[organisation]"""
-        .as(simpleUserGroup.*)
+  def byOrganisationIds(organisationIds: List[Organisation.Id]): Future[List[UserGroup]] =
+    Future {
+      db.withConnection { implicit connection =>
+        val organisationIdStrings = organisationIds.map(_.id)
+        SQL"""SELECT * FROM "user_group" WHERE ARRAY[$organisationIdStrings] @> ARRAY[organisation]"""
+          .as(simpleUserGroup.*)
+      }
     }
-  }
 
 }

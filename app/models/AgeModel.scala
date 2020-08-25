@@ -29,4 +29,5 @@ trait AgeModel {
     } else {
       s"quelques secondes"
     }
+
 }

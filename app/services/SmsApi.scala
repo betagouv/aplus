@@ -75,6 +75,7 @@ object SmsApi {
 
     def deleteSms(id: Sms.ApiId): Future[Either[Error, Unit]] =
       api.deleteSms(MessageBirdApi.Sms.Id(id.underlying))
+
   }
 
   final class OvhSmsApi(
@@ -160,6 +161,7 @@ object SmsApi {
                   )
             }
         )
+
   }
 
   /** Fake API for dev and test */

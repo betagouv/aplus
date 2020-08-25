@@ -94,4 +94,5 @@ object AttachmentHelper {
         Some(attachmentName -> f.length())
     }
   }
+
 }

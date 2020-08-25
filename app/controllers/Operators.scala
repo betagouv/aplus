@@ -51,6 +51,7 @@ object Operators {
           Future(Unauthorized("Vous n'êtes pas en charge de la zone de ce groupe."))
         }
       }
+
   }
 
   trait UserOperators {
@@ -109,10 +110,12 @@ object Operators {
         payload: () => Future[Result]
     )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
       // TODO: use only Authorization
-      if (not(
-            request.currentUser.canSeeUsersInArea(areaId) ||
-              Authorization.isObserver(request.rights)
-          )) {
+      if (
+        not(
+          request.currentUser.canSeeUsersInArea(areaId) ||
+            Authorization.isObserver(request.rights)
+        )
+      ) {
         val (eventType, description) = event()
         eventService.log(eventType, description = description)
         Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
@@ -138,14 +141,15 @@ object Operators {
           payload()
         }
       }
+
   }
 
   trait ApplicationOperators {
     def applicationService: ApplicationService
     def eventService: EventService
 
-    private def manageApplicationError[A](applicationId: UUID, error: Error)(
-        implicit request: RequestWithUserData[A],
+    private def manageApplicationError[A](applicationId: UUID, error: Error)(implicit
+        request: RequestWithUserData[A],
         ec: ExecutionContext
     ): Future[Result] = {
       val result =
@@ -180,10 +184,14 @@ object Operators {
           rights = request.rights
         )
         .flatMap(
-          _.fold(error => manageApplicationError(applicationId, error), {
-            application: Application => payload(application)
-          })
+          _.fold(
+            error => manageApplicationError(applicationId, error),
+            { application: Application =>
+              payload(application)
+            }
+          )
         )
+
   }
 
 }
