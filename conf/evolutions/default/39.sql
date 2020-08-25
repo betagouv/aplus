@@ -67,8 +67,7 @@ CREATE VIEW login_token_metadata AS
 SELECT
   user_id,
   creation_date,
-  expiration_date,
-  ip_address
+  expiration_date
 FROM login_token;
 
 
