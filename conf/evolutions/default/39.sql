@@ -1,5 +1,6 @@
 # --- !Ups
 
+
 CREATE VIEW application_metadata AS
 SELECT
   id,
@@ -26,7 +27,7 @@ FROM application;
 -- 2019-08-12T15:52:51.526+02:00
 -- others are like this
 -- 2020-08-04T17:05:21.675+02:00[Europe/Paris]
--- we use text here, subsequent users should be careful
+-- we use text here, people who will have to parse this field should be careful
 CREATE VIEW answer_metadata AS
 SELECT
   answer.id,
@@ -58,9 +59,9 @@ SELECT
   creation_date,
   application_id,
   sms_thread_closed,
-  jsonb_array_length(sms_thread) AS sms_thread_size
+  jsonb_array_length(sms_thread) AS sms_thread_size,
+  array(SELECT jsonb_extract_path_text(value::jsonb, 'tag') FROM jsonb_array_elements(sms_thread))
 FROM mandat;
-
 
 
 CREATE VIEW login_token_metadata AS
