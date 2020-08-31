@@ -81,7 +81,7 @@ case class GroupController @Inject() (
             Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?")
           )
         } else {
-          val groupUsers = userService.byGroupIds(List(id))
+          val groupUsers = userService.byGroupIds(List(id), includeDisabled = true)
           eventService.log(EditGroupShowed, s"Visualise la vue de modification du groupe")
           val isEmpty = groupService.isGroupEmpty(group.id)
           Future(

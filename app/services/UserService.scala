@@ -86,9 +86,16 @@ class UserService @Inject() (
         .as(simpleUser.*)
     }
 
-  def byGroupIds(ids: List[UUID]): List[User] =
+  def byGroupIds(ids: List[UUID], includeDisabled: Boolean = false): List[User] =
     db.withConnection { implicit connection =>
-      SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
+      val disabledSQL: String = if (includeDisabled) {
+        ""
+      } else {
+        "AND disabled = false"
+      }
+      SQL(s"""SELECT * FROM "user" WHERE ARRAY[{ids}]::uuid[] && group_ids $disabledSQL""")
+        .on("ids" -> ids)
+        .as(simpleUser.*)
     }
 
   // Note: this function is used in the stats,

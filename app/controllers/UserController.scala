@@ -106,7 +106,9 @@ case class UserController @Inject() (
             // Includes users without any group for debug purpose
             userService.all
           } else {
-            groupsFuture.map(groups => userService.byGroupIds(groups.map(_.id)))
+            groupsFuture.map(groups =>
+              userService.byGroupIds(groups.map(_.id), includeDisabled = true)
+            )
           }
         val applications = applicationService.allByArea(selectedArea.id, anonymous = true)
 
@@ -145,12 +147,12 @@ case class UserController @Inject() (
             userService.all
           } else {
             groupService.byAreas(request.currentUser.areas).map { groupsOfArea =>
-              userService.byGroupIds(groupsOfArea.map(_.id))
+              userService.byGroupIds(groupsOfArea.map(_.id), includeDisabled = true)
             }
           }
         } else {
           groupService.byArea(areaId).map { groupsOfArea =>
-            userService.byGroupIds(groupsOfArea.map(_.id))
+            userService.byGroupIds(groupsOfArea.map(_.id), includeDisabled = true)
           }
         }
         val groupsFuture: Future[List[UserGroup]] =
