@@ -46,53 +46,61 @@ class UserService @Inject() (
     )
     .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
 
-  def allNoNameNoEmail: Future[List[User]] = Future {
-    db.withConnection { implicit connection =>
-      SQL("""SELECT *, '' as name, '' as email, '' as qualite FROM "user"""").as(simpleUser.*)
+  def allNoNameNoEmail: Future[List[User]] =
+    Future {
+      db.withConnection { implicit connection =>
+        SQL("""SELECT *, '' as name, '' as email, '' as qualite FROM "user"""").as(simpleUser.*)
+      }
     }
-  }
 
-  def all: Future[List[User]] = Future {
-    db.withConnection(implicit connection => SQL("""SELECT * FROM "user"""").as(simpleUser.*))
-  }
-
-  def allNotDisabled: Future[List[User]] = Future {
-    db.withConnection { implicit connection =>
-      SQL("""SELECT * FROM "user" WHERE NOT disabled""").as(simpleUser.*)
+  def all: Future[List[User]] =
+    Future {
+      db.withConnection(implicit connection => SQL("""SELECT * FROM "user"""").as(simpleUser.*))
     }
-  }
 
-  def allExperts: Future[List[User]] = Future {
-    db.withConnection { implicit connection =>
-      SQL"""SELECT * FROM "user" WHERE expert = true AND disabled = false"""
-        .as(simpleUser.*)
-    }.toList ++ (User.admins.filter(_.expert))
-  }
+  def allNotDisabled: Future[List[User]] =
+    Future {
+      db.withConnection { implicit connection =>
+        SQL("""SELECT * FROM "user" WHERE NOT disabled""").as(simpleUser.*)
+      }
+    }
+
+  def allExperts: Future[List[User]] =
+    Future {
+      db.withConnection { implicit connection =>
+        SQL"""SELECT * FROM "user" WHERE expert = true AND disabled = false"""
+          .as(simpleUser.*)
+      }.toList ++ (User.admins.filter(_.expert))
+    }
 
   // Note: this is deprecated, should check via the UserGroup
-  def byAreaIds(areaIds: List[UUID]): List[User] = db.withConnection { implicit connection =>
-    SQL"""SELECT * FROM "user" WHERE ARRAY[$areaIds]::uuid[] && areas""".as(simpleUser.*)
-  }
+  def byAreaIds(areaIds: List[UUID]): List[User] =
+    db.withConnection { implicit connection =>
+      SQL"""SELECT * FROM "user" WHERE ARRAY[$areaIds]::uuid[] && areas""".as(simpleUser.*)
+    }
 
-  def allDBOnlybyArea(areaId: UUID) = db.withConnection { implicit connection =>
-    SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""")
-      .on("areaId" -> areaId)
-      .as(simpleUser.*)
-  }
+  def allDBOnlybyArea(areaId: UUID) =
+    db.withConnection { implicit connection =>
+      SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""")
+        .on("areaId" -> areaId)
+        .as(simpleUser.*)
+    }
 
-  def byGroupIds(ids: List[UUID]): List[User] = db.withConnection { implicit connection =>
-    SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
-  }
+  def byGroupIds(ids: List[UUID]): List[User] =
+    db.withConnection { implicit connection =>
+      SQL"""SELECT * FROM "user" WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
+    }
 
   // Note: this function is used in the stats,
   // pseudonymization is possible (removing name, etc.)
-  def byGroupIdsAnonymous(ids: List[UUID]): Future[List[User]] = Future {
-    db.withConnection { implicit connection =>
-      SQL"""SELECT *, '' as name, '' as email, '' as qualite
+  def byGroupIdsAnonymous(ids: List[UUID]): Future[List[User]] =
+    Future {
+      db.withConnection { implicit connection =>
+        SQL"""SELECT *, '' as name, '' as email, '' as qualite
             FROM "user"
             WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
+      }
     }
-  }
 
   def byId(id: UUID, includeDisabled: Boolean = false): Option[User] = {
     val results = byIds(List(id), includeDisabled)
@@ -114,19 +122,17 @@ class UserService @Inject() (
 
   def byKey(key: String): Option[User] =
     db.withConnection { implicit connection =>
-        SQL("""SELECT * FROM "user" WHERE key = {key} AND disabled = false""")
-          .on("key" -> key)
-          .as(simpleUser.singleOpt)
-      }
-      .orElse(User.admins.find(_.key == key))
+      SQL("""SELECT * FROM "user" WHERE key = {key} AND disabled = false""")
+        .on("key" -> key)
+        .as(simpleUser.singleOpt)
+    }.orElse(User.admins.find(_.key == key))
 
   def byEmail(email: String): Option[User] =
     db.withConnection { implicit connection =>
-        SQL("""SELECT * FROM "user" WHERE lower(email) = {email} AND disabled = false""")
-          .on("email" -> email.toLowerCase)
-          .as(simpleUser.singleOpt)
-      }
-      .orElse(User.admins.find(_.email.toLowerCase() == email.toLowerCase()))
+      SQL("""SELECT * FROM "user" WHERE lower(email) = {email} AND disabled = false""")
+        .on("email" -> email.toLowerCase)
+        .as(simpleUser.singleOpt)
+    }.orElse(User.admins.find(_.email.toLowerCase() == email.toLowerCase()))
       .filter(!_.disabled)
 
   def byEmails(emails: List[String]): List[User] = {
@@ -137,9 +143,10 @@ class UserService @Inject() (
     }.toList ++ (User.admins.filter(user => lowerCaseEmails.contains(user.email.toLowerCase)))
   }
 
-  def deleteById(userId: UUID): Boolean = db.withTransaction { implicit connection =>
-    SQL"""DELETE FROM "user" WHERE id = ${userId}::uuid""".execute()
-  }
+  def deleteById(userId: UUID): Boolean =
+    db.withTransaction { implicit connection =>
+      SQL"""DELETE FROM "user" WHERE id = ${userId}::uuid""".execute()
+    }
 
   def add(users: List[User]): Either[String, Unit] =
     try {
@@ -174,7 +181,8 @@ class UserService @Inject() (
         Left("Aucun utilisateur n'a été ajouté")
     } catch {
       case ex: PSQLException =>
-        val EmailErrorPattern = """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
+        val EmailErrorPattern =
+          """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
         val errorMessage = EmailErrorPattern.findFirstIn(ex.getServerErrorMessage.toString) match {
           case Some(email) => s"Un utilisateur avec l'adresse $email existe déjà."
           case _           => s"SQL Erreur : ${ex.getServerErrorMessage.toString}"
@@ -204,8 +212,8 @@ class UserService @Inject() (
        """.executeUpdate() == 1
     })
 
-  def acceptCGU(userId: UUID, acceptNewsletter: Boolean) = db.withConnection {
-    implicit connection =>
+  def acceptCGU(userId: UUID, acceptNewsletter: Boolean) =
+    db.withConnection { implicit connection =>
       val now = Time.nowParis()
       val resultCGUAcceptation = SQL"""
         UPDATE "user" SET
@@ -222,5 +230,6 @@ class UserService @Inject() (
         true
       }
       resultCGUAcceptation && resultNewsletterAcceptation
-  }
+    }
+
 }

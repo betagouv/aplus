@@ -22,4 +22,5 @@ case class Answer(
   } else {
     Some(7 - ageInDays)
   }
+
 }

@@ -23,6 +23,7 @@ object Organisation {
 
       override def unbind(key: String, value: Organisation.Id) =
         Map(key -> value.id)
+
     }
 
     implicit val organisationIdAnormParser: anorm.Column[Organisation.Id] =
@@ -30,11 +31,12 @@ object Organisation {
 
   }
 
-  def apply(shortName: String, name: String): Organisation = Organisation(
-    id = Organisation.Id(shortName),
-    shortName = shortName,
-    name = name
-  )
+  def apply(shortName: String, name: String): Organisation =
+    Organisation(
+      id = Organisation.Id(shortName),
+      shortName = shortName,
+      name = name
+    )
 
   def isValidId(id: Organisation.Id): Boolean =
     byId(id).nonEmpty
@@ -114,4 +116,5 @@ object Organisation {
         lowerCaseName.contains(organisation.name.toLowerCase().stripSpecialChars)
       }
   }
+
 }

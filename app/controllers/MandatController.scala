@@ -49,79 +49,80 @@ case class MandatController @Inject() (
     *
     * Note: protection against rapidly sending SMS to the same number is only performed
     *       client-side, we might want to revisit that.
-    *
     */
-  def beginMandatSms: Action[JsValue] = loginAction(parse.json).async { implicit request =>
-    request.body
-      .validate[SmsMandatInitiation]
-      .fold(
-        errors => {
-          val errorMessage = helper.PlayFormHelper.prettifyJsonFormInvalidErrors(errors)
-          eventService.log(EventType.MandatInitiationBySmsInvalid, s"$errorMessage")
-          Future(
-            BadRequest(
-              Json.obj("message" -> JsString(errorMessage), "errors" -> JsError.toJson(errors))
-            )
-          )
-        },
-        entity =>
-          // Note: we create the `Mandat` first in DB due to failure cases:
-          // OK: creating the entity in DB, then failing to send the SMS
-          // NOT OK: sending the SMS, but failing to save the entity
-          mandatService
-            .createSmsMandat(entity, request.currentUser)
-            .flatMap(
-              _.fold(
-                error => {
-                  eventService.logError(error)
-                  Future(jsonInternalServerError)
-                },
-                mandat => {
-                  val userGroups = userGroupService.byIds(request.currentUser.groupIds)
-                  val recipient = Sms.PhoneNumber.fromLocalPhoneFrance(entity.usagerPhoneLocal)
-                  smsService
-                    .sendMandatSms(recipient, mandat, request.currentUser, userGroups)
-                    .flatMap(
-                      _.fold(
-                        error => {
-                          eventService.logError(error)
-                          Future(jsonInternalServerError)
-                        },
-                        sms =>
-                          mandatService
-                            .addSmsToMandat(mandat.id, sms)
-                            .map(
-                              _.fold(
-                                error => {
-                                  eventService.logError(error)
-                                  jsonInternalServerError
-                                },
-                                _ => {
-                                  eventService.log(
-                                    EventType.MandatInitiationBySmsDone,
-                                    s"Le mandat par SMS ${mandat.id.underlying} a été créé. " +
-                                      s"Le SMS de demande ${sms.apiId.underlying} a été envoyé"
-                                  )
-                                  notificationsService.mandatSmsSent(mandat.id, request.currentUser)
-                                  Ok(Json.toJson(mandat))
-                                }
-                              )
-                            )
-                      )
-                    )
-                }
+  def beginMandatSms: Action[JsValue] =
+    loginAction(parse.json).async { implicit request =>
+      request.body
+        .validate[SmsMandatInitiation]
+        .fold(
+          errors => {
+            val errorMessage = helper.PlayFormHelper.prettifyJsonFormInvalidErrors(errors)
+            eventService.log(EventType.MandatInitiationBySmsInvalid, s"$errorMessage")
+            Future(
+              BadRequest(
+                Json.obj("message" -> JsString(errorMessage), "errors" -> JsError.toJson(errors))
               )
             )
-      )
+          },
+          entity =>
+            // Note: we create the `Mandat` first in DB due to failure cases:
+            // OK: creating the entity in DB, then failing to send the SMS
+            // NOT OK: sending the SMS, but failing to save the entity
+            mandatService
+              .createSmsMandat(entity, request.currentUser)
+              .flatMap(
+                _.fold(
+                  error => {
+                    eventService.logError(error)
+                    Future(jsonInternalServerError)
+                  },
+                  mandat => {
+                    val userGroups = userGroupService.byIds(request.currentUser.groupIds)
+                    val recipient = Sms.PhoneNumber.fromLocalPhoneFrance(entity.usagerPhoneLocal)
+                    smsService
+                      .sendMandatSms(recipient, mandat, request.currentUser, userGroups)
+                      .flatMap(
+                        _.fold(
+                          error => {
+                            eventService.logError(error)
+                            Future(jsonInternalServerError)
+                          },
+                          sms =>
+                            mandatService
+                              .addSmsToMandat(mandat.id, sms)
+                              .map(
+                                _.fold(
+                                  error => {
+                                    eventService.logError(error)
+                                    jsonInternalServerError
+                                  },
+                                  _ => {
+                                    eventService.log(
+                                      EventType.MandatInitiationBySmsDone,
+                                      s"Le mandat par SMS ${mandat.id.underlying} a été créé. " +
+                                        s"Le SMS de demande ${sms.apiId.underlying} a été envoyé"
+                                    )
+                                    notificationsService
+                                      .mandatSmsSent(mandat.id, request.currentUser)
+                                    Ok(Json.toJson(mandat))
+                                  }
+                                )
+                              )
+                        )
+                      )
+                  }
+                )
+              )
+        )
 
-  }
+    }
 
   /** This is an `Action[String]` because we need to parse both as bytes and json.
     * Also, this is a webhook, only the returned status code is useful
     */
   // TODO: What if usager send an incorrect response the first time? close sms_thread only after some time has passed?
-  def webhookSmsReceived: Action[String] = Action(bodyParsers.tolerantText).async {
-    implicit request =>
+  def webhookSmsReceived: Action[String] =
+    Action(bodyParsers.tolerantText).async { implicit request =>
       smsService
         .smsReceivedCallback(request)
         .flatMap(
@@ -184,37 +185,38 @@ case class MandatController @Inject() (
                 )
           )
         )
-  }
+    }
 
-  def mandat(rawId: UUID): Action[AnyContent] = loginAction.async { implicit request =>
-    mandatService
-      .byId(Mandat.Id(rawId), request.rights)
-      .map(
-        _.fold(
-          error => {
-            eventService.logError(error)
-            error match {
-              case _: Error.EntityNotFound =>
-                NotFound("Nous n'avons pas trouvé ce mandat.")
-              case _: Error.Authorization =>
-                Unauthorized(
-                  s"Vous n'avez pas les droits suffisants pour voir ce mandat. " +
-                    s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-                )
-              case _: Error.Database | _: Error.SqlException | _: Error.MiscException =>
-                InternalServerError(
-                  s"Une erreur s'est produite sur le serveur. " +
-                    s"Si cette erreur persiste, " +
-                    s"vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-                )
+  def mandat(rawId: UUID): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      mandatService
+        .byId(Mandat.Id(rawId), request.rights)
+        .map(
+          _.fold(
+            error => {
+              eventService.logError(error)
+              error match {
+                case _: Error.EntityNotFound =>
+                  NotFound("Nous n'avons pas trouvé ce mandat.")
+                case _: Error.Authorization =>
+                  Unauthorized(
+                    s"Vous n'avez pas les droits suffisants pour voir ce mandat. " +
+                      s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+                  )
+                case _: Error.Database | _: Error.SqlException | _: Error.MiscException =>
+                  InternalServerError(
+                    s"Une erreur s'est produite sur le serveur. " +
+                      s"Si cette erreur persiste, " +
+                      s"vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+                  )
+              }
+            },
+            mandat => {
+              eventService.log(EventType.MandatShowed, s"Mandat $rawId consulté")
+              Ok(views.html.showMandat(request.currentUser, request.rights)(mandat))
             }
-          },
-          mandat => {
-            eventService.log(EventType.MandatShowed, s"Mandat $rawId consulté")
-            Ok(views.html.showMandat(request.currentUser, request.rights)(mandat))
-          }
+          )
         )
-      )
-  }
+    }
 
 }

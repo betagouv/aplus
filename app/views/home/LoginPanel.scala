@@ -14,4 +14,5 @@ object LoginPanel {
       tokenExpirationInMinutes: Int,
       successMessage: Option[String]
   ) extends LoginPanel
+
 }

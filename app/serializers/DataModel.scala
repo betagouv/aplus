@@ -24,7 +24,9 @@ object DataModel {
           case "paper" => Some(Paper)
           case _       => None
         }
+
     }
+
   }
 
   object SmsFormats {
@@ -33,6 +35,7 @@ object DataModel {
 
     implicit val smsIdWrites =
       implicitly[Writes[String]].contramap((id: Sms.ApiId) => id.underlying)
+
     implicit val smsPhoneNumberReads = implicitly[Reads[String]].map(Sms.PhoneNumber.apply)
 
     implicit val smsPhoneNumberWrites =

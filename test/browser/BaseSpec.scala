@@ -8,4 +8,5 @@ trait BaseSpec {
     new GuiceApplicationBuilder()
       .configure("app.filesPath" -> "files", "app.host" -> "localhost", "play.mailer.mock" -> true)
       .build()
+
 }

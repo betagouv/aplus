@@ -18,6 +18,7 @@ object MDLForms {
       val indexes = defaults.filter(!includeIndexes.contains(_)) ++ includeIndexes
       indexes.map(i => fieldRenderer(field("[" + i + "]"), i))
     }
+
   }
 
 }
