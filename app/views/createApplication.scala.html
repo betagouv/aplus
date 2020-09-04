@@ -188,7 +188,7 @@
                         }<br>
 
                         @if(currentUser.sharedAccount) {
-                            Signature :<br>
+                            Signature <span class="mdl-color-text--red-500">*</span><br>
                             @helper.input(
                                 applicationForm("signature"),
                                 "label" -> "Renseignez ici votre : Prénom, NOM, service",
