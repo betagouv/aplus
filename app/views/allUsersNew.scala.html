@@ -62,7 +62,8 @@
                         groupAdmin: @user.groupAdmin,
                         admin: @user.admin,
                         expert: @user.expert,
-                        disabled: @user.disabled
+                        disabled: @user.disabled,
+                        sharedAccount: @user.sharedAccount
                     },
                 }
             ];
@@ -140,6 +141,15 @@
                             {
                                 title: "Responsable",
                                 field: "groupAdmin",
+                                formatter: "tickCross",
+                                headerFilter: "tickCross",
+                                headerFilterParams: { tristate: true },
+                                headerVertical: verticalHeader,
+                                bottomCalc: "count"
+                            },
+                            {
+                                title: "Partagé",
+                                field: "sharedAccount",
                                 formatter: "tickCross",
                                 headerFilter: "tickCross",
                                 headerFilterParams: { tristate: true },
