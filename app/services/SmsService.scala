@@ -70,11 +70,11 @@ class SmsService @Inject() (
       }
 
     val body =
-      s"En répondant OUI, vous assurez sur l'honneur que " +
+      s"En répondant OUI, vous attestez sur l'honneur que " +
         s"les informations communiquées ($usagerInfos) sont exactes " +
         s"et vous autorisez $userInfos$groupInfos, à utiliser vos données personnelles " +
-        s"dans le cadre d'une demande et pour la durée d'instruction de celle-ci. " +
-        s"Conformément aux conditions générales d'utilisation de la plateforme Adminitration+."
+        s"pour la durée d'instruction de votre demande. " +
+        s"Conformément aux CGU d'Administration+."
     api.sendSms(body, recipient)
   }
 
