@@ -859,7 +859,24 @@ case class ApplicationController @Inject() (
          userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
        }
      } else if (request.currentUser.helper && application.creatorUserId == request.currentUser.id) {
-       Future(userService.byGroupIds(request.currentUser.groupIds).filter(_.helper))
+       // 1. coworkers
+       val coworkers = Future(userService.byGroupIds(request.currentUser.groupIds).filter(_.helper))
+       // 2. coworkers of instructors that are already on the application
+       //    these will mostly be the ones that have been added as users after
+       //    the application has been sent.
+       val instructorsCoworkers = {
+         val invitedUsers: List[User] =
+           userService.byIds(application.invitedUsers.keys.toList, includeDisabled = true)
+         val groupsOfInvitedUsers: Set[UUID] = invitedUsers.flatMap(_.groupIds).toSet
+         userGroupService.byArea(application.area).map { groupsOfArea =>
+           val invitedGroups: Set[UUID] =
+             groupsOfInvitedUsers.intersect(groupsOfArea.map(_.id).toSet)
+           userService.byGroupIds(invitedGroups.toList).filter(_.instructor)
+         }
+       }
+       coworkers.zip(instructorsCoworkers).map {
+         case (helpers, instructors) => helpers ::: instructors
+       }
      } else {
        Future(List[User]())
      }).map(
