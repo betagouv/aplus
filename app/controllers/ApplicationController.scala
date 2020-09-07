@@ -251,6 +251,8 @@ case class ApplicationController @Inject() (
           List(s"(${userGroup.name})")
         }
       }
+      .distinct
+
     val capitalizedUserName = user.name.split(' ').map(_.capitalize).mkString(" ")
     if (contexts.isEmpty)
       s"${capitalizedUserName} ( ${user.qualite} )"
