@@ -70,7 +70,7 @@ class UserService @Inject() (
       db.withConnection { implicit connection =>
         SQL"""SELECT * FROM "user" WHERE expert = true AND disabled = false"""
           .as(simpleUser.*)
-      }.toList ++ (User.admins.filter(_.expert))
+      }
     }
 
   // Note: this is deprecated, should check via the UserGroup
@@ -125,29 +125,28 @@ class UserService @Inject() (
       SQL(s"""SELECT * FROM "user" WHERE ARRAY[{ids}]::uuid[] @> ARRAY[id]::uuid[] $disabledSQL""")
         .on("ids" -> ids)
         .as(simpleUser.*)
-    } ++ User.admins.filter(user => ids.contains(user.id)).filter(!_.disabled || includeDisabled)
+    }
 
   def byKey(key: String): Option[User] =
     db.withConnection { implicit connection =>
       SQL("""SELECT * FROM "user" WHERE key = {key} AND disabled = false""")
         .on("key" -> key)
         .as(simpleUser.singleOpt)
-    }.orElse(User.admins.find(_.key == key))
+    }
 
   def byEmail(email: String): Option[User] =
     db.withConnection { implicit connection =>
       SQL("""SELECT * FROM "user" WHERE lower(email) = {email} AND disabled = false""")
         .on("email" -> email.toLowerCase)
         .as(simpleUser.singleOpt)
-    }.orElse(User.admins.find(_.email.toLowerCase() == email.toLowerCase()))
-      .filter(!_.disabled)
+    }
 
   def byEmails(emails: List[String]): List[User] = {
     val lowerCaseEmails = emails.map(_.toLowerCase)
     db.withConnection { implicit connection =>
       SQL"""SELECT * FROM "user" WHERE  ARRAY[${lowerCaseEmails}]::text[] @> ARRAY[lower(email)]::text[]"""
         .as(simpleUser.*)
-    }.toList ++ (User.admins.filter(user => lowerCaseEmails.contains(user.email.toLowerCase)))
+    }
   }
 
   def deleteById(userId: UUID): Boolean =
