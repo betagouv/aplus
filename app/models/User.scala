@@ -48,7 +48,6 @@ case class User(
 }
 
 object User {
-  private val date = ZonedDateTime.parse("2017-11-01T00:00+01:00")
 
   val systemUser = User(
     UUIDHelper.namedFrom("system"),
@@ -60,7 +59,7 @@ object User {
     false,
     false,
     List(),
-    date,
+    ZonedDateTime.parse("2017-11-01T00:00+01:00"),
     "75056",
     false,
     disabled = true
