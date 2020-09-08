@@ -452,7 +452,7 @@ class NotificationService @Inject() (
             else
               "les clore, "
           ),
-          """en appuyant sur le bouton "Clore la demande"."""
+          """en appuyant sur le bouton « Clore l’échange »."""
         ),
         ul(
           infos.applicationsThatShouldBeClosed.map(application =>
