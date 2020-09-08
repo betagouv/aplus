@@ -186,7 +186,7 @@ dialog {
     </dialog>
         @if(application.canBeClosedBy(currentUser) && not(application.closed)) {
             <button class="mdl-cell mdl-cell--3-col mdl-cell--9-offset-desktop mdl-cell--12-col-phone mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()">
-                Clore la demande
+                Clore l’échange
             </button>
         }
         <div class="mdl-card mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">
@@ -256,7 +256,7 @@ dialog {
                 }
                 @if(application.canBeClosedBy(currentUser) && not(application.closed)) {
                     <button class="mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()" style="margin-right: 10px;">
-                        Clore la demande
+                        Clore l’échange
                     </button>
                 }
             </div>
@@ -384,9 +384,9 @@ dialog {
                             <p class="application__message">@answer.message</p>
                             @if(application.answers.last == answer && application.creatorUserId == currentUser.id && !application.closed && answer.creatorUserID != currentUser.id) {
                                 <div class="info-box do-not-print">
-                                Si l’instructeur a répondu à votre demande, vous pouvez clore la demande :<br><br>
+                                Si l’instructeur a répondu à votre demande, vous pouvez clore l’échange :<br><br>
                                 <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="showDialog()" >
-                                        Clore la demande
+                                        Clore l’échange
                                 </button> <br><br>
                                 Sinon n’hésitez pas à recontacter la personne en utilisant </i><b>Ajouter une réponse</b> ci-dessous.
                                 </div>
@@ -448,7 +448,7 @@ dialog {
             @if(application.canBeClosedBy(currentUser) && not(application.closed)) {
                 <div>
                     <button class="mdl-button mdl-button--raised mdl-button--primary mdl-button--multiline-text mdl-js-button do-not-print" onclick="showDialog()">
-                        Clore la demande
+                        Clore l’échange
                     </button>
                 </div>
             }
