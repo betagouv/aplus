@@ -93,25 +93,23 @@ case class ApiController @Inject() (
           .map { case (groupId, users) => (groupId, users.size) }
           .toMap
         val data: List[FranceServiceInstanceLine] = matches
-          .map {
-            case (franceServiceInstance, groupOpt, area) =>
-              FranceServiceInstanceLine(
-                nomFranceService = franceServiceInstance.nomFranceService,
-                commune = franceServiceInstance.commune,
-                departementName = area.name,
-                departementCode = area.inseeCode,
-                matchedGroup = groupOpt.map(_.name),
-                groupSize = groupOpt.flatMap(group => groupSizes.get(group.id)).getOrElse(0),
-                departementIsDone = false,
-                contactMail = franceServiceInstance.contactMail,
-                phone = franceServiceInstance.phone
-              )
+          .map { case (franceServiceInstance, groupOpt, area) =>
+            FranceServiceInstanceLine(
+              nomFranceService = franceServiceInstance.nomFranceService,
+              commune = franceServiceInstance.commune,
+              departementName = area.name,
+              departementCode = area.inseeCode,
+              matchedGroup = groupOpt.map(_.name),
+              groupSize = groupOpt.flatMap(group => groupSizes.get(group.id)).getOrElse(0),
+              departementIsDone = false,
+              contactMail = franceServiceInstance.contactMail,
+              phone = franceServiceInstance.phone
+            )
           }
           .groupBy(_.departementCode)
-          .flatMap {
-            case (_, sameDepartementLines) =>
-              val departementIsDone = sameDepartementLines.forall(_.groupSize >= 2)
-              sameDepartementLines.map(_.copy(departementIsDone = departementIsDone))
+          .flatMap { case (_, sameDepartementLines) =>
+            val departementIsDone = sameDepartementLines.forall(_.groupSize >= 2)
+            sameDepartementLines.map(_.copy(departementIsDone = departementIsDone))
           }
           .toList
           .sortBy(line => (line.departementCode, line.nomFranceService))

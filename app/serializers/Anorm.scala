@@ -48,9 +48,8 @@ object Anorm {
     }
 
   private def convertStringMapToUUIDMap(map: Map[String, String]) =
-    map.flatMap {
-      case (key, value) =>
-        UUIDHelper.fromString(key).map(_ -> value)
+    map.flatMap { case (key, value) =>
+      UUIDHelper.fromString(key).map(_ -> value)
     }
 
   implicit val fieldsMapUUIDParser: anorm.Column[Map[UUID, String]] =

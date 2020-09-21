@@ -102,8 +102,8 @@ case class MapMapping[T](
     * @return the plain data and any errors in the plain data
     */
   def unbindAndValidate(value: Map[String, T]): (Map[String, String], Seq[FormError]) = {
-    val (datas, errors) = value.map {
-      case (i, v) => wrapped.withPrefix(key + "[" + i + "]").unbindAndValidate(v)
+    val (datas, errors) = value.map { case (i, v) =>
+      wrapped.withPrefix(key + "[" + i + "]").unbindAndValidate(v)
     }.unzip
     (
       datas.foldLeft(Map.empty[String, String])(_ ++ _),

@@ -175,15 +175,14 @@ final class OvhApi(
           )
         }
       }
-      .recover {
-        case (e: Throwable) =>
-          Left(
-            Error.MiscException(
-              EventType.SmsSendError,
-              s"Impossible de supprimer le message reçu ${id.underlying}",
-              e
-            )
+      .recover { case (e: Throwable) =>
+        Left(
+          Error.MiscException(
+            EventType.SmsSendError,
+            s"Impossible de supprimer le message reçu ${id.underlying}",
+            e
           )
+        )
       }
   }
 
@@ -206,15 +205,14 @@ final class OvhApi(
           )
         }
       }
-      .recover {
-        case (e: Throwable) =>
-          Left(
-            Error.MiscException(
-              EventType.SmsSendError,
-              s"Impossible de supprimer le message envoyé ${id.underlying}",
-              e
-            )
+      .recover { case (e: Throwable) =>
+        Left(
+          Error.MiscException(
+            EventType.SmsSendError,
+            s"Impossible de supprimer le message envoyé ${id.underlying}",
+            e
           )
+        )
       }
   }
 
@@ -249,15 +247,14 @@ final class OvhApi(
           )
         }
       }
-      .recover {
-        case (e: Throwable) =>
-          Left(
-            Error.MiscException(
-              EventType.SmsSendError,
-              s"Impossible d'envoyer un SMS",
-              e
-            )
+      .recover { case (e: Throwable) =>
+        Left(
+          Error.MiscException(
+            EventType.SmsSendError,
+            s"Impossible d'envoyer un SMS",
+            e
           )
+        )
       }
   }
 
@@ -278,15 +275,14 @@ final class OvhApi(
           throw new Exception(s"Unexpected response from OVH server (status ${response.status})")
         }
       }
-      .recover {
-        case (e: Throwable) =>
-          Left(
-            Error.MiscException(
-              EventType.SmsReadError,
-              s"Impossible de lire le SMS ${id.underlying} chez le provider distant",
-              e
-            )
+      .recover { case (e: Throwable) =>
+        Left(
+          Error.MiscException(
+            EventType.SmsReadError,
+            s"Impossible de lire le SMS ${id.underlying} chez le provider distant",
+            e
           )
+        )
       }
   }
 

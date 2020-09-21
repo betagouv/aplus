@@ -109,8 +109,8 @@ case class Application(
     val newUsersInfo = userInfos.map { case (key, value) => key -> s"**$key (${value.length})**" }
     val newAnswers = answers.map { answer =>
       answer.copy(
-        userInfos = answer.userInfos.map(_.map {
-          case (key, value) => key -> s"**$key (${value.length})**"
+        userInfos = answer.userInfos.map(_.map { case (key, value) =>
+          key -> s"**$key (${value.length})**"
         }),
         message = s"** Message de ${answer.message.length} caractères **"
       )
