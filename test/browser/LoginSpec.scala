@@ -50,15 +50,15 @@ class gLoginSpec extends Specification with Tables with BaseSpec with BeforeAfte
         "julien.dauphant.test" + "@beta.gouv.fr" ! "Consultez vos e-mails" |
         "wrong@beta.gouv.fr" ! "Aucun compte actif n'est associé à cette adresse e-mail." |
         "simon.pineau" + "@beta.gouv.fr" ! "Aucun compte actif n'est associé à cette adresse e-mail." |> {
-        (email, expected) =>
-          val loginURL =
-            controllers.routes.LoginController.login().absoluteURL(false, s"localhost:$port")
-          browser.goTo(loginURL)
-          browser.el("input[name='email']").fill().withText(email)
-          browser.el("form").submit()
+          (email, expected) =>
+            val loginURL =
+              controllers.routes.LoginController.login().absoluteURL(false, s"localhost:$port")
+            browser.goTo(loginURL)
+            browser.el("input[name='email']").fill().withText(email)
+            browser.el("form").submit()
 
-          browser.pageSource must contain(expected)
-      }
+            browser.pageSource must contain(expected)
+        }
     }
 
     "Use token with success" in new WithBrowser(
