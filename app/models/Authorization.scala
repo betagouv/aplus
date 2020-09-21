@@ -11,12 +11,20 @@ object Authorization {
     UserRights(
       Set[Option[UserRight]](
         Some(HasUserId(user.id)),
-        if (user.helper) Some(Helper) else None,
-        if (user.expert) Some(ExpertOfAreas(user.areas.toSet)) else None,
-        if (user.admin) Some(AdminOfAreas(user.areas.toSet)) else None,
-        if (user.instructor) Some(InstructorOfGroups(user.groupIds.toSet)) else None,
-        if (user.groupAdmin) Some(ManagerOfGroups(user.groupIds.toSet)) else None,
-        if (user.observableOrganisationIds.nonEmpty)
+        if (user.helper && not(user.disabled)) Some(Helper) else None,
+        if (user.expert && not(user.disabled))
+          Some(ExpertOfAreas(user.areas.toSet))
+        else None,
+        if (user.admin && not(user.disabled))
+          Some(AdminOfAreas(user.areas.toSet))
+        else None,
+        if (user.instructor && not(user.disabled))
+          Some(InstructorOfGroups(user.groupIds.toSet))
+        else None,
+        if (user.groupAdmin && not(user.disabled))
+          Some(ManagerOfGroups(user.groupIds.toSet))
+        else None,
+        if (user.observableOrganisationIds.nonEmpty && not(user.disabled))
           Some(ObserverOfOrganisations(user.observableOrganisationIds.toSet))
         else None
       ).flatten
