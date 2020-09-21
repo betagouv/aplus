@@ -606,6 +606,10 @@ a {
     padding-top: 8px;
 }
 
+.single--padding-top-16px {
+    padding-top: 16px;
+}
+
 .single--padding-bottom-8px {
     padding-bottom: 8px;
 }
