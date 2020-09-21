@@ -96,9 +96,8 @@ case class CSVImportController @Inject() (
       }
     withGroup.copy(
       users = newUsersFormDataList,
-      alreadyExistsOrAllUsersAlreadyExist =
-        withGroup.alreadyExistingGroup.nonEmpty ||
-          newUsersFormDataList.forall(_.alreadyExists)
+      alreadyExistsOrAllUsersAlreadyExist = withGroup.alreadyExistingGroup.nonEmpty ||
+        newUsersFormDataList.forall(_.alreadyExists)
     )
   }
 
@@ -333,17 +332,16 @@ case class CSVImportController @Inject() (
                     .map(_.user)
                     // Here we will group users by email, so we can put them in multiple groups
                     .groupBy(_.email)
-                    .map {
-                      case (_, entitiesWithSameEmail) =>
-                        // Note: users appear in the same order as given in the import
-                        // Safe due to groupBy
-                        val repr: User = entitiesWithSameEmail.head
-                        val groupIds: List[UUID] = entitiesWithSameEmail.flatMap(_.groupIds)
-                        val areas: List[UUID] = entitiesWithSameEmail.flatMap(_.areas)
-                        repr.copy(
-                          areas = areas,
-                          groupIds = groupIds
-                        )
+                    .map { case (_, entitiesWithSameEmail) =>
+                      // Note: users appear in the same order as given in the import
+                      // Safe due to groupBy
+                      val repr: User = entitiesWithSameEmail.head
+                      val groupIds: List[UUID] = entitiesWithSameEmail.flatMap(_.groupIds)
+                      val areas: List[UUID] = entitiesWithSameEmail.flatMap(_.areas)
+                      repr.copy(
+                        areas = areas,
+                        groupIds = groupIds
+                      )
                     }
                     .toList
 

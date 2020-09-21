@@ -145,8 +145,10 @@ object SmsApi {
               )
             ),
           id =>
-            api.deleteOutgoingSms(id).zip(api.deleteIncomingSms(id)).map {
-              case (outResult, inResult) =>
+            api
+              .deleteOutgoingSms(id)
+              .zip(api.deleteIncomingSms(id))
+              .map { case (outResult, inResult) =>
                 if (outResult.isRight || inResult.isRight)
                   Right(())
                 else
@@ -159,7 +161,7 @@ object SmsApi {
                       )
                     )
                   )
-            }
+              }
         )
 
   }

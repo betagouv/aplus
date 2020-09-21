@@ -102,15 +102,14 @@ final class MessageBirdApi(
           )
         }
       }
-      .recover {
-        case (e: Throwable) =>
-          Left(
-            Error.MiscException(
-              EventType.SmsSendError,
-              s"Impossible d'envoyer un SMS à partir du numéro $aplusPhoneNumber",
-              e
-            )
+      .recover { case (e: Throwable) =>
+        Left(
+          Error.MiscException(
+            EventType.SmsSendError,
+            s"Impossible d'envoyer un SMS à partir du numéro $aplusPhoneNumber",
+            e
           )
+        )
       }
   }
 
@@ -200,15 +199,14 @@ final class MessageBirdApi(
           throw new Exception(s"Unknown response from MB server (status ${response.status})")
         }
       }
-      .recover {
-        case (e: Throwable) =>
-          Left(
-            Error.MiscException(
-              EventType.SmsReadError,
-              s"Impossible de lire le SMS ${id.underlying} chez le provider distant",
-              e
-            )
+      .recover { case (e: Throwable) =>
+        Left(
+          Error.MiscException(
+            EventType.SmsReadError,
+            s"Impossible de lire le SMS ${id.underlying} chez le provider distant",
+            e
           )
+        )
       }
 
   /** API Doc:
@@ -225,15 +223,14 @@ final class MessageBirdApi(
         else
           throw new Exception(s"Unknown response from MB server (status ${response.status})")
       }
-      .recover {
-        case (e: Throwable) =>
-          Left(
-            Error.MiscException(
-              EventType.SmsDeleteError,
-              s"Impossible de supprimer le SMS ${id.underlying} chez le provider distant",
-              e
-            )
+      .recover { case (e: Throwable) =>
+        Left(
+          Error.MiscException(
+            EventType.SmsDeleteError,
+            s"Impossible de supprimer le SMS ${id.underlying} chez le provider distant",
+            e
           )
+        )
       }
 
 }

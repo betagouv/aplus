@@ -113,24 +113,23 @@ case class UserController @Inject() (
         val applications = applicationService.allByArea(selectedArea.id, anonymous = true)
 
         eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
-        usersFuture.zip(groupsFuture).map {
-          case (users, groups) =>
-            val result = request.getQueryString(Keys.QueryParam.vue).getOrElse("nouvelle") match {
-              case "nouvelle" if request.currentUser.admin =>
-                views.html.allUsersNew(request.currentUser, request.rights)(
-                  groups,
-                  users,
-                  selectedArea
-                )
-              case _ =>
-                views.html.allUsersByGroup(request.currentUser, request.rights)(
-                  groups,
-                  users,
-                  applications,
-                  selectedArea
-                )
-            }
-            Ok(result)
+        usersFuture.zip(groupsFuture).map { case (users, groups) =>
+          val result = request.getQueryString(Keys.QueryParam.vue).getOrElse("nouvelle") match {
+            case "nouvelle" if request.currentUser.admin =>
+              views.html.allUsersNew(request.currentUser, request.rights)(
+                groups,
+                users,
+                selectedArea
+              )
+            case _ =>
+              views.html.allUsersByGroup(request.currentUser, request.rights)(
+                groups,
+                users,
+                applications,
+                selectedArea
+              )
+          }
+          Ok(result)
         }
       }
     }
@@ -159,62 +158,61 @@ case class UserController @Inject() (
           groupService.byAreas(request.currentUser.areas)
         eventService.log(AllUserCsvShowed, "Visualise le CSV de tous les zones de l'utilisateur")
 
-        usersFuture.zip(groupsFuture).map {
-          case (users, groups) =>
-            def userToCSV(user: User): String = {
-              val userGroups = user.groupIds.flatMap(id => groups.find(_.id == id))
-              List[String](
-                user.id.toString,
-                user.name,
-                user.email,
-                Time.formatPatternFr(user.creationDate, "dd-MM-YYYY-HHhmm"),
-                if (user.sharedAccount) "Compte Partagé" else " ",
-                if (user.helper) "Aidant" else " ",
-                if (user.instructor) "Instructeur" else " ",
-                if (user.groupAdmin) "Responsable" else " ",
-                if (user.expert) "Expert" else " ",
-                if (user.admin) "Admin" else " ",
-                if (user.disabled) "Désactivé" else " ",
-                user.communeCode,
-                user.areas.flatMap(Area.fromId).map(_.name).mkString(", "),
-                userGroups.map(_.name).mkString(", "),
-                userGroups
-                  .flatMap(_.organisation)
-                  .flatMap(Organisation.byId)
-                  .map(_.shortName)
-                  .mkString(", "),
-                if (user.cguAcceptationDate.nonEmpty) "CGU Acceptées" else "",
-                if (user.newsletterAcceptationDate.nonEmpty) "Newsletter Acceptée" else ""
-              ).mkString(";")
-            }
-
-            val headers = List[String](
-              "Id",
-              UserAndGroupCsvSerializer.USER_NAME.prefixes(0),
-              UserAndGroupCsvSerializer.USER_EMAIL.prefixes(0),
-              "Création",
-              UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes(0),
-              "Aidant",
-              UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes(0),
-              UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes(0),
-              "Expert",
-              "Admin",
-              "Actif",
-              "Commune INSEE",
-              UserAndGroupCsvSerializer.GROUP_AREAS_IDS.prefixes(0),
-              UserAndGroupCsvSerializer.GROUP_NAME.prefixes(0),
-              UserAndGroupCsvSerializer.GROUP_ORGANISATION.prefixes(0),
-              "CGU",
-              "Newsletter"
+        usersFuture.zip(groupsFuture).map { case (users, groups) =>
+          def userToCSV(user: User): String = {
+            val userGroups = user.groupIds.flatMap(id => groups.find(_.id == id))
+            List[String](
+              user.id.toString,
+              user.name,
+              user.email,
+              Time.formatPatternFr(user.creationDate, "dd-MM-YYYY-HHhmm"),
+              if (user.sharedAccount) "Compte Partagé" else " ",
+              if (user.helper) "Aidant" else " ",
+              if (user.instructor) "Instructeur" else " ",
+              if (user.groupAdmin) "Responsable" else " ",
+              if (user.expert) "Expert" else " ",
+              if (user.admin) "Admin" else " ",
+              if (user.disabled) "Désactivé" else " ",
+              user.communeCode,
+              user.areas.flatMap(Area.fromId).map(_.name).mkString(", "),
+              userGroups.map(_.name).mkString(", "),
+              userGroups
+                .flatMap(_.organisation)
+                .flatMap(Organisation.byId)
+                .map(_.shortName)
+                .mkString(", "),
+              if (user.cguAcceptationDate.nonEmpty) "CGU Acceptées" else "",
+              if (user.newsletterAcceptationDate.nonEmpty) "Newsletter Acceptée" else ""
             ).mkString(";")
+          }
 
-            val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
-            val date = Time.formatPatternFr(Time.nowParis(), "dd-MMM-YYY-HH'h'mm")
-            val filename = "aplus-" + date + "-users-" + area.name.replace(" ", "-") + ".csv"
+          val headers = List[String](
+            "Id",
+            UserAndGroupCsvSerializer.USER_NAME.prefixes(0),
+            UserAndGroupCsvSerializer.USER_EMAIL.prefixes(0),
+            "Création",
+            UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes(0),
+            "Aidant",
+            UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes(0),
+            UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes(0),
+            "Expert",
+            "Admin",
+            "Actif",
+            "Commune INSEE",
+            UserAndGroupCsvSerializer.GROUP_AREAS_IDS.prefixes(0),
+            UserAndGroupCsvSerializer.GROUP_NAME.prefixes(0),
+            UserAndGroupCsvSerializer.GROUP_ORGANISATION.prefixes(0),
+            "CGU",
+            "Newsletter"
+          ).mkString(";")
 
-            Ok(csvContent)
-              .withHeaders("Content-Disposition" -> s"""attachment; filename="$filename"""")
-              .as("text/csv")
+          val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
+          val date = Time.formatPatternFr(Time.nowParis(), "dd-MMM-YYY-HH'h'mm")
+          val filename = "aplus-" + date + "-users-" + area.name.replace(" ", "-") + ".csv"
+
+          Ok(csvContent)
+            .withHeaders("Content-Disposition" -> s"""attachment; filename="$filename"""")
+            .as("text/csv")
         }
       }
     }
@@ -451,20 +449,19 @@ case class UserController @Inject() (
             s"Formulaire invalide, prévenez l’administrateur du service. ${formWithErrors.errors.mkString(", ")}"
           )
         },
-        {
-          case (redirectOption, newsletter, validate) =>
-            if (validate) {
-              userService.acceptCGU(request.currentUser.id, newsletter)
-            }
-            eventService.log(CGUValidated, "CGU validées")
-            val route = redirectOption match {
-              case Some(redirect)
-                  if (redirect: String) != (routes.ApplicationController.myApplications.url: String) =>
-                Call("GET", redirect)
-              case _ =>
-                routes.HomeController.welcome
-            }
-            Redirect(route).flashing("success" -> "Merci d’avoir accepté les CGU")
+        { case (redirectOption, newsletter, validate) =>
+          if (validate) {
+            userService.acceptCGU(request.currentUser.id, newsletter)
+          }
+          eventService.log(CGUValidated, "CGU validées")
+          val route = redirectOption match {
+            case Some(redirect)
+                if (redirect: String) != (routes.ApplicationController.myApplications.url: String) =>
+              Call("GET", redirect)
+            case _ =>
+              routes.HomeController.welcome
+          }
+          Redirect(route).flashing("success" -> "Merci d’avoir accepté les CGU")
         }
       )
     }

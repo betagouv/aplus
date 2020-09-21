@@ -494,27 +494,25 @@ case class ApplicationController @Inject() (
     val applicationsByArea: Map[Area, List[Application]] =
       applications
         .groupBy(_.area)
-        .flatMap {
-          case (areaId: UUID, applications: Seq[Application]) =>
-            Area.all
-              .find(area => (area.id: UUID) == (areaId: UUID))
-              .map(area => (area, applications))
+        .flatMap { case (areaId: UUID, applications: Seq[Application]) =>
+          Area.all
+            .find(area => (area.id: UUID) == (areaId: UUID))
+            .map(area => (area, applications))
         }
 
     val firstDate: ZonedDateTime =
       if (applications.isEmpty) now else applications.map(_.creationDate).min
     val months = Time.monthsMap(firstDate, now)
     val allApplications = applicationsByArea.flatMap(_._2).toList
-    val allApplicationsByArea = applicationsByArea.map {
-      case (area, applications) =>
-        StatsData.AreaAggregates(
-          area = area,
-          StatsData.ApplicationAggregates(
-            applications = applications,
-            months = months,
-            usersRelatedToApplications = users
-          )
+    val allApplicationsByArea = applicationsByArea.map { case (area, applications) =>
+      StatsData.AreaAggregates(
+        area = area,
+        StatsData.ApplicationAggregates(
+          applications = applications,
+          months = months,
+          usersRelatedToApplications = users
         )
+      )
     }.toList
     val data = StatsData(
       all = StatsData.ApplicationAggregates(
@@ -870,8 +868,8 @@ case class ApplicationController @Inject() (
            userService.byGroupIds(invitedGroups.toList).filter(_.instructor)
          }
        }
-       coworkers.zip(instructorsCoworkers).map {
-         case (helpers, instructors) => helpers ::: instructors
+       coworkers.zip(instructorsCoworkers).map { case (helpers, instructors) =>
+         helpers ::: instructors
        }
      }).map(
       _.filterNot(user =>

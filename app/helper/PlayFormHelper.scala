@@ -22,10 +22,9 @@ object PlayFormHelper {
   ): String =
     "Champs du formulaire invalides : " +
       errors
-        .map {
-          case (path, validationErrors) =>
-            validationErrors.map(_.message).mkString(", ") +
-              path.toJsonString
+        .map { case (path, validationErrors) =>
+          validationErrors.map(_.message).mkString(", ") +
+            path.toJsonString
         }
         .mkString(" ; ")
 

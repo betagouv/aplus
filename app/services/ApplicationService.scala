@@ -212,9 +212,8 @@ class ApplicationService @Inject() (
 
   def createApplication(newApplication: Application) =
     db.withConnection { implicit connection =>
-      val invitedUserJson = Json.toJson(newApplication.invitedUsers.map {
-        case (key, value) =>
-          key.toString -> value
+      val invitedUserJson = Json.toJson(newApplication.invitedUsers.map { case (key, value) =>
+        key.toString -> value
       })
       val mandatType =
         newApplication.mandatType.map(DataModel.Application.MandatType.dataModelSerialization)
@@ -255,9 +254,8 @@ class ApplicationService @Inject() (
 
   def add(applicationId: UUID, answer: Answer, expertInvited: Boolean = false) =
     db.withTransaction { implicit connection =>
-      val invitedUserJson = Json.toJson(answer.invitedUsers.map {
-        case (key, value) =>
-          key.toString -> value
+      val invitedUserJson = Json.toJson(answer.invitedUsers.map { case (key, value) =>
+        key.toString -> value
       })
       val sql = (if (answer.declareApplicationHasIrrelevant) {
                    ", irrelevant = true "
