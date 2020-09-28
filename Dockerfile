@@ -10,12 +10,13 @@ RUN npm run build
 
 
 #
-# Scala and sbt Dockerfile part based on
-# https://github.com/hseeberger/scala-sbt
+# Builder image for the Scala app
+# based on https://github.com/hseeberger/scala-sbt
 #
+FROM openjdk:8u242 AS scalabuilder
 
-# Pull base image
-FROM openjdk:8u242
+# We need nodejs to run in a reasonable amount of time sbt-web
+RUN apt-get update && apt-get install -y --no-install-recommends nodejs
 
 # Env variables
 ENV SCALA_VERSION 2.12.7
@@ -52,6 +53,15 @@ COPY project/*.properties project/*.sbt project/*.scala $PLAY_APP_DIR/project/
 WORKDIR $PLAY_APP_DIR
 ENV HOME $PLAY_APP_DIR
 RUN sbt clean stage
+
+
+# Pull base image
+FROM openjdk:8u242
+
+ENV PLAY_APP_NAME aplus
+ENV PLAY_APP_DIR /var/www/$PLAY_APP_NAME
+
+COPY --from=scalabuilder $PLAY_APP_DIR/target/universal/stage $PLAY_APP_DIR/target/universal/stage
 RUN chmod 554 $PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME
 RUN chmod 774 $PLAY_APP_DIR/target/universal/stage/
 
