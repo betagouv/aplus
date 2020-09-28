@@ -16,7 +16,8 @@ RUN npm run build
 FROM openjdk:8u242 AS scalabuilder
 
 # We need nodejs to run in a reasonable amount of time sbt-web
-RUN apt-get update && apt-get install -y --no-install-recommends nodejs
+# see step `Optimizing JavaScript with RequireJS`
+RUN apt-get update && apt-get install -y nodejs
 
 # Env variables
 ENV SCALA_VERSION 2.12.7
