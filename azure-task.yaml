@@ -1,0 +1,12 @@
+version: v1.1.0
+steps:
+# Build target image
+- build: -t {{.Run.Registry}}/aplus:run-{{.Run.ID}} -f Dockerfile .
+# Add tags
+- cmd: docker tag {{.Run.Registry}}/aplus:run-{{.Run.ID}} {{.Run.Registry}}/aplus:{{.Run.Commit}}
+- cmd: docker tag {{.Run.Registry}}/aplus:run-{{.Run.ID}} {{.Run.Registry}}/aplus:{{.Run.Branch}}
+# Push image
+- push:
+  - {{.Run.Registry}}/aplus:run-{{.Run.ID}}
+  - {{.Run.Registry}}/aplus:{{.Run.Commit}}
+  - {{.Run.Registry}}/aplus:{{.Run.Branch}}
