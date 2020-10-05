@@ -96,6 +96,9 @@ case class ApplicationController @Inject() (
   private val featureCanSendApplicationsAnywhere: Boolean =
     configuration.get[Boolean]("app.features.canSendApplicationsAnywhere")
 
+  // This is a feature that is temporary and should be activated
+  // for short period of time during migrations for smooth handling of files.
+  // Just remove the env variable FILES_SECOND_INSTANCE_HOST to deactivate.
   private val filesSecondInstanceHost: Option[String] =
     configuration.getOptional[String]("app.filesSecondInstanceHost")
 
