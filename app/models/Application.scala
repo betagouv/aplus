@@ -3,7 +3,9 @@ package models
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit.MINUTES
 import java.util.UUID
+
 import helper.BooleanHelper.not
+import models.Authorization.{isExpert, isHelper, isInstructor, readUserRights, UserRights}
 
 case class Application(
     id: UUID,
@@ -129,22 +131,17 @@ case class Application(
 
   // Security
 
-  def fileCanBeShowed(user: User, answer: UUID) =
+  def fileCanBeShowed(user: User, answer: UUID): Boolean =
     answers.find(_.id == answer) match {
       case None => false
       case Some(answer) if answer.filesAvailabilityLeftInDays.isEmpty =>
         false // You can't download expired file
-      case Some(answer) if answer.creatorUserID == user.id =>
-        false // You can't download your own file
-      case _ =>
-        ((user.instructor || user.helper) && not(user.expert) && invitedUsers.keys.toList
-          .contains(user.id)) ||
-          (user.helper && user.id == creatorUserId)
+      case _ => fileCanBeShowed(user)
     }
 
   def fileCanBeShowed(user: User) =
-    filesAvailabilityLeftInDays.nonEmpty && (user.instructor && invitedUsers.keys.toList
-      .contains(user.id)) ||
+    filesAvailabilityLeftInDays.nonEmpty && not(user.expert) &&
+      (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
       (user.helper && user.id == creatorUserId)
 
   def canHaveExpertsInvitedBy(user: User) =
