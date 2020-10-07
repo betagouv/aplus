@@ -4,6 +4,8 @@ import java.io.File
 import java.nio.file.{FileAlreadyExistsException, Files, Path, Paths}
 import java.util.UUID
 
+import helper.StringHelper.normalizeNFKC
+
 object AttachmentHelper {
   private val APPLICATION_ID_KEY = "application-id"
   private val ANSWER_ID_KEY = "answer-id"
@@ -12,7 +14,6 @@ object AttachmentHelper {
 
   def computeStoreAndRemovePendingAndNewApplicationAttachment(
       applicationId: UUID,
-      formContent: Map[String, String],
       getAttachmentsToStore: => Iterable[(Path, String)],
       filesPath: String
   ): (Map[String, Long], Map[String, Long]) = {
@@ -24,7 +25,6 @@ object AttachmentHelper {
 
   def computeStoreAndRemovePendingAndNewAnswerAttachment(
       applicationId: UUID,
-      formContent: Map[String, String],
       getAttachmentsToStore: => Iterable[(Path, String)],
       filesPath: String
   ): (Map[String, Long], Map[String, Long]) = {
@@ -82,15 +82,15 @@ object AttachmentHelper {
       filesPath: String,
       prefix: String
   ): Option[(String, Long)] = {
-    val fileDestination = Paths.get(s"$filesPath/${prefix}$applicationId-$attachmentName")
+    val fileDestination = Paths.get(s"$filesPath/$prefix$applicationId-$attachmentName")
     try {
       Files.copy(attachmentPath, fileDestination)
       val f: File = new File(fileDestination.toString)
-      Some(attachmentName -> f.length())
+      Some(normalizeNFKC(attachmentName) -> f.length())
     } catch {
       case _: FileAlreadyExistsException =>
         val f: File = new File(fileDestination.toString)
-        Some(attachmentName -> f.length())
+        Some(normalizeNFKC(attachmentName) -> f.length())
     }
   }
 
