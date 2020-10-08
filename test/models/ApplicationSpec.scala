@@ -107,18 +107,18 @@ class ApplicationSpec extends org.specs2.mutable.Specification {
       }
 
       // TODO : check functional rule
-      "if an answer exists by a user that has the same name as the user qualite" >> {
+      "if an answer exists by a user that is not the application creator" >> {
         val creatorId = randomUUID()
-        val userQualite = "qualite"
+        val userName = "qualite"
         val application =
           makeApplication().copy(
             creatorUserId = creatorId,
-            answers = List(makeAnswer().copy(creatorUserName = userQualite)),
+            answers = List(makeAnswer().copy(creatorUserName = userName)),
             closed = false
           )
-        val user = makeUser().copy(id = randomUUID(), qualite = userQualite)
+        val user = makeUser().copy(id = randomUUID(), qualite = userName)
 
-        application.longStatus(user) must contain(s"Répondu par $userQualite")
+        application.longStatus(user) must contain(s"Répondu par $userName")
       }
     }
 
