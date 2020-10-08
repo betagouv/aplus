@@ -70,6 +70,7 @@ case class Application(
         val username = answers
           .find(_.creatorUserName.contains(user.qualite))
           .map(_.creatorUserName)
+          // TODO : I think this case will never happen because of the pattern matching condition
           .getOrElse("un collègue")
           .replaceAll("\\(.*\\)", "")
           .trim
