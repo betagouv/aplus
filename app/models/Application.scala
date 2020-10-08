@@ -27,6 +27,7 @@ case class Application(
     hasSelectedSubject: Boolean = false,
     category: Option[String] = None,
     files: Map[String, Long] = Map(),
+    // TODO : Can we have a mandatDate without mandatType ? => Maybe a type Option[(MandatType, String)] should be better
     mandatType: Option[Application.MandatType],
     mandatDate: Option[String]
 ) extends AgeModel {
@@ -43,24 +44,15 @@ case class Application(
 
   lazy val searchData = {
     val stripChars = "\"<>'"
-    val areaName: String = Area.fromId(area).map(_.name).getOrElse("")
-    val creatorName: String = creatorUserName.filterNot(stripChars contains _)
-    val userInfosStripped: String =
-      userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")
-    val subjectStripped: String = subject.filterNot(stripChars contains _)
-    val descriptionStripped: String = description.filterNot(stripChars contains _)
-    val invitedUserNames: String =
-      invitedUsers.values.map(_.filterNot(stripChars contains _)).mkString(" ")
-    val answersStripped: String =
-      answers.map(_.message.filterNot(stripChars contains _)).mkString(" ")
+    val areaName = Area.fromId(area).map(_.name).getOrElse("")
+    val creatorName = creatorUserName.filterNot(stripChars contains _)
+    val userInfosStripped = userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")
+    val subjectStripped = subject.filterNot(stripChars contains _)
+    val descriptionStripped = description.filterNot(stripChars contains _)
+    val invitedUserNames = invitedUsers.values.map(_.filterNot(stripChars contains _)).mkString(" ")
+    val answersStripped = answers.map(_.message.filterNot(stripChars contains _)).mkString(" ")
 
-    (areaName + " " +
-      creatorName + " " +
-      userInfosStripped + " " +
-      subjectStripped + " " +
-      descriptionStripped + " " +
-      invitedUserNames + " " +
-      answersStripped)
+    s"$areaName $creatorName $userInfosStripped $subjectStripped $descriptionStripped $invitedUserNames $answersStripped"
   }
 
   def longStatus(user: User) =
@@ -74,25 +66,24 @@ case class Application(
         "Consultée"
       case _ if user.id == creatorUserId                   => "Envoyée"
       case _ if answers.exists(_.creatorUserID == user.id) => "Répondu"
-      case _ if answers.exists(_.creatorUserName.contains(user.qualite)) => {
+      case _ if answers.exists(_.creatorUserName.contains(user.qualite)) =>
         val username = answers
           .find(_.creatorUserName.contains(user.qualite))
           .map(_.creatorUserName)
           .getOrElse("un collègue")
           .replaceAll("\\(.*\\)", "")
           .trim
-        s"Répondu par ${username}"
-      }
+        s"Répondu par $username"
       case _ if seenByUserIds.contains(user.id) => "Consultée"
       case _                                    => "Nouvelle"
     }
 
   def status =
     closed match {
-      case true                                                              => "Clôturée"
-      case _ if answers.filterNot(_.creatorUserID != creatorUserId).nonEmpty => "Répondu"
-      case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty   => "Consultée"
-      case _                                                                 => "Nouvelle"
+      case true                                                            => "Clôturée"
+      case _ if !answers.forall(_.creatorUserID != creatorUserId)          => "Répondu"
+      case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty => "Consultée"
+      case _                                                               => "Nouvelle"
     }
 
   def invitedUsers(users: List[User]): List[User] =
