@@ -1,7 +1,6 @@
 package models
 
 import java.time.ZonedDateTime.now
-import java.util.UUID
 import java.util.UUID.randomUUID
 
 class ApplicationSpec extends org.specs2.mutable.Specification {
@@ -52,7 +51,7 @@ class ApplicationSpec extends org.specs2.mutable.Specification {
 
   "The Application longStatus should" >> {
 
-    "display 'Nouvelle'" >> {
+    "display 'Nouvelle' for a new application" >> {
       val application = makeApplication().copy(closed = false)
       val user = makeUser()
 
@@ -66,42 +65,75 @@ class ApplicationSpec extends org.specs2.mutable.Specification {
       application.longStatus(user) must be("Clôturée")
     }
 
-    "display 'Envoyée' if user is the creator" >> {
-      val userId = UUID.randomUUID()
-      val application =
-        makeApplication().copy(
-          creatorUserId = userId,
-          closed = false
-        )
-      val user = makeUser().copy(id = userId)
+    "display 'Envoyée'" >> {
+      "if the reading user is the creator" >> {
+        val creatorId = randomUUID()
+        val application =
+          makeApplication().copy(
+            creatorUserId = creatorId,
+            closed = false
+          )
+        val user = makeUser().copy(id = creatorId)
 
-      application.longStatus(user) must be("Envoyée")
+        application.longStatus(user) must be("Envoyée")
+      }
+
+      "if the reading user is the creator and it exists an answer by the creator" >> {
+        val creatorId = randomUUID()
+        val application =
+          makeApplication().copy(
+            creatorUserId = creatorId,
+            answers = List(makeAnswer().copy(creatorUserID = creatorId)),
+            closed = false
+          )
+        val user = makeUser().copy(id = creatorId)
+
+        application.longStatus(user) must be("Envoyée")
+      }
     }
 
-    "display 'Envoyée' if the user is the creator and it exists an answer by the creator" >> {
-      val userId = UUID.randomUUID()
-      val application =
-        makeApplication().copy(
-          creatorUserId = userId,
-          answers = List(makeAnswer().copy(creatorUserID = userId)),
-          closed = false
-        )
-      val user = makeUser().copy(id = userId)
+    "display 'Répondu'" >> {
+      "if the reading user is the creator and it exists an answer not by the creator" >> {
+        val creatorId = randomUUID()
+        val application =
+          makeApplication().copy(
+            creatorUserId = creatorId,
+            answers = List(makeAnswer().copy(creatorUserID = randomUUID())),
+            closed = false
+          )
+        val user = makeUser().copy(id = creatorId)
 
-      application.longStatus(user) must be("Envoyée")
+        application.longStatus(user) must be("Répondu")
+      }
+
+      // TODO : check functional rule
+      "if an answer exists by the reading user that has the same name as the user qualite" >> {
+        val creatorId = randomUUID()
+        val userQualite = "qualite"
+        val application =
+          makeApplication().copy(
+            creatorUserId = creatorId,
+            answers = List(makeAnswer().copy(creatorUserName = userQualite)),
+            closed = false
+          )
+        val user = makeUser().copy(id = randomUUID(), qualite = userQualite)
+
+        application.longStatus(user) must contain(s"Répondu par $userQualite")
+      }
     }
 
-    "display 'Répondu' if the user is the creator and it exists an answer not by the creator" >> {
-      val userId = UUID.randomUUID()
+    "display 'Consultée' if the reading user is not the creator and has seen the application" >> {
+      val creatorId = randomUUID()
+      val userId = randomUUID()
       val application =
         makeApplication().copy(
-          creatorUserId = userId,
-          answers = List(makeAnswer().copy(creatorUserID = randomUUID())),
-          closed = false
+          creatorUserId = creatorId,
+          closed = false,
+          seenByUserIds = List(userId)
         )
       val user = makeUser().copy(id = userId)
 
-      application.longStatus(user) must be("Répondu")
+      application.longStatus(user) must be("Consultée")
     }
 
   }
