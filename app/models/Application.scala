@@ -85,10 +85,10 @@ case class Application(
 
   def status =
     closed match {
-      case true                                                            => "Clôturée"
-      case _ if !answers.forall(_.creatorUserID != creatorUserId)          => "Répondu"
-      case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty => "Consultée"
-      case _                                                               => "Nouvelle"
+      case true                                                   => "Clôturée"
+      case _ if !answers.forall(_.creatorUserID != creatorUserId) => "Répondu"
+      case _ if seenByInvitedUser()                               => "Consultée"
+      case _                                                      => "Nouvelle"
     }
 
   def invitedUsers(users: List[User]): List[User] =
