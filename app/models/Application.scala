@@ -3,6 +3,7 @@ package models
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit.MINUTES
 import java.util.UUID
+
 import helper.BooleanHelper.not
 
 case class Application(
@@ -32,11 +33,7 @@ case class Application(
     mandatDate: Option[String]
 ) extends AgeModel {
 
-  lazy val filesAvailabilityLeftInDays: Option[Int] = if (ageInDays > 8) {
-    None
-  } else {
-    Some(7 - ageInDays)
-  }
+  lazy val filesAvailabilityLeftInDays: Option[Int] = Some(ageInDays).filter(_ < 8).map(7 - _)
 
   lazy val allFiles: Map[String, Long] = {
     files ++ answers.flatMap(_.files).flatten
@@ -55,28 +52,35 @@ case class Application(
     s"$areaName $creatorName $userInfosStripped $subjectStripped $descriptionStripped $invitedUserNames $answersStripped"
   }
 
+  private def seenByInvitedUser() = seenByUserIds
+    .intersect(invitedUsers.keys.toList)
+    .nonEmpty
+
+  private def seenBy(user: User) = seenByUserIds.contains(user.id)
+
+  private def answeredBy(user: User) = answers.exists(_.creatorUserID == user.id)
+
+  private def answeredByOtherThan(user: User) = answers.exists(_.creatorUserID != user.id)
+
+  private def isCreator(user: User) = user.id == creatorUserId
+
   def longStatus(user: User) =
     closed match {
-      case true                                                                        => "Clôturée"
-      case _ if user.id == creatorUserId && answers.exists(_.creatorUserID != user.id) => "Répondu"
-      case _
-          if user.id == creatorUserId && seenByUserIds
-            .intersect(invitedUsers.keys.toList)
-            .nonEmpty =>
-        "Consultée"
-      case _ if user.id == creatorUserId                   => "Envoyée"
-      case _ if answers.exists(_.creatorUserID == user.id) => "Répondu"
-      case _ if answers.exists(_.creatorUserName.contains(user.qualite)) =>
+      case true                                              => "Clôturée"
+      case _ if isCreator(user) && answeredByOtherThan(user) => "Répondu"
+      case _ if answeredBy(user)                             => "Répondu"
+      case _ if isCreator(user) && seenByInvitedUser()       => "Consultée"
+      case _ if isCreator(user)                              => "Envoyée"
+      case _ if !isCreator(user) && answeredByOtherThan(user) =>
         val username = answers
-          .find(_.creatorUserName.contains(user.qualite))
+          .find(_.creatorUserID != user.id)
           .map(_.creatorUserName)
-          // TODO : I think this case will never happen because of the pattern matching condition
           .getOrElse("un collègue")
           .replaceAll("\\(.*\\)", "")
           .trim
         s"Répondu par $username"
-      case _ if seenByUserIds.contains(user.id) => "Consultée"
-      case _                                    => "Nouvelle"
+      case _ if seenBy(user) => "Consultée"
+      case _                 => "Nouvelle"
     }
 
   def status =
