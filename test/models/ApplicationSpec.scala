@@ -107,7 +107,7 @@ class ApplicationSpec extends org.specs2.mutable.Specification {
       }
 
       // TODO : check functional rule
-      "if an answer exists by the reading user that has the same name as the user qualite" >> {
+      "if an answer exists by a user that has the same name as the user qualite" >> {
         val creatorId = randomUUID()
         val userQualite = "qualite"
         val application =
