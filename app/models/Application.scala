@@ -70,7 +70,6 @@ case class Application(
       case _ if isCreator(user) && answeredByOtherThan(user) => "Répondu"
       case _ if isCreator(user) && seenByInvitedUser()       => "Consultée"
       case _ if isCreator(user)                              => "Envoyée"
-      case _ if answeredBy(user)                             => "Répondu"
       case _ if !isCreator(user) && answeredByOtherThan(user) =>
         val username = answers
           .find(_.creatorUserID != user.id)
@@ -79,8 +78,9 @@ case class Application(
           .replaceAll("\\(.*\\)", "")
           .trim
         s"Répondu par $username"
-      case _ if seenBy(user) => "Consultée"
-      case _                 => "Nouvelle"
+      case _ if answeredBy(user) => "Répondu"
+      case _ if seenBy(user)     => "Consultée"
+      case _                     => "Nouvelle"
     }
 
   def status =
