@@ -68,9 +68,9 @@ case class Application(
     closed match {
       case true                                              => "Clôturée"
       case _ if isCreator(user) && answeredByOtherThan(user) => "Répondu"
-      case _ if answeredBy(user)                             => "Répondu"
       case _ if isCreator(user) && seenByInvitedUser()       => "Consultée"
       case _ if isCreator(user)                              => "Envoyée"
+      case _ if answeredBy(user)                             => "Répondu"
       case _ if !isCreator(user) && answeredByOtherThan(user) =>
         val username = answers
           .find(_.creatorUserID != user.id)
