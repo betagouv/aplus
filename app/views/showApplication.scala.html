@@ -247,7 +247,7 @@ dialog {
                             font-weight: 600;
                             line-height: 16px;">
                             <i class="icon material-icons icon--light">attach_file</i>
-                            @application.creatorUserName a ajouté @if(application.fileCanBeShowed(currentUser)) { le fichier <a href="@routes.ApplicationController.applicationFile(application.id, filename)" target="_blank">@filename</a> } else { un fichier }
+                            @application.creatorUserName a ajouté @if(application.fileCanBeShowed(currentUser)(currentUserRights)) { le fichier <a href="@routes.ApplicationController.applicationFile(application.id, filename)" target="_blank">@filename</a> } else { un fichier }
                             @application.filesAvailabilityLeftInDays match {
                                 case None => { ( Fichier expiré et supprimé ) }
                                 case Some(expirationInDays) => { ( Suppression du fichier dans @expirationInDays jours ) }
@@ -337,7 +337,7 @@ dialog {
                             font-weight: 600;
                             line-height: 16px;">
                             <i class="icon material-icons icon--light">attach_file</i>
-                            @answer.creatorUserName a ajouté @if(application.fileCanBeShowed(currentUser, answer.id)) { le fichier <a href="@routes.ApplicationController.answerFile(application.id, answer.id, filename)" target="_blank">@filename</a> } else { un fichier }
+                            @answer.creatorUserName a ajouté @if(application.fileCanBeShowed(currentUser, currentUserRights, answer.id)) { le fichier <a href="@routes.ApplicationController.answerFile(application.id, answer.id, filename)" target="_blank">@filename</a> } else { un fichier }
                             @answer.filesAvailabilityLeftInDays match {
                                 case None => { ( Fichier expiré et supprimé ) }
                                 case Some(expirationInDays) => { ( Suppression du fichier dans @expirationInDays jours ) }

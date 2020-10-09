@@ -131,18 +131,18 @@ case class Application(
 
   // Security
 
-  def fileCanBeShowed(user: User, answer: UUID): Boolean =
+  def fileCanBeShowed(user: User, rights: UserRights, answer: UUID): Boolean =
     answers.find(_.id == answer) match {
       case None => false
       case Some(answer) if answer.filesAvailabilityLeftInDays.isEmpty =>
         false // You can't download expired file
-      case _ => fileCanBeShowed(user)
+      case _ => fileCanBeShowed(user)(rights)
     }
 
-  def fileCanBeShowed(user: User) =
-    filesAvailabilityLeftInDays.nonEmpty && not(user.expert) &&
-      (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
-      (user.helper && user.id == creatorUserId)
+  def fileCanBeShowed(user: User)(rights: UserRights) =
+    filesAvailabilityLeftInDays.nonEmpty && not(isExpert(rights)) &&
+      (isInstructor(rights) && invitedUsers.keys.toList.contains(user.id)) ||
+      (isHelper(rights) && user.id == creatorUserId)
 
   def canHaveExpertsInvitedBy(user: User) =
     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
