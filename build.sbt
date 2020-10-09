@@ -92,7 +92,9 @@ libraryDependencies ++= Seq(
   // known security vulnerabilities is used
   // It is also compatible with play-json
   // https://github.com/playframework/play-json/blob/master/build.sbt#L20
-  "com.fasterxml.jackson.core" % "jackson-databind" % "2.10.5"
+  "com.fasterxml.jackson.core" % "jackson-databind" % "2.10.5",
+  "net.codingwell" %% "scala-guice" % "4.2.6",
+  "com.hhandoko" %% "play28-scala-pdf" % "4.3.0"
 )
 
 // UI

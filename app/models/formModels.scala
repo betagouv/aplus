@@ -55,4 +55,9 @@ object formModels {
   // TOOD : rename Data -> FormData
   case class CSVImportData(csvLines: String, areaIds: List[UUID], separator: Char)
 
+  final case class MandatGeneration(
+      firstName: String,
+      lastName: String
+  )
+
 }

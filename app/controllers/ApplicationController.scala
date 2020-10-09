@@ -3,69 +3,35 @@ package controllers
 import java.nio.file.{Files, Path, Paths}
 import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
-import helper.UUIDHelper
-import scala.util.{Failure, Success}
 
 import actions._
+import com.hhandoko.play.pdf.PdfGenerator
 import constants.Constants
-import helper.Time.zonedDateTimeOrdering
 import forms.FormsPlusMap
-import helper.{Hash, Time}
+import helper.BooleanHelper.not
+import helper.CSVUtil.escape
+import helper.StringHelper.CanonizeString
+import helper.Time.zonedDateTimeOrdering
+import helper.{Hash, Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
-import models.{Answer, Application, Area, Authorization, Organisation, User, UserGroup}
-import models.formModels.{AnswerFormData, ApplicationFormData, InvitationFormData}
+import models.EventType._
+import models.formModels.{AnswerFormData, ApplicationFormData, InvitationFormData, MandatGeneration}
 import models.mandat.Mandat
+import models._
 import org.webjars.play.WebJarsUtil
+import play.api.cache.AsyncCacheApi
 import play.api.data.Forms._
 import play.api.data._
 import play.api.data.validation.Constraints._
 import play.api.mvc._
-import services._
-import helper.BooleanHelper.not
-import helper.CSVUtil.escape
-import models.EventType.{
-  AddExpertCreated,
-  AddExpertNotCreated,
-  AddExpertUnauthorized,
-  AgentsAdded,
-  AgentsNotAdded,
-  AllApplicationsShowed,
-  AllApplicationsUnauthorized,
-  AllAsNotFound,
-  AllAsShowed,
-  AllAsUnauthorized,
-  AllCSVShowed,
-  AnswerCreated,
-  AnswerNotCreated,
-  ApplicationCreated,
-  ApplicationCreationError,
-  ApplicationCreationInvalid,
-  ApplicationFormShowed,
-  ApplicationLinkedToMandat,
-  ApplicationLinkedToMandatError,
-  ApplicationShowed,
-  FileNotFound,
-  FileOpened,
-  FileUnauthorized,
-  InviteNotCreated,
-  MyApplicationsShowed,
-  MyCSVShowed,
-  StatsShowed,
-  TerminateCompleted,
-  TerminateError,
-  TerminateIncompleted,
-  TerminateUnauthorized
-}
-import play.api.cache.AsyncCacheApi
 import play.twirl.api.Html
+import serializers.{AttachmentHelper, DataModel, Keys}
+import services._
 import views.stats.StatsData
 
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration._
-import helper.StringHelper.CanonizeString
-import serializers.{AttachmentHelper, DataModel, Keys}
-
-import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 /**
   * This controller creates an `Action` to handle HTTP requests to the
@@ -82,7 +48,8 @@ case class ApplicationController @Inject() (
     mandatService: MandatService,
     organisationService: OrganisationService,
     userGroupService: UserGroupService,
-    configuration: play.api.Configuration
+    configuration: play.api.Configuration,
+    pdfGenerator: PdfGenerator
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with play.api.i18n.I18nSupport
@@ -1282,6 +1249,27 @@ case class ApplicationController @Inject() (
             }
         }
       }
+    }
+
+  private val generateMandatForm = Form(
+    mapping(
+      "firstName" -> text,
+      "lastName" -> text,
+    )(MandatGeneration.apply)(MandatGeneration.unapply)
+  )
+
+  def generateMandat: Action[AnyContent] =
+    loginAction.async { implicit request =>
+      generateMandatForm.bindFromRequest.fold(
+        _ => Future.successful(BadRequest("Le mandat ne peut pas être généré")),
+        form =>
+          Future(
+            pdfGenerator.ok(
+              views.html.mandat(request.currentUser, request.rights)(form.firstName, form.lastName),
+              request.host
+            )
+          )
+      )
     }
 
   //

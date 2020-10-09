@@ -1,0 +1,195 @@
+@(user: User, currentUserRights: Authorization.UserRights)(firstName: String, lastName: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+
+<html>
+    <head><meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+        <style type="text/css">
+                <!--
+                span.cls_002 {
+                    font-family: Times, serif;
+                    font-size: 11.1px;
+                    color: rgb(0, 0, 0);
+                    font-weight: bold;
+                    font-style: normal;
+                    text-decoration: none
+                }
+
+                div.cls_002 {
+                    font-family: Times, serif;
+                    font-size: 11.1px;
+                    color: rgb(0, 0, 0);
+                    font-weight: bold;
+                    font-style: normal;
+                    text-decoration: none
+                }
+
+                span.cls_003 {
+                    font-family: Times, serif;
+                    font-size: 11.1px;
+                    color: rgb(0, 0, 0);
+                    font-weight: normal;
+                    font-style: normal;
+                    text-decoration: none
+                }
+
+                div.cls_003 {
+                    font-family: Times, serif;
+                    font-size: 11.1px;
+                    color: rgb(0, 0, 0);
+                    font-weight: normal;
+                    font-style: normal;
+                    text-decoration: none
+                }
+
+                span.cls_004 {
+                    font-family: Times, serif;
+                    font-size: 11.1px;
+                    color: rgb(0, 0, 0);
+                    font-weight: normal;
+                    font-style: italic;
+                    text-decoration: none
+                }
+
+                div.cls_004 {
+                    font-family: Times, serif;
+                    font-size: 11.1px;
+                    color: rgb(0, 0, 0);
+                    font-weight: normal;
+                    font-style: italic;
+                    text-decoration: none
+                }
+
+                -->
+        </style>
+        <script type="text/javascript" src="26e38e8c-0a0c-11eb-8b25-0cc47a792c0a_id_26e38e8c-0a0c-11eb-8b25-0cc47a792c0a_files/wz_jsgraphics.js"></script>
+    </head>
+    <body>
+        <div style="position: absolute;
+            left: 50%;
+            margin-left: -297px;
+            top: 0px;
+            width: 595px;
+            height: 841px;
+            overflow: hidden">
+            <div style="position: absolute;
+                left: 0px;
+                top: 0px">
+                <img src="26e38e8c-0a0c-11eb-8b25-0cc47a792c0a_id_26e38e8c-0a0c-11eb-8b25-0cc47a792c0a_files/background1.jpg" width=595 height=841></div>
+            <div style="position: absolute;
+                left: 230.21px;
+                top: 70.72px" class="cls_002"><span class="cls_002">Mandat « Administration+ »</span></div>
+            <div style="position: absolute;
+                left: 145.70px;
+                top: 85.26px" class="cls_002"><span class="cls_002">
+                d’un aidant réalisant des démarches administratives numériques</span></div>
+            <div style="position: absolute;
+                left: 220.01px;
+                top: 99.78px" class="cls_002"><span class="cls_002">au bénéfice d’une personne aidée</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 143.46px" class="cls_003"><span class="cls_003">
+                Monsieur/Madame @lastName @firstName, habitant ________________ , tel ________________,</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 157.98px" class="cls_003"><span class="cls_003">reconnait avoir mandaté :</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 187.14px" class="cls_003"><span class="cls_003">
+                Monsieur/Madame @user.name, exerçant la fonction de ________________________</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 201.66px" class="cls_003"><span class="cls_003">
+                dans/à ____________________________ (</span><span class="cls_004">
+                précisez la structure/l’organisme</span><span class="cls_003">), tel ________________</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 216.18px" class="cls_003"><span class="cls_003">
+                pour réaliser les démarches administratives numériques suivantes me concernant :</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 230.70px" class="cls_003"><span class="cls_003">
+                _________________________________________________________________ (</span><span class="cls_004">
+                précisez lesquelles</span><span class="cls_003">)</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 274.41px" class="cls_003"><span class="cls_003">A cette fin :</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 288.93px" class="cls_003"><span class="cls_003">
+                Monsieur/Madame @lastName @firstName autorise :</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 303.45px" class="cls_003"><span class="cls_003">
+                Monsieur/Madame @user.name à utiliser ses données à caractère personnel suivantes :</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 318.09px" class="cls_003"><span class="cls_003">
+                _________________________________________________________________ (</span><span class="cls_004">
+                précisez lesquelles</span><span class="cls_003">)</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 347.13px" class="cls_003"><span class="cls_003">
+                Monsieur/Madame @user.name a rappelé à Monsieur/Madame @lastName @firstName:</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 361.65px" class="cls_003"><span class="cls_003">
+                - l’objet de l’intervention ; la raison pour laquelle ses informations sont collectées et leur utilité ;</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 376.29px" class="cls_003"><span class="cls_003">
+                - l’existence de </span><A HREF="https://www.cnil.fr/fr/les-droits-pour-maitriser-vos-donnees-personnelles">
+                droits sur ses données</A> (accès, rectification, suppression, etc.) ; la possibilité pour</div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 390.81px" class="cls_003"><span class="cls_003">
+                l’usager de retirer à tout moment son consentement.</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 434.37px" class="cls_003"><span class="cls_003">
+                Monsieur/Madame @user.name s’engage à :</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 449.01px" class="cls_003"><span class="cls_003">
+                1°/ utiliser les données à caractère personnel strictement nécessaires à la réalisation de ces seules</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 463.55px" class="cls_003"><span class="cls_003">démarches administratives* ;</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 478.07px" class="cls_003"><span class="cls_003">
+                2°/ conserver les données à caractère personnel strictement nécessaires à ces démarches le seul temps</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 492.59px" class="cls_003"><span class="cls_003">nécessaire à leur réalisation ;</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 507.23px" class="cls_003"><span class="cls_003">
+                3°/ détruire, dès la réalisation de ces démarches, les données à caractère personnel en sa possession.</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 536.27px" class="cls_003"><span class="cls_003">
+                Le présent mandat prend fin à compter de la réalisation des démarches précitées. A défaut, il est valable</span></div>
+            <div style="position: absolute;
+                left: 70.82px;
+                top: 550.79px" class="cls_003"><span class="cls_003">pour une durée d’un an renouvelable.</span></div>
+            <div style="position: absolute;
+                left: 106.22px;
+                top: 594.47px" class="cls_003"><span class="cls_003">Date, Lieu et Signature</span></div>
+            <div style="position: absolute;
+                left: 387.07px;
+                top: 594.47px" class="cls_003"><span class="cls_003">Date, Lieu et Signature</span></div>
+            <div style="position: absolute;
+                left: 131.42px;
+                top: 608.99px" class="cls_003"><span class="cls_003">Le mandant</span></div>
+            <div style="position: absolute;
+                left: 409.15px;
+                top: 608.99px" class="cls_003"><span class="cls_003">Le mandataire</span></div>
+            <div style="position: absolute;
+                left: 77.90px;
+                top: 726.86px" class="cls_003"><span class="cls_003">
+                * Il convient de préciser pour le cas où ils le seraient, que les codes et identifiants de l’usager sont</span></div>
+            <div style="position: absolute;
+                left: 77.90px;
+                top: 741.50px" class="cls_003"><span class="cls_003">inclus dans ces données.</span></div>
+        </div>
+    </body>
+</html>

@@ -339,6 +339,12 @@
                         }
                     </div>
             }
+            @helper.form(action = routes.ApplicationController.generateMandat(), "enctype" -> "multipart/form-data", "id" -> "generate-mandat-form", "class" -> "aplus-protected-form", "target" -> "_blank", "rel" -> "noopener noreferrer") {
+                @helper.CSRF.formField
+                <input type="hidden" name="firstName" id="firstNameCopy" readonly>
+                <input type="hidden" name="lastName" id="lastNameCopy" readonly>
+                <input type="submit" id="generate-mandat" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" value="Générer le mandat" disabled>
+                }
         </div>
 }{
         <script type="application/javascript" src="@routes.Assets.versioned("javascripts/application-attachment.js")"></script>

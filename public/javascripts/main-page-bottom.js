@@ -410,6 +410,63 @@ function setupApplicationForm() {
 
 setupApplicationForm();
 
+function setupMandatGeneration() {
+    const firstNameInput = document.getElementById("usagerPrenom");
+    const firstNameCopy = document.getElementById("firstNameCopy");
+    const lastNameInput = document.getElementById("usagerNom");
+    const lastNameCopy = document.getElementById("lastNameCopy");
+    const generateMandatButton = document.getElementById("generate-mandat");
+
+    function validateNonEmptyInput(input) {
+        const data = input.value;
+        if (data) {
+            input.parentNode.classList.remove("is-invalid");
+            return data;
+        } else {
+            input.parentNode.classList.add("is-invalid");
+            return null;
+        }
+    }
+
+    function validateForm() {
+        const firstName = validateNonEmptyInput(firstNameInput);
+        const lastName = validateNonEmptyInput(lastNameInput);
+
+        return {
+            isValid: firstName && lastName,
+            data: {
+                firstName,
+                lastName,
+            }
+        };
+    }
+
+    function mustButtonBeEnabled() {
+        generateMandatButton.disabled = !(firstNameInput.value && lastNameInput);
+    }
+
+    firstNameInput.addEventListener("change", function (event) {
+        firstNameCopy.value = event.target.value;
+        mustButtonBeEnabled()
+        event.preventDefault();
+    });
+
+    lastNameInput.addEventListener("change", function (event) {
+        lastNameCopy.value = event.target.value;
+        mustButtonBeEnabled()
+        event.preventDefault();
+    });
+
+    generateMandatButton.addEventListener("click", function (event) {
+        const form = validateForm()
+        if (!form.isValid) {
+            event.preventDefault()
+        }
+    });
+}
+
+setupMandatGeneration()
+
 //
 // SMS Mandat Card
 //
