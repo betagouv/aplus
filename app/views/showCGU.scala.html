@@ -14,7 +14,7 @@
 }{
 <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
     <h3 class="mdl-cell mdl-cell--12-col">@if(user.cguAcceptationDate.isDefined) {CGU} else {Validation des CGU pour continuer}</h3>
-    @if(user.cguAcceptationDate.isEmpty) { <p>Pour accéder à la plateforme Administration+, vous devez valider les <a href="https://docs.aplus.beta.gouv.fr/conditions-generales-dutilisation" target="_blank" rel="noopener">CGU suivantes</a></p>}
+    @if(user.cguAcceptationDate.isEmpty) { <p>Pour accéder à la plateforme Administration+, vous devez valider les <a href="https://docs.aplus.beta.gouv.fr/conditions-generales-dutilisation" target="_blank" rel="noopener noreferrer">CGU suivantes</a></p>}
         @if(user.cguAcceptationDate.isEmpty) {
             @helper.form(action = routes.UserController.validateCGU(), args = "class" -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
                 @helper.CSRF.formField
