@@ -943,7 +943,8 @@ case class ApplicationController @Inject() (
     loginAction.async { implicit request =>
       withApplication(applicationId) { application: Application =>
         answerIdOption match {
-          case Some(answerId) if application.fileCanBeShowed(request.currentUser, answerId) =>
+          case Some(answerId)
+              if application.fileCanBeShowed(request.currentUser, request.rights, answerId) =>
             application.answers.find(_.id == answerId) match {
               case Some(answer) if answer.files.getOrElse(Map.empty).contains(filename) =>
                 eventService.log(
@@ -966,7 +967,7 @@ case class ApplicationController @Inject() (
                 )
                 Future(NotFound("Nous n'avons pas trouvé ce fichier"))
             }
-          case None if application.fileCanBeShowed(request.currentUser) =>
+          case None if application.fileCanBeShowed(request.currentUser)(request.rights) =>
             if (application.files.contains(filename)) {
               eventService
                 .log(FileOpened, s"Le fichier de la demande $applicationId a été ouvert")
