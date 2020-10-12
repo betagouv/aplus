@@ -943,7 +943,8 @@ case class ApplicationController @Inject() (
     loginAction.async { implicit request =>
       withApplication(applicationId) { application: Application =>
         answerIdOption match {
-          case Some(answerId) if application.fileCanBeShowed(request.currentUser, request.rights, answerId) =>
+          case Some(answerId)
+              if application.fileCanBeShowed(request.currentUser, request.rights, answerId) =>
             application.answers.find(_.id == answerId) match {
               case Some(answer) if answer.files.getOrElse(Map.empty).contains(filename) =>
                 eventService.log(
