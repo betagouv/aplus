@@ -272,7 +272,7 @@ case class UserController @Inject() (
             userService.deleteById(userId)
             val message = s"Utilisateur $userId / ${user.email} a été supprimé"
             eventService.log(UserDeleted, message, involvesUser = Some(user))
-            Future(Redirect(controllers.routes.UserController.home).flashing("success" -> message))
+            Future(Redirect(controllers.routes.UserController.home()).flashing("success" -> message))
           }
         }
       }
@@ -281,7 +281,7 @@ case class UserController @Inject() (
   def editUserPost(userId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(() => PostEditUserUnauthorized -> s"Accès non autorisé à modifier $userId") { () =>
-        userForm(Time.timeZoneParis).bindFromRequest.fold(
+        userForm(Time.timeZoneParis).bindFromRequest().fold(
           formWithErrors => {
             val groups = groupService.allGroups
             eventService.log(
@@ -349,7 +349,7 @@ case class UserController @Inject() (
           eventService.log(PostAddUserUnauthorized, "Accès non autorisé à l'admin des utilisateurs")
           Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
         } else {
-          usersForm(Time.timeZoneParis, group.areaIds).bindFromRequest.fold(
+          usersForm(Time.timeZoneParis, group.areaIds).bindFromRequest().fold(
             { formWithErrors =>
               eventService
                 .log(AddUserError, "Essai d'ajout d'utilisateurs avec des erreurs de validation")
@@ -442,7 +442,7 @@ case class UserController @Inject() (
 
   def validateCGU(): Action[AnyContent] =
     loginAction { implicit request =>
-      validateCGUForm.bindFromRequest.fold(
+      validateCGUForm.bindFromRequest().fold(
         { formWithErrors =>
           eventService.log(CGUValidationError, "Erreur de formulaire dans la validation des CGU")
           BadRequest(
@@ -456,10 +456,10 @@ case class UserController @Inject() (
           eventService.log(CGUValidated, "CGU validées")
           val route = redirectOption match {
             case Some(redirect)
-                if (redirect: String) != (routes.ApplicationController.myApplications.url: String) =>
+                if (redirect: String) != (routes.ApplicationController.myApplications().url: String) =>
               Call("GET", redirect)
             case _ =>
-              routes.HomeController.welcome
+              routes.HomeController.welcome()
           }
           Redirect(route).flashing("success" -> "Merci d’avoir accepté les CGU")
         }
@@ -480,7 +480,7 @@ case class UserController @Inject() (
 
   def subscribeNewsletter: Action[AnyContent] =
     loginAction { implicit request =>
-      subscribeNewsletterForm.bindFromRequest.fold(
+      subscribeNewsletterForm.bindFromRequest().fold(
         { formWithErrors =>
           eventService.log(
             NewsletterSubscriptionError,
@@ -496,7 +496,7 @@ case class UserController @Inject() (
             userService.acceptCGU(request.currentUser.id, newsletter)
           }
           eventService.log(NewsletterSubscribed, "Newletter subscribed")
-          Redirect(routes.HomeController.welcome)
+          Redirect(routes.HomeController.welcome())
             .flashing("success" -> "Merci d’avoir terminé votre inscription")
         }
       )
@@ -531,7 +531,7 @@ case class UserController @Inject() (
       }
     }
 
-  def allEvents: Action[AnyContent] =
+  def allEvents(): Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(() => EventsUnauthorized -> "Accès non autorisé pour voir les événements") { () =>
         val limit = request

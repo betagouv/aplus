@@ -139,7 +139,7 @@ object UserAndGroupCsvSerializer {
       .map { csvExtractResult: CSVExtractResult =>
         val result: List[Either[String, UserGroupFormData]] = csvExtractResult.map {
           case (lineNumber: LineNumber, csvMap: CSVMap, rawCSVLine: RawCSVLine) =>
-            csvMap.trimValues.csvCleanHeadersWithExpectedHeaders
+            csvMap.trimValues().csvCleanHeadersWithExpectedHeaders()
               .convertAreasNameToAreaUUID(defaultAreas)
               .convertBooleanValue(UserAndGroupCsvSerializer.USER_GROUP_MANAGER.key, "Responsable")
               .convertBooleanValue(UserAndGroupCsvSerializer.USER_INSTRUCTOR.key, "Instructeur")
@@ -147,7 +147,7 @@ object UserAndGroupCsvSerializer {
                 UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.key,
                 "Compte Partagé"
               )
-              .includeAreasNameInGroupName
+              .includeAreasNameInGroupName()
               .matchOrganisationId
               .fromCsvFieldNameToHtmlFieldName
               .includeFirstnameInLastName()

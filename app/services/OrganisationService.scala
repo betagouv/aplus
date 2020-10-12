@@ -59,7 +59,7 @@ class OrganisationService {
   import CustomYaml._
 
   val categories = {
-    val yaml = Source.fromFile("data/categories.yaml").getLines.mkString("\n")
+    val yaml = Source.fromFile("data/categories.yaml").getLines().mkString("\n")
     yaml.parseYaml.convertTo[List[Category]]
   }
 

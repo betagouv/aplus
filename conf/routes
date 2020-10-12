@@ -56,7 +56,7 @@ POST    /importation/revue-import               controllers.CSVImportController.
 POST    /importation/import                     controllers.CSVImportController.importUsersAfterReview
 
 # Groups
-POST    /groups                         controllers.GroupController.addGroup
+POST    /groups                         controllers.GroupController.addGroup()
 GET     /groups/:groupId                controllers.GroupController.editGroup(groupId: java.util.UUID)
 POST    /groups/:groupId                controllers.GroupController.editGroupPost(groupId: java.util.UUID)
 GET     /groups/:groupId/users          controllers.UserController.add(groupId: java.util.UUID)
@@ -64,11 +64,11 @@ POST    /groups/:groupId/users          controllers.UserController.addPost(group
 GET     /group/delete/unused/:groupId   controllers.GroupController.deleteUnusedGroupById(groupId: java.util.UUID)
 
 # Events
-GET     /events                     controllers.UserController.allEvents
+GET     /events                     controllers.UserController.allEvents()
 
 # CGU
-GET     /cgu                      controllers.UserController.showCGU
-POST    /cgu                      controllers.UserController.validateCGU
+GET     /cgu                      controllers.UserController.showCGU()
+POST    /cgu                      controllers.UserController.validateCGU()
 
 # Newsletter
 POST    /newsletter                      controllers.UserController.subscribeNewsletter

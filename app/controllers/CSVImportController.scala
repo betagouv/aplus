@@ -197,7 +197,7 @@ case class CSVImportController @Inject() (
       asAdmin { () =>
         ImportGroupUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
       } { () =>
-        csvImportContentForm.bindFromRequest.fold(
+        csvImportContentForm.bindFromRequest().fold(
           { csvImportContentFormWithError =>
             eventService.log(
               CsvImportInputEmpty,
@@ -284,7 +284,7 @@ case class CSVImportController @Inject() (
         ImportUsersUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
       ) { () =>
         val currentDate = Time.nowParis()
-        importUsersAfterReviewForm(currentDate).bindFromRequest.fold(
+        importUsersAfterReviewForm(currentDate).bindFromRequest().fold(
           { importUsersAfterReviewFormWithError =>
             eventService.log(ImportUserFormError, description = "Erreur de formulaire de review")
             Future(

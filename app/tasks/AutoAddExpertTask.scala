@@ -32,7 +32,7 @@ class AutoAddExpertTask @Inject() (
 
   // https://github.com/akka/akka/blob/v2.6.4/akka-actor/src/main/scala/akka/actor/Scheduler.scala#L403
   actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = 24.hours)(
-    new Runnable { override def run(): Unit = inviteExpertsInApplication }
+    new Runnable { override def run(): Unit = inviteExpertsInApplication() }
   )
 
   val dayWithoutAgentAnswer = 5

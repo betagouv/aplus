@@ -262,7 +262,7 @@ case class ApplicationController @Inject() (
 
   def createPost: Action[AnyContent] =
     loginAction.async { implicit request =>
-      val form = applicationForm(request.currentUser).bindFromRequest
+      val form = applicationForm(request.currentUser).bindFromRequest()
       val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
 
       // Get `areaId` from the form, to avoid losing it in case of errors
@@ -538,7 +538,7 @@ case class ApplicationController @Inject() (
 
     val (usersFuture, applicationsFutureNoDateFilter, groupsFuture) =
       if (areaIds.isEmpty && organisationIds.isEmpty && groupIds.isEmpty) {
-        (userService.allNoNameNoEmail, applicationService.all, userGroupService.all)
+        (userService.allNoNameNoEmail, applicationService.all(), userGroupService.all)
       } else if (areaIds.nonEmpty && groupIds.isEmpty) {
         val groupsFuture = userGroupService.byAreas(areaIds)
         if (organisationIds.isEmpty) {
@@ -620,7 +620,7 @@ case class ApplicationController @Inject() (
     loginAction.async { implicit request =>
       // TODO: remove `.get`
       val (areaIds, organisationIds, groupIds, creationMinDate, creationMaxDate) =
-        statsForm.bindFromRequest.value.get
+        statsForm.bindFromRequest().value.get
 
       val observableOrganisationIds = if (Authorization.isAdmin(request.rights)) {
         organisationIds
@@ -1004,7 +1004,7 @@ case class ApplicationController @Inject() (
   def answer(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application =>
-        val form = answerForm(request.currentUser).bindFromRequest
+        val form = answerForm(request.currentUser).bindFromRequest()
         val answerId = AttachmentHelper.retrieveOrGenerateAnswerId(form.data)
         val (pendingAttachments, newAttachments) =
           AttachmentHelper.computeStoreAndRemovePendingAndNewAnswerAttachment(
@@ -1090,7 +1090,7 @@ case class ApplicationController @Inject() (
   def invite(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application =>
-        inviteForm.bindFromRequest.fold(
+        inviteForm.bindFromRequest().fold(
           formWithErrors => {
             val error =
               s"Erreur dans le formulaire d’invitation (${formWithErrors.errors.map(_.message).mkString(", ")})."

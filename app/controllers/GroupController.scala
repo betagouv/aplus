@@ -100,12 +100,12 @@ case class GroupController @Inject() (
   def addGroup(): Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(() => AddGroupUnauthorized -> s"Accès non autorisé pour ajouter un groupe") { () =>
-        addGroupForm(Time.timeZoneParis).bindFromRequest.fold(
+        addGroupForm(Time.timeZoneParis).bindFromRequest().fold(
           formWithErrors => {
             eventService
               .log(AddUserGroupError, s"Essai d'ajout d'un groupe avec des erreurs de validation")
             Future(
-              Redirect(routes.UserController.home).flashing(
+              Redirect(routes.UserController.home()).flashing(
                 "error" -> s"Impossible d'ajouter le groupe : ${formWithErrors.errors.mkString}"
               )
             )
@@ -117,7 +117,7 @@ case class GroupController @Inject() (
                 { error: String =>
                   eventService.log(AddUserGroupError, s"Impossible d'ajouter le groupe dans la BDD")
                   Future(
-                    Redirect(routes.UserController.home)
+                    Redirect(routes.UserController.home())
                       .flashing("error" -> s"Impossible d'ajouter le groupe : $error")
                   )
                 },
@@ -149,7 +149,7 @@ case class GroupController @Inject() (
               Unauthorized("Vous n'êtes pas authorisé à ajouter des utilisateurs à ce groupe.")
             )
           } else {
-            addGroupForm(Time.timeZoneParis).bindFromRequest.fold(
+            addGroupForm(Time.timeZoneParis).bindFromRequest().fold(
               formWithError => {
                 eventService.log(
                   EditUserGroupError,
