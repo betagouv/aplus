@@ -100,39 +100,42 @@ case class GroupController @Inject() (
   def addGroup(): Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(() => AddGroupUnauthorized -> s"Accès non autorisé pour ajouter un groupe") { () =>
-        addGroupForm(Time.timeZoneParis).bindFromRequest().fold(
-          formWithErrors => {
-            eventService
-              .log(AddUserGroupError, s"Essai d'ajout d'un groupe avec des erreurs de validation")
-            Future(
-              Redirect(routes.UserController.home()).flashing(
-                "error" -> s"Impossible d'ajouter le groupe : ${formWithErrors.errors.mkString}"
+        addGroupForm(Time.timeZoneParis)
+          .bindFromRequest()
+          .fold(
+            formWithErrors => {
+              eventService
+                .log(AddUserGroupError, s"Essai d'ajout d'un groupe avec des erreurs de validation")
+              Future(
+                Redirect(routes.UserController.home()).flashing(
+                  "error" -> s"Impossible d'ajouter le groupe : ${formWithErrors.errors.mkString}"
+                )
               )
-            )
-          },
-          group =>
-            groupService
-              .add(group)
-              .fold(
-                { error: String =>
-                  eventService.log(AddUserGroupError, s"Impossible d'ajouter le groupe dans la BDD")
-                  Future(
-                    Redirect(routes.UserController.home())
-                      .flashing("error" -> s"Impossible d'ajouter le groupe : $error")
-                  )
-                },
-                { _ =>
-                  eventService.log(
-                    UserGroupCreated,
-                    s"Groupe ${group.name} (id : ${group.id}) ajouté par l'utilisateur d'id ${request.currentUser.id}"
-                  )
-                  Future(
-                    Redirect(routes.GroupController.editGroup(group.id))
-                      .flashing("success" -> "Groupe ajouté")
-                  )
-                }
-              )
-        )
+            },
+            group =>
+              groupService
+                .add(group)
+                .fold(
+                  { error: String =>
+                    eventService
+                      .log(AddUserGroupError, s"Impossible d'ajouter le groupe dans la BDD")
+                    Future(
+                      Redirect(routes.UserController.home())
+                        .flashing("error" -> s"Impossible d'ajouter le groupe : $error")
+                    )
+                  },
+                  { _ =>
+                    eventService.log(
+                      UserGroupCreated,
+                      s"Groupe ${group.name} (id : ${group.id}) ajouté par l'utilisateur d'id ${request.currentUser.id}"
+                    )
+                    Future(
+                      Redirect(routes.GroupController.editGroup(group.id))
+                        .flashing("success" -> "Groupe ajouté")
+                    )
+                  }
+                )
+          )
       }
     }
 
@@ -149,36 +152,38 @@ case class GroupController @Inject() (
               Unauthorized("Vous n'êtes pas authorisé à ajouter des utilisateurs à ce groupe.")
             )
           } else {
-            addGroupForm(Time.timeZoneParis).bindFromRequest().fold(
-              formWithError => {
-                eventService.log(
-                  EditUserGroupError,
-                  s"Essai d'edition d'un groupe avec des erreurs de validation"
-                )
-                Future(
-                  Redirect(routes.GroupController.editGroup(groupId)).flashing(
-                    "error" -> s"Impossible de modifier le groupe (erreur de formulaire) : ${formWithError.errors.mkString}"
+            addGroupForm(Time.timeZoneParis)
+              .bindFromRequest()
+              .fold(
+                formWithError => {
+                  eventService.log(
+                    EditUserGroupError,
+                    s"Essai d'edition d'un groupe avec des erreurs de validation"
                   )
-                )
-              },
-              group =>
-                if (groupService.edit(group.copy(id = groupId))) {
-                  eventService.log(UserGroupEdited, s"Groupe édité")
                   Future(
-                    Redirect(routes.GroupController.editGroup(groupId))
-                      .flashing("success" -> "Groupe modifié")
+                    Redirect(routes.GroupController.editGroup(groupId)).flashing(
+                      "error" -> s"Impossible de modifier le groupe (erreur de formulaire) : ${formWithError.errors.mkString}"
+                    )
                   )
-                } else {
-                  eventService
-                    .log(EditUserGroupError, s"Impossible de modifier le groupe dans la BDD")
-                  Future(
-                    Redirect(routes.GroupController.editGroup(groupId))
-                      .flashing(
-                        "error" -> "Impossible de modifier le groupe: erreur en base de donnée"
-                      )
-                  )
-                }
-            )
+                },
+                group =>
+                  if (groupService.edit(group.copy(id = groupId))) {
+                    eventService.log(UserGroupEdited, s"Groupe édité")
+                    Future(
+                      Redirect(routes.GroupController.editGroup(groupId))
+                        .flashing("success" -> "Groupe modifié")
+                    )
+                  } else {
+                    eventService
+                      .log(EditUserGroupError, s"Impossible de modifier le groupe dans la BDD")
+                    Future(
+                      Redirect(routes.GroupController.editGroup(groupId))
+                        .flashing(
+                          "error" -> "Impossible de modifier le groupe: erreur en base de donnée"
+                        )
+                    )
+                  }
+              )
           }
         }
       }
