@@ -23,6 +23,7 @@ object Organisation {
 
       override def unbind(key: String, value: Organisation.Id) =
         Map(key -> value.id)
+
     }
 
     implicit val organisationIdAnormParser: anorm.Column[Organisation.Id] =
@@ -30,11 +31,12 @@ object Organisation {
 
   }
 
-  def apply(shortName: String, name: String): Organisation = Organisation(
-    id = Organisation.Id(shortName),
-    shortName = shortName,
-    name = name
-  )
+  def apply(shortName: String, name: String): Organisation =
+    Organisation(
+      id = Organisation.Id(shortName),
+      shortName = shortName,
+      name = name
+    )
 
   def isValidId(id: Organisation.Id): Boolean =
     byId(id).nonEmpty
@@ -48,6 +50,9 @@ object Organisation {
     all.find(org => (org.id: Id) == (id: Id))
 
   val franceServicesId = Organisation.Id("MFS")
+  val franceServices = Organisation(franceServicesId, "FS", "France Services")
+  val msap = Organisation("MSAP", "Maison de services au public")
+  val hopital = Organisation("Hôpital", "Hôpital")
 
   /** Note: checklist when adding an `Organisation`
     * - alphabetical order
@@ -69,20 +74,28 @@ object Organisation {
     Organisation("DDFIP", "Direction départementale des Finances publiques"), //Département
     Organisation("Département", "Conseil départemental"),
     Organisation("DRFIP", "Direction régionale des Finances publiques"), //Région
-    Organisation("Hôpital", "Hôpital"), //Ville
+    hopital, //Ville
     Organisation("OFPRA", "Office français de protection des réfugiés et apatrides"), //Nationale
     Organisation("La Poste", "La Poste"),
     Organisation("Mairie", "Mairie"), //Ville
     Organisation("MDPH", "Maison départementale des personnes handicapées"),
-    Organisation(franceServicesId, "FS", "France Services"),
+    franceServices,
     Organisation("Mission locale", "Mission locale"), //Ville
     Organisation("MSA", "Mutualité sociale agricole"),
-    Organisation("MSAP", "Maison de services au public"), // Ville
-    Organisation("MSD", "Maisons des solidarités départementales"),
+    msap, // Ville
     Organisation("Pôle emploi", "Pôle emploi"),
     Organisation("Préf", "Préfecture"), //Département
-    Organisation("Sous-Préf", "Sous-préfecture")
+    Organisation("Sous-Préf", "Sous-préfecture"),
+    Organisation(
+      "URSSAF",
+      "Unions de Recouvrement des cotisations de Sécurité Sociale et d’Allocations Familiales"
+    )
   )
+
+  val organismesAidants: List[Organisation] = List(franceServices, msap, hopital)
+
+  val organismesOperateurs: List[Organisation] =
+    all.filter(!organismesAidants.contains[Organisation](_))
 
   case class Subject(subject: String, organisations: Seq[Organisation])
 
@@ -103,4 +116,5 @@ object Organisation {
         lowerCaseName.contains(organisation.name.toLowerCase().stripSpecialChars)
       }
   }
+
 }

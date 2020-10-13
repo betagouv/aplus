@@ -1,0 +1,27 @@
+name: Lint
+
+on:
+  push:
+    branches-ignore:
+      - master
+      - prod
+  pull_request:
+
+jobs:
+  lint-scala:
+    name: Scala
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Formatting
+        run: sbt scalafmtSbtCheck scalafmtCheck test:scalafmtCheck
+  super-linter:
+    name: Run Super Linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Lint Code Base
+        uses: docker://github/super-linter:v3
+        env:
+          VALIDATE_ALL_CODEBASE: true
+          VALIDATE_TYPESCRIPT_ES: true

@@ -16,6 +16,7 @@ import models.EventType.{
 import models.{Area, Authorization, Organisation, User, UserGroup}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
+import serializers.Keys
 import services.{EventService, UserGroupService, UserService}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,40 +38,51 @@ case class AreaController @Inject() (
     .toList
 
   @deprecated("You should not need area", "v0.1")
-  def change(areaId: UUID) = loginAction { implicit request =>
-    if (!request.currentUser.areas.contains[UUID](areaId)) {
-      eventService.log(ChangeAreaUnauthorized, s"Accès à la zone $areaId non autorisé")
-      Unauthorized(
-        s"Vous n'avez pas les droits suffisants pour accèder à cette zone. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-      )
-    } else {
-      eventService.log(AreaChanged, s"Changement vers la zone $areaId")
-      val redirect = request
-        .getQueryString("redirect")
-        .map(url => Redirect(url))
-        .getOrElse(Redirect(routes.ApplicationController.myApplications()))
-      redirect.withSession(request.session - "areaId" + ("areaId" -> areaId.toString))
-    }
-  }
-
-  def all = loginAction.async { implicit request =>
-    if (!request.currentUser.admin && !request.currentUser.groupAdmin) {
-      eventService.log(AllAreaUnauthorized, "Accès non autorisé pour voir la page des territoires")
-      Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
-    } else {
-      val userGroupsFuture: Future[List[UserGroup]] = if (request.currentUser.admin) {
-        userGroupService.byAreas(request.currentUser.areas)
+  def change(areaId: UUID) =
+    loginAction { implicit request =>
+      if (!request.currentUser.areas.contains[UUID](areaId)) {
+        eventService.log(ChangeAreaUnauthorized, s"Accès à la zone $areaId non autorisé")
+        Unauthorized(
+          s"Vous n'avez pas les droits suffisants pour accèder à cette zone. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+        )
       } else {
-        Future(userGroupService.byIds(request.currentUser.groupIds))
-      }
-      userGroupsFuture.map { userGroups =>
-        Ok(
-          views.html
-            .allArea(request.currentUser, request.rights)(Area.all, areasWithLoginByKey, userGroups)
+        eventService.log(AreaChanged, s"Changement vers la zone $areaId")
+        val redirect = request
+          .getQueryString("redirect")
+          .map(url => Redirect(url))
+          .getOrElse(Redirect(routes.ApplicationController.myApplications()))
+        redirect.withSession(
+          request.session - Keys.Session.areaId + (Keys.Session.areaId -> areaId.toString)
         )
       }
     }
-  }
+
+  def all =
+    loginAction.async { implicit request =>
+      if (!request.currentUser.admin && !request.currentUser.groupAdmin) {
+        eventService.log(
+          AllAreaUnauthorized,
+          "Accès non autorisé pour voir la page des territoires"
+        )
+        Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
+      } else {
+        val userGroupsFuture: Future[List[UserGroup]] = if (request.currentUser.admin) {
+          userGroupService.byAreas(request.currentUser.areas)
+        } else {
+          Future(userGroupService.byIds(request.currentUser.groupIds))
+        }
+        userGroupsFuture.map { userGroups =>
+          Ok(
+            views.html
+              .allArea(request.currentUser, request.rights)(
+                Area.all,
+                areasWithLoginByKey,
+                userGroups
+              )
+          )
+        }
+      }
+    }
 
   private val organisationGroupingAll: List[Set[Organisation]] = {
     val groups: List[Set[Organisation]] = List(
@@ -100,66 +112,68 @@ case class AreaController @Inject() (
       ).map(Set(_))
   ).map(_.flatMap(id => Organisation.byId(Organisation.Id(id))))
 
-  def deploymentDashboard = loginAction.async { implicit request =>
-    asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
-      DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
-    } { () =>
-      val userGroups = userGroupService.allGroups
-      userService.all.map { users =>
-        def usersIn(area: Area, organisationSet: Set[Organisation]): List[User] =
-          for {
-            group <- userGroups.filter(group =>
-              group.areaIds.contains[UUID](area.id)
-                && organisationSet.exists(group.organisationSetOrDeducted.contains[Organisation])
-            )
-            user <- users if user.groupIds.contains[UUID](group.id)
-          } yield user
+  def deploymentDashboard =
+    loginAction.async { implicit request =>
+      asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
+        DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
+      } { () =>
+        val userGroups = userGroupService.allGroups
+        userService.allNoNameNoEmail.map { users =>
+          def usersIn(area: Area, organisationSet: Set[Organisation]): List[User] =
+            for {
+              group <- userGroups.filter(group =>
+                group.areaIds.contains[UUID](area.id)
+                  && organisationSet.exists(group.organisationSetOrDeducted.contains[Organisation])
+              )
+              user <- users if user.groupIds.contains[UUID](group.id)
+            } yield user
 
-        val organisationGrouping =
-          if (request.getQueryString("uniquement-fs").getOrElse("oui") == "oui") {
-            organisationGroupingFranceService
-          } else {
-            organisationGroupingAll
+          val organisationGrouping =
+            if (request.getQueryString(Keys.QueryParam.uniquementFs).getOrElse("oui") == "oui") {
+              organisationGroupingFranceService
+            } else {
+              organisationGroupingAll
+            }
+
+          val data = for {
+            area <- request.currentUser.areas.flatMap(Area.fromId).filterNot(_.name == "Demo")
+          } yield {
+            val organisationMap: List[(Set[Organisation], Int)] = for {
+              organisations <- organisationGrouping
+              users = usersIn(area, organisations)
+              userSum = users.count(_.instructor)
+            } yield organisations -> userSum
+            (area, organisationMap, organisationMap.count(_._2 > 0))
           }
 
-        val data = for {
-          area <- request.currentUser.areas.flatMap(Area.fromId).filterNot(_.name == "Demo")
-        } yield {
-          val organisationMap: List[(Set[Organisation], Int)] = for {
-            organisations <- organisationGrouping
-            users = usersIn(area, organisations)
-            userSum = users.count(_.instructor)
-          } yield organisations -> userSum
-          (area, organisationMap, organisationMap.count(_._2 > 0))
-        }
+          val organisationSetToCountOfCounts: Map[Set[Organisation], Int] = {
+            val organisationSetToCount: List[(Set[Organisation], Int)] = data.flatMap(_._2)
+            val countsGroupedByOrganisationSet
+                : Map[Set[Organisation], List[(Set[Organisation], Int)]] =
+              organisationSetToCount.groupBy(_._1)
+            val organisationSetToCountOfCounts: Map[Set[Organisation], Int] =
+              countsGroupedByOrganisationSet.view.mapValues(_.map(_._2).count(_ > 0)).toMap
+            organisationSetToCountOfCounts
+          }
 
-        val organisationSetToCountOfCounts: Map[Set[Organisation], Int] = {
-          val organisationSetToCount: List[(Set[Organisation], Int)] = data.flatMap(_._2)
-          val countsGroupedByOrganisationSet
-              : Map[Set[Organisation], List[(Set[Organisation], Int)]] =
-            organisationSetToCount.groupBy(_._1)
-          val organisationSetToCountOfCounts: Map[Set[Organisation], Int] =
-            countsGroupedByOrganisationSet.view.mapValues(_.map(_._2).count(_ > 0)).toMap
-          organisationSetToCountOfCounts
-        }
-
-        Ok(
-          views.html.deploymentDashboard(request.currentUser, request.rights)(
-            data,
-            organisationSetToCountOfCounts,
-            organisationGrouping
+          Ok(
+            views.html.deploymentDashboard(request.currentUser, request.rights)(
+              data,
+              organisationSetToCountOfCounts,
+              organisationGrouping
+            )
           )
-        )
+        }
       }
     }
-  }
 
-  def franceServiceDeploymentDashboard = loginAction.async { implicit request =>
-    asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
-      DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
-    } { () =>
-      Future(Ok(views.html.franceServiceDeploymentDashboard(request.currentUser, request.rights)))
+  def franceServiceDeploymentDashboard =
+    loginAction.async { implicit request =>
+      asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
+        DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
+      } { () =>
+        Future(Ok(views.html.franceServiceDeploymentDashboard(request.currentUser, request.rights)))
+      }
     }
-  }
 
 }

@@ -27,4 +27,5 @@ object LoginToken {
       Time.nowParis().plusMinutes(expirationInMinutes.toLong),
       ipAddress
     )
+
 }

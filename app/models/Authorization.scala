@@ -11,12 +11,20 @@ object Authorization {
     UserRights(
       Set[Option[UserRight]](
         Some(HasUserId(user.id)),
-        if (user.helper) Some(Helper) else None,
-        if (user.expert) Some(ExpertOfAreas(user.areas.toSet)) else None,
-        if (user.admin) Some(AdminOfAreas(user.areas.toSet)) else None,
-        if (user.instructor) Some(InstructorOfGroups(user.groupIds.toSet)) else None,
-        if (user.groupAdmin) Some(ManagerOfGroups(user.groupIds.toSet)) else None,
-        if (user.observableOrganisationIds.nonEmpty)
+        if (user.helper && not(user.disabled)) Some(Helper) else None,
+        if (user.expert && not(user.disabled))
+          Some(ExpertOfAreas(user.areas.toSet))
+        else None,
+        if (user.admin && not(user.disabled))
+          Some(AdminOfAreas(user.areas.toSet))
+        else None,
+        if (user.instructor && not(user.disabled))
+          Some(InstructorOfGroups(user.groupIds.toSet))
+        else None,
+        if (user.groupAdmin && not(user.disabled))
+          Some(ManagerOfGroups(user.groupIds.toSet))
+        else None,
+        if (user.observableOrganisationIds.nonEmpty && not(user.disabled))
           Some(ObserverOfOrganisations(user.observableOrganisationIds.toSet))
         else None
       ).flatten
@@ -40,7 +48,7 @@ object Authorization {
     * this enforces that all possible checks are in this package
     */
   case class UserRights(
-      private[Authorization] rights: Set[UserRight]
+      private[Authorization] val rights: Set[UserRight]
   )
 
   //
@@ -71,6 +79,12 @@ object Authorization {
     _.rights.exists {
       case UserRight.Helper => true
       case _                => false
+    }
+
+  def isExpert: Check =
+    _.rights.exists {
+      case UserRight.ExpertOfAreas(_) => true
+      case _                          => false
     }
 
   def isExpert(areaId: UUID): Check =
@@ -154,30 +168,33 @@ object Authorization {
       case _                       => false
     }
 
-  def canSeeApplication(application: Application): Check = rights => {
-    val validCase1 = isApplicationCreator(application)(rights)
-    val validCase2 = isAdmin(rights)
-    val validCase3 =
-      (isInstructor(rights) || isHelper(rights)) && not(isExpert(application.area)(rights)) &&
-        isInvitedOn(application)(rights)
-    val validCase4 = isExpert(application.area)(rights) && isInvitedOn(application)(rights) && not(
-      application.closed
-    )
-    validCase1 || validCase2 || validCase3 || validCase4
-  }
+  def canSeeApplication(application: Application): Check =
+    rights => {
+      val validCase1 = isApplicationCreator(application)(rights)
+      val validCase2 = isAdmin(rights)
+      val validCase3 =
+        (isInstructor(rights) || isHelper(rights)) && not(isExpert(application.area)(rights)) &&
+          isInvitedOn(application)(rights)
+      val validCase4 =
+        isExpert(application.area)(rights) && isInvitedOn(application)(rights) && not(
+          application.closed
+        )
+      validCase1 || validCase2 || validCase3 || validCase4
+    }
 
-  def canSeePrivateDataOfApplication(application: Application): Check = rights => {
-    val isCreatorOrIsInvited = isInvitedOn(application)(rights) || isApplicationCreator(
-      application
-    )(rights)
-    val validCase1 = isCreatorOrIsInvited && !isAdmin(rights)
-    // If user is expert, admin and invited to the application he can see the data
-    val validCase2 =
-      isCreatorOrIsInvited && isExpert(application.area)(rights) && isAdmin(rights) && not(
-        application.closed
-      )
-    validCase1 || validCase2
-  }
+  def canSeePrivateDataOfApplication(application: Application): Check =
+    rights => {
+      val isCreatorOrIsInvited = isInvitedOn(application)(rights) || isApplicationCreator(
+        application
+      )(rights)
+      val validCase1 = isCreatorOrIsInvited && !isAdmin(rights)
+      // If user is expert, admin and invited to the application he can see the data
+      val validCase2 =
+        isCreatorOrIsInvited && isExpert(application.area)(rights) && isAdmin(rights) && not(
+          application.closed
+        )
+      validCase1 || validCase2
+    }
 
   def canSeePrivateDataOfMandat(mandat: Mandat): Check =
     _.rights.exists {
@@ -185,10 +202,11 @@ object Authorization {
       case _                       => false
     }
 
-  def canSeeMandat(mandat: Mandat): Check = rights => {
-    val validCase1 = canSeePrivateDataOfMandat(mandat)(rights)
-    val validCase2 = isAdmin(rights)
-    validCase1 || validCase2
-  }
+  def canSeeMandat(mandat: Mandat): Check =
+    rights => {
+      val validCase1 = canSeePrivateDataOfMandat(mandat)(rights)
+      val validCase2 = isAdmin(rights)
+      validCase1 || validCase2
+    }
 
 }

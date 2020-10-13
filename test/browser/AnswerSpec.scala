@@ -103,134 +103,134 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
         "invited-expert-test" |
         "invited-user-test" |
         "helper-test" |> { (userSeed: String) =>
-        val tokenService = app.injector.instanceOf[TokenService]
-        val userService = app.injector.instanceOf[UserService]
-        val groupService = app.injector.instanceOf[UserGroupService]
-        val applicationService = app.injector.instanceOf[ApplicationService]
+          val tokenService = app.injector.instanceOf[TokenService]
+          val userService = app.injector.instanceOf[UserService]
+          val groupService = app.injector.instanceOf[UserGroupService]
+          val applicationService = app.injector.instanceOf[ApplicationService]
 
-        // Generate data and save in DB
-        val testSeed = scala.util.Random.nextInt()
-        val helperGroup = generateGroup(testSeed, "helper", groupService)
-        val answerGroup = generateGroup(testSeed, "answer", groupService)
-        val expertGroup = generateGroup(testSeed, "expert", groupService)
-        val instructorUser = generateUser(
-          testSeed,
-          "instructor-test",
-          s"J'instruit $testSeed",
-          s"Instructeur Testeur $testSeed",
-          true,
-          true,
-          false,
-          List(answerGroup),
-          userService
-        )
-        val invitedExpertUser = generateUser(
-          testSeed,
-          "invited-expert-test",
-          s"Je suis un expert TEST $testSeed",
-          s"Expert $testSeed",
-          true,
-          false,
-          true,
-          List(expertGroup),
-          userService
-        )
-        val invitedUser = generateUser(
-          testSeed,
-          "invited-user-test",
-          s"Je suis un agent TEST $testSeed",
-          s"Agent $testSeed",
-          true,
-          false,
-          false,
-          List(answerGroup),
-          userService
-        )
-        val helperUser = generateUser(
-          testSeed,
-          "helper-test",
-          s"J'aide TEST $testSeed",
-          s"Aidant Testeur $testSeed",
-          true,
-          false,
-          false,
-          List(helperGroup),
-          userService
-        )
-        val users = List(
-          instructorUser,
-          invitedExpertUser,
-          invitedUser,
-          helperUser
-        )
-        users.forall(user => userService.acceptCGU(user.id, false))
-        val expertInvited = userSeed == "invited-expert-test"
-        val userInvited = userSeed == "invited-user-test"
-        val invitedUsers =
-          List(
-            Some(instructorUser),
-            if (expertInvited) Some(invitedExpertUser) else None,
-            if (userInvited) Some(invitedUser) else None
-          ).flatten
-        val application =
-          generateApplication(
-            helperUser,
-            helperGroup,
-            invitedUsers,
-            expertInvited,
-            applicationService
+          // Generate data and save in DB
+          val testSeed = scala.util.Random.nextInt()
+          val helperGroup = generateGroup(testSeed, "helper", groupService)
+          val answerGroup = generateGroup(testSeed, "answer", groupService)
+          val expertGroup = generateGroup(testSeed, "expert", groupService)
+          val instructorUser = generateUser(
+            testSeed,
+            "instructor-test",
+            s"J'instruit $testSeed",
+            s"Instructeur Testeur $testSeed",
+            true,
+            true,
+            false,
+            List(answerGroup),
+            userService
           )
-
-        // Helper login
-        val answerUserId = userId(testSeed, userSeed)
-        val loginToken =
-          LoginToken.forUserId(answerUserId, 5, "127.0.0.1")
-        tokenService.create(loginToken)
-
-        val loginURL = controllers.routes.LoginController
-          .magicLinkAntiConsumptionPage()
-          .absoluteURL(false, s"localhost:$port")
-
-        browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
-
-        // Wait for login
-        eventually {
-          browser.url must endWith(
-            controllers.routes.ApplicationController.myApplications().url.substring(1)
+          val invitedExpertUser = generateUser(
+            testSeed,
+            "invited-expert-test",
+            s"Je suis un expert TEST $testSeed",
+            s"Expert $testSeed",
+            true,
+            false,
+            true,
+            List(expertGroup),
+            userService
           )
-        }
+          val invitedUser = generateUser(
+            testSeed,
+            "invited-user-test",
+            s"Je suis un agent TEST $testSeed",
+            s"Agent $testSeed",
+            true,
+            false,
+            false,
+            List(answerGroup),
+            userService
+          )
+          val helperUser = generateUser(
+            testSeed,
+            "helper-test",
+            s"J'aide TEST $testSeed",
+            s"Aidant Testeur $testSeed",
+            true,
+            false,
+            false,
+            List(helperGroup),
+            userService
+          )
+          val users = List(
+            instructorUser,
+            invitedExpertUser,
+            invitedUser,
+            helperUser
+          )
+          users.forall(user => userService.acceptCGU(user.id, false))
+          val expertInvited = userSeed == "invited-expert-test"
+          val userInvited = userSeed == "invited-user-test"
+          val invitedUsers =
+            List(
+              Some(instructorUser),
+              if (expertInvited) Some(invitedExpertUser) else None,
+              if (userInvited) Some(invitedUser) else None
+            ).flatten
+          val application =
+            generateApplication(
+              helperUser,
+              helperGroup,
+              invitedUsers,
+              expertInvited,
+              applicationService
+            )
 
-        // Submit answer
-        val applicationURL =
-          controllers.routes.ApplicationController
-            .show(application.id)
+          // Helper login
+          val answerUserId = userId(testSeed, userSeed)
+          val loginToken =
+            LoginToken.forUserId(answerUserId, 5, "127.0.0.1")
+          tokenService.create(loginToken)
+
+          val loginURL = controllers.routes.LoginController
+            .magicLinkAntiConsumptionPage()
             .absoluteURL(false, s"localhost:$port")
-        browser.goTo(applicationURL)
 
-        val answerMessage = "Il y a juste à faire ça!"
+          browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
 
-        browser.waitUntil(browser.el(s"textarea[name='message']").clickable())
-        browser.el("textarea[name='message']").fill().withText(answerMessage)
-        browser.el("button[id='review-validation']").click()
+          // Wait for login
+          eventually {
+            browser.url must endWith(
+              controllers.routes.ApplicationController.myApplications().url.substring(1)
+            )
+          }
 
-        // Wait for form submit
-        eventually {
-          browser.pageSource must contain(helperUser.name)
+          // Submit answer
+          val applicationURL =
+            controllers.routes.ApplicationController
+              .show(application.id)
+              .absoluteURL(false, s"localhost:$port")
+          browser.goTo(applicationURL)
+
+          val answerMessage = "Il y a juste à faire ça!"
+
+          browser.waitUntil(browser.el(s"textarea[name='message']").clickable())
+          browser.el("textarea[name='message']").fill().withText(answerMessage)
+          browser.el("button[id='review-validation']").click()
+
+          // Wait for form submit
+          eventually {
+            browser.pageSource must contain(helperUser.name)
+          }
+
+          val changedApplicationOption = applicationService
+            .allByArea(helperGroup.areaIds.head, false)
+            .find(app => (app.id: UUID) == (application.id: UUID))
+
+          changedApplicationOption mustNotEqual None
+          val changedApplication = changedApplicationOption.get
+
+          val answer = changedApplication.answers.head
+          answer.message mustEqual answerMessage
+          answer.creatorUserID mustEqual answerUserId
+        // Note: answer.creatorUserName actually uses
+        // contextualizedUserName(request.currentUser, currentAreaId)
         }
-
-        val changedApplicationOption = applicationService
-          .allByArea(helperGroup.areaIds.head, false)
-          .find(app => (app.id: UUID) == (application.id: UUID))
-
-        changedApplicationOption mustNotEqual None
-        val changedApplication = changedApplicationOption.get
-
-        val answer = changedApplication.answers.head
-        answer.message mustEqual answerMessage
-        answer.creatorUserID mustEqual answerUserId
-      // Note: answer.creatorUserName actually uses
-      // contextualizedUserName(request.currentUser, currentAreaId)
-      }
     }
   }
 }

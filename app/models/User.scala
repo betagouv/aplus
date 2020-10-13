@@ -17,6 +17,7 @@ case class User(
     // TODO: `private[models]` so we cannot check it without going through authorization
     admin: Boolean,
     // TODO: remove usage of areas to more specific AdministratedAreaIds
+    // Note: `areas` is used to give "full access" to someone to multiple areas
     areas: List[UUID],
     creationDate: ZonedDateTime,
     communeCode: String,
@@ -43,10 +44,10 @@ case class User(
   // TODO: put this in Authorization
   def canSeeUsersInArea(areaId: UUID): Boolean =
     (areaId == Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
+
 }
 
 object User {
-  private val date = ZonedDateTime.parse("2017-11-01T00:00+01:00")
 
   val systemUser = User(
     UUIDHelper.namedFrom("system"),
@@ -58,79 +59,10 @@ object User {
     false,
     false,
     List(),
-    date,
+    ZonedDateTime.parse("2017-11-01T00:00+01:00"),
     "75056",
     false,
     disabled = true
   )
 
-  val admins = List(
-    // Enabled
-    User(
-      UUIDHelper.namedFrom("zohra"),
-      Hash.sha256(s"zohra"),
-      "LEBEL-SEDKI Zohra",
-      "Experte A+",
-      "zohra.lebel@beta.gouv.fr",
-      true,
-      false,
-      true,
-      Area.all.map(_.id),
-      date,
-      "75056",
-      true,
-      disabled = false,
-      expert = true,
-      cguAcceptationDate = Some(date)
-    ),
-    User(
-      UUIDHelper.namedFrom("julien"),
-      Hash.sha256(s"julien"),
-      "Julien DAUPHANT",
-      "Admin A+",
-      "julien.dauphant@beta.gouv.fr",
-      true,
-      false,
-      true,
-      Area.all.map(_.id),
-      date,
-      "75056",
-      true,
-      disabled = false,
-      cguAcceptationDate = Some(date)
-    ),
-    User(
-      UUIDHelper.namedFrom("thibault"),
-      Hash.sha256(s"thibault"),
-      "Thibault DESJARDINS",
-      "Expert A+",
-      "thibault.desjardins@beta.gouv.fr",
-      true,
-      false,
-      true,
-      Area.all.map(_.id),
-      date,
-      "75056",
-      true,
-      disabled = false,
-      expert = false,
-      cguAcceptationDate = Some(date)
-    ),
-    User(
-      id = UUIDHelper.namedFrom("dunia"),
-      key = Hash.sha256("dunia"),
-      name = "Dunia El Achcar",
-      qualite = "Experte A+",
-      email = "dunia.el_achcar@beta.gouv.fr",
-      helper = true,
-      instructor = false,
-      admin = true,
-      areas = Area.all.map(_.id),
-      creationDate = date,
-      communeCode = "75056",
-      groupAdmin = true,
-      disabled = false,
-      cguAcceptationDate = Some(date)
-    )
-  )
 }

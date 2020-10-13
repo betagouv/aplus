@@ -29,6 +29,7 @@ import models.EventType.{
 }
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import serializers.{Keys, UserAndGroupCsvSerializer}
+import scala.concurrent.{ExecutionContext, Future}
 
 case class CSVImportController @Inject() (
     loginAction: LoginAction,
@@ -36,7 +37,7 @@ case class CSVImportController @Inject() (
     groupService: UserGroupService,
     notificationsService: NotificationService,
     eventService: EventService
-)(implicit val webJarsUtil: WebJarsUtil)
+)(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with play.api.i18n.I18nSupport
     with UserOperators
@@ -51,11 +52,15 @@ case class CSVImportController @Inject() (
     )(CSVImportData.apply)(CSVImportData.unapply)
   )
 
-  def importUsersFromCSV: Action[AnyContent] = loginAction { implicit request =>
-    asAdmin(() => ImportUserUnauthorized -> "Accès non autorisé pour importer les utilisateurs") {
-      () => Ok(views.html.importUsersCSV(request.currentUser, request.rights)(csvImportContentForm))
+  def importUsersFromCSV: Action[AnyContent] =
+    loginAction.async { implicit request =>
+      asAdmin(() => ImportUserUnauthorized -> "Accès non autorisé pour importer les utilisateurs") {
+        () =>
+          Future(
+            Ok(views.html.importUsersCSV(request.currentUser, request.rights)(csvImportContentForm))
+          )
+      }
     }
-  }
 
   /** Checks with the DB if Users or UserGroups already exist. */
   private def augmentUserGroupInformation(
@@ -91,9 +96,8 @@ case class CSVImportController @Inject() (
       }
     withGroup.copy(
       users = newUsersFormDataList,
-      alreadyExistsOrAllUsersAlreadyExist =
-        withGroup.alreadyExistingGroup.nonEmpty ||
-          newUsersFormDataList.forall(_.alreadyExists)
+      alreadyExistsOrAllUsersAlreadyExist = withGroup.alreadyExistingGroup.nonEmpty ||
+        newUsersFormDataList.forall(_.alreadyExists)
     )
   }
 
@@ -111,10 +115,13 @@ case class CSVImportController @Inject() (
 
   private def userImportMapping(date: ZonedDateTime): Mapping[User] =
     mapping(
-      "id" -> optional(uuid).transform[UUID]({
-        case None     => UUID.randomUUID()
-        case Some(id) => id
-      }, Some(_)),
+      "id" -> optional(uuid).transform[UUID](
+        {
+          case None     => UUID.randomUUID()
+          case Some(id) => id
+        },
+        Some(_)
+      ),
       "key" -> ignored("key"),
       "name" -> nonEmptyText.verifying(maxLength(100)),
       "quality" -> default(text, ""),
@@ -139,10 +146,13 @@ case class CSVImportController @Inject() (
 
   private def groupImportMapping(date: ZonedDateTime): Mapping[UserGroup] =
     mapping(
-      "id" -> optional(uuid).transform[UUID]({
-        case None     => UUID.randomUUID()
-        case Some(id) => id
-      }, Some(_)),
+      "id" -> optional(uuid).transform[UUID](
+        {
+          case None     => UUID.randomUUID()
+          case Some(id) => id
+        },
+        Some(_)
+      ),
       "name" -> text(maxLength = 60),
       "description" -> optional(text),
       "insee-code" -> list(text),
@@ -156,33 +166,34 @@ case class CSVImportController @Inject() (
       "email" -> optional(email)
     )(UserGroup.apply)(UserGroup.unapply)
 
-  private def importUsersAfterReviewForm(date: ZonedDateTime): Form[List[UserGroupFormData]] = Form(
-    single(
-      "groups" -> list(
-        mapping(
-          "group" -> groupImportMapping(date),
-          "users" -> list(
-            mapping(
-              "user" -> userImportMapping(date),
-              "line" -> number,
-              "alreadyExists" -> boolean,
-              "alreadyExistingUser" -> ignored(Option.empty[User]),
-              "isInMoreThanOneGroup" -> optional(boolean)
-            )(UserFormData.apply)(UserFormData.unapply)
-          ),
-          "alreadyExistsOrAllUsersAlreadyExist" -> boolean,
-          "doNotInsert" -> boolean,
-          "alreadyExistingGroup" -> ignored(Option.empty[UserGroup])
-        )(UserGroupFormData.apply)(UserGroupFormData.unapply)
+  private def importUsersAfterReviewForm(date: ZonedDateTime): Form[List[UserGroupFormData]] =
+    Form(
+      single(
+        "groups" -> list(
+          mapping(
+            "group" -> groupImportMapping(date),
+            "users" -> list(
+              mapping(
+                "user" -> userImportMapping(date),
+                "line" -> number,
+                "alreadyExists" -> boolean,
+                "alreadyExistingUser" -> ignored(Option.empty[User]),
+                "isInMoreThanOneGroup" -> optional(boolean)
+              )(UserFormData.apply)(UserFormData.unapply)
+            ),
+            "alreadyExistsOrAllUsersAlreadyExist" -> boolean,
+            "doNotInsert" -> boolean,
+            "alreadyExistingGroup" -> ignored(Option.empty[UserGroup])
+          )(UserGroupFormData.apply)(UserGroupFormData.unapply)
+        )
       )
     )
-  )
 
   /** Action that reads the CSV file (CSV file was copy-paste in a web form)
     *  and display possible errors.
     */
   def importUsersReview: Action[AnyContent] =
-    loginAction { implicit request =>
+    loginAction.async { implicit request =>
       asAdmin { () =>
         ImportGroupUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
       } { () =>
@@ -192,12 +203,15 @@ case class CSVImportController @Inject() (
               CsvImportInputEmpty,
               description = "Le champ d'import de CSV est vide ou le séparateur n'est pas défini."
             )
-            BadRequest(
-              views.html.importUsersCSV(request.currentUser, request.rights)(
-                csvImportContentFormWithError
+            Future(
+              BadRequest(
+                views.html.importUsersCSV(request.currentUser, request.rights)(
+                  csvImportContentFormWithError
+                )
               )
             )
-          }, { csvImportData =>
+          },
+          { csvImportData =>
             val defaultAreas = csvImportData.areaIds.flatMap(Area.fromId)
             UserAndGroupCsvSerializer
               .csvLinesToUserGroupData(csvImportData.separator, defaultAreas, Time.nowParis())(
@@ -209,15 +223,18 @@ case class CSVImportController @Inject() (
                     csvImportContentForm.fill(csvImportData).withGlobalError(error)
                   eventService
                     .log(CSVImportFormError, description = "Erreur de formulaire Importation")
-                  BadRequest(
-                    views.html.importUsersCSV(request.currentUser, request.rights)(
-                      csvImportContentFormWithError
+                  Future(
+                    BadRequest(
+                      views.html.importUsersCSV(request.currentUser, request.rights)(
+                        csvImportContentFormWithError
+                      )
                     )
                   )
-                }, {
+                },
+                {
                   case (
-                      userNotImported: List[String],
-                      userGroupDataForm: List[UserGroupFormData]
+                        userNotImported: List[String],
+                        userGroupDataForm: List[UserGroupFormData]
                       ) =>
                     val augmentedUserGroupInformation: List[UserGroupFormData] =
                       augmentUserGroupsInformation(userGroupDataForm)
@@ -234,9 +251,11 @@ case class CSVImportController @Inject() (
                     } else {
                       formWithData
                     }
-                    Ok(
-                      views.html
-                        .reviewUsersImport(request.currentUser, request.rights)(formWithError)
+                    Future(
+                      Ok(
+                        views.html
+                          .reviewUsersImport(request.currentUser, request.rights)(formWithError)
+                      )
                     )
                 }
               )
@@ -259,19 +278,24 @@ case class CSVImportController @Inject() (
   }
 
   /** Import the reviewed CSV. */
-  def importUsersAfterReview: Action[AnyContent] = loginAction { implicit request =>
-    asAdmin(() => ImportUsersUnauthorized -> "Accès non autorisé pour importer les utilisateurs") {
-      () =>
+  def importUsersAfterReview: Action[AnyContent] =
+    loginAction.async { implicit request =>
+      asAdmin(() =>
+        ImportUsersUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
+      ) { () =>
         val currentDate = Time.nowParis()
         importUsersAfterReviewForm(currentDate).bindFromRequest.fold(
           { importUsersAfterReviewFormWithError =>
             eventService.log(ImportUserFormError, description = "Erreur de formulaire de review")
-            BadRequest(
-              views.html.reviewUsersImport(request.currentUser, request.rights)(
-                importUsersAfterReviewFormWithError
+            Future(
+              BadRequest(
+                views.html.reviewUsersImport(request.currentUser, request.rights)(
+                  importUsersAfterReviewFormWithError
+                )
               )
             )
-          }, { userGroupDataForm: List[UserGroupFormData] =>
+          },
+          { userGroupDataForm: List[UserGroupFormData] =>
             val augmentedUserGroupInformation: List[UserGroupFormData] =
               augmentUserGroupsInformation(userGroupDataForm)
 
@@ -283,80 +307,84 @@ case class CSVImportController @Inject() (
             groupService
               .add(groupsToInsert)
               .fold(
-                {
-                  error: String =>
-                    val description = s"Impossible d'importer les groupes : $error"
-                    eventService.log(ImportUserError, description)
-                    val formWithError = importUsersAfterReviewForm(currentDate)
-                      .fill(augmentedUserGroupInformation)
-                      .withGlobalError(description)
+                { error: String =>
+                  val description = s"Impossible d'importer les groupes : $error"
+                  eventService.log(ImportUserError, description)
+                  val formWithError = importUsersAfterReviewForm(currentDate)
+                    .fill(augmentedUserGroupInformation)
+                    .withGlobalError(description)
+                  Future(
                     InternalServerError(
                       views.html
                         .reviewUsersImport(request.currentUser, request.rights)(formWithError)
                     )
-                }, {
-                  _ =>
-                    groupsToInsert.foreach { userGroup =>
-                      eventService.log(UserGroupCreated, s"Groupe ${userGroup.id} ajouté")
-                    }
-                    val usersToInsert: List[User] = augmentedUserGroupInformation
-                      .filterNot(_.doNotInsert)
-                      .map(associateGroupToUsers)
-                      .flatMap(_.users)
-                      .filter(_.alreadyExistingUser.isEmpty)
-                      .map(_.user)
-                      // Here we will group users by email, so we can put them in multiple groups
-                      .groupBy(_.email)
-                      .map {
-                        case (_, entitiesWithSameEmail) =>
-                          // Note: users appear in the same order as given in the import
-                          // Safe due to groupBy
-                          val repr: User = entitiesWithSameEmail.head
-                          val groupIds: List[UUID] = entitiesWithSameEmail.flatMap(_.groupIds)
-                          val areas: List[UUID] = entitiesWithSameEmail.flatMap(_.areas)
-                          repr.copy(
-                            areas = areas,
-                            groupIds = groupIds
-                          )
-                      }
-                      .toList
-
-                    userService
-                      .add(usersToInsert)
-                      .fold(
-                        {
-                          error: String =>
-                            val description = s"Impossible d'importer les utilisateurs : $error"
-                            eventService.log(ImportUserError, description)
-                            val formWithError = importUsersAfterReviewForm(currentDate)
-                              .fill(augmentedUserGroupInformation)
-                              .withGlobalError(description)
-                            InternalServerError(
-                              views.html
-                                .reviewUsersImport(request.currentUser, request.rights)(
-                                  formWithError
-                                )
-                            )
-                        }, {
-                          _ =>
-                            usersToInsert.foreach { user =>
-                              notificationsService.newUser(user)
-                              eventService.log(
-                                UserCreated,
-                                s"Ajout de l'utilisateur ${user.name} ${user.email}",
-                                involvesUser = Some(user)
-                              )
-                            }
-                            eventService
-                              .log(UsersImported, "Utilisateurs ajoutés par l'importation")
-                            Redirect(routes.UserController.all(Area.allArea.id))
-                              .flashing("success" -> "Utilisateurs importés.")
-                        }
+                  )
+                },
+                { _ =>
+                  groupsToInsert.foreach { userGroup =>
+                    eventService.log(UserGroupCreated, s"Groupe ${userGroup.id} ajouté")
+                  }
+                  val usersToInsert: List[User] = augmentedUserGroupInformation
+                    .filterNot(_.doNotInsert)
+                    .map(associateGroupToUsers)
+                    .flatMap(_.users)
+                    .filter(_.alreadyExistingUser.isEmpty)
+                    .map(_.user)
+                    // Here we will group users by email, so we can put them in multiple groups
+                    .groupBy(_.email)
+                    .map { case (_, entitiesWithSameEmail) =>
+                      // Note: users appear in the same order as given in the import
+                      // Safe due to groupBy
+                      val repr: User = entitiesWithSameEmail.head
+                      val groupIds: List[UUID] = entitiesWithSameEmail.flatMap(_.groupIds)
+                      val areas: List[UUID] = entitiesWithSameEmail.flatMap(_.areas)
+                      repr.copy(
+                        areas = areas,
+                        groupIds = groupIds
                       )
+                    }
+                    .toList
+
+                  userService
+                    .add(usersToInsert)
+                    .fold(
+                      { error: String =>
+                        val description = s"Impossible d'importer les utilisateurs : $error"
+                        eventService.log(ImportUserError, description)
+                        val formWithError = importUsersAfterReviewForm(currentDate)
+                          .fill(augmentedUserGroupInformation)
+                          .withGlobalError(description)
+                        Future(
+                          InternalServerError(
+                            views.html
+                              .reviewUsersImport(request.currentUser, request.rights)(
+                                formWithError
+                              )
+                          )
+                        )
+                      },
+                      { _ =>
+                        usersToInsert.foreach { user =>
+                          notificationsService.newUser(user)
+                          eventService.log(
+                            UserCreated,
+                            s"Ajout de l'utilisateur ${user.name} ${user.email}",
+                            involvesUser = Some(user)
+                          )
+                        }
+                        eventService
+                          .log(UsersImported, "Utilisateurs ajoutés par l'importation")
+                        Future(
+                          Redirect(routes.UserController.all(Area.allArea.id))
+                            .flashing("success" -> "Utilisateurs importés.")
+                        )
+                      }
+                    )
                 }
               )
           }
         )
+      }
     }
-  }
+
 }

@@ -109,13 +109,6 @@
       <br>
     }
     <br>
-    <b style="color: red">@helper.checkbox(form("admin"), List[Option[(Symbol, String)]](
-        Some("type" -> "checkbox"),
-        Some("label" -> "Admin de la zone"),
-        Some("class" -> "mdl-checkbox__input"),
-        if (canEditUser) None else Some("disabled" -> "")
-      ).flatten:_*)
-    </b>
   </div>
   <div class="mdl-grid mdl-cell--6-col-desktop mdl-cell--12-col">
       <div class="mdl-cell mdl-cell--12-col-desktop mdl-cell--12-col">

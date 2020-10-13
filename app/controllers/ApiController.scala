@@ -60,40 +60,40 @@ case class ApiController @Inject() (
     }
   }
 
-  def franceServiceDeployment: Action[AnyContent] = loginAction.async { implicit request =>
-    asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
-      DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
-    } { () =>
-      val userGroups = userGroupService.allGroups.filter(
-        _.organisationSetOrDeducted.exists(_.id == Organisation.franceServicesId)
-      )
-      val franceServiceInstances = organisationService.franceServiceInfos.instances
-      val doNotMatchTheseEmails =
-        franceServiceInstances
-          .flatMap(_.contactMail)
-          .groupBy(identity)
-          .filter(_._2.length > 1)
-          .keys
-          .toSet
-      val matches: List[(FranceServiceInstance, Option[UserGroup], Area)] =
-        franceServiceInstances
-          .map(instance =>
-            (
-              instance,
-              matchFranceServiceInstance(instance, userGroups, doNotMatchTheseEmails),
-              Area.fromInseeCode(instance.departementCode.code).getOrElse(Area.notApplicable)
+  def franceServiceDeployment: Action[AnyContent] =
+    loginAction.async { implicit request =>
+      asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
+        DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
+      } { () =>
+        val userGroups = userGroupService.allGroups.filter(
+          _.organisationSetOrDeducted.exists(_.id == Organisation.franceServicesId)
+        )
+        val franceServiceInstances = organisationService.franceServiceInfos.instances
+        val doNotMatchTheseEmails =
+          franceServiceInstances
+            .flatMap(_.contactMail)
+            .groupBy(identity)
+            .filter(_._2.length > 1)
+            .keys
+            .toSet
+        val matches: List[(FranceServiceInstance, Option[UserGroup], Area)] =
+          franceServiceInstances
+            .map(instance =>
+              (
+                instance,
+                matchFranceServiceInstance(instance, userGroups, doNotMatchTheseEmails),
+                Area.fromInseeCode(instance.departementCode.code).getOrElse(Area.notApplicable)
+              )
             )
-          )
-      val allGroupIds: List[UUID] = matches.flatMap(_._2).map(_.id)
-      val allUsers = userService.byGroupIds(allGroupIds)
-      val groupSizes: Map[UUID, Int] = allUsers
-        .flatMap(user => user.groupIds.map(groupId => (groupId, user)))
-        .groupBy(_._1) // Group by groupId
-        .map { case (groupId, users) => (groupId, users.size) }
-        .toMap
-      val data: List[FranceServiceInstanceLine] = matches
-        .map {
-          case (franceServiceInstance, groupOpt, area) =>
+        val allGroupIds: List[UUID] = matches.flatMap(_._2).map(_.id)
+        val allUsers = userService.byGroupIds(allGroupIds)
+        val groupSizes: Map[UUID, Int] = allUsers
+          .flatMap(user => user.groupIds.map(groupId => (groupId, user)))
+          .groupBy(_._1) // Group by groupId
+          .map { case (groupId, users) => (groupId, users.size) }
+          .toMap
+        val data: List[FranceServiceInstanceLine] = matches
+          .map { case (franceServiceInstance, groupOpt, area) =>
             FranceServiceInstanceLine(
               nomFranceService = franceServiceInstance.nomFranceService,
               commune = franceServiceInstance.commune,
@@ -105,17 +105,16 @@ case class ApiController @Inject() (
               contactMail = franceServiceInstance.contactMail,
               phone = franceServiceInstance.phone
             )
-        }
-        .groupBy(_.departementCode)
-        .flatMap {
-          case (_, sameDepartementLines) =>
+          }
+          .groupBy(_.departementCode)
+          .flatMap { case (_, sameDepartementLines) =>
             val departementIsDone = sameDepartementLines.forall(_.groupSize >= 2)
             sameDepartementLines.map(_.copy(departementIsDone = departementIsDone))
-        }
-        .toList
-        .sortBy(line => (line.departementCode, line.nomFranceService))
-      Future(Ok(Json.toJson(data)))
+          }
+          .toList
+          .sortBy(line => (line.departementCode, line.nomFranceService))
+        Future(Ok(Json.toJson(data)))
+      }
     }
-  }
 
 }

@@ -22,4 +22,9 @@ server.pid
 .cache
 .*
 !.scalafmt.conf
+!.github/
+!.dockerignore
 files
+package-lock.json
+node_modules/
+/public/generated-js/

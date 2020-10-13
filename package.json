@@ -1,0 +1,22 @@
+{
+  "name": "aplus",
+  "version": "0.0.1",
+  "description": "Administration+",
+  "scripts": {
+    "watch": "webpack --context typescript --config typescript/webpack/webpack.dev.js --watch",
+    "build": "webpack --context typescript --config typescript/webpack/webpack.prod.js",
+    "clean": "rimraf public/generated-js"
+  },
+  "dependencies": {
+    "ts-polyfill": "3.8.2"
+  },
+  "devDependencies": {
+    "@types/tabulator-tables": "4.5.2",
+    "rimraf": "3.0.2",
+    "ts-loader": "8.0.4",
+    "typescript": "4.0.3",
+    "webpack": "4.44.2",
+    "webpack-cli": "3.3.12",
+    "webpack-merge": "5.1.4"
+  }
+}

@@ -19,16 +19,15 @@ object StatsData {
       timeAxis.map(timePoint =>
         (
           timePoint.label,
-          series.map {
-            case (condition, singleTimeSeries) =>
-              (
-                condition.label,
-                singleTimeSeries.points
-                  .find(t => (t._1: Label) == (timePoint: Label))
-                  .map(_._2)
-                  // not pretty, maybe figure out how to have some Option / NaN
-                  .getOrElse[Int](0)
-              )
+          series.map { case (condition, singleTimeSeries) =>
+            (
+              condition.label,
+              singleTimeSeries.points
+                .find(t => (t._1: Label) == (timePoint: Label))
+                .map(_._2)
+                // not pretty, maybe figure out how to have some Option / NaN
+                .getOrElse[Int](0)
+            )
           }
         )
       )
@@ -76,6 +75,30 @@ object StatsData {
           .toList
       }
 
+    private def applicationsCountByMandat(mandatType: Application.MandatType): List[Int] =
+      applicationsGroupedByMonth.map(
+        _._2.count(application =>
+          (application.mandatType: Option[Application.MandatType]) == Some(mandatType)
+        )
+      )
+
+    lazy val applicationsCountByMandatPaper: List[Int] =
+      applicationsGroupedByMonth.map(
+        _._2
+          .count(application =>
+            application.mandatType.isEmpty ||
+              (application.mandatType: Option[Application.MandatType]) == Some(
+                Application.MandatType.Paper
+              )
+          )
+      )
+
+    lazy val applicationsCountByMandatSms: List[Int] =
+      applicationsCountByMandat(Application.MandatType.Sms)
+
+    lazy val applicationsCountByMandatPhone: List[Int] =
+      applicationsCountByMandat(Application.MandatType.Phone)
+
     // Conditional Series
 
     lazy val administrations: List[String] =
@@ -97,14 +120,13 @@ object StatsData {
             Label(administration),
             TimeSeries(
               applicationsGroupedByMonth
-                .map {
-                  case (month, applications) =>
-                    (
-                      Label(month),
-                      applications.count(
-                        _.administrations(usersRelatedToApplications).contains(administration)
-                      )
+                .map { case (month, applications) =>
+                  (
+                    Label(month),
+                    applications.count(
+                      _.administrations(usersRelatedToApplications).contains(administration)
                     )
+                  )
                 }
             )
           )
@@ -126,14 +148,13 @@ object StatsData {
             Label(qualite),
             TimeSeries(
               applicationsGroupedByMonth
-                .map {
-                  case (month, applications) =>
-                    (
-                      Label(month),
-                      applications.count(
-                        _.creatorUserQualite(usersRelatedToApplications).contains(qualite)
-                      )
+                .map { case (month, applications) =>
+                  (
+                    Label(month),
+                    applications.count(
+                      _.creatorUserQualite(usersRelatedToApplications).contains(qualite)
                     )
+                  )
                 }
             )
           )

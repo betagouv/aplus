@@ -75,6 +75,7 @@ object SmsApi {
 
     def deleteSms(id: Sms.ApiId): Future[Either[Error, Unit]] =
       api.deleteSms(MessageBirdApi.Sms.Id(id.underlying))
+
   }
 
   final class OvhSmsApi(
@@ -144,8 +145,10 @@ object SmsApi {
               )
             ),
           id =>
-            api.deleteOutgoingSms(id).zip(api.deleteIncomingSms(id)).map {
-              case (outResult, inResult) =>
+            api
+              .deleteOutgoingSms(id)
+              .zip(api.deleteIncomingSms(id))
+              .map { case (outResult, inResult) =>
                 if (outResult.isRight || inResult.isRight)
                   Right(())
                 else
@@ -158,8 +161,9 @@ object SmsApi {
                       )
                     )
                   )
-            }
+              }
         )
+
   }
 
   /** Fake API for dev and test */

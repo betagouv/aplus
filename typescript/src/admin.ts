@@ -1,15 +1,14 @@
 //
 // Admin page for France Service deployment
 //
-
 var franceServiceDeploymentTableTagId = "aplus-admin-deployment-france-service-table"
 var franceServiceDeploymentTotalTagId = "aplus-admin-deployment-france-service-total"
 var franceServiceDeploymentDownloadBtnCsvId = "aplus-admin-deployment-france-service-download-btn-csv"
 var franceServiceDeploymentDownloadBtnXlsxId = "aplus-admin-deployment-france-service-download-btn-xlsx"
 
 // TODO: macro that will generate field names from the scala case class (Scala => TS)
-var franceServiceDeploymentColumns = [
-  {title: "Nom", field: "nomFranceService", sorter: "string", width: 200},
+var franceServiceDeploymentColumns: Array<Tabulator.ColumnDefinition> = [
+  { title: "Nom", field: "nomFranceService", sorter: "string", width: 200 },
   {
     title: "Département",
     field: "departementName",
@@ -56,10 +55,10 @@ var franceServiceDeploymentColumns = [
       return value;
     }
   },
-  {title: "Commune", field: "commune", sorter: "string"},
-  {title: "Mail", field: "contactMail", sorter: "string"},
-  {title: "Téléphone", field: "phone", sorter: "string"},
-  {title: "Groupe", field: "matchedGroup", sorter: "string"},
+  { title: "Commune", field: "commune", sorter: "string" },
+  { title: "Mail", field: "contactMail", sorter: "string" },
+  { title: "Téléphone", field: "phone", sorter: "string" },
+  { title: "Groupe", field: "matchedGroup", sorter: "string" },
 ]
 
 if (window.document.getElementById(franceServiceDeploymentTableTagId)) {
@@ -88,24 +87,23 @@ if (window.document.getElementById(franceServiceDeploymentTableTagId)) {
     height: "75vh",
   });
 
-  function downloadCSV() {
-    var date = new Date().toISOString().replace(/:/g,'-');
+
+
+  window.document.getElementById(franceServiceDeploymentDownloadBtnCsvId).onclick = function() {
+    var date = new Date().toISOString().replace(/:/g, '-');
     franceServiceDeploymentTable.download(
       'csv',
-      'aplus-export-deploiement-france-service-'+date+'.csv'
+      'aplus-export-deploiement-france-service-' + date + '.csv'
     );
-  }
+  };
 
-  function downloadXLSX() {
-    var date = new Date().toISOString().replace(/:/g,'-');
+  window.document.getElementById(franceServiceDeploymentDownloadBtnXlsxId).onclick = function() {
+    var date = new Date().toISOString().replace(/:/g, '-');
     franceServiceDeploymentTable.download(
       "xlsx",
-      'aplus-export-deploiement-france-service-'+date+'.xlsx',
-      {sheetName:"Déploiement France Service"}
+      'aplus-export-deploiement-france-service-' + date + '.xlsx',
+      { sheetName: "Déploiement France Service" }
     );
-  }
-
-  window.document.getElementById(franceServiceDeploymentDownloadBtnCsvId).onclick = downloadCSV;
-  window.document.getElementById(franceServiceDeploymentDownloadBtnXlsxId).onclick = downloadXLSX;
+  };
 
 }

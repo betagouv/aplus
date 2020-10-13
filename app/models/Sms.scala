@@ -30,7 +30,7 @@ object Sms {
       }
     )
 
-    /** Example: ("+31612345678": PhoneNumber) => ("31612345678": String)  */
+    /** Example: ("+31612345678": PhoneNumber) => ("31612345678": String) */
     def numberWithoutPlus: String = internationalPhoneNumber.stripPrefix("+")
 
     /** Example: ("+31612345678": PhoneNumber) => ("0612345678": String) */
@@ -43,7 +43,7 @@ object Sms {
 
     private val internationalNumberRegex = """\+[0-9]+""".r
 
-    /** Example: ("0612345678": String) => ("+31612345678": PhoneNumber)  */
+    /** Example: ("0612345678": String) => ("+31612345678": PhoneNumber) */
     def fromLocalPhoneFrance(localPhoneFrance: String): PhoneNumber =
       PhoneNumber("+33" + localPhoneFrance.drop(1))
 

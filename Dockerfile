@@ -1,22 +1,26 @@
 #
-# Scala and sbt Dockerfile part based on
-# https://github.com/hseeberger/scala-sbt
+# Builder image for the TS pipeline
 #
+FROM node:10-buster AS tsbuilder
+COPY package.json /var/www/aplus/package.json
+COPY typescript /var/www/aplus/typescript/
+WORKDIR /var/www/aplus/
+RUN npm install
+RUN npm run build
 
-# Pull base image
-FROM openjdk:8u242
+
+#
+# Builder image for the Scala app
+# based on https://github.com/hseeberger/scala-sbt
+#
+FROM openjdk:8u265 AS scalabuilder
+
+# We need nodejs to run in a reasonable amount of time sbt-web
+# see step `Optimizing JavaScript with RequireJS`
+RUN apt-get update && apt-get install -y nodejs
 
 # Env variables
-ENV SCALA_VERSION 2.12.7
-ENV SBT_VERSION 1.2.4
-
-
-# Install Scala
-## Piping curl directly in tar
-RUN \
-  curl -fsL https://downloads.typesafe.com/scala/$SCALA_VERSION/scala-$SCALA_VERSION.tgz | tar xfz - -C /root/ && \
-  echo >> /root/.bashrc && \
-  echo "export PATH=~/scala-$SCALA_VERSION/bin:$PATH" >> /root/.bashrc
+ENV SBT_VERSION 1.3.13
 
 # Install sbt
 RUN \
@@ -30,18 +34,35 @@ RUN \
 ENV PLAY_APP_NAME aplus
 ENV PLAY_APP_DIR /var/www/$PLAY_APP_NAME
 RUN mkdir -p $PLAY_APP_DIR
+COPY .git $PLAY_APP_DIR/.git/
 COPY build.sbt $PLAY_APP_DIR/
 COPY app $PLAY_APP_DIR/app/
 COPY conf $PLAY_APP_DIR/conf/
 COPY public $PLAY_APP_DIR/public/
-COPY data $PLAY_APP_DIR/data/
+COPY --from=tsbuilder /var/www/aplus/public/generated-js $PLAY_APP_DIR/public/generated-js/
 COPY project/*.properties project/*.sbt project/*.scala $PLAY_APP_DIR/project/
 
 WORKDIR $PLAY_APP_DIR
 ENV HOME $PLAY_APP_DIR
 RUN sbt clean stage
-RUN chmod 554 $PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME
-RUN chmod 774 $PLAY_APP_DIR/target/universal/stage/
+
+
+#
+#
+# Final Image
+#
+#
+FROM openjdk:8u265
+
+ENV PLAY_APP_NAME aplus
+ENV PLAY_APP_DIR /var/www/$PLAY_APP_NAME
+ENV HOME $PLAY_APP_DIR
+WORKDIR $PLAY_APP_DIR
+
+COPY --from=scalabuilder $PLAY_APP_DIR/target/universal/stage $PLAY_APP_DIR
+COPY data $PLAY_APP_DIR/data/
+RUN chmod 554 $PLAY_APP_DIR/bin/$PLAY_APP_NAME
+RUN chmod 774 $PLAY_APP_DIR
 
 EXPOSE 9000
-CMD ["sh", "-c", "$PLAY_APP_DIR/target/universal/stage/bin/$PLAY_APP_NAME $OPTIONS"]
+CMD ["sh", "-c", "$PLAY_APP_DIR/bin/$PLAY_APP_NAME $OPTIONS"]

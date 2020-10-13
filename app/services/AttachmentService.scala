@@ -47,9 +47,8 @@ object AttachmentHelper {
       prefix: String
   ): Map[String, Long] =
     getAttachmentsToStore
-      .flatMap({
-        case (attachmentPath, attachmentName) =>
-          storeAttachment(attachmentPath, attachmentName, applicationId, filesPath, prefix)
+      .flatMap({ case (attachmentPath, attachmentName) =>
+        storeAttachment(attachmentPath, attachmentName, applicationId, filesPath, prefix)
       })
       .toMap
 
@@ -94,4 +93,5 @@ object AttachmentHelper {
         Some(attachmentName -> f.length())
     }
   }
+
 }

@@ -26,10 +26,11 @@ object Area {
   def apply(id: String, name: String, inseeCode: String): Area =
     Area(UUIDHelper.namedFrom(id), name, inseeCode)
 
+  val ain: Area = Area("Ain", "Ain", "01")
   val calvados: Area = Area("calvados", "Calvados", "14")
 
   val all = List(
-    Area("Ain", "Ain", "01"),
+    ain,
     Area("Aisne", "Aisne", "02"),
     Area("Allier", "Allier", "03"),
     Area("Alpes-de-Haute-Provence", "Alpes-de-Haute-Provence", "04"),
@@ -132,6 +133,7 @@ object Area {
     Area("Yvelines", "Yvelines", "78"),
     Area("exemple", "Demo", "-1")
   )
+
   val allArea = Area(UUIDHelper.namedFrom("all"), "tous les territoires", "0")
 
   val notApplicable = Area("notApplicable", "NotApplicable", "-1")

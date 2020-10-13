@@ -3,12 +3,14 @@ package models
 import java.util.UUID
 
 object formModels {
-  // TOOD : rename Data -> FormData
 
   case class ApplicationFormData(
       subject: String,
       description: String,
-      infos: Map[String, String],
+      usagerPrenom: String,
+      usagerNom: String,
+      usagerBirthDate: String,
+      usagerOptionalInfos: Map[String, String],
       users: List[UUID],
       organismes: List[String],
       category: Option[String],
@@ -22,12 +24,17 @@ object formModels {
   case class AnswerFormData(
       message: String,
       applicationIsDeclaredIrrelevant: Boolean,
-      infos: Map[String, String],
+      usagerOptionalInfos: Map[String, String],
       privateToHelpers: Boolean,
       signature: Option[String]
   )
 
-  case class InvitationData(message: String, invitedUsers: List[UUID], privateToHelpers: Boolean)
+  case class InvitationFormData(
+      message: String,
+      invitedUsers: List[UUID],
+      invitedGroups: List[UUID],
+      privateToHelpers: Boolean
+  )
 
   case class UserFormData(
       user: User,
@@ -45,5 +52,7 @@ object formModels {
       alreadyExistingGroup: Option[UserGroup] = None
   )
 
+  // TOOD : rename Data -> FormData
   case class CSVImportData(csvLines: String, areaIds: List[UUID], separator: Char)
+
 }

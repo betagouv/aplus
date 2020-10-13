@@ -3,7 +3,9 @@ package models
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit.MINUTES
 import java.util.UUID
+
 import helper.BooleanHelper.not
+import models.Authorization.{isExpert, isHelper, isInstructor, readUserRights, UserRights}
 
 case class Application(
     id: UUID,
@@ -63,33 +65,37 @@ case class Application(
       answersStripped)
   }
 
-  def longStatus(user: User) = closed match {
-    case true                                                                        => "Clôturée"
-    case _ if user.id == creatorUserId && answers.exists(_.creatorUserID != user.id) => "Répondu"
-    case _
-        if user.id == creatorUserId && seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty =>
-      "Consultée"
-    case _ if user.id == creatorUserId                   => "Envoyée"
-    case _ if answers.exists(_.creatorUserID == user.id) => "Répondu"
-    case _ if answers.exists(_.creatorUserName.contains(user.qualite)) => {
-      val username = answers
-        .find(_.creatorUserName.contains(user.qualite))
-        .map(_.creatorUserName)
-        .getOrElse("un collègue")
-        .replaceAll("\\(.*\\)", "")
-        .trim
-      s"Répondu par ${username}"
+  def longStatus(user: User) =
+    closed match {
+      case true                                                                        => "Clôturée"
+      case _ if user.id == creatorUserId && answers.exists(_.creatorUserID != user.id) => "Répondu"
+      case _
+          if user.id == creatorUserId && seenByUserIds
+            .intersect(invitedUsers.keys.toList)
+            .nonEmpty =>
+        "Consultée"
+      case _ if user.id == creatorUserId                   => "Envoyée"
+      case _ if answers.exists(_.creatorUserID == user.id) => "Répondu"
+      case _ if answers.exists(_.creatorUserName.contains(user.qualite)) => {
+        val username = answers
+          .find(_.creatorUserName.contains(user.qualite))
+          .map(_.creatorUserName)
+          .getOrElse("un collègue")
+          .replaceAll("\\(.*\\)", "")
+          .trim
+        s"Répondu par ${username}"
+      }
+      case _ if seenByUserIds.contains(user.id) => "Consultée"
+      case _                                    => "Nouvelle"
     }
-    case _ if seenByUserIds.contains(user.id) => "Consultée"
-    case _                                    => "Nouvelle"
-  }
 
-  def status = closed match {
-    case true                                                              => "Clôturée"
-    case _ if answers.filterNot(_.creatorUserID != creatorUserId).nonEmpty => "Répondu"
-    case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty   => "Consultée"
-    case _                                                                 => "Nouvelle"
-  }
+  def status =
+    closed match {
+      case true                                                              => "Clôturée"
+      case _ if answers.filterNot(_.creatorUserID != creatorUserId).nonEmpty => "Répondu"
+      case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty   => "Consultée"
+      case _                                                                 => "Nouvelle"
+    }
 
   def invitedUsers(users: List[User]): List[User] =
     invitedUsers.keys.flatMap(userId => users.find(_.id == userId)).toList
@@ -105,8 +111,8 @@ case class Application(
     val newUsersInfo = userInfos.map { case (key, value) => key -> s"**$key (${value.length})**" }
     val newAnswers = answers.map { answer =>
       answer.copy(
-        userInfos = answer.userInfos.map(_.map {
-          case (key, value) => key -> s"**$key (${value.length})**"
+        userInfos = answer.userInfos.map(_.map { case (key, value) =>
+          key -> s"**$key (${value.length})**"
         }),
         message = s"** Message de ${answer.message.length} caractères **"
       )
@@ -125,23 +131,18 @@ case class Application(
 
   // Security
 
-  def fileCanBeShowed(user: User, answer: UUID) =
+  def fileCanBeShowed(user: User, rights: UserRights, answer: UUID): Boolean =
     answers.find(_.id == answer) match {
       case None => false
       case Some(answer) if answer.filesAvailabilityLeftInDays.isEmpty =>
         false // You can't download expired file
-      case Some(answer) if answer.creatorUserID == user.id =>
-        false // You can't download your own file
-      case _ =>
-        ((user.instructor || user.helper) && not(user.expert) && invitedUsers.keys.toList
-          .contains(user.id)) ||
-          (user.helper && user.id == creatorUserId)
+      case _ => fileCanBeShowed(user)(rights)
     }
 
-  def fileCanBeShowed(user: User) =
-    filesAvailabilityLeftInDays.nonEmpty && (user.instructor && invitedUsers.keys.toList
-      .contains(user.id)) ||
-      (user.helper && user.id == creatorUserId)
+  def fileCanBeShowed(user: User)(rights: UserRights) =
+    filesAvailabilityLeftInDays.nonEmpty && not(isExpert(rights)) &&
+      (isInstructor(rights) && invitedUsers.keys.toList.contains(user.id)) ||
+      (isHelper(rights) && user.id == creatorUserId)
 
   def canHaveExpertsInvitedBy(user: User) =
     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
@@ -177,6 +178,7 @@ case class Application(
   lazy val firstAnswerTimeInMinutes: Option[Int] = firstAgentAnswerDate.map { firstAnswerDate =>
     MINUTES.between(creationDate, firstAnswerDate).toInt
   }
+
 }
 
 object Application {

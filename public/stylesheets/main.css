@@ -232,7 +232,6 @@ html, body {
     width: 80px;
     color: #666666;
     font-size: 12px;
-    font-weight: 600;
     line-height: 12px;
     text-align: center;
     background-color: #ECECEC;
@@ -605,6 +604,10 @@ a {
 
 .single--padding-top-8px {
     padding-top: 8px;
+}
+
+.single--padding-top-16px {
+    padding-top: 16px;
 }
 
 .single--padding-bottom-8px {

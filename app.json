@@ -10,9 +10,6 @@
     "APP_DOMAIN": {
       "required": true
     },
-    "APP_HOST": {
-      "required": true
-    },
     "APP_HTTPS": {
       "required": true
     },
@@ -56,6 +53,9 @@
     "heroku-postgresql"
   ],
   "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    },
     {
       "url": "heroku/scala"
     }

@@ -1,17 +1,45 @@
 package browser
 
-import helper.UUIDHelper
-import helper.Time
-import models.LoginToken
+import helper.{Hash, Time, UUIDHelper}
+import java.time.ZonedDateTime
+import models.{Area, LoginToken, User}
 import org.specs2.mutable._
 import org.specs2.runner._
 import org.junit.runner._
 import play.api.test._
 import play.api.test.Helpers._
-import services.TokenService
+import services.{TokenService, UserService}
+import org.specs2.specification.BeforeAfterAll
 
 @RunWith(classOf[JUnitRunner])
-class gLoginSpec extends Specification with Tables with BaseSpec {
+class gLoginSpec extends Specification with Tables with BaseSpec with BeforeAfterAll {
+
+  val existingUser = User(
+    UUIDHelper.namedFrom("julien.test"),
+    Hash.sha256(s"julien.test"),
+    "Julien DAUPHANT TEST",
+    "Admin A+",
+    "julien.dauphant.test@beta.gouv.fr",
+    true,
+    false,
+    true,
+    Area.all.map(_.id),
+    ZonedDateTime.parse("2017-11-01T00:00+01:00"),
+    "75056",
+    true,
+    disabled = false
+  )
+
+  def beforeAll() = {
+    val userService = applicationWithBrowser.injector.instanceOf[UserService]
+    val _ = userService.add(List(existingUser))
+    val _ = userService.acceptCGU(existingUser.id, true)
+  }
+
+  def afterAll() = {
+    val userService = applicationWithBrowser.injector.instanceOf[UserService]
+    val _ = userService.deleteById(existingUser.id)
+  }
 
   "Login" should {
     "Login with valid or invalid emails" in new WithBrowser(
@@ -19,19 +47,18 @@ class gLoginSpec extends Specification with Tables with BaseSpec {
       app = applicationWithBrowser
     ) {
       "email" | "result" |
-        "julien.dauphant" + "@beta.gouv.fr" ! "Consultez vos e-mails" |
+        "julien.dauphant.test" + "@beta.gouv.fr" ! "Consultez vos e-mails" |
         "wrong@beta.gouv.fr" ! "Aucun compte actif n'est associé à cette adresse e-mail." |
         "simon.pineau" + "@beta.gouv.fr" ! "Aucun compte actif n'est associé à cette adresse e-mail." |> {
-        (email, expected) =>
-          val loginURL =
-            controllers.routes.LoginController.login().absoluteURL(false, s"localhost:$port")
+          (email, expected) =>
+            val loginURL =
+              controllers.routes.LoginController.login().absoluteURL(false, s"localhost:$port")
+            browser.goTo(loginURL)
+            browser.el("input[name='email']").fill().withText(email)
+            browser.el("form").submit()
 
-          browser.goTo(loginURL)
-          browser.el("input[name='email']").fill().withText(email)
-          browser.el("form").submit()
-
-          browser.pageSource must contain(expected)
-      }
+            browser.pageSource must contain(expected)
+        }
     }
 
     "Use token with success" in new WithBrowser(
@@ -39,7 +66,8 @@ class gLoginSpec extends Specification with Tables with BaseSpec {
       app = applicationWithBrowser
     ) {
       val tokenService = app.injector.instanceOf[TokenService]
-      val loginToken = LoginToken.forUserId(UUIDHelper.namedFrom("julien"), 5, "127.0.0.1")
+      val loginToken = LoginToken.forUserId(existingUser.id, 5, "127.0.0.1")
+
       tokenService.create(loginToken)
 
       val loginURL = controllers.routes.LoginController
@@ -54,13 +82,14 @@ class gLoginSpec extends Specification with Tables with BaseSpec {
         )
       }
     }
+
     "Use expired token without success" in new WithBrowser(
       webDriver = WebDriverFactory(HTMLUNIT),
       app = applicationWithBrowser
     ) {
       val tokenService = app.injector.instanceOf[TokenService]
       val loginToken = LoginToken
-        .forUserId(UUIDHelper.namedFrom("julien"), 5, "127.0.0.1")
+        .forUserId(existingUser.id, 5, "127.0.0.1")
         .copy(expirationDate = Time.nowParis().minusMinutes(5))
       tokenService.create(loginToken)
 
@@ -75,6 +104,7 @@ class gLoginSpec extends Specification with Tables with BaseSpec {
         browser.pageSource must contain("Votre lien de connexion a expiré, il est valable")
       }
     }
+
     "Use token without success" in new WithBrowser(
       webDriver = WebDriverFactory(HTMLUNIT),
       app = applicationWithBrowser
