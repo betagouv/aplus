@@ -435,29 +435,29 @@ function setupMandatGeneration() {
         return {
             isValid: firstName && lastName,
             data: {
-                firstName,
-                lastName,
+                firstName: firstName,
+                lastName: lastName,
             }
         };
     }
 
-    function mustButtonBeEnabled() {
+    function updateButtonEnabled() {
         generateMandatButton.disabled = !(firstNameInput.value && lastNameInput);
     }
 
-    firstNameInput.addEventListener("change", function (event) {
+    firstNameInput && firstNameInput.addEventListener('change', function (event) {
         firstNameCopy.value = event.target.value;
-        mustButtonBeEnabled()
+        updateButtonEnabled()
         event.preventDefault();
     });
 
-    lastNameInput.addEventListener("change", function (event) {
+    lastNameInput && lastNameInput.addEventListener('change', function (event) {
         lastNameCopy.value = event.target.value;
-        mustButtonBeEnabled()
+        updateButtonEnabled()
         event.preventDefault();
     });
 
-    generateMandatButton.addEventListener("click", function (event) {
+    generateMandatButton && generateMandatButton.addEventListener('click', function (event) {
         const form = validateForm()
         if (!form.isValid) {
             event.preventDefault()
