@@ -4,7 +4,7 @@ import java.nio.file.{Files, Path, Paths}
 import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 import helper.UUIDHelper
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 import actions._
 import constants.Constants
@@ -57,6 +57,7 @@ import models.EventType.{
   TerminateUnauthorized
 }
 import play.api.cache.AsyncCacheApi
+import play.api.libs.ws.WSClient
 import play.twirl.api.Html
 import views.stats.StatsData
 
@@ -82,7 +83,8 @@ case class ApplicationController @Inject() (
     mandatService: MandatService,
     organisationService: OrganisationService,
     userGroupService: UserGroupService,
-    configuration: play.api.Configuration
+    configuration: play.api.Configuration,
+    ws: WSClient,
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with play.api.i18n.I18nSupport
@@ -93,6 +95,12 @@ case class ApplicationController @Inject() (
 
   private val featureCanSendApplicationsAnywhere: Boolean =
     configuration.get[Boolean]("app.features.canSendApplicationsAnywhere")
+
+  // This is a feature that is temporary and should be activated
+  // for short period of time during migrations for smooth handling of files.
+  // Just remove the env variable FILES_SECOND_INSTANCE_HOST to deactivate.
+  private val filesSecondInstanceHost: Option[String] =
+    configuration.getOptional[String]("app.filesSecondInstanceHost")
 
   private val dir = Paths.get(s"$filesPath")
   if (!Files.isDirectory(dir)) {
@@ -939,6 +947,57 @@ case class ApplicationController @Inject() (
   def applicationFile(applicationId: UUID, filename: String): Action[AnyContent] =
     file(applicationId, None, filename)
 
+  private def sendFile(localPath: Path, filename: String, remoteUrlPath: String)(implicit
+      request: actions.RequestWithUserData[_]
+  ): Future[Result] =
+    if (Files.exists(localPath)) {
+      Future(
+        Ok.sendPath(
+          localPath,
+          true,
+          { _: Path =>
+            Some(filename)
+          }
+        )
+      )
+    } else {
+      filesSecondInstanceHost match {
+        case None =>
+          eventService.log(
+            FileNotFound,
+            s"Le fichier n'existe pas sur le serveur"
+          )
+          Future(NotFound("Nous n'avons pas trouvé ce fichier"))
+        case Some(domain) =>
+          val cookies = request.headers.getAll(COOKIE)
+          val url = domain + remoteUrlPath
+          ws.url(url)
+            .addHttpHeaders(cookies.map(cookie => (COOKIE, cookie)): _*)
+            .get()
+            .map { response =>
+              if (response.status / 100 == 2) {
+                val body = response.bodyAsSource
+                val contentLength: Option[Long] =
+                  response.header(CONTENT_LENGTH).flatMap(raw => Try(raw.toLong).toOption)
+                // Note: `streamed` should set `Content-Disposition`
+                // https://github.com/playframework/playframework/blob/2.8.x/core/play/src/main/scala/play/api/mvc/Results.scala#L523
+                Ok.streamed(
+                  content = body,
+                  contentLength = contentLength,
+                  `inline` = true,
+                  fileName = Some(filename)
+                )
+              } else {
+                eventService.log(
+                  FileNotFound,
+                  s"La requête vers le serveur distant $url a échoué (status ${response.status})"
+                )
+                NotFound("Nous n'avons pas trouvé ce fichier")
+              }
+            }
+      }
+    }
+
   private def file(applicationId: UUID, answerIdOption: Option[UUID], filename: String) =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application: Application =>
@@ -951,14 +1010,10 @@ case class ApplicationController @Inject() (
                   FileOpened,
                   s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert"
                 )
-                Future(
-                  Ok.sendPath(
-                    Paths.get(s"$filesPath/ans_$answerId-$filename"),
-                    true,
-                    { _: Path =>
-                      Some(filename)
-                    }
-                  )
+                sendFile(
+                  Paths.get(s"$filesPath/ans_$answerId-$filename"),
+                  filename,
+                  s"/toutes-les-demandes/$applicationId/messages/$answerId/fichiers/$filename"
                 )
               case _ =>
                 eventService.log(
@@ -971,14 +1026,10 @@ case class ApplicationController @Inject() (
             if (application.files.contains(filename)) {
               eventService
                 .log(FileOpened, s"Le fichier de la demande $applicationId a été ouvert")
-              Future(
-                Ok.sendPath(
-                  Paths.get(s"$filesPath/app_$applicationId-$filename"),
-                  true,
-                  { _: Path =>
-                    Some(filename)
-                  }
-                )
+              sendFile(
+                Paths.get(s"$filesPath/app_$applicationId-$filename"),
+                filename,
+                s"/toutes-les-demandes/$applicationId/fichiers/$filename"
               )
             } else {
               eventService.log(
