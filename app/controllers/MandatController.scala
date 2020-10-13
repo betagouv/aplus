@@ -51,7 +51,6 @@ case class MandatController @Inject() (
     *
     * Note: protection against rapidly sending SMS to the same number is only performed
     *       client-side, we might want to revisit that.
-    *
     */
   def beginMandatSms: Action[JsValue] = loginAction(parse.json).async { implicit request =>
     request.body
@@ -86,15 +85,15 @@ case class MandatController @Inject() (
                 error => {
                   eventService.logError(error)
                   jsonInternalServerError
-                }, {
-                  case (mandat, sms) =>
-                    eventService.log(
-                      EventType.MandatInitiationBySmsDone,
-                      s"Le mandat par SMS ${mandat.id.underlying} a été créé. " +
-                        s"Le SMS de demande ${sms.apiId.underlying} a été envoyé"
-                    )
-                    notificationsService.mandatSmsSent(mandat.id, request.currentUser)
-                    Ok(Json.toJson(mandat))
+                },
+                { case (mandat, sms) =>
+                  eventService.log(
+                    EventType.MandatInitiationBySmsDone,
+                    s"Le mandat par SMS ${mandat.id.underlying} a été créé. " +
+                      s"Le SMS de demande ${sms.apiId.underlying} a été envoyé"
+                  )
+                  notificationsService.mandatSmsSent(mandat.id, request.currentUser)
+                  Ok(Json.toJson(mandat))
                 }
               )
             )
