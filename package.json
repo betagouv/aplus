@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "description": "Administration+",
   "scripts": {
-    "watch": "webpack --context typescript --config typescript/webpack/webpack.dev.js --watch",
-    "build": "webpack --context typescript --config typescript/webpack/webpack.prod.js",
+    "watch": "cd typescript && webpack --config webpack/webpack.dev.js --watch",
+    "build": "cd typescript && webpack --config webpack/webpack.prod.js",
     "clean": "rimraf public/generated-js"
   },
   "dependencies": {
@@ -16,7 +16,7 @@
     "ts-loader": "8.0.4",
     "typescript": "4.0.3",
     "webpack": "4.44.2",
-    "webpack-cli": "3.3.12",
+    "webpack-cli": "4.0.0",
     "webpack-merge": "5.2.0"
   }
 }
