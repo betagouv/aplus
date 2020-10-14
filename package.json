@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "description": "Administration+",
   "scripts": {
-    "watch": "webpack --context typescript --config typescript/webpack/webpack.dev.js --watch",
-    "build": "webpack --context typescript --config typescript/webpack/webpack.prod.js",
+    "watch": "cd typescript && webpack --config webpack/webpack.dev.js --watch",
+    "build": "cd typescript && webpack --config webpack/webpack.prod.js",
     "clean": "rimraf public/generated-js"
   },
   "dependencies": {
