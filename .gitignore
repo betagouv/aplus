@@ -28,3 +28,7 @@ files
 package-lock.json
 node_modules/
 /public/generated-js/
+.metals
+/project/metals.sbt
+/project/project/metals.sbt
+project/project/project/metals.sbt
