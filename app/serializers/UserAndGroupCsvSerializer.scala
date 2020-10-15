@@ -7,9 +7,10 @@ import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import models.formModels.{UserFormData, UserGroupFormData}
 import helper.{PlayFormHelper, UUIDHelper}
 import helper.StringHelper._
-import models.{Area, Organisation, User, UserGroup}
+import models.{Area, Organisation, UnvalidatedUser, User, UserGroup}
 import play.api.data.Forms._
 import play.api.data.Mapping
+import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 
 import scala.io.Source
 
@@ -323,7 +324,7 @@ object UserAndGroupCsvSerializer {
 
   }
 
-  private def userCSVMapping(currentDate: ZonedDateTime): Mapping[User] =
+  private def userCSVMapping(currentDate: ZonedDateTime): Mapping[UnvalidatedUser] =
     single(
       "user" -> mapping(
         "id" -> optional(uuid).transform[UUID](
@@ -331,29 +332,20 @@ object UserAndGroupCsvSerializer {
             case None     => UUID.randomUUID()
             case Some(id) => id
           },
-          Some(_)
+          Option.apply
         ),
-        "key" -> ignored("key"),
-        "name" -> nonEmptyText,
-        "quality" -> default(text, ""),
-        "email" -> nonEmptyText,
-        "helper" -> ignored(true),
+        "email" -> email.verifying(maxLength(200), nonEmpty),
+        "firstname" -> optional(nonEmptyText.verifying(maxLength(100))),
+        "lastname" -> optional(nonEmptyText.verifying(maxLength(100))),
+        "phone-number" -> optional(text),
+        "sharedAccountName" -> optional(text.verifying(maxLength(500))),
         "instructor" -> boolean,
-        "admin" -> ignored(false),
+        "admin" -> boolean,
         "area-ids" -> ignored(List.empty[UUID]),
         "creationDate" -> ignored(currentDate),
-        "communeCode" -> ignored("0"),
-        "admin-group" -> boolean,
-        "disabled" -> ignored(false),
-        "expert" -> ignored(false),
-        "groupIds" -> default(list(uuid), Nil),
-        "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-        "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-        "phone-number" -> optional(text),
-        // TODO: put in CSV?
-        "observableOrganisationIds" -> list(of[Organisation.Id]),
-        Keys.User.sharedAccount -> boolean
-      )(User.apply)(User.unapply)
+        "groupIds" -> default(list(uuid), List.empty[UUID]),
+        "observableOrganisationIds" -> list(of[Organisation.Id])
+      )(UnvalidatedUser.apply)(UnvalidatedUser.unapply)
     )
 
   private def groupCSVMapping(currentDate: ZonedDateTime): Mapping[UserGroup] =

@@ -147,10 +147,18 @@ class LoginAction @Inject() (
     }
   }
 
+  // user: Either[...]
   private def manageUserLogged[A](user: User)(implicit request: Request[A]) =
     LoginAction.readUserRights(user).map { userRights =>
       implicit val requestWithUserData = new RequestWithUserData(user, userRights, request)
-      if (user.cguAcceptationDate.nonEmpty || request.path.contains("cgu")) {
+      // case Left(unvalidated) =>
+      // If UnvalidatedUser => show CGU
+      // case Right() =>
+      val hasAcceptedCgu = user.cguAcceptationDate.nonEmpty
+      // `request.path.contains("cgu")` seems to be used to avoid infinite redirects
+      val isOnCguPage = request.path.contains("cgu")
+      val doNotRedirectToCgu = hasAcceptedCgu || isOnCguPage
+      if (doNotRedirectToCgu) {
         Right(requestWithUserData)
       } else {
         eventService.log(ToCGURedirected, "Redirection vers les CGUs")
@@ -223,13 +231,20 @@ class LoginAction @Inject() (
         .withSession(request.session - Keys.Session.userId)
     )
 
+  /** The query string '?token=xxx' is put on the URL by
+    * the magicLinkAntiConsumptionPage.
+    */
   private def tokenById[A](implicit request: Request[A]): Option[LoginToken] =
     request.getQueryString(Keys.QueryParam.token).flatMap(tokenService.byToken)
 
+  /** API only for the demo, should be removed one day (likely when we add a login/password),
+    * linked with areasWithLoginByKey (AREAS_WITH_LOGIN_BY_KEY)
+    */
   private def userByKey[A](implicit request: Request[A]): Option[User] =
     request.getQueryString(Keys.QueryParam.key).flatMap(userService.byKey)
 
-  private def userBySession[A](implicit request: Request[A]): Option[User] =
+  /** Already logged in users */
+  private def userBySession[A](implicit request: Request[A]): Option[User] = // => Option[Either[...]]
     request.session
       .get(Keys.Session.userId)
       .flatMap(UUIDHelper.fromString)

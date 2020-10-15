@@ -5,9 +5,10 @@ import java.util.UUID
 
 import actions.LoginAction
 import Operators.{GroupOperators, UserOperators}
+import cats.implicits.catsSyntaxEitherId
 import models.formModels.{CSVImportData, UserFormData, UserGroupFormData}
 import javax.inject.Inject
-import models.{Area, Organisation, User, UserGroup}
+import models.{Area, Organisation, UnvalidatedUser, User, UserGroup}
 import org.webjars.play.WebJarsUtil
 import play.api.data.{Form, Mapping}
 import play.api.data.Forms._
@@ -29,6 +30,7 @@ import models.EventType.{
 }
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import serializers.{Keys, UserAndGroupCsvSerializer}
+
 import scala.concurrent.{ExecutionContext, Future}
 
 case class CSVImportController @Inject() (
@@ -113,36 +115,31 @@ case class CSVImportController @Inject() (
     groups.map(group => augmentUserGroupInformation(group, multiGroupUserEmails))
   }
 
-  private def userImportMapping(date: ZonedDateTime): Mapping[User] =
+  private def unvalidatedUserImportMapping(date: ZonedDateTime): Mapping[UnvalidatedUser] =
     mapping(
+      // TODO: probably not useful
       "id" -> optional(uuid).transform[UUID](
         {
           case None     => UUID.randomUUID()
           case Some(id) => id
         },
-        Some(_)
+        Option.apply
       ),
-      "key" -> ignored("key"),
-      "name" -> nonEmptyText.verifying(maxLength(100)),
-      "quality" -> default(text, ""),
       "email" -> email.verifying(maxLength(200), nonEmpty),
-      "helper" -> ignored(true),
+      "firstname" -> optional(nonEmptyText.verifying(maxLength(100))),
+      "lastname" -> optional(nonEmptyText.verifying(maxLength(100))),
+      // TODO: rename into phoneNumber
+      "phone-number" -> optional(text),
+      "sharedAccountName" -> optional(text.verifying(maxLength(500))),
       "instructor" -> boolean,
-      "admin" -> ignored(false),
+      // TODO: rename into managerOfGroups
+      "admin" -> boolean,
       "areas" -> list(uuid),
       "creationDate" -> ignored(date),
-      "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
-      "adminGroup" -> boolean,
-      "disabled" -> boolean,
-      "expert" -> ignored(false),
-      "groupIds" -> default(list(uuid), List()),
-      "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "phone-number" -> optional(text),
+      "groupIds" -> default(list(uuid), List.empty[UUID]),
       // TODO: put also in forms/imports?
-      "observableOrganisationIds" -> list(of[Organisation.Id]),
-      Keys.User.sharedAccount -> boolean
-    )(User.apply)(User.unapply)
+      "observableOrganisationIds" -> list(of[Organisation.Id])
+    )(UnvalidatedUser.apply)(UnvalidatedUser.unapply)
 
   private def groupImportMapping(date: ZonedDateTime): Mapping[UserGroup] =
     mapping(
@@ -174,7 +171,7 @@ case class CSVImportController @Inject() (
             "group" -> groupImportMapping(date),
             "users" -> list(
               mapping(
-                "user" -> userImportMapping(date),
+                "user" -> unvalidatedUserImportMapping(date),
                 "line" -> number,
                 "alreadyExists" -> boolean,
                 "alreadyExistingUser" -> ignored(Option.empty[User]),
@@ -324,7 +321,7 @@ case class CSVImportController @Inject() (
                   groupsToInsert.foreach { userGroup =>
                     eventService.log(UserGroupCreated, s"Groupe ${userGroup.id} ajouté")
                   }
-                  val usersToInsert: List[User] = augmentedUserGroupInformation
+                  val usersToInsert: List[UnvalidatedUser] = augmentedUserGroupInformation
                     .filterNot(_.doNotInsert)
                     .map(associateGroupToUsers)
                     .flatMap(_.users)
@@ -335,7 +332,7 @@ case class CSVImportController @Inject() (
                     .map { case (_, entitiesWithSameEmail) =>
                       // Note: users appear in the same order as given in the import
                       // Safe due to groupBy
-                      val repr: User = entitiesWithSameEmail.head
+                      val repr = entitiesWithSameEmail.head
                       val groupIds: List[UUID] = entitiesWithSameEmail.flatMap(_.groupIds)
                       val areas: List[UUID] = entitiesWithSameEmail.flatMap(_.areas)
                       repr.copy(
@@ -346,7 +343,7 @@ case class CSVImportController @Inject() (
                     .toList
 
                   userService
-                    .add(usersToInsert)
+                    .addUnvalidatedUser(usersToInsert)
                     .fold(
                       { error: String =>
                         val description = s"Impossible d'importer les utilisateurs : $error"
@@ -365,11 +362,11 @@ case class CSVImportController @Inject() (
                       },
                       { _ =>
                         usersToInsert.foreach { user =>
-                          notificationsService.newUser(user)
+                          notificationsService.newUser(user.asLeft[User])
                           eventService.log(
                             UserCreated,
-                            s"Ajout de l'utilisateur ${user.name} ${user.email}",
-                            involvesUser = Some(user)
+                            s"Ajout de l'utilisateur ${user.email}",
+                            involvesUser = Option.empty[User]
                           )
                         }
                         eventService

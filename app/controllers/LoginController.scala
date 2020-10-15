@@ -24,10 +24,15 @@ class LoginController @Inject() (
   private lazy val tokenExpirationInMinutes =
     configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
-  /** Security Note:
+  /** This serves the /login page with GET & POST
+    * GET /login = used with '?email=xxx' as API so an email is sent automatically
+    * POST /login = sends the magic link after having filled the "email" input on the login page
+    * 
+    * Security Note:
     * when the email is in the query "?email=xxx", we do not check the CSRF token
     * because the API is used externally.
     */
+    // maybe rename "generateMagicLink" ?
   def login: Action[AnyContent] =
     Action.async { implicit request =>
       val emailFromRequestOrQueryParamOrFlash: Option[String] = request.body.asFormUrlEncoded
@@ -37,8 +42,9 @@ class LoginController @Inject() (
       emailFromRequestOrQueryParamOrFlash.fold {
         Future(Ok(views.html.home.page(LoginPanel.ConnectionForm)))
       } { email =>
+        // TODO: add search in table UnvalidatedUser
         userService
-          .byEmail(email)
+          .byEmail(email) // TODO => Either[...]
           .fold {
             // TODO: this should be removed
             val user = User.systemUser

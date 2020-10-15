@@ -4,7 +4,8 @@ import java.util.UUID
 
 import javax.inject.Inject
 import anorm._
-import models.User
+import cats.implicits.catsSyntaxEitherId
+import models.{UnvalidatedUser, User}
 import play.api.db.Database
 import helper.{Hash, Time}
 import org.postgresql.util.PSQLException
@@ -152,6 +153,44 @@ class UserService @Inject() (
   def deleteById(userId: UUID): Boolean =
     db.withTransaction { implicit connection =>
       SQL"""DELETE FROM "user" WHERE id = ${userId}::uuid""".execute()
+    }
+
+  def addUnvalidatedUser(users: List[UnvalidatedUser]): Either[String, Unit] =
+    try {
+      val result = db.withTransaction { implicit cnx =>
+        users.foldRight(true) { (user, success) =>
+          assert(user.areas.nonEmpty)
+          success &&
+          SQL"""
+            INSERT INTO "unvalidated_user" (
+            id, key, email, firstname, lastname, sharedAccountName, instructor, areas, creation_date, group_admin, group_ids, phone_number
+            ) VALUES (
+           ${user.id}::uuid,
+           ${Hash.sha256(s"${user.id}$cryptoSecret")},
+           ${user.email},
+           ${user.firstname},
+           ${user.lastname},
+           ${user.sharedAccountName},
+           ${user.instructor},
+           array[${user.areas.distinct}]::uuid[],
+           ${user.creationDate},
+           ${user.managerOfGroups},
+           array[${user.groupIds.distinct}]::uuid[],
+           ${user.phoneNumber}
+           )
+        """.executeUpdate() == 1
+        }
+      }
+      result.asRight[String].filterOrElse(identity, "Aucun utilisateur n'a été ajouté").map(_ => ())
+    } catch {
+      case ex: PSQLException =>
+        val EmailErrorPattern =
+          """[^()@]+@[^()@.]+\.[^()@]+""".r // This didn't work in that case : """ Detail: Key \(email\)=\(([^()]*)\) already exists."""".r  (don't know why, the regex is correct)
+        val errorMessage = EmailErrorPattern.findFirstIn(ex.getServerErrorMessage.toString) match {
+          case Some(email) => s"Un utilisateur avec l'adresse $email existe déjà."
+          case _           => s"SQL Erreur : ${ex.getServerErrorMessage.toString}"
+        }
+        Left(errorMessage)
     }
 
   def add(users: List[User]): Either[String, Unit] =

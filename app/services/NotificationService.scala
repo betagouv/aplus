@@ -163,7 +163,7 @@ class NotificationService @Inject() (
     }
   }
 
-  def newUser(newUser: User) =
+  def newUser(newUser: Either[UnvalidatedUser, User]) =
     sendMail(generateWelcomeEmail(newUser))
 
   def newLoginRequest(absoluteUrl: String, path: String, user: User, loginToken: LoginToken) = {
@@ -218,12 +218,19 @@ class NotificationService @Inject() (
     )
   }
 
-  private def generateWelcomeEmail(user: User): Email = {
-    val bodyHtml = views.html.emails.welcome(user, tokenExpirationInMinutes).toString()
+  private def generateWelcomeEmail(user: Either[UnvalidatedUser, User]): Email = {
+    val (email, to) = user match {
+      case Left(user) =>
+        (user.email, List(s"${user.email}"))
+      case Right(user) =>
+        (user.email, List(s"${quoteEmailPhrase(user.name)} <${user.email}>"))
+    }
+
+    val bodyHtml = views.html.emails.welcome(email, tokenExpirationInMinutes).toString()
     Email(
       subject = "[A+] Bienvenue sur Administration+",
       from = from,
-      to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
+      to = to,
       bodyHtml = Some(bodyHtml)
     )
   }

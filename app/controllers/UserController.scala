@@ -8,6 +8,7 @@ import scala.util.Try
 import actions.{LoginAction, RequestWithUserData}
 import helper.BooleanHelper.not
 import Operators.{GroupOperators, UserOperators}
+import cats.implicits.catsSyntaxEitherId
 import helper.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
 import models.EventType.{
@@ -39,7 +40,7 @@ import models.EventType.{
   ViewUserUnauthorized
 }
 import models.formModels.ValidateCGUForm
-import models.{Area, Authorization, EventType, Organisation, User, UserGroup}
+import models.{Area, Authorization, EventType, Organisation, UnvalidatedUser, User, UserGroup}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
@@ -389,7 +390,7 @@ case class UserController @Inject() (
                     },
                     { _ =>
                       users.foreach { user =>
-                        notificationsService.newUser(user)
+                        notificationsService.newUser(user.asRight[UnvalidatedUser])
                         eventService.log(
                           EventType.UserCreated,
                           s"Ajout de l'utilisateur ${user.name} ${user.email}",
@@ -472,8 +473,8 @@ case class UserController @Inject() (
       "redirect" -> optional(text),
       "newsletter" -> boolean,
       "validate" -> boolean,
-      "firstName" -> nonEmptyText.verifying(maxLength(100)),
-      "lastName" -> nonEmptyText.verifying(maxLength(100)),
+      "firstname" -> nonEmptyText.verifying(maxLength(100)),
+      "lastname" -> nonEmptyText.verifying(maxLength(100)),
       "sharedAccountName" -> optional(nonEmptyText.verifying(maxLength(500)))
     )(ValidateCGUForm.apply)(ValidateCGUForm.unapply)
   )

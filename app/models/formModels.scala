@@ -37,7 +37,7 @@ object formModels {
   )
 
   case class UserFormData(
-      user: User,
+      user: UnvalidatedUser,
       line: Int,
       alreadyExists: Boolean,
       alreadyExistingUser: Option[User] = None,
