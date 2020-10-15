@@ -2,9 +2,9 @@ package controllers
 
 import java.time.{LocalDate, ZoneId, ZonedDateTime}
 import java.util.UUID
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
-
 import actions.{LoginAction, RequestWithUserData}
 import helper.BooleanHelper.not
 import Operators.{GroupOperators, UserOperators}
@@ -38,6 +38,7 @@ import models.EventType.{
   UsersShowed,
   ViewUserUnauthorized
 }
+import models.formModels.ValidateCGUForm
 import models.{Area, Authorization, EventType, Organisation, User, UserGroup}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
@@ -437,7 +438,7 @@ case class UserController @Inject() (
   def showCGU(): Action[AnyContent] =
     loginAction { implicit request =>
       eventService.log(CGUShowed, "CGU visualisé")
-      Ok(views.html.showCGU(request.currentUser, request.rights))
+      Ok(views.html.showCGU(request.currentUser, request.rights, validateCGUForm))
     }
 
   def validateCGU(): Action[AnyContent] =
@@ -449,12 +450,12 @@ case class UserController @Inject() (
             s"Formulaire invalide, prévenez l’administrateur du service. ${formWithErrors.errors.mkString(", ")}"
           )
         },
-        { case (redirectOption, newsletter, validate) =>
-          if (validate) {
-            userService.acceptCGU(request.currentUser.id, newsletter)
+        { form =>
+          if (form.validate) {
+            userService.acceptCGU(request.currentUser.id, form.newsletter)
           }
           eventService.log(CGUValidated, "CGU validées")
-          val route = redirectOption match {
+          val route = form.redirect match {
             case Some(redirect)
                 if (redirect: String) != (routes.ApplicationController.myApplications.url: String) =>
               Call("GET", redirect)
@@ -466,12 +467,15 @@ case class UserController @Inject() (
       )
     }
 
-  private val validateCGUForm: Form[(Option[String], Boolean, Boolean)] = Form(
-    tuple(
+  private val validateCGUForm: Form[ValidateCGUForm] = Form(
+    mapping(
       "redirect" -> optional(text),
       "newsletter" -> boolean,
-      "validate" -> boolean
-    )
+      "validate" -> boolean,
+      "firstName" -> nonEmptyText.verifying(maxLength(100)),
+      "lastName" -> nonEmptyText.verifying(maxLength(100)),
+      "sharedAccountName" -> optional(nonEmptyText.verifying(maxLength(500)))
+    )(ValidateCGUForm.apply)(ValidateCGUForm.unapply)
   )
 
   private val subscribeNewsletterForm: Form[Boolean] = Form(
