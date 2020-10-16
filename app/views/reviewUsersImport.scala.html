@@ -8,7 +8,7 @@
 @(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @groupWillNotBeInserted(group: Field) = @{
-  group("alreadyExistsOrAllUsersAlreadyExist").value.exists(_ == "true")
+  group("alreadyExistsOrAllUsersAlreadyExist").value.contains("true")
 }
 
 @display(section: Field, groupIndex: Int)(header: Html) = {
@@ -21,7 +21,7 @@
         <tr class="searchable-row td--clear-border" id="line_@{groupIndex}_@{index}">
           <td class="mdl-data-table__cell--non-numeric cell-import-user">
 
-              @if(user("isInMoreThanOneGroup").value == Some("true")) {
+              @if(user("isInMoreThanOneGroup").value.contains("true")) {
                   <i class="material-icons mdl-color-text--orange-500">warning</i>
               }
 
@@ -37,15 +37,26 @@
                    @toHtmlArgs(args)>
             }
 
-            @helper.input(user("user")("name"), "label" -> "Nom et prénom", "class" -> "input-import-user") { (id, name, value, args) =>
+            @helper.input(user("user")("firstName"), "label" -> "Prénom", "class" -> "input-import-user") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user"
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(user("alreadyExists").value.exists(_ == "true")) { readonly }
+                     @if(user("alreadyExists").value.contains("true")) { readonly }
                      value="@value"
                      @toHtmlArgs(args)>
             }
+          </td>
+            <td class="mdl-data-table__cell--non-numeric cell-import-user">
+              @helper.input(user("user")("lastName"), "label" -> "Nom", "class" -> "input-import-user") { (id, name, value, args) =>
+                  <input class="mdl-textfield__input input-import-user"
+                  type="text"
+                  name="@name"
+                  id="@id"
+              @if(user("alreadyExists").value.contains("true")) { readonly }
+              value="@value"
+              @toHtmlArgs(args)>
+              }
           </td>
           <td class="mdl-data-table__cell--non-numeric cell-import-user">
             @helper.input(user("user")("email"), "label" -> "Email", "class" -> "input-import-user") { (id, name, value, args) =>
@@ -53,48 +64,37 @@
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(user("alreadyExists").value.exists(_ == "true")) { readonly }
+                     @if(user("alreadyExists").value.contains("true")) { readonly }
                      value="@value"
                      @toHtmlArgs(args)>
             }
           </td>
           <td class="mdl-data-table__cell--non-numeric cell-import-user">
-            @helper.input(user("user")("phone-number"), "label" -> "Numéro de téléphone", "class" -> "input-import-user") { (id, name, value, args) =>
+            @helper.input(user("user")("phoneNumber"), "label" -> "Numéro de téléphone", "class" -> "input-import-user") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user"
                      type="text"
                      name="@name"
                      id="@id"
-                     @if(user("alreadyExists").value.exists(_ == "true")) { readonly }
+                     @if(user("alreadyExists").value.contains("true")) { readonly }
                      value="@value"
                      @toHtmlArgs(args)>
             }
           </td>
-          <td class="mdl-data-table__cell--non-numeric cell-import-user">
-            @helper.input(user("user")("quality"), "label" -> "Qualité", "class" -> "input-import-user") { (id, name, value, args) =>
-              <input class="mdl-textfield__input input-import-user"
-                     type="text"
-                     name="@name"
-                     id="@id"
-                     @if(user("alreadyExists").value.exists(_ == "true")) { readonly }
-                     value="@value"
-                     @toHtmlArgs(args)>
-            }
+          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.contains("true")){avoid-clicks}">
+            @helper.checkbox(user("user")("instructor"), "type" -> "checkbox", "label" -> UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes.head, "class" -> "mdl-checkbox__input instructor")
           </td>
-          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
-            @helper.checkbox(user("user")("instructor"), "type" -> "checkbox", "label" -> UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes(0), "class" -> "mdl-checkbox__input instructor")
+          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.contains("true")){avoid-clicks}">
+            @helper.checkbox(user("user")("adminGroup"), "type" -> "checkbox", "label" -> UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes.head, "class" -> "mdl-checkbox__input")
           </td>
-          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
-            @helper.checkbox(user("user")("adminGroup"), "type" -> "checkbox", "label" -> UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes(0), "class" -> "mdl-checkbox__input")
-          </td>
-          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.exists(_ == "true")){avoid-clicks}">
+          <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.contains("true")){avoid-clicks}">
             @helper.checkbox(
               user("user")(Keys.User.sharedAccount),
               "type" -> "checkbox",
-              "label" -> UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes(0),
+              "label" -> UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes.head,
               "class" -> "mdl-checkbox__input")
           </td>
           <td>
-            @if(user("alreadyExists").value.exists(_ == "true")) {
+            @if(user("alreadyExists").value.contains("true")) {
               <a target="_blank" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" title="Voir fiche utilisateur" href="@routes.UserController.editUser(user("user")("id").value.flatMap(UUIDHelper.fromString).get)"><i class='fas fa-user-edit'></i></a>
             } else {
               <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" title="Supprimer (Définitif)" onclick="deleteElement('#line_@{groupIndex}_@index')"><i class="material-icons">delete_forever</i></button>
@@ -107,7 +107,7 @@
   </div>
 }
 
-@main(currentUser, currentUserRights, maxWidth = false)("Revue de votre import CSV") {
+@main(currentUser.name, currentUser.email, currentUserRights, maxWidth = false)("Revue de votre import CSV") {
   <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 } {
   @helper.form(routes.CSVImportController.importUsersAfterReview(), "method" -> "post", "class" -> "mdl-cell mdl-cell--12-col") {

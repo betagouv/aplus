@@ -9,6 +9,7 @@ import actions.{LoginAction, RequestWithUserData}
 import helper.BooleanHelper.not
 import Operators.{GroupOperators, UserOperators}
 import cats.implicits.catsSyntaxEitherId
+import controllers.UserController.validateCGUForm
 import helper.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
 import models.EventType.{
@@ -190,20 +191,20 @@ case class UserController @Inject() (
 
           val headers = List[String](
             "Id",
-            UserAndGroupCsvSerializer.USER_NAME.prefixes(0),
-            UserAndGroupCsvSerializer.USER_EMAIL.prefixes(0),
+            UserAndGroupCsvSerializer.USER_LAST_NAME.prefixes.head,
+            UserAndGroupCsvSerializer.USER_EMAIL.prefixes.head,
             "Création",
-            UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes(0),
+            UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes.head,
             "Aidant",
-            UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes(0),
-            UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes(0),
+            UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes.head,
+            UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes.head,
             "Expert",
             "Admin",
             "Actif",
             "Commune INSEE",
-            UserAndGroupCsvSerializer.GROUP_AREAS_IDS.prefixes(0),
-            UserAndGroupCsvSerializer.GROUP_NAME.prefixes(0),
-            UserAndGroupCsvSerializer.GROUP_ORGANISATION.prefixes(0),
+            UserAndGroupCsvSerializer.GROUP_AREAS_IDS.prefixes.head,
+            UserAndGroupCsvSerializer.GROUP_NAME.prefixes.head,
+            UserAndGroupCsvSerializer.GROUP_ORGANISATION.prefixes.head,
             "CGU",
             "Newsletter"
           ).mkString(";")
@@ -439,7 +440,14 @@ case class UserController @Inject() (
   def showCGU(): Action[AnyContent] =
     loginAction { implicit request =>
       eventService.log(CGUShowed, "CGU visualisé")
-      Ok(views.html.showCGU(request.currentUser, request.rights, validateCGUForm))
+      Ok(
+        views.html.showCGU(
+          request.currentUser.name,
+          request.currentUser.email,
+          request.rights,
+          validateCGUForm
+        )
+      )
     }
 
   def validateCGU(): Action[AnyContent] =
@@ -467,17 +475,6 @@ case class UserController @Inject() (
         }
       )
     }
-
-  private val validateCGUForm: Form[ValidateCGUForm] = Form(
-    mapping(
-      "redirect" -> optional(text),
-      "newsletter" -> boolean,
-      "validate" -> boolean,
-      "firstname" -> nonEmptyText.verifying(maxLength(100)),
-      "lastname" -> nonEmptyText.verifying(maxLength(100)),
-      "sharedAccountName" -> optional(nonEmptyText.verifying(maxLength(500)))
-    )(ValidateCGUForm.apply)(ValidateCGUForm.unapply)
-  )
 
   private val subscribeNewsletterForm: Form[Boolean] = Form(
     "newsletter" -> boolean
@@ -631,5 +628,20 @@ case class UserController @Inject() (
       "observableOrganisationIds" -> list(of[Organisation.Id]),
       Keys.User.sharedAccount -> boolean
     )(User.apply)(User.unapply)
+
+}
+
+object UserController {
+
+  val validateCGUForm: Form[ValidateCGUForm] = Form(
+    mapping(
+      "redirect" -> optional(text),
+      "newsletter" -> boolean,
+      "validate" -> boolean,
+      "firstName" -> nonEmptyText.verifying(maxLength(100)),
+      "lastName" -> nonEmptyText.verifying(maxLength(100)),
+      "sharedAccountName" -> optional(nonEmptyText.verifying(maxLength(500)))
+    )(ValidateCGUForm.apply)(ValidateCGUForm.unapply)
+  )
 
 }

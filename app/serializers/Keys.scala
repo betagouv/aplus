@@ -15,7 +15,7 @@ object Keys {
   }
 
   object User {
-    val sharedAccount: String = "sharedAccount"
+    val sharedAccount: String = "sharedAccountName"
   }
 
   //

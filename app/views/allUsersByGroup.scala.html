@@ -67,7 +67,7 @@
 }
 
 
-@main(currentUser, currentUserRights)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
+@main(currentUser.name, currentUser.email, currentUserRights)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 
   <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/auto-complete.css")'>

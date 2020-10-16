@@ -6,6 +6,8 @@ import models.mandat.Mandat
 
 object Authorization {
 
+  val forUnvalidatedUser: UserRights = UserRights(Set.empty[UserRight])
+
   def readUserRights(user: User): UserRights = {
     import UserRight._
     UserRights(

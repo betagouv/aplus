@@ -3,7 +3,7 @@
 
 @(currentUser: User, currentUserRights: Authorization.UserRights)(result: Html, groups: List[UserGroup], selectedAreaIds: List[UUID], selectedOrganisationIds: List[Organisation.Id], selectedGroupIds: List[UUID], creationMinDate: LocalDate, creationMaxDate: LocalDate)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-@main(currentUser, currentUserRights)(s"Stats")  {
+@main(currentUser.name, currentUser.email, currentUserRights)(s"Stats")  {
     @webJarsUtil.locate("Chart.bundle.min.js").script()
 }{
     <div class="mdl-cell mdl-cell--12-col">

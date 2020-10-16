@@ -1,6 +1,6 @@
 @import helper._
 
-@(currentUser: User, currentUserRights: Authorization.UserRights, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(userName: String, userEmail :String, currentUserRights: Authorization.UserRights, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 <!doctype html>
 <html lang="fr">
@@ -63,8 +63,8 @@
                         <ul class="mdl-list">
                             <li class="mdl-list__item mdl-list__item--two-line">
                                 <span class="mdl-list__item-primary-content">
-                                    <span>@currentUser.name</span>
-                                    <span class="mdl-list__item-sub-title">@currentUser.email</span>
+                                    <span>@userName</span>
+                                    <span class="mdl-list__item-sub-title">@userEmail</span>
                                 </span>
                                 <span class="mdl-list__item-secondary-content single--align-items-center-important">
                                     <a class="mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" href="@routes.LoginController.disconnect" title="Déconnexion">

@@ -3,7 +3,7 @@
 @(user: User, currentUserRights: Authorization.UserRights)(areas: List[Area], areasWithLoginByKey: List[UUID], userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
-@main(user, currentUserRights)(s"Gestion des territoires"){
+@main(user.name, user.email, currentUserRights)(s"Gestion des territoires"){
 
 }{
     <div class="mdl-cell mdl-cell--12-col pem-container mdl-grid">

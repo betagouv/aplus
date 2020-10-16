@@ -4,10 +4,10 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import models.formModels.{UserFormData, UserGroupFormData}
-import helper.{PlayFormHelper, UUIDHelper}
 import helper.StringHelper._
-import models.{Area, Organisation, UnvalidatedUser, User, UserGroup}
+import helper.{PlayFormHelper, UUIDHelper}
+import models.formModels.{UserFormData, UserGroupFormData}
+import models.{Area, Organisation, UnvalidatedUser, UserGroup}
 import play.api.data.Forms._
 import play.api.data.Mapping
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
@@ -20,16 +20,15 @@ object UserAndGroupCsvSerializer {
     val lowerPrefixes = prefixes.map(_.toLowerCase().stripSpecialChars)
   }
 
-  val USER_NAME = Header("user.name", List("Nom", "PRENOM NOM"))
-  val USER_FIRST_NAME = Header("user.firstname", List("Prénom", "Prenom"))
+  val USER_FIRST_NAME = Header("user.firstName", List("Prénom", "Prenom"))
+  val USER_LAST_NAME = Header("user.lastName", List("Nom", "Nom"))
 
   val USER_EMAIL =
     Header("user.email", List("Email", "Adresse e-mail", "Contact mail Agent", "MAIL"))
 
   val USER_INSTRUCTOR = Header("user.instructor", List("Instructeur"))
-  val USER_GROUP_MANAGER = Header("user.admin-group", List("Responsable"))
-  val USER_QUALITY = Header("user.quality", List("Qualité"))
-  val USER_PHONE_NUMBER = Header("user.phone-number", List("Numéro de téléphone", "téléphone"))
+  val USER_GROUP_MANAGER = Header("user.groupManager", List("Responsable"))
+  val USER_PHONE_NUMBER = Header("user.phoneNumber", List("Numéro de téléphone", "téléphone"))
   val USER_ACCOUNT_IS_SHARED = Header("user." + Keys.User.sharedAccount, List("Compte Partagé"))
 
   val GROUP_AREAS_IDS = Header("group.area-ids", List("Territoire", "DEPARTEMENTS"))
@@ -47,17 +46,17 @@ object UserAndGroupCsvSerializer {
   val USER_HEADERS = List(
     USER_PHONE_NUMBER,
     USER_FIRST_NAME,
-    USER_NAME,
+    USER_LAST_NAME,
     USER_EMAIL,
     USER_INSTRUCTOR,
     USER_GROUP_MANAGER,
     USER_ACCOUNT_IS_SHARED
   )
 
-  val USER_HEADER = USER_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
+  val USER_HEADER = USER_HEADERS.map(_.prefixes.head).mkString(SEPARATOR)
 
   val GROUP_HEADERS = List(GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL, GROUP_AREAS_IDS)
-  val GROUP_HEADER = GROUP_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
+  val GROUP_HEADER = GROUP_HEADERS.map(_.prefixes.head).mkString(SEPARATOR)
 
   type UUIDGenerator = () => UUID
 
@@ -69,11 +68,10 @@ object UserAndGroupCsvSerializer {
   private val expectedUserHeaders: List[Header] = List(
     USER_PHONE_NUMBER,
     USER_FIRST_NAME,
-    USER_NAME,
+    USER_LAST_NAME,
     USER_EMAIL,
     USER_INSTRUCTOR,
     USER_GROUP_MANAGER,
-    USER_QUALITY,
     USER_ACCOUNT_IS_SHARED
   )
 
@@ -86,7 +84,7 @@ object UserAndGroupCsvSerializer {
     userGroupFormData
       .groupBy(_.group.name.stripSpecialChars)
       .view
-      .mapValues({ case sameGroupNameList: List[UserGroupFormData] =>
+      .mapValues({ sameGroupNameList: List[UserGroupFormData] =>
         val group = sameGroupNameList.head
         val usersFormData = sameGroupNameList.flatMap(_.users)
         group.copy(users = usersFormData)
@@ -140,7 +138,9 @@ object UserAndGroupCsvSerializer {
       .map { csvExtractResult: CSVExtractResult =>
         val result: List[Either[String, UserGroupFormData]] = csvExtractResult.map {
           case (lineNumber: LineNumber, csvMap: CSVMap, rawCSVLine: RawCSVLine) =>
-            csvMap.trimValues.csvCleanHeadersWithExpectedHeaders
+            csvMap
+              .trimValues()
+              .csvCleanHeadersWithExpectedHeaders()
               .convertAreasNameToAreaUUID(defaultAreas)
               .convertBooleanValue(UserAndGroupCsvSerializer.USER_GROUP_MANAGER.key, "Responsable")
               .convertBooleanValue(UserAndGroupCsvSerializer.USER_INSTRUCTOR.key, "Instructeur")
@@ -148,11 +148,9 @@ object UserAndGroupCsvSerializer {
                 UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.key,
                 "Compte Partagé"
               )
-              .includeAreasNameInGroupName
+              .includeAreasNameInGroupName()
               .matchOrganisationId
               .fromCsvFieldNameToHtmlFieldName
-              .includeFirstnameInLastName()
-              .setDefaultQualityIfNeeded()
               .toUserGroupData(lineNumber, currentDate)
               .left
               .map { error: String =>
@@ -171,8 +169,7 @@ object UserAndGroupCsvSerializer {
     def csvCleanHeadersWithExpectedHeaders(): CSVMap = {
       def convertToPrefixForm(
           values: CSVMap,
-          expectedHeaders: List[Header],
-          formPrefix: String
+          expectedHeaders: List[Header]
       ): CSVMap =
         values
           .map({ case (key, value) =>
@@ -184,10 +181,9 @@ object UserAndGroupCsvSerializer {
           .flatten
           .toMap
 
-      convertToPrefixForm(csvMap, expectedGroupHeaders, "group.") ++ convertToPrefixForm(
+      convertToPrefixForm(csvMap, expectedGroupHeaders) ++ convertToPrefixForm(
         csvMap,
-        expectedUserHeaders,
-        "user."
+        expectedUserHeaders
       )
     }
 
@@ -202,7 +198,7 @@ object UserAndGroupCsvSerializer {
           val inseeCodes = stringToInseeCodeList(areas)
 
           val detectedAreas: List[Area] = if (inseeCodes.nonEmpty) {
-            inseeCodes.flatMap(Area.fromInseeCode).toList
+            inseeCodes.flatMap(Area.fromInseeCode)
           } else {
             areas.split(",").flatMap(_.split(";")).flatMap(Area.searchFromName).toList
           }.distinct
@@ -225,8 +221,8 @@ object UserAndGroupCsvSerializer {
         .fold {
           csvMap
         } { value =>
-          csvMap + (key -> (value.toLowerCase.stripSpecialChars
-            .contains(trueValue.toLowerCase.stripSpecialChars))
+          csvMap + (key -> value.toLowerCase.stripSpecialChars
+            .contains(trueValue.toLowerCase.stripSpecialChars)
             .toString)
         }
 
@@ -237,7 +233,7 @@ object UserAndGroupCsvSerializer {
           ids.split(",").flatMap(UUIDHelper.fromString).flatMap(Area.fromId).toList.map(_.name)
         })
       // TODO: Only if the groupName dont include the area
-      (optionalAreaNames -> csvMap.get(UserAndGroupCsvSerializer.GROUP_NAME.key)) match {
+      optionalAreaNames -> csvMap.get(UserAndGroupCsvSerializer.GROUP_NAME.key) match {
         case (Some(areaNames), Some(initialGroupName)) =>
           csvMap + (UserAndGroupCsvSerializer.GROUP_NAME.key -> s"$initialGroupName - ${areaNames.mkString("/")}")
         case _ =>
@@ -272,28 +268,6 @@ object UserAndGroupCsvSerializer {
             })
           (csvMap - GROUP_AREAS_IDS.key) ++ newTuples
         })
-
-    def includeFirstnameInLastName(): CSVMap =
-      (csvMap.get(USER_FIRST_NAME.key), csvMap.get(USER_NAME.key)) match {
-        case (Some(firstName), Some(lastName)) =>
-          csvMap + (USER_NAME.key -> s"${lastName} ${firstName}")
-        case _ =>
-          csvMap
-      }
-
-    def setDefaultQualityIfNeeded(): CSVMap = {
-      val defaultUserQuality = csvMap.getOrElse(GROUP_NAME.key, "")
-      csvMap
-        .get(USER_QUALITY.key)
-        .fold {
-          csvMap + (USER_QUALITY.key -> defaultUserQuality)
-        } { quality =>
-          if (quality.isEmpty)
-            csvMap + (USER_QUALITY.key -> defaultUserQuality)
-          else
-            csvMap
-        }
-    }
 
     def trimValues(): CSVMap = csvMap.view.mapValues(_.trim).toMap
 
@@ -335,16 +309,15 @@ object UserAndGroupCsvSerializer {
           Option.apply
         ),
         "email" -> email.verifying(maxLength(200), nonEmpty),
-        "firstname" -> optional(nonEmptyText.verifying(maxLength(100))),
-        "lastname" -> optional(nonEmptyText.verifying(maxLength(100))),
-        "phone-number" -> optional(text),
+        "firstName" -> optional(nonEmptyText.verifying(maxLength(100))),
+        "lastName" -> optional(nonEmptyText.verifying(maxLength(100))),
+        "phoneNumber" -> optional(text),
         "sharedAccountName" -> optional(text.verifying(maxLength(500))),
         "instructor" -> boolean,
-        "admin" -> boolean,
+        "groupManager" -> boolean,
         "area-ids" -> ignored(List.empty[UUID]),
         "creationDate" -> ignored(currentDate),
-        "groupIds" -> default(list(uuid), List.empty[UUID]),
-        "observableOrganisationIds" -> list(of[Organisation.Id])
+        "groupIds" -> default(list(uuid), List.empty[UUID])
       )(UnvalidatedUser.apply)(UnvalidatedUser.unapply)
     )
 

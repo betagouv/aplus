@@ -4,32 +4,21 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import actions.LoginAction
-import Operators.{GroupOperators, UserOperators}
 import cats.implicits.catsSyntaxEitherId
-import models.formModels.{CSVImportData, UserFormData, UserGroupFormData}
-import javax.inject.Inject
-import models.{Area, Organisation, UnvalidatedUser, User, UserGroup}
-import org.webjars.play.WebJarsUtil
-import play.api.data.{Form, Mapping}
-import play.api.data.Forms._
-import play.api.mvc.{Action, AnyContent, InjectedController}
-import services.{EventService, NotificationService, UserGroupService, UserService}
-import helper.Time
+import controllers.Operators.{GroupOperators, UserOperators}
 import helper.StringHelper._
-import models.EventType.{
-  CSVImportFormError,
-  CsvImportInputEmpty,
-  ImportGroupUnauthorized,
-  ImportUserError,
-  ImportUserFormError,
-  ImportUserUnauthorized,
-  ImportUsersUnauthorized,
-  UserCreated,
-  UserGroupCreated,
-  UsersImported
-}
+import helper.Time
+import javax.inject.Inject
+import models.EventType._
+import models.formModels.{CSVImportData, UserFormData, UserGroupFormData}
+import models._
+import org.webjars.play.WebJarsUtil
+import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
-import serializers.{Keys, UserAndGroupCsvSerializer}
+import play.api.data.{Form, Mapping}
+import play.api.mvc.{Action, AnyContent, InjectedController}
+import serializers.UserAndGroupCsvSerializer
+import services.{EventService, NotificationService, UserGroupService, UserService}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -126,19 +115,15 @@ case class CSVImportController @Inject() (
         Option.apply
       ),
       "email" -> email.verifying(maxLength(200), nonEmpty),
-      "firstname" -> optional(nonEmptyText.verifying(maxLength(100))),
-      "lastname" -> optional(nonEmptyText.verifying(maxLength(100))),
-      // TODO: rename into phoneNumber
-      "phone-number" -> optional(text),
+      "firstName" -> optional(nonEmptyText.verifying(maxLength(100))),
+      "lastName" -> optional(nonEmptyText.verifying(maxLength(100))),
+      "phoneNumber" -> optional(text),
       "sharedAccountName" -> optional(text.verifying(maxLength(500))),
       "instructor" -> boolean,
-      // TODO: rename into managerOfGroups
-      "admin" -> boolean,
+      "groupManager" -> boolean,
       "areas" -> list(uuid),
       "creationDate" -> ignored(date),
-      "groupIds" -> default(list(uuid), List.empty[UUID]),
-      // TODO: put also in forms/imports?
-      "observableOrganisationIds" -> list(of[Organisation.Id])
+      "groupIds" -> default(list(uuid), List.empty[UUID])
     )(UnvalidatedUser.apply)(UnvalidatedUser.unapply)
 
   private def groupImportMapping(date: ZonedDateTime): Mapping[UserGroup] =
@@ -158,7 +143,7 @@ case class CSVImportController @Inject() (
         .verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
       "organisation" -> optional(of[Organisation.Id]).verifying(
         "Vous devez sélectionner une organisation dans la liste",
-        _.map(Organisation.isValidId).getOrElse(false)
+        _.exists(Organisation.isValidId)
       ),
       "email" -> optional(email)
     )(UserGroup.apply)(UserGroup.unapply)
@@ -267,7 +252,7 @@ case class CSVImportController @Inject() (
     val newUsers = groupFormData.users.map({ userFormData =>
       val newUser = userFormData.user.copy(
         groupIds = (groupId :: userFormData.user.groupIds).distinct,
-        areas = (areasId ++ userFormData.user.areas).distinct
+        areaIds = (areasId ++ userFormData.user.areaIds).distinct
       )
       userFormData.copy(user = newUser)
     })
@@ -334,9 +319,9 @@ case class CSVImportController @Inject() (
                       // Safe due to groupBy
                       val repr = entitiesWithSameEmail.head
                       val groupIds: List[UUID] = entitiesWithSameEmail.flatMap(_.groupIds)
-                      val areas: List[UUID] = entitiesWithSameEmail.flatMap(_.areas)
+                      val areas: List[UUID] = entitiesWithSameEmail.flatMap(_.areaIds)
                       repr.copy(
-                        areas = areas,
+                        areaIds = areas,
                         groupIds = groupIds
                       )
                     }

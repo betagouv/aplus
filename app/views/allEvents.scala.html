@@ -2,7 +2,7 @@
 
 @(user: User, currentUserRights: Authorization.UserRights)(events: Seq[Event], limit: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-@main(user, currentUserRights, maxWidth = false)(s"Evénements ($limit derniers)")  {
+@main(user.name, user.email, currentUserRights, maxWidth = false)(s"Evénements ($limit derniers)")  {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("sortable/sortable.css")'>
     <script src="@routes.Assets.versioned("sortable/sortable.js")"></script>
 }{

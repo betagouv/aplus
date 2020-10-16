@@ -1,6 +1,6 @@
 @(currentUser: User, currentUserRights: Authorization.UserRights)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-@main(currentUser, currentUserRights, maxWidth = false)(s"Tableau de déploiement France Services") {
+@main(currentUser.name, currentUser.email, currentUserRights, maxWidth = false)(s"Tableau de déploiement France Services") {
     @webJarsUtil.locate("tabulator.min.css").css()
     @webJarsUtil.locate("tabulator.min.js").script()
     @webJarsUtil.locate("xlsx.full.min.js").script()

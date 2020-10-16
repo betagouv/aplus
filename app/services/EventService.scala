@@ -34,6 +34,29 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
   )
 
   def log(
+      request: Request[_],
+      userName: String,
+      userId: UUID,
+      event: EventType,
+      description: String,
+      application: Option[Application],
+      /** Not the logged-in `User`, but if the op is about some other `User`. */
+      involvesUser: Option[User],
+      /** If the warn/error has an exception as cause. */
+      underlyingException: Option[Throwable]
+  ) = register(
+    event.level,
+    userName,
+    userId,
+    request.remoteAddress,
+    event.code,
+    s"$description. ${request.method} ${request.path}",
+    application,
+    involvesUser,
+    underlyingException
+  )
+
+  def log(
       event: EventType,
       description: String,
       application: Option[Application] = None,
@@ -86,6 +109,44 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       involvesUser = involvesUser,
       underlyingException = underlyingException
     )
+
+  private def register(
+      level: String,
+      userName: String,
+      userId: UUID,
+      remoteAddress: String,
+      code: String,
+      description: String,
+      application: Option[Application],
+      involvesUser: Option[User],
+      underlyingException: Option[Throwable]
+  ): Unit = {
+    val event = Event(
+      UUID.randomUUID(),
+      level,
+      code,
+      userName,
+      userId,
+      Time.nowParis(),
+      description,
+      Area.notApplicable.id,
+      application.map(_.id),
+      involvesUser.map(_.id),
+      remoteAddress
+    )
+    addEvent(event)
+
+    val message = s"$userName/$description"
+    level match {
+      case "INFO" =>
+        underlyingException.fold(logger.info(message))(e => logger.info(message, e))
+      case "WARN" =>
+        underlyingException.fold(logger.warn(message))(e => logger.warn(message, e))
+      case "ERROR" =>
+        underlyingException.fold(logger.error(message))(e => logger.error(message, e))
+      case _ =>
+    }
+  }
 
   private def register(level: String)(
       currentUser: User,

@@ -1,24 +1,19 @@
 package actions
 
+import cats.implicits.catsSyntaxEitherId
 import constants.Constants
-import javax.inject.{Inject, Singleton}
 import controllers.routes
 import helper.UUIDHelper
-import models._
-import play.api.mvc._
+import javax.inject.{Inject, Singleton}
+import models.EventType._
+import models.UnvalidatedUser.toUser
+import models.{Area, Authorization, UnvalidatedUser, User, _}
+import play.api.Logger
 import play.api.mvc.Results.TemporaryRedirect
+import play.api.mvc._
 import serializers.Keys
 import services.{EventService, TokenService, UserService}
-import models.EventType.{
-  AuthByKey,
-  AuthWithDifferentIp,
-  ExpiredToken,
-  LoginByKey,
-  ToCGURedirected,
-  TryLoginByKey,
-  UserAccessDisabled
-}
-import play.api.Logger
+
 import scala.concurrent.{ExecutionContext, Future}
 
 class RequestWithUserData[A](
@@ -76,7 +71,7 @@ class LoginAction @Inject() (
       )
     val url = "http" + (if (request.secure) "s" else "") + "://" + request.host + path
     (userBySession, userByKey, tokenById) match {
-      case (Some(userSession), Some(userKey), None) if userSession.id == userKey.id =>
+      case (Some(Right(userSession)), Some(userKey), None) if userSession.id == userKey.id =>
         Future(Left(TemporaryRedirect(Call(request.method, url).url)))
       case (_, Some(user), None) =>
         LoginAction.readUserRights(user).map { userRights =>
@@ -107,12 +102,13 @@ class LoginAction @Inject() (
         }
       case (_, None, Some(token)) =>
         manageToken(token)
-      case (Some(user), None, None) if user.disabled == false =>
-        manageUserLogged(user)
-      case (Some(user), None, None) if user.disabled == true =>
+      case (Some(Left(user)), None, None) =>
+        manageUserLogged(user.asLeft[User])
+      case (Some(Right(user)), None, None) if !user.disabled =>
+        manageUserLogged(user.asRight[UnvalidatedUser])
+      case (Some(Right(user)), None, None) if user.disabled =>
         LoginAction.readUserRights(user).map { userRights =>
-          implicit val requestWithUserData =
-            new RequestWithUserData(user, userRights, request)
+          implicit val requestWithUserData = new RequestWithUserData(user, userRights, request)
           eventService.log(
             UserAccessDisabled,
             s"Utilisateur désactivé essaye d'accéder à la page ${request.path}}"
@@ -147,35 +143,74 @@ class LoginAction @Inject() (
     }
   }
 
+  import play.api.mvc._
+
   // user: Either[...]
-  private def manageUserLogged[A](user: User)(implicit request: Request[A]) =
-    LoginAction.readUserRights(user).map { userRights =>
-      implicit val requestWithUserData = new RequestWithUserData(user, userRights, request)
-      // case Left(unvalidated) =>
-      // If UnvalidatedUser => show CGU
-      // case Right() =>
-      val hasAcceptedCgu = user.cguAcceptationDate.nonEmpty
-      // `request.path.contains("cgu")` seems to be used to avoid infinite redirects
+  private def manageUserLogged[A](
+      user: Either[UnvalidatedUser, User]
+  )(implicit request: Request[A]) = user match {
+    case Left(user) =>
+      implicit val requestWithUserData =
+        new RequestWithUserData[A](toUser(user), Authorization.forUnvalidatedUser, request)
       val isOnCguPage = request.path.contains("cgu")
-      val doNotRedirectToCgu = hasAcceptedCgu || isOnCguPage
-      if (doNotRedirectToCgu) {
-        Right(requestWithUserData)
+      if (isOnCguPage) {
+        //eventService.log(CGUShowed, "CGU visualisé")
+        Future(requestWithUserData.asRight[Result])
       } else {
-        eventService.log(ToCGURedirected, "Redirection vers les CGUs")
-        Left(
-          TemporaryRedirect(routes.UserController.showCGU().url)
-            .flashing("redirect" -> request.path)
-        )
+        Future.successful {
+          Left(
+            TemporaryRedirect(routes.UserController.showCGU().url)
+              .flashing("redirect" -> request.path)
+          )
+        }
       }
-    }
+    case Right(user) =>
+      LoginAction.readUserRights(user).map { userRights =>
+        implicit val requestWithUserData = new RequestWithUserData(user, userRights, request)
+        // case Left(unvalidated) =>
+        // If UnvalidatedUser => show CGU
+        // case Right() =>
+        val hasAcceptedCgu = user.cguAcceptationDate.nonEmpty
+        // `request.path.contains("cgu")` seems to be used to avoid infinite redirects
+        val isOnCguPage = request.path.contains("cgu")
+        val doNotRedirectToCgu = hasAcceptedCgu || isOnCguPage
+        if (doNotRedirectToCgu) {
+          Right(requestWithUserData)
+        } else {
+          eventService.log(ToCGURedirected, "Redirection vers les CGUs")
+          Left(
+            TemporaryRedirect(routes.UserController.showCGU().url)
+              .flashing("redirect" -> request.path)
+          )
+        }
+      }
+  }
 
   private def manageToken[A](token: LoginToken)(implicit request: Request[A]) = {
-    val userOption = userService.byId(token.userId)
+    val userOption = userService.allUsersById(token.userId)
     userOption match {
       case None =>
         log.error(s"Try to login by token ${token.token} for an unknown user : ${token.userId}")
         Future(userNotLogged("Une erreur s'est produite, votre utilisateur n'existe plus"))
-      case Some(user) =>
+      case Some(Left(user)) if token.isActive =>
+        val url = request.path + queryToString(
+          request.queryString - Keys.QueryParam.key - Keys.QueryParam.token
+        )
+        Future {
+          TemporaryRedirect(Call(request.method, url).url)
+            .withSession(
+              request.session - Keys.Session.userId + (Keys.Session.userId -> user.id.toString)
+            )
+            .asLeft[Nothing]
+        }
+      case Some(Left(user)) =>
+        Future {
+          redirectToHomeWithEmailSendbackButton(
+            user.email,
+            s"Votre lien de connexion a expiré, il est valable $tokenExpirationInMinutes minutes à réception."
+          )
+        }
+      case Some(Right(user)) if token.isActive =>
         LoginAction.readUserRights(user).map { userRights =>
           //hack: we need RequestWithUserData to call the logger
           implicit val requestWithUserData =
@@ -187,24 +222,33 @@ class LoginAction @Inject() (
               s"Utilisateur ${token.userId} à une adresse ip différente pour l'essai de connexion"
             )
           }
-          if (token.isActive) {
-            val url = request.path + queryToString(
-              request.queryString - Keys.QueryParam.key - Keys.QueryParam.token
+          val url = request.path + queryToString(
+            request.queryString - Keys.QueryParam.key - Keys.QueryParam.token
+          )
+          eventService.log(AuthByKey, s"Identification par token")
+          TemporaryRedirect(Call(request.method, url).url)
+            .withSession(
+              request.session - Keys.Session.userId + (Keys.Session.userId -> user.id.toString)
             )
-            eventService.log(AuthByKey, s"Identification par token")
-            Left(
-              TemporaryRedirect(Call(request.method, url).url)
-                .withSession(
-                  request.session - Keys.Session.userId + (Keys.Session.userId -> user.id.toString)
-                )
-            )
-          } else {
-            eventService.log(ExpiredToken, s"Token expiré pour ${token.userId}")
-            redirectToHomeWithEmailSendbackButton(
-              user.email,
-              s"Votre lien de connexion a expiré, il est valable $tokenExpirationInMinutes minutes à réception."
+            .asLeft[Nothing]
+        }
+      case Some(Right(user)) =>
+        LoginAction.readUserRights(user).map { userRights =>
+          //hack: we need RequestWithUserData to call the logger
+          implicit val requestWithUserData =
+            new RequestWithUserData(user, userRights, request)
+
+          if (token.ipAddress != request.remoteAddress) {
+            eventService.log(
+              AuthWithDifferentIp,
+              s"Utilisateur ${token.userId} à une adresse ip différente pour l'essai de connexion"
             )
           }
+          eventService.log(ExpiredToken, s"Token expiré pour ${token.userId}")
+          redirectToHomeWithEmailSendbackButton(
+            user.email,
+            s"Votre lien de connexion a expiré, il est valable $tokenExpirationInMinutes minutes à réception."
+          )
         }
     }
   }
@@ -244,10 +288,12 @@ class LoginAction @Inject() (
     request.getQueryString(Keys.QueryParam.key).flatMap(userService.byKey)
 
   /** Already logged in users */
-  private def userBySession[A](implicit request: Request[A]): Option[User] = // => Option[Either[...]]
+  private def userBySession[A](implicit
+      request: Request[A]
+  ): Option[Either[UnvalidatedUser, User]] = // => Option[Either[...]]
     request.session
       .get(Keys.Session.userId)
       .flatMap(UUIDHelper.fromString)
-      .flatMap(id => userService.byId(id, true))
+      .flatMap(id => userService.allUsersById(id, includeDisabled = true))
 
 }

@@ -4,7 +4,7 @@ import java.util.UUID
 
 import javax.inject.Inject
 import anorm._
-import cats.implicits.catsSyntaxEitherId
+import cats.implicits.{catsSyntaxEitherId, catsSyntaxOptionId}
 import models.{UnvalidatedUser, User}
 import play.api.db.Database
 import helper.{Hash, Time}
@@ -44,6 +44,22 @@ class UserService @Inject() (
       "phone_number",
       "observable_organisation_ids",
       "shared_account"
+    )
+    .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
+
+  private val unvalidatedUserParser: RowParser[UnvalidatedUser] = Macro
+    .parser[UnvalidatedUser](
+      "id",
+      "email",
+      "first_name",
+      "last_name",
+      "phone_number",
+      "shared_account_name",
+      "instructor",
+      "group_manager",
+      "area_ids",
+      "creation_date",
+      "group_ids"
     )
     .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
 
@@ -116,6 +132,26 @@ class UserService @Inject() (
     results.headOption
   }
 
+  def allUsersById(
+      id: UUID,
+      includeDisabled: Boolean = false
+  ): Option[Either[UnvalidatedUser, User]] = {
+    val results = byIds(List(id), includeDisabled)
+    assert(results.length <= 1)
+    val user = results.headOption
+
+    user.fold(getUnvalidatedUserById(id).map(user => user.asLeft[User]))(user =>
+      user.asRight[UnvalidatedUser].some
+    )
+  }
+
+  def getUnvalidatedUserById(id: UUID): Option[UnvalidatedUser] =
+    db.withConnection { implicit connection =>
+      SQL(s"""SELECT * FROM "unvalidated_user" WHERE id = {id}::uuid""")
+        .on("id" -> id)
+        .as(unvalidatedUserParser.singleOpt)
+    }
+
   def byIds(ids: List[UUID], includeDisabled: Boolean = false): List[User] =
     db.withConnection { implicit connection =>
       val disabledSQL: String = if (includeDisabled) {
@@ -135,11 +171,19 @@ class UserService @Inject() (
         .as(simpleUser.singleOpt)
     }
 
-  def byEmail(email: String): Option[User] =
-    db.withConnection { implicit connection =>
-      SQL("""SELECT * FROM "user" WHERE lower(email) = {email} AND disabled = false""")
-        .on("email" -> email.toLowerCase)
-        .as(simpleUser.singleOpt)
+  def byEmail(email: String): Future[Option[Either[UnvalidatedUser, User]]] =
+    Future {
+      db.withConnection { implicit connection =>
+        SQL("""SELECT * FROM "user" WHERE lower(email) = {email} AND disabled = false""")
+          .on("email" -> email.toLowerCase)
+          .as(simpleUser.singleOpt)
+      }.fold(
+        db.withConnection { implicit connection =>
+          SQL("""SELECT * FROM unvalidated_user WHERE lower(email) = {email}""")
+            .on("email" -> email.toLowerCase)
+            .as(unvalidatedUserParser.singleOpt)
+        }.fold(Option.empty[Either[UnvalidatedUser, User]])(user => Left(user).some)
+      )(user => Right(user).some)
     }
 
   def byEmails(emails: List[String]): List[User] = {
@@ -159,22 +203,21 @@ class UserService @Inject() (
     try {
       val result = db.withTransaction { implicit cnx =>
         users.foldRight(true) { (user, success) =>
-          assert(user.areas.nonEmpty)
+          assert(user.areaIds.nonEmpty)
           success &&
           SQL"""
             INSERT INTO "unvalidated_user" (
-            id, key, email, firstname, lastname, sharedAccountName, instructor, areas, creation_date, group_admin, group_ids, phone_number
+            id, email, first_name, last_name, shared_account_name, instructor, area_ids, creation_date, group_manager, group_ids, phone_number
             ) VALUES (
            ${user.id}::uuid,
-           ${Hash.sha256(s"${user.id}$cryptoSecret")},
            ${user.email},
-           ${user.firstname},
-           ${user.lastname},
+           ${user.firstName},
+           ${user.lastName},
            ${user.sharedAccountName},
            ${user.instructor},
-           array[${user.areas.distinct}]::uuid[],
+           array[${user.areaIds.distinct}]::uuid[],
            ${user.creationDate},
-           ${user.managerOfGroups},
+           ${user.groupManager},
            array[${user.groupIds.distinct}]::uuid[],
            ${user.phoneNumber}
            )

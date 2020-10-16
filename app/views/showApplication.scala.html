@@ -32,7 +32,7 @@
 }
 
 
-@main(currentUser, currentUserRights)(s"Demande de ${application.creatorUserName} - ${Area.fromId(application.area).get.name}")  {
+@main(currentUser.name, currentUser.email, currentUserRights)(s"Demande de ${application.creatorUserName} - ${Area.fromId(application.area).get.name}")  {
 <style>
 .mdl-list__item-primary-content {
     font-weight: bold;

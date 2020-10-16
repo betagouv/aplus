@@ -7,13 +7,13 @@
 
     <p>
         Nous avons envoyé par e-mail un lien de connexion valable @infos.tokenExpirationInMinutes minutes
-        à l'adresse <b>@infos.user.email</b>.
+        à l'adresse <b>@infos.userEmail</b>.
         Cliquez sur le lien contenu dans l'e-mail pour accéder à Administration+.
     </p>
 
     <p><i>
         Vous n'avez pas reçu d'e-mail ? Veuillez consulter vos courriers indésirables
-        ou <a class="aplus-color-text--blue" href="@routes.LoginController.login()?email=@infos.user.email&action=sendemailback">renvoyer un autre e-mail</a>
+        ou <a class="aplus-color-text--blue" href="@routes.LoginController.login()?email=@infos.userEmail&action=sendemailback">renvoyer un autre e-mail</a>
     </i></p>
 
     @infos.successMessage.map { message =>

@@ -1,6 +1,6 @@
 @(currentUser: User, currentUserRights: Authorization.UserRights)(data: List[(Area, List[(Set[Organisation],Int)], Int)], organisationSetToCountOfCounts: Map[Set[Organisation], Int], organisationGrouping: List[Set[Organisation]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-@main(currentUser, currentUserRights, maxWidth = false)(s"Tableau de suivie déploiement") {
+@main(currentUser.name, currentUser.email, currentUserRights, maxWidth = false)(s"Tableau de suivie déploiement") {
     @webJarsUtil.locate("tabulator.min.css").css()
     @webJarsUtil.locate("tabulator.min.js").script()
     @webJarsUtil.locate("xlsx.full.min.js").script()

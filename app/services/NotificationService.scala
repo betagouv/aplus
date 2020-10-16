@@ -163,15 +163,21 @@ class NotificationService @Inject() (
     }
   }
 
-  def newUser(newUser: Either[UnvalidatedUser, User]) =
+  def newUser(newUser: Either[UnvalidatedUser, User]): Unit =
     sendMail(generateWelcomeEmail(newUser))
 
-  def newLoginRequest(absoluteUrl: String, path: String, user: User, loginToken: LoginToken) = {
-    val url = s"${absoluteUrl}?token=${loginToken.token}&path=$path"
-    val bodyHtml = s"""Bonjour ${user.name},<br>
+  def newLoginRequest(
+      absoluteUrl: String,
+      path: String,
+      userName: String,
+      userEmail: String,
+      loginToken: LoginToken
+  ): Unit = {
+    val url = s"$absoluteUrl?token=${loginToken.token}&path=$path"
+    val bodyHtml = s"""Bonjour $userName,<br>
                       |<br>
                       |Vous pouvez maintenant accéder au service Administration+ en cliquant sur le lien suivant :<br>
-                      |<a href="${url}">${url}</a>
+                      |<a href="$url">$url</a>
                       |<br>
                       |<br>
                       |Si vous avez des questions ou vous rencontrez un problème, n'hésitez pas à nous contacter sur <a href="mailto:${Constants.supportEmail}">${Constants.supportEmail}</a><br>
@@ -179,7 +185,7 @@ class NotificationService @Inject() (
     val email = play.api.libs.mailer.Email(
       s"Connexion à Administration+",
       from = from,
-      Seq(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
+      Seq(s"${quoteEmailPhrase(userName)} <$userEmail>"),
       bodyHtml = Some(bodyHtml)
     )
     sendMail(email)

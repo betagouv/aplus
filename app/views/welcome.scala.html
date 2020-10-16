@@ -1,6 +1,6 @@
 @(user: User, currentUserRights: Authorization.UserRights)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
-@main(user, currentUserRights)(s"Bienvenue")  {
+@main(user.name, user.email, currentUserRights)(s"Bienvenue")  {
 
 }{
 
