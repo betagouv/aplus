@@ -9,6 +9,8 @@ import helper.{Hash, UUIDHelper}
 case class User(
     id: UUID,
     key: String,
+    firstName: Option[String],
+    lastName: Option[String],
     name: String,
     qualite: String,
     email: String,
@@ -52,16 +54,18 @@ object User {
   val systemUser = User(
     UUIDHelper.namedFrom("system"),
     Hash.sha256(s"system"),
+    Option.empty[String],
+    Option.empty[String],
     "Système A+",
     "System A+",
     Constants.supportEmail,
-    false,
-    false,
-    false,
+    helper = false,
+    instructor = false,
+    admin = false,
     List(),
     ZonedDateTime.parse("2017-11-01T00:00+01:00"),
     "75056",
-    false,
+    groupAdmin = false,
     disabled = true
   )
 

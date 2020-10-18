@@ -55,4 +55,13 @@ object formModels {
   // TOOD : rename Data -> FormData
   case class CSVImportData(csvLines: String, areaIds: List[UUID], separator: Char)
 
+  final case class ValidateCGUForm(
+      redirect: Option[String],
+      newsletter: Boolean,
+      validate: Boolean,
+      firstName: String,
+      lastName: String,
+      sharedAccountName: Option[String]
+  )
+
 }

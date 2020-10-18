@@ -2,12 +2,13 @@ package controllers
 
 import java.time.{LocalDate, ZoneId, ZonedDateTime}
 import java.util.UUID
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
-
 import actions.{LoginAction, RequestWithUserData}
 import helper.BooleanHelper.not
 import Operators.{GroupOperators, UserOperators}
+import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption, catsSyntaxOptionId}
 import helper.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
 import models.EventType.{
@@ -38,11 +39,13 @@ import models.EventType.{
   UsersShowed,
   ViewUserUnauthorized
 }
+import models.formModels.ValidateCGUForm
 import models.{Area, Authorization, EventType, Organisation, User, UserGroup}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
 import play.api.data.Forms._
+import play.api.data.validation.Constraints
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.{Form, Mapping}
 import play.api.mvc._
@@ -163,10 +166,12 @@ case class UserController @Inject() (
             val userGroups = user.groupIds.flatMap(id => groups.find(_.id == id))
             List[String](
               user.id.toString,
-              user.name,
+              user.firstName.orEmpty,
+              user.lastName.orEmpty,
               user.email,
               Time.formatPatternFr(user.creationDate, "dd-MM-YYYY-HHhmm"),
               if (user.sharedAccount) "Compte Partagé" else " ",
+              if (user.sharedAccount) user.name else " ",
               if (user.helper) "Aidant" else " ",
               if (user.instructor) "Instructeur" else " ",
               if (user.groupAdmin) "Responsable" else " ",
@@ -188,20 +193,22 @@ case class UserController @Inject() (
 
           val headers = List[String](
             "Id",
-            UserAndGroupCsvSerializer.USER_NAME.prefixes(0),
-            UserAndGroupCsvSerializer.USER_EMAIL.prefixes(0),
+            UserAndGroupCsvSerializer.USER_FIRST_NAME.prefixes.head,
+            UserAndGroupCsvSerializer.USER_LAST_NAME.prefixes.head,
+            UserAndGroupCsvSerializer.USER_EMAIL.prefixes.head,
             "Création",
-            UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes(0),
+            UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes.head,
+            UserAndGroupCsvSerializer.SHARED_ACCOUNT_NAME.prefixes.head,
             "Aidant",
-            UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes(0),
-            UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes(0),
+            UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes.head,
+            UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes.head,
             "Expert",
             "Admin",
             "Actif",
             "Commune INSEE",
-            UserAndGroupCsvSerializer.GROUP_AREAS_IDS.prefixes(0),
-            UserAndGroupCsvSerializer.GROUP_NAME.prefixes(0),
-            UserAndGroupCsvSerializer.GROUP_ORGANISATION.prefixes(0),
+            UserAndGroupCsvSerializer.GROUP_AREAS_IDS.prefixes.head,
+            UserAndGroupCsvSerializer.GROUP_NAME.prefixes.head,
+            UserAndGroupCsvSerializer.GROUP_ORGANISATION.prefixes.head,
             "CGU",
             "Newsletter"
           ).mkString(";")
@@ -436,8 +443,24 @@ case class UserController @Inject() (
 
   def showCGU(): Action[AnyContent] =
     loginAction { implicit request =>
-      eventService.log(CGUShowed, "CGU visualisé")
-      Ok(views.html.showCGU(request.currentUser, request.rights))
+      eventService.log(CGUShowed, "CGU visualisée")
+      val user = request.currentUser
+      Ok(
+        views.html.showCGU(
+          user,
+          request.rights,
+          validateCGUForm.fill(
+            ValidateCGUForm(
+              Option.empty,
+              newsletter = user.newsletterAcceptationDate.isDefined,
+              validate = user.cguAcceptationDate.isDefined,
+              user.firstName.orEmpty,
+              user.lastName.orEmpty,
+              user.name.some.filter(_.nonEmpty)
+            )
+          )
+        )
+      )
     }
 
   def validateCGU(): Action[AnyContent] =
@@ -449,14 +472,13 @@ case class UserController @Inject() (
             s"Formulaire invalide, prévenez l’administrateur du service. ${formWithErrors.errors.mkString(", ")}"
           )
         },
-        { case (redirectOption, newsletter, validate) =>
-          if (validate) {
-            userService.acceptCGU(request.currentUser.id, newsletter)
+        { form =>
+          if (form.validate) {
+            userService.validateUser(request.currentUser.id, form)
           }
           eventService.log(CGUValidated, "CGU validées")
-          val route = redirectOption match {
-            case Some(redirect)
-                if (redirect: String) != (routes.ApplicationController.myApplications.url: String) =>
+          val route = form.redirect match {
+            case Some(redirect) if redirect != routes.ApplicationController.myApplications.url =>
               Call("GET", redirect)
             case _ =>
               routes.HomeController.welcome
@@ -466,12 +488,15 @@ case class UserController @Inject() (
       )
     }
 
-  private val validateCGUForm: Form[(Option[String], Boolean, Boolean)] = Form(
-    tuple(
+  private val validateCGUForm: Form[ValidateCGUForm] = Form(
+    mapping(
       "redirect" -> optional(text),
       "newsletter" -> boolean,
-      "validate" -> boolean
-    )
+      "validate" -> boolean,
+      "firstName" -> nonEmptyText.verifying(maxLength(100)),
+      "lastName" -> nonEmptyText.verifying(maxLength(100)),
+      "sharedAccountName" -> optional(nonEmptyText.verifying(maxLength(500)))
+    )(ValidateCGUForm.apply)(ValidateCGUForm.unapply)
   )
 
   private val subscribeNewsletterForm: Form[Boolean] = Form(
@@ -563,6 +588,8 @@ case class UserController @Inject() (
               Some(_)
             ),
             "key" -> ignored("key"),
+            "firstName" -> optional(text.verifying(maxLength(100))),
+            "lastName" -> optional(text.verifying(maxLength(100))),
             "name" -> nonEmptyText.verifying(maxLength(100)),
             "qualite" -> text.verifying(maxLength(100)),
             "email" -> email.verifying(maxLength(200), nonEmpty),
@@ -607,6 +634,8 @@ case class UserController @Inject() (
         Some(_)
       ),
       "key" -> ignored("key"),
+      "firstName" -> optional(text.verifying(maxLength(100))),
+      "lastName" -> optional(text.verifying(maxLength(100))),
       "name" -> nonEmptyText.verifying(maxLength(100)),
       "qualite" -> text.verifying(maxLength(100)),
       "email" -> email.verifying(maxLength(200), nonEmpty),

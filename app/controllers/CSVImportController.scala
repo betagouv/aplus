@@ -123,7 +123,9 @@ case class CSVImportController @Inject() (
         Some(_)
       ),
       "key" -> ignored("key"),
-      "name" -> nonEmptyText.verifying(maxLength(100)),
+      "firstName" -> optional(text.verifying(maxLength(100))),
+      "lastName" -> optional(text.verifying(maxLength(100))),
+      "name" -> text.verifying(maxLength(500)),
       "quality" -> default(text, ""),
       "email" -> email.verifying(maxLength(200), nonEmpty),
       "helper" -> ignored(true),
@@ -161,7 +163,7 @@ case class CSVImportController @Inject() (
         .verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
       "organisation" -> optional(of[Organisation.Id]).verifying(
         "Vous devez sélectionner une organisation dans la liste",
-        _.map(Organisation.isValidId).getOrElse(false)
+        _.exists(Organisation.isValidId)
       ),
       "email" -> optional(email)
     )(UserGroup.apply)(UserGroup.unapply)
