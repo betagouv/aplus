@@ -14,7 +14,6 @@ lazy val root = (project in file("."))
     buildInfoPackage := "constants"
   )
 
-// TODO: when upgrading the version, remove "-Wconf:msg=Octal:s"
 scalaVersion := "2.13.3"
 
 // https://docs.scala-lang.org/overviews/compiler-options/index.html
