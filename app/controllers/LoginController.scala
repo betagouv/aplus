@@ -108,7 +108,13 @@ class LoginController @Inject() (
         request.getQueryString(Keys.QueryParam.path)
       ) match {
         case (Some(token), Some(path)) =>
-          Ok(views.html.loginHome(Right((token, path)), tokenExpirationInMinutes))
+          Ok(
+            views.html.magicLinkAntiConsumptionPage(
+              token = token,
+              pathToRedirectTo = path,
+              tokenExpirationInMinutes = tokenExpirationInMinutes
+            )
+          )
         case _ =>
           TemporaryRedirect(routes.LoginController.login().url).flashing(
             "error" -> "Il y a une erreur dans votre lien de connexion. Merci de contacter l'équipe Administration+"
