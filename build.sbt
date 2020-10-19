@@ -1,4 +1,4 @@
-name := """aplus"""
+name := "aplus"
 organization := "fr.gouv.beta"
 
 version := "1.0-SNAPSHOT"
@@ -14,8 +14,7 @@ lazy val root = (project in file("."))
     buildInfoPackage := "constants"
   )
 
-// TODO: when upgrading the version, remove "-Wconf:msg=Octal:s"
-scalaVersion := "2.13.2"
+scalaVersion := "2.13.3"
 
 // https://docs.scala-lang.org/overviews/compiler-options/index.html
 scalacOptions ++= Seq(
@@ -25,7 +24,6 @@ scalacOptions ++= Seq(
   "-Xlint:adapted-args",
   "-Xlint:nullary-unit",
   "-Xlint:inaccessible",
-  "-Xlint:nullary-override",
   "-Xlint:infer-any",
   "-Xlint:missing-interpolator",
   "-Xlint:doc-detached",
@@ -51,9 +49,6 @@ scalacOptions ++= Seq(
   "-Wmacros:before",
   "-Wnumeric-widen",
   "-Woctal-literal",
-  // Fixes a regression in 2.13.2:
-  // https://github.com/scala/bug/issues/11950
-  "-Wconf:msg=Octal:s",
   // "-Wself-implicit", // Warns about too much useful constructs
   // Note: -Wunused:imports cannot work with twirl
   // "-Wunused:imports",

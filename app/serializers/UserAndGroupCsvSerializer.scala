@@ -53,10 +53,10 @@ object UserAndGroupCsvSerializer {
     USER_ACCOUNT_IS_SHARED
   )
 
-  val USER_HEADER = USER_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
+  val USER_HEADER = USER_HEADERS.map(_.prefixes.head).mkString(SEPARATOR)
 
   val GROUP_HEADERS = List(GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL, GROUP_AREAS_IDS)
-  val GROUP_HEADER = GROUP_HEADERS.map(_.prefixes(0)).mkString(SEPARATOR)
+  val GROUP_HEADER = GROUP_HEADERS.map(_.prefixes.head).mkString(SEPARATOR)
 
   type UUIDGenerator = () => UUID
 
@@ -85,11 +85,11 @@ object UserAndGroupCsvSerializer {
     userGroupFormData
       .groupBy(_.group.name.stripSpecialChars)
       .view
-      .mapValues({ case sameGroupNameList: List[UserGroupFormData] =>
+      .mapValues { sameGroupNameList: List[UserGroupFormData] =>
         val group = sameGroupNameList.head
         val usersFormData = sameGroupNameList.flatMap(_.users)
         group.copy(users = usersFormData)
-      })
+      }
       .values
       .toList
 
@@ -139,7 +139,9 @@ object UserAndGroupCsvSerializer {
       .map { csvExtractResult: CSVExtractResult =>
         val result: List[Either[String, UserGroupFormData]] = csvExtractResult.map {
           case (lineNumber: LineNumber, csvMap: CSVMap, rawCSVLine: RawCSVLine) =>
-            csvMap.trimValues.csvCleanHeadersWithExpectedHeaders
+            csvMap
+              .trimValues()
+              .csvCleanHeadersWithExpectedHeaders()
               .convertAreasNameToAreaUUID(defaultAreas)
               .convertBooleanValue(UserAndGroupCsvSerializer.USER_GROUP_MANAGER.key, "Responsable")
               .convertBooleanValue(UserAndGroupCsvSerializer.USER_INSTRUCTOR.key, "Instructeur")
@@ -147,7 +149,7 @@ object UserAndGroupCsvSerializer {
                 UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.key,
                 "Compte Partagé"
               )
-              .includeAreasNameInGroupName
+              .includeAreasNameInGroupName()
               .matchOrganisationId
               .fromCsvFieldNameToHtmlFieldName
               .includeFirstnameInLastName()
@@ -201,7 +203,7 @@ object UserAndGroupCsvSerializer {
           val inseeCodes = stringToInseeCodeList(areas)
 
           val detectedAreas: List[Area] = if (inseeCodes.nonEmpty) {
-            inseeCodes.flatMap(Area.fromInseeCode).toList
+            inseeCodes.flatMap(Area.fromInseeCode)
           } else {
             areas.split(",").flatMap(_.split(";")).flatMap(Area.searchFromName).toList
           }.distinct
@@ -224,8 +226,8 @@ object UserAndGroupCsvSerializer {
         .fold {
           csvMap
         } { value =>
-          csvMap + (key -> (value.toLowerCase.stripSpecialChars
-            .contains(trueValue.toLowerCase.stripSpecialChars))
+          csvMap + (key -> value.toLowerCase.stripSpecialChars
+            .contains(trueValue.toLowerCase.stripSpecialChars)
             .toString)
         }
 
@@ -236,7 +238,7 @@ object UserAndGroupCsvSerializer {
           ids.split(",").flatMap(UUIDHelper.fromString).flatMap(Area.fromId).toList.map(_.name)
         })
       // TODO: Only if the groupName dont include the area
-      (optionalAreaNames -> csvMap.get(UserAndGroupCsvSerializer.GROUP_NAME.key)) match {
+      optionalAreaNames -> csvMap.get(UserAndGroupCsvSerializer.GROUP_NAME.key) match {
         case (Some(areaNames), Some(initialGroupName)) =>
           csvMap + (UserAndGroupCsvSerializer.GROUP_NAME.key -> s"$initialGroupName - ${areaNames.mkString("/")}")
         case _ =>

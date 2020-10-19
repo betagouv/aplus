@@ -22,7 +22,7 @@
             </div>
         </div>
         @if(user.newsletterAcceptationDate.isEmpty) {
-            @helper.form(action = routes.UserController.subscribeNewsletter,
+            @helper.form(action = routes.UserController.subscribeNewsletter(),
                          args = "class" -> "mdl-grid") {
                 @helper.CSRF.formField
                 <div class="mdl-cell mdl-cell--12-col">
@@ -81,7 +81,7 @@
                 </div>
             </div>
             <br>
-            <a href="@routes.ApplicationController.myApplications.url"
+            <a href="@routes.ApplicationController.myApplications().url"
                class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary ">
                 Voir les demandes
             </a>
@@ -122,7 +122,7 @@
                 </div>
             </div>
             <br>
-            <a href="@routes.ApplicationController.create.url"
+            <a href="@routes.ApplicationController.create().url"
                class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary ">
                 Créer une demande
             </a>
