@@ -106,7 +106,7 @@ libraryDependencies ++= Seq(
   "org.webjars.npm" % "dialog-polyfill" % "0.4.10",
   "org.webjars.npm" % "twemoji" % "2.5.1",
   "org.webjars" % "chartjs" % "2.9.3",
-  "org.webjars" % "font-awesome" % "5.15.0",
+  "org.webjars" % "font-awesome" % "5.15.1",
   "org.webjars.bowergithub.olifolkerd" % "tabulator" % "4.5.3",
   "org.webjars.npm" % "xlsx" % "0.16.7"
 )
