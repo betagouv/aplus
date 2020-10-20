@@ -10,8 +10,8 @@ import helper.BooleanHelper.not
 import helper.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
 import models.EventType._
-import models.formModels.ValidateSubscriptionForm
 import models._
+import models.formModels.ValidateSubscriptionForm
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
@@ -422,10 +422,10 @@ case class UserController @Inject() (
         views.html.validateAccount(
           user,
           request.rights,
-          ValidateSubscriptionForm.validate
+          ValidateSubscriptionForm
+            .validate(request.currentUser)
             .fill(
               ValidateSubscriptionForm(
-                sharedAccount = user.name.nonEmpty,
                 redirect = Option.empty,
                 validate = user.cguAcceptationDate.isDefined,
                 firstName = user.firstName,
@@ -439,14 +439,13 @@ case class UserController @Inject() (
     }
 
   private def validateUser(user: User)(
-      sharedAccount: Boolean,
       firstName: Option[String],
       lastName: Option[String],
       qualite: Option[String],
       phoneNumber: Option[String]
   ): Unit = {
     userService.update(
-      user.validateWith(sharedAccount)(
+      user.validateWith(
         firstName.map(_.toLowerCase.capitalize),
         lastName.map(_.toLowerCase.capitalize),
         qualite,
@@ -459,7 +458,9 @@ case class UserController @Inject() (
   def validateAccount(): Action[AnyContent] =
     loginAction { implicit request =>
       val user = request.currentUser
-      ValidateSubscriptionForm.validate.bindFromRequest
+      ValidateSubscriptionForm
+        .validate(user)
+        .bindFromRequest
         .fold(
           { errors =>
             eventService.log(CGUValidationError, "Erreur de formulaire dans la validation des CGU")
@@ -468,25 +469,12 @@ case class UserController @Inject() (
             )
           },
           {
-            case ValidateSubscriptionForm(true, _, true, _, _, _, _) =>
-              validateUser(request.currentUser)(
-                sharedAccount = true,
-                Option.empty,
-                Option.empty,
-                Option.empty,
-                Option.empty
-              )
+            case ValidateSubscriptionForm(_, true, fn, ln, qualite, phoneNumber) =>
+              validateUser(request.currentUser)(fn, ln, qualite, phoneNumber)
               eventService.log(CGUValidated, "CGU validées")
               Redirect(routes.HomeController.welcome())
                 .flashing("success" -> "Merci d’avoir accepté les CGU")
-            case ValidateSubscriptionForm(true, _, false, _, _, _, _) =>
-              Redirect(routes.HomeController.welcome())
-            case ValidateSubscriptionForm(sharedAccount, _, true, fn, ln, qualite, phoneNumber) =>
-              validateUser(request.currentUser)(sharedAccount, fn, ln, qualite, phoneNumber)
-              eventService.log(CGUValidated, "CGU validées")
-              Redirect(routes.HomeController.welcome())
-                .flashing("success" -> "Merci d’avoir accepté les CGU")
-            case ValidateSubscriptionForm(_, _, false, _, _, _, _) =>
+            case ValidateSubscriptionForm(_, false, _, _, _, _) =>
               Redirect(routes.HomeController.welcome())
           }
         )

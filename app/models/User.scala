@@ -48,7 +48,7 @@ case class User(
   def canSeeUsersInArea(areaId: UUID): Boolean =
     (areaId == Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
 
-  def validateWith(sharedAccount: Boolean)(
+  def validateWith(
       firstName: Option[String],
       lastName: Option[String],
       qualite: Option[String],
@@ -59,8 +59,7 @@ case class User(
       lastName = lastName,
       name = if (sharedAccount) name else s"${firstName.orEmpty} ${lastName.orEmpty.toUpperCase}",
       qualite = qualite.orEmpty,
-      phoneNumber = phoneNumber,
-      sharedAccount = sharedAccount
+      phoneNumber = phoneNumber
     )
 
 }

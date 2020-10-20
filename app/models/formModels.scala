@@ -60,7 +60,6 @@ object formModels {
   case class CSVImportData(csvLines: String, areaIds: List[UUID], separator: Char)
 
   final case class ValidateSubscriptionForm(
-      sharedAccount: Boolean,
       redirect: Option[String],
       validate: Boolean,
       firstName: Option[String],
@@ -71,9 +70,8 @@ object formModels {
 
   object ValidateSubscriptionForm {
 
-    def validate: Form[ValidateSubscriptionForm] = Form(
+    def validate(user: User): Form[ValidateSubscriptionForm] = Form(
       mapping(
-        "sharedAccount" -> boolean,
         "redirect" -> optional(text),
         "validate" -> boolean,
         "firstName" -> optional(nonEmptyText.verifying(maxLength(100))),
@@ -83,15 +81,15 @@ object formModels {
       )(ValidateSubscriptionForm.apply)(ValidateSubscriptionForm.unapply)
         .verifying(
           "Le prénom est requis",
-          form => if (!form.sharedAccount) form.firstName.map(_.trim).exists(_.nonEmpty) else true
+          form => if (!user.sharedAccount) form.firstName.map(_.trim).exists(_.nonEmpty) else true
         )
         .verifying(
           "Le nom est requis",
-          form => if (!form.sharedAccount) form.lastName.map(_.trim).exists(_.nonEmpty) else true
+          form => if (!user.sharedAccount) form.lastName.map(_.trim).exists(_.nonEmpty) else true
         )
         .verifying(
           "La qualité est requise",
-          form => if (!form.sharedAccount) form.lastName.map(_.trim).exists(_.nonEmpty) else true
+          form => if (!user.sharedAccount) form.lastName.map(_.trim).exists(_.nonEmpty) else true
         )
     )
 

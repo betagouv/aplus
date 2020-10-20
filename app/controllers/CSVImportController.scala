@@ -332,6 +332,10 @@ case class CSVImportController @Inject() (
                     .flatMap(_.users)
                     .filter(_.alreadyExistingUser.isEmpty)
                     .map(_.user)
+                    .map {
+                      case u if u.name.nonEmpty => u.copy(sharedAccount = true)
+                      case u                    => u.copy(sharedAccount = false)
+                    }
                     // Here we will group users by email, so we can put them in multiple groups
                     .groupBy(_.email)
                     .map { case (_, entitiesWithSameEmail) =>
