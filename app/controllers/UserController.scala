@@ -422,70 +422,52 @@ case class UserController @Inject() (
         views.html.validateAccount(
           user,
           request.rights,
-          validateSubscriptionForm(user).fill(
-            ValidateSubscriptionForm(
-              redirect = Option.empty,
-              newsletter = user.newsletterAcceptationDate.isDefined,
-              validate = user.cguAcceptationDate.isDefined,
-              firstName = user.firstName,
-              lastName = user.lastName,
-              email = user.email,
-              sharedAccountName = user.name.some.filter(_.nonEmpty)
+          ValidateSubscriptionForm
+            .validate(user)
+            .fill(
+              ValidateSubscriptionForm(
+                redirect = Option.empty,
+                newsletter = user.newsletterAcceptationDate.isDefined,
+                validate = user.cguAcceptationDate.isDefined,
+                firstName = user.firstName,
+                lastName = user.lastName,
+                email = user.email,
+                phoneNumber = user.phoneNumber,
+                qualite = user.qualite,
+                sharedAccountName = user.name.some.filter(_.nonEmpty)
+              )
             )
-          )
         )
       )
     }
 
   def validateAccount(): Action[AnyContent] =
     loginAction { implicit request =>
-      validateSubscriptionForm(request.currentUser).bindFromRequest.fold(
-        { formWithErrors =>
-          eventService.log(CGUValidationError, "Erreur de formulaire dans la validation des CGU")
-          BadRequest(
-            s"Formulaire invalide, prévenez l’administrateur du service. ${formWithErrors.errors.mkString(", ")}"
-          )
-        },
-        { form =>
-          if (form.validate) {
-            userService.validateUser(request.currentUser.id, form)
+      ValidateSubscriptionForm
+        .validate(request.currentUser)
+        .bindFromRequest
+        .fold(
+          { formWithErrors =>
+            eventService.log(CGUValidationError, "Erreur de formulaire dans la validation des CGU")
+            BadRequest(
+              s"Formulaire invalide, prévenez l’administrateur du service. ${formWithErrors.errors.mkString(", ")}"
+            )
+          },
+          { form =>
+            if (form.validate) {
+              userService.validateUser(request.currentUser.id, form)
+            }
+            eventService.log(CGUValidated, "CGU validées")
+            val route = form.redirect match {
+              case Some(redirect) if redirect != routes.ApplicationController.myApplications.url =>
+                Call("GET", redirect)
+              case _ =>
+                routes.HomeController.welcome
+            }
+            Redirect(route).flashing("success" -> "Merci d’avoir accepté les CGU")
           }
-          eventService.log(CGUValidated, "CGU validées")
-          val route = form.redirect match {
-            case Some(redirect) if redirect != routes.ApplicationController.myApplications.url =>
-              Call("GET", redirect)
-            case _ =>
-              routes.HomeController.welcome
-          }
-          Redirect(route).flashing("success" -> "Merci d’avoir accepté les CGU")
-        }
-      )
+        )
     }
-
-  private def validateSubscriptionForm(user: User): Form[ValidateSubscriptionForm] = Form(
-    mapping(
-      "redirect" -> optional(text),
-      "newsletter" -> boolean,
-      "validate" -> boolean,
-      "firstName" -> optional(nonEmptyText.verifying(maxLength(100))),
-      "lastName" -> optional(nonEmptyText.verifying(maxLength(100))),
-      "email" -> email,
-      "sharedAccountName" -> optional(nonEmptyText.verifying(maxLength(500)))
-    )(ValidateSubscriptionForm.apply)(ValidateSubscriptionForm.unapply)
-      .verifying(
-        "Le prénom est requis",
-        form => if (!user.sharedAccount) form.firstName.map(_.trim).exists(_.nonEmpty) else true
-      )
-      .verifying(
-        "Le nom est requis",
-        form => if (!user.sharedAccount) form.lastName.map(_.trim).exists(_.nonEmpty) else true
-      )
-      .verifying(
-        "Le nom du groupe partagé est requis",
-        form =>
-          if (user.sharedAccount) form.sharedAccountName.map(_.trim).exists(_.nonEmpty) else true
-      )
-  )
 
   private val subscribeNewsletterForm: Form[Boolean] = Form(
     "newsletter" -> boolean

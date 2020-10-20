@@ -104,7 +104,7 @@
                         <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
                             <div>Numéro de téléphone professionel
                                 <br>
-                                @helper.input(cguForm("phone-number"),
+                                @helper.input(cguForm("phoneNumber"),
                                     "class" -> "mdl-textfield--fix"
                                 ) { (id, name, value, args) =>
                                     <input class="mdl-textfield__input mdl-color--white"
@@ -117,7 +117,7 @@
                             </div>
                         </div>
                         <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
-                            <div>Intitulé du poste
+                            <div>Intitulé du poste <span class="mdl-color-text--red-500">*</span>
                                 <br>
                                 @helper.input(cguForm("qualite"),
                                     "class" -> "mdl-textfield--fix"
@@ -125,7 +125,7 @@
                                     <input class="mdl-textfield__input mdl-color--white"
                                     type="text"
                                     name="@name"
-                                    id=@id
+                                    id="qualiteValue"
                                     value="@value"
                                     @toHtmlArgs(args)>
                                 }

@@ -1,12 +1,14 @@
 const firstnameValue = <HTMLInputElement>document.getElementById('firstnameValue');
 const lastnameValue = <HTMLInputElement>document.getElementById('lastnameValue');
+const qualiteValue = <HTMLInputElement>document.getElementById('qualiteValue');
 
 const checkbox = <HTMLInputElement>document.querySelector("#checkbox-charte");
 
 function formCanBeSubmitted() {
     return checkbox.checked &&
         firstnameValue.value.trim() !== '' &&
-        lastnameValue.value.trim() !== '';
+        lastnameValue.value.trim() !== '' &&
+        qualiteValue.value.trim() !== '';
 }
 
 function addInputEvent(el: Element) {
@@ -26,3 +28,4 @@ function addClickEvent(el: Element) {
 addClickEvent(checkbox);
 addInputEvent(firstnameValue);
 addInputEvent(lastnameValue);
+addInputEvent(qualiteValue);
