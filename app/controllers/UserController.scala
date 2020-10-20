@@ -3,49 +3,19 @@ package controllers
 import java.time.{LocalDate, ZoneId, ZonedDateTime}
 import java.util.UUID
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
 import actions.{LoginAction, RequestWithUserData}
-import helper.BooleanHelper.not
-import Operators.{GroupOperators, UserOperators}
 import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption, catsSyntaxOptionId}
+import controllers.Operators.{GroupOperators, UserOperators}
+import helper.BooleanHelper.not
 import helper.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
-import models.EventType.{
-  AddUserError,
-  AllUserCSVUnauthorized,
-  AllUserCsvShowed,
-  AllUserIncorrectSetup,
-  AllUserUnauthorized,
-  CGUShowed,
-  CGUValidated,
-  CGUValidationError,
-  DeleteUserUnauthorized,
-  EditUserError,
-  EditUserShowed,
-  EventsShowed,
-  EventsUnauthorized,
-  NewsletterSubscribed,
-  NewsletterSubscriptionError,
-  PostAddUserUnauthorized,
-  PostEditUserUnauthorized,
-  ShowAddUserUnauthorized,
-  UserDeleted,
-  UserEdited,
-  UserIsUsed,
-  UserNotFound,
-  UserShowed,
-  UsersCreated,
-  UsersShowed,
-  ViewUserUnauthorized
-}
-import models.formModels.ValidateCGUForm
-import models.{Area, Authorization, EventType, Organisation, User, UserGroup}
+import models.EventType._
+import models.formModels.ValidateSubscriptionForm
+import models._
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
 import play.api.data.Forms._
-import play.api.data.validation.Constraints
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.{Form, Mapping}
 import play.api.mvc._
@@ -53,6 +23,9 @@ import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
 import serializers.{Keys, UserAndGroupCsvSerializer}
 import services._
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 @Singleton
 case class UserController @Inject() (
@@ -441,31 +414,32 @@ case class UserController @Inject() (
       }
     }
 
-  def showCGU(): Action[AnyContent] =
+  def showValidateAccount(): Action[AnyContent] =
     loginAction { implicit request =>
       eventService.log(CGUShowed, "CGU visualisée")
       val user = request.currentUser
       Ok(
-        views.html.showCGU(
+        views.html.validateAccount(
           user,
           request.rights,
-          validateCGUForm.fill(
-            ValidateCGUForm(
-              Option.empty,
+          validateSubscriptionForm(user).fill(
+            ValidateSubscriptionForm(
+              redirect = Option.empty,
               newsletter = user.newsletterAcceptationDate.isDefined,
               validate = user.cguAcceptationDate.isDefined,
-              user.firstName.orEmpty,
-              user.lastName.orEmpty,
-              user.name.some.filter(_.nonEmpty)
+              firstName = user.firstName,
+              lastName = user.lastName,
+              email = user.email,
+              sharedAccountName = user.name.some.filter(_.nonEmpty)
             )
           )
         )
       )
     }
 
-  def validateCGU(): Action[AnyContent] =
+  def validateAccount(): Action[AnyContent] =
     loginAction { implicit request =>
-      validateCGUForm.bindFromRequest.fold(
+      validateSubscriptionForm(request.currentUser).bindFromRequest.fold(
         { formWithErrors =>
           eventService.log(CGUValidationError, "Erreur de formulaire dans la validation des CGU")
           BadRequest(
@@ -488,15 +462,29 @@ case class UserController @Inject() (
       )
     }
 
-  private val validateCGUForm: Form[ValidateCGUForm] = Form(
+  private def validateSubscriptionForm(user: User): Form[ValidateSubscriptionForm] = Form(
     mapping(
       "redirect" -> optional(text),
       "newsletter" -> boolean,
       "validate" -> boolean,
-      "firstName" -> nonEmptyText.verifying(maxLength(100)),
-      "lastName" -> nonEmptyText.verifying(maxLength(100)),
+      "firstName" -> optional(nonEmptyText.verifying(maxLength(100))),
+      "lastName" -> optional(nonEmptyText.verifying(maxLength(100))),
+      "email" -> email,
       "sharedAccountName" -> optional(nonEmptyText.verifying(maxLength(500)))
-    )(ValidateCGUForm.apply)(ValidateCGUForm.unapply)
+    )(ValidateSubscriptionForm.apply)(ValidateSubscriptionForm.unapply)
+      .verifying(
+        "Le prénom est requis",
+        form => if (!user.sharedAccount) form.firstName.map(_.trim).exists(_.nonEmpty) else true
+      )
+      .verifying(
+        "Le nom est requis",
+        form => if (!user.sharedAccount) form.lastName.map(_.trim).exists(_.nonEmpty) else true
+      )
+      .verifying(
+        "Le nom du groupe partagé est requis",
+        form =>
+          if (user.sharedAccount) form.sharedAccountName.map(_.trim).exists(_.nonEmpty) else true
+      )
   )
 
   private val subscribeNewsletterForm: Form[Boolean] = Form(

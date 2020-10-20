@@ -67,8 +67,8 @@ GET         /group/delete/unused/:groupId                                       
 GET         /events                                                                          controllers.UserController.allEvents
 
 # CGU
-GET         /cgu                                                                             controllers.UserController.showCGU
-POST        /cgu                                                                             controllers.UserController.validateCGU
+GET         /cgu                                                                             controllers.UserController.showValidateAccount
+POST        /cgu                                                                             controllers.UserController.validateAccount
 
 # Newsletter
 POST        /newsletter                                                                      controllers.UserController.subscribeNewsletter

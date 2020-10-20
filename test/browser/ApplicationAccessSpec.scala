@@ -1,5 +1,6 @@
 package browser
 
+import cats.implicits.catsSyntaxOptionId
 import helper.{Time, UUIDHelper}
 import models.{Application, Area, LoginToken, User, UserGroup}
 import org.junit.runner._
@@ -121,108 +122,122 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
     val instructorUser = User(
       UUIDHelper.namedFrom(s"instructor-test$number"),
       "key",
+      "FirstName".some,
+      "LastName".some,
       s"J'instruit TEST $number",
       s"Instructeur Testeur $number",
       s"instructor-test$number@example.com",
-      true,
-      true,
-      false,
+      helper = true,
+      instructor = true,
+      admin = false,
       List(area),
       Time.nowParis(),
       "0",
-      false,
-      false,
+      groupAdmin = false,
+      disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
       groupIds = List(instructorGroup.id)
     )
     val unrelatedInstructorUser = User(
       UUIDHelper.namedFrom(s"instructor-test-unrelated$number"),
       "key",
+      "FirstName".some,
+      "LastName".some,
       s"Je n'instruit pas TEST $number",
       s"Instructeur Testeur $number",
       s"instructor-test-unrelated$number@example.com",
-      true,
-      true,
-      false,
+      helper = true,
+      instructor = true,
+      admin = false,
       List(area),
       Time.nowParis(),
       "0",
-      false,
-      false,
+      groupAdmin = false,
+      disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
       groupIds = Nil
     )
     val helperUser = User(
       UUIDHelper.namedFrom(s"helper-test$number"),
       "key",
+      "FirstName".some,
+      "LastName".some,
       s"J'aide TEST $number",
       "Aidant Testeur",
       s"helper-test$number@example.com",
-      true,
-      false,
-      false,
+      helper = true,
+      instructor = false,
+      admin = false,
       List(area),
       Time.nowParis(),
       "0",
-      false,
-      false,
+      groupAdmin = false,
+      disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
       groupIds = List(helperGroup.id)
     )
     val helperFriendUser = User(
       UUIDHelper.namedFrom(s"helper-test-friend$number"),
       "key",
+      "FirstName".some,
+      "LastName".some,
       s"Je suis collegue de  TEST $number",
       "Aidant Testeur",
       s"helper-test-friend$number@example.com",
-      true,
-      false,
-      false,
+      helper = true,
+      instructor = false,
+      admin = false,
       List(area),
       Time.nowParis(),
       "0",
-      false,
-      false,
+      groupAdmin = false,
+      disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
       groupIds = List(helperGroup.id)
     )
     val unrelatedHelperUser = User(
       UUIDHelper.namedFrom(s"helper-test-unrelated$number"),
       "key",
+      "FirstName".some,
+      "LastName".some,
       s"Je suis collegue de  TEST $number",
       "Aidant Testeur",
       s"helper-test-unrelated$number@example.com",
-      true,
-      false,
-      false,
+      helper = true,
+      instructor = false,
+      admin = false,
       List(area),
       Time.nowParis(),
       "0",
-      false,
-      false,
+      groupAdmin = false,
+      disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
       groupIds = List(helperGroup.id)
     )
     val unrelatedExpertUser = User(
       UUIDHelper.namedFrom(s"expert-test-unrelated$number"),
       "key",
+      "FirstName".some,
+      "LastName".some,
       s"Je suis un expert sans rapport $number",
       "Expert Testeur",
       s"expert-test-unrelated$number@example.com",
-      true,
-      false,
-      false,
+      helper = true,
+      instructor = false,
+      admin = false,
       List(area),
       Time.nowParis(),
       "0",
-      false,
-      false,
+      groupAdmin = false,
+      disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
       groupIds = List(helperGroup.id)
     )
     val managerUser = User(
       UUIDHelper.namedFrom(s"helper-test-manager$number"),
       "key",
+      "FirstName".some,
+      "LastName".some,
       s"Je suis manager de TEST $number",
       "Manager Testeur",
       s"helper-test-manager$number@example.com",
@@ -250,7 +265,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
 
     val result = userService.add(users)
     result.isRight must beTrue
-    users.forall(user => userService.acceptCGU(user.id, false))
+    users.forall(user => userService.acceptCGU(user.id, acceptNewsletter = false))
 
     val application = Application(
       UUIDHelper.randomUUID,
@@ -300,9 +315,9 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
       )
       browser.pageSource must not contain (application.subject)
       browser.pageSource must not contain (application.description)
-      browser.pageSource must not contain (application.userInfos("Prénom"))
-      browser.pageSource must not contain (application.userInfos("Nom de famille"))
-      browser.pageSource must not contain (application.userInfos("Date de naissance"))
+      browser.pageSource must not contain application.userInfos("Prénom")
+      browser.pageSource must not contain application.userInfos("Nom de famille")
+      browser.pageSource must not contain application.userInfos("Date de naissance")
     } else {
       browser.pageSource must contain(application.subject)
       browser.pageSource must contain(application.description)

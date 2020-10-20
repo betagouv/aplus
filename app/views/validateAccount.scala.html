@@ -1,0 +1,191 @@
+@import models._
+@import _root_.helper.MDLForms._
+@(user: User, currentUserRights: Authorization.UserRights, cguForm: Form[models.formModels.ValidateSubscriptionForm])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+
+@main(user, currentUserRights)("Conditions générales d’utilisations") {
+    <style>
+            .mdl-data-table td {
+                padding: 0px 18px;
+            }
+
+            .invisible {
+                display: none;
+            }
+    </style>
+} {
+    <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+        <h3 class="mdl-cell mdl-cell--12-col">@if(user.cguAcceptationDate.isDefined) {CGU} else {Confirmation de votre inscription}</h3>
+        @if(user.cguAcceptationDate.isEmpty) {
+            @helper.form(action = routes.UserController.validateAccount(), args = "class" -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
+                @helper.CSRF.formField
+                @flash.get("redirect").map { redirect =>
+                    <input name="redirect" value="@redirect" style="display: none">
+                }
+                <div>
+                    @if(user.sharedAccount) {
+                        <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+                            <div>Email du compte (non éditable) <span class="mdl-color-text--red-500">*</span>
+                                <br>
+                                @helper.input(cguForm("email"),
+                                    "class" -> "mdl-textfield--fix"
+                                ) { (id, name, value, args) =>
+                                    <input class="mdl-textfield__input mdl-color--white"
+                                    type="text"
+                                    name="@name"
+                                    id="emailValue"
+                                    value="@value"
+                                @toHtmlArgs(args) disabled>
+                                }
+                            </div>
+                        </div>
+                        <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+                            <div>Nom du groupe
+                                <br>
+                                @helper.input(cguForm("sharedAccountName"),
+                                    "class" -> "mdl-textfield--fix"
+                                ) { (id, name, value, args) =>
+                                    <input class="mdl-textfield__input mdl-color--white"
+                                    type="text"
+                                    name="@name"
+                                    id=@id
+                                    value=" @value
+                                    "
+                                    @toHtmlArgs(args) disabled>
+                                }
+                            </div>
+                        </div>
+                    }
+                    @if(!user.sharedAccount) {
+                        <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+                            <div>Email du compte (non éditable) <span class="mdl-color-text--red-500">*</span>
+                                <br>
+                                @helper.input(cguForm("email"),
+                                    "class" -> "mdl-textfield--fix"
+                                ) { (id, name, value, args) =>
+                                    <input class="mdl-textfield__input mdl-color--white"
+                                    type="text"
+                                    name="@name"
+                                    id="emailValue"
+                                    value="@value"
+                                @toHtmlArgs(args) disabled>
+                                }
+                            </div>
+                        </div>
+                        <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+                            <div>Prénom <span class="mdl-color-text--red-500">*</span>
+                                <br>
+                                @helper.input(cguForm("firstName"),
+                                    "class" -> "mdl-textfield--fix"
+                                ) { (id, name, value, args) =>
+                                    <input class="mdl-textfield__input mdl-color--white"
+                                    type="text"
+                                    name="@name"
+                                    id="firstnameValue"
+                                    value="@value"
+                                        @toHtmlArgs(args)>
+                                }
+                            </div>
+                        </div>
+                        <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+                            <div>Nom <span class="mdl-color-text--red-500">*</span>
+                                <br>
+                                @helper.input(cguForm("lastName"),
+                                    "class" -> "mdl-textfield--fix"
+                                ) { (id, name, value, args) =>
+                                    <input class="mdl-textfield__input mdl-color--white"
+                                    type="text"
+                                    name="@name"
+                                    id="lastnameValue"
+                                    value="@value"
+                                        @toHtmlArgs(args)>
+                                }
+                            </div>
+                        </div>
+                        <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+                            <div>Intitulé du poste
+                                <br>
+                                @helper.input(cguForm("qualite"),
+                                    "class" -> "mdl-textfield--fix"
+                                ) { (id, name, value, args) =>
+                                    <input class="mdl-textfield__input mdl-color--white"
+                                    type="text"
+                                    name="@name"
+                                    id=@id
+                                    value=" @value
+                                    "
+                                    @toHtmlArgs(args)>
+                                }
+                            </div>
+                        </div>
+                        <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+                            <div>Numéro de téléphone
+                                <br>
+                                @helper.input(cguForm("phone-number"),
+                                    "class" -> "mdl-textfield--fix"
+                                ) { (id, name, value, args) =>
+                                    <input class="mdl-textfield__input mdl-color--white"
+                                    type="text"
+                                    name="@name"
+                                    id=@id
+                                    value=" @value
+                                    "
+                                    @toHtmlArgs(args)>
+                                }
+                            </div>
+                        </div>
+                    }
+                    <div class="mdl-color--white mdl-cell mdl-cell--12-col mdl-grid">
+                        @if(user.cguAcceptationDate.isEmpty) {
+                            <p>Pour accéder à la plateforme Administration+, vous devez valider les <a href="https://docs.aplus.beta.gouv.fr/conditions-generales-dutilisation" target="_blank" rel="noopener noreferrer">
+                                CGU suivantes</a></p>
+                        }
+                        <p><label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-newsletter" style="height: unset;">
+                            <input type="checkbox" id="checkbox-newsletter" name="newsletter" class="mdl-checkbox__input" value="true">
+                            <span class="mdl-checkbox__label">
+                                J’accepte de recevoir la newsletter mensuelle d’Administration+ sur l’évolution de l’outil et de l’élargissement de la communauté.</span>
+                        </label><br>
+
+                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-charte" style="height: unset;">
+                                <input type="checkbox" id="checkbox-charte" name="validate" class="mdl-checkbox__input" value="true">
+                                <span class="mdl-checkbox__label">
+                                    J’atteste avoir pris connaissance des conditions générales d’utilisation et je m’engage à les respecter. <span class="mdl-color-text--red-500">
+                                    *</span></span>
+                            </label> </p>
+                        <button id="validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset" disabled>
+                            Valider l'inscription
+                        </button>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+    <script>
+            const firstnameValue = document.getElementById('firstnameValue');
+            const lastnameValue = document.getElementById('lastnameValue');
+
+            const checkbox = document.querySelector("#checkbox-charte");
+
+            function formCanBeSubmitted() {
+                return checkbox.checked &&
+                        firstnameValue.value.trim() !== '' &&
+                        lastnameValue.value.trim() !== '';
+            }
+
+            function addInputEvent(el) {
+                el.addEventListener('input', function () {
+                    document.querySelector("#validation").disabled = !formCanBeSubmitted();
+                });
+            }
+
+            function addClickEvent(el) {
+                el.addEventListener('click', function () {
+                    document.querySelector("#validation").disabled = !formCanBeSubmitted();
+                });
+            }
+
+            addClickEvent(checkbox);
+            addInputEvent(firstnameValue);
+            addInputEvent(lastnameValue);
+    </script>
+} {
+}

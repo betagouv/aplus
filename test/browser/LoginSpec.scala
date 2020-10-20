@@ -2,6 +2,8 @@ package browser
 
 import helper.{Hash, Time, UUIDHelper}
 import java.time.ZonedDateTime
+
+import cats.implicits.catsSyntaxOptionId
 import models.{Area, LoginToken, User}
 import org.specs2.mutable._
 import org.specs2.runner._
@@ -12,31 +14,33 @@ import services.{TokenService, UserService}
 import org.specs2.specification.BeforeAfterAll
 
 @RunWith(classOf[JUnitRunner])
-class gLoginSpec extends Specification with Tables with BaseSpec with BeforeAfterAll {
+class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfterAll {
 
   val existingUser = User(
     UUIDHelper.namedFrom("julien.test"),
     Hash.sha256(s"julien.test"),
+    "FirstName".some,
+    "LastName".some,
     "Julien DAUPHANT TEST",
     "Admin A+",
     "julien.dauphant.test@beta.gouv.fr",
-    true,
-    false,
-    true,
+    helper = true,
+    instructor = false,
+    admin = true,
     Area.all.map(_.id),
     ZonedDateTime.parse("2017-11-01T00:00+01:00"),
     "75056",
-    true,
+    groupAdmin = true,
     disabled = false
   )
 
-  def beforeAll() = {
+  def beforeAll(): Unit = {
     val userService = applicationWithBrowser.injector.instanceOf[UserService]
     val _ = userService.add(List(existingUser))
-    val _ = userService.acceptCGU(existingUser.id, true)
+    val _ = userService.acceptCGU(existingUser.id, acceptNewsletter = true)
   }
 
-  def afterAll() = {
+  def afterAll(): Unit = {
     val userService = applicationWithBrowser.injector.instanceOf[UserService]
     val _ = userService.deleteById(existingUser.id)
   }

@@ -3,10 +3,11 @@ package services
 import java.util.UUID
 
 import anorm._
+import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption}
 import helper.{Hash, Time}
 import javax.inject.Inject
 import models.User
-import models.formModels.ValidateCGUForm
+import models.formModels.ValidateSubscriptionForm
 import org.postgresql.util.PSQLException
 import play.api.db.Database
 
@@ -225,13 +226,13 @@ class UserService @Inject() (
        """.executeUpdate() == 1
     })
 
-  def validateUser(userId: UUID, form: ValidateCGUForm) =
+  def validateUser(userId: UUID, form: ValidateSubscriptionForm) =
     db.withConnection { implicit connection =>
       val now = Time.nowParis()
       val resultCGUAcceptation = SQL"""
         UPDATE "user" SET
-        first_name = ${form.firstName.toLowerCase.capitalize},
-        last_name = ${form.lastName.toLowerCase.capitalize},
+        first_name = ${form.firstName.map(_.toLowerCase.capitalize).orEmpty},
+        last_name = ${form.lastName.map(_.toLowerCase.capitalize).orEmpty},
         cgu_acceptation_date = $now
         WHERE id = $userId::uuid
      """.executeUpdate() == 1
