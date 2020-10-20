@@ -157,33 +157,5 @@
             }
         }
     </div>
-    <script>
-            const firstnameValue = document.getElementById('firstnameValue');
-            const lastnameValue = document.getElementById('lastnameValue');
-
-            const checkbox = document.querySelector("#checkbox-charte");
-
-            function formCanBeSubmitted() {
-                return checkbox.checked &&
-                        firstnameValue.value.trim() !== '' &&
-                        lastnameValue.value.trim() !== '';
-            }
-
-            function addInputEvent(el) {
-                el.addEventListener('input', function () {
-                    document.querySelector("#validation").disabled = !formCanBeSubmitted();
-                });
-            }
-
-            function addClickEvent(el) {
-                el.addEventListener('click', function () {
-                    document.querySelector("#validation").disabled = !formCanBeSubmitted();
-                });
-            }
-
-            addClickEvent(checkbox);
-            addInputEvent(firstnameValue);
-            addInputEvent(lastnameValue);
-    </script>
 } {
 }
