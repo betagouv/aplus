@@ -265,7 +265,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
 
     val result = userService.add(users)
     result.isRight must beTrue
-    users.forall(user => userService.acceptNewsletter(user.id, acceptation = false))
+    users.map(user => userService.validateCGU(user.id))
 
     val application = Application(
       UUIDHelper.randomUUID,
@@ -313,8 +313,8 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
       browser.pageSource must contain(
         "Vous n'avez pas les droits suffisants pour voir cette demande."
       )
-      browser.pageSource must not contain (application.subject)
-      browser.pageSource must not contain (application.description)
+      browser.pageSource must not contain application.subject
+      browser.pageSource must not contain application.description
       browser.pageSource must not contain application.userInfos("Prénom")
       browser.pageSource must not contain application.userInfos("Nom de famille")
       browser.pageSource must not contain application.userInfos("Date de naissance")

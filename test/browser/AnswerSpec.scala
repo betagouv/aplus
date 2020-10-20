@@ -176,7 +176,7 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
             invitedUser,
             helperUser
           )
-          users.forall(user => userService.acceptNewsletter(user.id, acceptation = false))
+          users.map(user => userService.validateCGU(user.id))
           val expertInvited = userSeed == "invited-expert-test"
           val userInvited = userSeed == "invited-user-test"
           val invitedUsers =

@@ -72,7 +72,7 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
         cguAcceptationDate = Some(Time.nowParis())
       )
       userService.add(List(instructorUser, helperUser))
-      userService.acceptNewsletter(helperUser.id, acceptation = false)
+      userService.validateCGU(helperUser.id)
 
       // Helper login
       val loginToken = LoginToken.forUserId(helperUser.id, 5, "127.0.0.1")
