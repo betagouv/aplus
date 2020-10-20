@@ -469,13 +469,21 @@ case class UserController @Inject() (
             )
           },
           {
+            case ValidateSubscriptionForm(Some(redirect), true, fn, ln, qualite, phoneNumber)
+                if redirect != routes.ApplicationController.myApplications.url =>
+              validateUser(request.currentUser)(fn, ln, qualite, phoneNumber)
+              eventService.log(CGUValidated, "CGU validées")
+              Redirect(Call("GET", redirect)).flashing("success" -> "Merci d’avoir accepté les CGU")
             case ValidateSubscriptionForm(_, true, fn, ln, qualite, phoneNumber) =>
               validateUser(request.currentUser)(fn, ln, qualite, phoneNumber)
               eventService.log(CGUValidated, "CGU validées")
-              Redirect(routes.HomeController.welcome())
+              Redirect(routes.HomeController.welcome)
                 .flashing("success" -> "Merci d’avoir accepté les CGU")
+            case ValidateSubscriptionForm(Some(redirect), false, _, _, _, _)
+                if redirect != routes.ApplicationController.myApplications.url =>
+              Redirect(Call("GET", redirect))
             case ValidateSubscriptionForm(_, false, _, _, _, _) =>
-              Redirect(routes.HomeController.welcome())
+              Redirect(routes.HomeController.welcome)
           }
         )
     }
