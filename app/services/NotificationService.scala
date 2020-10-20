@@ -3,6 +3,7 @@ package services
 import akka.stream.{ActorAttributes, Materializer, Supervision}
 import akka.stream.scaladsl.{RestartSource, Sink, Source}
 import constants.Constants
+import java.time.ZonedDateTime
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import controllers.routes
@@ -257,10 +258,15 @@ class NotificationService @Inject() (
           a(href := url, url),
           br,
           br,
-          "Ce lien est ",
-          b(s"valide $tokenExpirationInMinutes minutes"),
-          " et est à ",
+          "Ce lien est à ",
           b("usage unique"),
+          " et est ",
+          b(s"valide $tokenExpirationInMinutes minutes"),
+          ", donc à utiliser avant ",
+          ZonedDateTime
+            .now(user.timeZone)
+            .plusMinutes(tokenExpirationInMinutes.toLong)
+            .format(Time.hourAndMinutesFormatter),
           ".",
           br,
           br,
@@ -407,7 +413,7 @@ class NotificationService @Inject() (
         application.subject,
         br,
         irrelevantDefaultText,
-        "Vous pouvez consulter la réponse, y répondre ou la clôturer en suivant le lien suivant: ",
+        "Vous pouvez consulter la réponse, y répondre ou la clôturer en suivant le lien suivant : ",
         br,
         a(
           href := url,
