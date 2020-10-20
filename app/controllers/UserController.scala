@@ -379,7 +379,7 @@ case class UserController @Inject() (
                     .fold(
                       { error =>
                         val errorMessage =
-                          s"Impossible d'ajouté les utilisateurs (Erreur interne 1) $error"
+                          s"Impossible d'ajouter les utilisateurs. $error"
                         eventService.log(AddUserError, errorMessage)
                         val form = usersForm(Time.timeZoneParis, group.areaIds)
                           .fill(users)

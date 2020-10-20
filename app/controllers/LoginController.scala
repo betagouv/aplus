@@ -47,8 +47,8 @@ class LoginController @Inject() (
                 new RequestWithUserData(user, userRights, request)
               eventService.log(UnknownEmail, s"Aucun compte actif à cette adresse mail $email")
               val message =
-                """Aucun compte actif n'est associé à cette adresse e-mail.
-                |Merci de vérifier qu'il s'agit bien de votre adresse professionnelle et nominative qui doit être sous la forme : prenom.nom@votre-structure.fr""".stripMargin
+                """Aucun compte actif n’est associé à cette adresse e-mail.
+                |Merci de vérifier qu’il s’agit bien de votre adresse professionnelle et nominative.""".stripMargin
               Redirect(routes.LoginController.login())
                 .flashing("error" -> message, "email-value" -> email)
             }
