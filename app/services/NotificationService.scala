@@ -176,7 +176,7 @@ class NotificationService @Inject() (
       loginToken: LoginToken
   ): Unit = {
     val url = s"$absoluteUrl?token=${loginToken.token}&path=$path"
-    val bodyHtml = s"""Bonjour${user.name.some.filter(_.nonEmpty).map(n => s" $n,").getOrElse(",")},<br>
+    val bodyHtml = s"""Bonjour${user.name.some.filter(_.nonEmpty).map(n => s" $n,").getOrElse(",")}<br>
                       |<br>
                       |Vous pouvez maintenant accéder au service Administration+ en cliquant sur le lien suivant :<br>
                       |<a href="$url">$url</a>
