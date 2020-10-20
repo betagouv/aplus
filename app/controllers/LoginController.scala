@@ -22,7 +22,7 @@ class LoginController @Inject() (
     extends InjectedController {
 
   private lazy val tokenExpirationInMinutes =
-    configuration.underlying.getInt("app.tokenExpirationInMinutes")
+    configuration.get[Int]("app.tokenExpirationInMinutes")
 
   /** Security Note:
     * when the email is in the query "?email=xxx", we do not check the CSRF token

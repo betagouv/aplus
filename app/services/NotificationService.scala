@@ -43,7 +43,7 @@ class NotificationService @Inject() (
   private val log = Logger(classOf[NotificationService])
 
   private lazy val tokenExpirationInMinutes =
-    configuration.underlying.getInt("app.tokenExpirationInMinutes")
+    configuration.get[Int]("app.tokenExpirationInMinutes")
 
   private val daySinceLastAgentAnswerForApplicationsThatShouldBeClosed = 10
 
@@ -255,6 +255,13 @@ class NotificationService @Inject() (
           "Vous pouvez maintenant accéder au service Administration+ en cliquant sur le lien suivant :",
           br,
           a(href := url, url),
+          br,
+          br,
+          "Ce lien est ",
+          b(s"valide $tokenExpirationInMinutes minutes"),
+          " et est à ",
+          b("usage unique"),
+          ".",
           br,
           br,
           "Si vous avez des questions ou vous rencontrez un problème, ",
