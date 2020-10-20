@@ -10,6 +10,7 @@ import models.User
 import models.formModels.ValidateSubscriptionForm
 import org.postgresql.util.PSQLException
 import play.api.db.Database
+import views.html.helper.form
 
 import scala.concurrent.Future
 
@@ -226,46 +227,24 @@ class UserService @Inject() (
        """.executeUpdate() == 1
     })
 
-  def validateUser(userId: UUID, form: ValidateSubscriptionForm) =
+  def validateCGU(userId: UUID) =
     db.withConnection { implicit connection =>
       val now = Time.nowParis()
-      val resultCGUAcceptation = SQL"""
+      SQL"""
         UPDATE "user" SET
-        first_name = ${form.firstName.map(_.toLowerCase.capitalize).orEmpty},
-        last_name = ${form.lastName.map(_.toLowerCase.capitalize).orEmpty},
         cgu_acceptation_date = $now
         WHERE id = $userId::uuid
-     """.executeUpdate() == 1
-      val resultNewsletterAcceptation = if (form.newsletter) {
-        SQL"""
+     """.executeUpdate()
+    }
+
+  def acceptNewsletter(userId: UUID) =
+    db.withConnection { implicit connection =>
+      val now = Time.nowParis()
+      SQL"""
         UPDATE "user" SET
         newsletter_acceptation_date = $now
         WHERE id = $userId::uuid
-     """.executeUpdate() == 1
-      } else {
-        true
-      }
-      resultCGUAcceptation && resultNewsletterAcceptation
-    }
-
-  def acceptCGU(userId: UUID, acceptNewsletter: Boolean) =
-    db.withConnection { implicit connection =>
-      val now = Time.nowParis()
-      val resultCGUAcceptation = SQL"""
-        UPDATE "user" SET
-        cgu_acceptation_date = ${now}
-        WHERE id = ${userId}::uuid
-     """.executeUpdate() == 1
-      val resultNewsletterAcceptation = if (acceptNewsletter) {
-        SQL"""
-        UPDATE "user" SET
-        newsletter_acceptation_date = ${now}
-        WHERE id = ${userId}::uuid
-     """.executeUpdate() == 1
-      } else {
-        true
-      }
-      resultCGUAcceptation && resultNewsletterAcceptation
+     """.executeUpdate()
     }
 
 }

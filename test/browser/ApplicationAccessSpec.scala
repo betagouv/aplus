@@ -265,7 +265,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
 
     val result = userService.add(users)
     result.isRight must beTrue
-    users.forall(user => userService.acceptCGU(user.id, acceptNewsletter = false))
+    users.forall(user => userService.acceptNewsletter(user.id, acceptation = false))
 
     val application = Application(
       UUIDHelper.randomUUID,

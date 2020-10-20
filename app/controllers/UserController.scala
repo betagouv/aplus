@@ -422,49 +422,72 @@ case class UserController @Inject() (
         views.html.validateAccount(
           user,
           request.rights,
-          ValidateSubscriptionForm
-            .validate(user)
+          ValidateSubscriptionForm.validate
             .fill(
               ValidateSubscriptionForm(
+                sharedAccount = user.name.nonEmpty,
                 redirect = Option.empty,
-                newsletter = user.newsletterAcceptationDate.isDefined,
                 validate = user.cguAcceptationDate.isDefined,
                 firstName = user.firstName,
                 lastName = user.lastName,
-                email = user.email,
                 phoneNumber = user.phoneNumber,
-                qualite = user.qualite,
-                sharedAccountName = user.name.some.filter(_.nonEmpty)
+                qualite = user.qualite.some
               )
             )
         )
       )
     }
 
+  private def validateUser(user: User)(
+      sharedAccount: Boolean,
+      firstName: Option[String],
+      lastName: Option[String],
+      qualite: Option[String],
+      phoneNumber: Option[String]
+  ): Unit = {
+    userService.update(
+      user.validateWith(sharedAccount)(
+        firstName.map(_.toLowerCase.capitalize),
+        lastName.map(_.toLowerCase.capitalize),
+        qualite,
+        phoneNumber
+      )
+    )
+    userService.validateCGU(user.id)
+  }
+
   def validateAccount(): Action[AnyContent] =
     loginAction { implicit request =>
-      ValidateSubscriptionForm
-        .validate(request.currentUser)
-        .bindFromRequest
+      val user = request.currentUser
+      ValidateSubscriptionForm.validate.bindFromRequest
         .fold(
-          { formWithErrors =>
+          { errors =>
             eventService.log(CGUValidationError, "Erreur de formulaire dans la validation des CGU")
             BadRequest(
-              s"Formulaire invalide, prévenez l’administrateur du service. ${formWithErrors.errors.mkString(", ")}"
+              s"Formulaire invalide, prévenez l’administrateur du service. ${errors.errors.mkString(", ")}"
             )
           },
-          { form =>
-            if (form.validate) {
-              userService.validateUser(request.currentUser.id, form)
-            }
-            eventService.log(CGUValidated, "CGU validées")
-            val route = form.redirect match {
-              case Some(redirect) if redirect != routes.ApplicationController.myApplications.url =>
-                Call("GET", redirect)
-              case _ =>
-                routes.HomeController.welcome
-            }
-            Redirect(route).flashing("success" -> "Merci d’avoir accepté les CGU")
+          {
+            case ValidateSubscriptionForm(true, _, true, _, _, _, _) =>
+              validateUser(request.currentUser)(
+                sharedAccount = true,
+                Option.empty,
+                Option.empty,
+                Option.empty,
+                Option.empty
+              )
+              eventService.log(CGUValidated, "CGU validées")
+              Redirect(routes.HomeController.welcome())
+                .flashing("success" -> "Merci d’avoir accepté les CGU")
+            case ValidateSubscriptionForm(true, _, false, _, _, _, _) =>
+              Redirect(routes.HomeController.welcome())
+            case ValidateSubscriptionForm(sharedAccount, _, true, fn, ln, qualite, phoneNumber) =>
+              validateUser(request.currentUser)(sharedAccount, fn, ln, qualite, phoneNumber)
+              eventService.log(CGUValidated, "CGU validées")
+              Redirect(routes.HomeController.welcome())
+                .flashing("success" -> "Merci d’avoir accepté les CGU")
+            case ValidateSubscriptionForm(_, _, false, _, _, _, _) =>
+              Redirect(routes.HomeController.welcome())
           }
         )
     }
@@ -487,8 +510,7 @@ case class UserController @Inject() (
         },
         { newsletter =>
           if (newsletter) {
-            // Note: CGU are not used anymore
-            userService.acceptCGU(request.currentUser.id, newsletter)
+            userService.acceptNewsletter(request.currentUser.id)
           }
           eventService.log(NewsletterSubscribed, "Newletter subscribed")
           Redirect(routes.HomeController.welcome)

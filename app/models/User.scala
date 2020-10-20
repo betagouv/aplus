@@ -3,6 +3,7 @@ package models
 import java.time.ZonedDateTime
 import java.util.UUID
 
+import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption}
 import constants.Constants
 import helper.{Hash, UUIDHelper}
 
@@ -46,6 +47,21 @@ case class User(
   // TODO: put this in Authorization
   def canSeeUsersInArea(areaId: UUID): Boolean =
     (areaId == Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
+
+  def validateWith(sharedAccount: Boolean)(
+      firstName: Option[String],
+      lastName: Option[String],
+      qualite: Option[String],
+      phoneNumber: Option[String]
+  ) =
+    this.copy(
+      firstName = firstName,
+      lastName = lastName,
+      name = if (sharedAccount) name else s"${firstName.orEmpty} ${lastName.orEmpty.toUpperCase}",
+      qualite = qualite.orEmpty,
+      phoneNumber = phoneNumber,
+      sharedAccount = sharedAccount
+    )
 
 }
 

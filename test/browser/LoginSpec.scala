@@ -37,7 +37,7 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
   def beforeAll(): Unit = {
     val userService = applicationWithBrowser.injector.instanceOf[UserService]
     val _ = userService.add(List(existingUser))
-    val _ = userService.acceptCGU(existingUser.id, acceptNewsletter = true)
+    val _ = userService.acceptNewsletter(existingUser.id, acceptation = true)
   }
 
   def afterAll(): Unit = {
