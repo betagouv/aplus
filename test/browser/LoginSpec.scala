@@ -48,8 +48,8 @@ class gLoginSpec extends Specification with Tables with BaseSpec with BeforeAfte
     ) {
       "email" | "result" |
         "julien.dauphant.test" + "@beta.gouv.fr" ! "Consultez vos e-mails" |
-        "wrong@beta.gouv.fr" ! "Aucun compte actif n'est associé à cette adresse e-mail." |
-        "simon.pineau" + "@beta.gouv.fr" ! "Aucun compte actif n'est associé à cette adresse e-mail." |> {
+        "wrong@beta.gouv.fr" ! "Aucun compte actif n’est associé à cette adresse e-mail." |
+        "simon.pineau" + "@beta.gouv.fr" ! "Aucun compte actif n’est associé à cette adresse e-mail." |> {
           (email, expected) =>
             val loginURL =
               controllers.routes.LoginController.login().absoluteURL(false, s"localhost:$port")
