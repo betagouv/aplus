@@ -71,8 +71,7 @@ class LoginController @Inject() (
                   tmpPath
                 }
               }
-              val url = routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL()
-              notificationService.newLoginRequest(url, path, user, loginToken)
+              notificationService.newMagicLinkEmail(user, loginToken, pathToRedirectTo = path)
 
               implicit val requestWithUserData =
                 new RequestWithUserData(user, userRights, request)

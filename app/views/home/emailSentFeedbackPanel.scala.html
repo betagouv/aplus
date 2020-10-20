@@ -6,15 +6,18 @@
     </h3>
 
     <p>
-        Nous avons envoyé par e-mail un lien de connexion valable @infos.tokenExpirationInMinutes minutes
-        à l'adresse <b>@infos.user.email</b>.
-        Cliquez sur le lien contenu dans l'e-mail pour accéder à Administration+.
+      Nous avons envoyé par e-mail un lien de connexion sécurisée <b>valable @infos.tokenExpirationInMinutes minutes</b>
+      à l’adresse <b>@infos.user.email</b>.
+      Cliquez sur le lien contenu dans l’e-mail « @services.NotificationService.magicLinkEmailSubject » avant @{java.time.ZonedDateTime.now(infos.user.timeZone).plusMinutes(infos.tokenExpirationInMinutes.toLong).format(_root_.helper.Time.hourAndMinutesFormatter)} pour accéder à Administration+.
     </p>
 
     <p><i>
-        Vous n'avez pas reçu d'e-mail ? Veuillez consulter vos courriers indésirables
-        ou <a class="aplus-color-text--blue" href="@routes.LoginController.login()?email=@infos.user.email&action=sendemailback">renvoyer un autre e-mail</a>
+        Vous n’avez pas reçu d’e-mail ? Veuillez consulter vos courriers indésirables ou <a class="aplus-color-text--blue" href="@routes.LoginController.login()?email=@infos.user.email&action=sendemailback">renvoyer un autre e-mail</a>
     </i></p>
+
+    <p>
+      <b>Attention</b>, ce message peut mettre jusqu’à <b>15 minutes</b> pour arriver.
+    </p>
 
     @infos.successMessage.map { message =>
     <div class="notification notification--success mdl-typography--text-prewrap" >@message</div>

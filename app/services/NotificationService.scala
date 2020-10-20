@@ -18,7 +18,11 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 object NotificationService {
+
+  val magicLinkEmailSubject = "Connexion sécurisée à Administration+"
+
   case class WeeklyEmailInfos(user: User, applicationsThatShouldBeClosed: List[Application])
+
 }
 
 @Singleton
@@ -166,22 +170,8 @@ class NotificationService @Inject() (
   def newUser(newUser: User) =
     sendMail(generateWelcomeEmail(newUser))
 
-  def newLoginRequest(absoluteUrl: String, path: String, user: User, loginToken: LoginToken) = {
-    val url = s"${absoluteUrl}?token=${loginToken.token}&path=$path"
-    val bodyHtml = s"""Bonjour ${user.name},<br>
-                      |<br>
-                      |Vous pouvez maintenant accéder au service Administration+ en cliquant sur le lien suivant :<br>
-                      |<a href="${url}">${url}</a>
-                      |<br>
-                      |<br>
-                      |Si vous avez des questions ou vous rencontrez un problème, n'hésitez pas à nous contacter sur <a href="mailto:${Constants.supportEmail}">${Constants.supportEmail}</a><br>
-                      |Equipe Administration+""".stripMargin
-    val email = play.api.libs.mailer.Email(
-      s"Connexion à Administration+",
-      from = from,
-      Seq(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
-      bodyHtml = Some(bodyHtml)
-    )
+  def newMagicLinkEmail(user: User, loginToken: LoginToken, pathToRedirectTo: String) = {
+    val email = generateMagicLinkEmail(user, loginToken, pathToRedirectTo)
     sendMail(email)
   }
 
@@ -247,6 +237,41 @@ class NotificationService @Inject() (
     )
 
   import scalatags.Text.all._
+
+  private def generateMagicLinkEmail(
+      user: User,
+      loginToken: LoginToken,
+      pathToRedirectTo: String
+  ): Email = {
+    val absoluteUrl: String =
+      routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL(https, host)
+    val url = s"${absoluteUrl}?token=${loginToken.token}&path=$pathToRedirectTo"
+    val bodyInner =
+      List[Modifier](
+        s"Bonjour ${user.name},",
+        br,
+        br,
+        p(
+          "Vous pouvez maintenant accéder au service Administration+ en cliquant sur le lien suivant :",
+          br,
+          a(href := url, url),
+          br,
+          br,
+          "Si vous avez des questions ou vous rencontrez un problème, ",
+          "n'hésitez pas à nous contacter sur ",
+          a(href := s"mailto:${Constants.supportEmail}", Constants.supportEmail),
+          br,
+          "Equipe Administration+"
+        )
+      ) ::: applicationEmailFooter
+
+    Email(
+      subject = magicLinkEmailSubject,
+      from = from,
+      to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
+      bodyHtml = Some(renderEmail(bodyInner))
+    )
+  }
 
   private def generateMandatSmsSentEmail(
       mandatId: Mandat.Id,
