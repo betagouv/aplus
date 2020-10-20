@@ -4,6 +4,8 @@ import akka.stream.{ActorAttributes, Materializer, Supervision}
 import akka.stream.scaladsl.{RestartSource, Sink, Source}
 import constants.Constants
 import java.util.UUID
+
+import cats.implicits.catsSyntaxOptionId
 import javax.inject.{Inject, Singleton}
 import controllers.routes
 import helper.EmailHelper.quoteEmailPhrase
@@ -14,6 +16,7 @@ import play.api.Logger
 import play.api.libs.concurrent.MaterializerProvider
 import play.api.libs.mailer.MailerClient
 import play.api.libs.mailer.Email
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
@@ -166,12 +169,17 @@ class NotificationService @Inject() (
   def newUser(newUser: User) =
     sendMail(generateWelcomeEmail(newUser))
 
-  def newLoginRequest(absoluteUrl: String, path: String, user: User, loginToken: LoginToken) = {
-    val url = s"${absoluteUrl}?token=${loginToken.token}&path=$path"
-    val bodyHtml = s"""Bonjour ${user.name},<br>
+  def newLoginRequest(
+      absoluteUrl: String,
+      path: String,
+      user: User,
+      loginToken: LoginToken
+  ): Unit = {
+    val url = s"$absoluteUrl?token=${loginToken.token}&path=$path"
+    val bodyHtml = s"""Bonjour${user.name.some.filter(_.nonEmpty).map(n => s" $n,").getOrElse(",")},<br>
                       |<br>
                       |Vous pouvez maintenant accéder au service Administration+ en cliquant sur le lien suivant :<br>
-                      |<a href="${url}">${url}</a>
+                      |<a href="$url">$url</a>
                       |<br>
                       |<br>
                       |Si vous avez des questions ou vous rencontrez un problème, n'hésitez pas à nous contacter sur <a href="mailto:${Constants.supportEmail}">${Constants.supportEmail}</a><br>
