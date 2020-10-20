@@ -8,7 +8,7 @@
     <p>
       Nous avons envoyé par e-mail un lien de connexion sécurisée <b>valable @infos.tokenExpirationInMinutes minutes</b>
       à l’adresse <b>@infos.user.email</b>.
-      Cliquez sur le lien contenu dans l’e-mail « @services.NotificationService.magicLinkEmailSubject » avant @{java.time.ZonedDateTime.now(infos.user.timeZone).plusMinutes(infos.tokenExpirationInMinutes.toLong).format(_root_.helper.Time.hourAndMinutesFormatter)} pour accéder à Administration+.
+      Cliquez sur le lien contenu dans l’e-mail « @views.emails.common.magicLinkSubject » avant @{java.time.ZonedDateTime.now(infos.user.timeZone).plusMinutes(infos.tokenExpirationInMinutes.toLong).format(_root_.helper.Time.hourAndMinutesFormatter)} pour accéder à Administration+.
     </p>
 
     <p><i>
