@@ -443,7 +443,7 @@ case class UserController @Inject() (
       lastName: Option[String],
       qualite: Option[String],
       phoneNumber: Option[String]
-  ): Unit = {
+  ): Int = {
     userService.update(
       user.validateWith(
         firstName.map(_.toLowerCase.capitalize),
