@@ -48,7 +48,7 @@ object StringHelper {
   def commonStringInputNormalization(string: String): String =
     mergeSpacesToOne(normalizeNFKC(string)).trim
 
-  def capitalizeFirstName(name: String): String =
+  def capitalizeName(name: String): String =
     name
       .split("[-\\s]")
       .map(_.toLowerCase.capitalize)

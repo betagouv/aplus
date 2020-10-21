@@ -7,7 +7,7 @@ import actions.{LoginAction, RequestWithUserData}
 import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption, catsSyntaxOptionId}
 import controllers.Operators.{GroupOperators, UserOperators}
 import helper.BooleanHelper.not
-import helper.StringHelper.{capitalizeFirstName, commonStringInputNormalization}
+import helper.StringHelper.{capitalizeName, commonStringInputNormalization}
 import helper.{StringHelper, Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
 import models.EventType._
@@ -447,8 +447,8 @@ case class UserController @Inject() (
   ): Int = {
     userService.update(
       user.validateWith(
-        firstName.map(commonStringInputNormalization).map(capitalizeFirstName),
-        lastName.map(commonStringInputNormalization),
+        firstName.map(commonStringInputNormalization).map(capitalizeName),
+        lastName.map(commonStringInputNormalization).map(capitalizeName),
         qualite.map(commonStringInputNormalization),
         phoneNumber.map(commonStringInputNormalization)
       )
