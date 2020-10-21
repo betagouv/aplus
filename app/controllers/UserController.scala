@@ -416,7 +416,7 @@ case class UserController @Inject() (
 
   def showValidateAccount(): Action[AnyContent] =
     loginAction { implicit request =>
-      eventService.log(CGUShowed, "CGU visualisée")
+      eventService.log(CGUShowed, "CGU visualisées")
       val user = request.currentUser
       Ok(
         views.html.validateAccount(
