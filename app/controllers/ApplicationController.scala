@@ -1066,7 +1066,6 @@ case class ApplicationController @Inject() (
           )
         form.fold(
           formWithErrors => {
-            // TODO: check if formWithErrors.errors can leak personal data
             val error =
               s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.message).mkString(", ")})."
             eventService.log(AnswerNotCreated, s"$error")
