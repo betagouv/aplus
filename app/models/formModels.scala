@@ -89,7 +89,7 @@ object formModels {
         )
         .verifying(
           "La qualité est requise",
-          form => if (!user.sharedAccount) form.lastName.map(_.trim).exists(_.nonEmpty) else true
+          form => if (!user.sharedAccount) form.qualite.map(_.trim).exists(_.nonEmpty) else true
         )
     )
 
