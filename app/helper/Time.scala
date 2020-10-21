@@ -23,7 +23,7 @@ object Time {
 
   val hourAndMinutesFormatter = DateTimeFormatter.ofPattern("HH'h'mm", Locale.FRANCE)
 
-  val dateWithHourFormatter = DateTimeFormatter.ofPattern("dd MMMM YYYY H'h'", Locale.FRANCE)
+  val dateWithHourFormatter = DateTimeFormatter.ofPattern("dd/MM/YYYY H'h'", Locale.FRANCE)
 
   def weeksMap(fromDate: ZonedDateTime, toDate: ZonedDateTime): ListMap[String, String] = {
     val keyFormatter = DateTimeFormatter.ofPattern("YYYY/ww", Locale.FRANCE)
