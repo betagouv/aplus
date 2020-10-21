@@ -7,7 +7,8 @@ import actions.{LoginAction, RequestWithUserData}
 import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption, catsSyntaxOptionId}
 import controllers.Operators.{GroupOperators, UserOperators}
 import helper.BooleanHelper.not
-import helper.{Time, UUIDHelper}
+import helper.StringHelper.{capitalizeFirstName, commonStringInputNormalization}
+import helper.{StringHelper, Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
 import models.EventType._
 import models._
@@ -427,7 +428,7 @@ case class UserController @Inject() (
             .fill(
               ValidateSubscriptionForm(
                 redirect = Option.empty,
-                validate = user.cguAcceptationDate.isDefined,
+                cguChecked = user.cguAcceptationDate.isDefined,
                 firstName = user.firstName,
                 lastName = user.lastName,
                 phoneNumber = user.phoneNumber,
@@ -438,7 +439,7 @@ case class UserController @Inject() (
       )
     }
 
-  private def validateUser(user: User)(
+  private def validateAndUpdateUser(user: User)(
       firstName: Option[String],
       lastName: Option[String],
       qualite: Option[String],
@@ -446,10 +447,10 @@ case class UserController @Inject() (
   ): Int = {
     userService.update(
       user.validateWith(
-        firstName.map(_.toLowerCase.capitalize),
-        lastName.map(_.toLowerCase.capitalize),
-        qualite,
-        phoneNumber
+        firstName.map(commonStringInputNormalization).map(capitalizeFirstName),
+        lastName.map(commonStringInputNormalization),
+        qualite.map(commonStringInputNormalization),
+        phoneNumber.map(commonStringInputNormalization)
       )
     )
     userService.validateCGU(user.id)
@@ -471,11 +472,11 @@ case class UserController @Inject() (
           {
             case ValidateSubscriptionForm(Some(redirect), true, fn, ln, qualite, phoneNumber)
                 if redirect != routes.ApplicationController.myApplications.url =>
-              validateUser(request.currentUser)(fn, ln, qualite, phoneNumber)
+              validateAndUpdateUser(request.currentUser)(fn, ln, qualite, phoneNumber)
               eventService.log(CGUValidated, "CGU validées")
               Redirect(Call("GET", redirect)).flashing("success" -> "Merci d’avoir accepté les CGU")
             case ValidateSubscriptionForm(_, true, fn, ln, qualite, phoneNumber) =>
-              validateUser(request.currentUser)(fn, ln, qualite, phoneNumber)
+              validateAndUpdateUser(request.currentUser)(fn, ln, qualite, phoneNumber)
               eventService.log(CGUValidated, "CGU validées")
               Redirect(routes.HomeController.welcome)
                 .flashing("success" -> "Merci d’avoir accepté les CGU")

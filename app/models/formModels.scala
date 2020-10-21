@@ -61,7 +61,7 @@ object formModels {
 
   final case class ValidateSubscriptionForm(
       redirect: Option[String],
-      validate: Boolean,
+      cguChecked: Boolean,
       firstName: Option[String],
       lastName: Option[String],
       qualite: Option[String],
@@ -73,7 +73,7 @@ object formModels {
     def validate(user: User): Form[ValidateSubscriptionForm] = Form(
       mapping(
         "redirect" -> optional(text),
-        "validate" -> boolean,
+        "cguChecked" -> boolean,
         "firstName" -> optional(nonEmptyText.verifying(maxLength(100))),
         "lastName" -> optional(nonEmptyText.verifying(maxLength(100))),
         "qualite" -> optional(nonEmptyText.verifying(maxLength(100))),

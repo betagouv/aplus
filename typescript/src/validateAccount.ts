@@ -1,36 +1,37 @@
-const firstnameValue = <HTMLInputElement>document.getElementById('firstnameValue');
-const lastnameValue = <HTMLInputElement>document.getElementById('lastnameValue');
-const qualiteValue = <HTMLInputElement>document.getElementById('qualiteValue');
-const sharedAccountValue = <HTMLInputElement>document.getElementById('sharedAccountValue');
+const firstnameValue = <HTMLInputElement | null>document.getElementById('firstnameValue');
+const lastnameValue = <HTMLInputElement | null>document.getElementById('lastnameValue');
+const qualiteValue = <HTMLInputElement | null>document.getElementById('qualiteValue');
+const sharedAccountValue = <HTMLInputElement | null>document.getElementById('sharedAccountValue');
 
-const checkbox = <HTMLInputElement>document.querySelector("#checkbox-charte");
+const checkbox = <HTMLInputElement | null>document.querySelector("#checkbox-charte");
 
 function formCanBeSubmitted(sharedAccount: Boolean) {
-    return checkbox.checked && (sharedAccount ? true :
-        firstnameValue.value.trim() !== '' &&
-        lastnameValue.value.trim() !== '' &&
-        qualiteValue.value.trim() !== '');
+    return checkbox && checkbox.checked && (sharedAccount ? true :
+        firstnameValue && firstnameValue.value.trim() !== '' &&
+        lastnameValue && lastnameValue.value.trim() !== '' &&
+        qualiteValue && qualiteValue.value.trim() !== '');
 }
 
 function addInputEvent(el: Element, sharedAccount: Boolean) {
-    el.addEventListener(`input`, function () {
-        const e = <HTMLInputElement>document.querySelector("#validation")
+    el && el.addEventListener(`input`, function () {
+        const e = <HTMLInputElement | null>document.querySelector("#validation")
         e.disabled = !formCanBeSubmitted(sharedAccount);
     });
 }
 
 function addClickEvent(el: Element, sharedAccount: Boolean) {
     el.addEventListener(`click`, function () {
-        const e = <HTMLInputElement>document.querySelector("#validation");
+        const e = <HTMLInputElement | null>document.querySelector("#validation");
         e.disabled = !formCanBeSubmitted(sharedAccount);
     });
 }
 
-const sharedAccount = sharedAccountValue.value !== "false";
+const sharedAccount = sharedAccountValue && sharedAccountValue.value !== "false";
 
-addClickEvent(checkbox, sharedAccount);
+checkbox && addClickEvent(checkbox, sharedAccount);
+
 if (!sharedAccount) {
-    addInputEvent(firstnameValue, sharedAccount);
-    addInputEvent(lastnameValue, sharedAccount);
-    addInputEvent(qualiteValue, sharedAccount);
+    firstnameValue && addInputEvent(firstnameValue, sharedAccount);
+    lastnameValue && addInputEvent(lastnameValue, sharedAccount);
+    qualiteValue && addInputEvent(qualiteValue, sharedAccount);
 }
