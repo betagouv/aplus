@@ -22,7 +22,7 @@ class LoginController @Inject() (
     extends InjectedController {
 
   private lazy val tokenExpirationInMinutes =
-    configuration.underlying.getInt("app.tokenExpirationInMinutes")
+    configuration.get[Int]("app.tokenExpirationInMinutes")
 
   /** Security Note:
     * when the email is in the query "?email=xxx", we do not check the CSRF token
@@ -71,8 +71,7 @@ class LoginController @Inject() (
                   tmpPath
                 }
               }
-              val url = routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL()
-              notificationService.newLoginRequest(url, path, user, loginToken)
+              notificationService.newMagicLinkEmail(user, loginToken, pathToRedirectTo = path)
 
               implicit val requestWithUserData =
                 new RequestWithUserData(user, userRights, request)
@@ -108,7 +107,13 @@ class LoginController @Inject() (
         request.getQueryString(Keys.QueryParam.path)
       ) match {
         case (Some(token), Some(path)) =>
-          Ok(views.html.loginHome(Right((token, path)), tokenExpirationInMinutes))
+          Ok(
+            views.html.magicLinkAntiConsumptionPage(
+              token = token,
+              pathToRedirectTo = path,
+              tokenExpirationInMinutes = tokenExpirationInMinutes
+            )
+          )
         case _ =>
           TemporaryRedirect(routes.LoginController.login().url).flashing(
             "error" -> "Il y a une erreur dans votre lien de connexion. Merci de contacter l'équipe Administration+"
