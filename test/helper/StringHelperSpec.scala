@@ -20,13 +20,14 @@ class StringHelperSpec extends Specification {
 
     "capitalize space composed name" >> {
       val name = "JeAn ChArLeS"
-      StringHelper.capitalizeName(name) must equalTo("Jean-Charles")
+      StringHelper.capitalizeName(name) must equalTo("Jean Charles")
     }
 
     "capitalize dash and space composed name" >> {
       val name = "JeAn ChArLeS-ReNé"
-      StringHelper.capitalizeName(name) must equalTo("Jean-Charles-René")
+      StringHelper.capitalizeName(name) must equalTo("Jean Charles-René")
     }
+
   }
 
 }

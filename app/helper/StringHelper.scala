@@ -49,9 +49,6 @@ object StringHelper {
     mergeSpacesToOne(normalizeNFKC(string)).trim
 
   def capitalizeName(name: String): String =
-    name
-      .split("[-\\s]")
-      .map(_.toLowerCase.capitalize)
-      .mkString("-")
+    """[\P{P}&&\P{Z}]+""".r.replaceAllIn(name, m => m.group(0).toLowerCase.capitalize)
 
 }
