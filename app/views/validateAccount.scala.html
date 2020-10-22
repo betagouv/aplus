@@ -3,33 +3,15 @@
 @(user: User, currentUserRights: Authorization.UserRights, cguForm: Form[models.formModels.ValidateSubscriptionForm])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
 
     @main(user, currentUserRights)("Conditions générales d’utilisations") {
-        <style>
-                .mdl-data-table .single--display-flex {
-                    padding: 0 0 0 50px;
-                }
-
-                .mdl-data-table h3 {
-                    padding: 0 0 0 50px;
-                }
-
-                .mdl-data-table p {
-                    padding: 0 0 0 50px;
-                }
-
-                .mdl-data-table > p {
-                    margin-left: 8px;
-                    padding: 0 0 0 50px;
-                }
-        </style>
     } {
         <div class="mdl-data-table mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
-            <h3 class="mdl-cell mdl-cell--12-col">Confirmation de votre inscription</h3>
+            <h3 class="mdl-cell mdl-cell--12-col single--padding-left-48px">Confirmation de votre inscription</h3>
             @if(user.cguAcceptationDate.nonEmpty) {
-                <p>Vous avez déjà validé vos informations professionnelles</p>
+                <p class="single--padding-left-48px single--margin-left-8px">Vous avez déjà validé vos informations professionnelles</p>
             }
             @if(user.cguAcceptationDate.isEmpty) {
                 @if(!user.sharedAccount) {
-                    <p>Veuillez saisir ou corriger vos informations professionnelles :</p>
+                    <p class="single--padding-left-48px single--margin-left-8px">Veuillez saisir ou corriger vos informations professionnelles :</p>
                 }
                 @helper.form(action = routes.UserController.validateAccount(), args = "class" -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
                     @helper.CSRF.formField
@@ -39,7 +21,7 @@
                     <input id="sharedAccountValue" value="@user.sharedAccount" style="display: none">
                     <div>
                         @if(!user.sharedAccount) {
-                            <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+                            <div class="single--display-flex single--align-items-center single--flex-wrap-wrap single--padding-left-48px">
                                 <div>Prénom <span class="mdl-color-text--red-500">*</span>
                                     <br>
                                     @helper.input(cguForm("firstName"),
@@ -54,7 +36,7 @@
                                     }
                                 </div>
                             </div>
-                            <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+                            <div class="single--display-flex single--align-items-center single--flex-wrap-wrap single--padding-left-48px">
                                 <div>Nom <span class="mdl-color-text--red-500">*</span>
                                     <br>
                                     @helper.input(cguForm("lastName"),
@@ -69,7 +51,7 @@
                                     }
                                 </div>
                             </div>
-                            <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+                            <div class="single--display-flex single--align-items-center single--flex-wrap-wrap single--padding-left-48px">
                                 <div>Numéro de téléphone professionel
                                     <br>
                                     @helper.input(cguForm("phoneNumber"),
@@ -84,7 +66,7 @@
                                     }
                                 </div>
                             </div>
-                            <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+                            <div class="single--display-flex single--align-items-center single--flex-wrap-wrap single--padding-left-48px">
                                 <div>Intitulé du poste <span class="mdl-color-text--red-500">*</span>
                                     <br>
                                     @helper.input(cguForm("qualite"),
@@ -100,7 +82,7 @@
                                 </div>
                             </div>
                         }
-                        <p>
+                        <p class="single--padding-left-48px">
                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-charte" style="height: unset;">
                                 <input type="checkbox" id="checkbox-charte" name="cguChecked" class="mdl-checkbox__input" value="true">
                                 <span class="mdl-checkbox__label">
