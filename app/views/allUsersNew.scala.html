@@ -44,6 +44,8 @@
                     {
                         id: "@user.id",
                         name: "@user.name",
+                        lastName: "@user.lastName",
+                        firstName: "@user.firstName",
                         email: "@user.email",
                         qualite: "@user.qualite",
                         phoneNumber: "@{user.phoneNumber.getOrElse("")}",
@@ -113,6 +115,8 @@
                         frozen:true
                     },
                     { title: "Nom et Prénom", field: "name", headerFilter: "input", frozen:true, formatter:"html" },
+                    { title: "Nom", field: "lastName", headerFilter: "input", frozen:true, formatter:"html" },
+                    { title: "Prénom", field: "firstName", headerFilter: "input", frozen:true, formatter:"html" },
                     { title: "Groupes", field: "groups", headerFilter: "input" },
                     { title: "Email", field: "email", headerFilter: "input" },
                     { title: "Qualité", field: "qualite", headerFilter: "input" },
