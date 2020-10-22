@@ -1,9 +1,7 @@
 package helper
 
 import java.text.Normalizer
-
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.text.WordUtils
 
 object StringHelper {
 
@@ -49,5 +47,11 @@ object StringHelper {
     */
   def commonStringInputNormalization(string: String): String =
     mergeSpacesToOne(normalizeNFKC(string)).trim
+
+  def capitalizeName(name: String): String =
+    name
+      .split("[-\\s]")
+      .map(_.toLowerCase.capitalize)
+      .mkString("-")
 
 }
