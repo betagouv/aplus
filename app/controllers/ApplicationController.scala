@@ -61,12 +61,11 @@ import play.api.libs.ws.WSClient
 import play.twirl.api.Html
 import views.stats.StatsData
 
+import cats.implicits._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import helper.StringHelper.CanonizeString
 import serializers.{AttachmentHelper, DataModel, Keys}
-
-import scala.concurrent.duration._
 
 /** This controller creates an `Action` to handle HTTP requests to the
   * application's home page.
@@ -875,9 +874,7 @@ case class ApplicationController @Inject() (
            userService.byGroupIds(invitedGroups.toList).filter(_.instructor)
          }
        }
-       coworkers.zip(instructorsCoworkers).map { case (helpers, instructors) =>
-         helpers ::: instructors
-       }
+       coworkers.combine(instructorsCoworkers)
      }).map(
       _.filterNot(user =>
         user.id == request.currentUser.id || application.invitedUsers.contains(user.id)
