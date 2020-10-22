@@ -463,11 +463,9 @@ case class UserController @Inject() (
         .validate(user)
         .bindFromRequest
         .fold(
-          { errors =>
+          { formWithErrors =>
             eventService.log(CGUValidationError, "Erreur de formulaire dans la validation des CGU")
-            BadRequest(
-              s"Formulaire invalide, prévenez l’administrateur du service. ${errors.errors.mkString(", ")}"
-            )
+            BadRequest(views.html.validateAccount(user, request.rights, formWithErrors))
           },
           {
             case ValidateSubscriptionForm(Some(redirect), true, fn, ln, qualite, phoneNumber)
