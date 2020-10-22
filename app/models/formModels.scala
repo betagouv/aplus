@@ -72,7 +72,6 @@ object formModels {
   object ValidateSubscriptionForm {
 
     val PhoneNumber = """(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})""".r
-    val AlphaString = """(\D)+""".r
 
     private val validPhoneNumberPrefixes =
       List("01", "02", "03", "04", "05", "06", "07", "08", "09")
@@ -88,19 +87,13 @@ object formModels {
         case _ => Invalid(ValidationError("Numéro de téléphone invalide"))
       }
 
-    val alphaConstraint: Constraint[String] =
-      Constraint[String]("constraint.invalidFormat") {
-        case AlphaString(_) => Valid
-        case _              => Invalid(ValidationError("Format invalide"))
-      }
-
     def validate(user: User): Form[ValidateSubscriptionForm] = Form(
       mapping(
         "redirect" -> optional(text),
         "cguChecked" -> boolean,
-        "firstName" -> optional(nonEmptyText.verifying(alphaConstraint, maxLength(100))),
-        "lastName" -> optional(nonEmptyText.verifying(alphaConstraint, maxLength(100))),
-        "qualite" -> optional(nonEmptyText.verifying(alphaConstraint, maxLength(100))),
+        "firstName" -> optional(nonEmptyText.verifying(maxLength(100))),
+        "lastName" -> optional(nonEmptyText.verifying(maxLength(100))),
+        "qualite" -> optional(nonEmptyText.verifying(maxLength(100))),
         "phoneNumber" -> optional(nonEmptyText.verifying(phoneNumberConstraint))
       )(ValidateSubscriptionForm.apply)(ValidateSubscriptionForm.unapply)
         .verifying(
