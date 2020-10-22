@@ -5,6 +5,7 @@ import java.util.UUID
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints.maxLength
+import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 
 object formModels {
 
@@ -70,14 +71,35 @@ object formModels {
 
   object ValidateSubscriptionForm {
 
+    val PhoneNumber = """(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})""".r
+    val AlphaString = """(\D)+""".r
+
+    private def isValidPhoneNumberPrefix(prefix: String) =
+      prefix == "01" || prefix == "02" || prefix == "03" || prefix == "04" ||
+        prefix == "05" || prefix == "06" || prefix == "07" || prefix == "08" || prefix == "09"
+
+    val phoneNumberConstraint: Constraint[String] =
+      Constraint[String]("constraint.invalidFormat") {
+        case PhoneNumber(prefix, _, _, _, _) if isValidPhoneNumberPrefix(prefix) => Valid
+        case PhoneNumber(_, _, _, _, _) =>
+          Invalid(ValidationError("Préfixe de numéro de téléphone invalide"))
+        case _ => Invalid(ValidationError("Numéro de téléphone invalide"))
+      }
+
+    val alphaConstraint: Constraint[String] =
+      Constraint[String]("constraint.invalidFormat") {
+        case AlphaString(_) => Valid
+        case _              => Invalid(ValidationError("Format invalide"))
+      }
+
     def validate(user: User): Form[ValidateSubscriptionForm] = Form(
       mapping(
         "redirect" -> optional(text),
         "cguChecked" -> boolean,
-        "firstName" -> optional(nonEmptyText.verifying(maxLength(100))),
-        "lastName" -> optional(nonEmptyText.verifying(maxLength(100))),
-        "qualite" -> optional(nonEmptyText.verifying(maxLength(100))),
-        "phoneNumber" -> optional(nonEmptyText.verifying(maxLength(40)))
+        "firstName" -> optional(nonEmptyText.verifying(alphaConstraint, maxLength(100))),
+        "lastName" -> optional(nonEmptyText.verifying(alphaConstraint, maxLength(100))),
+        "qualite" -> optional(nonEmptyText.verifying(alphaConstraint, maxLength(100))),
+        "phoneNumber" -> optional(nonEmptyText.verifying(phoneNumberConstraint))
       )(ValidateSubscriptionForm.apply)(ValidateSubscriptionForm.unapply)
         .verifying(
           "Le prénom est requis",
