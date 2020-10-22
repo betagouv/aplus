@@ -447,8 +447,8 @@ case class UserController @Inject() (
   ): Int = {
     userService.update(
       user.validateWith(
-        firstName.map(commonStringInputNormalization).map(capitalizeName),
-        lastName.map(commonStringInputNormalization).map(capitalizeName),
+        firstName.map(commonStringInputNormalization).map(_.capitalize),
+        lastName.map(commonStringInputNormalization).map(_.capitalize),
         qualite.map(commonStringInputNormalization),
         phoneNumber.map(commonStringInputNormalization)
       )
