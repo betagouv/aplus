@@ -57,7 +57,7 @@ case class User(
     this.copy(
       firstName = firstName,
       lastName = lastName,
-      name = if (sharedAccount) name else s"${firstName.orEmpty} ${lastName.orEmpty.toUpperCase}",
+      name = if (sharedAccount) name else s"${lastName.orEmpty.toUpperCase} ${firstName.orEmpty}",
       qualite = qualite.orEmpty,
       phoneNumber = phoneNumber
     )
