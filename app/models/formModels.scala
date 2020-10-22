@@ -74,9 +74,11 @@ object formModels {
     val PhoneNumber = """(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})""".r
     val AlphaString = """(\D)+""".r
 
+    private val validPhoneNumberPrefixes =
+      List("01", "02", "03", "04", "05", "06", "07", "08", "09")
+
     private def isValidPhoneNumberPrefix(prefix: String) =
-      prefix == "01" || prefix == "02" || prefix == "03" || prefix == "04" ||
-        prefix == "05" || prefix == "06" || prefix == "07" || prefix == "08" || prefix == "09"
+      validPhoneNumberPrefixes.contains(prefix)
 
     val phoneNumberConstraint: Constraint[String] =
       Constraint[String]("constraint.invalidFormat") {
