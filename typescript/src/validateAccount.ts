@@ -1,32 +1,32 @@
-var firstnameValue = <HTMLInputElement | null>document.getElementById('firstnameValue');
-var lastnameValue = <HTMLInputElement | null>document.getElementById('lastnameValue');
-var qualiteValue = <HTMLInputElement | null>document.getElementById('qualiteValue');
-var sharedAccountValue = <HTMLInputElement | null>document.getElementById('sharedAccountValue');
+const firstnameValue = <HTMLInputElement | null>document.getElementById('firstnameValue');
+const lastnameValue = <HTMLInputElement | null>document.getElementById('lastnameValue');
+const qualiteValue = <HTMLInputElement | null>document.getElementById('qualiteValue');
+const sharedAccountValue = <HTMLInputElement | null>document.getElementById('sharedAccountValue');
 
-var checkbox = <HTMLInputElement | null>document.querySelector("#checkbox-charte");
+const checkbox = <HTMLInputElement | null>document.querySelector("#checkbox-charte");
 
-function formCanBeSubmitted(sharedAccount: Boolean) {
+const formCanBeSubmitted = (sharedAccount: Boolean) => {
     return checkbox && checkbox.checked && (sharedAccount ? true :
         firstnameValue && firstnameValue.value.trim() !== '' &&
         lastnameValue && lastnameValue.value.trim() !== '' &&
         qualiteValue && qualiteValue.value.trim() !== '');
 }
 
-function addInputEvent(el: Element, sharedAccount: Boolean) {
-    el && el.addEventListener(`input`, function () {
-        var e = <HTMLInputElement | null>document.querySelector("#validation")
+const addInputEvent = (el: Element, sharedAccount: Boolean) => {
+    el && el.addEventListener(`input`, () => {
+        const e = <HTMLInputElement | null>document.querySelector("#validation")
         e.disabled = !formCanBeSubmitted(sharedAccount);
     });
 }
 
-function addClickEvent(el: Element, sharedAccount: Boolean) {
-    el.addEventListener(`click`, function () {
-        var e = <HTMLInputElement | null>document.querySelector("#validation");
+const addClickEvent = (el: Element, sharedAccount: Boolean) => {
+    el.addEventListener(`click`, () => {
+        const e = <HTMLInputElement | null>document.querySelector("#validation");
         e.disabled = !formCanBeSubmitted(sharedAccount);
     });
 }
 
-var sharedAccount = sharedAccountValue && sharedAccountValue.value !== "false";
+const sharedAccount = sharedAccountValue && sharedAccountValue.value !== "false";
 
 checkbox && addClickEvent(checkbox, sharedAccount);
 
