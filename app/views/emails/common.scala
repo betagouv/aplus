@@ -75,18 +75,18 @@ object common {
         "Vous pouvez suivre l’échange en cliquant sur ce lien : ",
         a(href := absoluteUrl, absoluteUrl)
       )
-    ) ::: applicationEmailFooter
+    ) ::: commonEmailFooter
 
   val mandatSmsClosedSubject = "[A+] Vous avez reçu une réponse par SMS à votre mandat"
 
   def mandatSmsClosedBody(absoluteUrl: String): List[Modifier] =
     List[Modifier](
       span(
-        "L’usager a répondu à votre demande de mandat. ",
-        "L’échange est disponible en cliquant sur ce lien : ",
+        "L’usager a répondu par SMS au mandat. ",
+        "L’échange SMS est disponible en cliquant sur ce lien : ",
         a(href := absoluteUrl, absoluteUrl)
       )
-    ) ::: applicationEmailFooter
+    ) ::: commonEmailFooter
 
   def invitationBody(
       application: Application,
