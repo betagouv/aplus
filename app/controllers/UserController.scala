@@ -8,7 +8,7 @@ import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption, catsSynta
 import controllers.Operators.{GroupOperators, UserOperators}
 import helper.BooleanHelper.not
 import helper.StringHelper.{capitalizeName, commonStringInputNormalization}
-import helper.{StringHelper, Time, UUIDHelper}
+import helper.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
 import models.EventType._
 import models._
@@ -618,12 +618,21 @@ case class UserController @Inject() (
           case None     => UUID.randomUUID()
           case Some(id) => id
         },
-        Some(_)
+        Option.apply
       ),
       "key" -> ignored("key"),
       "firstName" -> optional(text.verifying(maxLength(100))),
       "lastName" -> optional(text.verifying(maxLength(100))),
-      "name" -> nonEmptyText.verifying(maxLength(100)),
+      "name" -> optional(nonEmptyText.verifying(maxLength(100))).transform[String](
+        {
+          case Some(value) => value
+          case None        => ""
+        },
+        {
+          case ""   => Option.empty[String]
+          case name => name.some
+        }
+      ),
       "qualite" -> text.verifying(maxLength(100)),
       "email" -> email.verifying(maxLength(200), nonEmpty),
       "helper" -> boolean,

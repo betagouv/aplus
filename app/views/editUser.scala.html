@@ -8,7 +8,7 @@
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
     <script src='@routes.Assets.versioned("javascripts/dialog.js")'></script>
 }{
-@defining(form.value.map(user => Authorization.canEditOtherUser(user)(currentUserRights)).getOrElse(false)) { canEditUser =>
+@defining(form.value.exists(user => Authorization.canEditOtherUser(user)(currentUserRights))) { canEditUser =>
     @helper.form(action = routes.UserController.editUserPost(userId), "class" -> "mdl-grid mdl-cell mdl-cell--12-col") {
         @for(user <- form.value) {
             @for((area, group) <- user.areas.headOption.flatMap(Area.fromId).zip(user.groupIds.headOption.flatMap(groupId => userGroups.find(_.id == groupId)))) {
@@ -35,6 +35,24 @@
         <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
     }
     @helper.input(form("name"), "label" -> "Nom et prénom") { (id, name, value, args) =>
+        <input class="mdl-textfield__input"
+               type="text"
+               name="@name"
+               id="@id"
+               value="@value"
+               @if(!canEditUser) { readonly }
+               @toHtmlArgs(args)>
+    } <br/>
+    @helper.input(form("lastName"), "label" -> "Nom") { (id, name, value, args) =>
+        <input class="mdl-textfield__input"
+               type="text"
+               name="@name"
+               id="@id"
+               value="@value"
+               @if(!canEditUser) { readonly }
+               @toHtmlArgs(args)>
+    } <br>
+    @helper.input(form("firstName"), "label" -> "Prénom") { (id, name, value, args) =>
         <input class="mdl-textfield__input"
                type="text"
                name="@name"
@@ -146,7 +164,7 @@
                   multiple>
             @for(organisation <- Organisation.all) {
                 <option value="@{organisation.id.id}"
-                    @if(form.value.map(_.observableOrganisationIds.contains[Organisation.Id](organisation.id)).getOrElse(false)){ selected }
+                    @if(form.value.exists(_.observableOrganisationIds.contains[Organisation.Id](organisation.id))){ selected }
                 >@{organisation.shortName} - @{organisation.name}</option>
             }
           </select>
@@ -172,8 +190,8 @@
     }
     <script type='text/javascript'>
         function showHide(sender) {
-            var thead = sender.parentNode.parentNode.parentNode.parentNode;
-            var tbody = thead.nextElementSibling;
+            const thead = sender.parentNode.parentNode.parentNode.parentNode;
+            const tbody = thead.nextElementSibling;
             if(sender.checked) {
                 tbody.classList.remove("invisible");
             } else {
