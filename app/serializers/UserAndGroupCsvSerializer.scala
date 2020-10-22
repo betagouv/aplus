@@ -3,6 +3,7 @@ package serializers
 import java.time.ZonedDateTime
 import java.util.UUID
 
+import cats.implicits.catsSyntaxOptionId
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import models.formModels.{UserFormData, UserGroupFormData}
 import helper.{PlayFormHelper, UUIDHelper}
@@ -316,7 +317,16 @@ object UserAndGroupCsvSerializer {
         "key" -> ignored("key"),
         "firstName" -> optional(text.verifying(maxLength(100))),
         "lastName" -> optional(text.verifying(maxLength(100))),
-        "name" -> text.verifying(maxLength(500)),
+        "name" -> optional(text.verifying(maxLength(500))).transform[String](
+          {
+            case Some(value) => value
+            case None        => ""
+          },
+          {
+            case ""   => Option.empty[String]
+            case name => name.some
+          }
+        ),
         "quality" -> default(text, ""),
         "email" -> nonEmptyText,
         "helper" -> ignored(true),
