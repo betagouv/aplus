@@ -76,7 +76,8 @@ class ApplicationService @Inject() (
       "category",
       "files",
       "mandat_type",
-      "mandat_date"
+      "mandat_date",
+      "invited_group_ids"
     )
     .map(application =>
       application.copy(

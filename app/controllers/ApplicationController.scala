@@ -82,9 +82,10 @@ case class ApplicationController @Inject() (
         "usagerNom" -> nonEmptyText.verifying(maxLength(30)),
         "usagerBirthDate" -> nonEmptyText.verifying(maxLength(30)),
         "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(30))),
-        "users" -> list(uuid)
+        "users" -> list(uuid),
+        "groups" -> list(uuid)
           .verifying("Vous devez sélectionner au moins une structure", _.nonEmpty),
-        "organismes" -> list(text),
+        //"organismes" -> list(text),
         "category" -> optional(text),
         "selected-subject" -> optional(text),
         "signature" -> (
@@ -311,7 +312,8 @@ case class ApplicationController @Inject() (
               files = newAttachments ++ pendingAttachments,
               mandatType = DataModel.Application.MandatType
                 .dataModelDeserialization(applicationData.mandatType),
-              mandatDate = Some(applicationData.mandatDate)
+              mandatDate = Some(applicationData.mandatDate),
+              invitedGroupIds = ???
             )
             if (applicationService.createApplication(application)) {
               notificationsService.newApplication(application)

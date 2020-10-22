@@ -52,6 +52,10 @@ object Organisation {
 
   def byId(id: Id): Option[Organisation] = all.find(org => org.id === id)
 
+  val cafId = Organisation.Id("CAF")
+  val caf = Organisation(cafId, "CAF", "Caisse d’allocations familiale")
+  val cpamId = Organisation.Id("CPAM")
+  val cpam = Organisation(cpamId, "CPAM", "Caisse primaire d'assurance maladie")
   val franceServicesId = Organisation.Id("MFS")
   val franceServices = Organisation(franceServicesId, "FS", "France Services")
   val msap = Organisation("MSAP", "Maison de services au public")
@@ -66,12 +70,12 @@ object Organisation {
     Organisation("ANAH", "Agence nationale de l'habitat"),
     Organisation("ANTS", "Agence nationale des titres sécurisés"),
     Organisation("BDF", "Banque de France"),
-    Organisation("CAF", "Caisse d’allocations familiale"), //Département
+    caf, //Département
     Organisation("CARSAT", "Caisse d'assurance retraite et de la santé au travail"), //
     Organisation("CCAS", "Centre communal d'action sociale"), //Ville
     Organisation("CDAD", "Conseils départementaux d'accès au droit"), //Département
     Organisation("CNAV", "Caisse nationale d'assurance vieillesse"), //Département
-    Organisation("CPAM", "Caisse primaire d'assurance maladie"), //Département
+    cpam, //Département
     Organisation("CNAM", "Caisse nationale d'assurance maladie"),
     Organisation("CRAM", "Caisse régionale d'assurance maladie"), //Région
     Organisation("DDFIP", "Direction départementale des Finances publiques"), //Département

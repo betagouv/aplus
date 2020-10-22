@@ -32,7 +32,9 @@ case class Application(
     category: Option[String] = None,
     files: Map[String, Long] = Map(),
     mandatType: Option[Application.MandatType],
-    mandatDate: Option[String]
+    mandatDate: Option[String],
+    // TODO:
+    invitedGroupIds: List[UUID]
 ) extends AgeModel {
 
   lazy val filesAvailabilityLeftInDays: Option[Int] = if (ageInDays > 8) {

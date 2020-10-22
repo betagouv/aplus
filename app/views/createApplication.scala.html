@@ -73,11 +73,56 @@
                             }
                         </div>
 
-                    <div class="mdl-grid mdl-grid--no-spacing" style="background-color: white;">
-                        @if(applicationForm("users").hasErrors) {
-                            <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
+                    <div class="mdl-grid" style="background-color: white;">
+                        @if(applicationForm("groups").hasErrors) {
+                            <p style="color: red; font-weight: bold;">@applicationForm("groups").errors.map(_.format).mkString(", ")</p>
                         }
-                        
+
+                            @@ TODO: JS @@
+                        <fieldset class="single--margin-left-8px single--margin-right-24px single--margin-top-16px single--margin-bottom-24px mdl-cell mdl-cell--12-col">
+                          @for(group <- organisationGroups.sortBy(_.name)) {
+                            @defining(group.organisationSetOrDeducted) { organisation: Option[Organisation] =>
+                            <div class="single--padding-top-8px single--padding-bottom-8px single--padding-left-16px">
+                              <label for="invite-@group.id"
+                                     class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect">
+                                <input id="invite-@group.id"
+                                       class="mdl-checkbox__input"
+                                       type="checkbox"
+                                       name="groups[]"
+                                       value="@group.id"
+                                       @if(applicationForm.data.find({case (k, v) => k.startsWith("groups[") && v == group.id.toString})){ checked="checked" }
+                                >
+                                <span class="mdl-checkbox__label">
+                                  <b>@group.name</b>
+                                  @if(organisation.nonEmpty){ <em>(@organisation.get.name)</em> }
+                                </span>
+                              </label>
+
+                              <div class="organisation-row @if(!applicationForm.data.find({case (k, v) => k.startsWith("groups[") && v == group.id.toString})){ invisible }">
+                                @if(organisation.map(_.id).filter(_ == Organisation.cafId).nonEmpty) {
+                                  <tr>
+                                    <td colspan="2" style="text-align: left; white-space: normal">
+                                      <div class="info-box info-box--no-spacing">
+                                        La CAF aura besoin du <b>numéro identifiant CAF</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.
+                                      </div>
+                                    </td>
+                                  </tr>
+                                } else if (organisation.map(_.id).filter(_ == Organisation.cpamId).nonEmpty) {
+                                  <tr>
+                                    <td colspan="2" style="text-align: left; white-space: normal">
+                                      <div class="info-box info-box--no-spacing">
+                                        La CPAM aura besoin du <b>numéro de sécurité sociale</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.
+                                      </div>
+                                    </td>
+                                  </tr>
+                                }
+                              </div>
+
+                            </div>
+                            }
+                            }
+                        </fieldset>
+
                         <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
                         @for(organisationGroup <- organisationGroups.sortBy(_.name)) {
                             @defining(organisationGroup.organisationSetOrDeducted) { organisation: Option[Organisation] =>
@@ -118,6 +163,8 @@
                         }
                         </table>
                     </div>
+
+
                     <br>
                     <h5 class="title--addline">
                         Sujet de la demande <span class="mdl-color-text--red-500">*</span>
