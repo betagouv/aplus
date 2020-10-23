@@ -22,6 +22,7 @@ import play.api.cache.AsyncCacheApi
 import play.api.data.Forms._
 import play.api.data._
 import play.api.data.validation.Constraints._
+import play.api.libs.ws.WSClient
 import play.api.mvc._
 import play.twirl.api.Html
 import serializers.{AttachmentHelper, DataModel, Keys}
@@ -30,10 +31,9 @@ import views.stats.StatsData
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
-/**
-  * This controller creates an `Action` to handle HTTP requests to the
+/** This controller creates an `Action` to handle HTTP requests to the
   * application's home page.
   */
 @Singleton
@@ -47,7 +47,8 @@ case class ApplicationController @Inject() (
     mandatService: MandatService,
     organisationService: OrganisationService,
     userGroupService: UserGroupService,
-    configuration: play.api.Configuration
+    configuration: play.api.Configuration,
+    ws: WSClient,
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with play.api.i18n.I18nSupport
@@ -58,6 +59,12 @@ case class ApplicationController @Inject() (
 
   private val featureCanSendApplicationsAnywhere: Boolean =
     configuration.get[Boolean]("app.features.canSendApplicationsAnywhere")
+
+  // This is a feature that is temporary and should be activated
+  // for short period of time during migrations for smooth handling of files.
+  // Just remove the env variable FILES_SECOND_INSTANCE_HOST to deactivate.
+  private val filesSecondInstanceHost: Option[String] =
+    configuration.getOptional[String]("app.filesSecondInstanceHost")
 
   private val dir = Paths.get(s"$filesPath")
   if (!Files.isDirectory(dir)) {
@@ -227,7 +234,7 @@ case class ApplicationController @Inject() (
 
   def createPost: Action[AnyContent] =
     loginAction.async { implicit request =>
-      val form = applicationForm(request.currentUser).bindFromRequest
+      val form = applicationForm(request.currentUser).bindFromRequest()
       val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
 
       // Get `areaId` from the form, to avoid losing it in case of errors
@@ -301,7 +308,7 @@ case class ApplicationController @Inject() (
               usagerInfos,
               invitedUsers,
               currentArea.id,
-              false,
+              irrelevant = false,
               hasSelectedSubject =
                 applicationData.selectedSubject.contains[String](applicationData.subject),
               category = applicationData.category,
@@ -502,7 +509,7 @@ case class ApplicationController @Inject() (
 
     val (usersFuture, applicationsFutureNoDateFilter, groupsFuture) =
       if (areaIds.isEmpty && organisationIds.isEmpty && groupIds.isEmpty) {
-        (userService.allNoNameNoEmail, applicationService.all, userGroupService.all)
+        (userService.allNoNameNoEmail, applicationService.all(), userGroupService.all)
       } else if (areaIds.nonEmpty && groupIds.isEmpty) {
         val groupsFuture = userGroupService.byAreas(areaIds)
         if (organisationIds.isEmpty) {
@@ -584,7 +591,7 @@ case class ApplicationController @Inject() (
     loginAction.async { implicit request =>
       // TODO: remove `.get`
       val (areaIds, organisationIds, groupIds, creationMinDate, creationMaxDate) =
-        statsForm.bindFromRequest.value.get
+        statsForm.bindFromRequest().value.get
 
       val observableOrganisationIds = if (Authorization.isAdmin(request.rights)) {
         organisationIds
@@ -599,12 +606,12 @@ case class ApplicationController @Inject() (
       }
 
       val cacheKey =
-        (Authorization.isAdmin(request.rights).toString +
+        Authorization.isAdmin(request.rights).toString +
           ".stats." +
           Hash.sha256(
             areaIds.toString + observableOrganisationIds.toString + observableGroupIds.toString +
               creationMinDate.toString + creationMaxDate.toString
-          ))
+          )
 
       cache
         .getOrElseUpdate[Html](cacheKey, 1.hours)(
@@ -903,25 +910,73 @@ case class ApplicationController @Inject() (
   def applicationFile(applicationId: UUID, filename: String): Action[AnyContent] =
     file(applicationId, None, filename)
 
+  private def sendFile(localPath: Path, filename: String, remoteUrlPath: String)(implicit
+      request: actions.RequestWithUserData[_]
+  ): Future[Result] =
+    if (Files.exists(localPath)) {
+      Future(
+        Ok.sendPath(
+          localPath,
+          true,
+          { _: Path =>
+            Some(filename)
+          }
+        )
+      )
+    } else {
+      filesSecondInstanceHost match {
+        case None =>
+          eventService.log(
+            FileNotFound,
+            s"Le fichier n'existe pas sur le serveur"
+          )
+          Future(NotFound("Nous n'avons pas trouvé ce fichier"))
+        case Some(domain) =>
+          val cookies = request.headers.getAll(COOKIE)
+          val url = domain + remoteUrlPath
+          ws.url(url)
+            .addHttpHeaders(cookies.map(cookie => (COOKIE, cookie)): _*)
+            .get()
+            .map { response =>
+              if (response.status / 100 == 2) {
+                val body = response.bodyAsSource
+                val contentLength: Option[Long] =
+                  response.header(CONTENT_LENGTH).flatMap(raw => Try(raw.toLong).toOption)
+                // Note: `streamed` should set `Content-Disposition`
+                // https://github.com/playframework/playframework/blob/2.8.x/core/play/src/main/scala/play/api/mvc/Results.scala#L523
+                Ok.streamed(
+                  content = body,
+                  contentLength = contentLength,
+                  `inline` = true,
+                  fileName = Some(filename)
+                )
+              } else {
+                eventService.log(
+                  FileNotFound,
+                  s"La requête vers le serveur distant $url a échoué (status ${response.status})"
+                )
+                NotFound("Nous n'avons pas trouvé ce fichier")
+              }
+            }
+      }
+    }
+
   private def file(applicationId: UUID, answerIdOption: Option[UUID], filename: String) =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application: Application =>
         answerIdOption match {
-          case Some(answerId) if application.fileCanBeShowed(request.currentUser, answerId) =>
+          case Some(answerId)
+              if application.fileCanBeShowed(request.currentUser, request.rights, answerId) =>
             application.answers.find(_.id == answerId) match {
               case Some(answer) if answer.files.getOrElse(Map.empty).contains(filename) =>
                 eventService.log(
                   FileOpened,
                   s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert"
                 )
-                Future(
-                  Ok.sendPath(
-                    Paths.get(s"$filesPath/ans_$answerId-$filename"),
-                    true,
-                    { _: Path =>
-                      Some(filename)
-                    }
-                  )
+                sendFile(
+                  Paths.get(s"$filesPath/ans_$answerId-$filename"),
+                  filename,
+                  s"/toutes-les-demandes/$applicationId/messages/$answerId/fichiers/$filename"
                 )
               case _ =>
                 eventService.log(
@@ -930,18 +985,14 @@ case class ApplicationController @Inject() (
                 )
                 Future(NotFound("Nous n'avons pas trouvé ce fichier"))
             }
-          case None if application.fileCanBeShowed(request.currentUser) =>
+          case None if application.fileCanBeShowed(request.currentUser)(request.rights) =>
             if (application.files.contains(filename)) {
               eventService
                 .log(FileOpened, s"Le fichier de la demande $applicationId a été ouvert")
-              Future(
-                Ok.sendPath(
-                  Paths.get(s"$filesPath/app_$applicationId-$filename"),
-                  true,
-                  { _: Path =>
-                    Some(filename)
-                  }
-                )
+              sendFile(
+                Paths.get(s"$filesPath/app_$applicationId-$filename"),
+                filename,
+                s"/toutes-les-demandes/$applicationId/fichiers/$filename"
               )
             } else {
               eventService.log(
@@ -968,7 +1019,7 @@ case class ApplicationController @Inject() (
   def answer(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application =>
-        val form = answerForm(request.currentUser).bindFromRequest
+        val form = answerForm(request.currentUser).bindFromRequest()
         val answerId = AttachmentHelper.retrieveOrGenerateAnswerId(form.data)
         val (pendingAttachments, newAttachments) =
           AttachmentHelper.computeStoreAndRemovePendingAndNewAnswerAttachment(
@@ -978,7 +1029,6 @@ case class ApplicationController @Inject() (
           )
         form.fold(
           formWithErrors => {
-            // TODO: check if formWithErrors.errors can leak personal data
             val error =
               s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.message).mkString(", ")})."
             eventService.log(AnswerNotCreated, s"$error")
@@ -1002,7 +1052,7 @@ case class ApplicationController @Inject() (
               request.currentUser.id,
               contextualizedUserName(request.currentUser, currentAreaId),
               Map(),
-              answerData.privateToHelpers == false,
+              !answerData.privateToHelpers,
               answerData.applicationIsDeclaredIrrelevant,
               Some(
                 answerData.usagerOptionalInfos
@@ -1053,22 +1103,12 @@ case class ApplicationController @Inject() (
   def invite(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application =>
-        inviteForm.bindFromRequest.fold(
-          formWithErrors => {
-            val error =
-              s"Erreur dans le formulaire d’invitation (${formWithErrors.errors.map(_.message).mkString(", ")})."
-            eventService.log(InviteNotCreated, error)
-            Future(
-              Redirect(
-                routes.ApplicationController.show(applicationId).withFragment("answer-error")
-              )
-                .flashing("answer-error" -> error, "opened-tab" -> "invite")
-            )
-          },
-          inviteData =>
-            if (inviteData.invitedUsers.isEmpty && inviteData.invitedGroups.isEmpty) {
+        inviteForm
+          .bindFromRequest()
+          .fold(
+            formWithErrors => {
               val error =
-                s"Erreur dans le formulaire d’invitation (une personne ou un organisme doit être sélectionné)."
+                s"Erreur dans le formulaire d’invitation (${formWithErrors.errors.map(_.message).mkString(", ")})."
               eventService.log(InviteNotCreated, error)
               Future(
                 Redirect(
@@ -1076,55 +1116,68 @@ case class ApplicationController @Inject() (
                 )
                   .flashing("answer-error" -> error, "opened-tab" -> "invite")
               )
-            } else {
-              val selectedAreaId =
-                if (request.currentUser.expert) currentAreaLegacy.id else application.area
-              usersWhoCanBeInvitedOn(application).flatMap { singleUsersWhoCanBeInvited =>
-                groupsWhichCanBeInvited(selectedAreaId, application).map { invitableGroups =>
-                  val usersWhoCanBeInvited: List[User] =
-                    singleUsersWhoCanBeInvited ::: userService.byGroupIds(invitableGroups.map(_.id))
-                  val invitedUsers: Map[UUID, String] = usersWhoCanBeInvited
-                    .filter(user =>
-                      inviteData.invitedUsers.contains[UUID](user.id) ||
-                        inviteData.invitedGroups.toSet.intersect(user.groupIds.toSet).nonEmpty
-                    )
-                    .map(user => (user.id, contextualizedUserName(user, selectedAreaId)))
-                    .toMap
-
-                  val answer = Answer(
-                    UUID.randomUUID(),
-                    applicationId,
-                    Time.nowParis(),
-                    inviteData.message,
-                    request.currentUser.id,
-                    contextualizedUserName(request.currentUser, selectedAreaId),
-                    invitedUsers,
-                    not(inviteData.privateToHelpers),
-                    false,
-                    Some(Map.empty)
+            },
+            inviteData =>
+              if (inviteData.invitedUsers.isEmpty && inviteData.invitedGroups.isEmpty) {
+                val error =
+                  s"Erreur dans le formulaire d’invitation (une personne ou un organisme doit être sélectionné)."
+                eventService.log(InviteNotCreated, error)
+                Future(
+                  Redirect(
+                    routes.ApplicationController.show(applicationId).withFragment("answer-error")
                   )
+                    .flashing("answer-error" -> error, "opened-tab" -> "invite")
+                )
+              } else {
+                val selectedAreaId =
+                  if (request.currentUser.expert) currentAreaLegacy.id else application.area
+                usersWhoCanBeInvitedOn(application).flatMap { singleUsersWhoCanBeInvited =>
+                  groupsWhichCanBeInvited(selectedAreaId, application).map { invitableGroups =>
+                    val usersWhoCanBeInvited: List[User] =
+                      singleUsersWhoCanBeInvited ::: userService
+                        .byGroupIds(invitableGroups.map(_.id))
+                    val invitedUsers: Map[UUID, String] = usersWhoCanBeInvited
+                      .filter(user =>
+                        inviteData.invitedUsers.contains[UUID](user.id) ||
+                          inviteData.invitedGroups.toSet.intersect(user.groupIds.toSet).nonEmpty
+                      )
+                      .map(user => (user.id, contextualizedUserName(user, selectedAreaId)))
+                      .toMap
 
-                  if (applicationService.add(applicationId, answer) == 1) {
-                    notificationsService.newAnswer(application, answer)
-                    eventService.log(
-                      AgentsAdded,
-                      s"L'ajout d'utilisateur ${answer.id} a été créé sur la demande $applicationId",
-                      Some(application)
+                    val answer = Answer(
+                      UUID.randomUUID(),
+                      applicationId,
+                      Time.nowParis(),
+                      inviteData.message,
+                      request.currentUser.id,
+                      contextualizedUserName(request.currentUser, selectedAreaId),
+                      invitedUsers,
+                      not(inviteData.privateToHelpers),
+                      declareApplicationHasIrrelevant = false,
+                      Some(Map.empty)
                     )
-                    Redirect(routes.ApplicationController.myApplications())
-                      .flashing("success" -> "Les utilisateurs ont été invités sur la demande")
-                  } else {
-                    eventService.log(
-                      AgentsNotAdded,
-                      s"L'ajout d'utilisateur ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD",
-                      Some(application)
-                    )
-                    InternalServerError("Les utilisateurs n'ont pas pu être invités")
+
+                    if (applicationService.add(applicationId, answer) == 1) {
+                      notificationsService.newAnswer(application, answer)
+                      eventService.log(
+                        AgentsAdded,
+                        s"L'ajout d'utilisateur ${answer.id} a été créé sur la demande $applicationId",
+                        Some(application)
+                      )
+                      Redirect(routes.ApplicationController.myApplications())
+                        .flashing("success" -> "Les utilisateurs ont été invités sur la demande")
+                    } else {
+                      eventService.log(
+                        AgentsNotAdded,
+                        s"L'ajout d'utilisateur ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD",
+                        Some(application)
+                      )
+                      InternalServerError("Les utilisateurs n'ont pas pu être invités")
+                    }
                   }
                 }
               }
-            }
-        )
+          )
       }
     }
 
@@ -1145,11 +1198,11 @@ case class ApplicationController @Inject() (
               request.currentUser.id,
               contextualizedUserName(request.currentUser, currentAreaId),
               experts,
-              true,
-              false,
+              visibleByHelpers = true,
+              declareApplicationHasIrrelevant = false,
               Some(Map())
             )
-            if (applicationService.add(applicationId, answer, true) == 1) {
+            if (applicationService.add(applicationId, answer, expertInvited = true) == 1) {
               notificationsService.newAnswer(application, answer)
               eventService.log(
                 AddExpertCreated,
@@ -1259,7 +1312,7 @@ case class ApplicationController @Inject() (
 
   /** Security: does not save signatures that are too big (longer than 1000 chars) */
   private def saveSharedAccountUserSignature[R](session: Session, signature: String): Session =
-    if (signature.size <= 1000)
+    if (signature.length <= 1000)
       session + (sharedAccountUserSignatureKey -> signature)
     else
       session

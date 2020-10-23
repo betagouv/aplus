@@ -48,7 +48,7 @@ object Authorization {
     * this enforces that all possible checks are in this package
     */
   case class UserRights(
-      private[Authorization] rights: Set[UserRight]
+      private[Authorization] val rights: Set[UserRight]
   )
 
   //
@@ -79,6 +79,12 @@ object Authorization {
     _.rights.exists {
       case UserRight.Helper => true
       case _                => false
+    }
+
+  def isExpert: Check =
+    _.rights.exists {
+      case UserRight.ExpertOfAreas(_) => true
+      case _                          => false
     }
 
   def isExpert(areaId: UUID): Check =

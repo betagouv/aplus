@@ -16,10 +16,14 @@ object Time {
   def nowParis() = ZonedDateTime.now(timeZoneParis)
 
   def formatPatternFr(date: ZonedDateTime, pattern: String): String =
-    date.format(java.time.format.DateTimeFormatter.ofPattern(pattern, Locale.FRANCE))
+    date.format(DateTimeFormatter.ofPattern(pattern, Locale.FRANCE))
 
   def formatPatternFr(date: LocalDate, pattern: String): String =
-    date.format(java.time.format.DateTimeFormatter.ofPattern(pattern, Locale.FRANCE))
+    date.format(DateTimeFormatter.ofPattern(pattern, Locale.FRANCE))
+
+  val hourAndMinutesFormatter = DateTimeFormatter.ofPattern("HH'h'mm", Locale.FRANCE)
+
+  val dateWithHourFormatter = DateTimeFormatter.ofPattern("dd/MM/YYYY H'h'", Locale.FRANCE)
 
   def weeksMap(fromDate: ZonedDateTime, toDate: ZonedDateTime): ListMap[String, String] = {
     val keyFormatter = DateTimeFormatter.ofPattern("YYYY/ww", Locale.FRANCE)

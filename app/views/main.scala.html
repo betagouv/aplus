@@ -26,7 +26,7 @@
         <script type="application/javascript" src="@routes.Assets.versioned("javascripts/main.js")"></script>
         @webJarsUtil.locate("dialog-polyfill.css").css()
         @webJarsUtil.locate("dialog-polyfill.js").script()
-        <script type="text/javascript" src="@routes.JavascriptController.javascriptRoutes"></script>
+        <script type="text/javascript" src="@routes.JavascriptController.javascriptRoutes()"></script>
         <style>
                 html, body {
                     max-width: 100%;
@@ -47,7 +47,7 @@
                         </span>
                     </div>
                     <div class="mdl-layout__header-row mdl-color--deep-purple-400 mdl-color-text--white">
-                        Dans le contexte de la loi d’état d’urgence sanitaire (avril 2021), Administration+ s’efforce de faciliter la résolution des blocages administratifs en mettant à votre disposition un système de mandat à distance.
+                        Dans le contexte de la loi d’état d’urgence sanitaire (avril 2020), Administration+ s’efforce de faciliter la résolution des blocages administratifs en mettant à votre disposition un système de mandat à distance.
                     </div>
                 </div>
                 <div class="mdl-layout__header-row">
@@ -67,10 +67,10 @@
                                     <span class="mdl-list__item-sub-title">@currentUser.email</span>
                                 </span>
                                 <span class="mdl-list__item-secondary-content single--align-items-center-important">
-                                    <a class="mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" href="@routes.LoginController.disconnect" title="Déconnexion">
+                                    <a class="mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" href="@routes.LoginController.disconnect()" title="Déconnexion">
                                         <i class="fas fa-sign-out-alt"></i>
                                     </a>
-                                    <span class="mdl-list__item-secondary-info"><a class="mdl-typography--font-regular mdl-color-text--grey-900 mdl-typography--text-nowrap" href="@routes.LoginController.disconnect" title="Déconnexion">Se déconnecter</a></span>
+                                    <span class="mdl-list__item-secondary-info"><a class="mdl-typography--font-regular mdl-color-text--grey-900 mdl-typography--text-nowrap" href="@routes.LoginController.disconnect()" title="Déconnexion">Se déconnecter</a></span>
                                 </span>
                             </li>
                         </ul>
@@ -82,7 +82,7 @@
             <div class="mdl-layout__drawer mdl-color--white do-not-print mdl-color-text--white">
                 <header class="drawer-header" >
                     <p style="line-height: 1.2; text-align: center;">
-                        <a href="@routes.HomeController.welcome">
+                        <a href="@routes.HomeController.welcome()">
                             <img src="@routes.Assets.versioned("images/logo_full_500x397.png")" alt="Logo Administration+" class="logo">
                         </a>
                     </p>
@@ -136,7 +136,7 @@
                         </div>
                         <ul class="mdl-mega-footer--link-list">
                             <li><a href="@routes.HomeController.help()">Aide</a></li>
-                            <li><a href="@routes.UserController.showCGU()">CGU</a></li>
+                            <li><a href="https://docs.aplus.beta.gouv.fr/conditions-generales-dutilisation" target="_blank" rel="noopener noreferrer">CGU</a></li>
                             <li><a href="@routes.ApplicationController.showExportMyApplicationsCSV()">Exporter mes demandes en CSV</a></li>
                         </ul>
                     </div>
