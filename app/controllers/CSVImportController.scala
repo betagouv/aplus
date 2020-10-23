@@ -143,7 +143,7 @@ case class CSVImportController @Inject() (
           case None     => UUID.randomUUID()
           case Some(id) => id
         },
-        Some(_)
+        Option.apply
       ),
       "name" -> text(maxLength = 60),
       "description" -> optional(text),
@@ -327,8 +327,8 @@ case class CSVImportController @Inject() (
                       .filter(_.alreadyExistingUser.isEmpty)
                       .map(_.user)
                       .map {
-                        case u if u.name.nonEmpty => u.copy(sharedAccount = true)
-                        case u                    => u.copy(sharedAccount = false)
+                        case user if user.name.nonEmpty => user.copy(sharedAccount = true)
+                        case user                       => user.copy(sharedAccount = false)
                       }
                       // Here we will group users by email, so we can put them in multiple groups
                       .groupBy(_.email)

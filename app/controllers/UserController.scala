@@ -476,13 +476,19 @@ case class UserController @Inject() (
             BadRequest(views.html.validateAccount(user, request.rights, formWithErrors))
           },
           {
-            case ValidateSubscriptionForm(Some(redirect), true, fn, ln, qualite, phoneNumber)
-                if redirect != routes.ApplicationController.myApplications().url =>
-              validateAndUpdateUser(request.currentUser)(fn, ln, qualite, phoneNumber)
+            case ValidateSubscriptionForm(
+                  Some(redirect),
+                  true,
+                  firstName,
+                  lastName,
+                  qualite,
+                  phoneNumber
+                ) if redirect != routes.ApplicationController.myApplications().url =>
+              validateAndUpdateUser(request.currentUser)(firstName, lastName, qualite, phoneNumber)
               eventService.log(CGUValidated, "CGU validées")
               Redirect(Call("GET", redirect)).flashing("success" -> "Merci d’avoir accepté les CGU")
-            case ValidateSubscriptionForm(_, true, fn, ln, qualite, phoneNumber) =>
-              validateAndUpdateUser(request.currentUser)(fn, ln, qualite, phoneNumber)
+            case ValidateSubscriptionForm(_, true, firstName, lastName, qualite, phoneNumber) =>
+              validateAndUpdateUser(request.currentUser)(firstName, lastName, qualite, phoneNumber)
               eventService.log(CGUValidated, "CGU validées")
               Redirect(routes.HomeController.welcome())
                 .flashing("success" -> "Merci d’avoir accepté les CGU")
