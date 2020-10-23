@@ -3,70 +3,35 @@ package controllers
 import java.nio.file.{Files, Path, Paths}
 import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
-import helper.UUIDHelper
-import scala.util.{Failure, Success, Try}
 
 import actions._
 import constants.Constants
-import helper.Time.zonedDateTimeOrdering
 import forms.FormsPlusMap
-import helper.{Hash, Time}
+import helper.BooleanHelper.not
+import helper.CSVUtil.escape
+import helper.StringHelper.CanonizeString
+import helper.Time.zonedDateTimeOrdering
+import helper.{Hash, Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
-import models.{Answer, Application, Area, Authorization, Organisation, User, UserGroup}
+import models.EventType._
+import models._
 import models.formModels.{AnswerFormData, ApplicationFormData, InvitationFormData}
 import models.mandat.Mandat
 import org.webjars.play.WebJarsUtil
+import play.api.cache.AsyncCacheApi
 import play.api.data.Forms._
 import play.api.data._
 import play.api.data.validation.Constraints._
-import play.api.mvc._
-import services._
-import helper.BooleanHelper.not
-import helper.CSVUtil.escape
-import models.EventType.{
-  AddExpertCreated,
-  AddExpertNotCreated,
-  AddExpertUnauthorized,
-  AgentsAdded,
-  AgentsNotAdded,
-  AllApplicationsShowed,
-  AllApplicationsUnauthorized,
-  AllAsNotFound,
-  AllAsShowed,
-  AllAsUnauthorized,
-  AllCSVShowed,
-  AnswerCreated,
-  AnswerNotCreated,
-  ApplicationCreated,
-  ApplicationCreationError,
-  ApplicationCreationInvalid,
-  ApplicationFormShowed,
-  ApplicationLinkedToMandat,
-  ApplicationLinkedToMandatError,
-  ApplicationShowed,
-  FileNotFound,
-  FileOpened,
-  FileUnauthorized,
-  InviteNotCreated,
-  MyApplicationsShowed,
-  MyCSVShowed,
-  StatsShowed,
-  TerminateCompleted,
-  TerminateError,
-  TerminateIncompleted,
-  TerminateUnauthorized
-}
-import play.api.cache.AsyncCacheApi
 import play.api.libs.ws.WSClient
+import play.api.mvc._
 import play.twirl.api.Html
+import serializers.{AttachmentHelper, DataModel, Keys}
+import services._
 import views.stats.StatsData
 
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration._
-import helper.StringHelper.CanonizeString
-import serializers.{AttachmentHelper, DataModel, Keys}
-
-import scala.concurrent.duration._
+import scala.util.{Failure, Success, Try}
 
 /** This controller creates an `Action` to handle HTTP requests to the
   * application's home page.
@@ -282,7 +247,6 @@ case class ApplicationController @Inject() (
       val (pendingAttachments, newAttachments) =
         AttachmentHelper.computeStoreAndRemovePendingAndNewApplicationAttachment(
           applicationId,
-          form.data,
           computeAttachmentsToStore(request),
           filesPath
         )
@@ -1060,7 +1024,6 @@ case class ApplicationController @Inject() (
         val (pendingAttachments, newAttachments) =
           AttachmentHelper.computeStoreAndRemovePendingAndNewAnswerAttachment(
             answerId,
-            form.data,
             computeAttachmentsToStore(request),
             filesPath
           )
