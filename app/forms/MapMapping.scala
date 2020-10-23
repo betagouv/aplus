@@ -1,7 +1,7 @@
 package forms
 
-import play.api.data.{FormError, Mapping}
 import play.api.data.validation.Constraint
+import play.api.data.{FormError, Mapping}
 
 object FormsPlusMap {
 
@@ -34,8 +34,8 @@ object MapMapping {
   */
 case class MapMapping[T](
     wrapped: Mapping[T],
-    val key: String = "",
-    val constraints: Seq[Constraint[Map[String, T]]] = Nil
+    key: String = "",
+    constraints: Seq[Constraint[Map[String, T]]] = Nil
 ) extends Mapping[Map[String, T]] {
 
   /** The Format expected for this field, if it exists.
@@ -56,7 +56,7 @@ case class MapMapping[T](
     * @return the new mapping
     */
   def verifying(addConstraints: Constraint[Map[String, T]]*): Mapping[Map[String, T]] =
-    this.copy(constraints = constraints ++ addConstraints.toSeq)
+    this.copy(constraints = constraints ++ addConstraints)
 
   /** Binds this field, i.e. construct a concrete value from submitted data.
     *

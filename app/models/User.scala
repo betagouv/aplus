@@ -1,6 +1,6 @@
 package models
 
-import java.time.ZonedDateTime
+import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 
 import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption}
@@ -47,6 +47,9 @@ case class User(
   // TODO: put this in Authorization
   def canSeeUsersInArea(areaId: UUID): Boolean =
     (areaId == Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
+
+  // Note: we want to have in DB the actual time zone
+  val timeZone: ZoneId = _root_.helper.Time.timeZoneParis
 
   def validateWith(
       firstName: Option[String],

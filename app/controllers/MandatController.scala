@@ -2,7 +2,6 @@ package controllers
 
 import actions.LoginAction
 import cats.data.EitherT
-import cats.implicits._
 import constants.Constants
 import java.util.UUID
 import javax.inject.{Inject, Singleton}

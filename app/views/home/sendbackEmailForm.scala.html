@@ -5,7 +5,7 @@
         Se connecter à Administration+
     </h3>
 
-    <form action="@routes.LoginController.login" method="post">
+    <form action="@routes.LoginController.login()" method="post">
         @helper.CSRF.formField
         @infos.errorMessage.map { message =>
         <div class="notification notification--error mdl-typography--text-prewrap" >@message</div>

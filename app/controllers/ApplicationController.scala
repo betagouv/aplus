@@ -269,7 +269,7 @@ case class ApplicationController @Inject() (
 
   def createPost: Action[AnyContent] =
     loginAction.async { implicit request =>
-      val form = applicationForm(request.currentUser).bindFromRequest
+      val form = applicationForm(request.currentUser).bindFromRequest()
       val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
 
       // Get `areaId` from the form, to avoid losing it in case of errors
@@ -344,7 +344,7 @@ case class ApplicationController @Inject() (
               usagerInfos,
               invitedUsers,
               currentArea.id,
-              false,
+              irrelevant = false,
               hasSelectedSubject =
                 applicationData.selectedSubject.contains[String](applicationData.subject),
               category = applicationData.category,
@@ -545,7 +545,7 @@ case class ApplicationController @Inject() (
 
     val (usersFuture, applicationsFutureNoDateFilter, groupsFuture) =
       if (areaIds.isEmpty && organisationIds.isEmpty && groupIds.isEmpty) {
-        (userService.allNoNameNoEmail, applicationService.all, userGroupService.all)
+        (userService.allNoNameNoEmail, applicationService.all(), userGroupService.all)
       } else if (areaIds.nonEmpty && groupIds.isEmpty) {
         val groupsFuture = userGroupService.byAreas(areaIds)
         if (organisationIds.isEmpty) {
@@ -627,7 +627,7 @@ case class ApplicationController @Inject() (
     loginAction.async { implicit request =>
       // TODO: remove `.get`
       val (areaIds, organisationIds, groupIds, creationMinDate, creationMaxDate) =
-        statsForm.bindFromRequest.value.get
+        statsForm.bindFromRequest().value.get
 
       val observableOrganisationIds = if (Authorization.isAdmin(request.rights)) {
         organisationIds
@@ -642,12 +642,12 @@ case class ApplicationController @Inject() (
       }
 
       val cacheKey =
-        (Authorization.isAdmin(request.rights).toString +
+        Authorization.isAdmin(request.rights).toString +
           ".stats." +
           Hash.sha256(
             areaIds.toString + observableOrganisationIds.toString + observableGroupIds.toString +
               creationMinDate.toString + creationMaxDate.toString
-          ))
+          )
 
       cache
         .getOrElseUpdate[Html](cacheKey, 1.hours)(
@@ -1055,7 +1055,7 @@ case class ApplicationController @Inject() (
   def answer(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application =>
-        val form = answerForm(request.currentUser).bindFromRequest
+        val form = answerForm(request.currentUser).bindFromRequest()
         val answerId = AttachmentHelper.retrieveOrGenerateAnswerId(form.data)
         val (pendingAttachments, newAttachments) =
           AttachmentHelper.computeStoreAndRemovePendingAndNewAnswerAttachment(
@@ -1066,7 +1066,6 @@ case class ApplicationController @Inject() (
           )
         form.fold(
           formWithErrors => {
-            // TODO: check if formWithErrors.errors can leak personal data
             val error =
               s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.message).mkString(", ")})."
             eventService.log(AnswerNotCreated, s"$error")
@@ -1090,7 +1089,7 @@ case class ApplicationController @Inject() (
               request.currentUser.id,
               contextualizedUserName(request.currentUser, currentAreaId),
               Map(),
-              answerData.privateToHelpers == false,
+              !answerData.privateToHelpers,
               answerData.applicationIsDeclaredIrrelevant,
               Some(
                 answerData.usagerOptionalInfos
@@ -1141,22 +1140,12 @@ case class ApplicationController @Inject() (
   def invite(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application =>
-        inviteForm.bindFromRequest.fold(
-          formWithErrors => {
-            val error =
-              s"Erreur dans le formulaire d’invitation (${formWithErrors.errors.map(_.message).mkString(", ")})."
-            eventService.log(InviteNotCreated, error)
-            Future(
-              Redirect(
-                routes.ApplicationController.show(applicationId).withFragment("answer-error")
-              )
-                .flashing("answer-error" -> error, "opened-tab" -> "invite")
-            )
-          },
-          inviteData =>
-            if (inviteData.invitedUsers.isEmpty && inviteData.invitedGroups.isEmpty) {
+        inviteForm
+          .bindFromRequest()
+          .fold(
+            formWithErrors => {
               val error =
-                s"Erreur dans le formulaire d’invitation (une personne ou un organisme doit être sélectionné)."
+                s"Erreur dans le formulaire d’invitation (${formWithErrors.errors.map(_.message).mkString(", ")})."
               eventService.log(InviteNotCreated, error)
               Future(
                 Redirect(
@@ -1164,55 +1153,68 @@ case class ApplicationController @Inject() (
                 )
                   .flashing("answer-error" -> error, "opened-tab" -> "invite")
               )
-            } else {
-              val selectedAreaId =
-                if (request.currentUser.expert) currentAreaLegacy.id else application.area
-              usersWhoCanBeInvitedOn(application).flatMap { singleUsersWhoCanBeInvited =>
-                groupsWhichCanBeInvited(selectedAreaId, application).map { invitableGroups =>
-                  val usersWhoCanBeInvited: List[User] =
-                    singleUsersWhoCanBeInvited ::: userService.byGroupIds(invitableGroups.map(_.id))
-                  val invitedUsers: Map[UUID, String] = usersWhoCanBeInvited
-                    .filter(user =>
-                      inviteData.invitedUsers.contains[UUID](user.id) ||
-                        inviteData.invitedGroups.toSet.intersect(user.groupIds.toSet).nonEmpty
-                    )
-                    .map(user => (user.id, contextualizedUserName(user, selectedAreaId)))
-                    .toMap
-
-                  val answer = Answer(
-                    UUID.randomUUID(),
-                    applicationId,
-                    Time.nowParis(),
-                    inviteData.message,
-                    request.currentUser.id,
-                    contextualizedUserName(request.currentUser, selectedAreaId),
-                    invitedUsers,
-                    not(inviteData.privateToHelpers),
-                    false,
-                    Some(Map.empty)
+            },
+            inviteData =>
+              if (inviteData.invitedUsers.isEmpty && inviteData.invitedGroups.isEmpty) {
+                val error =
+                  s"Erreur dans le formulaire d’invitation (une personne ou un organisme doit être sélectionné)."
+                eventService.log(InviteNotCreated, error)
+                Future(
+                  Redirect(
+                    routes.ApplicationController.show(applicationId).withFragment("answer-error")
                   )
+                    .flashing("answer-error" -> error, "opened-tab" -> "invite")
+                )
+              } else {
+                val selectedAreaId =
+                  if (request.currentUser.expert) currentAreaLegacy.id else application.area
+                usersWhoCanBeInvitedOn(application).flatMap { singleUsersWhoCanBeInvited =>
+                  groupsWhichCanBeInvited(selectedAreaId, application).map { invitableGroups =>
+                    val usersWhoCanBeInvited: List[User] =
+                      singleUsersWhoCanBeInvited ::: userService
+                        .byGroupIds(invitableGroups.map(_.id))
+                    val invitedUsers: Map[UUID, String] = usersWhoCanBeInvited
+                      .filter(user =>
+                        inviteData.invitedUsers.contains[UUID](user.id) ||
+                          inviteData.invitedGroups.toSet.intersect(user.groupIds.toSet).nonEmpty
+                      )
+                      .map(user => (user.id, contextualizedUserName(user, selectedAreaId)))
+                      .toMap
 
-                  if (applicationService.add(applicationId, answer) == 1) {
-                    notificationsService.newAnswer(application, answer)
-                    eventService.log(
-                      AgentsAdded,
-                      s"L'ajout d'utilisateur ${answer.id} a été créé sur la demande $applicationId",
-                      Some(application)
+                    val answer = Answer(
+                      UUID.randomUUID(),
+                      applicationId,
+                      Time.nowParis(),
+                      inviteData.message,
+                      request.currentUser.id,
+                      contextualizedUserName(request.currentUser, selectedAreaId),
+                      invitedUsers,
+                      not(inviteData.privateToHelpers),
+                      declareApplicationHasIrrelevant = false,
+                      Some(Map.empty)
                     )
-                    Redirect(routes.ApplicationController.myApplications())
-                      .flashing("success" -> "Les utilisateurs ont été invités sur la demande")
-                  } else {
-                    eventService.log(
-                      AgentsNotAdded,
-                      s"L'ajout d'utilisateur ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD",
-                      Some(application)
-                    )
-                    InternalServerError("Les utilisateurs n'ont pas pu être invités")
+
+                    if (applicationService.add(applicationId, answer) == 1) {
+                      notificationsService.newAnswer(application, answer)
+                      eventService.log(
+                        AgentsAdded,
+                        s"L'ajout d'utilisateur ${answer.id} a été créé sur la demande $applicationId",
+                        Some(application)
+                      )
+                      Redirect(routes.ApplicationController.myApplications())
+                        .flashing("success" -> "Les utilisateurs ont été invités sur la demande")
+                    } else {
+                      eventService.log(
+                        AgentsNotAdded,
+                        s"L'ajout d'utilisateur ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD",
+                        Some(application)
+                      )
+                      InternalServerError("Les utilisateurs n'ont pas pu être invités")
+                    }
                   }
                 }
               }
-            }
-        )
+          )
       }
     }
 
@@ -1233,11 +1235,11 @@ case class ApplicationController @Inject() (
               request.currentUser.id,
               contextualizedUserName(request.currentUser, currentAreaId),
               experts,
-              true,
-              false,
+              visibleByHelpers = true,
+              declareApplicationHasIrrelevant = false,
               Some(Map())
             )
-            if (applicationService.add(applicationId, answer, true) == 1) {
+            if (applicationService.add(applicationId, answer, expertInvited = true) == 1) {
               notificationsService.newAnswer(application, answer)
               eventService.log(
                 AddExpertCreated,
@@ -1347,7 +1349,7 @@ case class ApplicationController @Inject() (
 
   /** Security: does not save signatures that are too big (longer than 1000 chars) */
   private def saveSharedAccountUserSignature[R](session: Session, signature: String): Session =
-    if (signature.size <= 1000)
+    if (signature.length <= 1000)
       session + (sharedAccountUserSignatureKey -> signature)
     else
       session

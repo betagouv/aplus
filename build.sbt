@@ -1,4 +1,4 @@
-name := """aplus"""
+name := "aplus"
 organization := "fr.gouv.beta"
 
 version := "1.0-SNAPSHOT"
@@ -14,8 +14,7 @@ lazy val root = (project in file("."))
     buildInfoPackage := "constants"
   )
 
-// TODO: when upgrading the version, remove "-Wconf:msg=Octal:s"
-scalaVersion := "2.13.2"
+scalaVersion := "2.13.3"
 
 // https://docs.scala-lang.org/overviews/compiler-options/index.html
 scalacOptions ++= Seq(
@@ -25,7 +24,6 @@ scalacOptions ++= Seq(
   "-Xlint:adapted-args",
   "-Xlint:nullary-unit",
   "-Xlint:inaccessible",
-  "-Xlint:nullary-override",
   "-Xlint:infer-any",
   "-Xlint:missing-interpolator",
   "-Xlint:doc-detached",
@@ -51,9 +49,6 @@ scalacOptions ++= Seq(
   "-Wmacros:before",
   "-Wnumeric-widen",
   "-Woctal-literal",
-  // Fixes a regression in 2.13.2:
-  // https://github.com/scala/bug/issues/11950
-  "-Wconf:msg=Octal:s",
   // "-Wself-implicit", // Warns about too much useful constructs
   // Note: -Wunused:imports cannot work with twirl
   // "-Wunused:imports",
@@ -78,7 +73,7 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.2.17",
+  "org.postgresql" % "postgresql" % "42.2.18",
   "org.playframework.anorm" %% "anorm" % "2.6.7",
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
@@ -88,7 +83,7 @@ libraryDependencies ++= Seq(
   "com.github.tototoshi" %% "scala-csv" % "1.3.6",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.9.2",
-  "org.typelevel" %% "cats-core" % "2.1.1",
+  "org.typelevel" %% "cats-core" % "2.2.0",
   // To ensure that the version of jackson that do not have
   // known security vulnerabilities is used
   // It is also compatible with play-json
@@ -106,12 +101,12 @@ libraryDependencies ++= Seq(
   "org.webjars.npm" % "dialog-polyfill" % "0.4.10",
   "org.webjars.npm" % "twemoji" % "2.5.1",
   "org.webjars" % "chartjs" % "2.9.3",
-  "org.webjars" % "font-awesome" % "5.15.0",
+  "org.webjars" % "font-awesome" % "5.15.1",
   "org.webjars.bowergithub.olifolkerd" % "tabulator" % "4.5.3",
   "org.webjars.npm" % "xlsx" % "0.16.7"
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "3.0.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "3.1.1"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"

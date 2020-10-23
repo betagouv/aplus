@@ -100,7 +100,7 @@ class LoginAction @Inject() (
           } else {
             eventService.log(TryLoginByKey, "Clé dans l'url, redirige vers la page de connexion")
             Left(
-              TemporaryRedirect(routes.LoginController.login.url)
+              TemporaryRedirect(routes.LoginController.login().url)
                 .flashing("email" -> user.email, "path" -> path)
             )
           }
@@ -203,7 +203,7 @@ class LoginAction @Inject() (
 
   private def userNotLogged[A](message: String)(implicit request: Request[A]) =
     Left(
-      TemporaryRedirect(routes.LoginController.login.url)
+      TemporaryRedirect(routes.LoginController.login().url)
         .withSession(request.session - Keys.Session.userId)
         .flashing("error" -> message)
     )
@@ -212,7 +212,7 @@ class LoginAction @Inject() (
       request: Request[A]
   ) =
     Left(
-      TemporaryRedirect(routes.HomeController.index.url)
+      TemporaryRedirect(routes.HomeController.index().url)
         .withSession(request.session - Keys.Session.userId)
         .flashing("email" -> email, "error" -> message)
     )

@@ -5,11 +5,11 @@
         Connectez-vous
     </h3>
 
-    <form action="@routes.LoginController.login" method="post">
+    <form action="@routes.LoginController.login()" method="post">
         @helper.CSRF.formField
         <label class="aplus-textfield__label" for="email">
-            Saisir votre e-mail professionnel pour recevoir un lien de
-            connexion à Administration+<br />
+            Saisissez votre e-mail professionnel pour recevoir un lien de
+            connexion sécurisée à Administration+<br />
         </label>
         <br />
         @flash.get("error").map { message =>
