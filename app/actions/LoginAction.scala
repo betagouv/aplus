@@ -1,8 +1,10 @@
 package actions
 
+import cats.implicits.catsSyntaxEq
 import constants.Constants
 import javax.inject.{Inject, Singleton}
 import controllers.routes
+import helper.BooleanHelper.not
 import helper.UUIDHelper
 import models._
 import play.api.mvc._
@@ -19,6 +21,7 @@ import models.EventType.{
   UserAccessDisabled
 }
 import play.api.Logger
+
 import scala.concurrent.{ExecutionContext, Future}
 
 class RequestWithUserData[A](
@@ -76,7 +79,7 @@ class LoginAction @Inject() (
       )
     val url = "http" + (if (request.secure) "s" else "") + "://" + request.host + path
     (userBySession, userByKey, tokenById) match {
-      case (Some(userSession), Some(userKey), None) if userSession.id == userKey.id =>
+      case (Some(userSession), Some(userKey), None) if userSession.id === userKey.id =>
         Future(Left(TemporaryRedirect(Call(request.method, url).url)))
       case (_, Some(user), None) =>
         LoginAction.readUserRights(user).map { userRights =>
@@ -107,9 +110,9 @@ class LoginAction @Inject() (
         }
       case (_, None, Some(token)) =>
         manageToken(token)
-      case (Some(user), None, None) if user.disabled == false =>
+      case (Some(user), None, None) if not(user.disabled) =>
         manageUserLogged(user)
-      case (Some(user), None, None) if user.disabled == true =>
+      case (Some(user), None, None) if user.disabled =>
         LoginAction.readUserRights(user).map { userRights =>
           implicit val requestWithUserData =
             new RequestWithUserData(user, userRights, request)

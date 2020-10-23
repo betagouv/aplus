@@ -1,27 +1,22 @@
 package controllers
 
+import java.util.UUID
+
 import actions.LoginAction
 import cats.data.EitherT
+import cats.implicits.catsSyntaxEq
 import constants.Constants
-import java.util.UUID
+import controllers.Operators.UserOperators
 import javax.inject.{Inject, Singleton}
-import models.{Error, EventType, Sms}
 import models.mandat.{Mandat, SmsMandatInitiation}
+import models.{Error, EventType, Sms}
 import org.webjars.play.WebJarsUtil
-import play.api.mvc.{Action, AnyContent, InjectedController, PlayBodyParsers}
 import play.api.libs.json.{JsError, JsString, JsValue, Json}
-import scala.concurrent.{ExecutionContext, Future}
+import play.api.mvc.{Action, AnyContent, InjectedController, PlayBodyParsers}
 import serializers.JsonFormats._
-import services.{
-  EventService,
-  MandatService,
-  NotificationService,
-  OrganisationService,
-  SmsService,
-  UserGroupService,
-  UserService
-}
-import Operators.UserOperators
+import services._
+
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 case class MandatController @Inject() (
@@ -129,7 +124,7 @@ case class MandatController @Inject() (
                         error.description,
                         underlyingException = error.underlyingException
                       )
-                      if (error.eventType == EventType.MandatNotFound)
+                      if (error.eventType === EventType.MandatNotFound)
                         Future(Ok)
                       else
                         Future(InternalServerError)

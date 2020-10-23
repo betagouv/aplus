@@ -74,7 +74,7 @@ class CSVSpec extends Specification {
         email = Some("sip.laon@dgfip.finances.gouv.fr")
       )
 
-      val dgfip = data.find(_.group.name == expectedUserGroup.name)
+      val dgfip = data.find(_.group.name === expectedUserGroup.name)
       dgfip must beSome
 
       dgfip.get.group.name must equalTo(expectedUserGroup.name)
@@ -105,7 +105,7 @@ class CSVSpec extends Specification {
       result must beRight
       val (errors, data) = result.toOption.get
       errors must have size 0
-      val group = data.find(_.group.name == "d’Aubigny sur Nère - Ardennes")
+      val group = data.find(_.group.name === "d’Aubigny sur Nère - Ardennes")
       group must beSome
       group.get.group.organisation must beSome(Organisation.Id("MSAP"))
       data must have size 2

@@ -5,12 +5,15 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import java.time.{Instant, ZonedDateTime}
 import java.util.Base64
+
+import cats.implicits.catsSyntaxEq
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import models.{Error, EventType}
 import play.api.libs.json.{JsPath, JsValue, Json, Reads, Writes}
 import play.api.libs.ws.WSClient
 import play.api.mvc.Request
+
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -92,7 +95,7 @@ final class MessageBirdApi(
       .withRequestTimeout(requestTimeout)
       .post(Json.toJson(request))
       .map { response =>
-        if ((response.status: Int) == 201) {
+        if (response.status === 201) {
           val json = response.body[JsValue]
           Right(json.as[Sms])
         } else {
@@ -102,7 +105,7 @@ final class MessageBirdApi(
           )
         }
       }
-      .recover { case (e: Throwable) =>
+      .recover { case e: Throwable =>
         Left(
           Error.MiscException(
             EventType.SmsSendError,
@@ -130,7 +133,7 @@ final class MessageBirdApi(
     val mac = Mac.getInstance("HmacSHA256")
     mac.init(secretKey)
     val requestSignature: List[Byte] = mac.doFinal(blobToHmac.toArray).toList
-    (requestSignature: List[Byte]) == (expectedSignature: List[Byte])
+    requestSignature === expectedSignature
   }
 
   private def checkSignature(request: Request[String]): Boolean = {
@@ -192,7 +195,7 @@ final class MessageBirdApi(
       .withRequestTimeout(requestTimeout)
       .get()
       .map { response =>
-        if (response.status == 200) {
+        if (response.status === 200) {
           val json = response.body[JsValue]
           Right(json.as[Sms])
         } else {
@@ -218,7 +221,7 @@ final class MessageBirdApi(
       .withRequestTimeout(requestTimeout)
       .delete()
       .map { response =>
-        if (response.status == 200)
+        if (response.status === 200)
           Right(())
         else
           throw new Exception(s"Unknown response from MB server (status ${response.status})")

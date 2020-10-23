@@ -4,6 +4,7 @@ import java.util.UUID
 
 import javax.inject.Inject
 import anorm._
+import cats.implicits.catsSyntaxEq
 import models.User
 import play.api.db.Database
 import helper.{Hash, Time}
@@ -144,14 +145,14 @@ class UserService @Inject() (
   def byEmails(emails: List[String]): List[User] = {
     val lowerCaseEmails = emails.map(_.toLowerCase)
     db.withConnection { implicit connection =>
-      SQL"""SELECT * FROM "user" WHERE  ARRAY[${lowerCaseEmails}]::text[] @> ARRAY[lower(email)]::text[]"""
+      SQL"""SELECT * FROM "user" WHERE  ARRAY[$lowerCaseEmails]::text[] @> ARRAY[lower(email)]::text[]"""
         .as(simpleUser.*)
     }
   }
 
   def deleteById(userId: UUID): Boolean =
     db.withTransaction { implicit connection =>
-      SQL"""DELETE FROM "user" WHERE id = ${userId}::uuid""".execute()
+      SQL"""DELETE FROM "user" WHERE id = $userId::uuid""".execute()
     }
 
   def add(users: List[User]): Either[String, Unit] =
@@ -178,7 +179,7 @@ class UserService @Inject() (
            ${user.expert},
            ${user.phoneNumber},
            ${user.sharedAccount})
-        """.executeUpdate() == 1
+        """.executeUpdate() === 1
         }
       }
       if (result)
@@ -215,7 +216,7 @@ class UserService @Inject() (
           observable_organisation_ids = array[${observableOrganisationIds.distinct}]::varchar[],
           shared_account = ${user.sharedAccount}
           WHERE id = ${user.id}::uuid
-       """.executeUpdate() == 1
+       """.executeUpdate() === 1
     })
 
   def acceptCGU(userId: UUID, acceptNewsletter: Boolean) =
@@ -223,15 +224,15 @@ class UserService @Inject() (
       val now = Time.nowParis()
       val resultCGUAcceptation = SQL"""
         UPDATE "user" SET
-        cgu_acceptation_date = ${now}
-        WHERE id = ${userId}::uuid
-     """.executeUpdate() == 1
+        cgu_acceptation_date = $now
+        WHERE id = $userId::uuid
+     """.executeUpdate() === 1
       val resultNewsletterAcceptation = if (acceptNewsletter) {
         SQL"""
         UPDATE "user" SET
-        newsletter_acceptation_date = ${now}
-        WHERE id = ${userId}::uuid
-     """.executeUpdate() == 1
+        newsletter_acceptation_date = $now
+        WHERE id = $userId::uuid
+     """.executeUpdate() === 1
       } else {
         true
       }

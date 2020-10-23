@@ -5,6 +5,7 @@ import Operators.UserOperators
 import helper.StringHelper
 import java.util.UUID
 
+import cats.implicits.catsSyntaxEq
 import javax.inject.{Inject, Singleton}
 import models.EventType.DeploymentDashboardUnauthorized
 import models.{Area, Authorization, Organisation, UserGroup}
@@ -37,7 +38,7 @@ case class ApiController @Inject() (
         if (doNotMatchTheseEmails.contains(email)) {
           None
         } else {
-          groups.find(group => (group.email: Option[String]) == (Some(email): Option[String]))
+          groups.find(group => group.email === Some(email))
         }
       )
     def byName: Option[UserGroup] =
@@ -56,7 +57,7 @@ case class ApiController @Inject() (
       )
     byEmail.orElse(byName).orElse(byCommune).filter { userGroup =>
       val areas: List[Area] = userGroup.areaIds.flatMap(Area.fromId)
-      areas.exists(_.inseeCode == franceServiceInstance.departementCode.code)
+      areas.exists(_.inseeCode === franceServiceInstance.departementCode.code)
     }
   }
 
@@ -66,7 +67,7 @@ case class ApiController @Inject() (
         DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
       } { () =>
         val userGroups = userGroupService.allGroups.filter(
-          _.organisationSetOrDeducted.exists(_.id == Organisation.franceServicesId)
+          _.organisationSetOrDeducted.exists(_.id === Organisation.franceServicesId)
         )
         val franceServiceInstances = organisationService.franceServiceInfos.instances
         val doNotMatchTheseEmails =

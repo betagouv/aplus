@@ -5,6 +5,7 @@ import java.util.UUID
 
 import actions.LoginAction
 import Operators.{GroupOperators, UserOperators}
+import cats.implicits.catsSyntaxEq
 import models.formModels.{CSVImportData, UserFormData, UserGroupFormData}
 import javax.inject.Inject
 import models.{Area, Organisation, User, UserGroup}
@@ -29,6 +30,7 @@ import models.EventType.{
 }
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import serializers.{Keys, UserAndGroupCsvSerializer}
+
 import scala.concurrent.{ExecutionContext, Future}
 
 case class CSVImportController @Inject() (
@@ -48,7 +50,7 @@ case class CSVImportController @Inject() (
       "csv-lines" -> nonEmptyText,
       "area-default-ids" -> list(uuid),
       "separator" -> char
-        .verifying("Séparateur incorrect", value => value == ';' || value == ',')
+        .verifying("Séparateur incorrect", value => value === ';' || value === ',')
     )(CSVImportData.apply)(CSVImportData.unapply)
   )
 
@@ -71,7 +73,7 @@ case class CSVImportController @Inject() (
     val alreadyExistingUsers = userService.byEmails(userEmails)
     val newUsersFormDataList = userGroupFormData.users.map { userDataForm =>
       alreadyExistingUsers
-        .find(_.email.stripSpecialChars == userDataForm.user.email.stripSpecialChars)
+        .find(_.email.stripSpecialChars === userDataForm.user.email.stripSpecialChars)
         .fold {
           userDataForm.copy(
             isInMoreThanOneGroup = Some(multiGroupUserEmails.contains(userDataForm.user.email))

@@ -1,6 +1,7 @@
 package services
 
 import anorm._
+import cats.implicits.catsSyntaxEq
 import javax.inject.Inject
 import models.LoginToken
 import play.api.db.Database
@@ -26,7 +27,7 @@ class TokenService @Inject() (configuration: play.api.Configuration, db: Databas
          ${loginToken.creationDate},
          ${loginToken.expirationDate},
          ${loginToken.ipAddress}::inet)
-      """.executeUpdate() == 1
+      """.executeUpdate() === 1
     }
 
   def byToken(token: String) =

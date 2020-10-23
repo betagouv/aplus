@@ -1,6 +1,7 @@
 package services
 
 import actions.RequestWithUserData
+import cats.implicits.catsSyntaxEq
 import javax.inject.{Inject, Singleton}
 import models.{Error, EventType, Organisation, Sms, User, UserGroup}
 import models.mandat.Mandat
@@ -8,6 +9,7 @@ import play.api.Configuration
 import play.api.libs.concurrent.{Futures, MaterializerProvider}
 import play.api.libs.ws.WSClient
 import play.api.mvc.{PlayBodyParsers, Request}
+
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -55,7 +57,7 @@ class SmsService @Inject() (
             s"n'a pas de groupe FS"
         )
         ""
-      } else if (franceServiceGroups.size == 1) {
+      } else if (franceServiceGroups.size === 1) {
         " de la structure " + franceServiceGroups.map(_.name).mkString(", ")
       } else if (franceServiceGroups.size <= 3) {
         " des structures " + franceServiceGroups.map(_.name).mkString(", ")

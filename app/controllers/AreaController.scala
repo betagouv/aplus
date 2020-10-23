@@ -5,6 +5,7 @@ import java.util.UUID
 import actions.LoginAction
 import constants.Constants
 import Operators.UserOperators
+import cats.implicits.catsSyntaxEq
 import helper.UUIDHelper
 import javax.inject.{Inject, Singleton}
 import models.EventType.{
@@ -18,6 +19,7 @@ import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
 import serializers.Keys
 import services.{EventService, UserGroupService, UserService}
+
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -129,14 +131,14 @@ case class AreaController @Inject() (
             } yield user
 
           val organisationGrouping =
-            if (request.getQueryString(Keys.QueryParam.uniquementFs).getOrElse("oui") == "oui") {
+            if (request.getQueryString(Keys.QueryParam.uniquementFs).getOrElse("oui") === "oui") {
               organisationGroupingFranceService
             } else {
               organisationGroupingAll
             }
 
           val data = for {
-            area <- request.currentUser.areas.flatMap(Area.fromId).filterNot(_.name == "Demo")
+            area <- request.currentUser.areas.flatMap(Area.fromId).filterNot(_.name === "Demo")
           } yield {
             val organisationMap: List[(Set[Organisation], Int)] = for {
               organisations <- organisationGrouping

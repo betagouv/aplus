@@ -1,14 +1,18 @@
 package tasks
 
-import akka.actor.ActorSystem
-import helper.Time
-import java.time.{DayOfWeek, ZonedDateTime}
 import java.time.temporal.ChronoUnit
+import java.time.{DayOfWeek, ZonedDateTime}
+
+import akka.actor.ActorSystem
+import cats.Eq
+import cats.implicits.catsSyntaxEq
+import helper.Time
 import javax.inject.Inject
 import play.api.Configuration
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext
 import services.NotificationService
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 class WeeklyEmailsTask @Inject() (
     actorSystem: ActorSystem,
@@ -29,8 +33,8 @@ class WeeklyEmailsTask @Inject() (
   // (hourly for demo / weekly for prod)
   val delay: FiniteDuration = 1.hour
 
-  actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = delay)(
-    new Runnable { override def run(): Unit = checkIfItIsTimeToSendThenSendEmails() }
+  actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = delay)(() =>
+    checkIfItIsTimeToSendThenSendEmails()
   )
 
   def checkIfItIsTimeToSendThenSendEmails(): Unit =
@@ -38,6 +42,8 @@ class WeeklyEmailsTask @Inject() (
       notificationService.weeklyEmails()
       ()
     }
+
+  implicit val EqInstance: Eq[DayOfWeek] = (x: DayOfWeek, y: DayOfWeek) => x.name() === y.name()
 
   // Note: this could be done easily by reading a cron expression
   // from the config. We don't do this to avoid more dependencies.
@@ -53,8 +59,8 @@ class WeeklyEmailsTask @Inject() (
         // The crucial part is that `now` is a ZonedDateTime
         // Once we use users' TZ, then the hour will be correct for everyone
         val now: ZonedDateTime = Time.nowParis()
-        (now.getHour: Int) == (scheduledHour: Int) &&
-        (now.getDayOfWeek: DayOfWeek) == (scheduledDay: DayOfWeek)
+        now.getHour === scheduledHour &&
+        now.getDayOfWeek === scheduledDay
       }
     } else {
       false

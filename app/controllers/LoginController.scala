@@ -1,11 +1,13 @@
 package controllers
 
 import actions.{LoginAction, RequestWithUserData}
+import cats.implicits.catsSyntaxEq
 import javax.inject.{Inject, Singleton}
 import models.EventType.{GenerateToken, UnknownEmail}
 import models.{Authorization, LoginToken, User}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Action, AnyContent, InjectedController}
+
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
 import services.{EventService, NotificationService, TokenService, UserService}
@@ -64,7 +66,7 @@ class LoginController @Inject() (
                 val shouldChangeObserverPath: Boolean =
                   Authorization.isObserver(userRights) &&
                     user.cguAcceptationDate.nonEmpty &&
-                    ((tmpPath: String) == (routes.HomeController.index().url: String))
+                    (tmpPath === routes.HomeController.index().url)
                 if (shouldChangeObserverPath) {
                   routes.ApplicationController.stats().url
                 } else {
@@ -85,7 +87,7 @@ class LoginController @Inject() (
               val successMessage = request
                 .getQueryString(Keys.QueryParam.action)
                 .flatMap(actionName =>
-                  if (actionName == "sendemailback")
+                  if (actionName === "sendemailback")
                     Some("Un nouveau lien de connexion vient de vous être envoyé par e-mail.")
                   else
                     None

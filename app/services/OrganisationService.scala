@@ -4,6 +4,7 @@ import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import models.Organisation
 import models.Organisation.{Category, Subject}
 import net.jcazevedo.moultingyaml._
+import cats.implicits.catsSyntaxEq
 
 import scala.io.Source
 
@@ -72,7 +73,7 @@ class OrganisationService {
     def readNthField(line: List[String], nth: Int): Option[String] =
       line.lift(nth).flatMap { field =>
         val trimmed: String = field.trim()
-        if (trimmed == "-" || trimmed.isEmpty) None
+        if (trimmed === "-" || trimmed.isEmpty) None
         else Some(trimmed)
       }
 
@@ -82,8 +83,8 @@ class OrganisationService {
       .map { line =>
         val rawDepartementCode = readNthField(line, 1).getOrElse("") // Should never be empty
         val departementCode = InseeCode(
-          if (rawDepartementCode.size == 0) "00"
-          else if (rawDepartementCode.size == 1) s"0$rawDepartementCode"
+          if (rawDepartementCode.length === 0) "00"
+          else if (rawDepartementCode.length === 1) s"0$rawDepartementCode"
           else rawDepartementCode
         )
         FranceServiceInstance(

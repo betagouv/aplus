@@ -3,6 +3,7 @@ package tasks
 import java.util.UUID
 
 import akka.actor._
+import cats.implicits.catsSyntaxEq
 import helper.Time
 import javax.inject.Inject
 import models._
@@ -72,7 +73,7 @@ class AutoAddExpertTask @Inject() (
           false,
           Some(Map())
         )
-        if (applicationService.add(application.id, answer, true) == 1) {
+        if (applicationService.add(application.id, answer, true) === 1) {
           notificationService.newAnswer(application, answer)
           eventService.info(
             User.systemUser,

@@ -3,12 +3,15 @@ package services
 import anorm._
 import helper.{PlayFormHelper, Time}
 import java.util.UUID
+
+import cats.implicits.catsSyntaxEq
 import javax.inject.Inject
 import models.{Authorization, Error, EventType, Sms, User}
 import models.Authorization.UserRights
 import models.mandat.{Mandat, SmsMandatInitiation}
 import play.api.db.Database
 import play.api.libs.json.{JsValue, Json}
+
 import scala.concurrent.Future
 import scala.util.Try
 import serializers.DataModel.SmsFormats._
@@ -166,7 +169,7 @@ class MandatService @Inject() (
             )
           ),
         (nrOfRows: Int) =>
-          if (nrOfRows == 1)
+          if (nrOfRows === 1)
             Right(())
           else
             Left(

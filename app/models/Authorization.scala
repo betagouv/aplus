@@ -2,6 +2,8 @@ package models
 
 import helper.BooleanHelper.not
 import java.util.UUID
+
+import cats.implicits.catsSyntaxEq
 import models.mandat.Mandat
 
 object Authorization {
@@ -158,7 +160,7 @@ object Authorization {
 
   def isApplicationCreator(application: Application): Check =
     _.rights.exists {
-      case UserRight.HasUserId(id) => (application.creatorUserId: UUID) == (id: UUID)
+      case UserRight.HasUserId(id) => application.creatorUserId === id
       case _                       => false
     }
 
@@ -198,7 +200,7 @@ object Authorization {
 
   def canSeePrivateDataOfMandat(mandat: Mandat): Check =
     _.rights.exists {
-      case UserRight.HasUserId(id) => (mandat.userId: UUID) == (id: UUID)
+      case UserRight.HasUserId(id) => mandat.userId === id
       case _                       => false
     }
 

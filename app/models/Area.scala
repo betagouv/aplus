@@ -2,25 +2,29 @@ package models
 
 import java.util.UUID
 
+import cats.Eq
+import cats.implicits.catsSyntaxEq
 import helper.StringHelper.CanonizeString
 import helper.UUIDHelper
 
 case class Area(id: UUID, name: String, inseeCode: String) {
-  override def toString(): String = s"$name ($inseeCode)"
+  override def toString: String = s"$name ($inseeCode)"
 }
 
 object Area {
 
+  implicit val Eq: Eq[Area] = (x: Area, y: Area) => x.id === y.id
+
   def fromId(id: UUID): Option[Area] =
-    if ((id: UUID) == (allArea.id: UUID)) {
+    if (id === allArea.id) {
       Some(allArea)
     } else {
-      all.find(area => (area.id: UUID) == (id: UUID))
+      all.find(area => area.id === id)
     }
 
   def searchFromName(name: String): Option[Area] = {
     val strippedName = name.stripSpecialChars
-    Area.all.find(area => (area.name.stripSpecialChars: String) == (strippedName: String))
+    Area.all.find(area => area.name.stripSpecialChars === strippedName)
   }
 
   def apply(id: String, name: String, inseeCode: String): Area =

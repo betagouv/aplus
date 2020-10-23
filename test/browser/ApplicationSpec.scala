@@ -129,7 +129,7 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
       // Check if the application exist in database
       val applicationOption = applicationService
         .allByArea(area, false)
-        .find(_.subject == subject)
+        .find(_.subject === subject)
 
       applicationOption mustNotEqual None
       val application = applicationOption.get
