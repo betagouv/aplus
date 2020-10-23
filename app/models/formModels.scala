@@ -71,7 +71,7 @@ object formModels {
 
   object ValidateSubscriptionForm {
 
-    val PhoneNumber = """(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})""".r
+    val PhoneNumber = """(\d{2}) (\d{2}) (\d{2}) (\d{2}) (\d{2})""".r
 
     private val validPhoneNumberPrefixes =
       List("01", "02", "03", "04", "05", "06", "07", "08", "09")
@@ -84,7 +84,7 @@ object formModels {
         case PhoneNumber(prefix, _, _, _, _) if isValidPhoneNumberPrefix(prefix) => Valid
         case PhoneNumber(_, _, _, _, _) =>
           Invalid(ValidationError("Préfixe de numéro de téléphone invalide"))
-        case _ => Invalid(ValidationError("Numéro de téléphone invalide"))
+        case _ => Invalid(ValidationError("Le format doit être XX XX XX XX XX"))
       }
 
     def validate(user: User): Form[ValidateSubscriptionForm] = Form(

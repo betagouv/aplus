@@ -28,7 +28,7 @@
                                         "class" -> "mdl-textfield--fix"
                                     ) { (id, name, value, args) =>
                                         <input class="mdl-textfield__input mdl-color--white"
-                                        type="text"
+                                        type="text" required
                                         name="@name"
                                         id="firstnameValue"
                                         value="@value"
@@ -43,7 +43,7 @@
                                         "class" -> "mdl-textfield--fix"
                                     ) { (id, name, value, args) =>
                                         <input class="mdl-textfield__input mdl-color--white"
-                                        type="text"
+                                        type="text" required
                                         name="@name"
                                         id="lastnameValue"
                                         value="@value"
@@ -55,10 +55,12 @@
                                 <div>Numéro de téléphone professionel
                                     <br>
                                     @helper.input(cguForm("phoneNumber"),
-                                        "class" -> "mdl-textfield--fix"
+                                        "class" -> "mdl-textfield--fix",
+                                        "label" -> "XX XX XX XX XX"
                                     ) { (id, name, value, args) =>
                                         <input class="mdl-textfield__input mdl-color--white"
-                                        type="text"
+                                        type="tel"
+                                        pattern="[0-9]{2} [0-9]{2} [0-9]{2} [0-9]{2} [0-9]{2}"
                                         name="@name"
                                         id=@id
                                         value="@value"
@@ -73,7 +75,7 @@
                                         "class" -> "mdl-textfield--fix"
                                     ) { (id, name, value, args) =>
                                         <input class="mdl-textfield__input mdl-color--white"
-                                        type="text"
+                                        type="text" required
                                         name="@name"
                                         id="qualiteValue"
                                         value="@value"
