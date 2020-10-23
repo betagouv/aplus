@@ -3,6 +3,8 @@ package views.emails
 import constants.Constants
 import helper.Time
 import java.time.ZonedDateTime
+
+import cats.implicits.catsSyntaxOptionId
 import models._
 import scalatags.Text.all._
 
@@ -34,15 +36,15 @@ object common {
       pathToRedirectTo: String,
       tokenExpirationInMinutes: Int
   ): List[Modifier] = {
-    val url = s"${absoluteUrl}?token=${loginToken.token}&path=$pathToRedirectTo"
+    val url = s"$absoluteUrl?token=${loginToken.token}&path=$pathToRedirectTo"
     List[Modifier](
-      s"Bonjour ${user.name},",
+      s"${user.name.some.filter(_.nonEmpty).map(n => s"Bonjour $n,").getOrElse("Bonjour,")}",
       br,
       br,
       p(
         "Vous pouvez maintenant accéder au service Administration+ en cliquant sur le lien suivant :",
         br,
-        a(href := url, url),
+        a(href := raw(url).render, raw(url)),
         br,
         br,
         "Ce lien est à ",
@@ -172,20 +174,11 @@ object common {
       br,
       p(
         s"Vous avez ${infos.applicationsThatShouldBeClosed.size} ",
-        (
-          if (infos.applicationsThatShouldBeClosed.size <= 1)
-            "demande qui a reçu une réponse il y a "
-          else
-            "demandes qui ont reçu une réponse il y a ",
-        ),
+        if (infos.applicationsThatShouldBeClosed.size <= 1) "demande qui a reçu une réponse il y a "
+        else "demandes qui ont reçu une réponse il y a ",
         s"plus de $daySinceLastAgentAnswerForApplicationsThatShouldBeClosed jours. ",
         "Si votre échange est terminé, n’hésitez pas à ",
-        (
-          if (infos.applicationsThatShouldBeClosed.size <= 1)
-            "la clore, "
-          else
-            "les clore, "
-        ),
+        if (infos.applicationsThatShouldBeClosed.size <= 1) "la clore, " else "les clore, ",
         """en appuyant sur le bouton « Clore l’échange »."""
       ),
       ul(
