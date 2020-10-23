@@ -1,9 +1,8 @@
 package csv
 
-import helper.UUIDHelper
-import models.formModels
-import helper.{CSVUtil, Time}
-import models.{Area, Organisation, UserGroup}
+import cats.kernel.Eq
+import helper.{CSVUtil, Time, UUIDHelper}
+import models.{formModels, Area, Organisation, UserGroup}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
@@ -74,7 +73,7 @@ class CSVSpec extends Specification {
         email = Some("sip.laon@dgfip.finances.gouv.fr")
       )
 
-      val dgfip = data.find(_.group.name === expectedUserGroup.name)
+      val dgfip = data.find(d => Eq[String].eqv(d.group.name, expectedUserGroup.name))
       dgfip must beSome
 
       dgfip.get.group.name must equalTo(expectedUserGroup.name)
