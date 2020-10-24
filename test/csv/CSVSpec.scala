@@ -73,7 +73,7 @@ class CSVSpec extends Specification {
         email = Some("sip.laon@dgfip.finances.gouv.fr")
       )
 
-      val dgfip = data.find(d => Eq[String].eqv(d.group.name, expectedUserGroup.name))
+      val dgfip = data.find(formData => Eq[String].eqv(formData.group.name, expectedUserGroup.name))
       dgfip must beSome
 
       dgfip.get.group.name must equalTo(expectedUserGroup.name)
