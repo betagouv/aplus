@@ -2,7 +2,7 @@
 @import _root_.helper.MDLForms._
 @import java.util.UUID
 @import serializers.Keys
-@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 @main(currentUser, currentUserRights)(s"Utilisateur ${form("name").value.getOrElse("")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>

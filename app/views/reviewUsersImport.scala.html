@@ -5,7 +5,7 @@
 @import serializers.{Keys, UserAndGroupCsvSerializer}
 
 @import models.formModels.UserGroupFormData
-@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[List[UserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 @groupWillNotBeInserted(group: Field) = @{
   group("alreadyExistsOrAllUsersAlreadyExist").value.exists(_ == "true")

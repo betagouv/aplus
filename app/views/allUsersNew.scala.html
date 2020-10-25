@@ -1,5 +1,5 @@
 @import models._
-@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 
 @main(currentUser, currentUserRights, maxWidth = false)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {

@@ -1,6 +1,6 @@
 @import _root_.helper.Time
 
-@(user: User, currentUserRights: Authorization.UserRights)(myOpenApplications: Seq[Application], myClosedApplications: Seq[Application], applicationsFromTheArea: Seq[Application] = List())(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(user: User, currentUserRights: Authorization.UserRights)(myOpenApplications: Seq[Application], myClosedApplications: Seq[Application], applicationsFromTheArea: Seq[Application] = List())(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 @display(applications: Seq[Application]) = {
     <div class="mdl-cell mdl-cell--12-col pem-container">

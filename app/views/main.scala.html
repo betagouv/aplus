@@ -1,6 +1,6 @@
 @import helper._
 
-@(currentUser: User, currentUserRights: Authorization.UserRights, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 <!doctype html>
 <html lang="fr">
