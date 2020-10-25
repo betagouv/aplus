@@ -46,6 +46,7 @@ case class GroupController @Inject() (
     userService: UserService
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
+    with Operators.Common
     with GroupOperators
     with UserOperators {
 

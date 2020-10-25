@@ -1,4 +1,6 @@
-@(token: String, pathToRedirectTo: String, tokenExpirationInMinutes: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil)
+@import helper._
+
+@(token: String, pathToRedirectTo: String, tokenExpirationInMinutes: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, mainInfos: MainInfos)
 
 <!doctype html>
 <html lang="fr">
@@ -38,12 +40,8 @@
     BETA
     </div>
 <div class="mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--deep-purple-900">
-    <div class="mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100 demo-only invisible">
-        <div class="mdl-layout__header-row mdl-color--pink-500 mdl-color-text--white">
-            <span class="mdl-layout-title aplus-demo-header__title">
-                Version de démonstration d'Administration+
-            </span>
-        </div>
+    <div class="mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100">
+      @toHtml(views.helpers.common.optionalDemoVersionHeader)
     </div>
 
     <main class="login-main">

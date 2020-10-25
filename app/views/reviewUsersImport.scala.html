@@ -3,9 +3,10 @@
 @import _root_.helper.UUIDHelper
 @import _root_.helper.BooleanHelper.not
 @import serializers.{Keys, UserAndGroupCsvSerializer}
-
 @import models.formModels.CSVUserGroupFormData
-@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[List[CSVUserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+
+@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[List[CSVUserGroupFormData]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
+
 
 @groupWillNotBeInserted(group: Field) = @{
   group("alreadyExistsOrAllUsersAlreadyExist").value.contains("true")

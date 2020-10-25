@@ -1,7 +1,8 @@
 @import models._
 @import models.formModels.AddUserFormData
 @import _root_.helper.MDLForms._
-@(user: User, currentUserRights: Authorization.UserRights)(form: Form[(List[AddUserFormData])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+
+@(user: User, currentUserRights: Authorization.UserRights)(form: Form[(List[AddUserFormData])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 
 @main(user, currentUserRights, maxWidth = false)(s"Gestion des utilisateurs") {
