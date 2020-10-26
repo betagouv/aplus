@@ -2,43 +2,17 @@ package controllers
 
 import java.time.{LocalDate, ZoneId, ZonedDateTime}
 import java.util.UUID
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
 
 import actions.{LoginAction, RequestWithUserData}
+import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption, catsSyntaxOptionId}
+import controllers.Operators.{GroupOperators, UserOperators}
 import helper.BooleanHelper.not
-import Operators.{GroupOperators, UserOperators}
+import helper.StringHelper.{capitalizeName, commonStringInputNormalization}
 import helper.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
-import models.EventType.{
-  AddUserError,
-  AllUserCSVUnauthorized,
-  AllUserCsvShowed,
-  AllUserIncorrectSetup,
-  AllUserUnauthorized,
-  CGUShowed,
-  CGUValidated,
-  CGUValidationError,
-  DeleteUserUnauthorized,
-  EditUserError,
-  EditUserShowed,
-  EventsShowed,
-  EventsUnauthorized,
-  NewsletterSubscribed,
-  NewsletterSubscriptionError,
-  PostAddUserUnauthorized,
-  PostEditUserUnauthorized,
-  ShowAddUserUnauthorized,
-  UserDeleted,
-  UserEdited,
-  UserIsUsed,
-  UserNotFound,
-  UserShowed,
-  UsersCreated,
-  UsersShowed,
-  ViewUserUnauthorized
-}
-import models.{Area, Authorization, EventType, Organisation, User, UserGroup}
+import models.EventType._
+import models._
+import models.formModels.ValidateSubscriptionForm
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
@@ -50,6 +24,9 @@ import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
 import serializers.{Keys, UserAndGroupCsvSerializer}
 import services._
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 @Singleton
 case class UserController @Inject() (
@@ -163,10 +140,12 @@ case class UserController @Inject() (
             val userGroups = user.groupIds.flatMap(id => groups.find(_.id == id))
             List[String](
               user.id.toString,
-              user.name,
+              user.firstName.orEmpty,
+              user.lastName.orEmpty,
               user.email,
               Time.formatPatternFr(user.creationDate, "dd-MM-YYYY-HHhmm"),
               if (user.sharedAccount) "Compte Partagé" else " ",
+              if (user.sharedAccount) user.name else " ",
               if (user.helper) "Aidant" else " ",
               if (user.instructor) "Instructeur" else " ",
               if (user.groupAdmin) "Responsable" else " ",
@@ -188,10 +167,12 @@ case class UserController @Inject() (
 
           val headers = List[String](
             "Id",
-            UserAndGroupCsvSerializer.USER_NAME.prefixes.head,
+            UserAndGroupCsvSerializer.USER_FIRST_NAME.prefixes.head,
+            UserAndGroupCsvSerializer.USER_LAST_NAME.prefixes.head,
             UserAndGroupCsvSerializer.USER_EMAIL.prefixes.head,
             "Création",
             UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes.head,
+            UserAndGroupCsvSerializer.SHARED_ACCOUNT_NAME.prefixes.head,
             "Aidant",
             UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes.head,
             UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes.head,
@@ -442,49 +423,83 @@ case class UserController @Inject() (
       }
     }
 
-  def showCGU(): Action[AnyContent] =
+  def showValidateAccount(): Action[AnyContent] =
     loginAction { implicit request =>
-      eventService.log(CGUShowed, "CGU visualisé")
-      Ok(views.html.showCGU(request.currentUser, request.rights))
+      eventService.log(CGUShowed, "CGU visualisées")
+      val user = request.currentUser
+      Ok(
+        views.html.validateAccount(
+          user,
+          request.rights,
+          ValidateSubscriptionForm
+            .validate(request.currentUser)
+            .fill(
+              ValidateSubscriptionForm(
+                redirect = Option.empty,
+                cguChecked = user.cguAcceptationDate.isDefined,
+                firstName = user.firstName,
+                lastName = user.lastName,
+                phoneNumber = user.phoneNumber,
+                qualite = user.qualite.some
+              )
+            )
+        )
+      )
     }
 
-  def validateCGU(): Action[AnyContent] =
+  private def validateAndUpdateUser(user: User)(
+      firstName: Option[String],
+      lastName: Option[String],
+      qualite: Option[String],
+      phoneNumber: Option[String]
+  ): Int = {
+    userService.update(
+      user.validateWith(
+        firstName.map(commonStringInputNormalization).map(capitalizeName),
+        lastName.map(commonStringInputNormalization).map(capitalizeName),
+        qualite.map(commonStringInputNormalization),
+        phoneNumber.map(commonStringInputNormalization)
+      )
+    )
+    userService.validateCGU(user.id)
+  }
+
+  def validateAccount(): Action[AnyContent] =
     loginAction { implicit request =>
-      validateCGUForm
+      val user = request.currentUser
+      ValidateSubscriptionForm
+        .validate(user)
         .bindFromRequest()
         .fold(
           { formWithErrors =>
             eventService.log(CGUValidationError, "Erreur de formulaire dans la validation des CGU")
-            BadRequest(
-              s"Formulaire invalide, prévenez l’administrateur du service. ${formWithErrors.errors.mkString(", ")}"
-            )
+            BadRequest(views.html.validateAccount(user, request.rights, formWithErrors))
           },
-          { case (redirectOption, newsletter, validate) =>
-            if (validate) {
-              userService.acceptCGU(request.currentUser.id, newsletter)
-            }
-            eventService.log(CGUValidated, "CGU validées")
-            val route = redirectOption match {
-              case Some(redirect)
-                  if (redirect: String) != (routes.ApplicationController
-                    .myApplications()
-                    .url: String) =>
-                Call("GET", redirect)
-              case _ =>
-                routes.HomeController.welcome()
-            }
-            Redirect(route).flashing("success" -> "Merci d’avoir accepté les CGU")
+          {
+            case ValidateSubscriptionForm(
+                  Some(redirect),
+                  true,
+                  firstName,
+                  lastName,
+                  qualite,
+                  phoneNumber
+                ) if redirect != routes.ApplicationController.myApplications().url =>
+              validateAndUpdateUser(request.currentUser)(firstName, lastName, qualite, phoneNumber)
+              eventService.log(CGUValidated, "CGU validées")
+              Redirect(Call("GET", redirect)).flashing("success" -> "Merci d’avoir accepté les CGU")
+            case ValidateSubscriptionForm(_, true, firstName, lastName, qualite, phoneNumber) =>
+              validateAndUpdateUser(request.currentUser)(firstName, lastName, qualite, phoneNumber)
+              eventService.log(CGUValidated, "CGU validées")
+              Redirect(routes.HomeController.welcome())
+                .flashing("success" -> "Merci d’avoir accepté les CGU")
+            case ValidateSubscriptionForm(Some(redirect), false, _, _, _, _)
+                if redirect != routes.ApplicationController.myApplications().url =>
+              Redirect(Call("GET", redirect))
+            case ValidateSubscriptionForm(_, false, _, _, _, _) =>
+              Redirect(routes.HomeController.welcome())
           }
         )
     }
-
-  private val validateCGUForm: Form[(Option[String], Boolean, Boolean)] = Form(
-    tuple(
-      "redirect" -> optional(text),
-      "newsletter" -> boolean,
-      "validate" -> boolean
-    )
-  )
 
   private val subscribeNewsletterForm: Form[Boolean] = Form(
     "newsletter" -> boolean
@@ -506,8 +521,7 @@ case class UserController @Inject() (
           },
           { newsletter =>
             if (newsletter) {
-              // Note: CGU are not used anymore
-              userService.acceptCGU(request.currentUser.id, newsletter)
+              userService.acceptNewsletter(request.currentUser.id)
             }
             eventService.log(NewsletterSubscribed, "Newletter subscribed")
             Redirect(routes.HomeController.welcome())
@@ -577,6 +591,8 @@ case class UserController @Inject() (
               Some(_)
             ),
             "key" -> ignored("key"),
+            "firstName" -> optional(text.verifying(maxLength(100))),
+            "lastName" -> optional(text.verifying(maxLength(100))),
             "name" -> nonEmptyText.verifying(maxLength(100)),
             "qualite" -> text.verifying(maxLength(100)),
             "email" -> email.verifying(maxLength(200), nonEmpty),
@@ -618,10 +634,21 @@ case class UserController @Inject() (
           case None     => UUID.randomUUID()
           case Some(id) => id
         },
-        Some(_)
+        Option.apply
       ),
       "key" -> ignored("key"),
-      "name" -> nonEmptyText.verifying(maxLength(100)),
+      "firstName" -> optional(text.verifying(maxLength(100))),
+      "lastName" -> optional(text.verifying(maxLength(100))),
+      "name" -> optional(nonEmptyText.verifying(maxLength(100))).transform[String](
+        {
+          case Some(value) => value
+          case None        => ""
+        },
+        {
+          case ""   => Option.empty[String]
+          case name => name.some
+        }
+      ),
       "qualite" -> text.verifying(maxLength(100)),
       "email" -> email.verifying(maxLength(200), nonEmpty),
       "helper" -> boolean,

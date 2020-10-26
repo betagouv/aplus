@@ -155,7 +155,7 @@ class LoginAction @Inject() (
       } else {
         eventService.log(ToCGURedirected, "Redirection vers les CGUs")
         Left(
-          TemporaryRedirect(routes.UserController.showCGU().url)
+          TemporaryRedirect(routes.UserController.showValidateAccount().url)
             .flashing("redirect" -> request.path)
         )
       }

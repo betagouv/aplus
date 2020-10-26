@@ -48,4 +48,7 @@ object StringHelper {
   def commonStringInputNormalization(string: String): String =
     mergeSpacesToOne(normalizeNFKC(string)).trim
 
+  def capitalizeName(name: String): String =
+    """[\P{P}&&\P{Z}]+""".r.replaceAllIn(name, m => m.group(0).toLowerCase.capitalize)
+
 }

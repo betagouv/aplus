@@ -2,12 +2,15 @@ package services
 
 import java.util.UUID
 
-import javax.inject.Inject
 import anorm._
-import models.User
-import play.api.db.Database
+import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption}
 import helper.{Hash, Time}
+import javax.inject.Inject
+import models.User
+import models.formModels.ValidateSubscriptionForm
 import org.postgresql.util.PSQLException
+import play.api.db.Database
+import views.html.helper.form
 
 import scala.concurrent.Future
 
@@ -25,6 +28,8 @@ class UserService @Inject() (
     .parser[User](
       "id",
       "key",
+      "first_name",
+      "last_name",
       "name",
       "qualite",
       "email",
@@ -144,7 +149,7 @@ class UserService @Inject() (
   def byEmails(emails: List[String]): List[User] = {
     val lowerCaseEmails = emails.map(_.toLowerCase)
     db.withConnection { implicit connection =>
-      SQL"""SELECT * FROM "user" WHERE  ARRAY[${lowerCaseEmails}]::text[] @> ARRAY[lower(email)]::text[]"""
+      SQL"""SELECT * FROM "user" WHERE  ARRAY[$lowerCaseEmails]::text[] @> ARRAY[lower(email)]::text[]"""
         .as(simpleUser.*)
     }
   }
@@ -160,10 +165,12 @@ class UserService @Inject() (
         users.foldRight(true) { (user, success) =>
           assert(user.areas.nonEmpty)
           success && SQL"""
-        INSERT INTO "user" (id, key, name, qualite, email, helper, instructor, admin, areas, creation_date,
+        INSERT INTO "user" (id, key, first_name, last_name, name, qualite, email, helper, instructor, admin, areas, creation_date,
                             commune_code, group_admin, group_ids, expert, phone_number, shared_account) VALUES (
            ${user.id}::uuid,
            ${Hash.sha256(s"${user.id}$cryptoSecret")},
+           ${user.firstName},
+           ${user.lastName},
            ${user.name},
            ${user.qualite},
            ${user.email},
@@ -201,6 +208,8 @@ class UserService @Inject() (
       val observableOrganisationIds = user.observableOrganisationIds.map(_.id)
       SQL"""
           UPDATE "user" SET
+          first_name = ${user.firstName},
+          last_name = ${user.lastName},
           name = ${user.name},
           qualite = ${user.qualite},
           email = ${user.email},
@@ -218,24 +227,24 @@ class UserService @Inject() (
        """.executeUpdate() == 1
     })
 
-  def acceptCGU(userId: UUID, acceptNewsletter: Boolean) =
+  def validateCGU(userId: UUID) =
     db.withConnection { implicit connection =>
       val now = Time.nowParis()
-      val resultCGUAcceptation = SQL"""
+      SQL"""
         UPDATE "user" SET
-        cgu_acceptation_date = ${now}
-        WHERE id = ${userId}::uuid
-     """.executeUpdate() == 1
-      val resultNewsletterAcceptation = if (acceptNewsletter) {
-        SQL"""
+        cgu_acceptation_date = $now
+        WHERE id = $userId::uuid
+     """.executeUpdate()
+    }
+
+  def acceptNewsletter(userId: UUID) =
+    db.withConnection { implicit connection =>
+      val now = Time.nowParis()
+      SQL"""
         UPDATE "user" SET
-        newsletter_acceptation_date = ${now}
-        WHERE id = ${userId}::uuid
-     """.executeUpdate() == 1
-      } else {
-        true
-      }
-      resultCGUAcceptation && resultNewsletterAcceptation
+        newsletter_acceptation_date = $now
+        WHERE id = $userId::uuid
+     """.executeUpdate()
     }
 
 }

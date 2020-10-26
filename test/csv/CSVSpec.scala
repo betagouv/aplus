@@ -1,5 +1,6 @@
 package csv
 
+import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption}
 import helper.UUIDHelper
 import models.formModels
 import helper.{CSVUtil, Time}
@@ -17,30 +18,30 @@ class CSVSpec extends Specification {
       |;Monsieur;;Aidant;Instructeur;;SuperGroupe;Alpes-Maritimes (06);;Le Super Groupe!;super.groupe@beta.gouv.fr""".stripMargin
 
   val prefFormat: String =
-    """Opérateur partenaire,Nom Référent,Prénom Référent,Adresse e-mail,numéro de téléphone,"adresse mail générique (si nécessaire)"
-      |CAF,Nom1,Prénom1,prenom1.nom1@cafaisne.cnafmail.fr,01.02.03.04.05,MFS.cafaisne@cafaisne.cnafmail.fr
-      |CPAM,Nom2,Prénom2,prenom2.nom2@assurance-maladie.fr,01.02.03.04.05,_x0001_
-      |CPAM,Nom3,Prénom3,prenom3.nom3@assurance-maladie.fr,01.02.03.04.05,
-      |CARSAT,Nom4,Prénom4,prenom4.nom4@carsat-nordpicardie.fr,01.02.03.04.05,partenariatsretraite@carsat-nordpicardie.fr
-      |DGFIP,Nom5,Prénom5,prenom5.nom5@dgfip.finances.gouv.fr,01.02.03.04.05,sip.laon@dgfip.finances.gouv.fr
-      |DGFIP,Nom6,Prénom6,prenom6.nom6@dgfip.finances.gouv.fr,01.02.03.04.06,ddfip02.gestionfiscale@dgfip.finances.gouv.fr
-      |DGFIP,Nom7,Prénom7,prenom7.nom7@dgfip.finances.gouv.fr,01.02.03.04.07,sip.soissons@dgfip.finances.gouv.fr
-      |La Poste,Nom8,Prénom8,prenom8.nom8@laposte.fr,,
-      |Min. Intérieur,Nom9,Prénom9,prenom9.nom9@aisne.gouv.fr,01.02.03.04.05,
-      |Min. Justice,Nom10,Prénom10,prenom10.nom10@justice.fr,01.02.03.04.05,
-      |MSA,Nom11,Prénom11,prenom11.nom11@picardie.msa.fr,01.02.03.04.05,
-      |Pôle Emploi,Nom12,Prénom12,prenom12.nom12@pole-emploi.fr,,
-      |,,,,,
+    """Opérateur partenaire,Nom Référent,Prénom Référent,Email,numéro de téléphone,"adresse mail générique (si nécessaire)",Compte partagé
+      |CAF,Nom1,Prénom1,prenom1.nom1@cafaisne.cnafmail.fr,01.02.03.04.05,MFS.cafaisne@cafaisne.cnafmail.fr,
+      |CPAM,Nom2,Prénom2,prenom2.nom2@assurance-maladie.fr,01.02.03.04.05,_x0001_,
+      |CPAM,Nom3,Prénom3,prenom3.nom3@assurance-maladie.fr,01.02.03.04.05,,
+      |CARSAT,Nom4,Prénom4,prenom4.nom4@carsat-nordpicardie.fr,01.02.03.04.05,partenariatsretraite@carsat-nordpicardie.fr,
+      |DGFIP,Nom5,Prénom5,prenom5.nom5@dgfip.finances.gouv.fr,01.02.03.04.05,sip.laon@dgfip.finances.gouv.fr,
+      |DGFIP,Nom6,Prénom6,prenom6.nom6@dgfip.finances.gouv.fr,01.02.03.04.06,ddfip02.gestionfiscale@dgfip.finances.gouv.fr,
+      |DGFIP,Nom7,Prénom7,prenom7.nom7@dgfip.finances.gouv.fr,01.02.03.04.07,sip.soissons@dgfip.finances.gouv.fr,
+      |La Poste,Nom8,Prénom8,prenom8.nom8@laposte.fr,,,
+      |Min. Intérieur,Nom9,Prénom9,prenom9.nom9@aisne.gouv.fr,01.02.03.04.05,,
+      |Min. Justice,Nom10,Prénom10,prenom10.nom10@justice.fr,01.02.03.04.05,,
+      |MSA,Nom11,Prénom11,prenom11.nom11@picardie.msa.fr,01.02.03.04.05,,
+      |Pôle Emploi,Nom12,Prénom12,prenom12.nom12@pole-emploi.fr,,,
+      |,,,,,,
       |""".stripMargin
 
   //TODO : In the future, manage "Nom de la structure labellisable"
   val organisationTest: String =
-    """organisation,Groupe,Adresse,Code Postal,Commune,Nom Agent,Prénom Agent,Contact mail Agent,Bal,"Coordonnées du référent préfectoral en charge du dossier France Services"
-      |MSAP,d’Aubigny sur Nère,6 rue du 8 mai 1945,18700,Aubigny sur Nère,Nom1,Prénom1,test1@aubigny-sur-nere.fr,msap@aubigny-sur-nere.fr,
-      |MSAP,d’Aubigny sur Nère,6 rue du 8 mai 1945,18700,Aubigny sur Nère,Nom2,Prénom2,test2@aubigny-sur-nere.fr,msap@aubigny-sur-nere.fr,
-      |MSAP,d’Aubigny sur Nère,6 rue du 8 mai 1945,18700,Aubigny sur Nère,Nom3,Prénom3,test3@aubigny-sur-nere.fr,msap@aubigny-sur-nere.fr,
-      |MSAP,de Sancoins,38 rue de la croix blanche,18600,Sancoins,Nom4,Prénom4,test4@aubigny-sur-nere.fr,msap@sancoins.fr,
-      |MSAP,de Sancoins,38 rue de la croix blanche,18600,Sancoins,Nom5,Prénom5,test5@aubigny-sur-nere.fr,msap@sancoins.fr,
+    """organisation,Groupe,Adresse,Code Postal,Commune,Nom Agent,Prénom Agent,Contact mail Agent,Bal,"Coordonnées du référent préfectoral en charge du dossier France Services",Compte partagé
+      |MSAP,d’Aubigny sur Nère,6 rue du 8 mai 1945,18700,Aubigny sur Nère,Nom1,Prénom1,test1@aubigny-sur-nere.fr,msap@aubigny-sur-nere.fr,,
+      |MSAP,d’Aubigny sur Nère,6 rue du 8 mai 1945,18700,Aubigny sur Nère,Nom2,Prénom2,test2@aubigny-sur-nere.fr,msap@aubigny-sur-nere.fr,,
+      |MSAP,d’Aubigny sur Nère,6 rue du 8 mai 1945,18700,Aubigny sur Nère,Nom3,Prénom3,test3@aubigny-sur-nere.fr,msap@aubigny-sur-nere.fr,,
+      |MSAP,de Sancoins,38 rue de la croix blanche,18600,Sancoins,Nom4,Prénom4,test4@aubigny-sur-nere.fr,msap@sancoins.fr,,
+      |MSAP,de Sancoins,38 rue de la croix blanche,18600,Sancoins,Nom5,Prénom5,test5@aubigny-sur-nere.fr,msap@sancoins.fr,,
       |""".stripMargin
 
   "The 'ap;l\"us' string should" >> {
@@ -85,10 +86,10 @@ class CSVSpec extends Specification {
       dgfip.get.group.email must equalTo(expectedUserGroup.email)
       dgfip.get.users must have size 3
 
-      val expectedUserName = "Nom5 Prénom5"
       val expectedEmail = "prenom5.nom5@dgfip.finances.gouv.fr"
       val expectedPhoneNumber = "01.02.03.04.05"
-      dgfip.get.users.head.user.name must equalTo(expectedUserName)
+      dgfip.get.users.head.user.firstName.orEmpty must equalTo("Prénom5")
+      dgfip.get.users.head.user.lastName.orEmpty must equalTo("Nom5")
       dgfip.get.users.head.user.email must equalTo(expectedEmail)
       dgfip.get.users.head.user.helper must beTrue
       dgfip.get.users.head.user.areas must equalTo(List[String]())
@@ -127,14 +128,14 @@ class CSVSpec extends Specification {
   }
 
   val csvFile: String =
-    """Nom;Qualité;Email;Instructeur;Responsable;Territoires;Organisation du groupe;Groupe;Bal générique / fonctionnelle;Précisions / Commentaires
-      |Nom1 Prénom1;Agent d’accueil FS;prenom1.nom1@france-service.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;
-      |Nom2 Prénom2;Agent d’accueil FS;prenom2.nom2@laposte.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;
-      |Nom3 Prénom3;Référent Pole Emploi;prenom3.nom3@pole-emploi.fr;Instructeur;;Ardennes;Pôle emploi;Pole Emploi Charleville Mézières;chareville-mezieres@pole.emploi.com;
-      |Nom4 Prénom4;Réponsable CAF;prenom4.nom4@pole-emploi.fr;Instructeur;Responsable;Ardennes;Caisse d’allocations familiale;CAF Ardennes;ardennes@caf.fr;
-      |Nom5 Prénom5;Responsable DDFIP;prenom5.nom5@ddfip.fr;;Responsable;Mayotte;Direction départementale des Finances publiques;DDFIP Mayotte (amendes);amendes@ddfip.fr;
-      |Nom6 Prénom6;Responsable DDFIP;prenom6.nom6@ddfip.fr;Instructeur;;Mayotte;Direction départementale des Finances publiques;DDFIP Mayotte (Impots locaux);amendes@ddfip.fr;
-      |;;;;;;;;;""".stripMargin
+    """Nom;Qualité;Email;Instructeur;Responsable;Territoires;Organisation du groupe;Groupe;Bal générique / fonctionnelle;Précisions / Commentaires;Compte partagé
+      |Nom1 Prénom1;Agent d’accueil FS;prenom1.nom1@france-service.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;;
+      |Nom2 Prénom2;Agent d’accueil FS;prenom2.nom2@laposte.com;;;Val-d’Oise;Maison France Services;MFS Saint Laurent;sfs.saint-laurent@laposte.com;;
+      |Nom3 Prénom3;Référent Pole Emploi;prenom3.nom3@pole-emploi.fr;Instructeur;;Ardennes;Pôle emploi;Pole Emploi Charleville Mézières;chareville-mezieres@pole.emploi.com;;
+      |Nom4 Prénom4;Réponsable CAF;prenom4.nom4@pole-emploi.fr;Instructeur;Responsable;Ardennes;Caisse d’allocations familiale;CAF Ardennes;ardennes@caf.fr;;
+      |Nom5 Prénom5;Responsable DDFIP;prenom5.nom5@ddfip.fr;;Responsable;Mayotte;Direction départementale des Finances publiques;DDFIP Mayotte (amendes);amendes@ddfip.fr;;
+      |Nom6 Prénom6;Responsable DDFIP;prenom6.nom6@ddfip.fr;Instructeur;;Mayotte;Direction départementale des Finances publiques;DDFIP Mayotte (Impots locaux);amendes@ddfip.fr;;
+      |;;;;;;;;;;""".stripMargin
 
   "The csvFile string should" >> {
     "produce valid groups" >> {
