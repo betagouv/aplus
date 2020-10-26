@@ -38,7 +38,7 @@ class AutoAddExpertTask @Inject() (
   def inviteExpertsInApplication() =
     if (configuration.get[Boolean]("app.features.autoAddExpert")) {
       applicationService.openAndOlderThan(dayWithoutAgentAnswer).foreach { application =>
-        application.answers.filter(_.creatorUserID != application.creatorUserId).lastOption match {
+        application.answers.filter(_.creatorUserID =!= application.creatorUserId).lastOption match {
           case None => // No answer for someone else the creator
             inviteExpert(application, dayWithoutAgentAnswer)
           case Some(answer)

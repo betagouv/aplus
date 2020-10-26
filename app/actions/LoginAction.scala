@@ -176,7 +176,7 @@ class LoginAction @Inject() (
           implicit val requestWithUserData =
             new RequestWithUserData(user, userRights, request)
 
-          if (token.ipAddress != request.remoteAddress) {
+          if (token.ipAddress =!= request.remoteAddress) {
             eventService.log(
               AuthWithDifferentIp,
               s"Utilisateur ${token.userId} à une adresse ip différente pour l'essai de connexion"
