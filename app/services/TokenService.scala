@@ -1,10 +1,11 @@
 package services
 
 import anorm._
+import cats.syntax.all._
 import javax.inject.Inject
 import models.LoginToken
-import play.api.db.Database
 import play.api.UnexpectedException
+import play.api.db.Database
 
 @javax.inject.Singleton
 class TokenService @Inject() (configuration: play.api.Configuration, db: Database) {
@@ -26,7 +27,7 @@ class TokenService @Inject() (configuration: play.api.Configuration, db: Databas
          ${loginToken.creationDate},
          ${loginToken.expirationDate},
          ${loginToken.ipAddress}::inet)
-      """.executeUpdate() == 1
+      """.executeUpdate() === 1
     }
 
   def byToken(token: String) =

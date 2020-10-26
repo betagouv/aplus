@@ -177,8 +177,8 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
             helperUser
           )
           users.map(user => userService.validateCGU(user.id))
-          val expertInvited = userSeed == "invited-expert-test"
-          val userInvited = userSeed == "invited-user-test"
+          val expertInvited = userSeed === "invited-expert-test"
+          val userInvited = userSeed === "invited-user-test"
           val invitedUsers =
             List(
               instructorUser.some,
@@ -232,7 +232,7 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
 
           val changedApplicationOption = applicationService
             .allByArea(helperGroup.areaIds.head, anonymous = false)
-            .find(app => (app.id: UUID) == (application.id: UUID))
+            .find(app => app.id === application.id)
 
           changedApplicationOption mustNotEqual None
           val changedApplication = changedApplicationOption.get

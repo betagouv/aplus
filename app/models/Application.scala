@@ -4,8 +4,10 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit.MINUTES
 import java.util.UUID
 
+import cats.Eq
+import cats.syntax.all._
 import helper.BooleanHelper.not
-import models.Authorization.{isExpert, isHelper, isInstructor, readUserRights, UserRights}
+import models.Authorization.{isExpert, isHelper, isInstructor, UserRights}
 
 case class Application(
     id: UUID,
@@ -67,15 +69,15 @@ case class Application(
 
   def longStatus(user: User) =
     closed match {
-      case true                                                                        => "Clôturée"
-      case _ if user.id == creatorUserId && answers.exists(_.creatorUserID != user.id) => "Répondu"
+      case true                                                                         => "Clôturée"
+      case _ if user.id === creatorUserId && answers.exists(_.creatorUserID != user.id) => "Répondu"
       case _
-          if user.id == creatorUserId && seenByUserIds
+          if user.id === creatorUserId && seenByUserIds
             .intersect(invitedUsers.keys.toList)
             .nonEmpty =>
         "Consultée"
-      case _ if user.id == creatorUserId                   => "Envoyée"
-      case _ if answers.exists(_.creatorUserID == user.id) => "Répondu"
+      case _ if user.id === creatorUserId                   => "Envoyée"
+      case _ if answers.exists(_.creatorUserID === user.id) => "Répondu"
       case _ if answers.exists(_.creatorUserName.contains(user.qualite)) => {
         val username = answers
           .find(_.creatorUserName.contains(user.qualite))
@@ -91,19 +93,19 @@ case class Application(
 
   def status =
     closed match {
-      case true                                                              => "Clôturée"
-      case _ if answers.filterNot(_.creatorUserID != creatorUserId).nonEmpty => "Répondu"
-      case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty   => "Consultée"
-      case _                                                                 => "Nouvelle"
+      case true                                                            => "Clôturée"
+      case _ if answers.exists(_.creatorUserID === creatorUserId)          => "Répondu"
+      case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty => "Consultée"
+      case _                                                               => "Nouvelle"
     }
 
   def invitedUsers(users: List[User]): List[User] =
-    invitedUsers.keys.flatMap(userId => users.find(_.id == userId)).toList
+    invitedUsers.keys.flatMap(userId => users.find(_.id === userId)).toList
 
   def administrations(users: List[User]): List[String] = invitedUsers(users).map(_.qualite).distinct
 
   def creatorUserQualite(users: List[User]): Option[String] =
-    users.find(_.id == creatorUserId).map(_.qualite)
+    users.find(_.id === creatorUserId).map(_.qualite)
 
   def allUserInfos = userInfos ++ answers.flatMap(_.userInfos.getOrElse(Map()))
 
@@ -132,7 +134,7 @@ case class Application(
   // Security
 
   def fileCanBeShowed(user: User, rights: UserRights, answer: UUID): Boolean =
-    answers.find(_.id == answer) match {
+    answers.find(_.id === answer) match {
       case None => false
       case Some(answer) if answer.filesAvailabilityLeftInDays.isEmpty =>
         false // You can't download expired file
@@ -142,11 +144,11 @@ case class Application(
   def fileCanBeShowed(user: User)(rights: UserRights) =
     filesAvailabilityLeftInDays.nonEmpty && not(isExpert(rights)) &&
       (isInstructor(rights) && invitedUsers.keys.toList.contains(user.id)) ||
-      (isHelper(rights) && user.id == creatorUserId)
+      (isHelper(rights) && user.id === creatorUserId)
 
   def canHaveExpertsInvitedBy(user: User) =
     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
-      creatorUserId == user.id
+      creatorUserId === user.id
 
   def canHaveAgentsInvitedBy(user: User) =
     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
@@ -154,7 +156,7 @@ case class Application(
 
   def canBeClosedBy(user: User) =
     (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
-      creatorUserId == user.id || user.admin
+      creatorUserId === user.id || user.admin
 
 // TODO: remove
   def haveUserInvitedOn(user: User) = invitedUsers.keys.toList.contains(user.id)
@@ -189,6 +191,9 @@ object Application {
     case object Sms extends MandatType
     case object Phone extends MandatType
     case object Paper extends MandatType
+
+    implicit val Eq: Eq[MandatType] = (x: MandatType, y: MandatType) => x == y
+
   }
 
   val USER_FIRST_NAME_KEY = "Prénom"

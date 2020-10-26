@@ -1,17 +1,19 @@
 package helper
 
-import akka.stream.Materializer
-import akka.util.ByteString
-import helper.Time
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import java.time.ZonedDateTime
+
+import akka.stream.Materializer
+import akka.util.ByteString
+import cats.syntax.all._
 import models.{Error, EventType}
 import play.api.libs.json.{JsValue, Json, Reads, Writes}
 import play.api.libs.ws.WSClient
 import play.api.mvc.{PlayBodyParsers, Request}
-import scala.concurrent.{ExecutionContext, Future}
+
 import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{ExecutionContext, Future}
 
 object OvhApi {
 
@@ -101,7 +103,7 @@ final class OvhApi(
 
       (report.ids, report.validReceivers) match {
         case (id :: otherIds, validReceiver :: otherReceivers) =>
-          if (validReceiver == recipient && otherIds.isEmpty && otherReceivers.isEmpty) {
+          if (validReceiver === recipient && otherIds.isEmpty && otherReceivers.isEmpty) {
             Right(id)
           } else {
             Left(
@@ -166,7 +168,7 @@ final class OvhApi(
       .withRequestTimeout(requestTimeout)
       .delete()
       .map { response =>
-        if ((response.status: Int) == 200) {
+        if (response.status === 200) {
           Right(())
         } else {
           throw new Exception(
@@ -196,7 +198,7 @@ final class OvhApi(
       .withRequestTimeout(requestTimeout)
       .delete()
       .map { response =>
-        if ((response.status: Int) == 200) {
+        if (response.status === 200) {
           Right(())
         } else {
           throw new Exception(
@@ -236,7 +238,7 @@ final class OvhApi(
       .withRequestTimeout(requestTimeout)
       .post(body)
       .map { response =>
-        if ((response.status: Int) == 200) {
+        if (response.status === 200) {
           val json = response.body[JsValue]
           val report = json.as[SmsSendingReport]
           Right(report)
@@ -268,7 +270,7 @@ final class OvhApi(
       .withRequestTimeout(requestTimeout)
       .get()
       .map { response =>
-        if (response.status == 200) {
+        if (response.status === 200) {
           val json = response.body[JsValue]
           Right(json.as[IncomingSms])
         } else {

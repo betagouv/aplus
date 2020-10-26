@@ -1,11 +1,11 @@
 package csv
 
 import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption}
-import helper.UUIDHelper
-import models.formModels
-import helper.{CSVUtil, Time}
-import models.{Area, Organisation, UserGroup}
+import cats.syntax.all._
+import helper.{CSVUtil, Time, UUIDHelper}
+import models.{formModels, Area, Organisation, UserGroup}
 import org.junit.runner.RunWith
+import org.specs2.matcher.{TypedEqual => _}
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
 import serializers.UserAndGroupCsvSerializer
@@ -75,7 +75,7 @@ class CSVSpec extends Specification {
         email = Some("sip.laon@dgfip.finances.gouv.fr")
       )
 
-      val dgfip = data.find(_.group.name == expectedUserGroup.name)
+      val dgfip = data.find(formData => formData.group.name.eqv(expectedUserGroup.name))
       dgfip must beSome
 
       dgfip.get.group.name must equalTo(expectedUserGroup.name)
@@ -106,7 +106,7 @@ class CSVSpec extends Specification {
       result must beRight
       val (errors, data) = result.toOption.get
       errors must have size 0
-      val group = data.find(_.group.name == "d’Aubigny sur Nère - Ardennes")
+      val group = data.find(_.group.name.eqv("d’Aubigny sur Nère - Ardennes"))
       group must beSome
       group.get.group.organisation must beSome(Organisation.Id("MSAP"))
       data must have size 2

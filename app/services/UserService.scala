@@ -3,12 +3,16 @@ package services
 import java.util.UUID
 
 import anorm._
+import cats.syntax.all._
 import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption}
 import helper.{Hash, Time}
 import javax.inject.Inject
 import models.User
+import javax.inject.Inject
+import models.User
 import models.formModels.ValidateSubscriptionForm
 import org.postgresql.util.PSQLException
+import play.api.db.Database
 import play.api.db.Database
 import views.html.helper.form
 
@@ -156,7 +160,7 @@ class UserService @Inject() (
 
   def deleteById(userId: UUID): Boolean =
     db.withTransaction { implicit connection =>
-      SQL"""DELETE FROM "user" WHERE id = ${userId}::uuid""".execute()
+      SQL"""DELETE FROM "user" WHERE id = $userId::uuid""".execute()
     }
 
   def add(users: List[User]): Either[String, Unit] =
@@ -185,7 +189,7 @@ class UserService @Inject() (
            ${user.expert},
            ${user.phoneNumber},
            ${user.sharedAccount})
-        """.executeUpdate() == 1
+        """.executeUpdate() === 1
         }
       }
       if (result)
@@ -224,7 +228,7 @@ class UserService @Inject() (
           observable_organisation_ids = array[${observableOrganisationIds.distinct}]::varchar[],
           shared_account = ${user.sharedAccount}
           WHERE id = ${user.id}::uuid
-       """.executeUpdate() == 1
+       """.executeUpdate() === 1
     })
 
   def validateCGU(userId: UUID) =

@@ -4,11 +4,23 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import actions.LoginAction
+import cats.syntax.all._
 import controllers.Operators.{GroupOperators, UserOperators}
 import helper.StringHelper._
 import helper.Time
 import javax.inject.Inject
-import models.EventType._
+import models.EventType.{
+  CSVImportFormError,
+  CsvImportInputEmpty,
+  ImportGroupUnauthorized,
+  ImportUserError,
+  ImportUserFormError,
+  ImportUserUnauthorized,
+  ImportUsersUnauthorized,
+  UserCreated,
+  UserGroupCreated,
+  UsersImported
+}
 import models.formModels.{CSVImportData, UserFormData, UserGroupFormData}
 import models.{Area, Organisation, User, UserGroup}
 import org.webjars.play.WebJarsUtil
@@ -38,7 +50,7 @@ case class CSVImportController @Inject() (
       "csv-lines" -> nonEmptyText,
       "area-default-ids" -> list(uuid),
       "separator" -> char
-        .verifying("Séparateur incorrect", value => value == ';' || value == ',')
+        .verifying("Séparateur incorrect", value => value === ';' || value === ',')
     )(CSVImportData.apply)(CSVImportData.unapply)
   )
 
@@ -61,7 +73,7 @@ case class CSVImportController @Inject() (
     val alreadyExistingUsers = userService.byEmails(userEmails)
     val newUsersFormDataList = userGroupFormData.users.map { userDataForm =>
       alreadyExistingUsers
-        .find(_.email.stripSpecialChars == userDataForm.user.email.stripSpecialChars)
+        .find(_.email.stripSpecialChars === userDataForm.user.email.stripSpecialChars)
         .fold {
           userDataForm.copy(
             isInMoreThanOneGroup = Some(multiGroupUserEmails.contains(userDataForm.user.email))

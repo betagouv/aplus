@@ -4,6 +4,7 @@ import java.util.UUID
 
 import akka.stream.scaladsl.{RestartSource, Sink, Source}
 import akka.stream.{ActorAttributes, Materializer, Supervision}
+import cats.syntax.all._
 import constants.Constants
 import controllers.routes
 import helper.EmailHelper.quoteEmailPhrase
@@ -59,7 +60,7 @@ class NotificationService @Inject() (
     }
   }
 
-  private val https = configuration.underlying.getString("app.https") == "true"
+  private val https = configuration.underlying.getString("app.https") === "true"
 
   private val from = s"Administration+ <${Constants.supportEmail}>"
 
@@ -129,7 +130,7 @@ class NotificationService @Inject() (
     // Send emails to users
     users
       .flatMap { user =>
-        if (user.id == answer.creatorUserID) {
+        if (user.id === answer.creatorUserID) {
           None
         } else if (answer.invitedUsers.contains(user.id)) {
           Some(generateInvitationEmail(application, Some(answer))(user))
@@ -318,7 +319,7 @@ class NotificationService @Inject() (
         application.answers.lastOption match {
           case None => false
           case Some(lastAnswer) =>
-            if ((lastAnswer.creatorUserID: UUID) == (user.id: UUID)) {
+            if (lastAnswer.creatorUserID === user.id) {
               false
             } else {
               lastAnswer.ageInDays > daySinceLastAgentAnswerForApplicationsThatShouldBeClosed

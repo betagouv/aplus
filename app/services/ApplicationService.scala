@@ -2,17 +2,19 @@ package services
 
 import java.time.ZonedDateTime
 import java.util.UUID
-import scala.concurrent.Future
 
-import javax.inject.Inject
 import anorm.Column.nonNull
-import models.{Answer, Application, Authorization, Error, EventType}
+import anorm._
+import cats.syntax.all._
+import helper.Time
+import javax.inject.Inject
 import models.Authorization.UserRights
+import models.{Answer, Application, Authorization, Error, EventType}
 import play.api.db.Database
 import play.api.libs.json.Json
-import anorm._
-import helper.Time
 import serializers.DataModel
+
+import scala.concurrent.Future
 
 @javax.inject.Singleton
 class ApplicationService @Inject() (
@@ -249,7 +251,7 @@ class ApplicationService @Inject() (
             $mandatType,
             ${newApplication.mandatDate}
           )
-      """.executeUpdate() == 1
+      """.executeUpdate() === 1
     }
 
   def add(applicationId: UUID, answer: Answer, expertInvited: Boolean = false) =
@@ -291,7 +293,7 @@ class ApplicationService @Inject() (
         "id" -> applicationId,
         "usefulness" -> usefulness,
         "closed_date" -> closedDate
-      ).executeUpdate() == 1
+      ).executeUpdate() === 1
     }
 
 }

@@ -5,12 +5,40 @@ import java.util.UUID
 
 import actions.{LoginAction, RequestWithUserData}
 import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption, catsSyntaxOptionId}
+import cats.syntax.all._
 import controllers.Operators.{GroupOperators, UserOperators}
 import helper.BooleanHelper.not
 import helper.StringHelper.{capitalizeName, commonStringInputNormalization}
 import helper.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
-import models.EventType._
+import models.EventType.{
+  AddUserError,
+  AllUserCSVUnauthorized,
+  AllUserCsvShowed,
+  AllUserIncorrectSetup,
+  AllUserUnauthorized,
+  CGUShowed,
+  CGUValidated,
+  CGUValidationError,
+  DeleteUserUnauthorized,
+  EditUserError,
+  EditUserShowed,
+  EventsShowed,
+  EventsUnauthorized,
+  NewsletterSubscribed,
+  NewsletterSubscriptionError,
+  PostAddUserUnauthorized,
+  PostEditUserUnauthorized,
+  ShowAddUserUnauthorized,
+  UserDeleted,
+  UserEdited,
+  UserIsUsed,
+  UserNotFound,
+  UserShowed,
+  UsersCreated,
+  UsersShowed,
+  ViewUserUnauthorized
+}
 import models._
 import models.formModels.ValidateSubscriptionForm
 import org.postgresql.util.PSQLException
@@ -57,7 +85,7 @@ case class UserController @Inject() (
 
         val allAreasGroupsFuture: Future[List[UserGroup]] =
           if (Authorization.isAdmin(request.rights)) {
-            if (selectedArea.id == Area.allArea.id) {
+            if (selectedArea.id === Area.allArea.id) {
               groupService.byAreas(request.currentUser.areas)
             } else {
               groupService.byArea(areaId)
@@ -72,14 +100,14 @@ case class UserController @Inject() (
           }
         val groupsFuture: Future[List[UserGroup]] =
           allAreasGroupsFuture.map(groups =>
-            if (selectedArea.id == Area.allArea.id) {
+            if (selectedArea.id === Area.allArea.id) {
               groups
             } else {
               groups.filter(_.areaIds.contains[UUID](selectedArea.id))
             }
           )
         val usersFuture: Future[List[User]] =
-          if (Authorization.isAdmin(request.rights) && areaId == Area.allArea.id) {
+          if (Authorization.isAdmin(request.rights) && areaId === Area.allArea.id) {
             // Includes users without any group for debug purpose
             userService.all
           } else {
@@ -117,7 +145,7 @@ case class UserController @Inject() (
         AllUserCSVUnauthorized -> "Accès non autorisé à l'export utilisateur"
       } { () =>
         val area = Area.fromId(areaId).get
-        val usersFuture: Future[List[User]] = if (areaId == Area.allArea.id) {
+        val usersFuture: Future[List[User]] = if (areaId === Area.allArea.id) {
           if (Authorization.isAdmin(request.rights)) {
             // Includes users without any group for debug purpose
             userService.all
@@ -137,7 +165,7 @@ case class UserController @Inject() (
 
         usersFuture.zip(groupsFuture).map { case (users, groups) =>
           def userToCSV(user: User): String = {
-            val userGroups = user.groupIds.flatMap(id => groups.find(_.id == id))
+            val userGroups = user.groupIds.flatMap(id => groups.find(_.id === id))
             List[String](
               user.id.toString,
               user.firstName.orEmpty,
@@ -614,9 +642,7 @@ case class UserController @Inject() (
                 "Organisation non reconnue",
                 organisationId =>
                   Organisation.all
-                    .exists(organisation =>
-                      (organisation.id: Organisation.Id) == (organisationId: Organisation.Id)
-                    )
+                    .exists(organisation => organisation.id === organisationId)
               )
             ),
             Keys.User.sharedAccount -> boolean

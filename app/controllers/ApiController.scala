@@ -1,19 +1,20 @@
 package controllers
 
-import actions.LoginAction
-import Operators.UserOperators
-import helper.StringHelper
 import java.util.UUID
 
+import actions.LoginAction
+import cats.syntax.all._
+import controllers.Operators.UserOperators
+import helper.StringHelper
 import javax.inject.{Inject, Singleton}
 import models.EventType.DeploymentDashboardUnauthorized
 import models.{Area, Authorization, Organisation, UserGroup}
 import play.api.libs.json.Json
 import play.api.mvc._
-
-import scala.concurrent.{ExecutionContext, Future}
 import serializers.ApiModel._
 import services.{EventService, OrganisationService, UserGroupService, UserService}
+
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 case class ApiController @Inject() (
@@ -37,7 +38,7 @@ case class ApiController @Inject() (
         if (doNotMatchTheseEmails.contains(email)) {
           None
         } else {
-          groups.find(group => (group.email: Option[String]) == (Some(email): Option[String]))
+          groups.find(group => group.email === Some(email))
         }
       )
     def byName: Option[UserGroup] =
@@ -56,7 +57,7 @@ case class ApiController @Inject() (
       )
     byEmail.orElse(byName).orElse(byCommune).filter { userGroup =>
       val areas: List[Area] = userGroup.areaIds.flatMap(Area.fromId)
-      areas.exists(_.inseeCode == franceServiceInstance.departementCode.code)
+      areas.exists(_.inseeCode === franceServiceInstance.departementCode.code)
     }
   }
 
@@ -66,7 +67,7 @@ case class ApiController @Inject() (
         DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
       } { () =>
         val userGroups = userGroupService.allGroups.filter(
-          _.organisationSetOrDeducted.exists(_.id == Organisation.franceServicesId)
+          _.organisationSetOrDeducted.exists(_.id === Organisation.franceServicesId)
         )
         val franceServiceInstances = organisationService.franceServiceInfos.instances
         val doNotMatchTheseEmails =
