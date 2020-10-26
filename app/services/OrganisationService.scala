@@ -1,10 +1,10 @@
 package services
 
+import cats.syntax.all._
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import models.Organisation
 import models.Organisation.{Category, Subject}
 import net.jcazevedo.moultingyaml._
-import cats.implicits.catsSyntaxEq
 
 import scala.io.Source
 

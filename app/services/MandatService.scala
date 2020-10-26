@@ -1,20 +1,20 @@
 package services
 
-import anorm._
-import helper.{PlayFormHelper, Time}
 import java.util.UUID
 
-import cats.implicits.catsSyntaxEq
+import anorm._
+import cats.syntax.all._
+import helper.{PlayFormHelper, Time}
 import javax.inject.Inject
-import models.{Authorization, Error, EventType, Sms, User}
 import models.Authorization.UserRights
 import models.mandat.{Mandat, SmsMandatInitiation}
+import models.{Authorization, Error, EventType, Sms, User}
 import play.api.db.Database
 import play.api.libs.json.{JsValue, Json}
+import serializers.DataModel.SmsFormats._
 
 import scala.concurrent.Future
 import scala.util.Try
-import serializers.DataModel.SmsFormats._
 
 /** This is a "low-level" component, akin to Java's "repositories".
   * This component does not represent the actual business level model.
@@ -26,7 +26,6 @@ class MandatService @Inject() (
     dependencies: ServicesDependencies
 ) {
   import dependencies.databaseExecutionContext
-
   import serializers.Anorm._
 
   implicit val mandatIdAnormParser: anorm.Column[Mandat.Id] =

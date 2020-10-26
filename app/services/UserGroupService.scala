@@ -3,14 +3,15 @@ package services
 import java.sql.ResultSet
 import java.util.UUID
 
-import scala.concurrent.Future
 import anorm._
-import cats.implicits.catsSyntaxEq
+import cats.syntax.all._
+import helper.{Time, UUIDHelper}
 import javax.inject.Inject
 import models.{Organisation, UserGroup}
-import play.api.db.Database
-import helper.{Time, UUIDHelper}
 import org.postgresql.util.PSQLException
+import play.api.db.Database
+
+import scala.concurrent.Future
 
 @javax.inject.Singleton
 class UserGroupService @Inject() (

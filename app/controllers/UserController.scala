@@ -3,12 +3,10 @@ package controllers
 import java.time.{LocalDate, ZoneId, ZonedDateTime}
 import java.util.UUID
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
 import actions.{LoginAction, RequestWithUserData}
+import cats.syntax.all._
+import controllers.Operators.{GroupOperators, UserOperators}
 import helper.BooleanHelper.not
-import Operators.{GroupOperators, UserOperators}
-import cats.implicits.catsSyntaxEq
 import helper.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
 import models.EventType.{
@@ -39,7 +37,7 @@ import models.EventType.{
   UsersShowed,
   ViewUserUnauthorized
 }
-import models.{Area, Authorization, EventType, Organisation, User, UserGroup}
+import models._
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
@@ -51,6 +49,9 @@ import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
 import serializers.{Keys, UserAndGroupCsvSerializer}
 import services._
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 @Singleton
 case class UserController @Inject() (

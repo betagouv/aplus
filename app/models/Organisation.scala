@@ -1,7 +1,7 @@
 package models
 
 import cats.Eq
-import cats.implicits.catsSyntaxEq
+import cats.syntax.all._
 import helper.StringHelper.CanonizeString
 
 case class Organisation(id: Organisation.Id, shortName: String, name: String)

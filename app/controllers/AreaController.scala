@@ -3,9 +3,9 @@ package controllers
 import java.util.UUID
 
 import actions.LoginAction
+import cats.syntax.all._
 import constants.Constants
-import Operators.UserOperators
-import cats.implicits.catsSyntaxEq
+import controllers.Operators.UserOperators
 import helper.UUIDHelper
 import javax.inject.{Inject, Singleton}
 import models.EventType.{
@@ -14,7 +14,7 @@ import models.EventType.{
   ChangeAreaUnauthorized,
   DeploymentDashboardUnauthorized
 }
-import models.{Area, Authorization, Organisation, User, UserGroup}
+import models._
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
 import serializers.Keys

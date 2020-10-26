@@ -1,7 +1,7 @@
 package models
 
 import cats.Eq
-import cats.implicits.catsSyntaxEq
+import cats.syntax.all._
 import helper.StringHelper
 
 /** Note: `EventType` is used for logging, and logging is an orthogonal concern.

@@ -1,11 +1,11 @@
 package services
 
 import anorm._
-import cats.implicits.catsSyntaxEq
+import cats.syntax.all._
 import javax.inject.Inject
 import models.LoginToken
-import play.api.db.Database
 import play.api.UnexpectedException
+import play.api.db.Database
 
 @javax.inject.Singleton
 class TokenService @Inject() (configuration: play.api.Configuration, db: Database) {

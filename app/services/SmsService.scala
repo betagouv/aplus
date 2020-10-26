@@ -1,10 +1,10 @@
 package services
 
 import actions.RequestWithUserData
-import cats.implicits.catsSyntaxEq
+import cats.syntax.all._
 import javax.inject.{Inject, Singleton}
-import models.{Error, EventType, Organisation, Sms, User, UserGroup}
 import models.mandat.Mandat
+import models.{Error, EventType, Organisation, Sms, User, UserGroup}
 import play.api.Configuration
 import play.api.libs.concurrent.{Futures, MaterializerProvider}
 import play.api.libs.ws.WSClient

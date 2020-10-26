@@ -1,6 +1,6 @@
 package csv
 
-import cats.implicits.catsSyntaxEq
+import cats.syntax.all._
 import helper.{CSVUtil, Time, UUIDHelper}
 import models.{formModels, Area, Organisation, UserGroup}
 import org.junit.runner.RunWith

@@ -1,20 +1,20 @@
 package controllers
 
-import actions.LoginAction
-import Operators.UserOperators
-import helper.StringHelper
 import java.util.UUID
 
-import cats.implicits.catsSyntaxEq
+import actions.LoginAction
+import cats.syntax.all._
+import controllers.Operators.UserOperators
+import helper.StringHelper
 import javax.inject.{Inject, Singleton}
 import models.EventType.DeploymentDashboardUnauthorized
 import models.{Area, Authorization, Organisation, UserGroup}
 import play.api.libs.json.Json
 import play.api.mvc._
-
-import scala.concurrent.{ExecutionContext, Future}
 import serializers.ApiModel._
 import services.{EventService, OrganisationService, UserGroupService, UserService}
+
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 case class ApiController @Inject() (

@@ -5,7 +5,7 @@ import java.time.{DayOfWeek, ZonedDateTime}
 
 import akka.actor.ActorSystem
 import cats.Eq
-import cats.implicits.catsSyntaxEq
+import cats.syntax.all._
 import helper.Time
 import javax.inject.Inject
 import play.api.Configuration

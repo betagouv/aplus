@@ -2,13 +2,13 @@ package services
 
 import java.util.UUID
 
-import javax.inject.Inject
 import anorm._
-import cats.implicits.catsSyntaxEq
-import models.User
-import play.api.db.Database
+import cats.syntax.all._
 import helper.{Hash, Time}
+import javax.inject.Inject
+import models.User
 import org.postgresql.util.PSQLException
+import play.api.db.Database
 
 import scala.concurrent.Future
 

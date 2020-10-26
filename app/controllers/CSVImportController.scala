@@ -4,18 +4,11 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import actions.LoginAction
-import Operators.{GroupOperators, UserOperators}
-import cats.implicits.catsSyntaxEq
-import models.formModels.{CSVImportData, UserFormData, UserGroupFormData}
-import javax.inject.Inject
-import models.{Area, Organisation, User, UserGroup}
-import org.webjars.play.WebJarsUtil
-import play.api.data.{Form, Mapping}
-import play.api.data.Forms._
-import play.api.mvc.{Action, AnyContent, InjectedController}
-import services.{EventService, NotificationService, UserGroupService, UserService}
-import helper.Time
+import cats.syntax.all._
+import controllers.Operators.{GroupOperators, UserOperators}
 import helper.StringHelper._
+import helper.Time
+import javax.inject.Inject
 import models.EventType.{
   CSVImportFormError,
   CsvImportInputEmpty,
@@ -28,8 +21,15 @@ import models.EventType.{
   UserGroupCreated,
   UsersImported
 }
+import models.formModels.{CSVImportData, UserFormData, UserGroupFormData}
+import models.{Area, Organisation, User, UserGroup}
+import org.webjars.play.WebJarsUtil
+import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
+import play.api.data.{Form, Mapping}
+import play.api.mvc.{Action, AnyContent, InjectedController}
 import serializers.{Keys, UserAndGroupCsvSerializer}
+import services.{EventService, NotificationService, UserGroupService, UserService}
 
 import scala.concurrent.{ExecutionContext, Future}
 

@@ -1,16 +1,15 @@
 package helper
 
-import helper.Time
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import java.time.{Instant, ZonedDateTime}
 import java.util.Base64
 
-import cats.implicits.catsSyntaxEq
+import cats.syntax.all._
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import models.{Error, EventType}
-import play.api.libs.json.{JsPath, JsValue, Json, Reads, Writes}
+import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.mvc.Request
 

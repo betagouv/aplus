@@ -1,16 +1,11 @@
 package actions
 
-import cats.implicits.catsSyntaxEq
+import cats.syntax.all._
 import constants.Constants
-import javax.inject.{Inject, Singleton}
 import controllers.routes
 import helper.BooleanHelper.not
 import helper.UUIDHelper
-import models._
-import play.api.mvc._
-import play.api.mvc.Results.TemporaryRedirect
-import serializers.Keys
-import services.{EventService, TokenService, UserService}
+import javax.inject.{Inject, Singleton}
 import models.EventType.{
   AuthByKey,
   AuthWithDifferentIp,
@@ -20,7 +15,12 @@ import models.EventType.{
   TryLoginByKey,
   UserAccessDisabled
 }
+import models._
 import play.api.Logger
+import play.api.mvc.Results.TemporaryRedirect
+import play.api.mvc._
+import serializers.Keys
+import services.{EventService, TokenService, UserService}
 
 import scala.concurrent.{ExecutionContext, Future}
 

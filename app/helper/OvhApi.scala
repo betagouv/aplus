@@ -1,18 +1,19 @@
 package helper
 
-import akka.stream.Materializer
-import akka.util.ByteString
-import helper.Time
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import java.time.ZonedDateTime
+
+import akka.stream.Materializer
+import akka.util.ByteString
+import cats.syntax.all._
 import models.{Error, EventType}
 import play.api.libs.json.{JsValue, Json, Reads, Writes}
 import play.api.libs.ws.WSClient
 import play.api.mvc.{PlayBodyParsers, Request}
-import scala.concurrent.{ExecutionContext, Future}
+
 import scala.concurrent.duration.FiniteDuration
-import cats.implicits.catsSyntaxEq
+import scala.concurrent.{ExecutionContext, Future}
 
 object OvhApi {
 

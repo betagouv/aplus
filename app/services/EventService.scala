@@ -1,18 +1,17 @@
 package services
 
+import java.time.LocalDate
 import java.util.UUID
 
 import actions.RequestWithUserData
-import java.time.LocalDate
-
+import anorm._
+import cats.syntax.all._
+import helper.Time
 import javax.inject.Inject
 import models._
+import play.api.Logger
 import play.api.db.Database
 import play.api.mvc.Request
-import anorm._
-import cats.implicits.catsSyntaxEq
-import helper.Time
-import play.api.Logger
 
 import scala.concurrent.Future
 

@@ -1,6 +1,6 @@
 package helper
 
-import cats.implicits.catsSyntaxEq
+import cats.syntax.all._
 
 object CSVUtil {
 

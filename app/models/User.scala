@@ -3,7 +3,7 @@ package models
 import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 
-import cats.implicits.catsSyntaxEq
+import cats.syntax.all._
 import constants.Constants
 import helper.{Hash, UUIDHelper}
 

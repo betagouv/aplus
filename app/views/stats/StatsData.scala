@@ -1,7 +1,7 @@
 package views.stats
 
-import cats.implicits.{catsKernelStdEqForOption, catsSyntaxEq, catsSyntaxOptionId}
 import cats.kernel.Eq
+import cats.syntax.all._
 import helper.Time
 import models.{Application, Area, User}
 

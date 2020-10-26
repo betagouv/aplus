@@ -3,7 +3,7 @@ package models
 import java.util.UUID
 
 import cats.Eq
-import cats.implicits.catsSyntaxEq
+import cats.syntax.all._
 import helper.StringHelper.CanonizeString
 import helper.UUIDHelper
 

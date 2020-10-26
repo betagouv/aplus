@@ -4,7 +4,7 @@ import java.util.UUID
 
 import actions.LoginAction
 import cats.data.EitherT
-import cats.implicits.catsSyntaxEq
+import cats.syntax.all._
 import constants.Constants
 import controllers.Operators.UserOperators
 import javax.inject.{Inject, Singleton}

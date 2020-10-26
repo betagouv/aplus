@@ -5,7 +5,7 @@ import java.time.temporal.ChronoUnit.MINUTES
 import java.util.UUID
 
 import cats.Eq
-import cats.implicits.catsSyntaxEq
+import cats.syntax.all._
 import helper.BooleanHelper.not
 import models.Authorization.{isExpert, isHelper, isInstructor, UserRights}
 
