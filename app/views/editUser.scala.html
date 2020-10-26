@@ -190,8 +190,8 @@
     }
     <script type='text/javascript'>
         function showHide(sender) {
-            const thead = sender.parentNode.parentNode.parentNode.parentNode;
-            const tbody = thead.nextElementSibling;
+            var thead = sender.parentNode.parentNode.parentNode.parentNode;
+            var tbody = thead.nextElementSibling;
             if(sender.checked) {
                 tbody.classList.remove("invisible");
             } else {
