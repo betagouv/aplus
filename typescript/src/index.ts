@@ -5,3 +5,4 @@ import 'ts-polyfill/lib/es2015-core';
 // Our scripts
 import "./admin.ts"
 import "./mdl-extensions.ts"
+import "./validateAccount"

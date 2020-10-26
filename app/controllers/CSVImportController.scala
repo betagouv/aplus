@@ -122,10 +122,12 @@ case class CSVImportController @Inject() (
           case None     => UUID.randomUUID()
           case Some(id) => id
         },
-        Some(_)
+        Option.apply
       ),
       "key" -> ignored("key"),
-      "name" -> nonEmptyText.verifying(maxLength(100)),
+      "firstName" -> optional(text.verifying(maxLength(100))),
+      "lastName" -> optional(text.verifying(maxLength(100))),
+      "name" -> text.verifying(maxLength(500)),
       "quality" -> default(text, ""),
       "email" -> email.verifying(maxLength(200), nonEmpty),
       "helper" -> ignored(true),
@@ -153,7 +155,7 @@ case class CSVImportController @Inject() (
           case None     => UUID.randomUUID()
           case Some(id) => id
         },
-        Some(_)
+        Option.apply
       ),
       "name" -> text(maxLength = 60),
       "description" -> optional(text),
@@ -336,6 +338,10 @@ case class CSVImportController @Inject() (
                       .flatMap(_.users)
                       .filter(_.alreadyExistingUser.isEmpty)
                       .map(_.user)
+                      .map {
+                        case user if user.name.nonEmpty => user.copy(sharedAccount = true)
+                        case user                       => user.copy(sharedAccount = false)
+                      }
                       // Here we will group users by email, so we can put them in multiple groups
                       .groupBy(_.email)
                       .map { case (_, entitiesWithSameEmail) =>

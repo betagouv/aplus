@@ -1,5 +1,6 @@
 package browser
 
+import cats.implicits.catsSyntaxOptionId
 import helper.{Time, UUIDHelper}
 import models.{Area, LoginToken, User, UserGroup}
 import org.junit.runner._
@@ -7,7 +8,7 @@ import org.specs2.mutable._
 import org.specs2.runner._
 import play.api.test.Helpers._
 import play.api.test._
-import services.{ApplicationService, EventService, TokenService, UserGroupService, UserService}
+import services.{ApplicationService, TokenService, UserGroupService, UserService}
 
 @RunWith(classOf[JUnitRunner])
 class ApplicationSpec extends Specification with Tables with BaseSpec {
@@ -20,7 +21,6 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
       val tokenService = app.injector.instanceOf[TokenService]
       val userService = app.injector.instanceOf[UserService]
       val groupService = app.injector.instanceOf[UserGroupService]
-      val eventService = app.injector.instanceOf[EventService]
       val applicationService = app.injector.instanceOf[ApplicationService]
 
       val number = scala.util.Random.nextInt()
@@ -37,38 +37,42 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
       val instructorUser = User(
         UUIDHelper.randomUUID,
         "key",
+        "FirstName".some,
+        "LastName".some,
         s"J'instruit TEST $number",
         s"Instructeur Testeur $number",
         s"instructor-test$number@example.com",
-        true,
-        true,
-        false,
+        helper = true,
+        instructor = true,
+        admin = false,
         List(area),
         Time.nowParis(),
         "0",
-        false,
-        false,
+        groupAdmin = false,
+        disabled = false,
         cguAcceptationDate = Some(Time.nowParis()),
         groupIds = List(instructorGroup.id)
       )
       val helperUser = User(
         UUIDHelper.randomUUID,
         "key",
+        "FirstName".some,
+        "LastName".some,
         s"J'aide TEST $number",
         "Aidant Testeur",
         s"helper-test$number@example.com",
-        true,
-        false,
-        false,
+        helper = true,
+        instructor = false,
+        admin = false,
         List(area),
         Time.nowParis(),
         "0",
-        false,
-        false,
+        groupAdmin = false,
+        disabled = false,
         cguAcceptationDate = Some(Time.nowParis())
       )
       userService.add(List(instructorUser, helperUser))
-      userService.acceptCGU(helperUser.id, false)
+      userService.validateCGU(helperUser.id)
 
       // Helper login
       val loginToken = LoginToken.forUserId(helperUser.id, 5, "127.0.0.1")
@@ -128,7 +132,7 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
 
       // Check if the application exist in database
       val applicationOption = applicationService
-        .allByArea(area, false)
+        .allByArea(area, anonymous = false)
         .find(_.subject === subject)
 
       applicationOption mustNotEqual None
