@@ -94,7 +94,7 @@ case class Application(
   def status =
     closed match {
       case true                                                            => "Clôturée"
-      case _ if !answers.forall(_.creatorUserID != creatorUserId)          => "Répondu"
+      case _ if answers.exists(_.creatorUserID === creatorUserId)          => "Répondu"
       case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty => "Consultée"
       case _                                                               => "Nouvelle"
     }
