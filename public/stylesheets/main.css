@@ -541,6 +541,14 @@ a {
     margin-top: 8px;
 }
 
+.single--margin-top--8px {
+    margin-top: -8px;
+}
+
+.single--margin-top--16px {
+    margin-top: -16px;
+}
+
 .single--margin-top-10px {
     margin-top: 10px;
 }
