@@ -69,8 +69,9 @@ case class Application(
 
   def longStatus(user: User) =
     closed match {
-      case true                                                                         => "Clôturée"
-      case _ if user.id === creatorUserId && answers.exists(_.creatorUserID != user.id) => "Répondu"
+      case true => "Clôturée"
+      case _ if user.id === creatorUserId && answers.exists(_.creatorUserID =!= user.id) =>
+        "Répondu"
       case _
           if user.id === creatorUserId && seenByUserIds
             .intersect(invitedUsers.keys.toList)
@@ -175,7 +176,7 @@ case class Application(
     None
   }
 
-  lazy val firstAgentAnswerDate = answers.find(_.id != creatorUserId).map(_.creationDate)
+  lazy val firstAgentAnswerDate = answers.find(_.id =!= creatorUserId).map(_.creationDate)
 
   lazy val firstAnswerTimeInMinutes: Option[Int] = firstAgentAnswerDate.map { firstAnswerDate =>
     MINUTES.between(creationDate, firstAnswerDate).toInt

@@ -38,7 +38,7 @@ class TokenService @Inject() (configuration: play.api.Configuration, db: Databas
       // To be sure the token is used only once, we remove it from the database
       if (
         result.nonEmpty && SQL"""DELETE FROM login_token WHERE token = $token"""
-          .executeUpdate() != 1
+          .executeUpdate() =!= 1
       ) {
         throw UnexpectedException(Some(s"loginToken $token can't be removed on byToken"))
       }
