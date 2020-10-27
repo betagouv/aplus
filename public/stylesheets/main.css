@@ -733,6 +733,10 @@ a {
     list-style-type: none;
 }
 
+.single--font-weight-600 {
+    font-weight: 600;
+}
+
 
 @media (max-width: 479px) {
     .single--hidden-phone {
