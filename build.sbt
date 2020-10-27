@@ -67,7 +67,7 @@ libraryDependencies ++= Seq(
   ehcache
 )
 
-pipelineStages := Seq(rjs, digest, gzip)
+pipelineStages := Seq(digest, gzip)
 
 libraryDependencies += specs2 % Test
 libraryDependencies += guice
