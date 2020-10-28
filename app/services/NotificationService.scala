@@ -1,21 +1,23 @@
 package services
 
-import akka.stream.{ActorAttributes, Materializer, Supervision}
-import akka.stream.scaladsl.{RestartSource, Sink, Source}
-import constants.Constants
 import java.util.UUID
-import javax.inject.{Inject, Singleton}
+
+import akka.stream.scaladsl.{RestartSource, Sink, Source}
+import akka.stream.{ActorAttributes, Materializer, Supervision}
+import cats.syntax.all._
+import constants.Constants
 import controllers.routes
 import helper.EmailHelper.quoteEmailPhrase
+import javax.inject.{Inject, Singleton}
 import models._
 import models.mandat.Mandat
 import play.api.Logger
 import play.api.libs.concurrent.MaterializerProvider
-import play.api.libs.mailer.MailerClient
-import play.api.libs.mailer.Email
-import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration._
+import play.api.libs.mailer.{Email, MailerClient}
 import views.emails.{common, WeeklyEmailInfos}
+
+import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class NotificationService @Inject() (
@@ -58,7 +60,7 @@ class NotificationService @Inject() (
     }
   }
 
-  private val https = configuration.underlying.getString("app.https") == "true"
+  private val https = configuration.underlying.getString("app.https") === "true"
 
   private val from = s"Administration+ <${Constants.supportEmail}>"
 
@@ -128,7 +130,7 @@ class NotificationService @Inject() (
     // Send emails to users
     users
       .flatMap { user =>
-        if (user.id == answer.creatorUserID) {
+        if (user.id === answer.creatorUserID) {
           None
         } else if (answer.invitedUsers.contains(user.id)) {
           Some(generateInvitationEmail(application, Some(answer))(user))
@@ -317,7 +319,7 @@ class NotificationService @Inject() (
         application.answers.lastOption match {
           case None => false
           case Some(lastAnswer) =>
-            if ((lastAnswer.creatorUserID: UUID) == (user.id: UUID)) {
+            if (lastAnswer.creatorUserID === user.id) {
               false
             } else {
               lastAnswer.ageInDays > daySinceLastAgentAnswerForApplicationsThatShouldBeClosed

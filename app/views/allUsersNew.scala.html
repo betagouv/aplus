@@ -44,6 +44,8 @@
                     {
                         id: "@user.id",
                         name: "@user.name",
+                        lastName: "@user.lastName",
+                        firstName: "@user.firstName",
                         email: "@user.email",
                         qualite: "@user.qualite",
                         phoneNumber: "@{user.phoneNumber.getOrElse("")}",
@@ -63,7 +65,8 @@
                         admin: @user.admin,
                         expert: @user.expert,
                         disabled: @user.disabled,
-                        sharedAccount: @user.sharedAccount
+                        sharedAccount: @user.sharedAccount,
+                        cgu: @user.cguAcceptationDate.nonEmpty
                     },
                 }
             ];
@@ -112,7 +115,9 @@
                         align: "center",
                         frozen:true
                     },
-                    { title: "Nom et Prénom", field: "name", headerFilter: "input", frozen:true, formatter:"html" },
+                    { title: "Nom et Prénom", field: "name", headerFilter: "input", formatter:"html" },
+                    { title: "Nom", field: "lastName", headerFilter: "input", frozen:true, formatter:"html" },
+                    { title: "Prénom", field: "firstName", headerFilter: "input", frozen:true, formatter:"html" },
                     { title: "Groupes", field: "groups", headerFilter: "input" },
                     { title: "Email", field: "email", headerFilter: "input" },
                     { title: "Qualité", field: "qualite", headerFilter: "input" },
@@ -184,6 +189,15 @@
                                 bottomCalc: "count"
                             }
                         ]
+                    },
+                    {
+                      title: "CGU",
+                      field: "cgu",
+                      formatter: "tickCross",
+                      headerFilter: "tickCross",
+                      headerFilterParams: { tristate: true },
+                      headerVertical: verticalHeader,
+                      bottomCalc: "count"
                     },
                     { title: "Départements", field: "areas", headerFilter: "input" },
                 ]

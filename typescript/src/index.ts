@@ -6,3 +6,4 @@ import 'ts-polyfill/lib/es2015-core';
 import "./admin.ts"
 import "./mdl-extensions.ts"
 import "./application-attachment"
+import "./validateAccount"

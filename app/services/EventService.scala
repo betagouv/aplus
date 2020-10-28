@@ -1,16 +1,18 @@
 package services
 
+import java.time.LocalDate
 import java.util.UUID
 
 import actions.RequestWithUserData
-import java.time.LocalDate
+import anorm._
+import cats.syntax.all._
+import helper.Time
 import javax.inject.Inject
 import models._
+import play.api.Logger
 import play.api.db.Database
 import play.api.mvc.Request
-import anorm._
-import helper.Time
-import play.api.Logger
+
 import scala.concurrent.Future
 
 @javax.inject.Singleton
@@ -139,7 +141,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
             ${event.toUserId}::uuid,
             ${event.ipAddress}::inet
           )
-      """.executeUpdate() == 1
+      """.executeUpdate() === 1
     }
 
   def all(limit: Int, fromUserId: Option[UUID], date: Option[LocalDate]): Future[List[Event]] =

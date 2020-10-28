@@ -5,6 +5,7 @@ const path = require('path');
 // Save output JS in public/generated-js/index.js
 //
 module.exports = {
+  target: 'es5',
   entry: {
     index: path.join(__dirname, '../src/index.ts')
   },

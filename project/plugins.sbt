@@ -1,9 +1,8 @@
 // The Play plugin
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.2")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.3")
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.6.1")
 addSbtPlugin("com.codacy" % "sbt-codacy-coverage" % "3.0.3")
-addSbtPlugin("com.typesafe.sbt" % "sbt-rjs" % "1.0.10")
 addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.4")
 addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.2")
 

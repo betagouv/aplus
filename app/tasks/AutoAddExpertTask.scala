@@ -3,17 +3,12 @@ package tasks
 import java.util.UUID
 
 import akka.actor._
+import cats.syntax.all._
 import helper.Time
 import javax.inject.Inject
 import models._
 import play.api.Configuration
-import services.{
-  ApplicationService,
-  EventService,
-  NotificationService,
-  UserGroupService,
-  UserService
-}
+import services._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -43,7 +38,7 @@ class AutoAddExpertTask @Inject() (
   def inviteExpertsInApplication() =
     if (configuration.get[Boolean]("app.features.autoAddExpert")) {
       applicationService.openAndOlderThan(dayWithoutAgentAnswer).foreach { application =>
-        application.answers.filter(_.creatorUserID != application.creatorUserId).lastOption match {
+        application.answers.filter(_.creatorUserID =!= application.creatorUserId).lastOption match {
           case None => // No answer for someone else the creator
             inviteExpert(application, dayWithoutAgentAnswer)
           case Some(answer)
@@ -72,7 +67,7 @@ class AutoAddExpertTask @Inject() (
           false,
           Some(Map())
         )
-        if (applicationService.add(application.id, answer, true) == 1) {
+        if (applicationService.add(application.id, answer, true) === 1) {
           notificationService.newAnswer(application, answer)
           eventService.info(
             User.systemUser,

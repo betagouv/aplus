@@ -1,0 +1,104 @@
+@import models._
+@import _root_.helper.MDLForms._
+@(user: User, currentUserRights: Authorization.UserRights, cguForm: Form[models.formModels.ValidateSubscriptionForm])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+
+    @main(user, currentUserRights)("Conditions générales d’utilisation") {
+    } {
+        <div class="mdl-data-table mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+            <h3 class="mdl-cell mdl-cell--12-col single--padding-left-48px">Confirmation de votre inscription</h3>
+            @if(user.cguAcceptationDate.nonEmpty) {
+                <p class="single--padding-left-48px single--margin-left-8px">Vous avez déjà validé vos informations professionnelles</p>
+            }
+            @if(user.cguAcceptationDate.isEmpty) {
+                @if(!user.sharedAccount) {
+                    <p class="single--padding-left-48px single--margin-left-8px">Veuillez saisir ou corriger vos informations professionnelles :</p>
+                }
+                @helper.form(action = routes.UserController.validateAccount(), args = "class" -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
+                    @helper.CSRF.formField
+                    @flash.get("redirect").map { redirect =>
+                        <input name="redirect" value="@redirect" style="display: none">
+                    }
+                    <input id="sharedAccountValue" value="@user.sharedAccount" style="display: none">
+                    <div>
+                        @if(!user.sharedAccount) {
+                            <div class="single--display-flex single--align-items-center single--flex-wrap-wrap single--padding-left-48px">
+                                <div>Prénom <span class="mdl-color-text--red-500">*</span>
+                                    <br>
+                                    @helper.input(cguForm("firstName"),
+                                        "class" -> "mdl-textfield--fix"
+                                    ) { (id, name, value, args) =>
+                                        <input class="mdl-textfield__input mdl-color--white"
+                                        type="text" required
+                                        name="@name"
+                                        id="firstnameValue"
+                                        value="@value"
+                                            @toHtmlArgs(args)>
+                                    }
+                                </div>
+                            </div>
+                            <div class="single--display-flex single--align-items-center single--flex-wrap-wrap single--padding-left-48px">
+                                <div>Nom <span class="mdl-color-text--red-500">*</span>
+                                    <br>
+                                    @helper.input(cguForm("lastName"),
+                                        "class" -> "mdl-textfield--fix"
+                                    ) { (id, name, value, args) =>
+                                        <input class="mdl-textfield__input mdl-color--white"
+                                        type="text" required
+                                        name="@name"
+                                        id="lastnameValue"
+                                        value="@value"
+                                            @toHtmlArgs(args)>
+                                    }
+                                </div>
+                            </div>
+                            <div class="single--display-flex single--align-items-center single--flex-wrap-wrap single--padding-left-48px">
+                                <div>Numéro de téléphone professionel
+                                    <br>
+                                    @helper.input(cguForm("phoneNumber"),
+                                        "class" -> "mdl-textfield--fix",
+                                        "label" -> "XX XX XX XX XX"
+                                    ) { (id, name, value, args) =>
+                                        <input class="mdl-textfield__input mdl-color--white"
+                                        type="tel"
+                                        pattern="[0-9]{2} [0-9]{2} [0-9]{2} [0-9]{2} [0-9]{2}"
+                                        name="@name"
+                                        id=@id
+                                        value="@value"
+                                            @toHtmlArgs(args)>
+                                    }
+                                </div>
+                            </div>
+                            <div class="single--display-flex single--align-items-center single--flex-wrap-wrap single--padding-left-48px">
+                                <div>Intitulé du poste <span class="mdl-color-text--red-500">*</span>
+                                    <br>
+                                    @helper.input(cguForm("qualite"),
+                                        "class" -> "mdl-textfield--fix"
+                                    ) { (id, name, value, args) =>
+                                        <input class="mdl-textfield__input mdl-color--white"
+                                        type="text" required
+                                        name="@name"
+                                        id="qualiteValue"
+                                        value="@value"
+                                            @toHtmlArgs(args)>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        <p class="single--padding-left-48px">
+                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-charte" style="height: unset;">
+                                <input type="checkbox" id="checkbox-charte" name="cguChecked" class="mdl-checkbox__input" value="true">
+                                <span class="mdl-checkbox__label">
+                                    J’atteste avoir pris connaissance des <a href="https://docs.aplus.beta.gouv.fr/conditions-generales-dutilisation" target="_blank" rel="noopener noreferrer">
+                                    conditions générales d’utilisation</a>
+                                    et je m’engage à les respecter. <span class="mdl-color-text--red-500">
+                                    *</span></span>
+                            </label> </p>
+                        <button id="validation" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset" disabled>
+                            Valider l’inscription
+                        </button>
+                    </div>
+                }
+            }
+        </div>
+    } {
+    }

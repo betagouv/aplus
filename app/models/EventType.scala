@@ -1,5 +1,7 @@
 package models
 
+import cats.Eq
+import cats.syntax.all._
 import helper.StringHelper
 
 /** Note: `EventType` is used for logging, and logging is an orthogonal concern.
@@ -12,6 +14,8 @@ trait EventType {
 }
 
 object EventType {
+
+  implicit val Eq: Eq[EventType] = (x: EventType, y: EventType) => x.code === y.code
 
   sealed trait Error extends EventType {
     val level = "ERROR"

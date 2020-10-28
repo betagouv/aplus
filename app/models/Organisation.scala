@@ -1,5 +1,7 @@
 package models
 
+import cats.Eq
+import cats.syntax.all._
 import helper.StringHelper.CanonizeString
 
 case class Organisation(id: Organisation.Id, shortName: String, name: String)
@@ -13,6 +15,8 @@ object Organisation {
   object Id {
 
     import play.api.data.format.Formatter
+
+    implicit val Eq: Eq[Id] = (x: Id, y: Id) => x.id === y.id
 
     implicit object OrganisationIdFormatter extends Formatter[Organisation.Id] {
       import play.api.data.format.Formats._
@@ -43,11 +47,10 @@ object Organisation {
 
   def fromShortName(shortName: String): Option[Organisation] = {
     val standardShortName = shortName.stripSpecialChars
-    all.find(_.shortName.stripSpecialChars == standardShortName)
+    all.find(_.shortName.stripSpecialChars === standardShortName)
   }
 
-  def byId(id: Id): Option[Organisation] =
-    all.find(org => (org.id: Id) == (id: Id))
+  def byId(id: Id): Option[Organisation] = all.find(org => org.id === id)
 
   val franceServicesId = Organisation.Id("MFS")
   val franceServices = Organisation(franceServicesId, "FS", "France Services")

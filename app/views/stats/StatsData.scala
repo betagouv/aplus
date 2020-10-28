@@ -1,13 +1,20 @@
 package views.stats
 
+import cats.kernel.Eq
+import cats.syntax.all._
 import helper.Time
-import java.time.ZonedDateTime
-import scala.collection.immutable.ListMap
 import models.{Application, Area, User}
+
+import scala.collection.immutable.ListMap
 
 object StatsData {
 
   case class Label(label: String) extends AnyVal
+
+  object Label {
+    implicit val Eq: Eq[Label] = (x: Label, y: Label) => x.label === y.label
+  }
+
   case class TimeSeries(points: List[(Label, Int)])
 
   case class ConditionalTimeSeries(series: List[(Label, TimeSeries)], timeAxis: List[Label]) {
@@ -23,7 +30,7 @@ object StatsData {
             (
               condition.label,
               singleTimeSeries.points
-                .find(t => (t._1: Label) == (timePoint: Label))
+                .find(t => t._1 === timePoint)
                 .map(_._2)
                 // not pretty, maybe figure out how to have some Option / NaN
                 .getOrElse[Int](0)
@@ -56,30 +63,24 @@ object StatsData {
       months.values.toList.map { month: String =>
         month -> applications
           .filter(application =>
-            (Time
-              .formatPatternFr(application.creationDate, "MMMM YYYY"): String) == (month: String)
+            Time
+              .formatPatternFr(application.creationDate, "MMMM YYYY") === month
           )
-          .toList
       }
 
     lazy val closedApplicationsGroupedByMonth: List[(String, List[Application])] =
       months.values.toList.map { month: String =>
         month -> applications
           .filter(application =>
-            application.estimatedClosedDate
-              .map(closedDate =>
-                (Time.formatPatternFr(closedDate, "MMMM YYYY"): String) == (month: String)
-              )
-              .getOrElse(false)
+            application.estimatedClosedDate.exists(closedDate =>
+              Time.formatPatternFr(closedDate, "MMMM YYYY") === month
+            )
           )
-          .toList
       }
 
     private def applicationsCountByMandat(mandatType: Application.MandatType): List[Int] =
       applicationsGroupedByMonth.map(
-        _._2.count(application =>
-          (application.mandatType: Option[Application.MandatType]) == Some(mandatType)
-        )
+        _._2.count(application => application.mandatType === mandatType.some)
       )
 
     lazy val applicationsCountByMandatPaper: List[Int] =
@@ -87,9 +88,7 @@ object StatsData {
         _._2
           .count(application =>
             application.mandatType.isEmpty ||
-              (application.mandatType: Option[Application.MandatType]) == Some(
-                Application.MandatType.Paper
-              )
+              application.mandatType === Application.MandatType.Paper.some
           )
       )
 
@@ -105,8 +104,7 @@ object StatsData {
       applicationsGroupedByMonth
         .flatMap(_._2)
         .flatMap(_.administrations(usersRelatedToApplications))
-        .toSet
-        .toList
+        .distinct
 
     lazy val applicationsCountByAdministrations: List[Int] =
       administrations.map(administration =>
@@ -138,8 +136,7 @@ object StatsData {
       applicationsGroupedByMonth
         .flatMap(_._2)
         .flatMap(_.creatorUserQualite(usersRelatedToApplications))
-        .toSet
-        .toList
+        .distinct
 
     lazy val applicationsCountGroupedByCreatorQualiteThenByMonth: ConditionalTimeSeries =
       ConditionalTimeSeries(

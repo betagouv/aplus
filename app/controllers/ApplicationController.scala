@@ -3,70 +3,36 @@ package controllers
 import java.nio.file.{Files, Path, Paths}
 import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
-import helper.UUIDHelper
-import scala.util.{Failure, Success, Try}
 
 import actions._
+import cats.syntax.all._
 import constants.Constants
-import helper.Time.zonedDateTimeOrdering
 import forms.FormsPlusMap
-import helper.{Hash, Time}
+import helper.BooleanHelper.not
+import helper.CSVUtil.escape
+import helper.StringHelper.CanonizeString
+import helper.Time.zonedDateTimeOrdering
+import helper.{Hash, Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
-import models.{Answer, Application, Area, Authorization, Organisation, User, UserGroup}
+import models.EventType._
+import models._
 import models.formModels.{AnswerFormData, ApplicationFormData, InvitationFormData}
 import models.mandat.Mandat
 import org.webjars.play.WebJarsUtil
+import play.api.cache.AsyncCacheApi
 import play.api.data.Forms._
 import play.api.data._
 import play.api.data.validation.Constraints._
-import play.api.mvc._
-import services._
-import helper.BooleanHelper.not
-import helper.CSVUtil.escape
-import models.EventType.{
-  AddExpertCreated,
-  AddExpertNotCreated,
-  AddExpertUnauthorized,
-  AgentsAdded,
-  AgentsNotAdded,
-  AllApplicationsShowed,
-  AllApplicationsUnauthorized,
-  AllAsNotFound,
-  AllAsShowed,
-  AllAsUnauthorized,
-  AllCSVShowed,
-  AnswerCreated,
-  AnswerNotCreated,
-  ApplicationCreated,
-  ApplicationCreationError,
-  ApplicationCreationInvalid,
-  ApplicationFormShowed,
-  ApplicationLinkedToMandat,
-  ApplicationLinkedToMandatError,
-  ApplicationShowed,
-  FileNotFound,
-  FileOpened,
-  FileUnauthorized,
-  InviteNotCreated,
-  MyApplicationsShowed,
-  MyCSVShowed,
-  StatsShowed,
-  TerminateCompleted,
-  TerminateError,
-  TerminateIncompleted,
-  TerminateUnauthorized
-}
-import play.api.cache.AsyncCacheApi
 import play.api.libs.ws.WSClient
+import play.api.mvc._
 import play.twirl.api.Html
+import serializers.{AttachmentHelper, DataModel, Keys}
+import services._
 import views.stats.StatsData
 
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration._
-import helper.StringHelper.CanonizeString
-import serializers.{AttachmentHelper, DataModel, Keys}
-
-import scala.concurrent.duration._
+import scala.util.{Failure, Success, Try}
 
 /** This controller creates an `Action` to handle HTTP requests to the
   * application's home page.
@@ -181,7 +147,7 @@ case class ApplicationController @Inject() (
         .filter(user =>
           user.helper && user.groupIds.toSet.intersect(currentUser.groupIds.toSet).nonEmpty
         )
-        .filterNot(user => (user.id: UUID) == (currentUser.id: UUID))
+        .filterNot(user => user.id === currentUser.id)
       // This could be optimized by doing only one SQL query
       val instructorsOfGroups = usersInThoseGroups.filter(_.instructor)
       val groupIdsWithInstructors = instructorsOfGroups.flatMap(_.groupIds).toSet
@@ -230,7 +196,7 @@ case class ApplicationController @Inject() (
                 groupsOfAreaWithInstructor,
                 coworkers,
                 readSharedAccountUserSignature(request.session),
-                canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
+                canCreatePhoneMandat = currentArea === Area.calvados,
                 featureMandatSms = featureMandatSms,
                 featureCanSendApplicationsAnywhere = featureCanSendApplicationsAnywhere,
                 categories,
@@ -282,7 +248,6 @@ case class ApplicationController @Inject() (
       val (pendingAttachments, newAttachments) =
         AttachmentHelper.computeStoreAndRemovePendingAndNewApplicationAttachment(
           applicationId,
-          form.data,
           computeAttachmentsToStore(request),
           filesPath
         )
@@ -303,7 +268,7 @@ case class ApplicationController @Inject() (
                     groupsOfAreaWithInstructor,
                     coworkers,
                     None,
-                    canCreatePhoneMandat = (currentArea: Area) == (Area.calvados: Area),
+                    canCreatePhoneMandat = currentArea === Area.calvados,
                     featureMandatSms = featureMandatSms,
                     featureCanSendApplicationsAnywhere = featureCanSendApplicationsAnywhere,
                     organisationService.categories,
@@ -448,7 +413,7 @@ case class ApplicationController @Inject() (
             )
           )
         case _ =>
-          val area = if (areaId == Area.allArea.id) None else Area.fromId(areaId)
+          val area = if (areaId === Area.allArea.id) None else Area.fromId(areaId)
           allApplicationVisibleByUserAdmin(request.currentUser, area).map {
             unfilteredApplications =>
               val filteredApplications =
@@ -503,7 +468,7 @@ case class ApplicationController @Inject() (
         .groupBy(_.area)
         .flatMap { case (areaId: UUID, applications: Seq[Application]) =>
           Area.all
-            .find(area => (area.id: UUID) == (areaId: UUID))
+            .find(area => area.id === areaId)
             .map(area => (area, applications))
         }
 
@@ -746,18 +711,18 @@ case class ApplicationController @Inject() (
     val groups = userGroupService.byIds(userGroupIds)
 
     def applicationToCSV(application: Application): String = {
-      val creatorUser = users.find(_.id == application.creatorUserId)
+      val creatorUser = users.find(_.id === application.creatorUserId)
       val invitedUsers =
         users.filter(user => application.invitedUsers.keys.toList.contains[UUID](user.id))
       val creatorUserGroupNames = creatorUser.toList
         .flatMap(_.groupIds)
-        .flatMap { groupId: UUID => groups.filter(group => group.id == groupId) }
+        .flatMap(groupId => groups.filter(group => group.id === groupId))
         .map(_.name)
         .mkString(",")
       val invitedUserGroupNames = invitedUsers
         .flatMap(_.groupIds)
         .distinct
-        .flatMap { groupId: UUID => groups.filter(group => group.id == groupId) }
+        .flatMap(groupId => groups.filter(group => group.id === groupId))
         .map(_.name)
         .mkString(",")
 
@@ -768,7 +733,7 @@ case class ApplicationController @Inject() (
         Time.formatPatternFr(application.creationDate, "YYY-MM-dd"),
         creatorUserGroupNames,
         invitedUserGroupNames,
-        Area.all.find(_.id == application.area).map(_.name).head,
+        Area.all.find(_.id === application.area).map(_.name).head,
         application.closedDate.map(date => Time.formatPatternFr(date, "YYY-MM-dd")).getOrElse(""),
         if (not(application.irrelevant)) "Oui" else "Non",
         application.usefulness.getOrElse("?"),
@@ -814,7 +779,7 @@ case class ApplicationController @Inject() (
 
   def allCSV(areaId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      val area = if (areaId == Area.allArea.id) None else Area.fromId(areaId)
+      val area = if (areaId === Area.allArea.id) None else Area.fromId(areaId)
       val exportedApplicationsFuture =
         if (request.currentUser.admin || request.currentUser.groupAdmin) {
           allApplicationVisibleByUserAdmin(request.currentUser, area)
@@ -875,12 +840,10 @@ case class ApplicationController @Inject() (
            userService.byGroupIds(invitedGroups.toList).filter(_.instructor)
          }
        }
-       coworkers.zip(instructorsCoworkers).map { case (helpers, instructors) =>
-         helpers ::: instructors
-       }
+       coworkers.combine(instructorsCoworkers)
      }).map(
       _.filterNot(user =>
-        user.id == request.currentUser.id || application.invitedUsers.contains(user.id)
+        user.id === request.currentUser.id || application.invitedUsers.contains(user.id)
       )
     )
 
@@ -974,7 +937,7 @@ case class ApplicationController @Inject() (
             .addHttpHeaders(cookies.map(cookie => (COOKIE, cookie)): _*)
             .get()
             .map { response =>
-              if (response.status / 100 == 2) {
+              if (response.status / 100 === 2) {
                 val body = response.bodyAsSource
                 val contentLength: Option[Long] =
                   response.header(CONTENT_LENGTH).flatMap(raw => Try(raw.toLong).toOption)
@@ -1003,7 +966,7 @@ case class ApplicationController @Inject() (
         answerIdOption match {
           case Some(answerId)
               if application.fileCanBeShowed(request.currentUser, request.rights, answerId) =>
-            application.answers.find(_.id == answerId) match {
+            application.answers.find(_.id === answerId) match {
               case Some(answer) if answer.files.getOrElse(Map.empty).contains(filename) =>
                 eventService.log(
                   FileOpened,
@@ -1060,7 +1023,6 @@ case class ApplicationController @Inject() (
         val (pendingAttachments, newAttachments) =
           AttachmentHelper.computeStoreAndRemovePendingAndNewAnswerAttachment(
             answerId,
-            form.data,
             computeAttachmentsToStore(request),
             filesPath
           )
@@ -1099,7 +1061,7 @@ case class ApplicationController @Inject() (
               ),
               files = Some(newAttachments ++ pendingAttachments)
             )
-            if (applicationService.add(applicationId, answer) == 1) {
+            if (applicationService.add(applicationId, answer) === 1) {
               eventService.log(
                 AnswerCreated,
                 s"La réponse ${answer.id} a été créée sur la demande $applicationId",
@@ -1194,7 +1156,7 @@ case class ApplicationController @Inject() (
                       Some(Map.empty)
                     )
 
-                    if (applicationService.add(applicationId, answer) == 1) {
+                    if (applicationService.add(applicationId, answer) === 1) {
                       notificationsService.newAnswer(application, answer)
                       eventService.log(
                         AgentsAdded,
@@ -1239,7 +1201,7 @@ case class ApplicationController @Inject() (
               declareApplicationHasIrrelevant = false,
               Some(Map())
             )
-            if (applicationService.add(applicationId, answer, expertInvited = true) == 1) {
+            if (applicationService.add(applicationId, answer, expertInvited = true) === 1) {
               notificationsService.newAnswer(application, answer)
               eventService.log(
                 AddExpertCreated,
@@ -1288,7 +1250,7 @@ case class ApplicationController @Inject() (
               )
             )
           case Some(usefulness) =>
-            val finalUsefulness = if (request.currentUser.id == application.creatorUserId) {
+            val finalUsefulness = if (request.currentUser.id === application.creatorUserId) {
               Some(usefulness)
             } else {
               None

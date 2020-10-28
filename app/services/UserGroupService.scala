@@ -3,13 +3,15 @@ package services
 import java.sql.ResultSet
 import java.util.UUID
 
-import scala.concurrent.Future
 import anorm._
+import cats.syntax.all._
+import helper.{Time, UUIDHelper}
 import javax.inject.Inject
 import models.{Organisation, UserGroup}
-import play.api.db.Database
-import helper.{Time, UUIDHelper}
 import org.postgresql.util.PSQLException
+import play.api.db.Database
+
+import scala.concurrent.Future
 
 @javax.inject.Singleton
 class UserGroupService @Inject() (
@@ -49,7 +51,7 @@ class UserGroupService @Inject() (
          array[${group.areaIds}]::uuid[],
          ${group.organisation.map(_.id)},
          ${group.email})
-      """.executeUpdate() == 1
+      """.executeUpdate() === 1
         }
       }
       if (result)
@@ -79,7 +81,7 @@ class UserGroupService @Inject() (
           area_ids = array[${group.areaIds}]::uuid[],
           email = ${group.email}
           WHERE id = ${group.id}::uuid
-       """.executeUpdate() == 1
+       """.executeUpdate() === 1
     //TODO: insee_code = array[${group.inseeCode}]::character varying(5)[], have been remove temporary
     }
 
@@ -134,7 +136,7 @@ class UserGroupService @Inject() (
             rs.next()
             rs.getInt("cardinality")
           })
-      cardinality == 0
+      cardinality === 0
     }
 
   def byArea(areaId: UUID): Future[List[UserGroup]] =

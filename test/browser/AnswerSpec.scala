@@ -2,6 +2,8 @@ package browser
 
 import helper.{Time, UUIDHelper}
 import java.util.UUID
+
+import cats.implicits.catsSyntaxOptionId
 import models.{Application, Area, LoginToken, User, UserGroup}
 import org.junit.runner._
 import org.specs2.mutable._
@@ -33,6 +35,8 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
   def generateUser(
       testSeed: Int,
       userSeed: String,
+      firstName: String,
+      lastName: String,
       userName: String,
       userQualite: String,
       isHelper: Boolean,
@@ -45,6 +49,8 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
     val user = User(
       id = userId(testSeed, userSeed),
       key = "key",
+      firstName = firstName.some,
+      lastName = lastName.some,
       name = userName,
       qualite = userQualite,
       email = email,
@@ -69,7 +75,6 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       user: User,
       group: UserGroup,
       invitedUsers: List[User],
-      expertInvited: Boolean,
       applicationService: ApplicationService
   ): Application = {
     // Create Application
@@ -115,47 +120,55 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
           val expertGroup = generateGroup(testSeed, "expert", groupService)
           val instructorUser = generateUser(
             testSeed,
-            "instructor-test",
-            s"J'instruit $testSeed",
-            s"Instructeur Testeur $testSeed",
-            true,
-            true,
-            false,
-            List(answerGroup),
-            userService
+            userSeed = "instructor-test",
+            firstName = "FirstName",
+            lastName = "LastName",
+            userName = s"J'instruit $testSeed",
+            userQualite = s"Instructeur Testeur $testSeed",
+            isHelper = true,
+            isInstructor = true,
+            isExpert = false,
+            groups = List(answerGroup),
+            userService = userService
           )
           val invitedExpertUser = generateUser(
             testSeed,
-            "invited-expert-test",
-            s"Je suis un expert TEST $testSeed",
-            s"Expert $testSeed",
-            true,
-            false,
-            true,
-            List(expertGroup),
-            userService
+            userSeed = "invited-expert-test",
+            firstName = "FirstName",
+            lastName = "LastName",
+            userName = s"Je suis un expert TEST $testSeed",
+            userQualite = s"Expert $testSeed",
+            isHelper = true,
+            isInstructor = false,
+            isExpert = true,
+            groups = List(expertGroup),
+            userService = userService
           )
           val invitedUser = generateUser(
             testSeed,
-            "invited-user-test",
-            s"Je suis un agent TEST $testSeed",
-            s"Agent $testSeed",
-            true,
-            false,
-            false,
-            List(answerGroup),
-            userService
+            userSeed = "invited-user-test",
+            firstName = "FirstName",
+            lastName = "LastName",
+            userName = s"Je suis un agent TEST $testSeed",
+            userQualite = s"Agent $testSeed",
+            isHelper = true,
+            isInstructor = false,
+            isExpert = false,
+            groups = List(answerGroup),
+            userService = userService
           )
           val helperUser = generateUser(
             testSeed,
-            "helper-test",
-            s"J'aide TEST $testSeed",
-            s"Aidant Testeur $testSeed",
-            true,
-            false,
-            false,
-            List(helperGroup),
-            userService
+            userSeed = "helper-test",
+            firstName = "FirstName",
+            lastName = "LastName",
+            userName = s"J'aide TEST $testSeed",
+            userQualite = s"Aidant Testeur $testSeed",
+            isHelper = true,
+            isInstructor = false,
+            isExpert = false,
+            groups = List(helperGroup),
+            userService = userService
           )
           val users = List(
             instructorUser,
@@ -163,21 +176,20 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
             invitedUser,
             helperUser
           )
-          users.forall(user => userService.acceptCGU(user.id, false))
-          val expertInvited = userSeed == "invited-expert-test"
-          val userInvited = userSeed == "invited-user-test"
+          users.map(user => userService.validateCGU(user.id))
+          val expertInvited = userSeed === "invited-expert-test"
+          val userInvited = userSeed === "invited-user-test"
           val invitedUsers =
             List(
-              Some(instructorUser),
-              if (expertInvited) Some(invitedExpertUser) else None,
-              if (userInvited) Some(invitedUser) else None
+              instructorUser.some,
+              invitedExpertUser.some.filter(_ => expertInvited),
+              invitedUser.some.filter(_ => userInvited)
             ).flatten
           val application =
             generateApplication(
               helperUser,
               helperGroup,
               invitedUsers,
-              expertInvited,
               applicationService
             )
 
@@ -219,8 +231,8 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
           }
 
           val changedApplicationOption = applicationService
-            .allByArea(helperGroup.areaIds.head, false)
-            .find(app => (app.id: UUID) == (application.id: UUID))
+            .allByArea(helperGroup.areaIds.head, anonymous = false)
+            .find(app => app.id === application.id)
 
           changedApplicationOption mustNotEqual None
           val changedApplication = changedApplicationOption.get
@@ -228,8 +240,6 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
           val answer = changedApplication.answers.head
           answer.message mustEqual answerMessage
           answer.creatorUserID mustEqual answerUserId
-        // Note: answer.creatorUserName actually uses
-        // contextualizedUserName(request.currentUser, currentAreaId)
         }
     }
   }

@@ -1,14 +1,11 @@
 package actions
 
+import cats.syntax.all._
 import constants.Constants
-import javax.inject.{Inject, Singleton}
 import controllers.routes
+import helper.BooleanHelper.not
 import helper.UUIDHelper
-import models._
-import play.api.mvc._
-import play.api.mvc.Results.TemporaryRedirect
-import serializers.Keys
-import services.{EventService, TokenService, UserService}
+import javax.inject.{Inject, Singleton}
 import models.EventType.{
   AuthByKey,
   AuthWithDifferentIp,
@@ -18,7 +15,13 @@ import models.EventType.{
   TryLoginByKey,
   UserAccessDisabled
 }
+import models._
 import play.api.Logger
+import play.api.mvc.Results.TemporaryRedirect
+import play.api.mvc._
+import serializers.Keys
+import services.{EventService, TokenService, UserService}
+
 import scala.concurrent.{ExecutionContext, Future}
 
 class RequestWithUserData[A](
@@ -76,7 +79,7 @@ class LoginAction @Inject() (
       )
     val url = "http" + (if (request.secure) "s" else "") + "://" + request.host + path
     (userBySession, userByKey, tokenById) match {
-      case (Some(userSession), Some(userKey), None) if userSession.id == userKey.id =>
+      case (Some(userSession), Some(userKey), None) if userSession.id === userKey.id =>
         Future(Left(TemporaryRedirect(Call(request.method, url).url)))
       case (_, Some(user), None) =>
         LoginAction.readUserRights(user).map { userRights =>
@@ -107,9 +110,9 @@ class LoginAction @Inject() (
         }
       case (_, None, Some(token)) =>
         manageToken(token)
-      case (Some(user), None, None) if user.disabled == false =>
+      case (Some(user), None, None) if not(user.disabled) =>
         manageUserLogged(user)
-      case (Some(user), None, None) if user.disabled == true =>
+      case (Some(user), None, None) if user.disabled =>
         LoginAction.readUserRights(user).map { userRights =>
           implicit val requestWithUserData =
             new RequestWithUserData(user, userRights, request)
@@ -155,7 +158,7 @@ class LoginAction @Inject() (
       } else {
         eventService.log(ToCGURedirected, "Redirection vers les CGUs")
         Left(
-          TemporaryRedirect(routes.UserController.showCGU().url)
+          TemporaryRedirect(routes.UserController.showValidateAccount().url)
             .flashing("redirect" -> request.path)
         )
       }
@@ -173,7 +176,7 @@ class LoginAction @Inject() (
           implicit val requestWithUserData =
             new RequestWithUserData(user, userRights, request)
 
-          if (token.ipAddress != request.remoteAddress) {
+          if (token.ipAddress =!= request.remoteAddress) {
             eventService.log(
               AuthWithDifferentIp,
               s"Utilisateur ${token.userId} à une adresse ip différente pour l'essai de connexion"

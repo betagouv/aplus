@@ -585,6 +585,10 @@ a {
     margin-left: 2px;
 }
 
+.single--margin-left-8px {
+    margin-left: 8px;
+}
+
 .single--margin-left-24px {
     margin-left: 24px;
 }
@@ -620,6 +624,10 @@ a {
 
 .single--padding-left-16px {
     padding-left: 16px;
+}
+
+.single--padding-left-48px {
+    padding-left: 48px;
 }
 
 .single--max-width-184px {

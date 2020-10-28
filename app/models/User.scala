@@ -3,12 +3,16 @@ package models
 import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 
+import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption}
+import cats.syntax.all._
 import constants.Constants
 import helper.{Hash, UUIDHelper}
 
 case class User(
     id: UUID,
     key: String,
+    firstName: Option[String],
+    lastName: Option[String],
     name: String,
     qualite: String,
     email: String,
@@ -43,10 +47,24 @@ case class User(
 
   // TODO: put this in Authorization
   def canSeeUsersInArea(areaId: UUID): Boolean =
-    (areaId == Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
+    (areaId === Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
 
   // Note: we want to have in DB the actual time zone
   val timeZone: ZoneId = _root_.helper.Time.timeZoneParis
+
+  def validateWith(
+      firstName: Option[String],
+      lastName: Option[String],
+      qualite: Option[String],
+      phoneNumber: Option[String]
+  ) =
+    this.copy(
+      firstName = firstName,
+      lastName = lastName,
+      name = if (sharedAccount) name else s"${lastName.orEmpty.toUpperCase} ${firstName.orEmpty}",
+      qualite = qualite.orEmpty,
+      phoneNumber = phoneNumber
+    )
 
 }
 
@@ -55,16 +73,18 @@ object User {
   val systemUser = User(
     UUIDHelper.namedFrom("system"),
     Hash.sha256(s"system"),
+    Option.empty[String],
+    Option.empty[String],
     "Système A+",
     "System A+",
     Constants.supportEmail,
-    false,
-    false,
-    false,
+    helper = false,
+    instructor = false,
+    admin = false,
     List(),
     ZonedDateTime.parse("2017-11-01T00:00+01:00"),
     "75056",
-    false,
+    groupAdmin = false,
     disabled = true
   )
 

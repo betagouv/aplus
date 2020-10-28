@@ -4,17 +4,11 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import actions.LoginAction
-import Operators.{GroupOperators, UserOperators}
-import models.formModels.{CSVImportData, UserFormData, UserGroupFormData}
-import javax.inject.Inject
-import models.{Area, Organisation, User, UserGroup}
-import org.webjars.play.WebJarsUtil
-import play.api.data.{Form, Mapping}
-import play.api.data.Forms._
-import play.api.mvc.{Action, AnyContent, InjectedController}
-import services.{EventService, NotificationService, UserGroupService, UserService}
-import helper.Time
+import cats.syntax.all._
+import controllers.Operators.{GroupOperators, UserOperators}
 import helper.StringHelper._
+import helper.Time
+import javax.inject.Inject
 import models.EventType.{
   CSVImportFormError,
   CsvImportInputEmpty,
@@ -27,8 +21,16 @@ import models.EventType.{
   UserGroupCreated,
   UsersImported
 }
+import models.formModels.{CSVImportData, UserFormData, UserGroupFormData}
+import models.{Area, Organisation, User, UserGroup}
+import org.webjars.play.WebJarsUtil
+import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
+import play.api.data.{Form, Mapping}
+import play.api.mvc.{Action, AnyContent, InjectedController}
 import serializers.{Keys, UserAndGroupCsvSerializer}
+import services.{EventService, NotificationService, UserGroupService, UserService}
+
 import scala.concurrent.{ExecutionContext, Future}
 
 case class CSVImportController @Inject() (
@@ -48,7 +50,7 @@ case class CSVImportController @Inject() (
       "csv-lines" -> nonEmptyText,
       "area-default-ids" -> list(uuid),
       "separator" -> char
-        .verifying("Séparateur incorrect", value => value == ';' || value == ',')
+        .verifying("Séparateur incorrect", value => value === ';' || value === ',')
     )(CSVImportData.apply)(CSVImportData.unapply)
   )
 
@@ -71,7 +73,7 @@ case class CSVImportController @Inject() (
     val alreadyExistingUsers = userService.byEmails(userEmails)
     val newUsersFormDataList = userGroupFormData.users.map { userDataForm =>
       alreadyExistingUsers
-        .find(_.email.stripSpecialChars == userDataForm.user.email.stripSpecialChars)
+        .find(_.email.stripSpecialChars === userDataForm.user.email.stripSpecialChars)
         .fold {
           userDataForm.copy(
             isInMoreThanOneGroup = Some(multiGroupUserEmails.contains(userDataForm.user.email))
@@ -120,10 +122,12 @@ case class CSVImportController @Inject() (
           case None     => UUID.randomUUID()
           case Some(id) => id
         },
-        Some(_)
+        Option.apply
       ),
       "key" -> ignored("key"),
-      "name" -> nonEmptyText.verifying(maxLength(100)),
+      "firstName" -> optional(text.verifying(maxLength(100))),
+      "lastName" -> optional(text.verifying(maxLength(100))),
+      "name" -> text.verifying(maxLength(500)),
       "quality" -> default(text, ""),
       "email" -> email.verifying(maxLength(200), nonEmpty),
       "helper" -> ignored(true),
@@ -151,7 +155,7 @@ case class CSVImportController @Inject() (
           case None     => UUID.randomUUID()
           case Some(id) => id
         },
-        Some(_)
+        Option.apply
       ),
       "name" -> text(maxLength = 60),
       "description" -> optional(text),
@@ -334,6 +338,10 @@ case class CSVImportController @Inject() (
                       .flatMap(_.users)
                       .filter(_.alreadyExistingUser.isEmpty)
                       .map(_.user)
+                      .map {
+                        case user if user.name.nonEmpty => user.copy(sharedAccount = true)
+                        case user                       => user.copy(sharedAccount = false)
+                      }
                       // Here we will group users by email, so we can put them in multiple groups
                       .groupBy(_.email)
                       .map { case (_, entitiesWithSameEmail) =>

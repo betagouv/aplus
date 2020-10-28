@@ -1,10 +1,11 @@
 package services
 
 import anorm._
+import cats.syntax.all._
 import javax.inject.Inject
 import models.LoginToken
-import play.api.db.Database
 import play.api.UnexpectedException
+import play.api.db.Database
 
 @javax.inject.Singleton
 class TokenService @Inject() (configuration: play.api.Configuration, db: Database) {
@@ -26,7 +27,7 @@ class TokenService @Inject() (configuration: play.api.Configuration, db: Databas
          ${loginToken.creationDate},
          ${loginToken.expirationDate},
          ${loginToken.ipAddress}::inet)
-      """.executeUpdate() == 1
+      """.executeUpdate() === 1
     }
 
   def byToken(token: String) =
@@ -37,7 +38,7 @@ class TokenService @Inject() (configuration: play.api.Configuration, db: Databas
       // To be sure the token is used only once, we remove it from the database
       if (
         result.nonEmpty && SQL"""DELETE FROM login_token WHERE token = $token"""
-          .executeUpdate() != 1
+          .executeUpdate() =!= 1
       ) {
         throw UnexpectedException(Some(s"loginToken $token can't be removed on byToken"))
       }

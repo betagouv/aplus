@@ -67,7 +67,7 @@ libraryDependencies ++= Seq(
   ehcache
 )
 
-pipelineStages := Seq(rjs, digest, gzip)
+pipelineStages := Seq(digest, gzip)
 
 libraryDependencies += specs2 % Test
 libraryDependencies += guice
@@ -106,7 +106,7 @@ libraryDependencies ++= Seq(
   "org.webjars.npm" % "xlsx" % "0.16.7"
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "3.1.1"
+libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.30"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
