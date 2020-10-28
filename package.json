@@ -8,6 +8,7 @@
     "clean": "rimraf public/generated-js"
   },
   "dependencies": {
+    "anchorme": "2.1.2",
     "ts-polyfill": "3.8.2"
   },
   "devDependencies": {
