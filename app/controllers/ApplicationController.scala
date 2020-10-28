@@ -614,30 +614,32 @@ case class ApplicationController @Inject() (
               creationMinDate.toString + creationMaxDate.toString
           )
 
-      cache
-        .getOrElseUpdate[Html](cacheKey, 1.hours)(
-          generateStats(
-            areaIds,
-            observableOrganisationIds,
-            observableGroupIds,
-            creationMinDate,
-            creationMaxDate
-          )
-        )
-        .map { html =>
-          eventService.log(StatsShowed, "Visualise les stats")
-          Ok(
-            views.html.stats.page(request.currentUser, request.rights)(
-              html,
-              List(),
+      userGroupService.byIdsFuture(request.currentUser.groupIds).flatMap { currentUserGroups =>
+        cache
+          .getOrElseUpdate[Html](cacheKey, 1.hours)(
+            generateStats(
               areaIds,
-              organisationIds,
-              groupIds,
+              observableOrganisationIds,
+              observableGroupIds,
               creationMinDate,
               creationMaxDate
             )
           )
-        }
+          .map { html =>
+            eventService.log(StatsShowed, "Visualise les stats")
+            Ok(
+              views.html.stats.page(request.currentUser, request.rights)(
+                html,
+                groupsThatCanBeFilteredBy = currentUserGroups,
+                areaIds,
+                organisationIds,
+                groupIds,
+                creationMinDate,
+                creationMaxDate
+              )
+            )
+          }
+      }
     }
 
   def allAs(userId: UUID): Action[AnyContent] =
