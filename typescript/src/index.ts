@@ -7,5 +7,6 @@ import 'core-js/web/dom-collections';
 // Our scripts
 import "./admin.ts"
 import "./mdl-extensions.ts"
-import "./application-attachment"
 import "./validateAccount"
+import "./application-attachment"
+import "./anchorme"
