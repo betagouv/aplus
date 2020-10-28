@@ -157,7 +157,7 @@ dialog {
 .application__message {
     white-space: pre-line;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 300;
     line-height: 25px;
 }
 
@@ -360,7 +360,7 @@ dialog {
                                 <div class="mdl-list__item">
                                     <div class="mdl-list__item-primary-content">
                                         @organisationIcon(answer.creatorUserName)
-                                        <span>@answer.creatorUserName</span>@if(currentUser.admin){ <span style="font-weight: bold; color:red" class="do-not-print"> <a href="@routes.UserController.editUser(answer.creatorUserID)"> Voir fiche utilisateur</a></span>}
+                                        <span class="single--font-weight-600">@answer.creatorUserName</span>@if(currentUser.admin){ <span style="font-weight: bold; color:red" class="do-not-print"> <a href="@routes.UserController.editUser(answer.creatorUserID)"> Voir fiche utilisateur</a></span>}
                                         <span class="mdl-list__item-sub-title"></span>
                                     </div>
                                     <div class="mdl-list__item-secondary-content">
@@ -679,5 +679,4 @@ dialog {
     We use twemoji for emoji : https://github.com/twitter/twemoji
     -->
 }{
-    <script type="application/javascript" src="@routes.Assets.versioned("javascripts/application-attachment.js")"></script>
 }

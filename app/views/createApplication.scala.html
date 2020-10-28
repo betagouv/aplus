@@ -120,12 +120,10 @@
                     </div>
                     <br>
                     <h5 class="title--addline">
-                        Sujet de la demande
+                        Sujet de la demande <span class="mdl-color-text--red-500">*</span>
                     </h5>
 
-                    Résumer la nature du problème rencontré <span class="mdl-color-text--red-500">*</span>
-
-                    <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
+                    <div class="single--display-flex single--align-items-center single--flex-wrap-wrap single--margin-top--16px">
                         <div>
                     @helper.input(applicationForm("subject"),
                                   "label" -> "Saisir le sujet de votre demande...",
@@ -182,7 +180,7 @@
                         Description du problème <span class="mdl-color-text--red-500">*</span>
                     </h5>
 
-                    <div>
+                    <div class="single--margin-top--16px">
                         @helper.input(applicationForm("description"), "class" -> "mdl-textfield--floating-label mdl-textfield--large", "label" -> "Rédigez une description rapide du problème ...") { (id, name, value, args) =>
                             <textarea class="mdl-textfield__input textfield__input--no-height-constraint" type="text" rows= "5" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
                         }<br>
@@ -345,5 +343,4 @@
             }
         </div>
 }{
-        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/application-attachment.js")"></script>
 }
