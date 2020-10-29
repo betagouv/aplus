@@ -3,7 +3,7 @@
 @import _root_.helper.BooleanHelper.not
 
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil, fileExpiryDayCount: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
 @organisationIcon(creatorUserName: String) = {
@@ -247,8 +247,8 @@ dialog {
                             font-weight: 600;
                             line-height: 16px;">
                             <i class="icon material-icons icon--light">attach_file</i>
-                            @application.creatorUserName a ajouté @if(application.fileCanBeShowed(currentUser)(currentUserRights)) { le fichier <a href="@routes.ApplicationController.applicationFile(application.id, filename)" target="_blank">@filename</a> } else { un fichier }
-                            @application.filesAvailabilityLeftInDays match {
+                            @application.creatorUserName a ajouté @if(Application.fileCanBeShowed(application, fileExpiryDayCount)(currentUser)(currentUserRights)) { le fichier <a href="@routes.ApplicationController.applicationFile(application.id, filename)" target="_blank">@filename</a> } else { un fichier }
+                            @Application.filesAvailabilityLeftInDays(application, fileExpiryDayCount) match {
                                 case None => { ( Fichier expiré et supprimé ) }
                                 case Some(expirationInDays) => { ( Suppression du fichier dans @expirationInDays jours ) }
                             }
@@ -337,8 +337,8 @@ dialog {
                             font-weight: 600;
                             line-height: 16px;">
                             <i class="icon material-icons icon--light">attach_file</i>
-                            @answer.creatorUserName a ajouté @if(application.fileCanBeShowed(currentUser, currentUserRights, answer.id)) { le fichier <a href="@routes.ApplicationController.answerFile(application.id, answer.id, filename)" target="_blank">@filename</a> } else { un fichier }
-                            @answer.filesAvailabilityLeftInDays match {
+                            @answer.creatorUserName a ajouté @if(Answer.fileCanBeShowed(application, answer.id, fileExpiryDayCount)(currentUser, currentUserRights)) { le fichier <a href="@routes.ApplicationController.answerFile(application.id, answer.id, filename)" target="_blank">@filename</a> } else { un fichier }
+                            @Answer.filesAvailabilityLeftInDays(fileExpiryDayCount)(answer) match {
                                 case None => { ( Fichier expiré et supprimé ) }
                                 case Some(expirationInDays) => { ( Suppression du fichier dans @expirationInDays jours ) }
                             }
