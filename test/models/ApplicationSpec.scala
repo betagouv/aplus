@@ -12,7 +12,7 @@ import org.specs2.runner.JUnitRunner
 class ApplicationSpec extends Specification {
 
   "Application should" >> {
-    "display 'clôturée' status if application is closed" >> {
+    "display 'Archivée' status if application is closed" >> {
       val closed = true
       val application = Application(
         closed = closed,
