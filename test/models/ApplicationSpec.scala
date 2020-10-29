@@ -30,7 +30,7 @@ class ApplicationSpec extends Specification {
         mandatDate = Option.empty[String]
       )
 
-      application.status must equalTo("Clôturée")
+      application.status must equalTo("Archivée")
     }
 
     "display 'répondu' status if there is an answer with the same creator as the application" >> {

@@ -1294,7 +1294,7 @@ case class ApplicationController @Inject() (
                 Some(application)
               )
               Future(
-                Unauthorized("Seul le créateur de la demande ou un expert peut clore la demande")
+                Unauthorized("Seul le créateur de la demande ou un expert peut archiver la demande")
               )
             }
         }

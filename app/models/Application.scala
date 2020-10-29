@@ -69,7 +69,7 @@ case class Application(
 
   def longStatus(user: User) =
     closed match {
-      case true => "Clôturée"
+      case true => "Archivée"
       case _ if user.id === creatorUserId && answers.exists(_.creatorUserID =!= user.id) =>
         "Répondu"
       case _
@@ -94,7 +94,7 @@ case class Application(
 
   def status =
     closed match {
-      case true                                                            => "Clôturée"
+      case true                                                            => "Archivées"
       case _ if answers.exists(_.creatorUserID === creatorUserId)          => "Répondu"
       case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty => "Consultée"
       case _                                                               => "Nouvelle"
