@@ -487,6 +487,14 @@ case class ApplicationController @Inject() (
     data
   }
 
+  private def anonymousGroupsAndUsers(
+      groups: List[UserGroup]
+  ): Future[(List[User], List[Application])] =
+    for {
+      users <- userService.byGroupIdsAnonymous(groups.map(_.id))
+      applications <- applicationService.allForUserIds(users.map(_.id))
+    } yield (users, applications)
+
   private def generateStats[A](
       areaIds: List[UUID],
       organisationIds: List[Organisation.Id],
@@ -520,17 +528,9 @@ case class ApplicationController @Inject() (
               .map(_.filter(application => areaIds.contains(application.area)))
           } yield (users, applications)
         case (_, _ :: _, _) =>
-          for {
-            groups <- userGroupService.byOrganisationIds(organisationIds)
-            users <- userService.byGroupIdsAnonymous(groups.map(_.id))
-            applications <- applicationService.allForUserIds(users.map(_.id))
-          } yield (users, applications)
+          userGroupService.byOrganisationIds(organisationIds).flatMap(anonymousGroupsAndUsers)
         case (_, _, _) =>
-          for {
-            groups <- userGroupService.byIdsFuture(groupIds)
-            users <- userService.byGroupIdsAnonymous(groups.map(_.id))
-            applications <- applicationService.allForUserIds(users.map(_.id))
-          } yield (users, applications)
+          userGroupService.byIdsFuture(groupIds).flatMap(anonymousGroupsAndUsers)
       }
 
     // Filter creation dates
