@@ -5,6 +5,8 @@ import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
 import actions._
+import cats.Applicative
+import cats.implicits.catsSyntaxTuple2Semigroupal
 import cats.syntax.all._
 import constants.Constants
 import forms.FormsPlusMap
@@ -498,16 +500,15 @@ case class ApplicationController @Inject() (
     val usersAndApplications =
       (areaIds, organisationIds, groupIds) match {
         case (Nil, Nil, Nil) =>
-          for {
-            users <- userService.allNoNameNoEmail
-            applications <- applicationService.all()
-          } yield (users, applications)
+          (userService.allNoNameNoEmail, applicationService.all()).mapN(Tuple2.apply)
         case (_ :: _, Nil, Nil) =>
           for {
             groups <- userGroupService.byAreas(areaIds)
-            users <- userService.byGroupIdsAnonymous(groups.map(_.id))
-            applications <- applicationService.allForAreas(areaIds)
-          } yield (users, applications)
+            users <- (
+              userService.byGroupIdsAnonymous(groups.map(_.id)),
+              applicationService.allForAreas(areaIds)
+            ).mapN(Tuple2.apply)
+          } yield users
         case (_ :: _, _ :: _, Nil) =>
           for {
             groups <- userGroupService
