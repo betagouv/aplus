@@ -254,11 +254,6 @@ dialog {
                             }
                         </div> <br>
                 }
-                @if(application.canBeClosedBy(currentUser) && not(application.closed)) {
-                    <button class="mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()" style="margin-right: 10px;">
-                        Archiver l’échange
-                    </button>
-                }
             </div>
         </div>
         <div class="mdl-card mdl-cell mdl-cell--4-col mdl-cell--12-col-phone mdl-grid mdl-color--blue-grey-100 do-not-print">
