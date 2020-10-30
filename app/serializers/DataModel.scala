@@ -1,6 +1,7 @@
 package serializers
 
-import models.Application.MandatType
+import cats.implicits.catsSyntaxOptionId
+import models.Application.Mandat.MandatType
 import play.api.libs.json._
 
 object DataModel {
@@ -8,7 +9,7 @@ object DataModel {
   object Application {
 
     object MandatType {
-      import models.Application.MandatType._
+      import models.Application.Mandat.MandatType._
 
       def dataModelSerialization(entity: MandatType): String =
         entity match {
@@ -19,9 +20,9 @@ object DataModel {
 
       def dataModelDeserialization(raw: String): Option[MandatType] =
         raw match {
-          case "sms"   => Some(Sms)
-          case "phone" => Some(Phone)
-          case "paper" => Some(Paper)
+          case "sms"   => Sms.some
+          case "phone" => Phone.some
+          case "paper" => Paper.some
           case _       => None
         }
 
@@ -53,20 +54,18 @@ object DataModel {
       }
 
     implicit val smsApiWrites: Writes[Sms] =
-      Writes(
-        _ match {
-          case sms: Sms.Outgoing =>
-            smsOutgoingFormat.writes(sms) match {
-              case obj: JsObject => obj + ("tag" -> JsString("outgoing"))
-              case other         => other
-            }
-          case sms: Sms.Incoming =>
-            smsIncomingFormat.writes(sms) match {
-              case obj: JsObject => obj + ("tag" -> JsString("incoming"))
-              case other         => other
-            }
-        }
-      )
+      Writes {
+        case sms: Sms.Outgoing =>
+          smsOutgoingFormat.writes(sms) match {
+            case obj: JsObject => obj + ("tag" -> JsString("outgoing"))
+            case other         => other
+          }
+        case sms: Sms.Incoming =>
+          smsIncomingFormat.writes(sms) match {
+            case obj: JsObject => obj + ("tag" -> JsString("incoming"))
+            case other         => other
+          }
+      }
 
   }
 

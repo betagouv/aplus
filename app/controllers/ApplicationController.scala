@@ -5,6 +5,7 @@ import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
 import actions._
+import cats.implicits.catsSyntaxOptionId
 import cats.syntax.all._
 import constants.Constants
 import forms.FormsPlusMap
@@ -228,9 +229,9 @@ case class ApplicationController @Inject() (
 
     val capitalizedUserName = user.name.split(' ').map(_.capitalize).mkString(" ")
     if (contexts.isEmpty)
-      s"${capitalizedUserName} ( ${user.qualite} )"
+      s"$capitalizedUserName ( ${user.qualite} )"
     else
-      s"${capitalizedUserName} ${contexts.mkString(",")}"
+      s"$capitalizedUserName ${contexts.mkString(",")}"
   }
 
   def createPost: Action[AnyContent] =
@@ -314,9 +315,11 @@ case class ApplicationController @Inject() (
                 applicationData.selectedSubject.contains[String](applicationData.subject),
               category = applicationData.category,
               files = newAttachments ++ pendingAttachments,
-              mandatType = DataModel.Application.MandatType
-                .dataModelDeserialization(applicationData.mandatType),
-              mandatDate = Some(applicationData.mandatDate)
+              mandat = (
+                DataModel.Application.MandatType
+                  .dataModelDeserialization(applicationData.mandatType),
+                applicationData.mandatDate.some
+              ).mapN(Application.Mandat.apply)
             )
             if (applicationService.createApplication(application)) {
               notificationsService.newApplication(application)

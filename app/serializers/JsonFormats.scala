@@ -3,43 +3,38 @@ package serializers
 import constants.Constants
 import helper.{StringHelper, UUIDHelper}
 import java.util.UUID
+
 import models.mandat.{Mandat, SmsMandatInitiation}
 import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json.JsonConfiguration.Aux
 import play.api.mvc.Results.InternalServerError
 
 object JsonFormats {
-  implicit val jsonConfiguration = JsonConfiguration(naming = JsonNaming.SnakeCase)
 
-  implicit val mapUUIDReads = new Reads[Map[UUID, String]] {
+  implicit val jsonConfiguration: Aux[Json.MacroOptions] =
+    JsonConfiguration(naming = JsonNaming.SnakeCase)
 
-    def reads(jv: JsValue): JsResult[Map[UUID, String]] =
-      JsSuccess(jv.as[Map[String, String]].map { case (k, v) =>
-        UUIDHelper.fromString(k).get -> v.asInstanceOf[String]
-      })
+  implicit val mapUUIDReads: Reads[Map[UUID, String]] = (jv: JsValue) =>
+    JsSuccess(jv.as[Map[String, String]].map { case (k, v) =>
+      UUIDHelper.fromString(k).get -> v.asInstanceOf[String]
+    })
 
-  }
+  implicit val mapUUIDWrites: Writes[Map[UUID, String]] = (map: Map[UUID, String]) =>
+    Json.obj(map.map { case (s, o) =>
+      val ret: (String, JsValueWrapper) = s.toString -> JsString(o)
+      ret
+    }.toSeq: _*)
 
-  implicit val mapUUIDWrites = new Writes[Map[UUID, String]] {
-
-    def writes(map: Map[UUID, String]): JsValue =
-      Json.obj(map.map { case (s, o) =>
-        val ret: (String, JsValueWrapper) = s.toString -> JsString(o)
-        ret
-      }.toSeq: _*)
-
-  }
-
-  implicit val mapUUIDFormat = Format(mapUUIDReads, mapUUIDWrites)
+  implicit val mapUUIDFormat: Format[Map[UUID, String]] = Format(mapUUIDReads, mapUUIDWrites)
 
   //
   // Mandat
   //
   import serializers.DataModel.SmsFormats._
 
-  implicit val mandatIdReads: Reads[Mandat.Id] =
-    implicitly[Reads[UUID]].map(Mandat.Id.apply)
+  implicit val mandatIdReads: Reads[Mandat.Id] = implicitly[Reads[UUID]].map(Mandat.Id.apply)
 
   implicit val mandatIdWrites: Writes[Mandat.Id] =
     implicitly[Writes[UUID]].contramap((id: Mandat.Id) => id.underlying)

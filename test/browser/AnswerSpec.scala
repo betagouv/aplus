@@ -77,7 +77,6 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       invitedUsers: List[User],
       applicationService: ApplicationService
   ): Application = {
-    // Create Application
     val application = Application(
       UUIDHelper.randomUUID,
       creationDate = Time.nowParis(),
@@ -90,8 +89,9 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       area = group.areaIds.head,
       irrelevant = false,
       expertInvited = true,
-      mandatType = Some(Application.MandatType.Paper),
-      mandatDate = Some(java.time.ZonedDateTime.now().toString)
+      mandat = Application
+        .Mandat(Application.MandatType.Paper, java.time.ZonedDateTime.now().toString)
+        .some
     )
     val result = applicationService.createApplication(application)
     result must beTrue

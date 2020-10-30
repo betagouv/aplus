@@ -3,7 +3,6 @@ package models
 import java.time.ZonedDateTime
 import java.util.UUID
 
-import models.Application.MandatType
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
@@ -26,8 +25,7 @@ class ApplicationSpec extends Specification {
         invitedUsers = Map.empty[UUID, String],
         area = UUID.randomUUID(),
         irrelevant = false,
-        mandatType = Option.empty[MandatType],
-        mandatDate = Option.empty[String]
+        mandat = Option.empty[Application.Mandat]
       )
 
       application.status must equalTo("Clôturée")
@@ -77,8 +75,7 @@ class ApplicationSpec extends Specification {
         invitedUsers = Map.empty[UUID, String],
         area = UUID.randomUUID(),
         irrelevant = false,
-        mandatType = Option.empty[MandatType],
-        mandatDate = Option.empty[String]
+        mandat = Option.empty[Application.Mandat]
       )
 
       application.status must equalTo("Répondu")
@@ -127,8 +124,7 @@ class ApplicationSpec extends Specification {
         invitedUsers = Map.empty[UUID, String],
         area = UUID.randomUUID(),
         irrelevant = false,
-        mandatType = Option.empty[MandatType],
-        mandatDate = Option.empty[String]
+        mandat = Option.empty[Application.Mandat]
       )
 
       application.status must equalTo("Nouvelle")

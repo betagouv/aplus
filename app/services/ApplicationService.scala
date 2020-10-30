@@ -3,10 +3,8 @@ package services
 import java.time.ZonedDateTime
 import java.util.UUID
 
-import anorm.Column.nonNull
 import anorm._
 import cats.syntax.all._
-import helper.Time
 import javax.inject.Inject
 import models.Authorization.UserRights
 import models.{Answer, Application, Authorization, Error, EventType}
@@ -22,70 +20,8 @@ class ApplicationService @Inject() (
     dependencies: ServicesDependencies
 ) {
   import dependencies.databaseExecutionContext
-
   import serializers.Anorm._
   import serializers.JsonFormats._
-
-  // Note:
-  // anorm.Column[String] => anorm.Column[Option[Application.MandatType]] does not work
-  // throws exception "AnormException: 'mandat_type' not found, available columns: ..."
-  implicit val mandatTypeAnormParser: anorm.Column[Option[Application.MandatType]] =
-    implicitly[anorm.Column[Option[String]]]
-      .map(_.flatMap(DataModel.Application.MandatType.dataModelDeserialization))
-
-  private implicit val answerReads = Json.reads[Answer]
-  private implicit val answerWrite = Json.writes[Answer]
-
-  implicit val answerListParser: anorm.Column[List[Answer]] =
-    nonNull { (value, meta) =>
-      val MetaDataItem(qualified, _, _) = meta
-      value match {
-        case json: org.postgresql.util.PGobject =>
-          Right(Json.parse(json.getValue).as[List[Answer]])
-        case json: String =>
-          Right(Json.parse(json).as[List[Answer]])
-        case _ =>
-          Left(
-            TypeDoesNotMatch(
-              s"Cannot convert $value: ${className(value)} to List[Answer] for column $qualified"
-            )
-          )
-      }
-    }
-
-  private val simpleApplication: RowParser[Application] = Macro
-    .parser[Application](
-      "id",
-      "creation_date",
-      "creator_user_name",
-      "creator_user_id",
-      "subject",
-      "description",
-      "user_infos",
-      "invited_users",
-      "area",
-      "irrelevant",
-      "answers", // Data have been left bad migrated from answser_unsed
-      "internal_id",
-      "closed",
-      "seen_by_user_ids",
-      "usefulness",
-      "closed_date",
-      "expert_invited",
-      "has_selected_subject",
-      "category",
-      "files",
-      "mandat_type",
-      "mandat_date"
-    )
-    .map(application =>
-      application.copy(
-        creationDate = application.creationDate.withZoneSameInstant(Time.timeZoneParis),
-        answers = application.answers.map(answer =>
-          answer.copy(creationDate = answer.creationDate.withZoneSameInstant(Time.timeZoneParis))
-        )
-      )
-    )
 
   def byId(id: UUID, fromUserId: UUID, rights: UserRights): Future[Either[Error, Application]] =
     Future {
@@ -93,29 +29,29 @@ class ApplicationService @Inject() (
         val result = SQL(
           "UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *"
         ).on("id" -> id, "seen_by_user_id" -> fromUserId)
-          .as(simpleApplication.singleOpt)
+          .as(Application.Parser.singleOpt)
         result match {
           case None =>
-            Left(
-              Error.EntityNotFound(
+            Error
+              .EntityNotFound(
                 EventType.ApplicationNotFound,
                 s"Tentative d'accès à une application inexistante: $id"
               )
-            )
+              .asLeft[Application]
           case Some(application) =>
             if (Authorization.canSeeApplication(application)(rights)) {
               if (Authorization.canSeePrivateDataOfApplication(application)(rights)) {
-                Right(application)
+                application.asRight[Error]
               } else {
-                Right(application.anonymousApplication)
+                application.anonymousApplication.asRight[Error]
               }
             } else {
-              Left(
-                Error.Authorization(
+              Error
+                .Authorization(
                   EventType.ApplicationUnauthorized,
                   s"Tentative d'accès à une application non autorisé: $id"
                 )
-              )
+                .asLeft[Application]
             }
         }
       }
@@ -125,7 +61,7 @@ class ApplicationService @Inject() (
     db.withConnection { implicit connection =>
       SQL(
         s"SELECT * FROM application WHERE closed = false AND age(creation_date) > '$day days' AND expert_invited = false"
-      ).as(simpleApplication.*)
+      ).as(Application.Parser.*)
     }
 
   def allOpenOrRecentForUserId(
@@ -139,7 +75,7 @@ class ApplicationService @Inject() (
           |  (closed = FALSE OR DATE_PART('day', {referenceDate} - closed_date) < 30)
           |ORDER BY creation_date DESC""".stripMargin)
         .on("userId" -> userId, "referenceDate" -> referenceDate)
-        .as(simpleApplication.*)
+        .as(Application.Parser.*)
       if (anonymous) {
         result.map(_.anonymousApplication)
       } else {
@@ -156,7 +92,7 @@ class ApplicationService @Inject() (
              AND closed = false
              ORDER BY creation_date DESC"""
         ).on("userId" -> userId)
-          .as(simpleApplication.*)
+          .as(Application.Parser.*)
         result.map(_.anonymousApplication)
       }
     }
@@ -166,7 +102,7 @@ class ApplicationService @Inject() (
       val result = SQL(
         "SELECT * FROM application WHERE creator_user_id = {userId}::uuid OR invited_users ?? {userId} ORDER BY creation_date DESC"
       ).on("userId" -> userId)
-        .as(simpleApplication.*)
+        .as(Application.Parser.*)
       if (anonymous) {
         result.map(_.anonymousApplication)
       } else {
@@ -178,7 +114,7 @@ class ApplicationService @Inject() (
     Future {
       db.withConnection { implicit connection =>
         SQL"SELECT * FROM application WHERE ARRAY[$userIds]::uuid[] @> ARRAY[creator_user_id]::uuid[] OR ARRAY(select jsonb_object_keys(invited_users))::uuid[] && ARRAY[$userIds]::uuid[] ORDER BY creation_date DESC"
-          .as(simpleApplication.*)
+          .as(Application.Parser.*)
           .map(_.anonymousApplication)
       }
     }
@@ -188,7 +124,7 @@ class ApplicationService @Inject() (
       val result =
         SQL("SELECT * FROM application WHERE area = {areaId}::uuid ORDER BY creation_date DESC")
           .on("areaId" -> areaId)
-          .as(simpleApplication.*)
+          .as(Application.Parser.*)
       if (anonymous) {
         result.map(_.anonymousApplication)
       } else {
@@ -200,7 +136,7 @@ class ApplicationService @Inject() (
     Future {
       db.withConnection { implicit connection =>
         SQL"""SELECT * FROM application WHERE ARRAY[$areaIds]::uuid[] @> ARRAY[area]::uuid[] ORDER BY creation_date DESC"""
-          .as(simpleApplication.*)
+          .as(Application.Parser.*)
           .map(_.anonymousApplication)
       }
     }
@@ -208,7 +144,7 @@ class ApplicationService @Inject() (
   def all(): Future[List[Application]] =
     Future {
       db.withConnection { implicit connection =>
-        SQL"""SELECT * FROM application""".as(simpleApplication.*).map(_.anonymousApplication)
+        SQL"""SELECT * FROM application""".as(Application.Parser.*).map(_.anonymousApplication)
       }
     }
 
@@ -218,7 +154,12 @@ class ApplicationService @Inject() (
         key.toString -> value
       })
       val mandatType =
-        newApplication.mandatType.map(DataModel.Application.MandatType.dataModelSerialization)
+        newApplication.mandat
+          .map(_._type)
+          .map(DataModel.Application.MandatType.dataModelSerialization)
+
+      val mandatDate = newApplication.mandat.map(_.date)
+
       SQL"""
           INSERT INTO application (
             id,
@@ -243,13 +184,13 @@ class ApplicationService @Inject() (
             ${newApplication.subject},
             ${newApplication.description},
             ${Json.toJson(newApplication.userInfos)},
-            ${invitedUserJson},
+            $invitedUserJson,
             ${newApplication.area}::uuid,
             ${newApplication.hasSelectedSubject},
             ${newApplication.category},
             ${Json.toJson(newApplication.files)}::jsonb,
             $mandatType,
-            ${newApplication.mandatDate}
+            $mandatDate
           )
       """.executeUpdate() === 1
     }

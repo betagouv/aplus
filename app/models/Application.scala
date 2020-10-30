@@ -4,10 +4,18 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit.MINUTES
 import java.util.UUID
 
+import anorm.SqlParser.{bool, get, int, str}
+import anorm.{~, RowParser}
 import cats.Eq
 import cats.syntax.all._
 import helper.BooleanHelper.not
+import helper.Time
+import models.Application.Mandat
+import models.Application.Mandat.MandatType
 import models.Authorization.{isExpert, isHelper, isInstructor, UserRights}
+import serializers.Anorm.{fieldsMapLongParser, fieldsMapStringParser, fieldsMapUUIDParser}
+import serializers.DataModel
+import serializers.JsonFormats._
 
 case class Application(
     id: UUID,
@@ -21,18 +29,17 @@ case class Application(
     invitedUsers: Map[UUID, String],
     area: UUID,
     irrelevant: Boolean,
-    answers: List[Answer] = List(),
+    answers: List[Answer] = List.empty[Answer],
     internalId: Int = -1,
     closed: Boolean = false,
-    seenByUserIds: List[UUID] = List(),
+    seenByUserIds: List[UUID] = List.empty[UUID],
     usefulness: Option[String] = None,
-    closedDate: Option[ZonedDateTime] = None,
+    closedDate: Option[ZonedDateTime] = Option.empty[ZonedDateTime],
     expertInvited: Boolean = false,
     hasSelectedSubject: Boolean = false,
-    category: Option[String] = None,
-    files: Map[String, Long] = Map(),
-    mandatType: Option[Application.MandatType],
-    mandatDate: Option[String]
+    category: Option[String] = Option.empty[String],
+    files: Map[String, Long] = Map.empty[String, Long],
+    mandat: Option[Mandat]
 ) extends AgeModel {
 
   lazy val filesAvailabilityLeftInDays: Option[Int] = if (ageInDays > 8) {
@@ -186,14 +193,75 @@ case class Application(
 
 object Application {
 
-  sealed trait MandatType
+  implicit val Parser: RowParser[Application] =
+    (get[UUID]("id") ~
+      get[ZonedDateTime]("creation_date").map(_.withZoneSameInstant(Time.timeZoneParis)) ~
+      str(columnName = "creator_user_name") ~
+      get[UUID]("creator_user_id") ~
+      str(columnName = "subject") ~
+      str(columnName = "description") ~
+      get[Map[String, String]]("user_infos") ~
+      get[Map[UUID, String]]("invited_users") ~
+      get[UUID]("area") ~
+      bool(columnName = "irrelevant") ~
+      get[List[Answer]]("answers") ~
+      int("internal_id") ~
+      bool("closed") ~
+      get[List[UUID]]("seen_by_user_ids") ~
+      str("usefulness").? ~
+      get[ZonedDateTime]("closed_date").? ~
+      bool("expert_invited") ~
+      bool("has_selected_subject") ~
+      str("category").? ~
+      get[Map[String, Long]]("files") ~
+      Application.Mandat.Parser)
+      .map {
+        case id ~ creation ~ creatorName ~ creatorId ~ subject ~ description ~ userInfos ~ invitedUsers
+            ~ area ~ irrelevant ~ answers ~ internalId ~ closed ~ seen ~ usefulness ~ closedDate ~ experts ~ hasSelectedSubject ~ category ~ files ~ mandat =>
+          Application(
+            id,
+            creation,
+            creatorName,
+            creatorId,
+            subject,
+            description,
+            userInfos,
+            invitedUsers,
+            area,
+            irrelevant,
+            answers,
+            internalId,
+            closed,
+            seen,
+            usefulness,
+            closedDate,
+            experts,
+            hasSelectedSubject,
+            category,
+            files,
+            mandat
+          )
+      }
 
-  object MandatType {
-    case object Sms extends MandatType
-    case object Phone extends MandatType
-    case object Paper extends MandatType
+  final case class Mandat(_type: MandatType, date: String)
 
-    implicit val Eq: Eq[MandatType] = (x: MandatType, y: MandatType) => x == y
+  object Mandat {
+
+    implicit val Parser: RowParser[Option[Mandat]] =
+      (str("mandat_type").?.map(
+        _.flatMap(DataModel.Application.MandatType.dataModelDeserialization)
+      ) ~ str("mandat_date").?).map { case _type ~ date => (_type, date).mapN(Mandat.apply) }
+
+    sealed trait MandatType
+
+    object MandatType {
+      case object Sms extends MandatType
+      case object Phone extends MandatType
+      case object Paper extends MandatType
+
+      implicit val Eq: Eq[MandatType] = (x: MandatType, y: MandatType) => x == y
+
+    }
 
   }
 
