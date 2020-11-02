@@ -1044,7 +1044,7 @@ case class ApplicationController @Inject() (
               answerData.applicationIsDeclaredIrrelevant,
               Some(
                 answerData.usagerOptionalInfos.collect {
-                  case (infoName, infoValue) if infoName.nonEmpty && infoValue.nonEmpty =>
+                  case (infoName, infoValue) if infoName.trim.nonEmpty && infoValue.trim.nonEmpty =>
                     (infoName.trim, infoValue.trim)
                 }
               ),
