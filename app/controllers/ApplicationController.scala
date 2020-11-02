@@ -290,7 +290,7 @@ case class ApplicationController @Inject() (
                 "Nom de famille" -> applicationData.usagerNom,
                 "Date de naissance" -> applicationData.usagerBirthDate
               ) ++ applicationData.usagerOptionalInfos.collect {
-                case (infoName, infoValue) if infoName.nonEmpty && infoValue.nonEmpty =>
+                case (infoName, infoValue) if infoName.trim.nonEmpty && infoValue.trim.nonEmpty =>
                   infoName.trim -> infoValue.trim
               }
             val application = Application(
