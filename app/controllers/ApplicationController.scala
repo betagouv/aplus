@@ -316,7 +316,7 @@ case class ApplicationController @Inject() (
               category = applicationData.category,
               files = newAttachments ++ pendingAttachments,
               mandat = (
-                DataModel.Application.MandatType
+                DataModel.Application.Mandat.MandatType
                   .dataModelDeserialization(applicationData.mandatType),
                 applicationData.mandatDate.some
               ).mapN(Application.Mandat.apply)

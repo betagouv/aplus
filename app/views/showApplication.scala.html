@@ -226,7 +226,7 @@ dialog {
                 @for(mandat <- application.mandat) {
                     <span>
                         J’atteste avoir recueilli l’autorisation de l’usager
-                        @mandat._type match {
+                        @mandat.type_ match {
                             case Application.Mandat.MandatType.Sms => {
                                 par sms
                             }

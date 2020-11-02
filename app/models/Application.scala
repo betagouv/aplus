@@ -4,17 +4,12 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit.MINUTES
 import java.util.UUID
 
-import anorm.SqlParser.{bool, get, int, str}
-import anorm.{~, RowParser}
 import cats.Eq
 import cats.syntax.all._
 import helper.BooleanHelper.not
-import helper.Time
 import models.Application.Mandat
 import models.Application.Mandat.MandatType
 import models.Authorization.{isExpert, isHelper, isInstructor, UserRights}
-import serializers.Anorm.{fieldsMapLongParser, fieldsMapStringParser, fieldsMapUUIDParser}
-import serializers.DataModel
 import serializers.JsonFormats._
 
 case class Application(
@@ -193,64 +188,9 @@ case class Application(
 
 object Application {
 
-  implicit val Parser: RowParser[Application] =
-    (get[UUID]("id") ~
-      get[ZonedDateTime]("creation_date").map(_.withZoneSameInstant(Time.timeZoneParis)) ~
-      str(columnName = "creator_user_name") ~
-      get[UUID]("creator_user_id") ~
-      str(columnName = "subject") ~
-      str(columnName = "description") ~
-      get[Map[String, String]]("user_infos") ~
-      get[Map[UUID, String]]("invited_users") ~
-      get[UUID]("area") ~
-      bool(columnName = "irrelevant") ~
-      get[List[Answer]]("answers") ~
-      int("internal_id") ~
-      bool("closed") ~
-      get[List[UUID]]("seen_by_user_ids") ~
-      str("usefulness").? ~
-      get[ZonedDateTime]("closed_date").? ~
-      bool("expert_invited") ~
-      bool("has_selected_subject") ~
-      str("category").? ~
-      get[Map[String, Long]]("files") ~
-      Application.Mandat.Parser)
-      .map {
-        case id ~ creation ~ creatorName ~ creatorId ~ subject ~ description ~ userInfos ~ invitedUsers
-            ~ area ~ irrelevant ~ answers ~ internalId ~ closed ~ seen ~ usefulness ~ closedDate ~ experts ~ hasSelectedSubject ~ category ~ files ~ mandat =>
-          Application(
-            id,
-            creation,
-            creatorName,
-            creatorId,
-            subject,
-            description,
-            userInfos,
-            invitedUsers,
-            area,
-            irrelevant,
-            answers,
-            internalId,
-            closed,
-            seen,
-            usefulness,
-            closedDate,
-            experts,
-            hasSelectedSubject,
-            category,
-            files,
-            mandat
-          )
-      }
-
-  final case class Mandat(_type: MandatType, date: String)
+  final case class Mandat(type_ : MandatType, date: String)
 
   object Mandat {
-
-    implicit val Parser: RowParser[Option[Mandat]] =
-      (str("mandat_type").?.map(
-        _.flatMap(DataModel.Application.MandatType.dataModelDeserialization)
-      ) ~ str("mandat_date").?).map { case _type ~ date => (_type, date).mapN(Mandat.apply) }
 
     sealed trait MandatType
 

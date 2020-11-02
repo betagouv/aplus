@@ -265,7 +265,7 @@
                                     Application.Mandat.MandatType.Sms -> "par sms",
                                     Application.Mandat.MandatType.Paper -> "par mandat signé"
                                 )
-                            ).map(option => (DataModel.Application.MandatType.dataModelSerialization(option._1), option._2))) { options =>
+                            ).map(option => (DataModel.Application.Mandat.MandatType.dataModelSerialization(option._1), option._2))) { options =>
                                 @options.map { case (optionValue, optionLabel) =>
                                 <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect single--margin-right-20px single--font-size-14px"
                                        for="@(id)_@optionValue">

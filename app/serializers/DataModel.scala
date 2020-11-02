@@ -1,5 +1,6 @@
 package serializers
 
+import anorm.Column
 import cats.implicits.catsSyntaxOptionId
 import models.Application.Mandat.MandatType
 import play.api.libs.json._
@@ -8,23 +9,32 @@ object DataModel {
 
   object Application {
 
-    object MandatType {
-      import models.Application.Mandat.MandatType._
+    object Mandat {
 
-      def dataModelSerialization(entity: MandatType): String =
-        entity match {
-          case Sms   => "sms"
-          case Phone => "phone"
-          case Paper => "paper"
-        }
+      object MandatType {
 
-      def dataModelDeserialization(raw: String): Option[MandatType] =
-        raw match {
-          case "sms"   => Sms.some
-          case "phone" => Phone.some
-          case "paper" => Paper.some
-          case _       => None
-        }
+        import models.Application.Mandat.MandatType._
+
+        implicit val MandatTypeParser: Column[Option[MandatType]] =
+          implicitly[Column[Option[String]]]
+            .map(_.flatMap(dataModelDeserialization))
+
+        def dataModelSerialization(entity: MandatType): String =
+          entity match {
+            case Sms   => "sms"
+            case Phone => "phone"
+            case Paper => "paper"
+          }
+
+        def dataModelDeserialization(raw: String): Option[MandatType] =
+          raw match {
+            case "sms"   => Sms.some
+            case "phone" => Phone.some
+            case "paper" => Paper.some
+            case _       => None
+          }
+
+      }
 
     }
 

@@ -90,7 +90,7 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       irrelevant = false,
       expertInvited = true,
       mandat = Application
-        .Mandat(Application.MandatType.Paper, java.time.ZonedDateTime.now().toString)
+        .Mandat(Application.Mandat.MandatType.Paper, java.time.ZonedDateTime.now().toString)
         .some
     )
     val result = applicationService.createApplication(application)

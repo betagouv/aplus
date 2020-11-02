@@ -282,7 +282,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
       area = area,
       irrelevant = false,
       mandat = Application
-        .Mandat(Application.MandatType.Paper, java.time.ZonedDateTime.now().toString)
+        .Mandat(Application.Mandat.MandatType.Paper, java.time.ZonedDateTime.now().toString)
         .some
     )
     applicationService.createApplication(application)
