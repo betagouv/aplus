@@ -178,7 +178,7 @@ object common {
         else "demandes qui ont reçu une réponse il y a ",
         s"plus de $daySinceLastAgentAnswerForApplicationsThatShouldBeClosed jours. ",
         "Si votre échange est terminé, n’hésitez pas à ",
-        if (infos.applicationsThatShouldBeClosed.size <= 1) "l'archiver, " else "les archiver, ",
+        if (infos.applicationsThatShouldBeClosed.size <= 1) "l’archiver, " else "les archiver, ",
         """en appuyant sur le bouton « Archiver l’échange »."""
       ),
       ul(
