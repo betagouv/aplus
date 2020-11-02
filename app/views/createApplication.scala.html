@@ -78,7 +78,6 @@
                             <p style="color: red; font-weight: bold;">@applicationForm("groups").errors.map(_.format).mkString(", ")</p>
                         }
 
-                            @@ TODO: JS @@
                         <fieldset class="single--margin-left-8px single--margin-right-24px single--margin-top-16px single--margin-bottom-24px mdl-cell mdl-cell--12-col">
                           @for(group <- organisationGroups.sortBy(_.name)) {
                             @defining(group.organisationSetOrDeducted) { organisation: Option[Organisation] =>
@@ -86,10 +85,11 @@
                               <label for="invite-@group.id"
                                      class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect">
                                 <input id="invite-@group.id"
-                                       class="mdl-checkbox__input"
+                                       class="mdl-checkbox__input application-form-invited-groups-checkbox"
                                        type="checkbox"
                                        name="groups[]"
                                        value="@group.id"
+                                       data-group-name="@group.name"
                                        @if(applicationForm.data.find({case (k, v) => k.startsWith("groups[") && v == group.id.toString})){ checked="checked" }
                                 >
                                 <span class="mdl-checkbox__label">
@@ -98,7 +98,7 @@
                                 </span>
                               </label>
 
-                              <div class="organisation-row @if(!applicationForm.data.find({case (k, v) => k.startsWith("groups[") && v == group.id.toString})){ invisible }">
+                              <div id="invite-@group.id-additional-infos" class="organisation-row @if(!applicationForm.data.find({case (k, v) => k.startsWith("groups[") && v == group.id.toString})){ invisible }">
                                 @if(organisation.map(_.id).filter(_ == Organisation.cafId).nonEmpty) {
                                   <tr>
                                     <td colspan="2" style="text-align: left; white-space: normal">

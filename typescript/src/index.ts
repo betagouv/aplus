@@ -5,6 +5,7 @@ import 'ts-polyfill/lib/es2015-core';
 import 'core-js/web/dom-collections';
 
 // Our scripts
+import "./application"
 import "./admin.ts"
 import "./mdl-extensions.ts"
 import "./validateAccount"
