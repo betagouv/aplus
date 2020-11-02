@@ -505,7 +505,7 @@ case class ApplicationController @Inject() (
       webJarsUtil: org.webjars.play.WebJarsUtil,
       request: RequestWithUserData[A]
   ): Future[Html] = {
-    val usersAndApplications =
+    val usersAndApplications: Future[(List[User], List[Application])] =
       (areaIds, organisationIds, groupIds) match {
         case (Nil, Nil, Nil) =>
           (userService.allNoNameNoEmail, applicationService.all()).mapN(Tuple2.apply)
