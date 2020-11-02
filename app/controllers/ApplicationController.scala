@@ -5,7 +5,6 @@ import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
 import actions._
-import cats.Applicative
 import cats.implicits.catsSyntaxTuple2Semigroupal
 import cats.syntax.all._
 import constants.Constants
@@ -112,7 +111,9 @@ case class ApplicationController @Inject() (
         .map(_.organisation)
         .collect {
           case Some(organisationId)
-              if Organisation.organismesAidants.map(_.id).contains[Organisation.Id](organisationId) =>
+              if Organisation.organismesAidants
+                .map(_.id)
+                .contains[Organisation.Id](organisationId) =>
             Organisation.organismesAidants.map(_.id)
           case Some(_) => Organisation.organismesOperateurs.map(_.id)
         }
@@ -508,7 +509,7 @@ case class ApplicationController @Inject() (
     val usersAndApplications: Future[(List[User], List[Application])] =
       (areaIds, organisationIds, groupIds) match {
         case (Nil, Nil, Nil) =>
-          (userService.allNoNameNoEmail, applicationService.all()).mapN(Tuple2.apply)
+          userService.allNoNameNoEmail.zip(applicationService.all())
         case (_ :: _, Nil, Nil) =>
           for {
             groups <- userGroupService.byAreas(areaIds)
