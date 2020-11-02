@@ -112,7 +112,7 @@ case class ApplicationController @Inject() (
         .map(_.organisation)
         .collect {
           case Some(organisationId)
-              if Organisation.organismesAidants.map(_.id).contains(organisationId) =>
+              if Organisation.organismesAidants.map(_.id).contains[Organisation.Id](organisationId) =>
             Organisation.organismesAidants.map(_.id)
           case Some(_) => Organisation.organismesOperateurs.map(_.id)
         }
