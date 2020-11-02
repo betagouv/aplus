@@ -22,19 +22,7 @@ case class Answer(
 
 object Answer {
 
-  def filesAvailabilityLeftInDays(expiryDayCount: Int)(answer: Answer): Option[Int] =
-    answer.ageInDays.some.map(expiryDayCount - _).filter(_ >= 0)
-
-  def fileCanBeShowed(
-      application: Application,
-      answer: UUID,
-      expiryDayCount: Int
-  )(user: User, rights: UserRights) =
-    application.answers
-      .find(_.id === answer)
-      .map(Answer.filesAvailabilityLeftInDays(expiryDayCount)) match {
-      case Some(_) => Application.fileCanBeShowed(application, expiryDayCount)(user)(rights)
-      case _       => false
-    }
+  def filesAvailabilityLeftInDays(filesExpirationInDays: Int)(answer: Answer): Option[Int] =
+    answer.ageInDays.some.map(filesExpirationInDays - _).filter(_ >= 0)
 
 }

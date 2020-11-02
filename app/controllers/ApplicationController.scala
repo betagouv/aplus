@@ -14,7 +14,6 @@ import helper.StringHelper.CanonizeString
 import helper.Time.zonedDateTimeOrdering
 import helper.{Hash, Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
-import models.Answer.fileCanBeShowed
 import models.EventType._
 import models._
 import models.formModels.{AnswerFormData, ApplicationFormData, InvitationFormData}
@@ -68,7 +67,7 @@ case class ApplicationController @Inject() (
   private val filesSecondInstanceHost: Option[String] =
     configuration.getOptional[String]("app.filesSecondInstanceHost")
 
-  private val fileExpiryDayCount: Int = configuration.get[Int]("app.fileExpiryDayCount")
+  private val filesExpirationInDays: Int = configuration.get[Int]("app.filesExpirationInDays")
 
   private val dir = Paths.get(s"$filesPath")
   if (!Files.isDirectory(dir)) {
@@ -901,7 +900,7 @@ case class ApplicationController @Inject() (
                 openedTab,
                 currentAreaLegacy,
                 readSharedAccountUserSignature(request.session),
-                fileExpiryDayCount = fileExpiryDayCount
+                fileExpiryDayCount = filesExpirationInDays
               )
             )
           }
@@ -971,7 +970,7 @@ case class ApplicationController @Inject() (
       withApplication(applicationId) { application: Application =>
         answerIdOption match {
           case Some(answerId)
-              if fileCanBeShowed(application, answerId, fileExpiryDayCount)(
+              if Authorization.answerFileCanBeShowed(filesExpirationInDays)(application, answerId)(
                 request.currentUser,
                 request.rights
               ) =>
@@ -994,7 +993,8 @@ case class ApplicationController @Inject() (
                 Future(NotFound("Nous n'avons pas trouvé ce fichier"))
             }
           case None
-              if Application.fileCanBeShowed(application, fileExpiryDayCount)(request.currentUser)(
+              if Authorization.applicationFileCanBeShowed(filesExpirationInDays)(application)(
+                request.currentUser,
                 request.rights
               ) =>
             if (application.files.contains(filename)) {

@@ -167,17 +167,8 @@ case class Application(
 
 object Application {
 
-  def fileCanBeShowed(application: Application, expiryDayCount: Int)(
-      user: User
-  )(rights: UserRights) =
-    Application.filesAvailabilityLeftInDays(application, expiryDayCount).nonEmpty && not(
-      isExpert(rights)
-    ) &&
-      (isInstructor(rights) && application.invitedUsers.keys.toList.contains(user.id)) ||
-      (isHelper(rights) && user.id === application.creatorUserId)
-
-  def filesAvailabilityLeftInDays(application: Application, expiryDayCount: Int) =
-    application.ageInDays.some.map(expiryDayCount - _).filter(_ >= 0)
+  def filesAvailabilityLeftInDays(filesExpirationInDays: Int)(application: Application) =
+    application.ageInDays.some.map(filesExpirationInDays - _).filter(_ >= 0)
 
   sealed trait MandatType
 

@@ -247,8 +247,8 @@ dialog {
                             font-weight: 600;
                             line-height: 16px;">
                             <i class="icon material-icons icon--light">attach_file</i>
-                            @application.creatorUserName a ajouté @if(Application.fileCanBeShowed(application, fileExpiryDayCount)(currentUser)(currentUserRights)) { le fichier <a href="@routes.ApplicationController.applicationFile(application.id, filename)" target="_blank">@filename</a> } else { un fichier }
-                            @Application.filesAvailabilityLeftInDays(application, fileExpiryDayCount) match {
+                            @application.creatorUserName a ajouté @if(Authorization.applicationFileCanBeShowed(fileExpiryDayCount)(application)(currentUser, currentUserRights)) { le fichier <a href="@routes.ApplicationController.applicationFile(application.id, filename)" target="_blank">@filename</a> } else { un fichier }
+                            @Application.filesAvailabilityLeftInDays(fileExpiryDayCount)(application) match {
                                 case None => { ( Fichier expiré et supprimé ) }
                                 case Some(expirationInDays) => { ( Suppression du fichier dans @expirationInDays jours ) }
                             }
@@ -337,7 +337,7 @@ dialog {
                             font-weight: 600;
                             line-height: 16px;">
                             <i class="icon material-icons icon--light">attach_file</i>
-                            @answer.creatorUserName a ajouté @if(Answer.fileCanBeShowed(application, answer.id, fileExpiryDayCount)(currentUser, currentUserRights)) { le fichier <a href="@routes.ApplicationController.answerFile(application.id, answer.id, filename)" target="_blank">@filename</a> } else { un fichier }
+                            @answer.creatorUserName a ajouté @if(Authorization.answerFileCanBeShowed(fileExpiryDayCount)(application, answer.id)(currentUser, currentUserRights)) { le fichier <a href="@routes.ApplicationController.answerFile(application.id, answer.id, filename)" target="_blank">@filename</a> } else { un fichier }
                             @Answer.filesAvailabilityLeftInDays(fileExpiryDayCount)(answer) match {
                                 case None => { ( Fichier expiré et supprimé ) }
                                 case Some(expirationInDays) => { ( Suppression du fichier dans @expirationInDays jours ) }
