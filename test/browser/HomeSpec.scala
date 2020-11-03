@@ -7,7 +7,7 @@ import play.api.test.Helpers._
 import play.api.test._
 
 @RunWith(classOf[JUnitRunner])
-class HomeSpec extends Specification with Tables with BaseSpec {
+class HomeSpec extends Specification with BaseSpec {
 
   "Home" should {
     "Stay on / when disconnected" in new WithBrowser(
