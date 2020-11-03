@@ -78,10 +78,10 @@
                             <p style="color: red; font-weight: bold;">@applicationForm("groups").errors.map(_.format).mkString(", ")</p>
                         }
 
-                        <fieldset class="single--margin-left-8px single--margin-right-24px single--margin-top-16px single--margin-bottom-24px mdl-cell mdl-cell--12-col">
+                        <fieldset class="single--margin-left-8px single--margin-right-24px single--margin-top-8px mdl-cell mdl-cell--12-col">
                           @for(group <- organisationGroups.sortBy(_.name)) {
                             @defining(group.organisationSetOrDeducted) { organisation: Option[Organisation] =>
-                            <div class="single--padding-top-8px single--padding-bottom-8px single--padding-left-16px">
+                            <div class="single--padding-top-8px single--padding-bottom-16px single--padding-left-16px">
                               <label for="invite-@group.id"
                                      class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect">
                                 <input id="invite-@group.id"
