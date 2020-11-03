@@ -21,14 +21,16 @@ import models.EventType.{
   UserGroupCreated,
   UsersImported
 }
+import models.User.AccountType.{Nominative, Shared}
+import models.form.ImportUserForm
+import models.form.UserGroupForm.groupImportMapping
 import models.formModels.{CSVImportData, UserFormData, UserGroupFormData}
-import models.{Area, Organisation, User, UserGroup}
+import models.{Area, User, UserGroup}
 import org.webjars.play.WebJarsUtil
+import play.api.data.Form
 import play.api.data.Forms._
-import play.api.data.validation.Constraints.{maxLength, nonEmpty}
-import play.api.data.{Form, Mapping}
 import play.api.mvc.{Action, AnyContent, InjectedController}
-import serializers.{Keys, UserAndGroupCsvSerializer}
+import serializers.UserAndGroupCsvSerializer
 import services.{EventService, NotificationService, UserGroupService, UserService}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -115,61 +117,6 @@ case class CSVImportController @Inject() (
     groups.map(group => augmentUserGroupInformation(group, multiGroupUserEmails))
   }
 
-  private def userImportMapping(date: ZonedDateTime): Mapping[User] =
-    mapping(
-      "id" -> optional(uuid).transform[UUID](
-        {
-          case None     => UUID.randomUUID()
-          case Some(id) => id
-        },
-        Option.apply
-      ),
-      "key" -> ignored("key"),
-      "firstName" -> optional(text.verifying(maxLength(100))),
-      "lastName" -> optional(text.verifying(maxLength(100))),
-      "name" -> text.verifying(maxLength(500)),
-      "quality" -> default(text, ""),
-      "email" -> email.verifying(maxLength(200), nonEmpty),
-      "helper" -> ignored(true),
-      "instructor" -> boolean,
-      "admin" -> ignored(false),
-      "areas" -> list(uuid),
-      "creationDate" -> ignored(date),
-      "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
-      "adminGroup" -> boolean,
-      "disabled" -> boolean,
-      "expert" -> ignored(false),
-      "groupIds" -> default(list(uuid), List()),
-      "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "phone-number" -> optional(text),
-      // TODO: put also in forms/imports?
-      "observableOrganisationIds" -> list(of[Organisation.Id]),
-      Keys.User.sharedAccount -> boolean
-    )(User.apply)(User.unapply)
-
-  private def groupImportMapping(date: ZonedDateTime): Mapping[UserGroup] =
-    mapping(
-      "id" -> optional(uuid).transform[UUID](
-        {
-          case None     => UUID.randomUUID()
-          case Some(id) => id
-        },
-        Option.apply
-      ),
-      "name" -> text(maxLength = 60),
-      "description" -> optional(text),
-      "insee-code" -> list(text),
-      "creationDate" -> ignored(date),
-      "area-ids" -> list(uuid)
-        .verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
-      "organisation" -> optional(of[Organisation.Id]).verifying(
-        "Vous devez sélectionner une organisation dans la liste",
-        _.exists(Organisation.isValidId)
-      ),
-      "email" -> optional(email)
-    )(UserGroup.apply)(UserGroup.unapply)
-
   private def importUsersAfterReviewForm(date: ZonedDateTime): Form[List[UserGroupFormData]] =
     Form(
       single(
@@ -178,7 +125,7 @@ case class CSVImportController @Inject() (
             "group" -> groupImportMapping(date),
             "users" -> list(
               mapping(
-                "user" -> userImportMapping(date),
+                "user" -> ImportUserForm.userImportMapping(date),
                 "line" -> number,
                 "alreadyExists" -> boolean,
                 "alreadyExistingUser" -> ignored(Option.empty[User]),
@@ -339,8 +286,9 @@ case class CSVImportController @Inject() (
                       .filter(_.alreadyExistingUser.isEmpty)
                       .map(_.user)
                       .map {
-                        case user if user.name.nonEmpty => user.copy(sharedAccount = true)
-                        case user                       => user.copy(sharedAccount = false)
+                        case user if user.name.nonEmpty =>
+                          user.copy(accountType = Shared(user.name))
+                        case user => user.copy(accountType = Nominative.newAccount)
                       }
                       // Here we will group users by email, so we can put them in multiple groups
                       .groupBy(_.email)

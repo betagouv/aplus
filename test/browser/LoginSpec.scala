@@ -4,6 +4,7 @@ import helper.{Hash, Time, UUIDHelper}
 import java.time.ZonedDateTime
 
 import cats.implicits.catsSyntaxOptionId
+import models.User.AccountType.Nominative
 import models.{Area, LoginToken, User}
 import org.specs2.mutable._
 import org.specs2.runner._
@@ -19,10 +20,7 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
   val existingUser = User(
     UUIDHelper.namedFrom("julien.test"),
     Hash.sha256(s"julien.test"),
-    "FirstName".some,
-    "LastName".some,
-    "Julien DAUPHANT TEST",
-    "Admin A+",
+    accountType = Nominative("Julien", "Dauohant", "Admin A+"),
     "julien.dauphant.test@beta.gouv.fr",
     helper = true,
     instructor = false,

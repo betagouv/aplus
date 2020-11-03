@@ -8,6 +8,7 @@ import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import models.formModels.{UserFormData, UserGroupFormData}
 import helper.{PlayFormHelper, UUIDHelper}
 import helper.StringHelper._
+import models.form.{ImportUserForm, UserGroupForm}
 import models.{Area, Organisation, User, UserGroup}
 import play.api.data.Forms._
 import play.api.data.Mapping
@@ -281,12 +282,14 @@ object UserAndGroupCsvSerializer {
         lineNumber: LineNumber,
         currentDate: ZonedDateTime
     ): Either[String, UserGroupFormData] =
-      groupCSVMapping(currentDate)
+      UserGroupForm
+        .groupImportMapping(currentDate)
         .bind(csvMap)
         .fold(
           errors => Left(errors.map(PlayFormHelper.prettifyFormError).mkString(", ")),
           group =>
-            userCSVMapping(currentDate)
+            ImportUserForm
+              .userImportMapping(currentDate)
               .bind(csvMap)
               .fold(
                 errors => Left(errors.map(PlayFormHelper.prettifyFormError).mkString(", ")),
@@ -303,70 +306,5 @@ object UserAndGroupCsvSerializer {
         )
 
   }
-
-  private def userCSVMapping(currentDate: ZonedDateTime): Mapping[User] =
-    single(
-      "user" -> mapping(
-        "id" -> optional(uuid).transform[UUID](
-          {
-            case None     => UUID.randomUUID()
-            case Some(id) => id
-          },
-          Option.apply
-        ),
-        "key" -> ignored("key"),
-        "firstName" -> optional(text.verifying(maxLength(100))),
-        "lastName" -> optional(text.verifying(maxLength(100))),
-        "name" -> optional(text.verifying(maxLength(500))).transform[String](
-          {
-            case Some(value) => value
-            case None        => ""
-          },
-          {
-            case ""   => Option.empty[String]
-            case name => name.some
-          }
-        ),
-        "quality" -> default(text, ""),
-        "email" -> nonEmptyText,
-        "helper" -> ignored(true),
-        "instructor" -> boolean,
-        "admin" -> ignored(false),
-        "area-ids" -> ignored(List.empty[UUID]),
-        "creationDate" -> ignored(currentDate),
-        "communeCode" -> ignored("0"),
-        "admin-group" -> boolean,
-        "disabled" -> ignored(false),
-        "expert" -> ignored(false),
-        "groupIds" -> default(list(uuid), Nil),
-        "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-        "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-        "phone-number" -> optional(text),
-        // TODO: put in CSV?
-        "observableOrganisationIds" -> list(of[Organisation.Id]),
-        Keys.User.sharedAccount -> ignored(false)
-      )(User.apply)(User.unapply)
-    )
-
-  private def groupCSVMapping(currentDate: ZonedDateTime): Mapping[UserGroup] =
-    single(
-      "group" ->
-        mapping(
-          "id" -> optional(uuid).transform[UUID](
-            {
-              case None     => UUID.randomUUID()
-              case Some(id) => id
-            },
-            Some(_)
-          ),
-          "name" -> text,
-          "description" -> optional(text),
-          "insee-code" -> list(text),
-          "creationDate" -> ignored(currentDate),
-          "area-ids" -> list(uuid),
-          "organisation" -> optional(of[Organisation.Id]),
-          "email" -> optional(email)
-        )(UserGroup.apply)(UserGroup.unapply)
-    )
 
 }

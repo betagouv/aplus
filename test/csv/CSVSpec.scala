@@ -1,6 +1,5 @@
 package csv
 
-import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption}
 import cats.syntax.all._
 import helper.{CSVUtil, Time, UUIDHelper}
 import models.{formModels, Area, Organisation, UserGroup}
@@ -88,8 +87,8 @@ class CSVSpec extends Specification {
 
       val expectedEmail = "prenom5.nom5@dgfip.finances.gouv.fr"
       val expectedPhoneNumber = "01.02.03.04.05"
-      dgfip.get.users.head.user.firstName.orEmpty must equalTo("Prénom5")
-      dgfip.get.users.head.user.lastName.orEmpty must equalTo("Nom5")
+      dgfip.get.users.head.user.firstName must equalTo("Prénom5")
+      dgfip.get.users.head.user.lastName must equalTo("Nom5")
       dgfip.get.users.head.user.email must equalTo(expectedEmail)
       dgfip.get.users.head.user.helper must beTrue
       dgfip.get.users.head.user.areas must equalTo(List[String]())

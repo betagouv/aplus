@@ -2,6 +2,7 @@ package browser
 
 import cats.implicits.catsSyntaxOptionId
 import helper.{Time, UUIDHelper}
+import models.User.AccountType.Nominative
 import models.{Area, LoginToken, User, UserGroup}
 import org.junit.runner._
 import org.specs2.mutable._
@@ -37,10 +38,7 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
       val instructorUser = User(
         UUIDHelper.randomUUID,
         "key",
-        "FirstName".some,
-        "LastName".some,
-        s"J'instruit TEST $number",
-        s"Instructeur Testeur $number",
+        accountType = Nominative("FirstName", "LastName", s"Instructeur Testeur $number"),
         s"instructor-test$number@example.com",
         helper = true,
         instructor = true,
@@ -56,10 +54,7 @@ class ApplicationSpec extends Specification with Tables with BaseSpec {
       val helperUser = User(
         UUIDHelper.randomUUID,
         "key",
-        "FirstName".some,
-        "LastName".some,
-        s"J'aide TEST $number",
-        "Aidant Testeur",
+        accountType = Nominative("FirstName", "LastName", "Aidant Testeur"),
         s"helper-test$number@example.com",
         helper = true,
         instructor = false,

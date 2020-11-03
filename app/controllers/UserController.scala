@@ -1,10 +1,10 @@
 package controllers
 
-import java.time.{LocalDate, ZoneId, ZonedDateTime}
+import java.time.{LocalDate, ZoneId}
 import java.util.UUID
 
 import actions.{LoginAction, RequestWithUserData}
-import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption, catsSyntaxOptionId}
+import cats.implicits.catsSyntaxOptionId
 import cats.syntax.all._
 import controllers.Operators.{GroupOperators, UserOperators}
 import helper.BooleanHelper.not
@@ -40,13 +40,13 @@ import models.EventType.{
   ViewUserUnauthorized
 }
 import models._
+import models.form.UserForm.{userMapping, usersForm}
 import models.formModels.ValidateSubscriptionForm
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
+import play.api.data.Form
 import play.api.data.Forms._
-import play.api.data.validation.Constraints.{maxLength, nonEmpty}
-import play.api.data.{Form, Mapping}
 import play.api.mvc._
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
@@ -168,8 +168,8 @@ case class UserController @Inject() (
             val userGroups = user.groupIds.flatMap(id => groups.find(_.id === id))
             List[String](
               user.id.toString,
-              user.firstName.orEmpty,
-              user.lastName.orEmpty,
+              user.firstName,
+              user.lastName,
               user.email,
               Time.formatPatternFr(user.creationDate, "dd-MM-YYYY-HHhmm"),
               if (user.sharedAccount) "Compte Partagé" else " ",
@@ -465,10 +465,10 @@ case class UserController @Inject() (
               ValidateSubscriptionForm(
                 redirect = Option.empty,
                 cguChecked = user.cguAcceptationDate.isDefined,
-                firstName = user.firstName,
-                lastName = user.lastName,
+                firstName = user.firstName.some.filter(_.trim.nonEmpty),
+                lastName = user.lastName.some.filter(_.trim.nonEmpty),
                 phoneNumber = user.phoneNumber,
-                qualite = user.qualite.some
+                qualite = user.qualite.some.filter(_.trim.nonEmpty)
               )
             )
         )
@@ -606,92 +606,6 @@ case class UserController @Inject() (
       }
     }
 
-  def usersForm(timeZone: ZoneId, areaIds: List[UUID]): Form[List[User]] =
-    Form(
-      single(
-        "users" -> list(
-          mapping(
-            "id" -> optional(uuid).transform[UUID](
-              {
-                case None     => UUID.randomUUID()
-                case Some(id) => id
-              },
-              Some(_)
-            ),
-            "key" -> ignored("key"),
-            "firstName" -> optional(text.verifying(maxLength(100))),
-            "lastName" -> optional(text.verifying(maxLength(100))),
-            "name" -> nonEmptyText.verifying(maxLength(100)),
-            "qualite" -> text.verifying(maxLength(100)),
-            "email" -> email.verifying(maxLength(200), nonEmpty),
-            "helper" -> ignored(true),
-            "instructor" -> boolean,
-            "admin" -> ignored(false),
-            "areas" -> ignored(areaIds),
-            "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
-            "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
-            "adminGroup" -> boolean,
-            "disabled" -> ignored(false),
-            "expert" -> ignored(false),
-            "groupIds" -> default(list(uuid), List()),
-            "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-            "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-            "phone-number" -> optional(text),
-            "observableOrganisationIds" -> list(
-              of[Organisation.Id].verifying(
-                "Organisation non reconnue",
-                organisationId =>
-                  Organisation.all
-                    .exists(organisation => organisation.id === organisationId)
-              )
-            ),
-            Keys.User.sharedAccount -> boolean
-          )(User.apply)(User.unapply)
-        )
-      )
-    )
-
   def userForm(timeZone: ZoneId): Form[User] = Form(userMapping(timeZone))
-
-  private def userMapping(implicit timeZone: ZoneId): Mapping[User] =
-    mapping(
-      "id" -> optional(uuid).transform[UUID](
-        {
-          case None     => UUID.randomUUID()
-          case Some(id) => id
-        },
-        Option.apply
-      ),
-      "key" -> ignored("key"),
-      "firstName" -> optional(text.verifying(maxLength(100))),
-      "lastName" -> optional(text.verifying(maxLength(100))),
-      "name" -> optional(nonEmptyText.verifying(maxLength(100))).transform[String](
-        {
-          case Some(value) => value
-          case None        => ""
-        },
-        {
-          case ""   => Option.empty[String]
-          case name => name.some
-        }
-      ),
-      "qualite" -> text.verifying(maxLength(100)),
-      "email" -> email.verifying(maxLength(200), nonEmpty),
-      "helper" -> boolean,
-      "instructor" -> boolean,
-      "admin" -> boolean,
-      "areas" -> list(uuid).verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
-      "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
-      "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
-      "adminGroup" -> boolean,
-      "disabled" -> boolean,
-      "expert" -> ignored(false),
-      "groupIds" -> default(list(uuid), Nil),
-      "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "phone-number" -> optional(text),
-      "observableOrganisationIds" -> list(of[Organisation.Id]),
-      Keys.User.sharedAccount -> boolean
-    )(User.apply)(User.unapply)
 
 }

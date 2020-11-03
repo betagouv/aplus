@@ -7,6 +7,7 @@ import cats.syntax.all._
 import helper.{Hash, Time}
 import javax.inject.Inject
 import models.User
+import models.sql.UserRow.UserParser
 import org.postgresql.util.PSQLException
 import play.api.db.Database
 
@@ -22,49 +23,22 @@ class UserService @Inject() (
 
   private lazy val cryptoSecret = configuration.underlying.getString("play.http.secret.key ")
 
-  private val simpleUser: RowParser[User] = Macro
-    .parser[User](
-      "id",
-      "key",
-      "first_name",
-      "last_name",
-      "name",
-      "qualite",
-      "email",
-      "helper",
-      "instructor",
-      "admin",
-      "areas",
-      "creation_date",
-      "commune_code",
-      "group_admin",
-      "disabled",
-      "expert",
-      "group_ids",
-      "cgu_acceptation_date",
-      "newsletter_acceptation_date",
-      "phone_number",
-      "observable_organisation_ids",
-      "shared_account"
-    )
-    .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
-
   def allNoNameNoEmail: Future[List[User]] =
     Future {
       db.withConnection { implicit connection =>
-        SQL("""SELECT *, '' as name, '' as email, '' as qualite FROM "user"""").as(simpleUser.*)
+        SQL("""SELECT *, '' as name, '' as email, '' as qualite FROM "user"""").as(UserParser.*)
       }
     }
 
   def all: Future[List[User]] =
     Future {
-      db.withConnection(implicit connection => SQL("""SELECT * FROM "user"""").as(simpleUser.*))
+      db.withConnection(implicit connection => SQL("""SELECT * FROM "user"""").as(UserParser.*))
     }
 
   def allNotDisabled: Future[List[User]] =
     Future {
       db.withConnection { implicit connection =>
-        SQL("""SELECT * FROM "user" WHERE NOT disabled""").as(simpleUser.*)
+        SQL("""SELECT * FROM "user" WHERE NOT disabled""").as(UserParser.*)
       }
     }
 
@@ -72,21 +46,21 @@ class UserService @Inject() (
     Future {
       db.withConnection { implicit connection =>
         SQL"""SELECT * FROM "user" WHERE expert = true AND disabled = false"""
-          .as(simpleUser.*)
+          .as(UserParser.*)
       }
     }
 
   // Note: this is deprecated, should check via the UserGroup
   def byAreaIds(areaIds: List[UUID]): List[User] =
     db.withConnection { implicit connection =>
-      SQL"""SELECT * FROM "user" WHERE ARRAY[$areaIds]::uuid[] && areas""".as(simpleUser.*)
+      SQL"""SELECT * FROM "user" WHERE ARRAY[$areaIds]::uuid[] && areas""".as(UserParser.*)
     }
 
   def allDBOnlybyArea(areaId: UUID) =
     db.withConnection { implicit connection =>
       SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""")
         .on("areaId" -> areaId)
-        .as(simpleUser.*)
+        .as(UserParser.*)
     }
 
   def byGroupIds(ids: List[UUID], includeDisabled: Boolean = false): List[User] =
@@ -98,7 +72,7 @@ class UserService @Inject() (
       }
       SQL(s"""SELECT * FROM "user" WHERE ARRAY[{ids}]::uuid[] && group_ids $disabledSQL""")
         .on("ids" -> ids)
-        .as(simpleUser.*)
+        .as(UserParser.*)
     }
 
   // Note: this function is used in the stats,
@@ -108,7 +82,7 @@ class UserService @Inject() (
       db.withConnection { implicit connection =>
         SQL"""SELECT *, '' as name, '' as email, '' as qualite
             FROM "user"
-            WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
+            WHERE ARRAY[$ids]::uuid[] && group_ids""".as(UserParser.*)
       }
     }
 
@@ -127,28 +101,28 @@ class UserService @Inject() (
       }
       SQL(s"""SELECT * FROM "user" WHERE ARRAY[{ids}]::uuid[] @> ARRAY[id]::uuid[] $disabledSQL""")
         .on("ids" -> ids)
-        .as(simpleUser.*)
+        .as(UserParser.*)
     }
 
   def byKey(key: String): Option[User] =
     db.withConnection { implicit connection =>
       SQL("""SELECT * FROM "user" WHERE key = {key} AND disabled = false""")
         .on("key" -> key)
-        .as(simpleUser.singleOpt)
+        .as(UserParser.singleOpt)
     }
 
   def byEmail(email: String): Option[User] =
     db.withConnection { implicit connection =>
       SQL("""SELECT * FROM "user" WHERE lower(email) = {email} AND disabled = false""")
         .on("email" -> email.toLowerCase)
-        .as(simpleUser.singleOpt)
+        .as(UserParser.singleOpt)
     }
 
   def byEmails(emails: List[String]): List[User] = {
     val lowerCaseEmails = emails.map(_.toLowerCase)
     db.withConnection { implicit connection =>
       SQL"""SELECT * FROM "user" WHERE  ARRAY[$lowerCaseEmails]::text[] @> ARRAY[lower(email)]::text[]"""
-        .as(simpleUser.*)
+        .as(UserParser.*)
     }
   }
 

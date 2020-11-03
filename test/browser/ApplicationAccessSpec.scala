@@ -2,6 +2,7 @@ package browser
 
 import cats.implicits.catsSyntaxOptionId
 import helper.{Time, UUIDHelper}
+import models.User.AccountType.Nominative
 import models.{Application, Area, LoginToken, User, UserGroup}
 import org.junit.runner._
 import org.specs2.matcher.MatchResult
@@ -122,10 +123,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
     val instructorUser = User(
       UUIDHelper.namedFrom(s"instructor-test$number"),
       "key",
-      "FirstName".some,
-      "LastName".some,
-      s"J'instruit TEST $number",
-      s"Instructeur Testeur $number",
+      accountType = Nominative("FirstName", "LastName", s"Instructeur Testeur $number"),
       s"instructor-test$number@example.com",
       helper = true,
       instructor = true,
@@ -141,10 +139,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
     val unrelatedInstructorUser = User(
       UUIDHelper.namedFrom(s"instructor-test-unrelated$number"),
       "key",
-      "FirstName".some,
-      "LastName".some,
-      s"Je n'instruit pas TEST $number",
-      s"Instructeur Testeur $number",
+      accountType = Nominative("FirstName", "LastName", s"Instructeur Testeur $number"),
       s"instructor-test-unrelated$number@example.com",
       helper = true,
       instructor = true,
@@ -160,10 +155,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
     val helperUser = User(
       UUIDHelper.namedFrom(s"helper-test$number"),
       "key",
-      "FirstName".some,
-      "LastName".some,
-      s"J'aide TEST $number",
-      "Aidant Testeur",
+      accountType = Nominative("FirstName", "LastName", "Aidant Testeur"),
       s"helper-test$number@example.com",
       helper = true,
       instructor = false,
@@ -179,10 +171,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
     val helperFriendUser = User(
       UUIDHelper.namedFrom(s"helper-test-friend$number"),
       "key",
-      "FirstName".some,
-      "LastName".some,
-      s"Je suis collegue de  TEST $number",
-      "Aidant Testeur",
+      accountType = Nominative("FirstName", "LastName", "Aidant Testeur"),
       s"helper-test-friend$number@example.com",
       helper = true,
       instructor = false,
@@ -198,10 +187,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
     val unrelatedHelperUser = User(
       UUIDHelper.namedFrom(s"helper-test-unrelated$number"),
       "key",
-      "FirstName".some,
-      "LastName".some,
-      s"Je suis collegue de  TEST $number",
-      "Aidant Testeur",
+      accountType = Nominative("FirstName", "LastName", "Aidant Testeur"),
       s"helper-test-unrelated$number@example.com",
       helper = true,
       instructor = false,
@@ -217,10 +203,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
     val unrelatedExpertUser = User(
       UUIDHelper.namedFrom(s"expert-test-unrelated$number"),
       "key",
-      "FirstName".some,
-      "LastName".some,
-      s"Je suis un expert sans rapport $number",
-      "Expert Testeur",
+      accountType = Nominative("FirstName", "LastName", "Expert Testeur"),
       s"expert-test-unrelated$number@example.com",
       helper = true,
       instructor = false,
@@ -236,10 +219,7 @@ class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
     val managerUser = User(
       UUIDHelper.namedFrom(s"helper-test-manager$number"),
       "key",
-      "FirstName".some,
-      "LastName".some,
-      s"Je suis manager de TEST $number",
-      "Manager Testeur",
+      accountType = Nominative("FirstName", "LastName", "Manager Testeur"),
       s"helper-test-manager$number@example.com",
       helper = false,
       instructor = false,

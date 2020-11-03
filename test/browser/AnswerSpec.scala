@@ -4,6 +4,7 @@ import helper.{Time, UUIDHelper}
 import java.util.UUID
 
 import cats.implicits.catsSyntaxOptionId
+import models.User.AccountType.Nominative
 import models.{Application, Area, LoginToken, User, UserGroup}
 import org.junit.runner._
 import org.specs2.mutable._
@@ -49,10 +50,7 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
     val user = User(
       id = userId(testSeed, userSeed),
       key = "key",
-      firstName = firstName.some,
-      lastName = lastName.some,
-      name = userName,
-      qualite = userQualite,
+      accountType = Nominative(firstName, lastName, userQualite),
       email = email,
       helper = isHelper,
       instructor = isInstructor,
