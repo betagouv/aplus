@@ -35,12 +35,6 @@ case class Application(
     mandatDate: Option[String]
 ) extends AgeModel {
 
-  lazy val filesAvailabilityLeftInDays: Option[Int] = if (ageInDays > 8) {
-    None
-  } else {
-    Some(7 - ageInDays)
-  }
-
   lazy val allFiles: Map[String, Long] = {
     files ++ answers.flatMap(_.files).flatten
   }
@@ -134,19 +128,6 @@ case class Application(
 
   // Security
 
-  def fileCanBeShowed(user: User, rights: UserRights, answer: UUID): Boolean =
-    answers.find(_.id === answer) match {
-      case None => false
-      case Some(answer) if answer.filesAvailabilityLeftInDays.isEmpty =>
-        false // You can't download expired file
-      case _ => fileCanBeShowed(user)(rights)
-    }
-
-  def fileCanBeShowed(user: User)(rights: UserRights) =
-    filesAvailabilityLeftInDays.nonEmpty && not(isExpert(rights)) &&
-      (isInstructor(rights) && invitedUsers.keys.toList.contains(user.id)) ||
-      (isHelper(rights) && user.id === creatorUserId)
-
   def canHaveExpertsInvitedBy(user: User) =
     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
       creatorUserId === user.id
@@ -186,6 +167,9 @@ case class Application(
 
 object Application {
 
+  def filesAvailabilityLeftInDays(filesExpirationInDays: Int)(application: Application) =
+    application.ageInDays.some.map(filesExpirationInDays - _).filter(_ >= 0)
+
   sealed trait MandatType
 
   object MandatType {
@@ -194,7 +178,6 @@ object Application {
     case object Paper extends MandatType
 
     implicit val Eq: Eq[MandatType] = (x: MandatType, y: MandatType) => x == y
-
   }
 
   val USER_FIRST_NAME_KEY = "Prénom"
