@@ -3,6 +3,7 @@ package models
 import java.time.ZonedDateTime
 import java.util.UUID
 
+import cats.syntax.all._
 import models.Application.MandatType
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
@@ -27,7 +28,8 @@ class ApplicationSpec extends Specification {
         area = UUID.randomUUID(),
         irrelevant = false,
         mandatType = Option.empty[MandatType],
-        mandatDate = Option.empty[String]
+        mandatDate = Option.empty[String],
+        invitedGroupIds = List.empty[UUID]
       )
 
       application.status must equalTo("Archivée")
@@ -48,7 +50,8 @@ class ApplicationSpec extends Specification {
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty
+          Option.empty,
+          invitedGroupIds = List.empty[UUID].some
         ),
         Answer(
           UUID.randomUUID(),
@@ -60,7 +63,8 @@ class ApplicationSpec extends Specification {
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty
+          Option.empty,
+          invitedGroupIds = List.empty[UUID].some
         )
       )
 
@@ -78,7 +82,8 @@ class ApplicationSpec extends Specification {
         area = UUID.randomUUID(),
         irrelevant = false,
         mandatType = Option.empty[MandatType],
-        mandatDate = Option.empty[String]
+        mandatDate = Option.empty[String],
+        invitedGroupIds = List.empty[UUID]
       )
 
       application.status must equalTo("Répondu")
@@ -98,7 +103,8 @@ class ApplicationSpec extends Specification {
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty
+          Option.empty,
+          invitedGroupIds = List.empty[UUID].some
         ),
         Answer(
           UUID.randomUUID(),
@@ -110,7 +116,8 @@ class ApplicationSpec extends Specification {
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty
+          Option.empty,
+          invitedGroupIds = List.empty[UUID].some
         )
       )
 
@@ -128,7 +135,8 @@ class ApplicationSpec extends Specification {
         area = UUID.randomUUID(),
         irrelevant = false,
         mandatType = Option.empty[MandatType],
-        mandatDate = Option.empty[String]
+        mandatDate = Option.empty[String],
+        invitedGroupIds = List.empty[UUID]
       )
 
       application.status must equalTo("Nouvelle")
