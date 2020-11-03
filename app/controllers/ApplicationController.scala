@@ -5,13 +5,13 @@ import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
 import actions._
-import cats.implicits.catsSyntaxTuple2Semigroupal
+import cats.implicits.{catsSyntaxOptionId, catsSyntaxTuple2Semigroupal}
 import cats.syntax.all._
 import constants.Constants
 import forms.FormsPlusMap
 import helper.BooleanHelper.not
 import helper.CSVUtil.escape
-import helper.StringHelper.CanonizeString
+import helper.StringHelper.{notEmpty, CanonizeString, StringOps}
 import helper.Time.zonedDateTimeOrdering
 import helper.{Hash, Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
@@ -1041,21 +1041,19 @@ case class ApplicationController @Inject() (
               request.currentUser.id,
               contextualizedUserName(request.currentUser, currentAreaId),
               Map.empty[UUID, String],
-              !answerData.privateToHelpers,
+              not(answerData.privateToHelpers),
               answerData.applicationIsDeclaredIrrelevant,
-              Some(
-                answerData.usagerOptionalInfos.collect {
-                  case (infoName, infoValue) if infoName.trim.nonEmpty && infoValue.trim.nonEmpty =>
-                    (infoName.trim, infoValue.trim)
-                }
-              ),
-              files = Some(newAttachments ++ pendingAttachments)
+              answerData.usagerOptionalInfos.collect {
+                case (infoName, infoValue) if infoName.notEmpty && infoValue.notEmpty =>
+                  (infoName.trim, infoValue.trim)
+              }.some,
+              files = (newAttachments ++ pendingAttachments).some
             )
             if (applicationService.add(applicationId, answer) === 1) {
               eventService.log(
                 AnswerCreated,
                 s"La réponse ${answer.id} a été créée sur la demande $applicationId",
-                Some(application)
+                application.some
               )
               notificationsService.newAnswer(application, answer)
               Future(

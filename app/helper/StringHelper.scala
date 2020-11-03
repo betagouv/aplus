@@ -51,4 +51,8 @@ object StringHelper {
   def capitalizeName(name: String): String =
     """[\P{P}&&\P{Z}]+""".r.replaceAllIn(name, m => m.group(0).toLowerCase.capitalize)
 
+  implicit class StringOps(s: String) {
+    def notEmpty = s.trim.nonEmpty
+  }
+
 }
