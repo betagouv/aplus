@@ -541,7 +541,21 @@ case class ApplicationController @Inject() (
         case (_, _ :: _, _) =>
           userGroupService.byOrganisationIds(organisationIds).flatMap(anonymousGroupsAndUsers)
         case (_, _, _) =>
-          userGroupService.byIdsFuture(groupIds).flatMap(anonymousGroupsAndUsers)
+          userGroupService
+            .byOrganisationIds(organisationIds)
+            .flatMap(anonymousGroupsAndUsers)
+            .map { case (users, allApplications) =>
+              val applications = allApplications.filter { application =>
+                val legacyCase = application.invitedGroupIds.isEmpty ||
+                  application.answers.exists(_.invitedGroupIds.isEmpty)
+                val invitedGroups: Set[UUID] =
+                  (application.invitedGroupIds :::
+                    application.answers.flatMap(_.invitedGroupIds).flatten).toSet
+                val oneGroupHasBeenInvited = invitedGroups.intersect(groupIds.toSet).nonEmpty
+                legacyCase || oneGroupHasBeenInvited
+              }
+              (users, applications)
+            }
       }
 
     // Filter creation dates
