@@ -211,4 +211,24 @@ object Authorization {
       validCase1 || validCase2
     }
 
+  def answerFileCanBeShowed(filesExpirationInDays: Int)(
+      application: Application,
+      answerId: UUID
+  )(user: User, rights: UserRights): Boolean =
+    application.answers
+      .find(_.id === answerId)
+      .map(Answer.filesAvailabilityLeftInDays(filesExpirationInDays)) match {
+      case Some(_) => applicationFileCanBeShowed(filesExpirationInDays)(application)(user, rights)
+      case _       => false
+    }
+
+  def applicationFileCanBeShowed(filesExpirationInDays: Int)(
+      application: Application
+  )(user: User, rights: UserRights): Boolean =
+    Application.filesAvailabilityLeftInDays(filesExpirationInDays)(application).nonEmpty && not(
+      isExpert(rights)
+    ) &&
+      (isInstructor(rights) && application.invitedUsers.keys.toList.contains(user.id)) ||
+      (isHelper(rights) && user.id === application.creatorUserId)
+
 }

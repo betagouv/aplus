@@ -3,6 +3,9 @@ package models
 import java.time.ZonedDateTime
 import java.util.UUID
 
+import cats.syntax.all._
+import models.Authorization.UserRights
+
 case class Answer(
     id: UUID,
     applicationId: UUID,
@@ -17,12 +20,11 @@ case class Answer(
     files: Option[Map[String, Long]] = Some(Map()),
     // Note: the `Option` is here to keep compatibility with the existing json
     invitedGroupIds: Option[List[UUID]],
-) extends AgeModel {
+) extends AgeModel
 
-  lazy val filesAvailabilityLeftInDays: Option[Int] = if (ageInDays > 8) {
-    None
-  } else {
-    Some(7 - ageInDays)
-  }
+object Answer {
+
+  def filesAvailabilityLeftInDays(filesExpirationInDays: Int)(answer: Answer): Option[Int] =
+    answer.ageInDays.some.map(filesExpirationInDays - _).filter(_ >= 0)
 
 }

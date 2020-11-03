@@ -15,7 +15,7 @@ import services._
   * CI to pass those tests (doesn't work otherwise).
   */
 @RunWith(classOf[JUnitRunner])
-class ApplicationAccessSpec extends Specification with Tables with BaseSpec {
+class ApplicationAccessSpec extends Specification with BaseSpec {
 
   "Application" should {
     "Allow the instructor to access an Application" in new WithBrowser(
