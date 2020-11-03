@@ -281,8 +281,9 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       ),
       area = area,
       irrelevant = false,
-      mandatType = Some(Application.MandatType.Paper),
-      mandatDate = Some(java.time.ZonedDateTime.now().toString)
+      mandat = Application
+        .Mandat(Application.Mandat.MandatType.Paper, java.time.ZonedDateTime.now().toString)
+        .some
     )
     applicationService.createApplication(application)
 

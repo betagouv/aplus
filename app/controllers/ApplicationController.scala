@@ -5,7 +5,7 @@ import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
 import actions._
-import cats.implicits.catsSyntaxTuple2Semigroupal
+import cats.implicits.{catsSyntaxOptionId, catsSyntaxTuple2Semigroupal}
 import cats.syntax.all._
 import constants.Constants
 import forms.FormsPlusMap
@@ -309,9 +309,11 @@ case class ApplicationController @Inject() (
                 applicationData.selectedSubject.contains[String](applicationData.subject),
               category = applicationData.category,
               files = newAttachments ++ pendingAttachments,
-              mandatType = DataModel.Application.MandatType
-                .dataModelDeserialization(applicationData.mandatType),
-              mandatDate = Some(applicationData.mandatDate)
+              mandat = (
+                DataModel.Application.Mandat.MandatType
+                  .dataModelDeserialization(applicationData.mandatType),
+                applicationData.mandatDate.some
+              ).mapN(Application.Mandat.apply)
             )
             if (applicationService.createApplication(application)) {
               notificationsService.newApplication(application)

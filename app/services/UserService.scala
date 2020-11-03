@@ -4,17 +4,11 @@ import java.util.UUID
 
 import anorm._
 import cats.syntax.all._
-import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption}
 import helper.{Hash, Time}
 import javax.inject.Inject
 import models.User
-import javax.inject.Inject
-import models.User
-import models.formModels.ValidateSubscriptionForm
 import org.postgresql.util.PSQLException
 import play.api.db.Database
-import play.api.db.Database
-import views.html.helper.form
 
 import scala.concurrent.Future
 

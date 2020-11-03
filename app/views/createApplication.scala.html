@@ -15,7 +15,7 @@
 }{
         <div class="mdl-cell mdl-cell--12-col">
             <div style="margin-bottom: 20px"><a href="@routes.ApplicationController.myApplications()">Mes demandes</a> <span style="margin: 0 10px 0 10px"> > </span> Nouvelle Demande</div>
-      
+
             <div class="mdl-grid mdl-grid--no-spacing">
                 @if(applicationForm.hasErrors) {
                     <div class="mdl-cell mdl-cell--12-col">
@@ -77,7 +77,7 @@
                         @if(applicationForm("users").hasErrors) {
                             <p style="color: red; font-weight: bold;">@applicationForm("users").errors.map(_.format).mkString(", ")</p>
                         }
-                        
+
                         <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
                         @for(organisationGroup <- organisationGroups.sortBy(_.name)) {
                             @defining(organisationGroup.organisationSetOrDeducted) { organisation: Option[Organisation] =>
@@ -258,14 +258,14 @@
 
                             @defining((
                                 if (canCreatePhoneMandat) List(
-                                    Application.MandatType.Sms -> "par sms",
-                                    Application.MandatType.Phone -> "par téléphone (à l’oral)",
-                                    Application.MandatType.Paper -> "par mandat signé"
+                                    Application.Mandat.MandatType.Sms -> "par sms",
+                                    Application.Mandat.MandatType.Phone -> "par téléphone (à l’oral)",
+                                    Application.Mandat.MandatType.Paper -> "par mandat signé"
                                 ) else List(
-                                    Application.MandatType.Sms -> "par sms",
-                                    Application.MandatType.Paper -> "par mandat signé"
+                                    Application.Mandat.MandatType.Sms -> "par sms",
+                                    Application.Mandat.MandatType.Paper -> "par mandat signé"
                                 )
-                            ).map(option => (DataModel.Application.MandatType.dataModelSerialization(option._1), option._2))) { options =>
+                            ).map(option => (DataModel.Application.Mandat.MandatType.dataModelSerialization(option._1), option._2))) { options =>
                                 @options.map { case (optionValue, optionLabel) =>
                                 <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect single--margin-right-20px single--font-size-14px"
                                        for="@(id)_@optionValue">

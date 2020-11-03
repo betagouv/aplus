@@ -78,25 +78,25 @@ object StatsData {
           )
       }
 
-    private def applicationsCountByMandat(mandatType: Application.MandatType): List[Int] =
+    private def applicationsCountByMandat(mandatType: Application.Mandat.MandatType): List[Int] =
       applicationsGroupedByMonth.map(
-        _._2.count(application => application.mandatType === mandatType.some)
+        _._2.count(application => application.mandat.map(_.type_) === mandatType.some)
       )
 
     lazy val applicationsCountByMandatPaper: List[Int] =
       applicationsGroupedByMonth.map(
         _._2
           .count(application =>
-            application.mandatType.isEmpty ||
-              application.mandatType === Application.MandatType.Paper.some
+            application.mandat.map(_.type_).isEmpty ||
+              application.mandat.map(_.type_) === Application.Mandat.MandatType.Paper.some
           )
       )
 
     lazy val applicationsCountByMandatSms: List[Int] =
-      applicationsCountByMandat(Application.MandatType.Sms)
+      applicationsCountByMandat(Application.Mandat.MandatType.Sms)
 
     lazy val applicationsCountByMandatPhone: List[Int] =
-      applicationsCountByMandat(Application.MandatType.Phone)
+      applicationsCountByMandat(Application.Mandat.MandatType.Phone)
 
     // Conditional Series
 

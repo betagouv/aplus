@@ -7,7 +7,10 @@ import java.util.UUID
 import cats.Eq
 import cats.syntax.all._
 import helper.BooleanHelper.not
+import models.Application.Mandat
+import models.Application.Mandat.MandatType
 import models.Authorization.{isExpert, isHelper, isInstructor, UserRights}
+import serializers.JsonFormats._
 
 case class Application(
     id: UUID,
@@ -21,18 +24,17 @@ case class Application(
     invitedUsers: Map[UUID, String],
     area: UUID,
     irrelevant: Boolean,
-    answers: List[Answer] = List(),
+    answers: List[Answer] = List.empty[Answer],
     internalId: Int = -1,
     closed: Boolean = false,
-    seenByUserIds: List[UUID] = List(),
+    seenByUserIds: List[UUID] = List.empty[UUID],
     usefulness: Option[String] = None,
-    closedDate: Option[ZonedDateTime] = None,
+    closedDate: Option[ZonedDateTime] = Option.empty[ZonedDateTime],
     expertInvited: Boolean = false,
     hasSelectedSubject: Boolean = false,
-    category: Option[String] = None,
-    files: Map[String, Long] = Map(),
-    mandatType: Option[Application.MandatType],
-    mandatDate: Option[String]
+    category: Option[String] = Option.empty[String],
+    files: Map[String, Long] = Map.empty[String, Long],
+    mandat: Option[Mandat]
 ) extends AgeModel {
 
   lazy val filesAvailabilityLeftInDays: Option[Int] = if (ageInDays > 8) {
@@ -186,14 +188,20 @@ case class Application(
 
 object Application {
 
-  sealed trait MandatType
+  final case class Mandat(type_ : MandatType, date: String)
 
-  object MandatType {
-    case object Sms extends MandatType
-    case object Phone extends MandatType
-    case object Paper extends MandatType
+  object Mandat {
 
-    implicit val Eq: Eq[MandatType] = (x: MandatType, y: MandatType) => x == y
+    sealed trait MandatType
+
+    object MandatType {
+      case object Sms extends MandatType
+      case object Phone extends MandatType
+      case object Paper extends MandatType
+
+      implicit val Eq: Eq[MandatType] = (x: MandatType, y: MandatType) => x == y
+
+    }
 
   }
 

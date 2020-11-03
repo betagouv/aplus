@@ -1,29 +1,40 @@
 package serializers
 
-import models.Application.MandatType
+import anorm.Column
+import cats.implicits.catsSyntaxOptionId
+import models.Application.Mandat.MandatType
 import play.api.libs.json._
 
 object DataModel {
 
   object Application {
 
-    object MandatType {
-      import models.Application.MandatType._
+    object Mandat {
 
-      def dataModelSerialization(entity: MandatType): String =
-        entity match {
-          case Sms   => "sms"
-          case Phone => "phone"
-          case Paper => "paper"
-        }
+      object MandatType {
 
-      def dataModelDeserialization(raw: String): Option[MandatType] =
-        raw match {
-          case "sms"   => Some(Sms)
-          case "phone" => Some(Phone)
-          case "paper" => Some(Paper)
-          case _       => None
-        }
+        import models.Application.Mandat.MandatType._
+
+        implicit val MandatTypeParser: Column[Option[MandatType]] =
+          implicitly[Column[Option[String]]]
+            .map(_.flatMap(dataModelDeserialization))
+
+        def dataModelSerialization(entity: MandatType): String =
+          entity match {
+            case Sms   => "sms"
+            case Phone => "phone"
+            case Paper => "paper"
+          }
+
+        def dataModelDeserialization(raw: String): Option[MandatType] =
+          raw match {
+            case "sms"   => Sms.some
+            case "phone" => Phone.some
+            case "paper" => Paper.some
+            case _       => None
+          }
+
+      }
 
     }
 
@@ -53,20 +64,18 @@ object DataModel {
       }
 
     implicit val smsApiWrites: Writes[Sms] =
-      Writes(
-        _ match {
-          case sms: Sms.Outgoing =>
-            smsOutgoingFormat.writes(sms) match {
-              case obj: JsObject => obj + ("tag" -> JsString("outgoing"))
-              case other         => other
-            }
-          case sms: Sms.Incoming =>
-            smsIncomingFormat.writes(sms) match {
-              case obj: JsObject => obj + ("tag" -> JsString("incoming"))
-              case other         => other
-            }
-        }
-      )
+      Writes {
+        case sms: Sms.Outgoing =>
+          smsOutgoingFormat.writes(sms) match {
+            case obj: JsObject => obj + ("tag" -> JsString("outgoing"))
+            case other         => other
+          }
+        case sms: Sms.Incoming =>
+          smsIncomingFormat.writes(sms) match {
+            case obj: JsObject => obj + ("tag" -> JsString("incoming"))
+            case other         => other
+          }
+      }
 
   }
 
