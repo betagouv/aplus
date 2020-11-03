@@ -275,9 +275,10 @@ case class ApplicationController @Inject() (
               )
           },
         applicationData =>
-          userService.byGroupIdsAnonymous(applicationData.groups).map { usersInGroups =>
+          Future {
             // Note: we will deprecate .currentArea as a variable stored in the cookies
             val currentAreaId: UUID = currentArea.id
+            val usersInGroups = userService.byGroupIds(applicationData.groups)
             val instructors: List[User] = usersInGroups.filter(_.instructor)
             val coworkers: List[User] = applicationData.users.flatMap(id => userService.byId(id))
             val invitedUsers: Map[UUID, String] = (instructors ::: coworkers)
