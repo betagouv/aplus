@@ -116,9 +116,8 @@ class NotificationService @Inject() (
     val userIds = (application.invitedUsers).keys
     val users = userService.byIds(userIds.toList)
     val groups = groupService
-      .byIds(users.flatMap(_.groupIds))
+      .byIds(application.invitedGroupIds)
       .filter(_.email.nonEmpty)
-      .filter(_.areaIds.contains(application.area))
 
     users
       .map(generateInvitationEmail(application))
@@ -129,14 +128,35 @@ class NotificationService @Inject() (
       .foreach(sendMail)
   }
 
+  // Note: application does not contains answer
   def newAnswer(application: Application, answer: Answer) = {
     // Retrieve data
     val userIds = (application.invitedUsers ++ answer.invitedUsers).keys
     val users = userService.byIds(userIds.toList)
-    val groups = groupService
-      .byIds(users.flatMap(_.groupIds))
-      .filter(_.email.nonEmpty)
-      .filter(_.areaIds.contains(application.area))
+    val legacyCase = application.answers.exists(_.invitedGroupIds.isEmpty) ||
+      (answer.invitedGroupIds === None)
+    val (groups, oldGroupIds): (List[UserGroup], Set[UUID]) =
+      if (legacyCase) {
+        (
+          groupService
+            .byIds(users.flatMap(_.groupIds))
+            .filter(_.email.nonEmpty)
+            .filter(_.areaIds.contains(application.area)),
+          users.filter(user => application.invitedUsers.contains(user.id)).flatMap(_.groupIds).toSet
+        )
+      } else {
+        val applicationGroupIds: List[UUID] =
+          (application.invitedGroupIds ::: application.answers
+            .flatMap(_.invitedGroupIds)
+            .flatten).distinct
+        val answerGroupIds: List[UUID] = answer.invitedGroupIds.toList.flatten
+        (
+          groupService
+            .byIds(applicationGroupIds ::: answerGroupIds)
+            .filter(_.email.nonEmpty),
+          applicationGroupIds.toSet
+        )
+      }
 
     // Send emails to users
     users
@@ -152,8 +172,6 @@ class NotificationService @Inject() (
       .foreach(sendMail)
 
     // Send emails to groups
-    val oldGroupIds: List[UUID] =
-      users.filter(user => application.invitedUsers.contains(user.id)).flatMap(_.groupIds)
     groups
       .filter(group => oldGroupIds.contains(group.id))
       .map(generateNotificationBALEmail(application, Some(answer), users))
