@@ -1,6 +1,5 @@
 package browser
 
-import cats.implicits.catsSyntaxOptionId
 import helper.{Time, UUIDHelper}
 import models.User.AccountType.Nominative
 import models.{Area, LoginToken, User, UserGroup}
