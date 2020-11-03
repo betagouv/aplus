@@ -124,11 +124,11 @@
         }
     }
     @if(myClosedApplications.nonEmpty) {
-        <div class="info-box" id="show-closed-applications"><b>Vous ne voyez pas vos anciennes demandes ?</b> <a href="#" onclick="showClosedApplications()">Cliquez ici pour afficher vos demandes clôturées</a><br>
-            (Elles seront supprimées 1 mois après la clôture.)</div>
+        <div class="info-box" id="show-closed-applications"><b>Vous ne voyez pas vos anciennes demandes ?</b> <a href="#" onclick="showClosedApplications()">Cliquez ici pour afficher vos demandes archivées</a><br>
+            (Elles seront supprimées 1 mois après l’archivage.)</div>
         
         <div class="mdl-grid mdl-grid--no-spacing invisible" id="closed-applications" style="margin: 50px 0;">
-            <h4 class="mdl-cell mdl-cell--12-col">Demandes clôturées</h4>
+            <h4 class="mdl-cell mdl-cell--12-col">Demandes archivées</h4>
             @display(myClosedApplications)
         </div>
     }
