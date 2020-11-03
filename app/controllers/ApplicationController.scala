@@ -11,7 +11,7 @@ import constants.Constants
 import forms.FormsPlusMap
 import helper.BooleanHelper.not
 import helper.CSVUtil.escape
-import helper.StringHelper.{notEmpty, CanonizeString, StringOps}
+import helper.StringHelper.{CanonizeString, StringOps}
 import helper.Time.zonedDateTimeOrdering
 import helper.{Hash, Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
