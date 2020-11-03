@@ -101,7 +101,7 @@
                               <div id="invite-@group.id-additional-infos" class="organisation-row @if(!applicationForm.data.find({case (k, v) => k.startsWith("groups[") && v == group.id.toString})){ invisible }">
                                 @if(organisation.map(_.id).filter(_ == Organisation.cafId).nonEmpty) {
                                   <tr>
-                                    <td colspan="2" style="text-align: left; white-space: normal">
+                                    <td style="text-align: left; white-space: normal">
                                       <div class="info-box info-box--no-spacing">
                                         La CAF aura besoin du <b>numéro identifiant CAF</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.
                                       </div>
@@ -109,7 +109,7 @@
                                   </tr>
                                 } else if (organisation.map(_.id).filter(_ == Organisation.cpamId).nonEmpty) {
                                   <tr>
-                                    <td colspan="2" style="text-align: left; white-space: normal">
+                                    <td style="text-align: left; white-space: normal">
                                       <div class="info-box info-box--no-spacing">
                                         La CPAM aura besoin du <b>numéro de sécurité sociale</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.
                                       </div>
@@ -123,45 +123,6 @@
                             }
                         </fieldset>
 
-                        <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" id="users">
-                        @for(organisationGroup <- organisationGroups.sortBy(_.name)) {
-                            @defining(organisationGroup.organisationSetOrDeducted) { organisation: Option[Organisation] =>
-                                <thead>
-                                    <tr>
-                                        <th class="mdl-data-table__cell--non-numeric" colspan="2">
-                                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                <input type="checkbox" class="mdl-checkbox__input aplus-application-form-group" value="@organisationGroup.name" name="organismes[]" @if(applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisationGroup.name})){ checked="checked" }>
-                                                <span class="mdl-checkbox__label aplus-color-text--black mdl-typography--font-regular" ><b>@organisationGroup.name</b> @if(organisation.nonEmpty){ <em>(@organisation.get.name)</em> }</span>
-                                                <span id="span-group-description">@organisationGroup.description</span>
-                                            </label></th>
-                                    </tr>
-                                </thead>
-                                <tbody class="organisation-row @if(!applicationForm.data.find({case (k, v) => k.startsWith("organismes[") && v == organisationGroup.name})){ invisible }">
-                                    @if(organisation.map(_.shortName).contains("CAF")) {
-                                        <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                            <div class="info-box info-box--no-spacing">La CAF aura besoin du <b>numéro identifiant CAF</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
-                                        </td></tr>
-                                    } else if(organisation.map(_.shortName).contains("CPAM")) {
-                                    <tr><td colspan="2" style="text-align: left; white-space: normal">
-                                        <div class="info-box info-box--no-spacing">La CPAM aura besoin du <b>numéro de sécurité sociale</b> et à défaut de la date de naissance. Vous pouvez le renseigner dans <b>Informations concernant l'usager</b> ci-dessous.</div>
-                                    </td></tr>
-                                    }
-
-                                    @for(instructor <- instructorsOfGroups.filter(_.groupIds.contains(organisationGroup.id))) {
-                                        <tr class="invisible" >
-                                            <td style="width: 95px">
-                                                <i class="material-icons" style="vertical-align: middle;">chevron_right</i>
-                                                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                    <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@instructor.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == instructor.id.toString})){ checked="checked" }>
-                                                </label>
-                                            </td>
-                                            <td class="mdl-data-table__cell--non-numeric">@instructor.name</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            }
-                        }
-                        </table>
                     </div>
 
 

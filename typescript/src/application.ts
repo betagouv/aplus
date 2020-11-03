@@ -1,37 +1,32 @@
 const createApplicationFormId = 'create-application-form';
 const invitedGroupsCheckboxClass = 'application-form-invited-groups-checkbox';
-const applicationFormUserInfosTypesSelectId = 'aplus-application-form-user-infos-types-select-id';
-const applicationFormUserInfosAddButtonClass = 'aplus-application-form-user-infos-add-button';
-const applicationFormUserInfosRemoveButtonClass = 'aplus-application-form-user-infos-remove-button';
-const applicationFormUserInfosInputClass = 'aplus-application-form-user-infos-input';
-const applicationFormCategoryFilterClass = 'aplus-application-form-category-filter-button';
-const applicationFormRemoveCategoryFilterClass = 'aplus-application-form-remove-category-filter-button';
-
-
+const usagerInfosTypesSelectId = 'aplus-application-form-user-infos-types-select-id';
+const usagerInfosAddButtonClass = 'aplus-application-form-user-infos-add-button';
+const usagerInfosRemoveButtonClass = 'aplus-application-form-user-infos-remove-button';
+const usagerInfosInputClass = 'aplus-application-form-user-infos-input';
+const categoryFilterClass = 'aplus-application-form-category-filter-button';
+const removeCategoryFilterClass = 'aplus-application-form-remove-category-filter-button';
 
 
 
 function addInvitedGroupInfos(groupName: string) {
   function checkDoesNotExist(name: string) {
-    var existingInfos: NodeListOf<HTMLInputElement> =
+    const existingInfos: NodeListOf<HTMLInputElement> =
       document.querySelectorAll("input[name^='usagerOptionalInfos[']");
-    for (var i = 0; i < existingInfos.length; i++) {
-      if (existingInfos[i].name.indexOf(name) !== -1) {
-        return false;
-      }
-    }
-    return true;
+    const alreadyHasInput = Array.from(existingInfos)
+      .some((infoInput) => infoInput.name.includes(name));
+    return !alreadyHasInput;
   }
 
   // CAF / CNAF => Identifiant CAF
   // CPAM / MSA / CNAV => Numéro de sécurité sociale
   if (/CN?AF(\s|$)/i.test(groupName)) {
-    var name = "Identifiant CAF";
+    const name = "Identifiant CAF";
     if (checkDoesNotExist(name)) {
       addOptionalInfoRow(name, "");
     }
   } else if (/(CPAM|MSA|CNAV)(\s|$)/i.test(groupName)) {
-    var name = "Numéro de sécurité sociale";
+    const name = "Numéro de sécurité sociale";
     if (checkDoesNotExist(name)) {
       addOptionalInfoRow(name, "");
     }
@@ -40,10 +35,11 @@ function addInvitedGroupInfos(groupName: string) {
 }
 
 
+
 function newTypeSelected() {
-  var select = <HTMLSelectElement | null>document
-    .getElementById(applicationFormUserInfosTypesSelectId);
-  var otherTypeElement = <HTMLInputElement | null>document.getElementById("other-type");
+  const select = <HTMLSelectElement | null>document
+    .getElementById(usagerInfosTypesSelectId);
+  const otherTypeElement = <HTMLInputElement | null>document.getElementById("other-type");
   if (select.value === "Autre") {
     otherTypeElement.value = "";
     (<HTMLElement>otherTypeElement.parentNode).classList.remove("invisible");
@@ -60,15 +56,17 @@ function newTypeSelected() {
   componentHandler.upgradeDom();
 }
 
+
+
 function addOptionalInfoRow(infoName: string, infoValue: string) {
-  var newNode = document.createElement("div");
+  const newNode = document.createElement("div");
   newNode.innerHTML = '<div class="single--display-flex single--align-items-center">' +
     '<div class="single--margin-right-24px single--font-size-14px">' + infoName + ' (facultatif)</div> \
      <div class="mdl-textfield mdl-js-textfield mdl-textfield--no-label single--margin-right-24px"> \
          <input class="mdl-textfield__input mdl-color--white" type="text" id="sample1" name="usagerOptionalInfos['+ infoName + ']" value="' + infoValue + '"> \
          <label class="mdl-textfield__label info__label" for="sample1">Saisir '+ infoName + ' de l’usager ici</label> \
      </div> \
-     <div class="'+ applicationFormUserInfosRemoveButtonClass + ' single--display-flex single--align-items-center"> \
+     <div class="'+ usagerInfosRemoveButtonClass + ' single--display-flex single--align-items-center"> \
          <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" type="button"> \
              <i class="material-icons">remove_circle</i> \
          </button> \
@@ -76,11 +74,11 @@ function addOptionalInfoRow(infoName: string, infoValue: string) {
      </div> \
   </div>';
 
-  var otherDiv = document.getElementById("other-div");
+  const otherDiv = document.getElementById("other-div");
   otherDiv.parentNode.insertBefore(newNode, otherDiv);
   componentHandler.upgradeElements(newNode);
-  var select = <HTMLSelectElement | null>document
-    .getElementById(applicationFormUserInfosTypesSelectId);
+  const select = <HTMLSelectElement | null>document
+    .getElementById(usagerInfosTypesSelectId);
   if (infoName !== "Autre") {
     select && Array.from(select.options).forEach((option) => {
       if (option.value === infoName) {
@@ -92,7 +90,7 @@ function addOptionalInfoRow(infoName: string, infoValue: string) {
   document.getElementById("add-infos__ok-button").classList.add("invisible");
 
   document
-    .querySelectorAll('.' + applicationFormUserInfosRemoveButtonClass)
+    .querySelectorAll('.' + usagerInfosRemoveButtonClass)
     .forEach((element: HTMLElement) => {
       // Avoid having many times the same event handler with .onclick
       element.onclick = () => {
@@ -101,6 +99,8 @@ function addOptionalInfoRow(infoName: string, infoValue: string) {
       };
     });
 }
+
+
 
 function addInfo() {
   const inputInfoName = <HTMLInputElement | null>document.getElementById("other-type");
@@ -120,63 +120,52 @@ function addInfo() {
 }
 
 
-function findAncestor(el, check) {
-  while ((el = el.parentElement) && !check(el));
-  return el;
-}
 
 function applyCategoryFilters() {
+  function findAncestor(el: HTMLElement, check: (e: HTMLElement) => boolean): HTMLElement {
+    while ((el = el.parentElement) && !check(el));
+    return el;
+  }
+
   // Get all activated categories organisations
-  var selectedCategories = [];
-  var parsedOrganisations = []; // local var
-  var categoryButtons = document.querySelectorAll(".mdl-chip." + applicationFormCategoryFilterClass);
-  for (var i = 0; i < categoryButtons.length; i++) {
-    if (categoryButtons[i].classList.contains("mdl-chip--active")) {
-      if ((<HTMLElement>categoryButtons[i]).dataset.organisations) {
-        parsedOrganisations = JSON.parse((<HTMLElement>categoryButtons[i]).dataset.organisations);
-        for (var j = 0; j < parsedOrganisations.length; j++) {
-          if (selectedCategories.indexOf(parsedOrganisations[j]) === -1) {
-            selectedCategories.push(parsedOrganisations[j]);
-          }
+  let selectedCategories: Array<string> = [];
+  document.querySelectorAll(".mdl-chip." + categoryFilterClass)
+    .forEach((categoryButton: HTMLElement) => {
+      if (categoryButton.classList.contains("mdl-chip--active")) {
+        if (categoryButton.dataset.organisations) {
+          const parsedOrganisations: Array<string> =
+            JSON.parse(categoryButton.dataset.organisations);
+          parsedOrganisations.forEach((parsedOrganisation) => {
+            if (!selectedCategories.includes(parsedOrganisation)) {
+              selectedCategories.push(parsedOrganisation);
+            }
+          });
         }
       }
-    }
-  }
+    });
   console.log("Selected organisations: ", selectedCategories);
 
   // Show / Hide Checkboxes
-  var organisationCheckboxes: NodeListOf<HTMLInputElement> = document
-    .querySelectorAll('.' + invitedGroupsCheckboxClass);
-  var shouldBeFilteredOut = true;
-  var thead;
-  for (var i = 0; i < organisationCheckboxes.length; i++) {
-    const groupCheckbox = organisationCheckboxes[i];
-    // TODO: add the org name
-    const organisationName = groupCheckbox.dataset.groupName;
-    if (selectedCategories.length === 0) {
-      shouldBeFilteredOut = false;
-    }
-    // .exists()
-    for (var j = 0; j < selectedCategories.length; j++) {
-      if (organisationName.toLowerCase()
-        .indexOf(selectedCategories[j].toLowerCase()) !== -1) {
+  document.querySelectorAll('.' + invitedGroupsCheckboxClass)
+    .forEach((invitedGroupCheckbox: HTMLInputElement) => {
+      const groupName: string = invitedGroupCheckbox.dataset.groupName;
+      const isSelected = selectedCategories.some((selectedCategory) =>
+        groupName.toLowerCase().includes(selectedCategory.toLowerCase()))
+      let shouldBeFilteredOut = !isSelected;
+      if (selectedCategories.length === 0) {
         shouldBeFilteredOut = false;
       }
-    }
 
-    thead = findAncestor(groupCheckbox, function(el) {
-      return el.nodeName === "DIV";
+      const thead = findAncestor(invitedGroupCheckbox, (el) => el.nodeName === "DIV");
+      if (shouldBeFilteredOut) {
+        thead.classList.add("invisible");
+      } else {
+        thead.classList.remove("invisible");
+      }
     });
-    if (shouldBeFilteredOut) {
-      thead.classList.add("invisible");
-    } else {
-      thead.classList.remove("invisible");
-    }
-    shouldBeFilteredOut = true;
-  }
 }
 
-function onClickFilterButton(button) {
+function onClickFilterButton(button: HTMLElement) {
   // Activate or deactivate button
   if (button.classList.contains("mdl-chip--active")) {
     button.classList.remove("mdl-chip--active");
@@ -187,39 +176,30 @@ function onClickFilterButton(button) {
   applyCategoryFilters()
 }
 
-function onClickRemoveFilter(button) {
-  var selectedCategories = document.querySelectorAll(
-    ".mdl-chip.aplus-application-form-remove-category-filter-button");
-  var categoryButtons = document.querySelectorAll(".mdl-chip." + applicationFormCategoryFilterClass);
-  for (var i = 0; i < categoryButtons.length; i++) {
-    categoryButtons[i].classList.remove("mdl-chip--active");
-  }
-
+function onClickRemoveFilter() {
+  document.querySelectorAll(".mdl-chip." + categoryFilterClass)
+    .forEach((categoryButton: HTMLElement) => categoryButton.classList.remove("mdl-chip--active"));
   applyCategoryFilters()
 }
 
 
 function setupDynamicUsagerInfosButtons() {
 
-  var userInfosTypesSelect = document.getElementById(applicationFormUserInfosTypesSelectId);
+  var userInfosTypesSelect = document.getElementById(usagerInfosTypesSelectId);
   if (userInfosTypesSelect) {
     newTypeSelected();
-    userInfosTypesSelect.addEventListener('change', function() {
-      newTypeSelected();
-    });
+    userInfosTypesSelect.addEventListener('change', () => newTypeSelected());
   }
 
   var createApplicationForm = document.getElementById(createApplicationFormId);
   if (createApplicationForm) {
-    createApplicationForm.addEventListener('submit', function() {
-      addInfo();
-    });
+    createApplicationForm.addEventListener('submit', () => addInfo());
   }
 
   document
-    .querySelectorAll("." + applicationFormUserInfosInputClass)
+    .querySelectorAll("." + usagerInfosInputClass)
     .forEach((element) => {
-      element.addEventListener('keydown', function(event: KeyboardEvent) {
+      element.addEventListener('keydown', (event: KeyboardEvent) => {
         if (event.keyCode === 13) {
           addInfo();
           return false;
@@ -228,27 +208,21 @@ function setupDynamicUsagerInfosButtons() {
     });
 
   document
-    .querySelectorAll("." + applicationFormUserInfosAddButtonClass)
+    .querySelectorAll("." + usagerInfosAddButtonClass)
     .forEach((element) => {
-      element.addEventListener('click', function(event) {
-        addInfo();
-      });
+      element.addEventListener('click', () => addInfo());
     });
 
   document
-    .querySelectorAll("." + applicationFormCategoryFilterClass)
-    .forEach((element) => {
-      element.addEventListener('click', function(event) {
-        onClickFilterButton(element);
-      });
+    .querySelectorAll("." + categoryFilterClass)
+    .forEach((element: HTMLElement) => {
+      element.addEventListener('click', () => onClickFilterButton(element));
     });
 
   document
-    .querySelectorAll("." + applicationFormRemoveCategoryFilterClass)
+    .querySelectorAll("." + removeCategoryFilterClass)
     .forEach((element) => {
-      element.addEventListener('click', function(event) {
-        onClickRemoveFilter(element);
-      });
+      element.addEventListener('click', () => onClickRemoveFilter());
     });
 
 }
