@@ -65,7 +65,8 @@ class AutoAddExpertTask @Inject() (
           experts,
           true,
           false,
-          Some(Map())
+          Some(Map()),
+          invitedGroupIds = List.empty.some
         )
         if (applicationService.add(application.id, answer, true) === 1) {
           notificationService.newAnswer(application, answer)

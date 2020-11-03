@@ -14,7 +14,9 @@ case class Answer(
     visibleByHelpers: Boolean,
     declareApplicationHasIrrelevant: Boolean,
     userInfos: Option[Map[String, String]],
-    files: Option[Map[String, Long]] = Some(Map())
+    files: Option[Map[String, Long]] = Some(Map()),
+    // Note: the `Option` is here to keep compatibility with the existing json
+    invitedGroupIds: Option[List[UUID]],
 ) extends AgeModel {
 
   lazy val filesAvailabilityLeftInDays: Option[Int] = if (ageInDays > 8) {
