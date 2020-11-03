@@ -5,6 +5,7 @@ import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
 import actions._
+import cats.implicits.catsSyntaxTuple2Semigroupal
 import cats.syntax.all._
 import constants.Constants
 import forms.FormsPlusMap
@@ -91,7 +92,7 @@ case class ApplicationController @Inject() (
         "signature" -> (
           if (currentUser.sharedAccount)
             nonEmptyText.transform[Option[String]](Some.apply, _.getOrElse(""))
-          else ignored(None: Option[String])
+          else ignored(Option.empty[String])
         ),
         "mandatType" -> text,
         "mandatDate" -> nonEmptyText,
@@ -108,25 +109,19 @@ case class ApplicationController @Inject() (
       // This case is a weird political restriction:
       // Users are basically segmented between 2 overall types or `Organisation`
       // `Organisation.organismesAidants` & `Organisation.organismesOperateurs`
-      val visibleOrganisations: Set[Organisation.Id] =
-        groups
-          .flatMap(
-            _.organisation match {
-              case None => Nil
-              case Some(organisationId) =>
-                if (
-                  Organisation.organismesAidants
-                    .map(_.id)
-                    .contains[Organisation.Id](organisationId)
-                ) {
-                  Organisation.organismesAidants
-                } else {
-                  Organisation.organismesOperateurs
-                }
-            }
-          )
-          .map(_.id)
-          .toSet
+      val visibleOrganisations = groups
+        .map(_.organisation)
+        .collect {
+          case Some(organisationId)
+              if Organisation.organismesAidants
+                .map(_.id)
+                .contains[Organisation.Id](organisationId) =>
+            Organisation.organismesAidants.map(_.id)
+          case Some(_) => Organisation.organismesOperateurs.map(_.id)
+        }
+        .flatten
+        .toSet
+
       groups.filter(group =>
         group.organisation match {
           case None     => false
@@ -182,7 +177,7 @@ case class ApplicationController @Inject() (
       .getQueryString(Keys.QueryParam.areaId)
       .flatMap(UUIDHelper.fromString)
       .flatMap(Area.fromId)
-      .map(Future(_))
+      .map(Future.successful)
       .getOrElse(defaultArea(request.currentUser))
 
   def create: Action[AnyContent] =
@@ -230,9 +225,9 @@ case class ApplicationController @Inject() (
 
     val capitalizedUserName = user.name.split(' ').map(_.capitalize).mkString(" ")
     if (contexts.isEmpty)
-      s"${capitalizedUserName} ( ${user.qualite} )"
+      s"$capitalizedUserName ( ${user.qualite} )"
     else
-      s"${capitalizedUserName} ${contexts.mkString(",")}"
+      s"$capitalizedUserName ${contexts.mkString(",")}"
   }
 
   def createPost: Action[AnyContent] =
@@ -297,10 +292,10 @@ case class ApplicationController @Inject() (
                 "Prénom" -> applicationData.usagerPrenom,
                 "Nom de famille" -> applicationData.usagerNom,
                 "Date de naissance" -> applicationData.usagerBirthDate
-              ) ++ applicationData.usagerOptionalInfos
-                .map { case (infoName, infoValue) => (infoName.trim, infoValue.trim) }
-                .filter(_._1.nonEmpty)
-                .filter(_._2.nonEmpty)
+              ) ++ applicationData.usagerOptionalInfos.collect {
+                case (infoName, infoValue) if infoName.trim.nonEmpty && infoValue.trim.nonEmpty =>
+                  infoName.trim -> infoValue.trim
+              }
             val application = Application(
               applicationId,
               Time.nowParis(),
@@ -375,10 +370,10 @@ case class ApplicationController @Inject() (
     request.body.asMultipartFormData
       .map(_.files.filter(_.key.matches("file\\[\\d+\\]")))
       .getOrElse(Nil)
-      .flatMap({ attachment =>
-        if (attachment.filename.isEmpty) None
-        else Some(attachment.ref.path -> attachment.filename)
-      })
+      .collect {
+        case attachment if attachment.filename.nonEmpty =>
+          attachment.ref.path -> attachment.filename
+      }
 
   private def allApplicationVisibleByUserAdmin(
       user: User,
@@ -459,11 +454,7 @@ case class ApplicationController @Inject() (
       )
     }
 
-  private def statsAggregates(
-      applications: List[Application],
-      users: List[User],
-      groups: List[UserGroup]
-  ): StatsData = {
+  private def statsAggregates(applications: List[Application], users: List[User]): StatsData = {
     val now = Time.nowParis()
     val applicationsByArea: Map[Area, List[Application]] =
       applications
@@ -499,6 +490,14 @@ case class ApplicationController @Inject() (
     data
   }
 
+  private def anonymousGroupsAndUsers(
+      groups: List[UserGroup]
+  ): Future[(List[User], List[Application])] =
+    for {
+      users <- userService.byGroupIdsAnonymous(groups.map(_.id))
+      applications <- applicationService.allForUserIds(users.map(_.id))
+    } yield (users, applications)
+
   private def generateStats[A](
       areaIds: List[UUID],
       organisationIds: List[Organisation.Id],
@@ -509,48 +508,38 @@ case class ApplicationController @Inject() (
       webJarsUtil: org.webjars.play.WebJarsUtil,
       request: RequestWithUserData[A]
   ): Future[Html] = {
-
-    val (usersFuture, applicationsFutureNoDateFilter, groupsFuture) =
-      if (areaIds.isEmpty && organisationIds.isEmpty && groupIds.isEmpty) {
-        (userService.allNoNameNoEmail, applicationService.all(), userGroupService.all)
-      } else if (areaIds.nonEmpty && groupIds.isEmpty) {
-        val groupsFuture = userGroupService.byAreas(areaIds)
-        if (organisationIds.isEmpty) {
-          val usersFuture = groupsFuture.flatMap { groups =>
-            val groupIds = groups.map(_.id)
-            userService.byGroupIdsAnonymous(groupIds)
-          }
-          (usersFuture, applicationService.allForAreas(areaIds), groupsFuture)
-        } else {
-          val groupsFuture = userGroupService.byOrganisationIds(organisationIds).map { groups =>
-            groups.filter(group => group.areaIds.intersect(areaIds).nonEmpty)
-          }
-          val usersFuture =
-            groupsFuture.flatMap(groups => userService.byGroupIdsAnonymous(groups.map(_.id)))
-          val applicationsFuture = usersFuture
-            .flatMap(users => applicationService.allForUserIds(users.map(_.id)))
-            .map(_.filter(application => areaIds.contains(application.area)))
-          (usersFuture, applicationsFuture, groupsFuture)
-        }
-      } else if (organisationIds.nonEmpty) {
-        val groupsFuture = userGroupService.byOrganisationIds(organisationIds)
-        val usersFuture =
-          groupsFuture.flatMap(groups => userService.byGroupIdsAnonymous(groups.map(_.id)))
-        val applicationsFuture =
-          usersFuture.flatMap(users => applicationService.allForUserIds(users.map(_.id)))
-        (usersFuture, applicationsFuture, groupsFuture)
-      } else {
-        val groupsFuture = userGroupService.byIdsFuture(groupIds)
-        val usersFuture =
-          groupsFuture.flatMap(groups => userService.byGroupIdsAnonymous(groups.map(_.id)))
-        val applicationsFuture =
-          usersFuture.flatMap(users => applicationService.allForUserIds(users.map(_.id)))
-        (usersFuture, applicationsFuture, groupsFuture)
+    val usersAndApplications: Future[(List[User], List[Application])] =
+      (areaIds, organisationIds, groupIds) match {
+        case (Nil, Nil, Nil) =>
+          userService.allNoNameNoEmail.zip(applicationService.all())
+        case (_ :: _, Nil, Nil) =>
+          for {
+            groups <- userGroupService.byAreas(areaIds)
+            users <- (
+              userService.byGroupIdsAnonymous(groups.map(_.id)),
+              applicationService.allForAreas(areaIds)
+            ).mapN(Tuple2.apply)
+          } yield users
+        case (_ :: _, _ :: _, Nil) =>
+          for {
+            groups <- userGroupService
+              .byOrganisationIds(organisationIds)
+              .map(_.filter(_.areaIds.intersect(areaIds).nonEmpty))
+            users <- userService.byGroupIdsAnonymous(groups.map(_.id))
+            applications <- applicationService
+              .allForUserIds(users.map(_.id))
+              .map(_.filter(application => areaIds.contains(application.area)))
+          } yield (users, applications)
+        case (_, _ :: _, _) =>
+          userGroupService.byOrganisationIds(organisationIds).flatMap(anonymousGroupsAndUsers)
+        case (_, _, _) =>
+          userGroupService.byIdsFuture(groupIds).flatMap(anonymousGroupsAndUsers)
       }
 
     // Filter creation dates
     def isBeforeOrEqual(d1: LocalDate, d2: LocalDate): Boolean = !d1.isAfter(d2)
-    val applicationsFuture = applicationsFutureNoDateFilter.map { applications =>
+
+    val applicationsFuture = usersAndApplications.map { case (_, applications) =>
       applications.filter(application =>
         isBeforeOrEqual(creationMinDate, application.creationDate.toLocalDate) &&
           isBeforeOrEqual(application.creationDate.toLocalDate, creationMaxDate)
@@ -568,12 +557,11 @@ case class ApplicationController @Inject() (
     // Note: `users` are Users on which we make stats (count, ...)
     // `relatedUsers` are Users to help Applications stats (linked orgs, ...)
     for {
-      users <- usersFuture
+      users <- usersAndApplications.map { case (users, _) => users }
       applications <- applicationsFuture
-      groups <- groupsFuture
       relatedUsers <- relatedUsersFuture
     } yield views.html.stats.charts(Authorization.isAdmin(request.rights))(
-      statsAggregates(applications, relatedUsers, groups),
+      statsAggregates(applications, relatedUsers),
       users
     )
   }
@@ -673,7 +661,7 @@ case class ApplicationController @Inject() (
         case (true, Some(user)) if request.currentUser.areas.intersect(user.areas).nonEmpty =>
           LoginAction.readUserRights(user).map { userRights =>
             val targetUserId = user.id
-            val applicationsFromTheArea = List[Application]()
+            val applicationsFromTheArea = List.empty[Application]
             eventService
               .log(
                 AllAsShowed,
@@ -720,13 +708,13 @@ case class ApplicationController @Inject() (
         users.filter(user => application.invitedUsers.keys.toList.contains[UUID](user.id))
       val creatorUserGroupNames = creatorUser.toList
         .flatMap(_.groupIds)
-        .flatMap(groupId => groups.filter(group => group.id === groupId))
+        .flatMap(groupId => groups.filter(_.id === groupId))
         .map(_.name)
         .mkString(",")
       val invitedUserGroupNames = invitedUsers
         .flatMap(_.groupIds)
         .distinct
-        .flatMap(groupId => groups.filter(group => group.id === groupId))
+        .flatMap(groupId => groups.filter(_.id === groupId))
         .map(_.name)
         .mkString(",")
 
@@ -783,7 +771,7 @@ case class ApplicationController @Inject() (
 
   def allCSV(areaId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      val area = if (areaId === Area.allArea.id) None else Area.fromId(areaId)
+      val area = if (areaId === Area.allArea.id) Option.empty else Area.fromId(areaId)
       val exportedApplicationsFuture =
         if (request.currentUser.admin || request.currentUser.groupAdmin) {
           allApplicationVisibleByUserAdmin(request.currentUser, area)
@@ -1062,14 +1050,14 @@ case class ApplicationController @Inject() (
               message,
               request.currentUser.id,
               contextualizedUserName(request.currentUser, currentAreaId),
-              Map(),
+              Map.empty[UUID, String],
               !answerData.privateToHelpers,
               answerData.applicationIsDeclaredIrrelevant,
               Some(
-                answerData.usagerOptionalInfos
-                  .map { case (infoName, infoValue) => (infoName.trim, infoValue.trim) }
-                  .filter(_._1.nonEmpty)
-                  .filter(_._2.nonEmpty)
+                answerData.usagerOptionalInfos.collect {
+                  case (infoName, infoValue) if infoName.trim.nonEmpty && infoValue.trim.nonEmpty =>
+                    (infoName.trim, infoValue.trim)
+                }
               ),
               files = Some(newAttachments ++ pendingAttachments)
             )
@@ -1262,11 +1250,8 @@ case class ApplicationController @Inject() (
               )
             )
           case Some(usefulness) =>
-            val finalUsefulness = if (request.currentUser.id === application.creatorUserId) {
-              Some(usefulness)
-            } else {
-              None
-            }
+            val finalUsefulness =
+              usefulness.some.filter(_ => request.currentUser.id === application.creatorUserId)
             if (application.canBeClosedBy(request.currentUser)) {
               if (
                 applicationService
@@ -1304,7 +1289,7 @@ case class ApplicationController @Inject() (
                 Some(application)
               )
               Future(
-                Unauthorized("Seul le créateur de la demande ou un expert peut clore la demande")
+                Unauthorized("Seul le créateur de la demande ou un expert peut archiver la demande")
               )
             }
         }
