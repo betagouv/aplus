@@ -99,7 +99,7 @@ case class Application(
   def status =
     closed match {
       case true                                                            => "Archivée"
-      case _ if answers.exists(_.message === finishedAnswer)               => "Traitée"
+      case _ if answers.lastOption.exists(_.message === finishedAnswer)    => "Traitée"
       case _ if answers.exists(_.creatorUserID === creatorUserId)          => "Répondu"
       case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty => "Consultée"
       case _                                                               => "Nouvelle"
