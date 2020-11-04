@@ -68,6 +68,8 @@ case class ApplicationController @Inject() (
   private val filesSecondInstanceHost: Option[String] =
     configuration.getOptional[String]("app.filesSecondInstanceHost")
 
+  private val filesExpirationInDays: Int = configuration.get[Int]("app.filesExpirationInDays")
+
   private val dir = Paths.get(s"$filesPath")
   if (!Files.isDirectory(dir)) {
     Files.createDirectories(dir)
@@ -886,6 +888,7 @@ case class ApplicationController @Inject() (
                 openedTab,
                 currentAreaLegacy,
                 readSharedAccountUserSignature(request.session),
+                fileExpiryDayCount = filesExpirationInDays,
                 finishedAnswer = Application.finishedAnswer
               )
             )
@@ -956,7 +959,10 @@ case class ApplicationController @Inject() (
       withApplication(applicationId) { application: Application =>
         answerIdOption match {
           case Some(answerId)
-              if application.fileCanBeShowed(request.currentUser, request.rights, answerId) =>
+              if Authorization.answerFileCanBeShowed(filesExpirationInDays)(application, answerId)(
+                request.currentUser,
+                request.rights
+              ) =>
             application.answers.find(_.id === answerId) match {
               case Some(answer) if answer.files.getOrElse(Map.empty).contains(filename) =>
                 eventService.log(
@@ -975,7 +981,11 @@ case class ApplicationController @Inject() (
                 )
                 Future(NotFound("Nous n'avons pas trouvé ce fichier"))
             }
-          case None if application.fileCanBeShowed(request.currentUser)(request.rights) =>
+          case None
+              if Authorization.applicationFileCanBeShowed(filesExpirationInDays)(application)(
+                request.currentUser,
+                request.rights
+              ) =>
             if (application.files.contains(filename)) {
               eventService
                 .log(FileOpened, s"Le fichier de la demande $applicationId a été ouvert")
