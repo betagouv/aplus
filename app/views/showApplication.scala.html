@@ -3,7 +3,7 @@
 @import _root_.helper.BooleanHelper.not
 
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil, finishedAnswer: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
 @organisationIcon(creatorUserName: String) = {
@@ -404,7 +404,7 @@ dialog {
                         <span class="mdl-radio__label" style="font-weight: bold;">Je m’en occupe</span>
                     </label>            <br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-2">
-                        <input type="radio" id="option-2" class="mdl-radio__button" name="message" value="Cette demande a bien été traitée. Je vous invite à archiver l'échange.">
+                        <input type="radio" id="option-2" class="mdl-radio__button" name="message" value="@finishedAnswer">
                         <span class="mdl-radio__label" style="font-weight: bold;">J’ai traité la demande</span>
                     </label>            <br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-3">

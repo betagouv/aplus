@@ -885,7 +885,8 @@ case class ApplicationController @Inject() (
                 answerForm(request.currentUser),
                 openedTab,
                 currentAreaLegacy,
-                readSharedAccountUserSignature(request.session)
+                readSharedAccountUserSignature(request.session),
+                finishedAnswer = Application.finishedAnswer
               )
             )
           }
