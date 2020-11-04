@@ -5,7 +5,7 @@ import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
 import actions._
-import cats.implicits.catsSyntaxTuple2Semigroupal
+import cats.implicits.{catsSyntaxOptionId, catsSyntaxTuple2Semigroupal}
 import cats.syntax.all._
 import constants.Constants
 import forms.FormsPlusMap
@@ -31,6 +31,7 @@ import serializers.{AttachmentHelper, DataModel, Keys}
 import services._
 import views.stats.StatsData
 
+import scala.concurrent.Future.successful
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -177,7 +178,7 @@ case class ApplicationController @Inject() (
       .getQueryString(Keys.QueryParam.areaId)
       .flatMap(UUIDHelper.fromString)
       .flatMap(Area.fromId)
-      .map(Future.successful)
+      .map(successful)
       .getOrElse(defaultArea(request.currentUser))
 
   def create: Action[AnyContent] =
@@ -1231,6 +1232,32 @@ case class ApplicationController @Inject() (
             )
           )
         }
+      }
+    }
+
+  // TODO : should be better to handle errors with better types (eg Either) than Boolean
+  def reopen(applicationId: UUID): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      withApplication(applicationId) { application: Application =>
+        import eventService._
+        applicationService
+          .reopen(applicationId)
+          .zip(successful(application.canBeOpenedBy(request.currentUser)))
+          .map {
+            case (true, true) =>
+              val subject = application.subject
+              val message = s"""La demande "$subject" a bien été réouverte"""
+              log(ReopenCompleted, s"La demande $applicationId est réouverte", application.some)
+              Redirect(routes.ApplicationController.myApplications()).flashing("success" -> message)
+            case (false, _) =>
+              val id = applicationId
+              log(ReopenError, s"La demande $id n'a pas pu être réouverte", application.some)
+              InternalServerError("Erreur interne: l'application n'a pas pu être réouverte")
+            case (_, false) =>
+              val id = applicationId
+              log(ReopenUnauthorized, s"Non autorisé à réouvrir la demande $id", application.some)
+              Unauthorized("Seul le créateur de la demande ou un expert peut réouvrir la demande")
+          }
       }
     }
 

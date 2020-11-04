@@ -6,8 +6,6 @@ import java.util.UUID
 
 import cats.Eq
 import cats.syntax.all._
-import helper.BooleanHelper.not
-import models.Authorization.{isExpert, isHelper, isInstructor, UserRights}
 
 case class Application(
     id: UUID,
@@ -137,6 +135,10 @@ case class Application(
       (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)
 
   def canBeClosedBy(user: User) =
+    (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
+      creatorUserId === user.id || user.admin
+
+  def canBeOpenedBy(user: User) =
     (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
       creatorUserId === user.id || user.admin
 
