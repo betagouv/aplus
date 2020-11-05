@@ -76,6 +76,8 @@ case class ApplicationController @Inject() (
     Files.createDirectories(dir)
   }
 
+  private val success = "success"
+
   private def applicationForm(currentUser: User) =
     Form(
       mapping(
@@ -350,7 +352,7 @@ case class ApplicationController @Inject() (
                     signature => saveSharedAccountUserSignature(request.session, signature)
                   )
                 )
-                .flashing("success" -> "Votre demande a bien été envoyée")
+                .flashing(success -> "Votre demande a bien été envoyée")
             } else {
               eventService.log(
                 ApplicationCreationError,
@@ -1076,7 +1078,7 @@ case class ApplicationController @Inject() (
                       signature => saveSharedAccountUserSignature(request.session, signature)
                     )
                   )
-                  .flashing("success" -> "Votre réponse a bien été envoyée")
+                  .flashing(success -> "Votre réponse a bien été envoyée")
               )
             } else {
               eventService.log(
@@ -1165,7 +1167,7 @@ case class ApplicationController @Inject() (
                         Some(application)
                       )
                       Redirect(routes.ApplicationController.myApplications())
-                        .flashing("success" -> "Les utilisateurs ont été invités sur la demande")
+                        .flashing(success -> "Les utilisateurs ont été invités sur la demande")
                     } else {
                       eventService.log(
                         AgentsNotAdded,
@@ -1210,7 +1212,7 @@ case class ApplicationController @Inject() (
                 Some(application)
               )
               Redirect(routes.ApplicationController.myApplications())
-                .flashing("success" -> "Un expert a été invité sur la demande")
+                .flashing(success -> "Un expert a été invité sur la demande")
             } else {
               eventService.log(
                 AddExpertNotCreated,
@@ -1240,24 +1242,26 @@ case class ApplicationController @Inject() (
     loginAction.async { implicit request =>
       withApplication(applicationId) { application: Application =>
         import eventService._
-        applicationService
-          .reopen(applicationId)
-          .zip(successful(application.canBeOpenedBy(request.currentUser)))
-          .map {
-            case (true, true) =>
-              val subject = application.subject
-              val message = s"""La demande "$subject" a bien été réouverte"""
-              log(ReopenCompleted, s"La demande $applicationId est réouverte", application.some)
-              Redirect(routes.ApplicationController.myApplications()).flashing("success" -> message)
-            case (false, _) =>
-              val id = applicationId
-              log(ReopenError, s"La demande $id n'a pas pu être réouverte", application.some)
-              InternalServerError("Erreur interne: l'application n'a pas pu être réouverte")
-            case (_, false) =>
-              val id = applicationId
-              log(ReopenUnauthorized, s"Non autorisé à réouvrir la demande $id", application.some)
-              Unauthorized("Seul le créateur de la demande ou un expert peut réouvrir la demande")
-          }
+        successful(application.canBeOpenedBy(request.currentUser)).flatMap {
+          case true =>
+            applicationService
+              .reopen(applicationId)
+              .filter(identity)
+              .map { _ =>
+                val message = s"""La demande "${application.subject}" a bien été réouverte"""
+                log(ReopenCompleted, message, application.some)
+                Redirect(routes.ApplicationController.myApplications()).flashing(success -> message)
+              }
+              .recover { _ =>
+                val message = s"La demande $applicationId n'a pas pu être réouverte"
+                log(ReopenError, message, application.some)
+                InternalServerError(message)
+              }
+          case false =>
+            val message = s"Non autorisé à réouvrir la demande $applicationId"
+            log(ReopenUnauthorized, message, application.some)
+            successful(Unauthorized(message))
+        }
       }
     }
 
@@ -1295,7 +1299,7 @@ case class ApplicationController @Inject() (
                     |Bravo et merci pour la résolution de cette demande !""".stripMargin
                 Future(
                   Redirect(routes.ApplicationController.myApplications())
-                    .flashing("success" -> successMessage)
+                    .flashing(success -> successMessage)
                 )
               } else {
                 eventService.log(
