@@ -6,8 +6,7 @@ import java.util.UUID
 
 import cats.Eq
 import cats.syntax.all._
-import helper.BooleanHelper.not
-import models.Authorization.{isExpert, isHelper, isInstructor, UserRights}
+import models.Application.SeenByUser
 
 case class Application(
     id: UUID,
@@ -21,19 +20,28 @@ case class Application(
     invitedUsers: Map[UUID, String],
     area: UUID,
     irrelevant: Boolean,
-    answers: List[Answer] = List(),
+    answers: List[Answer] = List.empty[Answer],
     internalId: Int = -1,
     closed: Boolean = false,
-    seenByUserIds: List[UUID] = List(),
-    usefulness: Option[String] = None,
-    closedDate: Option[ZonedDateTime] = None,
+    seenByUsers: List[SeenByUser] = List.empty[SeenByUser],
+    usefulness: Option[String] = Option.empty[String],
+    closedDate: Option[ZonedDateTime] = Option.empty[ZonedDateTime],
     expertInvited: Boolean = false,
     hasSelectedSubject: Boolean = false,
-    category: Option[String] = None,
-    files: Map[String, Long] = Map(),
+    category: Option[String] = Option.empty[String],
+    files: Map[String, Long] = Map.empty[String, Long],
     mandatType: Option[Application.MandatType],
     mandatDate: Option[String]
 ) extends AgeModel {
+
+  val seenByUserIds = seenByUsers.map(_.userId)
+
+  def newAnswersFor(userId: UUID) = {
+    val maybeSeenLastDate = seenByUsers.find(_.userId === userId).map(_.lastSeenDate)
+    maybeSeenLastDate
+      .map(seenLastDate => answers.filter(_.creationDate.isAfter(seenLastDate)))
+      .getOrElse(answers)
+  }
 
   lazy val allFiles: Map[String, Long] = {
     files ++ answers.flatMap(_.files).flatten
@@ -166,6 +174,8 @@ case class Application(
 }
 
 object Application {
+
+  final case class SeenByUser(userId: UUID, lastSeenDate: ZonedDateTime)
 
   def filesAvailabilityLeftInDays(filesExpirationInDays: Int)(application: Application) =
     application.ageInDays.some.map(filesExpirationInDays - _).filter(_ >= 0)

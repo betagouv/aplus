@@ -1,17 +1,21 @@
 package services
 
+import java.sql.Connection
 import java.time.ZonedDateTime
 import java.util.UUID
 
 import anorm.Column.nonNull
+import anorm.SqlParser.scalar
 import anorm._
 import cats.syntax.all._
 import helper.Time
 import javax.inject.Inject
 import models.Authorization.UserRights
 import models.{Answer, Application, Authorization, Error, EventType}
+import org.postgresql.util.PGobject
 import play.api.db.Database
 import play.api.libs.json.Json
+import play.api.libs.json.Json.{arr, obj}
 import serializers.DataModel
 
 import scala.concurrent.Future
@@ -22,7 +26,6 @@ class ApplicationService @Inject() (
     dependencies: ServicesDependencies
 ) {
   import dependencies.databaseExecutionContext
-
   import serializers.Anorm._
   import serializers.JsonFormats._
 
@@ -52,6 +55,8 @@ class ApplicationService @Inject() (
           )
       }
     }
+
+  import DataModel.Application.SeenByUser._
 
   private val simpleApplication: RowParser[Application] = Macro
     .parser[Application](
@@ -87,35 +92,92 @@ class ApplicationService @Inject() (
       )
     )
 
-  def byId(id: UUID, fromUserId: UUID, rights: UserRights): Future[Either[Error, Application]] =
+  private def searchApplicationByUserSeen(id: UUID, userId: UUID)(implicit cnx: Connection) = {
+    val pgObject = new PGobject
+    pgObject.setType("json")
+    pgObject.setValue(
+      arr(
+        obj(
+          "user_id" -> userId.toString,
+        )
+      ).toString
+    )
+    SQL("""SELECT COUNT(*)
+                       |FROM application
+                       |WHERE seen_by_user_ids @> {object}::jsonb
+                       |AND id = {id}::uuid;""".stripMargin)
+      .on(
+        "id" -> id,
+        "object" -> anorm.Object(pgObject)
+      )
+      .as(scalar[Long].single)
+  }
+
+  private def deleteUserSeen(id: UUID, userId: UUID)(implicit
+      cnx: Connection
+  ) =
+    SQL("""UPDATE application
+          |SET seen_by_user_ids = seen_by_user_ids -
+          |                       Cast((SELECT position - 1
+          |                             FROM application,
+          |                                  jsonb_array_elements(seen_by_user_ids) with ordinality arr(seen, position)
+          |                             WHERE id = {id}::uuid
+          |                               AND seen ->> 'user_id' = {user_id}) as int)
+          |WHERE id = {id}::uuid;""".stripMargin)
+      .on(
+        "id" -> id,
+        "user_id" -> userId
+      )
+      .executeUpdate()
+
+  private def insertUserSeen(id: UUID, userId: UUID, moment: ZonedDateTime)(implicit
+      cnx: Connection
+  ) = {
+    val pgObject = new PGobject
+    pgObject.setType("json")
+    pgObject.setValue(
+      obj(
+        "user_id" -> userId.toString,
+        "last_seen_date" -> moment.toString
+      ).toString
+    )
+    SQL("""UPDATE application
+          |SET seen_by_user_ids = seen_by_user_ids || {object}::jsonb
+          |WHERE id = {id}::uuid
+          |RETURNING *;""".stripMargin)
+      .on(
+        "id" -> id,
+        "object" -> anorm.Object(pgObject)
+      )
+      .as(simpleApplication.singleOpt)
+  }
+
+  def byId(id: UUID, userId: UUID, rights: UserRights): Future[Either[Error, Application]] =
     Future {
-      db.withConnection { implicit connection =>
-        val result = SQL(
-          "UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *"
-        ).on("id" -> id, "seen_by_user_id" -> fromUserId)
-          .as(simpleApplication.singleOpt)
+      db.withTransaction { implicit connection =>
+        val moment = Time.nowParis()
+        val result = searchApplicationByUserSeen(id, userId) match {
+          case 0 =>
+            insertUserSeen(id, userId, moment)
+          case _ =>
+            deleteUserSeen(id, userId)
+            insertUserSeen(id, userId, moment)
+        }
+
         result match {
           case None =>
-            Left(
-              Error.EntityNotFound(
-                EventType.ApplicationNotFound,
-                s"Tentative d'accès à une application inexistante: $id"
-              )
-            )
+            val message = s"Tentative d'accès à une application inexistante: $id"
+            Error.EntityNotFound(EventType.ApplicationNotFound, message).asLeft[Application]
           case Some(application) =>
             if (Authorization.canSeeApplication(application)(rights)) {
-              if (Authorization.canSeePrivateDataOfApplication(application)(rights)) {
-                Right(application)
-              } else {
-                Right(application.anonymousApplication)
-              }
+              if (Authorization.canSeePrivateDataOfApplication(application)(rights))
+                application.asRight[Error]
+              else application.anonymousApplication.asRight[Error]
             } else {
-              Left(
-                Error.Authorization(
-                  EventType.ApplicationUnauthorized,
-                  s"Tentative d'accès à une application non autorisé: $id"
-                )
-              )
+              val message = s"Tentative d'accès à une application non autorisé: $id"
+              Error
+                .Authorization(EventType.ApplicationUnauthorized, message)
+                .asLeft[Application]
             }
         }
       }
