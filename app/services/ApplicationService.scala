@@ -5,17 +5,17 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import anorm.Column.nonNull
-import anorm.SqlParser.scalar
 import anorm._
 import cats.syntax.all._
 import helper.Time
 import javax.inject.Inject
+import models.Application.SeenByUser
 import models.Authorization.UserRights
 import models.{Answer, Application, Authorization, Error, EventType}
 import org.postgresql.util.PGobject
 import play.api.db.Database
 import play.api.libs.json.Json
-import play.api.libs.json.Json.{arr, obj}
+import play.api.libs.json.Json.toJson
 import serializers.DataModel
 
 import scala.concurrent.Future
@@ -92,78 +92,43 @@ class ApplicationService @Inject() (
       )
     )
 
-  private def searchApplicationByUserSeen(id: UUID, userId: UUID)(implicit cnx: Connection) = {
-    val pgObject = new PGobject
-    pgObject.setType("json")
-    pgObject.setValue(
-      arr(
-        obj(
-          "user_id" -> userId.toString,
-        )
-      ).toString
-    )
-    SQL("""SELECT COUNT(*)
-                       |FROM application
-                       |WHERE seen_by_user_ids @> {object}::jsonb
-                       |AND id = {id}::uuid;""".stripMargin)
-      .on(
-        "id" -> id,
-        "object" -> anorm.Object(pgObject)
-      )
-      .as(scalar[Long].single)
-  }
-
-  private def deleteUserSeen(id: UUID, userId: UUID)(implicit
-      cnx: Connection
-  ) =
-    SQL("""UPDATE application
-          |SET seen_by_user_ids = seen_by_user_ids -
-          |                       Cast((SELECT position - 1
-          |                             FROM application,
-          |                                  jsonb_array_elements(seen_by_user_ids) with ordinality arr(seen, position)
-          |                             WHERE id = {id}::uuid
-          |                               AND seen ->> 'user_id' = {user_id}) as int)
-          |WHERE id = {id}::uuid;""".stripMargin)
-      .on(
-        "id" -> id,
-        "user_id" -> userId
-      )
-      .executeUpdate()
-
-  private def insertUserSeen(id: UUID, userId: UUID, moment: ZonedDateTime)(implicit
+  private def setSeenByUsers(id: UUID, seenByUsers: List[SeenByUser])(implicit
       cnx: Connection
   ) = {
     val pgObject = new PGobject
     pgObject.setType("json")
-    pgObject.setValue(
-      obj(
-        "user_id" -> userId.toString,
-        "last_seen_date" -> moment.toString
-      ).toString
-    )
+    pgObject.setValue(toJson(seenByUsers).toString)
+
     SQL("""UPDATE application
-          |SET seen_by_user_ids = seen_by_user_ids || {object}::jsonb
+          |SET seen_by_user_ids = {seen_by_users}::jsonb
           |WHERE id = {id}::uuid
           |RETURNING *;""".stripMargin)
       .on(
         "id" -> id,
-        "object" -> anorm.Object(pgObject)
+        "seen_by_users" -> anorm.Object(pgObject)
       )
       .as(simpleApplication.singleOpt)
   }
 
+  private def byId(id: UUID)(implicit cnx: Connection) =
+    SQL("""SELECT *
+          |FROM application
+          |WHERE id = {id}::uuid;""".stripMargin)
+      .on(
+        "id" -> id
+      )
+      .as(simpleApplication.singleOpt)
+
   def byId(id: UUID, userId: UUID, rights: UserRights): Future[Either[Error, Application]] =
     Future {
       db.withTransaction { implicit connection =>
-        val moment = Time.nowParis()
-        val result = searchApplicationByUserSeen(id, userId) match {
-          case 0 =>
-            insertUserSeen(id, userId, moment)
-          case _ =>
-            deleteUserSeen(id, userId)
-            insertUserSeen(id, userId, moment)
+        val result = byId(id) match {
+          case Some(application) =>
+            val newSeen = SeenByUser.now(userId)
+            val seenByUsers = newSeen :: application.seenByUsers.filter(_.userId =!= userId)
+            setSeenByUsers(id, seenByUsers)
+          case None => Option.empty[Application]
         }
-
         result match {
           case None =>
             val message = s"Tentative d'accès à une application inexistante: $id"
@@ -276,7 +241,7 @@ class ApplicationService @Inject() (
 
   def createApplication(newApplication: Application) =
     db.withConnection { implicit connection =>
-      val invitedUserJson = Json.toJson(newApplication.invitedUsers.map { case (key, value) =>
+      val invitedUserJson = toJson(newApplication.invitedUsers.map { case (key, value) =>
         key.toString -> value
       })
       val mandatType =
@@ -304,12 +269,12 @@ class ApplicationService @Inject() (
             ${newApplication.creatorUserId}::uuid,
             ${newApplication.subject},
             ${newApplication.description},
-            ${Json.toJson(newApplication.userInfos)},
+            ${toJson(newApplication.userInfos)},
             ${invitedUserJson},
             ${newApplication.area}::uuid,
             ${newApplication.hasSelectedSubject},
             ${newApplication.category},
-            ${Json.toJson(newApplication.files)}::jsonb,
+            ${toJson(newApplication.files)}::jsonb,
             $mandatType,
             ${newApplication.mandatDate}
           )
@@ -318,7 +283,7 @@ class ApplicationService @Inject() (
 
   def add(applicationId: UUID, answer: Answer, expertInvited: Boolean = false) =
     db.withTransaction { implicit connection =>
-      val invitedUserJson = Json.toJson(answer.invitedUsers.map { case (key, value) =>
+      val invitedUserJson = toJson(answer.invitedUsers.map { case (key, value) =>
         key.toString -> value
       })
       val sql = (if (answer.declareApplicationHasIrrelevant) {
@@ -339,7 +304,7 @@ class ApplicationService @Inject() (
        """
       ).on(
         "id" -> applicationId,
-        "answer" -> Json.toJson(answer),
+        "answer" -> toJson(answer),
         "invited_users" -> invitedUserJson
       ).executeUpdate()
     }

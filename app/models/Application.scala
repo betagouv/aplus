@@ -1,6 +1,6 @@
 package models
 
-import java.time.ZonedDateTime
+import java.time.{Instant, ZonedDateTime}
 import java.time.temporal.ChronoUnit.MINUTES
 import java.util.UUID
 
@@ -39,7 +39,7 @@ case class Application(
   def newAnswersFor(userId: UUID) = {
     val maybeSeenLastDate = seenByUsers.find(_.userId === userId).map(_.lastSeenDate)
     maybeSeenLastDate
-      .map(seenLastDate => answers.filter(_.creationDate.isAfter(seenLastDate)))
+      .map(seenLastDate => answers.filter(_.creationDate.toInstant.isAfter(seenLastDate)))
       .getOrElse(answers)
   }
 
@@ -175,7 +175,11 @@ case class Application(
 
 object Application {
 
-  final case class SeenByUser(userId: UUID, lastSeenDate: ZonedDateTime)
+  final case class SeenByUser(userId: UUID, lastSeenDate: Instant)
+
+  object SeenByUser {
+    def now(userId: UUID) = SeenByUser(userId, Instant.now())
+  }
 
   def filesAvailabilityLeftInDays(filesExpirationInDays: Int)(application: Application) =
     application.ageInDays.some.map(filesExpirationInDays - _).filter(_ >= 0)
