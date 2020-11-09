@@ -177,6 +177,7 @@ object Application {
     case object Phone extends MandatType
     case object Paper extends MandatType
 
+    @SuppressWarnings(Array("scalafix:DisableSyntax.=="))
     implicit val Eq: Eq[MandatType] = (x: MandatType, y: MandatType) => x == y
   }
 
