@@ -179,6 +179,7 @@ object Application {
 
     @SuppressWarnings(Array("scalafix:DisableSyntax.=="))
     implicit val Eq: Eq[MandatType] = (x: MandatType, y: MandatType) => x == y
+
   }
 
   val USER_FIRST_NAME_KEY = "Prénom"
