@@ -1248,12 +1248,12 @@ case class ApplicationController @Inject() (
               .reopen(applicationId)
               .filter(identity)
               .map { _ =>
-                val message = s"""La demande "${application.subject}" a bien été réouverte"""
+                val message = "La demande a bien été réouverte"
                 log(ReopenCompleted, message, application.some)
                 Redirect(routes.ApplicationController.myApplications()).flashing(success -> message)
               }
               .recover { _ =>
-                val message = s"La demande $applicationId n'a pas pu être réouverte"
+                val message = "La demande n'a pas pu être réouverte"
                 log(ReopenError, message, application.some)
                 InternalServerError(message)
               }
