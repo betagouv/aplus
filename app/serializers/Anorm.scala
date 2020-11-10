@@ -10,6 +10,7 @@ import play.api.libs.json.{JsValue, Json}
 
 object Anorm {
 
+  @SuppressWarnings(Array("scalafix:DisableSyntax.=="))
   @inline def className(that: Any): String =
     if (that == null) "<null>" else that.getClass.getName
 
