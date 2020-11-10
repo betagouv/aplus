@@ -1,5 +1,6 @@
 package services
 
+import java.sql.Connection
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -8,10 +9,13 @@ import anorm._
 import cats.syntax.all._
 import helper.Time
 import javax.inject.Inject
+import models.Application.SeenByUser
 import models.Authorization.UserRights
 import models.{Answer, Application, Authorization, Error, EventType}
+import org.postgresql.util.PGobject
 import play.api.db.Database
 import play.api.libs.json.Json
+import play.api.libs.json.Json.toJson
 import serializers.DataModel
 
 import scala.concurrent.Future
@@ -22,7 +26,6 @@ class ApplicationService @Inject() (
     dependencies: ServicesDependencies
 ) {
   import dependencies.databaseExecutionContext
-
   import serializers.Anorm._
   import serializers.JsonFormats._
 
@@ -52,6 +55,8 @@ class ApplicationService @Inject() (
           )
       }
     }
+
+  import DataModel.Application.SeenByUser._
 
   private val simpleApplication: RowParser[Application] = Macro
     .parser[Application](
@@ -88,35 +93,57 @@ class ApplicationService @Inject() (
       )
     )
 
-  def byId(id: UUID, fromUserId: UUID, rights: UserRights): Future[Either[Error, Application]] =
+  private def setSeenByUsers(id: UUID, seenByUsers: List[SeenByUser])(implicit
+      cnx: Connection
+  ) = {
+    val pgObject = new PGobject
+    pgObject.setType("json")
+    pgObject.setValue(toJson(seenByUsers).toString)
+
+    SQL("""UPDATE application
+          |SET seen_by_user_ids = {seen_by_users}::jsonb
+          |WHERE id = {id}::uuid
+          |RETURNING *;""".stripMargin)
+      .on(
+        "id" -> id,
+        "seen_by_users" -> anorm.Object(pgObject)
+      )
+      .as(simpleApplication.singleOpt)
+  }
+
+  private def byId(id: UUID)(implicit cnx: Connection) =
+    SQL("""SELECT *
+          |FROM application
+          |WHERE id = {id}::uuid;""".stripMargin)
+      .on(
+        "id" -> id
+      )
+      .as(simpleApplication.singleOpt)
+
+  def byId(id: UUID, userId: UUID, rights: UserRights): Future[Either[Error, Application]] =
     Future {
-      db.withConnection { implicit connection =>
-        val result = SQL(
-          "UPDATE application SET seen_by_user_ids = seen_by_user_ids || {seen_by_user_id}::uuid WHERE id = {id}::uuid RETURNING *"
-        ).on("id" -> id, "seen_by_user_id" -> fromUserId)
-          .as(simpleApplication.singleOpt)
+      db.withTransaction { implicit connection =>
+        val result = byId(id) match {
+          case Some(application) =>
+            val newSeen = SeenByUser.now(userId)
+            val seenByUsers = newSeen :: application.seenByUsers.filter(_.userId =!= userId)
+            setSeenByUsers(id, seenByUsers)
+          case None => Option.empty[Application]
+        }
         result match {
           case None =>
-            Left(
-              Error.EntityNotFound(
-                EventType.ApplicationNotFound,
-                s"Tentative d'accès à une application inexistante: $id"
-              )
-            )
+            val message = s"Tentative d'accès à une application inexistante: $id"
+            Error.EntityNotFound(EventType.ApplicationNotFound, message).asLeft[Application]
           case Some(application) =>
             if (Authorization.canSeeApplication(application)(rights)) {
-              if (Authorization.canSeePrivateDataOfApplication(application)(rights)) {
-                Right(application)
-              } else {
-                Right(application.anonymousApplication)
-              }
+              if (Authorization.canSeePrivateDataOfApplication(application)(rights))
+                application.asRight[Error]
+              else application.anonymousApplication.asRight[Error]
             } else {
-              Left(
-                Error.Authorization(
-                  EventType.ApplicationUnauthorized,
-                  s"Tentative d'accès à une application non autorisé: $id"
-                )
-              )
+              val message = s"Tentative d'accès à une application non autorisé: $id"
+              Error
+                .Authorization(EventType.ApplicationUnauthorized, message)
+                .asLeft[Application]
             }
         }
       }
@@ -215,7 +242,7 @@ class ApplicationService @Inject() (
 
   def createApplication(newApplication: Application) =
     db.withConnection { implicit connection =>
-      val invitedUserJson = Json.toJson(newApplication.invitedUsers.map { case (key, value) =>
+      val invitedUserJson = toJson(newApplication.invitedUsers.map { case (key, value) =>
         key.toString -> value
       })
       val mandatType =
@@ -244,12 +271,12 @@ class ApplicationService @Inject() (
             ${newApplication.creatorUserId}::uuid,
             ${newApplication.subject},
             ${newApplication.description},
-            ${Json.toJson(newApplication.userInfos)},
+            ${toJson(newApplication.userInfos)},
             ${invitedUserJson},
             ${newApplication.area}::uuid,
             ${newApplication.hasSelectedSubject},
             ${newApplication.category},
-            ${Json.toJson(newApplication.files)}::jsonb,
+            ${toJson(newApplication.files)}::jsonb,
             $mandatType,
             ${newApplication.mandatDate},
             array[${newApplication.invitedGroupIds}]::uuid[]
@@ -259,7 +286,7 @@ class ApplicationService @Inject() (
 
   def add(applicationId: UUID, answer: Answer, expertInvited: Boolean = false) =
     db.withTransaction { implicit connection =>
-      val invitedUserJson = Json.toJson(answer.invitedUsers.map { case (key, value) =>
+      val invitedUserJson = toJson(answer.invitedUsers.map { case (key, value) =>
         key.toString -> value
       })
       val sql = (if (answer.declareApplicationHasIrrelevant) {
@@ -280,7 +307,7 @@ class ApplicationService @Inject() (
        """
       ).on(
         "id" -> applicationId,
-        "answer" -> Json.toJson(answer),
+        "answer" -> toJson(answer),
         "invited_users" -> invitedUserJson
       ).executeUpdate()
     }

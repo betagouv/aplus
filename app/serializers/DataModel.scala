@@ -1,7 +1,11 @@
 package serializers
 
-import models.Application.MandatType
+import anorm.SqlMappingError
+import helper.PlayFormHelper
+import models.Application.{MandatType, SeenByUser}
+import play.api.libs.json.JsonNaming.SnakeCase
 import play.api.libs.json._
+import serializers.Anorm.columnToJson
 
 object DataModel {
 
@@ -24,6 +28,24 @@ object DataModel {
           case "paper" => Some(Paper)
           case _       => None
         }
+
+    }
+
+    object SeenByUser {
+      // Because fields in jsonb are snake-case formatted
+      implicit val jsonConfig = JsonConfiguration(SnakeCase)
+
+      implicit val seenByUserReads = Json.reads[SeenByUser]
+      implicit val seenByUserWrites = Json.writes[SeenByUser]
+
+      implicit val seenByUserListParser: anorm.Column[List[SeenByUser]] =
+        implicitly[anorm.Column[JsValue]].mapResult(
+          _.validate[List[SeenByUser]].asEither.left.map(errors =>
+            SqlMappingError(
+              s"Cannot parse JSON as List[SeenByUser]: ${PlayFormHelper.prettifyJsonFormInvalidErrors(errors)}"
+            )
+          )
+        )
 
     }
 

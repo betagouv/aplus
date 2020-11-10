@@ -1,10 +1,10 @@
 package models
 
-import java.time.ZonedDateTime
+import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 
 import cats.syntax.all._
-import models.Application.MandatType
+import models.Application.{MandatType, SeenByUser}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
@@ -12,8 +12,120 @@ import org.specs2.runner.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class ApplicationSpec extends Specification {
 
+  private def createAnswer(applicationId: UUID, date: ZonedDateTime) = Answer(
+    UUID.randomUUID(),
+    applicationId,
+    date,
+    "",
+    UUID.randomUUID(),
+    "",
+    Map.empty[UUID, String],
+    visibleByHelpers = true,
+    declareApplicationHasIrrelevant = true,
+    Option.empty[Map[String, String]],
+    invitedGroupIds = List.empty[UUID].some
+  )
+
   "Application should" >> {
-    "display 'Archivée' status if application is closed" >> {
+    "compute all answers as 'new' for a user without seenByUser" >> {
+      val applicationId = UUID.randomUUID()
+      val userId = UUID.randomUUID()
+      val answers = List(
+        createAnswer(applicationId, ZonedDateTime.now()),
+        createAnswer(applicationId, ZonedDateTime.now())
+      )
+
+      val application = Application(
+        id = applicationId,
+        answers = answers,
+        seenByUsers = List.empty[SeenByUser],
+        creationDate = ZonedDateTime.now(),
+        creatorUserName = "Mathieu",
+        creatorUserId = UUID.randomUUID(),
+        subject = "Sujet",
+        description = "Description",
+        userInfos = Map.empty[String, String],
+        invitedUsers = Map.empty[UUID, String],
+        area = UUID.randomUUID(),
+        irrelevant = false,
+        mandatType = Option.empty[MandatType],
+        mandatDate = Option.empty[String],
+        invitedGroupIds = List.empty[UUID]
+      )
+
+      application.newAnswersFor(userId) must equalTo(answers)
+    }
+
+    "compute only new answers as 'new' for a user with seenByUser" >> {
+      val applicationId = UUID.randomUUID()
+      val userId = UUID.randomUUID()
+      val firstAnswerDate = ZonedDateTime.of(2020, 11, 1, 15, 36, 0, 0, ZoneId.systemDefault())
+      val secondAnswerDate = ZonedDateTime.of(2020, 11, 9, 15, 36, 0, 0, ZoneId.systemDefault())
+
+      val lastVisitDate =
+        ZonedDateTime.of(2020, 11, 5, 15, 36, 0, 0, ZoneId.systemDefault()).toInstant
+
+      val answer1 = createAnswer(applicationId, firstAnswerDate)
+      val answer2 = createAnswer(applicationId, secondAnswerDate)
+
+      val application = Application(
+        id = applicationId,
+        answers = List(answer1, answer2),
+        seenByUsers = List(SeenByUser(userId, lastVisitDate)),
+        creationDate = ZonedDateTime.now(),
+        creatorUserName = "Mathieu",
+        creatorUserId = UUID.randomUUID(),
+        subject = "Sujet",
+        description = "Description",
+        userInfos = Map.empty[String, String],
+        invitedUsers = Map.empty[UUID, String],
+        area = UUID.randomUUID(),
+        irrelevant = false,
+        mandatType = Option.empty[MandatType],
+        mandatDate = Option.empty[String],
+        invitedGroupIds = List.empty[UUID]
+      )
+
+      application.newAnswersFor(userId) must equalTo(List(answer2))
+    }
+
+    "compute none of the answers as 'new' for a user with a visit after all answers" >> {
+      val applicationId = UUID.randomUUID()
+      val userId = UUID.randomUUID()
+      val firstAnswerDate = ZonedDateTime.of(2020, 11, 1, 15, 36, 0, 0, ZoneId.systemDefault())
+      val secondAnswerDate = ZonedDateTime.of(2020, 11, 9, 15, 36, 0, 0, ZoneId.systemDefault())
+
+      val lastVisitDate =
+        ZonedDateTime.of(2020, 11, 10, 15, 36, 0, 0, ZoneId.systemDefault()).toInstant
+
+      val application = Application(
+        id = applicationId,
+        answers = List(
+          createAnswer(applicationId, firstAnswerDate),
+          createAnswer(applicationId, secondAnswerDate)
+        ),
+        seenByUsers = List(SeenByUser(userId, lastVisitDate)),
+        creationDate = ZonedDateTime.now(),
+        creatorUserName = "Mathieu",
+        creatorUserId = UUID.randomUUID(),
+        subject = "Sujet",
+        description = "Description",
+        userInfos = Map.empty[String, String],
+        invitedUsers = Map.empty[UUID, String],
+        area = UUID.randomUUID(),
+        irrelevant = false,
+        mandatType = Option.empty[MandatType],
+        mandatDate = Option.empty[String],
+        invitedGroupIds = List.empty[UUID]
+      )
+
+      application.newAnswersFor(userId) must equalTo(List.empty[Answer])
+    }
+
+  }
+
+  "Application should display status" >> {
+    "'Archivée' if application is closed" >> {
       val closed = true
       val application = Application(
         closed = closed,
@@ -35,7 +147,7 @@ class ApplicationSpec extends Specification {
       application.status must equalTo("Archivée")
     }
 
-    "display 'répondu' status if there is an answer with the same creator as the application" >> {
+    "'répondu' if there is an answer with the same creator as the application" >> {
       val closed = false
       val applicationCreatorUserId = UUID.randomUUID()
 
@@ -89,7 +201,7 @@ class ApplicationSpec extends Specification {
       application.status must equalTo("Répondu")
     }
 
-    "display 'nouvelle' status if there is no answer with the same creator as the application" >> {
+    "'nouvelle' if there is no answer with the same creator as the application" >> {
       val closed = false
 
       val answers = List(
