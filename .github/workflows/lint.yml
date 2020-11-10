@@ -16,4 +16,4 @@ jobs:
       - name: Formatting
         run: sbt scalafmtSbtCheck scalafmtCheck test:scalafmtCheck
       - name: Scalafix
-        run: sbt scalafixAll --check
+        run: sbt "scalafixAll --check"
