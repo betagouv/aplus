@@ -14,3 +14,5 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0")
 
 // Makes available sbt commands results to project scala code
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.10.0")
+
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.23")
