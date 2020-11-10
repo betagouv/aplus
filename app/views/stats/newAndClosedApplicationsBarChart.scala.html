@@ -16,31 +16,31 @@
               stack: 'new',
               data: [@Html(data.applicationsGroupedByMonth.map(_._2.length).mkString(", "))]
           }, {
-              label: "Demandes clôturées non évaluées",
+              label: "Demandes archivées non évaluées",
               backgroundColor: 'gray',
               borderColor: 'gray',
               stack: 'useful',
               data: [@Html(data.closedApplicationsGroupedByMonth.map(_._2.count(_.usefulness.isEmpty)).mkString(", "))],
           },{
-              label: "Demandes clôturées non utiles",
+              label: "Demandes archivées non utiles",
               backgroundColor: 'orange',
               borderColor: 'orange',
               stack: 'useful',
               data: [@Html(data.closedApplicationsGroupedByMonth.map(_._2.count(_.usefulness.contains("Non"))).mkString(", "))],
           }, {
-              label: "Demandes clôturées utilité inconnue",
+              label: "Demandes archivées utilité inconnue",
               backgroundColor: 'yellow',
               borderColor: 'yellow',
               stack: 'useful',
               data: [@Html(data.closedApplicationsGroupedByMonth.map(_._2.count(_.usefulness.contains("Je ne sais pas"))).mkString(", "))],
           },{
-              label: "Demandes clôturées utiles",
+              label: "Demandes archivées utiles",
               backgroundColor: 'green',
               borderColor: 'green',
               stack: 'useful',
               data: [@Html(data.closedApplicationsGroupedByMonth.map(_._2.count(_.usefulness.contains("Oui"))).mkString(", "))]
           }, {
-              label: "Demandes clôturées non pertinentes",
+              label: "Demandes archivées non pertinentes",
               backgroundColor: 'red',
               borderColor: 'red',
               stack: 'irrelevant',

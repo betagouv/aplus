@@ -23,7 +23,7 @@
 <div class="mdl-cell mdl-cell--6-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
     <h6>Répartition des demandes</h6>
     @applicationsStatusPieChart(data.all)
-    <h5>@data.all.countClosedLast30Days clôturées sur les 30 derniers jours</h5>
+    <h5>@data.all.countClosedLast30Days archivées sur les 30 derniers jours</h5>
 </div>
 <div class="mdl-cell mdl-cell--6-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
     <h6>Pertinence des demandes</h6>
@@ -42,7 +42,7 @@
 </div>
 
 <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
-    <h6>Demandes déposées et clôturées</h6>
+    <h6>Demandes déposées et archivées</h6>
     <div class="single--margin-right-16px">
         @newAndClosedApplicationsBarChart(data.all, "all")
     </div>
@@ -107,7 +107,7 @@
                     )
                 </details>
                 <details class="mdl-cell mdl-cell--12-col">
-                    <summary>Détail des demandes clôturées</summary>
+                    <summary>Détail des demandes archivées</summary>
                     @closedApplicationsTable(areaData.aggregates)
                 </details>
             </div>
