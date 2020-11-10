@@ -180,7 +180,7 @@ object Operators {
       applicationService
         .byId(
           applicationId,
-          fromUserId = request.currentUser.id,
+          userId = request.currentUser.id,
           rights = request.rights
         )
         .flatMap(
