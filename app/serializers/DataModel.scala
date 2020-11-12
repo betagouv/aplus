@@ -3,12 +3,16 @@ package serializers
 import java.time.ZonedDateTime
 import java.util.UUID
 
+import anorm.SqlMappingError
+import helper.PlayFormHelper
 import models.Answer
 import models.Answer.AnswerType
-import models.Application.MandatType
+import models.Application.{MandatType, SeenByUser}
 import play.api.libs.functional.syntax._
+import play.api.libs.json.JsonNaming.SnakeCase
 import play.api.libs.json.Reads._
 import play.api.libs.json._
+import serializers.Anorm.columnToJson
 import serializers.JsonFormats._
 
 object DataModel {
@@ -23,8 +27,7 @@ object DataModel {
       implicit val answerTypeWrites = implicitly[Writes[String]].contramap[AnswerType](_.name)
     }
 
-    import AnswerType.answerTypeWrites
-    import AnswerType.answerTypeReads
+    import AnswerType.{answerTypeReads, answerTypeWrites}
 
     implicit val answerReads: Reads[Answer] = (JsPath \ "id")
       .read[UUID]
@@ -66,6 +69,21 @@ object DataModel {
           case "paper" => Some(Paper)
           case _       => None
         }
+
+    }
+
+    object SeenByUser {
+      implicit val seenByUserReads = Json.reads[SeenByUser]
+      implicit val seenByUserWrites = Json.writes[SeenByUser]
+
+      implicit val seenByUserListParser: anorm.Column[List[SeenByUser]] =
+        implicitly[anorm.Column[JsValue]].mapResult(
+          _.validate[List[SeenByUser]].asEither.left.map(errors =>
+            SqlMappingError(
+              s"Cannot parse JSON as List[SeenByUser]: ${PlayFormHelper.prettifyJsonFormInvalidErrors(errors)}"
+            )
+          )
+        )
 
     }
 

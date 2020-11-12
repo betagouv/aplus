@@ -47,6 +47,7 @@ object common {
         a(href := raw(url).render, raw(url)),
         br,
         br,
+        " ",
         "Ce lien est à ",
         b("usage unique"),
         " et est ",
@@ -63,6 +64,7 @@ object common {
         "n’hésitez pas à nous contacter sur ",
         a(href := s"mailto:${Constants.supportEmail}", Constants.supportEmail),
         br,
+        " ",
         "Equipe Administration+"
       )
     ) ::: commonEmailFooter
@@ -252,9 +254,11 @@ object common {
           s"${Constants.supportEmail}"
         ),
         br,
+        " ",
         "- Le navigateur Internet Explorer peut rencontrer des difficultés à accéder au site. Microsoft conseille depuis février 2019 de ne plus utiliser son navigateur historique qui n’est plus mis à jour depuis la sortie de Edge en 2015 et ne supporte donc plus les standards actuels du Web. ",
         a(
           href := "https://docs.aplus.beta.gouv.fr/faq/pourquoi-ne-plus-utiliser-le-navigateur-internet-explorer-de-microsoft",
+          " ",
           "Pour en savoir plus"
         )
       )

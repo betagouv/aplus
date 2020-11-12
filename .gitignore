@@ -24,6 +24,7 @@ server.pid
 !.scalafmt.conf
 !.github/
 !.dockerignore
+!.scalafix.conf
 files
 package-lock.json
 node_modules/

@@ -15,3 +15,5 @@ jobs:
       - uses: actions/checkout@v2
       - name: Formatting
         run: sbt scalafmtSbtCheck scalafmtCheck test:scalafmtCheck
+      - name: Scalafix
+        run: sbt "scalafixAll --check"

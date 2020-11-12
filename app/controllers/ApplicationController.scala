@@ -1278,11 +1278,11 @@ case class ApplicationController @Inject() (
                 eventService
                   .log(
                     TerminateCompleted,
-                    s"La demande $applicationId est clôturée",
+                    s"La demande $applicationId est archivée",
                     Some(application)
                   )
                 val successMessage =
-                  s"""|La demande "${application.subject}" a bien été clôturée. 
+                  s"""|La demande "${application.subject}" a bien été archivée. 
                     |Bravo et merci pour la résolution de cette demande !""".stripMargin
                 Future(
                   Redirect(routes.ApplicationController.myApplications())
@@ -1291,12 +1291,12 @@ case class ApplicationController @Inject() (
               } else {
                 eventService.log(
                   TerminateError,
-                  s"La demande $applicationId n'a pas pu être clôturée en BDD",
+                  s"La demande $applicationId n'a pas pu être archivée en BDD",
                   Some(application)
                 )
                 Future(
                   InternalServerError(
-                    "Erreur interne: l'application n'a pas pu être indiquée comme clôturée"
+                    "Erreur interne: l'application n'a pas pu être indiquée comme archivée"
                   )
                 )
               }

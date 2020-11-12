@@ -152,7 +152,7 @@ class NotificationService @Inject() (
       .map(generateNotificationBALEmail(application, None, users))
       .foreach(sendMail)
 
-    if (answer.visibleByHelpers && answer.creatorUserID != application.creatorUserId) {
+    if (answer.visibleByHelpers && answer.creatorUserID =!= application.creatorUserId) {
       userService
         .byId(application.creatorUserId)
         .map(generateAnswerEmail(application, answer))
