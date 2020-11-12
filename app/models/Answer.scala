@@ -30,6 +30,7 @@ object Answer {
 
   object AnswerType {
 
+    @SuppressWarnings(Array("scalafix:DisableSyntax.=="))
     implicit val AnswerTypeEq: Eq[AnswerType] = (x: AnswerType, y: AnswerType) => x == y
 
     final case object Custom extends AnswerType {
