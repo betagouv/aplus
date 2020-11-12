@@ -11,7 +11,7 @@ import constants.Constants
 import forms.FormsPlusMap
 import helper.BooleanHelper.not
 import helper.CSVUtil.escape
-import helper.StringHelper.{CanonizeString, StringOps}
+import helper.StringHelper.{CanonizeString, TrimedString}
 import helper.Time.zonedDateTimeOrdering
 import helper.{Hash, Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
@@ -1073,8 +1073,7 @@ case class ApplicationController @Inject() (
               not(answerData.privateToHelpers),
               answerData.applicationIsDeclaredIrrelevant,
               answerData.usagerOptionalInfos.collect {
-                case (infoName, infoValue) if infoName.notEmpty && infoValue.notEmpty =>
-                  (infoName.trim, infoValue.trim)
+                case (TrimedString(infoName), TrimedString(infoValue)) => (infoName, infoValue)
               }.some,
               files = (newAttachments ++ pendingAttachments).some
             )
