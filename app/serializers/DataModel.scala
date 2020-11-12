@@ -1,9 +1,51 @@
 package serializers
 
+import java.time.ZonedDateTime
+import java.util.UUID
+
+import models.Answer
+import models.Answer.AnswerType
 import models.Application.MandatType
+import play.api.libs.functional.syntax._
+import play.api.libs.json.Reads._
 import play.api.libs.json._
+import serializers.JsonFormats._
 
 object DataModel {
+
+  object Answer {
+
+    object AnswerType {
+
+      implicit val answerTypeReads =
+        implicitly[Reads[String]].map(models.Answer.AnswerType.fromString)
+
+      implicit val answerTypeWrites = implicitly[Writes[String]].contramap[AnswerType](_.name)
+    }
+
+    import AnswerType.answerTypeWrites
+    import AnswerType.answerTypeReads
+
+    implicit val answerReads: Reads[Answer] = (JsPath \ "id")
+      .read[UUID]
+      .and((JsPath \ "application_id").read[UUID])
+      .and((JsPath \ "creation_date").read[ZonedDateTime])
+      .and((JsPath \ "answer_type").readNullable[AnswerType].map {
+        case Some(answerType) => answerType
+        case None             => models.Answer.AnswerType.Custom
+      })
+      .and((JsPath \ "message").read[String])
+      .and((JsPath \ "creator_user_id").read[UUID])
+      .and((JsPath \ "creator_user_name").read[String])
+      .and((JsPath \ "invited_users").read[Map[UUID, String]])
+      .and((JsPath \ "visible_by_helpers").read[Boolean])
+      .and((JsPath \ "declare_application_has_irrelevant").read[Boolean])
+      .and((JsPath \ "user_infos").readNullable[Map[String, String]])
+      .and((JsPath \ "files").readNullable[Map[String, Long]])(models.Answer.apply _)
+
+    implicit val answerWrite = Json.writes[Answer]
+
+  }
 
   object Application {
 
@@ -53,20 +95,18 @@ object DataModel {
       }
 
     implicit val smsApiWrites: Writes[Sms] =
-      Writes(
-        _ match {
-          case sms: Sms.Outgoing =>
-            smsOutgoingFormat.writes(sms) match {
-              case obj: JsObject => obj + ("tag" -> JsString("outgoing"))
-              case other         => other
-            }
-          case sms: Sms.Incoming =>
-            smsIncomingFormat.writes(sms) match {
-              case obj: JsObject => obj + ("tag" -> JsString("incoming"))
-              case other         => other
-            }
-        }
-      )
+      Writes {
+        case sms: Sms.Outgoing =>
+          smsOutgoingFormat.writes(sms) match {
+            case obj: JsObject => obj + ("tag" -> JsString("outgoing"))
+            case other         => other
+          }
+        case sms: Sms.Incoming =>
+          smsIncomingFormat.writes(sms) match {
+            case obj: JsObject => obj + ("tag" -> JsString("incoming"))
+            case other         => other
+          }
+      }
 
   }
 

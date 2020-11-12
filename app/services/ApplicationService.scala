@@ -22,7 +22,6 @@ class ApplicationService @Inject() (
     dependencies: ServicesDependencies
 ) {
   import dependencies.databaseExecutionContext
-
   import serializers.Anorm._
   import serializers.JsonFormats._
 
@@ -33,23 +32,20 @@ class ApplicationService @Inject() (
     implicitly[anorm.Column[Option[String]]]
       .map(_.flatMap(DataModel.Application.MandatType.dataModelDeserialization))
 
-  private implicit val answerReads = Json.reads[Answer]
-  private implicit val answerWrite = Json.writes[Answer]
+  import serializers.DataModel.Answer._
 
   implicit val answerListParser: anorm.Column[List[Answer]] =
     nonNull { (value, meta) =>
       val MetaDataItem(qualified, _, _) = meta
       value match {
         case json: org.postgresql.util.PGobject =>
-          Right(Json.parse(json.getValue).as[List[Answer]])
+          Json.parse(json.getValue).as[List[Answer]].asRight[SqlRequestError]
         case json: String =>
-          Right(Json.parse(json).as[List[Answer]])
+          Json.parse(json).as[List[Answer]].asRight[SqlRequestError]
         case _ =>
-          Left(
-            TypeDoesNotMatch(
-              s"Cannot convert $value: ${className(value)} to List[Answer] for column $qualified"
-            )
-          )
+          TypeDoesNotMatch(
+            s"Cannot convert $value: ${className(value)} to List[Answer] for column $qualified"
+          ).asLeft[List[Answer]]
       }
     }
 
@@ -65,7 +61,7 @@ class ApplicationService @Inject() (
       "invited_users",
       "area",
       "irrelevant",
-      "answers", // Data have been left bad migrated from answser_unsed
+      "answers",
       "internal_id",
       "closed",
       "seen_by_user_ids",
@@ -243,7 +239,7 @@ class ApplicationService @Inject() (
             ${newApplication.subject},
             ${newApplication.description},
             ${Json.toJson(newApplication.userInfos)},
-            ${invitedUserJson},
+            $invitedUserJson,
             ${newApplication.area}::uuid,
             ${newApplication.hasSelectedSubject},
             ${newApplication.category},

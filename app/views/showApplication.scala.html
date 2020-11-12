@@ -2,8 +2,9 @@
 @import _root_.helper.MDLForms._
 @import _root_.helper.BooleanHelper.not
 
-
-@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil, fileExpiryDayCount: Int, finishedAnswer: String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@import cats.implicits.catsSyntaxEq
+@import models.Answer.AnswerType
+@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil, fileExpiryDayCount: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
 @organisationIcon(creatorUserName: String) = {
@@ -386,7 +387,7 @@ dialog {
                                 Sinon n’hésitez pas à recontacter la personne en utilisant </i><b>Ajouter une réponse</b> ci-dessous.
                                 </div>
                             }
-                            @if(application.answers.last != answer && answer.message == finishedAnswer && application.creatorUserId == currentUser.id && not(application.closed) && answer.creatorUserID != currentUser.id) {
+                            @if(application.answers.last != answer && answer.answerType === AnswerType.ApplicationProcessed && application.creatorUserId == currentUser.id && not(application.closed) && answer.creatorUserID != currentUser.id) {
                                 <div class="info-box do-not-print">
                                     Cette demande a bien été traitée. Je vous invite à archiver l'échange en cliquant sur le bouton ci-dessous :<br><br>
                                     <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="showDialog()" >
@@ -408,15 +409,15 @@ dialog {
                     @helper.CSRF.formField
                     Réponse rapide à l’aidant :                 <br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-1">
-                        <input type="radio" id="option-1" class="mdl-radio__button" name="message" value="Je m'en occupe" checked>
+                        <input type="radio" id="option-1" class="mdl-radio__button" name="answer_type" value="workInProgress" checked>
                         <span class="mdl-radio__label" style="font-weight: bold;">Je m’en occupe</span>
                     </label>            <br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-2">
-                        <input type="radio" id="option-2" class="mdl-radio__button" name="message" value="@finishedAnswer">
+                        <input type="radio" id="option-2" class="mdl-radio__button" name="answer_type" value="applicationProcessed">
                         <span class="mdl-radio__label" style="font-weight: bold;">J’ai traité la demande</span>
                     </label>            <br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-3">
-                        <input type="radio" id="option-3" class="mdl-radio__button" name="message" value="Je ne suis pas le bon interlocuteur">
+                        <input type="radio" id="option-3" class="mdl-radio__button" name="answer_type" value="wrongInstructor">
                         <span class="mdl-radio__label" style="font-weight: bold;">Je ne suis pas le bon interlocuteur</span>
                     </label>         <br>
                     <button class="mdl-button mdl-button--primary mdl-button--raised mdl-js-button mdl-button--nowrap">
@@ -467,6 +468,7 @@ dialog {
 
                 @helper.CSRF.formField
                 <input type="hidden" name="answer-id" readonly value="@answerToAgentsForm("answer-id").value.getOrElse(java.util.UUID.randomUUID)">
+                <input type="hidden" name="answer_type" readonly value="custom">
 
                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
                     @if(currentUser.instructor) {

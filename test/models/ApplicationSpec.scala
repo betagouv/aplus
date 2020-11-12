@@ -3,6 +3,7 @@ package models
 import java.time.ZonedDateTime
 import java.util.UUID
 
+import models.Answer.AnswerType
 import models.Application.MandatType
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
@@ -42,25 +43,27 @@ class ApplicationSpec extends Specification {
           UUID.randomUUID(),
           UUID.randomUUID(),
           ZonedDateTime.now(),
+          AnswerType.Custom,
           "message",
           applicationCreatorUserId,
           "createUserName",
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty
+          Option.empty[Map[String, String]]
         ),
         Answer(
           UUID.randomUUID(),
           UUID.randomUUID(),
           ZonedDateTime.now(),
+          AnswerType.Custom,
           "message",
           UUID.randomUUID(),
           "createUserName",
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty
+          Option.empty[Map[String, String]]
         )
       )
 
@@ -92,25 +95,27 @@ class ApplicationSpec extends Specification {
           UUID.randomUUID(),
           UUID.randomUUID(),
           ZonedDateTime.now(),
+          AnswerType.Custom,
           "message",
           UUID.randomUUID(),
           "createUserName",
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty
+          Option.empty[Map[String, String]]
         ),
         Answer(
           UUID.randomUUID(),
           UUID.randomUUID(),
           ZonedDateTime.now(),
+          AnswerType.Custom,
           "message",
           UUID.randomUUID(),
           "createUserName",
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty
+          Option.empty[Map[String, String]]
         )
       )
 

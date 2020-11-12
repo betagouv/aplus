@@ -6,8 +6,7 @@ import java.util.UUID
 
 import cats.Eq
 import cats.syntax.all._
-import helper.BooleanHelper.not
-import models.Authorization.{isExpert, isHelper, isInstructor, UserRights}
+import models.Answer.AnswerType.ApplicationProcessed
 
 case class Application(
     id: UUID,
@@ -63,8 +62,8 @@ case class Application(
 
   def longStatus(user: User) =
     closed match {
-      case true                                                                     => "Archivée"
-      case _ if answers.lastOption.exists(_.message === Application.finishedAnswer) => "Traitée"
+      case true                                                                  => "Archivée"
+      case _ if answers.lastOption.exists(_.answerType === ApplicationProcessed) => "Traitée"
       case _ if user.id === creatorUserId && answers.exists(_.creatorUserID =!= user.id) =>
         "Répondu"
       case _
@@ -89,11 +88,11 @@ case class Application(
 
   def status =
     closed match {
-      case true                                                                     => "Archivée"
-      case _ if answers.lastOption.exists(_.message === Application.finishedAnswer) => "Traitée"
-      case _ if answers.exists(_.creatorUserID === creatorUserId)                   => "Répondu"
-      case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty          => "Consultée"
-      case _                                                                        => "Nouvelle"
+      case true                                                                  => "Archivée"
+      case _ if answers.lastOption.exists(_.answerType === ApplicationProcessed) => "Traitée"
+      case _ if answers.exists(_.creatorUserID === creatorUserId)                => "Répondu"
+      case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty       => "Consultée"
+      case _                                                                     => "Nouvelle"
     }
 
   def invitedUsers(users: List[User]): List[User] =
@@ -168,8 +167,6 @@ case class Application(
 }
 
 object Application {
-
-  val finishedAnswer = "Cette demande a bien été traitée. Je vous invite à archiver l'échange."
 
   def filesAvailabilityLeftInDays(filesExpirationInDays: Int)(application: Application) =
     application.ageInDays.some.map(filesExpirationInDays - _).filter(_ >= 0)
