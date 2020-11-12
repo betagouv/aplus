@@ -48,15 +48,10 @@ object Answer {
       override val name = "wrongInstructor"
     }
 
-    final case object AddExpert extends AnswerType {
-      override val name = "addExpert"
-    }
-
     def fromString(value: String): AnswerType = value match {
       case WorkInProgress.name       => WorkInProgress
       case ApplicationProcessed.name => ApplicationProcessed
       case WrongInstructor.name      => WrongInstructor
-      case AddExpert.name            => AddExpert
       case _                         => Custom
     }
 

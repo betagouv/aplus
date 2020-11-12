@@ -1017,7 +1017,7 @@ case class ApplicationController @Inject() (
       }
     }
 
-  private def buildMessage(message: String, signature: Option[String]) =
+  private def buildAnswerMessage(message: String, signature: Option[String]) =
     signature.map(s => message + "\n\n" + s).getOrElse(message)
 
   private val ApplicationProcessedMessage = "J'ai traité la demande."
@@ -1050,15 +1050,17 @@ case class ApplicationController @Inject() (
           answerData => {
             val answerType = AnswerType.fromString(answerData.answerType)
             val currentAreaId = application.area
+
             val message = (answerType, answerData.message) match {
-              case (AnswerType.Custom, Some(message)) => buildMessage(message, answerData.signature)
+              case (AnswerType.Custom, Some(message)) =>
+                buildAnswerMessage(message, answerData.signature)
               case (AnswerType.ApplicationProcessed, _) =>
-                buildMessage(ApplicationProcessedMessage, answerData.signature)
+                buildAnswerMessage(ApplicationProcessedMessage, answerData.signature)
               case (AnswerType.WorkInProgress, _) =>
-                buildMessage(WorkInProgressMessage, answerData.signature)
+                buildAnswerMessage(WorkInProgressMessage, answerData.signature)
               case (AnswerType.WrongInstructor, _) =>
-                buildMessage(WrongInstructorMessage, answerData.signature)
-              case _ => throw new RuntimeException
+                buildAnswerMessage(WrongInstructorMessage, answerData.signature)
+              case (AnswerType.Custom, None) => buildAnswerMessage("", answerData.signature)
             }
 
             val answer = Answer(
@@ -1210,7 +1212,7 @@ case class ApplicationController @Inject() (
               UUID.randomUUID(),
               applicationId,
               Time.nowParis(),
-              AnswerType.AddExpert,
+              AnswerType.Custom,
               "J'ajoute un expert",
               request.currentUser.id,
               contextualizedUserName(request.currentUser, currentAreaId),
