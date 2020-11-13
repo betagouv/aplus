@@ -165,6 +165,11 @@ dialog {
 .mdl-list__item-primary-content {
     font-weight: initial;
 }
+
+.mdl-card__supporting-text-without-transparency {
+    color: #00234d;
+}
+
 </style>
 }{
     <dialog class="mdl-dialog" id="dialog-terminate">
@@ -378,16 +383,7 @@ dialog {
                                 </ul>
                             }
                             <p class="application__message">@answer.message</p>
-                            @if(application.answers.last == answer && application.creatorUserId == currentUser.id && not(application.closed) && answer.creatorUserID != currentUser.id) {
-                                <div class="info-box do-not-print">
-                                Si l’instructeur a répondu à votre demande, vous pouvez archiver l’échange :<br><br>
-                                <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="showDialog()" >
-                                        Archiver l’échange
-                                </button> <br><br>
-                                Sinon n’hésitez pas à recontacter la personne en utilisant </i><b>Ajouter une réponse</b> ci-dessous.
-                                </div>
-                            }
-                            @if(application.answers.last != answer && answer.answerType === AnswerType.ApplicationProcessed && application.creatorUserId == currentUser.id && not(application.closed) && answer.creatorUserID != currentUser.id) {
+                            @if(answer.answerType === AnswerType.ApplicationProcessed && application.creatorUserId == currentUser.id && not(application.closed) && answer.creatorUserID != currentUser.id) {
                                 <div class="info-box do-not-print">
                                     Cette demande a bien été traitée. Je vous invite à archiver l'échange en cliquant sur le bouton ci-dessous :<br><br>
                                     <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="showDialog()" >
@@ -403,24 +399,24 @@ dialog {
 
     @if(currentUser.instructor){
         <div class="mdl-card mdl-cell mdl-cell--12-col">
-            <div class="mdl-card__supporting-text mdl-card--border">
+            <div class="mdl-card__supporting-text mdl-card__supporting-text-without-transparency mdl-card--border">
 
                 <form class="do-not-print" action="@routes.ApplicationController.answer(application.id)" method="post">
                     @helper.CSRF.formField
-                    Réponse rapide à l’aidant :                 <br>
+                    <h5 class="mdl-cell mdl-cell--12-col">Réponse rapide à l’aidant :</h5><br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-1">
                         <input type="radio" id="option-1" class="mdl-radio__button" name="answer_type" value="workInProgress" checked>
-                        <span class="mdl-radio__label" style="font-weight: bold;">Je m’en occupe</span>
+                        <span class="mdl-radio__label">Je m’en occupe</span>
                     </label>            <br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-2">
                         <input type="radio" id="option-2" class="mdl-radio__button" name="answer_type" value="applicationProcessed">
-                        <span class="mdl-radio__label" style="font-weight: bold;">J’ai traité la demande</span>
+                        <span class="mdl-radio__label">J’ai traité la demande</span>
                     </label>            <br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-3">
                         <input type="radio" id="option-3" class="mdl-radio__button" name="answer_type" value="wrongInstructor">
-                        <span class="mdl-radio__label" style="font-weight: bold;">Je ne suis pas le bon interlocuteur</span>
+                        <span class="mdl-radio__label">Je ne suis pas le bon interlocuteur</span>
                     </label>         <br>
-                    <button class="mdl-button mdl-button--primary mdl-button--raised mdl-js-button mdl-button--nowrap">
+                    <button class="single--margin-top-16px mdl-button mdl-button--primary mdl-button--raised mdl-js-button mdl-button--nowrap">
                         Envoyer
                     </button>
                 </form>
