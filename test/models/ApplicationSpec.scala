@@ -4,6 +4,8 @@ import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 
 import models.Answer.AnswerType
+import cats.syntax.all._
+import models.Answer.AnswerType
 import models.Application.{MandatType, SeenByUser}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
@@ -23,7 +25,8 @@ class ApplicationSpec extends Specification {
     Map.empty[UUID, String],
     visibleByHelpers = true,
     declareApplicationHasIrrelevant = true,
-    Option.empty[Map[String, String]]
+    Option.empty[Map[String, String]],
+    invitedGroupIds = List.empty[UUID]
   )
 
   "Application should" >> {
@@ -49,7 +52,8 @@ class ApplicationSpec extends Specification {
         area = UUID.randomUUID(),
         irrelevant = false,
         mandatType = Option.empty[MandatType],
-        mandatDate = Option.empty[String]
+        mandatDate = Option.empty[String],
+        invitedGroupIds = List.empty[UUID]
       )
 
       application.newAnswersFor(userId) must equalTo(answers)
@@ -81,7 +85,8 @@ class ApplicationSpec extends Specification {
         area = UUID.randomUUID(),
         irrelevant = false,
         mandatType = Option.empty[MandatType],
-        mandatDate = Option.empty[String]
+        mandatDate = Option.empty[String],
+        invitedGroupIds = List.empty[UUID]
       )
 
       application.newAnswersFor(userId) must equalTo(List(answer2))
@@ -113,7 +118,8 @@ class ApplicationSpec extends Specification {
         area = UUID.randomUUID(),
         irrelevant = false,
         mandatType = Option.empty[MandatType],
-        mandatDate = Option.empty[String]
+        mandatDate = Option.empty[String],
+        invitedGroupIds = List.empty[UUID]
       )
 
       application.newAnswersFor(userId) must equalTo(List.empty[Answer])
@@ -137,7 +143,8 @@ class ApplicationSpec extends Specification {
         area = UUID.randomUUID(),
         irrelevant = false,
         mandatType = Option.empty[MandatType],
-        mandatDate = Option.empty[String]
+        mandatDate = Option.empty[String],
+        invitedGroupIds = List.empty[UUID]
       )
 
       application.status must equalTo("Archivée")
@@ -159,7 +166,8 @@ class ApplicationSpec extends Specification {
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty[Map[String, String]]
+          Option.empty[Map[String, String]],
+          invitedGroupIds = List.empty[UUID]
         ),
         Answer(
           UUID.randomUUID(),
@@ -172,7 +180,8 @@ class ApplicationSpec extends Specification {
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty[Map[String, String]]
+          Option.empty[Map[String, String]],
+          invitedGroupIds = List.empty[UUID]
         )
       )
 
@@ -190,7 +199,8 @@ class ApplicationSpec extends Specification {
         area = UUID.randomUUID(),
         irrelevant = false,
         mandatType = Option.empty[MandatType],
-        mandatDate = Option.empty[String]
+        mandatDate = Option.empty[String],
+        invitedGroupIds = List.empty[UUID]
       )
 
       application.status must equalTo("Répondu")
@@ -211,7 +221,8 @@ class ApplicationSpec extends Specification {
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty[Map[String, String]]
+          Option.empty[Map[String, String]],
+          invitedGroupIds = List.empty[UUID]
         ),
         Answer(
           UUID.randomUUID(),
@@ -224,7 +235,8 @@ class ApplicationSpec extends Specification {
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty[Map[String, String]]
+          Option.empty[Map[String, String]],
+          invitedGroupIds = List.empty[UUID]
         )
       )
 
@@ -242,7 +254,8 @@ class ApplicationSpec extends Specification {
         area = UUID.randomUUID(),
         irrelevant = false,
         mandatType = Option.empty[MandatType],
-        mandatDate = Option.empty[String]
+        mandatDate = Option.empty[String],
+        invitedGroupIds = List.empty[UUID]
       )
 
       application.status must equalTo("Nouvelle")

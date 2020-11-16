@@ -17,7 +17,7 @@ object formModels {
       usagerBirthDate: String,
       usagerOptionalInfos: Map[String, String],
       users: List[UUID],
-      organismes: List[String],
+      groups: List[UUID],
       category: Option[String],
       selectedSubject: Option[String],
       signature: Option[String],

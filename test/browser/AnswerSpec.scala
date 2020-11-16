@@ -91,7 +91,8 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       irrelevant = false,
       expertInvited = true,
       mandatType = Some(Application.MandatType.Paper),
-      mandatDate = Some(java.time.ZonedDateTime.now().toString)
+      mandatDate = Some(java.time.ZonedDateTime.now().toString),
+      invitedGroupIds = List(group.id)
     )
     val result = applicationService.createApplication(application)
     result must beTrue

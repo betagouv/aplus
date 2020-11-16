@@ -78,7 +78,8 @@ class ApplicationService @Inject() (
       "category",
       "files",
       "mandat_type",
-      "mandat_date"
+      "mandat_date",
+      "invited_group_ids"
     )
     .map(application =>
       application.copy(
@@ -258,7 +259,8 @@ class ApplicationService @Inject() (
             category,
             files,
             mandat_type,
-            mandat_date
+            mandat_date,
+            invited_group_ids
             ) VALUES (
             ${newApplication.id}::uuid,
             ${newApplication.creationDate},
@@ -273,7 +275,8 @@ class ApplicationService @Inject() (
             ${newApplication.category},
             ${toJson(newApplication.files)}::jsonb,
             $mandatType,
-            ${newApplication.mandatDate}
+            ${newApplication.mandatDate},
+            array[${newApplication.invitedGroupIds}]::uuid[]
           )
       """.executeUpdate() === 1
     }

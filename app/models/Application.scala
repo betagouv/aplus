@@ -32,7 +32,8 @@ case class Application(
     category: Option[String] = Option.empty[String],
     files: Map[String, Long] = Map.empty[String, Long],
     mandatType: Option[Application.MandatType],
-    mandatDate: Option[String]
+    mandatDate: Option[String],
+    invitedGroupIds: List[UUID]
 ) extends AgeModel {
 
   val seenByUserIds = seenByUsers.map(_.userId)

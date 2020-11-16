@@ -102,12 +102,10 @@ class ApplicationSpec extends Specification with BaseSpec {
       val description = s"John a un problème $number"
       val birthDate = "1988"
 
-      browser.waitUntil(browser.el(s"input[value='${instructorGroup.name}']").clickable())
+      browser.waitUntil(browser.el(s"input[value='${instructorGroup.id}']").clickable())
 
-      browser.el(s"input[value='${instructorGroup.name}']").click()
-      browser.el(s"input[value='${instructorGroup.name}']").selected() mustEqual true
-
-      browser.waitUntil(browser.el(s"input[value='${instructorUser.id}']").selected)
+      browser.el(s"input[value='${instructorGroup.id}']").click()
+      browser.el(s"input[value='${instructorGroup.id}']").selected() mustEqual true
 
       browser.el("input[name='subject']").fill().withText(subject)
       browser.el("input[name='usagerPrenom']").fill().withText(firstName)
