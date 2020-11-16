@@ -38,6 +38,10 @@ class NotificationService @Inject() (
   private lazy val tokenExpirationInMinutes =
     configuration.get[Int]("app.tokenExpirationInMinutes")
 
+  // This blacklist if mainly for experts who do not need emails
+  private lazy val notificationEmailBlacklist: Set[String] =
+    configuration.get[String]("app.notificationEmailBlacklist").split(",").map(_.trim).toSet
+
   private val daySinceLastAgentAnswerForApplicationsThatShouldBeClosed = 10
 
   private val maxNumberOfWeeklyEmails: Long =
@@ -64,6 +68,9 @@ class NotificationService @Inject() (
 
   private val from = s"Administration+ <${Constants.supportEmail}>"
 
+  private def emailIsBlacklisted(email: Email): Boolean =
+    notificationEmailBlacklist.exists(black => email.to.exists(_.contains(black)))
+
   // TODO: seems to be blocking
   // https://github.com/playframework/play-mailer/blob/7.0.x/play-mailer/src/main/scala/play/api/libs/mailer/MailerClient.scala#L15
   private def sendMail(email: Email): Unit = {
@@ -75,8 +82,12 @@ class NotificationService @Inject() (
         "X-MAILJET-TRACKOPEN" -> "0"
       )
     )
-    mailerClient.send(emailWithText)
-    log.info(s"Email sent to ${email.to.mkString(", ")}")
+    if (emailIsBlacklisted(email) && (email.subject =!= common.magicLinkSubject)) {
+      log.info(s"Did not send email to ${email.to.mkString(", ")} because it is in the blacklist")
+    } else {
+      mailerClient.send(emailWithText)
+      log.info(s"Email sent to ${email.to.mkString(", ")}")
+    }
   }
 
   // Non blocking, will apply a backoff if the `Future` is `Failed`
