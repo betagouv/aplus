@@ -1020,8 +1020,8 @@ case class ApplicationController @Inject() (
   private def buildAnswerMessage(message: String, signature: Option[String]) =
     signature.map(s => message + "\n\n" + s).getOrElse(message)
 
-  private val ApplicationProcessedMessage = "J'ai traité la demande."
-  private val WorkInProgressMessage = "Je m'en occupe."
+  private val ApplicationProcessedMessage = "J’ai traité la demande."
+  private val WorkInProgressMessage = "Je m’en occupe."
   private val WrongInstructorMessage = "Je ne suis pas le bon interlocuteur."
 
   def answer(applicationId: UUID): Action[AnyContent] =
