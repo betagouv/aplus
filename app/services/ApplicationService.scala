@@ -67,7 +67,7 @@ class ApplicationService @Inject() (
       "invited_users",
       "area",
       "irrelevant",
-      "answers",
+      "answers", // Data have been left bad migrated from answser_unsed
       "internal_id",
       "closed",
       "seen_by_user_ids",
@@ -318,6 +318,20 @@ class ApplicationService @Inject() (
         "usefulness" -> usefulness,
         "closed_date" -> closedDate
       ).executeUpdate() === 1
+    }
+
+  def reopen(applicationId: UUID): Future[Boolean] =
+    Future {
+      db.withTransaction { implicit connection =>
+        SQL(
+          """
+          UPDATE application SET closed = false, usefulness = null, closed_date = null
+          WHERE id = {id}::uuid
+       """
+        ).on(
+          "id" -> applicationId,
+        ).executeUpdate() === 1
+      }
     }
 
 }

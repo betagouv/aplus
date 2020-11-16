@@ -1,7 +1,7 @@
 package models
 
-import java.time.{Instant, ZonedDateTime}
 import java.time.temporal.ChronoUnit.MINUTES
+import java.time.{Instant, ZonedDateTime}
 import java.util.UUID
 
 import cats.Eq
@@ -148,6 +148,10 @@ case class Application(
       (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)
 
   def canBeClosedBy(user: User) =
+    (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
+      creatorUserId === user.id || user.admin
+
+  def canBeOpenedBy(user: User) =
     (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
       creatorUserId === user.id || user.admin
 
