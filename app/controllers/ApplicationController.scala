@@ -88,9 +88,9 @@ case class ApplicationController @Inject() (
         "usagerNom" -> nonEmptyText.verifying(maxLength(30)),
         "usagerBirthDate" -> nonEmptyText.verifying(maxLength(30)),
         "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(30))),
-        "users" -> list(uuid)
+        "users" -> list(uuid),
+        "groups" -> list(uuid)
           .verifying("Vous devez sélectionner au moins une structure", _.nonEmpty),
-        "organismes" -> list(text),
         "category" -> optional(text),
         "selected-subject" -> optional(text),
         "signature" -> (
@@ -282,9 +282,12 @@ case class ApplicationController @Inject() (
           Future {
             // Note: we will deprecate .currentArea as a variable stored in the cookies
             val currentAreaId: UUID = currentArea.id
-            val invitedUsers: Map[UUID, String] = applicationData.users.flatMap { id =>
-              userService.byId(id).map(user => id -> contextualizedUserName(user, currentAreaId))
-            }.toMap
+            val usersInGroups = userService.byGroupIds(applicationData.groups)
+            val instructors: List[User] = usersInGroups.filter(_.instructor)
+            val coworkers: List[User] = applicationData.users.flatMap(id => userService.byId(id))
+            val invitedUsers: Map[UUID, String] = (instructors ::: coworkers)
+              .map(user => user.id -> contextualizedUserName(user, currentAreaId))
+              .toMap
 
             val description: String =
               applicationData.signature
@@ -317,7 +320,8 @@ case class ApplicationController @Inject() (
               files = newAttachments ++ pendingAttachments,
               mandatType = DataModel.Application.MandatType
                 .dataModelDeserialization(applicationData.mandatType),
-              mandatDate = Some(applicationData.mandatDate)
+              mandatDate = Some(applicationData.mandatDate),
+              invitedGroupIds = applicationData.groups
             )
             if (applicationService.createApplication(application)) {
               notificationsService.newApplication(application)
@@ -1081,7 +1085,8 @@ case class ApplicationController @Inject() (
                 case (NonEmptyTrimmedString(infoName), NonEmptyTrimmedString(infoValue)) =>
                   (infoName, infoValue)
               }.some,
-              files = (newAttachments ++ pendingAttachments).some
+              files = (newAttachments ++ pendingAttachments).some,
+              invitedGroupIds = List.empty[UUID]
             )
             if (applicationService.add(applicationId, answer) === 1) {
               eventService.log(
@@ -1176,7 +1181,8 @@ case class ApplicationController @Inject() (
                       invitedUsers,
                       not(inviteData.privateToHelpers),
                       declareApplicationHasIrrelevant = false,
-                      Map.empty[String, String].some
+                      Map.empty[String, String].some,
+                      invitedGroupIds = inviteData.invitedGroups
                     )
 
                     if (applicationService.add(applicationId, answer) === 1) {
@@ -1223,7 +1229,8 @@ case class ApplicationController @Inject() (
               experts,
               visibleByHelpers = true,
               declareApplicationHasIrrelevant = false,
-              Map.empty[String, String].some
+              Map.empty[String, String].some,
+              invitedGroupIds = List.empty[UUID]
             )
             if (applicationService.add(applicationId, answer, expertInvited = true) === 1) {
               notificationsService.newAnswer(application, answer)

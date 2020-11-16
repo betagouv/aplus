@@ -44,7 +44,10 @@ object DataModel {
       .and((JsPath \ "visible_by_helpers").read[Boolean])
       .and((JsPath \ "declare_application_has_irrelevant").read[Boolean])
       .and((JsPath \ "user_infos").readNullable[Map[String, String]])
-      .and((JsPath \ "files").readNullable[Map[String, Long]])(models.Answer.apply _)
+      .and((JsPath \ "files").readNullable[Map[String, Long]])
+      .and(
+        (JsPath \ "invited_group_ids").readNullable[List[UUID]].map(_.getOrElse(List.empty[UUID]))
+      )(models.Answer.apply _)
 
     implicit val answerWrite = Json.writes[Answer]
 
