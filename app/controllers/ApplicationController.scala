@@ -1205,7 +1205,7 @@ case class ApplicationController @Inject() (
               experts,
               visibleByHelpers = true,
               declareApplicationHasIrrelevant = false,
-              Some(Map()),
+              Map.empty[String, String].some,
               invitedGroupIds = List.empty.some
             )
             if (applicationService.add(applicationId, answer, expertInvited = true) === 1) {
