@@ -67,7 +67,7 @@ class ApplicationService @Inject() (
       "invited_users",
       "area",
       "irrelevant",
-      "answers",
+      "answers", // Data have been left bad migrated from answser_unsed
       "internal_id",
       "closed",
       "seen_by_user_ids",
