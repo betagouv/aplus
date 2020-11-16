@@ -74,7 +74,7 @@ libraryDependencies += guice
 
 libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.2.18",
-  "org.playframework.anorm" %% "anorm" % "2.6.7",
+  "org.playframework.anorm" %% "anorm" % "2.6.8",
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "com.typesafe.play" %% "play-mailer-guice" % "8.0.1",
@@ -103,7 +103,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "chartjs" % "2.9.3",
   "org.webjars" % "font-awesome" % "5.15.1",
   "org.webjars.bowergithub.olifolkerd" % "tabulator" % "4.5.3",
-  "org.webjars.npm" % "xlsx" % "0.16.7"
+  "org.webjars.npm" % "xlsx" % "0.16.8"
 )
 // Crash
 libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.30"
