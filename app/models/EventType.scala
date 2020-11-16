@@ -106,10 +106,13 @@ object EventType {
   object SmsCallbackError extends Error
   object StatsShowed extends Info
   object StatsUnauthorized extends Warn
+  object ReopenCompleted extends Info
   object TerminateCompleted extends Info
   object TerminateError extends Error
+  object ReopenError extends Error
   object TerminateIncompleted extends Error
   object TerminateNotFound extends Error
+  object ReopenUnauthorized extends Warn
   object TerminateUnauthorized extends Warn
   object ToCGURedirected extends Info
   object UserAccessDisabled extends Info
