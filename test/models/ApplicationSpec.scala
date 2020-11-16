@@ -4,6 +4,7 @@ import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 
 import cats.syntax.all._
+import models.Answer.AnswerType
 import models.Application.{MandatType, SeenByUser}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
@@ -16,6 +17,7 @@ class ApplicationSpec extends Specification {
     UUID.randomUUID(),
     applicationId,
     date,
+    AnswerType.Custom,
     "",
     UUID.randomUUID(),
     "",
@@ -156,26 +158,28 @@ class ApplicationSpec extends Specification {
           UUID.randomUUID(),
           UUID.randomUUID(),
           ZonedDateTime.now(),
+          AnswerType.Custom,
           "message",
           applicationCreatorUserId,
           "createUserName",
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty,
+          Option.empty[Map[String, String]],
           invitedGroupIds = List.empty[UUID].some
         ),
         Answer(
           UUID.randomUUID(),
           UUID.randomUUID(),
           ZonedDateTime.now(),
+          AnswerType.Custom,
           "message",
           UUID.randomUUID(),
           "createUserName",
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty,
+          Option.empty[Map[String, String]],
           invitedGroupIds = List.empty[UUID].some
         )
       )
@@ -209,26 +213,28 @@ class ApplicationSpec extends Specification {
           UUID.randomUUID(),
           UUID.randomUUID(),
           ZonedDateTime.now(),
+          AnswerType.Custom,
           "message",
           UUID.randomUUID(),
           "createUserName",
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty,
+          Option.empty[Map[String, String]],
           invitedGroupIds = List.empty[UUID].some
         ),
         Answer(
           UUID.randomUUID(),
           UUID.randomUUID(),
           ZonedDateTime.now(),
+          AnswerType.Custom,
           "message",
           UUID.randomUUID(),
           "createUserName",
           Map.empty[UUID, String],
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
-          Option.empty,
+          Option.empty[Map[String, String]],
           invitedGroupIds = List.empty[UUID].some
         )
       )

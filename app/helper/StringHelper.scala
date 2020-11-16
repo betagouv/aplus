@@ -1,6 +1,8 @@
 package helper
 
 import java.text.Normalizer
+
+import cats.implicits.catsSyntaxOptionId
 import org.apache.commons.lang3.StringUtils
 
 object StringHelper {
@@ -50,5 +52,9 @@ object StringHelper {
 
   def capitalizeName(name: String): String =
     """[\P{P}&&\P{Z}]+""".r.replaceAllIn(name, m => m.group(0).toLowerCase.capitalize)
+
+  final object NonEmptyTrimmedString {
+    def unapply(s: String): Option[String] = s.some.map(_.trim).filter(_.nonEmpty)
+  }
 
 }

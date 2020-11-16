@@ -6,6 +6,7 @@ import akka.actor._
 import cats.syntax.all._
 import helper.Time
 import javax.inject.Inject
+import models.Answer.AnswerType
 import models._
 import play.api.Configuration
 import services._
@@ -19,7 +20,6 @@ class AutoAddExpertTask @Inject() (
     configuration: Configuration,
     eventService: EventService,
     notificationService: NotificationService,
-    userGroupService: UserGroupService,
     userService: UserService
 )(implicit executionContext: ExecutionContext) {
   val startAtHour = 8
@@ -28,8 +28,8 @@ class AutoAddExpertTask @Inject() (
   val initialDelay: FiniteDuration = java.time.Duration.between(now, startDate).getSeconds.seconds
 
   // https://github.com/akka/akka/blob/v2.6.4/akka-actor/src/main/scala/akka/actor/Scheduler.scala#L403
-  actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = 24.hours)(
-    new Runnable { override def run(): Unit = inviteExpertsInApplication() }
+  actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = 24.hours)(() =>
+    inviteExpertsInApplication()
   )
 
   val dayWithoutAgentAnswer = 5
@@ -59,25 +59,26 @@ class AutoAddExpertTask @Inject() (
           UUID.randomUUID(),
           application.id,
           Time.nowParis(),
+          AnswerType.Custom,
           s"Je rejoins la conversation automatiquement comme expert(e) car le dernier message a plus de $days jours",
           expert.id,
           expert.nameWithQualite,
           experts,
-          true,
-          false,
-          Some(Map()),
+          visibleByHelpers = true,
+          declareApplicationHasIrrelevant = false,
+          Map.empty[String, String].some,
           invitedGroupIds = List.empty.some
         )
-        if (applicationService.add(application.id, answer, true) === 1) {
+        if (applicationService.add(application.id, answer, expertInvited = true) === 1) {
           notificationService.newAnswer(application, answer)
           eventService.info(
             User.systemUser,
             "0.0.0.0",
             "ADD_EXPERT_CREATED",
             s"Les experts ont été automatiquement ajoutés ${answer.id} sur la demande ${application.id}",
-            Some(application),
-            None,
-            None
+            application.some,
+            Option.empty[User],
+            Option.empty[Throwable]
           )
         } else {
           eventService.error(
@@ -85,9 +86,9 @@ class AutoAddExpertTask @Inject() (
             "0.0.0.0",
             "ANSWER_NOT_CREATED",
             s"Les experts n'ont pas pu être automatiquement ajoutés ${answer.id} sur la demande ${application.id} : problème BDD",
-            Some(application),
-            None,
-            None
+            application.some,
+            Option.empty[User],
+            Option.empty[Throwable]
           )
         }
       }
