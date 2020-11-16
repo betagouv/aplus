@@ -662,20 +662,21 @@ dialog {
     <script>
             var button = document.getElementById('review-validation');
             var customAnswerInput = document.getElementById('custom-answer');
+            var dialog = document.querySelector('#dialog-terminate');
 
             function enableButtonAndDisableCustomAnswer() {
                 button.disabled = false;
                 customAnswerInput.value = "";
                 customAnswerInput.disabled = true;
+                customAnswerInput.style.background = 'lightgrey';
             }
 
             function disableButtonAndEnableCustomAnswer() {
                 button.disabled = true;
                 customAnswerInput.disabled = false;
+                customAnswerInput.style.background = 'white';
             }
 
-
-            var dialog = document.querySelector('#dialog-terminate');
             if (! dialog.showModal) {
                 dialogPolyfill.registerDialog(dialog);
             }
