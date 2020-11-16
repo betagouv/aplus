@@ -5,16 +5,17 @@ import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
 import actions._
-import cats.implicits.{catsSyntaxOptionId, catsSyntaxTuple2Semigroupal}
+import cats.implicits.{catsSyntaxOption, catsSyntaxOptionId, catsSyntaxTuple2Semigroupal}
 import cats.syntax.all._
 import constants.Constants
 import forms.FormsPlusMap
 import helper.BooleanHelper.not
 import helper.CSVUtil.escape
-import helper.StringHelper.CanonizeString
+import helper.StringHelper.{CanonizeString, NonEmptyTrimmedString}
 import helper.Time.zonedDateTimeOrdering
 import helper.{Hash, Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
+import models.Answer.AnswerType
 import models.EventType._
 import models._
 import models.formModels.{AnswerFormData, ApplicationFormData, InvitationFormData}
@@ -799,14 +800,15 @@ case class ApplicationController @Inject() (
   private def answerForm(currentUser: User) =
     Form(
       mapping(
-        "message" -> nonEmptyText,
+        "answer_type" -> nonEmptyText.verifying(maxLength(20)),
+        "message" -> optional(nonEmptyText),
         "irrelevant" -> boolean,
         "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(30))),
         "privateToHelpers" -> boolean,
         "signature" -> (
           if (currentUser.sharedAccount)
-            nonEmptyText.transform[Option[String]](Some.apply, _.getOrElse(""))
-          else ignored(None: Option[String])
+            nonEmptyText.transform[Option[String]](Some.apply, _.orEmpty)
+          else ignored(Option.empty[String])
         )
       )(AnswerFormData.apply)(AnswerFormData.unapply)
     )
@@ -1018,6 +1020,13 @@ case class ApplicationController @Inject() (
       }
     }
 
+  private def buildAnswerMessage(message: String, signature: Option[String]) =
+    signature.map(s => message + "\n\n" + s).getOrElse(message)
+
+  private val ApplicationProcessedMessage = "J’ai traité la demande."
+  private val WorkInProgressMessage = "Je m’en occupe."
+  private val WrongInstructorMessage = "Je ne suis pas le bon interlocuteur."
+
   def answer(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application =>
@@ -1042,33 +1051,43 @@ case class ApplicationController @Inject() (
             )
           },
           answerData => {
+            val answerType = AnswerType.fromString(answerData.answerType)
             val currentAreaId = application.area
-            val message: String =
-              answerData.signature
-                .fold(answerData.message)(signature => answerData.message + "\n\n" + signature)
+
+            val message = (answerType, answerData.message) match {
+              case (AnswerType.Custom, Some(message)) =>
+                buildAnswerMessage(message, answerData.signature)
+              case (AnswerType.ApplicationProcessed, _) =>
+                buildAnswerMessage(ApplicationProcessedMessage, answerData.signature)
+              case (AnswerType.WorkInProgress, _) =>
+                buildAnswerMessage(WorkInProgressMessage, answerData.signature)
+              case (AnswerType.WrongInstructor, _) =>
+                buildAnswerMessage(WrongInstructorMessage, answerData.signature)
+              case (AnswerType.Custom, None) => buildAnswerMessage("", answerData.signature)
+            }
+
             val answer = Answer(
               answerId,
               applicationId,
               Time.nowParis(),
+              answerType,
               message,
               request.currentUser.id,
               contextualizedUserName(request.currentUser, currentAreaId),
               Map.empty[UUID, String],
-              !answerData.privateToHelpers,
+              not(answerData.privateToHelpers),
               answerData.applicationIsDeclaredIrrelevant,
-              Some(
-                answerData.usagerOptionalInfos.collect {
-                  case (infoName, infoValue) if infoName.trim.nonEmpty && infoValue.trim.nonEmpty =>
-                    (infoName.trim, infoValue.trim)
-                }
-              ),
-              files = Some(newAttachments ++ pendingAttachments)
+              answerData.usagerOptionalInfos.collect {
+                case (NonEmptyTrimmedString(infoName), NonEmptyTrimmedString(infoValue)) =>
+                  (infoName, infoValue)
+              }.some,
+              files = (newAttachments ++ pendingAttachments).some
             )
             if (applicationService.add(applicationId, answer) === 1) {
               eventService.log(
                 AnswerCreated,
                 s"La réponse ${answer.id} a été créée sur la demande $applicationId",
-                Some(application)
+                application.some
               )
               notificationsService.newAnswer(application, answer)
               Future(
@@ -1150,13 +1169,14 @@ case class ApplicationController @Inject() (
                       UUID.randomUUID(),
                       applicationId,
                       Time.nowParis(),
+                      AnswerType.Custom,
                       inviteData.message,
                       request.currentUser.id,
                       contextualizedUserName(request.currentUser, selectedAreaId),
                       invitedUsers,
                       not(inviteData.privateToHelpers),
                       declareApplicationHasIrrelevant = false,
-                      Some(Map.empty)
+                      Map.empty[String, String].some
                     )
 
                     if (applicationService.add(applicationId, answer) === 1) {
@@ -1196,13 +1216,14 @@ case class ApplicationController @Inject() (
               UUID.randomUUID(),
               applicationId,
               Time.nowParis(),
+              AnswerType.Custom,
               "J'ajoute un expert",
               request.currentUser.id,
               contextualizedUserName(request.currentUser, currentAreaId),
               experts,
               visibleByHelpers = true,
               declareApplicationHasIrrelevant = false,
-              Some(Map())
+              Map.empty[String, String].some
             )
             if (applicationService.add(applicationId, answer, expertInvited = true) === 1) {
               notificationsService.newAnswer(application, answer)

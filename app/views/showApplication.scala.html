@@ -2,7 +2,8 @@
 @import _root_.helper.MDLForms._
 @import _root_.helper.BooleanHelper.not
 
-
+@import cats.implicits.catsSyntaxEq
+@import models.Answer.AnswerType
 @(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil, fileExpiryDayCount: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
@@ -164,6 +165,11 @@ dialog {
 .mdl-list__item-primary-content {
     font-weight: initial;
 }
+
+.mdl-card__supporting-text-without-transparency {
+    color: #00234d;
+}
+
 </style>
 }{
     <dialog class="mdl-dialog" id="dialog-terminate">
@@ -212,8 +218,8 @@ dialog {
                 </div>
             }
             <div class="mdl-card__supporting-text mdl-card--border vertical-align--middle">
-                <i class="material-icons icon--light">chat_bubble</i> <span class="application__anwsers"><b>@application.answers.length</b> messages </span> | 
-                <span class="application__age">Créée il y a @application.ageString (@Time.formatPatternFr(application.creationDate, "dd MMM YYYY - HH:mm")) </span> | 
+                <i class="material-icons icon--light">chat_bubble</i> <span class="application__anwsers"><b>@application.answers.length</b> messages </span> |
+                <span class="application__age">Créée il y a @application.ageString (@Time.formatPatternFr(application.creationDate, "dd MMM YYYY - HH:mm")) </span> |
                     @for(area <- Area.fromId(application.area)){ @area.name}
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
@@ -382,13 +388,12 @@ dialog {
                                 </ul>
                             }
                             <p class="application__message">@answer.message</p>
-                            @if(application.answers.last == answer && application.creatorUserId == currentUser.id && !application.closed && answer.creatorUserID != currentUser.id) {
+                            @if(answer.answerType === AnswerType.ApplicationProcessed && application.creatorUserId == currentUser.id && not(application.closed) && answer.creatorUserID != currentUser.id) {
                                 <div class="info-box do-not-print">
-                                Si l’instructeur a répondu à votre demande, vous pouvez archiver l’échange :<br><br>
-                                <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="showDialog()" >
+                                    Cette demande a bien été traitée. Je vous invite à archiver l’échange en cliquant sur le bouton ci-dessous&nbsp;:<br><br>
+                                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="showDialog()" >
                                         Archiver l’échange
-                                </button> <br><br>
-                                Sinon n’hésitez pas à recontacter la personne en utilisant </i><b>Ajouter une réponse</b> ci-dessous.
+                                    </button> <br><br>
                                 </div>
                             }
                         </div>
@@ -397,22 +402,26 @@ dialog {
             }
         }
 
-    @if(application.answers.isEmpty && currentUser.instructor){
+    @if(currentUser.instructor){
         <div class="mdl-card mdl-cell mdl-cell--12-col">
-            <div class="mdl-card__supporting-text mdl-card--border">
+            <div class="mdl-card__supporting-text mdl-card__supporting-text-without-transparency mdl-card--border">
 
                 <form class="do-not-print" action="@routes.ApplicationController.answer(application.id)" method="post">
                     @helper.CSRF.formField
-                    Réponse rapide à l’aidant :                 <br>
+                    <h5 class="mdl-cell mdl-cell--12-col">Réponse rapide à l’aidant :</h5><br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-1">
-                        <input type="radio" id="option-1" class="mdl-radio__button" name="message" value="Je m'en occupe" checked>
-                        <span class="mdl-radio__label" style="font-weight: bold;">Je m’en occupe</span>
+                        <input type="radio" id="option-1" class="mdl-radio__button" name="answer_type" value="workInProgress" checked>
+                        <span class="mdl-radio__label">Je m’en occupe</span>
                     </label>            <br>
                     <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-2">
-                        <input type="radio" id="option-2" class="mdl-radio__button" name="message" value="Je ne suis pas le bon interlocuteur">
-                        <span class="mdl-radio__label" style="font-weight: bold;">Je ne suis pas le bon interlocuteur</span>
+                        <input type="radio" id="option-2" class="mdl-radio__button" name="answer_type" value="applicationProcessed">
+                        <span class="mdl-radio__label">J’ai traité la demande</span>
+                    </label>            <br>
+                    <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-3">
+                        <input type="radio" id="option-3" class="mdl-radio__button" name="answer_type" value="wrongInstructor">
+                        <span class="mdl-radio__label">Je ne suis pas le bon interlocuteur</span>
                     </label>         <br>
-                    <button class="mdl-button mdl-button--primary mdl-button--raised mdl-js-button mdl-button--nowrap">
+                    <button class="single--margin-top-16px mdl-button mdl-button--primary mdl-button--raised mdl-js-button mdl-button--nowrap">
                         Envoyer
                     </button>
                 </form>
@@ -460,6 +469,7 @@ dialog {
 
                 @helper.CSRF.formField
                 <input type="hidden" name="answer-id" readonly value="@answerToAgentsForm("answer-id").value.getOrElse(java.util.UUID.randomUUID)">
+                <input type="hidden" name="answer_type" readonly value="custom">
 
                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
                     @if(currentUser.instructor) {
@@ -658,7 +668,7 @@ dialog {
             function enableYes() {
                 document.getElementById("close-dialog-terminate").disabled = false;
             }
-            
+
             function closeDialog() {
                 dialog.close();
             }

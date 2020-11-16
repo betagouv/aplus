@@ -8,6 +8,8 @@ object applications {
   def statusTag(application: Application, user: User): Tag = {
     val status: String = application.longStatus(user)
     val classes: String = status match {
+      case "Traitée" =>
+        "tag mdl-color--grey-500 mdl-color-text--white"
       case "Archivée" =>
         "tag mdl-color--grey-200 mdl-color-text--black"
       case "Nouvelle" =>

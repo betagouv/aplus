@@ -27,7 +27,8 @@ object formModels {
   )
 
   case class AnswerFormData(
-      message: String,
+      answerType: String,
+      message: Option[String],
       applicationIsDeclaredIrrelevant: Boolean,
       usagerOptionalInfos: Map[String, String],
       privateToHelpers: Boolean,

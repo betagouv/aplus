@@ -6,6 +6,7 @@ import java.util.UUID
 
 import cats.Eq
 import cats.syntax.all._
+import models.Answer.AnswerType.ApplicationProcessed
 import models.Application.SeenByUser
 
 case class Application(
@@ -71,7 +72,8 @@ case class Application(
 
   def longStatus(user: User) =
     closed match {
-      case true => "Archivée"
+      case true                                                                  => "Archivée"
+      case _ if answers.lastOption.exists(_.answerType === ApplicationProcessed) => "Traitée"
       case _ if user.id === creatorUserId && answers.exists(_.creatorUserID =!= user.id) =>
         "Répondu"
       case _
@@ -96,10 +98,11 @@ case class Application(
 
   def status =
     closed match {
-      case true                                                            => "Archivée"
-      case _ if answers.exists(_.creatorUserID === creatorUserId)          => "Répondu"
-      case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty => "Consultée"
-      case _                                                               => "Nouvelle"
+      case true                                                                  => "Archivée"
+      case _ if answers.lastOption.exists(_.answerType === ApplicationProcessed) => "Traitée"
+      case _ if answers.exists(_.creatorUserID === creatorUserId)                => "Répondu"
+      case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty       => "Consultée"
+      case _                                                                     => "Nouvelle"
     }
 
   def invitedUsers(users: List[User]): List[User] =
