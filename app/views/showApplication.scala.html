@@ -385,7 +385,7 @@ dialog {
                             <p class="application__message">@answer.message</p>
                             @if(answer.answerType === AnswerType.ApplicationProcessed && application.creatorUserId == currentUser.id && not(application.closed) && answer.creatorUserID != currentUser.id) {
                                 <div class="info-box do-not-print">
-                                    Cette demande a bien été traitée. Je vous invite à archiver l'échange en cliquant sur le bouton ci-dessous :<br><br>
+                                    Cette demande a bien été traitée. Je vous invite à archiver l’échange en cliquant sur le bouton ci-dessous&nbsp;:<br><br>
                                     <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="showDialog()" >
                                         Archiver l’échange
                                     </button> <br><br>
