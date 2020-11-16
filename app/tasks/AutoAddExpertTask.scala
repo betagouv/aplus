@@ -67,7 +67,7 @@ class AutoAddExpertTask @Inject() (
           visibleByHelpers = true,
           declareApplicationHasIrrelevant = false,
           Map.empty[String, String].some,
-          invitedGroupIds = List.empty.some
+          invitedGroupIds = List.empty[UUID]
         )
         if (applicationService.add(application.id, answer, expertInvited = true) === 1) {
           notificationService.newAnswer(application, answer)

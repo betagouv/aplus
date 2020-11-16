@@ -1086,7 +1086,7 @@ case class ApplicationController @Inject() (
                   (infoName, infoValue)
               }.some,
               files = (newAttachments ++ pendingAttachments).some,
-              invitedGroupIds = List.empty.some
+              invitedGroupIds = List.empty[UUID]
             )
             if (applicationService.add(applicationId, answer) === 1) {
               eventService.log(
@@ -1182,7 +1182,7 @@ case class ApplicationController @Inject() (
                       not(inviteData.privateToHelpers),
                       declareApplicationHasIrrelevant = false,
                       Map.empty[String, String].some,
-                      invitedGroupIds = Some(inviteData.invitedGroups)
+                      invitedGroupIds = inviteData.invitedGroups
                     )
 
                     if (applicationService.add(applicationId, answer) === 1) {
@@ -1230,7 +1230,7 @@ case class ApplicationController @Inject() (
               visibleByHelpers = true,
               declareApplicationHasIrrelevant = false,
               Map.empty[String, String].some,
-              invitedGroupIds = List.empty.some
+              invitedGroupIds = List.empty[UUID]
             )
             if (applicationService.add(applicationId, answer, expertInvited = true) === 1) {
               notificationsService.newAnswer(application, answer)

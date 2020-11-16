@@ -25,7 +25,7 @@ class ApplicationSpec extends Specification {
     visibleByHelpers = true,
     declareApplicationHasIrrelevant = true,
     Option.empty[Map[String, String]],
-    invitedGroupIds = List.empty[UUID].some
+    invitedGroupIds = List.empty[UUID]
   )
 
   "Application should" >> {
@@ -166,7 +166,7 @@ class ApplicationSpec extends Specification {
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
           Option.empty[Map[String, String]],
-          invitedGroupIds = List.empty[UUID].some
+          invitedGroupIds = List.empty[UUID]
         ),
         Answer(
           UUID.randomUUID(),
@@ -180,7 +180,7 @@ class ApplicationSpec extends Specification {
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
           Option.empty[Map[String, String]],
-          invitedGroupIds = List.empty[UUID].some
+          invitedGroupIds = List.empty[UUID]
         )
       )
 
@@ -221,7 +221,7 @@ class ApplicationSpec extends Specification {
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
           Option.empty[Map[String, String]],
-          invitedGroupIds = List.empty[UUID].some
+          invitedGroupIds = List.empty[UUID]
         ),
         Answer(
           UUID.randomUUID(),
@@ -235,7 +235,7 @@ class ApplicationSpec extends Specification {
           visibleByHelpers = false,
           declareApplicationHasIrrelevant = false,
           Option.empty[Map[String, String]],
-          invitedGroupIds = List.empty[UUID].some
+          invitedGroupIds = List.empty[UUID]
         )
       )
 

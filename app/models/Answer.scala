@@ -20,8 +20,7 @@ case class Answer(
     declareApplicationHasIrrelevant: Boolean,
     userInfos: Option[Map[String, String]],
     files: Option[Map[String, Long]] = Map.empty[String, Long].some,
-    // Note: the `Option` is here to keep compatibility with the existing json
-    invitedGroupIds: Option[List[UUID]],
+    invitedGroupIds: List[UUID],
 ) extends AgeModel
 
 object Answer {
