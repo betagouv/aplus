@@ -1,6 +1,6 @@
 package serializers
 
-import java.time.ZonedDateTime
+import java.time.{Instant, ZonedDateTime}
 import java.util.UUID
 
 import anorm.SqlMappingError
@@ -9,11 +9,10 @@ import models.Answer
 import models.Answer.AnswerType
 import models.Application.{MandatType, SeenByUser}
 import play.api.libs.functional.syntax._
-import play.api.libs.json.JsonNaming.SnakeCase
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 import serializers.Anorm.columnToJson
-import serializers.JsonFormats._
+import serializers.JsonFormats.mapUUIDReads
 
 object DataModel {
 
@@ -76,8 +75,14 @@ object DataModel {
     }
 
     object SeenByUser {
-      implicit val seenByUserReads = Json.reads[SeenByUser]
-      implicit val seenByUserWrites = Json.writes[SeenByUser]
+
+      implicit val seenByUserReads: Reads[SeenByUser] = (__ \ "user_id")
+        .read[UUID]
+        .and((__ \ "last_seen_date").read[Instant])(models.Application.SeenByUser.apply _)
+
+      implicit val seenByUserWrites = (__ \ "user_id")
+        .write[UUID]
+        .and((__ \ "last_seen_date").write[Instant])(unlift(models.Application.SeenByUser.unapply))
 
       implicit val seenByUserListParser: anorm.Column[List[SeenByUser]] =
         implicitly[anorm.Column[JsValue]].mapResult(
@@ -105,8 +110,19 @@ object DataModel {
       implicitly[Writes[String]].contramap((id: Sms.PhoneNumber) => id.internationalPhoneNumber)
 
     // Not implicits, so they are not picked as serializers/deserializers of `Sms`
-    private val smsOutgoingFormat = Json.format[Sms.Outgoing]
-    private val smsIncomingFormat = Json.format[Sms.Incoming]
+    private val smsOutgoingFormat: Format[Sms.Outgoing] =
+      (JsPath \ "apiId")
+        .format[Sms.ApiId]
+        .and((JsPath \ "creationDate").format[ZonedDateTime])
+        .and((JsPath \ "recipient").format[Sms.PhoneNumber])
+        .and((JsPath \ "body").format[String])(Sms.Outgoing.apply, unlift(Sms.Outgoing.unapply))
+
+    private val smsIncomingFormat: Format[Sms.Incoming] =
+      (JsPath \ "apiId")
+        .format[Sms.ApiId]
+        .and((JsPath \ "creationDate").format[ZonedDateTime])
+        .and((JsPath \ "originator").format[Sms.PhoneNumber])
+        .and((JsPath \ "body").format[String])(Sms.Incoming.apply, unlift(Sms.Incoming.unapply))
 
     implicit val smsApiReads: Reads[Sms] =
       (JsPath \ "tag").read[String].flatMap {
