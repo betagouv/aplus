@@ -105,8 +105,19 @@ object DataModel {
       implicitly[Writes[String]].contramap((id: Sms.PhoneNumber) => id.internationalPhoneNumber)
 
     // Not implicits, so they are not picked as serializers/deserializers of `Sms`
-    private val smsOutgoingFormat = Json.format[Sms.Outgoing]
-    private val smsIncomingFormat = Json.format[Sms.Incoming]
+    private val smsOutgoingFormat: Format[Sms.Outgoing] =
+      (JsPath \ "apiId")
+        .format[Sms.ApiId]
+        .and((JsPath \ "creationDate").format[ZonedDateTime])
+        .and((JsPath \ "recipient").format[Sms.PhoneNumber])
+        .and((JsPath \ "body").format[String])(Sms.Outgoing.apply, unlift(Sms.Outgoing.unapply))
+
+    private val smsIncomingFormat: Format[Sms.Incoming] =
+      (JsPath \ "apiId")
+        .format[Sms.ApiId]
+        .and((JsPath \ "creationDate").format[ZonedDateTime])
+        .and((JsPath \ "originator").format[Sms.PhoneNumber])
+        .and((JsPath \ "body").format[String])(Sms.Incoming.apply, unlift(Sms.Incoming.unapply))
 
     implicit val smsApiReads: Reads[Sms] =
       (JsPath \ "tag").read[String].flatMap {
