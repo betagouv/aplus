@@ -52,7 +52,7 @@ FROM application;
 
 # --- !Downs
 DROP VIEW application_metadata;
-ALTER TABLE application ADD seen_by_user_ids_temp uuid[];
+ALTER TABLE application ADD seen_by_user_ids_temp uuid[] default array[]::uuid[];
 
 WITH data AS(select id, creation_date,
                     (select array_agg(t::uuid) from jsonb_array_elements_text(data.seen_by_user_ids) as x(t)) as seen_by_user_ids
