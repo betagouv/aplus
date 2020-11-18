@@ -546,11 +546,12 @@ case class ApplicationController @Inject() (
             .flatMap(anonymousGroupsAndUsers)
             .map { case (users, allApplications) =>
               val applications = allApplications.filter { application =>
+                // See legacyCase in NotificationService
                 val legacyCase = application.invitedGroupIds.isEmpty ||
                   application.answers.exists(_.invitedGroupIds.isEmpty)
                 val invitedGroups: Set[UUID] =
                   (application.invitedGroupIds :::
-                    application.answers.flatMap(_.invitedGroupIds).flatten).toSet
+                    application.answers.flatMap(_.invitedGroupIds)).toSet
                 val oneGroupHasBeenInvited = invitedGroups.intersect(groupIds.toSet).nonEmpty
                 legacyCase || oneGroupHasBeenInvited
               }
