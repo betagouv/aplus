@@ -54,7 +54,6 @@ object DataModel {
       .and(
         (JsPath \ "invited_users")
           .read[Map[UUID, String]]
-          .or((JsPath \ "invitedUsers").read[Map[UUID, String]])
           .or((JsPath \ "invitedUsers").read[List[(UUID, String)]].map(_.toMap))
       )
       .and(
