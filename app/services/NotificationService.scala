@@ -128,7 +128,7 @@ class NotificationService @Inject() (
       .foreach(sendMail)
   }
 
-  // Note: application does not contains answer at this point
+  // Note: application does not contain answer at this point
   def newAnswer(application: Application, answer: Answer) = {
     // Retrieve data
     val userIds = (application.invitedUsers ++ answer.invitedUsers).keys
