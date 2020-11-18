@@ -1,6 +1,6 @@
 package models
 
-import java.time.ZonedDateTime
+import java.time.Instant
 import java.util.UUID
 
 case class Event(
@@ -9,7 +9,7 @@ case class Event(
     code: String,
     fromUserName: String,
     fromUserId: UUID,
-    creationDate: ZonedDateTime,
+    creationDate: Instant,
     description: String,
     area: UUID,
     toApplicationId: Option[UUID],

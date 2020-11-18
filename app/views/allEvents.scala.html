@@ -33,7 +33,7 @@
                 <tbody>
                 @for(event <- events) {
                     <tr data-search="@event.searchData" class="searchable-row">
-                        <td class="mdl-data-table__cell--non-numeric">@Time.formatPatternFr(event.creationDate, "dd/MM/YY-HH:mm")</td>
+                        <td class="mdl-data-table__cell--non-numeric">@Time.formatForAdmins(event.creationDate)</td>
                         <td class="mdl-data-table__cell--non-numeric">@Area.fromId(event.area).map(_.name).getOrElse("N/A")</td>
                         <td class="mdl-data-table__cell--non-numeric">@event.level</td>
                         <td class="mdl-data-table__cell--non-numeric">
