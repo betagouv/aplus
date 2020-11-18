@@ -52,11 +52,14 @@ object common {
         b("usage unique"),
         " et est ",
         b(s"valide $tokenExpirationInMinutes minutes"),
-        ", donc à utiliser avant ",
-        ZonedDateTime
-          .now(user.timeZone)
-          .plusMinutes(tokenExpirationInMinutes.toLong)
-          .format(Time.hourAndMinutesFormatter),
+        ", donc à utiliser ",
+        b(
+          "avant ",
+          ZonedDateTime
+            .now(user.timeZone)
+            .plusMinutes(tokenExpirationInMinutes.toLong)
+            .format(Time.hourAndMinutesFormatter)
+        ),
         ".",
         br,
         br,
