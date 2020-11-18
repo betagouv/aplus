@@ -2,6 +2,7 @@
 @import _root_.helper.MDLForms._
 @import java.util.UUID
 @import serializers.Keys
+@import cats.implicits.catsSyntaxEq
 @(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[User], userId: UUID, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @main(currentUser, currentUserRights)(s"Utilisateur ${form("name").value.getOrElse("")}") {
@@ -157,7 +158,7 @@
                 </optgroup>
             }
           </select>
-          <b class="mdl-cell mdl-cell--12-col">Observateur des organisations:</b>
+          <b class="mdl-cell mdl-cell--12-col">Observateur des organisations</b>
           <select name="observableOrganisationIds[]"
                   class="use-slimselect"
                   @if(!canEditUser) { disabled }
@@ -170,6 +171,13 @@
           </select>
           @if(form("areas").hasErrors) {
             <p style="color: red; font-weight: bold;">@form("areas").errors.map(_.format).mkString(", ")</p>
+          }
+
+          <b class="mdl-cell mdl-cell--12-col">Groupes :</b>
+          @for(user <- form.value) {
+              @for(group <- user.groupIds.flatMap(groupId => userGroups.find(_.id === groupId))) {
+                  <a href="@routes.GroupController.editGroup(group.id)">@{group.name}</a>
+              }
           }
       </div>
   </div>
