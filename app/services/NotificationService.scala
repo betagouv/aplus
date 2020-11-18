@@ -128,13 +128,16 @@ class NotificationService @Inject() (
       .foreach(sendMail)
   }
 
-  // Note: application does not contains answer
+  // Note: application does not contains answer at this point
   def newAnswer(application: Application, answer: Answer) = {
     // Retrieve data
     val userIds = (application.invitedUsers ++ answer.invitedUsers).keys
     val users = userService.byIds(userIds.toList)
+    // The legacy case fixes (badly) when invited groups where not
+    // added to application or answer. It can be removed once data
+    // has been cleaned up.
     val legacyCase = application.answers.exists(_.invitedGroupIds.isEmpty) ||
-      (answer.invitedGroupIds === None)
+      answer.invitedGroupIds.isEmpty
     val (groups, oldGroupIds): (List[UserGroup], Set[UUID]) =
       if (legacyCase) {
         (
@@ -146,10 +149,8 @@ class NotificationService @Inject() (
         )
       } else {
         val applicationGroupIds: List[UUID] =
-          (application.invitedGroupIds ::: application.answers
-            .flatMap(_.invitedGroupIds)
-            .flatten).distinct
-        val answerGroupIds: List[UUID] = answer.invitedGroupIds.toList.flatten
+          (application.invitedGroupIds ::: application.answers.flatMap(_.invitedGroupIds)).distinct
+        val answerGroupIds: List[UUID] = answer.invitedGroupIds
         (
           groupService
             .byIds(applicationGroupIds ::: answerGroupIds)
