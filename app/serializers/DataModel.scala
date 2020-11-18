@@ -12,7 +12,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 import serializers.Anorm.columnToJson
-import serializers.JsonFormats.mapUUIDReads
+import serializers.JsonFormats.mapUUIDFormat
 
 object DataModel {
 
@@ -28,27 +28,73 @@ object DataModel {
 
     import AnswerType.{answerTypeReads, answerTypeWrites}
 
+    // .or are due to an old bug
     implicit val answerReads: Reads[Answer] = (JsPath \ "id")
       .read[UUID]
-      .and((JsPath \ "application_id").read[UUID])
-      .and((JsPath \ "creation_date").read[ZonedDateTime])
-      .and((JsPath \ "answer_type").readNullable[AnswerType].map {
-        case Some(answerType) => answerType
-        case None             => models.Answer.AnswerType.Custom
-      })
+      .and((JsPath \ "application_id").read[UUID].or((JsPath \ "applicationId").read[UUID]))
+      .and(
+        (JsPath \ "creation_date")
+          .read[ZonedDateTime]
+          .or((JsPath \ "creationDate").read[ZonedDateTime])
+      )
+      .and(
+        (JsPath \ "answer_type")
+          .readNullable[AnswerType]
+          .or((JsPath \ "answerType").readNullable[AnswerType])
+          .map {
+            case Some(answerType) => answerType
+            case None             => models.Answer.AnswerType.Custom
+          }
+      )
       .and((JsPath \ "message").read[String])
-      .and((JsPath \ "creator_user_id").read[UUID])
-      .and((JsPath \ "creator_user_name").read[String])
-      .and((JsPath \ "invited_users").read[Map[UUID, String]])
-      .and((JsPath \ "visible_by_helpers").read[Boolean])
-      .and((JsPath \ "declare_application_has_irrelevant").read[Boolean])
-      .and((JsPath \ "user_infos").readNullable[Map[String, String]])
+      .and((JsPath \ "creator_user_id").read[UUID].or((JsPath \ "creatorUserID").read[UUID]))
+      .and(
+        (JsPath \ "creator_user_name").read[String].or((JsPath \ "creatorUserName").read[String])
+      )
+      .and(
+        (JsPath \ "invited_users")
+          .read[Map[UUID, String]]
+          .or((JsPath \ "invitedUsers").read[List[(UUID, String)]].map(_.toMap))
+      )
+      .and(
+        (JsPath \ "visible_by_helpers")
+          .read[Boolean]
+          .or((JsPath \ "visibleByHelpers").read[Boolean])
+      )
+      .and(
+        (JsPath \ "declare_application_has_irrelevant")
+          .read[Boolean]
+          .or((JsPath \ "declareApplicationHasIrrelevant").read[Boolean])
+      )
+      .and(
+        (JsPath \ "user_infos")
+          .readNullable[Map[String, String]]
+          .or((JsPath \ "userInfos").readNullable[Map[String, String]])
+      )
       .and((JsPath \ "files").readNullable[Map[String, Long]])
       .and(
-        (JsPath \ "invited_group_ids").readNullable[List[UUID]].map(_.getOrElse(List.empty[UUID]))
+        (JsPath \ "invited_group_ids")
+          .readNullable[List[UUID]]
+          .or((JsPath \ "invitedGroupIds").readNullable[List[UUID]])
+          .map(_.getOrElse(List.empty[UUID]))
       )(models.Answer.apply _)
 
-    implicit val answerWrite = Json.writes[Answer]
+    //implicit val answerWrite: Writes[Answer] = Json.writes[Answer]
+    implicit val answerWrite: Writes[Answer] =
+      (JsPath \ "id")
+        .write[UUID]
+        .and((JsPath \ "application_id").write[UUID])
+        .and((JsPath \ "creation_date").write[ZonedDateTime])
+        .and((JsPath \ "answer_type").write[AnswerType])
+        .and((JsPath \ "message").write[String])
+        .and((JsPath \ "creator_user_id").write[UUID])
+        .and((JsPath \ "creator_user_name").write[String])
+        .and((JsPath \ "invited_users").write[Map[UUID, String]])
+        .and((JsPath \ "visible_by_helpers").write[Boolean])
+        .and((JsPath \ "declare_application_has_irrelevant").write[Boolean])
+        .and((JsPath \ "user_infos").writeNullable[Map[String, String]])
+        .and((JsPath \ "files").writeNullable[Map[String, Long]])
+        .and((JsPath \ "invited_group_ids").write[List[UUID]])(unlift(models.Answer.unapply))
 
   }
 
