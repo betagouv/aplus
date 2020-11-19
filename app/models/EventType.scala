@@ -145,4 +145,7 @@ object EventType {
   object StatsIncorrectSetup extends Warn
   object TryLoginByKey extends Info
   object UnknownEmail extends Warn
+
+  object UserProfileUpdated extends Info
+  object UserProfileUpdatedError extends Error
 }

@@ -57,4 +57,9 @@ object StringHelper {
     def unapply(s: String): Option[String] = s.some.map(_.trim).filter(_.nonEmpty)
   }
 
+  implicit class StringOps(s: String) {
+    def normalized = StringHelper.normalizeNFKC(s)
+    def fullyCapitalized = StringHelper.capitalizeName(s)
+  }
+
 }

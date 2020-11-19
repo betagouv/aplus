@@ -26,7 +26,9 @@ object formModels {
           "firstName" -> text.verifying(maxLength(100), nonEmpty),
           "lastName" -> text.verifying(maxLength(100), nonEmpty),
           "qualite" -> text.verifying(maxLength(100), nonEmpty),
-          "phone-number" -> text.verifying(pattern("""0\d \d{2} \d{2} \d{2} \d{2}""".r))
+          "phone-number" -> text.verifying(
+            pattern("""0\d \d{2} \d{2} \d{2} \d{2}""".r, error = "Le numéro est incorrect")
+          )
         )(EditProfileFormData.apply)(EditProfileFormData.unapply)
       )
 

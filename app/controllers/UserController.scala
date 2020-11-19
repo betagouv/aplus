@@ -34,6 +34,8 @@ import models.EventType.{
   UserEdited,
   UserIsUsed,
   UserNotFound,
+  UserProfileUpdated,
+  UserProfileUpdatedError,
   UserShowed,
   UsersCreated,
   UsersShowed,
@@ -53,6 +55,7 @@ import play.filters.csrf.CSRF.Token
 import serializers.{Keys, UserAndGroupCsvSerializer}
 import services._
 
+import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
@@ -81,25 +84,45 @@ case class UserController @Inject() (
         user.qualite,
         user.phoneNumber.orEmpty
       )
-      Future.successful(
-        Ok(
-          views.html.editProfile(request.currentUser, request.rights)(
-            EditProfileFormData.form.fill(profile)
-          )
-        )
-      )
+      val form = EditProfileFormData.form.fill(profile)
+      successful(Ok(views.html.editProfile(request.currentUser, request.rights)(form)))
     }
 
   def editProfile =
     loginAction.async { implicit request =>
-      Future.successful(
-        Ok(views.html.welcome(request.currentUser, request.rights))
-      )
+      import eventService._
+      EditProfileFormData.form
+        .bindFromRequest()
+        .fold(
+          errors => {
+            log(UserProfileUpdatedError, "Erreur lors de la modification du profil")
+            successful(
+              BadRequest(
+                views.html.editProfile(request.currentUser, request.rights)(errors)
+              )
+            )
+          },
+          success => {
+            import success._
+            import userService.{editProfile => edit}
+            successful(edit(request.currentUser.id)(firstName, lastName, qualite, phoneNumber))
+              .map { _ =>
+                val message = "Votre profil a bien été modifié"
+                log(UserProfileUpdated, message)
+                Redirect(routes.UserController.editProfile()).flashing("success" -> message)
+              }
+              .recover { e =>
+                val errorMessage = s"Erreur lors de la modification du profil: ${e.getMessage}"
+                log(UserProfileUpdatedError, errorMessage)
+                InternalServerError(views.html.welcome(request.currentUser, request.rights))
+              }
+          }
+        )
     }
 
   def home =
     loginAction {
-      TemporaryRedirect(controllers.routes.UserController.all(Area.allArea.id).url)
+      TemporaryRedirect(routes.UserController.all(Area.allArea.id).url)
     }
 
   def all(areaId: UUID): Action[AnyContent] =
@@ -308,7 +331,7 @@ case class UserController @Inject() (
             val message = s"Utilisateur $userId / ${user.email} a été supprimé"
             eventService.log(UserDeleted, message, involvesUser = Some(user))
             Future(
-              Redirect(controllers.routes.UserController.home()).flashing("success" -> message)
+              Redirect(routes.UserController.home()).flashing("success" -> message)
             )
           }
         }
