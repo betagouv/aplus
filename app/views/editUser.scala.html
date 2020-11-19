@@ -173,10 +173,10 @@
             <p style="color: red; font-weight: bold;">@form("areas").errors.map(_.format).mkString(", ")</p>
           }
 
-          <b class="mdl-cell mdl-cell--12-col">Groupes :</b>
+          <b class="mdl-cell mdl-cell--12-col">Utilisateur actuellement présent dans ces groupes :</b><br/>
           @for(user <- form.value) {
               @for(group <- user.groupIds.flatMap(groupId => userGroups.find(_.id === groupId))) {
-                  <a href="@routes.GroupController.editGroup(group.id)">@{group.name}</a>
+                  <a class="mdl-cell mdl-cell--10-col" href="@routes.GroupController.editGroup(group.id)">@{group.name}</a><br/>
               }
           }
       </div>
