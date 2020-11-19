@@ -11,10 +11,13 @@
 
 <nav class="navigation mdl-navigation mdl-color--deep-purple-900">
 
+    <a @linkAttrs(routes.UserController.editProfile())>
+        <i class="material-icons" role="presentation">face</i>Mon profil
+    </a>
+
     <a @linkAttrs(routes.ApplicationController.myApplications())>
         <i class="material-icons" role="presentation">folder_open</i>Mes demandes
     </a>
-
 
     @if(Authorization.isAdmin(currentUserRights)) {
         <a @linkAttrs(routes.AreaController.all())>

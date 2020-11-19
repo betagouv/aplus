@@ -40,7 +40,7 @@ import models.EventType.{
   ViewUserUnauthorized
 }
 import models._
-import models.formModels.ValidateSubscriptionForm
+import models.formModels.{EditProfileFormData, ValidateSubscriptionForm}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
@@ -70,6 +70,41 @@ case class UserController @Inject() (
     with play.api.i18n.I18nSupport
     with UserOperators
     with GroupOperators {
+
+  private def editProfileForm: Form[EditProfileFormData] =
+    Form(
+      mapping(
+        "email" -> email.verifying(maxLength(200), nonEmpty),
+        "firstName" -> text.verifying(maxLength(100)),
+        "lastName" -> text.verifying(maxLength(100)),
+        "qualite" -> text.verifying(maxLength(100)),
+        "phone-number" -> text
+      )(EditProfileFormData.apply)(EditProfileFormData.unapply)
+    )
+
+  def showEditProfile =
+    loginAction.async { implicit request =>
+      val user = request.currentUser
+      val profile = EditProfileFormData(
+        user.email,
+        user.firstName.orEmpty,
+        user.lastName.orEmpty,
+        user.qualite,
+        user.phoneNumber.orEmpty
+      )
+      Future.successful(
+        Ok(
+          views.html.editProfile(request.currentUser, request.rights)(editProfileForm.fill(profile))
+        )
+      )
+    }
+
+  def editProfile =
+    loginAction.async { implicit request =>
+      Future.successful(
+        Ok(views.html.welcome(request.currentUser, request.rights))
+      )
+    }
 
   def home =
     loginAction {

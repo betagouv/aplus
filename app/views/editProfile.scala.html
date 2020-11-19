@@ -1,0 +1,69 @@
+@import _root_.helper.MDLForms._
+@import models._
+@import models.formModels.EditProfileFormData
+@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[EditProfileFormData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+
+@main(currentUser, currentUserRights)(s"Utilisateur ${form("name").value.getOrElse("")}") {
+    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+} {
+    @helper.form(action = routes.UserController.editProfile(), "method" -> "post", "class" -> "mdl-grid mdl-cell mdl-cell--12-col") {
+        <div class="mdl-cell mdl-cell--6-col-desktop mdl-cell--12-col">
+            @helper.CSRF.formField
+
+            @if(form.hasGlobalErrors) {
+                <div style="color: red;
+                    font-weight: bold;">@form.globalErrors.mkString(", ")</div>
+            }
+            @helper.input(form("id"), "label" -> "Id", "class" -> "hidden") { (id, name, value, args) =>
+                <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+            } <br/>
+            @helper.input(form("email"), "label" -> "Email") { (id, name, value, args) =>
+                <input class="mdl-textfield__input"
+                type="text"
+                name="@name"
+                id="@id"
+                value="@value"
+                readonly
+                    @toHtmlArgs(args)>
+            } <br/>
+            @helper.input(form("lastName"), "label" -> "Nom") { (id, name, value, args) =>
+                <input class="mdl-textfield__input"
+                type="text"
+                name="@name"
+                id="@id"
+                value="@value"
+                    @toHtmlArgs(args)>
+            } <br>
+            @helper.input(form("firstName"), "label" -> "Prénom") { (id, name, value, args) =>
+                <input class="mdl-textfield__input"
+                type="text"
+                name="@name"
+                id="@id"
+                value="@value"
+                    @toHtmlArgs(args)>
+            } <br>
+            @helper.input(form("qualite"), "label" -> "Qualité") { (id, name, value, args) =>
+                <input class="mdl-textfield__input"
+                type="text"
+                name="@name"
+                id="@id"
+                value="@value"
+                    @toHtmlArgs(args)>
+            } <br>
+            @helper.input(form("phone-number"), "label" -> "Numéro de téléphone") { (id, name, value, args) =>
+                <input class="mdl-textfield__input"
+                type="text"
+                name="@name"
+                id="@id"
+                value="@value"
+                    @toHtmlArgs(args)>
+            }
+        </div>
+        <div class="mdl-cell mdl-cell--12-col">
+            <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
+                Sauvegarder
+            </button>
+        </div>
+    }
+} {
+}

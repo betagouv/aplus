@@ -9,6 +9,14 @@ import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 
 object formModels {
 
+  final case class EditProfileFormData(
+      email: String,
+      firstName: String,
+      lastName: String,
+      qualite: String,
+      phoneNumber: String
+  )
+
   case class ApplicationFormData(
       subject: String,
       description: String,
