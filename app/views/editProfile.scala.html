@@ -3,10 +3,12 @@
 @import models.formModels.EditProfileFormData
 @(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[EditProfileFormData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
-@main(currentUser, currentUserRights)(s"Utilisateur ${form("name").value.getOrElse("")}") {
+@main(currentUser, currentUserRights)(s"Mon profil") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 } {
     @helper.form(action = routes.UserController.editProfile(), "method" -> "post", "class" -> "mdl-grid mdl-cell mdl-cell--12-col") {
+        <h4 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Mon profil</h4>
+        <div class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Vous pouvez modifier les informations vous concernant</div>
         <div class="mdl-cell mdl-cell--6-col-desktop mdl-cell--12-col">
             @helper.CSRF.formField
 

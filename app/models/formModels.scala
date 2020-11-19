@@ -4,7 +4,7 @@ import java.util.UUID
 
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.data.validation.Constraints.maxLength
+import play.api.data.validation.Constraints.{emailAddress, maxLength, minLength, nonEmpty, pattern}
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 
 object formModels {
@@ -16,6 +16,21 @@ object formModels {
       qualite: String,
       phoneNumber: String
   )
+
+  object EditProfileFormData {
+
+    val form: Form[EditProfileFormData] =
+      Form(
+        mapping(
+          "email" -> email.verifying(emailAddress, maxLength(200), nonEmpty),
+          "firstName" -> text.verifying(maxLength(100), nonEmpty),
+          "lastName" -> text.verifying(maxLength(100), nonEmpty),
+          "qualite" -> text.verifying(maxLength(100), nonEmpty),
+          "phone-number" -> text.verifying(pattern("""0\d \d{2} \d{2} \d{2} \d{2}""".r))
+        )(EditProfileFormData.apply)(EditProfileFormData.unapply)
+      )
+
+  }
 
   case class ApplicationFormData(
       subject: String,

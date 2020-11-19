@@ -71,17 +71,6 @@ case class UserController @Inject() (
     with UserOperators
     with GroupOperators {
 
-  private def editProfileForm: Form[EditProfileFormData] =
-    Form(
-      mapping(
-        "email" -> email.verifying(maxLength(200), nonEmpty),
-        "firstName" -> text.verifying(maxLength(100)),
-        "lastName" -> text.verifying(maxLength(100)),
-        "qualite" -> text.verifying(maxLength(100)),
-        "phone-number" -> text
-      )(EditProfileFormData.apply)(EditProfileFormData.unapply)
-    )
-
   def showEditProfile =
     loginAction.async { implicit request =>
       val user = request.currentUser
@@ -94,7 +83,9 @@ case class UserController @Inject() (
       )
       Future.successful(
         Ok(
-          views.html.editProfile(request.currentUser, request.rights)(editProfileForm.fill(profile))
+          views.html.editProfile(request.currentUser, request.rights)(
+            EditProfileFormData.form.fill(profile)
+          )
         )
       )
     }

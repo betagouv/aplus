@@ -642,6 +642,10 @@ a {
     padding-left: 16px;
 }
 
+.single--padding-left-40px {
+    padding-left: 40px;
+}
+
 .single--padding-left-48px {
     padding-left: 48px;
 }
@@ -743,6 +747,10 @@ a {
 
 .single--font-weight-600 {
     font-weight: 600;
+}
+
+.single--line-height-24px {
+    line-height: 24px !important;
 }
 
 
