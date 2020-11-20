@@ -91,33 +91,38 @@ case class UserController @Inject() (
   def editProfile =
     loginAction.async { implicit request =>
       import eventService._
-      EditProfileFormData.form
-        .bindFromRequest()
-        .fold(
-          errors => {
-            log(UserProfileUpdatedError, "Erreur lors de la modification du profil")
-            successful(
-              BadRequest(
-                views.html.editProfile(request.currentUser, request.rights)(errors)
+      val user = request.currentUser
+      if (user.sharedAccount) {
+        log(UserProfileUpdatedError, "Impossible de modifier un profil partagé")
+        successful(BadRequest(views.html.welcome(user, request.rights)))
+      } else
+        EditProfileFormData.form
+          .bindFromRequest()
+          .fold(
+            errors => {
+              log(UserProfileUpdatedError, "Erreur lors de la modification du profil")
+              successful(
+                BadRequest(
+                  views.html.editProfile(user, request.rights)(errors)
+                )
               )
-            )
-          },
-          success => {
-            import success._
-            import userService.{editProfile => edit}
-            successful(edit(request.currentUser.id)(firstName, lastName, qualite, phoneNumber))
-              .map { _ =>
-                val message = "Votre profil a bien été modifié"
-                log(UserProfileUpdated, message)
-                Redirect(routes.UserController.editProfile()).flashing("success" -> message)
-              }
-              .recover { e =>
-                val errorMessage = s"Erreur lors de la modification du profil: ${e.getMessage}"
-                log(UserProfileUpdatedError, errorMessage)
-                InternalServerError(views.html.welcome(request.currentUser, request.rights))
-              }
-          }
-        )
+            },
+            success => {
+              import success._
+              import userService.{editProfile => edit}
+              successful(edit(user.id)(firstName, lastName, qualite, phoneNumber))
+                .map { _ =>
+                  val message = "Votre profil a bien été modifié"
+                  log(UserProfileUpdated, message)
+                  Redirect(routes.UserController.editProfile()).flashing("success" -> message)
+                }
+                .recover { e =>
+                  val errorMessage = s"Erreur lors de la modification du profil: ${e.getMessage}"
+                  log(UserProfileUpdatedError, errorMessage)
+                  InternalServerError(views.html.welcome(user, request.rights))
+                }
+            }
+          )
     }
 
   def home =

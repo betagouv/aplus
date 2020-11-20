@@ -66,12 +66,15 @@
                                     <span>@currentUser.name</span>
                                     <span class="mdl-list__item-sub-title">@currentUser.email</span>
                                 </span>
-                                <span class="mdl-list__item-secondary-content single--align-items-center-important">
-                                    <a class="mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" href="@routes.UserController.editProfile()" title="Mon profil">
-                                        <i class="fas fa-user-circle"></i>
-                                    </a>
-                                    <span class="mdl-list__item-secondary-info"><a class="mdl-typography--font-regular mdl-color-text--grey-900 mdl-typography--text-nowrap" href="@routes.UserController.editProfile()" title="Mon profil">Mon profil</a></span>
-                                </span>
+                                @if(!currentUser.sharedAccount) {
+                                    <span class="mdl-list__item-secondary-content single--align-items-center-important">
+                                        <a class="mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" href="@routes.UserController.editProfile()" title="Mon profil">
+                                            <i class="fas fa-user-circle"></i>
+                                        </a>
+                                        <span class="mdl-list__item-secondary-info"><a class="mdl-typography--font-regular mdl-color-text--grey-900 mdl-typography--text-nowrap" href="@routes.UserController.editProfile()" title="Mon profil">
+                                            Mon profil</a></span>
+                                    </span>
+                                }
                                 <span class="mdl-list__item-secondary-content single--align-items-center-important single--padding-left-40px">
                                     <a class="mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" href="@routes.LoginController.disconnect()" title="Déconnexion">
                                         <i class="fas fa-sign-out-alt"></i>
