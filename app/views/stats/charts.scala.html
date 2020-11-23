@@ -55,11 +55,6 @@
             @mandatTypeBarChart(data.all, "mandat-type")
         </div>
     </div>
-
-    <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white typography--text-align-center">
-        <h6>Demande par administration réceptrice (Beta)</h6>
-        @applicationsByAdministrationPieChart(data.all)
-    </div>
 }
 
 @if(isAdmin) {
@@ -77,21 +72,6 @@
             <h4 class="mdl-cell mdl-cell--12-col">@areaData.area.name</h4>
             <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white mdl-grid">
                 @stats.newAndClosedApplicationsBarChart(areaData.aggregates, areaData.area.id.toString)
-                <details class="mdl-cell mdl-cell--12-col">
-                    <summary>Détail des demandes reçues par les instructeurs d’administrations</summary>
-                    <div class="chart-container">
-                        @conditionalTimeSeriesPlot(
-                            areaData.aggregates.applicationsCountGroupedByAdministrationThenByMonth,
-                            s"toto-admin-received-chart-${areaData.area.id}"
-                        )
-                    </div>
-                    @conditionalTimeSeriesTransposedTable(
-                        areaData.aggregates.applicationsCountGroupedByAdministrationThenByMonth,
-                        "Mois",
-                        "Total"
-                    )
-                </details>
-
                 <details class="mdl-cell mdl-cell--12-col">
                     <summary>Détail des demandes faites par des structures aidantes</summary>
                     <div class="chart-container">

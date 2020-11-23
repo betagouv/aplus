@@ -116,8 +116,6 @@ case class Application(
   def invitedUsers(users: List[User]): List[User] =
     invitedUsers.keys.flatMap(userId => users.find(_.id === userId)).toList
 
-  def administrations(users: List[User]): List[String] = invitedUsers(users).map(_.qualite).distinct
-
   def creatorUserQualite(users: List[User]): Option[String] =
     users.find(_.id === creatorUserId).map(_.qualite)
 
