@@ -116,9 +116,8 @@ class NotificationService @Inject() (
     val userIds = (application.invitedUsers).keys
     val users = userService.byIds(userIds.toList)
     val groups = groupService
-      .byIds(users.flatMap(_.groupIds))
+      .byIds(application.invitedGroupIdsAtCreation)
       .filter(_.email.nonEmpty)
-      .filter(_.areaIds.contains(application.area))
 
     users
       .map(generateInvitationEmail(application))
@@ -129,14 +128,30 @@ class NotificationService @Inject() (
       .foreach(sendMail)
   }
 
+  // Note: application does not contain answer at this point
   def newAnswer(application: Application, answer: Answer) = {
     // Retrieve data
     val userIds = (application.invitedUsers ++ answer.invitedUsers).keys
     val users = userService.byIds(userIds.toList)
-    val groups = groupService
-      .byIds(users.flatMap(_.groupIds))
-      .filter(_.email.nonEmpty)
-      .filter(_.areaIds.contains(application.area))
+    val (allGroups, alreadyPresentGroupIds): (List[UserGroup], Set[UUID]) =
+      // This legacy case can be removed once data has been fixed
+      if (application.isWithoutInvitedGroupIdsLegacyCase) {
+        (
+          groupService
+            .byIds(users.flatMap(_.groupIds))
+            .filter(_.email.nonEmpty)
+            .filter(_.areaIds.contains(application.area)),
+          users.filter(user => application.invitedUsers.contains(user.id)).flatMap(_.groupIds).toSet
+        )
+      } else {
+        val allGroupIds = application.invitedGroups.union(answer.invitedGroupIds.toSet)
+        (
+          groupService
+            .byIds(allGroupIds.toList)
+            .filter(_.email.nonEmpty),
+          application.invitedGroups
+        )
+      }
 
     // Send emails to users
     users
@@ -152,15 +167,13 @@ class NotificationService @Inject() (
       .foreach(sendMail)
 
     // Send emails to groups
-    val oldGroupIds: List[UUID] =
-      users.filter(user => application.invitedUsers.contains(user.id)).flatMap(_.groupIds)
-    groups
-      .filter(group => oldGroupIds.contains(group.id))
-      .map(generateNotificationBALEmail(application, Some(answer), users))
-      .foreach(sendMail)
-    groups
-      .filter(group => !oldGroupIds.contains(group.id))
-      .map(generateNotificationBALEmail(application, None, users))
+    allGroups
+      .collect {
+        case group if alreadyPresentGroupIds.contains(group.id) =>
+          generateNotificationBALEmail(application, answer.some, users)(group)
+        case group if !alreadyPresentGroupIds.contains(group.id) =>
+          generateNotificationBALEmail(application, Option.empty[Answer], users)(group)
+      }
       .foreach(sendMail)
 
     if (answer.visibleByHelpers && answer.creatorUserID =!= application.creatorUserId) {
