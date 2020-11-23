@@ -1034,7 +1034,6 @@ case class ApplicationController @Inject() (
   def answer(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application =>
-        import applicationService._
         val form = answerForm(request.currentUser).bindFromRequest()
         val answerId = AttachmentHelper.retrieveOrGenerateAnswerId(form.data)
         val (pendingAttachments, newAttachments) =
@@ -1091,7 +1090,10 @@ case class ApplicationController @Inject() (
             )
             // If the new answer creator is the application creator, we force the application reopening
             val shouldBeReopened = answer.creatorUserID === application.creatorUserId
-            if (addAnswer(applicationId, answer, shouldBeReopened = shouldBeReopened) === 1) {
+            if (
+              applicationService
+                .addAnswer(applicationId, answer, shouldBeOpened = shouldBeReopened) === 1
+            ) {
               eventService.log(
                 AnswerCreated,
                 s"La réponse ${answer.id} a été créée sur la demande $applicationId",
