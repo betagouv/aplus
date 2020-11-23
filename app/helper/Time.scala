@@ -1,6 +1,6 @@
 package helper
 
-import java.time.{Instant, LocalDate, ZoneId, ZonedDateTime}
+import java.time.{Instant, LocalDate, YearMonth, ZoneId, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import scala.collection.immutable.ListMap
@@ -21,7 +21,11 @@ object Time {
   def formatPatternFr(date: LocalDate, pattern: String): String =
     date.format(DateTimeFormatter.ofPattern(pattern, Locale.FRANCE))
 
+  def formatMonthYearAllLetters(month: YearMonth): String =
+    month.atDay(1).format(monthYearAllLettersFormatter)
+
   private val adminsFormatter = DateTimeFormatter.ofPattern("dd/MM/YY-HH:mm", Locale.FRANCE)
+  private val monthYearAllLettersFormatter = DateTimeFormatter.ofPattern("MMMM YYYY", Locale.FRANCE)
 
   // Note: we use an Instant here to make clear that we will set our own TZ
   def formatForAdmins(date: Instant): String =
@@ -46,19 +50,15 @@ object Time {
     recursion(toDateFirstDayOfWeek)
   }
 
-  /** Example `ListMap(2018/02 -> février 2018, 2018/03 -> mars 2018)` */
-  def monthsMap(fromDate: ZonedDateTime, toDate: ZonedDateTime): ListMap[String, String] = {
-    val keyFormatter = DateTimeFormatter.ofPattern("YYYY/MM", Locale.FRANCE)
-    val valueFormatter = DateTimeFormatter.ofPattern("MMMM YYYY", Locale.FRANCE)
+  def monthsBetween(fromDate: ZonedDateTime, toDate: ZonedDateTime): List[YearMonth] = {
     val beginning = fromDate.withDayOfMonth(1)
-    def recursion(date: ZonedDateTime): ListMap[String, String] =
+    def recursion(date: ZonedDateTime): Vector[YearMonth] =
       if (date.isBefore(beginning)) {
-        ListMap()
+        Vector.empty[YearMonth]
       } else {
-        recursion(date.minusMonths(1)) +
-          (date.format(keyFormatter) -> date.format(valueFormatter))
+        recursion(date.minusMonths(1)) :+ YearMonth.from(date)
       }
-    recursion(toDate)
+    recursion(toDate).toList
   }
 
 }

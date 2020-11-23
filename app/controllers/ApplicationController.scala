@@ -475,7 +475,7 @@ case class ApplicationController @Inject() (
 
     val firstDate: ZonedDateTime =
       if (applications.isEmpty) now else applications.map(_.creationDate).min
-    val months = Time.monthsMap(firstDate, now)
+    val months = Time.monthsBetween(firstDate, now)
     val allApplications = applicationsByArea.flatMap(_._2).toList
     val allApplicationsByArea = applicationsByArea.map { case (area, applications) =>
       StatsData.AreaAggregates(
