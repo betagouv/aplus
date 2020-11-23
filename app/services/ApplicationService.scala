@@ -19,6 +19,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
 import serializers.DataModel
 
+import scala.Option.empty
 import scala.concurrent.Future
 
 @javax.inject.Singleton
@@ -126,7 +127,7 @@ class ApplicationService @Inject() (
             val newSeen = SeenByUser.now(userId)
             val seenByUsers = newSeen :: application.seenByUsers.filter(_.userId =!= userId)
             setSeenByUsers(id, seenByUsers)
-          case None => Option.empty[Application]
+          case None => empty[Application]
         }
         result match {
           case None =>
@@ -286,20 +287,19 @@ class ApplicationService @Inject() (
       applicationId: UUID,
       answer: Answer,
       expertInvited: Boolean = false,
-      shouldBeReopened: Boolean = false
+      shouldBeOpened: Boolean = false
   ) =
     db.withTransaction { implicit connection =>
       val invitedUserJson = toJson(answer.invitedUsers.map { case (key, value) =>
         key.toString -> value
       })
 
-      val irrelevant = if (answer.declareApplicationHasIrrelevant) "irrelevant = true" else ""
-      val expert = if (expertInvited) "expert_invited = true" else ""
-      val reopen = if (shouldBeReopened) "closed = false, closed_date = null" else ""
+      val irrelevant =
+        if (answer.declareApplicationHasIrrelevant) "irrelevant = true".some else empty[String]
+      val expert = if (expertInvited) "expert_invited = true".some else empty[String]
+      val reopen = if (shouldBeOpened) "closed = false, closed_date = null".some else empty[String]
 
-      val sql = List(irrelevant, expert, reopen)
-        .filter(_.nonEmpty)
-        .mkStringIfNonEmpty(", ", ", ", "")
+      val sql = List(irrelevant, expert, reopen).flatten.mkStringIfNonEmpty(", ", ", ", "")
 
       SQL(
         s"""UPDATE application SET answers = answers || {answer}::jsonb,
