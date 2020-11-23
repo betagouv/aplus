@@ -321,7 +321,7 @@ case class ApplicationController @Inject() (
               mandatType = DataModel.Application.MandatType
                 .dataModelDeserialization(applicationData.mandatType),
               mandatDate = Some(applicationData.mandatDate),
-              invitedGroupIds = applicationData.groups
+              invitedGroupIdsAtCreation = applicationData.groups
             )
             if (applicationService.createApplication(application)) {
               notificationsService.newApplication(application)
@@ -541,7 +541,16 @@ case class ApplicationController @Inject() (
         case (_, _ :: _, _) =>
           userGroupService.byOrganisationIds(organisationIds).flatMap(anonymousGroupsAndUsers)
         case (_, _, _) =>
-          userGroupService.byIdsFuture(groupIds).flatMap(anonymousGroupsAndUsers)
+          userGroupService
+            .byOrganisationIds(organisationIds)
+            .flatMap(anonymousGroupsAndUsers)
+            .map { case (users, allApplications) =>
+              val applications = allApplications.filter { application =>
+                application.isWithoutInvitedGroupIdsLegacyCase ||
+                application.invitedGroups.intersect(groupIds.toSet).nonEmpty
+              }
+              (users, applications)
+            }
       }
 
     // Filter creation dates

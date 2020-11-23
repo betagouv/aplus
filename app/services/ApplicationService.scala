@@ -276,7 +276,7 @@ class ApplicationService @Inject() (
             ${toJson(newApplication.files)}::jsonb,
             $mandatType,
             ${newApplication.mandatDate},
-            array[${newApplication.invitedGroupIds}]::uuid[]
+            array[${newApplication.invitedGroupIdsAtCreation}]::uuid[]
           )
       """.executeUpdate() === 1
     }
