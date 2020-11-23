@@ -7,6 +7,7 @@ import java.util.UUID
 import anorm.Column.nonNull
 import anorm._
 import cats.syntax.all._
+import helper.StringHelper.StringListOps
 import helper.Time
 import javax.inject.Inject
 import models.Application.SeenByUser
@@ -281,21 +282,24 @@ class ApplicationService @Inject() (
       """.executeUpdate() === 1
     }
 
-  def add(applicationId: UUID, answer: Answer, expertInvited: Boolean = false) =
+  def addAnswer(
+      applicationId: UUID,
+      answer: Answer,
+      expertInvited: Boolean = false,
+      shouldBeReopened: Boolean = false
+  ) =
     db.withTransaction { implicit connection =>
       val invitedUserJson = toJson(answer.invitedUsers.map { case (key, value) =>
         key.toString -> value
       })
-      val sql = (if (answer.declareApplicationHasIrrelevant) {
-                   ", irrelevant = true "
-                 } else {
-                   ""
-                 }) +
-        (if (expertInvited) {
-           ", expert_invited = true"
-         } else {
-           ""
-         })
+
+      val irrelevant = if (answer.declareApplicationHasIrrelevant) "irrelevant = true" else ""
+      val expert = if (expertInvited) "expert_invited = true" else ""
+      val reopen = if (shouldBeReopened) "closed = false, closed_date = null" else ""
+
+      val sql = List(irrelevant, expert, reopen)
+        .filter(_.nonEmpty)
+        .mkStringIfNonEmpty(", ", ", ", "")
 
       SQL(
         s"""UPDATE application SET answers = answers || {answer}::jsonb,
