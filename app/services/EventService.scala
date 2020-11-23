@@ -1,6 +1,6 @@
 package services
 
-import java.time.LocalDate
+import java.time.{Instant, LocalDate}
 import java.util.UUID
 
 import actions.RequestWithUserData
@@ -104,7 +104,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       code,
       currentUser.name,
       currentUser.id,
-      Time.nowParis(),
+      Instant.now(),
       description,
       Area.notApplicable.id,
       application.map(_.id),

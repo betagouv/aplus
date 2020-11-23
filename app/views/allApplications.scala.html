@@ -88,7 +88,7 @@
                     @for((application) <- applications) {
                         <tr @if(currentUser.admin){ onclick="window.document.location='@routes.ApplicationController.show(application.id)';" class="searchable-row" } else { style="cursor: none" } data-search="@application.searchData" >
                         @if(currentUser.admin){ <td class="mdl-data-table__cell--non-numeric" style="font-weight: bold; color: red;">@application.internalId</td>}
-                            <td class="mdl-data-table__cell--non-numeric">@Time.formatPatternFr(application.creationDate, "dd MMM YYYY - HH:mm")</td>
+                            <td class="mdl-data-table__cell--non-numeric">@Time.formatForAdmins(application.creationDate.toInstant)</td>
                             @if(currentUser.admin) {
                                 <td class="mdl-data-table__cell--non-numeric">@Area.fromId(application.area).get.name</td>
                             }

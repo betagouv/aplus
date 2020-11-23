@@ -1,6 +1,6 @@
 package helper
 
-import java.time.{LocalDate, ZoneId, ZonedDateTime}
+import java.time.{Instant, LocalDate, ZoneId, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import scala.collection.immutable.ListMap
@@ -20,6 +20,12 @@ object Time {
 
   def formatPatternFr(date: LocalDate, pattern: String): String =
     date.format(DateTimeFormatter.ofPattern(pattern, Locale.FRANCE))
+
+  private val adminsFormatter = DateTimeFormatter.ofPattern("dd/MM/YY-HH:mm", Locale.FRANCE)
+
+  // Note: we use an Instant here to make clear that we will set our own TZ
+  def formatForAdmins(date: Instant): String =
+    date.atZone(timeZoneParis).format(adminsFormatter)
 
   val hourAndMinutesFormatter = DateTimeFormatter.ofPattern("HH'h'mm", Locale.FRANCE)
 
