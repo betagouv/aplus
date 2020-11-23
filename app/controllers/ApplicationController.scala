@@ -321,7 +321,7 @@ case class ApplicationController @Inject() (
               mandatType = DataModel.Application.MandatType
                 .dataModelDeserialization(applicationData.mandatType),
               mandatDate = Some(applicationData.mandatDate),
-              invitedGroupIds = applicationData.groups
+              invitedGroupIdsAtCreation = applicationData.groups
             )
             if (applicationService.createApplication(application)) {
               notificationsService.newApplication(application)
@@ -546,14 +546,8 @@ case class ApplicationController @Inject() (
             .flatMap(anonymousGroupsAndUsers)
             .map { case (users, allApplications) =>
               val applications = allApplications.filter { application =>
-                // See legacyCase in NotificationService
-                val legacyCase = application.invitedGroupIds.isEmpty ||
-                  application.answers.exists(_.invitedGroupIds.isEmpty)
-                val invitedGroups: Set[UUID] =
-                  (application.invitedGroupIds :::
-                    application.answers.flatMap(_.invitedGroupIds)).toSet
-                val oneGroupHasBeenInvited = invitedGroups.intersect(groupIds.toSet).nonEmpty
-                legacyCase || oneGroupHasBeenInvited
+                application.isWithoutInvitedGroupIdsLegacyCase ||
+                application.invitedGroups.intersect(groupIds.toSet).nonEmpty
               }
               (users, applications)
             }
