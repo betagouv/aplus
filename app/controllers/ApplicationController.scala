@@ -1089,11 +1089,11 @@ case class ApplicationController @Inject() (
               invitedGroupIds = List.empty[UUID]
             )
             // If the new answer creator is the application creator, we force the application reopening
-            val shouldBeReopened = answer.creatorUserID === application.creatorUserId
-            if (
-              applicationService
-                .addAnswer(applicationId, answer, shouldBeOpened = shouldBeReopened) === 1
-            ) {
+            val shouldBeOpened = answer.creatorUserID === application.creatorUserId
+            val answerAdded =
+              applicationService.addAnswer(applicationId, answer, false, shouldBeOpened)
+
+            if (answerAdded === 1) {
               eventService.log(
                 AnswerCreated,
                 s"La réponse ${answer.id} a été créée sur la demande $applicationId",
