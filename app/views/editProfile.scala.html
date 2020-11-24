@@ -13,8 +13,7 @@
             @helper.CSRF.formField
 
             @if(form.hasGlobalErrors) {
-                <div style="color: red;
-                    font-weight: bold;">@form.globalErrors.mkString(", ")</div>
+                <div class="global-errors">@form.globalErrors.mkString(", ")</div>
             }
             @helper.input(form("id"), "label" -> "Id", "class" -> "hidden") { (id, name, value, args) =>
                 <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>

@@ -84,23 +84,23 @@ case class UserController @Inject() (
         user.qualite,
         user.phoneNumber.orEmpty
       )
-      val form = EditProfileFormData.form.fill(profile)
+      val form = EditProfileFormData.form(user.email).fill(profile)
       successful(Ok(views.html.editProfile(request.currentUser, request.rights)(form)))
     }
 
   def editProfile =
     loginAction.async { implicit request =>
-      import eventService._
       val user = request.currentUser
       if (user.sharedAccount) {
-        log(UserProfileUpdatedError, "Impossible de modifier un profil partagé")
+        eventService.log(UserProfileUpdatedError, "Impossible de modifier un profil partagé")
         successful(BadRequest(views.html.welcome(user, request.rights)))
       } else
-        EditProfileFormData.form
+        EditProfileFormData
+          .form(user.email)
           .bindFromRequest()
           .fold(
             errors => {
-              log(UserProfileUpdatedError, "Erreur lors de la modification du profil")
+              eventService.log(UserProfileUpdatedError, "Erreur lors de la modification du profil")
               successful(
                 BadRequest(
                   views.html.editProfile(user, request.rights)(errors)
@@ -109,16 +109,17 @@ case class UserController @Inject() (
             },
             success => {
               import success._
-              import userService.{editProfile => edit}
-              successful(edit(user.id)(firstName, lastName, qualite, phoneNumber))
+              val edited =
+                userService.editProfile(user.id)(firstName, lastName, qualite, phoneNumber)
+              successful(edited)
                 .map { _ =>
                   val message = "Votre profil a bien été modifié"
-                  log(UserProfileUpdated, message)
+                  eventService.log(UserProfileUpdated, message)
                   Redirect(routes.UserController.editProfile()).flashing("success" -> message)
                 }
                 .recover { e =>
                   val errorMessage = s"Erreur lors de la modification du profil: ${e.getMessage}"
-                  log(UserProfileUpdatedError, errorMessage)
+                  eventService.log(UserProfileUpdatedError, errorMessage)
                   InternalServerError(views.html.welcome(user, request.rights))
                 }
             }

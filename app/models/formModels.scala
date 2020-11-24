@@ -19,10 +19,10 @@ object formModels {
 
   object EditProfileFormData {
 
-    val form: Form[EditProfileFormData] =
+    def form(email: String): Form[EditProfileFormData] =
       Form(
         mapping(
-          "email" -> email.verifying(emailAddress, maxLength(200), nonEmpty),
+          "email" -> ignored(email),
           "firstName" -> text.verifying(maxLength(100), nonEmpty),
           "lastName" -> text.verifying(maxLength(100), nonEmpty),
           "qualite" -> text.verifying(maxLength(100), nonEmpty),

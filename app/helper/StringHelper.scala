@@ -58,8 +58,8 @@ object StringHelper {
   }
 
   implicit class StringOps(s: String) {
-    def normalized = StringHelper.normalizeNFKC(s)
-    def fullyCapitalized = StringHelper.capitalizeName(s)
+    def normalized = StringHelper.commonStringInputNormalization(s)
+    def capitalizeWords = StringHelper.capitalizeName(s)
   }
 
   implicit class StringListOps(list: List[String]) {

@@ -256,12 +256,12 @@ class UserService @Inject() (
       val normalizedFirstName = firstName.normalized
       val normalizedLastName = lastName.normalized
       val normalizedQualite = qualite.normalized
-      val name = s"${normalizedLastName.toUpperCase} ${normalizedFirstName.fullyCapitalized}"
+      val name = s"${normalizedLastName.toUpperCase} ${normalizedFirstName.capitalizeWords}"
       SQL"""
         UPDATE "user" SET
         name = $name,
-        first_name = ${normalizedFirstName.fullyCapitalized},
-        last_name = ${normalizedLastName.fullyCapitalized},
+        first_name = ${normalizedFirstName.capitalizeWords},
+        last_name = ${normalizedLastName.capitalizeWords},
         qualite = $normalizedQualite,
         phone_number = $phoneNumber
         WHERE id = $userId::uuid
