@@ -57,4 +57,15 @@ object StringHelper {
     def unapply(s: String): Option[String] = s.some.map(_.trim).filter(_.nonEmpty)
   }
 
+  implicit class StringListOps(list: List[String]) {
+
+    def mkStringIfNonEmpty(start: String, sep: String, end: String) = {
+      val s = if (list.nonEmpty) start else ""
+      val e = if (list.nonEmpty) end else ""
+
+      list.mkString(s, sep, e)
+    }
+
+  }
+
 }
