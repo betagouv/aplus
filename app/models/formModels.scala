@@ -4,7 +4,7 @@ import java.util.UUID
 
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.data.validation.Constraints.{emailAddress, maxLength, minLength, nonEmpty, pattern}
+import play.api.data.validation.Constraints.{maxLength, nonEmpty, pattern}
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 
 object formModels {
