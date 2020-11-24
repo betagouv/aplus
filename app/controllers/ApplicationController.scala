@@ -321,7 +321,7 @@ case class ApplicationController @Inject() (
               mandatType = DataModel.Application.MandatType
                 .dataModelDeserialization(applicationData.mandatType),
               mandatDate = Some(applicationData.mandatDate),
-              invitedGroupIds = applicationData.groups
+              invitedGroupIdsAtCreation = applicationData.groups
             )
             if (applicationService.createApplication(application)) {
               notificationsService.newApplication(application)
@@ -541,7 +541,16 @@ case class ApplicationController @Inject() (
         case (_, _ :: _, _) =>
           userGroupService.byOrganisationIds(organisationIds).flatMap(anonymousGroupsAndUsers)
         case (_, _, _) =>
-          userGroupService.byIdsFuture(groupIds).flatMap(anonymousGroupsAndUsers)
+          userGroupService
+            .byOrganisationIds(organisationIds)
+            .flatMap(anonymousGroupsAndUsers)
+            .map { case (users, allApplications) =>
+              val applications = allApplications.filter { application =>
+                application.isWithoutInvitedGroupIdsLegacyCase ||
+                application.invitedGroups.intersect(groupIds.toSet).nonEmpty
+              }
+              (users, applications)
+            }
       }
 
     // Filter creation dates
@@ -1088,7 +1097,12 @@ case class ApplicationController @Inject() (
               files = (newAttachments ++ pendingAttachments).some,
               invitedGroupIds = List.empty[UUID]
             )
-            if (applicationService.add(applicationId, answer) === 1) {
+            // If the new answer creator is the application creator, we force the application reopening
+            val shouldBeOpened = answer.creatorUserID === application.creatorUserId
+            val answerAdded =
+              applicationService.addAnswer(applicationId, answer, false, shouldBeOpened)
+
+            if (answerAdded === 1) {
               eventService.log(
                 AnswerCreated,
                 s"La réponse ${answer.id} a été créée sur la demande $applicationId",
@@ -1185,7 +1199,7 @@ case class ApplicationController @Inject() (
                       invitedGroupIds = inviteData.invitedGroups
                     )
 
-                    if (applicationService.add(applicationId, answer) === 1) {
+                    if (applicationService.addAnswer(applicationId, answer) === 1) {
                       notificationsService.newAnswer(application, answer)
                       eventService.log(
                         AgentsAdded,
@@ -1232,7 +1246,7 @@ case class ApplicationController @Inject() (
               Map.empty[String, String].some,
               invitedGroupIds = List.empty[UUID]
             )
-            if (applicationService.add(applicationId, answer, expertInvited = true) === 1) {
+            if (applicationService.addAnswer(applicationId, answer, expertInvited = true) === 1) {
               notificationsService.newAnswer(application, answer)
               eventService.log(
                 AddExpertCreated,

@@ -62,4 +62,15 @@ object StringHelper {
     def fullyCapitalized = StringHelper.capitalizeName(s)
   }
 
+  implicit class StringListOps(list: List[String]) {
+
+    def mkStringIfNonEmpty(start: String, sep: String, end: String) = {
+      val s = if (list.nonEmpty) start else ""
+      val e = if (list.nonEmpty) end else ""
+
+      list.mkString(s, sep, e)
+    }
+
+  }
+
 }

@@ -176,27 +176,27 @@ dialog {
         <h4 class="mdl-dialog__title">Est-ce que la réponse vous semble utile pour l'usager ?</h4>
         <div class="mdl-dialog__content">
             <div class="inputs--row">
-            <input id="yes" class="input--sweet" type="radio" name="usefulness" value="Oui" onchange="enableYes()">
+            <input id="yes" class="input--sweet" type="radio" name="usefulness" value="Oui">
             <label for="yes"><img class="input__icon" src="@webJarsUtil.locate("1f600.svg").url.get">Oui</label>
-            <input id="neutral" class="input--sweet" type="radio" name="usefulness" value="Je ne sais pas" onchange="enableYes()">
+            <input id="neutral" class="input--sweet" type="radio" name="usefulness" value="Je ne sais pas">
                 <label for="neutral"><img class="input__icon" src="@webJarsUtil.locate("1f610.svg").url.get"><span style="width: 100%">Je ne sais pas</span></label>
-            <input id="no" class="input--sweet" type="radio" name="usefulness" value="Non" onchange="enableYes()">
+            <input id="no" class="input--sweet" type="radio" name="usefulness" value="Non">
             <label for="no"><img class="input__icon" src="@webJarsUtil.locate("1f61e.svg").url.get">Non</label>
             </div><br>
             <b>Vous devez sélectionner une réponse pour archiver la demande.</b>
         </div>
         <div class="mdl-dialog__actions">
-            <button type="button" class="mdl-button mdl-button--raised" onclick="closeDialog()">Quitter</button>
-            <button type="button" disabled="disabled" class="mdl-button mdl-button--raised mdl-button--colored" id="close-dialog-terminate" onclick="confirmTerminate()">Archiver</button>
+            <button id="close-dialog-quit" type="button" class="mdl-button mdl-button--raised">Quitter</button>
+            <button type="button" disabled="disabled" class="mdl-button mdl-button--raised mdl-button--colored" id="close-dialog-terminate" data-target-url="@routes.ApplicationController.terminate(application.id).url">Archiver</button>
         </div>
     </dialog>
         @if(application.canBeClosedBy(currentUser) && not(application.closed)) {
-            <button class="mdl-cell mdl-cell--3-col mdl-cell--9-offset-desktop mdl-cell--12-col-phone mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="showDialog()">
+            <button id="archive-button-1" class="mdl-cell mdl-cell--3-col mdl-cell--9-offset-desktop mdl-cell--12-col-phone mdl-button mdl-button--raised mdl-button--primary mdl-js-button do-not-print">
                 Archiver l’échange
             </button>
         }
         @if(application.canBeOpenedBy(currentUser) && application.closed) {
-            <button class="mdl-cell mdl-cell--3-col mdl-cell--9-offset-desktop mdl-cell--12-col-phone mdl-button mdl-button--raised mdl-button--primary  mdl-js-button do-not-print" onclick="reopen()">
+            <button id="reopen-button" class="mdl-cell mdl-cell--3-col mdl-cell--9-offset-desktop mdl-cell--12-col-phone mdl-button mdl-button--raised mdl-button--primary mdl-js-button do-not-print" data-target-url="@routes.ApplicationController.reopen(application.id).url">
                 Réouvrir l’échange
             </button>
         }
@@ -391,7 +391,7 @@ dialog {
                             @if(answer.answerType === AnswerType.ApplicationProcessed && application.creatorUserId == currentUser.id && not(application.closed) && answer.creatorUserID != currentUser.id) {
                                 <div class="info-box do-not-print">
                                     Cette demande a bien été traitée. Je vous invite à archiver l’échange en cliquant sur le bouton ci-dessous&nbsp;:<br><br>
-                                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect" onclick="showDialog()" >
+                                    <button id="archive-button-2" class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect">
                                         Archiver l’échange
                                     </button> <br><br>
                                 </div>
@@ -402,33 +402,6 @@ dialog {
             }
         }
 
-    @if(currentUser.instructor){
-        <div class="mdl-card mdl-cell mdl-cell--12-col">
-            <div class="mdl-card__supporting-text mdl-card__supporting-text-without-transparency mdl-card--border">
-
-                <form class="do-not-print" action="@routes.ApplicationController.answer(application.id)" method="post">
-                    @helper.CSRF.formField
-                    <h5 class="mdl-cell mdl-cell--12-col">Réponse rapide à l’aidant :</h5><br>
-                    <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-1">
-                        <input type="radio" id="option-1" class="mdl-radio__button" name="answer_type" value="workInProgress" checked>
-                        <span class="mdl-radio__label">Je m’en occupe</span>
-                    </label>            <br>
-                    <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-2">
-                        <input type="radio" id="option-2" class="mdl-radio__button" name="answer_type" value="applicationProcessed">
-                        <span class="mdl-radio__label">J’ai traité la demande</span>
-                    </label>            <br>
-                    <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-3">
-                        <input type="radio" id="option-3" class="mdl-radio__button" name="answer_type" value="wrongInstructor">
-                        <span class="mdl-radio__label">Je ne suis pas le bon interlocuteur</span>
-                    </label>         <br>
-                    <button class="single--margin-top-16px mdl-button mdl-button--primary mdl-button--raised mdl-js-button mdl-button--nowrap">
-                        Envoyer
-                    </button>
-                </form>
-
-            </div>
-        </div>
-    }
     @flash.get("answer-error").map { error =>
         <div class="mdl-cell mdl-cell--12-col" id="answer-error">
             <div class="notification notification--error"><b>@error</b><br>
@@ -456,7 +429,7 @@ dialog {
 
             @if(application.canBeClosedBy(currentUser) && not(application.closed)) {
                 <div>
-                    <button class="mdl-button mdl-button--raised mdl-button--primary mdl-button--multiline-text mdl-js-button do-not-print" onclick="showDialog()">
+                    <button id="archive-button-3" class="mdl-button mdl-button--raised mdl-button--primary mdl-button--multiline-text mdl-js-button do-not-print">
                         Archiver l’échange
                     </button>
                 </div>
@@ -469,7 +442,6 @@ dialog {
 
                 @helper.CSRF.formField
                 <input type="hidden" name="answer-id" readonly value="@answerToAgentsForm("answer-id").value.getOrElse(java.util.UUID.randomUUID)">
-                <input type="hidden" name="answer_type" readonly value="custom">
 
                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
                     @if(currentUser.instructor) {
@@ -489,9 +461,37 @@ dialog {
                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
                     <h5 class="mdl-cell mdl-cell--12-col">Votre réponse :</h5>
 
-                    <div class="mdl-textfield mdl-js-textfield mdl-cell mdl-cell--12-col single--padding-0px">
-                        <textarea class="mdl-textfield__input" type="text" rows= "5" id="helper-answer-message" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
-                    </div>
+                        @if(currentUser.instructor) {
+                            <div class="mdl-card mdl-cell mdl-cell--12-col">
+                                <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" id="option-1-label" for="option-1">
+                                    <input type="radio" id="option-1" class="mdl-radio__button" name="answer_type" value="workInProgress">
+                                    <span class="mdl-radio__label">Je m’en occupe</span>
+                                </label>
+                                <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" id="option-2-label" for="option-2">
+                                    <input type="radio" id="option-2" class="mdl-radio__button" name="answer_type" value="applicationProcessed">
+                                    <span class="mdl-radio__label">J’ai traité la demande</span>
+                                </label>
+                                <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" id="option-3-label" for="option-3">
+                                    <input type="radio" id="option-3" class="mdl-radio__button" name="answer_type" value="wrongInstructor">
+                                    <span class="mdl-radio__label">Je ne suis pas le bon interlocuteur</span>
+                                </label>
+                                <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" id="option-4-label" for="option-4">
+                                    <input type="radio" id="option-4" class="mdl-radio__button" name="answer_type" value="custom" checked>
+                                    <span class="mdl-radio__label">Réponse personnalisée :</span>
+                                </label>
+                                <div class="mdl-textfield mdl-js-textfield mdl-cell mdl-cell--12-col single--padding-0px">
+                                    <textarea id="custom-answer" class="mdl-textfield__input" type="text" rows="5" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
+                                </div>
+                            </div>
+                        }
+
+                        @if(not(currentUser.instructor)) {
+                            <input type="hidden" name="answer_type" value="custom" readonly>
+                            <div class="mdl-textfield mdl-js-textfield mdl-cell mdl-cell--12-col single--padding-0px">
+                                <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
+                            </div>
+                        }
+
 
                     @if(currentUser.sharedAccount) {
                         <div class="mdl-cell mdl-cell--12-col">
@@ -657,38 +657,6 @@ dialog {
                     }
                 </div>
         </div>
-
-
-    <script>
-            var dialog = document.querySelector('#dialog-terminate');
-            if (! dialog.showModal) {
-                dialogPolyfill.registerDialog(dialog);
-            }
-
-            function enableYes() {
-                document.getElementById("close-dialog-terminate").disabled = false;
-            }
-
-            function closeDialog() {
-                dialog.close();
-            }
-
-            function showDialog() {
-                Array.from(document.querySelectorAll("#dialog-terminate input")).forEach(function(input) {
-                    input.checked = false;
-                })
-                dialog.showModal();
-            }
-
-            function confirmTerminate() {
-                var usefulness = document.querySelector('input[name="usefulness"]:checked').value;
-                document.location = '@routes.ApplicationController.terminate(application.id)?usefulness='+usefulness;
-            }
-
-            function reopen() {
-                document.location = '@routes.ApplicationController.reopen(application.id)';
-            }
-    </script>
     <!--
     We use twemoji for emoji : https://github.com/twitter/twemoji
     -->

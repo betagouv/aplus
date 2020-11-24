@@ -20,7 +20,7 @@ case class Answer(
     declareApplicationHasIrrelevant: Boolean,
     userInfos: Option[Map[String, String]],
     files: Option[Map[String, Long]] = Map.empty[String, Long].some,
-    invitedGroupIds: List[UUID],
+    invitedGroupIds: List[UUID]
 ) extends AgeModel
 
 object Answer {

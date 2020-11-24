@@ -33,8 +33,15 @@ case class Application(
     files: Map[String, Long] = Map.empty[String, Long],
     mandatType: Option[Application.MandatType],
     mandatDate: Option[String],
-    invitedGroupIds: List[UUID]
+    invitedGroupIdsAtCreation: List[UUID]
 ) extends AgeModel {
+
+  // Legacy case, can be removed once data has been cleaned up.
+  val isWithoutInvitedGroupIdsLegacyCase: Boolean =
+    invitedGroupIdsAtCreation.isEmpty
+
+  val invitedGroups: Set[UUID] =
+    (invitedGroupIdsAtCreation ::: answers.flatMap(_.invitedGroupIds)).toSet
 
   val seenByUserIds = seenByUsers.map(_.userId)
 
@@ -108,8 +115,6 @@ case class Application(
 
   def invitedUsers(users: List[User]): List[User] =
     invitedUsers.keys.flatMap(userId => users.find(_.id === userId)).toList
-
-  def administrations(users: List[User]): List[String] = invitedUsers(users).map(_.qualite).distinct
 
   def creatorUserQualite(users: List[User]): Option[String] =
     users.find(_.id === creatorUserId).map(_.qualite)

@@ -99,39 +99,6 @@ object StatsData {
       applicationsCountByMandat(Application.MandatType.Phone)
 
     // Conditional Series
-
-    lazy val administrations: List[String] =
-      applicationsGroupedByMonth
-        .flatMap(_._2)
-        .flatMap(_.administrations(usersRelatedToApplications))
-        .distinct
-
-    lazy val applicationsCountByAdministrations: List[Int] =
-      administrations.map(administration =>
-        applications.count(_.administrations(usersRelatedToApplications).contains(administration))
-      )
-
-    lazy val applicationsCountGroupedByAdministrationThenByMonth: ConditionalTimeSeries =
-      ConditionalTimeSeries(
-        series = administrations.map(administration =>
-          (
-            Label(administration),
-            TimeSeries(
-              applicationsGroupedByMonth
-                .map { case (month, applications) =>
-                  (
-                    Label(month),
-                    applications.count(
-                      _.administrations(usersRelatedToApplications).contains(administration)
-                    )
-                  )
-                }
-            )
-          )
-        ),
-        timeAxis = months.values.map(Label.apply).toList
-      )
-
     lazy val creatorQualitees: List[String] =
       applicationsGroupedByMonth
         .flatMap(_._2)

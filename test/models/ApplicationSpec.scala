@@ -3,6 +3,7 @@ package models
 import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 
+import models.Answer.AnswerType
 import cats.syntax.all._
 import models.Answer.AnswerType
 import models.Application.{MandatType, SeenByUser}
@@ -52,7 +53,7 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIds = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID]
       )
 
       application.newAnswersFor(userId) must equalTo(answers)
@@ -85,7 +86,7 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIds = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID]
       )
 
       application.newAnswersFor(userId) must equalTo(List(answer2))
@@ -118,7 +119,7 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIds = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID]
       )
 
       application.newAnswersFor(userId) must equalTo(List.empty[Answer])
@@ -143,7 +144,7 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIds = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID]
       )
 
       application.status must equalTo("Archivée")
@@ -199,7 +200,7 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIds = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID]
       )
 
       application.status must equalTo("Répondu")
@@ -254,7 +255,7 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIds = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID]
       )
 
       application.status must equalTo("Nouvelle")

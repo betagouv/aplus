@@ -7,6 +7,7 @@ import java.util.UUID
 import anorm.Column.nonNull
 import anorm._
 import cats.syntax.all._
+import helper.StringHelper.StringListOps
 import helper.Time
 import javax.inject.Inject
 import models.Application.SeenByUser
@@ -18,6 +19,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
 import serializers.DataModel
 
+import scala.Option.empty
 import scala.concurrent.Future
 
 @javax.inject.Singleton
@@ -125,7 +127,7 @@ class ApplicationService @Inject() (
             val newSeen = SeenByUser.now(userId)
             val seenByUsers = newSeen :: application.seenByUsers.filter(_.userId =!= userId)
             setSeenByUsers(id, seenByUsers)
-          case None => Option.empty[Application]
+          case None => empty[Application]
         }
         result match {
           case None =>
@@ -276,26 +278,28 @@ class ApplicationService @Inject() (
             ${toJson(newApplication.files)}::jsonb,
             $mandatType,
             ${newApplication.mandatDate},
-            array[${newApplication.invitedGroupIds}]::uuid[]
+            array[${newApplication.invitedGroupIdsAtCreation}]::uuid[]
           )
       """.executeUpdate() === 1
     }
 
-  def add(applicationId: UUID, answer: Answer, expertInvited: Boolean = false) =
+  def addAnswer(
+      applicationId: UUID,
+      answer: Answer,
+      expertInvited: Boolean = false,
+      shouldBeOpened: Boolean = false
+  ) =
     db.withTransaction { implicit connection =>
       val invitedUserJson = toJson(answer.invitedUsers.map { case (key, value) =>
         key.toString -> value
       })
-      val sql = (if (answer.declareApplicationHasIrrelevant) {
-                   ", irrelevant = true "
-                 } else {
-                   ""
-                 }) +
-        (if (expertInvited) {
-           ", expert_invited = true"
-         } else {
-           ""
-         })
+
+      val irrelevant =
+        if (answer.declareApplicationHasIrrelevant) "irrelevant = true".some else empty[String]
+      val expert = if (expertInvited) "expert_invited = true".some else empty[String]
+      val reopen = if (shouldBeOpened) "closed = false, closed_date = null".some else empty[String]
+
+      val sql = List(irrelevant, expert, reopen).flatten.mkStringIfNonEmpty(", ", ", ", "")
 
       SQL(
         s"""UPDATE application SET answers = answers || {answer}::jsonb,
