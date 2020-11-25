@@ -843,3 +843,7 @@ Tabs
     background: red;
     color: white;
 }
+
+.mdl-card__supporting-text {
+    color: rgba(0, 0, 0, 0.70);
+}
