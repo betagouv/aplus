@@ -146,6 +146,8 @@ object EventType {
   object TryLoginByKey extends Info
   object UnknownEmail extends Warn
 
+  object UserProfileShowed extends Info
+  object UserProfileShowedError extends Error
   object UserProfileUpdated extends Info
   object UserProfileUpdatedError extends Error
 }

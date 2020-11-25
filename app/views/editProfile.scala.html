@@ -1,70 +1,80 @@
 @import _root_.helper.MDLForms._
 @import models._
 @import models.formModels.EditProfileFormData
-@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[EditProfileFormData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[EditProfileFormData], email: String, groups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
-@main(currentUser, currentUserRights)(s"Mon profil") {
-    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
-} {
-    @helper.form(action = routes.UserController.editProfile(), "method" -> "post", "class" -> "mdl-grid mdl-cell mdl-cell--12-col") {
-        <h4 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Mon profil</h4>
-        <div class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Vous pouvez modifier les informations vous concernant</div>
-        <div class="mdl-cell mdl-cell--6-col-desktop mdl-cell--12-col">
-            @helper.CSRF.formField
+    @main(currentUser, currentUserRights)(s"Mon profil") {
+        <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
+    } {
+        @helper.form(action = routes.UserController.editProfile(), "method" -> "post", "class" -> "mdl-grid mdl-cell mdl-cell--12-col") {
+            <h4 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Mon profil</h4>
+            <div class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">
+                Vous pouvez modifier les informations vous concernant</div>
+            <div class="mdl-cell mdl-cell--6-col-desktop mdl-cell--12-col">
+                @helper.CSRF.formField
 
-            @if(form.hasGlobalErrors) {
-                <div class="global-errors">@form.globalErrors.mkString(", ")</div>
-            }
-            @helper.input(form("id"), "label" -> "Id", "class" -> "hidden") { (id, name, value, args) =>
-                <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-            } <br/>
-            @helper.input(form("email"), "label" -> "Email") { (id, name, value, args) =>
-                <input class="mdl-textfield__input"
-                type="text"
-                name="@name"
-                id="@id"
-                value="@value"
-                readonly
-                    @toHtmlArgs(args)>
-            } <br/>
-            @helper.input(form("lastName"), "label" -> "Nom") { (id, name, value, args) =>
-                <input class="mdl-textfield__input"
-                type="text"
-                name="@name"
-                id="@id"
-                value="@value"
-                    @toHtmlArgs(args)>
-            } <br>
-            @helper.input(form("firstName"), "label" -> "Prénom") { (id, name, value, args) =>
-                <input class="mdl-textfield__input"
-                type="text"
-                name="@name"
-                id="@id"
-                value="@value"
-                    @toHtmlArgs(args)>
-            } <br>
-            @helper.input(form("qualite"), "label" -> "Fonction / Rôle") { (id, name, value, args) =>
-                <input class="mdl-textfield__input"
-                type="text"
-                name="@name"
-                id="@id"
-                value="@value"
-                    @toHtmlArgs(args)>
-            } <br>
-            @helper.input(form("phone-number"), "label" -> "Numéro de téléphone") { (id, name, value, args) =>
-                <input class="mdl-textfield__input"
-                type="text"
-                name="@name"
-                id="@id"
-                value="@value"
-                    @toHtmlArgs(args)>
-            }
-        </div>
-        <div class="mdl-cell mdl-cell--12-col">
-            <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
-                Sauvegarder
-            </button>
-        </div>
+                @if(form.hasGlobalErrors) {
+                    <div class="global-errors">@form.globalErrors.mkString(", ")</div>
+                }
+                @helper.input(form("id"), "label" -> "Id", "class" -> "hidden") { (id, name, value, args) =>
+                    <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
+                } <br/>
+                @helper.input(form("email"), "label" -> "Email") { (id, name, _, args) =>
+                    <input class="mdl-textfield__input"
+                    type="text"
+                    name="@name"
+                    id="@id"
+                    value="@email"
+                    readonly
+                        @toHtmlArgs(args)>
+                } <br/>
+                @helper.input(form("lastName"), "label" -> "Nom") { (id, name, value, args) =>
+                    <input class="mdl-textfield__input"
+                    type="text"
+                    name="@name"
+                    id="@id"
+                    value="@value"
+                        @toHtmlArgs(args)>
+                } <br/>
+                @helper.input(form("firstName"), "label" -> "Prénom") { (id, name, value, args) =>
+                    <input class="mdl-textfield__input"
+                    type="text"
+                    name="@name"
+                    id="@id"
+                    value="@value"
+                        @toHtmlArgs(args)>
+                } <br/>
+                @helper.input(form("qualite"), "label" -> "Fonction / Rôle") { (id, name, value, args) =>
+                    <input class="mdl-textfield__input"
+                    type="text"
+                    name="@name"
+                    id="@id"
+                    value="@value"
+                        @toHtmlArgs(args)>
+                } <br/>
+                @helper.input(form("phone-number"), "label" -> "Numéro de téléphone") { (id, name, value, args) =>
+                    <input class="mdl-textfield__input"
+                    type="text"
+                    name="@name"
+                    id="@id"
+                    value="@value"
+                        @toHtmlArgs(args)>
+                } <br/>
+                @if(groups.isEmpty) {
+                    <div class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Vous n’appartenez à aucun groupe</div>
+                }
+                @if(groups.nonEmpty) {
+                    <div class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Vous appartenez aux groupes suivants :</div>
+                    @for(group <- groups) {
+                        <div>@group.name</div>
+                    }
+                }
+            </div>
+            <div class="mdl-cell mdl-cell--12-col">
+                <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
+                    Sauvegarder
+                </button>
+            </div>
+        }
+    } {
     }
-} {
-}

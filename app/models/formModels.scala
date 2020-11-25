@@ -10,7 +10,6 @@ import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 object formModels {
 
   final case class EditProfileFormData(
-      email: String,
       firstName: String,
       lastName: String,
       qualite: String,
@@ -19,15 +18,17 @@ object formModels {
 
   object EditProfileFormData {
 
-    def form(email: String): Form[EditProfileFormData] =
+    val form: Form[EditProfileFormData] =
       Form(
         mapping(
-          "email" -> ignored(email),
           "firstName" -> text.verifying(maxLength(100), nonEmpty),
           "lastName" -> text.verifying(maxLength(100), nonEmpty),
           "qualite" -> text.verifying(maxLength(100), nonEmpty),
           "phone-number" -> text.verifying(
-            pattern("""0\d \d{2} \d{2} \d{2} \d{2}""".r, error = "Le numéro est incorrect")
+            pattern(
+              """0\d \d{2} \d{2} \d{2} \d{2}""".r,
+              error = "Le format doit être XX XX XX XX XX"
+            )
           )
         )(EditProfileFormData.apply)(EditProfileFormData.unapply)
       )

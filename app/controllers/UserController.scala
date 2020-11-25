@@ -34,6 +34,8 @@ import models.EventType.{
   UserEdited,
   UserIsUsed,
   UserNotFound,
+  UserProfileShowed,
+  UserProfileShowedError,
   UserProfileUpdated,
   UserProfileUpdatedError,
   UserShowed,
@@ -76,16 +78,27 @@ case class UserController @Inject() (
 
   def showEditProfile =
     loginAction.async { implicit request =>
+      // Should be better if User could contains List[UserGroup] instead of List[UUID]
       val user = request.currentUser
       val profile = EditProfileFormData(
-        user.email,
         user.firstName.orEmpty,
         user.lastName.orEmpty,
         user.qualite,
         user.phoneNumber.orEmpty
       )
-      val form = EditProfileFormData.form(user.email).fill(profile)
-      successful(Ok(views.html.editProfile(request.currentUser, request.rights)(form)))
+      val form = EditProfileFormData.form.fill(profile)
+      groupService
+        .byIdsFuture(user.groupIds)
+        .map { groups =>
+          eventService.log(UserProfileShowed, "Visualise la modification de profil")
+          Ok(views.html.editProfile(request.currentUser, request.rights)(form, user.email, groups))
+        }
+        .recoverWith { case exception =>
+          val message =
+            s"Impossible de visualiser la modification de profil : ${exception.getMessage}"
+          eventService.log(UserProfileShowedError, message)
+          Future.successful(InternalServerError(views.html.welcome(user, request.rights)))
+        }
     }
 
   def editProfile =
@@ -95,17 +108,18 @@ case class UserController @Inject() (
         eventService.log(UserProfileUpdatedError, "Impossible de modifier un profil partagé")
         successful(BadRequest(views.html.welcome(user, request.rights)))
       } else
-        EditProfileFormData
-          .form(user.email)
+        EditProfileFormData.form
           .bindFromRequest()
           .fold(
             errors => {
               eventService.log(UserProfileUpdatedError, "Erreur lors de la modification du profil")
-              successful(
-                BadRequest(
-                  views.html.editProfile(user, request.rights)(errors)
+              groupService
+                .byIdsFuture(user.groupIds)
+                .map(groups =>
+                  BadRequest(
+                    views.html.editProfile(user, request.rights)(errors, user.email, groups)
+                  )
                 )
-              )
             },
             success => {
               import success._
