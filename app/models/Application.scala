@@ -58,7 +58,7 @@ case class Application(
 
   lazy val searchData = {
     val stripChars = "\"<>'"
-    val areaName: String = Area.fromId(area).map(_.name).getOrElse("")
+    val areaName: String = Area.fromId(area).map(_.name).orEmpty
     val creatorName: String = creatorUserName.filterNot(stripChars contains _)
     val userInfosStripped: String =
       userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")
@@ -69,40 +69,31 @@ case class Application(
     val answersStripped: String =
       answers.map(_.message.filterNot(stripChars contains _)).mkString(" ")
 
-    (areaName + " " +
-      creatorName + " " +
-      userInfosStripped + " " +
-      subjectStripped + " " +
-      descriptionStripped + " " +
-      invitedUserNames + " " +
-      answersStripped)
+    s"$areaName $creatorName $userInfosStripped $subjectStripped $descriptionStripped $invitedUserNames $answersStripped"
   }
 
-  def longStatus(user: User) =
+  def longStatus(user: User) = {
+    lazy val isCreator = user.id === creatorUserId
+    lazy val answeredByOtherThanMe = answers.exists(_.creatorUserID =!= user.id)
+    lazy val seenByInvitedUser = seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty
+    lazy val userName = answers
+      .find(_.creatorUserName.contains(user.qualite))
+      .map(_.creatorUserName)
+      .getOrElse("un collègue")
+      .replaceAll("\\(.*\\)", "")
+      .trim
     closed match {
       case true                                                                  => "Archivée"
       case _ if answers.lastOption.exists(_.answerType === ApplicationProcessed) => "Traitée"
-      case _ if user.id === creatorUserId && answers.exists(_.creatorUserID =!= user.id) =>
-        "Répondu"
-      case _
-          if user.id === creatorUserId && seenByUserIds
-            .intersect(invitedUsers.keys.toList)
-            .nonEmpty =>
-        "Consultée"
-      case _ if user.id === creatorUserId                   => "Envoyée"
-      case _ if answers.exists(_.creatorUserID === user.id) => "Répondu"
-      case _ if answers.exists(_.creatorUserName.contains(user.qualite)) => {
-        val username = answers
-          .find(_.creatorUserName.contains(user.qualite))
-          .map(_.creatorUserName)
-          .getOrElse("un collègue")
-          .replaceAll("\\(.*\\)", "")
-          .trim
-        s"Répondu par ${username}"
-      }
-      case _ if seenByUserIds.contains(user.id) => "Consultée"
-      case _                                    => "Nouvelle"
+      case _ if isCreator && answeredByOtherThanMe                               => "Répondu"
+      case _ if isCreator && seenByInvitedUser                                   => "Consultée"
+      case _ if user.id === creatorUserId                                        => "Envoyée"
+      case _ if answers.exists(_.creatorUserID === user.id)                      => "Répondu"
+      case _ if answers.exists(_.creatorUserName.contains(user.qualite))         => s"Répondu par $userName"
+      case _ if seenByUserIds.contains(user.id)                                  => "Consultée"
+      case _                                                                     => "Nouvelle"
     }
+  }
 
   def status =
     closed match {
