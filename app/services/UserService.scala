@@ -4,7 +4,7 @@ import java.util.UUID
 
 import anorm._
 import cats.syntax.all._
-import helper.StringHelper.{capitalizeName, normalizeNFKC, StringOps}
+import helper.StringHelper.StringOps
 import helper.{Hash, Time}
 import javax.inject.Inject
 import models.User
@@ -89,6 +89,9 @@ class UserService @Inject() (
         .on("areaId" -> areaId)
         .as(simpleUser.*)
     }
+
+  def byGroupIdsFuture(ids: List[UUID], includeDisabled: Boolean = false): Future[List[User]] =
+    Future(byGroupIds(ids, includeDisabled))
 
   def byGroupIds(ids: List[UUID], includeDisabled: Boolean = false): List[User] =
     db.withConnection { implicit connection =>
@@ -267,5 +270,16 @@ class UserService @Inject() (
         WHERE id = $userId::uuid
      """.executeUpdate()
     }
+
+  def removeFromGroup(userId: UUID, groupId: UUID): Future[Int] = db.withConnection {
+    implicit cnx =>
+      Future(
+        SQL"""
+         UPDATE "user" SET
+          group_ids = array_remove(group_ids, $groupId::uuid)
+         WHERE id = $userId::uuid
+       """.executeUpdate()
+      )
+  }
 
 }

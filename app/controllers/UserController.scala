@@ -76,6 +76,35 @@ case class UserController @Inject() (
     with UserOperators
     with GroupOperators {
 
+  def removeFromGroup(id: UUID, groupId: UUID) =
+    loginAction.async { implicit request =>
+      val user = request.currentUser
+      if (user.belongsTo(groupId))
+        userService.removeFromGroup(id, groupId).map { _ =>
+          val message = "L’utilisateur a été modifié"
+          Redirect(routes.UserController.showEditMyGroups()).flashing("success" -> message)
+        }
+      else
+        Future.successful(Forbidden(views.html.welcome(user, request.rights)))
+    }
+
+  def showEditMyGroups =
+    loginAction.async { implicit request =>
+      val user = request.currentUser
+      (for {
+        groups <- groupService.byIdsFuture(user.groupIds)
+        users <- userService.byGroupIdsFuture(groups.map(_.id))
+        applications <- applicationService.allForUserIds(users.map(_.id))
+      } yield {
+        eventService.log(UserProfileShowed, "Visualise la modification de profil")
+        Ok(views.html.editMyGroups(user, request.rights)(groups, users, applications))
+      }).recover { case exception =>
+        val message = s"Impossible de modifier le groupe : ${exception.getMessage}"
+        eventService.log(UserProfileShowedError, message)
+        InternalServerError(views.html.welcome(user, request.rights))
+      }
+    }
+
   def showEditProfile =
     loginAction.async { implicit request =>
       // Should be better if User could contains List[UserGroup] instead of List[UUID]

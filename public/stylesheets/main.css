@@ -881,3 +881,27 @@ Tabs
     color: red;
     font-weight: bold;
 }
+
+/* Edit My Groups styles */
+.mdl-data-table tbody tr.no-hover:nth-child(even) {
+    background: #eeeeee
+}
+
+.mdl-data-table tbody tr.no-hover:nth-child(even):hover {
+    background: #eeeeee;
+}
+
+.mdl-data-table tbody tr.no-hover:hover {
+    background: inherit;
+}
+
+.header {
+    color: #555555;
+    font-size: 20px;
+    margin-bottom: 20px;
+    border-bottom: solid 1px #eeeeee;
+}
+
+.remove-link {
+    color: #555555;
+}

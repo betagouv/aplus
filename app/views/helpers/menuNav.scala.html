@@ -15,6 +15,10 @@
         <i class="material-icons" role="presentation">folder_open</i>Mes demandes
     </a>
 
+    <a @linkAttrs(routes.UserController.showEditMyGroups())>
+        <i class="material-icons" role="presentation">group_add</i>Mes groupes
+    </a>
+
     @if(Authorization.isAdmin(currentUserRights)) {
         <a @linkAttrs(routes.AreaController.all())>
             <i class="material-icons" role="presentation">place</i>Territoires
