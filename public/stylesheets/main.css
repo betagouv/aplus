@@ -905,3 +905,19 @@ Tabs
 .remove-link {
     color: #555555;
 }
+
+.group-container {
+    padding-top: 24px;
+    padding-bottom: 8px;
+}
+
+.group-container > div:first-child {
+    padding-left: 24px;
+}
+
+.group-table {
+    border: none;
+    border-spacing: 0;
+    border-collapse: unset;
+    white-space: normal;
+}
