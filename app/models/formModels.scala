@@ -4,10 +4,36 @@ import java.util.UUID
 
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.data.validation.Constraints.maxLength
+import play.api.data.validation.Constraints.{maxLength, nonEmpty, pattern}
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 
 object formModels {
+
+  final case class EditProfileFormData(
+      firstName: String,
+      lastName: String,
+      qualite: String,
+      phoneNumber: String
+  )
+
+  object EditProfileFormData {
+
+    val form: Form[EditProfileFormData] =
+      Form(
+        mapping(
+          "firstName" -> text.verifying(maxLength(100), nonEmpty),
+          "lastName" -> text.verifying(maxLength(100), nonEmpty),
+          "qualite" -> text.verifying(maxLength(100), nonEmpty),
+          "phone-number" -> text.verifying(
+            pattern(
+              """0\d \d{2} \d{2} \d{2} \d{2}""".r,
+              error = "Le format doit être XX XX XX XX XX"
+            )
+          )
+        )(EditProfileFormData.apply)(EditProfileFormData.unapply)
+      )
+
+  }
 
   case class ApplicationFormData(
       subject: String,

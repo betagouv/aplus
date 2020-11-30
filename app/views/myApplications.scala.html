@@ -40,7 +40,7 @@
                         <div id="answers-@application.id" class="vertical-align--middle">
                             <i class="material-icons icon--light">chat_bubble</i>
                             <span class="application__anwsers badge-holder">@application.answers.length messages
-                                @if(application.newAnswersFor(user.id).length > 0) {
+                                @if(application.newAnswersFor(user.id).length > 0 && !application.closed) {
                                     <span class="mdl-color--pink-500 badge">@{application.newAnswersFor(user.id).length}</span>
                                 }
                             </span>

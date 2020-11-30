@@ -3,6 +3,7 @@ package models
 import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 
+import models.Answer.AnswerType
 import cats.syntax.all._
 import models.Answer.AnswerType
 import models.Application.{MandatType, SeenByUser}

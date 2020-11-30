@@ -4,17 +4,12 @@ import java.util.UUID
 
 import anorm._
 import cats.syntax.all._
-import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption}
+import helper.StringHelper.{capitalizeName, normalizeNFKC, StringOps}
 import helper.{Hash, Time}
 import javax.inject.Inject
 import models.User
-import javax.inject.Inject
-import models.User
-import models.formModels.ValidateSubscriptionForm
 import org.postgresql.util.PSQLException
 import play.api.db.Database
-import play.api.db.Database
-import views.html.helper.form
 
 import scala.concurrent.Future
 
@@ -247,6 +242,28 @@ class UserService @Inject() (
       SQL"""
         UPDATE "user" SET
         newsletter_acceptation_date = $now
+        WHERE id = $userId::uuid
+     """.executeUpdate()
+    }
+
+  def editProfile(userId: UUID)(
+      firstName: String,
+      lastName: String,
+      qualite: String,
+      phoneNumber: String
+  ) =
+    db.withConnection { implicit cnx =>
+      val normalizedFirstName = firstName.normalized
+      val normalizedLastName = lastName.normalized
+      val normalizedQualite = qualite.normalized
+      val name = s"${normalizedLastName.toUpperCase} ${normalizedFirstName.capitalizeWords}"
+      SQL"""
+        UPDATE "user" SET
+        name = $name,
+        first_name = ${normalizedFirstName.capitalizeWords},
+        last_name = ${normalizedLastName.capitalizeWords},
+        qualite = $normalizedQualite,
+        phone_number = $phoneNumber
         WHERE id = $userId::uuid
      """.executeUpdate()
     }
