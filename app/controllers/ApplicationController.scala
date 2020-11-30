@@ -540,14 +540,15 @@ case class ApplicationController @Inject() (
           } yield (users, applications)
         case (_, _ :: _, _) =>
           userGroupService.byOrganisationIds(organisationIds).flatMap(anonymousGroupsAndUsers)
-        case (_, _, _) =>
+        case (_, Nil, _) =>
           userGroupService
-            .byOrganisationIds(organisationIds)
+            .byIdsFuture(groupIds)
             .flatMap(anonymousGroupsAndUsers)
             .map { case (users, allApplications) =>
               val applications = allApplications.filter { application =>
                 application.isWithoutInvitedGroupIdsLegacyCase ||
-                application.invitedGroups.intersect(groupIds.toSet).nonEmpty
+                application.invitedGroups.intersect(groupIds.toSet).nonEmpty ||
+                users.exists(user => user.id === application.creatorUserId)
               }
               (users, applications)
             }
