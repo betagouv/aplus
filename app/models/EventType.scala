@@ -150,4 +150,9 @@ object EventType {
   object UserProfileShowedError extends Error
   object UserProfileUpdated extends Info
   object UserProfileUpdatedError extends Error
+
+  object AddToGroupShowed extends Info
+  object AddToGroupShowedError extends Error
+  object AddToGroupUpdated extends Info
+  object AddToGroupUpdatedError extends Error
 }

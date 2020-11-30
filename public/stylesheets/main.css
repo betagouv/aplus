@@ -921,3 +921,11 @@ Tabs
     border-collapse: unset;
     white-space: normal;
 }
+
+.add-new-user-panel {
+    align-items: center;
+    justify-content: space-between;
+    margin-left: 24px;
+    margin-right: 24px;
+    margin-bottom: 24px;
+}

@@ -148,6 +148,8 @@ class UserService @Inject() (
         .as(simpleUser.singleOpt)
     }
 
+  def byEmailFuture(email: String): Future[Option[User]] = Future(byEmail(email))
+
   def byEmails(emails: List[String]): List[User] = {
     val lowerCaseEmails = emails.map(_.toLowerCase)
     db.withConnection { implicit connection =>
@@ -255,7 +257,7 @@ class UserService @Inject() (
       qualite: String,
       phoneNumber: String
   ) =
-    db.withConnection { implicit cnx =>
+    db.withConnection { implicit connection =>
       val normalizedFirstName = firstName.normalized
       val normalizedLastName = lastName.normalized
       val normalizedQualite = qualite.normalized
@@ -271,15 +273,26 @@ class UserService @Inject() (
      """.executeUpdate()
     }
 
-  def removeFromGroup(userId: UUID, groupId: UUID): Future[Int] = db.withConnection {
-    implicit cnx =>
-      Future(
+  def addToGroup(userId: UUID, groupId: UUID) =
+    Future {
+      db.withConnection { implicit connection =>
+        SQL"""
+         UPDATE "user" SET
+          group_ids = group_ids || $groupId::uuid
+         WHERE id = $userId::uuid
+       """.executeUpdate()
+      }
+    }
+
+  def removeFromGroup(userId: UUID, groupId: UUID) =
+    Future {
+      db.withConnection { implicit connection =>
         SQL"""
          UPDATE "user" SET
           group_ids = array_remove(group_ids, $groupId::uuid)
          WHERE id = $userId::uuid
        """.executeUpdate()
-      )
-  }
+      }
+    }
 
 }

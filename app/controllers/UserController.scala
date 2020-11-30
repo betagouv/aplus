@@ -12,6 +12,7 @@ import helper.StringHelper.{capitalizeName, commonStringInputNormalization}
 import helper.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
 import models.EventType.{
+  AddToGroupUpdated,
   AddUserError,
   AllUserCSVUnauthorized,
   AllUserCsvShowed,
@@ -44,7 +45,7 @@ import models.EventType.{
   ViewUserUnauthorized
 }
 import models._
-import models.formModels.{EditProfileFormData, ValidateSubscriptionForm}
+import models.formModels.{AddUserToGroupFormData, EditProfileFormData, ValidateSubscriptionForm}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
@@ -76,33 +77,71 @@ case class UserController @Inject() (
     with UserOperators
     with GroupOperators {
 
+  private def getGroupsUsersAndApplicationsBy(user: User) = for {
+    groups <- groupService.byIdsFuture(user.groupIds)
+    users <- userService.byGroupIdsFuture(groups.map(_.id))
+    applications <- applicationService.allForUserIds(users.map(_.id))
+  } yield (groups, users, applications)
+
+  def addToGroup(groupId: UUID) =
+    loginAction.async { implicit request =>
+      val user = request.currentUser
+      AddUserToGroupFormData.form
+        .bindFromRequest()
+        .fold(
+          errors => {
+            val message = "L’adresse email n'est pas correcte"
+            eventService.log(AddToGroupUpdated, message)
+            getGroupsUsersAndApplicationsBy(user).map { case (groups, users, applications) =>
+              Ok(views.html.editMyGroups(user, request.rights)(errors)(groups, users, applications))
+            }
+          },
+          data =>
+            userService.byEmailFuture(data.email).flatMap {
+              case None => successful(Forbidden(views.html.welcome(user, request.rights)))
+              case Some(userToAdd) =>
+                for {
+                  _ <- userService.addToGroup(userToAdd.id, groupId)
+                  (groups, users, applications) <- getGroupsUsersAndApplicationsBy(user)
+                } yield {
+                  val form = AddUserToGroupFormData.form
+                  val view =
+                    views.html
+                      .editMyGroups(user, request.rights)(form)(groups, users, applications)
+                  Ok(view)
+                }
+            }
+        )
+    }
+
   def removeFromGroup(id: UUID, groupId: UUID) =
     loginAction.async { implicit request =>
       val user = request.currentUser
       if (user.belongsTo(groupId))
-        userService.removeFromGroup(id, groupId).map { _ =>
-          val message = "L’utilisateur a été modifié"
-          Redirect(routes.UserController.showEditMyGroups()).flashing("success" -> message)
-        }
-      else
-        Future.successful(Forbidden(views.html.welcome(user, request.rights)))
+        userService
+          .removeFromGroup(id, groupId)
+          .map { _ =>
+            val message = "Le groupe a été modifié"
+            Redirect(routes.UserController.showEditMyGroups()).flashing("success" -> message)
+          }
+          .recover(_ => Forbidden(views.html.welcome(user, request.rights)))
+      else successful(Forbidden(views.html.welcome(user, request.rights)))
     }
 
   def showEditMyGroups =
     loginAction.async { implicit request =>
       val user = request.currentUser
-      (for {
-        groups <- groupService.byIdsFuture(user.groupIds)
-        users <- userService.byGroupIdsFuture(groups.map(_.id))
-        applications <- applicationService.allForUserIds(users.map(_.id))
-      } yield {
-        eventService.log(UserProfileShowed, "Visualise la modification de profil")
-        Ok(views.html.editMyGroups(user, request.rights)(groups, users, applications))
-      }).recover { case exception =>
-        val message = s"Impossible de modifier le groupe : ${exception.getMessage}"
-        eventService.log(UserProfileShowedError, message)
-        InternalServerError(views.html.welcome(user, request.rights))
-      }
+      val form = AddUserToGroupFormData.form
+      getGroupsUsersAndApplicationsBy(user)
+        .map { case (groups, users, applications) =>
+          eventService.log(UserProfileShowed, "Visualise la modification de groupe")
+          Ok(views.html.editMyGroups(user, request.rights)(form)(groups, users, applications))
+        }
+        .recover { case exception =>
+          val message = s"Impossible de modifier le groupe : ${exception.getMessage}"
+          eventService.log(UserProfileShowedError, message)
+          InternalServerError(views.html.welcome(user, request.rights))
+        }
     }
 
   def showEditProfile =
@@ -126,7 +165,7 @@ case class UserController @Inject() (
           val message =
             s"Impossible de visualiser la modification de profil : ${exception.getMessage}"
           eventService.log(UserProfileShowedError, message)
-          Future.successful(InternalServerError(views.html.welcome(user, request.rights)))
+          successful(InternalServerError(views.html.welcome(user, request.rights)))
         }
     }
 

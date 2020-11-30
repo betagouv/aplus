@@ -9,6 +9,19 @@ import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 
 object formModels {
 
+  final case class AddUserToGroupFormData(email: String)
+
+  object AddUserToGroupFormData {
+
+    val form: Form[AddUserToGroupFormData] =
+      Form(
+        mapping("email" -> nonEmptyText)(AddUserToGroupFormData.apply)(
+          AddUserToGroupFormData.unapply
+        )
+      )
+
+  }
+
   final case class EditProfileFormData(
       firstName: String,
       lastName: String,
