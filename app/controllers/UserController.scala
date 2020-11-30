@@ -100,16 +100,9 @@ case class UserController @Inject() (
             userService.byEmailFuture(data.email).flatMap {
               case None => successful(Forbidden(views.html.welcome(user, request.rights)))
               case Some(userToAdd) =>
-                for {
-                  _ <- userService.addToGroup(userToAdd.id, groupId)
-                  (groups, users, applications) <- getGroupsUsersAndApplicationsBy(user)
-                } yield {
-                  val form = AddUserToGroupFormData.form
-                  val view =
-                    views.html
-                      .editMyGroups(user, request.rights)(form)(groups, users, applications)
-                  Ok(view)
-                }
+                userService
+                  .addToGroup(userToAdd.id, groupId)
+                  .map(_ => Redirect(routes.UserController.showEditMyGroups()))
             }
         )
     }
