@@ -902,6 +902,10 @@ Tabs
     border-bottom: solid 1px #eeeeee;
 }
 
+.remove-link-panel {
+    text-align: center !important;
+}
+
 .remove-link {
     color: #555555;
 }

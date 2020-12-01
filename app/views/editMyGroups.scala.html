@@ -44,9 +44,9 @@
                             sollicitations</span>
                     </div>
                 </td>
-                <td>
+                <td class="remove-link-panel">
                 @if(user.id != currentUser.id) {
-                    <a class="remove-link" href="@routes.UserController.removeFromGroup(user.id, groupId)">Supprimer</a>
+                    <a class="remove-link" href="@routes.UserController.removeFromGroup(user.id, groupId)">Retirer&nbsp;du groupe</a>
                 }
                 </td>
             </tr>
