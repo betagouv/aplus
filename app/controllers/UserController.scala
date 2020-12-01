@@ -108,22 +108,34 @@ case class UserController @Inject() (
           },
           data =>
             if (user.belongsTo(groupId)) {
-              userService.byEmailFuture(data.email).flatMap {
-                case None =>
-                  val message = "L’utilisateur n'existe pas dans Administration+"
-                  eventService.log(EditMyGroupUpdatedWarn, message)
-                  successful(
-                    Redirect(routes.UserController.showEditMyGroups()).flashing("error" -> message)
-                  )
-                case Some(userToAdd) =>
-                  userService
-                    .addToGroup(userToAdd.id, groupId)
-                    .map { _ =>
-                      eventService.log(EditMyGroupUpdated, "L’utilisateur a été ajouté au groupe")
+              userService
+                .byEmailFuture(data.email)
+                .zip(userService.byGroupIdsFuture(List(groupId), includeDisabled = true))
+                .flatMap {
+                  case (None, _) =>
+                    val message = "L’utilisateur n'existe pas dans Administration+"
+                    eventService.log(EditMyGroupUpdatedWarn, message)
+                    successful(
                       Redirect(routes.UserController.showEditMyGroups())
-                        .flashing("success" -> "L’utilisateur a été ajouté au groupe")
-                    }
-              }
+                        .flashing("error" -> message)
+                    )
+                  case (Some(userToAdd), usersInGroup)
+                      if usersInGroup.map(_.id).contains[UUID](userToAdd.id) =>
+                    val message = "L’utilisateur est déjà présent dans le groupe"
+                    eventService.log(EditMyGroupUpdatedWarn, message)
+                    successful(
+                      Redirect(routes.UserController.showEditMyGroups())
+                        .flashing("error" -> message)
+                    )
+                  case (Some(userToAdd), _) =>
+                    userService
+                      .addToGroup(userToAdd.id, groupId)
+                      .map { _ =>
+                        eventService.log(EditMyGroupUpdated, "L’utilisateur a été ajouté au groupe")
+                        Redirect(routes.UserController.showEditMyGroups())
+                          .flashing("success" -> "L’utilisateur a été ajouté au groupe")
+                      }
+                }
             } else successful(updateMyGroupsNotAllowed())
         )
     }
