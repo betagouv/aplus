@@ -151,8 +151,9 @@ object EventType {
   object UserProfileUpdated extends Info
   object UserProfileUpdatedError extends Error
 
-  object AddToGroupShowed extends Info
-  object AddToGroupShowedError extends Error
-  object AddToGroupUpdated extends Info
-  object AddToGroupUpdatedError extends Error
+  object EditMyGroupShowed extends Info
+  object EditMyGroupShowedError extends Error
+  object EditMyGroupUpdated extends Info
+  object EditMyGroupUpdatedWarn extends Warn
+  object EditMyGroupUpdatedError extends Error
 }
