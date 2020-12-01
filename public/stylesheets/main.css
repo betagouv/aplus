@@ -454,6 +454,11 @@ a {
     border-color: #d63626;
 }
 
+.notification--error > div {
+    display: flex;
+    margin: auto;
+}
+
 .notification__message {
     flex-grow: 1;
 }
