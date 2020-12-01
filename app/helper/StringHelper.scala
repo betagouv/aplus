@@ -57,6 +57,11 @@ object StringHelper {
     def unapply(s: String): Option[String] = s.some.map(_.trim).filter(_.nonEmpty)
   }
 
+  implicit class StringOps(s: String) {
+    def normalized = StringHelper.commonStringInputNormalization(s)
+    def capitalizeWords = StringHelper.capitalizeName(s)
+  }
+
   implicit class StringListOps(list: List[String]) {
 
     def mkStringIfNonEmpty(start: String, sep: String, end: String) = {

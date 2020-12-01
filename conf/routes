@@ -46,6 +46,8 @@ GET         /validation-connexion                                               
 
 # Users
 
+GET         /me                                                                              controllers.UserController.showEditProfile
+POST        /me                                                                              controllers.UserController.editProfile
 GET         /utilisateurs                                                                    controllers.UserController.home
 GET         /utilisateurs/:userId                                                            controllers.UserController.editUser(userId: java.util.UUID)
 POST        /utilisateurs/:userId                                                            controllers.UserController.editUserPost(userId: java.util.UUID)

@@ -4,7 +4,6 @@ import java.time.{LocalDate, ZoneId, ZonedDateTime}
 import java.util.UUID
 
 import actions.{LoginAction, RequestWithUserData}
-import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption, catsSyntaxOptionId}
 import cats.syntax.all._
 import controllers.Operators.{GroupOperators, UserOperators}
 import helper.BooleanHelper.not
@@ -34,13 +33,17 @@ import models.EventType.{
   UserEdited,
   UserIsUsed,
   UserNotFound,
+  UserProfileShowed,
+  UserProfileShowedError,
+  UserProfileUpdated,
+  UserProfileUpdatedError,
   UserShowed,
   UsersCreated,
   UsersShowed,
   ViewUserUnauthorized
 }
 import models._
-import models.formModels.ValidateSubscriptionForm
+import models.formModels.{EditProfileFormData, ValidateSubscriptionForm}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
@@ -53,6 +56,7 @@ import play.filters.csrf.CSRF.Token
 import serializers.{Keys, UserAndGroupCsvSerializer}
 import services._
 
+import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
@@ -71,9 +75,73 @@ case class UserController @Inject() (
     with UserOperators
     with GroupOperators {
 
+  def showEditProfile =
+    loginAction.async { implicit request =>
+      // Should be better if User could contains List[UserGroup] instead of List[UUID]
+      val user = request.currentUser
+      val profile = EditProfileFormData(
+        user.firstName.orEmpty,
+        user.lastName.orEmpty,
+        user.qualite,
+        user.phoneNumber.orEmpty
+      )
+      val form = EditProfileFormData.form.fill(profile)
+      groupService
+        .byIdsFuture(user.groupIds)
+        .map { groups =>
+          eventService.log(UserProfileShowed, "Visualise la modification de profil")
+          Ok(views.html.editProfile(request.currentUser, request.rights)(form, user.email, groups))
+        }
+        .recoverWith { case exception =>
+          val message =
+            s"Impossible de visualiser la modification de profil : ${exception.getMessage}"
+          eventService.log(UserProfileShowedError, message)
+          Future.successful(InternalServerError(views.html.welcome(user, request.rights)))
+        }
+    }
+
+  def editProfile =
+    loginAction.async { implicit request =>
+      val user = request.currentUser
+      if (user.sharedAccount) {
+        eventService.log(UserProfileUpdatedError, "Impossible de modifier un profil partagé")
+        successful(BadRequest(views.html.welcome(user, request.rights)))
+      } else
+        EditProfileFormData.form
+          .bindFromRequest()
+          .fold(
+            errors => {
+              eventService.log(UserProfileUpdatedError, "Erreur lors de la modification du profil")
+              groupService
+                .byIdsFuture(user.groupIds)
+                .map(groups =>
+                  BadRequest(
+                    views.html.editProfile(user, request.rights)(errors, user.email, groups)
+                  )
+                )
+            },
+            success => {
+              import success._
+              val edited =
+                userService.editProfile(user.id)(firstName, lastName, qualite, phoneNumber)
+              successful(edited)
+                .map { _ =>
+                  val message = "Votre profil a bien été modifié"
+                  eventService.log(UserProfileUpdated, message)
+                  Redirect(routes.UserController.editProfile()).flashing("success" -> message)
+                }
+                .recover { e =>
+                  val errorMessage = s"Erreur lors de la modification du profil: ${e.getMessage}"
+                  eventService.log(UserProfileUpdatedError, errorMessage)
+                  InternalServerError(views.html.welcome(user, request.rights))
+                }
+            }
+          )
+    }
+
   def home =
     loginAction {
-      TemporaryRedirect(controllers.routes.UserController.all(Area.allArea.id).url)
+      TemporaryRedirect(routes.UserController.all(Area.allArea.id).url)
     }
 
   def all(areaId: UUID): Action[AnyContent] =
@@ -282,7 +350,7 @@ case class UserController @Inject() (
             val message = s"Utilisateur $userId / ${user.email} a été supprimé"
             eventService.log(UserDeleted, message, involvesUser = Some(user))
             Future(
-              Redirect(controllers.routes.UserController.home()).flashing("success" -> message)
+              Redirect(routes.UserController.home()).flashing("success" -> message)
             )
           }
         }
