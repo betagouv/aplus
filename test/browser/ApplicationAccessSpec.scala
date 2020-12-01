@@ -1,6 +1,6 @@
 package browser
 
-import cats.implicits.catsSyntaxOptionId
+import cats.syntax.all._
 import helper.{Time, UUIDHelper}
 import models.{Application, Area, LoginToken, User, UserGroup}
 import org.junit.runner._

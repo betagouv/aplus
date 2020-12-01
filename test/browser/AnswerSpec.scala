@@ -1,9 +1,8 @@
 package browser
 
+import cats.syntax.all._
 import helper.{Time, UUIDHelper}
 import java.util.UUID
-
-import cats.implicits.catsSyntaxOptionId
 import models.{Application, Area, LoginToken, User, UserGroup}
 import org.junit.runner._
 import org.specs2.mutable._

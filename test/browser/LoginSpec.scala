@@ -1,9 +1,8 @@
 package browser
 
+import cats.syntax.all._
 import helper.{Hash, Time, UUIDHelper}
 import java.time.ZonedDateTime
-
-import cats.implicits.catsSyntaxOptionId
 import models.{Area, LoginToken, User}
 import org.specs2.mutable._
 import org.specs2.runner._
