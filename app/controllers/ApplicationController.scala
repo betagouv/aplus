@@ -5,7 +5,6 @@ import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
 import actions._
-import cats.implicits.{catsSyntaxOption, catsSyntaxOptionId, catsSyntaxTuple2Semigroupal}
 import cats.syntax.all._
 import constants.Constants
 import forms.FormsPlusMap
