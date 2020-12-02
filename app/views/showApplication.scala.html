@@ -164,6 +164,13 @@ dialog {
     font-size: 16px;
     font-weight: 300;
     line-height: 25px;
+}
+
+.answer__message {
+    white-space: pre-line;
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 25px;
     margin-left: 72px;
     margin-top: -20px;
 }
@@ -393,7 +400,7 @@ dialog {
                                     }
                                 </ul>
                             }
-                            <p class="application__message">@answer.message</p>
+                            <p class="answer__message">@answer.message</p>
                             @if(answer.answerType === AnswerType.ApplicationProcessed && application.creatorUserId == currentUser.id && not(application.closed) && answer.creatorUserID != currentUser.id) {
                                 <div class="info-box do-not-print">
                                     Cette demande a bien été traitée. Je vous invite à archiver l’échange en cliquant sur le bouton ci-dessous&nbsp;:<br><br>
