@@ -14,7 +14,13 @@ lazy val root = (project in file("."))
     buildInfoPackage := "constants"
   )
 
-scalaVersion := "2.13.3"
+inThisBuild(
+  List(
+    scalaVersion := "2.13.3",
+    semanticdbEnabled := true, // enable SemanticDB
+    semanticdbVersion := scalafixSemanticdb.revision // use Scalafix compatible version
+  )
+)
 
 // https://docs.scala-lang.org/overviews/compiler-options/index.html
 scalacOptions ++= Seq(
