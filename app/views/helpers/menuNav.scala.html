@@ -15,7 +15,6 @@
         <i class="material-icons" role="presentation">folder_open</i>Mes demandes
     </a>
 
-
     @if(Authorization.isAdmin(currentUserRights)) {
         <a @linkAttrs(routes.AreaController.all())>
             <i class="material-icons" role="presentation">place</i>Territoires

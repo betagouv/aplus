@@ -83,12 +83,12 @@ libraryDependencies ++= Seq(
   "com.github.tototoshi" %% "scala-csv" % "1.3.6",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.9.2",
-  "org.typelevel" %% "cats-core" % "2.2.0",
+  "org.typelevel" %% "cats-core" % "2.3.0",
   // To ensure that the version of jackson that do not have
   // known security vulnerabilities is used
   // It is also compatible with play-json
   // https://github.com/playframework/play-json/blob/master/build.sbt#L20
-  "com.fasterxml.jackson.core" % "jackson-databind" % "2.10.5"
+  "com.fasterxml.jackson.core" % "jackson-databind" % "2.10.5.1"
 )
 
 // UI
@@ -103,7 +103,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "chartjs" % "2.9.3",
   "org.webjars" % "font-awesome" % "5.15.1",
   "org.webjars.bowergithub.olifolkerd" % "tabulator" % "4.5.3",
-  "org.webjars.npm" % "xlsx" % "0.16.8"
+  "org.webjars.npm" % "xlsx" % "0.16.9"
 )
 // Crash
 libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.30"
