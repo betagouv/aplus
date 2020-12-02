@@ -877,6 +877,12 @@ Tabs
     color: white;
 }
 
+.answer-card {
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom: none !important;
+}
+
 .global-errors {
     color: red;
     font-weight: bold;
