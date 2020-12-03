@@ -21,11 +21,11 @@ import models.EventType.{
   CGUValidated,
   CGUValidationError,
   DeleteUserUnauthorized,
+  EditMyGroupBadUserInput,
   EditMyGroupShowed,
   EditMyGroupShowedError,
   EditMyGroupUpdated,
   EditMyGroupUpdatedError,
-  EditMyGroupUpdatedWarn,
   EditUserError,
   EditUserShowed,
   EventsShowed,
@@ -101,7 +101,7 @@ case class UserController @Inject() (
         .fold(
           err => {
             val message = "L’adresse email n'est pas correcte"
-            eventService.log(EditMyGroupUpdatedWarn, message)
+            eventService.log(EditMyGroupBadUserInput, message)
             getGroupsUsersAndApplicationsBy(user).map { case (groups, users, applications) =>
               Ok(views.html.editMyGroups(user, request.rights)(err)(groups, users, applications))
             }
@@ -114,7 +114,7 @@ case class UserController @Inject() (
                 .flatMap {
                   case (None, _) =>
                     val message = "L’utilisateur n’existe pas dans Administration+"
-                    eventService.log(EditMyGroupUpdatedWarn, message)
+                    eventService.log(EditMyGroupBadUserInput, message)
                     successful(
                       Redirect(routes.UserController.showEditMyGroups())
                         .flashing("error" -> message)
@@ -122,7 +122,7 @@ case class UserController @Inject() (
                   case (Some(userToAdd), usersInGroup)
                       if usersInGroup.map(_.id).contains[UUID](userToAdd.id) =>
                     val message = "L’utilisateur est déjà présent dans le groupe"
-                    eventService.log(EditMyGroupUpdatedWarn, message)
+                    eventService.log(EditMyGroupBadUserInput, message)
                     successful(
                       Redirect(routes.UserController.showEditMyGroups())
                         .flashing("error" -> message)

@@ -154,6 +154,6 @@ object EventType {
   object EditMyGroupShowed extends Info
   object EditMyGroupShowedError extends Error
   object EditMyGroupUpdated extends Info
-  object EditMyGroupUpdatedWarn extends Warn
+  object EditMyGroupBadUserInput extends Warn
   object EditMyGroupUpdatedError extends Error
 }
