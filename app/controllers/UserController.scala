@@ -113,7 +113,7 @@ case class UserController @Inject() (
                 .zip(userService.byGroupIdsFuture(List(groupId), includeDisabled = true))
                 .flatMap {
                   case (None, _) =>
-                    val message = "L’utilisateur n'existe pas dans Administration+"
+                    val message = "L’utilisateur n’existe pas dans Administration+"
                     eventService.log(EditMyGroupUpdatedWarn, message)
                     successful(
                       Redirect(routes.UserController.showEditMyGroups())
