@@ -10,6 +10,7 @@
             <div class="header">@header</div>
         </div>
         <table class="group-table mdl-data-table mdl-js-data-table">
+        <div class="sub-header">Liste des membres du groupe</div>
         @for(user <- users) {
             <tr class="no-hover td--clear-border">
                 <td class="mdl-data-table__cell--non-numeric @if(user.disabled) { text--strikethrough }"><span class="application__name">@user.name</span>
@@ -75,17 +76,22 @@
                     @if(form.hasGlobalErrors) {
                         <div class="global-errors">@form.globalErrors.mkString(", ")</div>
                     }
+                    <div class="sub-header">Ajouter un membre au groupe</div>
                     <div class="add-new-user-panel single--display-flex">
-                        @helper.input(form("email"), "label" -> "Adresse email de l’utilisateur") { (id, name, value, args) =>
-                            <input class="mdl-textfield__input"
-                                type="text"
-                                name="@name"
-                                id="@id"
-                                value="@value"
-                                @toHtmlArgs(args)>
-                        }
-                        <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
-                            Ajouter l’utilisateur</button>
+                        <div>
+                            <div class="single--margin-bottom--8px">Adresse e-mail&nbsp;<span class="mdl-color-text--red-500">*</span>&nbsp;:</div>
+                            <div>
+                                @helper.input(form("email"), "label" -> "Saisir l’adresse e-mail") { (id, name, value, args) =>
+                                    <input class="mdl-textfield__input"
+                                        type="text"
+                                        name="@name"
+                                        id="@id"
+                                        value="@value"
+                                        @toHtmlArgs(args)>
+                                }
+                            </div>
+                        </div>
+                        <button class="single--margin-left-24px mdl-button mdl-js-button mdl-button--raised" type="submit">Ajouter au groupe</button>
                     </div>
                 }
             }
