@@ -87,7 +87,7 @@ case class UserController @Inject() (
     applications <- applicationService.allForUserIds(users.map(_.id))
   } yield (groups, users, applications)
 
-  private def updateMyGroupsNotAllowed[A]()(implicit request: RequestWithUserData[A]) = {
+  private def updateMyGroupsNotAllowed()(implicit request: RequestWithUserData[_]) = {
     val message = "Vous n’avez pas le droit de modifier ce groupe"
     eventService.log(EditMyGroupUpdatedError, message)
     Redirect(routes.UserController.showEditMyGroups()).flashing("error" -> message)
