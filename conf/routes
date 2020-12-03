@@ -61,7 +61,7 @@ POST        /importation/import                                                 
 # Groups
 POST        /groups                                                                          controllers.GroupController.addGroup()
 GET         /groups                                                                          controllers.UserController.showEditMyGroups()
-GET         /groups/:groupId/remove/:userId                                                  controllers.UserController.removeFromGroup(userId: java.util.UUID, groupId: java.util.UUID)
+POST        /groups/:groupId/remove/:userId                                                  controllers.UserController.removeFromGroup(userId: java.util.UUID, groupId: java.util.UUID)
 POST        /groups/:groupId/add                                                             controllers.UserController.addToGroup(groupId: java.util.UUID)
 GET         /groups/:groupId                                                                 controllers.GroupController.editGroup(groupId: java.util.UUID)
 POST        /groups/:groupId                                                                 controllers.GroupController.editGroupPost(groupId: java.util.UUID)

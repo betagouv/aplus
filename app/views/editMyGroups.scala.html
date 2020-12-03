@@ -48,7 +48,10 @@
                 </td>
                 <td class="remove-link-panel">
                 @if(user.id =!= currentUser.id) {
-                    <a class="remove-link" href="@routes.UserController.removeFromGroup(user.id, groupId)">Retirer&nbsp;du groupe</a>
+                    @helper.form(routes.UserController.removeFromGroup(user.id, groupId), "method" -> "post") {
+                        @helper.CSRF.formField
+                        <button class="remove-link" type="submit">Retirer&nbsp;du groupe</button>
+                    }
                 }
                 </td>
             </tr>
