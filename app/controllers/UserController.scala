@@ -154,7 +154,8 @@ case class UserController @Inject() (
           .recover { e =>
             val message = e.getMessage
             eventService.log(EditMyGroupUpdatedError, message)
-            Redirect(routes.UserController.showEditMyGroups()).flashing("error" -> message)
+            Redirect(routes.UserController.showEditMyGroups())
+              .flashing("error" -> "Une erreur technique est survenue")
           }
       else successful(updateMyGroupsNotAllowed())
     }
