@@ -66,7 +66,7 @@ case class User(
       phoneNumber = phoneNumber
     )
 
-  def belongsTo(groupId: UUID) = this.groupIds.contains[UUID](groupId)
+  def belongsTo(groupId: UUID) = groupIds.contains[UUID](groupId)
 
 }
 
