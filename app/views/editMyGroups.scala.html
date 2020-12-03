@@ -77,7 +77,7 @@
                         <div class="global-errors">@form.globalErrors.mkString(", ")</div>
                     }
                     <div class="add-new-user-panel single--display-flex">
-                        @helper.input(form("email"), "label" -> "Adresse email de l'utilisateur") { (id, name, value, args) =>
+                        @helper.input(form("email"), "label" -> "Adresse email de l’utilisateur") { (id, name, value, args) =>
                             <input class="mdl-textfield__input"
                                 type="text"
                                 name="@name"
