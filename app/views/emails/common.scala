@@ -1,10 +1,9 @@
 package views.emails
 
+import cats.syntax.all._
 import constants.Constants
 import helper.Time
 import java.time.ZonedDateTime
-
-import cats.implicits.catsSyntaxOptionId
 import models._
 import scalatags.Text.all._
 

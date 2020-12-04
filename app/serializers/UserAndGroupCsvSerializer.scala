@@ -3,7 +3,7 @@ package serializers
 import java.time.ZonedDateTime
 import java.util.UUID
 
-import cats.implicits.catsSyntaxOptionId
+import cats.syntax.all._
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import models.formModels.{UserFormData, UserGroupFormData}
 import helper.{PlayFormHelper, UUIDHelper}

@@ -159,7 +159,7 @@ class UserGroupService @Inject() (
     Future {
       db.withConnection { implicit connection =>
         val organisationIdStrings = organisationIds.map(_.id)
-        SQL"""SELECT * FROM "user_group" WHERE ARRAY[$organisationIdStrings] @> ARRAY[organisation]"""
+        SQL"""SELECT * FROM "user_group" WHERE ARRAY[$organisationIdStrings]::varchar[] @> ARRAY[organisation]"""
           .as(simpleUserGroup.*)
       }
     }
