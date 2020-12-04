@@ -877,6 +877,16 @@ Tabs
     color: white;
 }
 
+.mdl-card__supporting-text {
+    color: rgba(0, 0, 0, 0.70);
+}
+
+.answer-card {
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom: none !important;
+}
+
 .global-errors {
     color: red;
     font-weight: bold;

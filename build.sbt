@@ -14,7 +14,13 @@ lazy val root = (project in file("."))
     buildInfoPackage := "constants"
   )
 
-scalaVersion := "2.13.3"
+inThisBuild(
+  List(
+    scalaVersion := "2.13.3",
+    semanticdbEnabled := true, // enable SemanticDB
+    semanticdbVersion := scalafixSemanticdb.revision // use Scalafix compatible version
+  )
+)
 
 // https://docs.scala-lang.org/overviews/compiler-options/index.html
 scalacOptions ++= Seq(
@@ -88,7 +94,7 @@ libraryDependencies ++= Seq(
   // known security vulnerabilities is used
   // It is also compatible with play-json
   // https://github.com/playframework/play-json/blob/master/build.sbt#L20
-  "com.fasterxml.jackson.core" % "jackson-databind" % "2.10.5"
+  "com.fasterxml.jackson.core" % "jackson-databind" % "2.10.5.1"
 )
 
 // UI
@@ -103,7 +109,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "chartjs" % "2.9.3",
   "org.webjars" % "font-awesome" % "5.15.1",
   "org.webjars.bowergithub.olifolkerd" % "tabulator" % "4.5.3",
-  "org.webjars.npm" % "xlsx" % "0.16.8"
+  "org.webjars.npm" % "xlsx" % "0.16.9"
 )
 // Crash
 libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.30"
