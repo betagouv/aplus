@@ -1,15 +1,14 @@
 package models
 
-import java.time.{ZoneId, ZonedDateTime}
-import java.util.UUID
-
 import models.Answer.AnswerType
-import cats.syntax.all._
-import models.Answer.AnswerType
+import models.Application.Status.{Archived, New, Processing}
 import models.Application.{MandatType, SeenByUser}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
+
+import java.time.{ZoneId, ZonedDateTime}
+import java.util.UUID
 
 @RunWith(classOf[JUnitRunner])
 class ApplicationSpec extends Specification {
@@ -147,7 +146,7 @@ class ApplicationSpec extends Specification {
         invitedGroupIdsAtCreation = List.empty[UUID]
       )
 
-      application.status must equalTo("Archivée")
+      application.status must equalTo(Archived)
     }
 
     "'répondu' if there is an answer with the same creator as the application" >> {
@@ -203,7 +202,7 @@ class ApplicationSpec extends Specification {
         invitedGroupIdsAtCreation = List.empty[UUID]
       )
 
-      application.status must equalTo("Répondu")
+      application.status must equalTo(Processing)
     }
 
     "'nouvelle' if there is no answer with the same creator as the application" >> {
@@ -258,7 +257,7 @@ class ApplicationSpec extends Specification {
         invitedGroupIdsAtCreation = List.empty[UUID]
       )
 
-      application.status must equalTo("Nouvelle")
+      application.status must equalTo(New)
     }
 
   }
