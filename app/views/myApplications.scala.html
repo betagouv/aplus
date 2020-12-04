@@ -16,7 +16,7 @@
             </tfoot>
             <tbody>
             @for((application) <- applications.sortBy(_.closed)) {
-                <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="searchable-row @if(application.longStatus(user) === New) {td--important-border} else {td--clear-border}">
+                <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="searchable-row @if(application.longStatus(user) === New) {td--important-border} else {td--clear-border} @if(!application.hasBeenDisplayedFor(user)) {td--blue-background}">
                   <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
                     @toHtml(views.helpers.applications.statusTag(application, user))
                     @if(Authorization.isAdmin(currentUserRights)) {

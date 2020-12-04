@@ -73,6 +73,8 @@ case class Application(
     s"$areaName $creatorName $userInfosStripped $subjectStripped $descriptionStripped $invitedUserNames $answersStripped"
   }
 
+  def hasBeenDisplayedFor(user: User) = seenByUserIds.contains[UUID](user.id)
+
   private def isProcessed = answers.lastOption.exists(_.answerType === ApplicationProcessed)
   private def isCreator(user: User) = user.id === creatorUserId
 
