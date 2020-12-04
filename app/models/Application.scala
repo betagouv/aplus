@@ -1,13 +1,14 @@
 package models
 
+import cats.syntax.all._
+import cats.{Eq, Show}
+import models.Answer.AnswerType.ApplicationProcessed
+import models.Application.SeenByUser
+import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
+
 import java.time.temporal.ChronoUnit.MINUTES
 import java.time.{Instant, ZonedDateTime}
 import java.util.UUID
-import cats.{Eq, Show}
-import cats.syntax.all._
-import models.Answer.AnswerType.ApplicationProcessed
-import models.Application.SeenByUser
-import models.Application.Status.{Archived, New, Processed, Processing}
 
 case class Application(
     id: UUID,
@@ -81,10 +82,10 @@ case class Application(
 
     closed match {
       case true                                                   => Archived
-      case false if isProcessed && isCreator(user)                => Application.Status.ToArchive
+      case false if isProcessed && isCreator(user)                => ToArchive
       case false if isProcessed                                   => Processed
       case false if answeredByOtherThan(user) | seenByInvitedUser => Processing
-      case false if isCreator(user)                               => Application.Status.Sent
+      case false if isCreator(user)                               => Sent
       case false                                                  => New
       // FIXME Avis de consultation ?
       // FIXME Idée : Trouver un autre signe pour montrer que j'ai vu la demande (gras pour les non lues ? code couleur ?)
