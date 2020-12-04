@@ -87,8 +87,6 @@ case class Application(
       case false if answeredByOtherThan(user) | seenByInvitedUser => Processing
       case false if isCreator(user)                               => Sent
       case false                                                  => New
-      // FIXME Avis de consultation ?
-      // FIXME Idée : Trouver un autre signe pour montrer que j'ai vu la demande (gras pour les non lues ? code couleur ?)
     }
   }
 
