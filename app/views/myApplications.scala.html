@@ -1,5 +1,8 @@
 @import _root_.helper.Time
 
+@import cats.syntax.all._
+@import models.Application.Status.New
+
 @(user: User, currentUserRights: Authorization.UserRights)(myOpenApplications: Seq[Application], myClosedApplications: Seq[Application], applicationsFromTheArea: Seq[Application] = List())(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 @display(applications: Seq[Application]) = {
@@ -13,7 +16,7 @@
             </tfoot>
             <tbody>
             @for((application) <- applications.sortBy(_.closed)) {
-                <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="searchable-row @if(application.longStatus(user) == "Nouvelle") {td--important-border} else {td--clear-border}">
+                <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="searchable-row @if(application.longStatus(user) === New) {td--important-border} else {td--clear-border}">
                   <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
                     @toHtml(views.helpers.applications.statusTag(application, user))
                     @if(Authorization.isAdmin(currentUserRights)) {

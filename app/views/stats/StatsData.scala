@@ -57,7 +57,8 @@ object StatsData {
     lazy val countIrrelevantLast30Days: Int =
       applications.count(a => a.ageInDays <= 30 && a.irrelevant)
 
-    lazy val applicationsByStatus: Map[String, List[Application]] = applications.groupBy(_.status)
+    lazy val applicationsByStatus: Map[String, List[Application]] =
+      applications.groupBy(_.status.show)
 
     lazy val applicationsGroupedByMonth: List[(String, List[Application])] =
       months.values.toList.map { month: String =>

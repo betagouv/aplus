@@ -3,9 +3,8 @@ package controllers
 import java.nio.file.{Files, Path, Paths}
 import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
-
 import actions._
-import cats.implicits.{catsSyntaxOption, catsSyntaxOptionId, catsSyntaxTuple2Semigroupal}
+import cats.implicits.{catsSyntaxOption, catsSyntaxOptionId, catsSyntaxTuple2Semigroupal, toShow}
 import cats.syntax.all._
 import constants.Constants
 import forms.FormsPlusMap
@@ -14,6 +13,7 @@ import helper.CSVUtil.escape
 import helper.StringHelper.{CanonizeString, NonEmptyTrimmedString}
 import helper.Time.zonedDateTimeOrdering
 import helper.{Hash, Time, UUIDHelper}
+
 import javax.inject.{Inject, Singleton}
 import models.Answer.AnswerType
 import models.EventType._
@@ -737,7 +737,7 @@ case class ApplicationController @Inject() (
 
       List[String](
         application.id.toString,
-        application.status,
+        application.status.show,
         // Precision limited for stats
         Time.formatPatternFr(application.creationDate, "YYY-MM-dd"),
         creatorUserGroupNames,
