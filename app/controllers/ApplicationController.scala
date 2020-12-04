@@ -1,7 +1,6 @@
 package controllers
 
 import actions._
-import cats.implicits.{catsSyntaxOption, catsSyntaxOptionId, catsSyntaxTuple2Semigroupal, toShow}
 import cats.syntax.all._
 import constants.Constants
 import forms.FormsPlusMap
