@@ -1,6 +1,6 @@
 package views.helpers
 
-import cats.implicits.toShow
+import cats.syntax.all._
 import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
 import models.{Application, User}
 import scalatags.Text.all._
