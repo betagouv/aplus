@@ -70,7 +70,13 @@ case class Application(
     val answersStripped: String =
       answers.map(_.message.filterNot(stripChars contains _)).mkString(" ")
 
-    s"$areaName $creatorName $userInfosStripped $subjectStripped $descriptionStripped $invitedUserNames $answersStripped"
+    areaName + " " +
+      creatorName + " " +
+      userInfosStripped + " " +
+      subjectStripped + " " +
+      descriptionStripped + " " +
+      invitedUserNames + " " +
+      answersStripped
   }
 
   private def isProcessed = answers.lastOption.exists(_.answerType === ApplicationProcessed)
@@ -80,16 +86,16 @@ case class Application(
     isCreator(userId) || seenByUserIds.contains[UUID](userId)
 
   def longStatus(user: User): Application.Status = {
-    def answeredByOtherThan(user: User) = answers.exists(_.creatorUserID =!= user.id)
+    def answeredByOtherThan = answers.exists(_.creatorUserID =!= user.id)
     lazy val seenByInvitedUser = seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty
 
     closed match {
-      case true                                                   => Archived
-      case false if isProcessed && isCreator(user.id)             => ToArchive
-      case false if isProcessed                                   => Processed
-      case false if answeredByOtherThan(user) | seenByInvitedUser => Processing
-      case false if isCreator(user.id)                            => Sent
-      case false                                                  => New
+      case true                                             => Archived
+      case false if isProcessed && isCreator(user.id)       => ToArchive
+      case false if isProcessed                             => Processed
+      case false if answeredByOtherThan | seenByInvitedUser => Processing
+      case false if isCreator(user.id)                      => Sent
+      case false                                            => New
     }
   }
 
@@ -102,7 +108,7 @@ case class Application(
       case true                                                       => Archived
       case false if isProcessed                                       => Processed
       case false if answeredByCreator | viewedByAtLeastOneInvitedUser => Processing
-      case false                                                      => New
+      case _                                                          => New
     }
   }
 
