@@ -78,7 +78,7 @@ case class Application(
   private def isCreator(user: User) = user.id === creatorUserId
 
   def hasBeenDisplayedFor(user: User) =
-    not(isCreator(user)) && seenByUserIds.contains[UUID](user.id)
+    isCreator(user) || seenByUserIds.contains[UUID](user.id)
 
   def longStatus(user: User): Application.Status = {
     def answeredByOtherThan(user: User) = answers.exists(_.creatorUserID =!= user.id)
