@@ -564,11 +564,19 @@ case class ApplicationController @Inject() (
     }
 
     // Users whose id is in the `Application`
-    val relatedUsersFuture = applicationsFuture.map { applications =>
-      val ids: List[UUID] = applications.flatMap { application =>
+    val relatedUsersFuture: Future[List[User]] = applicationsFuture.flatMap { applications =>
+      val ids: Set[UUID] = applications.flatMap { application =>
         application.creatorUserId :: application.invitedUsers.keys.toList
+      }.toSet
+      if (ids.size > 1000) {
+        // We don't want to send a giga-query to PG
+        // it fails with
+        // IOException
+        // Tried to send an out-of-range integer as a 2-byte value: 33484
+        userService.all.map(_.filter(user => ids.contains(user.id)))
+      } else {
+        userService.byIdsFuture(ids.toList, includeDisabled = true)
       }
-      userService.byIds(ids, includeDisabled = true)
     }
 
     // Note: `users` are Users on which we make stats (count, ...)

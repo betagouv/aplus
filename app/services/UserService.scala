@@ -131,6 +131,9 @@ class UserService @Inject() (
         .as(simpleUser.*)
     }
 
+  def byIdsFuture(ids: List[UUID], includeDisabled: Boolean = false): Future[List[User]] =
+    Future(byIds(ids, includeDisabled))
+
   def byKey(key: String): Option[User] =
     db.withConnection { implicit connection =>
       SQL("""SELECT * FROM "user" WHERE key = {key} AND disabled = false""")
