@@ -80,7 +80,10 @@ case class Application(
   }
 
   private def isProcessed = answers.lastOption.exists(_.answerType === ApplicationProcessed)
-  private def isCreator(user: User) = user.id === creatorUserId
+  private def isCreator(userId: UUID) = userId === creatorUserId
+
+  def hasBeenDisplayedFor(userId: UUID) =
+    isCreator(userId) || seenByUserIds.contains[UUID](userId)
 
   def longStatus(user: User): Application.Status = {
     def answeredByOtherThan = answers.exists(_.creatorUserID =!= user.id)
@@ -88,11 +91,11 @@ case class Application(
 
     closed match {
       case true                                             => Archived
-      case false if isProcessed && isCreator(user)          => ToArchive
+      case false if isProcessed && isCreator(user.id)       => ToArchive
       case false if isProcessed                             => Processed
       case false if answeredByOtherThan | seenByInvitedUser => Processing
-      case false if isCreator(user)                         => Sent
-      case _                                                => New
+      case false if isCreator(user.id)                      => Sent
+      case false                                            => New
     }
   }
 
