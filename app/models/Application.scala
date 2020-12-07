@@ -2,7 +2,6 @@ package models
 
 import cats.syntax.all._
 import cats.{Eq, Show}
-import helper.BooleanHelper.not
 import models.Answer.AnswerType.ApplicationProcessed
 import models.Application.SeenByUser
 import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
