@@ -2,6 +2,8 @@ package models
 
 import cats.syntax.all._
 import cats.{Eq, Show}
+import helper.BooleanHelper
+import helper.BooleanHelper.not
 import models.Answer.AnswerType.ApplicationProcessed
 import models.Application.SeenByUser
 import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
@@ -73,10 +75,11 @@ case class Application(
     s"$areaName $creatorName $userInfosStripped $subjectStripped $descriptionStripped $invitedUserNames $answersStripped"
   }
 
-  def hasBeenDisplayedFor(user: User) = seenByUserIds.contains[UUID](user.id)
-
   private def isProcessed = answers.lastOption.exists(_.answerType === ApplicationProcessed)
   private def isCreator(user: User) = user.id === creatorUserId
+
+  def hasBeenDisplayedFor(user: User) =
+    not(isCreator(user)) && seenByUserIds.contains[UUID](user.id)
 
   def longStatus(user: User): Application.Status = {
     def answeredByOtherThan(user: User) = answers.exists(_.creatorUserID =!= user.id)
