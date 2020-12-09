@@ -977,7 +977,7 @@ case class ApplicationController @Inject() (
         answerIdOption match {
           case Some(answerId)
               if Authorization.answerFileCanBeShowed(filesExpirationInDays)(application, answerId)(
-                request.currentUser,
+                request.currentUser.id,
                 request.rights
               ) =>
             application.answers.find(_.id === answerId) match {
@@ -1000,7 +1000,7 @@ case class ApplicationController @Inject() (
             }
           case None
               if Authorization.applicationFileCanBeShowed(filesExpirationInDays)(application)(
-                request.currentUser,
+                request.currentUser.id,
                 request.rights
               ) =>
             if (application.files.contains(filename)) {
