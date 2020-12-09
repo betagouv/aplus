@@ -217,7 +217,7 @@ object Authorization {
   )(userId: UUID, rights: UserRights): Boolean =
     application.answers
       .find(_.id === answerId)
-      .map(Answer.filesAvailabilityLeftInDays(filesExpirationInDays)) match {
+      .flatMap(Answer.filesAvailabilityLeftInDays(filesExpirationInDays)) match {
       case Some(_) => applicationFileCanBeShowed(filesExpirationInDays)(application)(userId, rights)
       case _       => false
     }
