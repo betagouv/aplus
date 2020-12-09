@@ -2,10 +2,9 @@ package views.stats
 
 import cats.kernel.Eq
 import cats.syntax.all._
+import java.time.YearMonth
 import helper.Time
 import models.{Application, Area, User}
-
-import scala.collection.immutable.ListMap
 
 object StatsData {
 
@@ -45,7 +44,7 @@ object StatsData {
 
   case class ApplicationAggregates(
       applications: List[Application],
-      months: ListMap[String, String],
+      months: List[YearMonth],
       private val usersRelatedToApplications: List[User]
   ) {
     def count: Int = applications.size
@@ -57,26 +56,26 @@ object StatsData {
     lazy val countIrrelevantLast30Days: Int =
       applications.count(a => a.ageInDays <= 30 && a.irrelevant)
 
-    lazy val applicationsByStatus: Map[String, List[Application]] = applications.groupBy(_.status)
+    lazy val applicationsByStatus: Map[String, List[Application]] =
+      applications.groupBy(_.status.show)
 
-    lazy val applicationsGroupedByMonth: List[(String, List[Application])] =
-      months.values.toList.map { month: String =>
-        month -> applications
-          .filter(application =>
-            Time
-              .formatPatternFr(application.creationDate, "MMMM YYYY") === month
-          )
+    lazy val applicationsGroupedByMonth: List[(String, List[Application])] = {
+      val grouped = applications.groupBy(application => YearMonth.from(application.creationDate))
+      months.map { month =>
+        Time.formatMonthYearAllLetters(month) -> grouped.getOrElse(month, List.empty[Application])
       }
+    }
 
-    lazy val closedApplicationsGroupedByMonth: List[(String, List[Application])] =
-      months.values.toList.map { month: String =>
-        month -> applications
-          .filter(application =>
-            application.estimatedClosedDate.exists(closedDate =>
-              Time.formatPatternFr(closedDate, "MMMM YYYY") === month
-            )
-          )
+    lazy val closedApplicationsGroupedByMonth: List[(String, List[Application])] = {
+      val grouped =
+        applications.groupBy(application => application.estimatedClosedDate.map(YearMonth.from))
+      months.map { month =>
+        Time.formatMonthYearAllLetters(month) -> grouped.getOrElse(
+          month.some,
+          List.empty[Application]
+        )
       }
+    }
 
     private def applicationsCountByMandat(mandatType: Application.MandatType): List[Int] =
       applicationsGroupedByMonth.map(
@@ -99,6 +98,7 @@ object StatsData {
       applicationsCountByMandat(Application.MandatType.Phone)
 
     // Conditional Series
+
     lazy val creatorQualitees: List[String] =
       applicationsGroupedByMonth
         .flatMap(_._2)
@@ -123,7 +123,7 @@ object StatsData {
             )
           )
         ),
-        timeAxis = months.values.map(Label.apply).toList
+        timeAxis = months.map(month => Label(Time.formatMonthYearAllLetters(month)))
       )
 
   }

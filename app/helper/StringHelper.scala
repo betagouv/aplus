@@ -1,8 +1,7 @@
 package helper
 
+import cats.syntax.all._
 import java.text.Normalizer
-
-import cats.implicits.catsSyntaxOptionId
 import org.apache.commons.lang3.StringUtils
 
 object StringHelper {

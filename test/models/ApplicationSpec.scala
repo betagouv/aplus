@@ -1,15 +1,14 @@
 package models
 
-import java.time.{ZoneId, ZonedDateTime}
-import java.util.UUID
-
 import models.Answer.AnswerType
-import cats.syntax.all._
-import models.Answer.AnswerType
+import models.Application.Status.{Archived, New, Processing}
 import models.Application.{MandatType, SeenByUser}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
+
+import java.time.{Instant, ZoneId, ZonedDateTime}
+import java.util.UUID
 
 @RunWith(classOf[JUnitRunner])
 class ApplicationSpec extends Specification {
@@ -147,7 +146,7 @@ class ApplicationSpec extends Specification {
         invitedGroupIdsAtCreation = List.empty[UUID]
       )
 
-      application.status must equalTo("Archivée")
+      application.status must equalTo(Archived)
     }
 
     "'répondu' if there is an answer with the same creator as the application" >> {
@@ -203,7 +202,7 @@ class ApplicationSpec extends Specification {
         invitedGroupIdsAtCreation = List.empty[UUID]
       )
 
-      application.status must equalTo("Répondu")
+      application.status must equalTo(Processing)
     }
 
     "'nouvelle' if there is no answer with the same creator as the application" >> {
@@ -258,9 +257,75 @@ class ApplicationSpec extends Specification {
         invitedGroupIdsAtCreation = List.empty[UUID]
       )
 
-      application.status must equalTo("Nouvelle")
+      application.status must equalTo(New)
+    }
+  }
+
+  "Application displaying should be" >> {
+    "false for an application creator" >> {
+      val userId = UUID.randomUUID()
+      val application = Application(
+        id = UUID.randomUUID(),
+        creationDate = ZonedDateTime.now(),
+        creatorUserName = "Mathieu",
+        creatorUserId = userId,
+        subject = "Sujet",
+        description = "Description",
+        userInfos = Map.empty[String, String],
+        invitedUsers = Map.empty[UUID, String],
+        area = UUID.randomUUID(),
+        irrelevant = false,
+        mandatType = Option.empty[MandatType],
+        mandatDate = Option.empty[String],
+        invitedGroupIdsAtCreation = List.empty[UUID]
+      )
+
+      application.hasBeenDisplayedFor(userId) must beTrue
     }
 
+    "false for an application with the userId in seenByUsers" >> {
+      val userId = UUID.randomUUID()
+      val application = Application(
+        id = UUID.randomUUID(),
+        creationDate = ZonedDateTime.now(),
+        creatorUserName = "Mathieu",
+        creatorUserId = UUID.randomUUID(),
+        subject = "Sujet",
+        description = "Description",
+        userInfos = Map.empty[String, String],
+        invitedUsers = Map.empty[UUID, String],
+        seenByUsers = List(SeenByUser(userId = userId, lastSeenDate = Instant.now())),
+        area = UUID.randomUUID(),
+        irrelevant = false,
+        mandatType = Option.empty[MandatType],
+        mandatDate = Option.empty[String],
+        invitedGroupIdsAtCreation = List.empty[UUID]
+      )
+
+      application.hasBeenDisplayedFor(userId) must beTrue
+    }
+
+    "true for an application without the userId in seenByUsers" >> {
+      val userId = UUID.randomUUID()
+      val application = Application(
+        id = UUID.randomUUID(),
+        creationDate = ZonedDateTime.now(),
+        creatorUserName = "Mathieu",
+        creatorUserId = UUID.randomUUID(),
+        subject = "Sujet",
+        description = "Description",
+        userInfos = Map.empty[String, String],
+        invitedUsers = Map.empty[UUID, String],
+        seenByUsers = List.empty[SeenByUser],
+        area = UUID.randomUUID(),
+        irrelevant = false,
+        mandatType = Option.empty[MandatType],
+        mandatDate = Option.empty[String],
+        invitedGroupIdsAtCreation = List.empty[UUID]
+      )
+
+      application.hasBeenDisplayedFor(userId) must beFalse
+    }
   }
 
 }

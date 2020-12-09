@@ -4,7 +4,6 @@ import java.time.{LocalDate, ZoneId, ZonedDateTime}
 import java.util.UUID
 
 import actions.{LoginAction, RequestWithUserData}
-import cats.implicits.{catsKernelStdMonoidForString, catsSyntaxOption, catsSyntaxOptionId}
 import cats.syntax.all._
 import controllers.Operators.{GroupOperators, UserOperators}
 import helper.BooleanHelper.not

@@ -1,11 +1,6 @@
 package controllers
 
-import java.nio.file.{Files, Path, Paths}
-import java.time.{LocalDate, ZonedDateTime}
-import java.util.UUID
-
 import actions._
-import cats.implicits.{catsSyntaxOption, catsSyntaxOptionId, catsSyntaxTuple2Semigroupal}
 import cats.syntax.all._
 import constants.Constants
 import forms.FormsPlusMap
@@ -14,7 +9,6 @@ import helper.CSVUtil.escape
 import helper.StringHelper.{CanonizeString, NonEmptyTrimmedString}
 import helper.Time.zonedDateTimeOrdering
 import helper.{Hash, Time, UUIDHelper}
-import javax.inject.{Inject, Singleton}
 import models.Answer.AnswerType
 import models.EventType._
 import models._
@@ -32,6 +26,10 @@ import serializers.{AttachmentHelper, DataModel, Keys}
 import services._
 import views.stats.StatsData
 
+import java.nio.file.{Files, Path, Paths}
+import java.time.{LocalDate, ZonedDateTime}
+import java.util.UUID
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -475,7 +473,7 @@ case class ApplicationController @Inject() (
 
     val firstDate: ZonedDateTime =
       if (applications.isEmpty) now else applications.map(_.creationDate).min
-    val months = Time.monthsMap(firstDate, now)
+    val months = Time.monthsBetween(firstDate, now)
     val allApplications = applicationsByArea.flatMap(_._2).toList
     val allApplicationsByArea = applicationsByArea.map { case (area, applications) =>
       StatsData.AreaAggregates(
@@ -540,14 +538,15 @@ case class ApplicationController @Inject() (
           } yield (users, applications)
         case (_, _ :: _, _) =>
           userGroupService.byOrganisationIds(organisationIds).flatMap(anonymousGroupsAndUsers)
-        case (_, _, _) =>
+        case (_, Nil, _) =>
           userGroupService
-            .byOrganisationIds(organisationIds)
+            .byIdsFuture(groupIds)
             .flatMap(anonymousGroupsAndUsers)
             .map { case (users, allApplications) =>
               val applications = allApplications.filter { application =>
                 application.isWithoutInvitedGroupIdsLegacyCase ||
-                application.invitedGroups.intersect(groupIds.toSet).nonEmpty
+                application.invitedGroups.intersect(groupIds.toSet).nonEmpty ||
+                users.exists(user => user.id === application.creatorUserId)
               }
               (users, applications)
             }
@@ -737,7 +736,7 @@ case class ApplicationController @Inject() (
 
       List[String](
         application.id.toString,
-        application.status,
+        application.status.show,
         // Precision limited for stats
         Time.formatPatternFr(application.creationDate, "YYY-MM-dd"),
         creatorUserGroupNames,
