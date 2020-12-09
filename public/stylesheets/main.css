@@ -274,6 +274,10 @@ html, body {
     border-color: #666666;
 }
 
+.td--blue-background {
+    background-color: #f1f6fc;
+}
+
 .icon--light {
     color: #D8D8D8;
 }

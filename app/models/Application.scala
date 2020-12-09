@@ -1,13 +1,14 @@
 package models
 
+import cats.syntax.all._
+import cats.{Eq, Show}
+import models.Answer.AnswerType.ApplicationProcessed
+import models.Application.SeenByUser
+import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
+
 import java.time.temporal.ChronoUnit.MINUTES
 import java.time.{Instant, ZonedDateTime}
 import java.util.UUID
-
-import cats.Eq
-import cats.syntax.all._
-import models.Answer.AnswerType.ApplicationProcessed
-import models.Application.SeenByUser
 
 case class Application(
     id: UUID,
@@ -58,7 +59,7 @@ case class Application(
 
   lazy val searchData = {
     val stripChars = "\"<>'"
-    val areaName: String = Area.fromId(area).map(_.name).getOrElse("")
+    val areaName: String = Area.fromId(area).map(_.name).orEmpty
     val creatorName: String = creatorUserName.filterNot(stripChars contains _)
     val userInfosStripped: String =
       userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")
@@ -69,49 +70,47 @@ case class Application(
     val answersStripped: String =
       answers.map(_.message.filterNot(stripChars contains _)).mkString(" ")
 
-    (areaName + " " +
+    areaName + " " +
       creatorName + " " +
       userInfosStripped + " " +
       subjectStripped + " " +
       descriptionStripped + " " +
       invitedUserNames + " " +
-      answersStripped)
+      answersStripped
   }
 
-  def longStatus(user: User) =
-    closed match {
-      case true                                                                  => "Archivée"
-      case _ if answers.lastOption.exists(_.answerType === ApplicationProcessed) => "Traitée"
-      case _ if user.id === creatorUserId && answers.exists(_.creatorUserID =!= user.id) =>
-        "Répondu"
-      case _
-          if user.id === creatorUserId && seenByUserIds
-            .intersect(invitedUsers.keys.toList)
-            .nonEmpty =>
-        "Consultée"
-      case _ if user.id === creatorUserId                   => "Envoyée"
-      case _ if answers.exists(_.creatorUserID === user.id) => "Répondu"
-      case _ if answers.exists(_.creatorUserName.contains(user.qualite)) => {
-        val username = answers
-          .find(_.creatorUserName.contains(user.qualite))
-          .map(_.creatorUserName)
-          .getOrElse("un collègue")
-          .replaceAll("\\(.*\\)", "")
-          .trim
-        s"Répondu par ${username}"
-      }
-      case _ if seenByUserIds.contains(user.id) => "Consultée"
-      case _                                    => "Nouvelle"
-    }
+  private def isProcessed = answers.lastOption.exists(_.answerType === ApplicationProcessed)
+  private def isCreator(userId: UUID) = userId === creatorUserId
 
-  def status =
+  def hasBeenDisplayedFor(userId: UUID) =
+    isCreator(userId) || seenByUserIds.contains[UUID](userId)
+
+  def longStatus(user: User): Application.Status = {
+    def answeredByOtherThan = answers.exists(_.creatorUserID =!= user.id)
+    lazy val seenByInvitedUser = seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty
+
     closed match {
-      case true                                                                  => "Archivée"
-      case _ if answers.lastOption.exists(_.answerType === ApplicationProcessed) => "Traitée"
-      case _ if answers.exists(_.creatorUserID === creatorUserId)                => "Répondu"
-      case _ if seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty       => "Consultée"
-      case _                                                                     => "Nouvelle"
+      case true                                             => Archived
+      case false if isProcessed && isCreator(user.id)       => ToArchive
+      case false if isProcessed                             => Processed
+      case false if answeredByOtherThan | seenByInvitedUser => Processing
+      case false if isCreator(user.id)                      => Sent
+      case false                                            => New
     }
+  }
+
+  def status: Application.Status = {
+    lazy val answeredByCreator = answers.exists(_.creatorUserID === creatorUserId)
+    lazy val viewedByAtLeastOneInvitedUser =
+      seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty
+
+    closed match {
+      case true                                                       => Archived
+      case false if isProcessed                                       => Processed
+      case false if answeredByCreator | viewedByAtLeastOneInvitedUser => Processing
+      case _                                                          => New
+    }
+  }
 
   def invitedUsers(users: List[User]): List[User] =
     invitedUsers.keys.flatMap(userId => users.find(_.id === userId)).toList
@@ -187,6 +186,34 @@ case class Application(
 }
 
 object Application {
+
+  sealed trait Status
+
+  object Status {
+
+    @SuppressWarnings(Array("scalafix:DisableSyntax.=="))
+    implicit val Eq: Eq[Status] = (x: Status, y: Status) => x == y
+
+    implicit val Show = new Show[Status] {
+
+      override def show(status: Status) = status match {
+        case Archived   => "Archivée"
+        case ToArchive  => "À archiver"
+        case Processed  => "Traitée"
+        case Processing => "En cours"
+        case Sent       => "Envoyée"
+        case New        => "Nouvelle"
+      }
+
+    }
+
+    case object Archived extends Status
+    case object ToArchive extends Status
+    case object Processed extends Status
+    case object Processing extends Status
+    case object Sent extends Status
+    case object New extends Status
+  }
 
   final case class SeenByUser(userId: UUID, lastSeenDate: Instant)
 
