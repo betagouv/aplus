@@ -15,7 +15,7 @@ object formModels {
 
     val form: Form[AddUserToGroupFormData] =
       Form(
-        mapping("email" -> nonEmptyText)(AddUserToGroupFormData.apply)(
+        mapping("email" -> nonEmptyText)(email => AddUserToGroupFormData(email.trim))(
           AddUserToGroupFormData.unapply
         )
       )
