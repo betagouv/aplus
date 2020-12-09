@@ -147,7 +147,7 @@ case class UserController @Inject() (
         userService
           .removeFromGroup(id, groupId)
           .map { _ =>
-            val message = "Le groupe a été modifié"
+            val message = "L’utilisateur a bien été retiré du groupe."
             eventService.log(EditMyGroupUpdated, message)
             Redirect(routes.UserController.showEditMyGroups()).flashing("success" -> message)
           }
