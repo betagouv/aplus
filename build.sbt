@@ -79,7 +79,6 @@ libraryDependencies ++= Seq(
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "com.typesafe.play" %% "play-mailer-guice" % "8.0.1",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
-  "com.google.guava" % "guava" % "30.0-jre",
   "com.github.tototoshi" %% "scala-csv" % "1.3.6",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.9.2",
@@ -90,6 +89,8 @@ libraryDependencies ++= Seq(
   // https://github.com/playframework/play-json/blob/master/build.sbt#L20
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.10.5"
 )
+
+dependencyOverrides += "com.google.guava" % "guava" % "30.0-jre"
 
 // UI
 libraryDependencies ++= Seq(
