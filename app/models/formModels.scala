@@ -24,12 +24,7 @@ object formModels {
           "firstName" -> text.verifying(maxLength(100), nonEmpty),
           "lastName" -> text.verifying(maxLength(100), nonEmpty),
           "qualite" -> text.verifying(maxLength(100), nonEmpty),
-          "phone-number" -> text.verifying(
-            pattern(
-              """0\d \d{2} \d{2} \d{2} \d{2}""".r,
-              error = "Le format doit être XX XX XX XX XX"
-            )
-          )
+          "phone-number" -> optional(nonEmptyText)
         )(EditProfileFormData.apply)(EditProfileFormData.unapply)
       )
 
