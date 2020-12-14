@@ -83,7 +83,7 @@ case class UserController @Inject() (
         user.firstName.orEmpty,
         user.lastName.orEmpty,
         user.qualite,
-        user.phoneNumber.orEmpty
+        user.phoneNumber
       )
       val form = EditProfileFormData.form.fill(profile)
       groupService
@@ -123,7 +123,7 @@ case class UserController @Inject() (
             success => {
               import success._
               val edited =
-                userService.editProfile(user.id)(firstName, lastName, qualite, phoneNumber)
+                userService.editProfile(user.id)(firstName, lastName, qualite, phoneNumber.orEmpty)
               successful(edited)
                 .map { _ =>
                   val message = "Votre profil a bien été modifié"

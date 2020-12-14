@@ -1,11 +1,11 @@
 package models
 
-import java.util.UUID
-
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.data.validation.Constraints.{maxLength, nonEmpty, pattern}
+import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
+
+import java.util.UUID
 
 object formModels {
 
@@ -13,7 +13,7 @@ object formModels {
       firstName: String,
       lastName: String,
       qualite: String,
-      phoneNumber: String
+      phoneNumber: Option[String]
   )
 
   object EditProfileFormData {
