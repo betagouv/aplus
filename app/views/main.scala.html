@@ -116,12 +116,12 @@
 
                 @flash.get("error").map { error =>
                     <div class="mdl-cell mdl-cell--12-col" id="answer-error">
-                        <div class="notification notification--error"><b>@error</b><br>
-                            Si l'erreur persiste vous pouvez contacter l'équipe A+ : <a href="mailto:@Constants.supportEmail?subject=@error">@Constants.supportEmail</a>
+                        <div class="notification notification--error">
+                            <div><b>@error</b></div>
+                            <div>Si l'erreur persiste vous pouvez contacter l'équipe A+&nbsp;:&nbsp;<a href="mailto:@Constants.supportEmail?subject=@error">@Constants.supportEmail</a></div>
                         </div>
                     </div>
                 }
-
 
                 @flash.get("success").map { message =>
                     <div class="mdl-cell mdl-cell--12-col">

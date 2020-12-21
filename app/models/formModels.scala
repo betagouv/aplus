@@ -9,6 +9,19 @@ import java.util.UUID
 
 object formModels {
 
+  final case class AddUserToGroupFormData(email: String)
+
+  object AddUserToGroupFormData {
+
+    val form: Form[AddUserToGroupFormData] =
+      Form(
+        mapping("email" -> nonEmptyText)(email => AddUserToGroupFormData(email.trim))(
+          AddUserToGroupFormData.unapply
+        )
+      )
+
+  }
+
   final case class EditProfileFormData(
       firstName: String,
       lastName: String,

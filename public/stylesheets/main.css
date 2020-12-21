@@ -404,7 +404,7 @@ a {
 }
 
 .text--font-size-medium {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 400;
 }
 
@@ -456,6 +456,11 @@ a {
 .notification--error {
     background: rgba(239, 172, 166, 0.45882);
     border-color: #d63626;
+}
+
+.notification--error > div {
+    display: flex;
+    margin: auto;
 }
 
 .notification__message {
@@ -591,6 +596,14 @@ a {
 
 .single--margin-top-30px {
     margin-top: 30px;
+}
+
+.single--margin-bottom--8px {
+    margin-bottom: -8px;
+}
+
+.single--margin-bottom--24px {
+    margin-bottom: -24px;
 }
 
 .single--margin-bottom-8px {
@@ -894,4 +907,70 @@ Tabs
 .global-errors {
     color: red;
     font-weight: bold;
+}
+
+/* Edit My Groups styles */
+.mdl-data-table tbody tr.no-hover:nth-child(even) {
+    background: #eeeeee
+}
+
+.mdl-data-table tbody tr.no-hover:nth-child(even):hover {
+    background: #eeeeee;
+}
+
+.mdl-data-table tbody tr.no-hover:hover {
+    background: inherit;
+}
+
+.header {
+    color: #555555;
+    font-size: 20px;
+    margin-bottom: 20px;
+    border-bottom: solid 1px #eeeeee;
+}
+
+.sub-header {
+    color: #3c3c3c;
+    font-size: 16px;
+    margin-top: 32px;
+    margin-left: 24px;
+    margin-bottom: 8px;
+}
+
+.remove-link-panel {
+    text-align: center !important;
+}
+
+.remove-link {
+    background: none !important;
+    border: none;
+    padding: 0 !important;
+    font-family: arial, sans-serif;
+    color: #555555;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.group-container {
+    padding-top: 24px;
+    padding-bottom: 8px;
+}
+
+.group-container > div:first-child {
+    padding-left: 24px;
+}
+
+.group-table {
+    border: none;
+    border-spacing: 0;
+    border-collapse: unset;
+    white-space: normal;
+}
+
+.add-new-user-panel {
+    align-items: center;
+    justify-content: start;
+    margin-left: 24px;
+    margin-right: 24px;
+    margin-bottom: 24px;
 }

@@ -4,7 +4,7 @@ import java.util.UUID
 
 import anorm._
 import cats.syntax.all._
-import helper.StringHelper.{capitalizeName, normalizeNFKC, StringOps}
+import helper.StringHelper.StringOps
 import helper.{Hash, Time}
 import javax.inject.Inject
 import models.User
@@ -90,6 +90,9 @@ class UserService @Inject() (
         .as(simpleUser.*)
     }
 
+  def byGroupIdsFuture(ids: List[UUID], includeDisabled: Boolean = false): Future[List[User]] =
+    Future(byGroupIds(ids, includeDisabled))
+
   def byGroupIds(ids: List[UUID], includeDisabled: Boolean = false): List[User] =
     db.withConnection { implicit connection =>
       val disabledSQL: String = if (includeDisabled) {
@@ -147,6 +150,8 @@ class UserService @Inject() (
         .on("email" -> email.toLowerCase)
         .as(simpleUser.singleOpt)
     }
+
+  def byEmailFuture(email: String): Future[Option[User]] = Future(byEmail(email))
 
   def byEmails(emails: List[String]): List[User] = {
     val lowerCaseEmails = emails.map(_.toLowerCase)
@@ -255,7 +260,7 @@ class UserService @Inject() (
       qualite: String,
       phoneNumber: String
   ) =
-    db.withConnection { implicit cnx =>
+    db.withConnection { implicit connection =>
       val normalizedFirstName = firstName.normalized
       val normalizedLastName = lastName.normalized
       val normalizedQualite = qualite.normalized
@@ -269,6 +274,28 @@ class UserService @Inject() (
         phone_number = $phoneNumber
         WHERE id = $userId::uuid
      """.executeUpdate()
+    }
+
+  def addToGroup(userId: UUID, groupId: UUID) =
+    Future {
+      db.withConnection { implicit connection =>
+        SQL"""
+         UPDATE "user" SET
+          group_ids = group_ids || $groupId::uuid
+         WHERE id = $userId::uuid
+       """.executeUpdate()
+      }
+    }
+
+  def removeFromGroup(userId: UUID, groupId: UUID) =
+    Future {
+      db.withConnection { implicit connection =>
+        SQL"""
+         UPDATE "user" SET
+          group_ids = array_remove(group_ids, $groupId::uuid)
+         WHERE id = $userId::uuid
+       """.executeUpdate()
+      }
     }
 
 }
