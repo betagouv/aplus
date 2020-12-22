@@ -104,11 +104,15 @@ case class GroupController @Inject() (
           .bindFromRequest()
           .fold(
             formWithErrors => {
+              val errorString: String = formWithErrors.errors.mkString
               eventService
-                .log(AddUserGroupError, s"Essai d'ajout d'un groupe avec des erreurs de validation")
+                .log(
+                  AddUserGroupError,
+                  s"Essai d'ajout d'un groupe avec des erreurs de validation: $errorString"
+                )
               Future(
                 Redirect(routes.UserController.home()).flashing(
-                  "error" -> s"Impossible d'ajouter le groupe : ${formWithErrors.errors.mkString}"
+                  "error" -> s"Impossible d'ajouter le groupe : $errorString"
                 )
               )
             },
@@ -117,8 +121,11 @@ case class GroupController @Inject() (
                 .add(group)
                 .fold(
                   { error: String =>
+                    val message =
+                      s"Impossible d'ajouter le groupe dans la BDD. " +
+                        group.toLogString + s" Détail de l'erreur: $error"
                     eventService
-                      .log(AddUserGroupError, s"Impossible d'ajouter le groupe dans la BDD")
+                      .log(AddUserGroupError, message)
                     Future(
                       Redirect(routes.UserController.home())
                         .flashing("error" -> s"Impossible d'ajouter le groupe : $error")
@@ -127,7 +134,7 @@ case class GroupController @Inject() (
                   { _ =>
                     eventService.log(
                       UserGroupCreated,
-                      s"Groupe ${group.name} (id : ${group.id}) ajouté par l'utilisateur d'id ${request.currentUser.id}"
+                      s"Groupe ${group.name} ajouté par l'utilisateur d'id ${request.currentUser.id} ${group.toLogString}"
                     )
                     Future(
                       Redirect(routes.GroupController.editGroup(group.id))

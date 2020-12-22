@@ -24,4 +24,12 @@ case class UserGroup(
       .flatMap(Organisation.byId)
       .orElse(Organisation.deductedFromName(name))
 
+  lazy val toLogString: String =
+    s"[Id: '$id' ; " +
+      s"Nom : '$name' ; " +
+      s"""Description : '${description.getOrElse("<vide>")}' ; """ +
+      s"""BAL : '${email.getOrElse("<vide>")}' ; """ +
+      s"""Organisme : ${organisation.map(_.id).getOrElse("<vide>")} ; """ +
+      s"""Territoires : ${areaIds.mkString(", ")}]"""
+
 }
