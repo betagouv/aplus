@@ -722,6 +722,10 @@ a {
     width: 100%;
 }
 
+.single--width-max-content {
+    width: max-content;
+}
+
 .single--flex-grow-1 {
     -webkit-box-flex: 1;
     -ms-flex-positive: 1;

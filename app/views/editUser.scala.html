@@ -92,42 +92,6 @@
                @if(!canEditUser) { readonly }
                @toHtmlArgs(args)>
     }
-    @helper.checkbox(form(Keys.User.sharedAccount), List[Option[(Symbol, String)]](
-        Some("type" -> "checkbox"),
-        Some("label" -> "Compte Partagé"),
-        Some("class" -> "mdl-checkbox__input"),
-        if (canEditUser) None else Some("disabled" -> "")
-    ).flatten: _*)
-    @helper.checkbox(form("instructor"), List[Option[(Symbol, String)]](
-        Some("type" -> "checkbox"),
-        Some("label" -> "Instructeur"),
-        Some("class" -> "mdl-checkbox__input"),
-        if (canEditUser) None else Some("disabled" -> "")
-    ).flatten:_*)
-    @helper.checkbox(form("helper"), List[Option[(Symbol, String)]](
-        Some("type" -> "checkbox"),
-        Some("label" -> "Aidant"),
-        Some("class" -> "mdl-checkbox__input"),
-        if (canEditUser) None else Some("disabled" -> "")
-    ).flatten:_*)
-    @helper.checkbox(form("adminGroup"), List[Option[(Symbol, String)]](
-        Some("type" -> "checkbox"),
-        Some("label" -> "Responsable de ces groupes"),
-        Some("class" -> "mdl-checkbox__input"),
-        if (canEditUser) None else Some("disabled" -> "")
-    ).flatten:_*)
-    @helper.checkbox(form("disabled"), List[Option[(Symbol, String)]](
-        Some("type" -> "checkbox"),
-        Some("label" -> "Désactiver l'utilisateur"),
-        Some("class" -> "mdl-checkbox__input"),
-        if (canEditUser) None else Some("disabled" -> "")
-    ).flatten:_*)
-
-    @if(unused && canEditUser) {
-      <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="showDialog(document.querySelector('#dialog-delete-user'))">Supprimer cet utilisateur inutilisé.</button>
-      <br>
-    }
-    <br>
   </div>
   <div class="mdl-grid mdl-cell--6-col-desktop mdl-cell--12-col">
       <div class="mdl-cell mdl-cell--12-col-desktop mdl-cell--12-col">
@@ -179,6 +143,59 @@
                   <a class="mdl-cell mdl-cell--10-col" href="@routes.GroupController.editGroup(group.id)">@{group.name}</a><br/>
               }
           }
+
+          <div class="mdl-cell mdl-cell--12-col single--margin-top-24px single--margin-bottom-24px">
+            @** To avoid unwanted clicks outside the checkbox texts,
+                we wrap them into a div that has the `width: max-content` **@
+            <div class="single--width-max-content">
+              @helper.checkbox(form(Keys.User.sharedAccount), List[Option[(Symbol, String)]](
+                Some("type" -> "checkbox"),
+                Some("label" -> "Compte Partagé"),
+                Some("class" -> "mdl-checkbox__input"),
+                if (canEditUser) None else Some("disabled" -> "")
+              ).flatten: _*)
+            </div>
+
+            <div class="single--width-max-content">
+              @helper.checkbox(form("instructor"), List[Option[(Symbol, String)]](
+                Some("type" -> "checkbox"),
+                Some("label" -> "Instructeur"),
+                Some("class" -> "mdl-checkbox__input"),
+                if (canEditUser) None else Some("disabled" -> "")
+              ).flatten:_*)
+            </div>
+            <div class="single--width-max-content">
+              @helper.checkbox(form("helper"), List[Option[(Symbol, String)]](
+                Some("type" -> "checkbox"),
+                Some("label" -> "Aidant"),
+                Some("class" -> "mdl-checkbox__input"),
+                if (canEditUser) None else Some("disabled" -> "")
+              ).flatten:_*)
+            </div>
+            <div class="single--width-max-content">
+              @helper.checkbox(form("adminGroup"), List[Option[(Symbol, String)]](
+                Some("type" -> "checkbox"),
+                Some("label" -> "Responsable de ces groupes"),
+                Some("class" -> "mdl-checkbox__input"),
+                if (canEditUser) None else Some("disabled" -> "")
+              ).flatten:_*)
+            </div>
+            <div class="single--width-max-content">
+              @helper.checkbox(form("disabled"), List[Option[(Symbol, String)]](
+                Some("type" -> "checkbox"),
+                Some("label" -> "Désactiver l'utilisateur"),
+                Some("class" -> "mdl-checkbox__input"),
+                if (canEditUser) None else Some("disabled" -> "")
+              ).flatten:_*)
+            </div>
+
+          </div>
+
+          @if(unused && canEditUser) {
+            <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="showDialog(document.querySelector('#dialog-delete-user'))">Supprimer cet utilisateur inutilisé</button>
+            <br>
+          }
+
       </div>
   </div>
 
