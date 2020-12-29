@@ -72,7 +72,8 @@ class CSVSpec extends Specification {
         areaIds = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten.map(_.id),
         organisation = None,
         email = Some("sip.laon@dgfip.finances.gouv.fr"),
-        publicNote = None
+        publicNote = None,
+        internalSupportComment = None
       )
 
       val dgfip = data.find(formData => formData.group.name.eqv(expectedUserGroup.name))

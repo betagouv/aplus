@@ -51,6 +51,22 @@
                     }
                 </select>
             </div>
+
+
+            @if(currentUser.admin) {
+
+              <div class="mdl-cell mdl-cell--12-col  mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <textarea class="mdl-textfield__input single--height-auto" type="text" rows="3" id="internalSupportComment" name="internalSupportComment">@userGroup.internalSupportComment</textarea>
+                <label class="mdl-textfield__label" for="internalSupportComment">Commentaire interne pour le support (visible uniquement par les administrateurs)</label>
+              </div>
+
+            } else {
+              <input type="hidden"
+                     name="internalSupportComment"
+                     id="internalSupportComment"
+                     value="@userGroup.internalSupportComment">
+            }
+
             @if(currentUser.admin) {
                 <div class="mdl-cell mdl-cell--12-col">
                     <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">

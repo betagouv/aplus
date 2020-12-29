@@ -23,7 +23,8 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       inseeCode = List("0"),
       creationDate = Time.nowParis(),
       areaIds = area :: Nil,
-      publicNote = None
+      publicNote = None,
+      internalSupportComment = None
     )
     groupService.add(group)
     group
@@ -64,7 +65,8 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       disabled = false,
       expert = isExpert,
       cguAcceptationDate = Some(Time.nowParis()),
-      groupIds = groups.map(_.id)
+      groupIds = groups.map(_.id),
+      internalSupportComment = None
     )
     val result = userService.add(List(user))
     result.isRight must beTrue

@@ -32,7 +32,8 @@ class ApplicationSpec extends Specification with BaseSpec {
         inseeCode = List("0"),
         creationDate = Time.nowParis(),
         areaIds = area :: Nil,
-        publicNote = None
+        publicNote = None,
+        internalSupportComment = None
       )
       groupService.add(instructorGroup)
       val instructorUser = User(
@@ -52,7 +53,8 @@ class ApplicationSpec extends Specification with BaseSpec {
         groupAdmin = false,
         disabled = false,
         cguAcceptationDate = Some(Time.nowParis()),
-        groupIds = List(instructorGroup.id)
+        groupIds = List(instructorGroup.id),
+        internalSupportComment = None
       )
       val helperUser = User(
         UUIDHelper.randomUUID,
@@ -70,7 +72,8 @@ class ApplicationSpec extends Specification with BaseSpec {
         "0",
         groupAdmin = false,
         disabled = false,
-        cguAcceptationDate = Some(Time.nowParis())
+        cguAcceptationDate = Some(Time.nowParis()),
+        internalSupportComment = None
       )
       userService.add(List(instructorUser, helperUser))
       userService.validateCGU(helperUser.id)
