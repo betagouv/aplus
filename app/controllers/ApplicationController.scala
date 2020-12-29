@@ -383,13 +383,14 @@ case class ApplicationController @Inject() (
 
   private def allApplicationVisibleByUserAdmin(
       user: User,
-      areaOption: Option[Area]
+      areaOption: Option[Area],
+      numOfMonthsDisplayed: Int
   ): Future[List[Application]] =
     (user.admin, areaOption) match {
       case (true, None) =>
-        applicationService.allForAreas(user.areas)
+        applicationService.allForAreas(user.areas, numOfMonthsDisplayed.some)
       case (true, Some(area)) =>
-        applicationService.allForAreas(List(area.id))
+        applicationService.allForAreas(List(area.id), numOfMonthsDisplayed.some)
       case (false, None) if user.groupAdmin =>
         val userIds = userService.byGroupIds(user.groupIds, includeDisabled = true).map(_.id)
         applicationService.allForUserIds(userIds)
@@ -416,8 +417,12 @@ case class ApplicationController @Inject() (
             )
           )
         case _ =>
+          val numOfMonthsDisplayed: Int = request
+            .getQueryString(Keys.QueryParam.numOfMonthsDisplayed)
+            .flatMap(s => Try(s.toInt).toOption)
+            .getOrElse(12)
           val area = if (areaId === Area.allArea.id) None else Area.fromId(areaId)
-          allApplicationVisibleByUserAdmin(request.currentUser, area).map {
+          allApplicationVisibleByUserAdmin(request.currentUser, area, numOfMonthsDisplayed).map {
             unfilteredApplications =>
               val filteredApplications =
                 request.getQueryString(Keys.QueryParam.filterIsOpen) match {
@@ -523,7 +528,7 @@ case class ApplicationController @Inject() (
             groups <- userGroupService.byAreas(areaIds)
             users <- (
               userService.byGroupIdsAnonymous(groups.map(_.id)),
-              applicationService.allForAreas(areaIds)
+              applicationService.allForAreas(areaIds, None)
             ).mapN(Tuple2.apply)
           } yield users
         case (_ :: _, _ :: _, Nil) =>
@@ -798,7 +803,7 @@ case class ApplicationController @Inject() (
       val area = if (areaId === Area.allArea.id) Option.empty else Area.fromId(areaId)
       val exportedApplicationsFuture =
         if (request.currentUser.admin || request.currentUser.groupAdmin) {
-          allApplicationVisibleByUserAdmin(request.currentUser, area)
+          allApplicationVisibleByUserAdmin(request.currentUser, area, 24)
         } else {
           Future(Nil)
         }

@@ -53,6 +53,11 @@ object Keys {
     val limit: String = "limit"
     val fromUserId: String = "fromUserId"
     val date: String = "date"
+
+    // Admin
+
+    val numOfMonthsDisplayed: String = "nombreDeMoisAffiche"
+
   }
 
 }

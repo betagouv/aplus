@@ -223,10 +223,21 @@ class ApplicationService @Inject() (
       }
     }
 
-  def allForAreas(areaIds: List[UUID]): Future[List[Application]] =
+  def allForAreas(areaIds: List[UUID], numOfMonths: Option[Int]): Future[List[Application]] =
     Future {
       db.withConnection { implicit connection =>
-        SQL"""SELECT * FROM application WHERE ARRAY[$areaIds]::uuid[] @> ARRAY[area]::uuid[] ORDER BY creation_date DESC"""
+        val additionalFilter = numOfMonths
+          .filter(_ >= 1)
+          .map(months =>
+            "AND creation_date >= date_trunc('month', now()) - " +
+              s"interval '$months month'"
+          )
+          .orEmpty
+        SQL(s"""SELECT * FROM application
+                WHERE ARRAY[{areaIds}]::uuid[] @> ARRAY[area]::uuid[]
+                $additionalFilter
+                ORDER BY creation_date DESC""")
+          .on("areaIds" -> areaIds)
           .as(simpleApplication.*)
           .map(_.anonymousApplication)
       }
