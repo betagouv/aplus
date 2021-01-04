@@ -1,6 +1,7 @@
 @import models._
+@import models.formModels.AddUserFormData
 @import _root_.helper.MDLForms._
-@(user: User, currentUserRights: Authorization.UserRights)(form: Form[(List[User])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@(user: User, currentUserRights: Authorization.UserRights)(form: Form[(List[AddUserFormData])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 
 @main(user, currentUserRights, maxWidth = false)(s"Gestion des utilisateurs") {
@@ -63,9 +64,6 @@
       @helper.repeatWithIndex(form("users"), min = min) { (userField, index) =>
         <tr id="line_@index">
           <td>@index
-            @helper.input(userField("id"), "label" -> "Id", "class" -> "hidden") { (id, name, value, args) =>
-              <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
-            }
           </td>
           <td class="mdl-data-table__cell--non-numeric smaller-textfield">
             @helper.input(userField("name"), "label" -> "Nom et prénom") { (id, name, value, args) =>
@@ -83,7 +81,7 @@
             }
           </td>
           <td class="mdl-data-table__cell--non-numeric smaller-textfield">
-            @helper.input(userField("phone-number"), "label" -> "Téléphone") { (id, name, value, args) =>
+            @helper.input(userField("phoneNumber"), "label" -> "Téléphone") { (id, name, value, args) =>
                 <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args)>
             }
           </td>
@@ -91,7 +89,7 @@
             @helper.checkbox(userField("instructor"), "type" -> "checkbox", "label" -> "Instructeur", "class" -> "mdl-checkbox__input instructor")
           </td>
           <td>
-          @helper.checkbox(userField("adminGroup"), "type" -> "checkbox", "label" -> "Responsable", "class" -> "mdl-checkbox__input")
+          @helper.checkbox(userField("groupAdmin"), "type" -> "checkbox", "label" -> "Responsable", "class" -> "mdl-checkbox__input")
           </td>
           <td>
           @helper.checkbox(userField("sharedAccount"), "type" -> "checkbox", "label" -> "Compte Partagé", "class" -> "mdl-checkbox__input")
