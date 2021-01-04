@@ -2,7 +2,8 @@ package csv
 
 import cats.syntax.all._
 import helper.{CSVUtil, Time, UUIDHelper}
-import models.{formModels, Area, Organisation, UserGroup}
+import models.{Area, Organisation, UserGroup}
+import models.formModels.CSVUserGroupFormData
 import org.junit.runner.RunWith
 import org.specs2.matcher.{TypedEqual => _}
 import org.specs2.mutable.Specification
@@ -51,7 +52,7 @@ class CSVSpec extends Specification {
 
   "The format of from the prefecture should" >> {
     "be recognized" >> {
-      val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
+      val result: Either[String, (List[String], List[CSVUserGroupFormData])] =
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ',',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
@@ -96,7 +97,7 @@ class CSVSpec extends Specification {
     }
 
     "be recognized with proper organisation" >> {
-      val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
+      val result: Either[String, (List[String], List[CSVUserGroupFormData])] =
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ',',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
@@ -114,7 +115,7 @@ class CSVSpec extends Specification {
 
   "The failFile string should" >> {
     "produce 1 errors" >> {
-      val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
+      val result: Either[String, (List[String], List[CSVUserGroupFormData])] =
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ';',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
@@ -138,7 +139,7 @@ class CSVSpec extends Specification {
 
   "The csvFile string should" >> {
     "produce valid groups" >> {
-      val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
+      val result: Either[String, (List[String], List[CSVUserGroupFormData])] =
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ';',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
@@ -151,7 +152,7 @@ class CSVSpec extends Specification {
     }
 
     "produce a valid users" >> {
-      val result: Either[String, (List[String], List[formModels.UserGroupFormData])] =
+      val result: Either[String, (List[String], List[CSVUserGroupFormData])] =
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ';',
           defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
