@@ -76,6 +76,18 @@ object formModels {
       privateToHelpers: Boolean
   )
 
+  case class AddUserFormData(
+      firstName: Option[String],
+      lastName: Option[String],
+      name: String,
+      qualite: String,
+      email: String,
+      instructor: Boolean,
+      groupAdmin: Boolean,
+      phoneNumber: Option[String],
+      sharedAccount: Boolean
+  )
+
   case class EditUserFormData(
       id: UUID,
       firstName: Option[String],
@@ -94,7 +106,7 @@ object formModels {
       sharedAccount: Boolean
   )
 
-  case class UserFormData(
+  case class CSVUserFormData(
       user: User,
       line: Int,
       alreadyExists: Boolean,
@@ -102,9 +114,9 @@ object formModels {
       isInMoreThanOneGroup: Option[Boolean] = None
   )
 
-  case class UserGroupFormData(
+  case class CSVUserGroupFormData(
       group: UserGroup,
-      users: List[UserFormData],
+      users: List[CSVUserFormData],
       alreadyExistsOrAllUsersAlreadyExist: Boolean,
       doNotInsert: Boolean,
       alreadyExistingGroup: Option[UserGroup] = None

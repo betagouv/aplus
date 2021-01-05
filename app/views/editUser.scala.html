@@ -20,13 +20,6 @@
                     Utilisateur : @form("name").value.getOrElse("") </span>
             }
         }
-    @if(canEditUser) {
-      <div class="mdl-cell mdl-cell--12-col">
-          <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell">
-              Sauvegarder
-          </button>
-      </div>
-    }
     <div class="mdl-cell mdl-cell--6-col-desktop mdl-cell--12-col">
     @helper.CSRF.formField
 
@@ -81,9 +74,6 @@
                @if(!canEditUser) { readonly }
                @toHtmlArgs(args)>
      } <br>
-    @helper.input(form("communeCode"), "label" -> "Code INSEE commune") { (id, name, value, args) =>
-    <input class="mdl-textfield__input" type="text" name="@name" id="@id" value="@value" @toHtmlArgs(args) disabled>
-    } <br>
     @helper.input(form("email"), "label" -> "Email") { (id, name, value, args) =>
         <input class="mdl-textfield__input"
                type="text"
