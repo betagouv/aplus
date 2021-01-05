@@ -48,7 +48,12 @@ import models.EventType.{
   ViewUserUnauthorized
 }
 import models._
-import models.formModels.{AddUserToGroupFormData, EditProfileFormData, ValidateSubscriptionForm}
+import models.formModels.{
+  AddUserToGroupFormData,
+  EditProfileFormData,
+  EditUserFormData,
+  ValidateSubscriptionForm
+}
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
@@ -405,7 +410,25 @@ case class UserController @Inject() (
             eventService.log(UserNotFound, s"L'utilisateur $userId n'existe pas")
             Future(NotFound("Nous n'avons pas trouvé cet utilisateur"))
           case Some(user) if Authorization.canSeeOtherUser(user)(request.rights) =>
-            val form = userForm(Time.timeZoneParis).fill(user)
+            val form = editUserForm.fill(
+              EditUserFormData(
+                id = user.id,
+                firstName = user.firstName,
+                lastName = user.lastName,
+                name = user.name,
+                qualite = user.qualite,
+                email = user.email,
+                helper = user.helper,
+                instructor = user.instructor,
+                areas = user.areas,
+                groupAdmin = user.groupAdmin,
+                disabled = user.disabled,
+                groupIds = user.groupIds,
+                phoneNumber = user.phoneNumber,
+                observableOrganisationIds = user.observableOrganisationIds,
+                sharedAccount = user.sharedAccount
+              )
+            )
             val groups = groupService.allGroups
             val unused = not(isAccountUsed(user))
             val Token(tokenName, tokenValue) = CSRF.getToken.get
@@ -419,7 +442,7 @@ case class UserController @Inject() (
               Ok(
                 views.html.editUser(request.currentUser, request.rights)(
                   form,
-                  userId,
+                  user,
                   groups,
                   unused,
                   tokenName = tokenName,
@@ -461,50 +484,74 @@ case class UserController @Inject() (
   def editUserPost(userId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(() => PostEditUserUnauthorized -> s"Accès non autorisé à modifier $userId") { () =>
-        userForm(Time.timeZoneParis)
+        editUserForm
           .bindFromRequest()
           .fold(
-            formWithErrors => {
-              val groups = groupService.allGroups
-              eventService.log(
-                AddUserError,
-                s"Essai de modification de l'utilisateur $userId avec des erreurs de validation"
-              )
-              Future(
-                BadRequest(
-                  views.html
-                    .editUser(request.currentUser, request.rights)(formWithErrors, userId, groups)
-                )
-              )
-            },
-            updatedUser =>
-              withUser(updatedUser.id, includeDisabled = true) { user: User =>
+            formWithErrors =>
+              formWithErrors.value.map(_.id) match {
+                case None =>
+                  eventService.log(UserNotFound, s"L'utilisateur $userId n'existe pas")
+                  Future(NotFound("Nous n'avons pas trouvé cet utilisateur"))
+                case Some(userId) =>
+                  withUser(userId, includeDisabled = true) { user: User =>
+                    val groups = groupService.allGroups
+                    eventService.log(
+                      AddUserError,
+                      s"Essai de modification de l'utilisateur $userId avec des erreurs de validation"
+                    )
+                    Future(
+                      BadRequest(
+                        views.html
+                          .editUser(request.currentUser, request.rights)(
+                            formWithErrors,
+                            user,
+                            groups
+                          )
+                      )
+                    )
+                  }
+              },
+            updatedUserData =>
+              withUser(updatedUserData.id, includeDisabled = true) { oldUser: User =>
                 // Ensure that user include all areas of his group
-                val groups = groupService.byIds(updatedUser.groupIds)
-                val areaIds = (updatedUser.areas ++ groups.flatMap(_.areaIds)).distinct
-                val userToUpdate = updatedUser.copy(
-                  areas = areaIds.intersect(request.currentUser.areas)
-                ) // intersect is a safe gard (In case an Admin try to manage an authorized area)
+                val groups = groupService.byIds(updatedUserData.groupIds)
+                val areaIds = (updatedUserData.areas ++ groups.flatMap(_.areaIds)).distinct
                 val rights = request.rights
-
-                if (not(Authorization.canEditOtherUser(user)(rights))) {
+                if (not(Authorization.canEditOtherUser(oldUser)(rights))) {
                   eventService
                     .log(PostEditUserUnauthorized, s"Accès non autorisé à modifier $userId")
                   Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
                 } else {
+                  val userToUpdate = oldUser.copy(
+                    firstName = updatedUserData.firstName,
+                    lastName = updatedUserData.lastName,
+                    name = updatedUserData.name,
+                    qualite = updatedUserData.qualite,
+                    email = updatedUserData.email,
+                    helper = updatedUserData.helper,
+                    instructor = updatedUserData.instructor,
+                    // intersect is a safe gard (In case an Admin try to manage an authorized area)
+                    areas = areaIds.intersect(request.currentUser.areas),
+                    groupAdmin = updatedUserData.groupAdmin,
+                    disabled = updatedUserData.disabled,
+                    groupIds = updatedUserData.groupIds,
+                    phoneNumber = updatedUserData.phoneNumber,
+                    observableOrganisationIds = updatedUserData.observableOrganisationIds,
+                    sharedAccount = updatedUserData.sharedAccount
+                  )
                   userService.update(userToUpdate).map { updateHasBeenDone =>
                     if (updateHasBeenDone) {
                       eventService
                         .log(
                           UserEdited,
                           s"Utilisateur $userId modifié",
-                          involvesUser = Some(updatedUser)
+                          involvesUser = Some(userToUpdate)
                         )
                       Redirect(routes.UserController.editUser(userId))
                         .flashing("success" -> "Utilisateur modifié")
                     } else {
-                      val form: Form[User] = userForm(Time.timeZoneParis)
-                        .fill(userToUpdate)
+                      val form = editUserForm
+                        .fill(updatedUserData)
                         .withGlobalError(
                           s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)"
                         )
@@ -512,11 +559,11 @@ case class UserController @Inject() (
                       eventService.log(
                         EditUserError,
                         "Impossible de modifier l'utilisateur dans la BDD",
-                        involvesUser = Some(updatedUser)
+                        involvesUser = Some(oldUser)
                       )
                       InternalServerError(
                         views.html
-                          .editUser(request.currentUser, request.rights)(form, userId, groups)
+                          .editUser(request.currentUser, request.rights)(form, oldUser, groups)
                       )
                     }
                   }
@@ -820,47 +867,35 @@ case class UserController @Inject() (
       )
     )
 
-  def userForm(timeZone: ZoneId): Form[User] = Form(userMapping(timeZone))
-
-  private def userMapping(implicit timeZone: ZoneId): Mapping[User] =
-    mapping(
-      "id" -> optional(uuid).transform[UUID](
-        {
-          case None     => UUID.randomUUID()
-          case Some(id) => id
-        },
-        Option.apply
-      ),
-      "key" -> ignored("key"),
-      "firstName" -> optional(text.verifying(maxLength(100))),
-      "lastName" -> optional(text.verifying(maxLength(100))),
-      "name" -> optional(nonEmptyText.verifying(maxLength(100))).transform[String](
-        {
-          case Some(value) => value
-          case None        => ""
-        },
-        {
-          case ""   => Option.empty[String]
-          case name => name.some
-        }
-      ),
-      "qualite" -> text.verifying(maxLength(100)),
-      "email" -> email.verifying(maxLength(200), nonEmpty),
-      "helper" -> boolean,
-      "instructor" -> boolean,
-      "admin" -> boolean,
-      "areas" -> list(uuid).verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
-      "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
-      "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
-      "adminGroup" -> boolean,
-      "disabled" -> boolean,
-      "expert" -> ignored(false),
-      "groupIds" -> default(list(uuid), Nil),
-      "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "phone-number" -> optional(text),
-      "observableOrganisationIds" -> list(of[Organisation.Id]),
-      Keys.User.sharedAccount -> boolean
-    )(User.apply)(User.unapply)
+  val editUserForm: Form[EditUserFormData] =
+    Form(
+      mapping(
+        "id" -> uuid,
+        "firstName" -> optional(text.verifying(maxLength(100))),
+        "lastName" -> optional(text.verifying(maxLength(100))),
+        "name" -> optional(nonEmptyText.verifying(maxLength(100))).transform[String](
+          {
+            case Some(value) => value
+            case None        => ""
+          },
+          {
+            case ""   => Option.empty[String]
+            case name => name.some
+          }
+        ),
+        "qualite" -> text.verifying(maxLength(100)),
+        "email" -> email.verifying(maxLength(200), nonEmpty),
+        "helper" -> boolean,
+        "instructor" -> boolean,
+        "areas" -> list(uuid)
+          .verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
+        "groupAdmin" -> boolean,
+        "disabled" -> boolean,
+        "groupIds" -> default(list(uuid), Nil),
+        "phoneNumber" -> optional(text),
+        "observableOrganisationIds" -> list(of[Organisation.Id]),
+        Keys.User.sharedAccount -> boolean
+      )(EditUserFormData.apply)(EditUserFormData.unapply)
+    )
 
 }
