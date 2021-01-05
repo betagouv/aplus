@@ -1,11 +1,13 @@
 package models
 
-import play.api.data.Form
+import play.api.data.{Form, Mapping}
 import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 
+import cats.syntax.all._
 import java.util.UUID
+import serializers.Keys
 
 object formModels {
 
@@ -76,6 +78,31 @@ object formModels {
       privateToHelpers: Boolean
   )
 
+  object AddUserFormData {
+
+    val formMapping: Mapping[AddUserFormData] = mapping(
+      "firstName" -> optional(text.verifying(maxLength(100))),
+      "lastName" -> optional(text.verifying(maxLength(100))),
+      "name" -> optional(nonEmptyText.verifying(maxLength(100))).transform[String](
+        {
+          case Some(value) => value
+          case None        => ""
+        },
+        {
+          case ""   => Option.empty[String]
+          case name => name.some
+        }
+      ),
+      "qualite" -> text.verifying(maxLength(100)),
+      "email" -> email.verifying(maxLength(200), nonEmpty),
+      "instructor" -> boolean,
+      "groupAdmin" -> boolean,
+      "phoneNumber" -> optional(text),
+      Keys.User.sharedAccount -> boolean
+    )(AddUserFormData.apply)(AddUserFormData.unapply)
+
+  }
+
   case class AddUserFormData(
       firstName: Option[String],
       lastName: Option[String],
@@ -106,8 +133,19 @@ object formModels {
       sharedAccount: Boolean
   )
 
+  case class CSVReviewUserFormData(
+      id: UUID,
+      firstName: Option[String],
+      lastName: Option[String],
+      name: String,
+      email: String,
+      instructor: Boolean,
+      groupAdmin: Boolean,
+      phoneNumber: Option[String]
+  )
+
   case class CSVUserFormData(
-      user: User,
+      user: CSVReviewUserFormData,
       line: Int,
       alreadyExists: Boolean,
       alreadyExistingUser: Option[User] = None,
@@ -122,8 +160,7 @@ object formModels {
       alreadyExistingGroup: Option[UserGroup] = None
   )
 
-  // TOOD : rename Data -> FormData
-  case class CSVImportData(csvLines: String, areaIds: List[UUID], separator: Char)
+  case class CSVRawLinesFormData(csvLines: String, areaIds: List[UUID], separator: Char)
 
   final case class ValidateSubscriptionForm(
       redirect: Option[String],

@@ -851,19 +851,7 @@ case class UserController @Inject() (
   val addUsersForm: Form[List[AddUserFormData]] =
     Form(
       single(
-        "users" -> list(
-          mapping(
-            "firstName" -> optional(text.verifying(maxLength(100))),
-            "lastName" -> optional(text.verifying(maxLength(100))),
-            "name" -> nonEmptyText.verifying(maxLength(100)),
-            "qualite" -> text.verifying(maxLength(100)),
-            "email" -> email.verifying(maxLength(200), nonEmpty),
-            "instructor" -> boolean,
-            "groupAdmin" -> boolean,
-            "phoneNumber" -> optional(text),
-            Keys.User.sharedAccount -> boolean
-          )(AddUserFormData.apply)(AddUserFormData.unapply)
-        )
+        "users" -> list(AddUserFormData.formMapping)
       )
     )
 

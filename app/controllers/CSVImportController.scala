@@ -21,7 +21,12 @@ import models.EventType.{
   UserGroupCreated,
   UsersImported
 }
-import models.formModels.{CSVImportData, CSVUserFormData, CSVUserGroupFormData}
+import models.formModels.{
+  CSVRawLinesFormData,
+  CSVReviewUserFormData,
+  CSVUserFormData,
+  CSVUserGroupFormData
+}
 import models.{Area, Organisation, User, UserGroup}
 import org.webjars.play.WebJarsUtil
 import play.api.data.Forms._
@@ -29,6 +34,7 @@ import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.{Form, Mapping}
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import serializers.{Keys, UserAndGroupCsvSerializer}
+import serializers.UserAndGroupCsvSerializer.UserGroupBlock
 import services.{EventService, NotificationService, UserGroupService, UserService}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -45,13 +51,13 @@ case class CSVImportController @Inject() (
     with UserOperators
     with GroupOperators {
 
-  private val csvImportContentForm: Form[CSVImportData] = Form(
+  private val csvImportContentForm: Form[CSVRawLinesFormData] = Form(
     mapping(
       "csv-lines" -> nonEmptyText,
       "area-default-ids" -> list(uuid),
       "separator" -> char
         .verifying("Séparateur incorrect", value => value === ';' || value === ',')
-    )(CSVImportData.apply)(CSVImportData.unapply)
+    )(CSVRawLinesFormData.apply)(CSVRawLinesFormData.unapply)
   )
 
   def importUsersFromCSV: Action[AnyContent] =
@@ -115,38 +121,59 @@ case class CSVImportController @Inject() (
     groups.map(group => augmentUserGroupInformation(group, multiGroupUserEmails))
   }
 
-  private def userImportMapping(date: ZonedDateTime): Mapping[User] =
+  // This function was written to wrap legacy code. Signature should be more or less OK.
+  private def csvImportDataToReviewFormData(
+      groups: List[UserGroupBlock]
+  ): List[CSVUserGroupFormData] = {
+    val tmpGroups = groups.map(group =>
+      CSVUserGroupFormData(
+        group = UserGroup(
+          id = UUID.randomUUID(),
+          name = group.group.name,
+          description = group.group.description,
+          inseeCode = Nil,
+          creationDate = Time.nowParis(),
+          areaIds = Nil,
+          organisation = None,
+          email = None
+        ),
+        users = group.users.map(user =>
+          CSVUserFormData(
+            user = CSVReviewUserFormData(
+              id = UUID.randomUUID(),
+              firstName = user.userData.firstName,
+              lastName = user.userData.lastName,
+              name = user.userData.name,
+              email = user.userData.email,
+              instructor = user.userData.instructor,
+              groupAdmin = user.userData.groupAdmin,
+              phoneNumber = user.userData.phoneNumber
+            ),
+            line = user.line,
+            alreadyExists = false,
+            alreadyExistingUser = None,
+            isInMoreThanOneGroup = None
+          )
+        ),
+        alreadyExistsOrAllUsersAlreadyExist = false,
+        doNotInsert = false,
+        alreadyExistingGroup = None
+      )
+    )
+    augmentUserGroupsInformation(tmpGroups)
+  }
+
+  private val userImportMapping: Mapping[CSVReviewUserFormData] =
     mapping(
-      "id" -> optional(uuid).transform[UUID](
-        {
-          case None     => UUID.randomUUID()
-          case Some(id) => id
-        },
-        Option.apply
-      ),
-      "key" -> ignored("key"),
+      "id" -> uuid,
       "firstName" -> optional(text.verifying(maxLength(100))),
       "lastName" -> optional(text.verifying(maxLength(100))),
       "name" -> text.verifying(maxLength(500)),
-      "quality" -> default(text, ""),
       "email" -> email.verifying(maxLength(200), nonEmpty),
-      "helper" -> ignored(true),
       "instructor" -> boolean,
-      "admin" -> ignored(false),
-      "areas" -> list(uuid),
-      "creationDate" -> ignored(date),
-      "communeCode" -> default(nonEmptyText.verifying(maxLength(5)), "0"),
-      "adminGroup" -> boolean,
-      "disabled" -> boolean,
-      "expert" -> ignored(false),
-      "groupIds" -> default(list(uuid), List()),
-      "cguAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "newsletterAcceptationDate" -> ignored(Option.empty[ZonedDateTime]),
-      "phone-number" -> optional(text),
-      // TODO: put also in forms/imports?
-      "observableOrganisationIds" -> list(of[Organisation.Id]),
-      Keys.User.sharedAccount -> boolean
-    )(User.apply)(User.unapply)
+      "groupAdmin" -> boolean,
+      "phoneNumber" -> optional(text)
+    )(CSVReviewUserFormData.apply)(CSVReviewUserFormData.unapply)
 
   private def groupImportMapping(date: ZonedDateTime): Mapping[UserGroup] =
     mapping(
@@ -178,7 +205,7 @@ case class CSVImportController @Inject() (
             "group" -> groupImportMapping(date),
             "users" -> list(
               mapping(
-                "user" -> userImportMapping(date),
+                "user" -> userImportMapping,
                 "line" -> number,
                 "alreadyExists" -> boolean,
                 "alreadyExistingUser" -> ignored(Option.empty[User]),
@@ -220,7 +247,7 @@ case class CSVImportController @Inject() (
             { csvImportData =>
               val defaultAreas = csvImportData.areaIds.flatMap(Area.fromId)
               UserAndGroupCsvSerializer
-                .csvLinesToUserGroupData(csvImportData.separator, defaultAreas, Time.nowParis())(
+                .csvLinesToUserGroupData(csvImportData.separator, defaultAreas)(
                   csvImportData.csvLines
                 )
                 .fold(
@@ -240,10 +267,10 @@ case class CSVImportController @Inject() (
                   {
                     case (
                           userNotImported: List[String],
-                          userGroupDataForm: List[CSVUserGroupFormData]
+                          userGroupDataForm: List[UserGroupBlock]
                         ) =>
                       val augmentedUserGroupInformation: List[CSVUserGroupFormData] =
-                        augmentUserGroupsInformation(userGroupDataForm)
+                        csvImportDataToReviewFormData(userGroupDataForm)
 
                       val currentDate = Time.nowParis()
                       val formWithData = importUsersAfterReviewForm(currentDate)
@@ -270,18 +297,43 @@ case class CSVImportController @Inject() (
       }
     }
 
-  private def associateGroupToUsers(groupFormData: CSVUserGroupFormData): CSVUserGroupFormData = {
-    val groupId = groupFormData.group.id
-    val areasId = groupFormData.group.areaIds
-    val newUsers = groupFormData.users.map({ userFormData =>
-      val newUser = userFormData.user.copy(
-        groupIds = (groupId :: userFormData.user.groupIds).distinct,
-        areas = (areasId ++ userFormData.user.areas).distinct
+  private def toInsertableUser(
+      userData: CSVUserFormData,
+      groupData: CSVUserGroupFormData
+  ): Option[User] =
+    if (groupData.doNotInsert || userData.alreadyExistingUser.nonEmpty) {
+      None
+    } else {
+      val groupId = groupData.group.id
+      val areaIds = groupData.group.areaIds
+
+      Some(
+        User(
+          id = UUID.randomUUID(),
+          key = "",
+          firstName = userData.user.firstName,
+          lastName = userData.user.lastName,
+          name = userData.user.name,
+          qualite = "",
+          email = userData.user.email,
+          helper = true,
+          instructor = userData.user.instructor,
+          admin = false,
+          areas = areaIds,
+          creationDate = Time.nowParis(),
+          communeCode = "0",
+          groupAdmin = userData.user.groupAdmin,
+          disabled = false,
+          expert = false,
+          groupIds = groupId :: Nil,
+          cguAcceptationDate = None,
+          newsletterAcceptationDate = None,
+          phoneNumber = userData.user.phoneNumber,
+          observableOrganisationIds = Nil,
+          sharedAccount = userData.user.name.nonEmpty
+        )
       )
-      userFormData.copy(user = newUser)
-    })
-    groupFormData.copy(users = newUsers)
-  }
+    }
 
   /** Import the reviewed CSV. */
   def importUsersAfterReview: Action[AnyContent] =
@@ -333,23 +385,14 @@ case class CSVImportController @Inject() (
                       eventService.log(UserGroupCreated, s"Groupe ${userGroup.id} ajouté")
                     }
                     val usersToInsert: List[User] = augmentedUserGroupInformation
-                      .filterNot(_.doNotInsert)
-                      .map(associateGroupToUsers)
-                      .flatMap(_.users)
-                      .filter(_.alreadyExistingUser.isEmpty)
-                      .map(_.user)
-                      .map {
-                        case user if user.name.nonEmpty => user.copy(sharedAccount = true)
-                        case user                       => user.copy(sharedAccount = false)
-                      }
-                      // Here we will group users by email, so we can put them in multiple groups
+                      .flatMap(group => group.users.flatMap(user => toInsertableUser(user, group)))
                       .groupBy(_.email)
                       .map { case (_, entitiesWithSameEmail) =>
                         // Note: users appear in the same order as given in the import
                         // Safe due to groupBy
                         val repr: User = entitiesWithSameEmail.head
                         val groupIds: List[UUID] = entitiesWithSameEmail.flatMap(_.groupIds)
-                        val areas: List[UUID] = entitiesWithSameEmail.flatMap(_.areas)
+                        val areas: List[UUID] = entitiesWithSameEmail.flatMap(_.areas).distinct
                         repr.copy(
                           areas = areas,
                           groupIds = groupIds
