@@ -88,6 +88,24 @@ object formModels {
       sharedAccount: Boolean
   )
 
+  case class EditUserFormData(
+      id: UUID,
+      firstName: Option[String],
+      lastName: Option[String],
+      name: String,
+      qualite: String,
+      email: String,
+      helper: Boolean,
+      instructor: Boolean,
+      areas: List[UUID],
+      groupAdmin: Boolean,
+      disabled: Boolean,
+      groupIds: List[UUID],
+      phoneNumber: Option[String],
+      observableOrganisationIds: List[Organisation.Id],
+      sharedAccount: Boolean
+  )
+
   case class CSVUserFormData(
       user: User,
       line: Int,
