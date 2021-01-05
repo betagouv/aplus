@@ -76,6 +76,18 @@ object formModels {
       privateToHelpers: Boolean
   )
 
+  case class AddUserFormData(
+      firstName: Option[String],
+      lastName: Option[String],
+      name: String,
+      qualite: String,
+      email: String,
+      instructor: Boolean,
+      groupAdmin: Boolean,
+      phoneNumber: Option[String],
+      sharedAccount: Boolean
+  )
+
   case class CSVUserFormData(
       user: User,
       line: Int,
