@@ -88,7 +88,7 @@ object formModels {
       sharedAccount: Boolean
   )
 
-  case class UserFormData(
+  case class CSVUserFormData(
       user: User,
       line: Int,
       alreadyExists: Boolean,
@@ -96,9 +96,9 @@ object formModels {
       isInMoreThanOneGroup: Option[Boolean] = None
   )
 
-  case class UserGroupFormData(
+  case class CSVUserGroupFormData(
       group: UserGroup,
-      users: List[UserFormData],
+      users: List[CSVUserFormData],
       alreadyExistsOrAllUsersAlreadyExist: Boolean,
       doNotInsert: Boolean,
       alreadyExistingGroup: Option[UserGroup] = None

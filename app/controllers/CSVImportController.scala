@@ -21,7 +21,7 @@ import models.EventType.{
   UserGroupCreated,
   UsersImported
 }
-import models.formModels.{CSVImportData, UserFormData, UserGroupFormData}
+import models.formModels.{CSVImportData, CSVUserFormData, CSVUserGroupFormData}
 import models.{Area, Organisation, User, UserGroup}
 import org.webjars.play.WebJarsUtil
 import play.api.data.Forms._
@@ -66,9 +66,9 @@ case class CSVImportController @Inject() (
 
   /** Checks with the DB if Users or UserGroups already exist. */
   private def augmentUserGroupInformation(
-      userGroupFormData: UserGroupFormData,
+      userGroupFormData: CSVUserGroupFormData,
       multiGroupUserEmails: Set[String]
-  ): UserGroupFormData = {
+  ): CSVUserGroupFormData = {
     val userEmails = userGroupFormData.users.map(_.user.email)
     val alreadyExistingUsers = userService.byEmails(userEmails)
     val newUsersFormDataList = userGroupFormData.users.map { userDataForm =>
@@ -104,8 +104,8 @@ case class CSVImportController @Inject() (
   }
 
   private def augmentUserGroupsInformation(
-      groups: List[UserGroupFormData]
-  ): List[UserGroupFormData] = {
+      groups: List[CSVUserGroupFormData]
+  ): List[CSVUserGroupFormData] = {
     val multiGroupUserEmails = groups
       .filterNot(_.doNotInsert)
       .flatMap(group => group.users.map(user => (group.group.id, user.user.email)))
@@ -170,7 +170,7 @@ case class CSVImportController @Inject() (
       "email" -> optional(email)
     )(UserGroup.apply)(UserGroup.unapply)
 
-  private def importUsersAfterReviewForm(date: ZonedDateTime): Form[List[UserGroupFormData]] =
+  private def importUsersAfterReviewForm(date: ZonedDateTime): Form[List[CSVUserGroupFormData]] =
     Form(
       single(
         "groups" -> list(
@@ -183,12 +183,12 @@ case class CSVImportController @Inject() (
                 "alreadyExists" -> boolean,
                 "alreadyExistingUser" -> ignored(Option.empty[User]),
                 "isInMoreThanOneGroup" -> optional(boolean)
-              )(UserFormData.apply)(UserFormData.unapply)
+              )(CSVUserFormData.apply)(CSVUserFormData.unapply)
             ),
             "alreadyExistsOrAllUsersAlreadyExist" -> boolean,
             "doNotInsert" -> boolean,
             "alreadyExistingGroup" -> ignored(Option.empty[UserGroup])
-          )(UserGroupFormData.apply)(UserGroupFormData.unapply)
+          )(CSVUserGroupFormData.apply)(CSVUserGroupFormData.unapply)
         )
       )
     )
@@ -240,9 +240,9 @@ case class CSVImportController @Inject() (
                   {
                     case (
                           userNotImported: List[String],
-                          userGroupDataForm: List[UserGroupFormData]
+                          userGroupDataForm: List[CSVUserGroupFormData]
                         ) =>
-                      val augmentedUserGroupInformation: List[UserGroupFormData] =
+                      val augmentedUserGroupInformation: List[CSVUserGroupFormData] =
                         augmentUserGroupsInformation(userGroupDataForm)
 
                       val currentDate = Time.nowParis()
@@ -270,7 +270,7 @@ case class CSVImportController @Inject() (
       }
     }
 
-  private def associateGroupToUsers(groupFormData: UserGroupFormData): UserGroupFormData = {
+  private def associateGroupToUsers(groupFormData: CSVUserGroupFormData): CSVUserGroupFormData = {
     val groupId = groupFormData.group.id
     val areasId = groupFormData.group.areaIds
     val newUsers = groupFormData.users.map({ userFormData =>
@@ -303,8 +303,8 @@ case class CSVImportController @Inject() (
                 )
               )
             },
-            { userGroupDataForm: List[UserGroupFormData] =>
-              val augmentedUserGroupInformation: List[UserGroupFormData] =
+            { userGroupDataForm: List[CSVUserGroupFormData] =>
+              val augmentedUserGroupInformation: List[CSVUserGroupFormData] =
                 augmentUserGroupsInformation(userGroupDataForm)
 
               val groupsToInsert = augmentedUserGroupInformation

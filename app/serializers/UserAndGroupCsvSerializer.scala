@@ -5,7 +5,7 @@ import java.util.UUID
 
 import cats.syntax.all._
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import models.formModels.{UserFormData, UserGroupFormData}
+import models.formModels.{CSVUserFormData, CSVUserGroupFormData}
 import helper.{PlayFormHelper, UUIDHelper}
 import helper.StringHelper._
 import models.{Area, Organisation, User, UserGroup}
@@ -88,12 +88,12 @@ object UserAndGroupCsvSerializer {
     List(GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL, GROUP_AREAS_IDS)
 
   private def userGroupDataListToUserGroupData(
-      userGroupFormData: List[UserGroupFormData]
-  ): List[UserGroupFormData] =
+      userGroupFormData: List[CSVUserGroupFormData]
+  ): List[CSVUserGroupFormData] =
     userGroupFormData
       .groupBy(_.group.name.stripSpecialChars)
       .view
-      .mapValues { sameGroupNameList: List[UserGroupFormData] =>
+      .mapValues { sameGroupNameList: List[CSVUserGroupFormData] =>
         val group = sameGroupNameList.head
         val usersFormData = sameGroupNameList.flatMap(_.users)
         group.copy(users = usersFormData)
@@ -130,22 +130,22 @@ object UserAndGroupCsvSerializer {
     }
 
   /** Only public method.
-    * Returns a Right[(List[String], List[UserGroupFormData]))]
+    * Returns a Right[(List[String], List[CSVUserGroupFormData]))]
     * where List[String] is a list of errors on the lines.
     */
   def csvLinesToUserGroupData(separator: Char, defaultAreas: Seq[Area], currentDate: ZonedDateTime)(
       csvLines: String
-  ): Either[String, (List[String], List[UserGroupFormData])] = {
+  ): Either[String, (List[String], List[CSVUserGroupFormData])] = {
     def partition(
-        list: List[Either[String, UserGroupFormData]]
-    ): (List[String], List[UserGroupFormData]) = {
+        list: List[Either[String, CSVUserGroupFormData]]
+    ): (List[String], List[CSVUserGroupFormData]) = {
       val (errors, successes) = list.partition(_.isLeft)
       errors.flatMap(_.swap.toOption) -> successes.flatMap(_.toOption)
     }
 
     extractFromCSVToMap(separator)(csvLines)
       .map { csvExtractResult: CSVExtractResult =>
-        val result: List[Either[String, UserGroupFormData]] = csvExtractResult.map {
+        val result: List[Either[String, CSVUserGroupFormData]] = csvExtractResult.map {
           case (lineNumber: LineNumber, csvMap: CSVMap, rawCSVLine: RawCSVLine) =>
             csvMap
               .trimValues()
@@ -164,8 +164,9 @@ object UserAndGroupCsvSerializer {
         }
         partition(result)
       }
-      .map { case (linesErrorList: List[String], userGroupFormDataList: List[UserGroupFormData]) =>
-        (linesErrorList, userGroupDataListToUserGroupData(userGroupFormDataList))
+      .map {
+        case (linesErrorList: List[String], userGroupFormDataList: List[CSVUserGroupFormData]) =>
+          (linesErrorList, userGroupDataListToUserGroupData(userGroupFormDataList))
       }
   }
 
@@ -280,7 +281,7 @@ object UserAndGroupCsvSerializer {
     def toUserGroupData(
         lineNumber: LineNumber,
         currentDate: ZonedDateTime
-    ): Either[String, UserGroupFormData] =
+    ): Either[String, CSVUserGroupFormData] =
       groupCSVMapping(currentDate)
         .bind(csvMap)
         .fold(
@@ -292,9 +293,9 @@ object UserAndGroupCsvSerializer {
                 errors => Left(errors.map(PlayFormHelper.prettifyFormError).mkString(", ")),
                 user =>
                   Right(
-                    UserGroupFormData(
+                    CSVUserGroupFormData(
                       group,
-                      List(UserFormData(user, lineNumber, alreadyExists = false)),
+                      List(CSVUserFormData(user, lineNumber, alreadyExists = false)),
                       alreadyExistsOrAllUsersAlreadyExist = false,
                       doNotInsert = false
                     )
