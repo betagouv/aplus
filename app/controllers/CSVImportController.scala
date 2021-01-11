@@ -133,9 +133,9 @@ case class CSVImportController @Inject() (
           description = group.group.description,
           inseeCode = Nil,
           creationDate = Time.nowParis(),
-          areaIds = Nil,
-          organisation = None,
-          email = None
+          areaIds = group.group.areaIds,
+          organisation = group.group.organisation,
+          email = group.group.email
         ),
         users = group.users.map(user =>
           CSVUserFormData(

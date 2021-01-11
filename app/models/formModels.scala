@@ -93,7 +93,7 @@ object formModels {
           case name => name.some
         }
       ),
-      "qualite" -> text.verifying(maxLength(100)),
+      "qualite" -> default(text.verifying(maxLength(100)), ""),
       "email" -> email.verifying(maxLength(200), nonEmpty),
       "instructor" -> boolean,
       "groupAdmin" -> boolean,

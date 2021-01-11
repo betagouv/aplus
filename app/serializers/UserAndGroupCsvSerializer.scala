@@ -47,7 +47,7 @@ object UserAndGroupCsvSerializer {
 
   val USER_INSTRUCTOR = Header("user.instructor", List("Instructeur"))
   val USER_GROUP_MANAGER = Header("user.groupAdmin", List("Responsable"))
-  val USER_QUALITY = Header("user.quality", List("Qualité"))
+  val USER_QUALITY = Header("user.qualite", List("Qualité"))
   val USER_PHONE_NUMBER = Header("user.phoneNumber", List("Numéro de téléphone", "téléphone"))
 
   val USER_ACCOUNT_IS_SHARED = Header("user." + Keys.User.sharedAccount, List("Compte Partagé"))
