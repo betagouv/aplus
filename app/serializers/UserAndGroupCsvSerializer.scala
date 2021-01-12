@@ -256,9 +256,9 @@ object UserAndGroupCsvSerializer {
         .map({ ids: String =>
           ids.split(",").flatMap(UUIDHelper.fromString).flatMap(Area.fromId).toList.map(_.name)
         })
-      // TODO: Only if the groupName dont include the area
       optionalAreaNames -> csvMap.get(UserAndGroupCsvSerializer.GROUP_NAME.key) match {
-        case (Some(areaNames), Some(initialGroupName)) =>
+        case (Some(areaNames), Some(initialGroupName))
+            if !initialGroupName.contains(s" ${areaNames.mkString("/")}") =>
           csvMap + (UserAndGroupCsvSerializer.GROUP_NAME.key -> s"$initialGroupName - ${areaNames.mkString("/")}")
         case _ =>
           csvMap
