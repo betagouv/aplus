@@ -115,6 +115,14 @@
                                       </div>
                                     </td>
                                   </tr>
+                                } else if (organisation.map(_.id).filter(id => List("Préf", "Sous-Préf").contains(id)).nonEmpty)  {
+                                  <tr>
+                                    <td style="text-align: left; white-space: normal">
+                                      <div class="info-box info-box--no-spacing">
+                                        La préfecture (ou sous-préfecture) ne répondra pas forcément aux questions relative aux renouvellements de titre de séjour ou les certificats d'immatriculation. Pour les titres de séjour concernant les étudiants, vous pouvez utiliser la plateforme du ministére de l'intérieur <a href="https://administration-etrangers-en-france.interieur.gouv.fr/particuliers/#/" target="_blank">à cette adresse</a>. Pour les certificats d'immatriculation, vous pouvez contacter l'ANTS <a href="https://ants.gouv.fr/Contacter-l-ANTS/Contactez-nous" target="_blank">à cette adresse</a>.
+                                      </div>
+                                    </td>
+                                  </tr>
                                 }
                               </div>
 
