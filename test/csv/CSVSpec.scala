@@ -3,12 +3,12 @@ package csv
 import cats.syntax.all._
 import helper.{CSVUtil, Time, UUIDHelper}
 import models.{Area, Organisation, UserGroup}
-import models.formModels.CSVUserGroupFormData
 import org.junit.runner.RunWith
 import org.specs2.matcher.{TypedEqual => _}
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
 import serializers.UserAndGroupCsvSerializer
+import serializers.UserAndGroupCsvSerializer.UserGroupBlock
 
 @RunWith(classOf[JUnitRunner])
 class CSVSpec extends Specification {
@@ -52,11 +52,10 @@ class CSVSpec extends Specification {
 
   "The format of from the prefecture should" >> {
     "be recognized" >> {
-      val result: Either[String, (List[String], List[CSVUserGroupFormData])] =
+      val result: Either[String, (List[String], List[UserGroupBlock])] =
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ',',
-          defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
-          Time.nowParis()
+          defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten
         )(prefFormat)
       result must beRight
 
@@ -80,7 +79,6 @@ class CSVSpec extends Specification {
 
       dgfip.get.group.name must equalTo(expectedUserGroup.name)
       dgfip.get.group.description must equalTo(expectedUserGroup.description)
-      dgfip.get.group.inseeCode must equalTo(expectedUserGroup.inseeCode)
       dgfip.get.group.areaIds must equalTo(expectedUserGroup.areaIds)
       dgfip.get.group.organisation must equalTo(expectedUserGroup.organisation)
       dgfip.get.group.email must equalTo(expectedUserGroup.email)
@@ -88,20 +86,17 @@ class CSVSpec extends Specification {
 
       val expectedEmail = "prenom5.nom5@dgfip.finances.gouv.fr"
       val expectedPhoneNumber = "01.02.03.04.05"
-      dgfip.get.users.head.user.firstName.orEmpty must equalTo("Prénom5")
-      dgfip.get.users.head.user.lastName.orEmpty must equalTo("Nom5")
-      dgfip.get.users.head.user.email must equalTo(expectedEmail)
-      dgfip.get.users.head.user.helper must beTrue
-      dgfip.get.users.head.user.areas must equalTo(List[String]())
-      dgfip.get.users.head.user.phoneNumber must beSome(expectedPhoneNumber)
+      dgfip.get.users.head.userData.firstName.orEmpty must equalTo("Prénom5")
+      dgfip.get.users.head.userData.lastName.orEmpty must equalTo("Nom5")
+      dgfip.get.users.head.userData.email must equalTo(expectedEmail)
+      dgfip.get.users.head.userData.phoneNumber must beSome(expectedPhoneNumber)
     }
 
     "be recognized with proper organisation" >> {
-      val result: Either[String, (List[String], List[CSVUserGroupFormData])] =
+      val result: Either[String, (List[String], List[UserGroupBlock])] =
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ',',
-          defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
-          Time.nowParis()
+          defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten
         )(organisationTest)
       result must beRight
       val (errors, data) = result.toOption.get
@@ -115,11 +110,10 @@ class CSVSpec extends Specification {
 
   "The failFile string should" >> {
     "produce 1 errors" >> {
-      val result: Either[String, (List[String], List[CSVUserGroupFormData])] =
+      val result: Either[String, (List[String], List[UserGroupBlock])] =
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ';',
-          defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
-          Time.nowParis()
+          defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten
         )(failFile)
       result must beRight
       val (errors, _) = result.toOption.get
@@ -139,11 +133,10 @@ class CSVSpec extends Specification {
 
   "The csvFile string should" >> {
     "produce valid groups" >> {
-      val result: Either[String, (List[String], List[CSVUserGroupFormData])] =
+      val result: Either[String, (List[String], List[UserGroupBlock])] =
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ';',
-          defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
-          Time.nowParis()
+          defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten
         )(csvFile)
       result must beRight
       val (errors, data) = result.toOption.get
@@ -152,16 +145,15 @@ class CSVSpec extends Specification {
     }
 
     "produce a valid users" >> {
-      val result: Either[String, (List[String], List[CSVUserGroupFormData])] =
+      val result: Either[String, (List[String], List[UserGroupBlock])] =
         UserAndGroupCsvSerializer.csvLinesToUserGroupData(
           separator = ';',
-          defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten,
-          Time.nowParis()
+          defaultAreas = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten
         )(csvFile)
       result must beRight
       val (errors, data) = result.toOption.get
       errors must have size 0
-      data.flatMap(_.users.map(_.user)) must have size 6
+      data.flatMap(_.users.map(_.userData)) must have size 6
     }
   }
 }

@@ -69,7 +69,7 @@
             }
           </td>
           <td class="mdl-data-table__cell--non-numeric cell-import-user">
-            @helper.input(user("user")("phone-number"), "label" -> "Numéro de téléphone", "class" -> "input-import-user") { (id, name, value, args) =>
+            @helper.input(user("user")("phoneNumber"), "label" -> "Numéro de téléphone", "class" -> "input-import-user") { (id, name, value, args) =>
               <input class="mdl-textfield__input input-import-user"
                      type="text"
                      name="@name"
@@ -83,7 +83,7 @@
             @helper.checkbox(user("user")("instructor"), "type" -> "checkbox", "label" -> UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes.head, "class" -> "mdl-checkbox__input instructor")
           </td>
           <td class="mdl-data-table__cell--non-numeric cell-import-user @if(user("alreadyExists").value.contains("true")){avoid-clicks}">
-            @helper.checkbox(user("user")("adminGroup"), "type" -> "checkbox", "label" -> UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes.head, "class" -> "mdl-checkbox__input")
+            @helper.checkbox(user("user")("groupAdmin"), "type" -> "checkbox", "label" -> UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes.head, "class" -> "mdl-checkbox__input")
           </td>
             <td class="mdl-data-table__cell--non-numeric cell-import-user">
             @helper.input(user("user")("name"), "label" -> UserAndGroupCsvSerializer.SHARED_ACCOUNT_NAME.prefixes.head, "class" -> "input-import-user") { (id, name, value, args) =>
