@@ -1,4 +1,5 @@
 @import _root_.helper.MDLForms._
+@import cats.implicits.catsSyntaxEq
 @import models.Organisation.Category
 @import play.api.libs.json.Json
 @import serializers.{DataModel, Keys}
@@ -90,7 +91,7 @@
                                        name="groups[]"
                                        value="@group.id"
                                        data-group-name="@group.name"
-                                       @if(applicationForm.data.find({case (k, v) => k.startsWith("groups[") && v == group.id.toString})){ checked="checked" }
+                                       @if(applicationForm.data.find({case (k, v) => k.startsWith("groups[") && v === group.id.toString})){ checked="checked" }
                                 >
                                 <span class="mdl-checkbox__label">
                                   <b>@group.name</b>
@@ -98,8 +99,8 @@
                                 </span>
                               </label>
 
-                              <div id="invite-@group.id-additional-infos" class="organisation-row @if(!applicationForm.data.find({case (k, v) => k.startsWith("groups[") && v == group.id.toString})){ invisible }">
-                                @if(organisation.map(_.id).filter(_ == Organisation.cafId).nonEmpty) {
+                              <div id="invite-@group.id-additional-infos" class="organisation-row @if(!applicationForm.data.find({case (k, v) => k.startsWith("groups[") && v === group.id.toString})){ invisible }">
+                                @if(organisation.map(_.id).filter(_ === Organisation.cafId).nonEmpty) {
                                   <tr>
                                     <td style="text-align: left; white-space: normal">
                                       <div class="info-box info-box--no-spacing">
@@ -107,7 +108,7 @@
                                       </div>
                                     </td>
                                   </tr>
-                                } else if (organisation.map(_.id).filter(_ == Organisation.cpamId).nonEmpty) {
+                                } else if (organisation.map(_.id).filter(_ === Organisation.cpamId).nonEmpty) {
                                   <tr>
                                     <td style="text-align: left; white-space: normal">
                                       <div class="info-box info-box--no-spacing">
@@ -115,11 +116,11 @@
                                       </div>
                                     </td>
                                   </tr>
-                                } else if (organisation.map(_.id).filter(id => List("Préf", "Sous-Préf").contains(id)).nonEmpty)  {
+                                } else if (organisation.find(entity => Set(Organisation.prefId, Organisation.sousPrefId).contains(entity.id)).nonEmpty)  {
                                   <tr>
                                     <td style="text-align: left; white-space: normal">
                                       <div class="info-box info-box--no-spacing">
-                                        La préfecture (ou sous-préfecture) ne répondra pas forcément aux questions relative aux renouvellements de titre de séjour ou les certificats d'immatriculation. Pour les titres de séjour concernant les étudiants, vous pouvez utiliser la plateforme du ministére de l'intérieur <a href="https://administration-etrangers-en-france.interieur.gouv.fr/particuliers/#/" target="_blank">à cette adresse</a>. Pour les certificats d'immatriculation, vous pouvez contacter l'ANTS <a href="https://ants.gouv.fr/Contacter-l-ANTS/Contactez-nous" target="_blank">à cette adresse</a>.
+                                        La préfecture (ou sous-préfecture) ne répondra pas forcément aux questions relative aux renouvellements de titre de séjour ou des certificats d’immatriculation. Pour les titres de séjour concernant les étudiants, vous pouvez utiliser la plateforme du ministère de l’intérieur <a href="https://administration-etrangers-en-france.interieur.gouv.fr/particuliers/#/" target="_blank" rel="noopener">à cette adresse</a>. Pour les certificats d’immatriculation, vous pouvez contacter l’ANTS <a href="https://ants.gouv.fr/Contacter-l-ANTS/Contactez-nous" target="_blank" rel="noopener">à cette adresse</a>.
                                       </div>
                                     </td>
                                   </tr>
@@ -243,7 +244,7 @@
                         <tr>
                           <td>
                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                              <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@coworker.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v == coworker.id.toString})){ checked="checked" }>
+                              <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@coworker.id" @if(applicationForm.data.find({case (k, v) => k.startsWith("users[") && v === coworker.id.toString})){ checked="checked" }>
                             </label>
                           </td>
                           <td class="mdl-data-table__cell--non-numeric">@coworker.name</td>
@@ -290,7 +291,7 @@
                                            class="mdl-radio__button"
                                            name="@name"
                                            value="@optionValue"
-                                           @if(value == Some(optionValue)){checked="checked"}
+                                           @if(value === Some(optionValue)){checked="checked"}
                                            @toHtmlArgs(args)/>
                                     <span class="mdl-radio__label">@optionLabel</span>
                                 </label>
