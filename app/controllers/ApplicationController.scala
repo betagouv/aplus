@@ -837,9 +837,12 @@ case class ApplicationController @Inject() (
       application: Application
   )(implicit request: RequestWithUserData[A]): Future[List[User]] =
     (if (request.currentUser.expert) {
-       //TODO : remove when the group invitation has been tested in prod by the expert
+       val creator = userService.byId(application.creatorUserId, includeDisabled = true)
+       val creatorGroups: Set[UUID] = creator.toList.flatMap(_.groupIds).toSet
        userGroupService.byArea(currentAreaLegacy.id).map { groupsOfArea =>
-         userService.byGroupIds(groupsOfArea.map(_.id)).filter(_.instructor)
+         userService
+           .byGroupIds(groupsOfArea.map(_.id))
+           .filter(user => user.instructor || user.groupIds.toSet.intersect(creatorGroups).nonEmpty)
        }
      } else {
        // 1. coworkers
