@@ -60,6 +60,10 @@ object Organisation {
   val franceServices = Organisation(franceServicesId, "FS", "France Services")
   val msap = Organisation("MSAP", "Maison de services au public")
   val hopital = Organisation("Hôpital", "Hôpital")
+  val prefId = Organisation.Id("Préf")
+  val pref = Organisation(prefId, "Préf", "Préfecture")
+  val sousPrefId = Organisation.Id("Sous-Préf")
+  val sousPref = Organisation(sousPrefId, "Sous-Préf", "Sous-préfecture")
 
   /** Note: checklist when adding an `Organisation`
     * - alphabetical order
@@ -91,8 +95,8 @@ object Organisation {
     Organisation("MSA", "Mutualité sociale agricole"),
     msap, // Ville
     Organisation("Pôle emploi", "Pôle emploi"),
-    Organisation("Préf", "Préfecture"), //Département
-    Organisation("Sous-Préf", "Sous-préfecture"),
+    pref, //Département
+    sousPref,
     Organisation(
       "URSSAF",
       "Unions de Recouvrement des cotisations de Sécurité Sociale et d’Allocations Familiales"
