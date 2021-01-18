@@ -1,12 +1,16 @@
 @(currentUserRights: Authorization.UserRights)(implicit request: RequestHeader)
 
-@linkAttrs(route: Call) = {
+@linkAttrs(route: Call, queryParams: String*) = {
     @if((request.path: String) == (route.path: String)) {
         class="mdl-navigation__link mdl-navigation__link--active"
     } else {
         class="mdl-navigation__link"
     }
-    href="@route.path()"
+    @if(queryParams.isEmpty) {
+      href="@route.path()"
+    } else {
+      href="@route.path()?@{queryParams.mkString("&")}"
+    }
 }
 
 <nav class="navigation mdl-navigation mdl-color--deep-purple-900">
@@ -26,7 +30,7 @@
     }
 
     @if(Authorization.canSeeApplicationsAsAdmin(currentUserRights)) {
-        <a @linkAttrs(routes.ApplicationController.all(Area.allArea.id))>
+        <a @linkAttrs(routes.ApplicationController.all(Area.allArea.id), serializers.Keys.QueryParam.numOfMonthsDisplayed + "=12")>
             <i class="material-icons" role="presentation">folder</i>Admin : demandes
         </a>
     }
