@@ -145,7 +145,7 @@ case class UserController @Inject() (
                       .map { _ =>
                         eventService.log(
                           EditMyGroupUpdated,
-                          s"L’utilisateur ${userToAdd.id} a été ajouté au groupe $groupId"
+                          s"Utilisateur ${userToAdd.id} ajouté au groupe $groupId"
                         )
                         Redirect(routes.UserController.showEditMyGroups())
                           .flashing("success" -> "L’utilisateur a été ajouté au groupe")
