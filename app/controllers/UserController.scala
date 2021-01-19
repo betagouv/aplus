@@ -498,7 +498,7 @@ case class UserController @Inject() (
             val flashMessage = s"Utilisateur $userId / ${user.email} a été supprimé"
             eventService.log(
               UserDeleted,
-              s"Suppression de l'utilisateur ${user.toLogString}",
+              s"Utilisateur ${user.toLogString} supprimé",
               involvesUser = Some(user)
             )
             Future(
