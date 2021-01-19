@@ -135,7 +135,7 @@ case class User(
         other.sharedAccountLog
       ),
       ("Admin", admin =!= other.admin, adminLog, other.adminLog),
-      ("Expert", expert =!= other.admin, expertLog, other.expertLog),
+      ("Expert", expert =!= other.expert, expertLog, other.expertLog),
       ("Désactivé", disabled =!= other.disabled, disabledLog, other.disabledLog),
       ("Groupes", groupIds =!= other.groupIds, groupIdsLog, other.groupIdsLog),
       ("Territoires", areas =!= other.areas, areasLog, other.areasLog),
