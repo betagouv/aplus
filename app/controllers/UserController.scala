@@ -495,7 +495,7 @@ case class UserController @Inject() (
             Future(Unauthorized("User is not unused."))
           } else {
             userService.deleteById(userId)
-            val flashMessage = s"Utilisateur $userId / ${user.email} a été supprimé"
+            val flashMessage = s"Utilisateur $userId / ${user.email} supprimé"
             eventService.log(
               UserDeleted,
               s"Utilisateur ${user.toLogString} supprimé",
