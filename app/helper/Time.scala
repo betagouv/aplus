@@ -1,5 +1,6 @@
 package helper
 
+import cats.Order
 import java.time.{Instant, LocalDate, YearMonth, ZoneId, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -24,7 +25,7 @@ object Time {
   def formatMonthYearAllLetters(month: YearMonth): String =
     month.atDay(1).format(monthYearAllLettersFormatter)
 
-  private val adminsFormatter = DateTimeFormatter.ofPattern("dd/MM/YY-HH:mm", Locale.FRANCE)
+  val adminsFormatter = DateTimeFormatter.ofPattern("dd/MM/YY-HH:mm", Locale.FRANCE)
   private val monthYearAllLettersFormatter = DateTimeFormatter.ofPattern("MMMM YYYY", Locale.FRANCE)
 
   // Note: we use an Instant here to make clear that we will set our own TZ
@@ -60,5 +61,10 @@ object Time {
       }
     recursion(toDate).toList
   }
+
+  implicit final val zonedDateTimeInstance =
+    new Order[ZonedDateTime] {
+      override def compare(x: ZonedDateTime, y: ZonedDateTime): Int = x.compareTo(y)
+    }
 
 }

@@ -55,12 +55,12 @@ case class GroupController @Inject() (
           if (not(empty)) {
             eventService.log(
               UserGroupDeletionUnauthorized,
-              description = "Tentative de suppression d'un groupe utilisé."
+              description = s"Tentative de suppression d'un groupe utilisé ($groupId)"
             )
-            Future(Unauthorized("Group is not unused."))
+            Future(Unauthorized("Le groupe est utilisé."))
           } else {
             groupService.deleteById(groupId)
-            eventService.log(UserGroupDeleted, s"Suppression du groupe ${groupId}.")
+            eventService.log(UserGroupDeleted, s"Groupe supprimé ${group.toLogString}")
             Future(
               Redirect(
                 routes.UserController.all(group.areaIds.headOption.getOrElse(Area.allArea.id)),
@@ -165,7 +165,7 @@ case class GroupController @Inject() (
                 formWithError => {
                   eventService.log(
                     EditUserGroupError,
-                    s"Essai d'edition d'un groupe avec des erreurs de validation"
+                    s"Tentative d'edition du groupe ${currentGroup.id} avec des erreurs de validation"
                   )
                   Future(
                     Redirect(routes.GroupController.editGroup(groupId)).flashing(
@@ -173,16 +173,23 @@ case class GroupController @Inject() (
                     )
                   )
                 },
-                group =>
-                  if (groupService.edit(group.copy(id = groupId))) {
-                    eventService.log(UserGroupEdited, s"Groupe édité")
+                group => {
+                  val newGroup = group.copy(id = groupId)
+                  if (groupService.edit(newGroup)) {
+                    eventService.log(
+                      UserGroupEdited,
+                      s"Groupe édité ${currentGroup.toDiffLogString(newGroup)}"
+                    )
                     Future(
                       Redirect(routes.GroupController.editGroup(groupId))
                         .flashing("success" -> "Groupe modifié")
                     )
                   } else {
                     eventService
-                      .log(EditUserGroupError, s"Impossible de modifier le groupe dans la BDD")
+                      .log(
+                        EditUserGroupError,
+                        s"Impossible de modifier le groupe dans la BDD ${currentGroup.toDiffLogString(newGroup)}"
+                      )
                     Future(
                       Redirect(routes.GroupController.editGroup(groupId))
                         .flashing(
@@ -190,6 +197,7 @@ case class GroupController @Inject() (
                         )
                     )
                   }
+                }
               )
           }
         }

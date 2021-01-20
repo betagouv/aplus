@@ -382,7 +382,7 @@ case class CSVImportController @Inject() (
                   },
                   { _ =>
                     groupsToInsert.foreach { userGroup =>
-                      eventService.log(UserGroupCreated, s"Groupe ${userGroup.id} ajouté")
+                      eventService.log(UserGroupCreated, s"Groupe ajouté ${userGroup.toLogString}")
                     }
                     val usersToInsert: List[User] = augmentedUserGroupInformation
                       .flatMap(group => group.users.flatMap(user => toInsertableUser(user, group)))
@@ -423,7 +423,7 @@ case class CSVImportController @Inject() (
                             notificationsService.newUser(user)
                             eventService.log(
                               UserCreated,
-                              s"Ajout de l'utilisateur ${user.name} ${user.email}",
+                              s"Utilisateur ajouté ${user.toLogString}",
                               involvesUser = Some(user)
                             )
                           }

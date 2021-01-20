@@ -52,6 +52,8 @@ object StringHelper {
   def capitalizeName(name: String): String =
     """[\P{P}&&\P{Z}]+""".r.replaceAllIn(name, m => m.group(0).toLowerCase.capitalize)
 
+  def withQuotes(str: String): String = s"'$str'"
+
   final object NonEmptyTrimmedString {
     def unapply(s: String): Option[String] = s.some.map(_.trim).filter(_.nonEmpty)
   }

@@ -259,13 +259,14 @@ class UserService @Inject() (
       lastName: String,
       qualite: String,
       phoneNumber: String
-  ) =
-    db.withConnection { implicit connection =>
-      val normalizedFirstName = firstName.normalized
-      val normalizedLastName = lastName.normalized
-      val normalizedQualite = qualite.normalized
-      val name = s"${normalizedLastName.toUpperCase} ${normalizedFirstName.capitalizeWords}"
-      SQL"""
+  ): Future[Int] =
+    Future {
+      db.withConnection { implicit connection =>
+        val normalizedFirstName = firstName.normalized
+        val normalizedLastName = lastName.normalized
+        val normalizedQualite = qualite.normalized
+        val name = s"${normalizedLastName.toUpperCase} ${normalizedFirstName.capitalizeWords}"
+        SQL"""
         UPDATE "user" SET
         name = $name,
         first_name = ${normalizedFirstName.capitalizeWords},
@@ -274,6 +275,7 @@ class UserService @Inject() (
         phone_number = $phoneNumber
         WHERE id = $userId::uuid
      """.executeUpdate()
+      }
     }
 
   def addToGroup(userId: UUID, groupId: UUID) =

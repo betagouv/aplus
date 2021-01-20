@@ -5,7 +5,9 @@ import java.util.UUID
 
 import cats.syntax.all._
 import constants.Constants
-import helper.{Hash, UUIDHelper}
+import helper.{Hash, Time, UUIDHelper}
+import helper.Time.zonedDateTimeInstance
+import helper.StringHelper.withQuotes
 
 case class User(
     id: UUID,
@@ -57,7 +59,7 @@ case class User(
       qualite: Option[String],
       phoneNumber: Option[String]
   ) =
-    this.copy(
+    copy(
       firstName = firstName,
       lastName = lastName,
       name = if (sharedAccount) name else s"${lastName.orEmpty.toUpperCase} ${firstName.orEmpty}",
@@ -66,6 +68,98 @@ case class User(
     )
 
   def belongsTo(groupId: UUID) = groupIds.contains[UUID](groupId)
+
+  lazy val firstNameLog: String = firstName.map(withQuotes).getOrElse("<vide>")
+  lazy val lastNameLog: String = lastName.map(withQuotes).getOrElse("<vide>")
+  lazy val nameLog: String = withQuotes(name)
+  lazy val qualiteLog: String = withQuotes(qualite)
+  lazy val emailLog: String = withQuotes(email)
+  lazy val helperLog: String = helper.toString
+  lazy val instructorLog: String = instructor.toString
+  lazy val adminLog: String = admin.toString
+  lazy val areasLog: String = areas.mkString(", ")
+  lazy val groupAdminLog: String = groupAdmin.toString
+  lazy val disabledLog: String = disabled.toString
+  lazy val expertLog: String = expert.toString
+  lazy val groupIdsLog: String = groupIds.mkString(", ")
+
+  lazy val cguAcceptationDateLog: String =
+    cguAcceptationDate.map(Time.adminsFormatter.format).getOrElse("<vide>")
+
+  lazy val newsletterAcceptationDateLog: String =
+    newsletterAcceptationDate.map(Time.adminsFormatter.format).getOrElse("<vide>")
+
+  lazy val phoneNumberLog: String = phoneNumber.map(withQuotes).getOrElse("<vide>")
+  lazy val observableOrganisationIdsLog: String = observableOrganisationIds.map(_.id).mkString(", ")
+  lazy val sharedAccountLog: String = sharedAccount.toString
+
+  lazy val toLogString: String =
+    "[" + List[(String, String)](
+      ("Id", id.toString),
+      ("Prénom", firstNameLog),
+      ("Nom", lastNameLog),
+      ("Nom complet", nameLog),
+      ("Qualité", qualiteLog),
+      ("Email", emailLog),
+      ("Téléphone", phoneNumberLog),
+      ("Aidant", helperLog),
+      ("Instructeur", instructorLog),
+      ("Responsable", groupAdminLog),
+      ("Compte partagé", sharedAccountLog),
+      ("Admin", adminLog),
+      ("Expert", expertLog),
+      ("Désactivé", disabledLog),
+      ("Groupes", groupIdsLog),
+      ("Territoires", areasLog),
+      ("Date CGU", cguAcceptationDateLog),
+      ("Newsletter", newsletterAcceptationDateLog),
+      ("Observation des organismes", observableOrganisationIdsLog),
+    ).map { case (fieldName, value) => s"$fieldName : $value" }.mkString(" | ") + "]"
+
+  def toDiffLogString(other: User): String = {
+    val diffs: List[String] = List[(String, Boolean, String, String)](
+      ("Id", id =!= other.id, id.toString, other.id.toString),
+      ("Prénom", firstName =!= other.firstName, firstNameLog, other.firstNameLog),
+      ("Nom", lastName =!= other.lastName, lastNameLog, other.lastNameLog),
+      ("Nom complet", name =!= other.name, nameLog, other.nameLog),
+      ("Qualité", qualite =!= other.qualite, qualiteLog, other.qualiteLog),
+      ("Email", email =!= other.email, emailLog, other.emailLog),
+      ("Téléphone", phoneNumber =!= other.phoneNumber, phoneNumberLog, other.phoneNumberLog),
+      ("Aidant", helper =!= other.helper, helperLog, other.helperLog),
+      ("Instructeur", instructor =!= other.instructor, instructorLog, other.instructorLog),
+      ("Responsable", groupAdmin =!= other.groupAdmin, groupAdminLog, other.groupAdminLog),
+      (
+        "Compte partagé",
+        sharedAccount =!= other.sharedAccount,
+        sharedAccountLog,
+        other.sharedAccountLog
+      ),
+      ("Admin", admin =!= other.admin, adminLog, other.adminLog),
+      ("Expert", expert =!= other.expert, expertLog, other.expertLog),
+      ("Désactivé", disabled =!= other.disabled, disabledLog, other.disabledLog),
+      ("Groupes", groupIds =!= other.groupIds, groupIdsLog, other.groupIdsLog),
+      ("Territoires", areas =!= other.areas, areasLog, other.areasLog),
+      (
+        "Date CGU",
+        cguAcceptationDate =!= other.cguAcceptationDate,
+        cguAcceptationDateLog,
+        other.cguAcceptationDateLog
+      ),
+      (
+        "Newsletter",
+        newsletterAcceptationDate =!= other.newsletterAcceptationDate,
+        newsletterAcceptationDateLog,
+        other.newsletterAcceptationDateLog
+      ),
+      (
+        "Observation des organismes",
+        observableOrganisationIds =!= other.observableOrganisationIds,
+        observableOrganisationIdsLog,
+        other.observableOrganisationIdsLog
+      ),
+    ).collect { case (name, true, thisValue, thatValue) => s"$name : $thisValue -> $thatValue" }
+    "[" + diffs.mkString(" | ") + "]"
+  }
 
 }
 
