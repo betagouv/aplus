@@ -121,11 +121,9 @@ html, body {
     z-index: 10;
 }
 
-/* Note: the mdl footer has too much padding at the bottom and demands a
- * mandatory scroll
- */
+/* Note: the mdl footer is off by a band of unused 4px */
 .mdl-mega-footer-fix {
-    padding-bottom: 4px;
+    margin-bottom: 4px;
 }
 
 .mdl-card__supporting-text {
