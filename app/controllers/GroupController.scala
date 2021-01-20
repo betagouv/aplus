@@ -16,6 +16,7 @@ import play.libs.ws.WSClient
 import services._
 import helper.BooleanHelper.not
 import helper.Time
+import helper.StringHelper.commonStringInputNormalization
 import models.EventType.{
   AddGroupUnauthorized,
   AddUserGroupError,
@@ -208,8 +209,12 @@ case class GroupController @Inject() (
     Form(
       mapping(
         "id" -> ignored(UUID.randomUUID()),
-        "name" -> text(maxLength = 60),
-        "description" -> optional(text),
+        "name" -> text(maxLength = 60)
+          .transform[String](commonStringInputNormalization, commonStringInputNormalization),
+        "description" -> optional(text).transform[Option[String]](
+          _.map(commonStringInputNormalization).filter(_.nonEmpty),
+          _.map(commonStringInputNormalization).filter(_.nonEmpty)
+        ),
         "insee-code" -> list(text),
         "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
         "area-ids" -> list(uuid)
@@ -219,7 +224,11 @@ case class GroupController @Inject() (
           )
           .verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
         "organisation" -> optional(of[Organisation.Id]),
-        "email" -> optional(email)
+        "email" -> optional(email),
+        "publicNote" -> optional(text).transform[Option[String]](
+          _.map(commonStringInputNormalization).filter(_.nonEmpty),
+          _.map(commonStringInputNormalization).filter(_.nonEmpty)
+        )
       )(UserGroup.apply)(UserGroup.unapply)
     )
 

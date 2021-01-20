@@ -13,7 +13,9 @@ case class UserGroup(
     creationDate: ZonedDateTime,
     areaIds: List[UUID],
     organisation: Option[Organisation.Id] = None,
-    email: Option[String] = None
+    email: Option[String] = None,
+    // This is a note displayed to users trying to select this group
+    publicNote: Option[String]
 ) {
 
   def canHaveUsersAddedBy(user: User): Boolean =
@@ -31,6 +33,7 @@ case class UserGroup(
   lazy val emailLog: String = email.map(withQuotes).getOrElse("<vide>")
   lazy val organisationLog: String = organisation.map(_.id).getOrElse("<vide>")
   lazy val areaIdsLog: String = areaIds.mkString(", ")
+  lazy val publicNoteLog: String = publicNote.map(withQuotes).getOrElse("<vide>")
 
   lazy val toLogString: String =
     "[" + List[(String, String)](
@@ -39,7 +42,8 @@ case class UserGroup(
       ("Description", descriptionLog),
       ("BAL", emailLog),
       ("Organisme", organisationLog),
-      ("Territoires", areaIdsLog)
+      ("Territoires", areaIdsLog),
+      ("Notice", publicNoteLog)
     ).map { case (fieldName, value) => s"$fieldName : $value" }.mkString(" | ") + "]"
 
   def toDiffLogString(other: UserGroup): String = {
@@ -50,6 +54,7 @@ case class UserGroup(
       ("BAL", email =!= other.email, emailLog, other.emailLog),
       ("Organisme", organisation =!= other.organisation, organisationLog, other.organisationLog),
       ("Territoires", areaIds =!= other.areaIds, areaIdsLog, other.areaIdsLog),
+      ("Notice", publicNote =!= other.publicNote, publicNoteLog, other.publicNoteLog),
     ).collect { case (name, true, thisValue, thatValue) => s"$name : $thisValue -> $thatValue" }
     "[" + diffs.mkString(" | ") + "]"
   }
