@@ -621,30 +621,7 @@ dialog {
                                 }
 
                                 @if(groupsThatCanBeInvited.nonEmpty) {
-                                  <fieldset class="single--margin-top-16px mdl-cell mdl-cell--12-col">
-                                    <legend class="single--padding-top-16px single--padding-bottom-16px mdl-typography--title">
-                                      Inviter un organisme sur la discussion
-                                    </legend>
-                                    @for(group <- groupsThatCanBeInvited.sortBy(_.name)) {
-                                    @defining(group.organisationSetOrDeducted) { organisation: Option[Organisation] =>
-                                      <div class="single--padding-top-8px single--padding-bottom-8px single--padding-left-16px">
-                                        <label for="invite-@group.id"
-                                               class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect">
-                                          <input id="invite-@group.id"
-                                                 class="mdl-checkbox__input"
-                                                 type="checkbox"
-                                                 name="groups[]"
-                                                 value="@group.id"
-                                          >
-                                          <span class="mdl-checkbox__label">
-                                            <b>@group.name</b>
-                                            @if(organisation.nonEmpty){ <em>(@organisation.get.name)</em> }
-                                          </span>
-                                        </label>
-                                      </div>
-                                    }
-                                    }
-                                  </fieldset>
+                                  @toHtml(views.helpers.applications.inviteTargetGroups(groupsThatCanBeInvited))
                                 }
 
                                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">

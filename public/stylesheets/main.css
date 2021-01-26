@@ -235,6 +235,11 @@ html, body {
     border-left-color: #FF7E47;
 }
 
+.info-box-container {
+    text-align: left;
+    white-space: normal;
+}
+
 .mdl-card__title-text {
     margin-right: 120px;
 }
@@ -710,6 +715,10 @@ a {
     justify-content: center;
 }
 
+.single--height-auto {
+    height: auto !important;
+}
+
 .single--width-100pc {
     width: 100%;
 }
@@ -796,6 +805,10 @@ a {
 
 .single--line-height-24px {
     line-height: 24px !important;
+}
+
+.single--background-color-white {
+    background-color: white;
 }
 
 
@@ -977,4 +990,11 @@ Tabs
     margin-left: 24px;
     margin-right: 24px;
     margin-bottom: 24px;
+}
+
+.form-example {
+    margin-left: 8px;
+    margin-right: 8px;
+    border: 1px solid #9E9E9E;
+    border-radius: 8px;
 }

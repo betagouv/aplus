@@ -31,7 +31,8 @@ class ApplicationSpec extends Specification with BaseSpec {
         description = None,
         inseeCode = List("0"),
         creationDate = Time.nowParis(),
-        areaIds = area :: Nil
+        areaIds = area :: Nil,
+        publicNote = None
       )
       groupService.add(instructorGroup)
       val instructorUser = User(

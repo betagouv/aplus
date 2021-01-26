@@ -17,8 +17,16 @@
             </div>
             <div class="mdl-cell mdl-cell--12-col  mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                 <input class="mdl-textfield__input" type="text" id="description" name="description" value="@userGroup.description" @if(!currentUser.admin) { disabled }>
-                <label class="mdl-textfield__label" for="description">Description du groupe</label>
+                <label class="mdl-textfield__label" for="description">Description succincte</label>
             </div>
+
+            <div class="mdl-cell mdl-cell--12-col  mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+              <textarea class="mdl-textfield__input single--height-auto" type="text" rows="3" id="publicNote" name="publicNote">@userGroup.publicNote</textarea>
+                <label class="mdl-textfield__label" for="publicNote">Description détaillée</label>
+            </div>
+
+            @toHtml(views.helpers.applications.groupFormExample(userGroup))
+
             @if(userGroup.inseeCode.nonEmpty) {
                 <div class="mdl-cell mdl-cell--12-col">
                     <b>Code INSEE</b> (non utilisé pour le moment) : @userGroup.inseeCode.mkString(", ")

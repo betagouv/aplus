@@ -135,7 +135,8 @@ case class CSVImportController @Inject() (
           creationDate = Time.nowParis(),
           areaIds = group.group.areaIds,
           organisation = group.group.organisation,
-          email = group.group.email
+          email = group.group.email,
+          publicNote = None
         ),
         users = group.users.map(user =>
           CSVUserFormData(
@@ -194,7 +195,8 @@ case class CSVImportController @Inject() (
         "Vous devez sélectionner une organisation dans la liste",
         _.exists(Organisation.isValidId)
       ),
-      "email" -> optional(email)
+      "email" -> optional(email),
+      "publicNote" -> ignored(Option.empty[String])
     )(UserGroup.apply)(UserGroup.unapply)
 
   private def importUsersAfterReviewForm(date: ZonedDateTime): Form[List[CSVUserGroupFormData]] =
