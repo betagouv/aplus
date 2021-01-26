@@ -123,18 +123,14 @@ object applications {
                 )
               )
             } else if (organisation.map(_.id).filter(_ === Organisation.cpamId).nonEmpty) {
-              tr(
-                td(
-                  cls := "info-box-container",
-                  div(
-                    cls := "info-box info-box--no-spacing",
-                    "La CPAM aura besoin du ",
-                    b("numéro de sécurité sociale"),
-                    " et à défaut de la date de naissance. ",
-                    "Vous pouvez le renseigner dans ",
-                    b("Informations concernant l’usager"),
-                    " ci-dessous."
-                  )
+              publicNoteBox(
+                frag(
+                  "La CPAM aura besoin du ",
+                  b("numéro de sécurité sociale"),
+                  " et à défaut de la date de naissance. ",
+                  "Vous pouvez le renseigner dans ",
+                  b("Informations concernant l’usager"),
+                  " ci-dessous."
                 )
               )
             } else if (
@@ -144,27 +140,23 @@ object applications {
                 )
                 .nonEmpty
             ) {
-              tr(
-                td(
-                  cls := "info-box-container",
-                  div(
-                    cls := "info-box info-box--no-spacing",
-                    "La préfecture (ou sous-préfecture) ne répondra pas forcément aux questions relative aux renouvellements de titre de séjour ou des certificats d’immatriculation. Pour les titres de séjour concernant les étudiants, vous pouvez utiliser la plateforme du ministère de l’intérieur ",
-                    a(
-                      href := "https://administration-etrangers-en-france.interieur.gouv.fr/particuliers/#/",
-                      target := "_blank",
-                      rel := "noopener",
-                      "à cette adresse"
-                    ),
-                    ". Pour les certificats d’immatriculation, vous pouvez contacter l’ANTS ",
-                    a(
-                      href := "https://ants.gouv.fr/Contacter-l-ANTS/Contactez-nous",
-                      target := "_blank",
-                      rel := "noopener",
-                      "à cette adresse"
-                    ),
-                    "."
-                  )
+              publicNoteBox(
+                frag(
+                  "La préfecture (ou sous-préfecture) ne répondra pas forcément aux questions relative aux renouvellements de titre de séjour ou des certificats d’immatriculation. Pour les titres de séjour concernant les étudiants, vous pouvez utiliser la plateforme du ministère de l’intérieur ",
+                  a(
+                    href := "https://administration-etrangers-en-france.interieur.gouv.fr/particuliers/#/",
+                    target := "_blank",
+                    rel := "noopener",
+                    "à cette adresse"
+                  ),
+                  ". Pour les certificats d’immatriculation, vous pouvez contacter l’ANTS ",
+                  a(
+                    href := "https://ants.gouv.fr/Contacter-l-ANTS/Contactez-nous",
+                    target := "_blank",
+                    rel := "noopener",
+                    "à cette adresse"
+                  ),
+                  "."
                 )
               )
             } else ()
