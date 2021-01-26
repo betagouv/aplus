@@ -106,7 +106,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       description = None,
       inseeCode = List("0"),
       creationDate = Time.nowParis(),
-      areaIds = area :: Nil
+      areaIds = area :: Nil,
+      publicNote = None
     )
     groupService.add(instructorGroup)
     val helperGroup = UserGroup(
@@ -115,7 +116,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       description = None,
       inseeCode = List("0"),
       creationDate = Time.nowParis(),
-      areaIds = area :: Nil
+      areaIds = area :: Nil,
+      publicNote = None
     )
     groupService.add(helperGroup)
 
