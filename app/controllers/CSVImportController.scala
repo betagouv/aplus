@@ -136,7 +136,8 @@ case class CSVImportController @Inject() (
           areaIds = group.group.areaIds,
           organisation = group.group.organisation,
           email = group.group.email,
-          publicNote = None
+          publicNote = None,
+          internalSupportComment = None
         ),
         users = group.users.map(user =>
           CSVUserFormData(
@@ -185,8 +186,12 @@ case class CSVImportController @Inject() (
         },
         Option.apply
       ),
-      "name" -> text(maxLength = 60),
-      "description" -> optional(text),
+      "name" -> text(maxLength = 60)
+        .transform[String](commonStringInputNormalization, commonStringInputNormalization),
+      "description" -> optional(text).transform[Option[String]](
+        _.map(commonStringInputNormalization).filter(_.nonEmpty),
+        _.map(commonStringInputNormalization).filter(_.nonEmpty)
+      ),
       "insee-code" -> list(text),
       "creationDate" -> ignored(date),
       "area-ids" -> list(uuid)
@@ -196,7 +201,8 @@ case class CSVImportController @Inject() (
         _.exists(Organisation.isValidId)
       ),
       "email" -> optional(email),
-      "publicNote" -> ignored(Option.empty[String])
+      "publicNote" -> ignored(Option.empty[String]),
+      "internalSupportComment" -> ignored(Option.empty[String])
     )(UserGroup.apply)(UserGroup.unapply)
 
   private def importUsersAfterReviewForm(date: ZonedDateTime): Form[List[CSVUserGroupFormData]] =
@@ -332,7 +338,8 @@ case class CSVImportController @Inject() (
           newsletterAcceptationDate = None,
           phoneNumber = userData.user.phoneNumber,
           observableOrganisationIds = Nil,
-          sharedAccount = userData.user.name.nonEmpty
+          sharedAccount = userData.user.name.nonEmpty,
+          internalSupportComment = None
         )
       )
     }

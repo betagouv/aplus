@@ -719,10 +719,6 @@ a {
     height: auto !important;
 }
 
-.single--width-100pc {
-    width: 100%;
-}
-
 .single--width-unset {
     width: unset;
 }

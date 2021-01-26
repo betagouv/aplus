@@ -182,6 +182,23 @@
 
           </div>
 
+          @if(currentUser.admin) {
+            @helper.input(form("internalSupportComment"),
+                          "label" -> "Commentaire interne pour le support (visible uniquement par les administrateurs)",
+                          "class" -> "single--width-100pc") { (id, name, value, args) =>
+              <textarea class="mdl-textfield__input single--height-auto"
+                        type="text"
+                        rows="3"
+                        id="@id"
+                        name="@name">@value</textarea>
+            }
+          } else {
+              <input type="hidden"
+                     name="internalSupportComment"
+                     id="internalSupportComment"
+                     value="@uneditedUser.internalSupportComment">
+          }
+
           @if(unused && canEditUser) {
             <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="showDialog(document.querySelector('#dialog-delete-user'))">Supprimer cet utilisateur inutilisé</button>
             <br>

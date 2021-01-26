@@ -130,7 +130,8 @@ object formModels {
       groupIds: List[UUID],
       phoneNumber: Option[String],
       observableOrganisationIds: List[Organisation.Id],
-      sharedAccount: Boolean
+      sharedAccount: Boolean,
+      internalSupportComment: Option[String]
   )
 
   case class CSVReviewUserFormData(

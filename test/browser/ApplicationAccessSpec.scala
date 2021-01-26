@@ -107,7 +107,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       inseeCode = List("0"),
       creationDate = Time.nowParis(),
       areaIds = area :: Nil,
-      publicNote = None
+      publicNote = None,
+      internalSupportComment = None
     )
     groupService.add(instructorGroup)
     val helperGroup = UserGroup(
@@ -117,7 +118,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       inseeCode = List("0"),
       creationDate = Time.nowParis(),
       areaIds = area :: Nil,
-      publicNote = None
+      publicNote = None,
+      internalSupportComment = None
     )
     groupService.add(helperGroup)
 
@@ -138,7 +140,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
-      groupIds = List(instructorGroup.id)
+      groupIds = List(instructorGroup.id),
+      internalSupportComment = None
     )
     val unrelatedInstructorUser = User(
       UUIDHelper.namedFrom(s"instructor-test-unrelated$number"),
@@ -157,7 +160,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
-      groupIds = Nil
+      groupIds = Nil,
+      internalSupportComment = None
     )
     val helperUser = User(
       UUIDHelper.namedFrom(s"helper-test$number"),
@@ -176,7 +180,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
-      groupIds = List(helperGroup.id)
+      groupIds = List(helperGroup.id),
+      internalSupportComment = None
     )
     val helperFriendUser = User(
       UUIDHelper.namedFrom(s"helper-test-friend$number"),
@@ -195,7 +200,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
-      groupIds = List(helperGroup.id)
+      groupIds = List(helperGroup.id),
+      internalSupportComment = None
     )
     val unrelatedHelperUser = User(
       UUIDHelper.namedFrom(s"helper-test-unrelated$number"),
@@ -214,7 +220,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
-      groupIds = List(helperGroup.id)
+      groupIds = List(helperGroup.id),
+      internalSupportComment = None
     )
     val unrelatedExpertUser = User(
       UUIDHelper.namedFrom(s"expert-test-unrelated$number"),
@@ -233,7 +240,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
-      groupIds = List(helperGroup.id)
+      groupIds = List(helperGroup.id),
+      internalSupportComment = None
     )
     val managerUser = User(
       UUIDHelper.namedFrom(s"helper-test-manager$number"),
@@ -252,7 +260,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
-      groupIds = List(helperGroup.id)
+      groupIds = List(helperGroup.id),
+      internalSupportComment = None
     )
 
     val users = List(

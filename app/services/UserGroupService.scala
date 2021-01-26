@@ -32,7 +32,8 @@ class UserGroupService @Inject() (
       "area_ids",
       "organisation",
       "email",
-      "public_note"
+      "public_note",
+      "internal_support_comment"
     )
     .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
 
@@ -81,7 +82,8 @@ class UserGroupService @Inject() (
           organisation = ${group.organisation.map(_.id)},
           area_ids = array[${group.areaIds}]::uuid[],
           email = ${group.email},
-          public_note = ${group.publicNote}
+          public_note = ${group.publicNote},
+          internal_support_comment = ${group.internalSupportComment}
           WHERE id = ${group.id}::uuid
        """.executeUpdate() === 1
     //TODO: insee_code = array[${group.inseeCode}]::character varying(5)[], have been remove temporary

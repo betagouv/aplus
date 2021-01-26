@@ -42,7 +42,9 @@ case class User(
     // * can see all users,
     // * can see one user but not edit it
     observableOrganisationIds: List[Organisation.Id] = Nil,
-    sharedAccount: Boolean = false
+    sharedAccount: Boolean = false,
+    // This is a comment only visible by the admins
+    internalSupportComment: Option[String]
 ) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"
 
@@ -93,6 +95,9 @@ case class User(
   lazy val observableOrganisationIdsLog: String = observableOrganisationIds.map(_.id).mkString(", ")
   lazy val sharedAccountLog: String = sharedAccount.toString
 
+  lazy val internalSupportCommentLog: String =
+    internalSupportComment.map(withQuotes).getOrElse("<vide>")
+
   lazy val toLogString: String =
     "[" + List[(String, String)](
       ("Id", id.toString),
@@ -114,6 +119,7 @@ case class User(
       ("Date CGU", cguAcceptationDateLog),
       ("Newsletter", newsletterAcceptationDateLog),
       ("Observation des organismes", observableOrganisationIdsLog),
+      ("Information Support", internalSupportCommentLog),
     ).map { case (fieldName, value) => s"$fieldName : $value" }.mkString(" | ") + "]"
 
   def toDiffLogString(other: User): String = {
@@ -157,6 +163,12 @@ case class User(
         observableOrganisationIdsLog,
         other.observableOrganisationIdsLog
       ),
+      (
+        "Information Support",
+        internalSupportCommentLog =!= other.internalSupportCommentLog,
+        internalSupportCommentLog,
+        other.internalSupportCommentLog
+      ),
     ).collect { case (name, true, thisValue, thatValue) => s"$name : $thisValue -> $thatValue" }
     "[" + diffs.mkString(" | ") + "]"
   }
@@ -180,7 +192,8 @@ object User {
     ZonedDateTime.parse("2017-11-01T00:00+01:00"),
     "75056",
     groupAdmin = false,
-    disabled = true
+    disabled = true,
+    internalSupportComment = None
   )
 
 }

@@ -228,6 +228,10 @@ case class GroupController @Inject() (
         "publicNote" -> optional(text).transform[Option[String]](
           _.map(commonStringInputNormalization).filter(_.nonEmpty),
           _.map(commonStringInputNormalization).filter(_.nonEmpty)
+        ),
+        "internalSupportComment" -> optional(text).transform[Option[String]](
+          _.map(commonStringInputNormalization).filter(_.nonEmpty),
+          _.map(commonStringInputNormalization).filter(_.nonEmpty)
         )
       )(UserGroup.apply)(UserGroup.unapply)
     )

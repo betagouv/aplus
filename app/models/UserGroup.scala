@@ -15,7 +15,9 @@ case class UserGroup(
     organisation: Option[Organisation.Id] = None,
     email: Option[String] = None,
     // This is a note displayed to users trying to select this group
-    publicNote: Option[String]
+    publicNote: Option[String],
+    // This is a comment only visible by the admins
+    internalSupportComment: Option[String]
 ) {
 
   def canHaveUsersAddedBy(user: User): Boolean =
@@ -35,6 +37,9 @@ case class UserGroup(
   lazy val areaIdsLog: String = areaIds.mkString(", ")
   lazy val publicNoteLog: String = publicNote.map(withQuotes).getOrElse("<vide>")
 
+  lazy val internalSupportCommentLog: String =
+    internalSupportComment.map(withQuotes).getOrElse("<vide>")
+
   lazy val toLogString: String =
     "[" + List[(String, String)](
       ("Id", id.toString),
@@ -43,7 +48,8 @@ case class UserGroup(
       ("BAL", emailLog),
       ("Organisme", organisationLog),
       ("Territoires", areaIdsLog),
-      ("Notice", publicNoteLog)
+      ("Notice", publicNoteLog),
+      ("Information Support", internalSupportCommentLog),
     ).map { case (fieldName, value) => s"$fieldName : $value" }.mkString(" | ") + "]"
 
   def toDiffLogString(other: UserGroup): String = {
@@ -55,6 +61,12 @@ case class UserGroup(
       ("Organisme", organisation =!= other.organisation, organisationLog, other.organisationLog),
       ("Territoires", areaIds =!= other.areaIds, areaIdsLog, other.areaIdsLog),
       ("Notice", publicNote =!= other.publicNote, publicNoteLog, other.publicNoteLog),
+      (
+        "Information Support",
+        internalSupportCommentLog =!= other.internalSupportCommentLog,
+        internalSupportCommentLog,
+        other.internalSupportCommentLog
+      ),
     ).collect { case (name, true, thisValue, thatValue) => s"$name : $thisValue -> $thatValue" }
     "[" + diffs.mkString(" | ") + "]"
   }

@@ -450,7 +450,8 @@ case class UserController @Inject() (
                 groupIds = user.groupIds,
                 phoneNumber = user.phoneNumber,
                 observableOrganisationIds = user.observableOrganisationIds,
-                sharedAccount = user.sharedAccount
+                sharedAccount = user.sharedAccount,
+                internalSupportComment = user.internalSupportComment
               )
             )
             val groups = groupService.allGroups
@@ -565,7 +566,8 @@ case class UserController @Inject() (
                     groupIds = updatedUserData.groupIds.distinct,
                     phoneNumber = updatedUserData.phoneNumber,
                     observableOrganisationIds = updatedUserData.observableOrganisationIds.distinct,
-                    sharedAccount = updatedUserData.sharedAccount
+                    sharedAccount = updatedUserData.sharedAccount,
+                    internalSupportComment = updatedUserData.internalSupportComment
                   )
                   userService.update(userToUpdate).map { updateHasBeenDone =>
                     if (updateHasBeenDone) {
@@ -649,7 +651,8 @@ case class UserController @Inject() (
                       newsletterAcceptationDate = None,
                       phoneNumber = userToAdd.phoneNumber,
                       observableOrganisationIds = Nil,
-                      sharedAccount = userToAdd.sharedAccount
+                      sharedAccount = userToAdd.sharedAccount,
+                      internalSupportComment = None
                     )
                   )
                   userService
@@ -922,7 +925,11 @@ case class UserController @Inject() (
         "groupIds" -> default(list(uuid), Nil),
         "phoneNumber" -> optional(text),
         "observableOrganisationIds" -> list(of[Organisation.Id]),
-        Keys.User.sharedAccount -> boolean
+        Keys.User.sharedAccount -> boolean,
+        "internalSupportComment" -> optional(text).transform[Option[String]](
+          _.map(commonStringInputNormalization).filter(_.nonEmpty),
+          _.map(commonStringInputNormalization).filter(_.nonEmpty)
+        )
       )(EditUserFormData.apply)(EditUserFormData.unapply)
     )
 

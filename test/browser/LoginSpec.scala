@@ -30,7 +30,8 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
     ZonedDateTime.parse("2017-11-01T00:00+01:00"),
     "75056",
     groupAdmin = true,
-    disabled = false
+    disabled = false,
+    internalSupportComment = None
   )
 
   def beforeAll(): Unit = {

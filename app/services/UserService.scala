@@ -46,7 +46,8 @@ class UserService @Inject() (
       "newsletter_acceptation_date",
       "phone_number",
       "observable_organisation_ids",
-      "shared_account"
+      "shared_account",
+      "internal_support_comment"
     )
     .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
 
@@ -229,7 +230,8 @@ class UserService @Inject() (
           phone_number = ${user.phoneNumber},
           disabled = ${user.disabled},
           observable_organisation_ids = array[${observableOrganisationIds.distinct}]::varchar[],
-          shared_account = ${user.sharedAccount}
+          shared_account = ${user.sharedAccount},
+          internal_support_comment = ${user.internalSupportComment}
           WHERE id = ${user.id}::uuid
        """.executeUpdate() === 1
     })
