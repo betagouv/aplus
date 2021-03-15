@@ -144,9 +144,10 @@ case class Application(
 
   // Security
 
-  def canHaveExpertsInvitedBy(user: User) =
-    (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
-      creatorUserId === user.id
+  def canHaveExpertsInvitedBy(user: User) = false 
+   // TODO : be more open to expert invitation if it's reintroduced
+   // (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
+   //  creatorUserId === user.id
 
   def canHaveAgentsInvitedBy(user: User) =
     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
