@@ -5,6 +5,12 @@ import helper.StringHelper.withQuotes
 import java.time.ZonedDateTime
 import java.util.UUID
 
+object UserGroup {
+
+  val nameMaxLength: Int = 250
+
+}
+
 case class UserGroup(
     id: UUID,
     name: String,

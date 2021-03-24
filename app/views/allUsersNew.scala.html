@@ -212,7 +212,7 @@
             @helper.form(routes.GroupController.addGroup(), "method" -> "post", "class" -> "mdl-cell mdl-cell--9-col") {
                 @helper.CSRF.formField
                 <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="text" id="name" name="name" maxlength="50">
+                    <input class="mdl-textfield__input" type="text" id="name" name="name" maxlength="@models.UserGroup.nameMaxLength">
                     <label class="mdl-textfield__label" for="name">Nom du groupe</label>
                 </div>
                 <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
