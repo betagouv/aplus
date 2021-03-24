@@ -16,7 +16,7 @@ lazy val root = (project in file("."))
 
 inThisBuild(
   List(
-    scalaVersion := "2.13.3",
+    scalaVersion := "2.13.5",
     semanticdbEnabled := true, // enable SemanticDB
     semanticdbVersion := scalafixSemanticdb.revision // use Scalafix compatible version
   )
@@ -79,14 +79,14 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.2.18",
-  "org.playframework.anorm" %% "anorm" % "2.6.9",
+  "org.postgresql" % "postgresql" % "42.2.19",
+  "org.playframework.anorm" %% "anorm" % "2.6.10",
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "com.typesafe.play" %% "play-mailer-guice" % "8.0.1",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   "com.google.guava" % "guava" % "28.1-jre",
-  "com.github.tototoshi" %% "scala-csv" % "1.3.6",
+  "com.github.tototoshi" %% "scala-csv" % "1.3.7",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.9.3",
   "org.typelevel" %% "cats-core" % "2.4.2",
@@ -112,7 +112,7 @@ libraryDependencies ++= Seq(
   "org.webjars.npm" % "xlsx" % "0.16.9"
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "1.7.30"
+libraryDependencies += "io.sentry" % "sentry-logback" % "4.3.0"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
