@@ -123,8 +123,9 @@ class UserService @Inject() (
     results.headOption
   }
 
-  def byIds(ids: List[UUID], includeDisabled: Boolean = false): List[User] =
+  def byIds(userIds: List[UUID], includeDisabled: Boolean = false): List[User] =
     db.withConnection { implicit connection =>
+      val ids = userIds.distinct
       val disabledSQL: String = if (includeDisabled) {
         ""
       } else {
