@@ -2,4 +2,4 @@
 ALTER TABLE "user_group" ALTER COLUMN "name" SET DATA TYPE character varying(250);
 
 # --- !Downs
-ALTER TABLE "user_group" ALTER COLUMN "name" SET DATA TYPE character varying(60);
+ALTER TABLE "user_group" ALTER COLUMN "name" SET DATA TYPE character varying(60) USING SUBSTR("name", 1, 60);
