@@ -52,6 +52,7 @@ object Organisation {
 
   def byId(id: Id): Option[Organisation] = all.find(org => org.id === id)
 
+  val association = Organisation("Association", "Association")
   val cafId = Organisation.Id("CAF")
   val caf = Organisation(cafId, "CAF", "Caisse d’allocations familiale")
   val cpamId = Organisation.Id("CPAM")
@@ -73,6 +74,7 @@ object Organisation {
   val all = List(
     Organisation("ANAH", "Agence nationale de l'habitat"),
     Organisation("ANTS", "Agence nationale des titres sécurisés"),
+    association,
     Organisation("BDF", "Banque de France"),
     caf, //Département
     Organisation("CARSAT", "Caisse d'assurance retraite et de la santé au travail"), //
@@ -103,7 +105,7 @@ object Organisation {
     )
   )
 
-  val organismesAidants: List[Organisation] = List(franceServices, msap, hopital)
+  val organismesAidants: List[Organisation] = List(association, franceServices, msap, hopital)
 
   val organismesOperateurs: List[Organisation] =
     all.filter(!organismesAidants.contains[Organisation](_))
