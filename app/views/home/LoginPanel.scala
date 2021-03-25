@@ -1,6 +1,6 @@
 package views.home
 
-import models.User
+import java.time.ZoneId
 
 sealed trait LoginPanel
 
@@ -10,7 +10,8 @@ object LoginPanel {
   case class SendbackEmailForm(email: String, errorMessage: Option[String]) extends LoginPanel
 
   case class EmailSentFeedback(
-      user: User,
+      email: String,
+      timeZone: ZoneId,
       tokenExpirationInMinutes: Int,
       successMessage: Option[String]
   ) extends LoginPanel

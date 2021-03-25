@@ -67,6 +67,20 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       underlyingException = error.underlyingException
     )
 
+  /** Logs an `Error` when no user is authenticated. */
+  def logErrorNoUser(
+      error: models.Error,
+      application: Option[Application] = None,
+      involvesUser: Option[User] = None
+  )(implicit request: Request[_]) =
+    logSystem(
+      event = error.eventType,
+      description = error.description,
+      application = application,
+      involvesUser = involvesUser,
+      underlyingException = error.underlyingException
+    )
+
   val info = register("INFO") _
   val warn = register("WARN") _
   val error = register("ERROR") _

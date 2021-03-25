@@ -8,16 +8,19 @@ import cats.syntax.all._
 import constants.Constants
 import controllers.routes
 import helper.EmailHelper.quoteEmailPhrase
+import java.time.ZoneId
 import javax.inject.{Inject, Singleton}
 import models._
 import models.mandat.Mandat
 import play.api.Logger
 import play.api.libs.concurrent.MaterializerProvider
 import play.api.libs.mailer.{Email, MailerClient}
+import play.api.mvc.Request
 import views.emails.{common, WeeklyEmailInfos}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 @Singleton
 class NotificationService @Inject() (
@@ -187,13 +190,32 @@ class NotificationService @Inject() (
   }
 
   def newUser(newUser: User) =
-    sendMail(generateWelcomeEmail(newUser))
+    sendMail(generateWelcomeEmail(newUser.name.some, newUser.email))
 
-  def newMagicLinkEmail(user: User, loginToken: LoginToken, pathToRedirectTo: String) = {
+  def newSignup(signup: SignupRequest)(implicit request: Request[_]) =
+    Try(sendMail(generateWelcomeEmail(none, signup.email)))
+      .recover { case e =>
+        eventService.logErrorNoUser(
+          Error.MiscException(
+            EventType.SignupEmailError,
+            s"Impossible d'envoyer l'email de bienvenue à ${signup.email} pour la préinscription ${signup.id}",
+            e
+          )
+        )
+      }
+
+  def newMagicLinkEmail(
+      userName: Option[String],
+      userEmail: String,
+      userTimeZone: ZoneId,
+      loginToken: LoginToken,
+      pathToRedirectTo: String
+  ) = {
     val absoluteUrl: String =
       routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL(https, host)
     val bodyInner = common.magicLinkBody(
-      user,
+      userName,
+      userTimeZone,
       loginToken,
       absoluteUrl,
       pathToRedirectTo,
@@ -202,7 +224,12 @@ class NotificationService @Inject() (
     val email = Email(
       subject = common.magicLinkSubject,
       from = from,
-      to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
+      to = List(
+        userName
+          .filter(_.nonEmpty)
+          .map(name => s"${quoteEmailPhrase(name)} <${userEmail}>")
+          .getOrElse(userEmail)
+      ),
       bodyHtml = Some(common.renderEmail(bodyInner))
     )
     sendMail(email)
@@ -261,12 +288,17 @@ class NotificationService @Inject() (
     )
   }
 
-  private def generateWelcomeEmail(user: User): Email = {
-    val bodyHtml = views.html.emails.welcome(user, tokenExpirationInMinutes).toString()
+  private def generateWelcomeEmail(userName: Option[String], userEmail: String): Email = {
+    val bodyHtml = views.html.emails.welcome(userEmail, tokenExpirationInMinutes).toString
     Email(
       subject = "[A+] Bienvenue sur Administration+",
       from = from,
-      to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
+      to = List(
+        userName
+          .filter(_.nonEmpty)
+          .map(name => s"${quoteEmailPhrase(name)} <${userEmail}>")
+          .getOrElse(userEmail)
+      ),
       bodyHtml = Some(bodyHtml)
     )
   }

@@ -1,6 +1,6 @@
 package controllers
 
-import java.time.{LocalDate, ZoneId, ZonedDateTime}
+import java.time.LocalDate
 import java.util.UUID
 
 import actions.{LoginAction, RequestWithUserData}
@@ -49,6 +49,7 @@ import models.EventType.{
 }
 import models._
 import models.formModels.{
+  normalizedOptionalText,
   AddUserFormData,
   AddUserToGroupFormData,
   EditProfileFormData,
@@ -61,6 +62,7 @@ import play.api.Configuration
 import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.{Form, Mapping}
+import play.api.i18n.I18nSupport
 import play.api.mvc._
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
@@ -82,7 +84,7 @@ case class UserController @Inject() (
     eventService: EventService
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
-    with play.api.i18n.I18nSupport
+    with I18nSupport
     with UserOperators
     with GroupOperators {
 
@@ -641,7 +643,7 @@ case class UserController @Inject() (
                       instructor = userToAdd.instructor,
                       admin = false,
                       areas = group.areaIds,
-                      creationDate = ZonedDateTime.now(Time.timeZoneParis),
+                      creationDate = Time.nowParis(),
                       communeCode = "0",
                       groupAdmin = userToAdd.groupAdmin,
                       disabled = false,
@@ -926,10 +928,7 @@ case class UserController @Inject() (
         "phoneNumber" -> optional(text),
         "observableOrganisationIds" -> list(of[Organisation.Id]),
         Keys.User.sharedAccount -> boolean,
-        "internalSupportComment" -> optional(text).transform[Option[String]](
-          _.map(commonStringInputNormalization).filter(_.nonEmpty),
-          _.map(commonStringInputNormalization).filter(_.nonEmpty)
-        )
+        "internalSupportComment" -> normalizedOptionalText
       )(EditUserFormData.apply)(EditUserFormData.unapply)
     )
 

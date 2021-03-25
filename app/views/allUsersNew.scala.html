@@ -15,7 +15,8 @@
     </style>
 }{
     @if(currentUser.admin) {
-        <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-offset mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.UserController.all(selectedArea.id)?vue=classique">Vue utilisateurs classique</a>
+        <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.UserController.all(selectedArea.id)?vue=classique">Vue utilisateurs classique</a>
+        <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.SignupController.signupRequests()">Pré-inscription Aidants</a>
         <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.CSVImportController.importUsersFromCSV()">Importer utilisateurs</a>
     }
     @if(currentUser.areas.length > 1) {
@@ -234,7 +235,7 @@
                     <select id="organisation" name="organisation">
                         <option selected style="font-weight: bold;" value="">Organisme non-référencé</option>
                         @for(organisation <- Organisation.all) {
-                            <option value="@organisation.shortName">@organisation.shortName : @organisation.name</option>
+                            <option value="@organisation.id.id">@organisation.shortName : @organisation.name</option>
                         }
                     </select>
                 </div>
