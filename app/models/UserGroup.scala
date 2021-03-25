@@ -7,7 +7,7 @@ import java.util.UUID
 
 object UserGroup {
 
-  val nameMaxLength: Int = 250
+  val nameMaxLength: Int = 100
 
 }
 
