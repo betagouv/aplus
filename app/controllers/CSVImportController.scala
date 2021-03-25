@@ -186,7 +186,7 @@ case class CSVImportController @Inject() (
         },
         Option.apply
       ),
-      "name" -> text(maxLength = 60)
+      "name" -> text(maxLength = UserGroup.nameMaxLength)
         .transform[String](commonStringInputNormalization, commonStringInputNormalization),
       "description" -> optional(text).transform[Option[String]](
         _.map(commonStringInputNormalization).filter(_.nonEmpty),

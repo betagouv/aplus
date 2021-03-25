@@ -209,7 +209,7 @@ case class GroupController @Inject() (
     Form(
       mapping(
         "id" -> ignored(UUID.randomUUID()),
-        "name" -> text(maxLength = 60)
+        "name" -> text(maxLength = UserGroup.nameMaxLength)
           .transform[String](commonStringInputNormalization, commonStringInputNormalization),
         "description" -> optional(text).transform[Option[String]](
           _.map(commonStringInputNormalization).filter(_.nonEmpty),
