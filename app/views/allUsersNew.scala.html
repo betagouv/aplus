@@ -1,4 +1,5 @@
 @import models._
+@import cats.implicits.catsSyntaxEq
 @(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
@@ -57,8 +58,13 @@
                             }
                         ],
                         groups: [
-                            @for(group <- user.groupIds.flatMap( groupId => userGroups.find( _.id == groupId ) ).map(_.name)){
+                            @for(group <- user.groupIds.flatMap( groupId => userGroups.find( _.id === groupId ) ).map(_.name)){
                                 "@group",
+                            }
+                        ],
+                        groupEmails: [
+                            @for(email <- user.groupIds.flatMap( groupId => userGroups.find( _.id === groupId ) ).flatMap(_.email)){
+                                "@email",
                             }
                         ],
                         groupAdmin: @user.groupAdmin,
@@ -199,6 +205,7 @@
                       headerVertical: verticalHeader,
                       bottomCalc: "count"
                     },
+                    { title: "BALs", field: "groupEmails", headerFilter: "input" },
                     { title: "Départements", field: "areas", headerFilter: "input" },
                 ]
             });
@@ -212,7 +219,7 @@
             @helper.form(routes.GroupController.addGroup(), "method" -> "post", "class" -> "mdl-cell mdl-cell--9-col") {
                 @helper.CSRF.formField
                 <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="text" id="name" name="name" maxlength="50">
+                    <input class="mdl-textfield__input" type="text" id="name" name="name" maxlength="@models.UserGroup.nameMaxLength">
                     <label class="mdl-textfield__label" for="name">Nom du groupe</label>
                 </div>
                 <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
