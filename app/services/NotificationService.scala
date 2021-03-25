@@ -3,7 +3,7 @@ package services
 import java.util.UUID
 
 import akka.stream.scaladsl.{RestartSource, Sink, Source}
-import akka.stream.{ActorAttributes, Materializer, Supervision}
+import akka.stream.{ActorAttributes, Materializer, RestartSettings, Supervision}
 import cats.syntax.all._
 import constants.Constants
 import controllers.routes
@@ -100,10 +100,12 @@ class NotificationService @Inject() (
   private def sendEmail(email: Email): Future[Unit] =
     RestartSource
       .onFailuresWithBackoff(
-        minBackoff = 10.seconds,
-        maxBackoff = 40.seconds,
-        randomFactor = 0.2,
-        maxRestarts = 3
+        RestartSettings(
+          minBackoff = 10.seconds,
+          maxBackoff = 40.seconds,
+          randomFactor = 0.2
+        )
+          .withMaxRestarts(count = 3, within = 10.seconds)
       ) { () =>
         Source.future {
           // `sendMail` is executed on the `dependencies.mailerExecutionContext` thread pool
