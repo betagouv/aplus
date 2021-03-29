@@ -433,7 +433,7 @@ case class CSVImportController @Inject() (
                             eventService.log(
                               UserCreated,
                               s"Utilisateur ajouté ${user.toLogString}",
-                              involvesUser = Some(user)
+                              involvesUser = Some(user.id)
                             )
                           }
                           eventService

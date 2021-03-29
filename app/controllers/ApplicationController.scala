@@ -669,7 +669,7 @@ case class ApplicationController @Inject() (
           eventService.log(
             AllAsUnauthorized,
             s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur $userId",
-            involvesUser = Some(user)
+            involvesUser = Some(user.id)
           )
           Future(
             Unauthorized(
@@ -680,7 +680,7 @@ case class ApplicationController @Inject() (
           eventService.log(
             AllAsUnauthorized,
             s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur admin $userId",
-            involvesUser = Some(user)
+            involvesUser = Some(user.id)
           )
           Future(
             Unauthorized(
@@ -695,7 +695,7 @@ case class ApplicationController @Inject() (
               .log(
                 AllAsShowed,
                 s"Visualise la vue de l'utilisateur $userId",
-                involvesUser = Some(user)
+                involvesUser = Some(user.id)
               )
             val applications = applicationService.allForUserId(
               userId = targetUserId,
@@ -999,7 +999,8 @@ case class ApplicationController @Inject() (
               case Some(answer) if answer.files.getOrElse(Map.empty).contains(filename) =>
                 eventService.log(
                   FileOpened,
-                  s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert"
+                  s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert",
+                  application = Some(application)
                 )
                 sendFile(
                   Paths.get(s"$filesPath/ans_$answerId-$filename"),
@@ -1009,7 +1010,8 @@ case class ApplicationController @Inject() (
               case _ =>
                 eventService.log(
                   FileNotFound,
-                  s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas"
+                  s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas",
+                  application = Some(application)
                 )
                 Future(NotFound("Nous n'avons pas trouvé ce fichier"))
             }
@@ -1020,7 +1022,11 @@ case class ApplicationController @Inject() (
               ) =>
             if (application.files.contains(filename)) {
               eventService
-                .log(FileOpened, s"Le fichier de la demande $applicationId a été ouvert")
+                .log(
+                  FileOpened,
+                  s"Le fichier de la demande $applicationId a été ouvert",
+                  application = Some(application)
+                )
               sendFile(
                 Paths.get(s"$filesPath/app_$applicationId-$filename"),
                 filename,
@@ -1029,7 +1035,8 @@ case class ApplicationController @Inject() (
             } else {
               eventService.log(
                 FileNotFound,
-                s"Le fichier de la demande $applicationId n'existe pas"
+                s"Le fichier de la demande $applicationId n'existe pas",
+                application = Some(application)
               )
               Future(NotFound("Nous n'avons pas trouvé ce fichier"))
             }
@@ -1070,7 +1077,7 @@ case class ApplicationController @Inject() (
           formWithErrors => {
             val error =
               s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.message).mkString(", ")})."
-            eventService.log(AnswerNotCreated, s"$error")
+            eventService.log(AnswerNotCreated, s"$error", application = Some(application))
             Future(
               Redirect(
                 routes.ApplicationController.show(applicationId).withFragment("answer-error")
@@ -1164,7 +1171,7 @@ case class ApplicationController @Inject() (
             formWithErrors => {
               val error =
                 s"Erreur dans le formulaire d’invitation (${formWithErrors.errors.map(_.message).mkString(", ")})."
-              eventService.log(InviteNotCreated, error)
+              eventService.log(InviteNotCreated, error, application = application.some)
               Future(
                 Redirect(
                   routes.ApplicationController.show(applicationId).withFragment("answer-error")
@@ -1176,7 +1183,7 @@ case class ApplicationController @Inject() (
               if (inviteData.invitedUsers.isEmpty && inviteData.invitedGroups.isEmpty) {
                 val error =
                   s"Erreur dans le formulaire d’invitation (une personne ou un organisme doit être sélectionné)."
-                eventService.log(InviteNotCreated, error)
+                eventService.log(InviteNotCreated, error, application = application.some)
                 Future(
                   Redirect(
                     routes.ApplicationController.show(applicationId).withFragment("answer-error")
@@ -1218,8 +1225,8 @@ case class ApplicationController @Inject() (
                       notificationsService.newAnswer(application, answer)
                       eventService.log(
                         AgentsAdded,
-                        s"L'ajout d'utilisateur ${answer.id} a été créé sur la demande $applicationId",
-                        Some(application)
+                        s"L'ajout d'utilisateur (ID de réponse ${answer.id}) a été créé sur la demande $applicationId",
+                        application = application.some
                       )
                       Redirect(routes.ApplicationController.myApplications())
                         .flashing(success -> "Les utilisateurs ont été invités sur la demande")
@@ -1227,7 +1234,7 @@ case class ApplicationController @Inject() (
                       eventService.log(
                         AgentsNotAdded,
                         s"L'ajout d'utilisateur ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD",
-                        Some(application)
+                        application = application.some
                       )
                       InternalServerError("Les utilisateurs n'ont pas pu être invités")
                     }
@@ -1266,7 +1273,7 @@ case class ApplicationController @Inject() (
               eventService.log(
                 AddExpertCreated,
                 s"La réponse ${answer.id} a été créée sur la demande $applicationId",
-                Some(application)
+                application = application.some
               )
               Redirect(routes.ApplicationController.myApplications())
                 .flashing(success -> "Un expert a été invité sur la demande")
@@ -1298,25 +1305,23 @@ case class ApplicationController @Inject() (
   def reopen(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application: Application =>
-        import eventService._
         successful(application.canBeOpenedBy(request.currentUser)).flatMap {
           case true =>
             applicationService
               .reopen(applicationId)
-              .filter(identity)
               .map { _ =>
                 val message = "La demande a bien été réouverte"
-                log(ReopenCompleted, message, application.some)
+                eventService.log(ReopenCompleted, message, application.some)
                 Redirect(routes.ApplicationController.myApplications()).flashing(success -> message)
               }
               .recover { _ =>
                 val message = "La demande n'a pas pu être réouverte"
-                log(ReopenError, message, application.some)
+                eventService.log(ReopenError, message, application.some)
                 InternalServerError(message)
               }
           case false =>
             val message = s"Non autorisé à réouvrir la demande $applicationId"
-            log(ReopenUnauthorized, message, application.some)
+            eventService.log(ReopenUnauthorized, message, application.some)
             successful(Unauthorized(message))
         }
       }
@@ -1330,7 +1335,8 @@ case class ApplicationController @Inject() (
             eventService
               .log(
                 TerminateIncompleted,
-                s"La demande de clôture pour $applicationId est incomplète"
+                s"La demande de clôture pour $applicationId est incomplète",
+                application = application.some
               )
             Future(
               BadGateway(
