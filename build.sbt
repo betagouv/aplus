@@ -89,7 +89,7 @@ libraryDependencies ++= Seq(
   "com.github.tototoshi" %% "scala-csv" % "1.3.7",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.9.4",
-  "org.typelevel" %% "cats-core" % "2.4.2",
+  "org.typelevel" %% "cats-core" % "2.5.0",
   // To ensure that the version of jackson that do not have
   // known security vulnerabilities is used
   // It is also compatible with play-json
