@@ -326,8 +326,16 @@ case class ApplicationController @Inject() (
               eventService.log(
                 ApplicationCreated,
                 s"La demande ${application.id} a été créée",
-                Some(application)
+                application = application.some
               )
+              application.invitedUsers.foreach { case (userId, _) =>
+                eventService.log(
+                  ApplicationCreated,
+                  s"Envoi de la nouvelle demande ${application.id} à l'utilisateur $userId",
+                  application = application.some,
+                  involvesUser = userId.some
+                )
+              }
               applicationData.linkedMandat.foreach { mandatId =>
                 mandatService
                   .linkToApplication(Mandat.Id(mandatId), applicationId)
@@ -340,7 +348,7 @@ case class ApplicationController @Inject() (
                         underlyingException = Some(error)
                       )
                     case Success(Left(error)) =>
-                      eventService.logError(error, application = Some(application))
+                      eventService.logError(error, application = application.some)
                     case Success(Right(_)) =>
                       eventService.log(
                         ApplicationLinkedToMandat,
@@ -1000,7 +1008,7 @@ case class ApplicationController @Inject() (
                 eventService.log(
                   FileOpened,
                   s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert",
-                  application = Some(application)
+                  application = application.some
                 )
                 sendFile(
                   Paths.get(s"$filesPath/ans_$answerId-$filename"),
@@ -1011,7 +1019,7 @@ case class ApplicationController @Inject() (
                 eventService.log(
                   FileNotFound,
                   s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas",
-                  application = Some(application)
+                  application = application.some
                 )
                 Future(NotFound("Nous n'avons pas trouvé ce fichier"))
             }
@@ -1025,7 +1033,7 @@ case class ApplicationController @Inject() (
                 .log(
                   FileOpened,
                   s"Le fichier de la demande $applicationId a été ouvert",
-                  application = Some(application)
+                  application = application.some
                 )
               sendFile(
                 Paths.get(s"$filesPath/app_$applicationId-$filename"),
@@ -1036,7 +1044,7 @@ case class ApplicationController @Inject() (
               eventService.log(
                 FileNotFound,
                 s"Le fichier de la demande $applicationId n'existe pas",
-                application = Some(application)
+                application = application.some
               )
               Future(NotFound("Nous n'avons pas trouvé ce fichier"))
             }
@@ -1077,7 +1085,7 @@ case class ApplicationController @Inject() (
           formWithErrors => {
             val error =
               s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.message).mkString(", ")})."
-            eventService.log(AnswerNotCreated, s"$error", application = Some(application))
+            eventService.log(AnswerNotCreated, s"$error", application = application.some)
             Future(
               Redirect(
                 routes.ApplicationController.show(applicationId).withFragment("answer-error")
@@ -1144,7 +1152,7 @@ case class ApplicationController @Inject() (
               eventService.log(
                 AnswerNotCreated,
                 s"La réponse ${answer.id} n'a pas été créée sur la demande $applicationId : problème BDD",
-                Some(application)
+                application.some
               )
               Future(InternalServerError("Votre réponse n'a pas pu être envoyée"))
             }
@@ -1225,9 +1233,17 @@ case class ApplicationController @Inject() (
                       notificationsService.newAnswer(application, answer)
                       eventService.log(
                         AgentsAdded,
-                        s"L'ajout d'utilisateur (ID de réponse ${answer.id}) a été créé sur la demande $applicationId",
+                        s"L'ajout d'utilisateur (réponse ${answer.id}) a été créé sur la demande $applicationId",
                         application = application.some
                       )
+                      answer.invitedUsers.foreach { case (userId, _) =>
+                        eventService.log(
+                          AgentsAdded,
+                          s"Utilisateur $userId invité sur la demande $applicationId (réponse ${answer.id})",
+                          application = application.some,
+                          involvesUser = userId.some
+                        )
+                      }
                       Redirect(routes.ApplicationController.myApplications())
                         .flashing(success -> "Les utilisateurs ont été invités sur la demande")
                     } else {
@@ -1275,6 +1291,14 @@ case class ApplicationController @Inject() (
                 s"La réponse ${answer.id} a été créée sur la demande $applicationId",
                 application = application.some
               )
+              answer.invitedUsers.foreach { case (userId, _) =>
+                eventService.log(
+                  AddExpertCreated,
+                  s"Expert $userId invité sur la demande $applicationId (réponse ${answer.id})",
+                  application = application.some,
+                  involvesUser = userId.some
+                )
+              }
               Redirect(routes.ApplicationController.myApplications())
                 .flashing(success -> "Un expert a été invité sur la demande")
             } else {
