@@ -1333,6 +1333,7 @@ case class ApplicationController @Inject() (
           case true =>
             applicationService
               .reopen(applicationId)
+              .filter(identity)
               .map { _ =>
                 val message = "La demande a bien été réouverte"
                 eventService.log(ReopenCompleted, message, application.some)
