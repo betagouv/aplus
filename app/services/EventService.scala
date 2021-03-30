@@ -40,7 +40,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       description: String,
       application: Option[Application] = None,
       /** Not the logged-in `User`, but if the op is about some other `User`. */
-      involvesUser: Option[User] = None,
+      involvesUser: Option[UUID] = None,
       /** If the warn/error has an exception as cause. */
       underlyingException: Option[Throwable] = None
   )(implicit request: RequestWithUserData[_]) =
@@ -57,7 +57,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
   def logError(
       error: models.Error,
       application: Option[Application] = None,
-      involvesUser: Option[User] = None
+      involvesUser: Option[UUID] = None
   )(implicit request: RequestWithUserData[_]) =
     log(
       event = error.eventType,
@@ -76,7 +76,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       event: EventType,
       description: String,
       application: Option[Application] = None,
-      involvesUser: Option[User] = None,
+      involvesUser: Option[UUID] = None,
       underlyingException: Option[Throwable] = None
   )(implicit request: Request[_]): Unit =
     register(event.level)(
@@ -95,7 +95,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       code: String,
       description: String,
       application: Option[Application],
-      involvesUser: Option[User],
+      involvesUser: Option[UUID],
       underlyingException: Option[Throwable]
   ): Unit = {
     val event = Event(
@@ -108,7 +108,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       description,
       Area.notApplicable.id,
       application.map(_.id),
-      involvesUser.map(_.id),
+      involvesUser,
       remoteAddress
     )
     addEvent(event)
