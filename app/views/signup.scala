@@ -251,7 +251,7 @@ object signup {
 
   private def cguCheckbox =
     div(
-      cls := "mdl-cell mdl-cell--12-col",
+      cls := "mdl-cell mdl-cell--12-col single--padding-bottom-16px",
       p(
         label(
           cls := "mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect",
@@ -276,6 +276,10 @@ object signup {
             span(cls := "mdl-color-text--red-A700", "*")
           )
         )
+      ),
+      // Because text is on 3 lines on a phone
+      div(
+        cls := "mdl-cell mdl-cell--4-col-phone mdl-cell--hide-tablet mdl-cell--hide-desktop single--margin-bottom-40px",
       )
     )
 
@@ -283,7 +287,7 @@ object signup {
     button(
       id := "signup-validation-id",
       `type` := "submit",
-      cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--10-col mdl-cell--1-offset",
+      cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--4-col-phone mdl-cell--6-col-tablet mdl-cell--1-offset-tablet mdl-cell--10-col-desktop mdl-cell--1-offset-desktop",
       "Valider l’inscription"
     )
 

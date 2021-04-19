@@ -152,7 +152,8 @@ object signupAdmin {
               ),
               p(
                 cls := " mdl-color-text--red-A700",
-                "Ne marche que pour des aidants"
+                "Ne marche que pour des aidants. Ne pas ajouter d’opérateurs, " +
+                  "ils ne pourront pas terminer leur inscription !"
               )
             )
           ),
