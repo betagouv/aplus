@@ -44,7 +44,12 @@ class NotificationService @Inject() (
   // This blacklist if mainly for experts who do not need emails
   // Note: be careful with the empty string
   private lazy val notificationEmailBlacklist: Set[String] =
-    configuration.get[String]("app.notificationEmailBlacklist").split(",").map(_.trim).filterNot(_.isEmpty).toSet
+    configuration
+      .get[String]("app.notificationEmailBlacklist")
+      .split(",")
+      .map(_.trim)
+      .filterNot(_.isEmpty)
+      .toSet
 
   private val daySinceLastAgentAnswerForApplicationsThatShouldBeClosed = 10
 
