@@ -260,7 +260,7 @@ class LoginAction @Inject() (
             Left(
               TemporaryRedirect(Call(request.method, url).url)
                 .withSession(
-                  request.session - Keys.Session.userId + (Keys.Session.userId -> user.id.toString)
+                  request.session - Keys.Session.userId - Keys.Session.signupId + (Keys.Session.userId -> user.id.toString)
                 )
             )
           } else {
