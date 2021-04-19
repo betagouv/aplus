@@ -7,6 +7,25 @@ const usagerInfosInputClass = 'aplus-application-form-user-infos-input';
 const categoryFilterClass = 'aplus-application-form-category-filter-button';
 const removeCategoryFilterClass = 'aplus-application-form-remove-category-filter-button';
 
+const inputPrenomId = "usagerPrenom";
+const inputNomId = "usagerNom";
+const inputBirthDateId = "usagerBirthDate";
+const mandatTypeSmsRadioId = "mandatType_sms";
+
+const mandatSmsPhoneInputName = "mandat-sms-phone";
+const mandatSmsSendButtonId = "mandat-sms-send-button";
+const mandatSmsSuccessId = "mandat-sms-success";
+const mandatSmsValidationFailedId = "mandat-sms-validation-failed";
+const mandatSmsErrorServerId = "mandat-sms-error-server";
+const mandatSmsErrorBrowserId = "mandat-sms-error-browser";
+const linkedMandatInputId = "linkedMandat";
+
+
+
+setupDynamicUsagerInfosButtons();
+setupInvitedGroups();
+setupMandatSmsForm();
+
 
 
 function addInvitedGroupInfos(groupName: string) {
@@ -250,5 +269,144 @@ function setupInvitedGroups() {
 
 
 
-setupDynamicUsagerInfosButtons();
-setupInvitedGroups();
+//
+// SMS Mandat Card
+//
+
+function setupMandatSmsForm() {
+  const inputPrenom = <HTMLInputElement>document.getElementById(inputPrenomId);
+  const inputNom = <HTMLInputElement>document.getElementById(inputNomId);
+  const inputBirthDate = <HTMLInputElement>document.getElementById(inputBirthDateId);
+  const inputPhoneNumber = <HTMLInputElement>document.getElementById(mandatSmsPhoneInputName);
+
+  const sendButton = <HTMLButtonElement | null>document.getElementById(mandatSmsSendButtonId);
+  const successMessage = document.getElementById(mandatSmsSuccessId);
+  const validationFailedMessage = document.getElementById(mandatSmsValidationFailedId);
+  const serverErrorMessage = document.getElementById(mandatSmsErrorServerId);
+  const browserErrorMessage = document.getElementById(mandatSmsErrorBrowserId);
+  const linkedMandatInput = <HTMLInputElement>document.getElementById(linkedMandatInputId);
+  const mandatTypeSmsRadio = document.getElementById(mandatTypeSmsRadioId);
+
+  function inputSecuriteSociale(): HTMLInputElement | null {
+    return document.querySelector('input[name*="Numéro de sécurité sociale"]')
+  }
+
+
+  // Returns null|string
+  function validateNonEmptyInput(input: HTMLInputElement) {
+    const data = input.value;
+    const parent = <HTMLElement>input.parentNode;
+    if (data) {
+      parent.classList.remove("is-invalid");
+      return data;
+    } else {
+      parent.classList.add("is-invalid");
+      return null;
+    }
+  }
+
+  function validatePhoneNumber(input: HTMLInputElement) {
+    const data = input.value.replace(/\s/g, '');
+    const parent = <HTMLElement>inputPhoneNumber.parentNode;
+    if (/^\d{10}$/.test(data)) {
+      parent.classList.remove("is-invalid");
+      return data;
+    } else {
+      parent.classList.add("is-invalid");
+      return null;
+    }
+  }
+
+  function validateForm() {
+    const prenom = validateNonEmptyInput(inputPrenom);
+    const nom = validateNonEmptyInput(inputNom);
+    const birthDate = validateNonEmptyInput(inputBirthDate);
+    const phoneNumber = validatePhoneNumber(inputPhoneNumber);
+    const securiteSociale = inputSecuriteSociale();
+    const hasSecuriteSociale = securiteSociale != null;
+    const isValid = prenom && nom && birthDate && phoneNumber;
+
+    return {
+      isValid: isValid,
+      data: {
+        prenom: prenom,
+        nom: nom,
+        birthDate: birthDate,
+        phoneNumber: phoneNumber,
+        hasSecuriteSociale: hasSecuriteSociale
+      }
+    };
+  }
+
+  function sendForm(data, callbackSuccess, callbackServerError, callbackBrowserError) {
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState == XMLHttpRequest.DONE) {   // XMLHttpRequest.DONE == 4
+          try {
+            if (Math.floor(xhr.status / 100) === 2) {
+              callbackSuccess(JSON.parse(xhr.responseText));
+            } else {
+              callbackServerError();
+            }
+          } catch (error) {
+            console.error(error);
+            callbackBrowserError(error);
+          }
+        }
+      };
+      xhr.open("POST", "/mandats/sms", true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      // Play recommends putting the CSRF token, even for AJAX request
+      // and cites browser plugins as culprits
+      // https://www.playframework.com/documentation/2.8.x/ScalaCsrf#Plays-CSRF-protection
+      const tokenInput = <HTMLInputElement>document.querySelector("input[name=csrfToken]");
+      const token = tokenInput.value;
+      xhr.setRequestHeader("Csrf-Token", token);
+      xhr.send(JSON.stringify(data));
+    } catch (error) {
+      console.error(error);
+      callbackBrowserError(error);
+    }
+  }
+
+  if (sendButton) {
+    sendButton.onclick = function(event) {
+      event.preventDefault();
+      successMessage.classList.add("hidden");
+      validationFailedMessage.classList.add("hidden");
+      serverErrorMessage.classList.add("hidden");
+      browserErrorMessage.classList.add("hidden");
+      const formData = validateForm();
+      if (formData.isValid) {
+        sendButton.disabled = true;
+        sendForm(
+          formData.data,
+          // Success
+          function(mandat) {
+            const link = successMessage.querySelector("a");
+            link.href = "/mandats/" + mandat.id;
+            linkedMandatInput.value = mandat.id;
+            successMessage.classList.remove("hidden");
+            // Note: mandatTypeSmsRadio.checked = true does not show the radio as checked
+            mandatTypeSmsRadio.click();
+          },
+          // Server error (= logged by Sentry)
+          function() {
+            // Wait 30s
+            setTimeout(function() { sendButton.disabled = false; }, 30000);
+            serverErrorMessage.classList.remove("hidden");
+          },
+          // Browser error (= not logged by Sentry)
+          function() {
+            // Wait 30s
+            setTimeout(function() { sendButton.disabled = false; }, 30000);
+            browserErrorMessage.classList.remove("hidden");
+          }
+        );
+      } else {
+        validationFailedMessage.classList.remove("hidden");
+      }
+    }
+  }
+}

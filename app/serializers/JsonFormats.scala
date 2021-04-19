@@ -70,7 +70,8 @@ object JsonFormats {
       .format[String](nameValidator)
       .and((JsPath \ "nom").format[String](nameValidator))
       .and((JsPath \ "birthDate").format[String](birthDateValidator))
-      .and((JsPath \ "phoneNumber").format[String](phoneValidator))(
+      .and((JsPath \ "phoneNumber").format[String](phoneValidator))
+      .and((JsPath \ "hasSecuriteSociale").format[Boolean])(
         SmsMandatInitiation.apply,
         unlift(SmsMandatInitiation.unapply)
       )

@@ -4,5 +4,6 @@ case class SmsMandatInitiation(
     usagerPrenom: String,
     usagerNom: String,
     usagerBirthDate: String,
-    usagerPhoneLocal: String
+    usagerPhoneLocal: String,
+    hasSecuriteSociale: Boolean
 )
