@@ -84,10 +84,15 @@ class LoginAction @Inject() (
     val tokenOpt = request.getQueryString(Keys.QueryParam.token)
 
     (userBySession, userByKey, tokenOpt, signupOpt) match {
-      // Note: this case is explicitly put here for failing fast, if the token is invalid,
+      // Note: this case is deliberately put here for failing fast, if the token is invalid,
       //       we don't want to continue doing sensitive operations
       case (_, _, Some(rawToken), _) =>
         tryAuthByToken(rawToken)
+      // Note: user.key is used here as a way to check if the user comes from an email.
+      //       With that key, the user won't see the warn in the last case.
+      //       Consequently, if there is no key, the user will see the case
+      //       userNotLogged("Vous devez vous identifier pour accéder à cette page.")
+      //       It is not clear this is a good thing and the code is definitely confusing.
       case (Some(userSession), Some(userKey), None, None) if userSession.id === userKey.id =>
         Future(Left(TemporaryRedirect(Call(request.method, url).url)))
       case (_, Some(user), None, None) =>
