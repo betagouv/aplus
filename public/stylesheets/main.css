@@ -13,11 +13,6 @@ html, body {
     height: 50px;
 }
 
-.contact-phone-icon {
-    width: 52px;
-    height: 52px;
-}
-
 .demo-layout .mdl-layout__header .mdl-layout__drawer-button {
     color: rgba(0, 0, 0, 0.54);
 }
@@ -747,6 +742,10 @@ a {
 
 .single--font-size-20px {
     font-size: 20px;
+}
+
+.single--font-size-50px {
+    font-size: 50px;
 }
 
 .single--overflow-auto {
