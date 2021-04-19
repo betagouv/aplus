@@ -71,7 +71,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
   def logErrorNoUser(
       error: models.Error,
       application: Option[Application] = None,
-      involvesUser: Option[User] = None
+      involvesUser: Option[UUID] = None
   )(implicit request: Request[_]) =
     logSystem(
       event = error.eventType,
