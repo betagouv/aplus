@@ -73,7 +73,7 @@ class SmsService @Inject() (
       }
 
     val securiteSociale: String =
-      if (hasSecuriteSociale) "ainsi que votre numéro de sécurité sociale "
+      if (hasSecuriteSociale) "dont votre numéro de sécurité sociale "
       else ""
 
     val body =
