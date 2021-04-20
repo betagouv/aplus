@@ -104,7 +104,7 @@ case class SignupController @Inject() (
                       EventType.SignupFormError,
                       s"Erreur lors de l'ajout d'un utilisateur par préinscription ${signupRequest.id} : " +
                         errorMessage +
-                        s"Utilisateur ayant échoué : ${user.toLogString}"
+                        s" Utilisateur ayant échoué : ${user.toLogString}"
                     )
                     val userMessage =
                       "Une erreur imprévue est survenue. Ce n’est pas de votre faute. " +
