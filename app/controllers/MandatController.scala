@@ -175,7 +175,7 @@ case class MandatController @Inject() (
             error match {
               case _: Error.EntityNotFound =>
                 NotFound("Nous n'avons pas trouvé ce mandat.")
-              case _: Error.Authorization =>
+              case _: Error.Authorization | _: Error.Authentication =>
                 Unauthorized(
                   s"Vous n'avez pas les droits suffisants pour voir ce mandat. " +
                     s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
