@@ -33,7 +33,6 @@ class SmsService @Inject() (
   def sendMandatSms(
       recipient: Sms.PhoneNumber,
       mandat: Mandat,
-      hasSecuriteSociale: Boolean,
       currentUser: User,
       userGroups: List[UserGroup]
   )(implicit request: RequestWithUserData[_]): Future[Either[Error, Sms.Outgoing]] = {
@@ -72,17 +71,12 @@ class SmsService @Inject() (
         ""
       }
 
-    val securiteSociale: String =
-      if (hasSecuriteSociale) "dont votre numéro de sécurité sociale "
-      else ""
-
     val body =
       s"En répondant OUI, vous attestez sur l'honneur que " +
         s"les informations communiquées ($usagerInfos) sont exactes " +
         s"et vous autorisez $userInfos$groupInfos, à utiliser vos données personnelles " +
-        securiteSociale +
-        s"pour la durée d'instruction de votre demande. " +
-        s"Conformément aux CGU d'Administration+."
+        "dont votre numéro de sécurité sociale si nécessaire " +
+        s"pour la durée d'instruction de votre demande."
     api.sendSms(body, recipient)
   }
 

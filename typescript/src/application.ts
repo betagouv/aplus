@@ -287,10 +287,6 @@ function setupMandatSmsForm() {
   const linkedMandatInput = <HTMLInputElement>document.getElementById(linkedMandatInputId);
   const mandatTypeSmsRadio = document.getElementById(mandatTypeSmsRadioId);
 
-  function inputSecuriteSociale(): HTMLInputElement | null {
-    return document.querySelector('input[name*="Numéro de sécurité sociale"]')
-  }
-
 
   // Returns null|string
   function validateNonEmptyInput(input: HTMLInputElement) {
@@ -322,8 +318,6 @@ function setupMandatSmsForm() {
     const nom = validateNonEmptyInput(inputNom);
     const birthDate = validateNonEmptyInput(inputBirthDate);
     const phoneNumber = validatePhoneNumber(inputPhoneNumber);
-    const securiteSociale = inputSecuriteSociale();
-    const hasSecuriteSociale = securiteSociale != null;
     const isValid = prenom && nom && birthDate && phoneNumber;
 
     return {
@@ -332,8 +326,7 @@ function setupMandatSmsForm() {
         prenom: prenom,
         nom: nom,
         birthDate: birthDate,
-        phoneNumber: phoneNumber,
-        hasSecuriteSociale: hasSecuriteSociale
+        phoneNumber: phoneNumber
       }
     };
   }

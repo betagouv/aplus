@@ -69,13 +69,7 @@ case class MandatController @Inject() (
               userGroups = userGroupService.byIds(request.currentUser.groupIds)
               recipient = Sms.PhoneNumber.fromLocalPhoneFrance(entity.usagerPhoneLocal)
               sms <- EitherT(
-                smsService.sendMandatSms(
-                  recipient,
-                  mandat,
-                  entity.hasSecuriteSociale,
-                  request.currentUser,
-                  userGroups
-                )
+                smsService.sendMandatSms(recipient, mandat, request.currentUser, userGroups)
               )
               _ <- EitherT(mandatService.addSmsToMandat(mandat.id, sms))
             } yield (mandat, sms)
