@@ -23,8 +23,7 @@ class SignupService @Inject() (
       "id",
       "request_date",
       "email",
-      "inviting_user_id",
-      "group_id"
+      "inviting_user_id"
     )
 
   def byId(signupId: UUID): Future[Either[Error, Option[SignupRequest]]] =
