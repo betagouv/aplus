@@ -1,6 +1,8 @@
 html, body {
     font-family: 'Roboto', 'Helvetica', sans-serif;
     color: #00234d;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .logo {
@@ -298,6 +300,10 @@ html, body {
 
 .hidden {
     display: none;
+}
+
+.hidden-important {
+    display: none !important;
 }
 
 @media (max-width: 767px) {
@@ -700,6 +706,10 @@ a {
     max-width: 184px;
 }
 
+.single--max-width-800px {
+    max-width: 800px;
+}
+
 .single--max-width-960px {
     max-width: 960px;
 }
@@ -735,6 +745,10 @@ a {
     -webkit-box-flex: 1;
     -ms-flex-positive: 1;
     flex-grow: 1;
+}
+
+.single--font-size-12px {
+    font-size: 12px;
 }
 
 .single--font-size-14px {
@@ -805,6 +819,10 @@ a {
 
 .single--background-color-white {
     background-color: white;
+}
+
+.single--background-color-white-important {
+    background-color: white !important;
 }
 
 
