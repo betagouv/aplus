@@ -3,7 +3,7 @@ package views.emails
 import cats.syntax.all._
 import constants.Constants
 import helper.Time
-import java.time.ZonedDateTime
+import java.time.{ZoneId, ZonedDateTime}
 import models._
 import scalatags.Text.all._
 
@@ -29,7 +29,8 @@ object common {
   val magicLinkSubject = "Connexion sécurisée à Administration+"
 
   def magicLinkBody(
-      user: User,
+      userName: Option[String],
+      userTimeZone: ZoneId,
       loginToken: LoginToken,
       absoluteUrl: String,
       pathToRedirectTo: String,
@@ -37,7 +38,7 @@ object common {
   ): List[Modifier] = {
     val url = s"$absoluteUrl?token=${loginToken.token}&path=$pathToRedirectTo"
     List[Modifier](
-      s"${user.name.some.filter(_.nonEmpty).map(n => s"Bonjour $n,").getOrElse("Bonjour,")}",
+      s"${userName.filter(_.nonEmpty).map(n => s"Bonjour $n,").getOrElse("Bonjour,")}",
       br,
       br,
       p(
@@ -55,7 +56,7 @@ object common {
         b(
           "avant ",
           ZonedDateTime
-            .now(user.timeZone)
+            .now(userTimeZone)
             .plusMinutes(tokenExpirationInMinutes.toLong)
             .format(Time.hourAndMinutesFormatter)
         ),

@@ -8,7 +8,7 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-        @helpers.buildInfoMeta()
+        @toHtml(views.helpers.head.buildInfoMeta)
         <link rel="icon" type="image/png" href="@routes.Assets.versioned("images/favicon.png")">
         <title>Administration+ - @title</title>
         @webJarsUtil.locate("material.min.css").css()
@@ -27,12 +27,6 @@
         @webJarsUtil.locate("dialog-polyfill.css").css()
         @webJarsUtil.locate("dialog-polyfill.js").script()
         <script type="text/javascript" src="@routes.JavascriptController.javascriptRoutes()"></script>
-        <style>
-                html, body {
-                    max-width: 100%;
-                    overflow-x: hidden;
-                }
-        </style>
     </head>
     <body>
         <div class="header__ribbon do-not-print mdl-color--cyan-800  mdl-color-text--white" id="header__ribbon">
@@ -112,27 +106,11 @@
             <main class="mdl-layout__content mdl-color--grey-200">
                 <div class="mdl-grid main__grid single--align-content-flex-start @if(maxWidth) { single--max-width-960px }" >
 
-                @flash.get("error").map { error =>
-                    <div class="mdl-cell mdl-cell--12-col" id="answer-error">
-                        <div class="notification notification--error">
-                            <div><b>@error</b></div>
-                            <div>Si l'erreur persiste vous pouvez contacter l'équipe A+&nbsp;:&nbsp;<a href="mailto:@Constants.supportEmail?subject=@error">@Constants.supportEmail</a></div>
-                        </div>
-                    </div>
-                }
 
-                @flash.get("success").map { message =>
-                    <div class="mdl-cell mdl-cell--12-col">
-                      <div class="notification notification--success">
-                        <div class="notification__message">
-                          @message
-                        </div>
-                        <button class="notification__close-btn mdl-button mdl-js-button mdl-button--icon">
-                          <i class="material-icons">close</i>
-                        </button>
-                      </div>
-                    </div>
-                }
+                @toHtml(views.helpers.forms.flashError)
+                @toHtml(views.helpers.forms.flashErrorRawHtml)
+                @toHtml(views.helpers.forms.flashSuccess)
+                @toHtml(views.helpers.forms.flashSuccessRawHtml)
 
                     @content
                 </div>

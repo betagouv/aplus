@@ -6,10 +6,95 @@ import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 
 import cats.syntax.all._
+import constants.Constants
+import helper.StringHelper.commonStringInputNormalization
 import java.util.UUID
 import serializers.Keys
 
 object formModels {
+
+  val normalizedText: Mapping[String] =
+    text.transform[String](commonStringInputNormalization, commonStringInputNormalization)
+
+  val normalizedOptionalText: Mapping[Option[String]] =
+    optional(text).transform[Option[String]](
+      _.map(commonStringInputNormalization).filter(_.nonEmpty),
+      _.map(commonStringInputNormalization).filter(_.nonEmpty)
+    )
+
+  def inOption[T](constraint: Constraint[T]): Constraint[Option[T]] =
+    Constraint[Option[T]](constraint.name, constraint.args) {
+      case None    => Valid
+      case Some(t) => constraint(t)
+    }
+
+  final case class SignupFormData(
+      firstName: Option[String],
+      lastName: Option[String],
+      qualite: Option[String],
+      sharedAccount: Boolean,
+      sharedAccountName: Option[String],
+      phoneNumber: Option[String],
+      areaId: UUID,
+      organisationId: String,
+      groupId: UUID,
+      cguChecked: Boolean
+  )
+
+  object SignupFormData {
+
+    val form: Form[SignupFormData] =
+      Form(
+        mapping(
+          "firstName" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
+          "lastName" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
+          "qualite" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
+          "sharedAccount" -> boolean,
+          "sharedAccountName" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
+          "phoneNumber" -> normalizedOptionalText.verifying(inOption(maxLength(30))),
+          Keys.Signup.areaId -> uuid,
+          Keys.Signup.organisationId -> normalizedText.verifying(nonEmpty),
+          Keys.Signup.groupId -> uuid,
+          "cguChecked" -> boolean
+        )(SignupFormData.apply)(SignupFormData.unapply)
+          .verifying(
+            "Le prénom est requis pour un compte nominatif",
+            form =>
+              if (form.sharedAccount) true
+              else form.firstName.exists(_.nonEmpty)
+          )
+          .verifying(
+            "Le nom est requis pour un compte nominatif",
+            form =>
+              if (form.sharedAccount) true
+              else form.lastName.exists(_.nonEmpty)
+          )
+          .verifying(
+            "Le nom est requis pour un compte partagé",
+            form => if (form.sharedAccount) form.sharedAccountName.exists(_.nonEmpty) else true
+          )
+          .verifying(
+            "Sans acceptation des CGU de votre part, nous ne pouvons pas terminer votre inscription. " +
+              "Si vous avez des remarques concernant les CGU, " +
+              s"vous pouvez les adresser au support ${Constants.supportEmail}.",
+            form => form.cguChecked
+          )
+      )
+
+  }
+
+  final case class AddSignupsFormData(emails: String)
+
+  object AddSignupsFormData {
+
+    val form =
+      Form(
+        mapping(
+          "emails" -> text,
+        )(AddSignupsFormData.apply)(AddSignupsFormData.unapply)
+      )
+
+  }
 
   final case class AddUserToGroupFormData(email: String)
 
