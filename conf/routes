@@ -37,6 +37,13 @@ GET         /stats                                                              
 POST        /stats                                                                           controllers.ApplicationController.stats
 
 
+# Signup
+GET         /inscription                                                                     controllers.SignupController.signupForm
+POST        /inscription                                                                     controllers.SignupController.createSignup
+GET         /utilisateurs/inscriptions                                                       controllers.SignupController.signupRequests
+POST        /utilisateurs/inscriptions/add-emails                                            controllers.SignupController.addSignupRequests
+
+
 # Login
 GET         /login                                                                           controllers.LoginController.login
 POST        /login                                                                           controllers.LoginController.login
@@ -75,6 +82,7 @@ GET         /events                                                             
 # CGU
 GET         /cgu                                                                             controllers.UserController.showValidateAccount()
 POST        /cgu                                                                             controllers.UserController.validateAccount()
+
 
 # Newsletter
 POST        /newsletter                                                                      controllers.UserController.subscribeNewsletter
