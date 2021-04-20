@@ -271,7 +271,7 @@ case class SignupController @Inject() (
         case None =>
           val message = "Merci de vous connecter pour accéder à cette page."
           Future.successful(
-            TemporaryRedirect(routes.LoginController.login().url)
+            Redirect(routes.LoginController.login())
               .flashing("error" -> message)
               .withSession(request.session - Keys.Session.signupId)
           )
@@ -286,7 +286,7 @@ case class SignupController @Inject() (
                     "Celle-ci étant possiblement temporaire, " +
                     "nous vous invitons à réessayer plus tard."
                   Future.successful(
-                    TemporaryRedirect(routes.LoginController.login().url)
+                    Redirect(routes.LoginController.login())
                       .flashing("error" -> message)
                       .withSession(request.session - Keys.Session.signupId)
                   )
@@ -300,12 +300,24 @@ case class SignupController @Inject() (
                     val message = "Une erreur interne est survenue. " +
                       "Si celle-ci persiste, vous pouvez contacter le support Administration+."
                     Future.successful(
-                      TemporaryRedirect(routes.LoginController.login().url)
+                      Redirect(routes.LoginController.login())
                         .flashing("error" -> message)
                         .withSession(request.session - Keys.Session.signupId)
                     )
                   case Some(signupRequest) =>
-                    action(request)(signupRequest)
+                    userService.byEmailFuture(signupRequest.email).flatMap {
+                      case None               => action(request)(signupRequest)
+                      case Some(existingUser) =>
+                        // The user exists already, we exchange its signup session by a user session
+                        // (this case happen if the signup session has not been purged after user creation)
+                        Future.successful(
+                          Redirect(routes.HomeController.welcome())
+                            .withSession(
+                              request.session - Keys.Session.userId - Keys.Session.signupId +
+                                (Keys.Session.userId -> existingUser.id.toString)
+                            )
+                        )
+                    }
                 }
               )
             )

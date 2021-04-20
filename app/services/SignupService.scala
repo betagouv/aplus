@@ -48,7 +48,7 @@ class SignupService @Inject() (
     Future(
       Try(
         db.withTransaction { implicit connection =>
-          SQL"""SELECT * FROM signup_request WHERE lower(email) = ${email}"""
+          SQL"""SELECT * FROM signup_request WHERE lower(email) = ${email.toLowerCase}"""
             .as(signupRequestRowParser.singleOpt)
         }
       ).toEither.left
