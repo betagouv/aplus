@@ -75,8 +75,8 @@ class SmsService @Inject() (
       s"En répondant OUI, vous attestez sur l'honneur que " +
         s"les informations communiquées ($usagerInfos) sont exactes " +
         s"et vous autorisez $userInfos$groupInfos, à utiliser vos données personnelles " +
-        s"pour la durée d'instruction de votre demande. " +
-        s"Conformément aux CGU d'Administration+."
+        "dont votre numéro de sécurité sociale si nécessaire " +
+        s"pour la durée d'instruction de votre demande."
     api.sendSms(body, recipient)
   }
 

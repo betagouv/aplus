@@ -19,12 +19,19 @@ object Keys {
     val sharedAccountName: String = "name"
   }
 
+  object Signup {
+    val organisationId: String = "organisationId"
+    val areaId: String = "areaId"
+    val groupId: String = "groupId"
+  }
+
   //
   // By Usage
   //
 
   object Session {
     val userId: String = "userId"
+    val signupId: String = "signupId"
     val areaId: String = "areaId"
   }
 
