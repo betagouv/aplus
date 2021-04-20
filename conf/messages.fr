@@ -31,8 +31,8 @@ error.minLength=La longueur minimum est de {0}
 error.maxLength=La longueur maximum est de {0}
 error.email=Email incorrect
 error.pattern=Must satisfy {0}
-error.date=La date est incorrect
-error.uuid=Valid UUID required
+error.date=La date est incorrecte
+error.uuid=La valeur n’est pas reconnue
 
 error.expected.date=Date value expected
 error.expected.date.isoformat=Iso date value expected

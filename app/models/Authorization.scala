@@ -154,6 +154,10 @@ object Authorization {
   def canSeeUsers: Check =
     atLeastOneIsAuthorized(isAdmin, isManager, isObserver)
 
+  def canSeeSignupsPage: Check = isAdmin
+
+  def canCreateSignups: Check = isAdmin
+
   //
   // Authorizations concerning Applications
   //

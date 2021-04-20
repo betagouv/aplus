@@ -14,6 +14,7 @@ import play.api.libs.json._
 import serializers.Anorm.columnToJson
 import serializers.JsonFormats.mapUUIDFormat
 
+/** Only to serialize/deserialize in PG. */
 object DataModel {
 
   object Answer {
