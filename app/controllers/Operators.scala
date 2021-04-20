@@ -156,7 +156,7 @@ object Operators {
         error match {
           case _: Error.EntityNotFound =>
             NotFound("Nous n'avons pas trouvé cette demande")
-          case _: Error.Authorization =>
+          case _: Error.Authorization | _: Error.Authentication =>
             Unauthorized(
               s"Vous n'avez pas les droits suffisants pour voir cette demande. " +
                 s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"

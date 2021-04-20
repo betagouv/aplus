@@ -15,6 +15,7 @@ sealed trait Error {
 
 object Error {
 
+  case class Authentication(eventType: EventType, description: String) extends Error
   case class Authorization(eventType: EventType, description: String) extends Error
   case class EntityNotFound(eventType: EventType, description: String) extends Error
   case class Database(eventType: EventType, description: String) extends Error

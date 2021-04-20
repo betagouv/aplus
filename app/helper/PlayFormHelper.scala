@@ -1,6 +1,7 @@
 package helper
 
-import play.api.data.FormError
+import play.api.data.{Form, FormError}
+import play.api.i18n.MessagesProvider
 import play.api.libs.json.{JsPath, JsonValidationError}
 
 object PlayFormHelper {
@@ -10,6 +11,11 @@ object PlayFormHelper {
     val prettyMessages = formError.messages.flatMap(_.split("\\.").lastOption).mkString(", ")
     s"($prettyKey : $prettyMessages)"
   }
+
+  def formErrorsLog(formWithErrors: Form[_])(implicit messages: MessagesProvider): String =
+    formWithErrors.errors
+      .map(error => "['" + error.key + "' => " + error.format + "]")
+      .mkString(" ")
 
   /** Uses `scala.collection.Seq` in its type to match the type returned by
     * Play Json
