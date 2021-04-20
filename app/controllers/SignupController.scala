@@ -102,7 +102,8 @@ case class SignupController @Inject() (
                     // this is most likely a case of the email being already used for a user.
                     eventService.logSystem(
                       EventType.SignupFormError,
-                      s"Erreur lors de l'ajout d'un utilisateur par préinscription ${signupRequest.id}. " +
+                      s"Erreur lors de l'ajout d'un utilisateur par préinscription ${signupRequest.id} : " +
+                        errorMessage +
                         s"Utilisateur ayant échoué : ${user.toLogString}"
                     )
                     val userMessage =
