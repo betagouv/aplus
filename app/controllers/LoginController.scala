@@ -55,7 +55,7 @@ class LoginController @Inject() (
                     val message = "Une erreur interne est survenue. " +
                       "Celle-ci étant possiblement temporaire, " +
                       "nous vous invitons à réessayer plus tard."
-                    Redirect(routes.LoginController.login())
+                    Redirect(routes.LoginController.login)
                       .flashing("error" -> message, "email-value" -> email)
                   },
                   {
@@ -65,7 +65,7 @@ class LoginController @Inject() (
                       val message =
                         """Aucun compte actif n’est associé à cette adresse e-mail.
                           |Merci de vérifier qu’il s’agit bien de votre adresse professionnelle et nominative.""".stripMargin
-                      Redirect(routes.LoginController.login())
+                      Redirect(routes.LoginController.login)
                         .flashing("error" -> message, "email-value" -> email)
                     case Some(signup) =>
                       val loginToken =
@@ -98,17 +98,17 @@ class LoginController @Inject() (
     // Here we want to redirect some users to more useful pages:
     // observer => /stats
     val path: String = {
-      val tmpPath = request.flash.get("path").getOrElse(routes.HomeController.index().url)
+      val tmpPath = request.flash.get("path").getOrElse(routes.HomeController.index.url)
       val shouldChangeObserverPath: Boolean =
         requestWithUserData
           .map(data =>
             Authorization.isObserver(data.rights) &&
               data.currentUser.cguAcceptationDate.nonEmpty &&
-              (tmpPath === routes.HomeController.index().url)
+              (tmpPath === routes.HomeController.index.url)
           )
           .getOrElse(false)
       if (shouldChangeObserverPath) {
-        routes.ApplicationController.stats().url
+        routes.ApplicationController.stats.url
       } else {
         tmpPath
       }
@@ -168,7 +168,7 @@ class LoginController @Inject() (
             )
           )
         case _ =>
-          TemporaryRedirect(routes.LoginController.login().url).flashing(
+          TemporaryRedirect(routes.LoginController.login.url).flashing(
             "error" -> "Il y a une erreur dans votre lien de connexion. Merci de contacter l'équipe Administration+"
           )
       }
@@ -176,7 +176,7 @@ class LoginController @Inject() (
 
   def disconnect: Action[AnyContent] =
     Action {
-      Redirect(routes.LoginController.login()).withNewSession
+      Redirect(routes.LoginController.login).withNewSession
     }
 
 }

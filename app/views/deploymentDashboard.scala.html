@@ -6,7 +6,7 @@
     @webJarsUtil.locate("xlsx.full.min.js").script()
 }{
     <div class="mdl-cell mdl-cell--12-col">
-        <a class="mdl-button mdl-button--raised" href="@routes.AreaController.franceServiceDeploymentDashboard()">Tableau Déploiement France Services</a>
+        <a class="mdl-button mdl-button--raised" href="@routes.AreaController.franceServiceDeploymentDashboard">Tableau Déploiement France Services</a>
     </div>
     <h5 class="title--addline">Nombre d'agents instructeurs par organisation</h5>
     <i>Les agents sont comptés double si ils sont dans plusieurs départements. Les organisations manquantes ne sont pas affichées. Certains agents ne sont pas détectés comme faisant partie d'un organisation (Vous devez corriger le groupe dans ce cas)</i>
@@ -22,7 +22,7 @@
     </div>
     <div id="table" class="mdl-cell mdl-cell--12-col"></div>
     <div class="mdl-cell mdl-cell--12-col">
-        <a class="mdl-button mdl-button--raised" href="@routes.AreaController.deploymentDashboard()?uniquement-fs=non">Afficher tous les organismes</a>
+        <a class="mdl-button mdl-button--raised" href="@routes.AreaController.deploymentDashboard?uniquement-fs=non">Afficher tous les organismes</a>
         <button class="mdl-button mdl-button--raised" onclick="downloadCSV()">Télécharger CSV</button>
         <button class="mdl-button mdl-button--raised" onclick="downloadXLSX()">Télécharger XLSX</button>
     </div>

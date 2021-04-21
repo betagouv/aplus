@@ -93,8 +93,8 @@ libraryDependencies ++= Seq(
   // To ensure that the version of jackson that do not have
   // known security vulnerabilities is used
   // It is also compatible with play-json
-  // https://github.com/playframework/play-json/blob/master/build.sbt#L20
-  "com.fasterxml.jackson.core" % "jackson-databind" % "2.10.5.1"
+  // https://github.com/playframework/play-json/blob/main/build.sbt#L34
+  "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.4"
 )
 
 // UI

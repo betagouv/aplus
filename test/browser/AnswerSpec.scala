@@ -202,8 +202,7 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
             LoginToken.forUserId(answerUserId, 5, "127.0.0.1")
           tokenService.create(loginToken)
 
-          val loginURL = controllers.routes.LoginController
-            .magicLinkAntiConsumptionPage()
+          val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
             .absoluteURL(false, s"localhost:$port")
 
           browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
@@ -211,7 +210,7 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
           // Wait for login
           eventually {
             browser.url must endWith(
-              controllers.routes.ApplicationController.myApplications().url.substring(1)
+              controllers.routes.ApplicationController.myApplications.url.substring(1)
             )
           }
 
