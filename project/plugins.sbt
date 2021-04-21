@@ -1,5 +1,7 @@
 // The Play plugin
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.7")
+// Important note: when upgrading the play version, check that the correct minor version
+//                 of jackson is set in build.sbt (with the patch version that is not vulnerable)
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.8")
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.6.1")
 addSbtPlugin("com.codacy" % "sbt-codacy-coverage" % "3.0.3")

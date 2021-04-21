@@ -29,7 +29,7 @@ class HomeController @Inject() (loginAction: LoginAction, db: Database)(implicit
         .isDefined
       if (needsRedirect)
         TemporaryRedirect(
-          s"${routes.ApplicationController.myApplications()}?${request.rawQueryString}"
+          s"${routes.ApplicationController.myApplications}?${request.rawQueryString}"
         )
       else
         request.flash.get("email") match {

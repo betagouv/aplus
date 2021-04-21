@@ -82,8 +82,7 @@ class ApplicationSpec extends Specification with BaseSpec {
       val loginToken = LoginToken.forUserId(helperUser.id, 5, "127.0.0.1")
       tokenService.create(loginToken)
 
-      val loginURL = controllers.routes.LoginController
-        .magicLinkAntiConsumptionPage()
+      val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
         .absoluteURL(false, s"localhost:$port")
 
       browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
@@ -91,13 +90,13 @@ class ApplicationSpec extends Specification with BaseSpec {
       // Wait for login
       eventually {
         browser.url must endWith(
-          controllers.routes.ApplicationController.myApplications().url.substring(1)
+          controllers.routes.ApplicationController.myApplications.url.substring(1)
         )
       }
 
       // Submit an application
       val createApplicationURL =
-        controllers.routes.ApplicationController.create().absoluteURL(false, s"localhost:$port")
+        controllers.routes.ApplicationController.create.absoluteURL(false, s"localhost:$port")
       browser.goTo(createApplicationURL)
 
       val subject = s"Sujet de la demande $number"
@@ -128,7 +127,7 @@ class ApplicationSpec extends Specification with BaseSpec {
       // Wait for form submit
       eventually {
         browser.url must endWith(
-          controllers.routes.ApplicationController.myApplications().url.substring(1)
+          controllers.routes.ApplicationController.myApplications.url.substring(1)
         )
       }
 
