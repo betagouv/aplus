@@ -56,7 +56,7 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
         "simon.pineau" + "@beta.gouv.fr" ! "Aucun compte actif n’est associé à cette adresse e-mail." |> {
           (email, expected) =>
             val loginURL =
-              controllers.routes.LoginController.login().absoluteURL(false, s"localhost:$port")
+              controllers.routes.LoginController.login.absoluteURL(false, s"localhost:$port")
             browser.goTo(loginURL)
             browser.el("input[name='email']").fill().withText(email)
             browser.el("form").submit()
@@ -74,15 +74,14 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
 
       tokenService.create(loginToken)
 
-      val loginURL = controllers.routes.LoginController
-        .magicLinkAntiConsumptionPage()
+      val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
         .absoluteURL(false, s"localhost:$port")
 
       browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
 
       eventually {
         browser.url must endWith(
-          controllers.routes.ApplicationController.myApplications().url.substring(1)
+          controllers.routes.ApplicationController.myApplications.url.substring(1)
         )
       }
     }
@@ -97,14 +96,13 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
         .copy(expirationDate = Time.nowParis().minusMinutes(5))
       tokenService.create(loginToken)
 
-      val loginURL = controllers.routes.LoginController
-        .magicLinkAntiConsumptionPage()
+      val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
         .absoluteURL(false, s"localhost:$port")
 
       browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
 
       eventually {
-        browser.url must endWith(controllers.routes.HomeController.index().url.substring(1))
+        browser.url must endWith(controllers.routes.HomeController.index.url.substring(1))
         browser.pageSource must contain("Votre lien de connexion a expiré, il est valable")
       }
     }
@@ -113,14 +111,13 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
       webDriver = WebDriverFactory(HTMLUNIT),
       app = applicationWithBrowser
     ) {
-      val loginURL = controllers.routes.LoginController
-        .magicLinkAntiConsumptionPage()
+      val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
         .absoluteURL(false, s"localhost:$port")
 
       browser.goTo(s"$loginURL?token=90798798789798&path=/")
 
       eventually {
-        browser.url must endWith(controllers.routes.LoginController.login().url.substring(1))
+        browser.url must endWith(controllers.routes.LoginController.login.url.substring(1))
         browser.pageSource must contain(
           "Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé."
         )

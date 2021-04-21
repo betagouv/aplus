@@ -100,7 +100,7 @@ case class UserController @Inject() (
       s"L'utilisateur n'est pas autorisé à éditer le groupe $groupId"
     )
     val message = "Vous n’avez pas le droit de modifier ce groupe"
-    Redirect(routes.UserController.showEditMyGroups()).flashing("error" -> message)
+    Redirect(routes.UserController.showEditMyGroups).flashing("error" -> message)
   }
 
   def addToGroup(groupId: UUID) =
@@ -128,7 +128,7 @@ case class UserController @Inject() (
                       s"Tentative d'ajout de l'utilisateur inexistant ${data.email} au groupe $groupId"
                     )
                     successful(
-                      Redirect(routes.UserController.showEditMyGroups())
+                      Redirect(routes.UserController.showEditMyGroups)
                         .flashing("error" -> "L’utilisateur n’existe pas dans Administration+")
                     )
                   case (Some(userToAdd), usersInGroup)
@@ -139,7 +139,7 @@ case class UserController @Inject() (
                       involvesUser = userToAdd.id.some
                     )
                     successful(
-                      Redirect(routes.UserController.showEditMyGroups())
+                      Redirect(routes.UserController.showEditMyGroups)
                         .flashing("error" -> "L’utilisateur est déjà présent dans le groupe")
                     )
                   case (Some(userToAdd), _) =>
@@ -151,7 +151,7 @@ case class UserController @Inject() (
                           s"Utilisateur ${userToAdd.id} ajouté au groupe $groupId",
                           involvesUser = userToAdd.id.some
                         )
-                        Redirect(routes.UserController.showEditMyGroups())
+                        Redirect(routes.UserController.showEditMyGroups)
                           .flashing("success" -> "L’utilisateur a été ajouté au groupe")
                       }
                 }
@@ -170,7 +170,7 @@ case class UserController @Inject() (
               s"Utilisateur $userId retiré du groupe $groupId",
               involvesUser = userId.some
             )
-            Redirect(routes.UserController.showEditMyGroups())
+            Redirect(routes.UserController.showEditMyGroups)
               .flashing("success" -> "L’utilisateur a bien été retiré du groupe.")
           }
           .recover { e =>
@@ -178,7 +178,7 @@ case class UserController @Inject() (
               EditMyGroupUpdatedError,
               s"Erreur lors de la tentative d'ajout de l'utilisateur $userId au groupe $groupId : ${e.getMessage}"
             )
-            Redirect(routes.UserController.showEditMyGroups())
+            Redirect(routes.UserController.showEditMyGroups)
               .flashing("error" -> "Une erreur technique est survenue")
           }
       else successful(updateMyGroupsNotAllowed(groupId))
@@ -266,7 +266,7 @@ case class UserController @Inject() (
                   eventService
                     .log(UserProfileUpdated, s"Profil édité ${user.toDiffLogString(editedUser)}")
                   val message = "Votre profil a bien été modifié"
-                  Redirect(routes.UserController.editProfile()).flashing("success" -> message)
+                  Redirect(routes.UserController.editProfile).flashing("success" -> message)
                 }
                 .recover { e =>
                   val errorMessage = s"Erreur lors de la modification du profil: ${e.getMessage}"
@@ -518,7 +518,7 @@ case class UserController @Inject() (
               involvesUser = Some(user.id)
             )
             Future(
-              Redirect(routes.UserController.home()).flashing("success" -> flashMessage)
+              Redirect(routes.UserController.home).flashing("success" -> flashMessage)
             )
           }
         }
@@ -743,7 +743,7 @@ case class UserController @Inject() (
       }
     }
 
-  def showValidateAccount(): Action[AnyContent] =
+  def showValidateAccount: Action[AnyContent] =
     loginAction { implicit request =>
       eventService.log(CGUShowed, "CGU visualisées")
       val user = request.currentUser
@@ -788,7 +788,7 @@ case class UserController @Inject() (
         userService.byId(user.id).head
       }
 
-  def validateAccount(): Action[AnyContent] =
+  def validateAccount: Action[AnyContent] =
     loginAction.async { implicit request =>
       val user = request.currentUser
       ValidateSubscriptionForm
@@ -807,7 +807,7 @@ case class UserController @Inject() (
                   lastName,
                   qualite,
                   phoneNumber
-                ) if redirect =!= routes.ApplicationController.myApplications().url =>
+                ) if redirect =!= routes.ApplicationController.myApplications.url =>
               validateAndUpdateUser(request.currentUser)(firstName, lastName, qualite, phoneNumber)
                 .map { updatedUser =>
                   val logMessage =
@@ -822,14 +822,14 @@ case class UserController @Inject() (
                   val logMessage =
                     s"CGU validées ${request.currentUser.toDiffLogString(updatedUser)}"
                   eventService.log(CGUValidated, logMessage)
-                  Redirect(routes.HomeController.welcome())
+                  Redirect(routes.HomeController.welcome)
                     .flashing("success" -> "Merci d’avoir accepté les CGU")
                 }
             case ValidateSubscriptionForm(Some(redirect), false, _, _, _, _)
-                if redirect =!= routes.ApplicationController.myApplications().url =>
+                if redirect =!= routes.ApplicationController.myApplications.url =>
               Future(Redirect(Call("GET", redirect)))
             case ValidateSubscriptionForm(_, false, _, _, _, _) =>
-              Future(Redirect(routes.HomeController.welcome()))
+              Future(Redirect(routes.HomeController.welcome))
           }
         )
     }
@@ -857,7 +857,7 @@ case class UserController @Inject() (
               userService.acceptNewsletter(request.currentUser.id)
             }
             eventService.log(NewsletterSubscribed, "Newletter subscribed")
-            Redirect(routes.HomeController.welcome())
+            Redirect(routes.HomeController.welcome)
               .flashing("success" -> "Merci d’avoir terminé votre inscription")
           }
         )
@@ -892,7 +892,7 @@ case class UserController @Inject() (
       }
     }
 
-  def allEvents(): Action[AnyContent] =
+  def allEvents: Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(() => EventsUnauthorized -> "Accès non autorisé pour voir les événements") { () =>
         val limit = request

@@ -50,8 +50,8 @@ object signup {
           "Finalisation de votre inscription"
         ),
         form(
-          action := SignupController.createSignup().path,
-          method := SignupController.createSignup().method,
+          action := SignupController.createSignup.path,
+          method := SignupController.createSignup.method,
           cls := "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing",
           displayFormGlobalErrors(signupForm),
           CSRFInput,
