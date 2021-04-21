@@ -99,7 +99,7 @@
                     }
                     @if(user.helper) {
                         Pour créer votre première demande, vous pouvez utiliser le bouton suivant.<br>
-                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" onclick="document.location = '@routes.ApplicationController.create()'">
+                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" onclick="document.location = '@routes.ApplicationController.create'">
                             Créer une demande
                         </button><br>
                         <br>
@@ -109,7 +109,7 @@
             } else {
                 <p>Vous n'avez pas de demande en cours.
                 @if(user.helper) {
-                    Pour créer une demande, vous pouvez utiliser le lien suivant : <a href="@routes.ApplicationController.create()">Créer une demande</a>.
+                    Pour créer une demande, vous pouvez utiliser le lien suivant : <a href="@routes.ApplicationController.create">Créer une demande</a>.
                 }
             }
             </p>
@@ -119,7 +119,7 @@
            <div class="mdl-grid mdl-grid--no-spacing">
                 <h4 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Mes demandes</h4>
                 @if(user.helper) {
-                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" onclick="document.location = '@routes.ApplicationController.create()'">
+                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" onclick="document.location = '@routes.ApplicationController.create'">
                         Créer une demande
                     </button>
                 }
