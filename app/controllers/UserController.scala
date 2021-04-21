@@ -743,7 +743,7 @@ case class UserController @Inject() (
       }
     }
 
-  def showValidateAccount(): Action[AnyContent] =
+  def showValidateAccount: Action[AnyContent] =
     loginAction { implicit request =>
       eventService.log(CGUShowed, "CGU visualisées")
       val user = request.currentUser
@@ -788,7 +788,7 @@ case class UserController @Inject() (
         userService.byId(user.id).head
       }
 
-  def validateAccount(): Action[AnyContent] =
+  def validateAccount: Action[AnyContent] =
     loginAction.async { implicit request =>
       val user = request.currentUser
       ValidateSubscriptionForm
@@ -892,7 +892,7 @@ case class UserController @Inject() (
       }
     }
 
-  def allEvents(): Action[AnyContent] =
+  def allEvents: Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(() => EventsUnauthorized -> "Accès non autorisé pour voir les événements") { () =>
         val limit = request

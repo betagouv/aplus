@@ -100,7 +100,7 @@ case class GroupController @Inject() (
       }
     }
 
-  def addGroup(): Action[AnyContent] =
+  def addGroup: Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(() => AddGroupUnauthorized -> s"Accès non autorisé pour ajouter un groupe") { () =>
         addGroupForm(Time.timeZoneParis)
