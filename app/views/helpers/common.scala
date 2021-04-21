@@ -41,7 +41,7 @@ object common {
                 ),
                 ul(
                   cls := "mdl-mega-footer--link-list",
-                  li(a(href := HomeController.help().url, "Aide")),
+                  li(a(href := HomeController.help.url, "Aide")),
                   li(
                     a(
                       href := "https://docs.aplus.beta.gouv.fr/conditions-generales-dutilisation",
@@ -52,7 +52,7 @@ object common {
                   ),
                   li(
                     a(
-                      href := ApplicationController.showExportMyApplicationsCSV().url,
+                      href := ApplicationController.showExportMyApplicationsCSV.url,
                       "Exporter mes demandes en CSV"
                     )
                   )
@@ -86,7 +86,7 @@ object common {
                   cls := "mdl-list__item-secondary-content single--align-items-center-important single--padding-left-40px",
                   a(
                     cls := "mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect",
-                    href := controllers.routes.LoginController.disconnect().url,
+                    href := controllers.routes.LoginController.disconnect.url,
                     title := "Déconnexion",
                     i(cls := "fas fa-sign-out-alt")
                   ),
@@ -94,7 +94,7 @@ object common {
                     cls := "mdl-list__item-secondary-info",
                     a(
                       cls := "mdl-typography--font-regular mdl-color-text--grey-900 mdl-typography--text-nowrap",
-                      href := controllers.routes.LoginController.disconnect().url,
+                      href := controllers.routes.LoginController.disconnect.url,
                       title := "Déconnexion",
                       "Se déconnecter"
                     )
@@ -112,7 +112,7 @@ object common {
           p(
             style := "line-height: 1.2; text-align: center;",
             a(
-              href := HomeController.welcome().url,
+              href := HomeController.welcome.url,
               img(
                 src := Assets.versioned("images/logo_full_500x397.png").url,
                 alt := "Logo Administration+",

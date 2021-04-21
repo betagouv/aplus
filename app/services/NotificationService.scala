@@ -218,7 +218,7 @@ class NotificationService @Inject() (
       pathToRedirectTo: String
   ) = {
     val absoluteUrl: String =
-      routes.LoginController.magicLinkAntiConsumptionPage().absoluteURL(https, host)
+      routes.LoginController.magicLinkAntiConsumptionPage.absoluteURL(https, host)
     val bodyInner = common.magicLinkBody(
       userName,
       userTimeZone,
