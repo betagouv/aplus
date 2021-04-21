@@ -22,7 +22,7 @@
             </tr>
         </thead>
         <tbody>
-        @for((user, index) <- users.zipWithIndex) {
+        @for((user, index) <- users.sortBy(_.name).zipWithIndex) {
             <tr>
                 @if(currentUser.admin) {
                     <td class="mdl-data-table__cell--non-numeric">
