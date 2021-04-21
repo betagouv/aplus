@@ -114,7 +114,7 @@ case class GroupController @Inject() (
                   s"Essai d'ajout d'un groupe avec des erreurs de validation: $errorString"
                 )
               Future(
-                Redirect(routes.UserController.home()).flashing(
+                Redirect(routes.UserController.home).flashing(
                   "error" -> s"Impossible d'ajouter le groupe : $errorString"
                 )
               )
@@ -130,7 +130,7 @@ case class GroupController @Inject() (
                     eventService
                       .log(AddUserGroupError, message)
                     Future(
-                      Redirect(routes.UserController.home())
+                      Redirect(routes.UserController.home)
                         .flashing("error" -> s"Impossible d'ajouter le groupe : $error")
                     )
                   },

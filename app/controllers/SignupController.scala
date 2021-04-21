@@ -123,7 +123,7 @@ case class SignupController @Inject() (
                         s"Utilisateur créé via le formulaire d'inscription ${signupRequest.id}. " +
                           s"Utilisateur : ${user.toLogString}"
                       )(new RequestWithUserData(user, userRights, request))
-                      Redirect(routes.HomeController.welcome())
+                      Redirect(routes.HomeController.welcome)
                         .withSession(
                           request.session - Keys.Session.signupId + (Keys.Session.userId -> user.id.toString)
                         )
@@ -225,7 +225,7 @@ case class SignupController @Inject() (
                         // this is intended to be quicker to use as the batch of working emails
                         // is added directly and non working ones
                         // can be copy/pasted somewhere to be processed later
-                        Redirect(routes.SignupController.signupRequests())
+                        Redirect(routes.SignupController.signupRequests)
                           .flashing(flashes: _*)
                           .asRight[Error]
                       }
@@ -271,7 +271,7 @@ case class SignupController @Inject() (
         case None =>
           val message = "Merci de vous connecter pour accéder à cette page."
           Future.successful(
-            Redirect(routes.LoginController.login())
+            Redirect(routes.LoginController.login)
               .flashing("error" -> message)
               .withSession(request.session - Keys.Session.signupId)
           )
@@ -286,7 +286,7 @@ case class SignupController @Inject() (
                     "Celle-ci étant possiblement temporaire, " +
                     "nous vous invitons à réessayer plus tard."
                   Future.successful(
-                    Redirect(routes.LoginController.login())
+                    Redirect(routes.LoginController.login)
                       .flashing("error" -> message)
                       .withSession(request.session - Keys.Session.signupId)
                   )
@@ -300,7 +300,7 @@ case class SignupController @Inject() (
                     val message = "Une erreur interne est survenue. " +
                       "Si celle-ci persiste, vous pouvez contacter le support Administration+."
                     Future.successful(
-                      Redirect(routes.LoginController.login())
+                      Redirect(routes.LoginController.login)
                         .flashing("error" -> message)
                         .withSession(request.session - Keys.Session.signupId)
                     )
@@ -311,7 +311,7 @@ case class SignupController @Inject() (
                         // The user exists already, we exchange its signup session by a user session
                         // (this case happen if the signup session has not been purged after user creation)
                         Future.successful(
-                          Redirect(routes.HomeController.welcome())
+                          Redirect(routes.HomeController.welcome)
                             .withSession(
                               request.session - Keys.Session.userId - Keys.Session.signupId +
                                 (Keys.Session.userId -> existingUser.id.toString)

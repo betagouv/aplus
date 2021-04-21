@@ -138,8 +138,8 @@ object signupAdmin {
       div(
         cls := "mdl-grid--no-spacing",
         form(
-          action := controllers.routes.SignupController.addSignupRequests().path,
-          method := controllers.routes.SignupController.addSignupRequests().method,
+          action := controllers.routes.SignupController.addSignupRequests.path,
+          method := controllers.routes.SignupController.addSignupRequests.method,
           cls := "mdl-grid--no-spacing",
           views.helpers.forms.CSRFInput,
           div(

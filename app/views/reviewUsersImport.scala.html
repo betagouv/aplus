@@ -113,7 +113,7 @@
 @main(currentUser, currentUserRights, maxWidth = false)("Revue de votre import CSV") {
   <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 } {
-  @helper.form(routes.CSVImportController.importUsersAfterReview(), "method" -> "post", "class" -> "mdl-cell mdl-cell--12-col") {
+  @helper.form(routes.CSVImportController.importUsersAfterReview, "method" -> "post", "class" -> "mdl-cell mdl-cell--12-col") {
   @helper.CSRF.formField
 
       @toHtml(views.helpers.csv.allErrors(form))

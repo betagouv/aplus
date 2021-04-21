@@ -15,16 +15,16 @@
 
 <nav class="navigation mdl-navigation mdl-color--deep-purple-900">
 
-    <a @linkAttrs(routes.ApplicationController.myApplications())>
+    <a @linkAttrs(routes.ApplicationController.myApplications)>
         <i class="material-icons" role="presentation">folder_open</i>Mes demandes
     </a>
 
-    <a @linkAttrs(routes.UserController.showEditMyGroups())>
+    <a @linkAttrs(routes.UserController.showEditMyGroups)>
         <i class="material-icons" role="presentation">group_add</i>Mes groupes
     </a>
 
     @if(Authorization.isAdmin(currentUserRights)) {
-        <a @linkAttrs(routes.AreaController.all())>
+        <a @linkAttrs(routes.AreaController.all)>
             <i class="material-icons" role="presentation">place</i>Territoires
         </a>
     }
@@ -42,19 +42,19 @@
     }
 
     @if(Authorization.isAdminOrObserver(currentUserRights)) {
-        <a @linkAttrs(routes.AreaController.deploymentDashboard())>
+        <a @linkAttrs(routes.AreaController.deploymentDashboard)>
             <i class="material-icons" role="presentation">track_changes</i>Déploiement
         </a>
     }
 
     @if(Authorization.isAdmin(currentUserRights)) {
-        <a @linkAttrs(routes.UserController.allEvents())>
+        <a @linkAttrs(routes.UserController.allEvents)>
             <i class="material-icons" role="presentation">event</i>Evénements
         </a>
     }
 
     @if(Authorization.canSeeStats(currentUserRights)) {
-        <a @linkAttrs(routes.ApplicationController.stats())>
+        <a @linkAttrs(routes.ApplicationController.stats)>
             <i class="material-icons" role="presentation">show_chart</i>Stats
         </a>
     }

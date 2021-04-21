@@ -44,7 +44,7 @@ object head {
       publicScript("javascripts/main.js"),
       webJarCss("dialog-polyfill.css"),
       webJarScript("dialog-polyfill.js"),
-      script(`type` := "text/javascript", src := JavascriptController.javascriptRoutes().url)
+      script(`type` := "text/javascript", src := JavascriptController.javascriptRoutes.url)
     )
 
   def bottomScripts(implicit webJarsUtil: WebJarsUtil): Frag =
