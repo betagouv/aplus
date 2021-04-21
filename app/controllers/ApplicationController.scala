@@ -357,7 +357,7 @@ case class ApplicationController @Inject() (
                       )
                   }
               }
-              Redirect(routes.ApplicationController.myApplications())
+              Redirect(routes.ApplicationController.myApplications)
                 .withSession(
                   applicationData.signature.fold(removeSharedAccountUserSignature(request.session))(
                     signature => saveSharedAccountUserSignature(request.session, signature)
@@ -1244,7 +1244,7 @@ case class ApplicationController @Inject() (
                           involvesUser = userId.some
                         )
                       }
-                      Redirect(routes.ApplicationController.myApplications())
+                      Redirect(routes.ApplicationController.myApplications)
                         .flashing(success -> "Les utilisateurs ont été invités sur la demande")
                     } else {
                       eventService.log(
@@ -1299,7 +1299,7 @@ case class ApplicationController @Inject() (
                   involvesUser = userId.some
                 )
               }
-              Redirect(routes.ApplicationController.myApplications())
+              Redirect(routes.ApplicationController.myApplications)
                 .flashing(success -> "Un expert a été invité sur la demande")
             } else {
               eventService.log(
@@ -1337,7 +1337,7 @@ case class ApplicationController @Inject() (
               .map { _ =>
                 val message = "La demande a bien été réouverte"
                 eventService.log(ReopenCompleted, message, application.some)
-                Redirect(routes.ApplicationController.myApplications()).flashing(success -> message)
+                Redirect(routes.ApplicationController.myApplications).flashing(success -> message)
               }
               .recover { _ =>
                 val message = "La demande n'a pas pu être réouverte"
@@ -1386,7 +1386,7 @@ case class ApplicationController @Inject() (
                   s"""|La demande "${application.subject}" a bien été archivée. 
                     |Bravo et merci pour la résolution de cette demande !""".stripMargin
                 Future(
-                  Redirect(routes.ApplicationController.myApplications())
+                  Redirect(routes.ApplicationController.myApplications)
                     .flashing(success -> successMessage)
                 )
               } else {

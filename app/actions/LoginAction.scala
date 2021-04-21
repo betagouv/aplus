@@ -119,7 +119,7 @@ class LoginAction @Inject() (
           } else {
             eventService.log(TryLoginByKey, "Clé dans l'url, redirige vers la page de connexion")
             Left(
-              TemporaryRedirect(routes.LoginController.login().url)
+              TemporaryRedirect(routes.LoginController.login.url)
                 .flashing("email" -> user.email, "path" -> path)
             )
           }
@@ -141,7 +141,7 @@ class LoginAction @Inject() (
       case (_, _, _, Some(signupId)) =>
         manageSignup(signupId)
       case _ =>
-        if (routes.HomeController.index().url.contains(path)) {
+        if (routes.HomeController.index.url.contains(path)) {
           Future(userNotLoggedOnLoginPage)
         } else {
           log.warn(s"Accès à la ${request.path} non autorisé")
@@ -212,7 +212,7 @@ class LoginAction @Inject() (
       } else {
         eventService.log(ToCGURedirected, "Redirection vers les CGUs")
         Left(
-          TemporaryRedirect(routes.UserController.showValidateAccount().url)
+          TemporaryRedirect(routes.UserController.showValidateAccount.url)
             .flashing("redirect" -> request.path)
         )
       }
@@ -226,7 +226,7 @@ class LoginAction @Inject() (
     // Not an infinite redirect because `signupForm` does not uses `LoginAction`
     Future(
       Left(
-        TemporaryRedirect(routes.SignupController.signupForm().url)
+        TemporaryRedirect(routes.SignupController.signupForm.url)
           .flashing("redirect" -> request.path)
       )
     )
@@ -327,7 +327,7 @@ class LoginAction @Inject() (
 
   private def userNotLogged[A](message: String)(implicit request: Request[A]) =
     Left(
-      TemporaryRedirect(routes.LoginController.login().url)
+      TemporaryRedirect(routes.LoginController.login.url)
         .withSession(request.session - Keys.Session.userId - Keys.Session.signupId)
         .flashing("error" -> message)
     )
@@ -336,14 +336,14 @@ class LoginAction @Inject() (
       request: Request[A]
   ) =
     Left(
-      TemporaryRedirect(routes.HomeController.index().url)
+      TemporaryRedirect(routes.HomeController.index.url)
         .withSession(request.session - Keys.Session.userId - Keys.Session.signupId)
         .flashing("email" -> email, "error" -> message)
     )
 
   private def userNotLoggedOnLoginPage[A](implicit request: Request[A]) =
     Left(
-      TemporaryRedirect(routes.HomeController.index().url)
+      TemporaryRedirect(routes.HomeController.index.url)
         .withSession(request.session - Keys.Session.userId)
     )
 
