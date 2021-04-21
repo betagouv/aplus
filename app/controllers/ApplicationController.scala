@@ -6,6 +6,7 @@ import constants.Constants
 import forms.FormsPlusMap
 import helper.BooleanHelper.not
 import helper.CSVUtil.escape
+import helper.PlayFormHelper.formErrorsLog
 import helper.StringHelper.{CanonizeString, NonEmptyTrimmedString}
 import helper.Time.zonedDateTimeOrdering
 import helper.{Hash, Time, UUIDHelper}
@@ -1177,21 +1178,23 @@ case class ApplicationController @Inject() (
           .bindFromRequest()
           .fold(
             formWithErrors => {
+              val message =
+                s"Erreur dans le formulaire d’invitation (${formWithErrors.errors.map(_.format).mkString(", ")})."
               val error =
-                s"Erreur dans le formulaire d’invitation (${formWithErrors.errors.map(_.message).mkString(", ")})."
-              eventService.log(InviteNotCreated, error, application = application.some)
+                s"Erreur dans le formulaire d’invitation (${formErrorsLog(formWithErrors)})"
+              eventService.log(InviteFormValidationError, error, application = application.some)
               Future(
                 Redirect(
                   routes.ApplicationController.show(applicationId).withFragment("answer-error")
                 )
-                  .flashing("answer-error" -> error, "opened-tab" -> "invite")
+                  .flashing("answer-error" -> message, "opened-tab" -> "invite")
               )
             },
             inviteData =>
               if (inviteData.invitedUsers.isEmpty && inviteData.invitedGroups.isEmpty) {
                 val error =
-                  s"Erreur dans le formulaire d’invitation (une personne ou un organisme doit être sélectionné)."
-                eventService.log(InviteNotCreated, error, application = application.some)
+                  s"Erreur dans le formulaire d’invitation (une personne ou un organisme doit être sélectionné)"
+                eventService.log(InviteFormValidationError, error, application = application.some)
                 Future(
                   Redirect(
                     routes.ApplicationController.show(applicationId).withFragment("answer-error")
@@ -1206,13 +1209,19 @@ case class ApplicationController @Inject() (
                     val usersWhoCanBeInvited: List[User] =
                       singleUsersWhoCanBeInvited ::: userService
                         .byGroupIds(invitableGroups.map(_.id))
-                    val invitedUsers: Map[UUID, String] = usersWhoCanBeInvited
+                    // When a group is checked, to avoid inviting everybody in a group,
+                    // we filter their users, keeping only instructors
+                    val invitedUsersFromGroups: List[User] = usersWhoCanBeInvited
                       .filter(user =>
-                        inviteData.invitedUsers.contains[UUID](user.id) ||
+                        user.instructor &&
                           inviteData.invitedGroups.toSet.intersect(user.groupIds.toSet).nonEmpty
                       )
-                      .map(user => (user.id, contextualizedUserName(user, selectedAreaId)))
-                      .toMap
+                    val directlyInvitedUsers: List[User] = usersWhoCanBeInvited
+                      .filter(user => inviteData.invitedUsers.contains[UUID](user.id))
+                    val invitedUsers: Map[UUID, String] =
+                      (invitedUsersFromGroups ::: directlyInvitedUsers)
+                        .map(user => (user.id, contextualizedUserName(user, selectedAreaId)))
+                        .toMap
 
                     val answer = Answer(
                       UUID.randomUUID(),
