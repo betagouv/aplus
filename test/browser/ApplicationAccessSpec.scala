@@ -303,8 +303,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       LoginToken.forUserId(UUIDHelper.namedFrom(s"$userCodeName$number"), 5, "127.0.0.1")
     tokenService.create(loginToken)
 
-    val loginURL = controllers.routes.LoginController
-      .magicLinkAntiConsumptionPage()
+    val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
       .absoluteURL(false, s"localhost:$port")
 
     browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
@@ -312,7 +311,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
     // Wait for login
     eventually {
       browser.url must endWith(
-        controllers.routes.ApplicationController.myApplications().url.substring(1)
+        controllers.routes.ApplicationController.myApplications.url.substring(1)
       )
     }
 
