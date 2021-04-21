@@ -69,8 +69,6 @@ case class User(
       phoneNumber = phoneNumber
     )
 
-  def belongsTo(groupId: UUID) = groupIds.contains[UUID](groupId)
-
   lazy val firstNameLog: String = firstName.map(withQuotes).getOrElse("<vide>")
   lazy val lastNameLog: String = lastName.map(withQuotes).getOrElse("<vide>")
   lazy val nameLog: String = withQuotes(name)

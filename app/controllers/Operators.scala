@@ -3,6 +3,7 @@ package controllers
 import java.util.UUID
 
 import actions.RequestWithUserData
+import cats.syntax.all._
 import constants.Constants
 import helper.BooleanHelper.not
 import models.EventType._
@@ -60,33 +61,42 @@ object Operators {
 
     import Results._
 
-    def withUser(userId: UUID, includeDisabled: Boolean = false)(
+    def withUser(
+        userId: UUID,
+        includeDisabled: Boolean = false,
+        errorMessage: String = "Tentative d'accès à un utilisateur inexistant",
+        errorResult: Option[Result] = none
+    )(
         payload: User => Future[Result]
-    )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
+    )(implicit request: RequestWithUserData[_]): Future[Result] =
       userService
         .byId(userId, includeDisabled)
         .fold({
-          eventService
-            .log(UserNotFound, description = "Tentative d'accès à un utilisateur inexistant.")
-          Future(NotFound("Utilisateur inexistant."))
+          eventService.log(UserNotFound, description = errorMessage)
+          Future.successful(
+            errorResult.getOrElse(NotFound("Utilisateur inexistant"))
+          )
         })({ user: User => payload(user) })
 
     def asUserWithAuthorization(authorizationCheck: Authorization.Check)(
-        event: () => (EventType, String)
+        errorEvent: () => (EventType, String),
+        errorResult: Option[Result] = none
     )(
         payload: () => Future[Result]
-    )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
-      if (not(authorizationCheck(request.rights))) {
-        val (eventType, description) = event()
-        eventService.log(eventType, description = description)
-        Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
-      } else {
+    )(implicit request: RequestWithUserData[_]): Future[Result] =
+      if (authorizationCheck(request.rights)) {
         payload()
+      } else {
+        val (eventType, description) = errorEvent()
+        eventService.log(eventType, description = description)
+        Future.successful(
+          errorResult.getOrElse(Unauthorized("Vous n'avez pas le droit de faire ça"))
+        )
       }
 
     def asAdmin(event: () => (EventType, String))(
         payload: () => Future[Result]
-    )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
+    )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
       if (not(request.currentUser.admin)) {
         val (eventType, description) = event()
         eventService.log(eventType, description = description)
@@ -97,7 +107,7 @@ object Operators {
 
     def asAdminWhoSeesUsersOfArea(areaId: UUID)(event: () => (EventType, String))(
         payload: () => Future[Result]
-    )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
+    )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
       if (not(request.currentUser.admin) || not(request.currentUser.canSeeUsersInArea(areaId))) {
         val (eventType, description) = event()
         eventService.log(eventType, description = description)
@@ -108,7 +118,7 @@ object Operators {
 
     def asUserWhoSeesUsersOfArea(areaId: UUID)(event: () => (EventType, String))(
         payload: () => Future[Result]
-    )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
+    )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
       // TODO: use only Authorization
       if (
         not(
@@ -125,7 +135,7 @@ object Operators {
 
     def asAdminOfUserZone(user: User)(event: () => (EventType, String))(
         payload: () => Future[Result]
-    )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
+    )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
       if (not(request.currentUser.admin)) {
         val (eventType, description) = event()
         eventService.log(eventType, description = description)
@@ -176,7 +186,7 @@ object Operators {
         applicationId: UUID
     )(
         payload: Application => Future[Result]
-    )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
+    )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
       applicationService
         .byId(
           applicationId,
