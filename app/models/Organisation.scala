@@ -70,6 +70,8 @@ object Organisation {
     * - alphabetical order
     * - when one name contains another, there is a 'hack' in `deductedFromName`
     *   (check for failing cases)
+    * - add to the table `organisation` which is used by Metabase
+    *   (see creation here conf/evolutions/default/40.sql and insert in 50.sql)
     */
   val all = List(
     Organisation("ANAH", "Agence nationale de l'habitat"),
