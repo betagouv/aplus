@@ -5,7 +5,7 @@ import java.util.UUID
 import anorm._
 import cats.syntax.all._
 import helper.StringHelper.StringOps
-import helper.{Hash, Time}
+import helper.{Hash, Time, UUIDHelper}
 import javax.inject.Inject
 import models.{Error, User}
 import org.postgresql.util.PSQLException
@@ -22,6 +22,15 @@ class UserService @Inject() (
   import dependencies.databaseExecutionContext
 
   private lazy val cryptoSecret = configuration.underlying.getString("play.http.secret.key ")
+
+  private lazy val groupsWhichCannotHaveInstructors: Set[UUID] =
+    configuration
+      .get[String]("app.groupsWhichCannotHaveInstructors")
+      .split(",")
+      .map(_.trim)
+      .filterNot(_.isEmpty)
+      .flatMap(UUIDHelper.fromString)
+      .toSet
 
   private val simpleUser: RowParser[User] = Macro
     .parser[User](
@@ -187,7 +196,7 @@ class UserService @Inject() (
            ${user.qualite},
            ${user.email},
            ${user.helper},
-           ${user.instructor},
+           ${instructorFlag(user)},
            ${user.admin},
            array[${user.areas.distinct}]::uuid[],
            ${user.creationDate},
@@ -230,7 +239,7 @@ class UserService @Inject() (
           qualite = ${user.qualite},
           email = ${user.email},
           helper = ${user.helper},
-          instructor = ${user.instructor},
+          instructor = ${instructorFlag(user)},
           areas = array[${user.areas.distinct}]::uuid[],
           commune_code = ${user.communeCode},
           group_admin = ${user.groupAdmin},
@@ -309,5 +318,9 @@ class UserService @Inject() (
        """.executeUpdate()
       }
     }
+
+  private def instructorFlag(user: User): Boolean =
+    user.instructor &&
+      groupsWhichCannotHaveInstructors.intersect(user.groupIds.toSet).isEmpty
 
 }
