@@ -58,9 +58,14 @@
                                 "@area",
                             }
                         ],
-                        groups: [
+                        groupNames: [
                             @for(group <- user.groupIds.flatMap( groupId => userGroups.find( _.id === groupId ) ).map(_.name)){
                                 "@group",
+                            }
+                        ],
+                        groups: [
+                            @for(group <- user.groupIds.flatMap( groupId => userGroups.find( _.id === groupId ) )){
+                                { id: "@group.id", name: "@group.name" } ,
                             }
                         ],
                         groupEmails: [
@@ -83,6 +88,24 @@
                 var uuid = cell.getRow().getData().id;
                 var url = jsRoutes.controllers.UserController.editUser(uuid).url;
                 return "<a href='"+url+"' target=\"_blank\" ><i class='fas fa-user-edit'></i></a>";
+            };
+
+            var groupsFormatter = function(cell, formatterParams) {
+              var groups = cell.getRow().getData().groups;
+              var links = "";
+              var groupName;
+              var groupUrl;
+              var isNotFirst = false;
+              for (index = 0; index < groups.length; index++) {
+                var groupUrl = jsRoutes.controllers.GroupController.editGroup(groups[index].id).url;
+                var groupName = groups[index].name;
+                if (isNotFirst) {
+                  links += ", ";
+                }
+                links += "<a href=\""+groupUrl+"\" target=\"_blank\" >"+groupName+"</a>";
+                isNotFirst = true;
+              }
+              return links;
             };
 
             var rawFormatter = function(row) {
@@ -125,7 +148,7 @@
                     { title: "Nom et Prénom", field: "name", headerFilter: "input", formatter:"html" },
                     { title: "Nom", field: "lastName", headerFilter: "input", frozen:true, formatter:"html" },
                     { title: "Prénom", field: "firstName", headerFilter: "input", frozen:true, formatter:"html" },
-                    { title: "Groupes", field: "groups", headerFilter: "input" },
+                    { title: "Groupes", field: "groupNames", formatter: groupsFormatter, headerFilter: "input" },
                     { title: "Email", field: "email", headerFilter: "input" },
                     { title: "Qualité", field: "qualite", headerFilter: "input" },
                     { title: "Téléphone", field: "phoneNumber", headerFilter: "input" },
