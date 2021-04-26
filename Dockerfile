@@ -29,7 +29,7 @@ RUN \
   rm sbt-$SBT_VERSION.deb && \
   apt-get update && \
   apt-get install -y sbt && \
-  sbt sbtVersion
+  sbt sbtVersion -Dsbt.rootdir=true
 
 ENV PLAY_APP_NAME aplus
 ENV PLAY_APP_DIR /var/www/$PLAY_APP_NAME
