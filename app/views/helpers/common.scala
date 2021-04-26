@@ -124,11 +124,12 @@ object common {
         div(cls := "mdl-layout-spacer mdl-color--deep-purple-900"),
         footer(
           cls := "drawer-footer mdl-color--deep-purple-900",
-          img(
-            src := Assets.versioned("images/contact_phone_104x104.png").url,
-            cls := "contact-phone-icon"
-          ),
           p(
+            i(
+              cls := "material-icons mdl-color-text--cyan-600 single--font-size-50px",
+              "contact_mail"
+            ),
+            br,
             span(
               cls := "mdl-typography--subhead",
               "Besoin d’aide ?"
