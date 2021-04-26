@@ -101,7 +101,8 @@ class UserGroupService @Inject() (
 
   def byIds(groupIds: List[UUID]): List[UserGroup] =
     db.withConnection { implicit connection =>
-      SQL"SELECT * FROM user_group WHERE ARRAY[$groupIds]::uuid[] @> ARRAY[id]::uuid[]".as(
+      val ids = groupIds.distinct
+      SQL"SELECT * FROM user_group WHERE ARRAY[$ids]::uuid[] @> ARRAY[id]::uuid[]".as(
         simpleUserGroup.*
       )
     }
@@ -109,7 +110,8 @@ class UserGroupService @Inject() (
   def byIdsFuture(groupIds: List[UUID]): Future[List[UserGroup]] =
     Future {
       db.withConnection { implicit connection =>
-        SQL"SELECT * FROM user_group WHERE ARRAY[$groupIds]::uuid[] @> ARRAY[id]::uuid[]".as(
+        val ids = groupIds.distinct
+        SQL"SELECT * FROM user_group WHERE ARRAY[$ids]::uuid[] @> ARRAY[id]::uuid[]".as(
           simpleUserGroup.*
         )
       }

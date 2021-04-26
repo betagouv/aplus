@@ -1,6 +1,8 @@
 html, body {
     font-family: 'Roboto', 'Helvetica', sans-serif;
     color: #00234d;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .logo {
@@ -11,11 +13,6 @@ html, body {
 .logo-header {
     width: 47px;
     height: 50px;
-}
-
-.contact-phone-icon {
-    width: 52px;
-    height: 52px;
 }
 
 .demo-layout .mdl-layout__header .mdl-layout__drawer-button {
@@ -298,6 +295,10 @@ html, body {
 
 .hidden {
     display: none;
+}
+
+.hidden-important {
+    display: none !important;
 }
 
 @media (max-width: 767px) {
@@ -700,6 +701,10 @@ a {
     max-width: 184px;
 }
 
+.single--max-width-800px {
+    max-width: 800px;
+}
+
 .single--max-width-960px {
     max-width: 960px;
 }
@@ -737,6 +742,10 @@ a {
     flex-grow: 1;
 }
 
+.single--font-size-12px {
+    font-size: 12px;
+}
+
 .single--font-size-14px {
     font-size: 14px;
 }
@@ -747,6 +756,10 @@ a {
 
 .single--font-size-20px {
     font-size: 20px;
+}
+
+.single--font-size-50px {
+    font-size: 50px;
 }
 
 .single--overflow-auto {
@@ -805,6 +818,10 @@ a {
 
 .single--background-color-white {
     background-color: white;
+}
+
+.single--background-color-white-important {
+    background-color: white !important;
 }
 
 

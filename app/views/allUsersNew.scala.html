@@ -1,4 +1,5 @@
 @import models._
+@import cats.implicits.catsSyntaxEq
 @(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
@@ -14,15 +15,16 @@
     </style>
 }{
     @if(currentUser.admin) {
-        <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-offset mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.UserController.all(selectedArea.id)?vue=classique">Vue utilisateurs classique</a>
-        <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.CSVImportController.importUsersFromCSV()">Importer utilisateurs</a>
+        <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.UserController.all(selectedArea.id)?vue=classique">Vue utilisateurs classique</a>
+        <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.SignupController.signupRequests">Préinscription Aidants</a>
+        <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.CSVImportController.importUsersFromCSV">Importer utilisateurs</a>
     }
     @if(currentUser.areas.length > 1) {
         <p class="mdl-cell mdl-cell--12-col">Territoire :
             <select id="area-selector" name="area-selector" onchange="changeAreaApps()">
-                <option value="@Area.allArea.id" @if(selectedArea.id == Area.allArea.id) { selected }>tous les territoires</option>
+                <option value="@Area.allArea.id" @if(selectedArea.id === Area.allArea.id) { selected }>tous les territoires</option>
                 @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-                    <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area</option>
+                    <option value="@area.id" @if(selectedArea.id === area.id) { selected }>@area</option>
                 }
             </select>
             <script>
@@ -56,9 +58,19 @@
                                 "@area",
                             }
                         ],
-                        groups: [
-                            @for(group <- user.groupIds.flatMap( groupId => userGroups.find( _.id == groupId ) ).map(_.name)){
+                        groupNames: [
+                            @for(group <- user.groupIds.flatMap( groupId => userGroups.find( _.id === groupId ) ).map(_.name)){
                                 "@group",
+                            }
+                        ],
+                        groups: [
+                            @for(group <- user.groupIds.flatMap( groupId => userGroups.find( _.id === groupId ) )){
+                                { id: "@group.id", name: "@group.name" } ,
+                            }
+                        ],
+                        groupEmails: [
+                            @for(email <- user.groupIds.flatMap( groupId => userGroups.find( _.id === groupId ) ).flatMap(_.email)){
+                                "@email",
                             }
                         ],
                         groupAdmin: @user.groupAdmin,
@@ -76,6 +88,24 @@
                 var uuid = cell.getRow().getData().id;
                 var url = jsRoutes.controllers.UserController.editUser(uuid).url;
                 return "<a href='"+url+"' target=\"_blank\" ><i class='fas fa-user-edit'></i></a>";
+            };
+
+            var groupsFormatter = function(cell, formatterParams) {
+              var groups = cell.getRow().getData().groups;
+              var links = "";
+              var groupName;
+              var groupUrl;
+              var isNotFirst = false;
+              for (index = 0; index < groups.length; index++) {
+                var groupUrl = jsRoutes.controllers.GroupController.editGroup(groups[index].id).url;
+                var groupName = groups[index].name;
+                if (isNotFirst) {
+                  links += ", ";
+                }
+                links += "<a href=\""+groupUrl+"\" target=\"_blank\" >"+groupName+"</a>";
+                isNotFirst = true;
+              }
+              return links;
             };
 
             var rawFormatter = function(row) {
@@ -118,7 +148,7 @@
                     { title: "Nom et Prénom", field: "name", headerFilter: "input", formatter:"html" },
                     { title: "Nom", field: "lastName", headerFilter: "input", frozen:true, formatter:"html" },
                     { title: "Prénom", field: "firstName", headerFilter: "input", frozen:true, formatter:"html" },
-                    { title: "Groupes", field: "groups", headerFilter: "input" },
+                    { title: "Groupes", field: "groupNames", formatter: groupsFormatter, headerFilter: "input" },
                     { title: "Email", field: "email", headerFilter: "input" },
                     { title: "Qualité", field: "qualite", headerFilter: "input" },
                     { title: "Téléphone", field: "phoneNumber", headerFilter: "input" },
@@ -199,6 +229,7 @@
                       headerVertical: verticalHeader,
                       bottomCalc: "count"
                     },
+                    { title: "BALs", field: "groupEmails", headerFilter: "input" },
                     { title: "Départements", field: "areas", headerFilter: "input" },
                 ]
             });
@@ -209,10 +240,10 @@
     @if(currentUser.admin) {
         <div class="mdl-cell mdl-cell--12-col mdl-grid">
             <h4 class="mdl-cell mdl-cell--12-col">Ajouter un groupe</h4> <br>
-            @helper.form(routes.GroupController.addGroup(), "method" -> "post", "class" -> "mdl-cell mdl-cell--9-col") {
+            @helper.form(routes.GroupController.addGroup, "method" -> "post", "class" -> "mdl-cell mdl-cell--9-col") {
                 @helper.CSRF.formField
                 <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="text" id="name" name="name" maxlength="50">
+                    <input class="mdl-textfield__input" type="text" id="name" name="name" maxlength="@models.UserGroup.nameMaxLength">
                     <label class="mdl-textfield__label" for="name">Nom du groupe</label>
                 </div>
                 <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
@@ -227,7 +258,7 @@
                     <select id="organisation" name="organisation">
                         <option selected style="font-weight: bold;" value="">Organisme non-référencé</option>
                         @for(organisation <- Organisation.all) {
-                            <option value="@organisation.shortName">@organisation.shortName : @organisation.name</option>
+                            <option value="@organisation.id.id">@organisation.shortName : @organisation.name</option>
                         }
                     </select>
                 </div>

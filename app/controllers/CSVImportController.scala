@@ -22,6 +22,8 @@ import models.EventType.{
   UsersImported
 }
 import models.formModels.{
+  normalizedOptionalText,
+  normalizedText,
   CSVRawLinesFormData,
   CSVReviewUserFormData,
   CSVUserFormData,
@@ -186,12 +188,8 @@ case class CSVImportController @Inject() (
         },
         Option.apply
       ),
-      "name" -> text(maxLength = 60)
-        .transform[String](commonStringInputNormalization, commonStringInputNormalization),
-      "description" -> optional(text).transform[Option[String]](
-        _.map(commonStringInputNormalization).filter(_.nonEmpty),
-        _.map(commonStringInputNormalization).filter(_.nonEmpty)
-      ),
+      "name" -> normalizedText.verifying(maxLength(UserGroup.nameMaxLength)),
+      "description" -> normalizedOptionalText,
       "insee-code" -> list(text),
       "creationDate" -> ignored(date),
       "area-ids" -> list(uuid)
@@ -433,7 +431,7 @@ case class CSVImportController @Inject() (
                             eventService.log(
                               UserCreated,
                               s"Utilisateur ajouté ${user.toLogString}",
-                              involvesUser = Some(user)
+                              involvesUser = Some(user.id)
                             )
                           }
                           eventService

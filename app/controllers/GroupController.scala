@@ -7,10 +7,12 @@ import actions.{LoginAction, RequestWithUserData}
 import Operators._
 import javax.inject.{Inject, Singleton}
 import models.{Area, Organisation, UserGroup}
+import models.formModels.{normalizedOptionalText, normalizedText}
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
 import play.api.data.Form
 import play.api.data.Forms.{email, ignored, list, mapping, of, optional, text, uuid}
+import play.api.data.validation.Constraints.maxLength
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import play.libs.ws.WSClient
 import services._
@@ -98,7 +100,7 @@ case class GroupController @Inject() (
       }
     }
 
-  def addGroup(): Action[AnyContent] =
+  def addGroup: Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(() => AddGroupUnauthorized -> s"Accès non autorisé pour ajouter un groupe") { () =>
         addGroupForm(Time.timeZoneParis)
@@ -112,7 +114,7 @@ case class GroupController @Inject() (
                   s"Essai d'ajout d'un groupe avec des erreurs de validation: $errorString"
                 )
               Future(
-                Redirect(routes.UserController.home()).flashing(
+                Redirect(routes.UserController.home).flashing(
                   "error" -> s"Impossible d'ajouter le groupe : $errorString"
                 )
               )
@@ -128,7 +130,7 @@ case class GroupController @Inject() (
                     eventService
                       .log(AddUserGroupError, message)
                     Future(
-                      Redirect(routes.UserController.home())
+                      Redirect(routes.UserController.home)
                         .flashing("error" -> s"Impossible d'ajouter le groupe : $error")
                     )
                   },
@@ -209,12 +211,8 @@ case class GroupController @Inject() (
     Form(
       mapping(
         "id" -> ignored(UUID.randomUUID()),
-        "name" -> text(maxLength = 60)
-          .transform[String](commonStringInputNormalization, commonStringInputNormalization),
-        "description" -> optional(text).transform[Option[String]](
-          _.map(commonStringInputNormalization).filter(_.nonEmpty),
-          _.map(commonStringInputNormalization).filter(_.nonEmpty)
-        ),
+        "name" -> normalizedText.verifying(maxLength(UserGroup.nameMaxLength)),
+        "description" -> normalizedOptionalText,
         "insee-code" -> list(text),
         "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
         "area-ids" -> list(uuid)
@@ -225,14 +223,8 @@ case class GroupController @Inject() (
           .verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
         "organisation" -> optional(of[Organisation.Id]),
         "email" -> optional(email),
-        "publicNote" -> optional(text).transform[Option[String]](
-          _.map(commonStringInputNormalization).filter(_.nonEmpty),
-          _.map(commonStringInputNormalization).filter(_.nonEmpty)
-        ),
-        "internalSupportComment" -> optional(text).transform[Option[String]](
-          _.map(commonStringInputNormalization).filter(_.nonEmpty),
-          _.map(commonStringInputNormalization).filter(_.nonEmpty)
-        )
+        "publicNote" -> normalizedOptionalText,
+        "internalSupportComment" -> normalizedOptionalText
       )(UserGroup.apply)(UserGroup.unapply)
     )
 

@@ -8,7 +8,7 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-        @helpers.buildInfoMeta()
+        @toHtml(views.helpers.head.buildInfoMeta)
         <link rel="icon" type="image/png" href="@routes.Assets.versioned("images/favicon.png")">
         <title>Administration+ - @title</title>
         @webJarsUtil.locate("material.min.css").css()
@@ -26,13 +26,7 @@
         <script type="application/javascript" src="@routes.Assets.versioned("javascripts/main.js")"></script>
         @webJarsUtil.locate("dialog-polyfill.css").css()
         @webJarsUtil.locate("dialog-polyfill.js").script()
-        <script type="text/javascript" src="@routes.JavascriptController.javascriptRoutes()"></script>
-        <style>
-                html, body {
-                    max-width: 100%;
-                    overflow-x: hidden;
-                }
-        </style>
+        <script type="text/javascript" src="@routes.JavascriptController.javascriptRoutes"></script>
     </head>
     <body>
         <div class="header__ribbon do-not-print mdl-color--cyan-800  mdl-color-text--white" id="header__ribbon">
@@ -52,10 +46,10 @@
                 </div>
                 <div class="mdl-layout__header-row">
                     <span class="mdl-layout-title invisible">
-                        <a href="@routes.HomeController.index()"><img src='@routes.Assets.versioned("images/logo_small_150x160.png")' class="logo-header" alt="Administration+"></a>
+                        <a href="@routes.HomeController.index"><img src='@routes.Assets.versioned("images/logo_small_150x160.png")' class="logo-header" alt="Administration+"></a>
                     </span>
                     <div class="invisible">
-                        <a class="mdl-button @if(title == "Mes demandes") { mdl-button--accent }" href="@routes.ApplicationController.myApplications()">Mes demandes</a>
+                        <a class="mdl-button @if(title == "Mes demandes") { mdl-button--accent }" href="@routes.ApplicationController.myApplications">Mes demandes</a>
                     </div>
                         <!-- Add spacer, to align navigation to the right in desktop -->
                     <div class="mdl-layout-spacer"></div>
@@ -68,18 +62,18 @@
                                 </span>
                                 @if(!currentUser.sharedAccount) {
                                     <span class="mdl-list__item-secondary-content single--align-items-center-important">
-                                        <a class="mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" href="@routes.UserController.editProfile()" title="Mon profil">
+                                        <a class="mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" href="@routes.UserController.editProfile" title="Mon profil">
                                             <i class="fas fa-user-circle"></i>
                                         </a>
-                                        <span class="mdl-list__item-secondary-info"><a class="mdl-typography--font-regular mdl-color-text--grey-900 mdl-typography--text-nowrap" href="@routes.UserController.editProfile()" title="Mon profil">
+                                        <span class="mdl-list__item-secondary-info"><a class="mdl-typography--font-regular mdl-color-text--grey-900 mdl-typography--text-nowrap" href="@routes.UserController.editProfile" title="Mon profil">
                                             Mon profil</a></span>
                                     </span>
                                 }
                                 <span class="mdl-list__item-secondary-content single--align-items-center-important single--padding-left-40px">
-                                    <a class="mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" href="@routes.LoginController.disconnect()" title="Déconnexion">
+                                    <a class="mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" href="@routes.LoginController.disconnect" title="Déconnexion">
                                         <i class="fas fa-sign-out-alt"></i>
                                     </a>
-                                    <span class="mdl-list__item-secondary-info"><a class="mdl-typography--font-regular mdl-color-text--grey-900 mdl-typography--text-nowrap" href="@routes.LoginController.disconnect()" title="Déconnexion">Se déconnecter</a></span>
+                                    <span class="mdl-list__item-secondary-info"><a class="mdl-typography--font-regular mdl-color-text--grey-900 mdl-typography--text-nowrap" href="@routes.LoginController.disconnect" title="Déconnexion">Se déconnecter</a></span>
                                 </span>
                             </li>
                         </ul>
@@ -91,7 +85,7 @@
             <div class="mdl-layout__drawer mdl-color--white do-not-print mdl-color-text--white">
                 <header class="drawer-header" >
                     <p style="line-height: 1.2; text-align: center;">
-                        <a href="@routes.HomeController.welcome()">
+                        <a href="@routes.HomeController.welcome">
                             <img src="@routes.Assets.versioned("images/logo_full_500x397.png")" alt="Logo Administration+" class="logo">
                         </a>
                     </p>
@@ -99,9 +93,10 @@
                 @helpers.menuNav(currentUserRights)
                 <div class="mdl-layout-spacer mdl-color--deep-purple-900"></div>
                 <footer class="drawer-footer mdl-color--deep-purple-900">
-                    <img src='@routes.Assets.versioned("images/contact_phone_104x104.png")' class="contact-phone-icon">
-
-                    <p><span class="mdl-typography--subhead">Besoin d’aide ?</span> <br>
+                    <p>
+                      <i class="material-icons mdl-color-text--cyan-600 single--font-size-50px">contact_mail</i>
+                      <br>
+                      <span class="mdl-typography--subhead">Besoin d’aide ?</span> <br>
                        Contactez-nous: <br>
                         <br>
                         <a href="mailto:@Constants.supportEmail" class="mdl-color-text--cyan-600">@Constants.supportEmail</a>  <br>
@@ -112,27 +107,11 @@
             <main class="mdl-layout__content mdl-color--grey-200">
                 <div class="mdl-grid main__grid single--align-content-flex-start @if(maxWidth) { single--max-width-960px }" >
 
-                @flash.get("error").map { error =>
-                    <div class="mdl-cell mdl-cell--12-col" id="answer-error">
-                        <div class="notification notification--error">
-                            <div><b>@error</b></div>
-                            <div>Si l'erreur persiste vous pouvez contacter l'équipe A+&nbsp;:&nbsp;<a href="mailto:@Constants.supportEmail?subject=@error">@Constants.supportEmail</a></div>
-                        </div>
-                    </div>
-                }
 
-                @flash.get("success").map { message =>
-                    <div class="mdl-cell mdl-cell--12-col">
-                      <div class="notification notification--success">
-                        <div class="notification__message">
-                          @message
-                        </div>
-                        <button class="notification__close-btn mdl-button mdl-js-button mdl-button--icon">
-                          <i class="material-icons">close</i>
-                        </button>
-                      </div>
-                    </div>
-                }
+                @toHtml(views.helpers.forms.flashError)
+                @toHtml(views.helpers.forms.flashErrorRawHtml)
+                @toHtml(views.helpers.forms.flashSuccess)
+                @toHtml(views.helpers.forms.flashSuccessRawHtml)
 
                     @content
                 </div>
@@ -142,9 +121,9 @@
                             Administration+ @java.time.LocalDate.now().getYear() :
                         </div>
                         <ul class="mdl-mega-footer--link-list">
-                            <li><a href="@routes.HomeController.help()">Aide</a></li>
+                            <li><a href="@routes.HomeController.help">Aide</a></li>
                             <li><a href="https://docs.aplus.beta.gouv.fr/conditions-generales-dutilisation" target="_blank" rel="noopener noreferrer">CGU</a></li>
-                            <li><a href="@routes.ApplicationController.showExportMyApplicationsCSV()">Exporter mes demandes en CSV</a></li>
+                            <li><a href="@routes.ApplicationController.showExportMyApplicationsCSV">Exporter mes demandes en CSV</a></li>
                         </ul>
                     </div>
                 </footer>

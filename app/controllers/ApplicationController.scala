@@ -6,6 +6,7 @@ import constants.Constants
 import forms.FormsPlusMap
 import helper.BooleanHelper.not
 import helper.CSVUtil.escape
+import helper.PlayFormHelper.formErrorsLog
 import helper.StringHelper.{CanonizeString, NonEmptyTrimmedString}
 import helper.Time.zonedDateTimeOrdering
 import helper.{Hash, Time, UUIDHelper}
@@ -326,8 +327,16 @@ case class ApplicationController @Inject() (
               eventService.log(
                 ApplicationCreated,
                 s"La demande ${application.id} a été créée",
-                Some(application)
+                application = application.some
               )
+              application.invitedUsers.foreach { case (userId, _) =>
+                eventService.log(
+                  ApplicationCreated,
+                  s"Envoi de la nouvelle demande ${application.id} à l'utilisateur $userId",
+                  application = application.some,
+                  involvesUser = userId.some
+                )
+              }
               applicationData.linkedMandat.foreach { mandatId =>
                 mandatService
                   .linkToApplication(Mandat.Id(mandatId), applicationId)
@@ -340,7 +349,7 @@ case class ApplicationController @Inject() (
                         underlyingException = Some(error)
                       )
                     case Success(Left(error)) =>
-                      eventService.logError(error, application = Some(application))
+                      eventService.logError(error, application = application.some)
                     case Success(Right(_)) =>
                       eventService.log(
                         ApplicationLinkedToMandat,
@@ -349,7 +358,7 @@ case class ApplicationController @Inject() (
                       )
                   }
               }
-              Redirect(routes.ApplicationController.myApplications())
+              Redirect(routes.ApplicationController.myApplications)
                 .withSession(
                   applicationData.signature.fold(removeSharedAccountUserSignature(request.session))(
                     signature => saveSharedAccountUserSignature(request.session, signature)
@@ -669,7 +678,7 @@ case class ApplicationController @Inject() (
           eventService.log(
             AllAsUnauthorized,
             s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur $userId",
-            involvesUser = Some(user)
+            involvesUser = Some(user.id)
           )
           Future(
             Unauthorized(
@@ -680,7 +689,7 @@ case class ApplicationController @Inject() (
           eventService.log(
             AllAsUnauthorized,
             s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur admin $userId",
-            involvesUser = Some(user)
+            involvesUser = Some(user.id)
           )
           Future(
             Unauthorized(
@@ -695,7 +704,7 @@ case class ApplicationController @Inject() (
               .log(
                 AllAsShowed,
                 s"Visualise la vue de l'utilisateur $userId",
-                involvesUser = Some(user)
+                involvesUser = Some(user.id)
               )
             val applications = applicationService.allForUserId(
               userId = targetUserId,
@@ -999,7 +1008,8 @@ case class ApplicationController @Inject() (
               case Some(answer) if answer.files.getOrElse(Map.empty).contains(filename) =>
                 eventService.log(
                   FileOpened,
-                  s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert"
+                  s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert",
+                  application = application.some
                 )
                 sendFile(
                   Paths.get(s"$filesPath/ans_$answerId-$filename"),
@@ -1009,7 +1019,8 @@ case class ApplicationController @Inject() (
               case _ =>
                 eventService.log(
                   FileNotFound,
-                  s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas"
+                  s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas",
+                  application = application.some
                 )
                 Future(NotFound("Nous n'avons pas trouvé ce fichier"))
             }
@@ -1020,7 +1031,11 @@ case class ApplicationController @Inject() (
               ) =>
             if (application.files.contains(filename)) {
               eventService
-                .log(FileOpened, s"Le fichier de la demande $applicationId a été ouvert")
+                .log(
+                  FileOpened,
+                  s"Le fichier de la demande $applicationId a été ouvert",
+                  application = application.some
+                )
               sendFile(
                 Paths.get(s"$filesPath/app_$applicationId-$filename"),
                 filename,
@@ -1029,7 +1044,8 @@ case class ApplicationController @Inject() (
             } else {
               eventService.log(
                 FileNotFound,
-                s"Le fichier de la demande $applicationId n'existe pas"
+                s"Le fichier de la demande $applicationId n'existe pas",
+                application = application.some
               )
               Future(NotFound("Nous n'avons pas trouvé ce fichier"))
             }
@@ -1070,7 +1086,7 @@ case class ApplicationController @Inject() (
           formWithErrors => {
             val error =
               s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.message).mkString(", ")})."
-            eventService.log(AnswerNotCreated, s"$error")
+            eventService.log(AnswerNotCreated, s"$error", application = application.some)
             Future(
               Redirect(
                 routes.ApplicationController.show(applicationId).withFragment("answer-error")
@@ -1137,7 +1153,7 @@ case class ApplicationController @Inject() (
               eventService.log(
                 AnswerNotCreated,
                 s"La réponse ${answer.id} n'a pas été créée sur la demande $applicationId : problème BDD",
-                Some(application)
+                application.some
               )
               Future(InternalServerError("Votre réponse n'a pas pu être envoyée"))
             }
@@ -1162,21 +1178,23 @@ case class ApplicationController @Inject() (
           .bindFromRequest()
           .fold(
             formWithErrors => {
+              val message =
+                s"Erreur dans le formulaire d’invitation (${formWithErrors.errors.map(_.format).mkString(", ")})."
               val error =
-                s"Erreur dans le formulaire d’invitation (${formWithErrors.errors.map(_.message).mkString(", ")})."
-              eventService.log(InviteNotCreated, error)
+                s"Erreur dans le formulaire d’invitation (${formErrorsLog(formWithErrors)})"
+              eventService.log(InviteFormValidationError, error, application = application.some)
               Future(
                 Redirect(
                   routes.ApplicationController.show(applicationId).withFragment("answer-error")
                 )
-                  .flashing("answer-error" -> error, "opened-tab" -> "invite")
+                  .flashing("answer-error" -> message, "opened-tab" -> "invite")
               )
             },
             inviteData =>
               if (inviteData.invitedUsers.isEmpty && inviteData.invitedGroups.isEmpty) {
                 val error =
-                  s"Erreur dans le formulaire d’invitation (une personne ou un organisme doit être sélectionné)."
-                eventService.log(InviteNotCreated, error)
+                  s"Erreur dans le formulaire d’invitation (une personne ou un organisme doit être sélectionné)"
+                eventService.log(InviteFormValidationError, error, application = application.some)
                 Future(
                   Redirect(
                     routes.ApplicationController.show(applicationId).withFragment("answer-error")
@@ -1191,13 +1209,19 @@ case class ApplicationController @Inject() (
                     val usersWhoCanBeInvited: List[User] =
                       singleUsersWhoCanBeInvited ::: userService
                         .byGroupIds(invitableGroups.map(_.id))
-                    val invitedUsers: Map[UUID, String] = usersWhoCanBeInvited
+                    // When a group is checked, to avoid inviting everybody in a group,
+                    // we filter their users, keeping only instructors
+                    val invitedUsersFromGroups: List[User] = usersWhoCanBeInvited
                       .filter(user =>
-                        inviteData.invitedUsers.contains[UUID](user.id) ||
+                        user.instructor &&
                           inviteData.invitedGroups.toSet.intersect(user.groupIds.toSet).nonEmpty
                       )
-                      .map(user => (user.id, contextualizedUserName(user, selectedAreaId)))
-                      .toMap
+                    val directlyInvitedUsers: List[User] = usersWhoCanBeInvited
+                      .filter(user => inviteData.invitedUsers.contains[UUID](user.id))
+                    val invitedUsers: Map[UUID, String] =
+                      (invitedUsersFromGroups ::: directlyInvitedUsers)
+                        .map(user => (user.id, contextualizedUserName(user, selectedAreaId)))
+                        .toMap
 
                     val answer = Answer(
                       UUID.randomUUID(),
@@ -1218,16 +1242,24 @@ case class ApplicationController @Inject() (
                       notificationsService.newAnswer(application, answer)
                       eventService.log(
                         AgentsAdded,
-                        s"L'ajout d'utilisateur ${answer.id} a été créé sur la demande $applicationId",
-                        Some(application)
+                        s"L'ajout d'utilisateur (réponse ${answer.id}) a été créé sur la demande $applicationId",
+                        application = application.some
                       )
-                      Redirect(routes.ApplicationController.myApplications())
+                      answer.invitedUsers.foreach { case (userId, _) =>
+                        eventService.log(
+                          AgentsAdded,
+                          s"Utilisateur $userId invité sur la demande $applicationId (réponse ${answer.id})",
+                          application = application.some,
+                          involvesUser = userId.some
+                        )
+                      }
+                      Redirect(routes.ApplicationController.myApplications)
                         .flashing(success -> "Les utilisateurs ont été invités sur la demande")
                     } else {
                       eventService.log(
                         AgentsNotAdded,
                         s"L'ajout d'utilisateur ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD",
-                        Some(application)
+                        application = application.some
                       )
                       InternalServerError("Les utilisateurs n'ont pas pu être invités")
                     }
@@ -1266,9 +1298,17 @@ case class ApplicationController @Inject() (
               eventService.log(
                 AddExpertCreated,
                 s"La réponse ${answer.id} a été créée sur la demande $applicationId",
-                Some(application)
+                application = application.some
               )
-              Redirect(routes.ApplicationController.myApplications())
+              answer.invitedUsers.foreach { case (userId, _) =>
+                eventService.log(
+                  AddExpertCreated,
+                  s"Expert $userId invité sur la demande $applicationId (réponse ${answer.id})",
+                  application = application.some,
+                  involvesUser = userId.some
+                )
+              }
+              Redirect(routes.ApplicationController.myApplications)
                 .flashing(success -> "Un expert a été invité sur la demande")
             } else {
               eventService.log(
@@ -1298,7 +1338,6 @@ case class ApplicationController @Inject() (
   def reopen(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application: Application =>
-        import eventService._
         successful(application.canBeOpenedBy(request.currentUser)).flatMap {
           case true =>
             applicationService
@@ -1306,17 +1345,17 @@ case class ApplicationController @Inject() (
               .filter(identity)
               .map { _ =>
                 val message = "La demande a bien été réouverte"
-                log(ReopenCompleted, message, application.some)
-                Redirect(routes.ApplicationController.myApplications()).flashing(success -> message)
+                eventService.log(ReopenCompleted, message, application.some)
+                Redirect(routes.ApplicationController.myApplications).flashing(success -> message)
               }
               .recover { _ =>
                 val message = "La demande n'a pas pu être réouverte"
-                log(ReopenError, message, application.some)
+                eventService.log(ReopenError, message, application.some)
                 InternalServerError(message)
               }
           case false =>
             val message = s"Non autorisé à réouvrir la demande $applicationId"
-            log(ReopenUnauthorized, message, application.some)
+            eventService.log(ReopenUnauthorized, message, application.some)
             successful(Unauthorized(message))
         }
       }
@@ -1330,7 +1369,8 @@ case class ApplicationController @Inject() (
             eventService
               .log(
                 TerminateIncompleted,
-                s"La demande de clôture pour $applicationId est incomplète"
+                s"La demande de clôture pour $applicationId est incomplète",
+                application = application.some
               )
             Future(
               BadGateway(
@@ -1355,7 +1395,7 @@ case class ApplicationController @Inject() (
                   s"""|La demande "${application.subject}" a bien été archivée. 
                     |Bravo et merci pour la résolution de cette demande !""".stripMargin
                 Future(
-                  Redirect(routes.ApplicationController.myApplications())
+                  Redirect(routes.ApplicationController.myApplications)
                     .flashing(success -> successMessage)
                 )
               } else {

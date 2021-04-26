@@ -13,7 +13,7 @@
                 @if(!user.sharedAccount) {
                     <p class="single--padding-left-48px single--margin-left-8px">Veuillez saisir ou corriger vos informations professionnelles :</p>
                 }
-                @helper.form(action = routes.UserController.validateAccount(), args = "class" -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
+                @helper.form(action = routes.UserController.validateAccount, args = "class" -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
                     @helper.CSRF.formField
                     @flash.get("redirect").map { redirect =>
                         <input name="redirect" value="@redirect" style="display: none">

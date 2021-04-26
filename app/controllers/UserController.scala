@@ -1,6 +1,6 @@
 package controllers
 
-import java.time.{LocalDate, ZoneId, ZonedDateTime}
+import java.time.LocalDate
 import java.util.UUID
 
 import actions.{LoginAction, RequestWithUserData}
@@ -49,6 +49,7 @@ import models.EventType.{
 }
 import models._
 import models.formModels.{
+  normalizedOptionalText,
   AddUserFormData,
   AddUserToGroupFormData,
   EditProfileFormData,
@@ -61,6 +62,7 @@ import play.api.Configuration
 import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.{Form, Mapping}
+import play.api.i18n.I18nSupport
 import play.api.mvc._
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
@@ -82,7 +84,7 @@ case class UserController @Inject() (
     eventService: EventService
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
-    with play.api.i18n.I18nSupport
+    with I18nSupport
     with UserOperators
     with GroupOperators {
 
@@ -98,7 +100,7 @@ case class UserController @Inject() (
       s"L'utilisateur n'est pas autorisé à éditer le groupe $groupId"
     )
     val message = "Vous n’avez pas le droit de modifier ce groupe"
-    Redirect(routes.UserController.showEditMyGroups()).flashing("error" -> message)
+    Redirect(routes.UserController.showEditMyGroups).flashing("error" -> message)
   }
 
   def addToGroup(groupId: UUID) =
@@ -126,17 +128,18 @@ case class UserController @Inject() (
                       s"Tentative d'ajout de l'utilisateur inexistant ${data.email} au groupe $groupId"
                     )
                     successful(
-                      Redirect(routes.UserController.showEditMyGroups())
+                      Redirect(routes.UserController.showEditMyGroups)
                         .flashing("error" -> "L’utilisateur n’existe pas dans Administration+")
                     )
                   case (Some(userToAdd), usersInGroup)
                       if usersInGroup.map(_.id).contains[UUID](userToAdd.id) =>
                     eventService.log(
                       EditMyGroupBadUserInput,
-                      s"Tentative d'ajout de l'utilisateur ${userToAdd.id} déjà présent au groupe $groupId"
+                      s"Tentative d'ajout de l'utilisateur ${userToAdd.id} déjà présent au groupe $groupId",
+                      involvesUser = userToAdd.id.some
                     )
                     successful(
-                      Redirect(routes.UserController.showEditMyGroups())
+                      Redirect(routes.UserController.showEditMyGroups)
                         .flashing("error" -> "L’utilisateur est déjà présent dans le groupe")
                     )
                   case (Some(userToAdd), _) =>
@@ -145,9 +148,10 @@ case class UserController @Inject() (
                       .map { _ =>
                         eventService.log(
                           EditMyGroupUpdated,
-                          s"Utilisateur ${userToAdd.id} ajouté au groupe $groupId"
+                          s"Utilisateur ${userToAdd.id} ajouté au groupe $groupId",
+                          involvesUser = userToAdd.id.some
                         )
-                        Redirect(routes.UserController.showEditMyGroups())
+                        Redirect(routes.UserController.showEditMyGroups)
                           .flashing("success" -> "L’utilisateur a été ajouté au groupe")
                       }
                 }
@@ -155,23 +159,26 @@ case class UserController @Inject() (
         )
     }
 
-  def removeFromGroup(id: UUID, groupId: UUID) =
+  def removeFromGroup(userId: UUID, groupId: UUID) =
     loginAction.async { implicit request =>
-      val user = request.currentUser
-      if (user.belongsTo(groupId))
+      if (request.currentUser.belongsTo(groupId))
         userService
-          .removeFromGroup(id, groupId)
+          .removeFromGroup(userId, groupId)
           .map { _ =>
-            eventService.log(EditMyGroupUpdated, s"Utilisateur $id retiré du groupe $groupId")
-            Redirect(routes.UserController.showEditMyGroups())
+            eventService.log(
+              EditMyGroupUpdated,
+              s"Utilisateur $userId retiré du groupe $groupId",
+              involvesUser = userId.some
+            )
+            Redirect(routes.UserController.showEditMyGroups)
               .flashing("success" -> "L’utilisateur a bien été retiré du groupe.")
           }
           .recover { e =>
             eventService.log(
               EditMyGroupUpdatedError,
-              s"Erreur lors de la tentative d'ajout de l'utilisateur $id au groupe $groupId : ${e.getMessage}"
+              s"Erreur lors de la tentative d'ajout de l'utilisateur $userId au groupe $groupId : ${e.getMessage}"
             )
-            Redirect(routes.UserController.showEditMyGroups())
+            Redirect(routes.UserController.showEditMyGroups)
               .flashing("error" -> "Une erreur technique est survenue")
           }
       else successful(updateMyGroupsNotAllowed(groupId))
@@ -259,7 +266,7 @@ case class UserController @Inject() (
                   eventService
                     .log(UserProfileUpdated, s"Profil édité ${user.toDiffLogString(editedUser)}")
                   val message = "Votre profil a bien été modifié"
-                  Redirect(routes.UserController.editProfile()).flashing("success" -> message)
+                  Redirect(routes.UserController.editProfile).flashing("success" -> message)
                 }
                 .recover { e =>
                   val errorMessage = s"Erreur lors de la modification du profil: ${e.getMessage}"
@@ -461,7 +468,7 @@ case class UserController @Inject() (
               .log(
                 UserShowed,
                 "Visualise la vue de modification l'utilisateur ",
-                involvesUser = Some(user)
+                involvesUser = Some(user.id)
               )
             Future(
               Ok(
@@ -476,7 +483,11 @@ case class UserController @Inject() (
               )
             )
           case _ =>
-            eventService.log(ViewUserUnauthorized, s"Accès non autorisé pour voir $userId")
+            eventService.log(
+              ViewUserUnauthorized,
+              s"Accès non autorisé pour voir $userId",
+              involvesUser = userId.some
+            )
             Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
         }
       }
@@ -492,7 +503,11 @@ case class UserController @Inject() (
           DeleteUserUnauthorized -> s"Suppression de l'utilisateur $userId refusée."
         } { () =>
           if (isAccountUsed(user)) {
-            eventService.log(UserIsUsed, description = s"Le compte ${user.id} est utilisé.")
+            eventService.log(
+              UserIsUsed,
+              description = s"Le compte ${user.id} est utilisé.",
+              involvesUser = user.id.some
+            )
             Future(Unauthorized("User is not unused."))
           } else {
             userService.deleteById(userId)
@@ -500,10 +515,10 @@ case class UserController @Inject() (
             eventService.log(
               UserDeleted,
               s"Utilisateur ${user.toLogString} supprimé",
-              involvesUser = Some(user)
+              involvesUser = Some(user.id)
             )
             Future(
-              Redirect(routes.UserController.home()).flashing("success" -> flashMessage)
+              Redirect(routes.UserController.home).flashing("success" -> flashMessage)
             )
           }
         }
@@ -526,7 +541,8 @@ case class UserController @Inject() (
                     val groups = groupService.allGroups
                     eventService.log(
                       AddUserError,
-                      s"Essai de modification de l'utilisateur $userId avec des erreurs de validation"
+                      s"Essai de modification de l'utilisateur $userId avec des erreurs de validation",
+                      involvesUser = user.id.some
                     )
                     Future(
                       BadRequest(
@@ -548,7 +564,11 @@ case class UserController @Inject() (
                 val rights = request.rights
                 if (not(Authorization.canEditOtherUser(oldUser)(rights))) {
                   eventService
-                    .log(PostEditUserUnauthorized, s"Accès non autorisé à modifier $userId")
+                    .log(
+                      PostEditUserUnauthorized,
+                      s"Accès non autorisé à modifier $userId",
+                      involvesUser = oldUser.id.some
+                    )
                   Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
                 } else {
                   val userToUpdate = oldUser.copy(
@@ -575,7 +595,7 @@ case class UserController @Inject() (
                         .log(
                           UserEdited,
                           s"Utilisateur $userId modifié ${oldUser.toDiffLogString(userToUpdate)}",
-                          involvesUser = Some(userToUpdate)
+                          involvesUser = Some(userToUpdate.id)
                         )
                       Redirect(routes.UserController.editUser(userId))
                         .flashing("success" -> "Utilisateur modifié")
@@ -589,7 +609,7 @@ case class UserController @Inject() (
                       eventService.log(
                         EditUserError,
                         s"Impossible de modifier l'utilisateur dans la BDD ${oldUser.toDiffLogString(userToUpdate)}",
-                        involvesUser = Some(oldUser)
+                        involvesUser = Some(oldUser.id)
                       )
                       InternalServerError(
                         views.html
@@ -641,7 +661,7 @@ case class UserController @Inject() (
                       instructor = userToAdd.instructor,
                       admin = false,
                       areas = group.areaIds,
-                      creationDate = ZonedDateTime.now(Time.timeZoneParis),
+                      creationDate = Time.nowParis(),
                       communeCode = "0",
                       groupAdmin = userToAdd.groupAdmin,
                       disabled = false,
@@ -681,7 +701,7 @@ case class UserController @Inject() (
                           eventService.log(
                             EventType.UserCreated,
                             s"Utilisateur ajouté ${user.toLogString}",
-                            involvesUser = Some(user)
+                            involvesUser = Some(user.id)
                           )
                         }
                         eventService.log(UsersCreated, "Utilisateurs ajoutés")
@@ -723,7 +743,7 @@ case class UserController @Inject() (
       }
     }
 
-  def showValidateAccount(): Action[AnyContent] =
+  def showValidateAccount: Action[AnyContent] =
     loginAction { implicit request =>
       eventService.log(CGUShowed, "CGU visualisées")
       val user = request.currentUser
@@ -768,7 +788,7 @@ case class UserController @Inject() (
         userService.byId(user.id).head
       }
 
-  def validateAccount(): Action[AnyContent] =
+  def validateAccount: Action[AnyContent] =
     loginAction.async { implicit request =>
       val user = request.currentUser
       ValidateSubscriptionForm
@@ -787,7 +807,7 @@ case class UserController @Inject() (
                   lastName,
                   qualite,
                   phoneNumber
-                ) if redirect =!= routes.ApplicationController.myApplications().url =>
+                ) if redirect =!= routes.ApplicationController.myApplications.url =>
               validateAndUpdateUser(request.currentUser)(firstName, lastName, qualite, phoneNumber)
                 .map { updatedUser =>
                   val logMessage =
@@ -802,14 +822,14 @@ case class UserController @Inject() (
                   val logMessage =
                     s"CGU validées ${request.currentUser.toDiffLogString(updatedUser)}"
                   eventService.log(CGUValidated, logMessage)
-                  Redirect(routes.HomeController.welcome())
+                  Redirect(routes.HomeController.welcome)
                     .flashing("success" -> "Merci d’avoir accepté les CGU")
                 }
             case ValidateSubscriptionForm(Some(redirect), false, _, _, _, _)
-                if redirect =!= routes.ApplicationController.myApplications().url =>
+                if redirect =!= routes.ApplicationController.myApplications.url =>
               Future(Redirect(Call("GET", redirect)))
             case ValidateSubscriptionForm(_, false, _, _, _, _) =>
-              Future(Redirect(routes.HomeController.welcome()))
+              Future(Redirect(routes.HomeController.welcome))
           }
         )
     }
@@ -837,7 +857,7 @@ case class UserController @Inject() (
               userService.acceptNewsletter(request.currentUser.id)
             }
             eventService.log(NewsletterSubscribed, "Newletter subscribed")
-            Redirect(routes.HomeController.welcome())
+            Redirect(routes.HomeController.welcome)
               .flashing("success" -> "Merci d’avoir terminé votre inscription")
           }
         )
@@ -872,7 +892,7 @@ case class UserController @Inject() (
       }
     }
 
-  def allEvents(): Action[AnyContent] =
+  def allEvents: Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(() => EventsUnauthorized -> "Accès non autorisé pour voir les événements") { () =>
         val limit = request
@@ -926,10 +946,7 @@ case class UserController @Inject() (
         "phoneNumber" -> optional(text),
         "observableOrganisationIds" -> list(of[Organisation.Id]),
         Keys.User.sharedAccount -> boolean,
-        "internalSupportComment" -> optional(text).transform[Option[String]](
-          _.map(commonStringInputNormalization).filter(_.nonEmpty),
-          _.map(commonStringInputNormalization).filter(_.nonEmpty)
-        )
+        "internalSupportComment" -> normalizedOptionalText
       )(EditUserFormData.apply)(EditUserFormData.unapply)
     )
 

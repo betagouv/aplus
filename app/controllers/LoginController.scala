@@ -2,13 +2,16 @@ package controllers
 
 import actions.{LoginAction, RequestWithUserData}
 import cats.syntax.all._
+import helper.{StringHelper, Time}
+import java.time.ZoneId
 import javax.inject.{Inject, Singleton}
 import models.EventType.{GenerateToken, UnknownEmail}
 import models.{Authorization, LoginToken, User}
 import org.webjars.play.WebJarsUtil
-import play.api.mvc.{Action, AnyContent, InjectedController}
+import play.api.Configuration
+import play.api.mvc.{Action, AnyContent, InjectedController, Request}
 import serializers.Keys
-import services.{EventService, NotificationService, TokenService, UserService}
+import services.{EventService, NotificationService, SignupService, TokenService, UserService}
 import views.home.LoginPanel
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -18,8 +21,9 @@ class LoginController @Inject() (
     userService: UserService,
     notificationService: NotificationService,
     tokenService: TokenService,
-    configuration: play.api.Configuration,
-    eventService: EventService
+    configuration: Configuration,
+    eventService: EventService,
+    signupService: SignupService
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController {
 
@@ -33,7 +37,7 @@ class LoginController @Inject() (
   def login: Action[AnyContent] =
     Action.async { implicit request =>
       val emailFromRequestOrQueryParamOrFlash: Option[String] = request.body.asFormUrlEncoded
-        .flatMap(_.get("email").flatMap(_.headOption))
+        .flatMap(_.get("email").flatMap(_.headOption.map(_.trim)))
         .orElse(request.getQueryString(Keys.QueryParam.email))
         .orElse(request.flash.get("email"))
       emailFromRequestOrQueryParamOrFlash.fold {
@@ -42,65 +46,112 @@ class LoginController @Inject() (
         userService
           .byEmail(email)
           .fold {
-            // TODO: this should be removed
-            val user = User.systemUser
-            LoginAction.readUserRights(user).map { userRights =>
-              implicit val requestWithUserData =
-                new RequestWithUserData(user, userRights, request)
-              eventService.log(UnknownEmail, s"Aucun compte actif à cette adresse mail $email")
-              val message =
-                """Aucun compte actif n’est associé à cette adresse e-mail.
-                |Merci de vérifier qu’il s’agit bien de votre adresse professionnelle et nominative.""".stripMargin
-              Redirect(routes.LoginController.login())
-                .flashing("error" -> message, "email-value" -> email)
-            }
+            signupService
+              .byEmail(email)
+              .map(
+                _.fold(
+                  e => {
+                    eventService.logErrorNoUser(e)
+                    val message = "Une erreur interne est survenue. " +
+                      "Celle-ci étant possiblement temporaire, " +
+                      "nous vous invitons à réessayer plus tard."
+                    Redirect(routes.LoginController.login)
+                      .flashing("error" -> message, "email-value" -> email)
+                  },
+                  {
+                    case None =>
+                      eventService
+                        .logSystem(UnknownEmail, s"Aucun compte actif à cette adresse mail $email")
+                      val message =
+                        """Aucun compte actif n’est associé à cette adresse e-mail.
+                          |Merci de vérifier qu’il s’agit bien de votre adresse professionnelle et nominative.""".stripMargin
+                      Redirect(routes.LoginController.login)
+                        .flashing("error" -> message, "email-value" -> email)
+                    case Some(signup) =>
+                      val loginToken =
+                        LoginToken
+                          .forSignupId(signup.id, tokenExpirationInMinutes, request.remoteAddress)
+                      loginHappyPath(loginToken, signup.email, None)
+                  }
+                )
+              )
           } { user: User =>
             LoginAction.readUserRights(user).map { userRights =>
               val loginToken =
                 LoginToken.forUserId(user.id, tokenExpirationInMinutes, request.remoteAddress)
-              tokenService.create(loginToken)
-              // Here we want to redirect some users to more useful pages:
-              // observer => /stats
-              val path: String = {
-                val tmpPath = request.flash.get("path").getOrElse(routes.HomeController.index().url)
-                val shouldChangeObserverPath: Boolean =
-                  Authorization.isObserver(userRights) &&
-                    user.cguAcceptationDate.nonEmpty &&
-                    (tmpPath === routes.HomeController.index().url)
-                if (shouldChangeObserverPath) {
-                  routes.ApplicationController.stats().url
-                } else {
-                  tmpPath
-                }
-              }
-              notificationService.newMagicLinkEmail(user, loginToken, pathToRedirectTo = path)
-
-              implicit val requestWithUserData =
+              val requestWithUserData =
                 new RequestWithUserData(user, userRights, request)
-              val emailInBody = request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty
-              val emailInFlash = request.flash.get("email").nonEmpty
-              eventService.log(
-                GenerateToken,
-                s"Génère un token pour une connexion par email body=${emailInBody}&flash=${emailInFlash}"
-              )
-
-              val successMessage = request
-                .getQueryString(Keys.QueryParam.action)
-                .flatMap(actionName =>
-                  if (actionName === "sendemailback")
-                    Some("Un nouveau lien de connexion vient de vous être envoyé par e-mail.")
-                  else
-                    None
-                )
-              Ok(
-                views.html.home.page(
-                  LoginPanel.EmailSentFeedback(user, tokenExpirationInMinutes, successMessage)
-                )
-              )
+              loginHappyPath(loginToken, user.email, requestWithUserData.some)
             }
           }
       }
     }
+
+  private def loginHappyPath(
+      token: LoginToken,
+      email: String,
+      requestWithUserData: Option[RequestWithUserData[_]]
+  )(implicit request: Request[AnyContent]) = {
+    // Note: we have a small race condition here
+    //       this should be OK almost always
+    tokenService.create(token)
+    // Here we want to redirect some users to more useful pages:
+    // observer => /stats
+    val path: String = {
+      val tmpPath = request.flash.get("path").getOrElse(routes.HomeController.index.url)
+      val shouldChangeObserverPath: Boolean =
+        requestWithUserData
+          .map(data =>
+            Authorization.isObserver(data.rights) &&
+              data.currentUser.cguAcceptationDate.nonEmpty &&
+              (tmpPath === routes.HomeController.index.url)
+          )
+          .getOrElse(false)
+      if (shouldChangeObserverPath) {
+        routes.ApplicationController.stats.url
+      } else {
+        tmpPath
+      }
+    }
+    notificationService.newMagicLinkEmail(
+      requestWithUserData.map(_.currentUser.name),
+      email,
+      requestWithUserData.map(_.currentUser.timeZone).getOrElse(Time.timeZoneParis),
+      token,
+      pathToRedirectTo = path
+    )
+    val emailInBody =
+      request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty
+    val emailInFlash = request.flash.get("email").nonEmpty
+    val logMessage =
+      s"Génère un token pour une connexion par email body=${emailInBody}&flash=${emailInFlash}"
+    requestWithUserData.fold(
+      eventService.logSystem(GenerateToken, logMessage)
+    ) { implicit userData =>
+      eventService.log(GenerateToken, logMessage)
+    }
+
+    val successMessage = request
+      .getQueryString(Keys.QueryParam.action)
+      .flatMap(actionName =>
+        if (actionName === "sendemailback")
+          Some(
+            "Un nouveau lien de connexion vient de vous être envoyé par email."
+          )
+        else
+          None
+      )
+    Ok(
+      views.html.home.page(
+        LoginPanel.EmailSentFeedback(
+          email,
+          requestWithUserData.map(_.currentUser.timeZone).getOrElse(Time.timeZoneParis),
+          tokenExpirationInMinutes,
+          successMessage
+        )
+      )
+    )
+  }
 
   def magicLinkAntiConsumptionPage: Action[AnyContent] =
     Action { implicit request =>
@@ -117,7 +168,7 @@ class LoginController @Inject() (
             )
           )
         case _ =>
-          TemporaryRedirect(routes.LoginController.login().url).flashing(
+          TemporaryRedirect(routes.LoginController.login.url).flashing(
             "error" -> "Il y a une erreur dans votre lien de connexion. Merci de contacter l'équipe Administration+"
           )
       }
@@ -125,7 +176,7 @@ class LoginController @Inject() (
 
   def disconnect: Action[AnyContent] =
     Action {
-      Redirect(routes.LoginController.login()).withNewSession
+      Redirect(routes.LoginController.login).withNewSession
     }
 
 }

@@ -52,7 +52,7 @@ case class AreaController @Inject() (
         val redirect = request
           .getQueryString("redirect")
           .map(url => Redirect(url))
-          .getOrElse(Redirect(routes.ApplicationController.myApplications()))
+          .getOrElse(Redirect(routes.ApplicationController.myApplications))
         redirect.withSession(
           request.session - Keys.Session.areaId + (Keys.Session.areaId -> areaId.toString)
         )

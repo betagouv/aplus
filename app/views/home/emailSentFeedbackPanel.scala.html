@@ -7,12 +7,12 @@
 
     <p>
       Nous avons envoyé par e-mail un lien de connexion sécurisée <b>valable @infos.tokenExpirationInMinutes minutes</b>
-      à l’adresse <b>@infos.user.email</b>.
-      Cliquez sur le lien contenu dans l’e-mail « @views.emails.common.magicLinkSubject » avant @{java.time.ZonedDateTime.now(infos.user.timeZone).plusMinutes(infos.tokenExpirationInMinutes.toLong).format(_root_.helper.Time.hourAndMinutesFormatter)} pour accéder à Administration+.
+      à l’adresse <b>@infos.email</b>.
+      Cliquez sur le lien contenu dans l’e-mail « @views.emails.common.magicLinkSubject » avant @{java.time.ZonedDateTime.now(infos.timeZone).plusMinutes(infos.tokenExpirationInMinutes.toLong).format(_root_.helper.Time.hourAndMinutesFormatter)} pour accéder à Administration+.
     </p>
 
     <p><i>
-        Vous n’avez pas reçu d’e-mail ? Veuillez consulter vos courriers indésirables ou <a class="aplus-color-text--blue" href="@routes.LoginController.login()?email=@infos.user.email&action=sendemailback">renvoyer un autre e-mail</a>
+        Vous n’avez pas reçu d’e-mail ? Veuillez consulter vos courriers indésirables ou <a class="aplus-color-text--blue" href="@routes.LoginController.login?email=@infos.email&action=sendemailback">renvoyer un autre e-mail</a>
     </i></p>
 
     <p>

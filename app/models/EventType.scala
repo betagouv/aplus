@@ -84,7 +84,7 @@ object EventType {
   object ImportUserError extends Error
   object ImportUserUnauthorized extends Warn
   object ImportUsersUnauthorized extends Warn
-  object InviteNotCreated extends Error
+  object InviteFormValidationError extends Warn
   object MandatInitiationBySmsInvalid extends Error
   object MandatInitiationBySmsWarn extends Warn
   object MandatInitiationBySmsDone extends Info
@@ -134,14 +134,9 @@ object EventType {
   object WeeklyEmailsSent extends Info
 
   object ApplicationCreationInvalid extends Info
-  object AuthByKey extends Info
-  object AuthWithDifferentIp extends Warn
   object CSVImportFormError extends Warn
   object CsvImportInputEmpty extends Warn
-  object ExpiredToken extends Warn
-  object GenerateToken extends Info
   object ImportUserFormError extends Warn
-  object LoginByKey extends Info
   object StatsIncorrectSetup extends Warn
   object TryLoginByKey extends Info
   object UnknownEmail extends Warn
@@ -156,4 +151,27 @@ object EventType {
   object EditMyGroupUpdated extends Info
   object EditMyGroupBadUserInput extends Warn
   object EditMyGroupUpdatedError extends Error
+
+  // Signups
+  object SignupFormShowed extends Info
+  object SignupFormValidationError extends Warn
+  object SignupFormError extends Error
+  object SignupFormSuccessful extends Info
+  object SignupsValidationError extends Warn
+  object SignupsUnauthorized extends Error
+  object SignupsError extends Error
+  object SignupEmailError extends Error
+  object SignupCreated extends Info
+
+  // Login & Token
+  object GenerateToken extends Info
+  object ExpiredToken extends Warn
+  object TokenDoubleUsage extends Warn
+  object TokenError extends Error
+  object MissingSignup extends Warn
+  object AuthByKey extends Info // Incorrectly named (this is an auth by token)
+  object AuthWithDifferentIp extends Warn
+  object LoginByKey extends Info
+  object AuthBySignupToken extends Info
+
 }

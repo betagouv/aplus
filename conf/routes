@@ -37,6 +37,13 @@ GET         /stats                                                              
 POST        /stats                                                                           controllers.ApplicationController.stats
 
 
+# Signup
+GET         /inscription                                                                     controllers.SignupController.signupForm
+POST        /inscription                                                                     controllers.SignupController.createSignup
+GET         /utilisateurs/inscriptions                                                       controllers.SignupController.signupRequests
+POST        /utilisateurs/inscriptions/add-emails                                            controllers.SignupController.addSignupRequests
+
+
 # Login
 GET         /login                                                                           controllers.LoginController.login
 POST        /login                                                                           controllers.LoginController.login
@@ -59,8 +66,8 @@ POST        /importation/revue-import                                           
 POST        /importation/import                                                              controllers.CSVImportController.importUsersAfterReview
 
 # Groups
-POST        /groups                                                                          controllers.GroupController.addGroup()
-GET         /groups                                                                          controllers.UserController.showEditMyGroups()
+POST        /groups                                                                          controllers.GroupController.addGroup
+GET         /groups                                                                          controllers.UserController.showEditMyGroups
 POST        /groups/:groupId/remove/:userId                                                  controllers.UserController.removeFromGroup(userId: java.util.UUID, groupId: java.util.UUID)
 POST        /groups/:groupId/add                                                             controllers.UserController.addToGroup(groupId: java.util.UUID)
 GET         /groups/:groupId                                                                 controllers.GroupController.editGroup(groupId: java.util.UUID)
@@ -70,11 +77,12 @@ POST        /groups/:groupId/users                                              
 GET         /group/delete/unused/:groupId                                                    controllers.GroupController.deleteUnusedGroupById(groupId: java.util.UUID)
 
 # Events
-GET         /events                                                                          controllers.UserController.allEvents()
+GET         /events                                                                          controllers.UserController.allEvents
 
 # CGU
-GET         /cgu                                                                             controllers.UserController.showValidateAccount()
-POST        /cgu                                                                             controllers.UserController.validateAccount()
+GET         /cgu                                                                             controllers.UserController.showValidateAccount
+POST        /cgu                                                                             controllers.UserController.validateAccount
+
 
 # Newsletter
 POST        /newsletter                                                                      controllers.UserController.subscribeNewsletter

@@ -7,7 +7,7 @@ import cats.syntax.all._
 import helper.StringHelper.StringOps
 import helper.{Hash, Time}
 import javax.inject.Inject
-import models.User
+import models.{Error, User}
 import org.postgresql.util.PSQLException
 import play.api.db.Database
 
@@ -123,8 +123,9 @@ class UserService @Inject() (
     results.headOption
   }
 
-  def byIds(ids: List[UUID], includeDisabled: Boolean = false): List[User] =
+  def byIds(userIds: List[UUID], includeDisabled: Boolean = false): List[User] =
     db.withConnection { implicit connection =>
+      val ids = userIds.distinct
       val disabledSQL: String = if (includeDisabled) {
         ""
       } else {
@@ -162,6 +163,9 @@ class UserService @Inject() (
     }
   }
 
+  def byEmailsFuture(emails: List[String]): Future[Either[Error, List[User]]] =
+    Future(byEmails(emails).asRight)
+
   def deleteById(userId: UUID): Boolean =
     db.withTransaction { implicit connection =>
       SQL"""DELETE FROM "user" WHERE id = $userId::uuid""".execute()
@@ -174,7 +178,7 @@ class UserService @Inject() (
           assert(user.areas.nonEmpty)
           success && SQL"""
         INSERT INTO "user" (id, key, first_name, last_name, name, qualite, email, helper, instructor, admin, areas, creation_date,
-                            commune_code, group_admin, group_ids, expert, phone_number, shared_account) VALUES (
+                            commune_code, group_admin, group_ids, cgu_acceptation_date, expert, phone_number, shared_account) VALUES (
            ${user.id}::uuid,
            ${Hash.sha256(s"${user.id}$cryptoSecret")},
            ${user.firstName},
@@ -190,6 +194,7 @@ class UserService @Inject() (
            ${user.communeCode},
            ${user.groupAdmin},
            array[${user.groupIds.distinct}]::uuid[],
+           ${user.cguAcceptationDate},
            ${user.expert},
            ${user.phoneNumber},
            ${user.sharedAccount})
@@ -210,6 +215,9 @@ class UserService @Inject() (
         }
         Left(errorMessage)
     }
+
+  def addFuture(users: List[User]): Future[Either[String, Unit]] =
+    Future(add(users))
 
   def update(user: User): Future[Boolean] =
     Future(db.withConnection { implicit connection =>
