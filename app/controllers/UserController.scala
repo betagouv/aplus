@@ -433,7 +433,7 @@ case class UserController @Inject() (
 
   def editUser(userId: UUID): Action[AnyContent] =
     loginAction.async { implicit request: RequestWithUserData[AnyContent] =>
-      asUserWithAuthorization(Authorization.canSeeUserEditPage) { () =>
+      asUserWithAuthorization(Authorization.canSeeEditUserPage) { () =>
         ViewUserUnauthorized -> s"Accès non autorisé pour voir $userId"
       } { () =>
         userService.byId(userId, includeDisabled = true) match {
