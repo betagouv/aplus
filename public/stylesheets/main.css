@@ -135,6 +135,11 @@ html, body {
     max-width: 400px;
 }
 
+.mdl-dialog-fix {
+    top: 50% !important;
+    transform: translate(0, -50%) !important;
+}
+
 @media print {
     .mdl-layout--fixed-drawer > .mdl-layout__content {
         margin-left: 0px !important;

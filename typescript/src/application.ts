@@ -1,3 +1,5 @@
+import { findAncestor } from "./helpers";
+
 const createApplicationFormId = 'create-application-form';
 const invitedGroupsCheckboxClass = 'application-form-invited-groups-checkbox';
 const usagerInfosTypesSelectId = 'aplus-application-form-user-infos-types-select-id';
@@ -141,11 +143,6 @@ function addInfo() {
 
 
 function applyCategoryFilters() {
-  function findAncestor(el: HTMLElement, check: (e: HTMLElement) => boolean): HTMLElement {
-    while ((el = el.parentElement) && !check(el));
-    return el;
-  }
-
   // Get all activated categories organisations
   let selectedCategories: Array<string> = [];
   document.querySelectorAll(".mdl-chip." + categoryFilterClass)
