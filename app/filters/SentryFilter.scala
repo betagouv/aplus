@@ -10,14 +10,14 @@ import serializers.Keys
 
 class SentryFilter @Inject() (implicit val mat: Materializer, ec: ExecutionContext) extends Filter {
 
-  val urisWeDoNotWantToTrace = List(
+  val urisBlacklist = List(
     "/favicon.ico",
     "/assets/",
     "/webjars/",
     "/jsRoutes"
   )
 
-  val queryParamsWeDoWantToTrace = List(
+  val queryParamsWhitelist = List(
     Keys.QueryParam.vue,
     Keys.QueryParam.uniquementFs,
     Keys.QueryParam.numOfMonthsDisplayed,
@@ -28,11 +28,12 @@ class SentryFilter @Inject() (implicit val mat: Materializer, ec: ExecutionConte
       nextFilter: RequestHeader => Future[Result]
   )(requestHeader: RequestHeader): Future[Result] = {
     val target = requestHeader.target
-    val filteredQuery = target.queryMap
-      .filterNot { case (key, _) => queryParamsWeDoWantToTrace.exists(_ === key) }
+    val filteredQuery = target.queryMap.filter { case (key, _) =>
+      queryParamsWhitelist.exists(_ === key)
+    }
     val uri = target.withQueryString(filteredQuery).uriString
     val transactionOpt: Option[ITransaction] =
-      if (urisWeDoNotWantToTrace.exists(prefix => uri.startsWith(prefix))) {
+      if (urisBlacklist.exists(prefix => uri.startsWith(prefix))) {
         None
       } else {
         val transactionName = s"${requestHeader.method} $uri"
