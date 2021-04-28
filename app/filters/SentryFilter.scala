@@ -27,11 +27,14 @@ class SentryFilter @Inject() (implicit val mat: Materializer, ec: ExecutionConte
   def apply(
       nextFilter: RequestHeader => Future[Result]
   )(requestHeader: RequestHeader): Future[Result] = {
-    val target = requestHeader.target
-    val filteredQuery = target.queryMap.filter { case (key, _) =>
-      queryParamsWhitelist.exists(_ === key)
-    }
-    val uri = target.withQueryString(filteredQuery).uriString
+    val filteredQuery = requestHeader.target.queryMap
+      .filter { case (key, _) => queryParamsWhitelist.exists(_ === key) }
+      .map { case (key, values) => values.map(value => key + "=" + value).mkString("&") }
+      .mkString("&")
+    // Note that target.withQueryString does not work for our use case (see Play source)
+    val uri =
+      if (filteredQuery.isEmpty) requestHeader.target.path
+      else requestHeader.target.path + "?" + filteredQuery
     val transactionOpt: Option[ITransaction] =
       if (urisBlacklist.exists(prefix => uri.startsWith(prefix))) {
         None
