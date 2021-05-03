@@ -129,6 +129,13 @@ object Authorization {
       case _ => false
     }
 
+  def canSeeStats: Check =
+    atLeastOneIsAuthorized(isAdmin, isManager, isObserver)
+
+  //
+  // Authorizations concerning User/UserGroup
+  //
+
   // TODO: weird...
   def userCanBeEditedBy(editorUser: User): Check =
     _ => editorUser.admin && editorUser.areas.intersect(editorUser.areas).nonEmpty
@@ -145,14 +152,10 @@ object Authorization {
   def canEditGroups: Check =
     atLeastOneIsAuthorized(isAdmin, isManager)
 
-  def canSeeApplicationsAsAdmin: Check =
-    atLeastOneIsAuthorized(isAdmin, isManager)
-
-  def canSeeStats: Check =
-    atLeastOneIsAuthorized(isAdmin, isManager, isObserver)
-
   def canSeeUsers: Check =
     atLeastOneIsAuthorized(isAdmin, isManager, isObserver)
+
+  def canSeeEditUserPage: Check = isAdminOrObserver
 
   def canSeeSignupsPage: Check = isAdmin
 
@@ -161,6 +164,9 @@ object Authorization {
   //
   // Authorizations concerning Applications
   //
+
+  def canSeeApplicationsAsAdmin: Check =
+    atLeastOneIsAuthorized(isAdmin, isManager)
 
   def isApplicationCreator(application: Application): Check =
     _.rights.exists {
