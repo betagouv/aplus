@@ -42,8 +42,7 @@ object head {
       webJarScript("material.min.js"),
       publicScript("javascripts/polyfills.js"),
       publicScript("javascripts/main.js"),
-      webJarCss("dialog-polyfill.css"),
-      webJarScript("dialog-polyfill.js"),
+      publicCss("generated-js/index.css"),
       script(`type` := "text/javascript", src := JavascriptController.javascriptRoutes.url)
     )
 
