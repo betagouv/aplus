@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "anchorme": "2.1.2",
-    "dialog-polyfill": "0.5.4",
+    "dialog-polyfill": "0.5.6",
     "ts-polyfill": "3.8.2"
   },
   "devDependencies": {
