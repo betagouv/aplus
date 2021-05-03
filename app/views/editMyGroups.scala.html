@@ -14,7 +14,12 @@
         <div class="sub-header">Liste des membres du groupe</div>
         @for(user <- users) {
             <tr class="no-hover td--clear-border">
-                <td class="mdl-data-table__cell--non-numeric @if(user.disabled) { text--strikethrough }"><span class="application__name">@user.name</span>
+                <td class="mdl-data-table__cell--non-numeric @if(user.disabled) { text--strikethrough }">
+                  @if(Authorization.canSeeEditUserPage(currentUserRights)) {
+                    <a href="@routes.UserController.editUser(user.id)">@user.name</a>
+                  } else {
+                    <span class="application__name">@user.name</span>
+                  }
                     <i></i>
                     <br>
                     <span class="application__subject">@user.qualite</span></td>
@@ -72,7 +77,11 @@
     @for(userGroup <- userGroups.sortBy(_.name)) {
         @defining(users.filter(_.groupIds.contains(userGroup.id))) { groupUsers =>
             @display(groupUsers, userGroup.id) {
-                @userGroup.name
+                @if(Authorization.canEditGroups(currentUserRights)) {
+                  <a href="@routes.GroupController.editGroup(userGroup.id)">@userGroup.name</a>
+                } else {
+                  @userGroup.name
+                }
                 <span class="text--font-size-medium">@userGroup.description</span>
             } {
                 @helper.form(routes.UserController.addToGroup(userGroup.id), "method" -> "post") {
