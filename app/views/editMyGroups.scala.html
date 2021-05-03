@@ -6,6 +6,7 @@
 @(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[AddUserToGroupFormData])(userGroups: List[UserGroup], users: List[User], applications: List[Application])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @display(users: Seq[User], groupId: UUID)(header: Html)(footer: Html) = {
+
     <div class="group-container mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white" id="group-@groupId">
         <div>
             <div class="header">@header</div>
@@ -14,7 +15,12 @@
         <div class="sub-header">Liste des membres du groupe</div>
         @for(user <- users) {
             <tr class="no-hover td--clear-border">
-                <td class="mdl-data-table__cell--non-numeric @if(user.disabled) { text--strikethrough }"><span class="application__name">@user.name</span>
+                <td class="mdl-data-table__cell--non-numeric @if(user.disabled) { text--strikethrough }">
+                  @if(Authorization.canSeeEditUserPage(currentUserRights)) {
+                    <a href="@routes.UserController.editUser(user.id)">@user.name</a>
+                  } else {
+                    <span class="application__name">@user.name</span>
+                  }
                     <i></i>
                     <br>
                     <span class="application__subject">@user.qualite</span></td>
@@ -48,10 +54,9 @@
                 </td>
                 <td class="remove-link-panel">
                 @if(user.id =!= currentUser.id) {
-                    @helper.form(routes.UserController.removeFromGroup(user.id, groupId), "method" -> "post") {
-                        @helper.CSRF.formField
-                        <button class="remove-link" type="submit">Retirer&nbsp;du groupe</button>
-                    }
+                  <button class="remove-link remove-user-from-group-button"
+                          data-user-id="@user.id"
+                          data-group-id="@groupId">Retirer&nbsp;du groupe</button>
                 }
                 </td>
             </tr>
@@ -69,10 +74,21 @@
 @main(currentUser, currentUserRights)(s"Mes groupes") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 } {
+
+    @for(userGroup <- userGroups.sortBy(_.name)) {
+      @for(user <- users) {
+        @toHtml(views.editMyGroupsPage.removeUserFromGroupDialog(user, userGroup.id))
+      }
+    }
+
     @for(userGroup <- userGroups.sortBy(_.name)) {
         @defining(users.filter(_.groupIds.contains(userGroup.id))) { groupUsers =>
             @display(groupUsers, userGroup.id) {
-                @userGroup.name
+                @if(Authorization.canEditGroups(currentUserRights)) {
+                  <a href="@routes.GroupController.editGroup(userGroup.id)">@userGroup.name</a>
+                } else {
+                  @userGroup.name
+                }
                 <span class="text--font-size-medium">@userGroup.description</span>
             } {
                 @helper.form(routes.UserController.addToGroup(userGroup.id), "method" -> "post") {

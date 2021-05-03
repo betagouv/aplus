@@ -120,8 +120,10 @@ case class SignupController @Inject() (
                     LoginAction.readUserRights(user).map { userRights =>
                       eventService.log(
                         EventType.SignupFormSuccessful,
-                        s"Utilisateur créé via le formulaire d'inscription ${signupRequest.id}. " +
-                          s"Utilisateur : ${user.toLogString}"
+                        s"Utilisateur créé via le formulaire d'inscription ${signupRequest.id} " +
+                          s"(créateur de la préinscription : ${signupRequest.invitingUserId}). " +
+                          s"Utilisateur : ${user.toLogString}",
+                        involvesUser = signupRequest.invitingUserId.some
                       )(new RequestWithUserData(user, userRights, request))
                       Redirect(routes.HomeController.welcome)
                         .withSession(
