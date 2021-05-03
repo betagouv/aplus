@@ -6,6 +6,7 @@
 @(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[AddUserToGroupFormData])(userGroups: List[UserGroup], users: List[User], applications: List[Application])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
 
 @display(users: Seq[User], groupId: UUID)(header: Html)(footer: Html) = {
+
     <div class="group-container mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white" id="group-@groupId">
         <div>
             <div class="header">@header</div>
@@ -53,10 +54,9 @@
                 </td>
                 <td class="remove-link-panel">
                 @if(user.id =!= currentUser.id) {
-                    @helper.form(routes.UserController.removeFromGroup(user.id, groupId), "method" -> "post") {
-                        @helper.CSRF.formField
-                        <button class="remove-link" type="submit">Retirer&nbsp;du groupe</button>
-                    }
+                  <button class="remove-link remove-user-from-group-button"
+                          data-user-id="@user.id"
+                          data-group-id="@groupId">Retirer&nbsp;du groupe</button>
                 }
                 </td>
             </tr>
@@ -74,6 +74,13 @@
 @main(currentUser, currentUserRights)(s"Mes groupes") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 } {
+
+    @for(userGroup <- userGroups.sortBy(_.name)) {
+      @for(user <- users) {
+        @toHtml(views.editMyGroupsPage.removeUserFromGroupDialog(user, userGroup.id))
+      }
+    }
+
     @for(userGroup <- userGroups.sortBy(_.name)) {
         @defining(users.filter(_.groupIds.contains(userGroup.id))) { groupUsers =>
             @display(groupUsers, userGroup.id) {

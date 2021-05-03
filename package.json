@@ -9,8 +9,8 @@
   },
   "dependencies": {
     "anchorme": "2.1.2",
-    "ts-polyfill": "3.8.2",
-    "dialog-polyfill": "0.5.4"
+    "dialog-polyfill": "0.5.4",
+    "ts-polyfill": "3.8.2"
   },
   "devDependencies": {
     "@types/tabulator-tables": "4.8.0",
