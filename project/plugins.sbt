@@ -3,7 +3,7 @@
 //                 of jackson is set in build.sbt (with the patch version that is not vulnerable)
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.8")
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1")
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.6.1")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.7.2")
 addSbtPlugin("com.codacy" % "sbt-codacy-coverage" % "3.0.3")
 addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.4")
 addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.2")
