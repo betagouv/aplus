@@ -190,6 +190,20 @@ object signupAdmin {
           ),
           div(
             cls := "mdl-cell mdl-cell--12-col",
+            label(
+              cls := "mdl-checkbox mdl-js-checkbox",
+              input(
+                id := "dryRun",
+                name := "dryRun",
+                `type` := "checkbox",
+                cls := "mdl-checkbox__input",
+                value := "true"
+              ),
+              span(cls := "mdl-checkbox__label", "Essai (test sans ajout)")
+            )
+          ),
+          div(
+            cls := "mdl-cell mdl-cell--12-col",
             button(
               cls := "mdl-button mdl-js-button mdl-button--raised",
               `type` := "submit",
@@ -210,7 +224,7 @@ object signupAdmin {
         ),
         tbody(
           frag(
-            signups.filter(_._2.isEmpty).map { case (signup, _) =>
+            signups.filter(_._2.isEmpty).sortBy(_._1.requestDate).reverse.map { case (signup, _) =>
               tr(
                 td(cls := "mdl-data-table__cell--non-numeric", signup.email),
                 td(signup.requestDate.toString),

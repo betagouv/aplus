@@ -83,7 +83,7 @@ object formModels {
 
   }
 
-  final case class AddSignupsFormData(emails: String)
+  final case class AddSignupsFormData(emails: String, dryRun: Boolean)
 
   object AddSignupsFormData {
 
@@ -91,6 +91,7 @@ object formModels {
       Form(
         mapping(
           "emails" -> text,
+          "dryRun" -> boolean,
         )(AddSignupsFormData.apply)(AddSignupsFormData.unapply)
       )
 
