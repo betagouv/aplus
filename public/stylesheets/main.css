@@ -125,6 +125,47 @@ html, body {
     padding-bottom: 4px;
 }
 
+.mdl-mega-footer {
+    color: #fff;
+    background-color: #1c1c1c;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.mdl-mega-footer__middle-section {
+    display: flex;
+    justify-content: space-between;
+}
+
+.mdl-mega-footer__aplus {
+    font-size: 20px;
+    margin-left: 16px;
+}
+
+.mdl-mega-footer__beta-link {
+    margin-left: 63px;
+}
+
+.mdl-mega-footer a {
+    color: #fff;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.mdl-mega-footer li {
+    color: #fff;
+    font-size: 16px;
+    font-weight: 400;
+    margin-top: 8px;
+    margin-bottom: 8px !important;
+}
+
+.mdl-mega-footer .mdl-logo {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    margin-right: 32px;
+}
+
 .mdl-card__supporting-text {
     width: 100% !important;
     box-sizing: border-box;
