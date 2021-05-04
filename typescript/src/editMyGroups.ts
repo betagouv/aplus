@@ -1,4 +1,5 @@
 import dialogPolyfill from "dialog-polyfill";
+import "dialog-polyfill/dist/dialog-polyfill.css";
 
 const removeUserFromGroupButtonClass = "remove-user-from-group-button";
 const removeUserFromGroupDialogId = (groupId: string, userId: string) =>

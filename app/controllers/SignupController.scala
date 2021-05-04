@@ -185,11 +185,17 @@ case class SignupController @Inject() (
                       )
                     )
 
+                  val insertRequests: Future[List[(Either[Error, Unit], SignupRequest)]] =
+                    if (form.dryRun)
+                      Future.successful(newSignups.map(signup => (().asRight, signup)))
+                    else
+                      Future
+                        .traverse(newSignups)(signup =>
+                          signupService.addSignupRequest(signup).map(result => (result, signup))
+                        )
+
                   EitherT(
-                    Future
-                      .traverse(newSignups)(signup =>
-                        signupService.addSignupRequest(signup).map(result => (result, signup))
-                      )
+                    insertRequests
                       .map { results =>
                         val errors: List[(SignupRequest, Error)] = results
                           .flatMap { case (result, signup) =>

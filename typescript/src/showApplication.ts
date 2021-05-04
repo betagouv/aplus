@@ -1,3 +1,6 @@
+import dialogPolyfill from "dialog-polyfill";
+import "dialog-polyfill/dist/dialog-polyfill.css";
+
 const reviewValidationButton = <HTMLButtonElement | null>document.getElementById('review-validation');
 const customAnswerInput = <HTMLInputElement | null>document.getElementById('custom-answer');
 const dialog = <HTMLDialogElement | null>document.querySelector('#dialog-terminate');
@@ -13,35 +16,35 @@ const closeDialogTerminateButton = document.getElementById('close-dialog-termina
 const closeDialogQuitButton = document.getElementById('close-dialog-quit');
 
 const enableButtonAndDisableCustomAnswer = () => {
-    reviewValidationButton.disabled = false;
-    customAnswerInput.value = "";
-    customAnswerInput.disabled = true;
-    customAnswerInput.style.background = 'lightgrey';
+  reviewValidationButton.disabled = false;
+  customAnswerInput.value = "";
+  customAnswerInput.disabled = true;
+  customAnswerInput.style.background = 'lightgrey';
 }
 
 const disableButtonAndEnableCustomAnswer = () => {
-    reviewValidationButton.disabled = true;
-    customAnswerInput.disabled = false;
-    customAnswerInput.style.background = 'white';
+  reviewValidationButton.disabled = true;
+  customAnswerInput.disabled = false;
+  customAnswerInput.style.background = 'white';
 }
 
 const enableYes = () => {
-    const button = <HTMLButtonElement | null>document.getElementById("close-dialog-terminate");
-    button.disabled = false;
+  const button = <HTMLButtonElement | null>document.getElementById("close-dialog-terminate");
+  button.disabled = false;
 }
 
 const closeDialog = () => dialog.close();
 
 const showDialog = () => {
-    Array.from(document.querySelectorAll("#dialog-terminate input")).forEach((input: HTMLInputElement) => input.checked = false)
-    dialog.showModal();
+  Array.from(document.querySelectorAll("#dialog-terminate input")).forEach((input: HTMLInputElement) => input.checked = false)
+  dialog.showModal();
 }
 
 const confirmTerminate = () => {
-    const targetUrl = closeDialogTerminateButton?.dataset.targetUrl;
-    const checked = <HTMLInputElement | null>document.querySelector('input[name="usefulness"]:checked');
-    const usefulness = checked.value;
-    document.location.href = targetUrl + '?usefulness=' + usefulness;
+  const targetUrl = closeDialogTerminateButton?.dataset.targetUrl;
+  const checked = <HTMLInputElement | null>document.querySelector('input[name="usefulness"]:checked');
+  const usefulness = checked.value;
+  document.location.href = targetUrl + '?usefulness=' + usefulness;
 }
 
 const reopen = () => document.location.href = reopenButton?.dataset.targetUrl;
@@ -64,5 +67,5 @@ enableFeedbackOnChangeForComponentId('yes');
 enableFeedbackOnChangeForComponentId('neutral');
 
 if (dialog && !dialog.showModal) {
-    dialogPolyfill.registerDialog(dialog);
+  dialogPolyfill.registerDialog(dialog);
 }
