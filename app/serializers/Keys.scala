@@ -35,6 +35,7 @@ object Keys {
     val areaId: String = "areaId"
   }
 
+  // Important note: do not forget to check the `SentryFilter` whitelist
   //.queryString .getQueryString
   object QueryParam {
 
