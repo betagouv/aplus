@@ -8,7 +8,6 @@
 
 @main(currentUser, currentUserRights)(s"Utilisateur ${form("name").value.getOrElse("")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
-    <script src='@routes.Assets.versioned("javascripts/dialog.js")'></script>
 }{
 @defining(form.value.exists(user => Authorization.canEditOtherUser(uneditedUser)(currentUserRights))) { canEditUser =>
     @helper.form(action = routes.UserController.editUserPost(uneditedUser.id), "class" -> "mdl-grid mdl-cell mdl-cell--12-col") {
@@ -200,7 +199,7 @@
           }
 
           @if(unused && canEditUser) {
-            <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="showDialog(document.querySelector('#dialog-delete-user'))">Supprimer cet utilisateur inutilisé</button>
+            <button id="delete-user-button" class="mdl-button mdl-js-button mdl-button--raised" type="button">Supprimer cet utilisateur inutilisé</button>
             <br>
           }
 
@@ -221,17 +220,6 @@
         </p>
     </div>
     }
-    <script type='text/javascript'>
-        function showHide(sender) {
-            var thead = sender.parentNode.parentNode.parentNode.parentNode;
-            var tbody = thead.nextElementSibling;
-            if(sender.checked) {
-                tbody.classList.remove("invisible");
-            } else {
-                tbody.classList.add("invisible");
-            }
-        }
-    </script>
 
     <dialog class="mdl-dialog" id="dialog-delete-user">
         <h4 class="mdl-dialog__title">Suppression d'un utilisateur inutilisé.</h4>
@@ -239,21 +227,11 @@
             <b>Êtes-vous certain de vouloir supprimer le compte de cet utilisateur?</b>
         </div>
         <div class="mdl-dialog__actions">
-            <button type="button" class="mdl-button mdl-button--raised mdl-button--colored" onclick="confirmDeletion()">Confirmer</button>
-            <button type="button" class="mdl-button mdl-button--raised" onclick="closeDialog(document.querySelector('#dialog-delete-user'))">Annuler</button>
+            <button id="delete-user-modal-confirm-button" type="button" class="mdl-button mdl-button--raised mdl-button--colored" data-user-id="@uneditedUser.id">Confirmer</button>
+            <button id="delete-user-modal-quit-button" type="button" class="mdl-button mdl-button--raised">Annuler</button>
         </div>
     </dialog>
 
-    <script type="text/javascript">
-        var dialog = document.querySelector('#dialog-delete-user');
-        if (!dialog.showModal) {
-            dialogPolyfill.registerDialog(dialog);
-        }
-
-        function confirmDeletion() {
-            document.location = '@routes.UserController.deleteUnusedUserById(uneditedUser.id)';
-        }
-    </script>
     }
 }
 }{

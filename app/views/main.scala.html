@@ -24,8 +24,7 @@
         @webJarsUtil.locate("material.min.js").script()
         <script type="application/javascript" src="@routes.Assets.versioned("javascripts/polyfills.js")"></script>
         <script type="application/javascript" src="@routes.Assets.versioned("javascripts/main.js")"></script>
-        @webJarsUtil.locate("dialog-polyfill.css").css()
-        @webJarsUtil.locate("dialog-polyfill.js").script()
+        <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("generated-js/index.css")'>
         <script type="text/javascript" src="@routes.JavascriptController.javascriptRoutes"></script>
     </head>
     <body>

@@ -2,19 +2,6 @@
 // TODO: The idea is to put everything in main.js in this file, then rename this file as main.js
 
 
-// Note: `Array.from` does not work in HTMLUnit on NodeList
-// so we resort to using this function
-function querySelectorAllForEach(selector, exec) {
-  var nodes = document.querySelectorAll(selector);
-  if (nodes) {
-    for (var i = 0; i < nodes.length; i++) {
-      exec(nodes[i]);
-    }
-  }
-}
-
-
-
 //
 // Header ribbon (demo)
 //
@@ -121,56 +108,6 @@ function setupApplicationForm() {
 setupApplicationForm();
 
 
-
-//
-// Dialog
-//
-
-var dialogDeleteGroupId = "dialog-delete-group";
-var dialogDeleteGroupButtonShowId = "dialog-delete-group-show";
-var dialogDeleteGroupButtonCancelId = "dialog-delete-group-cancel";
-var dialogDeleteGroupButtonConfirmId = "dialog-delete-group-confirm";
-function setupDialog() {
-  var dialog = document.getElementById(dialogDeleteGroupId);
-
-  if (dialog) {
-    if (!dialog.showModal) {
-      dialogPolyfill.registerDialog(dialog);
-    }
-
-    querySelectorAllForEach(
-        "#" + dialogDeleteGroupButtonCancelId,
-        function (element) {
-          element.addEventListener('click', function(event) {
-            dialog.close();
-          });
-        }
-    );
-
-    querySelectorAllForEach(
-        "#" + dialogDeleteGroupButtonShowId,
-        function (element) {
-          element.addEventListener('click', function(event) {
-            dialog.showModal();
-          });
-        }
-    );
-
-    querySelectorAllForEach(
-        "#" + dialogDeleteGroupButtonConfirmId,
-        function (element) {
-          element.addEventListener('click', function(event) {
-            var uuid = element.dataset.uuid;
-            var url = jsRoutes.controllers.GroupController.deleteUnusedGroupById(uuid).url;
-            window.location = url;
-          });
-        }
-    );
-  }
-}
-
-
-setupDialog();
 
 //
 // Transform <select> with SlimSelect
