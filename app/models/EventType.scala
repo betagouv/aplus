@@ -74,6 +74,7 @@ object EventType {
   object EditUserError extends Error
   object EditUserGroupError extends Error
   object EditUserShowed extends Info
+  object EditUserUnauthorized extends Warn
   object EventsShowed extends Info
   object EventsUnauthorized extends Warn
   object FileNotFound extends Error
@@ -125,7 +126,7 @@ object EventType {
   object UserGroupEdited extends Info
   object UserGroupNotFound extends Error
   object UserIsUsed extends Error
-  object UserNotFound extends Error
+  object UserNotFound extends Warn
   object UserShowed extends Info
   object UsersCreated extends Info
   object UsersImported extends Info
@@ -151,6 +152,7 @@ object EventType {
   object EditMyGroupUpdated extends Info
   object EditMyGroupBadUserInput extends Warn
   object EditMyGroupUpdatedError extends Error
+  object EditMyGroupUnauthorized extends Error
 
   // Signups
   object SignupFormShowed extends Info

@@ -400,10 +400,12 @@ html, body {
 
 .tag--instructor {
     background-color: #bee1ff;
+    color: black;
 }
 
 .tag--aidant {
     background-color: greenyellow;
+    color: black;
 }
 
 .tag--disabled {

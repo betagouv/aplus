@@ -1,4 +1,4 @@
-import { addDialogButtonsClickListeners } from "./dialog";
+import { addDialogButtonsClickListenersByIds } from "./dialog";
 
 const dialogDeleteGroupId = "dialog-delete-group";
 const dialogDeleteGroupButtonShowId = "dialog-delete-group-show";
@@ -13,7 +13,7 @@ setupDeleteGroupModal();
 
 function setupDeleteGroupModal() {
 
-  addDialogButtonsClickListeners(
+  addDialogButtonsClickListenersByIds(
     dialogDeleteGroupId,
     dialogDeleteGroupButtonShowId,
     dialogDeleteGroupButtonCancelId

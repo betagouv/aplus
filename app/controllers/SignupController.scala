@@ -290,12 +290,9 @@ case class SignupController @Inject() (
               _.fold(
                 e => {
                   eventService.logErrorNoUser(e)
-                  val message = "Une erreur interne est survenue. " +
-                    "Celle-ci étant possiblement temporaire, " +
-                    "nous vous invitons à réessayer plus tard."
                   Future.successful(
                     Redirect(routes.LoginController.login)
-                      .flashing("error" -> message)
+                      .flashing("error" -> Constants.error500FlashMessage)
                       .withSession(request.session - Keys.Session.signupId)
                   )
                 },
