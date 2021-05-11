@@ -171,8 +171,8 @@ case class SignupController @Inject() (
                 .product(EitherT(signupService.byEmails(emails)))
                 .flatMap { case (existingUsers, existingSignups) =>
                   val nonExistingEmails = emails.filterNot(email =>
-                    existingUsers.exists(_.email === email) ||
-                      existingSignups.exists(_.email === email)
+                    existingUsers.exists(_.email.toLowerCase === email.toLowerCase) ||
+                      existingSignups.exists(_.email.toLowerCase === email.toLowerCase)
                   )
                   val now = Instant.now()
                   val newSignups: List[SignupRequest] =
@@ -290,12 +290,9 @@ case class SignupController @Inject() (
               _.fold(
                 e => {
                   eventService.logErrorNoUser(e)
-                  val message = "Une erreur interne est survenue. " +
-                    "Celle-ci étant possiblement temporaire, " +
-                    "nous vous invitons à réessayer plus tard."
                   Future.successful(
                     Redirect(routes.LoginController.login)
-                      .flashing("error" -> message)
+                      .flashing("error" -> Constants.error500FlashMessage)
                       .withSession(request.session - Keys.Session.signupId)
                   )
                 },

@@ -5,6 +5,7 @@ import java.util.UUID
 
 import actions.{LoginAction, RequestWithUserData}
 import cats.syntax.all._
+import constants.Constants
 import controllers.Operators.{GroupOperators, UserOperators}
 import helper.BooleanHelper.not
 import helper.StringHelper.{capitalizeName, commonStringInputNormalization}
@@ -90,21 +91,28 @@ case class UserController @Inject() (
 
   private def getGroupsUsersAndApplicationsBy(user: User) = for {
     groups <- groupService.byIdsFuture(user.groupIds)
-    users <- userService.byGroupIdsFuture(groups.map(_.id))
+    users <- userService.byGroupIdsFuture(groups.map(_.id), includeDisabled = true)
     applications <- applicationService.allForUserIds(users.map(_.id))
   } yield (groups, users, applications)
 
-  private def updateMyGroupsNotAllowed(groupId: UUID)(implicit request: RequestWithUserData[_]) = {
-    eventService.log(
-      EditMyGroupUpdatedError,
-      s"L'utilisateur n'est pas autorisé à éditer le groupe $groupId"
-    )
-    val message = "Vous n’avez pas le droit de modifier ce groupe"
-    Redirect(routes.UserController.showEditMyGroups).flashing("error" -> message)
-  }
+  private def myGroupsAction(
+      groupId: UUID
+  )(inner: RequestWithUserData[_] => Future[Result]): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      asUserWithAuthorization(Authorization.canAddOrRemoveOtherUser(groupId))(
+        () =>
+          (
+            EventType.EditMyGroupUnauthorized,
+            s"L'utilisateur n'est pas autorisé à éditer le groupe $groupId"
+          ), {
+          val message = "Vous n’avez pas le droit de modifier ce groupe"
+          Redirect(routes.UserController.showEditMyGroups).flashing("error" -> message).some
+        }
+      )(() => inner(request))
+    }
 
   def addToGroup(groupId: UUID) =
-    loginAction.async { implicit request =>
+    myGroupsAction(groupId) { implicit request =>
       val user = request.currentUser
       AddUserToGroupFormData.form
         .bindFromRequest()
@@ -117,71 +125,139 @@ case class UserController @Inject() (
             }
           },
           data =>
-            if (user.belongsTo(groupId)) {
-              userService
-                .byEmailFuture(data.email)
-                .zip(userService.byGroupIdsFuture(List(groupId), includeDisabled = true))
-                .flatMap {
-                  case (None, _) =>
-                    eventService.log(
-                      EditMyGroupBadUserInput,
-                      s"Tentative d'ajout de l'utilisateur inexistant ${data.email} au groupe $groupId"
-                    )
-                    successful(
+            userService
+              .byEmailFuture(data.email)
+              .zip(userService.byGroupIdsFuture(List(groupId), includeDisabled = true))
+              .flatMap {
+                case (None, _) =>
+                  eventService.log(
+                    EditMyGroupBadUserInput,
+                    s"Tentative d'ajout de l'utilisateur inexistant ${data.email} au groupe $groupId"
+                  )
+                  successful(
+                    Redirect(routes.UserController.showEditMyGroups)
+                      .flashing("error" -> "L’utilisateur n’existe pas dans Administration+")
+                  )
+                case (Some(userToAdd), usersInGroup)
+                    if usersInGroup.map(_.id).contains[UUID](userToAdd.id) =>
+                  eventService.log(
+                    EditMyGroupBadUserInput,
+                    s"Tentative d'ajout de l'utilisateur ${userToAdd.id} déjà présent au groupe $groupId",
+                    involvesUser = userToAdd.id.some
+                  )
+                  successful(
+                    Redirect(routes.UserController.showEditMyGroups)
+                      .flashing("error" -> "L’utilisateur est déjà présent dans le groupe")
+                  )
+                case (Some(userToAdd), _) =>
+                  userService
+                    .addToGroup(userToAdd.id, groupId)
+                    .map { _ =>
+                      eventService.log(
+                        EditMyGroupUpdated,
+                        s"Utilisateur ${userToAdd.id} ajouté au groupe $groupId",
+                        involvesUser = userToAdd.id.some
+                      )
                       Redirect(routes.UserController.showEditMyGroups)
-                        .flashing("error" -> "L’utilisateur n’existe pas dans Administration+")
-                    )
-                  case (Some(userToAdd), usersInGroup)
-                      if usersInGroup.map(_.id).contains[UUID](userToAdd.id) =>
-                    eventService.log(
-                      EditMyGroupBadUserInput,
-                      s"Tentative d'ajout de l'utilisateur ${userToAdd.id} déjà présent au groupe $groupId",
-                      involvesUser = userToAdd.id.some
-                    )
-                    successful(
-                      Redirect(routes.UserController.showEditMyGroups)
-                        .flashing("error" -> "L’utilisateur est déjà présent dans le groupe")
-                    )
-                  case (Some(userToAdd), _) =>
-                    userService
-                      .addToGroup(userToAdd.id, groupId)
-                      .map { _ =>
-                        eventService.log(
-                          EditMyGroupUpdated,
-                          s"Utilisateur ${userToAdd.id} ajouté au groupe $groupId",
-                          involvesUser = userToAdd.id.some
-                        )
-                        Redirect(routes.UserController.showEditMyGroups)
-                          .flashing("success" -> "L’utilisateur a été ajouté au groupe")
-                      }
-                }
-            } else successful(updateMyGroupsNotAllowed(groupId))
+                        .flashing("success" -> "L’utilisateur a été ajouté au groupe")
+                    }
+              }
         )
     }
 
-  def removeFromGroup(userId: UUID, groupId: UUID) =
+  def enableUser(userId: UUID) =
     loginAction.async { implicit request =>
-      if (request.currentUser.belongsTo(groupId))
-        userService
-          .removeFromGroup(userId, groupId)
-          .map { _ =>
-            eventService.log(
-              EditMyGroupUpdated,
-              s"Utilisateur $userId retiré du groupe $groupId",
-              involvesUser = userId.some
+      withUser(
+        userId,
+        includeDisabled = true,
+        errorMessage = s"L'utilisateur $userId n'existe pas et ne peut pas être réactivé",
+        errorResult = Redirect(routes.UserController.showEditMyGroups)
+          .flashing(
+            "error" -> ("L’utilisateur n’existe pas dans Administration+. " +
+              "S’il s’agit d’une erreur, vous pouvez contacter le support.")
+          )
+          .some
+      ) { otherUser =>
+        asUserWithAuthorization(Authorization.canEnableOtherUser(otherUser))(() =>
+          (
+            EventType.EditUserUnauthorized,
+            s"L'utilisateur n'est pas autorisé à réactiver l'utilisateur $userId"
+          )
+        ) { () =>
+          userService
+            .enable(userId)
+            .map(
+              _.fold(
+                error => {
+                  eventService.logError(error)
+                  Redirect(routes.UserController.showEditMyGroups)
+                    .flashing("error" -> Constants.error500FlashMessage)
+                },
+                _ => {
+                  eventService.log(
+                    EventType.UserEdited,
+                    s"Utilisateur $userId réactivé",
+                    involvesUser = userId.some
+                  )
+                  Redirect(routes.UserController.showEditMyGroups)
+                    .flashing("success" -> "L’utilisateur a bien été réactivé.")
+                }
+              )
             )
-            Redirect(routes.UserController.showEditMyGroups)
-              .flashing("success" -> "L’utilisateur a bien été retiré du groupe.")
+        }
+      }
+    }
+
+  def removeFromGroup(userId: UUID, groupId: UUID) =
+    myGroupsAction(groupId) { implicit request =>
+      withUser(
+        userId,
+        includeDisabled = true,
+        errorMessage = s"L'utilisateur $userId n'existe pas et ne peut pas être désactivé",
+        errorResult = Redirect(routes.UserController.showEditMyGroups)
+          .flashing(
+            "error" -> ("L’utilisateur n’existe pas dans Administration+. " +
+              "S’il s’agit d’une erreur, vous pouvez contacter le support.")
+          )
+          .some
+      ) { otherUser =>
+        val result: Future[Either[Error, Result]] =
+          if (otherUser.groupIds.toSet.size <= 1) {
+            userService
+              .disable(userId)
+              .map(_.map { _ =>
+                eventService.log(
+                  EventType.UserEdited,
+                  s"Utilisateur $userId désactivé",
+                  involvesUser = userId.some
+                )
+                Redirect(routes.UserController.showEditMyGroups)
+                  .flashing("success" -> "L’utilisateur a bien été désactivé.")
+              })
+          } else {
+            userService
+              .removeFromGroup(userId, groupId)
+              .map(_.map { _ =>
+                eventService.log(
+                  EditMyGroupUpdated,
+                  s"Utilisateur $userId retiré du groupe $groupId",
+                  involvesUser = userId.some
+                )
+                Redirect(routes.UserController.showEditMyGroups)
+                  .flashing("success" -> "L’utilisateur a bien été retiré du groupe.")
+              })
           }
-          .recover { e =>
-            eventService.log(
-              EditMyGroupUpdatedError,
-              s"Erreur lors de la tentative d'ajout de l'utilisateur $userId au groupe $groupId : ${e.getMessage}"
-            )
-            Redirect(routes.UserController.showEditMyGroups)
-              .flashing("error" -> "Une erreur technique est survenue")
-          }
-      else successful(updateMyGroupsNotAllowed(groupId))
+        result.map(
+          _.fold(
+            error => {
+              eventService.logError(error)
+              Redirect(routes.UserController.showEditMyGroups)
+                .flashing("error" -> Constants.error500FlashMessage)
+            },
+            identity
+          )
+        )
+      }
     }
 
   def showEditMyGroups =

@@ -12,11 +12,12 @@ object Authorization {
     import UserRight._
     UserRights(
       Set[Option[UserRight]](
-        Some(HasUserId(user.id)),
-        if (user.helper && not(user.disabled)) Some(Helper) else None,
+        HasUserId(user.id).some,
+        IsInGroups(user.groupIds.toSet).some,
+        if (user.helper && not(user.disabled)) Helper.some else none,
         if (user.expert && not(user.disabled))
-          Some(ExpertOfAreas(user.areas.toSet))
-        else None,
+          ExpertOfAreas(user.areas.toSet).some
+        else none,
         if (user.admin && not(user.disabled))
           Some(AdminOfAreas(user.areas.toSet))
         else None,
@@ -37,6 +38,7 @@ object Authorization {
 
   object UserRight {
     case class HasUserId(id: UUID) extends UserRight
+    case class IsInGroups(groups: Set[UUID]) extends UserRight
     case object Helper extends UserRight
     case class ExpertOfAreas(expertOfAreas: Set[UUID]) extends UserRight
     case class InstructorOfGroups(groupsManaged: Set[UUID]) extends UserRight
@@ -64,6 +66,12 @@ object Authorization {
 
   def allMustBeAuthorized(checks: Check*): Check =
     rights => checks.forall(_(rights))
+
+  def isInGroup(groupId: UUID): Check =
+    _.rights.exists {
+      case UserRight.IsInGroups(groups) if groups.contains(groupId) => true
+      case _                                                        => false
+    }
 
   def isAdmin: Check =
     _.rights.exists {
@@ -147,7 +155,13 @@ object Authorization {
     )
 
   def canEditOtherUser(editedUser: User): Check =
-    rights => isAdminOfOneOfAreas(editedUser.areas.toSet)(rights)
+    isAdminOfOneOfAreas(editedUser.areas.toSet)
+
+  def canAddOrRemoveOtherUser(otherUserGroupId: UUID): Check =
+    atLeastOneIsAuthorized(isAdmin, isInGroup(otherUserGroupId))
+
+  def canEnableOtherUser(otherUser: User): Check =
+    atLeastOneIsAuthorized(isAdmin, atLeastOneIsAuthorized(otherUser.groupIds.map(isInGroup): _*))
 
   def canEditGroups: Check =
     atLeastOneIsAuthorized(isAdmin, isManager)
