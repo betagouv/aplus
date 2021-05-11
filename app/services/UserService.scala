@@ -332,7 +332,7 @@ class UserService @Inject() (
 
   def disable(userId: UUID): Future[Either[Error, Unit]] =
     executeUserUpdate(
-      s"Impossible de réactiver l'utilisateur $userId"
+      s"Impossible de désactiver l'utilisateur $userId"
     ) { implicit connection =>
       SQL"""
         UPDATE "user" SET
