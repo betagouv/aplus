@@ -1,4 +1,4 @@
-import { addDialogButtonsClickListeners } from "./dialog";
+import { addDialogButtonsClickListenersByIds } from "./dialog";
 
 const deleteUserButtonId = "delete-user-button";
 const deleteUserModalId = "dialog-delete-user";
@@ -13,7 +13,7 @@ setupDeleteUserModal();
 
 function setupDeleteUserModal() {
 
-  addDialogButtonsClickListeners(
+  addDialogButtonsClickListenersByIds(
     deleteUserModalId,
     deleteUserButtonId,
     deleteUserModalQuitButtonId

@@ -1,17 +1,17 @@
 package services
 
-import java.util.UUID
-
 import anorm._
 import cats.syntax.all._
 import helper.StringHelper.StringOps
 import helper.{Hash, Time, UUIDHelper}
+import java.sql.Connection
+import java.util.UUID
 import javax.inject.Inject
-import models.{Error, User}
+import models.{Error, EventType, User}
 import org.postgresql.util.PSQLException
 import play.api.db.Database
-
 import scala.concurrent.Future
+import scala.util.Try
 
 @javax.inject.Singleton
 class UserService @Inject() (
@@ -308,16 +308,54 @@ class UserService @Inject() (
       }
     }
 
-  def removeFromGroup(userId: UUID, groupId: UUID) =
-    Future {
-      db.withConnection { implicit connection =>
-        SQL"""
-         UPDATE "user" SET
+  def removeFromGroup(userId: UUID, groupId: UUID): Future[Either[Error, Unit]] =
+    executeUserUpdate(
+      s"Impossible d'ajouter l'utilisateur $userId au groupe $groupId"
+    ) { implicit connection =>
+      SQL"""
+        UPDATE "user" SET
           group_ids = array_remove(group_ids, $groupId::uuid)
-         WHERE id = $userId::uuid
-       """.executeUpdate()
-      }
+        WHERE id = $userId::uuid
+      """.executeUpdate()
     }
+
+  def enable(userId: UUID): Future[Either[Error, Unit]] =
+    executeUserUpdate(
+      s"Impossible de réactiver l'utilisateur $userId"
+    ) { implicit connection =>
+      SQL"""
+        UPDATE "user" SET
+          disabled = false
+        WHERE id = $userId::uuid
+      """.executeUpdate()
+    }
+
+  def disable(userId: UUID): Future[Either[Error, Unit]] =
+    executeUserUpdate(
+      s"Impossible de désactiver l'utilisateur $userId"
+    ) { implicit connection =>
+      SQL"""
+        UPDATE "user" SET
+          disabled = true
+        WHERE id = $userId::uuid
+      """.executeUpdate()
+    }
+
+  private def executeUserUpdate(
+      errorMessage: String
+  )(inner: Connection => _): Future[Either[Error, Unit]] =
+    Future(
+      Try(db.withConnection(inner)).toEither
+        .map(_ => ())
+        .left
+        .map(error =>
+          Error.SqlException(
+            EventType.EditUserError,
+            errorMessage,
+            error
+          )
+        )
+    )
 
   private def instructorFlag(user: User): Boolean =
     user.instructor &&
