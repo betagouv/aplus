@@ -239,11 +239,26 @@ object Authorization {
       application: Application,
       answerId: UUID
   )(userId: UUID, rights: UserRights): Boolean =
-    application.answers
-      .find(_.id === answerId)
-      .flatMap(Answer.filesAvailabilityLeftInDays(filesExpirationInDays)) match {
-      case Some(_) => applicationFileCanBeShowed(filesExpirationInDays)(application)(userId, rights)
-      case _       => false
+    application.answers.find(_.id === answerId) match {
+      case None => false
+      case Some(answer) =>
+        val hasNotExpired =
+          Answer.filesAvailabilityLeftInDays(filesExpirationInDays)(answer).nonEmpty
+        val validCase1 =
+          hasNotExpired &&
+            isHelper(rights) &&
+            answer.visibleByHelpers &&
+            userId === application.creatorUserId
+        val invitedUsersInAnswers: Set[UUID] =
+          (application.answers.takeWhile(_.id =!= answerId) :+ answer)
+            .flatMap(_.invitedUsers.keys)
+            .toSet
+        val validCase2 =
+          hasNotExpired &&
+            isInstructor(rights) &&
+            (application.invitedUsers.keys.toSet ++ invitedUsersInAnswers).contains(userId)
+
+        validCase1 || validCase2
     }
 
   def applicationFileCanBeShowed(filesExpirationInDays: Int)(
