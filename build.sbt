@@ -86,7 +86,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-mailer-guice" % "8.0.1",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   "com.google.guava" % "guava" % "28.1-jre",
-  "com.github.tototoshi" %% "scala-csv" % "1.3.7",
+  "com.github.tototoshi" %% "scala-csv" % "1.3.8",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.9.4",
   "org.typelevel" %% "cats-core" % "2.6.0",
