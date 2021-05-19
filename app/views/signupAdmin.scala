@@ -1,5 +1,6 @@
 package views
 
+import cats.syntax.all._
 import helper.TwirlImports.toHtml
 import java.util.UUID
 import models.{Authorization, Error, SignupRequest, User}
@@ -16,13 +17,43 @@ object signupAdmin {
       currentUser: User,
       currentUserRights: Authorization.UserRights,
       signups: List[(SignupRequest, Option[UUID])],
-      signupForm: Form[AddSignupsFormData]
+      signupForm: Form[AddSignupsFormData],
+      successSignups: List[SignupRequest] = Nil,
+      existingSignups: List[SignupRequest] = Nil,
+      existingUsers: List[User] = Nil,
+      miscErrors: List[(SignupRequest, Error)] = Nil
   )(implicit webJarsUtil: WebJarsUtil, flash: Flash, request: RequestHeader): Html =
     views.html.main(currentUser, currentUserRights, maxWidth = false)("Préinscription d’aidants")(
       views.helpers.head.publicCss("stylesheets/newForm.css")
-    )(inner(signups))(Nil)
+    )(
+      frag(
+        notificationMessages(successSignups, existingSignups, existingUsers, miscErrors),
+        inner(signups)
+      )
+    )(Nil)
 
-  def errorMessage(
+  private def notificationMessages(
+      successSignups: List[SignupRequest],
+      existingSignups: List[SignupRequest],
+      existingUsers: List[User],
+      miscErrors: List[(SignupRequest, Error)]
+  ): Frag = {
+    val errors = (existingSignups, existingUsers, miscErrors) match {
+      case (Nil, Nil, Nil) => none
+      case _ =>
+        helpers.forms.flashErrorOuter(errorMessage(existingSignups, existingUsers, miscErrors)).some
+    }
+    val successes =
+      if (successSignups.isEmpty) none
+      else
+        helpers.forms.flashSuccessOuter(successMessage(successSignups)).some
+    frag(
+      errors,
+      successes
+    )
+  }
+
+  private def errorMessage(
       existingSignups: List[SignupRequest],
       existingUsers: List[User],
       miscErrors: List[(SignupRequest, Error)]
@@ -111,7 +142,7 @@ object signupAdmin {
       },
     )
 
-  def successMessage(signups: List[SignupRequest]): Tag =
+  private def successMessage(signups: List[SignupRequest]): Tag =
     div(
       cls := "single--display-flex single--width-100pc single--flex-wrap-wrap",
       div(
