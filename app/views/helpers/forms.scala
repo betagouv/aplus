@@ -32,11 +32,8 @@ object forms {
     flash.get(flashErrorKey) match {
       case None => ()
       case Some(error) =>
-        div(
-          cls := "mdl-cell mdl-cell--12-col",
-          id := "answer-error",
-          div(
-            cls := "notification notification--error",
+        flashErrorOuter(
+          frag(
             div(b(error)),
             div(
               "Si l’erreur persiste vous pouvez contacter l’équipe A+ : ",
@@ -50,17 +47,19 @@ object forms {
 
   def flashErrorRawHtml(implicit flash: Flash): Frag =
     flash.get(flashErrorRawHtmlKey) match {
-      case None => ()
-      case Some(error) =>
-        div(
-          cls := "mdl-cell mdl-cell--12-col",
-          id := "answer-error",
-          div(
-            cls := "notification notification--error",
-            raw(error)
-          )
-        )
+      case None        => ()
+      case Some(error) => flashErrorOuter(raw(error))
     }
+
+  def flashErrorOuter(inner: Frag): Tag =
+    div(
+      cls := "mdl-cell mdl-cell--12-col",
+      id := "answer-error",
+      div(
+        cls := "notification notification--error",
+        inner
+      )
+    )
 
   val flashSuccessKey = "success"
 
@@ -68,10 +67,8 @@ object forms {
     flash.get(flashSuccessKey) match {
       case None => ()
       case Some(message) =>
-        div(
-          cls := "mdl-cell mdl-cell--12-col",
-          div(
-            cls := "notification notification--success",
+        flashSuccessOuter(
+          frag(
             div(
               cls := "notification__message",
               message
@@ -88,16 +85,18 @@ object forms {
 
   def flashSuccessRawHtml(implicit flash: Flash): Frag =
     flash.get(flashSuccessRawHtmlKey) match {
-      case None => ()
-      case Some(message) =>
-        div(
-          cls := "mdl-cell mdl-cell--12-col",
-          div(
-            cls := "notification notification--success",
-            raw(message)
-          )
-        )
+      case None          => ()
+      case Some(message) => flashSuccessOuter(raw(message))
     }
+
+  def flashSuccessOuter(inner: Frag): Tag =
+    div(
+      cls := "mdl-cell mdl-cell--12-col",
+      div(
+        cls := "notification notification--success",
+        inner
+      )
+    )
 
   def displayFormGlobalErrors(form: Form[_])(implicit messages: MessagesProvider): Frag =
     form.hasErrors.some

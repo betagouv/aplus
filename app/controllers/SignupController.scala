@@ -196,19 +196,12 @@ case class SignupController @Inject() (
 
                   EitherT(
                     insertRequests
-                      .map { results =>
+                      .flatMap { results =>
                         val errors: List[(SignupRequest, Error)] = results
                           .flatMap { case (result, signup) =>
                             result.left.toOption.map(error => (signup, error))
                           }
                         errors.foreach { case (_, error) => eventService.logError(error) }
-                        val errorsFlash = (existingSignups, existingUsers, errors) match {
-                          case (Nil, Nil, Nil) => none
-                          case _ =>
-                            (views.helpers.forms.flashErrorRawHtmlKey -> views.signupAdmin
-                              .errorMessage(existingSignups, existingUsers, errors)
-                              .toString).some
-                        }
                         val successes: List[SignupRequest] = results
                           .flatMap { case (result, signup) =>
                             result.toOption.map(_ => signup)
@@ -220,22 +213,19 @@ case class SignupController @Inject() (
                             s"Préinscription créée ${signup.toLogString}"
                           )
                         }
-                        val successesFlash =
-                          if (successes.isEmpty) none
-                          else
-                            (views.helpers.forms.flashSuccessRawHtmlKey -> views.signupAdmin
-                              .successMessage(successes)
-                              .toString).some
-                        val flashes = List(errorsFlash, successesFlash).flatten
 
                         // Important note: we deliberately
                         // **do not show errors as validation errors**
                         // this is intended to be quicker to use as the batch of working emails
                         // is added directly and non working ones
                         // can be copy/pasted somewhere to be processed later
-                        Redirect(routes.SignupController.signupRequests)
-                          .flashing(flashes: _*)
-                          .asRight[Error]
+                        showAllSignupsPage(
+                          AddSignupsFormData.form,
+                          successSignups = successes,
+                          existingSignups = existingSignups,
+                          existingUsers = existingUsers,
+                          miscErrors = errors
+                        ).map(_.asRight[Error])
                       }
                   )
                 }
@@ -249,7 +239,11 @@ case class SignupController @Inject() (
     }
 
   private def showAllSignupsPage(
-      form: Form[AddSignupsFormData]
+      form: Form[AddSignupsFormData],
+      successSignups: List[SignupRequest] = Nil,
+      existingSignups: List[SignupRequest] = Nil,
+      existingUsers: List[User] = Nil,
+      miscErrors: List[(SignupRequest, Error)] = Nil
   )(implicit request: RequestWithUserData[AnyContent]): Future[Result] =
     signupService
       .allAfter(ZonedDateTime.now().minusYears(1).toInstant)
@@ -265,7 +259,19 @@ case class SignupController @Inject() (
                   "Nous ne pouvons pas afficher les préinscriptions.")
               )
           },
-          signups => Ok(views.signupAdmin.page(request.currentUser, request.rights, signups, form))
+          signups =>
+            Ok(
+              views.signupAdmin.page(
+                request.currentUser,
+                request.rights,
+                signups,
+                form,
+                successSignups = successSignups,
+                existingSignups = existingSignups,
+                existingUsers = existingUsers,
+                miscErrors = miscErrors
+              )
+            )
         )
       )
 
