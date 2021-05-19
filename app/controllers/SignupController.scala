@@ -201,17 +201,21 @@ case class SignupController @Inject() (
                           .flatMap { case (result, signup) =>
                             result.left.toOption.map(error => (signup, error))
                           }
-                        errors.foreach { case (_, error) => eventService.logError(error) }
+                        if (!form.dryRun) {
+                          errors.foreach { case (_, error) => eventService.logError(error) }
+                        }
                         val successes: List[SignupRequest] = results
                           .flatMap { case (result, signup) =>
                             result.toOption.map(_ => signup)
                           }
-                        successes.foreach { signup =>
-                          notificationsService.newSignup(signup)
-                          eventService.log(
-                            EventType.SignupCreated,
-                            s"Préinscription créée ${signup.toLogString}"
-                          )
+                        if (!form.dryRun) {
+                          successes.foreach { signup =>
+                            notificationsService.newSignup(signup)
+                            eventService.log(
+                              EventType.SignupCreated,
+                              s"Préinscription créée ${signup.toLogString}"
+                            )
+                          }
                         }
 
                         // Important note: we deliberately
