@@ -1,3 +1,5 @@
+@import models.Authorization
+
 @(currentUser: User, currentUserRights: Authorization.UserRights)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
 
 
@@ -5,6 +7,10 @@
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/auto-complete.css")'>
 }{
+
+@defining(Authorization.canEditGroup(userGroup)(currentUserRights)) { canEdit =>
+@defining(Authorization.canEditGroupAnyField(userGroup)(currentUserRights)) { canEditAny =>
+
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         <span class="mdl-cell mdl-cell--12-col ariane">Territoires : @for(areaId <- userGroup.areaIds) {
             <a href="@routes.UserController.all(areaId)#group-@userGroup.id">@{Area.fromId(areaId).get.name}</a>
@@ -12,16 +18,16 @@
         @helper.form(routes.GroupController.editGroupPost(userGroup.id), "method" -> "post") {
             @helper.CSRF.formField
             <div class="mdl-cell mdl-cell--12-col  mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" id="name" name="name" value="@userGroup.name" @if(!currentUser.admin) { disabled } maxlength="@models.UserGroup.nameMaxLength">
+                <input class="mdl-textfield__input" type="text" id="name" name="name" value="@userGroup.name" @if(!canEdit) { disabled } maxlength="@models.UserGroup.nameMaxLength">
                 <label class="mdl-textfield__label" for="name">Nom du groupe</label>
             </div>
             <div class="mdl-cell mdl-cell--12-col  mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" id="description" name="description" value="@userGroup.description" @if(!currentUser.admin) { disabled }>
+                <input class="mdl-textfield__input" type="text" id="description" name="description" value="@userGroup.description" @if(!canEdit) { disabled }>
                 <label class="mdl-textfield__label" for="description">Description succincte</label>
             </div>
 
             <div class="mdl-cell mdl-cell--12-col  mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-              <textarea class="mdl-textfield__input single--height-auto" type="text" rows="3" id="publicNote" name="publicNote">@userGroup.publicNote</textarea>
+              <textarea class="mdl-textfield__input single--height-auto" type="text" rows="3" id="publicNote" name="publicNote" @if(!canEdit) { disabled }>@userGroup.publicNote</textarea>
                 <label class="mdl-textfield__label" for="publicNote">Description détaillée</label>
             </div>
 
@@ -33,27 +39,42 @@
                 </div>
             }
             <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" id="email" name="email" value="@userGroup.email.getOrElse("")" @if(!currentUser.admin) { disabled } maxlength="200">
+                <input class="mdl-textfield__input" type="text" id="email" name="email" value="@userGroup.email.getOrElse("")" @if(!canEdit) { disabled } maxlength="200">
                 <label class="mdl-textfield__label" for="email">Email du groupe (BAL générique pour inscription et notifications)</label>
             </div>
             <div class="mdl-cell mdl-cell--12-col">
-                <select id="organisation" name="organisation">
+                <select id="organisation" name="organisation" @if(!canEditAny) {disabled}>
                     <option @if(userGroup.organisationSetOrDeducted.isEmpty){selected} style="font-weight: bold" value="">Organisme non-référencé</option>
                     @for(organisation <- Organisation.all) {
                         <option value="@organisation.id.id" @if(userGroup.organisationSetOrDeducted.map(_.id).contains[Organisation.Id](organisation.id)){selected}>@organisation.shortName : @organisation.name</option>
                     }
                 </select>
+                @if(!canEditAny) {
+                  <select id="organisation-hidden" name="organisation" class="hidden">
+                    <option value="">Organisme non-référencé</option>
+                    @for(organisation <- Organisation.all) {
+                        <option value="@organisation.id.id" @if(userGroup.organisationSetOrDeducted.map(_.id).contains[Organisation.Id](organisation.id)){selected}>@organisation.shortName : @organisation.name</option>
+                    }
+                  </select>
+                }
             </div>
             <div class="mdl-cell mdl-cell--12-col">
-                <select id="area-ids" name="area-ids[]" multiple size="5" class="use-slimselect">
+                <select id="area-ids" name="area-ids[]" multiple size="5" class="use-slimselect" @if(!canEditAny) {disabled}>
                     @for(area <- currentUser.areas.flatMap(Area.fromId)) {
                         <option value="@area.id" @if(userGroup.areaIds.contains(area.id)) { selected }>@area.name</option>
                     }
                 </select>
+                @if(!canEditAny) {
+                  <select id="area-ids" name="area-ids[]" multiple size="5" class="hidden">
+                    @for(area <- Area.all) {
+                        <option value="@area.id" @if(userGroup.areaIds.contains(area.id)) { selected }>@area.name</option>
+                    }
+                  </select>
+                }
             </div>
 
 
-            @if(currentUser.admin) {
+            @if(Authorization.canEditSupportMessages(currentUserRights)) {
 
               <div class="mdl-cell mdl-cell--12-col  mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                 <textarea class="mdl-textfield__input single--height-auto" type="text" rows="3" id="internalSupportComment" name="internalSupportComment">@userGroup.internalSupportComment</textarea>
@@ -67,7 +88,7 @@
                      value="@userGroup.internalSupportComment">
             }
 
-            @if(currentUser.admin) {
+            @if(canEdit) {
                 <div class="mdl-cell mdl-cell--12-col">
                     <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
                         Editer le groupe
@@ -104,6 +125,11 @@
             <button type="button" class="mdl-button mdl-button" id="dialog-delete-group-confirm" data-uuid="@userGroup.id">Confirmer</button>
         </div>
     </dialog>
+
+
+
+}
+}
 }{
     <script src='@routes.Assets.versioned("javascripts/auto-complete.min.js")'></script>
 }

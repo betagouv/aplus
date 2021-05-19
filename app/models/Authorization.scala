@@ -61,11 +61,14 @@ object Authorization {
 
   type Check = UserRights => Boolean
 
+  def forall[A](list: List[A], fn: A => Check): Check =
+    rights => list.forall(fn(_)(rights))
+
   def atLeastOneIsAuthorized(checks: Check*): Check =
     rights => checks.exists(_(rights))
 
   def allMustBeAuthorized(checks: Check*): Check =
-    rights => checks.forall(_(rights))
+    forall[Check](checks.toList, identity)
 
   def isInGroup(groupId: UUID): Check =
     _.rights.exists {
@@ -113,6 +116,12 @@ object Authorization {
     _.rights.exists {
       case UserRight.ManagerOfGroups(_) => true
       case _                            => false
+    }
+
+  def isManagerOfGroup(groupId: UUID): Check =
+    _.rights.exists {
+      case UserRight.ManagerOfGroups(managedGroups) if managedGroups.contains(groupId) => true
+      case _                                                                           => false
     }
 
   def isObserver: Check =
@@ -163,8 +172,15 @@ object Authorization {
   def canEnableOtherUser(otherUser: User): Check =
     atLeastOneIsAuthorized(isAdmin, atLeastOneIsAuthorized(otherUser.groupIds.map(isInGroup): _*))
 
-  def canEditGroups: Check =
-    atLeastOneIsAuthorized(isAdmin, isManager)
+  def canEditGroup(group: UserGroup): Check =
+    atLeastOneIsAuthorized(
+      forall(group.areaIds, isAdminOfArea),
+      isManagerOfGroup(group.id)
+    )
+
+  /** For organisation & areas. */
+  def canEditGroupAnyField(group: UserGroup): Check =
+    forall(group.areaIds, isAdminOfArea)
 
   def canSeeUsers: Check =
     atLeastOneIsAuthorized(isAdmin, isManager, isObserver)
@@ -174,6 +190,8 @@ object Authorization {
   def canSeeSignupsPage: Check = isAdmin
 
   def canCreateSignups: Check = isAdmin
+
+  def canEditSupportMessages: Check = isAdmin
 
   //
   // Authorizations concerning Applications

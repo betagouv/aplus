@@ -125,7 +125,7 @@
                 <a href="@routes.UserController.editUser(user.id)" target="_blank" >@user.name (@user.qualite)</a> /
               } <hr>
             }
-            @if(Authorization.canEditGroups(currentUserRights)) {
+            @if(Authorization.canEditGroup(userGroup)(currentUserRights)) {
               @helper.form(routes.UserController.add(userGroup.id), "method" -> "get") {
                 @helper.CSRF.formField
                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width: unset; margin-right: 24px;">
