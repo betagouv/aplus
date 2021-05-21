@@ -12,7 +12,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.2")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.2")
 
 // Git to get the current git commit
-addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0")
+addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.1")
 
 // Makes available sbt commands results to project scala code
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.10.0")
