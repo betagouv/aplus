@@ -702,10 +702,14 @@ case class UserController @Inject() (
   def addPost(groupId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withGroup(groupId) { group: UserGroup =>
-        if (!group.canHaveUsersAddedBy(request.currentUser)) {
-          eventService.log(PostAddUserUnauthorized, "Accès non autorisé à l'admin des utilisateurs")
-          Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
-        } else {
+        asUserWithAuthorization(Authorization.canEditGroup(group))(
+          () =>
+            (
+              PostAddUserUnauthorized,
+              s"Tentative non autorisée d'ajout d'utilisateurs au groupe ${group.id}"
+            ),
+          Unauthorized("Vous ne pouvez pas ajouter des utilisateurs à ce groupe.").some
+        ) { () =>
           addUsersForm
             .bindFromRequest()
             .fold(
@@ -942,13 +946,14 @@ case class UserController @Inject() (
   def add(groupId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withGroup(groupId) { group: UserGroup =>
-        if (!group.canHaveUsersAddedBy(request.currentUser)) {
-          eventService.log(
-            ShowAddUserUnauthorized,
-            s"Accès non autorisé à l'admin des utilisateurs du groupe $groupId"
-          )
-          Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
-        } else {
+        asUserWithAuthorization(Authorization.canEditGroup(group))(
+          () =>
+            (
+              ShowAddUserUnauthorized,
+              s"Tentative non autorisée d'accès à l'ajout d'utilisateurs dans le groupe ${group.id}"
+            ),
+          Unauthorized("Vous ne pouvez pas ajouter des utilisateurs à ce groupe.").some
+        ) { () =>
           val rows =
             request
               .getQueryString(Keys.QueryParam.rows)

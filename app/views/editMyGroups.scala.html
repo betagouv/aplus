@@ -39,7 +39,7 @@
     @for(userGroup <- userGroups.sortBy(_.name)) {
         @defining(users.filter(_.groupIds.contains(userGroup.id))) { groupUsers =>
             @display(groupUsers, userGroup.id) {
-                @if(Authorization.canEditGroups(currentUserRights)) {
+                @if(Authorization.canEditGroup(userGroup)(currentUserRights)) {
                   <a href="@routes.GroupController.editGroup(userGroup.id)">@userGroup.name</a>
                 } else {
                   @userGroup.name
