@@ -111,7 +111,7 @@ libraryDependencies ++= Seq(
   "org.webjars.npm" % "xlsx" % "0.16.9"
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "4.3.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "5.0.0"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
