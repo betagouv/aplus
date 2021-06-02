@@ -26,11 +26,6 @@ case class UserGroup(
     internalSupportComment: Option[String]
 ) {
 
-  def canHaveUsersAddedBy(user: User): Boolean =
-    (user.groupAdmin && user.groupIds.contains(id)) || (user.admin && areaIds.forall(
-      user.areas.contains
-    ))
-
   lazy val organisationSetOrDeducted: Option[Organisation] =
     organisation
       .flatMap(Organisation.byId)
