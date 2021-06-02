@@ -67,7 +67,7 @@
                     <div class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Vous appartenez aux groupes suivants :</div>
                     @for(group <- groups) {
                       <div>
-                        @if(Authorization.canEditGroups(currentUserRights)) {
+                        @if(Authorization.canEditGroup(group)(currentUserRights)) {
                           <a href="@routes.GroupController.editGroup(group.id)">@group.name</a>
                         } else {
                           @group.name
