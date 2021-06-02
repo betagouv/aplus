@@ -4,9 +4,10 @@ import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 
 import actions.{LoginAction, RequestWithUserData}
+import cats.syntax.all._
 import Operators._
 import javax.inject.{Inject, Singleton}
-import models.{Area, Organisation, UserGroup}
+import models.{Area, Authorization, Organisation, UserGroup}
 import models.formModels.{normalizedOptionalText, normalizedText}
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
@@ -78,12 +79,14 @@ case class GroupController @Inject() (
   def editGroup(id: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withGroup(id) { group: UserGroup =>
-        if (!group.canHaveUsersAddedBy(request.currentUser)) {
-          eventService.log(EditGroupUnauthorized, s"Accès non autorisé à l'edition de ce groupe")
-          Future(
-            Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?")
-          )
-        } else {
+        asUserWithAuthorization(Authorization.canEditGroup(group))(
+          () =>
+            (
+              EditGroupUnauthorized,
+              s"Tentative d'accès non autorisé à l'edition du groupe ${group.id}"
+            ),
+          Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?").some
+        ) { () =>
           val groupUsers = userService.byGroupIds(List(id), includeDisabled = true)
           eventService.log(EditGroupShowed, s"Visualise la vue de modification du groupe")
           val isEmpty = groupService.isGroupEmpty(group.id)
@@ -151,58 +154,55 @@ case class GroupController @Inject() (
 
   def editGroupPost(groupId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      asAdmin(() => EditGroupUnauthorized -> s"Accès non autorisé à l'edition de ce groupe") { () =>
-        withGroup(groupId) { currentGroup: UserGroup =>
-          if (not(currentGroup.canHaveUsersAddedBy(request.currentUser))) {
-            eventService.log(
-              AddUserToGroupUnauthorized,
-              s"L'utilisateur ${request.currentUser.id} n'est pas authorisé à ajouter des utilisateurs au groupe ${currentGroup.id}."
-            )
-            Future(
-              Unauthorized("Vous n'êtes pas authorisé à ajouter des utilisateurs à ce groupe.")
-            )
-          } else {
-            addGroupForm(Time.timeZoneParis)
-              .bindFromRequest()
-              .fold(
-                formWithError => {
+      withGroup(groupId) { currentGroup: UserGroup =>
+        asUserWithAuthorization(Authorization.canEditGroup(currentGroup))(
+          () =>
+            (
+              EditGroupUnauthorized,
+              s"Tentative d'édition non autorisée du groupe ${currentGroup.id}"
+            ),
+          Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?").some
+        ) { () =>
+          addGroupForm(Time.timeZoneParis)
+            .bindFromRequest()
+            .fold(
+              formWithError => {
+                eventService.log(
+                  EditUserGroupError,
+                  s"Tentative d'edition du groupe ${currentGroup.id} avec des erreurs de validation"
+                )
+                Future(
+                  Redirect(routes.GroupController.editGroup(groupId)).flashing(
+                    "error" -> s"Impossible de modifier le groupe (erreur de formulaire) : ${formWithError.errors.mkString}"
+                  )
+                )
+              },
+              group => {
+                val newGroup = group.copy(id = groupId)
+                if (groupService.edit(newGroup)) {
                   eventService.log(
-                    EditUserGroupError,
-                    s"Tentative d'edition du groupe ${currentGroup.id} avec des erreurs de validation"
+                    UserGroupEdited,
+                    s"Groupe édité ${currentGroup.toDiffLogString(newGroup)}"
                   )
                   Future(
-                    Redirect(routes.GroupController.editGroup(groupId)).flashing(
-                      "error" -> s"Impossible de modifier le groupe (erreur de formulaire) : ${formWithError.errors.mkString}"
-                    )
+                    Redirect(routes.GroupController.editGroup(groupId))
+                      .flashing("success" -> "Groupe modifié")
                   )
-                },
-                group => {
-                  val newGroup = group.copy(id = groupId)
-                  if (groupService.edit(newGroup)) {
-                    eventService.log(
-                      UserGroupEdited,
-                      s"Groupe édité ${currentGroup.toDiffLogString(newGroup)}"
+                } else {
+                  eventService
+                    .log(
+                      EditUserGroupError,
+                      s"Impossible de modifier le groupe dans la BDD ${currentGroup.toDiffLogString(newGroup)}"
                     )
-                    Future(
-                      Redirect(routes.GroupController.editGroup(groupId))
-                        .flashing("success" -> "Groupe modifié")
-                    )
-                  } else {
-                    eventService
-                      .log(
-                        EditUserGroupError,
-                        s"Impossible de modifier le groupe dans la BDD ${currentGroup.toDiffLogString(newGroup)}"
+                  Future(
+                    Redirect(routes.GroupController.editGroup(groupId))
+                      .flashing(
+                        "error" -> "Impossible de modifier le groupe: erreur en base de donnée"
                       )
-                    Future(
-                      Redirect(routes.GroupController.editGroup(groupId))
-                        .flashing(
-                          "error" -> "Impossible de modifier le groupe: erreur en base de donnée"
-                        )
-                    )
-                  }
+                  )
                 }
-              )
-          }
+              }
+            )
         }
       }
     }

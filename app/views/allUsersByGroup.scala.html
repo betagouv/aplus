@@ -76,7 +76,8 @@
 }{
 
   @if(currentUser.admin) {
-    <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-offset mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.UserController.all(selectedArea.id)?vue=nouvelle">Nouvelle vue utilisateurs</a>
+    <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.UserController.all(selectedArea.id)?vue=nouvelle">Nouvelle vue utilisateurs</a>
+    <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.SignupController.signupRequests">Préinscription Aidants</a>
     <a class="mdl-button mdl-js-button mdl-button--raised mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" href="@routes.CSVImportController.importUsersFromCSV">Importer utilisateurs</a>
   }
   @if(currentUser.areas.length > 1) {
@@ -125,7 +126,7 @@
                 <a href="@routes.UserController.editUser(user.id)" target="_blank" >@user.name (@user.qualite)</a> /
               } <hr>
             }
-            @if(Authorization.canEditGroups(currentUserRights)) {
+            @if(Authorization.canEditGroup(userGroup)(currentUserRights)) {
               @helper.form(routes.UserController.add(userGroup.id), "method" -> "get") {
                 @helper.CSRF.formField
                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width: unset; margin-right: 24px;">
