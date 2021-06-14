@@ -79,7 +79,7 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.2.20",
+  "org.postgresql" % "postgresql" % "42.2.21",
   "org.playframework.anorm" %% "anorm" % "2.6.10",
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
@@ -111,7 +111,7 @@ libraryDependencies ++= Seq(
   "org.webjars.npm" % "xlsx" % "0.16.9"
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "4.3.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "5.0.1"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
