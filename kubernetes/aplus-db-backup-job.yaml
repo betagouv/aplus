@@ -36,6 +36,7 @@ data:
       fi
     done < <(swift --os-auth-token $AUTH_TOKEN --os-storage-url $STORAGE_URL list --json $STORAGE_CONTAINER | jq -c '.[]')
 ---
+# TODO: change for `batch/v1` when upgrading to kubernetes v1.21
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
