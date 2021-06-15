@@ -7,6 +7,7 @@ data:
     set -e
     apt-get update
     apt-get install -y jq postgresql-client-11
+    pip install python-openstackclient==5.5.0
     pip install python-swiftclient==3.12.0
     pip install python-keystoneclient==4.2.0
 
@@ -16,6 +17,9 @@ data:
       exit 0
     fi
     gpg --no-tty --import /key/key.pub
+
+    # Create token here because they are valid only for a short period of time
+    AUTH_TOKEN=$(openstack token issue -c id -f value)
 
     # Create new backup
     NOW="$(date +"%Y-%m-%d-%s")"
@@ -36,6 +40,10 @@ data:
       fi
     done < <(swift --os-auth-token $AUTH_TOKEN --os-storage-url $STORAGE_URL list --json $STORAGE_CONTAINER | jq -c '.[]')
 ---
+# Note: The CronJob default history is 3 completed and 1 failed
+#       this means having in general 4 jobs (kubectl get jobs) together with
+#       the corresponding pods (many for the failed job, and mostly one by completed job)
+#
 # TODO: change for `batch/v1` when upgrading to kubernetes v1.21
 apiVersion: batch/v1beta1
 kind: CronJob
@@ -51,11 +59,41 @@ spec:
           - name: aplus-db-backup
             image: python:3
             env:
-            - name: AUTH_TOKEN
+            - name: OS_AUTH_URL
               valueFrom:
                 secretKeyRef:
                   name: ovh-storage-creds
-                  key: AUTH_TOKEN
+                  key: OS_AUTH_URL
+            - name: OS_IDENTITY_API_VERSION
+              valueFrom:
+                secretKeyRef:
+                  name: ovh-storage-creds
+                  key: OS_IDENTITY_API_VERSION
+            - name: OS_TENANT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: ovh-storage-creds
+                  key: OS_TENANT_ID
+            - name: OS_TENANT_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: ovh-storage-creds
+                  key: OS_TENANT_NAME
+            - name: OS_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: ovh-storage-creds
+                  key: OS_USERNAME
+            - name: OS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ovh-storage-creds
+                  key: OS_PASSWORD
+            - name: OS_REGION_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: ovh-storage-creds
+                  key: OS_REGION_NAME
             - name: DATABASE_BACKUP_PREFIX
               value: "aplus-db"
             - name: DATABASE_NAME
