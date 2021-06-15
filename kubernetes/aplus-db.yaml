@@ -56,7 +56,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: aplus-db-postgres-secret
-                  key: DATABASE_URL
+                  key: POSTGRES_PASSWORD
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
       volumes:
