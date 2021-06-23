@@ -1,4 +1,4 @@
-@(currentUser: User, currentUserRights: Authorization.UserRights)(data: List[(Area, List[(Set[Organisation],Int)], Int)], organisationSetToCountOfCounts: Map[Set[Organisation], Int], organisationGrouping: List[Set[Organisation]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(data: List[(Area, List[(Set[Organisation],Int)], Int)], organisationSetToCountOfCounts: Map[Set[Organisation], Int], organisationGrouping: List[Set[Organisation]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 @main(currentUser, currentUserRights, maxWidth = false)(s"Tableau de suivie déploiement") {
     @webJarsUtil.locate("tabulator.min.css").css()
