@@ -1,6 +1,6 @@
 @import helper._
 
-@(currentUser: User, currentUserRights: Authorization.UserRights, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 <!doctype html>
 <html lang="fr">
@@ -33,13 +33,9 @@
         </div>
         <div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-header mdl-layout--fixed-drawer">
             <div class="mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 do-not-print">
-                <div class="mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100">
-                    <div class="mdl-layout__header-row mdl-color--pink-500 mdl-color-text--white invisible demo-only">
-                        <span class="mdl-layout-title aplus-demo-header__title">
-                            Version de démonstration d’Administration+
-                        </span>
-                    </div>
-                </div>
+
+              @toHtml(views.helpers.common.topHeaderConnected)
+
                 <div class="mdl-layout__header-row">
                     <span class="mdl-layout-title invisible">
                         <a href="@routes.HomeController.index"><img src='@routes.Assets.versioned("images/logo_small_150x160.png")' class="logo-header" alt="Administration+"></a>

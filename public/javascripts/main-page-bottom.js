@@ -2,24 +2,6 @@
 // TODO: The idea is to put everything in main.js in this file, then rename this file as main.js
 
 
-//
-// Header ribbon (demo)
-//
-
-function setupDemoBanner() {
-  if(/localhost|demo/.test(window.location.hostname)) {
-    var ribon = document.getElementById("header__ribbon");
-    if(ribon) {
-      ribon.classList.add("invisible");
-    }
-    var elements = document.getElementsByClassName("demo-only");
-    for (var i = 0; i < elements.length; i++) {
-      elements[i].classList.remove("invisible");
-    }
-  }
-}
-
-setupDemoBanner();
 
 //
 // Area Change Select

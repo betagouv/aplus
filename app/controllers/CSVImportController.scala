@@ -31,6 +31,7 @@ import models.formModels.{
 }
 import models.{Area, Organisation, User, UserGroup}
 import org.webjars.play.WebJarsUtil
+import play.api.Configuration
 import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.{Form, Mapping}
@@ -42,6 +43,7 @@ import services.{EventService, NotificationService, UserGroupService, UserServic
 import scala.concurrent.{ExecutionContext, Future}
 
 case class CSVImportController @Inject() (
+    val configuration: Configuration,
     loginAction: LoginAction,
     userService: UserService,
     groupService: UserGroupService,
@@ -50,6 +52,7 @@ case class CSVImportController @Inject() (
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with play.api.i18n.I18nSupport
+    with Operators.Common
     with UserOperators
     with GroupOperators {
 

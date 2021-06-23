@@ -1,7 +1,7 @@
 @import _root_.helper.Time
 @import serializers.Keys
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(applications: Seq[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(applications: Seq[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 @main(currentUser, currentUserRights, maxWidth = false)(s"Demandes")  {
 <style>

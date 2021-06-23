@@ -8,12 +8,28 @@ import constants.Constants
 import helper.BooleanHelper.not
 import models.EventType._
 import models.{Application, Authorization, Error, EventType, User, UserGroup}
+import play.api.Configuration
 import play.api.mvc.Results.{InternalServerError, NotFound, Unauthorized}
-import play.api.mvc.{AnyContent, Result, Results}
+import play.api.mvc.{AnyContent, RequestHeader, Result, Results}
 import scala.concurrent.{ExecutionContext, Future}
 import services.{ApplicationService, EventService, UserGroupService, UserService}
+import views.MainInfos
 
 object Operators {
+
+  trait Common {
+    def configuration: Configuration
+
+    implicit def mainInfos(implicit request: RequestHeader): MainInfos = {
+      val isDemo = request.domain.contains("localhost") ||
+        request.domain.contains("demo")
+      MainInfos(
+        isDemo = isDemo,
+        topHeaderWarningMessage = configuration.getOptional[String]("app.topHeaderWarningMessage")
+      )
+    }
+
+  }
 
   trait GroupOperators {
     def groupService: UserGroupService

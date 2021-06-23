@@ -3,7 +3,7 @@ package controllers
 import javax.inject.{Inject, Singleton}
 import actions.LoginAction
 import org.webjars.play.WebJarsUtil
-import play.api.Logger
+import play.api.{Configuration, Logger}
 import play.api.mvc._
 import play.api.db.Database
 import serializers.Keys
@@ -13,10 +13,14 @@ import views.home.LoginPanel
   * application's home page.
   */
 @Singleton
-class HomeController @Inject() (loginAction: LoginAction, db: Database)(implicit
-    webJarsUtil: WebJarsUtil
-) extends InjectedController
-    with play.api.i18n.I18nSupport {
+class HomeController @Inject() (
+    val configuration: Configuration,
+    loginAction: LoginAction,
+    db: Database
+)(implicit webJarsUtil: WebJarsUtil)
+    extends InjectedController
+    with play.api.i18n.I18nSupport
+    with Operators.Common {
 
   private val log = Logger(classOf[HomeController])
 
