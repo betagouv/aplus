@@ -3,7 +3,8 @@
 @import java.util.UUID
 @import models.formModels.AddUserToGroupFormData
 @import cats.implicits.catsSyntaxEq
-@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[AddUserToGroupFormData])(userGroups: List[UserGroup], users: List[User], applications: List[Application])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+
+@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[AddUserToGroupFormData])(userGroups: List[UserGroup], users: List[User], applications: List[Application])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 @display(users: Seq[User], groupId: UUID)(header: Html)(footer: Html) = {
 

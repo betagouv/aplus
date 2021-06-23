@@ -1,7 +1,8 @@
 @import _root_.helper.MDLForms._
 @import models._
 @import models.formModels.EditProfileFormData
-@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[EditProfileFormData], email: String, groups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+
+@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[EditProfileFormData], email: String, groups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
     @main(currentUser, currentUserRights)(s"Mon profil") {
         <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>

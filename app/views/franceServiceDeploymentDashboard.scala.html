@@ -1,4 +1,4 @@
-@(currentUser: User, currentUserRights: Authorization.UserRights)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 @main(currentUser, currentUserRights, maxWidth = false)(s"Tableau de déploiement France Services") {
     @webJarsUtil.locate("tabulator.min.css").css()

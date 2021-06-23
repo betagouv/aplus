@@ -55,6 +55,7 @@ case class ApplicationController @Inject() (
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with play.api.i18n.I18nSupport
+    with Operators.Common
     with Operators.ApplicationOperators {
 
   private val filesPath = configuration.underlying.getString("app.filesPath")

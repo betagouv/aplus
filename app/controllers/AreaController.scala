@@ -31,6 +31,7 @@ case class AreaController @Inject() (
     configuration: play.api.Configuration
 )(implicit ec: ExecutionContext, val webJarsUtil: WebJarsUtil)
     extends InjectedController
+    with Operators.Common
     with UserOperators {
 
   private lazy val areasWithLoginByKey: List[UUID] = configuration.underlying

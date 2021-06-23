@@ -21,11 +21,12 @@ class LoginController @Inject() (
     userService: UserService,
     notificationService: NotificationService,
     tokenService: TokenService,
-    configuration: Configuration,
+    val configuration: Configuration,
     eventService: EventService,
     signupService: SignupService
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
-    extends InjectedController {
+    extends InjectedController
+    with Operators.Common {
 
   private lazy val tokenExpirationInMinutes =
     configuration.get[Int]("app.tokenExpirationInMinutes")

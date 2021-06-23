@@ -1,6 +1,6 @@
 @import models.Authorization
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 
 @main(currentUser, currentUserRights)(s"Gestion du groupe ${userGroup.name} - ${userGroup.areaIds.flatMap(Area.fromId).map(_.name).mkString(", ")}") {
