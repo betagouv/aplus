@@ -5,15 +5,13 @@ metadata:
   labels:
     app: aplus
 spec:
-  type: NodePort
+  # Note: this is the default type = ClusterIP
   ports:
-  - port: 80
+  - port: 9000
     targetPort: 9000
   selector:     # Should be a Pod selector
     app: aplus
     tier: frontend
-  externalIPs:
-    - 54.38.254.141
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -50,13 +48,16 @@ spec:
         tier: frontend
     spec:
       containers:
-      - image: administrationplus.azurecr.io/aplus:master-20210526-084710z-f9c361b67edc2536f89e0cf1d1190a7467b6dba7
+      - image: betagouv/aplus:0.16.1
         name: aplus-app
         env:
         - name: APP_HOST
-          value: aplus.beta.gouv.fr
+          valueFrom:
+            configMapKeyRef:
+              name: aplus-config
+              key: APP_HOST
         - name: APP_HTTPS
-          value: "false"
+          value: "true"
         - name: APPLICATION_SECRET
           valueFrom:
             secretKeyRef:
@@ -70,15 +71,24 @@ spec:
         - name: EVOLUTIONS_AUTOAPPLY
           value: "true"
         - name: FEATURE_AUTO_ADD_EXPERT
-          value: "true"
+          valueFrom:
+            configMapKeyRef:
+              name: aplus-config
+              key: FEATURE_AUTO_ADD_EXPERT
         - name: FEATURE_SEND_APPLICATIONS_ANYWHERE
           value: "true"
         - name: FEATURE_SMS_MANDAT
-          value: "false"
-        - name: FEATURE_WEEKLY_EMAILS
           value: "true"
+        - name: FEATURE_WEEKLY_EMAILS
+          valueFrom:
+            configMapKeyRef:
+              name: aplus-config
+              key: FEATURE_WEEKLY_EMAILS
         - name: FILES_EXPIRATION_IN_DAYS
           value: "15"
+        - name: FILES_SECOND_INSTANCE_HOST
+          value: "https://aplusprodapp.azurewebsites.net/"
+
         - name: FILES_PATH
           value: "/app/files"
         - name: GROUPS_WHICH_CANNOT_HAVE_INSTRUCTORS
@@ -98,6 +108,8 @@ spec:
             secretKeyRef:
               name: aplus-email-secret
               key: MAIL_PORT
+        - name: MAIL_SSL
+          value: "yes"
         - name: MAIL_USER
           valueFrom:
             secretKeyRef:
@@ -105,8 +117,44 @@ spec:
               key: MAIL_USER
         - name: NOTIFICATION_EMAIL_BLACKLIST
           value: "daniel.balmy@beta.gouv.fr"
+
+        - name: OVH_APPLICATION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: aplus-ovh-sms-secret
+              key: OVH_APPLICATION_KEY
+        - name: OVH_APPLICATION_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: aplus-ovh-sms-secret
+              key: OVH_APPLICATION_SECRET
+        - name: OVH_CONSUMER_KEY
+          valueFrom:
+            secretKeyRef:
+              name: aplus-ovh-sms-secret
+              key: OVH_CONSUMER_KEY
+        - name: OVH_SERVICE_NAME
+          valueFrom:
+            secretKeyRef:
+              name: aplus-ovh-sms-secret
+              key: OVH_SERVICE_NAME
+
+        - name: PERSONAL_DATA_RETENTION_IN_MONTHS
+          valueFrom:
+            configMapKeyRef:
+              name: aplus-config
+              key: PERSONAL_DATA_RETENTION_IN_MONTHS
+
+        - name: SENTRY_DSN
+          valueFrom:
+            secretKeyRef:
+              name: aplus-sentry-secret
+              key: SENTRY_DSN
+        - name: SENTRY_TRACES_SAMPLE_RATE
+          value: "0.01"
+
         - name: SMS_USE_LIVE_API
-          value: "false"
+          value: "true"
         - name: WEEKLY_EMAILS_DAY_OF_WEEK
           value: tuesday
         - name: WEEKLY_EMAILS_HOUR_OF_DAY
@@ -119,8 +167,6 @@ spec:
         volumeMounts:
         - name: aplus-files-pv
           mountPath: /app/files
-      imagePullSecrets:
-      - name: acr-docker-creds
       volumes:
       - name: aplus-files-pv
         persistentVolumeClaim:

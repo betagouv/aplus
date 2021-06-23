@@ -22,11 +22,11 @@ data:
     AUTH_TOKEN=$(openstack token issue -c id -f value)
 
     # Create new backup
-    NOW="$(date +"%Y-%m-%d-%s")"
-    FILENAME="$DATABASE_BACKUP_PREFIX.$NOW.pgdump.gz"
-    pg_dump -Fc $DATABASE_NAME | gzip > $FILENAME
-    gpg --batch --trust-model always --output "${FILENAME}.gpg" --recipient ${RECIPIENT_PUBLIC_KEY_EMAIL} --encrypt ${FILENAME}
-    swift --os-auth-token $AUTH_TOKEN --os-storage-url $STORAGE_URL upload $STORAGE_CONTAINER "${FILENAME}.gpg"
+    NOW="$(date +"%Y-%m-%d-%H%M%S")"
+    FILENAME="$DATABASE_BACKUP_PREFIX.$NOW.pgdump.gz.gpg"
+    # Pipe directly into gpg to avoid creating an unencrypted file
+    pg_dump -Fc | gzip | gpg --batch --trust-model always --output "$FILENAME" --recipient "$GPG_RECIPIENT" --encrypt
+    swift --os-auth-token $AUTH_TOKEN --os-storage-url $STORAGE_URL upload $STORAGE_CONTAINER "$FILENAME"
 
     # Cleanup old backups
     while read line
@@ -57,8 +57,9 @@ spec:
         spec:
           containers:
           - name: aplus-db-backup
-            image: python:3
+            image: python:3-buster
             env:
+
             - name: OS_AUTH_URL
               valueFrom:
                 secretKeyRef:
@@ -94,9 +95,8 @@ spec:
                 secretKeyRef:
                   name: ovh-storage-creds
                   key: OS_REGION_NAME
-            - name: DATABASE_BACKUP_PREFIX
-              value: "aplus-db"
-            - name: DATABASE_NAME
+
+            - name: PGDATABASE
               valueFrom:
                 secretKeyRef:
                   name: aplus-db-app-secret
@@ -113,15 +113,18 @@ spec:
                   key: POSTGRES_PASSWORD
             - name: PGUSER
               value: postgres
-            - name: RECIPIENT_PUBLIC_KEY_EMAIL
+
+            - name: DATABASE_BACKUP_PREFIX
+              value: "aplus-db"
+            - name: GPG_RECIPIENT
               valueFrom:
                 secretKeyRef:
                   name: aplus-backup-pub-key
-                  key: RECIPIENT_PUBLIC_KEY_EMAIL
+                  key: GPG_RECIPIENT
             - name: RETENTION_NUM_OF_DAYS
-              value: "2"
+              value: "30"
             - name: STORAGE_CONTAINER
-              value: "aplus-test-storage"
+              value: "aplusprodbackup"
             - name: STORAGE_URL
               valueFrom:
                 secretKeyRef:
@@ -144,7 +147,7 @@ spec:
             secret:
               secretName: aplus-backup-pub-key
               items:
-              - key: RECIPIENT_PUBLIC_KEY
+              - key: GPG_PUBLIC_KEY
                 path: "key.pub"
           restartPolicy: Never
       backoffLimit: 4
