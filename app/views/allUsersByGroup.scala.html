@@ -1,6 +1,6 @@
 @import cats.implicits.catsSyntaxEq
 @import models._
-@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 @display(users: Seq[User], id: Option[String] = None)(header: Html)(footer: Html) = {
     <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white" style="padding: 24px;" @if(id.isDefined){ id="@id.get" } >

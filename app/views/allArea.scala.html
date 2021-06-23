@@ -1,6 +1,6 @@
 @import models._
 @import java.util.UUID
-@(user: User, currentUserRights: Authorization.UserRights)(areas: List[Area], areasWithLoginByKey: List[UUID], userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(user: User, currentUserRights: Authorization.UserRights)(areas: List[Area], areasWithLoginByKey: List[UUID], userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 
 @main(user, currentUserRights)(s"Gestion des territoires"){

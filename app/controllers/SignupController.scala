@@ -34,6 +34,7 @@ case class SignupController @Inject() (
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with I18nSupport
+    with Operators.Common
     with UserOperators {
 
   def signupForm: Action[AnyContent] =

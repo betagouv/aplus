@@ -86,6 +86,7 @@ case class UserController @Inject() (
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with I18nSupport
+    with Operators.Common
     with UserOperators
     with GroupOperators {
 

@@ -22,7 +22,12 @@ object signupAdmin {
       existingSignups: List[SignupRequest] = Nil,
       existingUsers: List[User] = Nil,
       miscErrors: List[(SignupRequest, Error)] = Nil
-  )(implicit webJarsUtil: WebJarsUtil, flash: Flash, request: RequestHeader): Html =
+  )(implicit
+      webJarsUtil: WebJarsUtil,
+      flash: Flash,
+      request: RequestHeader,
+      mainInfos: MainInfos
+  ): Html =
     views.html.main(currentUser, currentUserRights, maxWidth = false)("Préinscription d’aidants")(
       views.helpers.head.publicCss("stylesheets/newForm.css")
     )(
