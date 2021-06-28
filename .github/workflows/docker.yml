@@ -2,6 +2,9 @@ name: Docker
 
 on: [push]
 
+env:
+  IMAGE_NAME: aplus
+
 jobs:
   build:
 
@@ -50,7 +53,7 @@ jobs:
         docker tag $IMAGE_NAME betagouv/aplus:$VERSION
         docker push betagouv/aplus:$VERSION
           
-        if [ "$VERSION" == "latest" ]; do
+        if [ "$VERSION" == "configure-dockerhub" ]; do
           VERSION=master-$(date +'%Y-%m-%dT%H-%M-%SZ')-$(git rev-parse --short HEAD)
           echo VERSION=$VERSION
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
