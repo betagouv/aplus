@@ -20,6 +20,12 @@ jobs:
     - name: Build image
       run: docker build . --tag betagouv/aplus:commit-${{ steps.date.outputs.date }}-${{ steps.shortsha.outputs.shortsha }}
 
+    - name: Log in to GH Registry
+      uses: docker/login-action@v1
+      with:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Log in to Docker Hub
       uses: docker/login-action@v1
       with:
@@ -27,4 +33,34 @@ jobs:
         password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
     - name: Push image
-      run: docker push betagouv/aplus:commit-${{ steps.date.outputs.date }}-${{ steps.shortsha.outputs.shortsha }}
+      run: |
+        IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
+          
+        # Change all uppercase to lowercase
+        IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+        
+        # Strip git ref prefix from version
+        VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          
+        # Strip "v" prefix from tag name
+        [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+        
+        # Use Docker `latest` tag convention
+        [ "$VERSION" == "master" ] && VERSION=latest
+        
+        echo IMAGE_ID=$IMAGE_ID
+        echo VERSION=$VERSION
+        
+        docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+        docker push $IMAGE_ID:$VERSION
+        docker tag $IMAGE_NAME betagouv/aplus:$VERSION
+        docker push betagouv/aplus:$VERSION
+          
+        if [ "$VERSION" == "latest" ]; do
+          VERSION=master-$(date +'%Y-%m-%dT%H-%M-%SZ')-$(git rev-parse --short HEAD)
+          echo VERSION=$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
+          docker tag $IMAGE_NAME betagouv/aplus:$VERSION
+          docker push betagouv/aplus:$VERSION
+        fi
