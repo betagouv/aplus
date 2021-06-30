@@ -122,7 +122,7 @@ case class UserController @Inject() (
             val message = "L’adresse email n'est pas correcte"
             eventService.log(EditMyGroupBadUserInput, message)
             getGroupsUsersAndApplicationsBy(user).map { case (groups, users, applications) =>
-              Ok(views.html.editMyGroups(user, request.rights)(err)(groups, users, applications))
+              Ok(views.editMyGroups.page(user, request.rights, err, groups, users, applications))
             }
           },
           data =>
@@ -268,7 +268,7 @@ case class UserController @Inject() (
       getGroupsUsersAndApplicationsBy(user)
         .map { case (groups, users, applications) =>
           eventService.log(EditMyGroupShowed, "Visualise la modification de groupe")
-          Ok(views.html.editMyGroups(user, request.rights)(form)(groups, users, applications))
+          Ok(views.editMyGroups.page(user, request.rights, form, groups, users, applications))
         }
         .recover { case exception =>
           val message = s"Impossible de modifier le groupe : ${exception.getMessage}"

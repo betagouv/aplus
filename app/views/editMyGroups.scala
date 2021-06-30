@@ -1,14 +1,138 @@
 package views
 
 import cats.syntax.all._
-import controllers.routes.UserController
+import controllers.routes.{GroupController, UserController}
 import helpers.forms.CSRFInput
+import helper.TwirlImports.toHtml
 import java.util.UUID
-import models.{Application, Authorization, User}
-import play.api.mvc.RequestHeader
+import models.{Application, Authorization, User, UserGroup}
+import models.formModels.AddUserToGroupFormData
+import org.webjars.play.WebJarsUtil
+import play.api.data.Form
+import play.api.i18n.MessagesProvider
+import play.api.mvc.{Flash, RequestHeader}
+import play.twirl.api.Html
 import scalatags.Text.all._
 
-object editMyGroupsPage {
+object editMyGroups {
+
+  def page(
+      currentUser: User,
+      currentUserRights: Authorization.UserRights,
+      addUserForm: Form[AddUserToGroupFormData],
+      userGroups: List[UserGroup],
+      users: List[User],
+      applications: List[Application]
+  )(implicit
+      flash: Flash,
+      messagesProvider: MessagesProvider,
+      request: RequestHeader,
+      webJarsUtil: WebJarsUtil,
+      mainInfos: MainInfos
+  ): Html =
+    views.html.main(currentUser, currentUserRights)("Mes groupes")(
+      views.helpers.head.publicCss("stylesheets/newForm.css")
+    )(
+      frag(
+        (for {
+          userGroup <- userGroups.sortBy(_.name)
+          user <- users
+        } yield removeUserFromGroupDialog(user, userGroup.id)) ::: (
+          for {
+            userGroup <- userGroups.sortBy(_.name)
+            groupUsers = users.filter(_.groupIds.contains(userGroup.id))
+          } yield groupBlock(
+            userGroup,
+            groupUsers,
+            applications,
+            addUserForm,
+            currentUser,
+            currentUserRights
+          )
+        )
+      )
+    )(Nil)
+
+  def groupBlock(
+      group: UserGroup,
+      users: List[User],
+      applications: List[Application],
+      addUserForm: Form[AddUserToGroupFormData],
+      currentUser: User,
+      currentUserRights: Authorization.UserRights
+  )(implicit messagesProvider: MessagesProvider, request: RequestHeader): Tag =
+    div(
+      cls := "group-container mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white",
+      id := s"group-${group.id}",
+      div(
+        div(
+          cls := "header",
+          if (Authorization.canEditGroup(group)(currentUserRights)) {
+            a(href := GroupController.editGroup(group.id).url, group.name)
+          } else {
+            group.name
+          },
+          span(cls := "text--font-size-medium", group.description)
+        )
+      ),
+      table(
+        cls := "group-table mdl-data-table mdl-js-data-table",
+        div(
+          cls := "sub-header",
+          "Liste des membres du groupe"
+        ),
+        users
+          .sortBy(user => (user.disabled, user.name))
+          .map(user => userLine(user, group.id, applications, currentUser, currentUserRights))
+      ),
+      div(
+        cls := "single--margin-top-24px single--margin-bottom--24px",
+        div(
+          form(
+            action := UserController.addToGroup(group.id).path,
+            method := UserController.addToGroup(group.id).method,
+            CSRFInput,
+            if (addUserForm.hasGlobalErrors) {
+              div(cls := "global-errors", addUserForm.globalErrors.map(_.format).mkString(", "))
+            } else (),
+            div(cls := "sub-header", "Ajouter un membre au groupe"),
+            div(
+              cls := "add-new-user-panel single--display-flex", {
+                val field = addUserForm("email")
+                div(
+                  div(
+                    cls := "single--margin-bottom--8px",
+                    "Adresse e-mail ",
+                    span(cls := "mdl-color-text--red-500", "*"),
+                    " :"
+                  ),
+                  div(
+                    views.helpers.forms.minimalTextInput(
+                      field,
+                      input(
+                        cls := "mdl-textfield__input",
+                        `type` := "text",
+                        name := field.name,
+                        id := field.id,
+                        field.value.map(value := _),
+                        //label := "Saisir l’adresse e-mail"
+                      ),
+                      field.id,
+                      fieldLabel = Some("Saisir l’adresse e-mail")
+                    )
+                  )
+                )
+              },
+              button(
+                cls := "single--margin-left-24px mdl-button mdl-js-button mdl-button--raised",
+                `type` := "submit",
+                "Ajouter au groupe"
+              )
+            )
+          )
+        )
+      )
+    )
 
   def userLine(
       user: User,
@@ -139,7 +263,9 @@ object editMyGroupsPage {
   /** Important note: modals will pop up relative to the parent node in Firefox.
     *                 This means we need to put them as high as possible in the DOM.
     */
-  def removeUserFromGroupDialog(otherUser: User, groupId: UUID)(implicit request: RequestHeader) =
+  def removeUserFromGroupDialog(otherUser: User, groupId: UUID)(implicit
+      request: RequestHeader
+  ): Tag =
     tag("dialog")(
       id := dialogId(groupId, otherUser.id),
       cls := "mdl-dialog mdl-dialog-fix",
