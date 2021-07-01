@@ -41,7 +41,7 @@ object Operators {
         groupId: UUID
     )(
         payload: UserGroup => Future[Result]
-    )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
+    )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
       groupService
         .groupById(groupId)
         .fold({
@@ -52,7 +52,7 @@ object Operators {
 
     def asAdminOfGroupZone(group: UserGroup)(event: () => (EventType, String))(
         payload: () => Future[Result]
-    )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
+    )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
       if (not(request.currentUser.admin)) {
         val (eventType, description) = event()
         eventService.log(eventType, description = description)
@@ -174,8 +174,8 @@ object Operators {
     def applicationService: ApplicationService
     def eventService: EventService
 
-    private def manageApplicationError[A](applicationId: UUID, error: Error)(implicit
-        request: RequestWithUserData[A],
+    private def manageApplicationError(applicationId: UUID, error: Error)(implicit
+        request: RequestWithUserData[_],
         ec: ExecutionContext
     ): Future[Result] = {
       val result =

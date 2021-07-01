@@ -1,6 +1,6 @@
 @import helper._
 
-@(currentUser: User, currentUserRights: Authorization.UserRights, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
+@(currentUser: User, currentUserRights: Authorization.UserRights, maxWidth: Boolean = true, modals: Html = Html(""))(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 <!doctype html>
 <html lang="fr">
@@ -121,6 +121,14 @@
                 </footer>
             </main>
         </div>
+
+        @*** Note: modals need to be here because:
+         ***      1. This is high enough in the DOM to avoid a bug when an
+         ***         inner element is scrolled
+         ***      2. This is before JS, so events are attached
+         ***@
+        @modals
+
 
             <!-- Piwik -->
         <script type="text/javascript">
