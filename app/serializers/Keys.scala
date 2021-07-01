@@ -62,6 +62,11 @@ object Keys {
     val fromUserId: String = "fromUserId"
     val date: String = "date"
 
+    // Groups
+
+    val redirect: String = "redirect"
+    val groupId: String = "groupId"
+
     // Admin
 
     val numOfMonthsDisplayed: String = "nombreDeMoisAffiche"

@@ -125,6 +125,7 @@ object EventType {
   object UserGroupDeletionUnauthorized extends Error
   object UserGroupEdited extends Info
   object UserGroupNotFound extends Error
+  object AddUserToGroupBadUserInput extends Warn
   object UserIsUsed extends Error
   object UserNotFound extends Warn
   object UserShowed extends Info
@@ -148,11 +149,6 @@ object EventType {
   object UserProfileUpdatedError extends Error
 
   object EditMyGroupShowed extends Info
-  object EditMyGroupShowedError extends Error
-  object EditMyGroupUpdated extends Info
-  object EditMyGroupBadUserInput extends Warn
-  object EditMyGroupUpdatedError extends Error
-  object EditMyGroupUnauthorized extends Error
 
   // Signups
   object SignupFormShowed extends Info

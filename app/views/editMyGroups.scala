@@ -22,7 +22,8 @@ object editMyGroups {
       addUserForm: Form[AddUserToGroupFormData],
       userGroups: List[UserGroup],
       users: List[User],
-      applications: List[Application]
+      applications: List[Application],
+      addRedirectQueryParam: String => String
   )(implicit
       flash: Flash,
       messagesProvider: MessagesProvider,
@@ -37,7 +38,7 @@ object editMyGroups {
         (for {
           userGroup <- userGroups.sortBy(_.name)
           user <- users
-        } yield removeUserFromGroupDialog(user, userGroup.id)) ::: (
+        } yield removeUserFromGroupDialog(user, userGroup.id, addRedirectQueryParam)) ::: (
           for {
             userGroup <- userGroups.sortBy(_.name)
             groupUsers = users.filter(_.groupIds.contains(userGroup.id))
@@ -46,6 +47,7 @@ object editMyGroups {
             groupUsers,
             applications,
             addUserForm,
+            addRedirectQueryParam,
             currentUser,
             currentUserRights
           )
@@ -58,6 +60,7 @@ object editMyGroups {
       users: List[User],
       applications: List[Application],
       addUserForm: Form[AddUserToGroupFormData],
+      addRedirectQueryParam: String => String,
       currentUser: User,
       currentUserRights: Authorization.UserRights
   )(implicit messagesProvider: MessagesProvider, request: RequestHeader): Tag =
@@ -83,14 +86,23 @@ object editMyGroups {
         ),
         users
           .sortBy(user => (user.disabled, user.name))
-          .map(user => userLine(user, group.id, applications, currentUser, currentUserRights))
+          .map(user =>
+            userLine(
+              user,
+              group.id,
+              applications,
+              addRedirectQueryParam,
+              currentUser,
+              currentUserRights
+            )
+          )
       ),
       div(
         cls := "single--margin-top-24px single--margin-bottom--24px",
         div(
           form(
-            action := UserController.addToGroup(group.id).path,
-            method := UserController.addToGroup(group.id).method,
+            action := addRedirectQueryParam(GroupController.addToGroup(group.id).path),
+            method := GroupController.addToGroup(group.id).method,
             CSRFInput,
             if (addUserForm.hasGlobalErrors) {
               div(cls := "global-errors", addUserForm.globalErrors.map(_.format).mkString(", "))
@@ -115,7 +127,6 @@ object editMyGroups {
                         name := field.name,
                         id := field.id,
                         field.value.map(value := _),
-                        //label := "Saisir l’adresse e-mail"
                       ),
                       field.id,
                       fieldLabel = Some("Saisir l’adresse e-mail")
@@ -138,6 +149,7 @@ object editMyGroups {
       user: User,
       groupId: UUID,
       applications: List[Application],
+      addRedirectQueryParam: String => String,
       currentUser: User,
       currentUserRights: Authorization.UserRights
   )(implicit request: RequestHeader): Tag =
@@ -189,7 +201,7 @@ object editMyGroups {
       ),
       td(
         cls := "remove-link-panel",
-        lineActionButton(user, groupId, currentUser, currentUserRights)
+        lineActionButton(user, groupId, addRedirectQueryParam, currentUser, currentUserRights)
       )
     )
 
@@ -214,14 +226,15 @@ object editMyGroups {
   private def lineActionButton(
       user: User,
       groupId: UUID,
+      addRedirectQueryParam: String => String,
       currentUser: User,
       currentUserRights: Authorization.UserRights
   )(implicit request: RequestHeader): Modifier =
     if (user.id =!= currentUser.id) {
       if (user.disabled && Authorization.canEnableOtherUser(user)(currentUserRights))
         form(
-          action := UserController.enableUser(user.id).path,
-          method := UserController.enableUser(user.id).method,
+          action := addRedirectQueryParam(GroupController.enableUser(user.id).path),
+          method := GroupController.enableUser(user.id).method,
           CSRFInput,
           button(
             `type` := "submit",
@@ -234,8 +247,8 @@ object editMyGroups {
         Authorization.canAddOrRemoveOtherUser(groupId)(currentUserRights)
       )
         form(
-          action := UserController.removeFromGroup(user.id, groupId).path,
-          method := UserController.removeFromGroup(user.id, groupId).method,
+          action := addRedirectQueryParam(GroupController.removeFromGroup(user.id, groupId).path),
+          method := GroupController.removeFromGroup(user.id, groupId).method,
           CSRFInput,
           button(
             `type` := "submit",
@@ -263,7 +276,11 @@ object editMyGroups {
   /** Important note: modals will pop up relative to the parent node in Firefox.
     *                 This means we need to put them as high as possible in the DOM.
     */
-  def removeUserFromGroupDialog(otherUser: User, groupId: UUID)(implicit
+  def removeUserFromGroupDialog(
+      otherUser: User,
+      groupId: UUID,
+      addRedirectQueryParam: String => String
+  )(implicit
       request: RequestHeader
   ): Tag =
     tag("dialog")(
@@ -276,8 +293,10 @@ object editMyGroups {
         " du groupe ?"
       ),
       form(
-        action := UserController.removeFromGroup(otherUser.id, groupId).path,
-        method := UserController.removeFromGroup(otherUser.id, groupId).method,
+        action := addRedirectQueryParam(
+          GroupController.removeFromGroup(otherUser.id, groupId).path
+        ),
+        method := GroupController.removeFromGroup(otherUser.id, groupId).method,
         CSRFInput,
         div(
           cls := "mdl-dialog__content",
