@@ -239,42 +239,7 @@
     </script>
 
     @if(currentUser.admin) {
-        <div class="mdl-cell mdl-cell--12-col mdl-grid">
-            <h4 class="mdl-cell mdl-cell--12-col">Ajouter un groupe</h4> <br>
-            @helper.form(routes.GroupController.addGroup, "method" -> "post", "class" -> "mdl-cell mdl-cell--9-col") {
-                @helper.CSRF.formField
-                <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="text" id="name" name="name" maxlength="@models.UserGroup.nameMaxLength">
-                    <label class="mdl-textfield__label" for="name">Nom du groupe</label>
-                </div>
-                <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="text" id="description" name="description">
-                    <label class="mdl-textfield__label" for="description">Description du groupe</label>
-                </div>
-                <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="text" id="email" name="email" maxlength="200">
-                    <label class="mdl-textfield__label" for="email">Email du groupe (BAL générique pour inscription et notification, champ facultatif)</label>
-                </div>
-                <div class="mdl-cell mdl-cell--12-col">
-                    <select id="organisation" name="organisation">
-                        <option selected style="font-weight: bold;" value="">Organisme non-référencé</option>
-                        @for(organisation <- Organisation.all) {
-                            <option value="@organisation.id.id">@organisation.shortName : @organisation.name</option>
-                        }
-                    </select>
-                </div>
-                <div class="mdl-cell mdl-cell--12-col">
-                    <select class="use-slimselect" id="area-ids" name="area-ids[]" multiple size="5" >
-                    @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-                        <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area.name</option>
-                    }
-                    </select>
-                </div>
-                <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
-                    Ajouter le groupe
-                </button>
-            }
-        </div>
+      @toHtml(views.addGroup.innerForm(currentUser, selectedArea))
     }
 }{
 }
