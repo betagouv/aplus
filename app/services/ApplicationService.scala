@@ -12,12 +12,11 @@ import helper.Time
 import javax.inject.Inject
 import models.Application.SeenByUser
 import models.Authorization.UserRights
-import models.{Answer, Application, Authorization, Error, EventType}
+import models.{dataModels, Answer, Application, Authorization, Error, EventType}
 import org.postgresql.util.PGobject
 import play.api.db.Database
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
-import serializers.DataModel
 
 import scala.Option.empty
 import scala.concurrent.Future
@@ -36,9 +35,9 @@ class ApplicationService @Inject() (
   // throws exception "AnormException: 'mandat_type' not found, available columns: ..."
   implicit val mandatTypeAnormParser: anorm.Column[Option[Application.MandatType]] =
     implicitly[anorm.Column[Option[String]]]
-      .map(_.flatMap(DataModel.Application.MandatType.dataModelDeserialization))
+      .map(_.flatMap(dataModels.Application.MandatType.dataModelDeserialization))
 
-  import serializers.DataModel.Answer._
+  import dataModels.Answer._
 
   implicit val answerListParser: anorm.Column[List[Answer]] =
     nonNull { (value, meta) =>
@@ -55,7 +54,7 @@ class ApplicationService @Inject() (
       }
     }
 
-  import DataModel.Application.SeenByUser._
+  import dataModels.Application.SeenByUser._
 
   private val simpleApplication: RowParser[Application] = Macro
     .parser[Application](
@@ -256,7 +255,7 @@ class ApplicationService @Inject() (
         key.toString -> value
       })
       val mandatType =
-        newApplication.mandatType.map(DataModel.Application.MandatType.dataModelSerialization)
+        newApplication.mandatType.map(dataModels.Application.MandatType.dataModelSerialization)
       SQL"""
           INSERT INTO application (
             id,

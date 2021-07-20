@@ -1,10 +1,10 @@
-package serializers
+package models
 
 import java.time.{Instant, ZonedDateTime}
 import java.util.UUID
 
 import anorm.SqlMappingError
-import helper.PlayFormHelper
+import helper.{PlayFormHelper, Time}
 import models.Answer
 import models.Answer.AnswerType
 import models.Application.{MandatType, SeenByUser}
@@ -15,7 +15,7 @@ import serializers.Anorm.columnToJson
 import serializers.JsonFormats.mapUUIDFormat
 
 /** Only to serialize/deserialize in PG. */
-object DataModel {
+object dataModels {
 
   object Answer {
 
@@ -191,6 +191,95 @@ object DataModel {
             case other         => other
           }
       }
+
+  }
+
+  object UserRow {
+
+    def fromUser(user: User, groupsWhichCannotHaveInstructors: Set[UUID]): UserRow = {
+      val isInstructor = user.instructor &&
+        groupsWhichCannotHaveInstructors.intersect(user.groupIds.toSet).isEmpty
+
+      UserRow(
+        id = user.id,
+        key = user.key,
+        firstName = user.firstName,
+        lastName = user.lastName,
+        name = user.name,
+        qualite = user.qualite,
+        email = user.email,
+        helper = user.helper,
+        instructor = isInstructor,
+        admin = user.admin,
+        areas = user.areas.distinct,
+        creationDate = user.creationDate.toInstant,
+        communeCode = user.communeCode,
+        groupAdmin = user.groupAdmin,
+        disabled = user.disabled,
+        expert = user.expert,
+        groupIds = user.groupIds.distinct,
+        cguAcceptationDate = user.cguAcceptationDate.map(_.toInstant),
+        newsletterAcceptationDate = user.newsletterAcceptationDate.map(_.toInstant),
+        phoneNumber = user.phoneNumber,
+        observableOrganisationIds = user.observableOrganisationIds.distinct.map(_.id),
+        sharedAccount = user.sharedAccount,
+        internalSupportComment = user.internalSupportComment,
+      )
+    }
+
+  }
+
+  case class UserRow(
+      id: UUID,
+      key: String,
+      firstName: Option[String],
+      lastName: Option[String],
+      name: String,
+      qualite: String,
+      email: String,
+      helper: Boolean,
+      instructor: Boolean,
+      admin: Boolean,
+      areas: List[UUID],
+      creationDate: Instant,
+      communeCode: String,
+      groupAdmin: Boolean,
+      disabled: Boolean,
+      expert: Boolean,
+      groupIds: List[UUID],
+      cguAcceptationDate: Option[Instant],
+      newsletterAcceptationDate: Option[Instant],
+      phoneNumber: Option[String],
+      observableOrganisationIds: List[String],
+      sharedAccount: Boolean,
+      internalSupportComment: Option[String]
+  ) {
+
+    def toUser: User = User(
+      id = id,
+      key = key,
+      firstName = firstName,
+      lastName = lastName,
+      name = name,
+      qualite = qualite,
+      email = email,
+      helper = helper,
+      instructor = instructor,
+      admin = admin,
+      areas = areas,
+      creationDate = creationDate.atZone(Time.timeZoneParis),
+      communeCode = communeCode,
+      groupAdmin = groupAdmin,
+      disabled = disabled,
+      expert = expert,
+      groupIds = groupIds,
+      cguAcceptationDate = cguAcceptationDate.map(_.atZone(Time.timeZoneParis)),
+      newsletterAcceptationDate = newsletterAcceptationDate.map(_.atZone(Time.timeZoneParis)),
+      phoneNumber = phoneNumber,
+      observableOrganisationIds = observableOrganisationIds.map(Organisation.Id.apply),
+      sharedAccount = sharedAccount,
+      internalSupportComment = internalSupportComment
+    )
 
   }
 
