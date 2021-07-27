@@ -259,7 +259,7 @@ case class UserController @Inject() (
               Time.formatPatternFr(user.creationDate, "dd-MM-YYYY-HHhmm"),
               if (user.sharedAccount) "Compte Partagé" else " ",
               if (user.sharedAccount) user.name else " ",
-              if (user.helper) "Aidant" else " ",
+              user.helperRoleName.getOrElse(""),
               if (user.instructor) "Instructeur" else " ",
               if (user.groupAdmin) "Responsable" else " ",
               if (user.expert) "Expert" else " ",
@@ -321,26 +321,7 @@ case class UserController @Inject() (
             eventService.log(UserNotFound, s"L'utilisateur $userId n'existe pas")
             Future(NotFound("Nous n'avons pas trouvé cet utilisateur"))
           case Some(user) if Authorization.canSeeOtherUser(user)(request.rights) =>
-            val form = editUserForm.fill(
-              EditUserFormData(
-                id = user.id,
-                firstName = user.firstName,
-                lastName = user.lastName,
-                name = user.name,
-                qualite = user.qualite,
-                email = user.email,
-                helper = user.helper,
-                instructor = user.instructor,
-                areas = user.areas,
-                groupAdmin = user.groupAdmin,
-                disabled = user.disabled,
-                groupIds = user.groupIds,
-                phoneNumber = user.phoneNumber,
-                observableOrganisationIds = user.observableOrganisationIds,
-                sharedAccount = user.sharedAccount,
-                internalSupportComment = user.internalSupportComment
-              )
-            )
+            val form = editUserForm.fill(EditUserFormData.fromUser(user))
             val groups = groupService.allGroups
             val unused = not(isAccountUsed(user))
             val Token(tokenName, tokenValue) = CSRF.getToken.get

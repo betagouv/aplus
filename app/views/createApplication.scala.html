@@ -1,8 +1,9 @@
 @import _root_.helper.MDLForms._
 @import cats.implicits.catsSyntaxEq
 @import models.Organisation.Category
+@import models.dataModels
 @import play.api.libs.json.Json
-@import serializers.{DataModel, Keys}
+@import serializers.Keys
 
 @(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], canCreatePhoneMandat: Boolean, featureMandatSms: Boolean, featureCanSendApplicationsAnywhere: Boolean, categories: List[Category], applicationForm: Form[models.formModels.ApplicationFormData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider, mainInfos: MainInfos)
 
@@ -224,7 +225,7 @@
                                     Application.MandatType.Sms -> "par sms",
                                     Application.MandatType.Paper -> "par mandat signé"
                                 )
-                            ).map(option => (DataModel.Application.MandatType.dataModelSerialization(option._1), option._2))) { options =>
+                            ).map(option => (dataModels.Application.MandatType.dataModelSerialization(option._1), option._2))) { options =>
                                 @options.map { case (optionValue, optionLabel) =>
                                 <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect single--margin-right-20px single--font-size-14px"
                                        for="@(id)_@optionValue">
