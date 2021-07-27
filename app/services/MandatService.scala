@@ -7,11 +7,11 @@ import cats.syntax.all._
 import helper.{PlayFormHelper, Time}
 import javax.inject.Inject
 import models.Authorization.UserRights
+import models.dataModels.SmsFormats._
 import models.mandat.{Mandat, SmsMandatInitiation}
 import models.{Authorization, Error, EventType, Sms, User}
 import play.api.db.Database
 import play.api.libs.json.{JsValue, Json}
-import serializers.DataModel.SmsFormats._
 
 import scala.concurrent.Future
 import scala.util.Try

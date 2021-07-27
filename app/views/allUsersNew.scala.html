@@ -52,8 +52,8 @@
                         email: "@user.email",
                         qualite: "@user.qualite",
                         phoneNumber: "@{user.phoneNumber.getOrElse("")}",
-                        helper: @user.helper,
-                        instructor: @user.instructor,
+                        helper: @user.helperRoleName.nonEmpty,
+                        instructor: @user.instructorRoleName.nonEmpty,
                         areas: [
                             @for(area <- user.areas.flatMap(Area.fromId).map(_.toString)){
                                 "@area",
@@ -74,10 +74,10 @@
                                 "@email",
                             }
                         ],
-                        groupAdmin: @user.groupAdmin,
-                        admin: @user.admin,
+                        groupAdmin: @user.groupAdminRoleName.nonEmpty,
+                        admin: @user.adminRoleName.nonEmpty,
                         expert: @user.expert,
-                        disabled: @user.disabled,
+                        disabled: @user.disabledRoleName.nonEmpty,
                         sharedAccount: @user.sharedAccount,
                         cgu: @user.cguAcceptationDate.nonEmpty
                     },

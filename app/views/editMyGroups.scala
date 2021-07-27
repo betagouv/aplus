@@ -220,7 +220,7 @@ object editMyGroups {
           .filter(identity)
           .map(_ => span(cls := "tag tag--instructor", "Instructeur")),
         " ",
-        user.helper.some.filter(identity).map(_ => span(cls := "tag tag--aidant", "Aidant")),
+        user.helperRoleName.map(role => span(cls := "tag tag--aidant", role)),
       )
 
   private def lineActionButton(

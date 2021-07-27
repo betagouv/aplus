@@ -23,7 +23,7 @@ import play.api.data.validation.Constraints._
 import play.api.libs.ws.WSClient
 import play.api.mvc._
 import play.twirl.api.Html
-import serializers.{AttachmentHelper, DataModel, Keys}
+import serializers.{AttachmentHelper, Keys}
 import services._
 import views.stats.StatsData
 
@@ -145,9 +145,7 @@ case class ApplicationController @Inject() (
       val usersInThoseGroups = userService.byGroupIds(visibleGroups.map(_.id))
       // Note: we don't care about users who are in several areas
       val coworkers = usersInThoseGroups
-        .filter(user =>
-          user.helper && user.groupIds.toSet.intersect(currentUser.groupIds.toSet).nonEmpty
-        )
+        .filter(user => Authorization.canAddUserAsCoworkerToNewApplication(user)(rights))
         .filterNot(user => user.id === currentUser.id)
       // This could be optimized by doing only one SQL query
       val instructorsOfGroups = usersInThoseGroups.filter(_.instructor)
@@ -318,7 +316,7 @@ case class ApplicationController @Inject() (
                 applicationData.selectedSubject.contains[String](applicationData.subject),
               category = applicationData.category,
               files = newAttachments ++ pendingAttachments,
-              mandatType = DataModel.Application.MandatType
+              mandatType = dataModels.Application.MandatType
                 .dataModelDeserialization(applicationData.mandatType),
               mandatDate = Some(applicationData.mandatDate),
               invitedGroupIdsAtCreation = applicationData.groups

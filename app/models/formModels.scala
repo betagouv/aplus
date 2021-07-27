@@ -201,6 +201,30 @@ object formModels {
       sharedAccount: Boolean
   )
 
+  object EditUserFormData {
+
+    def fromUser(user: User): EditUserFormData =
+      EditUserFormData(
+        id = user.id,
+        firstName = user.firstName,
+        lastName = user.lastName,
+        name = user.name,
+        qualite = user.qualite,
+        email = user.email,
+        helper = user.helper,
+        instructor = user.instructor,
+        areas = user.areas,
+        groupAdmin = user.groupAdmin,
+        disabled = user.disabled,
+        groupIds = user.groupIds,
+        phoneNumber = user.phoneNumber,
+        observableOrganisationIds = user.observableOrganisationIds,
+        sharedAccount = user.sharedAccount,
+        internalSupportComment = user.internalSupportComment
+      )
+
+  }
+
   case class EditUserFormData(
       id: UUID,
       firstName: Option[String],
