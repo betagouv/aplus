@@ -76,6 +76,12 @@ object Authorization {
       case _                                                        => false
     }
 
+  def isInOneOfGroups(groupIds: Set[UUID]): Check =
+    _.rights.exists {
+      case UserRight.IsInGroups(groups) if groups.intersect(groupIds).nonEmpty => true
+      case _                                                                   => false
+    }
+
   def isAdmin: Check =
     _.rights.exists {
       case UserRight.AdminOfAreas(_) => true
@@ -88,7 +94,7 @@ object Authorization {
       case _                                                                               => false
     }
 
-  def isHelper: Check =
+  private def isHelper: Check =
     _.rights.exists {
       case UserRight.Helper => true
       case _                => false
@@ -153,6 +159,9 @@ object Authorization {
   // Authorizations concerning User/UserGroup
   //
 
+  def canSeeExperimentalAdminFeatures: Check =
+    isAdmin
+
   // TODO: weird...
   def userCanBeEditedBy(editorUser: User): Check =
     _ => editorUser.admin && editorUser.areas.intersect(editorUser.areas).nonEmpty
@@ -196,6 +205,12 @@ object Authorization {
   //
   // Authorizations concerning Applications
   //
+
+  def canCreateApplication: Check =
+    isHelper
+
+  def canAddUserAsCoworkerToNewApplication(otherUser: User): Check =
+    rights => otherUser.helper && isInOneOfGroups(otherUser.groupIds.toSet)(rights)
 
   def canSeeApplicationsAsAdmin: Check =
     atLeastOneIsAuthorized(isAdmin, isManager)

@@ -17,7 +17,7 @@ case class User(
     name: String,
     qualite: String,
     email: String,
-    helper: Boolean,
+    private[models] val helper: Boolean,
     instructor: Boolean,
     // TODO: `private[models]` so we cannot check it without going through authorization
     admin: Boolean,
@@ -68,6 +68,17 @@ case class User(
       qualite = qualite.orEmpty,
       phoneNumber = phoneNumber
     )
+
+  lazy val helperRoleName: Option[String] = helper.some.filter(identity).map(_ => "Aidant")
+
+  lazy val instructorRoleName: Option[String] =
+    instructor.some.filter(identity).map(_ => "Instructeur")
+
+  lazy val groupAdminRoleName: Option[String] =
+    groupAdmin.some.filter(identity).map(_ => "Responsable")
+
+  lazy val adminRoleName: Option[String] = admin.some.filter(identity).map(_ => "Admin")
+  lazy val disabledRoleName: Option[String] = disabled.some.filter(identity).map(_ => "Désactivé")
 
   lazy val firstNameLog: String = firstName.map(withQuotes).getOrElse("<vide>")
   lazy val lastNameLog: String = lastName.map(withQuotes).getOrElse("<vide>")
