@@ -92,7 +92,10 @@ case class GroupController @Inject() (
                   )
                   Future.successful(
                     Redirect(redirectPage)
-                      .flashing("error" -> "L’utilisateur n’existe pas dans Administration+")
+                      .flashing(
+                        "error" -> ("Le compte n’existe pas dans Administration+. " +
+                          "Celui-ci peut être créé par un responsable identifiable dans la liste ci-dessous.")
+                      )
                   )
                 case (Some(userToAdd), usersInGroup)
                     if usersInGroup.map(_.id).contains[UUID](userToAdd.id) =>
