@@ -8,6 +8,7 @@ import java.sql.Connection
 import java.util.UUID
 import javax.inject.Inject
 import models.{Error, EventType, User}
+import models.dataModels.UserRow
 import org.postgresql.util.PSQLException
 import play.api.db.Database
 import scala.concurrent.Future
@@ -32,8 +33,8 @@ class UserService @Inject() (
       .flatMap(UUIDHelper.fromString)
       .toSet
 
-  private val simpleUser: RowParser[User] = Macro
-    .parser[User](
+  private val simpleUser: RowParser[UserRow] = Macro
+    .parser[UserRow](
       "id",
       "key",
       "first_name",
@@ -58,25 +59,25 @@ class UserService @Inject() (
       "shared_account",
       "internal_support_comment"
     )
-    .map(a => a.copy(creationDate = a.creationDate.withZoneSameInstant(Time.timeZoneParis)))
 
   def allNoNameNoEmail: Future[List[User]] =
     Future {
       db.withConnection { implicit connection =>
         SQL("""SELECT *, '' as name, '' as email, '' as qualite FROM "user"""").as(simpleUser.*)
-      }
+      }.map(_.toUser)
     }
 
   def all: Future[List[User]] =
     Future {
       db.withConnection(implicit connection => SQL("""SELECT * FROM "user"""").as(simpleUser.*))
+        .map(_.toUser)
     }
 
   def allNotDisabled: Future[List[User]] =
     Future {
       db.withConnection { implicit connection =>
         SQL("""SELECT * FROM "user" WHERE NOT disabled""").as(simpleUser.*)
-      }
+      }.map(_.toUser)
     }
 
   def allExperts: Future[List[User]] =
@@ -84,21 +85,21 @@ class UserService @Inject() (
       db.withConnection { implicit connection =>
         SQL"""SELECT * FROM "user" WHERE expert = true AND disabled = false"""
           .as(simpleUser.*)
-      }
+      }.map(_.toUser)
     }
 
   // Note: this is deprecated, should check via the UserGroup
   def byAreaIds(areaIds: List[UUID]): List[User] =
     db.withConnection { implicit connection =>
       SQL"""SELECT * FROM "user" WHERE ARRAY[$areaIds]::uuid[] && areas""".as(simpleUser.*)
-    }
+    }.map(_.toUser)
 
   def allDBOnlybyArea(areaId: UUID) =
     db.withConnection { implicit connection =>
       SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""")
         .on("areaId" -> areaId)
         .as(simpleUser.*)
-    }
+    }.map(_.toUser)
 
   def byGroupIdsFuture(ids: List[UUID], includeDisabled: Boolean = false): Future[List[User]] =
     Future(byGroupIds(ids, includeDisabled))
@@ -113,7 +114,7 @@ class UserService @Inject() (
       SQL(s"""SELECT * FROM "user" WHERE ARRAY[{ids}]::uuid[] && group_ids $disabledSQL""")
         .on("ids" -> ids)
         .as(simpleUser.*)
-    }
+    }.map(_.toUser)
 
   // Note: this function is used in the stats,
   // pseudonymization is possible (removing name, etc.)
@@ -123,7 +124,7 @@ class UserService @Inject() (
         SQL"""SELECT *, '' as name, '' as email, '' as qualite
             FROM "user"
             WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
-      }
+      }.map(_.toUser)
     }
 
   def byId(id: UUID, includeDisabled: Boolean = false): Option[User] = {
@@ -143,7 +144,7 @@ class UserService @Inject() (
       SQL(s"""SELECT * FROM "user" WHERE ARRAY[{ids}]::uuid[] @> ARRAY[id]::uuid[] $disabledSQL""")
         .on("ids" -> ids)
         .as(simpleUser.*)
-    }
+    }.map(_.toUser)
 
   def byIdsFuture(ids: List[UUID], includeDisabled: Boolean = false): Future[List[User]] =
     Future(byIds(ids, includeDisabled))
@@ -153,14 +154,14 @@ class UserService @Inject() (
       SQL("""SELECT * FROM "user" WHERE key = {key} AND disabled = false""")
         .on("key" -> key)
         .as(simpleUser.singleOpt)
-    }
+    }.map(_.toUser)
 
   def byEmail(email: String): Option[User] =
     db.withConnection { implicit connection =>
       SQL("""SELECT * FROM "user" WHERE lower(email) = {email} AND disabled = false""")
         .on("email" -> email.toLowerCase)
         .as(simpleUser.singleOpt)
-    }
+    }.map(_.toUser)
 
   def byEmailFuture(email: String): Future[Option[User]] = Future(byEmail(email))
 
@@ -169,7 +170,7 @@ class UserService @Inject() (
     db.withConnection { implicit connection =>
       SQL"""SELECT * FROM "user" WHERE  ARRAY[$lowerCaseEmails]::text[] @> ARRAY[lower(email)]::text[]"""
         .as(simpleUser.*)
-    }
+    }.map(_.toUser)
   }
 
   def byEmailsFuture(emails: List[String]): Future[Either[Error, List[User]]] =
@@ -184,29 +185,30 @@ class UserService @Inject() (
     try {
       val result = db.withTransaction { implicit connection =>
         users.foldRight(true) { (user, success) =>
-          assert(user.areas.nonEmpty)
+          val row = UserRow.fromUser(user, groupsWhichCannotHaveInstructors)
+          assert(row.areas.nonEmpty)
           success && SQL"""
         INSERT INTO "user" (id, key, first_name, last_name, name, qualite, email, helper, instructor, admin, areas, creation_date,
                             commune_code, group_admin, group_ids, cgu_acceptation_date, expert, phone_number, shared_account) VALUES (
-           ${user.id}::uuid,
-           ${Hash.sha256(s"${user.id}$cryptoSecret")},
-           ${user.firstName},
-           ${user.lastName},
-           ${user.name},
-           ${user.qualite},
-           ${user.email},
-           ${user.helper},
-           ${instructorFlag(user)},
-           ${user.admin},
-           array[${user.areas.distinct}]::uuid[],
-           ${user.creationDate},
-           ${user.communeCode},
-           ${user.groupAdmin},
-           array[${user.groupIds.distinct}]::uuid[],
-           ${user.cguAcceptationDate},
-           ${user.expert},
-           ${user.phoneNumber},
-           ${user.sharedAccount})
+           ${row.id}::uuid,
+           ${Hash.sha256(s"${row.id}$cryptoSecret")},
+           ${row.firstName},
+           ${row.lastName},
+           ${row.name},
+           ${row.qualite},
+           ${row.email},
+           ${row.helper},
+           ${row.instructor},
+           ${row.admin},
+           array[${row.areas}]::uuid[],
+           ${row.creationDate},
+           ${row.communeCode},
+           ${row.groupAdmin},
+           array[${row.groupIds}]::uuid[],
+           ${row.cguAcceptationDate},
+           ${row.expert},
+           ${row.phoneNumber},
+           ${row.sharedAccount})
         """.executeUpdate() === 1
         }
       }
@@ -230,26 +232,26 @@ class UserService @Inject() (
 
   def update(user: User): Future[Boolean] =
     Future(db.withConnection { implicit connection =>
-      val observableOrganisationIds = user.observableOrganisationIds.map(_.id)
+      val row = UserRow.fromUser(user, groupsWhichCannotHaveInstructors)
       SQL"""
           UPDATE "user" SET
-          first_name = ${user.firstName},
-          last_name = ${user.lastName},
-          name = ${user.name},
-          qualite = ${user.qualite},
-          email = ${user.email},
-          helper = ${user.helper},
-          instructor = ${instructorFlag(user)},
-          areas = array[${user.areas.distinct}]::uuid[],
-          commune_code = ${user.communeCode},
-          group_admin = ${user.groupAdmin},
-          group_ids = array[${user.groupIds.distinct}]::uuid[],
-          phone_number = ${user.phoneNumber},
-          disabled = ${user.disabled},
-          observable_organisation_ids = array[${observableOrganisationIds.distinct}]::varchar[],
-          shared_account = ${user.sharedAccount},
-          internal_support_comment = ${user.internalSupportComment}
-          WHERE id = ${user.id}::uuid
+          first_name = ${row.firstName},
+          last_name = ${row.lastName},
+          name = ${row.name},
+          qualite = ${row.qualite},
+          email = ${row.email},
+          helper = ${row.helper},
+          instructor = ${row.instructor},
+          areas = array[${row.areas}]::uuid[],
+          commune_code = ${row.communeCode},
+          group_admin = ${row.groupAdmin},
+          group_ids = array[${row.groupIds}]::uuid[],
+          phone_number = ${row.phoneNumber},
+          disabled = ${row.disabled},
+          observable_organisation_ids = array[${row.observableOrganisationIds}]::varchar[],
+          shared_account = ${row.sharedAccount},
+          internal_support_comment = ${row.internalSupportComment}
+          WHERE id = ${row.id}::uuid
        """.executeUpdate() === 1
     })
 
@@ -356,9 +358,5 @@ class UserService @Inject() (
           )
         )
     )
-
-  private def instructorFlag(user: User): Boolean =
-    user.instructor &&
-      groupsWhichCannotHaveInstructors.intersect(user.groupIds.toSet).isEmpty
 
 }
