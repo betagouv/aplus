@@ -32,7 +32,6 @@ object Keys {
   object Session {
     val userId: String = "userId"
     val signupId: String = "signupId"
-    val areaId: String = "areaId"
   }
 
   // Important note: do not forget to check the `SentryFilter` whitelist
