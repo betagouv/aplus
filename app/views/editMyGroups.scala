@@ -97,6 +97,14 @@ object editMyGroups {
             )
           )
       ),
+      (
+        if (Authorization.canEditGroup(group)(currentUserRights)) {
+          div(
+            cls := "single--margin-top-24px",
+            createAccountBlock(group, currentUser, currentUserRights)
+          )
+        } else ()
+      ),
       div(
         cls := "single--margin-top-24px single--margin-bottom--24px",
         div(
@@ -107,9 +115,13 @@ object editMyGroups {
             if (addUserForm.hasGlobalErrors) {
               div(cls := "global-errors", addUserForm.globalErrors.map(_.format).mkString(", "))
             } else (),
-            div(cls := "sub-header", "Ajouter un membre au groupe"),
+            div(cls := "sub-header", "Ajouter un membre existant au groupe"),
             div(
-              cls := "add-new-user-panel single--display-flex", {
+              cls := "single--margin-left-24px",
+              "Un membre est un agent qui dispose déjà d’un compte Administration+"
+            ),
+            div(
+              cls := "add-new-user-panel single--display-flex single--margin-top-16px", {
                 val field = addUserForm("email")
                 div(
                   div(
@@ -140,6 +152,45 @@ object editMyGroups {
                 "Ajouter au groupe"
               )
             )
+          )
+        )
+      ),
+    )
+
+  def createAccountBlock(
+      group: UserGroup,
+      currentUser: User,
+      currentUserRights: Authorization.UserRights
+  )(implicit request: RequestHeader): Tag =
+    div(
+      form(
+        action := UserController.add(group.id).path,
+        method := UserController.add(group.id).method,
+        CSRFInput,
+        div(cls := "sub-header", "Créer des nouveaux comptes dans ce groupe"),
+        div(
+          cls := "add-new-user-panel single--display-flex",
+          div(
+            cls := "mdl-textfield mdl-js-textfield mdl-textfield--floating-label single--max-width-160px",
+            input(
+              cls := "mdl-textfield__input",
+              `type` := "text",
+              pattern := """-?[0-9]*(\.[0-9]+)?""",
+              id := "rows",
+              name := "rows",
+              value := "1"
+            ),
+            label(
+              cls := "mdl-textfield__label",
+              `for` := "rows",
+              "Nombre de comptes à créer"
+            ),
+            span(cls := "mdl-textfield__error", "Ce n’est pas un nombre")
+          ),
+          button(
+            cls := "single--margin-left-24px mdl-button mdl-js-button mdl-button--raised",
+            `type` := "submit",
+            "Créer des comptes dans ce groupe"
           )
         )
       )
