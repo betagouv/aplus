@@ -745,6 +745,10 @@ a {
     padding-left: 48px;
 }
 
+.single--max-width-160px {
+    max-width: 160px;
+}
+
 .single--max-width-184px {
     max-width: 184px;
 }
