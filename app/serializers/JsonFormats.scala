@@ -36,7 +36,7 @@ object JsonFormats {
   //
   // Mandat
   //
-  import serializers.DataModel.SmsFormats._
+  import models.dataModels.SmsFormats._
 
   implicit val mandatIdReads: Reads[Mandat.Id] =
     implicitly[Reads[UUID]].map(Mandat.Id.apply)

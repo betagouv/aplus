@@ -7,7 +7,7 @@
 @modals = {
 
   @********* Experimental (testing by admins for now) **********@
-  @if(currentUser.admin) {
+  @if(Authorization.canSeeExperimentalAdminFeatures(currentUserRights)) {
 
     @for(user <- groupUsers) {
       @toHtml(views.editMyGroups.removeUserFromGroupDialog(user, userGroup.id, addRedirectQueryParam))
@@ -128,7 +128,7 @@
         }
     </div>
     <div class="single--overflow-auto">
-        @helpers.displayUsers(groupUsers)(currentUser)
+        @helpers.displayUsers(currentUser, currentUserRights)(groupUsers)
         @helper.form(routes.UserController.add(userGroup.id), "method" -> "get") {
             @helper.CSRF.formField
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
@@ -144,7 +144,7 @@
 
 
     @********* Experimental (testing by admins for now) **********@
-    @if(currentUser.admin) {
+    @if(Authorization.canSeeExperimentalAdminFeatures(currentUserRights)) {
 
       @toHtml(views.editMyGroups.groupBlock(userGroup, groupUsers, groupApplications, addUserForm, addRedirectQueryParam, currentUser, currentUserRights))
 

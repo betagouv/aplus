@@ -174,7 +174,7 @@ object SmsApi {
       ws: WSClient,
       implicit val executionContext: ExecutionContext
   ) extends SmsApi {
-    import serializers.DataModel.SmsFormats._
+    import models.dataModels.SmsFormats._
 
     private val serverPort: String =
       Option(System.getProperty("http.port"))
