@@ -84,7 +84,7 @@ object JsonFormats {
             "message" -> JsString(
               "Un incident s’est produit chez notre fournisseur de SMS. " +
                 "Celui-ci est temporaire mais peut durer 30 minutes, " +
-                "nous vous invitons à réessayer plus tard. " +
+                "nous vous invitons à réessayer plus tard ou utiliser le mandat papier. " +
                 s"Si le problème persiste, vous pouvez contacter l’équipe A+ : ${Constants.supportEmail}."
             )
           )
@@ -103,7 +103,7 @@ object JsonFormats {
           Json.obj(
             "message" -> JsString(
               s"Une erreur s’est produite sur le serveur. " +
-                "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard. " +
+                "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard ou utiliser le mandat papier. " +
                 s"Si cette erreur persiste, " +
                 s"vous pouvez contacter l’équipe A+ : ${Constants.supportEmail}"
             )
@@ -114,7 +114,7 @@ object JsonFormats {
           Json.obj(
             "message" -> JsString(
               s"Une erreur s’est produite sur le serveur. " +
-                "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard. " +
+                "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard ou utiliser le mandat papier. " +
                 s"Si cette erreur persiste, " +
                 s"vous pouvez contacter l’équipe A+ : ${Constants.supportEmail}"
             )
