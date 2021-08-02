@@ -13,11 +13,11 @@ RUN npm run build
 # Builder image for the Scala app
 # based on https://github.com/hseeberger/scala-sbt
 #
-FROM openjdk:8u265 AS scalabuilder
+FROM adoptopenjdk:8-jdk-hotspot AS scalabuilder
 
 # We need nodejs to run in a reasonable amount of time sbt-web
 # see step `Optimizing JavaScript with RequireJS`
-RUN apt-get update && apt-get install -y nodejs
+RUN apt-get update && apt-get install -y --no-install-recommends nodejs
 
 # Env variables
 ENV SBT_VERSION 1.5.1
@@ -28,7 +28,7 @@ RUN \
   dpkg -i sbt-$SBT_VERSION.deb && \
   rm sbt-$SBT_VERSION.deb && \
   apt-get update && \
-  apt-get install -y sbt && \
+  apt-get install -y --no-install-recommends sbt && \
   sbt sbtVersion -Dsbt.rootdir=true
 
 ENV PLAY_APP_NAME aplus
@@ -52,7 +52,7 @@ RUN sbt clean stage
 # Final Image
 #
 #
-FROM openjdk:8u265
+FROM adoptopenjdk:8-jre-hotspot
 
 ENV PLAY_APP_NAME aplus
 ENV PLAY_APP_DIR /var/www/$PLAY_APP_NAME
