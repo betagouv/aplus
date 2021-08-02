@@ -9,7 +9,7 @@ import akka.util.ByteString
 import cats.syntax.all._
 import models.{Error, EventType}
 import play.api.libs.json.{JsValue, Json, Reads, Writes}
-import play.api.libs.ws.WSClient
+import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.mvc.{PlayBodyParsers, Request}
 
 import scala.concurrent.duration.FiniteDuration
@@ -163,29 +163,13 @@ final class OvhApi(
     */
   def deleteIncomingSms(id: SmsId): Future[Either[Error, Unit]] = {
     val url = s"https://eu.api.ovh.com/1.0/sms/${serviceName}/incoming/${id.underlying}"
+    val errorMessage = s"Impossible de supprimer le message reçu ${id.underlying}"
     ws.url(url)
       .addHttpHeaders(requestHeaders("DELETE", url, ""): _*)
       .withRequestTimeout(requestTimeout)
       .delete()
-      .map { response =>
-        if (response.status === 200) {
-          Right(())
-        } else {
-          throw new Exception(
-            s"Unexpected response from OVH server (status ${response.status})" +
-              s": $response - ${response.body}"
-          )
-        }
-      }
-      .recover { case (e: Throwable) =>
-        Left(
-          Error.MiscException(
-            EventType.SmsSendError,
-            s"Impossible de supprimer le message reçu ${id.underlying}",
-            e
-          )
-        )
-      }
+      .map(readResponse(_ => (), EventType.SmsDeleteError, errorMessage))
+      .recover(e => recoverApiCall(e, EventType.SmsDeleteError, errorMessage))
   }
 
   /** API Doc:
@@ -193,39 +177,44 @@ final class OvhApi(
     */
   def deleteOutgoingSms(id: SmsId): Future[Either[Error, Unit]] = {
     val url = s"https://eu.api.ovh.com/1.0/sms/${serviceName}/outgoing/${id.underlying}"
+    val errorMessage = s"Impossible de supprimer le message envoyé ${id.underlying}"
     ws.url(url)
       .addHttpHeaders(requestHeaders("DELETE", url, ""): _*)
       .withRequestTimeout(requestTimeout)
       .delete()
-      .map { response =>
-        if (response.status === 200) {
-          Right(())
-        } else {
-          throw new Exception(
-            s"Unexpected response from OVH server (status ${response.status})" +
-              s": $response - ${response.body}"
-          )
-        }
-      }
-      .recover { case (e: Throwable) =>
-        Left(
-          Error.MiscException(
-            EventType.SmsSendError,
-            s"Impossible de supprimer le message envoyé ${id.underlying}",
-            e
-          )
-        )
-      }
+      .map(readResponse(_ => (), EventType.SmsDeleteError, errorMessage))
+      .recover(e => recoverApiCall(e, EventType.SmsDeleteError, errorMessage))
   }
 
   /** API Doc:
     * https://eu.api.ovh.com/console/#/sms/{serviceName}/jobs#POST
+    *
+    * List of experienced errors:
+    *
+    * java.lang.Exception
+    * $response.status = 500
+    * $response = AhcWSResponse(StandaloneAhcWSResponse(500, Internal Server Error))
+    * $response.body = {"message":"Internal server error"}
+    *
+    * java.lang.Exception
+    * $response.status = 503
+    * $response = AhcWSResponse(StandaloneAhcWSResponse(503, Service Unavailable))
+    * $response.body = <html> ...(HTML).. <title>Error 503: server unavailable</title> ...
+    *
+    * java.lang.Exception
+    * $response.status = 402
+    * $response = AhcWSResponse(StandaloneAhcWSResponse(402, Payment Required))
+    * $response.body = {"message":"Not enough credits (left: 2.00)"}
+    *
+    * java.util.concurrent.TimeoutException
+    * Request timeout to eu.api.ovh.com/51.38.17.223:443 after 5000 ms
     */
   def createJob(
       message: String,
       recipients: List[String]
   ): Future[Either[Error, SmsSendingReport]] = {
     val url = s"https://eu.api.ovh.com/1.0/sms/${serviceName}/jobs"
+    val errorMessage = s"Impossible d'envoyer le SMS"
     val request = SmsJob(
       message = message,
       receivers = recipients,
@@ -237,27 +226,8 @@ final class OvhApi(
       .addHttpHeaders(requestHeaders("POST", url, body): _*)
       .withRequestTimeout(requestTimeout)
       .post(body)
-      .map { response =>
-        if (response.status === 200) {
-          val json = response.body[JsValue]
-          val report = json.as[SmsSendingReport]
-          Right(report)
-        } else {
-          throw new Exception(
-            s"Unexpected response from OVH server (status ${response.status})" +
-              s": $response - ${response.body}"
-          )
-        }
-      }
-      .recover { case (e: Throwable) =>
-        Left(
-          Error.MiscException(
-            EventType.SmsSendError,
-            s"Impossible d'envoyer un SMS",
-            e
-          )
-        )
-      }
+      .map(readResponse(_.body[JsValue].as[SmsSendingReport], EventType.SmsSendError, errorMessage))
+      .recover(e => recoverApiCall(e, EventType.SmsSendError, errorMessage))
   }
 
   /** API Doc:
@@ -265,27 +235,45 @@ final class OvhApi(
     */
   def fetchIncomingSmsById(id: SmsId): Future[Either[Error, IncomingSms]] = {
     val url = s"https://eu.api.ovh.com/1.0/sms/${serviceName}/incoming/${id.underlying}"
+    val errorMessage = s"Impossible de lire le SMS ${id.underlying} chez le provider distant"
     ws.url(url)
       .addHttpHeaders(requestHeaders("GET", url, ""): _*)
       .withRequestTimeout(requestTimeout)
       .get()
-      .map { response =>
-        if (response.status === 200) {
-          val json = response.body[JsValue]
-          Right(json.as[IncomingSms])
-        } else {
-          throw new Exception(s"Unexpected response from OVH server (status ${response.status})")
-        }
-      }
-      .recover { case (e: Throwable) =>
-        Left(
-          Error.MiscException(
-            EventType.SmsReadError,
-            s"Impossible de lire le SMS ${id.underlying} chez le provider distant",
-            e
+      .map(readResponse(_.body[JsValue].as[IncomingSms], EventType.SmsSendError, errorMessage))
+      .recover(e => recoverApiCall(e, EventType.SmsReadError, errorMessage))
+  }
+
+  private def readResponse[A](
+      onStatus200: WSResponse => A,
+      errorType: EventType,
+      errorDescription: => String
+  )(response: WSResponse): Either[Error, A] =
+    if (response.status === 200) {
+      onStatus200(response).asRight
+    } else {
+      Error
+        .UnexpectedServerResponse(
+          errorType,
+          errorDescription + s" (status ${response.status})",
+          response.status,
+          new Exception(
+            s"Unexpected response from OVH server (status ${response.status})" +
+              s": $response - ${response.body}"
           )
         )
-      }
+        .asLeft
+    }
+
+  private def recoverApiCall[A](
+      e: Throwable,
+      errorType: EventType,
+      errorDescription: String
+  ): Either[Error, A] = e match {
+    case e: java.util.concurrent.TimeoutException =>
+      Error.Timeout(errorType, errorDescription, e).asLeft
+    case e =>
+      Error.MiscException(errorType, errorDescription, e).asLeft
   }
 
   private def requestHeaders(method: String, query: String, body: String): Seq[(String, String)] = {
