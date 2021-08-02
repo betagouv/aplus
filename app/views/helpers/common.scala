@@ -40,7 +40,7 @@ object common {
       case lines =>
         div(
           cls := "mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100",
-          frag(headerLines)
+          frag(lines)
         )
     }
   }

@@ -41,10 +41,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Node 10
-      uses: actions/setup-node@v2.3.0
+    - name: Set up Node 14
+      uses: actions/setup-node@v2
       with:
-        node-version: '10.x'
+        node-version: '14'
     - name: Install npm dependencies
       run: npm install
     - name: Build the JS blob
