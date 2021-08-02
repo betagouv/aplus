@@ -3,6 +3,7 @@ package serializers
 import constants.Constants
 import helper.{StringHelper, UUIDHelper}
 import java.util.UUID
+import models.Error
 import models.mandat.{Mandat, SmsMandatInitiation}
 import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
@@ -75,14 +76,50 @@ object JsonFormats {
         unlift(SmsMandatInitiation.unapply)
       )
 
-  def jsonInternalServerError =
-    InternalServerError(
-      Json.obj(
-        "message" -> JsString(
-          "Une erreur est survenue sur le serveur. " +
-            s"Si le problème persiste, pouvez contacter l’équipe A+ : ${Constants.supportEmail}."
+  def mandatJsonInternalServerError(error: Error) =
+    error match {
+      case _: Error.UnexpectedServerResponse | _: Error.Timeout =>
+        InternalServerError(
+          Json.obj(
+            "message" -> JsString(
+              "Un incident s’est produit chez notre fournisseur de SMS. " +
+                "Celui-ci est temporaire mais peut durer 30 minutes, " +
+                "nous vous invitons à réessayer plus tard ou à utiliser le mandat papier. " +
+                s"Si le problème persiste, vous pouvez contacter l’équipe A+ : ${Constants.supportEmail}."
+            )
+          )
         )
-      )
-    )
+      case _: Error.EntityNotFound | _: Error.Authorization | _: Error.Authentication =>
+        InternalServerError(
+          Json.obj(
+            "message" -> JsString(
+              "Une erreur est survenue sur le serveur. " +
+                s"Si le problème persiste, vous pouvez contacter l’équipe A+ : ${Constants.supportEmail}."
+            )
+          )
+        )
+      case _: Error.Database | _: Error.SqlException =>
+        InternalServerError(
+          Json.obj(
+            "message" -> JsString(
+              s"Une erreur s’est produite sur le serveur. " +
+                "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard ou à utiliser le mandat papier. " +
+                s"Si cette erreur persiste, " +
+                s"vous pouvez contacter l’équipe A+ : ${Constants.supportEmail}"
+            )
+          )
+        )
+      case _: Error.MiscException =>
+        InternalServerError(
+          Json.obj(
+            "message" -> JsString(
+              s"Une erreur s’est produite sur le serveur. " +
+                "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard ou à utiliser le mandat papier. " +
+                s"Si cette erreur persiste, " +
+                s"vous pouvez contacter l’équipe A+ : ${Constants.supportEmail}"
+            )
+          )
+        )
+    }
 
 }

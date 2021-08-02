@@ -187,9 +187,11 @@ object Operators {
               s"Vous n'avez pas les droits suffisants pour voir cette demande. " +
                 s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
             )
-          case _: Error.Database | _: Error.SqlException | _: Error.MiscException =>
+          case _: Error.Database | _: Error.SqlException | _: Error.UnexpectedServerResponse |
+              _: Error.Timeout | _: Error.MiscException =>
             InternalServerError(
               s"Une erreur s'est produite sur le serveur. " +
+                "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard. " +
                 s"Si cette erreur persiste, " +
                 s"vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
             )

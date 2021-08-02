@@ -25,6 +25,20 @@ object Error {
     override val underlyingException = Some(underlying)
   }
 
+  case class UnexpectedServerResponse(
+      eventType: EventType,
+      description: String,
+      status: Int,
+      underlying: Throwable
+  ) extends Error {
+    override val underlyingException = Some(underlying)
+  }
+
+  case class Timeout(eventType: EventType, description: String, underlying: Throwable)
+      extends Error {
+    override val underlyingException = Some(underlying)
+  }
+
   case class MiscException(eventType: EventType, description: String, underlying: Throwable)
       extends Error {
     override val underlyingException = Some(underlying)
