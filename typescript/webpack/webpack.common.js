@@ -12,7 +12,8 @@ module.exports = {
   },
   output: {
     path: path.join(__dirname, '../../public/generated-js'),
-    filename: '[name].js'
+    filename: '[name].js',
+    chunkFormat: false
   },
   module: {
     rules: [
