@@ -29,7 +29,6 @@
 
 @main(currentUser, currentUserRights, modals = modals)(s"Gestion du groupe ${userGroup.name} - ${userGroup.areaIds.flatMap(Area.fromId).map(_.name).mkString(", ")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
-    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/auto-complete.css")'>
 }{
 
 @defining(Authorization.canEditGroup(userGroup)(currentUserRights)) { canEdit =>
@@ -153,5 +152,4 @@
 }
 }
 }{
-    <script src='@routes.Assets.versioned("javascripts/auto-complete.min.js")'></script>
 }

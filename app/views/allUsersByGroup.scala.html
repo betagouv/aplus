@@ -71,9 +71,6 @@
 
 @main(currentUser, currentUserRights)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
-
-  <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/auto-complete.css")'>
-  <script src='@routes.Assets.versioned("javascripts/auto-complete.min.js")'></script>
 }{
 
   @if(currentUser.admin) {
