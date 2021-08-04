@@ -5,15 +5,9 @@ const slimSelectClass = "use-slimselect";
 
 
 
-setupSlimSelect();
-
-
-
 //
 // Transform <select> with SlimSelect
 //
-function setupSlimSelect() {
-  Array.from(document.querySelectorAll("." + slimSelectClass)).forEach(function(select) {
-    new SlimSelect({ select, selectByGroup: true, closeOnSelect: false });
-  });
-}
+Array.from(document.querySelectorAll("." + slimSelectClass)).forEach(function(select) {
+  new SlimSelect({ select, selectByGroup: true, closeOnSelect: false });
+});
