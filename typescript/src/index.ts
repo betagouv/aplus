@@ -6,15 +6,15 @@ import 'ts-polyfill/lib/es2016-array-include';
 import 'core-js/web/dom-collections';
 
 // Our scripts
-import "./application"
-import "./admin"
-import "./mdl-extensions"
-import "./validateAccount"
-import "./application-attachment"
-import "./anchorme"
-import "./showApplication"
-import "./signup"
-import "./editMyGroups"
-import "./editUser"
-import "./editGroup"
-import "./slimselect"
+import "./application";
+import "./admin";
+import "./mdl-extensions";
+import "./validateAccount";
+import "./application-attachment";
+import "./anchorme";
+import "./showApplication";
+import "./signup";
+import "./editMyGroups";
+import "./editUser";
+import "./editGroup";
+import "./slimselect";
