@@ -3,7 +3,7 @@ import Autolinker from 'autolinker';
 const autolinkerClass = "use-autolinker";
 
 
-const elements: Array<HTMLElement> = Array.from(document.querySelectorAll("." + autolinkerClass))
+const elements: Array<HTMLElement> = Array.from(document.querySelectorAll("." + autolinkerClass));
 
 if (elements.length > 0) {
 
