@@ -37,16 +37,16 @@ object head {
       webJarCss("solid.css"),
       publicCss("stylesheets/main.css"),
       publicCss("stylesheets/mdl-extensions.css"),
-      webJarCss("slimselect.min.css"),
       additionalTags,
       webJarScript("material.min.js"),
       publicScript("javascripts/polyfills.js"),
       publicScript("javascripts/main.js"),
+      publicCss("generated-js/slimselect.min.css"),
       publicCss("generated-js/index.css"),
       script(`type` := "text/javascript", src := JavascriptController.javascriptRoutes.url)
     )
 
-  def bottomScripts(implicit webJarsUtil: WebJarsUtil): Frag =
+  def bottomScripts: Frag =
     frag(
       script(
         raw("""
@@ -62,7 +62,6 @@ object head {
                 })();
        """)
       ),
-      webJarScript("slimselect.min.js"),
       publicScript("javascripts/main-page-bottom.js"),
       publicScript("generated-js/index.js")
     )

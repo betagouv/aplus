@@ -1,6 +1,7 @@
 const webpack = require('webpack');
 const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CopyPlugin = require("copy-webpack-plugin");
 
 //
 // Save output JS in public/generated-js/index.js
@@ -35,6 +36,13 @@ module.exports = {
     extensions: ['.ts', '.tsx', '.js', '.css']
   },
   plugins: [
+    new CopyPlugin({
+      patterns: [
+        // This one is needed because the maintainer did not fix the exports issue
+        // https://github.com/brianvoe/slim-select/issues/269
+        { from: "../node_modules/slim-select/dist/slimselect.min.css" },
+      ],
+    }),
     new MiniCssExtractPlugin(),
   ]
 };
