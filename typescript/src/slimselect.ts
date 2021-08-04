@@ -14,6 +14,6 @@ setupSlimSelect();
 //
 function setupSlimSelect() {
   Array.from(document.querySelectorAll("." + slimSelectClass)).forEach(function(select) {
-    new SlimSelect({ select: select, selectByGroup: true, closeOnSelect: false });
+    new SlimSelect({ select, selectByGroup: true, closeOnSelect: false });
   });
 }
