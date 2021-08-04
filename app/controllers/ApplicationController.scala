@@ -156,16 +156,6 @@ case class ApplicationController @Inject() (
     }
   }
 
-  // We want to ultimately remove the use of `request.currentUser.areas` for the
-  // prefered linked `UserGroup.areaIds`
-  private def currentAreaLegacy(implicit request: RequestWithUserData[_]): Area =
-    request.session
-      .get(Keys.Session.areaId)
-      .flatMap(UUIDHelper.fromString)
-      .orElse(request.currentUser.areas.headOption)
-      .flatMap(Area.fromId)
-      .getOrElse(Area.all.head)
-
   // Note: `defaultArea` is not stateful between pages,
   // because changing area is considered to be a special case.
   // This might change in the future depending on user feedback.
@@ -174,13 +164,23 @@ case class ApplicationController @Inject() (
       .byIdsFuture(user.groupIds)
       .map(_.flatMap(_.areaIds).flatMap(Area.fromId).headOption.getOrElse(Area.ain))
 
-  private def currentArea(implicit request: RequestWithUserData[_]): Future[Area] =
+  private def areaInQueryString(implicit request: RequestWithUserData[_]): Option[Area] =
     request
       .getQueryString(Keys.QueryParam.areaId)
       .flatMap(UUIDHelper.fromString)
       .flatMap(Area.fromId)
-      .map(successful)
+
+  private def currentArea(implicit request: RequestWithUserData[_]): Future[Area] =
+    areaInQueryString
+      .map(Future.successful)
       .getOrElse(defaultArea(request.currentUser))
+
+  private def extractAreaOutOfFormOrThrow(form: Form[_], formName: String): Area =
+    form.data
+      .get(Keys.Application.areaId)
+      .map(UUID.fromString)
+      .flatMap(Area.fromId)
+      .getOrElse(throw new Exception("No key 'areaId' in " + formName))
 
   def create: Action[AnyContent] =
     loginAction.async { implicit request =>
@@ -238,11 +238,7 @@ case class ApplicationController @Inject() (
       val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
 
       // Get `areaId` from the form, to avoid losing it in case of errors
-      val currentArea: Area = form.data
-        .get(Keys.Application.areaId)
-        .map(UUID.fromString)
-        .flatMap(Area.fromId)
-        .getOrElse(throw new Exception("No key 'areaId' in the Application creation form."))
+      val currentArea: Area = extractAreaOutOfFormOrThrow(form, "Application creation form")
 
       val (pendingAttachments, newAttachments) =
         AttachmentHelper.computeStoreAndRemovePendingAndNewApplicationAttachment(
@@ -846,13 +842,13 @@ case class ApplicationController @Inject() (
       )(AnswerFormData.apply)(AnswerFormData.unapply)
     )
 
-  private def usersWhoCanBeInvitedOn[A](
-      application: Application
-  )(implicit request: RequestWithUserData[A]): Future[List[User]] =
+  private def usersWhoCanBeInvitedOn(application: Application, currentAreaId: UUID)(implicit
+      request: RequestWithUserData[_]
+  ): Future[List[User]] =
     (if (request.currentUser.expert) {
        val creator = userService.byId(application.creatorUserId, includeDisabled = true)
        val creatorGroups: Set[UUID] = creator.toList.flatMap(_.groupIds).toSet
-       userGroupService.byArea(currentAreaLegacy.id).map { groupsOfArea =>
+       userGroupService.byArea(currentAreaId).map { groupsOfArea =>
          userService
            .byGroupIds(groupsOfArea.map(_.id))
            .filter(user => user.instructor || user.groupIds.toSet.intersect(creatorGroups).nonEmpty)
@@ -907,13 +903,17 @@ case class ApplicationController @Inject() (
   def show(id: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(id) { application =>
-        val selectedAreaId =
-          if (request.currentUser.expert) currentAreaLegacy.id else application.area
-        usersWhoCanBeInvitedOn(application).flatMap { usersWhoCanBeInvited =>
+        val selectedArea: Area =
+          request.currentUser.expert.some
+            .filter(identity)
+            .flatMap(_ => areaInQueryString)
+            .getOrElse(Area.fromId(application.area).getOrElse(Area.all.head))
+        val selectedAreaId = selectedArea.id
+        usersWhoCanBeInvitedOn(application, selectedAreaId).flatMap { usersWhoCanBeInvited =>
           groupsWhichCanBeInvited(selectedAreaId, application).map { invitableGroups =>
             val groups = userGroupService
               .byIds(usersWhoCanBeInvited.flatMap(_.groupIds))
-              .filter(_.areaIds.contains[UUID](application.area))
+              .filter(_.areaIds.contains[UUID](selectedAreaId))
             val groupsWithUsersThatCanBeInvited = groups.map { group =>
               group -> usersWhoCanBeInvited.filter(_.groupIds.contains[UUID](group.id))
             }
@@ -927,7 +927,7 @@ case class ApplicationController @Inject() (
                 application,
                 answerForm(request.currentUser),
                 openedTab,
-                currentAreaLegacy,
+                selectedArea,
                 readSharedAccountUserSignature(request.session),
                 fileExpiryDayCount = filesExpirationInDays
               )
@@ -1173,38 +1173,38 @@ case class ApplicationController @Inject() (
   def invite(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application =>
-        inviteForm
-          .bindFromRequest()
-          .fold(
-            formWithErrors => {
-              val message =
-                s"Erreur dans le formulaire d’invitation (${formWithErrors.errors.map(_.format).mkString(", ")})."
+        val form = inviteForm.bindFromRequest()
+        // Get `areaId` from the form, to avoid losing it in case of errors
+        val currentArea: Area = extractAreaOutOfFormOrThrow(form, "Invite User form")
+        form.fold(
+          formWithErrors => {
+            val message =
+              s"Erreur dans le formulaire d’invitation (${formWithErrors.errors.map(_.format).mkString(", ")})."
+            val error =
+              s"Erreur dans le formulaire d’invitation (${formErrorsLog(formWithErrors)})"
+            eventService.log(InviteFormValidationError, error, application = application.some)
+            Future(
+              Redirect(
+                routes.ApplicationController.show(applicationId).withFragment("answer-error")
+              )
+                .flashing("answer-error" -> message, "opened-tab" -> "invite")
+            )
+          },
+          inviteData =>
+            if (inviteData.invitedUsers.isEmpty && inviteData.invitedGroups.isEmpty) {
               val error =
-                s"Erreur dans le formulaire d’invitation (${formErrorsLog(formWithErrors)})"
+                s"Erreur dans le formulaire d’invitation (une personne ou un organisme doit être sélectionné)"
               eventService.log(InviteFormValidationError, error, application = application.some)
               Future(
                 Redirect(
                   routes.ApplicationController.show(applicationId).withFragment("answer-error")
                 )
-                  .flashing("answer-error" -> message, "opened-tab" -> "invite")
+                  .flashing("answer-error" -> error, "opened-tab" -> "invite")
               )
-            },
-            inviteData =>
-              if (inviteData.invitedUsers.isEmpty && inviteData.invitedGroups.isEmpty) {
-                val error =
-                  s"Erreur dans le formulaire d’invitation (une personne ou un organisme doit être sélectionné)"
-                eventService.log(InviteFormValidationError, error, application = application.some)
-                Future(
-                  Redirect(
-                    routes.ApplicationController.show(applicationId).withFragment("answer-error")
-                  )
-                    .flashing("answer-error" -> error, "opened-tab" -> "invite")
-                )
-              } else {
-                val selectedAreaId =
-                  if (request.currentUser.expert) currentAreaLegacy.id else application.area
-                usersWhoCanBeInvitedOn(application).flatMap { singleUsersWhoCanBeInvited =>
-                  groupsWhichCanBeInvited(selectedAreaId, application).map { invitableGroups =>
+            } else {
+              usersWhoCanBeInvitedOn(application, currentArea.id).flatMap {
+                singleUsersWhoCanBeInvited =>
+                  groupsWhichCanBeInvited(currentArea.id, application).map { invitableGroups =>
                     val usersWhoCanBeInvited: List[User] =
                       singleUsersWhoCanBeInvited ::: userService
                         .byGroupIds(invitableGroups.map(_.id))
@@ -1219,7 +1219,7 @@ case class ApplicationController @Inject() (
                       .filter(user => inviteData.invitedUsers.contains[UUID](user.id))
                     val invitedUsers: Map[UUID, String] =
                       (invitedUsersFromGroups ::: directlyInvitedUsers)
-                        .map(user => (user.id, contextualizedUserName(user, selectedAreaId)))
+                        .map(user => (user.id, contextualizedUserName(user, currentArea.id)))
                         .toMap
 
                     val answer = Answer(
@@ -1229,7 +1229,7 @@ case class ApplicationController @Inject() (
                       AnswerType.Custom,
                       inviteData.message,
                       request.currentUser.id,
-                      contextualizedUserName(request.currentUser, selectedAreaId),
+                      contextualizedUserName(request.currentUser, currentArea.id),
                       invitedUsers,
                       not(inviteData.privateToHelpers),
                       declareApplicationHasIrrelevant = false,
@@ -1263,9 +1263,9 @@ case class ApplicationController @Inject() (
                       InternalServerError("Les utilisateurs n'ont pas pu être invités")
                     }
                   }
-                }
               }
-          )
+            }
+        )
       }
     }
 

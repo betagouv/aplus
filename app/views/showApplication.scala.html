@@ -3,8 +3,9 @@
 @import _root_.helper.BooleanHelper.not
 @import cats.implicits.catsSyntaxEq
 @import models.Answer.AnswerType
+@import serializers.Keys
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil, fileExpiryDayCount: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, selectedArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil, fileExpiryDayCount: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 @organisationIcon(creatorUserName: String) = {
     @Map("A+" -> "aplus",
@@ -577,10 +578,16 @@ dialog {
                     @if(groupsWithUsersThatCanBeInvited.nonEmpty || groupsThatCanBeInvited.nonEmpty || currentUser.expert) {
                         <div class="mdl-tabs__panel @if(openedTab =="invite"){ is-active }" id="invite">
                             <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col mdl-grid aplus-protected-form" method="post">
+
+                                <input type="hidden"
+                                       name="@{Keys.Application.areaId}"
+                                       readonly
+                                       value="@{selectedArea.id}">
+
                                 @if(currentUser.expert) {
                                     <div>
                                         Territoire concerné :
-                                    @helpers.changeArea(currentArea, currentUser.areas.flatMap(Area.fromId))
+                                    @helpers.changeAreaSelect(selectedArea, currentUser.areas.flatMap(Area.fromId), routes.ApplicationController.show(application.id))
                                     </div>
                                 }
                                 @helper.CSRF.formField
