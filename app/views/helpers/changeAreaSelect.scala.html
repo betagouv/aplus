@@ -1,3 +1,4 @@
+@import cats.implicits.catsSyntaxEq
 @import serializers.Keys
 
 @(currentArea: Area, selectableAreas: List[Area], redirectUrlPath: Call)
@@ -8,6 +9,6 @@
         data-redirect-url-prefix="@redirectUrlPath?@{Keys.QueryParam.areaId}=">
     @for(area <- selectableAreas) {
         <option value="@area.id"
-        @if(area.id == currentArea.id) { selected }>@area</option>
+        @if(area.id === currentArea.id) { selected }>@area</option>
     }
 </select>

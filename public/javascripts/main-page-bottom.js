@@ -92,18 +92,6 @@ setupApplicationForm();
 
 
 //
-// Transform <select> with SlimSelect
-//
-
-var slimSelectClass = "use-slimselect";
-
-Array.from(document.querySelectorAll("." + slimSelectClass)).forEach(function (select) {
-  new SlimSelect({ select: select, selectByGroup: true, closeOnSelect: false});
-});
-
-
-
-//
 // Welcome Page
 //
 
