@@ -222,8 +222,8 @@ if (window.document.getElementById(deploymentTableTagId)) {
       field: "total",
       sorter: "number",
       headerVertical: true,
-      formatter: function(cell) {
-        var value = cell.getValue();
+      formatter: (cell) => {
+        let value = cell.getValue();
         if (value !== '') {
           if (value < 1) {
             cell.getElement().classList.add("mdl-color--red");
