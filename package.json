@@ -14,7 +14,7 @@
     "ts-polyfill": "3.8.2"
   },
   "devDependencies": {
-    "@types/tabulator-tables": "4.8.0",
+    "@types/tabulator-tables": "4.9.3",
     "copy-webpack-plugin": "9.0.1",
     "css-loader": "6.2.0",
     "mini-css-extract-plugin": "2.2.0",
