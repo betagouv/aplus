@@ -188,7 +188,8 @@ case class ApiController @Inject() (
               numOfInstructorByOrganisationSet = numOfInstructors.map {
                 case (organisations, count) => (organisationSetId(organisations), count)
               },
-              numOfOrganisationSetWithOneInstructor = numOfInstructors.count(_._2 > 0)
+              numOfOrganisationSetWithOneInstructor = numOfInstructors
+                .count { case (_, numOfInstructors) => numOfInstructors > 0 }
             )
           }
 

@@ -8,13 +8,13 @@
 // To be noted that we can make it work like this, however, without TS types
 // import 'tabulator-tables';
 // const Tabulator = require('tabulator-tables').default;
-import Tabulator from 'tabulator-tables'
+import Tabulator from 'tabulator-tables';
 import "tabulator-tables/dist/css/tabulator.css";
 
 
-const usersTableId = "tabulator-users-table"
-const currentAreaValueId = "current-area-value"
-const currentAreaDatasetKey = "areaId"
+const usersTableId = "tabulator-users-table";
+const currentAreaValueId = "current-area-value";
+const currentAreaDatasetKey = "areaId";
 
 
 interface UserInfosGroup {
@@ -37,7 +37,7 @@ if (window.document.getElementById(usersTableId)) {
     let groups = <Array<UserInfosGroup>>cell.getRow().getData().groups;
     let links = "";
     let isNotFirst = false;
-    groups.forEach(group => {
+    groups.forEach((group) => {
       let groupUrl = jsRoutes.controllers.GroupController.editGroup(group.id).url;
       let groupName = group.name;
       if (isNotFirst) {
@@ -154,7 +154,7 @@ if (window.document.getElementById(usersTableId)) {
     ajaxURL: jsRoutes.controllers.UserController.allJson(areaId).url,
     height: "80vh",
     columnMaxWidth: 300,
-    rowFormatter: rowFormatter,
+    rowFormatter,
     langs: {
       "fr-fr": {
         pagination: {
@@ -173,8 +173,8 @@ if (window.document.getElementById(usersTableId)) {
         }
       }
     },
-    columns: columns,
-  }
+    columns,
+  };
   const table = new Tabulator("#" + usersTableId, options);
   table.setLocale("fr-fr");
   table.setSort("name", "asc");

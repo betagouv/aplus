@@ -13,10 +13,10 @@ window["XLSX"] = XLSX;
 //
 // Admin page for France Service deployment
 //
-const franceServiceDeploymentTableTagId = "aplus-admin-deployment-france-service-table"
-const franceServiceDeploymentTotalTagId = "aplus-admin-deployment-france-service-total"
-const franceServiceDeploymentDownloadBtnCsvId = "aplus-admin-deployment-france-service-download-btn-csv"
-const franceServiceDeploymentDownloadBtnXlsxId = "aplus-admin-deployment-france-service-download-btn-xlsx"
+const franceServiceDeploymentTableTagId = "aplus-admin-deployment-france-service-table";
+const franceServiceDeploymentTotalTagId = "aplus-admin-deployment-france-service-total";
+const franceServiceDeploymentDownloadBtnCsvId = "aplus-admin-deployment-france-service-download-btn-csv";
+const franceServiceDeploymentDownloadBtnXlsxId = "aplus-admin-deployment-france-service-download-btn-xlsx";
 
 
 // TODO: macro that will generate field names from the scala case class (Scala => TS)
@@ -166,7 +166,7 @@ if (window.document.getElementById(deploymentTableTagId)) {
   if (window.location.search.indexOf("uniquement-fs=non") > -1) {
     url = url + "?uniquement-fs=non";
   }
-  fetch(url).then(response => response.json()).then((deploymentData: DeploymentData) => {
+  fetch(url).then((response) => response.json()).then((deploymentData: DeploymentData) => {
 
     const organisationFormatter: Tabulator.Formatter = function(cell) {
       const value = cell.getValue();
@@ -197,8 +197,8 @@ if (window.document.getElementById(deploymentTableTagId)) {
       return value;
     };
 
-    const groupingColumns = deploymentData.organisationSets.map(orgSet => {
-      const title = orgSet.organisations.map(organisation => organisation.shortName).join(" / ");
+    const groupingColumns = deploymentData.organisationSets.map((orgSet) => {
+      const title = orgSet.organisations.map((organisation) => organisation.shortName).join(" / ");
       const field = orgSet.id;
 
       const column: Tabulator.ColumnDefinition = {
@@ -244,7 +244,7 @@ if (window.document.getElementById(deploymentTableTagId)) {
     const columns = [areaColumn].concat(groupingColumns).concat([totalColumn]);
 
     type Row = { [index: string]: string | number };
-    const data = deploymentData.areasData.map(areaData => {
+    const data = deploymentData.areasData.map((areaData) => {
       let rowData: Row = {
         areaName: areaData.areaName,
         total: areaData.numOfOrganisationSetWithOneInstructor,
