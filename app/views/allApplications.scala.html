@@ -51,7 +51,7 @@
            <br>
 
 
-           <input class="mdl-cell mdl-cell--6-col" type="search" placeholder="Filtrer les demandes (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/>
+           <input class="mdl-cell mdl-cell--6-col" type="search" placeholder="Filtrer les demandes (saisir nom, numéro, description, etc)" id="search-input"/>
            <br>
 
        <div class="mdl-cell mdl-cell--12-col pem-container single--overflow-auto">
@@ -81,7 +81,7 @@
                     </thead>
                     <tfoot class="invisible">
                         <tr>
-                            <td class="mdl-data-table__cell--non-numeric" colspan="8" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+                            <td class="mdl-data-table__cell--non-numeric" colspan="8" style="text-align: center"><button id="clear-search" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">Supprimer le filtre et afficher toutes les demandes</button></td>
                         </tr>
                     </tfoot>
                     <tbody>
