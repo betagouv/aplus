@@ -57,12 +57,14 @@ import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.{Form, Mapping}
 import play.api.i18n.I18nSupport
+import play.api.libs.json.Json
 import play.api.mvc._
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 import serializers.{Keys, UserAndGroupCsvSerializer}
+import serializers.ApiModel.UserInfos
 import services._
 
 @Singleton
@@ -161,56 +163,52 @@ case class UserController @Inject() (
       TemporaryRedirect(routes.UserController.all(Area.allArea.id).url)
     }
 
+  def usersAndGroups(selectedArea: Area)(implicit request: RequestWithUserData[_]) = {
+    val allAreasGroupsFuture: Future[List[UserGroup]] =
+      if (Authorization.isAdmin(request.rights)) {
+        if (selectedArea.id === Area.allArea.id) {
+          groupService.byAreas(request.currentUser.areas)
+        } else {
+          groupService.byArea(selectedArea.id)
+        }
+      } else if (Authorization.isObserver(request.rights)) {
+        groupService.byOrganisationIds(request.currentUser.observableOrganisationIds)
+      } else if (Authorization.isManager(request.rights)) {
+        groupService.byIdsFuture(request.currentUser.groupIds)
+      } else {
+        eventService.log(AllUserIncorrectSetup, "Erreur d'accès aux groupes")
+        Future(Nil)
+      }
+    val groupsFuture: Future[List[UserGroup]] =
+      allAreasGroupsFuture.map(groups =>
+        if (selectedArea.id === Area.allArea.id) {
+          groups
+        } else {
+          groups.filter(_.areaIds.contains[UUID](selectedArea.id))
+        }
+      )
+    val usersFuture: Future[List[User]] =
+      if (Authorization.isAdmin(request.rights) && selectedArea.id === Area.allArea.id) {
+        // Includes users without any group for debug purpose
+        userService.all
+      } else {
+        groupsFuture.map(groups => userService.byGroupIds(groups.map(_.id), includeDisabled = true))
+      }
+    usersFuture.zip(groupsFuture)
+  }
+
   def all(areaId: UUID): Action[AnyContent] =
     loginAction.async { implicit request: RequestWithUserData[AnyContent] =>
       asUserWhoSeesUsersOfArea(areaId) { () =>
         AllUserUnauthorized -> "Accès non autorisé à l'admin des utilisateurs"
       } { () =>
         val selectedArea = Area.fromId(areaId).get
-
-        val allAreasGroupsFuture: Future[List[UserGroup]] =
-          if (Authorization.isAdmin(request.rights)) {
-            if (selectedArea.id === Area.allArea.id) {
-              groupService.byAreas(request.currentUser.areas)
-            } else {
-              groupService.byArea(areaId)
-            }
-          } else if (Authorization.isObserver(request.rights)) {
-            groupService.byOrganisationIds(request.currentUser.observableOrganisationIds)
-          } else if (Authorization.isManager(request.rights)) {
-            groupService.byIdsFuture(request.currentUser.groupIds)
-          } else {
-            eventService.log(AllUserIncorrectSetup, "Erreur d'accès aux groupes")
-            Future(Nil)
-          }
-        val groupsFuture: Future[List[UserGroup]] =
-          allAreasGroupsFuture.map(groups =>
-            if (selectedArea.id === Area.allArea.id) {
-              groups
-            } else {
-              groups.filter(_.areaIds.contains[UUID](selectedArea.id))
-            }
-          )
-        val usersFuture: Future[List[User]] =
-          if (Authorization.isAdmin(request.rights) && areaId === Area.allArea.id) {
-            // Includes users without any group for debug purpose
-            userService.all
-          } else {
-            groupsFuture.map(groups =>
-              userService.byGroupIds(groups.map(_.id), includeDisabled = true)
-            )
-          }
-        val applications = applicationService.allByArea(selectedArea.id, anonymous = true)
-
-        eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
-        usersFuture.zip(groupsFuture).map { case (users, groups) =>
+        usersAndGroups(selectedArea).map { case (users, groups) =>
+          val applications = applicationService.allByArea(selectedArea.id, anonymous = true)
+          eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
           val result = request.getQueryString(Keys.QueryParam.vue).getOrElse("nouvelle") match {
             case "nouvelle" if request.currentUser.admin =>
-              views.html.allUsersNew(request.currentUser, request.rights)(
-                groups,
-                users,
-                selectedArea
-              )
+              views.html.allUsersNew(request.currentUser, request.rights)(selectedArea)
             case _ =>
               views.html.allUsersByGroup(request.currentUser, request.rights)(
                 groups,
@@ -224,7 +222,46 @@ case class UserController @Inject() (
       }
     }
 
-  def allCSV(areaId: java.util.UUID): Action[AnyContent] =
+  def allJson(areaId: UUID): Action[AnyContent] =
+    loginAction.async { implicit request: RequestWithUserData[AnyContent] =>
+      asUserWhoSeesUsersOfArea(areaId) { () =>
+        AllUserUnauthorized -> "Accès non autorisé à l'admin des utilisateurs"
+      } { () =>
+        val selectedArea = Area.fromId(areaId).get
+        usersAndGroups(selectedArea).map { case (users, groups) =>
+          eventService.log(UsersShowed, "Appelle la liste des utilisateurs")
+          val idToGroup = groups.map(group => (group.id, group)).toMap
+          val userInfos = users.map { user =>
+            UserInfos(
+              id = user.id,
+              firstName = user.firstName,
+              lastName = user.lastName,
+              name = user.name,
+              qualite = user.qualite,
+              email = user.email,
+              phoneNumber = user.phoneNumber,
+              helper = user.helperRoleName.nonEmpty,
+              instructor = user.instructorRoleName.nonEmpty,
+              areas = user.areas.flatMap(Area.fromId).map(_.toString),
+              groupNames = user.groupIds.flatMap(idToGroup.get).map(_.name),
+              groups = user.groupIds
+                .flatMap(idToGroup.get)
+                .map(group => UserInfos.Group(group.id, group.name)),
+              groupEmails = user.groupIds.flatMap(idToGroup.get).flatMap(_.email),
+              groupAdmin = user.groupAdminRoleName.nonEmpty,
+              admin = user.adminRoleName.nonEmpty,
+              expert = user.expert,
+              disabled = user.disabledRoleName.nonEmpty,
+              sharedAccount = user.sharedAccount,
+              cgu = user.cguAcceptationDate.nonEmpty,
+            )
+          }
+          Ok(Json.toJson(userInfos))
+        }
+      }
+    }
+
+  def allCSV(areaId: UUID): Action[AnyContent] =
     loginAction.async { implicit request: RequestWithUserData[AnyContent] =>
       asAdminWhoSeesUsersOfArea(areaId) { () =>
         AllUserCSVUnauthorized -> "Accès non autorisé à l'export utilisateur"

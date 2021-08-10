@@ -4,6 +4,7 @@ import 'ts-polyfill/lib/es2015-core';
 import 'ts-polyfill/lib/es2016-array-include';
 // This adds NodeList.forEach, etc.
 import 'core-js/web/dom-collections';
+import 'unfetch/polyfill';
 
 // Our scripts
 import "./admin";
@@ -23,5 +24,6 @@ import "./searchInput";
 import "./showApplication";
 import "./signup";
 import "./slimselect";
+import "./users";
 import "./validateAccount";
 import "./welcome";
