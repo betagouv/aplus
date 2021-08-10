@@ -1,142 +1,19 @@
-@(currentUser: User, currentUserRights: Authorization.UserRights)(data: List[(Area, List[(Set[Organisation],Int)], Int)], organisationSetToCountOfCounts: Map[Set[Organisation], Int], organisationGrouping: List[Set[Organisation]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
-@main(currentUser, currentUserRights, maxWidth = false)(s"Tableau de suivie déploiement") {
-    @webJarsUtil.locate("tabulator.min.css").css()
-    @webJarsUtil.locate("tabulator.min.js").script()
-    @webJarsUtil.locate("xlsx.full.min.js").script()
+@main(currentUser, currentUserRights, maxWidth = false)(s"Tableau de suivi du déploiement") {
 }{
     <div class="mdl-cell mdl-cell--12-col">
         <a class="mdl-button mdl-button--raised" href="@routes.AreaController.franceServiceDeploymentDashboard">Tableau Déploiement France Services</a>
     </div>
     <h5 class="title--addline">Nombre d'agents instructeurs par organisation</h5>
     <i>Les agents sont comptés double si ils sont dans plusieurs départements. Les organisations manquantes ne sont pas affichées. Certains agents ne sont pas détectés comme faisant partie d'un organisation (Vous devez corriger le groupe dans ce cas)</i>
-    <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">
-        @for(organisationSet <- data.head._2.map(_._1)) {
-            <div class="mdl-cell mdl-cell--2-col">
-                <label>
-                    <input type="checkbox" checked name="@{organisationSet.map(_.id.toString).mkString}" onchange="table.toggleColumn('@{organisationSet.map(_.id.toString).mkString}')">
-                    @{organisationSet.map(_.shortName).mkString("/")}
-                </label>
-            </div>
-        }
-    </div>
-    <div id="table" class="mdl-cell mdl-cell--12-col"></div>
+    <div id="aplus-admin-deployment-table" class="mdl-cell mdl-cell--12-col"></div>
     <div class="mdl-cell mdl-cell--12-col">
         <a class="mdl-button mdl-button--raised" href="@routes.AreaController.deploymentDashboard?uniquement-fs=non">Afficher tous les organismes</a>
-        <button class="mdl-button mdl-button--raised" onclick="downloadCSV()">Télécharger CSV</button>
-        <button class="mdl-button mdl-button--raised" onclick="downloadXLSX()">Télécharger XLSX</button>
+        <button id="aplus-admin-deployment-download-btn-csv"
+                class="mdl-button mdl-button--raised">Télécharger CSV</button>
+        <button id="aplus-admin-deployment-download-btn-xlsx"
+                class="mdl-button mdl-button--raised">Télécharger XLSX</button>
     </div>
-    <script>
-       var tableData = [
-           @for((area: Area, usersSumPerOrganisation: List[(Set[Organisation], Int)], total) <- data) {
-                { area: "@area",
-                    @for((organisations, userSum) <- usersSumPerOrganisation)  {
-                        @{organisations.map(_.id.toString).mkString} : @userSum,
-                    }
-                  total: "@total"
-                },
-           }
-           {
-                area: "Couverture",
-                @for((organisations, count) <- organisationSetToCountOfCounts)  {
-                    @{organisations.map(_.id.toString).mkString} : "@count",
-                }
-                total: "",
-           },
-           {
-               area: "Avancement",
-               @for((organisations, count) <- organisationSetToCountOfCounts)  {
-                    @{organisations.map(_.id.toString).mkString} : "@(math.round(count*1000.toDouble/data.length)/10) %",
-                   @*********************
-                    * Hack to have 1 number after the "," *
-                    *********************@
-               }
-               total: "",
-           },
-       ]
-
-       var columns = [
-           {title: "Département", field: "area", sorter:"string", width:150,
-               frozen:true},
-           @for(organisations <- organisationGrouping) {
-                {
-                    title: "@{organisations.map(_.shortName).mkString("/")}",
-                    field: "@{organisations.map(_.id.toString).mkString}",
-                    sorter:"number",
-                    headerVertical:true,
-                    formatter: function(cell, formatterParams, onRendered) {
-                        var value = cell.getValue();
-                        if (cell.getRow()._row.data.area == "Couverture") {
-                            if (value < 1) {
-                                cell.getElement().classList.add("mdl-color--red");
-                            } else if (value <= 4) {
-                                cell.getElement().classList.add("mdl-color--light-green");
-                            } else if (value <= 7) {
-                                cell.getElement().classList.add("mdl-color--medium-green");
-                            } else {
-                                cell.getElement().classList.add("mdl-color--dark-green");
-                            }
-                            value = value + ' / @data.length';
-                            return value;
-                        }
-                        if (cell.getRow()._row.data.area !== "Avancement") {
-                            if (value < 1) {
-                                cell.getElement().classList.add("mdl-color--red");
-                            } else if (value >= 2) {
-                                cell.getElement().classList.add("mdl-color--green");
-                            } else {
-                                cell.getElement().classList.add("mdl-color--yellow");
-                            }
-                        }
-                        return value;
-                    }
-                },
-           },
-           {
-                title: "Couverture",
-                field: "total",
-                sorter: "number",
-                headerVertical: true,
-                formatter: function(cell, formatterParams, onRendered) {
-                    var value = cell.getValue();
-                    if (value !== '') {
-                        if (value < 1) {
-                            cell.getElement().classList.add("mdl-color--red");
-                        } else if (value <= 4) {
-                            cell.getElement().classList.add("mdl-color--light-green");
-                        } else if (value <= 7){
-                            cell.getElement().classList.add("mdl-color--medium-green");
-                        } else {
-                            cell.getElement().classList.add("mdl-color--dark-green");
-                        }
-                        value = value + ' / @data.head._2.length';
-                    }
-                    return value;
-                }
-           }
-       ]
-
-       var table = new Tabulator("#table", {
-           data:tableData,           //load row data from array
-           layout:"fitColumns",      //fit columns to width of table
-           responsiveLayout:"hide",  //hide columns that dont fit on the table
-           movableColumns:true,      //allow column order to be changed
-           resizableRows:true,       //allow row order to be changed
-           initialSort: [],
-           columns: columns,
-           height: "85vh",
-       });
-
-       function downloadCSV() {
-           var date = new Date().toISOString().replace(/:/g,'-');
-           table.download('csv', 'aplus-export-deploiement-'+date+'.csv');
-       }
-
-       function downloadXLSX() {
-           var date = new Date().toISOString().replace(/:/g,'-');
-           table.download("xlsx", 'aplus-export-deploiement-'+date+'.xlsx', {sheetName:"Déploiement"});
-       }
-
-    </script>
 }{
 }
