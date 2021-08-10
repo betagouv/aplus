@@ -26,7 +26,7 @@ const franceServiceDeploymentColumns: Array<Tabulator.ColumnDefinition> = [
     title: "Département",
     field: "departementName",
     sorter: "string",
-    formatter: function(cell) {
+    formatter: (cell) => {
       const value = cell.getValue();
       const departementIsDone = cell.getRow().getData().departementIsDone;
       if (departementIsDone) {
@@ -41,7 +41,7 @@ const franceServiceDeploymentColumns: Array<Tabulator.ColumnDefinition> = [
     title: "Code",
     field: "departementCode",
     sorter: "string",
-    formatter: function(cell) {
+    formatter: (cell) => {
       const value = cell.getValue();
       const departementIsDone = cell.getRow().getData().departementIsDone;
       if (departementIsDone) {
@@ -56,7 +56,7 @@ const franceServiceDeploymentColumns: Array<Tabulator.ColumnDefinition> = [
     title: "Déploiement",
     field: "groupSize",
     sorter: "number",
-    formatter: function(cell) {
+    formatter: (cell) => {
       const value = cell.getValue();
       if (value < 1) {
         cell.getElement().classList.add("mdl-color--red");
@@ -102,7 +102,7 @@ if (window.document.getElementById(franceServiceDeploymentTableTagId)) {
 
 
 
-  window.document.getElementById(franceServiceDeploymentDownloadBtnCsvId).onclick = function() {
+  window.document.getElementById(franceServiceDeploymentDownloadBtnCsvId).onclick = () => {
     const date = new Date().toISOString().replace(/:/g, '-');
     franceServiceDeploymentTable.download(
       'csv',
@@ -110,7 +110,7 @@ if (window.document.getElementById(franceServiceDeploymentTableTagId)) {
     );
   };
 
-  window.document.getElementById(franceServiceDeploymentDownloadBtnXlsxId).onclick = function() {
+  window.document.getElementById(franceServiceDeploymentDownloadBtnXlsxId).onclick = () => {
     const date = new Date().toISOString().replace(/:/g, '-');
     franceServiceDeploymentTable.download(
       "xlsx",
@@ -168,7 +168,7 @@ if (window.document.getElementById(deploymentTableTagId)) {
   }
   fetch(url).then((response) => response.json()).then((deploymentData: DeploymentData) => {
 
-    const organisationFormatter: Tabulator.Formatter = function(cell) {
+    const organisationFormatter: Tabulator.Formatter = (cell) => {
       const value = cell.getValue();
       const areaName = cell.getRow().getData().areaName;
 
@@ -270,12 +270,12 @@ if (window.document.getElementById(deploymentTableTagId)) {
       height: "85vh",
     });
 
-    window.document.getElementById(deploymentDownloadBtnCsvId).onclick = function() {
+    window.document.getElementById(deploymentDownloadBtnCsvId).onclick = () => {
       const date = new Date().toISOString().replace(/:/g, '-');
       table.download('csv', 'aplus-export-deploiement-' + date + '.csv');
     };
 
-    window.document.getElementById(deploymentDownloadBtnXlsxId).onclick = function() {
+    window.document.getElementById(deploymentDownloadBtnXlsxId).onclick = () => {
       const date = new Date().toISOString().replace(/:/g, '-');
       table.download("xlsx", 'aplus-export-deploiement-' + date + '.xlsx', { sheetName: "Déploiement" });
     };
