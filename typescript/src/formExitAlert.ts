@@ -18,7 +18,6 @@ function setupOneProtectedForm(form: Element) {
   if (form == null) {
     return;
   }
-  console.log("Protection of the form will be activated.");
 
   form.querySelectorAll("input, textarea, select").forEach((elem) => {
     elem.addEventListener("input", () => {

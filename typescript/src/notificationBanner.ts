@@ -10,8 +10,8 @@ function onClickRemoveElement(clickElement: Element, elementToRemove: Element) {
   clickElement.addEventListener("click", () => {
     // Cross browser
     // https://stackoverflow.com/questions/3387427/remove-element-by-id
-    elementToRemove.outerHTML = ""
-  })
+    elementToRemove.outerHTML = "";
+  });
 }
 
 document.querySelectorAll(".notification").forEach((elem) => {

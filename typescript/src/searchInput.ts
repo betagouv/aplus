@@ -7,7 +7,7 @@ if (searchInput) {
   const onSearch = () => {
     const searchTerm = searchInput.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
     if (searchTerm.length > 2) {
-      document.querySelectorAll("tfoot").forEach((row) => { row.classList.remove("invisible") });
+      document.querySelectorAll("tfoot").forEach((row) => { row.classList.remove("invisible"); });
       document.querySelectorAll(".searchable-row").forEach((row) => {
         const searchData = row.getAttribute("data-search");
         const searchResult = searchData.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").indexOf(searchTerm);
@@ -27,9 +27,9 @@ if (searchInput) {
     } else {
       document.querySelectorAll(".searchable-row").forEach((row) => { row.classList.remove("invisible"); });
       document.querySelectorAll(".search-cell").forEach((cell) => { cell.innerHTML = ""; });
-      document.querySelectorAll("tfoot").forEach((row) => { row.classList.add("invisible") });
+      document.querySelectorAll("tfoot").forEach((row) => { row.classList.add("invisible"); });
     }
-  }
+  };
 
   searchInput.addEventListener('input', onSearch);
   searchInput.addEventListener('search', onSearch);
@@ -37,7 +37,7 @@ if (searchInput) {
     clearSearch.addEventListener('click', () => {
       searchInput.value = "";
       onSearch();
-    })
+    });
   }
 
 }
