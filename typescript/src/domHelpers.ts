@@ -2,6 +2,8 @@ const deleteElementClass = "onclick-delete-element";
 const checkAllClass = "onclick-check-all";
 const uncheckAllClass = "onclick-uncheck-all";
 const disableOnSubmitClass = "onsubmit-disable";
+const changeLocationClass = "onclick-change-location";
+const printButtonClass = "onclick-print";
 
 
 document.querySelectorAll<HTMLElement>("." + deleteElementClass).forEach((button) => {
@@ -35,5 +37,20 @@ document.querySelectorAll<HTMLElement>("." + uncheckAllClass).forEach((button) =
 document.querySelectorAll<HTMLButtonElement>("." + disableOnSubmitClass).forEach((button) => {
   button.addEventListener("submit", () => {
     button.disabled = true;
+  });
+});
+
+document.querySelectorAll<HTMLElement>("." + changeLocationClass).forEach((button) => {
+  const url = button.dataset.location;
+  if (url) {
+    button.addEventListener("click", () => {
+      window.location.href = url;
+    });
+  }
+});
+
+document.querySelectorAll<HTMLElement>("." + printButtonClass).forEach((button) => {
+  button.addEventListener("click", () => {
+    window.print();
   });
 });
