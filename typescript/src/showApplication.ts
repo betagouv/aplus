@@ -67,13 +67,13 @@ archiveButton3?.addEventListener('click', showDialog);
 if (customAnswerInput) {
   customAnswerInput.addEventListener("keyup", () => {
     reviewValidationButton.disabled = customAnswerInput.value === '';
-  })
+  });
 }
 
 if (nonInstructorAnswerInput) {
   nonInstructorAnswerInput.addEventListener("keyup", () => {
     reviewValidationButton.disabled = nonInstructorAnswerInput.value === '';
-  })
+  });
 }
 
 enableFeedbackOnChangeForComponentId('no');
