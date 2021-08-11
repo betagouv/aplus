@@ -6,7 +6,7 @@
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("sortable/sortable.css")'>
     <script src="@routes.Assets.versioned("sortable/sortable.js")"></script>
 }{
-    <input class="mdl-cell mdl-cell--12-col" type="search" placeholder="Filtrer les événements (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
+    <input class="mdl-cell mdl-cell--12-col" type="search" placeholder="Filtrer les événements (saisir nom, numéro, description, etc)" id="search-input"/><br>
     <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
         <div class="mdl-cell mdl-cell--12-col pem-container">
             <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp sortable" style="white-space: normal;">
@@ -27,7 +27,7 @@
                 </thead>
                 <tfoot class="invisible">
                     <tr>
-                        <td class="mdl-data-table__cell--non-numeric" colspan="8" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les éléments</button></td>
+                        <td class="mdl-data-table__cell--non-numeric" colspan="8" style="text-align: center"><button id="clear-search" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">Supprimer le filtre et afficher toutes les éléments</button></td>
                     </tr>
                 </tfoot>
                 <tbody>

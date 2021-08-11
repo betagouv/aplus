@@ -39,8 +39,6 @@ object head {
       publicCss("stylesheets/mdl-extensions.css"),
       additionalTags,
       webJarScript("material.min.js"),
-      publicScript("javascripts/polyfills.js"),
-      publicScript("javascripts/main.js"),
       publicCss("generated-js/slimselect.min.css"),
       publicCss("generated-js/index.css"),
       script(`type` := "text/javascript", src := JavascriptController.javascriptRoutes.url)
@@ -62,7 +60,6 @@ object head {
                 })();
        """)
       ),
-      publicScript("javascripts/main-page-bottom.js"),
       publicScript("generated-js/index.js")
     )
 
