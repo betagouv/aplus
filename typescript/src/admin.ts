@@ -1,11 +1,10 @@
 import Tabulator from 'tabulator-tables';
 import "tabulator-tables/dist/css/tabulator.css";
-import XLSX from 'xlsx';
 
 
 // Tabulator uses the global XLSX
 // https://github.com/olifolkerd/tabulator/blob/4.9.3/src/js/modules/download.js#L331
-window["XLSX"] = XLSX;
+// The dependency is served in another <script>
 
 
 
