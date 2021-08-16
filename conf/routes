@@ -33,7 +33,9 @@ POST        /mandats/sms/webhook                                                
 
 
 # Stats
++ nocsp
 GET         /stats                                                                           controllers.ApplicationController.stats
++ nocsp
 POST        /stats                                                                           controllers.ApplicationController.stats
 
 

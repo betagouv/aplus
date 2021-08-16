@@ -3,6 +3,7 @@ import "dialog-polyfill/dist/dialog-polyfill.css";
 
 const reviewValidationButton = <HTMLButtonElement | null>document.getElementById('review-validation');
 const customAnswerInput = <HTMLInputElement | null>document.getElementById('custom-answer');
+const nonInstructorAnswerInput = <HTMLInputElement | null>document.getElementById('non-instructor-answer');
 const dialog = <HTMLDialogElement | null>document.querySelector('#dialog-terminate');
 const reopenButton = <HTMLElement | null>document.getElementById('reopen-button');
 const archiveButton1 = document.getElementById('archive-button-1');
@@ -14,6 +15,7 @@ const quickAnswer3Button = document.getElementById('option-3');
 const quickAnswer4Button = document.getElementById('option-4');
 const closeDialogTerminateButton = document.getElementById('close-dialog-terminate');
 const closeDialogQuitButton = document.getElementById('close-dialog-quit');
+
 
 const enableButtonAndDisableCustomAnswer = () => {
   reviewValidationButton.disabled = false;
@@ -61,6 +63,18 @@ closeDialogQuitButton?.addEventListener('click', closeDialog);
 archiveButton1?.addEventListener('click', showDialog);
 archiveButton2?.addEventListener('click', showDialog);
 archiveButton3?.addEventListener('click', showDialog);
+
+if (customAnswerInput) {
+  customAnswerInput.addEventListener("keyup", () => {
+    reviewValidationButton.disabled = customAnswerInput.value === '';
+  });
+}
+
+if (nonInstructorAnswerInput) {
+  nonInstructorAnswerInput.addEventListener("keyup", () => {
+    reviewValidationButton.disabled = nonInstructorAnswerInput.value === '';
+  });
+}
 
 enableFeedbackOnChangeForComponentId('no');
 enableFeedbackOnChangeForComponentId('yes');

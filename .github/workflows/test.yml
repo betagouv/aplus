@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up JDK 1.8
       uses: actions/setup-java@v2
       with:
@@ -21,6 +21,21 @@ jobs:
          postgresql db: 'aplus'
          postgresql user: 'aplus'
          postgresql password: 'mysecretpassword'
+
+    - name: Set up Node
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+    - name: Install npm dependencies
+      run: npm install
+    - name: Hack TS source to please HTMLUnit
+      run: sed -e "/autolinker/s/^/\/\/ /" -i typescript/src/index.ts
+    # Note that the polyfill commented below is needed for IE...
+    - name: Hack TS source to please HTMLUnit (again)
+      run: sed -e "/es2015-promise/s/^/\/\/ /" -i typescript/src/index.ts
+    - name: Build the JS blob
+      run: npm run build
+
     # We compile the tests here so the test command can run faster
     - name: Compile tests
       run: "sbt test:compile"
@@ -41,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Node 14
+    - name: Set up Node
       uses: actions/setup-node@v2
       with:
         node-version: '14'

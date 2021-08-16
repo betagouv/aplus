@@ -59,11 +59,6 @@
             <div>
                 @footer
             </div>
-            <div class="invisible">
-                <div style="text-align: center;">
-                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button>
-                </div>
-            </div>
         </div>
     </div>
 }
@@ -80,24 +75,21 @@
   }
   @if(currentUser.areas.length > 1) {
     <p class="mdl-cell mdl-cell--12-col">Territoire :
-      <select id="area-selector" name="area-selector" onchange="changeAreaApps()">
-        <option value="@Area.allArea.id" @if(selectedArea.id == Area.allArea.id) { selected }>tous les territoires</option>
-        @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-          <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area</option>
-        }
+      <select id="changeAreaSelect"
+              name="area-selector"
+              data-current-area="@{selectedArea.id}">
+        @for(area <- (Area.allArea :: currentUser.areas.flatMap(Area.fromId))) {
+          <option value="@area.id"
+                  data-redirect-url="@{routes.UserController.all(area.id).url + "?vue=classique"}"
+                  @if(area.id === selectedArea.id) { selected }>
+            @if(area.id === Area.allArea.id) { tous les territoires } else { @area }
+          </option>
+          }
       </select>
-      <script>
-              function changeAreaApps() {
-                var areaSelected = document.getElementById("area-selector").value;
-                if(areaSelected != "@selectedArea.id") {
-                  document.location = jsRoutes.controllers.UserController.all(areaSelected).url + "?vue=classique";
-                }
-              }
-      </script>
     </p>
   }
   @if(currentUser.admin) {
-    <button class="mdl-button mdl-js-button mdl-button--raised" onclick="document.location = '@routes.UserController.allCSV(selectedArea.id)'">
+    <button class="mdl-button mdl-js-button mdl-button--raised onclick-change-location" data-location="@routes.UserController.allCSV(selectedArea.id)">
       Télécharger export CSV
     </button>
   }

@@ -10,9 +10,18 @@ if (select) {
   const currentArea = select.dataset["currentArea"];
   const redirectUrlPrefix = select.dataset["redirectUrlPrefix"];
   select.addEventListener('change', () => {
-    const selectedArea = select.value;
-    if (selectedArea !== currentArea) {
-      document.location.href = redirectUrlPrefix + selectedArea;
+    if (redirectUrlPrefix) {
+      const selectedArea = select.value;
+      if (selectedArea !== currentArea) {
+        document.location.href = redirectUrlPrefix + selectedArea;
+      }
+    } else {
+
+      const selectedOption = select.options[select.selectedIndex];
+      const redirectUrl = selectedOption.dataset["redirectUrl"];
+      if (redirectUrl) {
+        document.location.href = redirectUrl;
+      }
     }
   });
 }
