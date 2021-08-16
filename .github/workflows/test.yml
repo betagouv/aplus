@@ -29,7 +29,7 @@ jobs:
     - name: Install npm dependencies
       run: npm install
     - name Hack TS source to please HTMLUnit
-      run: sed -e '/autolinker/s/^/\/\/ /' -i typescript/src/index.ts
+      run: "sed -e '/autolinker/s/^/\/\/ /' -i typescript/src/index.ts"
     - name: Build the JS blob
       run: npm run build
 
