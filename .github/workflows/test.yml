@@ -21,6 +21,14 @@ jobs:
          postgresql db: 'aplus'
          postgresql user: 'aplus'
          postgresql password: 'mysecretpassword'
+    - name: Set up Node 14
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+    - name: Install npm dependencies
+      run: npm install
+    - name: Build the JS blob
+      run: npm run build
     # We compile the tests here so the test command can run faster
     - name: Compile tests
       run: "sbt test:compile"
