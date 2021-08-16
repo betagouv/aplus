@@ -26,8 +26,14 @@ jobs:
       run: "sbt test:compile"
     # Due to transient errors thrown by HTMLUnit, we try
     # to run the tests a few times
+    - name: Run tests test
+      run: "sbt test"
+      env:
+        JAVA_OPTS: "-Xms1G -Xmx3G -XX:MaxMetaspaceSize=2G"
     - name: Run tests
-      run: "sbt -J-Xms1G -J-Xmx3G coverage test coverageReport"
+      run: "sbt coverage test coverageReport"
+      env:
+        JAVA_OPTS: "-Xms1G -Xmx3G"
     - name: Upload Coverage to codacy
       run: |
          if [ "$CODACY_PROJECT_TOKEN" != "" ]; then
