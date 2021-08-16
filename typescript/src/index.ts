@@ -16,7 +16,7 @@ import "./admin";
 import "./application";
 import "./applicationMandatFields";
 import "./application-attachment";
-import "./autolinker";
+//import "./autolinker";
 import "./changeArea";
 import "./domHelpers";
 import "./editGroup";
