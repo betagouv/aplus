@@ -30,6 +30,9 @@ jobs:
       run: npm install
     - name: Hack TS source to please HTMLUnit
       run: sed -e "/autolinker/s/^/\/\/ /" -i typescript/src/index.ts
+    # Note that the polyfill commented below is needed for IE...
+    - name: Hack TS source to please HTMLUnit (again)
+      run: sed -e "/es2015-promise/s/^/\/\/ /" -i typescript/src/index.ts
     - name: Build the JS blob
       run: npm run build
 
