@@ -38,7 +38,7 @@ jobs:
 
     # We compile the tests here so the test command can run faster
     - name: Compile tests
-      run: "sbt test:compile"
+      run: "sbt Test/compile"
     # Due to transient errors thrown by HTMLUnit, we try
     # to run the tests a few times
     - name: Run tests
