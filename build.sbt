@@ -50,6 +50,8 @@ scalacOptions ++= Seq(
   "-Xlint:eta-zero",
   "-Xlint:eta-sam",
   "-Xlint:deprecation",
+  // Sets warnings as errors on the CI
+  if (insideCI.value) "-Wconf:any:error" else "-Wconf:any:warning",
   "-Wdead-code",
   "-Wextra-implicit",
   "-Wmacros:before",
