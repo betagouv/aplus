@@ -10,11 +10,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up JDK 1.8
+    - name: Set up JDK
       uses: actions/setup-java@v2
       with:
         distribution: 'adopt'
-        java-version: '8'
+        java-version: '11'
     - uses: harmon758/postgresql-action@v1
       with:
          postgresql version: '10'
