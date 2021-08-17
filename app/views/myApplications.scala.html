@@ -11,12 +11,12 @@
         <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
             <tfoot class="invisible">
                 <tr>
-                    <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+                    <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button id="clear-search" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">Supprimer le filtre et afficher toutes les demandes</button></td>
                 </tr>
             </tfoot>
             <tbody>
             @for((application) <- applications.sortBy(_.closed)) {
-                <tr onclick="window.document.location = '@routes.ApplicationController.show(application.id)';" data-search="@application.searchData" class="searchable-row @if(application.longStatus(user) === New) {td--important-border} else {td--clear-border} @if(!application.hasBeenDisplayedFor(user.id)) {td--blue-background}">
+                <tr data-location="@routes.ApplicationController.show(application.id)" data-search="@application.searchData" class="onclick-change-location searchable-row @if(application.longStatus(user) === New) {td--important-border} else {td--clear-border} @if(!application.hasBeenDisplayedFor(user.id)) {td--blue-background}">
                   <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
                     @toHtml(views.helpers.applications.statusTag(application, user))
                     @if(Authorization.isAdmin(currentUserRights)) {
@@ -99,7 +99,7 @@
                     }
                     @if(Authorization.canCreateApplication(currentUserRights)) {
                         Pour créer votre première demande, vous pouvez utiliser le bouton suivant.<br>
-                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" onclick="document.location = '@routes.ApplicationController.create'">
+                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone onclick-change-location" data-location="@routes.ApplicationController.create">
                             Créer une demande
                         </button><br>
                         <br>
@@ -119,19 +119,19 @@
            <div class="mdl-grid mdl-grid--no-spacing">
                 <h4 class="mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">Mes demandes</h4>
                 @if(Authorization.canCreateApplication(currentUserRights)) {
-                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone" onclick="document.location = '@routes.ApplicationController.create'">
+                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone onclick-change-location" data-location="@routes.ApplicationController.create">
                         Créer une demande
                     </button>
                 }
             </div>
                <br>
-                <span>FILTRER PAR </span><input style="width: 400px; max-width: 100%" type="search" placeholder="Saisir nom, numéro, description, etc" id="search-input" onsearch="onSearch()" oninput="onSearch()"/><br>
+                <span>FILTRER PAR </span><input style="width: 400px; max-width: 100%" type="search" placeholder="Saisir nom, numéro, description, etc" id="search-input"/><br>
                 <br>
                 @display(myOpenApplications)
         }
     }
     @if(myClosedApplications.nonEmpty) {
-        <div class="info-box" id="show-closed-applications"><b>Vous ne voyez pas vos anciennes demandes ?</b> <a href="#" onclick="showClosedApplications()">Cliquez ici pour afficher vos demandes archivées</a><br>
+        <div class="info-box" id="show-closed-applications"><b>Vous ne voyez pas vos anciennes demandes ?</b> <a href="#" id="show-closed-toggle">Cliquez ici pour afficher vos demandes archivées</a><br>
             (Elles seront supprimées 1 mois après l’archivage.)</div>
 
         <div class="mdl-grid mdl-grid--no-spacing invisible" id="closed-applications" style="margin: 50px 0;">
@@ -142,10 +142,4 @@
 
     </div>
 }{
-    <script>
-     function showClosedApplications() {
-         document.getElementById("show-closed-applications").classList.add("invisible");
-         document.getElementById("closed-applications").classList.remove("invisible");
-     }
-    </script>
 }

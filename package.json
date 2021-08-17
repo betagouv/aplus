@@ -8,21 +8,25 @@
     "clean": "rimraf public/generated-js"
   },
   "dependencies": {
-    "anchorme": "2.1.2",
+    "autolinker": "3.14.3",
     "dialog-polyfill": "0.5.6",
     "slim-select": "1.26.2",
-    "ts-polyfill": "3.8.2"
+    "tabulator-tables": "4.9.3",
+    "ts-polyfill": "3.8.2",
+    "unfetch": "4.2.0",
+    "unorm": "1.6.0",
+    "xlsx": "0.17.0"
   },
   "devDependencies": {
-    "@types/tabulator-tables": "4.8.0",
+    "@types/tabulator-tables": "4.9.3",
     "copy-webpack-plugin": "9.0.1",
     "css-loader": "6.2.0",
-    "mini-css-extract-plugin": "2.1.0",
+    "mini-css-extract-plugin": "2.2.0",
     "rimraf": "3.0.2",
     "ts-loader": "9.2.5",
     "typescript": "4.3.5",
-    "webpack": "5.48.0",
-    "webpack-cli": "4.7.2",
+    "webpack": "5.50.0",
+    "webpack-cli": "4.8.0",
     "webpack-merge": "5.8.0"
   }
 }

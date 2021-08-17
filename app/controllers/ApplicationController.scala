@@ -611,6 +611,9 @@ case class ApplicationController @Inject() (
       )
     )
 
+  private val statsCSP =
+    "connect-src 'self' https://stats.data.gouv.fr; base-uri 'none'; img-src 'self' data: stats.data.gouv.fr; form-action 'self'; frame-src 'self'; style-src 'self' 'unsafe-inline' stats.data.gouv.fr; object-src 'none'; script-src 'self' 'unsafe-inline' stats.data.gouv.fr; default-src 'none'; font-src 'self'; frame-ancestors 'self'"
+
   def stats: Action[AnyContent] =
     loginAction.async { implicit request =>
       // TODO: remove `.get`
@@ -660,7 +663,7 @@ case class ApplicationController @Inject() (
                 creationMinDate,
                 creationMaxDate
               )
-            )
+            ).withHeaders(CONTENT_SECURITY_POLICY -> statsCSP)
           }
       }
     }

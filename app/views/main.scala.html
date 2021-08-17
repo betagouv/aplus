@@ -20,12 +20,8 @@
         <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/mdl-extensions.css")'>
 
         @header
-        @webJarsUtil.locate("material.min.js").script()
-        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/polyfills.js")"></script>
-        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/main.js")"></script>
         <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("generated-js/slimselect.min.css")'>
         <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("generated-js/index.css")'>
-        <script type="text/javascript" src="@routes.JavascriptController.javascriptRoutes"></script>
     </head>
     <body>
         <div class="header__ribbon do-not-print mdl-color--cyan-800  mdl-color-text--white" id="header__ribbon">
@@ -130,22 +126,12 @@
         @modals
 
 
-            <!-- Piwik -->
-        <script type="text/javascript">
-                var _paq = _paq || [];
-                _paq.push(["setDomains", ["*.aplus.beta.gouv.fr"]]);
-                _paq.push(['trackPageView']);
-                (function() {
-                    var u="//stats.data.gouv.fr/";
-                    _paq.push(['setTrackerUrl', u+'piwik.php']);
-                    _paq.push(['setSiteId', '42']);
-                    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-                    g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
-                })();
-        </script>
+        <!-- Piwik -->
+        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/stats.js")"></script>
         <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border:0;" alt="" /></p></noscript>
-            <!-- End Piwik Code -->
-        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/main-page-bottom.js")"></script>
+        <!-- End Piwik Code -->
+        @webJarsUtil.locate("material.min.js").script()
+        <script type="text/javascript" src="@routes.JavascriptController.javascriptRoutes"></script>
         <script type="application/javascript" src="@routes.Assets.versioned("generated-js/index.js")"></script>
         @bodyBottom
 

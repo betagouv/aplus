@@ -101,7 +101,7 @@
             @if(user("alreadyExists").value.contains("true")) {
               <a target="_blank" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" title="Voir fiche utilisateur" href="@routes.UserController.editUser(user("user")("id").value.flatMap(UUIDHelper.fromString).get)"><i class='fas fa-user-edit'></i></a>
             } else {
-              <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" title="Supprimer (Définitif)" onclick="deleteElement('#line_@{groupIndex}_@index')"><i class="material-icons">delete_forever</i></button>
+              <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab onclick-delete-element" title="Supprimer (Définitif)" data-selector="#line_@{groupIndex}_@index"><i class="material-icons">delete_forever</i></button>
             }
           </td>
         </tr>
@@ -119,7 +119,7 @@
 
       @toHtml(views.helpers.csv.allErrors(form))
 
-    <em>Attribuer le rôle d’instructeur à : </em><a href="#" onclick="checkAllBySelector('.instructor')">Tous</a> / <a href="#" onclick="uncheckAllBySelector('.instructor')">Aucuns</a>
+    <em>Attribuer le rôle d’instructeur à : </em><a href="#" class="onclick-check-all" data-selector=".instructor">Tous</a> / <a href="#" class="onclick-uncheck-all" data-selector=".instructor">Aucuns</a>
     @helper.repeatWithIndex(form("groups")) { (group, groupIndex) =>
       @display(group, groupIndex) {
           <div class="mdl-cell mdl-cell--12-col mdl-grid" style="padding: 0px;">
@@ -220,7 +220,7 @@
           </div>
       }
     }
-    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell" onsubmit="Main.disableEventTarget(this)">Importer</button>
+    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell onsubmit-disable">Importer</button>
   }
 }{
 }
