@@ -150,6 +150,9 @@ object EventType {
 
   object EditMyGroupShowed extends Info
 
+  object WipeDataComplete extends Info
+  object WipeDataError extends Error
+
   // Signups
   object SignupFormShowed extends Info
   object SignupFormValidationError extends Warn

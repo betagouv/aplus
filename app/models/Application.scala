@@ -34,7 +34,8 @@ case class Application(
     files: Map[String, Long] = Map.empty[String, Long],
     mandatType: Option[Application.MandatType],
     mandatDate: Option[String],
-    invitedGroupIdsAtCreation: List[UUID]
+    invitedGroupIdsAtCreation: List[UUID],
+    personalDataWiped: Boolean = false,
 ) extends AgeModel {
 
   // Legacy case, can be removed once data has been cleaned up.

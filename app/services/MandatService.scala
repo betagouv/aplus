@@ -1,10 +1,10 @@
 package services
 
-import java.util.UUID
-
 import anorm._
 import cats.syntax.all._
 import helper.{PlayFormHelper, Time}
+import java.time.ZonedDateTime
+import java.util.UUID
 import javax.inject.Inject
 import models.Authorization.UserRights
 import models.dataModels.SmsFormats._
@@ -40,6 +40,21 @@ class MandatService @Inject() (
       )
     )
 
+  private val fieldsInSelect: String =
+    List(
+      "id",
+      "user_id",
+      "creation_date",
+      "application_id",
+      "usager_prenom",
+      "usager_nom",
+      "usager_birth_date",
+      "usager_phone_local",
+      "sms_thread",
+      "sms_thread_closed",
+      "personal_data_wiped"
+    ).mkString(", ")
+
   private val mandatRowParser: RowParser[Mandat] = Macro
     .parser[Mandat](
       "id",
@@ -51,7 +66,8 @@ class MandatService @Inject() (
       "usager_birth_date",
       "usager_phone_local",
       "sms_thread",
-      "sms_thread_closed"
+      "sms_thread_closed",
+      "personal_data_wiped"
     )
 
   private def byIdNoAuthorizationCheck(id: Mandat.Id): Future[Either[Error, Mandat]] =
@@ -245,6 +261,59 @@ class MandatService @Inject() (
           )
         )
         .flatten
+    )
+
+  def wipePersonalData(retentionInMonths: Long): Future[Either[Error, List[Mandat]]] =
+    Future(
+      Try {
+        val before = ZonedDateTime.now().minusMonths(retentionInMonths)
+        val mandats = db.withConnection { implicit connection =>
+          SQL(s"""SELECT $fieldsInSelect
+                  FROM mandat
+                  WHERE personal_data_wiped = false
+                  AND creation_date < {before};""")
+            .on("before" -> before)
+            .as(mandatRowParser.*)
+        }
+        mandats.flatMap { mandat =>
+          db.withConnection { implicit connection =>
+            val wipedSms: List[Sms] = mandat.smsThread.map {
+              case sms: Sms.Outgoing =>
+                sms.copy(
+                  recipient = Sms.PhoneNumber("+330" + "0" * 8),
+                  body = ""
+                )
+              case sms: Sms.Incoming =>
+                sms.copy(
+                  originator = Sms.PhoneNumber("+330" + "0" * 8),
+                  body = ""
+                )
+            }
+            SQL(s"""UPDATE mandat
+                    SET
+                      usager_prenom = '',
+                      usager_nom = '',
+                      usager_birth_date = '',
+                      usager_phone_local = '',
+                      sms_thread = {smsThread}::jsonb,
+                      personal_data_wiped = true
+                    WHERE id = {id}::uuid
+                    RETURNING $fieldsInSelect;""")
+              .on(
+                "id" -> mandat.id.underlying,
+                "smsThread" -> Json.toJson(wipedSms)
+              )
+              .as(mandatRowParser.singleOpt)
+          }
+        }
+      }.toEither.left
+        .map(e =>
+          Error.SqlException(
+            EventType.WipeDataError,
+            s"Impossible de supprimer les informations personnelles des mandats",
+            e
+          )
+        )
     )
 
 }
