@@ -18,7 +18,9 @@ import scala.concurrent.Future
 import scala.util.Try
 
 /** This is a "low-level" component, akin to Java's "repositories".
+  *
   * This component does not represent the actual business level model.
+  *
   * "high-level" code is in the corresponding controller.
   */
 @javax.inject.Singleton

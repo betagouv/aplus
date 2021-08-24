@@ -63,8 +63,8 @@ object MessageBirdApi {
 }
 
 /** Various infos:
-  * https://support.messagebird.com/hc/en-us/articles/208015009-France
-  * "Each Virtual Number has a daily limit of approximately 500 SMS per number, per day."
+  * - https://support.messagebird.com/hc/en-us/articles/208015009-France
+  * - "Each Virtual Number has a daily limit of approximately 500 SMS per number, per day."
   */
 final class MessageBirdApi(
     bodyParsers: play.api.mvc.PlayBodyParsers,

@@ -67,6 +67,7 @@ object OvhApi {
 }
 
 /** For the Auth, see https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/
+  *
   * API Doc:
   * https://docs.ovh.com/fr/sms/api_sms_cookbook/
   * https://eu.api.ovh.com/console/#/sms
@@ -126,11 +127,11 @@ final class OvhApi(
     })
 
   /** OVH Interface:
-    * Do put the callback URL under "General options"
-    * Put the callback URL in "Reply options"
+    * - Do put the callback URL under "General options"
+    * - Put the callback URL in "Reply options"
     *
     * API:
-    * Content-Type: application/x-www-form-urlencoded
+    * - Content-Type: application/x-www-form-urlencoded
     */
   def smsReceivedCallback(request: Request[String]): Future[Either[Error, IncomingSms]] =
     bodyParsers
@@ -190,7 +191,7 @@ final class OvhApi(
     * https://eu.api.ovh.com/console/#/sms/{serviceName}/jobs#POST
     *
     * List of experienced errors:
-    *
+    * ```
     * java.lang.Exception
     * $response.status = 500
     * $response = AhcWSResponse(StandaloneAhcWSResponse(500, Internal Server Error))
@@ -208,6 +209,7 @@ final class OvhApi(
     *
     * java.util.concurrent.TimeoutException
     * Request timeout to eu.api.ovh.com/51.38.17.223:443 after 5000 ms
+    * ```
     */
   def createJob(
       message: String,

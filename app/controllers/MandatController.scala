@@ -99,6 +99,7 @@ case class MandatController @Inject() (
   }
 
   /** This is an `Action[String]` because we need to parse both as bytes and json.
+    *
     * Also, this is a webhook, only the returned status code is useful
     */
   // TODO: What if usager send an incorrect response the first time? close sms_thread only after some time has passed?

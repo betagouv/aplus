@@ -48,6 +48,7 @@ object Authorization {
   }
 
   /** Attached to a User
+    *
     * `rights` is private to authorization,
     * this enforces that all possible checks are in this package
     */
