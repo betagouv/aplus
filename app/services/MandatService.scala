@@ -40,7 +40,7 @@ class MandatService @Inject() (
       )
     )
 
-  private val fieldsInSelect: String =
+  private val mandatFields: List[String] =
     List(
       "id",
       "user_id",
@@ -53,7 +53,9 @@ class MandatService @Inject() (
       "sms_thread",
       "sms_thread_closed",
       "personal_data_wiped"
-    ).mkString(", ")
+    )
+
+  private val fieldsInSelect: String = mandatFields.mkString(", ")
 
   private val mandatRowParser: RowParser[Mandat] = Macro
     .parser[Mandat](
@@ -267,11 +269,18 @@ class MandatService @Inject() (
     Future(
       Try {
         val before = ZonedDateTime.now().minusMonths(retentionInMonths)
+        val selectFields = mandatFields.map(field => s"mandat.$field").mkString(", ")
         val mandats = db.withConnection { implicit connection =>
-          SQL(s"""SELECT $fieldsInSelect
+          SQL(s"""SELECT $selectFields
                   FROM mandat
-                  WHERE personal_data_wiped = false
-                  AND creation_date < {before};""")
+                  LEFT JOIN application ON mandat.application_id = application.id
+                  WHERE mandat.personal_data_wiped = false
+                  AND (
+                         (mandat.application_id IS NOT NULL
+                          AND application.closed_date < {before})
+                      OR (mandat.application_id IS NULL
+                          AND mandat.creation_date < {before})
+                  );""")
             .on("before" -> before)
             .as(mandatRowParser.*)
         }
