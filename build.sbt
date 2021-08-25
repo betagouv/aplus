@@ -15,7 +15,6 @@ lazy val root = (project in file("."))
   )
   .dependsOn(macrosProject)
 
-
 inThisBuild(
   List(
     scalaVersion := "2.13.6",
@@ -124,20 +123,19 @@ TwirlKeys.templateImports += "views.MainInfos"
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "fr.gouv.beta.binders._"
 
-
 /////////////////////////////////////
 //              Macros             //
 /////////////////////////////////////
 
-
-lazy val scalaReflect = Def.setting { "org.scala-lang" % "scala-reflect" % scalaVersion.value }
+lazy val scalaReflect = Def.setting("org.scala-lang" % "scala-reflect" % scalaVersion.value)
 
 lazy val macrosProject = (project in file("macros"))
-  .settings(libraryDependencies ++= Seq(
-              anormDependency,
-              scalaReflect.value
-            ))
-
+  .settings(
+    libraryDependencies ++= Seq(
+      anormDependency,
+      scalaReflect.value
+    )
+  )
 
 /////////////////////////////////////
 // Task and Hook for the TS build  //
