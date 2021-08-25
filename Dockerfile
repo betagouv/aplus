@@ -37,6 +37,7 @@ RUN mkdir -p $PLAY_APP_DIR
 COPY .git $PLAY_APP_DIR/.git/
 COPY build.sbt $PLAY_APP_DIR/
 COPY app $PLAY_APP_DIR/app/
+COPY macros $PLAY_APP_DIR/macros/
 COPY conf $PLAY_APP_DIR/conf/
 COPY public $PLAY_APP_DIR/public/
 COPY --from=tsbuilder /var/www/aplus/public/generated-js $PLAY_APP_DIR/public/generated-js/
