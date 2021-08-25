@@ -6,6 +6,7 @@ import java.util.UUID
 
 import anorm.Column.nonNull
 import anorm._
+import aplus.macros.Macros
 import cats.syntax.all._
 import helper.StringHelper.StringListOps
 import helper.Time
@@ -56,61 +57,36 @@ class ApplicationService @Inject() (
 
   import dataModels.Application.SeenByUser._
 
-  private val fieldsInSelect: String =
-    List(
-      "id",
-      "creation_date",
-      "creator_user_name",
-      "creator_user_id",
-      "subject",
-      "description",
-      "user_infos",
-      "invited_users",
-      "area",
-      "irrelevant",
-      "answers",
-      "internal_id",
-      "closed",
-      "seen_by_user_ids",
-      "usefulness",
-      "closed_date",
-      "expert_invited",
-      "has_selected_subject",
-      "category",
-      "files",
-      "mandat_type",
-      "mandat_date",
-      "invited_group_ids",
-      "personal_data_wiped"
-    ).mkString(", ")
+  private val (applicationParser, applicationTableFields) = Macros.parserWithFields[Application](
+    "id",
+    "creation_date",
+    "creator_user_name",
+    "creator_user_id",
+    "subject",
+    "description",
+    "user_infos",
+    "invited_users",
+    "area",
+    "irrelevant",
+    "answers", // Data have been left bad migrated from answser_unsed
+    "internal_id",
+    "closed",
+    "seen_by_user_ids",
+    "usefulness",
+    "closed_date",
+    "expert_invited",
+    "has_selected_subject",
+    "category",
+    "files",
+    "mandat_type",
+    "mandat_date",
+    "invited_group_ids",
+    "personal_data_wiped"
+  )
 
-  private val simpleApplication: RowParser[Application] = Macro
-    .parser[Application](
-      "id",
-      "creation_date",
-      "creator_user_name",
-      "creator_user_id",
-      "subject",
-      "description",
-      "user_infos",
-      "invited_users",
-      "area",
-      "irrelevant",
-      "answers", // Data have been left bad migrated from answser_unsed
-      "internal_id",
-      "closed",
-      "seen_by_user_ids",
-      "usefulness",
-      "closed_date",
-      "expert_invited",
-      "has_selected_subject",
-      "category",
-      "files",
-      "mandat_type",
-      "mandat_date",
-      "invited_group_ids",
-      "personal_data_wiped"
-    )
+  private val fieldsInSelect: String = applicationTableFields.mkString(", ")
+
+  private val simpleApplication: RowParser[Application] = applicationParser
     .map(application =>
       application.copy(
         creationDate = application.creationDate.withZoneSameInstant(Time.timeZoneParis),

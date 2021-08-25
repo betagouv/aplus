@@ -1,6 +1,7 @@
 package services
 
 import anorm._
+import aplus.macros.Macros
 import cats.syntax.all._
 import helper.{PlayFormHelper, Time}
 import java.time.ZonedDateTime
@@ -40,37 +41,21 @@ class MandatService @Inject() (
       )
     )
 
-  private val mandatFields: List[String] =
-    List(
-      "id",
-      "user_id",
-      "creation_date",
-      "application_id",
-      "usager_prenom",
-      "usager_nom",
-      "usager_birth_date",
-      "usager_phone_local",
-      "sms_thread",
-      "sms_thread_closed",
-      "personal_data_wiped"
-    )
+  private val (mandatRowParser, mandatTableFields) = Macros.parserWithFields[Mandat](
+    "id",
+    "user_id",
+    "creation_date",
+    "application_id",
+    "usager_prenom",
+    "usager_nom",
+    "usager_birth_date",
+    "usager_phone_local",
+    "sms_thread",
+    "sms_thread_closed",
+    "personal_data_wiped"
+  )
 
-  private val fieldsInSelect: String = mandatFields.mkString(", ")
-
-  private val mandatRowParser: RowParser[Mandat] = Macro
-    .parser[Mandat](
-      "id",
-      "user_id",
-      "creation_date",
-      "application_id",
-      "usager_prenom",
-      "usager_nom",
-      "usager_birth_date",
-      "usager_phone_local",
-      "sms_thread",
-      "sms_thread_closed",
-      "personal_data_wiped"
-    )
+  private val fieldsInSelect: String = mandatTableFields.mkString(", ")
 
   private def byIdNoAuthorizationCheck(id: Mandat.Id): Future[Either[Error, Mandat]] =
     Future(
@@ -269,7 +254,7 @@ class MandatService @Inject() (
     Future(
       Try {
         val before = ZonedDateTime.now().minusMonths(retentionInMonths)
-        val selectFields = mandatFields.map(field => s"mandat.$field").mkString(", ")
+        val selectFields = mandatTableFields.map(field => s"mandat.$field").mkString(", ")
         val mandats = db.withConnection { implicit connection =>
           SQL(s"""SELECT $selectFields
                   FROM mandat
