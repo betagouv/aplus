@@ -20,7 +20,8 @@ case class Mandat(
     // FR local phone number, example "0612345678"
     usagerPhoneLocal: Option[String],
     smsThread: List[Sms],
-    smsThreadClosed: Boolean
+    smsThreadClosed: Boolean,
+    personalDataWiped: Boolean
 ) {
 
   lazy val anonymous: Mandat =

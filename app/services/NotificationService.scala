@@ -352,7 +352,7 @@ class NotificationService @Inject() (
       .map { count: Int =>
         eventService.info(
           User.systemUser,
-          "",
+          "0.0.0.0",
           EventType.WeeklyEmailsSent.code,
           s"Les emails hebdomadaires ont été envoyés ($count)",
           None,

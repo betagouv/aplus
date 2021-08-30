@@ -212,7 +212,7 @@ object SmsApi {
             e =>
               eventService.error(
                 User.systemUser,
-                "",
+                "0.0.0.0",
                 EventType.SmsCallbackError.code,
                 s"Impossible d'envoyer un message de test (faux webhook). SMS id: ${inId.underlying}",
                 None,
@@ -222,7 +222,7 @@ object SmsApi {
             _ =>
               eventService.warn(
                 User.systemUser,
-                "",
+                "0.0.0.0",
                 EventType.SmsCallbackError.code,
                 s"Un message de test (faux webhook) a été envoyé. SMS id: ${inId.underlying}",
                 None,

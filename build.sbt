@@ -13,6 +13,7 @@ lazy val root = (project in file("."))
     ),
     buildInfoPackage := "constants"
   )
+  .dependsOn(macrosProject)
 
 inThisBuild(
   List(
@@ -68,6 +69,8 @@ scalacOptions ++= Seq(
   "-Wvalue-discard"
 )
 
+lazy val anormDependency = "org.playframework.anorm" %% "anorm" % "2.6.10"
+
 libraryDependencies ++= Seq(
   ws,
   jdbc,
@@ -82,7 +85,7 @@ libraryDependencies += guice
 
 libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.2.23",
-  "org.playframework.anorm" %% "anorm" % "2.6.10",
+  anormDependency,
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "com.typesafe.play" %% "play-mailer-guice" % "8.0.1",
@@ -110,7 +113,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "font-awesome" % "5.15.3",
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "5.1.1"
+libraryDependencies += "io.sentry" % "sentry-logback" % "5.1.2"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
@@ -119,6 +122,20 @@ TwirlKeys.templateImports += "views.MainInfos"
 
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "fr.gouv.beta.binders._"
+
+/////////////////////////////////////
+//              Macros             //
+/////////////////////////////////////
+
+lazy val scalaReflect = Def.setting("org.scala-lang" % "scala-reflect" % scalaVersion.value)
+
+lazy val macrosProject = (project in file("macros"))
+  .settings(
+    libraryDependencies ++= Seq(
+      anormDependency,
+      scalaReflect.value
+    )
+  )
 
 /////////////////////////////////////
 // Task and Hook for the TS build  //
