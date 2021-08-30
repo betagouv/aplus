@@ -112,8 +112,9 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       involvesUser: Option[UUID],
       underlyingException: Option[Throwable]
   ): Unit = {
+    val eventId = UUID.randomUUID()
     val event = Event(
-      UUID.randomUUID(),
+      eventId,
       level,
       code,
       currentUser.name,
@@ -127,7 +128,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
     )
     addEvent(event)
 
-    val message = s"${currentUser.name}/${description}"
+    val message = s"${currentUser.name}/${description} [$eventId]"
     level match {
       case "INFO" =>
         underlyingException.fold(logger.info(message))(e => logger.info(message, e))

@@ -6,6 +6,7 @@ import java.util.UUID
 
 import anorm.Column.nonNull
 import anorm._
+import aplus.macros.Macros
 import cats.syntax.all._
 import helper.StringHelper.StringListOps
 import helper.Time
@@ -56,32 +57,36 @@ class ApplicationService @Inject() (
 
   import dataModels.Application.SeenByUser._
 
-  private val simpleApplication: RowParser[Application] = Macro
-    .parser[Application](
-      "id",
-      "creation_date",
-      "creator_user_name",
-      "creator_user_id",
-      "subject",
-      "description",
-      "user_infos",
-      "invited_users",
-      "area",
-      "irrelevant",
-      "answers", // Data have been left bad migrated from answser_unsed
-      "internal_id",
-      "closed",
-      "seen_by_user_ids",
-      "usefulness",
-      "closed_date",
-      "expert_invited",
-      "has_selected_subject",
-      "category",
-      "files",
-      "mandat_type",
-      "mandat_date",
-      "invited_group_ids"
-    )
+  private val (applicationParser, applicationTableFields) = Macros.parserWithFields[Application](
+    "id",
+    "creation_date",
+    "creator_user_name",
+    "creator_user_id",
+    "subject",
+    "description",
+    "user_infos",
+    "invited_users",
+    "area",
+    "irrelevant",
+    "answers", // Data have been left bad migrated from answser_unsed
+    "internal_id",
+    "closed",
+    "seen_by_user_ids",
+    "usefulness",
+    "closed_date",
+    "expert_invited",
+    "has_selected_subject",
+    "category",
+    "files",
+    "mandat_type",
+    "mandat_date",
+    "invited_group_ids",
+    "personal_data_wiped"
+  )
+
+  private val fieldsInSelect: String = applicationTableFields.mkString(", ")
+
+  private val simpleApplication: RowParser[Application] = applicationParser
     .map(application =>
       application.copy(
         creationDate = application.creationDate.withZoneSameInstant(Time.timeZoneParis),
@@ -348,6 +353,55 @@ class ApplicationService @Inject() (
         ).on(
           "id" -> applicationId,
         ).executeUpdate() === 1
+      }
+    }
+
+  def wipePersonalData(retentionInMonths: Long): Future[List[Application]] =
+    Future {
+      val before = ZonedDateTime.now().minusMonths(retentionInMonths)
+      val applications = db.withConnection { implicit connection =>
+        SQL(s"""SELECT $fieldsInSelect
+                FROM application
+                WHERE personal_data_wiped = false
+                AND closed_date < {before};""")
+          .on("before" -> before)
+          .as(simpleApplication.*)
+      }
+      applications.flatMap { application =>
+        db.withConnection { implicit connection =>
+          val wipedUsagerInfos: Map[String, String] = application.userInfos.map { case (key, _) =>
+            (key, "")
+          }
+          val wipedAnswers: List[Answer] = application.answers.map(answer =>
+            answer.copy(
+              message = "",
+              userInfos = answer.userInfos.map(_.map { case (key, _) => (key, "") }),
+              files = answer.files.map(_.zipWithIndex.map { case ((_, size), i) =>
+                (s"fichier-non-existant-$i", size)
+              }.toMap),
+            )
+          )
+          val wipedFiles: Map[String, Long] = application.files.zipWithIndex.map {
+            case ((_, size), i) => (s"fichier-non-existant-$i", size)
+          }.toMap
+          SQL(s"""UPDATE application
+                  SET
+                    subject = '',
+                    description = '',
+                    user_infos = {usagerInfos}::jsonb,
+                    answers = {answers}::jsonb,
+                    files = {files}::jsonb,
+                    personal_data_wiped = true
+                  WHERE id = {id}::uuid
+                  RETURNING $fieldsInSelect;""")
+            .on(
+              "id" -> application.id,
+              "usagerInfos" -> toJson(wipedUsagerInfos),
+              "answers" -> toJson(wipedAnswers),
+              "files" -> toJson(wipedFiles)
+            )
+            .as(simpleApplication.singleOpt)
+        }
       }
     }
 
