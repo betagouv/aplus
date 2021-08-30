@@ -128,7 +128,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
     )
     addEvent(event)
 
-    val message = s"${currentUser.name}/${description} [$eventId]"
+    val message = s"${currentUser.name}/$description [$eventId]"
     level match {
       case "INFO" =>
         underlyingException.fold(logger.info(message))(e => logger.info(message, e))

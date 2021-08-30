@@ -63,7 +63,7 @@ class NotificationService @Inject() (
           throw new Exception(
             "Impossible de lire l'une des variables APP_HOST ou HEROKU_APP_NAME"
           )
-        case Some(herokuAppName) => s"${herokuAppName}.herokuapp.com"
+        case Some(herokuAppName) => s"$herokuAppName.herokuapp.com"
       }
     configuration.get[Option[String]]("app.host") match {
       case None => readHerokuAppNameOrThrow
@@ -233,7 +233,7 @@ class NotificationService @Inject() (
       to = List(
         userName
           .filter(_.nonEmpty)
-          .map(name => s"${quoteEmailPhrase(name)} <${userEmail}>")
+          .map(name => s"${quoteEmailPhrase(name)} <$userEmail>")
           .getOrElse(userEmail)
       ),
       bodyHtml = Some(common.renderEmail(bodyInner))
@@ -302,7 +302,7 @@ class NotificationService @Inject() (
       to = List(
         userName
           .filter(_.nonEmpty)
-          .map(name => s"${quoteEmailPhrase(name)} <${userEmail}>")
+          .map(name => s"${quoteEmailPhrase(name)} <$userEmail>")
           .getOrElse(userEmail)
       ),
       bodyHtml = Some(bodyHtml)

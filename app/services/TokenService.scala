@@ -14,14 +14,13 @@ import scala.util.Try
 
 object TokenService {
 
-  /** Maps to the actual table row. It can be transformed to and from
-    * the actual model `LoginToken`.
+  /** Maps to the actual table row. It can be transformed to and from the actual model `LoginToken`.
     *
-    * We use a case class here instead of rarely used anorm combinators to
-    * improve readability and maintainability (but with more code).
+    * We use a case class here instead of rarely used anorm combinators to improve readability and
+    * maintainability (but with more code).
     *
-    * Note that `Instant` is the correct type to map to a timestamp, because
-    * Postgres does not store timezones.
+    * Note that `Instant` is the correct type to map to a timestamp, because Postgres does not store
+    * timezones.
     */
   case class LoginTokenRow(
       token: String,

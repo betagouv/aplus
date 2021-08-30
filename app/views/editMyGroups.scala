@@ -324,8 +324,8 @@ object editMyGroups {
   private def dialogId(groupId: UUID, userId: UUID): String =
     s"remove-user-from-group-dialog-$groupId-$userId"
 
-  /** Important note: modals will pop up relative to the parent node in Firefox.
-    *                 This means we need to put them as high as possible in the DOM.
+  /** Important note: modals will pop up relative to the parent node in Firefox. This means we need
+    * to put them as high as possible in the DOM.
     */
   def removeUserFromGroupDialog(
       otherUser: User,

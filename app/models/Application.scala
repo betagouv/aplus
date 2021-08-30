@@ -146,6 +146,7 @@ case class Application(
   // Security (TODO: put in Authorization)
 
   def canHaveExpertsInvitedBy(user: User) = false
+
   // TODO : be more open to expert invitation if it's reintroduced
   // (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
   //  creatorUserId === user.id

@@ -147,9 +147,8 @@ object UserAndGroupCsvSerializer {
         Left(s"Erreur lors de l'extraction du csv ${ex.getMessage}")
     }
 
-  /** Only public method.
-    * Returns a Right[(List[String], List[CSVUserGroupFormData]))]
-    * where List[String] is a list of errors on the lines.
+  /** Only public method. Returns a Right[(List[String], List[CSVUserGroupFormData]))] where
+    * List[String] is a list of errors on the lines.
     */
   def csvLinesToUserGroupData(separator: Char, defaultAreas: Seq[Area])(
       csvLines: String

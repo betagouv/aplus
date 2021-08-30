@@ -34,7 +34,7 @@ object Authorization {
     )
   }
 
-  private[Authorization] sealed trait UserRight
+  sealed private[Authorization] trait UserRight
 
   object UserRight {
     case class HasUserId(id: UUID) extends UserRight
@@ -48,8 +48,9 @@ object Authorization {
   }
 
   /** Attached to a User
-    * `rights` is private to authorization,
-    * this enforces that all possible checks are in this package
+    *
+    * `rights` is private to authorization, this enforces that all possible checks are in this
+    * package
     */
   case class UserRights(
       private[Authorization] val rights: Set[UserRight]

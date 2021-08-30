@@ -17,11 +17,10 @@ object PlayFormHelper {
       .map(error => "['" + error.key + "' => " + error.format + "]")
       .mkString(" ")
 
-  /** Uses `scala.collection.Seq` in its type to match the type returned by
-    * Play Json
+  /** Uses `scala.collection.Seq` in its type to match the type returned by Play Json
     *
-    * Note: `errors` does not contain personal data, only the `JsPath` and
-    *        a message about the validation that failed
+    * Note: `errors` does not contain personal data, only the `JsPath` and a message about the
+    * validation that failed
     */
   def prettifyJsonFormInvalidErrors(
       errors: scala.collection.Seq[(JsPath, scala.collection.Seq[JsonValidationError])]

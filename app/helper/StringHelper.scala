@@ -35,16 +35,16 @@ object StringHelper {
   def mergeSpacesToOne(string: String): String =
     oneOrMoreSpacesRegex.replaceAllIn(string, " ")
 
-  /** Notably: will merge letter+accent together (C in NFKC) and convert some weird unicode
-    * letters to compatible letters (K in NFKC).
+  /** Notably: will merge letter+accent together (C in NFKC) and convert some weird unicode letters
+    * to compatible letters (K in NFKC).
     */
   def normalizeNFKC(string: String): String =
     Normalizer.normalize(string, Normalizer.Form.NFKC)
 
   /** This is a "common" normalization for untrusted inputs.
-    * 1. Unicode NFKC
-    * 2. Merge multiple spaces in one
-    * 3. Trim left an right whitespaces
+    *   1. Unicode NFKC
+    *   1. Merge multiple spaces in one
+    *   1. Trim left an right whitespaces
     */
   def commonStringInputNormalization(string: String): String =
     mergeSpacesToOne(normalizeNFKC(string)).trim

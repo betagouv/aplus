@@ -9,8 +9,7 @@ import play.api.db.Database
 import serializers.Keys
 import views.home.LoginPanel
 
-/** This controller creates an `Action` to handle HTTP requests to the
-  * application's home page.
+/** This controller creates an `Action` to handle HTTP requests to the application's home page.
   */
 @Singleton
 class HomeController @Inject() (

@@ -141,9 +141,8 @@ lazy val macrosProject = (project in file("macros"))
 // Task and Hook for the TS build  //
 /////////////////////////////////////
 
-/** This task will run `npm install` and `npm run build`
-  * in the typescript/ directory.
-  * This will generate the JS production bundle in public/generate-js/index.js
+/** This task will run `npm install` and `npm run build` in the typescript/ directory. This will
+  * generate the JS production bundle in public/generate-js/index.js
   */
 lazy val npmBuild = taskKey[Unit]("Run npm run build.")
 
@@ -155,8 +154,7 @@ npmBuild := {
   Process("npm run build", tsDirectory).!
 }
 
-/** Add a hook to the Play sbt plugin,
-  * so `npm run watch` is runned when using the sbt command `run`
+/** Add a hook to the Play sbt plugin, so `npm run watch` is runned when using the sbt command `run`
   *
   * See documentation:
   * https://www.playframework.com/documentation/2.8.x/sbtCookbook#Hooking-into-Plays-dev-mode

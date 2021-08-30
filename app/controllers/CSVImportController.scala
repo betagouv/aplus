@@ -230,8 +230,8 @@ case class CSVImportController @Inject() (
       )
     )
 
-  /** Action that reads the CSV file (CSV file was copy-paste in a web form)
-    *  and display possible errors.
+  /** Action that reads the CSV file (CSV file was copy-paste in a web form) and display possible
+    * errors.
     */
   def importUsersReview: Action[AnyContent] =
     loginAction.async { implicit request =>
