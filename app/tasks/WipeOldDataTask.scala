@@ -33,7 +33,7 @@ class WipeOldDataTask @Inject() (
     }
   )
 
-  def wipeOldData(retentionInMonths: Long): Unit = {
+  def wipeOldData(retentionInMonths: Long): Unit =
     applicationService
       .wipePersonalData(retentionInMonths)
       .onComplete {
@@ -54,8 +54,9 @@ class WipeOldDataTask @Inject() (
             Some(error)
           )
       }
-    // Not wiping these data, pending legal validation
-    /*
+
+  // Not wiping these data, pending legal validation
+  /*
     mandatService
       .wipePersonalData(retentionInMonths)
       .onComplete {
@@ -78,8 +79,7 @@ class WipeOldDataTask @Inject() (
             Some(error)
           )
       }
-     */
-  }
+   */
 
   private def logSuccess(description: String) =
     eventService.info(
