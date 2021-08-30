@@ -35,8 +35,8 @@ object StringHelper {
   def mergeSpacesToOne(string: String): String =
     oneOrMoreSpacesRegex.replaceAllIn(string, " ")
 
-  /** Notably: will merge letter+accent together (C in NFKC) and convert some weird unicode
-    * letters to compatible letters (K in NFKC).
+  /** Notably: will merge letter+accent together (C in NFKC) and convert some weird unicode letters
+    * to compatible letters (K in NFKC).
     */
   def normalizeNFKC(string: String): String =
     Normalizer.normalize(string, Normalizer.Form.NFKC)

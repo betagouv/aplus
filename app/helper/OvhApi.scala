@@ -68,9 +68,7 @@ object OvhApi {
 
 /** For the Auth, see https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/
   *
-  * API Doc:
-  * https://docs.ovh.com/fr/sms/api_sms_cookbook/
-  * https://eu.api.ovh.com/console/#/sms
+  * API Doc: https://docs.ovh.com/fr/sms/api_sms_cookbook/ https://eu.api.ovh.com/console/#/sms
   */
 final class OvhApi(
     bodyParsers: PlayBodyParsers,
@@ -85,8 +83,7 @@ final class OvhApi(
 ) {
   import OvhApi._
 
-  /** API Doc:
-    * https://eu.api.ovh.com/console/#/sms/{serviceName}/jobs#POST
+  /** API Doc: https://eu.api.ovh.com/console/#/sms/{serviceName}/jobs#POST
     */
   def sendSms(
       message: String,
@@ -127,11 +124,11 @@ final class OvhApi(
     })
 
   /** OVH Interface:
-    * - Do put the callback URL under "General options"
-    * - Put the callback URL in "Reply options"
+    *   - Do put the callback URL under "General options"
+    *   - Put the callback URL in "Reply options"
     *
     * API:
-    * - Content-Type: application/x-www-form-urlencoded
+    *   - Content-Type: application/x-www-form-urlencoded
     */
   def smsReceivedCallback(request: Request[String]): Future[Either[Error, IncomingSms]] =
     bodyParsers
@@ -159,11 +156,10 @@ final class OvhApi(
         )
       )
 
-  /** API Doc:
-    * https://eu.api.ovh.com/console/#/sms/{serviceName}/incoming/{id}#DELETE
+  /** API Doc: https://eu.api.ovh.com/console/#/sms/{serviceName}/incoming/{id}#DELETE
     */
   def deleteIncomingSms(id: SmsId): Future[Either[Error, Unit]] = {
-    val url = s"https://eu.api.ovh.com/1.0/sms/${serviceName}/incoming/${id.underlying}"
+    val url = s"https://eu.api.ovh.com/1.0/sms/$serviceName/incoming/${id.underlying}"
     val errorMessage = s"Impossible de supprimer le message reçu ${id.underlying}"
     ws.url(url)
       .addHttpHeaders(requestHeaders("DELETE", url, ""): _*)
@@ -173,11 +169,10 @@ final class OvhApi(
       .recover(e => recoverApiCall(e, EventType.SmsDeleteError, errorMessage))
   }
 
-  /** API Doc:
-    * https://eu.api.ovh.com/console/#/sms/{serviceName}/outgoing/{id}#DELETE
+  /** API Doc: https://eu.api.ovh.com/console/#/sms/{serviceName}/outgoing/{id}#DELETE
     */
   def deleteOutgoingSms(id: SmsId): Future[Either[Error, Unit]] = {
-    val url = s"https://eu.api.ovh.com/1.0/sms/${serviceName}/outgoing/${id.underlying}"
+    val url = s"https://eu.api.ovh.com/1.0/sms/$serviceName/outgoing/${id.underlying}"
     val errorMessage = s"Impossible de supprimer le message envoyé ${id.underlying}"
     ws.url(url)
       .addHttpHeaders(requestHeaders("DELETE", url, ""): _*)
@@ -187,8 +182,7 @@ final class OvhApi(
       .recover(e => recoverApiCall(e, EventType.SmsDeleteError, errorMessage))
   }
 
-  /** API Doc:
-    * https://eu.api.ovh.com/console/#/sms/{serviceName}/jobs#POST
+  /** API Doc: https://eu.api.ovh.com/console/#/sms/{serviceName}/jobs#POST
     *
     * List of experienced errors:
     * ```
@@ -215,7 +209,7 @@ final class OvhApi(
       message: String,
       recipients: List[String]
   ): Future[Either[Error, SmsSendingReport]] = {
-    val url = s"https://eu.api.ovh.com/1.0/sms/${serviceName}/jobs"
+    val url = s"https://eu.api.ovh.com/1.0/sms/$serviceName/jobs"
     val errorMessage = s"Impossible d'envoyer le SMS"
     val request = SmsJob(
       message = message,
@@ -232,11 +226,10 @@ final class OvhApi(
       .recover(e => recoverApiCall(e, EventType.SmsSendError, errorMessage))
   }
 
-  /** API Doc:
-    * https://eu.api.ovh.com/console/#/sms/{serviceName}/incoming/{id}#GET
+  /** API Doc: https://eu.api.ovh.com/console/#/sms/{serviceName}/incoming/{id}#GET
     */
   def fetchIncomingSmsById(id: SmsId): Future[Either[Error, IncomingSms]] = {
-    val url = s"https://eu.api.ovh.com/1.0/sms/${serviceName}/incoming/${id.underlying}"
+    val url = s"https://eu.api.ovh.com/1.0/sms/$serviceName/incoming/${id.underlying}"
     val errorMessage = s"Impossible de lire le SMS ${id.underlying} chez le provider distant"
     ws.url(url)
       .addHttpHeaders(requestHeaders("GET", url, ""): _*)

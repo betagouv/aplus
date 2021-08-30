@@ -30,7 +30,7 @@ class SignupService @Inject() (
     Future(
       Try(
         db.withTransaction { implicit connection =>
-          SQL"""SELECT * FROM signup_request WHERE id = ${signupId}::uuid"""
+          SQL"""SELECT * FROM signup_request WHERE id = $signupId::uuid"""
             .as(signupRequestRowParser.singleOpt)
         }
       ).toEither.left
@@ -88,7 +88,7 @@ class SignupService @Inject() (
                   "user".id AS signedup_user_id
                 FROM signup_request
                 LEFT JOIN "user" ON LOWER("user".email) = LOWER(signup_request.email)
-                WHERE request_date >= ${afterDate}"""
+                WHERE request_date >= $afterDate"""
             .as((signupRequestRowParser ~ SqlParser.get[Option[UUID]]("signedup_user_id")).*)
             .map { case a ~ b => (a, b) }
         }
@@ -123,7 +123,7 @@ class SignupService @Inject() (
         .map { error =>
           Error.SqlException(
             EventType.SignupsError,
-            s"Impossible d'ajouter la préinscription ${request}",
+            s"Impossible d'ajouter la préinscription $request",
             error
           )
         }
@@ -133,7 +133,7 @@ class SignupService @Inject() (
             Error
               .Database(
                 EventType.SignupsError,
-                s"Nombre incorrect de lignes ($nrOfRows) lors de l'ajout de la préinscription ${request}"
+                s"Nombre incorrect de lignes ($nrOfRows) lors de l'ajout de la préinscription $request"
               )
               .asLeft
         }

@@ -32,7 +32,7 @@ object OrganisationService {
     implicit val categoryFormat = yamlFormat4(Category.apply)
   }
 
-  private implicit object fsCsvFormat extends DefaultCSVFormat {
+  implicit private object fsCsvFormat extends DefaultCSVFormat {
     override val delimiter = ';'
   }
 

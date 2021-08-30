@@ -63,8 +63,8 @@ object MessageBirdApi {
 }
 
 /** Various infos:
-  * - https://support.messagebird.com/hc/en-us/articles/208015009-France
-  * - "Each Virtual Number has a daily limit of approximately 500 SMS per number, per day."
+  *   - https://support.messagebird.com/hc/en-us/articles/208015009-France
+  *   - "Each Virtual Number has a daily limit of approximately 500 SMS per number, per day."
   */
 final class MessageBirdApi(
     bodyParsers: play.api.mvc.PlayBodyParsers,
@@ -77,8 +77,7 @@ final class MessageBirdApi(
 ) {
   import MessageBirdApi._
 
-  /** API Doc:
-    * https://developers.messagebird.com/api/sms-messaging/#send-outbound-sms
+  /** API Doc: https://developers.messagebird.com/api/sms-messaging/#send-outbound-sms
     */
   def sendSms(
       body: String,
@@ -185,8 +184,7 @@ final class MessageBirdApi(
       liveFetchSmsById
     )
 
-  /** API Doc:
-    * https://developers.messagebird.com/api/sms-messaging/#view-an-sms
+  /** API Doc: https://developers.messagebird.com/api/sms-messaging/#view-an-sms
     */
   private def liveFetchSmsById(id: Sms.Id): Future[Either[Error, Sms]] =
     ws.url(s"https://rest.messagebird.com/messages/${id.underlying}")
@@ -211,8 +209,7 @@ final class MessageBirdApi(
         )
       }
 
-  /** API Doc:
-    * https://developers.messagebird.com/api/sms-messaging/#available-http-methods
+  /** API Doc: https://developers.messagebird.com/api/sms-messaging/#available-http-methods
     */
   def deleteSms(id: Sms.Id): Future[Either[Error, Unit]] =
     ws.url(s"https://rest.messagebird.com/messages/${id.underlying}")

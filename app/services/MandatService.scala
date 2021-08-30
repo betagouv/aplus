@@ -129,7 +129,7 @@ class MandatService @Inject() (
             usager_birth_date,
             usager_phone_local
           ) VALUES (
-            ${id}::uuid,
+            $id::uuid,
             ${user.id}::uuid,
             $now,
             ${initiation.usagerPrenom},
@@ -158,7 +158,7 @@ class MandatService @Inject() (
       Try(
         db.withConnection { implicit connection =>
           SQL"""UPDATE mandat
-                SET application_id = ${applicationId}::uuid
+                SET application_id = $applicationId::uuid
                 WHERE id = ${id.underlying}::uuid
              """
             .executeUpdate()
@@ -192,7 +192,7 @@ class MandatService @Inject() (
         db.withConnection { implicit connection =>
           val smsJson: JsValue = Json.toJson(sms)
           SQL"""UPDATE mandat
-            SET sms_thread = sms_thread || ${smsJson}::jsonb
+            SET sms_thread = sms_thread || $smsJson::jsonb
             WHERE id = ${id.underlying}::uuid
          """
             .executeUpdate()
@@ -231,7 +231,7 @@ class MandatService @Inject() (
             case Some(mandat) =>
               val smsJson = Json.toJson(sms: Sms)
               SQL"""UPDATE mandat
-                    SET sms_thread = sms_thread || ${smsJson}::jsonb,
+                    SET sms_thread = sms_thread || $smsJson::jsonb,
                         sms_thread_closed = true
                     WHERE usager_phone_local = $localPhone
                     AND sms_thread_closed = false

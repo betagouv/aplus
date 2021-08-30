@@ -130,8 +130,8 @@ object StatsData {
 
 }
 
-/** This class (and its subclasses) should have all "computation" methods,
-  * such that the template do not have calculations in it.
+/** This class (and its subclasses) should have all "computation" methods, such that the template do
+  * not have calculations in it.
   */
 case class StatsData(
     all: StatsData.ApplicationAggregates,

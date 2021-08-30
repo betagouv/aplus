@@ -238,7 +238,7 @@ class LoginAction @Inject() (
     val userOption: Option[User] = userService.byId(userId)
     userOption match {
       case None =>
-        log.error(s"Try to login by token ${token.token} for an unknown user : ${userId}")
+        log.error(s"Try to login by token ${token.token} for an unknown user : $userId")
         Future(userNotLogged("Une erreur s'est produite, votre utilisateur n'existe plus"))
       case Some(user) =>
         LoginAction.readUserRights(user).map { userRights =>
@@ -249,7 +249,7 @@ class LoginAction @Inject() (
           if (token.ipAddress =!= request.remoteAddress) {
             eventService.log(
               AuthWithDifferentIp,
-              s"Utilisateur ${userId} à une adresse ip différente pour l'essai de connexion"
+              s"Utilisateur $userId à une adresse ip différente pour l'essai de connexion"
             )
           }
           if (token.isActive) {
@@ -291,7 +291,7 @@ class LoginAction @Inject() (
               eventService.logSystem(
                 EventType.MissingSignup,
                 s"Tentative de connexion par token ${token.token} " +
-                  s"avec une préinscription inconnue : ${signupId}"
+                  s"avec une préinscription inconnue : $signupId"
               )
               userNotLogged(
                 "Une erreur s'est produite, les données sur votre inscription n'existent plus"

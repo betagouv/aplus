@@ -20,7 +20,7 @@ case class Event(
   lazy val searchData = {
     val stripChars = "\"<>'"
     s"${Area.fromId(area).map(_.name).getOrElse("")} $level $code ${fromUserName.filterNot(stripChars contains _)} " +
-      s"${description.filterNot(stripChars contains _)} ${ipAddress} ${id} ${fromUserId} ${toApplicationId
+      s"${description.filterNot(stripChars contains _)} $ipAddress $id $fromUserId ${toApplicationId
         .getOrElse("")} ${toUserId.getOrElse("")}"
   }
 

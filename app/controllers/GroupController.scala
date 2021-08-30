@@ -227,7 +227,7 @@ case class GroupController @Inject() (
     loginAction.async { implicit request =>
       withGroup(groupId) { group: UserGroup =>
         asAdminOfGroupZone(group) { () =>
-          GroupDeletionUnauthorized -> s"Droits insuffisants pour la suppression du groupe ${groupId}."
+          GroupDeletionUnauthorized -> s"Droits insuffisants pour la suppression du groupe $groupId."
         } { () =>
           val empty = groupService.isGroupEmpty(group.id)
           if (not(empty)) {
