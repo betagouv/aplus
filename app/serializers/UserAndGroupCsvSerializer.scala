@@ -194,13 +194,13 @@ object UserAndGroupCsvSerializer {
           expectedHeaders: List[Header]
       ): CSVMap =
         values
-          .map({ case (key, value) =>
+          .map { case (key, value) =>
             val lowerKey = key.trim.toLowerCase.stripSpecialChars
             expectedHeaders
               // TODO : Weird bug here to correct (eg : can't use two column named "nom" and "nomducomptepartage" because of the startWith :(
               .find(expectedHeader => expectedHeader.lowerPrefixes.exists(lowerKey.startsWith))
               .map(expectedHeader => expectedHeader.key -> value)
-          })
+          }
           .flatten
           .toMap
 
@@ -286,9 +286,9 @@ object UserAndGroupCsvSerializer {
           val newTuples: Array[(String, String)] = areasValue
             .split(",")
             .zipWithIndex
-            .map({ case (areaUuid, index) =>
+            .map { case (areaUuid, index) =>
               s"${GROUP_AREAS_IDS.key}[$index]" -> areaUuid
-            })
+            }
           (csvMap - GROUP_AREAS_IDS.key) ++ newTuples
         })
 
