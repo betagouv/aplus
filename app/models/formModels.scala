@@ -103,9 +103,9 @@ object formModels {
 
     val form: Form[AddUserToGroupFormData] =
       Form(
-        mapping("email" -> nonEmptyText)(email => AddUserToGroupFormData(email.trim))(
-          AddUserToGroupFormData.unapply
-        )
+        mapping(
+          "email" -> normalizedText
+        )(AddUserToGroupFormData.apply)(AddUserToGroupFormData.unapply)
       )
 
   }
@@ -122,10 +122,10 @@ object formModels {
     val form: Form[EditProfileFormData] =
       Form(
         mapping(
-          "firstName" -> text.verifying(maxLength(100), nonEmpty),
-          "lastName" -> text.verifying(maxLength(100), nonEmpty),
-          "qualite" -> text.verifying(maxLength(100), nonEmpty),
-          "phone-number" -> optional(nonEmptyText)
+          "firstName" -> normalizedText.verifying(maxLength(100), nonEmpty),
+          "lastName" -> normalizedText.verifying(maxLength(100), nonEmpty),
+          "qualite" -> normalizedText.verifying(maxLength(100), nonEmpty),
+          "phone-number" -> normalizedOptionalText
         )(EditProfileFormData.apply)(EditProfileFormData.unapply)
       )
 
@@ -167,25 +167,34 @@ object formModels {
   object AddUserFormData {
 
     val formMapping: Mapping[AddUserFormData] = mapping(
-      "firstName" -> optional(text.verifying(maxLength(100))),
-      "lastName" -> optional(text.verifying(maxLength(100))),
-      "name" -> optional(nonEmptyText.verifying(maxLength(100))).transform[String](
-        {
-          case Some(value) => value
-          case None        => ""
-        },
-        {
-          case ""   => Option.empty[String]
-          case name => name.some
-        }
-      ),
-      "qualite" -> default(text.verifying(maxLength(100)), ""),
+      "firstName" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
+      "lastName" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
+      "name" -> normalizedOptionalText
+        .verifying(inOption(maxLength(100)))
+        .transform[String](
+          {
+            case Some(value) => value
+            case None        => ""
+          },
+          {
+            case ""   => Option.empty[String]
+            case name => name.some
+          }
+        ),
+      "qualite" -> default(normalizedText.verifying(maxLength(100)), ""),
       "email" -> email.verifying(maxLength(200), nonEmpty),
       "instructor" -> boolean,
       "groupAdmin" -> boolean,
-      "phoneNumber" -> optional(text),
+      "phoneNumber" -> normalizedOptionalText,
       Keys.User.sharedAccount -> boolean
     )(AddUserFormData.apply)(AddUserFormData.unapply)
+
+    val addUsersForm: Form[List[AddUserFormData]] =
+      Form(
+        single(
+          "users" -> list(formMapping)
+        )
+      )
 
   }
 
@@ -221,6 +230,40 @@ object formModels {
         observableOrganisationIds = user.observableOrganisationIds,
         sharedAccount = user.sharedAccount,
         internalSupportComment = user.internalSupportComment
+      )
+
+    val form: Form[EditUserFormData] =
+      Form(
+        mapping(
+          "id" -> uuid,
+          "firstName" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
+          "lastName" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
+          "name" -> normalizedOptionalText
+            .verifying(inOption(maxLength(100)))
+            .transform[String](
+              {
+                case Some(value) => value
+                case None        => ""
+              },
+              {
+                case ""   => Option.empty[String]
+                case name => name.some
+              }
+            ),
+          "qualite" -> normalizedText.verifying(maxLength(100)),
+          "email" -> email.verifying(maxLength(200), nonEmpty),
+          "helper" -> boolean,
+          "instructor" -> boolean,
+          "areas" -> list(uuid)
+            .verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
+          "groupAdmin" -> boolean,
+          "disabled" -> boolean,
+          "groupIds" -> default(list(uuid), Nil),
+          "phoneNumber" -> normalizedOptionalText,
+          "observableOrganisationIds" -> list(of[Organisation.Id]),
+          Keys.User.sharedAccount -> boolean,
+          "internalSupportComment" -> normalizedOptionalText
+        )(EditUserFormData.apply)(EditUserFormData.unapply)
       )
 
   }
@@ -304,10 +347,10 @@ object formModels {
       mapping(
         "redirect" -> optional(text),
         "cguChecked" -> boolean,
-        "firstName" -> optional(nonEmptyText.verifying(maxLength(100))),
-        "lastName" -> optional(nonEmptyText.verifying(maxLength(100))),
-        "qualite" -> optional(nonEmptyText.verifying(maxLength(100))),
-        "phoneNumber" -> optional(nonEmptyText.verifying(phoneNumberConstraint))
+        "firstName" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
+        "lastName" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
+        "qualite" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
+        "phoneNumber" -> normalizedOptionalText.verifying(inOption(phoneNumberConstraint))
       )(ValidateSubscriptionForm.apply)(ValidateSubscriptionForm.unapply)
         .verifying(
           "Le prénom est requis",

@@ -23,7 +23,7 @@ import play.api.data.validation.Constraints._
 import play.api.libs.ws.WSClient
 import play.api.mvc._
 import play.twirl.api.Html
-import serializers.{AttachmentHelper, Keys}
+import serializers.Keys
 import services._
 import views.stats.StatsData
 

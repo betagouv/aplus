@@ -22,6 +22,7 @@ import models.EventType.{
   UsersImported
 }
 import models.formModels.{
+  inOption,
   normalizedOptionalText,
   normalizedText,
   CSVRawLinesFormData,
@@ -173,13 +174,13 @@ case class CSVImportController @Inject() (
   private val userImportMapping: Mapping[CSVReviewUserFormData] =
     mapping(
       "id" -> uuid,
-      "firstName" -> optional(text.verifying(maxLength(100))),
-      "lastName" -> optional(text.verifying(maxLength(100))),
-      "name" -> text.verifying(maxLength(500)),
+      "firstName" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
+      "lastName" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
+      "name" -> normalizedText.verifying(maxLength(500)),
       "email" -> email.verifying(maxLength(200), nonEmpty),
       "instructor" -> boolean,
       "groupAdmin" -> boolean,
-      "phoneNumber" -> optional(text)
+      "phoneNumber" -> normalizedOptionalText
     )(CSVReviewUserFormData.apply)(CSVReviewUserFormData.unapply)
 
   private def groupImportMapping(date: ZonedDateTime): Mapping[UserGroup] =
