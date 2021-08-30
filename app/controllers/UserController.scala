@@ -358,7 +358,7 @@ case class UserController @Inject() (
             eventService.log(UserNotFound, s"L'utilisateur $userId n'existe pas")
             Future(NotFound("Nous n'avons pas trouvé cet utilisateur"))
           case Some(user) if Authorization.canSeeOtherUser(user)(request.rights) =>
-            val form = editUserForm.fill(EditUserFormData.fromUser(user))
+            val form = EditUserFormData.form.fill(EditUserFormData.fromUser(user))
             val groups = groupService.allGroups
             val unused = not(isAccountUsed(user))
             val Token(tokenName, tokenValue) = CSRF.getToken.get
@@ -426,7 +426,7 @@ case class UserController @Inject() (
   def editUserPost(userId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(() => PostEditUserUnauthorized -> s"Accès non autorisé à modifier $userId") { () =>
-        editUserForm
+        EditUserFormData.form
           .bindFromRequest()
           .fold(
             formWithErrors =>
@@ -498,7 +498,7 @@ case class UserController @Inject() (
                       Redirect(routes.UserController.editUser(userId))
                         .flashing("success" -> "Utilisateur modifié")
                     } else {
-                      val form = editUserForm
+                      val form = EditUserFormData.form
                         .fill(updatedUserData)
                         .withGlobalError(
                           s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)"
@@ -532,7 +532,7 @@ case class UserController @Inject() (
             ),
           Unauthorized("Vous ne pouvez pas ajouter des utilisateurs à ce groupe.").some
         ) { () =>
-          addUsersForm
+          AddUserFormData.addUsersForm
             .bindFromRequest()
             .fold(
               { formWithErrors =>
@@ -584,7 +584,7 @@ case class UserController @Inject() (
                         val errorMessage =
                           s"Impossible d'ajouter les utilisateurs. $error"
                         eventService.log(AddUserError, errorMessage)
-                        val form = addUsersForm
+                        val form = AddUserFormData.addUsersForm
                           .fill(usersToAdd)
                           .withGlobalError(errorMessage)
                         Future(
@@ -623,7 +623,7 @@ case class UserController @Inject() (
                         case _ =>
                           "Erreur d'insertion dans la base de donnée : contacter l'administrateur."
                       }
-                    val form = addUsersForm
+                    val form = AddUserFormData.addUsersForm
                       .fill(usersToAdd)
                       .withGlobalError(errorMessage)
                     eventService.log(
@@ -785,7 +785,7 @@ case class UserController @Inject() (
           Future(
             Ok(
               views.html.addUsers(request.currentUser, request.rights)(
-                addUsersForm,
+                AddUserFormData.addUsersForm,
                 rows,
                 routes.UserController.addPost(groupId)
               )
@@ -813,44 +813,5 @@ case class UserController @Inject() (
         }
       }
     }
-
-  val addUsersForm: Form[List[AddUserFormData]] =
-    Form(
-      single(
-        "users" -> list(AddUserFormData.formMapping)
-      )
-    )
-
-  val editUserForm: Form[EditUserFormData] =
-    Form(
-      mapping(
-        "id" -> uuid,
-        "firstName" -> optional(text.verifying(maxLength(100))),
-        "lastName" -> optional(text.verifying(maxLength(100))),
-        "name" -> optional(nonEmptyText.verifying(maxLength(100))).transform[String](
-          {
-            case Some(value) => value
-            case None        => ""
-          },
-          {
-            case ""   => Option.empty[String]
-            case name => name.some
-          }
-        ),
-        "qualite" -> text.verifying(maxLength(100)),
-        "email" -> email.verifying(maxLength(200), nonEmpty),
-        "helper" -> boolean,
-        "instructor" -> boolean,
-        "areas" -> list(uuid)
-          .verifying("Vous devez sélectionner au moins un territoire", _.nonEmpty),
-        "groupAdmin" -> boolean,
-        "disabled" -> boolean,
-        "groupIds" -> default(list(uuid), Nil),
-        "phoneNumber" -> optional(text),
-        "observableOrganisationIds" -> list(of[Organisation.Id]),
-        Keys.User.sharedAccount -> boolean,
-        "internalSupportComment" -> normalizedOptionalText
-      )(EditUserFormData.apply)(EditUserFormData.unapply)
-    )
 
 }
