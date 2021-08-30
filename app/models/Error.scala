@@ -2,8 +2,8 @@ package models
 
 sealed trait Error {
 
-  /** The `description` as logged by `EventService`
-    * ie will be displayed in the admin events on the app
+  /** The `description` as logged by `EventService` ie will be displayed in the admin events on the
+    * app
     */
   def description: String
 

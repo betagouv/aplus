@@ -36,8 +36,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-/** This controller creates an `Action` to handle HTTP requests to the
-  * application's home page.
+/** This controller creates an `Action` to handle HTTP requests to the application's home page.
   */
 @Singleton
 case class ApplicationController @Inject() (
@@ -819,11 +818,11 @@ case class ApplicationController @Inject() (
         val date = Time.formatPatternFr(Time.nowParis(), "YYY-MM-dd-HH'h'mm")
         val csvContent = applicationsToCSV(exportedApplications)
 
-        eventService.log(AllCSVShowed, s"Visualise un CSV pour la zone ${area}")
+        eventService.log(AllCSVShowed, s"Visualise un CSV pour la zone $area")
         val filenameAreaPart: String = area.map(_.name.stripSpecialChars).getOrElse("tous")
         Ok(csvContent)
           .withHeaders(
-            "Content-Disposition" -> s"""attachment; filename="aplus-demandes-$date-${filenameAreaPart}.csv""""
+            "Content-Disposition" -> s"""attachment; filename="aplus-demandes-$date-$filenameAreaPart.csv""""
           )
           .as("text/csv")
       }

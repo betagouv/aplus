@@ -188,8 +188,8 @@ object forms {
       )
     )
 
-  /** Note: Twirl impl is in app/views/helpers/input.scala.html
-    *       (replaces default defaultFieldConstructor.scala.html)
+  /** Note: Twirl impl is in app/views/helpers/input.scala.html (replaces default
+    * defaultFieldConstructor.scala.html)
     *
     * Default impl is at
     * https://github.com/playframework/playframework/blob/2.8.x/core/play/src/main/scala/views/helper/defaultFieldConstructor.scala.html

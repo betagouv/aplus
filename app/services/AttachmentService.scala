@@ -60,7 +60,7 @@ object AttachmentHelper {
     val path = new File(s"$filesPath")
     path.listFiles
       .filter(_.isFile)
-      .filter(_.getName.startsWith(s"${prefix}$applicationId"))
+      .filter(_.getName.startsWith(s"$prefix$applicationId"))
       .map(path =>
         storageFilenameToClientFilename(path.getName, applicationId.toString, prefix) -> path
           .length()
@@ -73,7 +73,7 @@ object AttachmentHelper {
       applicationId: String,
       prefix: String
   ): String =
-    storageFilename.replaceFirst(s"${prefix}$applicationId-", "")
+    storageFilename.replaceFirst(s"$prefix$applicationId-", "")
 
   def storeAttachment(
       attachmentPath: Path,

@@ -30,8 +30,7 @@ object applications {
     )
   }
 
-  /** This is for the Application creation form
-    * Some fields here are from `Form`
+  /** This is for the Application creation form Some fields here are from `Form`
     * https://www.playframework.com/documentation/2.8.x/api/scala/play/api/data/Form.html
     */
   def applicationTargetGroups(

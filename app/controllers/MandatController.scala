@@ -37,17 +37,19 @@ case class MandatController @Inject() (
     with UserOperators {
 
   /** To have a somewhat consistent process:
-    * - a SMS can fail for various reasons, even after having received a 2xx response from the api provider
-    * - we assume many SMS could potentially be sent for one `Mandat` (to manage SMS failures)
-    * - the `Mandat` is created but not signed until we have a response SMS
-    * - we assume no other `Mandat` will be opened for the same end-user before receiving a SMS response
-    * - a `Mandat` is allowed to be "dangling" (without a linked `Application`)
-    * - once a `Mandat` has been linked to an `Application`, it is used, and cannot be reused
+    *   - a SMS can fail for various reasons, even after having received a 2xx response from the api
+    *     provider
+    *   - we assume many SMS could potentially be sent for one `Mandat` (to manage SMS failures)
+    *   - the `Mandat` is created but not signed until we have a response SMS
+    *   - we assume no other `Mandat` will be opened for the same end-user before receiving a SMS
+    *     response
+    *   - a `Mandat` is allowed to be "dangling" (without a linked `Application`)
+    *   - once a `Mandat` has been linked to an `Application`, it is used, and cannot be reused
     *
     * This is a JSON API, mandats are initiated via Ajax calls.
     *
-    * Note: protection against rapidly sending SMS to the same number is only performed
-    *       client-side, we might want to revisit that.
+    * Note: protection against rapidly sending SMS to the same number is only performed client-side,
+    * we might want to revisit that.
     */
   def beginMandatSms: Action[JsValue] = loginAction(parse.json).async { implicit request =>
     request.body
@@ -99,6 +101,7 @@ case class MandatController @Inject() (
   }
 
   /** This is an `Action[String]` because we need to parse both as bytes and json.
+    *
     * Also, this is a webhook, only the returned status code is useful
     */
   // TODO: What if usager send an incorrect response the first time? close sms_thread only after some time has passed?
