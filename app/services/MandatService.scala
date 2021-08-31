@@ -43,7 +43,7 @@ class MandatService @Inject() (
       )
     )
 
-  private val (mandatRowParser, mandatTableFields) = Macros.parserWithFields[Mandat](
+  private val (mandatRowParser, tableFields) = Macros.parserWithFields[Mandat](
     "id",
     "user_id",
     "creation_date",
@@ -57,13 +57,14 @@ class MandatService @Inject() (
     "personal_data_wiped"
   )
 
-  private val fieldsInSelect: String = mandatTableFields.mkString(", ")
+  private val fieldsInSelect: String = tableFields.mkString(", ")
 
   private def byIdNoAuthorizationCheck(id: Mandat.Id): Future[Either[Error, Mandat]] =
     Future(
       Try(
         db.withTransaction { implicit connection =>
-          SQL"""SELECT * FROM mandat WHERE id = ${id.underlying}::uuid"""
+          SQL(s"""SELECT $fieldsInSelect FROM mandat WHERE id = {id}::uuid""")
+            .on("id" -> id.underlying)
             .as(mandatRowParser.singleOpt)
         }
       ).toEither.left
@@ -139,7 +140,8 @@ class MandatService @Inject() (
           )
         """.executeInsert(SqlParser.scalar[UUID].singleOpt)
 
-          SQL"""SELECT * FROM mandat WHERE id = $id::uuid"""
+          SQL(s"""SELECT $fieldsInSelect FROM mandat WHERE id = {id}::uuid""")
+            .on("id" -> id)
             .as(mandatRowParser.singleOpt)
             // `.get` is OK here, we want to rollback if we cannot get back the entity
             .get
@@ -214,11 +216,15 @@ class MandatService @Inject() (
         db.withTransaction { implicit connection =>
           val localPhone = sms.originator.toLocalPhoneFrance
           // Check if a thread is open
-          val allOpenMandats = SQL"""SELECT * FROM mandat
-                                     WHERE usager_phone_local = $localPhone
-                                     AND sms_thread_closed = false
-                             """
-            .as(mandatRowParser.*)
+          val allOpenMandats =
+            SQL(
+              s"""SELECT $fieldsInSelect
+                  FROM mandat
+                  WHERE usager_phone_local = {localPhone}
+                  AND sms_thread_closed = false
+               """
+            ).on("localPhone" -> localPhone)
+              .as(mandatRowParser.*)
           allOpenMandats.headOption match {
             case None =>
               Left(
@@ -256,9 +262,9 @@ class MandatService @Inject() (
     Future(
       Try {
         val before = ZonedDateTime.now().minusMonths(retentionInMonths)
-        val selectFields = mandatTableFields.map(field => s"mandat.$field").mkString(", ")
+        val fields = tableFields.map(field => s"mandat.$field").mkString(", ")
         val mandats = db.withConnection { implicit connection =>
-          SQL(s"""SELECT $selectFields
+          SQL(s"""SELECT $fields
                   FROM mandat
                   LEFT JOIN application ON mandat.application_id = application.id
                   WHERE mandat.personal_data_wiped = false

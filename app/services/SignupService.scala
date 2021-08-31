@@ -1,6 +1,7 @@
 package services
 
 import anorm._
+import aplus.macros.Macros
 import cats.syntax.all._
 import java.time.Instant
 import java.util.UUID
@@ -18,19 +19,21 @@ class SignupService @Inject() (
 ) {
   import dependencies.databaseExecutionContext
 
-  private val signupRequestRowParser: RowParser[SignupRequest] = Macro
-    .parser[SignupRequest](
-      "id",
-      "request_date",
-      "email",
-      "inviting_user_id"
-    )
+  private val (signupRequestRowParser, tableFields) = Macros.parserWithFields[SignupRequest](
+    "id",
+    "request_date",
+    "email",
+    "inviting_user_id"
+  )
+
+  private val fieldsInSelect: String = tableFields.mkString(", ")
 
   def byId(signupId: UUID): Future[Either[Error, Option[SignupRequest]]] =
     Future(
       Try(
         db.withTransaction { implicit connection =>
-          SQL"""SELECT * FROM signup_request WHERE id = $signupId::uuid"""
+          SQL(s"""SELECT $fieldsInSelect FROM signup_request WHERE id = {signupId}::uuid""")
+            .on("signupId" -> signupId)
             .as(signupRequestRowParser.singleOpt)
         }
       ).toEither.left
@@ -47,7 +50,10 @@ class SignupService @Inject() (
     Future(
       Try(
         db.withTransaction { implicit connection =>
-          SQL"""SELECT * FROM signup_request WHERE lower(email) = ${email.toLowerCase}"""
+          SQL(s"""SELECT $fieldsInSelect
+                  FROM signup_request
+                  WHERE lower(email) = {email}""")
+            .on("email" -> email.toLowerCase)
             .as(signupRequestRowParser.singleOpt)
         }
       ).toEither.left
@@ -65,8 +71,9 @@ class SignupService @Inject() (
       Try {
         val lowerCaseEmails = emails.map(_.toLowerCase)
         db.withConnection { implicit connection =>
-          SQL"""SELECT * FROM signup_request
-                WHERE ARRAY[$lowerCaseEmails]::text[] @> ARRAY[lower(email)]::text[]"""
+          SQL(s"""SELECT $fieldsInSelect FROM signup_request
+                  WHERE ARRAY[{emails}]::text[] @> ARRAY[lower(email)]::text[]""")
+            .on("emails" -> lowerCaseEmails)
             .as(signupRequestRowParser.*)
         }
       }.toEither.left
@@ -83,12 +90,14 @@ class SignupService @Inject() (
     Future(
       Try(
         db.withTransaction { implicit connection =>
-          SQL"""SELECT
-                  signup_request.*,
-                  "user".id AS signedup_user_id
-                FROM signup_request
-                LEFT JOIN "user" ON LOWER("user".email) = LOWER(signup_request.email)
-                WHERE request_date >= $afterDate"""
+          val fields = tableFields.map(field => s"signup_request.$field").mkString(", ")
+          SQL(s"""SELECT
+                    $fields,
+                    "user".id AS signedup_user_id
+                  FROM signup_request
+                  LEFT JOIN "user" ON LOWER("user".email) = LOWER(signup_request.email)
+                  WHERE request_date >= {afterDate}""")
+            .on("afterDate" -> afterDate)
             .as((signupRequestRowParser ~ SqlParser.get[Option[UUID]]("signedup_user_id")).*)
             .map { case a ~ b => (a, b) }
         }

@@ -1,6 +1,7 @@
 package services
 
 import anorm._
+import aplus.macros.Macros
 import cats.syntax.all._
 import helper.StringHelper.StringOps
 import helper.{Hash, Time, UUIDHelper}
@@ -33,57 +34,60 @@ class UserService @Inject() (
       .flatMap(UUIDHelper.fromString)
       .toSet
 
-  private val simpleUser: RowParser[UserRow] = Macro
-    .parser[UserRow](
-      "id",
-      "key",
-      "first_name",
-      "last_name",
-      "name",
-      "qualite",
-      "email",
-      "helper",
-      "instructor",
-      "admin",
-      "areas",
-      "creation_date",
-      "commune_code",
-      "group_admin",
-      "disabled",
-      "expert",
-      "group_ids",
-      "cgu_acceptation_date",
-      "newsletter_acceptation_date",
-      "phone_number",
-      "observable_organisation_ids",
-      "shared_account",
-      "internal_support_comment"
-    )
+  private val (simpleUser, tableFields) = Macros.parserWithFields[UserRow](
+    "id",
+    "key",
+    "first_name",
+    "last_name",
+    "name",
+    "qualite",
+    "email",
+    "helper",
+    "instructor",
+    "admin",
+    "areas",
+    "creation_date",
+    "commune_code",
+    "group_admin",
+    "disabled",
+    "expert",
+    "group_ids",
+    "cgu_acceptation_date",
+    "newsletter_acceptation_date",
+    "phone_number",
+    "observable_organisation_ids",
+    "shared_account",
+    "internal_support_comment"
+  )
+
+  private val fieldsInSelect: String = tableFields.mkString(", ")
 
   def allNoNameNoEmail: Future[List[User]] =
     Future {
       db.withConnection { implicit connection =>
-        SQL("""SELECT *, '' as name, '' as email, '' as qualite FROM "user"""").as(simpleUser.*)
+        SQL(s"""SELECT $fieldsInSelect, '' as name, '' as email, '' as qualite FROM "user"""")
+          .as(simpleUser.*)
       }.map(_.toUser)
     }
 
   def all: Future[List[User]] =
     Future {
-      db.withConnection(implicit connection => SQL("""SELECT * FROM "user"""").as(simpleUser.*))
-        .map(_.toUser)
+      db.withConnection(implicit connection =>
+        SQL(s"""SELECT $fieldsInSelect FROM "user"""").as(simpleUser.*)
+      ).map(_.toUser)
     }
 
   def allNotDisabled: Future[List[User]] =
     Future {
       db.withConnection { implicit connection =>
-        SQL("""SELECT * FROM "user" WHERE NOT disabled""").as(simpleUser.*)
+        SQL(s"""SELECT $fieldsInSelect FROM "user" WHERE NOT disabled""").as(simpleUser.*)
       }.map(_.toUser)
     }
 
   def allExperts: Future[List[User]] =
     Future {
       db.withConnection { implicit connection =>
-        SQL"""SELECT * FROM "user" WHERE expert = true AND disabled = false"""
+        SQL(s"""SELECT $fieldsInSelect FROM "user" WHERE expert = true AND disabled = false""")
           .as(simpleUser.*)
       }.map(_.toUser)
     }
@@ -91,12 +95,14 @@ class UserService @Inject() (
   // Note: this is deprecated, should check via the UserGroup
   def byAreaIds(areaIds: List[UUID]): List[User] =
     db.withConnection { implicit connection =>
-      SQL"""SELECT * FROM "user" WHERE ARRAY[$areaIds]::uuid[] && areas""".as(simpleUser.*)
+      SQL(s"""SELECT $fieldsInSelect FROM "user" WHERE ARRAY[{areaIds}]::uuid[] && areas""")
+        .on("areaIds" -> areaIds)
+        .as(simpleUser.*)
     }.map(_.toUser)
 
   def allDBOnlybyArea(areaId: UUID) =
     db.withConnection { implicit connection =>
-      SQL("""SELECT * FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""")
+      SQL(s"""SELECT $fieldsInSelect FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""")
         .on("areaId" -> areaId)
         .as(simpleUser.*)
     }.map(_.toUser)
@@ -111,7 +117,9 @@ class UserService @Inject() (
       } else {
         "AND disabled = false"
       }
-      SQL(s"""SELECT * FROM "user" WHERE ARRAY[{ids}]::uuid[] && group_ids $disabledSQL""")
+      SQL(s"""SELECT $fieldsInSelect
+              FROM "user"
+              WHERE ARRAY[{ids}]::uuid[] && group_ids $disabledSQL""")
         .on("ids" -> ids)
         .as(simpleUser.*)
     }.map(_.toUser)
@@ -121,9 +129,11 @@ class UserService @Inject() (
   def byGroupIdsAnonymous(ids: List[UUID]): Future[List[User]] =
     Future {
       db.withConnection { implicit connection =>
-        SQL"""SELECT *, '' as name, '' as email, '' as qualite
-            FROM "user"
-            WHERE ARRAY[$ids]::uuid[] && group_ids""".as(simpleUser.*)
+        SQL(s"""SELECT $fieldsInSelect, '' as name, '' as email, '' as qualite
+                FROM "user"
+                WHERE ARRAY[{ids}]::uuid[] && group_ids""")
+          .on("ids" -> ids)
+          .as(simpleUser.*)
       }.map(_.toUser)
     }
 
@@ -141,7 +151,9 @@ class UserService @Inject() (
       } else {
         "AND disabled = false"
       }
-      SQL(s"""SELECT * FROM "user" WHERE ARRAY[{ids}]::uuid[] @> ARRAY[id]::uuid[] $disabledSQL""")
+      SQL(s"""SELECT $fieldsInSelect
+              FROM "user"
+              WHERE ARRAY[{ids}]::uuid[] @> ARRAY[id]::uuid[] $disabledSQL""")
         .on("ids" -> ids)
         .as(simpleUser.*)
     }.map(_.toUser)
@@ -151,14 +163,17 @@ class UserService @Inject() (
 
   def byKey(key: String): Option[User] =
     db.withConnection { implicit connection =>
-      SQL("""SELECT * FROM "user" WHERE key = {key} AND disabled = false""")
+      SQL(s"""SELECT $fieldsInSelect FROM "user" WHERE key = {key} AND disabled = false""")
         .on("key" -> key)
         .as(simpleUser.singleOpt)
     }.map(_.toUser)
 
   def byEmail(email: String): Option[User] =
     db.withConnection { implicit connection =>
-      SQL("""SELECT * FROM "user" WHERE lower(email) = {email} AND disabled = false""")
+      SQL(s"""SELECT $fieldsInSelect
+              FROM "user"
+              WHERE lower(email) = {email}
+              AND disabled = false""")
         .on("email" -> email.toLowerCase)
         .as(simpleUser.singleOpt)
     }.map(_.toUser)
@@ -168,7 +183,10 @@ class UserService @Inject() (
   def byEmails(emails: List[String]): List[User] = {
     val lowerCaseEmails = emails.map(_.toLowerCase)
     db.withConnection { implicit connection =>
-      SQL"""SELECT * FROM "user" WHERE  ARRAY[$lowerCaseEmails]::text[] @> ARRAY[lower(email)]::text[]"""
+      SQL(s"""SELECT $fieldsInSelect
+              FROM "user"
+              WHERE ARRAY[{emails}]::text[] @> ARRAY[lower(email)]::text[]""")
+        .on("emails" -> lowerCaseEmails)
         .as(simpleUser.*)
     }.map(_.toUser)
   }
