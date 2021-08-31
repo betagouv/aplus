@@ -46,11 +46,9 @@ object AttachmentHelper {
       filesPath: String,
       prefix: String
   ): Map[String, Long] =
-    getAttachmentsToStore
-      .flatMap({ case (attachmentPath, attachmentName) =>
-        storeAttachment(attachmentPath, attachmentName, applicationId, filesPath, prefix)
-      })
-      .toMap
+    getAttachmentsToStore.flatMap { case (attachmentPath, attachmentName) =>
+      storeAttachment(attachmentPath, attachmentName, applicationId, filesPath, prefix)
+    }.toMap
 
   private def getAttachments(
       applicationId: UUID,

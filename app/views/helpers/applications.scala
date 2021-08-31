@@ -91,7 +91,7 @@ object applications {
     groups.sortBy(_.name).map { group =>
       val organisation: Option[Organisation] = group.organisationSetOrDeducted
       val groupIsChecked =
-        formData.exists({ case (k, v) => k.startsWith("groups[") && v === group.id.toString })
+        formData.exists { case (k, v) => k.startsWith("groups[") && v === group.id.toString }
 
       def publicNoteBox(inner: Frag) =
         tr(
