@@ -218,7 +218,6 @@ function setupDynamicUsagerInfosButtons() {
       element.addEventListener('keydown', (event: KeyboardEvent) => {
         if (event.keyCode === 13) {
           addInfo();
-          return false;
         }
       });
     });
