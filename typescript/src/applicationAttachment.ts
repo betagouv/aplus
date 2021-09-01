@@ -23,11 +23,11 @@ if (attachmentList) {
         fileInputCount--;
       }
     }
-  }
+  };
 
   // For all file inputs, add a listener that adds a new file input to allow
   // for more attachments to be made.
-  attachmentList.querySelectorAll("input").forEach(input => {
+  attachmentList.querySelectorAll("input").forEach((input) => {
     input.addEventListener("change", increaseOrDecreaseFileInputList);
   });
 }
