@@ -15,7 +15,7 @@ import 'unorm';
 import "./admin";
 import "./application";
 import "./applicationMandatFields";
-import "./application-attachment";
+import "./applicationAttachment";
 //import "./autolinker";
 import "./changeArea";
 import "./domHelpers";
