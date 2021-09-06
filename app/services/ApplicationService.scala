@@ -57,7 +57,7 @@ class ApplicationService @Inject() (
 
   import dataModels.Application.SeenByUser._
 
-  private val (applicationParser, applicationTableFields) = Macros.parserWithFields[Application](
+  private val (parser, tableFields) = Macros.parserWithFields[Application](
     "id",
     "creation_date",
     "creator_user_name",
@@ -84,9 +84,9 @@ class ApplicationService @Inject() (
     "personal_data_wiped"
   )
 
-  private val fieldsInSelect: String = applicationTableFields.mkString(", ")
+  private val fieldsInSelect: String = tableFields.mkString(", ")
 
-  private val simpleApplication: RowParser[Application] = applicationParser
+  private val simpleApplication: RowParser[Application] = parser
     .map(application =>
       application.copy(
         creationDate = application.creationDate.withZoneSameInstant(Time.timeZoneParis),
@@ -98,15 +98,15 @@ class ApplicationService @Inject() (
 
   private def setSeenByUsers(id: UUID, seenByUsers: List[SeenByUser])(implicit
       cnx: Connection
-  ) = {
+  ): Option[Application] = {
     val pgObject = new PGobject
     pgObject.setType("json")
     pgObject.setValue(toJson(seenByUsers).toString)
 
-    SQL("""UPDATE application
-          |SET seen_by_user_ids = {seen_by_users}::jsonb
-          |WHERE id = {id}::uuid
-          |RETURNING *;""".stripMargin)
+    SQL(s"""UPDATE application
+           |SET seen_by_user_ids = {seen_by_users}::jsonb
+           |WHERE id = {id}::uuid
+           |RETURNING $fieldsInSelect;""".stripMargin)
       .on(
         "id" -> id,
         "seen_by_users" -> anorm.Object(pgObject)
@@ -115,9 +115,9 @@ class ApplicationService @Inject() (
   }
 
   private def byId(id: UUID)(implicit cnx: Connection) =
-    SQL("""SELECT *
-          |FROM application
-          |WHERE id = {id}::uuid;""".stripMargin)
+    SQL(s"""SELECT $fieldsInSelect
+           |FROM application
+           |WHERE id = {id}::uuid;""".stripMargin)
       .on(
         "id" -> id
       )
@@ -155,7 +155,11 @@ class ApplicationService @Inject() (
   def openAndOlderThan(day: Int) =
     db.withConnection { implicit connection =>
       SQL(
-        s"SELECT * FROM application WHERE closed = false AND age(creation_date) > '$day days' AND expert_invited = false"
+        s"""SELECT $fieldsInSelect
+            FROM application
+            WHERE closed = false
+            AND age(creation_date) > '$day days'
+            AND expert_invited = false"""
       ).as(simpleApplication.*)
     }
 
@@ -165,7 +169,7 @@ class ApplicationService @Inject() (
       referenceDate: ZonedDateTime
   ): List[Application] =
     db.withConnection { implicit connection =>
-      val result = SQL("""SELECT * FROM application
+      val result = SQL(s"""SELECT $fieldsInSelect FROM application
           |WHERE (creator_user_id = {userId}::uuid OR invited_users ?? {userId}) AND
           |  (closed = FALSE OR DATE_PART('day', {referenceDate} - closed_date) < 30)
           |ORDER BY creation_date DESC""".stripMargin)
@@ -182,10 +186,10 @@ class ApplicationService @Inject() (
     Future {
       db.withConnection { implicit connection =>
         val result = SQL(
-          """SELECT * FROM application
-             WHERE creator_user_id = {userId}::uuid
-             AND closed = false
-             ORDER BY creation_date DESC"""
+          s"""SELECT $fieldsInSelect FROM application
+              WHERE creator_user_id = {userId}::uuid
+              AND closed = false
+              ORDER BY creation_date DESC"""
         ).on("userId" -> userId)
           .as(simpleApplication.*)
         result.map(_.anonymousApplication)
@@ -195,7 +199,11 @@ class ApplicationService @Inject() (
   def allForUserId(userId: UUID, anonymous: Boolean) =
     db.withConnection { implicit connection =>
       val result = SQL(
-        "SELECT * FROM application WHERE creator_user_id = {userId}::uuid OR invited_users ?? {userId} ORDER BY creation_date DESC"
+        s"""SELECT $fieldsInSelect
+            FROM application
+            WHERE creator_user_id = {userId}::uuid
+            OR invited_users ?? {userId}
+            ORDER BY creation_date DESC"""
       ).on("userId" -> userId)
         .as(simpleApplication.*)
       if (anonymous) {
@@ -208,7 +216,13 @@ class ApplicationService @Inject() (
   def allForUserIds(userIds: List[UUID]): Future[List[Application]] =
     Future {
       db.withConnection { implicit connection =>
-        SQL"SELECT * FROM application WHERE ARRAY[$userIds]::uuid[] @> ARRAY[creator_user_id]::uuid[] OR ARRAY(select jsonb_object_keys(invited_users))::uuid[] && ARRAY[$userIds]::uuid[] ORDER BY creation_date DESC"
+        SQL(
+          s"""SELECT $fieldsInSelect
+              FROM application
+              WHERE ARRAY[{userIds}]::uuid[] @> ARRAY[creator_user_id]::uuid[]
+              OR ARRAY(select jsonb_object_keys(invited_users))::uuid[] && ARRAY[{userIds}]::uuid[]
+              ORDER BY creation_date DESC"""
+        ).on("userIds" -> userIds)
           .as(simpleApplication.*)
           .map(_.anonymousApplication)
       }
@@ -217,8 +231,12 @@ class ApplicationService @Inject() (
   def allByArea(areaId: UUID, anonymous: Boolean) =
     db.withConnection { implicit connection =>
       val result =
-        SQL("SELECT * FROM application WHERE area = {areaId}::uuid ORDER BY creation_date DESC")
-          .on("areaId" -> areaId)
+        SQL(
+          s"""SELECT $fieldsInSelect
+              FROM application
+              WHERE area = {areaId}::uuid
+              ORDER BY creation_date DESC"""
+        ).on("areaId" -> areaId)
           .as(simpleApplication.*)
       if (anonymous) {
         result.map(_.anonymousApplication)
@@ -237,7 +255,8 @@ class ApplicationService @Inject() (
               s"interval '$months month'"
           )
           .orEmpty
-        SQL(s"""SELECT * FROM application
+        SQL(s"""SELECT $fieldsInSelect
+                FROM application
                 WHERE ARRAY[{areaIds}]::uuid[] @> ARRAY[area]::uuid[]
                 $additionalFilter
                 ORDER BY creation_date DESC""")
@@ -250,7 +269,9 @@ class ApplicationService @Inject() (
   def all(): Future[List[Application]] =
     Future {
       db.withConnection { implicit connection =>
-        SQL"""SELECT * FROM application""".as(simpleApplication.*).map(_.anonymousApplication)
+        SQL(s"""SELECT $fieldsInSelect FROM application""")
+          .as(simpleApplication.*)
+          .map(_.anonymousApplication)
       }
     }
 
