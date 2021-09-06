@@ -25,7 +25,7 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noPropertyAccessFromIndexSignature": true,
-    /**"noUncheckedIndexedAccess": true,*/
+    "noUncheckedIndexedAccess": true,
     /**"strict": true,*/
     "strictBindCallApply": true,
     "strictFunctionTypes": true,
