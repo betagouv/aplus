@@ -7,7 +7,7 @@ const printButtonClass = "onclick-print";
 
 
 document.querySelectorAll<HTMLElement>("." + deleteElementClass).forEach((button) => {
-  const selector = button.dataset.selector;
+  const selector = button.dataset['selector'];
   button.addEventListener("click", () => {
     const element = document.querySelector(selector);
     element.parentNode.removeChild(element);
@@ -15,7 +15,7 @@ document.querySelectorAll<HTMLElement>("." + deleteElementClass).forEach((button
 });
 
 document.querySelectorAll<HTMLElement>("." + checkAllClass).forEach((button) => {
-  const selector = button.dataset.selector;
+  const selector = button.dataset['selector'];
   button.addEventListener("click", () => {
     document.querySelectorAll<HTMLInputElement>(selector).forEach((checkbox) => {
       checkbox.checked = true;
@@ -25,7 +25,7 @@ document.querySelectorAll<HTMLElement>("." + checkAllClass).forEach((button) => 
 });
 
 document.querySelectorAll<HTMLElement>("." + uncheckAllClass).forEach((button) => {
-  const selector = button.dataset.selector;
+  const selector = button.dataset['selector'];
   button.addEventListener("click", () => {
     document.querySelectorAll<HTMLInputElement>(selector).forEach((checkbox) => {
       checkbox.checked = false;
@@ -41,7 +41,7 @@ document.querySelectorAll<HTMLButtonElement>("." + disableOnSubmitClass).forEach
 });
 
 document.querySelectorAll<HTMLElement>("." + changeLocationClass).forEach((button) => {
-  const url = button.dataset.location;
+  const url = button.dataset['location'];
   if (url) {
     button.addEventListener("click", () => {
       window.location.href = url;

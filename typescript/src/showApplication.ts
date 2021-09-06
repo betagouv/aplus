@@ -44,13 +44,13 @@ const showDialog = () => {
 }
 
 const confirmTerminate = () => {
-  const targetUrl = closeDialogTerminateButton?.dataset.targetUrl;
+  const targetUrl = closeDialogTerminateButton?.dataset['targetUrl'];
   const checked = <HTMLInputElement | null>document.querySelector('input[name="usefulness"]:checked');
   const usefulness = checked.value;
   document.location.href = targetUrl + '?usefulness=' + usefulness;
 }
 
-const reopen = () => document.location.href = reopenButton?.dataset.targetUrl;
+const reopen = () => document.location.href = reopenButton?.dataset['targetUrl'];
 
 const enableFeedbackOnChangeForComponentId = (id: string) => document.getElementById(id)?.addEventListener('change', enableYes);
 

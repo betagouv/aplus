@@ -19,12 +19,12 @@
     "allowUnusedLabels": false,
     "alwaysStrict": true,
     /**"exactOptionalPropertyTypes": true,*/
-    /**"noFallthroughCasesInSwitch": true,*/
+    "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
-    /**"noPropertyAccessFromIndexSignature": true,*/
+    "noPropertyAccessFromIndexSignature": true,
     /**"noUncheckedIndexedAccess": true,*/
     /**"strict": true,*/
     "strictBindCallApply": true,

@@ -155,9 +155,9 @@ function applyCategoryFilters() {
   document.querySelectorAll<HTMLElement>(".mdl-chip." + categoryFilterClass)
     .forEach((categoryButton) => {
       if (categoryButton.classList.contains("mdl-chip--active")) {
-        if (categoryButton.dataset.organisations) {
+        if (categoryButton.dataset['organisations']) {
           const parsedOrganisations: Array<string> =
-            JSON.parse(categoryButton.dataset.organisations);
+            JSON.parse(categoryButton.dataset['organisations']);
           parsedOrganisations.forEach((parsedOrganisation) => {
             if (!selectedCategories.includes(parsedOrganisation)) {
               selectedCategories.push(parsedOrganisation);
@@ -171,7 +171,7 @@ function applyCategoryFilters() {
   // Show / Hide Checkboxes
   document.querySelectorAll<HTMLInputElement>('.' + invitedGroupsCheckboxClass)
     .forEach((invitedGroupCheckbox) => {
-      const groupName: string = invitedGroupCheckbox.dataset.groupName;
+      const groupName: string = invitedGroupCheckbox.dataset['groupName'];
       const isSelected = selectedCategories.some((selectedCategory) =>
         groupName.toLowerCase().includes(selectedCategory.toLowerCase()))
       let shouldBeFilteredOut = !isSelected;
@@ -261,7 +261,7 @@ function setupInvitedGroups() {
         const infosDiv = document.getElementById(`invite-${ groupId }-additional-infos`);
         if (input.checked) {
           infosDiv && infosDiv.classList.remove('invisible');
-          const groupName = input.dataset.groupName;
+          const groupName = input.dataset['groupName'];
           groupName && addInvitedGroupInfos(groupName);
         } else {
           infosDiv && infosDiv.classList.add('invisible');
