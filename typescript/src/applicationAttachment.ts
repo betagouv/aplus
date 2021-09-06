@@ -3,10 +3,11 @@ const attachmentList: HTMLElement | null = document.getElementById("attachment-l
 if (attachmentList) {
   let fileInputCount: number = 1;
   let idSequence: number = 1; // In order to avoid id collisions
-  let increaseOrDecreaseFileInputList: (event: Event & { target: HTMLInputElement }) => void = () => { };
+  let increaseOrDecreaseFileInputList: (event: Event) => void = () => { };
 
   increaseOrDecreaseFileInputList = (event) => {
-    if (event.target.files.length > 0) {
+    const target = event.target as HTMLInputElement;
+    if (target.files.length > 0) {
       // If a new file is added, add a new file input.
       const li: HTMLLIElement = document.createElement("li");
       const input: HTMLInputElement = document.createElement("input");
@@ -19,7 +20,7 @@ if (attachmentList) {
     } else {
       // If a previous file is unset for upload, remove the corresponding input file.
       if (fileInputCount > 1) {
-        event.target.parentElement.parentElement.removeChild(event.target.parentElement);
+        target.parentElement.parentElement.removeChild(target.parentElement);
         fileInputCount--;
       }
     }

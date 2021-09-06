@@ -111,8 +111,8 @@ function addOptionalInfoRow(infoName: string, infoValue: string) {
   document.getElementById("add-infos__ok-button").classList.add("invisible");
 
   document
-    .querySelectorAll('.' + usagerInfosRemoveButtonClass)
-    .forEach((element: HTMLElement) => {
+    .querySelectorAll<HTMLElement>('.' + usagerInfosRemoveButtonClass)
+    .forEach((element) => {
       // Avoid having many times the same event handler with .onclick
       element.onclick = () => {
         var row = element.parentNode;
@@ -145,8 +145,8 @@ function addInfo() {
 function applyCategoryFilters() {
   // Get all activated categories organisations
   let selectedCategories: Array<string> = [];
-  document.querySelectorAll(".mdl-chip." + categoryFilterClass)
-    .forEach((categoryButton: HTMLElement) => {
+  document.querySelectorAll<HTMLElement>(".mdl-chip." + categoryFilterClass)
+    .forEach((categoryButton) => {
       if (categoryButton.classList.contains("mdl-chip--active")) {
         if (categoryButton.dataset.organisations) {
           const parsedOrganisations: Array<string> =
@@ -162,8 +162,8 @@ function applyCategoryFilters() {
   console.log("Selected organisations: ", selectedCategories);
 
   // Show / Hide Checkboxes
-  document.querySelectorAll('.' + invitedGroupsCheckboxClass)
-    .forEach((invitedGroupCheckbox: HTMLInputElement) => {
+  document.querySelectorAll<HTMLInputElement>('.' + invitedGroupsCheckboxClass)
+    .forEach((invitedGroupCheckbox) => {
       const groupName: string = invitedGroupCheckbox.dataset.groupName;
       const isSelected = selectedCategories.some((selectedCategory) =>
         groupName.toLowerCase().includes(selectedCategory.toLowerCase()))
@@ -193,8 +193,8 @@ function onClickFilterButton(button: HTMLElement) {
 }
 
 function onClickRemoveFilter() {
-  document.querySelectorAll(".mdl-chip." + categoryFilterClass)
-    .forEach((categoryButton: HTMLElement) => categoryButton.classList.remove("mdl-chip--active"));
+  document.querySelectorAll<HTMLElement>(".mdl-chip." + categoryFilterClass)
+    .forEach((categoryButton) => categoryButton.classList.remove("mdl-chip--active"));
   applyCategoryFilters()
 }
 
@@ -215,8 +215,8 @@ function setupDynamicUsagerInfosButtons() {
   document
     .querySelectorAll("." + usagerInfosInputClass)
     .forEach((element) => {
-      element.addEventListener('keydown', (event: KeyboardEvent) => {
-        if (event.keyCode === 13) {
+      element.addEventListener('keydown', (event) => {
+        if ((<KeyboardEvent>event).keyCode === 13) {
           addInfo();
         }
       });
@@ -229,8 +229,8 @@ function setupDynamicUsagerInfosButtons() {
     });
 
   document
-    .querySelectorAll("." + categoryFilterClass)
-    .forEach((element: HTMLElement) => {
+    .querySelectorAll<HTMLElement>("." + categoryFilterClass)
+    .forEach((element) => {
       element.addEventListener('click', () => onClickFilterButton(element));
     });
 

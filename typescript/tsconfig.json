@@ -28,7 +28,7 @@
     /**"noUncheckedIndexedAccess": true,*/
     /**"strict": true,*/
     "strictBindCallApply": true,
-    /**"strictFunctionTypes": true,*/
+    "strictFunctionTypes": true,
     /**"strictNullChecks": true,*/
     /**"strictPropertyInitialization": true,*/
     "useUnknownInCatchVariables": true
