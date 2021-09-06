@@ -24,10 +24,17 @@ const linkedMandatInputId = "linkedMandat";
 
 
 
-setupDynamicUsagerInfosButtons();
-setupInvitedGroups();
-setupMandatSmsForm();
+interface SmsMandatFormData {
+  prenom: string;
+  nom: string;
+  birthDate: string;
+  phoneNumber: string;
+}
 
+// models.mandat.Mandat
+interface Mandat {
+  id: string;
+}
 
 
 function addInvitedGroupInfos(groupName: string) {
@@ -327,20 +334,25 @@ function setupMandatSmsForm() {
     };
   }
 
-  function sendForm(data, callbackSuccess, callbackServerError, callbackBrowserError) {
+  function sendForm(
+    data: SmsMandatFormData,
+    callbackSuccess: (mandat: Mandat) => void,
+    callbackServerError: () => void,
+    callbackBrowserError: () => void
+  ) {
     try {
       const xhr = new XMLHttpRequest();
       xhr.onreadystatechange = function() {
         if (xhr.readyState == XMLHttpRequest.DONE) {   // XMLHttpRequest.DONE == 4
           try {
             if (Math.floor(xhr.status / 100) === 2) {
-              callbackSuccess(JSON.parse(xhr.responseText));
+              callbackSuccess(<Mandat>JSON.parse(xhr.responseText));
             } else {
               callbackServerError();
             }
           } catch (error) {
             console.error(error);
-            callbackBrowserError(error);
+            callbackBrowserError();
           }
         }
       };
@@ -355,7 +367,7 @@ function setupMandatSmsForm() {
       xhr.send(JSON.stringify(data));
     } catch (error) {
       console.error(error);
-      callbackBrowserError(error);
+      callbackBrowserError();
     }
   }
 
@@ -372,7 +384,7 @@ function setupMandatSmsForm() {
         sendForm(
           formData.data,
           // Success
-          function(mandat) {
+          function(mandat: Mandat) {
             const link = successMessage.querySelector("a");
             link.href = "/mandats/" + mandat.id;
             linkedMandatInput.value = mandat.id;
@@ -399,3 +411,10 @@ function setupMandatSmsForm() {
     }
   }
 }
+
+
+
+
+setupDynamicUsagerInfosButtons();
+setupInvitedGroups();
+setupMandatSmsForm();
