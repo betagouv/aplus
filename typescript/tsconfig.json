@@ -18,7 +18,7 @@
     */
     "allowUnusedLabels": false,
     "alwaysStrict": true,
-    /**"exactOptionalPropertyTypes": true,*/
+    "exactOptionalPropertyTypes": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noImplicitOverride": true,
@@ -26,11 +26,11 @@
     "noImplicitThis": true,
     "noPropertyAccessFromIndexSignature": true,
     "noUncheckedIndexedAccess": true,
-    /**"strict": true,*/
+    "strict": true,
     "strictBindCallApply": true,
     "strictFunctionTypes": true,
     "strictNullChecks": true,
-    /**"strictPropertyInitialization": true,*/
+    "strictPropertyInitialization": true,
     "useUnknownInCatchVariables": true
   }
 }
