@@ -23,63 +23,65 @@ if (dialog && !dialog.showModal) {
   dialogPolyfill.registerDialog(dialog);
 }
 
-if (reviewValidationButton != null &&
-  customAnswerInput != null &&
-  dialog != null) {
+const closeDialog = () => dialog?.close();
 
-  const closeDialog = () => dialog.close();
+const showDialog = () => {
+  Array.from(document.querySelectorAll<HTMLInputElement>("#dialog-terminate input"))
+    .forEach((input: HTMLInputElement) => input.checked = false);
+  dialog?.showModal();
+}
 
-  const showDialog = () => {
-    Array.from(document.querySelectorAll<HTMLInputElement>("#dialog-terminate input"))
-      .forEach((input: HTMLInputElement) => input.checked = false);
-    dialog.showModal();
+const confirmTerminate = () => {
+  const targetUrl = closeDialogTerminateButton?.dataset['targetUrl'];
+  const checked = <HTMLInputElement | null>document.querySelector('input[name="usefulness"]:checked');
+  if (checked != null) {
+    const usefulness = checked.value;
+    document.location.href = targetUrl + '?usefulness=' + usefulness;
   }
-
-  const confirmTerminate = () => {
-    const targetUrl = closeDialogTerminateButton?.dataset['targetUrl'];
-    const checked = <HTMLInputElement | null>document.querySelector('input[name="usefulness"]:checked');
-    if (checked != null) {
-      const usefulness = checked.value;
-      document.location.href = targetUrl + '?usefulness=' + usefulness;
-    }
-  }
+}
 
 
-  const enableButtonAndDisableCustomAnswer = () => {
+const enableButtonAndDisableCustomAnswer = () => {
+  if (reviewValidationButton) {
     reviewValidationButton.disabled = false;
+  }
+  if (customAnswerInput) {
     customAnswerInput.value = "";
     customAnswerInput.disabled = true;
     customAnswerInput.style.background = 'lightgrey';
   }
+}
 
-  const disableButtonAndEnableCustomAnswer = () => {
+const disableButtonAndEnableCustomAnswer = () => {
+  if (reviewValidationButton) {
     reviewValidationButton.disabled = true;
+  }
+  if (customAnswerInput) {
     customAnswerInput.disabled = false;
     customAnswerInput.style.background = 'white';
   }
+}
 
-  quickAnswer1Button?.addEventListener('click', enableButtonAndDisableCustomAnswer);
-  quickAnswer2Button?.addEventListener('click', enableButtonAndDisableCustomAnswer);
-  quickAnswer3Button?.addEventListener('click', enableButtonAndDisableCustomAnswer);
-  quickAnswer4Button?.addEventListener('click', disableButtonAndEnableCustomAnswer);
-  closeDialogTerminateButton?.addEventListener('click', confirmTerminate);
-  closeDialogQuitButton?.addEventListener('click', closeDialog);
-  archiveButton1?.addEventListener('click', showDialog);
-  archiveButton2?.addEventListener('click', showDialog);
-  archiveButton3?.addEventListener('click', showDialog);
+quickAnswer1Button?.addEventListener('click', enableButtonAndDisableCustomAnswer);
+quickAnswer2Button?.addEventListener('click', enableButtonAndDisableCustomAnswer);
+quickAnswer3Button?.addEventListener('click', enableButtonAndDisableCustomAnswer);
+quickAnswer4Button?.addEventListener('click', disableButtonAndEnableCustomAnswer);
+closeDialogTerminateButton?.addEventListener('click', confirmTerminate);
+closeDialogQuitButton?.addEventListener('click', closeDialog);
+archiveButton1?.addEventListener('click', showDialog);
+archiveButton2?.addEventListener('click', showDialog);
+archiveButton3?.addEventListener('click', showDialog);
 
-  if (customAnswerInput) {
-    customAnswerInput.addEventListener("keyup", () => {
-      reviewValidationButton.disabled = customAnswerInput.value === '';
-    });
-  }
+if (customAnswerInput && reviewValidationButton) {
+  customAnswerInput.addEventListener("keyup", () => {
+    reviewValidationButton.disabled = customAnswerInput.value === '';
+  });
+}
 
-  if (nonInstructorAnswerInput) {
-    nonInstructorAnswerInput.addEventListener("keyup", () => {
-      reviewValidationButton.disabled = nonInstructorAnswerInput.value === '';
-    });
-  }
-
+if (nonInstructorAnswerInput && reviewValidationButton) {
+  nonInstructorAnswerInput.addEventListener("keyup", () => {
+    reviewValidationButton.disabled = nonInstructorAnswerInput.value === '';
+  });
 }
 
 
