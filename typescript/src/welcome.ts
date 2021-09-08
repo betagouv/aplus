@@ -10,10 +10,12 @@ const welcomePageNewletterCheckbox =
 if (welcomePageNewletterCheckbox) {
   welcomePageNewletterCheckbox.addEventListener('click', () => {
     const button = document.querySelector<HTMLButtonElement>("#" + welcomePageNewletterSubmitTagId);
-    if (welcomePageNewletterCheckbox.checked) {
-      button.disabled = false;
-    } else {
-      button.disabled = true;
+    if (button) {
+      if (welcomePageNewletterCheckbox.checked) {
+        button.disabled = false;
+      } else {
+        button.disabled = true;
+      }
     }
   });
 }

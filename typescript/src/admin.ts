@@ -86,8 +86,10 @@ if (window.document.getElementById(franceServiceDeploymentTableTagId)) {
         }
       }
       const element = window.document.getElementById(franceServiceDeploymentTotalTagId);
-      element.textContent = "Nombre de déploiements (plus de 1 utilisateur): " +
-        nrOfDeployed + " ; Nombre total: " + totalNr
+      if (element) {
+        element.textContent = "Nombre de déploiements (plus de 1 utilisateur): " +
+          nrOfDeployed + " ; Nombre total: " + totalNr
+      }
       return response; //return the response data to tabulator
     },
     layout: "fitColumns",      //fit columns to width of table
@@ -101,22 +103,28 @@ if (window.document.getElementById(franceServiceDeploymentTableTagId)) {
 
 
 
-  window.document.getElementById(franceServiceDeploymentDownloadBtnCsvId).onclick = () => {
-    const date = new Date().toISOString().replace(/:/g, '-');
-    franceServiceDeploymentTable.download(
-      'csv',
-      'aplus-export-deploiement-france-service-' + date + '.csv'
-    );
-  };
+  const csvBtn = window.document.getElementById(franceServiceDeploymentDownloadBtnCsvId);
+  if (csvBtn) {
+    csvBtn.onclick = () => {
+      const date = new Date().toISOString().replace(/:/g, '-');
+      franceServiceDeploymentTable.download(
+        'csv',
+        'aplus-export-deploiement-france-service-' + date + '.csv'
+      );
+    };
+  }
 
-  window.document.getElementById(franceServiceDeploymentDownloadBtnXlsxId).onclick = () => {
-    const date = new Date().toISOString().replace(/:/g, '-');
-    franceServiceDeploymentTable.download(
-      "xlsx",
-      'aplus-export-deploiement-france-service-' + date + '.xlsx',
-      { sheetName: "Déploiement France Service" }
-    );
-  };
+  const xlsxBtn = window.document.getElementById(franceServiceDeploymentDownloadBtnXlsxId);
+  if (xlsxBtn) {
+    xlsxBtn.onclick = () => {
+      const date = new Date().toISOString().replace(/:/g, '-');
+      franceServiceDeploymentTable.download(
+        "xlsx",
+        'aplus-export-deploiement-france-service-' + date + '.xlsx',
+        { sheetName: "Déploiement France Service" }
+      );
+    };
+  }
 
 }
 
@@ -269,15 +277,21 @@ if (window.document.getElementById(deploymentTableTagId)) {
       height: "85vh",
     });
 
-    window.document.getElementById(deploymentDownloadBtnCsvId).onclick = () => {
-      const date = new Date().toISOString().replace(/:/g, '-');
-      table.download('csv', 'aplus-export-deploiement-' + date + '.csv');
-    };
+    const csvBtn = window.document.getElementById(deploymentDownloadBtnCsvId);
+    if (csvBtn) {
+      csvBtn.onclick = () => {
+        const date = new Date().toISOString().replace(/:/g, '-');
+        table.download('csv', 'aplus-export-deploiement-' + date + '.csv');
+      };
+    }
 
-    window.document.getElementById(deploymentDownloadBtnXlsxId).onclick = () => {
-      const date = new Date().toISOString().replace(/:/g, '-');
-      table.download("xlsx", 'aplus-export-deploiement-' + date + '.xlsx', { sheetName: "Déploiement" });
-    };
+    const xlsxBtn = window.document.getElementById(deploymentDownloadBtnXlsxId);
+    if (xlsxBtn) {
+      xlsxBtn.onclick = () => {
+        const date = new Date().toISOString().replace(/:/g, '-');
+        table.download("xlsx", 'aplus-export-deploiement-' + date + '.xlsx', { sheetName: "Déploiement" });
+      };
+    }
 
   });
 }

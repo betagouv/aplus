@@ -7,7 +7,7 @@ if (attachmentList) {
 
   increaseOrDecreaseFileInputList = (event) => {
     const target = event.target as HTMLInputElement;
-    if (target.files.length > 0) {
+    if (target.files && target.files.length > 0) {
       // If a new file is added, add a new file input.
       const li: HTMLLIElement = document.createElement("li");
       const input: HTMLInputElement = document.createElement("input");
@@ -20,8 +20,11 @@ if (attachmentList) {
     } else {
       // If a previous file is unset for upload, remove the corresponding input file.
       if (fileInputCount > 1) {
-        target.parentElement.parentElement.removeChild(target.parentElement);
-        fileInputCount--;
+        const parent = target.parentElement;
+        if (parent != null) {
+          parent.parentElement?.removeChild(parent);
+          fileInputCount--;
+        }
       }
     }
   };
