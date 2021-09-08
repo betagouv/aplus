@@ -30,7 +30,8 @@ if (reviewValidationButton != null &&
   const closeDialog = () => dialog.close();
 
   const showDialog = () => {
-    Array.from(document.querySelectorAll<HTMLInputElement>("#dialog-terminate input")).forEach((input: HTMLInputElement) => input.checked = false)
+    Array.from(document.querySelectorAll<HTMLInputElement>("#dialog-terminate input"))
+      .forEach((input: HTMLInputElement) => input.checked = false);
     dialog.showModal();
   }
 

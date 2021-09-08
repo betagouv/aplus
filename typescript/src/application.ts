@@ -189,7 +189,7 @@ function applyCategoryFilters() {
         if (groupName == null) {
           return false;
         } else {
-          return groupName.toLowerCase().includes(selectedCategory.toLowerCase())
+          return groupName.toLowerCase().includes(selectedCategory.toLowerCase());
         }
       });
       let shouldBeFilteredOut = !isSelected;
