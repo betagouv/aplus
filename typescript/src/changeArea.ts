@@ -18,7 +18,7 @@ if (select) {
     } else {
 
       const selectedOption = select.options[select.selectedIndex];
-      const redirectUrl = selectedOption.dataset["redirectUrl"];
+      const redirectUrl = selectedOption?.dataset["redirectUrl"];
       if (redirectUrl) {
         document.location.href = redirectUrl;
       }

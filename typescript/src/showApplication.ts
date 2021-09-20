@@ -18,69 +18,93 @@ const closeDialogTerminateButton = document.getElementById('close-dialog-termina
 const closeDialogQuitButton = document.getElementById('close-dialog-quit');
 
 
-const enableButtonAndDisableCustomAnswer = () => {
-  reviewValidationButton.disabled = false;
-  customAnswerInput.value = "";
-  customAnswerInput.disabled = true;
-  customAnswerInput.style.background = 'lightgrey';
+
+if (dialog && !dialog.showModal) {
+  dialogPolyfill.registerDialog(dialog);
 }
 
-const disableButtonAndEnableCustomAnswer = () => {
-  reviewValidationButton.disabled = true;
-  customAnswerInput.disabled = false;
-  customAnswerInput.style.background = 'white';
-}
-
-const enableYes = () => {
-  const button = <HTMLButtonElement | null>document.getElementById("close-dialog-terminate");
-  button.disabled = false;
-}
-
-const closeDialog = () => dialog.close();
+const closeDialog = () => dialog?.close();
 
 const showDialog = () => {
-  Array.from(document.querySelectorAll("#dialog-terminate input")).forEach((input: HTMLInputElement) => input.checked = false)
-  dialog.showModal();
+  Array.from(document.querySelectorAll<HTMLInputElement>("#dialog-terminate input"))
+    .forEach((input: HTMLInputElement) => input.checked = false);
+  dialog?.showModal();
 }
 
 const confirmTerminate = () => {
-  const targetUrl = closeDialogTerminateButton?.dataset.targetUrl;
+  const targetUrl = closeDialogTerminateButton?.dataset['targetUrl'];
   const checked = <HTMLInputElement | null>document.querySelector('input[name="usefulness"]:checked');
-  const usefulness = checked.value;
-  document.location.href = targetUrl + '?usefulness=' + usefulness;
+  if (checked != null) {
+    const usefulness = checked.value;
+    document.location.href = targetUrl + '?usefulness=' + usefulness;
+  }
 }
 
-const reopen = () => document.location.href = reopenButton?.dataset.targetUrl;
 
-const enableFeedbackOnChangeForComponentId = (id: string) => document.getElementById(id)?.addEventListener('change', enableYes);
+const enableButtonAndDisableCustomAnswer = () => {
+  if (reviewValidationButton) {
+    reviewValidationButton.disabled = false;
+  }
+  if (customAnswerInput) {
+    customAnswerInput.value = "";
+    customAnswerInput.disabled = true;
+    customAnswerInput.style.background = 'lightgrey';
+  }
+}
+
+const disableButtonAndEnableCustomAnswer = () => {
+  if (reviewValidationButton) {
+    reviewValidationButton.disabled = true;
+  }
+  if (customAnswerInput) {
+    customAnswerInput.disabled = false;
+    customAnswerInput.style.background = 'white';
+  }
+}
 
 quickAnswer1Button?.addEventListener('click', enableButtonAndDisableCustomAnswer);
 quickAnswer2Button?.addEventListener('click', enableButtonAndDisableCustomAnswer);
 quickAnswer3Button?.addEventListener('click', enableButtonAndDisableCustomAnswer);
 quickAnswer4Button?.addEventListener('click', disableButtonAndEnableCustomAnswer);
-reopenButton?.addEventListener('click', () => reopen());
 closeDialogTerminateButton?.addEventListener('click', confirmTerminate);
 closeDialogQuitButton?.addEventListener('click', closeDialog);
 archiveButton1?.addEventListener('click', showDialog);
 archiveButton2?.addEventListener('click', showDialog);
 archiveButton3?.addEventListener('click', showDialog);
 
-if (customAnswerInput) {
+if (customAnswerInput && reviewValidationButton) {
   customAnswerInput.addEventListener("keyup", () => {
     reviewValidationButton.disabled = customAnswerInput.value === '';
   });
 }
 
-if (nonInstructorAnswerInput) {
+if (nonInstructorAnswerInput && reviewValidationButton) {
   nonInstructorAnswerInput.addEventListener("keyup", () => {
     reviewValidationButton.disabled = nonInstructorAnswerInput.value === '';
   });
 }
 
+
+
+if (reopenButton != null) {
+  const targetUrl = reopenButton.dataset['targetUrl'];
+  if (targetUrl != null) {
+    const reopen = () => document.location.href = targetUrl;
+    reopenButton.addEventListener('click', () => reopen());
+  }
+}
+
+
+
+const enableYes = () => {
+  const button = <HTMLButtonElement | null>document.getElementById("close-dialog-terminate");
+  if (button != null) {
+    button.disabled = false;
+  }
+}
+
+const enableFeedbackOnChangeForComponentId = (id: string) => document.getElementById(id)?.addEventListener('change', enableYes);
+
 enableFeedbackOnChangeForComponentId('no');
 enableFeedbackOnChangeForComponentId('yes');
 enableFeedbackOnChangeForComponentId('neutral');
-
-if (dialog && !dialog.showModal) {
-  dialogPolyfill.registerDialog(dialog);
-}

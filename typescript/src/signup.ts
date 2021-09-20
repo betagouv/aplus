@@ -16,11 +16,6 @@ const sharedAccountNameId = "signup-shared-account-name-id"
 
 
 
-setupSignupGroupSelect();
-setupSignupSharedAccountRadio();
-
-
-
 interface UserGroup {
   id: string;
   name: string;
@@ -43,19 +38,24 @@ function setupSignupGroupSelect() {
   const groupsDataField = <HTMLElement | null>document.getElementById(groupsDatasetFieldId);
 
   if (organisationInput != null && areaInput != null && groupInput != null && groupsDataField != null) {
-    const groups: Array<UserGroup> =
-      JSON.parse(groupsDataField.dataset[groupsDataset]);
+    const unparsedGroups = groupsDataField.dataset[groupsDataset];
+    if (unparsedGroups == null) {
+      return;
+    }
+    const groups: Array<UserGroup> = JSON.parse(unparsedGroups);
     const indexedGroups: IndexedGroups = {};
     groups.forEach(group => {
-      if (indexedGroups[group.organisationId]) {
-        if (indexedGroups[group.organisationId][group.areaId]) {
-          indexedGroups[group.organisationId][group.areaId].push(group);
+      const indexedGroup = indexedGroups[group.organisationId];
+      if (indexedGroup != null) {
+        if (indexedGroup[group.areaId]) {
+          indexedGroup[group.areaId]?.push(group);
         } else {
-          indexedGroups[group.organisationId][group.areaId] = [group];
+          indexedGroup[group.areaId] = [group];
         }
       } else {
-        indexedGroups[group.organisationId] = {};
-        indexedGroups[group.organisationId][group.areaId] = [group];
+        const index: { [area: string]: Array<UserGroup> } = {};
+        index[group.areaId] = [group];
+        indexedGroups[group.organisationId] = index;
       }
     });
     // Initial setup
@@ -76,10 +76,14 @@ function setGroupsOptions(
   groups: IndexedGroups
 ) {
   const selectedGroupId = (groupInput.value ||
-    (groupInput.options[groupInput.selectedIndex] && groupInput.options[groupInput.selectedIndex].value));
+    (groupInput.options[groupInput.selectedIndex] && groupInput.options[groupInput.selectedIndex]?.value));
   let selectableGroups: Array<UserGroup> = [];
-  if (groups[organisationInput.value] && groups[organisationInput.value][areaInput.value]) {
-    selectableGroups = groups[organisationInput.value][areaInput.value];
+  const groupsInThisOrganisation = groups[organisationInput.value];
+  if (groupsInThisOrganisation != null) {
+    const groups = groupsInThisOrganisation[areaInput.value];
+    if (groups != null) {
+      selectableGroups = groups;
+    }
   }
 
   groupInput.innerHTML = "";
@@ -177,3 +181,9 @@ function setSharedAccountFields(
     sharedAccountName.value = ""
   }
 }
+
+
+
+
+setupSignupGroupSelect();
+setupSignupSharedAccountRadio();

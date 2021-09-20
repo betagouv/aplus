@@ -149,33 +149,35 @@ if (window.document.getElementById(usersTableId)) {
 
 
   const areaValueField = <HTMLElement | null>document.getElementById(currentAreaValueId);
-  const areaId: string = areaValueField.dataset[currentAreaDatasetKey];
-  const options: Tabulator.Options = {
-    ajaxURL: jsRoutes.controllers.UserController.allJson(areaId).url,
-    height: "80vh",
-    columnMaxWidth: 300,
-    rowFormatter,
-    langs: {
-      "fr-fr": {
-        pagination: {
-          page_size: "Taille de la page",
-          first: "Premier",
-          first_title: "Première Page",
-          last: "Dernier",
-          last_title: "Dernière Page",
-          prev: "Précédent",
-          prev_title: "Page Précédente",
-          next: "Suivant",
-          next_title: "Page Suivante"
-        },
-        headerFilters: {
-          default: "filtrer..." //default header filter placeholder text
+  if (areaValueField != null) {
+    const areaId = areaValueField.dataset[currentAreaDatasetKey];
+    const options: Tabulator.Options = {
+      ajaxURL: jsRoutes.controllers.UserController.allJson(areaId).url,
+      height: "80vh",
+      columnMaxWidth: 300,
+      rowFormatter,
+      langs: {
+        "fr-fr": {
+          pagination: {
+            page_size: "Taille de la page",
+            first: "Premier",
+            first_title: "Première Page",
+            last: "Dernier",
+            last_title: "Dernière Page",
+            prev: "Précédent",
+            prev_title: "Page Précédente",
+            next: "Suivant",
+            next_title: "Page Suivante"
+          },
+          headerFilters: {
+            default: "filtrer..." //default header filter placeholder text
+          }
         }
-      }
-    },
-    columns,
-  };
-  const table = new Tabulator("#" + usersTableId, options);
-  table.setLocale("fr-fr");
-  table.setSort("name", "asc");
+      },
+      columns,
+    };
+    const table = new Tabulator("#" + usersTableId, options);
+    table.setLocale("fr-fr");
+    table.setSort("name", "asc");
+  }
 }

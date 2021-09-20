@@ -9,19 +9,22 @@ if (searchInput) {
     if (searchTerm.length > 2) {
       document.querySelectorAll("tfoot").forEach((row) => { row.classList.remove("invisible"); });
       document.querySelectorAll(".searchable-row").forEach((row) => {
-        const searchData = row.getAttribute("data-search");
+        const searchData = row.getAttribute("data-search") || '';
         const searchResult = searchData.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").indexOf(searchTerm);
-        if (searchResult > -1) {
-          row.classList.remove("invisible");
-          const minIndex = Math.max(searchResult - extract, 0);
-          const maxIndex = Math.min(searchResult + searchTerm.length + extract, searchData.length);
-          row.querySelector(".search-cell").innerHTML = searchData.substring(minIndex, searchResult) +
-            '<span style="font-weight: bold; background-color: #FFFF00;">' +
-            searchData.substring(searchResult, searchResult + searchTerm.length) +
-            "</span>" + searchData.substring(searchResult + searchTerm.length, maxIndex);
-        } else {
-          row.classList.add("invisible");
-          row.querySelector(".search-cell").innerHTML = "";
+        const searchCell = row.querySelector(".search-cell");
+        if (searchCell) {
+          if (searchResult > -1) {
+            row.classList.remove("invisible");
+            const minIndex = Math.max(searchResult - extract, 0);
+            const maxIndex = Math.min(searchResult + searchTerm.length + extract, searchData.length);
+            searchCell.innerHTML = searchData.substring(minIndex, searchResult) +
+              '<span style="font-weight: bold; background-color: #FFFF00;">' +
+              searchData.substring(searchResult, searchResult + searchTerm.length) +
+              "</span>" + searchData.substring(searchResult + searchTerm.length, maxIndex);
+          } else {
+            row.classList.add("invisible");
+            searchCell.innerHTML = "";
+          }
         }
       });
     } else {

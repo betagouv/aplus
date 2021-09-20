@@ -26,7 +26,7 @@ function mandatFieldsAreFilled(): boolean {
 
   // 3. Date input
   const dateInput = <HTMLInputElement | null>document.getElementById("mandatDate");
-  if (!dateInput.value) {
+  if (dateInput && !dateInput.value) {
     return false;
   }
 
@@ -34,10 +34,13 @@ function mandatFieldsAreFilled(): boolean {
 }
 
 function onMandatFieldChange() {
-  if (mandatFieldsAreFilled()) {
-    document.querySelector<HTMLButtonElement>("#review-validation").disabled = false;
-  } else {
-    document.querySelector<HTMLButtonElement>("#review-validation").disabled = true;
+  const validation = document.querySelector<HTMLButtonElement>("#review-validation");
+  if (validation != null) {
+    if (mandatFieldsAreFilled()) {
+      validation.disabled = false;
+    } else {
+      validation.disabled = true;
+    }
   }
 }
 
