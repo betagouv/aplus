@@ -232,11 +232,18 @@ case class UserController @Inject() (
           eventService.log(UsersShowed, "Appelle la liste des utilisateurs")
           val idToGroup = groups.map(group => (group.id, group)).toMap
           val userInfos = users.map { user =>
+            val completeName = {
+              val firstName = user.firstName.getOrElse("")
+              val lastName = user.lastName.getOrElse("")
+              if (firstName.nonEmpty || lastName.nonEmpty) s"${user.name} ($lastName $firstName)"
+              else user.name
+            }
             UserInfos(
               id = user.id,
               firstName = user.firstName,
               lastName = user.lastName,
               name = user.name,
+              completeName = completeName,
               qualite = user.qualite,
               email = user.email,
               phoneNumber = user.phoneNumber,
