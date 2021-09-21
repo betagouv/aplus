@@ -30,7 +30,7 @@
     }
 
     @if(Authorization.canSeeApplicationsAsAdmin(currentUserRights)) {
-        <a @linkAttrs(routes.ApplicationController.all(Area.allArea.id), serializers.Keys.QueryParam.numOfMonthsDisplayed + "=12")>
+        <a @linkAttrs(routes.ApplicationController.all(Area.allArea.id), serializers.Keys.QueryParam.numOfMonthsDisplayed + "=3")>
             <i class="material-icons" role="presentation">folder</i>Admin : demandes
         </a>
     }

@@ -423,7 +423,7 @@ case class ApplicationController @Inject() (
           val numOfMonthsDisplayed: Int = request
             .getQueryString(Keys.QueryParam.numOfMonthsDisplayed)
             .flatMap(s => Try(s.toInt).toOption)
-            .getOrElse(12)
+            .getOrElse(3)
           val area = if (areaId === Area.allArea.id) None else Area.fromId(areaId)
           allApplicationVisibleByUserAdmin(request.currentUser, area, numOfMonthsDisplayed).map {
             unfilteredApplications =>
