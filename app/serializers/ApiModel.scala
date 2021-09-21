@@ -79,6 +79,7 @@ object ApiModel {
       firstName: Option[String],
       lastName: Option[String],
       name: String,
+      completeName: String,
       qualite: String,
       email: String,
       phoneNumber: Option[String],

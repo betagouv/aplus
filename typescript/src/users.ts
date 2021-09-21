@@ -59,11 +59,10 @@ if (window.document.getElementById(usersTableId)) {
 
   const columns: Array<Tabulator.ColumnDefinition> = [
     { title: "", formatter: editIcon, width: 40, frozen: true },
-    { title: "Nom et Prénom", field: "name", headerFilter: "input", formatter: "html" },
-    { title: "Nom", field: "lastName", headerFilter: "input", frozen: true, formatter: "html" },
-    { title: "Prénom", field: "firstName", headerFilter: "input", frozen: true, formatter: "html" },
-    { title: "Groupes", field: "groupNames", formatter: groupsFormatter, headerFilter: "input" },
     { title: "Email", field: "email", headerFilter: "input" },
+    { title: "Groupes", field: "groupNames", formatter: groupsFormatter, headerFilter: "input" },
+    { title: "Nom Complet", field: "completeName", headerFilter: "input", formatter: "html" },
+    { title: "BALs", field: "groupEmails", headerFilter: "input" },
     { title: "Qualité", field: "qualite", headerFilter: "input" },
     { title: "Téléphone", field: "phoneNumber", headerFilter: "input" },
     {
@@ -143,8 +142,10 @@ if (window.document.getElementById(usersTableId)) {
       headerVertical: verticalHeader,
       bottomCalc: "count"
     },
-    { title: "BALs", field: "groupEmails", headerFilter: "input" },
     { title: "Départements", field: "areas", headerFilter: "input" },
+    { title: "Nom et Prénom", field: "name", headerFilter: "input", formatter: "html" },
+    { title: "Nom", field: "lastName", headerFilter: "input", formatter: "html" },
+    { title: "Prénom", field: "firstName", headerFilter: "input", formatter: "html" },
   ];
 
 
