@@ -1085,14 +1085,16 @@ case class ApplicationController @Inject() (
           )
         form.fold(
           formWithErrors => {
+            val message =
+              s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.format).mkString(", ")})."
             val error =
-              s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.message).mkString(", ")})."
-            eventService.log(AnswerNotCreated, s"$error", application = application.some)
+              s"Erreur dans le formulaire de réponse (${formErrorsLog(formWithErrors)})"
+            eventService.log(AnswerNotCreated, error, application = application.some)
             Future(
               Redirect(
                 routes.ApplicationController.show(applicationId).withFragment("answer-error")
               )
-                .flashing("answer-error" -> error, "opened-tab" -> "anwser")
+                .flashing("answer-error" -> message, "opened-tab" -> "anwser")
             )
           },
           answerData => {
