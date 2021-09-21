@@ -15,7 +15,7 @@
     "ts-polyfill": "3.8.2",
     "unfetch": "4.2.0",
     "unorm": "1.6.0",
-    "xlsx": "0.17.1"
+    "xlsx": "0.17.2"
   },
   "devDependencies": {
     "@types/tabulator-tables": "4.9.3",
