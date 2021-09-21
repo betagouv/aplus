@@ -315,13 +315,16 @@ dialog {
                             </span>
                         </div>
                         <div class="mdl-list__item-secondary-content">
-                            @if(application.seenByUserIds.contains(userId)){
+                            @application.seenByUsersMap.get(userId) match {
+                              case None => {}
+                              case Some(date) => {
                                 <div id="seen-@userId" class="vertical-align--middle">
-                                    <i class="material-icons icon--light">remove_red_eye</i>
+                                    <i class="material-icons">remove_red_eye</i>
                                 </div>
                                 <div class="mdl-tooltip" for="seen-@userId">
-                                    Consultée par l’utilisateur
+                                    Consultée par l’utilisateur (@Time.formatPatternFr(date.atZone(currentUser.timeZone), "dd MMM YYYY - HH:mm"))
                                 </div>
+                              }
                             }
                         </div>
                     </div>

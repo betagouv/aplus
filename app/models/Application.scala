@@ -46,6 +46,7 @@ case class Application(
     (invitedGroupIdsAtCreation ::: answers.flatMap(_.invitedGroupIds)).toSet
 
   val seenByUserIds = seenByUsers.map(_.userId)
+  val seenByUsersMap = seenByUsers.map { case SeenByUser(userId, date) => (userId, date) }.toMap
 
   def newAnswersFor(userId: UUID) = {
     val maybeSeenLastDate = seenByUsers.find(_.userId === userId).map(_.lastSeenDate)
