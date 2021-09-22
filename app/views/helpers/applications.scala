@@ -30,8 +30,7 @@ object applications {
     )
   }
 
-  /** This is for the Application creation form
-    * Some fields here are from `Form`
+  /** This is for the Application creation form Some fields here are from `Form`
     * https://www.playframework.com/documentation/2.8.x/api/scala/play/api/data/Form.html
     */
   def applicationTargetGroups(
@@ -92,7 +91,7 @@ object applications {
     groups.sortBy(_.name).map { group =>
       val organisation: Option[Organisation] = group.organisationSetOrDeducted
       val groupIsChecked =
-        formData.exists({ case (k, v) => k.startsWith("groups[") && v === group.id.toString })
+        formData.exists { case (k, v) => k.startsWith("groups[") && v === group.id.toString }
 
       def publicNoteBox(inner: Frag) =
         tr(

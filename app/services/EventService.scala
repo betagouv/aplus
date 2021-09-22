@@ -5,6 +5,7 @@ import java.util.UUID
 
 import actions.RequestWithUserData
 import anorm._
+import aplus.macros.Macros
 import cats.syntax.all._
 import helper.Time
 import javax.inject.Inject
@@ -21,7 +22,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
 
   private val logger = Logger(classOf[EventService])
 
-  private val simpleEvent: RowParser[Event] = Macro.parser[Event](
+  private val (simpleEvent, tableFields) = Macros.parserWithFields[Event](
     "id",
     "level",
     "code",
@@ -34,6 +35,8 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
     "to_user_id",
     "ip_address"
   )
+
+  private val fieldsInSelect: String = tableFields.mkString(", ")
 
   def log(
       event: EventType,
@@ -112,8 +115,9 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       involvesUser: Option[UUID],
       underlyingException: Option[Throwable]
   ): Unit = {
+    val eventId = UUID.randomUUID()
     val event = Event(
-      UUID.randomUUID(),
+      eventId,
       level,
       code,
       currentUser.name,
@@ -127,7 +131,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
     )
     addEvent(event)
 
-    val message = s"${currentUser.name}/${description}"
+    val message = s"${currentUser.name}/$description [$eventId]"
     level match {
       case "INFO" =>
         underlyingException.fold(logger.info(message))(e => logger.info(message, e))
@@ -163,32 +167,36 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       db.withConnection { implicit connection =>
         (fromUserId, date) match {
           case (Some(userId), Some(date)) =>
-            SQL"""SELECT *, host(ip_address)::TEXT AS ip_address
-                FROM "event"
-                WHERE (from_user_id = $userId::uuid OR to_user_id = $userId::uuid)
-                AND date_trunc('day',creation_date) = $date
-                ORDER BY creation_date DESC
-                LIMIT $limit"""
+            SQL(s"""SELECT $fieldsInSelect, host(ip_address)::TEXT AS ip_address
+                    FROM "event"
+                    WHERE (from_user_id = {userId}::uuid OR to_user_id = {userId}::uuid)
+                    AND date_trunc('day',creation_date) = {date}
+                    ORDER BY creation_date DESC
+                    LIMIT {limit}""")
+              .on("userId" -> userId, "date" -> date, "limit" -> limit)
               .as(simpleEvent.*)
           case (None, Some(date)) =>
-            SQL"""SELECT *, host(ip_address)::TEXT AS ip_address
-                FROM "event"
-                WHERE date_trunc('day',creation_date) = $date
-                ORDER BY creation_date DESC
-                LIMIT $limit"""
+            SQL(s"""SELECT $fieldsInSelect, host(ip_address)::TEXT AS ip_address
+                    FROM "event"
+                    WHERE date_trunc('day',creation_date) = {date}
+                    ORDER BY creation_date DESC
+                    LIMIT {limit}""")
+              .on("date" -> date, "limit" -> limit)
               .as(simpleEvent.*)
           case (Some(userId), None) =>
-            SQL"""SELECT *, host(ip_address)::TEXT AS ip_address
-                FROM "event"
-                WHERE from_user_id = $userId::uuid OR to_user_id = $userId::uuid
-                ORDER BY creation_date DESC
-                LIMIT $limit"""
+            SQL(s"""SELECT $fieldsInSelect, host(ip_address)::TEXT AS ip_address
+                    FROM "event"
+                    WHERE from_user_id = {userId}::uuid OR to_user_id = {userId}::uuid
+                    ORDER BY creation_date DESC
+                    LIMIT {limit}""")
+              .on("userId" -> userId, "limit" -> limit)
               .as(simpleEvent.*)
           case (None, None) =>
-            SQL"""SELECT *, host(ip_address)::TEXT AS ip_address
-                FROM "event"
-                ORDER BY creation_date DESC
-                LIMIT $limit"""
+            SQL(s"""SELECT $fieldsInSelect, host(ip_address)::TEXT AS ip_address
+                    FROM "event"
+                    ORDER BY creation_date DESC
+                    LIMIT {limit}""")
+              .on("limit" -> limit)
               .as(simpleEvent.*)
         }
       }

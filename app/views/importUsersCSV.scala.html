@@ -2,7 +2,9 @@
 @import _root_.helper.MDLForms._
 @import models.formModels.CSVRawLinesFormData
 @import serializers.UserAndGroupCsvSerializer
-@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[CSVRawLinesFormData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider)
+
+@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[CSVRawLinesFormData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider, mainInfos: MainInfos)
+
 
 @main(currentUser, currentUserRights, maxWidth = false)(s"Importer des utilisateurs") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>

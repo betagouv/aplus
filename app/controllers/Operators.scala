@@ -8,12 +8,28 @@ import constants.Constants
 import helper.BooleanHelper.not
 import models.EventType._
 import models.{Application, Authorization, Error, EventType, User, UserGroup}
+import play.api.Configuration
 import play.api.mvc.Results.{InternalServerError, NotFound, Unauthorized}
-import play.api.mvc.{AnyContent, Result, Results}
+import play.api.mvc.{AnyContent, RequestHeader, Result, Results}
 import scala.concurrent.{ExecutionContext, Future}
 import services.{ApplicationService, EventService, UserGroupService, UserService}
+import views.MainInfos
 
 object Operators {
+
+  trait Common {
+    def configuration: Configuration
+
+    implicit def mainInfos(implicit request: RequestHeader): MainInfos = {
+      val isDemo = request.domain.contains("localhost") ||
+        request.domain.contains("demo")
+      MainInfos(
+        isDemo = isDemo,
+        topHeaderWarningMessage = configuration.getOptional[String]("app.topHeaderWarningMessage")
+      )
+    }
+
+  }
 
   trait GroupOperators {
     def groupService: UserGroupService
@@ -25,7 +41,7 @@ object Operators {
         groupId: UUID
     )(
         payload: UserGroup => Future[Result]
-    )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
+    )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
       groupService
         .groupById(groupId)
         .fold({
@@ -36,7 +52,7 @@ object Operators {
 
     def asAdminOfGroupZone(group: UserGroup)(event: () => (EventType, String))(
         payload: () => Future[Result]
-    )(implicit request: RequestWithUserData[AnyContent], ec: ExecutionContext): Future[Result] =
+    )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
       if (not(request.currentUser.admin)) {
         val (eventType, description) = event()
         eventService.log(eventType, description = description)
@@ -158,8 +174,8 @@ object Operators {
     def applicationService: ApplicationService
     def eventService: EventService
 
-    private def manageApplicationError[A](applicationId: UUID, error: Error)(implicit
-        request: RequestWithUserData[A],
+    private def manageApplicationError(applicationId: UUID, error: Error)(implicit
+        request: RequestWithUserData[_],
         ec: ExecutionContext
     ): Future[Result] = {
       val result =
@@ -171,9 +187,11 @@ object Operators {
               s"Vous n'avez pas les droits suffisants pour voir cette demande. " +
                 s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
             )
-          case _: Error.Database | _: Error.SqlException | _: Error.MiscException =>
+          case _: Error.Database | _: Error.SqlException | _: Error.UnexpectedServerResponse |
+              _: Error.Timeout | _: Error.MiscException =>
             InternalServerError(
               s"Une erreur s'est produite sur le serveur. " +
+                "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard. " +
                 s"Si cette erreur persiste, " +
                 s"vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
             )

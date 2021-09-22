@@ -1,7 +1,8 @@
 @import models._
 @import models.formModels.AddUserFormData
 @import _root_.helper.MDLForms._
-@(user: User, currentUserRights: Authorization.UserRights)(form: Form[(List[AddUserFormData])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+
+@(user: User, currentUserRights: Authorization.UserRights)(form: Form[(List[AddUserFormData])], min: Int, action: Call)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 
 @main(user, currentUserRights, maxWidth = false)(s"Gestion des utilisateurs") {
@@ -20,7 +21,7 @@
     @if(form.hasGlobalErrors) {
       <div style="color: red; font-weight: bold;">@form.globalErrors.flatMap(_.messages).mkString(", ")</div>
     }
-      <em>Attribuer le rôle d’instructeur à : </em><a href="#" onclick="checkAllBySelector('.instructor')">Tous</a> / <a href="#" onclick="uncheckAllBySelector('.instructor')">Aucuns</a>
+      <em>Attribuer le rôle d’instructeur à : </em><a href="#" class="onclick-check-all" data-selector=".instructor">Tous</a> / <a href="#" class="onclick-uncheck-all" data-selector=".instructor">Aucuns</a>
 
       <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table" style="white-space: normal;">
       <thead>
@@ -70,7 +71,7 @@
           @helper.checkbox(userField("sharedAccount"), "type" -> "checkbox", "label" -> "Compte Partagé", "class" -> "mdl-checkbox__input")
           </td>
         <td>
-            <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onclick="deleteElement('#line_@index')"><i class="material-icons">delete_forever</i></button>
+            <button type="button" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab onclick-delete-element" data-selector="#line_@index"><i class="material-icons">delete_forever</i></button>
         </td>
         </tr>
       }

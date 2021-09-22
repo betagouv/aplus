@@ -1,4 +1,6 @@
-@(token: String, pathToRedirectTo: String, tokenExpirationInMinutes: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil)
+@import helper._
+
+@(token: String, pathToRedirectTo: String, tokenExpirationInMinutes: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, mainInfos: MainInfos)
 
 <!doctype html>
 <html lang="fr">
@@ -13,37 +15,15 @@
     <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/main.css")'>
     <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/login.css")'>
     <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/mdl-extensions.css")'>
-    <script src="@routes.Assets.versioned("javascripts/polyfills.js")"></script>
     <meta name="robots" content="noindex" />
-     <!-- Piwik -->
-    <script type="text/javascript">
-      var _paq = _paq || [];
-      _paq.push(["setDomains", ["*.aplus.beta.gouv.fr"]]);
-      _paq.push(['trackPageView']);
-      _paq.push(['enableLinkTracking']);
-      (function() {
-        var u="//stats.data.gouv.fr/";
-        _paq.push(['setTrackerUrl', u+'piwik.php']);
-        _paq.push(['setSiteId', '42']);
-        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-        g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
-      })();
-    </script>
-    <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border:0;" alt="" /></p></noscript>
-    <!-- End Piwik Code -->
-
 </head>
 <body>
     <div class="header__ribbon do-not-print mdl-color--cyan-800 mdl-color-text--white" id="header__ribbon">
     BETA
     </div>
 <div class="mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--deep-purple-900">
-    <div class="mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100 demo-only invisible">
-        <div class="mdl-layout__header-row mdl-color--pink-500 mdl-color-text--white">
-            <span class="mdl-layout-title aplus-demo-header__title">
-                Version de démonstration d'Administration+
-            </span>
-        </div>
+    <div class="mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100">
+      @toHtml(views.helpers.common.optionalDemoVersionHeader)
     </div>
 
     <main class="login-main">
@@ -55,22 +35,9 @@
             <div class="login-content mdl-color--grey-100 mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
 
               <h3>Vous allez accéder automatiquement à Administration+</h3>
-              <p>Si la page suivante ne se charge pas automatiquement, <em><a href="#" id="validation-button" onclick="redirect();">cliquez ici pour accéder à Administration+</a></em></p>
+              <p>Si la page suivante ne se charge pas automatiquement, <em><a href="#" id="magic-link-anti-consumption" data-redirect-url="@pathToRedirectTo?token=@token">cliquez ici pour accéder à Administration+</a></em></p>
               <br>
               <div id="p2" class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>
-              <script>
-                            var redirected = false;
-                            function redirect() {
-                                if(!redirected) {
-                                    document.getElementById("validation-button").disabled = true;
-                                    redirected = true;
-                                    window.location='@pathToRedirectTo?token=@token';
-                                }
-                            }
-                            window.setTimeout(function(){
-                                redirect();
-                            }, 1500);
-              </script>
               <br><br>
               <p class="single--margin-top-30px">Vous rencontrez des difficultés à vous connecter ?<br>
                 Contactez-nous sur <a href="mailto:@Constants.supportEmail?subject=Problème%20A+%20Connexion">@Constants.supportEmail</a>.
@@ -79,6 +46,14 @@
         </div>
     </main>
 </div>
-    @webJarsUtil.locate("material.min.js").script()
+
+        <!-- Piwik -->
+        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/stats.js")"></script>
+        <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border:0;" alt="" /></p></noscript>
+        <!-- End Piwik Code -->
+
+
+        @webJarsUtil.locate("material.min.js").script()
+        <script type="application/javascript" src="@routes.Assets.versioned("generated-js/index.js")"></script>
 </body>
 </html>

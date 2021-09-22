@@ -33,7 +33,9 @@ POST        /mandats/sms/webhook                                                
 
 
 # Stats
++ nocsp
 GET         /stats                                                                           controllers.ApplicationController.stats
++ nocsp
 POST        /stats                                                                           controllers.ApplicationController.stats
 
 
@@ -58,7 +60,7 @@ POST        /me                                                                 
 GET         /utilisateurs                                                                    controllers.UserController.home
 GET         /utilisateurs/:userId                                                            controllers.UserController.editUser(userId: java.util.UUID)
 POST        /utilisateurs/:userId                                                            controllers.UserController.editUserPost(userId: java.util.UUID)
-POST        /utilisateurs/:userId/reactivation                                               controllers.UserController.enableUser(userId: java.util.UUID)
+POST        /utilisateurs/:userId/reactivation                                               controllers.GroupController.enableUser(userId: java.util.UUID)
 GET         /user/delete/unused/:userId                                                      controllers.UserController.deleteUnusedUserById(userId: java.util.UUID)
 
 
@@ -70,9 +72,9 @@ POST        /importation/import                                                 
 
 # Groups
 POST        /groups                                                                          controllers.GroupController.addGroup
-GET         /groups                                                                          controllers.UserController.showEditMyGroups
-POST        /groups/:groupId/remove/:userId                                                  controllers.UserController.removeFromGroup(userId: java.util.UUID, groupId: java.util.UUID)
-POST        /groups/:groupId/add                                                             controllers.UserController.addToGroup(groupId: java.util.UUID)
+GET         /groups                                                                          controllers.GroupController.showEditMyGroups
+POST        /groups/:groupId/remove/:userId                                                  controllers.GroupController.removeFromGroup(userId: java.util.UUID, groupId: java.util.UUID)
+POST        /groups/:groupId/add                                                             controllers.GroupController.addToGroup(groupId: java.util.UUID)
 GET         /groups/:groupId                                                                 controllers.GroupController.editGroup(groupId: java.util.UUID)
 POST        /groups/:groupId                                                                 controllers.GroupController.editGroupPost(groupId: java.util.UUID)
 GET         /groups/:groupId/users                                                           controllers.UserController.add(groupId: java.util.UUID)
@@ -94,7 +96,6 @@ POST        /newsletter                                                         
 GET         /territoires                                                                     controllers.AreaController.all
 GET         /territoires/deploiement                                                         controllers.AreaController.deploymentDashboard
 GET         /territoires/deploiement/france-service                                          controllers.AreaController.franceServiceDeploymentDashboard
-GET         /territoires/:areaId                                                             controllers.AreaController.change(areaId: java.util.UUID)
 GET         /territoires/:areaId/demandes                                                    controllers.ApplicationController.all(areaId: java.util.UUID)
 GET         /territoires/:areaId/demandes.csv                                                controllers.ApplicationController.allCSV(areaId: java.util.UUID)
 GET         /territoires/:areaId/utilisateurs                                                controllers.UserController.all(areaId: java.util.UUID)
@@ -106,6 +107,8 @@ GET         /status                                                             
 # API
 
 GET         /api/deploiement/france-service                                                  controllers.ApiController.franceServiceDeployment
+GET         /api/deploiement/operateurs                                                      controllers.ApiController.deploymentData
+GET         /api/territoires/:areaId/utilisateurs                                            controllers.UserController.allJson(areaId: java.util.UUID)
 
 # Javascript resource
 GET         /jsRoutes                                                                        controllers.JavascriptController.javascriptRoutes

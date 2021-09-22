@@ -6,18 +6,18 @@ import java.util.UUID
 
 import anorm.Column.nonNull
 import anorm._
+import aplus.macros.Macros
 import cats.syntax.all._
 import helper.StringHelper.StringListOps
 import helper.Time
 import javax.inject.Inject
 import models.Application.SeenByUser
 import models.Authorization.UserRights
-import models.{Answer, Application, Authorization, Error, EventType}
+import models.{dataModels, Answer, Application, Authorization, Error, EventType}
 import org.postgresql.util.PGobject
 import play.api.db.Database
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
-import serializers.DataModel
 
 import scala.Option.empty
 import scala.concurrent.Future
@@ -36,9 +36,9 @@ class ApplicationService @Inject() (
   // throws exception "AnormException: 'mandat_type' not found, available columns: ..."
   implicit val mandatTypeAnormParser: anorm.Column[Option[Application.MandatType]] =
     implicitly[anorm.Column[Option[String]]]
-      .map(_.flatMap(DataModel.Application.MandatType.dataModelDeserialization))
+      .map(_.flatMap(dataModels.Application.MandatType.dataModelDeserialization))
 
-  import serializers.DataModel.Answer._
+  import dataModels.Answer._
 
   implicit val answerListParser: anorm.Column[List[Answer]] =
     nonNull { (value, meta) =>
@@ -55,34 +55,38 @@ class ApplicationService @Inject() (
       }
     }
 
-  import DataModel.Application.SeenByUser._
+  import dataModels.Application.SeenByUser._
 
-  private val simpleApplication: RowParser[Application] = Macro
-    .parser[Application](
-      "id",
-      "creation_date",
-      "creator_user_name",
-      "creator_user_id",
-      "subject",
-      "description",
-      "user_infos",
-      "invited_users",
-      "area",
-      "irrelevant",
-      "answers", // Data have been left bad migrated from answser_unsed
-      "internal_id",
-      "closed",
-      "seen_by_user_ids",
-      "usefulness",
-      "closed_date",
-      "expert_invited",
-      "has_selected_subject",
-      "category",
-      "files",
-      "mandat_type",
-      "mandat_date",
-      "invited_group_ids"
-    )
+  private val (parser, tableFields) = Macros.parserWithFields[Application](
+    "id",
+    "creation_date",
+    "creator_user_name",
+    "creator_user_id",
+    "subject",
+    "description",
+    "user_infos",
+    "invited_users",
+    "area",
+    "irrelevant",
+    "answers", // Data have been left bad migrated from answser_unsed
+    "internal_id",
+    "closed",
+    "seen_by_user_ids",
+    "usefulness",
+    "closed_date",
+    "expert_invited",
+    "has_selected_subject",
+    "category",
+    "files",
+    "mandat_type",
+    "mandat_date",
+    "invited_group_ids",
+    "personal_data_wiped"
+  )
+
+  private val fieldsInSelect: String = tableFields.mkString(", ")
+
+  private val simpleApplication: RowParser[Application] = parser
     .map(application =>
       application.copy(
         creationDate = application.creationDate.withZoneSameInstant(Time.timeZoneParis),
@@ -94,15 +98,15 @@ class ApplicationService @Inject() (
 
   private def setSeenByUsers(id: UUID, seenByUsers: List[SeenByUser])(implicit
       cnx: Connection
-  ) = {
+  ): Option[Application] = {
     val pgObject = new PGobject
     pgObject.setType("json")
     pgObject.setValue(toJson(seenByUsers).toString)
 
-    SQL("""UPDATE application
-          |SET seen_by_user_ids = {seen_by_users}::jsonb
-          |WHERE id = {id}::uuid
-          |RETURNING *;""".stripMargin)
+    SQL(s"""UPDATE application
+           |SET seen_by_user_ids = {seen_by_users}::jsonb
+           |WHERE id = {id}::uuid
+           |RETURNING $fieldsInSelect;""".stripMargin)
       .on(
         "id" -> id,
         "seen_by_users" -> anorm.Object(pgObject)
@@ -111,9 +115,9 @@ class ApplicationService @Inject() (
   }
 
   private def byId(id: UUID)(implicit cnx: Connection) =
-    SQL("""SELECT *
-          |FROM application
-          |WHERE id = {id}::uuid;""".stripMargin)
+    SQL(s"""SELECT $fieldsInSelect
+           |FROM application
+           |WHERE id = {id}::uuid;""".stripMargin)
       .on(
         "id" -> id
       )
@@ -151,7 +155,11 @@ class ApplicationService @Inject() (
   def openAndOlderThan(day: Int) =
     db.withConnection { implicit connection =>
       SQL(
-        s"SELECT * FROM application WHERE closed = false AND age(creation_date) > '$day days' AND expert_invited = false"
+        s"""SELECT $fieldsInSelect
+            FROM application
+            WHERE closed = false
+            AND age(creation_date) > '$day days'
+            AND expert_invited = false"""
       ).as(simpleApplication.*)
     }
 
@@ -161,7 +169,7 @@ class ApplicationService @Inject() (
       referenceDate: ZonedDateTime
   ): List[Application] =
     db.withConnection { implicit connection =>
-      val result = SQL("""SELECT * FROM application
+      val result = SQL(s"""SELECT $fieldsInSelect FROM application
           |WHERE (creator_user_id = {userId}::uuid OR invited_users ?? {userId}) AND
           |  (closed = FALSE OR DATE_PART('day', {referenceDate} - closed_date) < 30)
           |ORDER BY creation_date DESC""".stripMargin)
@@ -178,10 +186,10 @@ class ApplicationService @Inject() (
     Future {
       db.withConnection { implicit connection =>
         val result = SQL(
-          """SELECT * FROM application
-             WHERE creator_user_id = {userId}::uuid
-             AND closed = false
-             ORDER BY creation_date DESC"""
+          s"""SELECT $fieldsInSelect FROM application
+              WHERE creator_user_id = {userId}::uuid
+              AND closed = false
+              ORDER BY creation_date DESC"""
         ).on("userId" -> userId)
           .as(simpleApplication.*)
         result.map(_.anonymousApplication)
@@ -191,7 +199,11 @@ class ApplicationService @Inject() (
   def allForUserId(userId: UUID, anonymous: Boolean) =
     db.withConnection { implicit connection =>
       val result = SQL(
-        "SELECT * FROM application WHERE creator_user_id = {userId}::uuid OR invited_users ?? {userId} ORDER BY creation_date DESC"
+        s"""SELECT $fieldsInSelect
+            FROM application
+            WHERE creator_user_id = {userId}::uuid
+            OR invited_users ?? {userId}
+            ORDER BY creation_date DESC"""
       ).on("userId" -> userId)
         .as(simpleApplication.*)
       if (anonymous) {
@@ -204,7 +216,13 @@ class ApplicationService @Inject() (
   def allForUserIds(userIds: List[UUID]): Future[List[Application]] =
     Future {
       db.withConnection { implicit connection =>
-        SQL"SELECT * FROM application WHERE ARRAY[$userIds]::uuid[] @> ARRAY[creator_user_id]::uuid[] OR ARRAY(select jsonb_object_keys(invited_users))::uuid[] && ARRAY[$userIds]::uuid[] ORDER BY creation_date DESC"
+        SQL(
+          s"""SELECT $fieldsInSelect
+              FROM application
+              WHERE ARRAY[{userIds}]::uuid[] @> ARRAY[creator_user_id]::uuid[]
+              OR ARRAY(select jsonb_object_keys(invited_users))::uuid[] && ARRAY[{userIds}]::uuid[]
+              ORDER BY creation_date DESC"""
+        ).on("userIds" -> userIds)
           .as(simpleApplication.*)
           .map(_.anonymousApplication)
       }
@@ -213,8 +231,12 @@ class ApplicationService @Inject() (
   def allByArea(areaId: UUID, anonymous: Boolean) =
     db.withConnection { implicit connection =>
       val result =
-        SQL("SELECT * FROM application WHERE area = {areaId}::uuid ORDER BY creation_date DESC")
-          .on("areaId" -> areaId)
+        SQL(
+          s"""SELECT $fieldsInSelect
+              FROM application
+              WHERE area = {areaId}::uuid
+              ORDER BY creation_date DESC"""
+        ).on("areaId" -> areaId)
           .as(simpleApplication.*)
       if (anonymous) {
         result.map(_.anonymousApplication)
@@ -233,7 +255,8 @@ class ApplicationService @Inject() (
               s"interval '$months month'"
           )
           .orEmpty
-        SQL(s"""SELECT * FROM application
+        SQL(s"""SELECT $fieldsInSelect
+                FROM application
                 WHERE ARRAY[{areaIds}]::uuid[] @> ARRAY[area]::uuid[]
                 $additionalFilter
                 ORDER BY creation_date DESC""")
@@ -246,7 +269,9 @@ class ApplicationService @Inject() (
   def all(): Future[List[Application]] =
     Future {
       db.withConnection { implicit connection =>
-        SQL"""SELECT * FROM application""".as(simpleApplication.*).map(_.anonymousApplication)
+        SQL(s"""SELECT $fieldsInSelect FROM application""")
+          .as(simpleApplication.*)
+          .map(_.anonymousApplication)
       }
     }
 
@@ -256,7 +281,7 @@ class ApplicationService @Inject() (
         key.toString -> value
       })
       val mandatType =
-        newApplication.mandatType.map(DataModel.Application.MandatType.dataModelSerialization)
+        newApplication.mandatType.map(dataModels.Application.MandatType.dataModelSerialization)
       SQL"""
           INSERT INTO application (
             id,
@@ -349,6 +374,55 @@ class ApplicationService @Inject() (
         ).on(
           "id" -> applicationId,
         ).executeUpdate() === 1
+      }
+    }
+
+  def wipePersonalData(retentionInMonths: Long): Future[List[Application]] =
+    Future {
+      val before = ZonedDateTime.now().minusMonths(retentionInMonths)
+      val applications = db.withConnection { implicit connection =>
+        SQL(s"""SELECT $fieldsInSelect
+                FROM application
+                WHERE personal_data_wiped = false
+                AND closed_date < {before};""")
+          .on("before" -> before)
+          .as(simpleApplication.*)
+      }
+      applications.flatMap { application =>
+        db.withConnection { implicit connection =>
+          val wipedUsagerInfos: Map[String, String] = application.userInfos.map { case (key, _) =>
+            (key, "")
+          }
+          val wipedAnswers: List[Answer] = application.answers.map(answer =>
+            answer.copy(
+              message = "",
+              userInfos = answer.userInfos.map(_.map { case (key, _) => (key, "") }),
+              files = answer.files.map(_.zipWithIndex.map { case ((_, size), i) =>
+                (s"fichier-non-existant-$i", size)
+              }.toMap),
+            )
+          )
+          val wipedFiles: Map[String, Long] = application.files.zipWithIndex.map {
+            case ((_, size), i) => (s"fichier-non-existant-$i", size)
+          }.toMap
+          SQL(s"""UPDATE application
+                  SET
+                    subject = '',
+                    description = '',
+                    user_infos = {usagerInfos}::jsonb,
+                    answers = {answers}::jsonb,
+                    files = {files}::jsonb,
+                    personal_data_wiped = true
+                  WHERE id = {id}::uuid
+                  RETURNING $fieldsInSelect;""")
+            .on(
+              "id" -> application.id,
+              "usagerInfos" -> toJson(wipedUsagerInfos),
+              "answers" -> toJson(wipedAnswers),
+              "files" -> toJson(wipedFiles)
+            )
+            .as(simpleApplication.singleOpt)
+        }
       }
     }
 

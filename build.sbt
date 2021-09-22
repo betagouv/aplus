@@ -13,6 +13,7 @@ lazy val root = (project in file("."))
     ),
     buildInfoPackage := "constants"
   )
+  .dependsOn(macrosProject)
 
 inThisBuild(
   List(
@@ -50,6 +51,8 @@ scalacOptions ++= Seq(
   "-Xlint:eta-zero",
   "-Xlint:eta-sam",
   "-Xlint:deprecation",
+  // Sets warnings as errors on the CI
+  if (insideCI.value) "-Wconf:any:error" else "-Wconf:any:warning",
   "-Wdead-code",
   "-Wextra-implicit",
   "-Wmacros:before",
@@ -66,6 +69,8 @@ scalacOptions ++= Seq(
   "-Wvalue-discard"
 )
 
+lazy val anormDependency = "org.playframework.anorm" %% "anorm" % "2.6.10"
+
 libraryDependencies ++= Seq(
   ws,
   jdbc,
@@ -79,8 +84,8 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.2.20",
-  "org.playframework.anorm" %% "anorm" % "2.6.10",
+  "org.postgresql" % "postgresql" % "42.2.23",
+  anormDependency,
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "com.typesafe.play" %% "play-mailer-guice" % "8.0.1",
@@ -99,34 +104,45 @@ libraryDependencies ++= Seq(
 
 // UI
 libraryDependencies ++= Seq(
-  "org.webjars" %% "webjars-play" % "2.8.8",
+  "org.webjars" %% "webjars-play" % "2.8.8-1",
   "org.webjars.bower" % "material-design-lite" % "1.3.0",
   "org.webjars" % "material-design-icons" % "4.0.0",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
-  "org.webjars.npm" % "slim-select" % "1.24.0",
   "org.webjars.npm" % "twemoji" % "2.5.1",
   "org.webjars" % "chartjs" % "2.9.4",
-  "org.webjars" % "font-awesome" % "5.15.2",
-  "org.webjars.bowergithub.olifolkerd" % "tabulator" % "4.5.3",
-  "org.webjars.npm" % "xlsx" % "0.16.9"
+  "org.webjars" % "font-awesome" % "5.15.4",
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "4.3.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "5.1.2"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
 TwirlKeys.templateImports += "_root_.helper.TwirlImports._"
+TwirlKeys.templateImports += "views.MainInfos"
 
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "fr.gouv.beta.binders._"
 
 /////////////////////////////////////
+//              Macros             //
+/////////////////////////////////////
+
+lazy val scalaReflect = Def.setting("org.scala-lang" % "scala-reflect" % scalaVersion.value)
+
+lazy val macrosProject = (project in file("macros"))
+  .settings(
+    libraryDependencies ++= Seq(
+      anormDependency,
+      scalaReflect.value
+    )
+  )
+
+/////////////////////////////////////
 // Task and Hook for the TS build  //
 /////////////////////////////////////
 
-/** This task will run `npm install` and `npm run build`
-  * in the typescript/ directory.
-  * This will generate the JS production bundle in public/generate-js/index.js
+/** This task will run `npm install` and `npm run build` in the typescript/ directory. This will
+  * generate the JS production bundle in public/generate-js/index.js
   */
 lazy val npmBuild = taskKey[Unit]("Run npm run build.")
 
@@ -138,8 +154,7 @@ npmBuild := {
   Process("npm run build", tsDirectory).!
 }
 
-/** Add a hook to the Play sbt plugin,
-  * so `npm run watch` is runned when using the sbt command `run`
+/** Add a hook to the Play sbt plugin, so `npm run watch` is runned when using the sbt command `run`
   *
   * See documentation:
   * https://www.playframework.com/documentation/2.8.x/sbtCookbook#Hooking-into-Plays-dev-mode

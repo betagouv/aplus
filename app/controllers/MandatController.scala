@@ -11,6 +11,7 @@ import javax.inject.{Inject, Singleton}
 import models.mandat.{Mandat, SmsMandatInitiation}
 import models.{Error, EventType, Sms}
 import org.webjars.play.WebJarsUtil
+import play.api.Configuration
 import play.api.libs.json.{JsError, JsString, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, InjectedController, PlayBodyParsers}
 import serializers.JsonFormats._
@@ -21,6 +22,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 case class MandatController @Inject() (
     bodyParsers: PlayBodyParsers,
+    val configuration: Configuration,
     eventService: EventService,
     loginAction: LoginAction,
     mandatService: MandatService,
@@ -31,20 +33,23 @@ case class MandatController @Inject() (
     userService: UserService
 )(implicit val ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
+    with Operators.Common
     with UserOperators {
 
   /** To have a somewhat consistent process:
-    * - a SMS can fail for various reasons, even after having received a 2xx response from the api provider
-    * - we assume many SMS could potentially be sent for one `Mandat` (to manage SMS failures)
-    * - the `Mandat` is created but not signed until we have a response SMS
-    * - we assume no other `Mandat` will be opened for the same end-user before receiving a SMS response
-    * - a `Mandat` is allowed to be "dangling" (without a linked `Application`)
-    * - once a `Mandat` has been linked to an `Application`, it is used, and cannot be reused
+    *   - a SMS can fail for various reasons, even after having received a 2xx response from the api
+    *     provider
+    *   - we assume many SMS could potentially be sent for one `Mandat` (to manage SMS failures)
+    *   - the `Mandat` is created but not signed until we have a response SMS
+    *   - we assume no other `Mandat` will be opened for the same end-user before receiving a SMS
+    *     response
+    *   - a `Mandat` is allowed to be "dangling" (without a linked `Application`)
+    *   - once a `Mandat` has been linked to an `Application`, it is used, and cannot be reused
     *
     * This is a JSON API, mandats are initiated via Ajax calls.
     *
-    * Note: protection against rapidly sending SMS to the same number is only performed
-    *       client-side, we might want to revisit that.
+    * Note: protection against rapidly sending SMS to the same number is only performed client-side,
+    * we might want to revisit that.
     */
   def beginMandatSms: Action[JsValue] = loginAction(parse.json).async { implicit request =>
     request.body
@@ -78,7 +83,7 @@ case class MandatController @Inject() (
               _.fold(
                 error => {
                   eventService.logError(error)
-                  jsonInternalServerError
+                  mandatJsonInternalServerError(error)
                 },
                 { case (mandat, sms) =>
                   eventService.log(
@@ -96,6 +101,7 @@ case class MandatController @Inject() (
   }
 
   /** This is an `Action[String]` because we need to parse both as bytes and json.
+    *
     * Also, this is a webhook, only the returned status code is useful
     */
   // TODO: What if usager send an incorrect response the first time? close sms_thread only after some time has passed?
@@ -180,9 +186,11 @@ case class MandatController @Inject() (
                   s"Vous n'avez pas les droits suffisants pour voir ce mandat. " +
                     s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
                 )
-              case _: Error.Database | _: Error.SqlException | _: Error.MiscException =>
+              case _: Error.Database | _: Error.SqlException |
+                  _: Error.UnexpectedServerResponse | _: Error.Timeout | _: Error.MiscException =>
                 InternalServerError(
                   s"Une erreur s'est produite sur le serveur. " +
+                    "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard. " +
                     s"Si cette erreur persiste, " +
                     s"vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
                 )

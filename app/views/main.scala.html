@@ -1,6 +1,6 @@
 @import helper._
 
-@(currentUser: User, currentUserRights: Authorization.UserRights, maxWidth: Boolean = true)(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights, maxWidth: Boolean = true, modals: Html = Html(""))(title: String)(header: Html)(content: Html)(bodyBottom: Html)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 <!doctype html>
 <html lang="fr">
@@ -18,14 +18,10 @@
         @webJarsUtil.locate("solid.css").css()
         <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/main.css")'>
         <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/mdl-extensions.css")'>
-        @webJarsUtil.locate("slimselect.min.css").css()
 
         @header
-        @webJarsUtil.locate("material.min.js").script()
-        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/polyfills.js")"></script>
-        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/main.js")"></script>
+        <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("generated-js/slimselect.min.css")'>
         <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("generated-js/index.css")'>
-        <script type="text/javascript" src="@routes.JavascriptController.javascriptRoutes"></script>
     </head>
     <body>
         <div class="header__ribbon do-not-print mdl-color--cyan-800  mdl-color-text--white" id="header__ribbon">
@@ -33,13 +29,9 @@
         </div>
         <div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-header mdl-layout--fixed-drawer">
             <div class="mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 do-not-print">
-                <div class="mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100">
-                    <div class="mdl-layout__header-row mdl-color--pink-500 mdl-color-text--white invisible demo-only">
-                        <span class="mdl-layout-title aplus-demo-header__title">
-                            Version de démonstration d’Administration+
-                        </span>
-                    </div>
-                </div>
+
+              @toHtml(views.helpers.common.topHeaderConnected)
+
                 <div class="mdl-layout__header-row">
                     <span class="mdl-layout-title invisible">
                         <a href="@routes.HomeController.index"><img src='@routes.Assets.versioned("images/logo_small_150x160.png")' class="logo-header" alt="Administration+"></a>
@@ -126,23 +118,20 @@
             </main>
         </div>
 
-            <!-- Piwik -->
-        <script type="text/javascript">
-                var _paq = _paq || [];
-                _paq.push(["setDomains", ["*.aplus.beta.gouv.fr"]]);
-                _paq.push(['trackPageView']);
-                (function() {
-                    var u="//stats.data.gouv.fr/";
-                    _paq.push(['setTrackerUrl', u+'piwik.php']);
-                    _paq.push(['setSiteId', '42']);
-                    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-                    g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
-                })();
-        </script>
+        @*** Note: modals need to be here because:
+         ***      1. This is high enough in the DOM to avoid a bug when an
+         ***         inner element is scrolled
+         ***      2. This is before JS, so events are attached
+         ***@
+        @modals
+
+
+        <!-- Piwik -->
+        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/stats.js")"></script>
         <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border:0;" alt="" /></p></noscript>
-            <!-- End Piwik Code -->
-        @webJarsUtil.locate("slimselect.min.js").script()
-        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/main-page-bottom.js")"></script>
+        <!-- End Piwik Code -->
+        @webJarsUtil.locate("material.min.js").script()
+        <script type="text/javascript" src="@routes.JavascriptController.javascriptRoutes"></script>
         <script type="application/javascript" src="@routes.Assets.versioned("generated-js/index.js")"></script>
         @bodyBottom
 

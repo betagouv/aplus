@@ -8,8 +8,7 @@ class ServicesDependencies @Inject() (
     actorSystem: ActorSystem
 ) {
 
-  /** Gives access to an ExecutionContext for the DB queries, that are
-    * supposed to be blocking.
+  /** Gives access to an ExecutionContext for the DB queries, that are supposed to be blocking.
     *
     * https://www.playframework.com/documentation/2.8.x/ThreadPools#Many-specific-thread-pools
     */

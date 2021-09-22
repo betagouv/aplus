@@ -1,6 +1,7 @@
+@import helper._
 @import views.home.LoginPanel
 
-@(innerPage: LoginPanel)(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil, request: RequestHeader)
+@(innerPage: LoginPanel)(implicit flash: Flash, webJarsUtil: org.webjars.play.WebJarsUtil, request: RequestHeader, mainInfos: MainInfos)
 
 <!DOCTYPE html>
 <html itemscope itemtype="http://schema.org/WebPage" lang="fr">
@@ -20,34 +21,13 @@
         <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/home.css")'>
         <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/mdl-extensions.css")'>
         <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("generated-js/index.css")'>
-        <script type="text/javascript">
-                var _paq = _paq || [];
-                _paq.push(["setDomains", ["*.aplus.beta.gouv.fr"]]);
-                _paq.push(['trackPageView']);
-                _paq.push(['enableLinkTracking']);
-                (function () {
-                    var u = "//stats.data.gouv.fr/";
-                    _paq.push(['setTrackerUrl', u + 'piwik.php']);
-                    _paq.push(['setSiteId', '42']);
-                    var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
-                    g.type = 'text/javascript';
-                    g.async = true;
-                    g.defer = true;
-                    g.src = u + 'piwik.js';
-                    s.parentNode.insertBefore(g, s);
-                })();
-        </script>
-        <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border: 0;" alt="" /></p></noscript>
     </head>
 
     <body>
         <div class="mdl-layout mdl-layout--fixed-header mdl-js-layout">
             <header class="mdl-layout__header mdl-color--white">
-                <div class="mdl-layout__header-row mdl-color--pink-500 mdl-color-text--white invisible demo-only">
-                    <span class="mdl-layout-title aplus-demo-header__title">
-                        Version de démonstration d’Administration+
-                    </span>
-                </div>
+
+                @toHtml(views.helpers.common.optionalDemoVersionHeader)
 
                 <div class="mdl-layout__header-row">
                     <div class="mdl-layout-title mdl-layout-title--plus">
@@ -377,7 +357,10 @@
                 </div>
             </div>
         </footer>
-        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/main-page-bottom.js")"></script>
+        <!-- Piwik -->
+        <script type="application/javascript" src="@routes.Assets.versioned("javascripts/stats.js")"></script>
+        <noscript><p><img src="//stats.data.gouv.fr/piwik.php?idsite=42" style="border:0;" alt="" /></p></noscript>
+        <!-- End Piwik Code -->
         <script type="application/javascript" src="@routes.Assets.versioned("generated-js/index.js")"></script>
     </body>
 </html>

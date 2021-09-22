@@ -228,7 +228,7 @@ object common {
       b("Ne transférez pas cet email et n’y répondez pas directement."),
       br,
       i(
-        "- Vous pouvez transférer la demande à un autre utilisateur en ouvrant le lien ci-dessus",
+        "- Vous pouvez transférer la demande à un autre utilisateur dans l’outil Administration+ en ouvrant le lien ci-dessus",
         br,
         "- Si vous avez un problème ou besoin d’aide à propos de l’outil Administration+, contactez-nous sur ",
         a(

@@ -34,7 +34,8 @@ case class Application(
     files: Map[String, Long] = Map.empty[String, Long],
     mandatType: Option[Application.MandatType],
     mandatDate: Option[String],
-    invitedGroupIdsAtCreation: List[UUID]
+    invitedGroupIdsAtCreation: List[UUID],
+    personalDataWiped: Boolean = false,
 ) extends AgeModel {
 
   // Legacy case, can be removed once data has been cleaned up.
@@ -45,6 +46,7 @@ case class Application(
     (invitedGroupIdsAtCreation ::: answers.flatMap(_.invitedGroupIds)).toSet
 
   val seenByUserIds = seenByUsers.map(_.userId)
+  val seenByUsersMap = seenByUsers.map { case SeenByUser(userId, date) => (userId, date) }.toMap
 
   def newAnswersFor(userId: UUID) = {
     val maybeSeenLastDate = seenByUsers.find(_.userId === userId).map(_.lastSeenDate)
@@ -145,6 +147,7 @@ case class Application(
   // Security (TODO: put in Authorization)
 
   def canHaveExpertsInvitedBy(user: User) = false
+
   // TODO : be more open to expert invitation if it's reintroduced
   // (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
   //  creatorUserId === user.id

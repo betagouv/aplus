@@ -1,11 +1,10 @@
 @import models._
 @import cats.implicits.catsSyntaxEq
-@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+
+@(currentUser: User, currentUserRights: Authorization.UserRights)(selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 
 @main(currentUser, currentUserRights, maxWidth = false)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
-    @webJarsUtil.locate("tabulator.min.css").css()
-    @webJarsUtil.locate("tabulator.min.js").script()
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
     <style>
             .row--disabled {
@@ -21,259 +20,26 @@
     }
     @if(currentUser.areas.length > 1) {
         <p class="mdl-cell mdl-cell--12-col">Territoire :
-            <select id="area-selector" name="area-selector" onchange="changeAreaApps()">
-                <option value="@Area.allArea.id" @if(selectedArea.id === Area.allArea.id) { selected }>tous les territoires</option>
-                @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-                    <option value="@area.id" @if(selectedArea.id === area.id) { selected }>@area</option>
-                }
-            </select>
-            <script>
-                    function changeAreaApps() {
-                        var areaSelected = document.getElementById("area-selector").value;
-                        if(areaSelected != "@selectedArea.id") {
-                            document.location = jsRoutes.controllers.UserController.all(areaSelected).url + "?vue=nouvelle";
-                        }
-                    }
-            </script>
+          <select id="changeAreaSelect"
+                  name="area-selector"
+                  data-current-area="@{selectedArea.id}">
+            @for(area <- (Area.allArea :: currentUser.areas.flatMap(Area.fromId))) {
+              <option value="@area.id"
+                      data-redirect-url="@{routes.UserController.all(area.id).url + "?vue=nouvelle"}"
+                      @if(area.id === selectedArea.id) { selected }>
+                @if(area.id === Area.allArea.id) { tous les territoires } else { @area }
+              </option>
+              }
+          </select>
         </p>
     }
-    <div class="mdl-cell mdl-cell--12-col" id="users-table"></div>
 
-    <script>
-            var verticalHeader = false;
-            var tabledata = [
-                @for(user <- allUsers) {
-                    {
-                        id: "@user.id",
-                        name: "@user.name",
-                        lastName: "@user.lastName",
-                        firstName: "@user.firstName",
-                        email: "@user.email",
-                        qualite: "@user.qualite",
-                        phoneNumber: "@{user.phoneNumber.getOrElse("")}",
-                        helper: @user.helper,
-                        instructor: @user.instructor,
-                        areas: [
-                            @for(area <- user.areas.flatMap(Area.fromId).map(_.toString)){
-                                "@area",
-                            }
-                        ],
-                        groupNames: [
-                            @for(group <- user.groupIds.flatMap( groupId => userGroups.find( _.id === groupId ) ).map(_.name)){
-                                "@group",
-                            }
-                        ],
-                        groups: [
-                            @for(group <- user.groupIds.flatMap( groupId => userGroups.find( _.id === groupId ) )){
-                                { id: "@group.id", name: "@group.name" } ,
-                            }
-                        ],
-                        groupEmails: [
-                            @for(email <- user.groupIds.flatMap( groupId => userGroups.find( _.id === groupId ) ).flatMap(_.email)){
-                                "@email",
-                            }
-                        ],
-                        groupAdmin: @user.groupAdmin,
-                        admin: @user.admin,
-                        expert: @user.expert,
-                        disabled: @user.disabled,
-                        sharedAccount: @user.sharedAccount,
-                        cgu: @user.cguAcceptationDate.nonEmpty
-                    },
-                }
-            ];
-
-            var editIcon = function(cell, formatterParams) {
-                //plain text value
-                var uuid = cell.getRow().getData().id;
-                var url = jsRoutes.controllers.UserController.editUser(uuid).url;
-                return "<a href='"+url+"' target=\"_blank\" ><i class='fas fa-user-edit'></i></a>";
-            };
-
-            var groupsFormatter = function(cell, formatterParams) {
-              var groups = cell.getRow().getData().groups;
-              var links = "";
-              var groupName;
-              var groupUrl;
-              var isNotFirst = false;
-              for (index = 0; index < groups.length; index++) {
-                var groupUrl = jsRoutes.controllers.GroupController.editGroup(groups[index].id).url;
-                var groupName = groups[index].name;
-                if (isNotFirst) {
-                  links += ", ";
-                }
-                links += "<a href=\""+groupUrl+"\" target=\"_blank\" >"+groupName+"</a>";
-                isNotFirst = true;
-              }
-              return links;
-            };
-
-            var rawFormatter = function(row) {
-                var element = row.getElement(),
-                        data = row.getData();
-                if (data.disabled) {
-                    element.classList.add("row--disabled");
-                }
-            };
-
-            var table = new Tabulator("#users-table", {
-                height: "80vh", // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
-                data: tabledata, //assign data to table
-                rowFormatter: rawFormatter,
-                langs: {
-                    "fr-fr": {
-                        pagination: {
-                            page_size: "Taille de la page",
-                            first: "Premier",
-                            first_title: "Première Page",
-                            last: "Dernier",
-                            last_title: "Dernière Page",
-                            prev: "Précédent",
-                            prev_title: "Page Précédente",
-                            next: "Suivant",
-                            next_title: "Page Suivante"
-                        },
-                        headerFilters: {
-                            default: "filtrer..." //default header filter placeholder text
-                        }
-                    }
-                },
-                columns: [
-                    {
-                        formatter: editIcon,
-                        width: 40,
-                        align: "center",
-                        frozen:true
-                    },
-                    { title: "Nom et Prénom", field: "name", headerFilter: "input", formatter:"html" },
-                    { title: "Nom", field: "lastName", headerFilter: "input", frozen:true, formatter:"html" },
-                    { title: "Prénom", field: "firstName", headerFilter: "input", frozen:true, formatter:"html" },
-                    { title: "Groupes", field: "groupNames", formatter: groupsFormatter, headerFilter: "input" },
-                    { title: "Email", field: "email", headerFilter: "input" },
-                    { title: "Qualité", field: "qualite", headerFilter: "input" },
-                    { title: "Téléphone", field: "phoneNumber", headerFilter: "input" },
-                    {
-                        title: "Droits",
-                        columns: [
-                            {
-                                title: "Aidant",
-                                field: "helper",
-                                formatter: "tickCross",
-                                headerFilter: "tickCross",
-                                headerFilterParams: { tristate: true },
-                                headerVertical: verticalHeader,
-                                bottomCalc: "count"
-                            },
-                            {
-                                title: "Instructeur",
-                                field: "instructor",
-                                formatter: "tickCross",
-                                headerFilter: "tickCross",
-                                headerFilterParams: { tristate: true },
-                                headerVertical: verticalHeader,
-                                bottomCalc: "count"
-                            },
-                            {
-                                title: "Responsable",
-                                field: "groupAdmin",
-                                formatter: "tickCross",
-                                headerFilter: "tickCross",
-                                headerFilterParams: { tristate: true },
-                                headerVertical: verticalHeader,
-                                bottomCalc: "count"
-                            },
-                            {
-                                title: "Partagé",
-                                field: "sharedAccount",
-                                formatter: "tickCross",
-                                headerFilter: "tickCross",
-                                headerFilterParams: { tristate: true },
-                                headerVertical: verticalHeader,
-                                bottomCalc: "count"
-                            },
-                            {
-                                title: "Expert",
-                                field: "expert",
-                                formatter: "tickCross",
-                                headerFilter: "tickCross",
-                                headerFilterParams: { tristate: true },
-                                headerVertical: verticalHeader,
-                                bottomCalc: "count"
-                            },
-                            {
-                                title: "Admin",
-                                field: "admin",
-                                formatter: "tickCross",
-                                headerFilter: "tickCross",
-                                headerFilterParams: { tristate: true },
-                                headerVertical: verticalHeader,
-                                bottomCalc: "count"
-                            },
-                            {
-                                title: "Désactivé",
-                                field: "disabled",
-                                formatter: "tickCross",
-                                headerFilter: "tickCross",
-                                headerFilterParams: { tristate: true },
-                                headerVertical: verticalHeader,
-                                bottomCalc: "count"
-                            }
-                        ]
-                    },
-                    {
-                      title: "CGU",
-                      field: "cgu",
-                      formatter: "tickCross",
-                      headerFilter: "tickCross",
-                      headerFilterParams: { tristate: true },
-                      headerVertical: verticalHeader,
-                      bottomCalc: "count"
-                    },
-                    { title: "BALs", field: "groupEmails", headerFilter: "input" },
-                    { title: "Départements", field: "areas", headerFilter: "input" },
-                ]
-            });
-            table.setLocale("fr-fr");
-            table.setSort("name", "asc");
-    </script>
+    <div id="current-area-value" data-area-id="@selectedArea.id"></div>
+    <div class="mdl-cell mdl-cell--12-col" id="tabulator-users-table"></div>
 
     @if(currentUser.admin) {
-        <div class="mdl-cell mdl-cell--12-col mdl-grid">
-            <h4 class="mdl-cell mdl-cell--12-col">Ajouter un groupe</h4> <br>
-            @helper.form(routes.GroupController.addGroup, "method" -> "post", "class" -> "mdl-cell mdl-cell--9-col") {
-                @helper.CSRF.formField
-                <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="text" id="name" name="name" maxlength="@models.UserGroup.nameMaxLength">
-                    <label class="mdl-textfield__label" for="name">Nom du groupe</label>
-                </div>
-                <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="text" id="description" name="description">
-                    <label class="mdl-textfield__label" for="description">Description du groupe</label>
-                </div>
-                <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="text" id="email" name="email" maxlength="200">
-                    <label class="mdl-textfield__label" for="email">Email du groupe (BAL générique pour inscription et notification, champ facultatif)</label>
-                </div>
-                <div class="mdl-cell mdl-cell--12-col">
-                    <select id="organisation" name="organisation">
-                        <option selected style="font-weight: bold;" value="">Organisme non-référencé</option>
-                        @for(organisation <- Organisation.all) {
-                            <option value="@organisation.id.id">@organisation.shortName : @organisation.name</option>
-                        }
-                    </select>
-                </div>
-                <div class="mdl-cell mdl-cell--12-col">
-                    <select class="use-slimselect" id="area-ids" name="area-ids[]" multiple size="5" >
-                    @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-                        <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area.name</option>
-                    }
-                    </select>
-                </div>
-                <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
-                    Ajouter le groupe
-                </button>
-            }
-        </div>
+      @toHtml(views.addGroup.innerForm(currentUser, selectedArea))
     }
+
 }{
 }

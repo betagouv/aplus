@@ -1,7 +1,7 @@
 #
 # Builder image for the TS pipeline
 #
-FROM node:10-buster AS tsbuilder
+FROM node:14-buster AS tsbuilder
 COPY package.json /var/www/aplus/package.json
 COPY typescript /var/www/aplus/typescript/
 WORKDIR /var/www/aplus/
@@ -13,11 +13,11 @@ RUN npm run build
 # Builder image for the Scala app
 # based on https://github.com/hseeberger/scala-sbt
 #
-FROM openjdk:8u265 AS scalabuilder
+FROM adoptopenjdk:11-jdk-hotspot AS scalabuilder
 
 # We need nodejs to run in a reasonable amount of time sbt-web
 # see step `Optimizing JavaScript with RequireJS`
-RUN apt-get update && apt-get install -y nodejs
+RUN apt-get update && apt-get install -y --no-install-recommends nodejs
 
 # Env variables
 ENV SBT_VERSION 1.5.1
@@ -28,7 +28,7 @@ RUN \
   dpkg -i sbt-$SBT_VERSION.deb && \
   rm sbt-$SBT_VERSION.deb && \
   apt-get update && \
-  apt-get install -y sbt && \
+  apt-get install -y --no-install-recommends sbt && \
   sbt sbtVersion -Dsbt.rootdir=true
 
 ENV PLAY_APP_NAME aplus
@@ -37,6 +37,7 @@ RUN mkdir -p $PLAY_APP_DIR
 COPY .git $PLAY_APP_DIR/.git/
 COPY build.sbt $PLAY_APP_DIR/
 COPY app $PLAY_APP_DIR/app/
+COPY macros $PLAY_APP_DIR/macros/
 COPY conf $PLAY_APP_DIR/conf/
 COPY public $PLAY_APP_DIR/public/
 COPY --from=tsbuilder /var/www/aplus/public/generated-js $PLAY_APP_DIR/public/generated-js/
@@ -52,7 +53,7 @@ RUN sbt clean stage
 # Final Image
 #
 #
-FROM openjdk:8u265
+FROM adoptopenjdk:11-jre-hotspot
 
 ENV PLAY_APP_NAME aplus
 ENV PLAY_APP_DIR /var/www/$PLAY_APP_NAME

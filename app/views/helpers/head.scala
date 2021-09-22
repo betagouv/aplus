@@ -37,33 +37,19 @@ object head {
       webJarCss("solid.css"),
       publicCss("stylesheets/main.css"),
       publicCss("stylesheets/mdl-extensions.css"),
-      webJarCss("slimselect.min.css"),
       additionalTags,
-      webJarScript("material.min.js"),
-      publicScript("javascripts/polyfills.js"),
-      publicScript("javascripts/main.js"),
+      publicCss("generated-js/slimselect.min.css"),
       publicCss("generated-js/index.css"),
-      script(`type` := "text/javascript", src := JavascriptController.javascriptRoutes.url)
     )
 
   def bottomScripts(implicit webJarsUtil: WebJarsUtil): Frag =
     frag(
-      script(
-        raw("""
-                var _paq = _paq || [];
-                _paq.push(["setDomains", ["*.aplus.beta.gouv.fr"]]);
-                _paq.push(['trackPageView']);
-                (function() {
-                    var u="//stats.data.gouv.fr/";
-                    _paq.push(['setTrackerUrl', u+'piwik.php']);
-                    _paq.push(['setSiteId', '42']);
-                    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-                    g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
-                })();
-       """)
+      publicScript("javascripts/stats.js"),
+      tags2.noscript(
+        p(img(src := "//stats.data.gouv.fr/piwik.php?idsite=42", style := "border:0;", alt := ""))
       ),
-      webJarScript("slimselect.min.js"),
-      publicScript("javascripts/main-page-bottom.js"),
+      webJarScript("material.min.js"),
+      script(`type` := "text/javascript", src := JavascriptController.javascriptRoutes.url),
       publicScript("generated-js/index.js")
     )
 

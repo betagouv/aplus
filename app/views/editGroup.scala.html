@@ -1,11 +1,34 @@
 @import models.Authorization
+@import models.formModels.AddUserToGroupFormData
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean, groupApplications: List[Application], addUserForm: Form[AddUserToGroupFormData], addRedirectQueryParam: String => String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 
-@main(currentUser, currentUserRights)(s"Gestion du groupe ${userGroup.name} - ${userGroup.areaIds.flatMap(Area.fromId).map(_.name).mkString(", ")}") {
+@modals = {
+
+  @********* Experimental (testing by admins for now) **********@
+  @if(Authorization.canSeeExperimentalAdminFeatures(currentUserRights)) {
+
+    @for(user <- groupUsers) {
+      @toHtml(views.editMyGroups.removeUserFromGroupDialog(user, userGroup.id, addRedirectQueryParam))
+    }
+
+  }
+
+
+    <dialog class="mdl-dialog dialog--50percent-width" id="dialog-delete-group">
+        <h4 class="mdl-dialog__title">Veuillez confirmer la suppression du groupe.</h4>
+        <div class="mdl-dialog__actions">
+            <button type="button" class="mdl-button mdl-button" id="dialog-delete-group-cancel">Annuler</button>
+            <button type="button" class="mdl-button mdl-button" id="dialog-delete-group-confirm" data-uuid="@userGroup.id">Confirmer</button>
+        </div>
+    </dialog>
+
+}
+
+
+@main(currentUser, currentUserRights, modals = modals)(s"Gestion du groupe ${userGroup.name} - ${userGroup.areaIds.flatMap(Area.fromId).map(_.name).mkString(", ")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
-    <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/auto-complete.css")'>
 }{
 
 @defining(Authorization.canEditGroup(userGroup)(currentUserRights)) { canEdit =>
@@ -104,32 +127,29 @@
         }
     </div>
     <div class="single--overflow-auto">
-        @helpers.displayUsers(groupUsers)(currentUser)
+        @helpers.displayUsers(currentUser, currentUserRights)(groupUsers)
         @helper.form(routes.UserController.add(userGroup.id), "method" -> "get") {
             @helper.CSRF.formField
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                 <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="rows" name="rows" value="1">
-                <label class="mdl-textfield__label" for="rows">Nombre d'utilisateur à ajouter</label>
-                <span class="mdl-textfield__error">Ce n'est pas un nombre</span>
+                <label class="mdl-textfield__label" for="rows">Nombre de comptes à créer</label>
+                <span class="mdl-textfield__error">Ce n’est pas un nombre</span>
             </div>
             <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
-                Ajouter des utilisateurs dans le groupe
+                Créer de nouveaux comptes dans ce groupe
             </button>
         }
     </div>
 
-    <dialog class="mdl-dialog dialog--50percent-width" id="dialog-delete-group">
-        <h4 class="mdl-dialog__title">Veuillez confirmer la suppression du groupe.</h4>
-        <div class="mdl-dialog__actions">
-            <button type="button" class="mdl-button mdl-button" id="dialog-delete-group-cancel">Annuler</button>
-            <button type="button" class="mdl-button mdl-button" id="dialog-delete-group-confirm" data-uuid="@userGroup.id">Confirmer</button>
-        </div>
-    </dialog>
 
+    @********* Experimental (testing by admins for now) **********@
+    @if(Authorization.canSeeExperimentalAdminFeatures(currentUserRights)) {
 
+      @toHtml(views.editMyGroups.groupBlock(userGroup, groupUsers, groupApplications, addUserForm, addRedirectQueryParam, currentUser, currentUserRights))
+
+    }
 
 }
 }
 }{
-    <script src='@routes.Assets.versioned("javascripts/auto-complete.min.js")'></script>
 }

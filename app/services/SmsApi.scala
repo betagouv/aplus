@@ -174,7 +174,7 @@ object SmsApi {
       ws: WSClient,
       implicit val executionContext: ExecutionContext
   ) extends SmsApi {
-    import serializers.DataModel.SmsFormats._
+    import models.dataModels.SmsFormats._
 
     private val serverPort: String =
       Option(System.getProperty("http.port"))
@@ -212,7 +212,7 @@ object SmsApi {
             e =>
               eventService.error(
                 User.systemUser,
-                "",
+                "0.0.0.0",
                 EventType.SmsCallbackError.code,
                 s"Impossible d'envoyer un message de test (faux webhook). SMS id: ${inId.underlying}",
                 None,
@@ -222,7 +222,7 @@ object SmsApi {
             _ =>
               eventService.warn(
                 User.systemUser,
-                "",
+                "0.0.0.0",
                 EventType.SmsCallbackError.code,
                 s"Un message de test (faux webhook) a été envoyé. SMS id: ${inId.underlying}",
                 None,

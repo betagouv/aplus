@@ -2,6 +2,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "es5",
+    "esModuleInterop": true,
     "lib": [
       "DOM",
       "ES5",
@@ -9,6 +10,27 @@
     ],
     "sourceMap": true,
     "rootDir": "src",
-    "outDir": "dist/js"
+    "outDir": "dist/js",
+
+    /**
+       Type Checks
+       https://www.typescriptlang.org/tsconfig#Type_Checking_6248
+    */
+    "allowUnusedLabels": false,
+    "alwaysStrict": true,
+    "exactOptionalPropertyTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
+    "strict": true,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "useUnknownInCatchVariables": true
   }
 }

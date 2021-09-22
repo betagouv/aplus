@@ -1,7 +1,8 @@
+@import cats.implicits.catsSyntaxEq
 @import _root_.helper.Time
 @import serializers.Keys
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(applications: Seq[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(applications: Seq[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 @main(currentUser, currentUserRights, maxWidth = false)(s"Demandes")  {
 <style>
@@ -32,16 +33,21 @@
    <div class="mdl-cell mdl-cell--12-col mdl-grid--no-spacing">
        @if(currentUser.areas.length > 1) {
            <p class="mdl-cell mdl-cell--12-col">Afficher :
-               <select id="area-selector" name="area-selector" onchange="changeSelectedArea()">
-                   <option value="@Area.allArea.id" @if(selectedArea.id == Area.allArea.id) { selected }>tous les territoires</option>
-                   @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-                       <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area</option>
-                   }
-               </select>
+             <select id="changeAreaSelect"
+                     name="area-selector"
+                     data-current-area="@{selectedArea.id}">
+               @for(area <- (Area.allArea :: currentUser.areas.flatMap(Area.fromId))) {
+                 <option value="@area.id"
+                         data-redirect-url="@{routes.ApplicationController.all(area.id).url}"
+                         @if(area.id === selectedArea.id) { selected }>
+                   @if(area.id === Area.allArea.id) { tous les territoires } else { @area }
+                 </option>
+                 }
+             </select>
            </p>
        }
 
-           <button class="mdl-button mdl-js-button mdl-button--raised" onclick="document.location='@routes.ApplicationController.allCSV(selectedArea.id)'">
+           <button class="mdl-button mdl-js-button mdl-button--raised onclick-change-location" data-location="@routes.ApplicationController.allCSV(selectedArea.id)">
                 Télécharger la liste / export CSV
            </button>
            <a class="mdl-button mdl-js-button mdl-button--raised" href="@routes.ApplicationController.all(selectedArea.id)?@{Keys.QueryParam.filterIsOpen}">
@@ -51,7 +57,7 @@
            <br>
 
 
-           <input class="mdl-cell mdl-cell--6-col" type="search" placeholder="Filtrer les demandes (saisir nom, numéro, description, etc)" id="search-input" onsearch="onSearch()" oninput="onSearch()"/>
+           <input class="mdl-cell mdl-cell--6-col" type="search" placeholder="Filtrer les demandes (saisir nom, numéro, description, etc)" id="search-input"/>
            <br>
 
        <div class="mdl-cell mdl-cell--12-col pem-container single--overflow-auto">
@@ -81,12 +87,12 @@
                     </thead>
                     <tfoot class="invisible">
                         <tr>
-                            <td class="mdl-data-table__cell--non-numeric" colspan="8" style="text-align: center"><button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button></td>
+                            <td class="mdl-data-table__cell--non-numeric" colspan="8" style="text-align: center"><button id="clear-search" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">Supprimer le filtre et afficher toutes les demandes</button></td>
                         </tr>
                     </tfoot>
                     <tbody>
                     @for((application) <- applications) {
-                        <tr @if(currentUser.admin){ onclick="window.document.location='@routes.ApplicationController.show(application.id)';" class="searchable-row" } else { style="cursor: none" } data-search="@application.searchData" >
+                        <tr @if(currentUser.admin){ data-location="@routes.ApplicationController.show(application.id)" class="searchable-row onclick-change-location" } else { style="cursor: none" } data-search="@application.searchData" >
                         @if(currentUser.admin){ <td class="mdl-data-table__cell--non-numeric" style="font-weight: bold; color: red;">@application.internalId</td>}
                             <td class="mdl-data-table__cell--non-numeric">@Time.formatForAdmins(application.creationDate.toInstant)</td>
                             @if(currentUser.admin) {
@@ -120,12 +126,4 @@
         </div>
 }{
         <script src="@routes.Assets.versioned("sortable/sortable.js")"></script>
-        <script>
-         function changeSelectedArea() {
-             var areaSelected = document.getElementById("area-selector").value;
-             if(areaSelected != "@selectedArea.id") {
-                 document.location = jsRoutes.controllers.ApplicationController.all(areaSelected).url;
-             }
-         }
-        </script>
 }

@@ -1,11 +1,11 @@
 @import _root_.helper.Time
 @import _root_.helper.MDLForms._
 @import _root_.helper.BooleanHelper.not
-
 @import cats.implicits.catsSyntaxEq
 @import models.Answer.AnswerType
-@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, currentArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil, fileExpiryDayCount: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader)
+@import serializers.Keys
 
+@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, selectedArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil, fileExpiryDayCount: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 @organisationIcon(creatorUserName: String) = {
     @Map("A+" -> "aplus",
@@ -218,7 +218,7 @@ dialog {
                 <h2 class="mdl-card__title-text">@application.subject</h2>
                 <div class="mdl-card__menu do-not-print">
 
-                    <button class="mdl-button mdl-button--raised mdl-js-button mdl-button--icon mdl-button--fab" onclick="window.print();">
+                    <button class="mdl-button mdl-button--raised mdl-js-button mdl-button--icon mdl-button--fab onclick-print">
                         <i class="material-icons">print</i>
                     </button>
                 </div>
@@ -246,7 +246,7 @@ dialog {
                         }
                     }
                 </div>
-                <p class="application__message">@application.description</p>
+                <p class="application__message use-autolinker">@application.description</p>
                 @for(mandatType <- application.mandatType) {
                     <span>
                         J’atteste avoir recueilli l’autorisation de l’usager
@@ -315,13 +315,16 @@ dialog {
                             </span>
                         </div>
                         <div class="mdl-list__item-secondary-content">
-                            @if(application.seenByUserIds.contains(userId)){
+                            @application.seenByUsersMap.get(userId) match {
+                              case None => {}
+                              case Some(date) => {
                                 <div id="seen-@userId" class="vertical-align--middle">
-                                    <i class="material-icons icon--light">remove_red_eye</i>
+                                    <i class="material-icons">remove_red_eye</i>
                                 </div>
                                 <div class="mdl-tooltip" for="seen-@userId">
-                                    Consultée par l’utilisateur
+                                    Consultée par l’utilisateur (@Time.formatPatternFr(date.atZone(currentUser.timeZone), "dd MMM YYYY - HH:mm"))
                                 </div>
+                              }
                             }
                         </div>
                     </div>
@@ -330,7 +333,7 @@ dialog {
                     not(application.closed) && not(application.expertInvited)) {
                     <div class="mdl-list__item">
                         <span class="mdl-list__item-primary-content">
-                            <button class="mdl-button mdl-button--raised mdl-js-button do-not-print single--white-space-nowrap" onclick="document.location = '@routes.ApplicationController.inviteExpert(application.id)'">
+                            <button class="mdl-button mdl-button--raised mdl-js-button do-not-print single--white-space-nowrap onclick-change-location" data-location="@routes.ApplicationController.inviteExpert(application.id)">
                                 Inviter un expert A+
                             </button>
                         </span>
@@ -400,7 +403,7 @@ dialog {
                                     }
                                 </ul>
                             }
-                            <p class="answer__message">@answer.message</p>
+                            <p class="answer__message use-autolinker">@answer.message</p>
                             @if(answer.answerType === AnswerType.ApplicationProcessed && application.creatorUserId == currentUser.id && not(application.closed) && answer.creatorUserID != currentUser.id) {
                                 <div class="info-box do-not-print">
                                     Cette demande a bien été traitée. Je vous invite à archiver l’échange en cliquant sur le bouton ci-dessous&nbsp;:<br><br>
@@ -451,7 +454,7 @@ dialog {
         </div>
 
         <div class="mdl-tabs__panel @if(openedTab =="answer"){ is-active  } " id="answer">
-            <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing single--margin-0px single--width-100pc aplus-protected-form" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('review-validation').disabled=true">
+            <form action="@routes.ApplicationController.answer(application.id)" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing single--margin-0px single--width-100pc aplus-protected-form" method="post" enctype="multipart/form-data">
 
                 @helper.CSRF.formField
                 <input type="hidden" name="answer-id" readonly value="@answerToAgentsForm("answer-id").value.getOrElse(java.util.UUID.randomUUID)">
@@ -493,7 +496,7 @@ dialog {
                                     <span class="mdl-radio__label">Réponse personnalisée :</span>
                                 </label>
                                 <div class="mdl-textfield mdl-js-textfield mdl-cell mdl-cell--12-col single--padding-0px">
-                                    <textarea id="custom-answer" class="mdl-textfield__input" type="text" rows="5" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
+                                    <textarea id="custom-answer" class="mdl-textfield__input" type="text" rows="5" style="width: 100%;" name="message"></textarea>
                                 </div>
                             </div>
                         }
@@ -501,7 +504,7 @@ dialog {
                         @if(not(currentUser.instructor)) {
                             <input type="hidden" name="answer_type" value="custom" readonly>
                             <div class="mdl-textfield mdl-js-textfield mdl-cell mdl-cell--12-col single--padding-0px">
-                                <textarea class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="message" onkeyup="document.getElementById('review-validation').disabled=(this.value === '')"></textarea>
+                                <textarea id="non-instructor-answer" class="mdl-textfield__input" type="text" rows= "5" style="width: 100%;" name="message"></textarea>
                             </div>
                         }
 
@@ -567,7 +570,7 @@ dialog {
 
                                 }
                                 <div class="mdl-cell mdl-cell--12-col">
-                                    <button id="review-validation" class="mdl-button mdl-button--primary mdl-js-button mdl-button--raised mdl-button--colored" disabled>
+                                    <button id="review-validation" class="mdl-button mdl-button--primary mdl-js-button mdl-button--raised mdl-button--colored onsubmit-disable" disabled>
                                         Répondre
                                     </button>
                                 </div>
@@ -578,10 +581,16 @@ dialog {
                     @if(groupsWithUsersThatCanBeInvited.nonEmpty || groupsThatCanBeInvited.nonEmpty || currentUser.expert) {
                         <div class="mdl-tabs__panel @if(openedTab =="invite"){ is-active }" id="invite">
                             <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col mdl-grid aplus-protected-form" method="post">
+
+                                <input type="hidden"
+                                       name="@{Keys.Application.areaId}"
+                                       readonly
+                                       value="@{selectedArea.id}">
+
                                 @if(currentUser.expert) {
                                     <div>
                                         Territoire concerné :
-                                    @helpers.changeArea(currentArea, currentUser.areas.flatMap(Area.fromId))
+                                    @helpers.changeAreaSelect(selectedArea, currentUser.areas.flatMap(Area.fromId), routes.ApplicationController.show(application.id))
                                     </div>
                                 }
                                 @helper.CSRF.formField

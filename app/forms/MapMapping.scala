@@ -12,7 +12,8 @@ object FormsPlusMap {
     * )
     * }}}
     *
-    * @param mapping The mapping to make repeated.
+    * @param mapping
+    *   The mapping to make repeated.
     */
   def map[A](mapping: Mapping[A]): Mapping[Map[String, A]] = MapMapping(mapping)
 }
@@ -30,7 +31,8 @@ object MapMapping {
 
 /** A mapping for repeated elements.
   *
-  * @param wrapped The wrapped mapping
+  * @param wrapped
+  *   The wrapped mapping
   */
 case class MapMapping[T](
     wrapped: Mapping[T],
@@ -52,16 +54,20 @@ case class MapMapping[T](
     *   Form("phonenumber" -> text.verifying(required) )
     * }}}
     *
-    * @param addConstraints the constraints to add
-    * @return the new mapping
+    * @param addConstraints
+    *   the constraints to add
+    * @return
+    *   the new mapping
     */
   def verifying(addConstraints: Constraint[Map[String, T]]*): Mapping[Map[String, T]] =
     this.copy(constraints = constraints ++ addConstraints)
 
   /** Binds this field, i.e. construct a concrete value from submitted data.
     *
-    * @param data the submitted data
-    * @return either a concrete value of type `List[T]` or a set of errors, if the binding failed
+    * @param data
+    *   the submitted data
+    * @return
+    *   either a concrete value of type `List[T]` or a set of errors, if the binding failed
     */
   def bind(data: Map[String, String]): Either[Seq[FormError], Map[String, T]] = {
     val allErrorsOrItems: Seq[Either[Seq[FormError], (String, T)]] =
@@ -80,8 +86,10 @@ case class MapMapping[T](
 
   /** Unbinds this field, i.e. transforms a concrete value to plain data.
     *
-    * @param value the value to unbind
-    * @return the plain data
+    * @param value
+    *   the value to unbind
+    * @return
+    *   the plain data
     */
   def unbind(value: Map[String, T]): Map[String, String] = {
     val datas = value.map { case (k, v) => wrapped.withPrefix(key + "[" + k + "]").unbind(v) }
@@ -90,8 +98,10 @@ case class MapMapping[T](
 
   /** Unbinds this field, i.e. transforms a concrete value to plain data, and applies validation.
     *
-    * @param value the value to unbind
-    * @return the plain data and any errors in the plain data
+    * @param value
+    *   the value to unbind
+    * @return
+    *   the plain data and any errors in the plain data
     */
   def unbindAndValidate(value: Map[String, T]): (Map[String, String], Seq[FormError]) = {
     val (datas, errors) = value.map { case (i, v) =>
@@ -105,8 +115,10 @@ case class MapMapping[T](
 
   /** Constructs a new Mapping based on this one, adding a prefix to the key.
     *
-    * @param prefix the prefix to add to the key
-    * @return the same mapping, with only the key changed
+    * @param prefix
+    *   the prefix to add to the key
+    * @return
+    *   the same mapping, with only the key changed
     */
   def withPrefix(prefix: String): Mapping[Map[String, T]] =
     addPrefix(prefix).map(newKey => this.copy(key = newKey)).getOrElse(this)

@@ -21,17 +21,17 @@ class LoginController @Inject() (
     userService: UserService,
     notificationService: NotificationService,
     tokenService: TokenService,
-    configuration: Configuration,
+    val configuration: Configuration,
     eventService: EventService,
     signupService: SignupService
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
-    extends InjectedController {
+    extends InjectedController
+    with Operators.Common {
 
   private lazy val tokenExpirationInMinutes =
     configuration.get[Int]("app.tokenExpirationInMinutes")
 
-  /** Security Note:
-    * when the email is in the query "?email=xxx", we do not check the CSRF token
+  /** Security Note: when the email is in the query "?email=xxx", we do not check the CSRF token
     * because the API is used externally.
     */
   def login: Action[AnyContent] =
@@ -124,7 +124,7 @@ class LoginController @Inject() (
       request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty
     val emailInFlash = request.flash.get("email").nonEmpty
     val logMessage =
-      s"Génère un token pour une connexion par email body=${emailInBody}&flash=${emailInFlash}"
+      s"Génère un token pour une connexion par email body=$emailInBody&flash=$emailInFlash"
     requestWithUserData.fold(
       eventService.logSystem(GenerateToken, logMessage)
     ) { implicit userData =>

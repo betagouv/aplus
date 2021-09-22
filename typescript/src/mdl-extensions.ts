@@ -10,19 +10,21 @@
 //
 // TODO: the tooltip should be visible when there is a focus event
 
-Array.from(document.querySelectorAll(".mdl-tooltip")).forEach(function (tooltip) {
-  var elementId = tooltip.getAttribute("for") || tooltip.getAttribute("data-mdl-for");
+Array.from(document.querySelectorAll(".mdl-tooltip")).forEach(function(tooltip) {
+  const elementId = tooltip.getAttribute("for") || tooltip.getAttribute("data-mdl-for");
   if (elementId) {
-    var element = document.getElementById(elementId);
-    ["mouseenter", "focus"].forEach(function (eventName) {
-      element.addEventListener(eventName, function (e) {
-        tooltip.setAttribute("aria-hidden", "false");
+    const element = document.getElementById(elementId);
+    if (element != null) {
+      ["mouseenter", "focus"].forEach(function(eventName) {
+        element.addEventListener(eventName, function(e) {
+          tooltip.setAttribute("aria-hidden", "false");
+        });
       });
-    });
-    ["mouseleave", "blur"].forEach(function (eventName) {
-      element.addEventListener(eventName, function (e) {
-        tooltip.setAttribute("aria-hidden", "true");
+      ["mouseleave", "blur"].forEach(function(eventName) {
+        element.addEventListener(eventName, function(e) {
+          tooltip.setAttribute("aria-hidden", "true");
+        });
       });
-    });
+    }
   }
 });

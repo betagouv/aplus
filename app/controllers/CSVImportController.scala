@@ -22,6 +22,7 @@ import models.EventType.{
   UsersImported
 }
 import models.formModels.{
+  inOption,
   normalizedOptionalText,
   normalizedText,
   CSVRawLinesFormData,
@@ -31,6 +32,7 @@ import models.formModels.{
 }
 import models.{Area, Organisation, User, UserGroup}
 import org.webjars.play.WebJarsUtil
+import play.api.Configuration
 import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.{Form, Mapping}
@@ -42,6 +44,7 @@ import services.{EventService, NotificationService, UserGroupService, UserServic
 import scala.concurrent.{ExecutionContext, Future}
 
 case class CSVImportController @Inject() (
+    val configuration: Configuration,
     loginAction: LoginAction,
     userService: UserService,
     groupService: UserGroupService,
@@ -50,6 +53,7 @@ case class CSVImportController @Inject() (
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with play.api.i18n.I18nSupport
+    with Operators.Common
     with UserOperators
     with GroupOperators {
 
@@ -170,13 +174,13 @@ case class CSVImportController @Inject() (
   private val userImportMapping: Mapping[CSVReviewUserFormData] =
     mapping(
       "id" -> uuid,
-      "firstName" -> optional(text.verifying(maxLength(100))),
-      "lastName" -> optional(text.verifying(maxLength(100))),
-      "name" -> text.verifying(maxLength(500)),
+      "firstName" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
+      "lastName" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
+      "name" -> normalizedText.verifying(maxLength(500)),
       "email" -> email.verifying(maxLength(200), nonEmpty),
       "instructor" -> boolean,
       "groupAdmin" -> boolean,
-      "phoneNumber" -> optional(text)
+      "phoneNumber" -> normalizedOptionalText
     )(CSVReviewUserFormData.apply)(CSVReviewUserFormData.unapply)
 
   private def groupImportMapping(date: ZonedDateTime): Mapping[UserGroup] =
@@ -226,8 +230,8 @@ case class CSVImportController @Inject() (
       )
     )
 
-  /** Action that reads the CSV file (CSV file was copy-paste in a web form)
-    *  and display possible errors.
+  /** Action that reads the CSV file (CSV file was copy-paste in a web form) and display possible
+    * errors.
     */
   def importUsersReview: Action[AnyContent] =
     loginAction.async { implicit request =>

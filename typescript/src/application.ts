@@ -24,10 +24,17 @@ const linkedMandatInputId = "linkedMandat";
 
 
 
-setupDynamicUsagerInfosButtons();
-setupInvitedGroups();
-setupMandatSmsForm();
+interface SmsMandatFormData {
+  prenom: string;
+  nom: string;
+  birthDate: string;
+  phoneNumber: string;
+}
 
+// models.mandat.Mandat
+interface Mandat {
+  id: string;
+}
 
 
 function addInvitedGroupInfos(groupName: string) {
@@ -61,20 +68,22 @@ function newTypeSelected() {
   const select = <HTMLSelectElement | null>document
     .getElementById(usagerInfosTypesSelectId);
   const otherTypeElement = <HTMLInputElement | null>document.getElementById("other-type");
-  if (select.value === "Autre") {
-    otherTypeElement.value = "";
-    (<HTMLElement>otherTypeElement.parentNode).classList.remove("invisible");
-    //componentHandler.upgradeElements(otherTypeElem.parentNode.parentNode.getElementsByTagName("*"));
-  } else {
-    (<HTMLElement>otherTypeElement.parentNode).classList.add("invisible");
-    otherTypeElement.value = select.value;
+  if (select != null && otherTypeElement != null) {
+    if (select.value === "Autre") {
+      otherTypeElement.value = "";
+      (<HTMLElement>otherTypeElement.parentNode).classList.remove("invisible");
+      //componentHandler.upgradeElements(otherTypeElem.parentNode.parentNode.getElementsByTagName("*"));
+    } else {
+      (<HTMLElement>otherTypeElement.parentNode).classList.add("invisible");
+      otherTypeElement.value = select.value;
+    }
+    if (select.value !== "") {
+      (<HTMLElement>document.getElementById("other-type-value")?.parentNode)
+        .classList.remove("invisible");
+      document.getElementById("add-infos__ok-button")?.classList.remove("invisible");
+    }
+    componentHandler.upgradeDom();
   }
-  if (select.value !== "") {
-    (<HTMLElement>document.getElementById("other-type-value").parentNode)
-      .classList.remove("invisible");
-    document.getElementById("add-infos__ok-button").classList.remove("invisible");
-  }
-  componentHandler.upgradeDom();
 }
 
 
@@ -96,10 +105,12 @@ function addOptionalInfoRow(infoName: string, infoValue: string) {
   </div>';
 
   const otherDiv = document.getElementById("other-div");
-  otherDiv.parentNode.insertBefore(newNode, otherDiv);
+  if (otherDiv == null) { return; }
+  otherDiv.parentNode?.insertBefore(newNode, otherDiv);
   componentHandler.upgradeElements(newNode);
   const select = <HTMLSelectElement | null>document
     .getElementById(usagerInfosTypesSelectId);
+  if (select == null) { return; }
   if (infoName !== "Autre") {
     select && Array.from(select.options).forEach((option) => {
       if (option.value === infoName) {
@@ -108,15 +119,16 @@ function addOptionalInfoRow(infoName: string, infoValue: string) {
     });
   }
   select.value = "";
-  document.getElementById("add-infos__ok-button").classList.add("invisible");
+  document.getElementById("add-infos__ok-button")?.classList.add("invisible");
 
   document
-    .querySelectorAll('.' + usagerInfosRemoveButtonClass)
-    .forEach((element: HTMLElement) => {
+    .querySelectorAll<HTMLElement>('.' + usagerInfosRemoveButtonClass)
+    .forEach((element) => {
       // Avoid having many times the same event handler with .onclick
       element.onclick = () => {
-        var row = element.parentNode;
-        row.parentNode.removeChild(row);
+        const row = element.parentNode;
+        if (row == null) { return; }
+        row.parentNode?.removeChild(row);
       };
     });
 }
@@ -124,18 +136,26 @@ function addOptionalInfoRow(infoName: string, infoValue: string) {
 
 
 function addInfo() {
+  let infoName = "";
+  let infoValue = "";
+
   const inputInfoName = <HTMLInputElement | null>document.getElementById("other-type");
-  const infoName = inputInfoName.value;
-  inputInfoName.value = "";
-  const inputInfoNameParent = <HTMLElement>inputInfoName.parentNode;
-  inputInfoNameParent.classList.remove("is-dirty");
-  inputInfoNameParent.classList.add("invisible");
-  var valueInput = <HTMLInputElement | null>document.getElementById("other-type-value");
-  var infoValue = valueInput.value;
-  valueInput.value = "";
-  const valueInputParent = <HTMLElement>valueInput.parentNode;
-  valueInputParent.classList.remove("is-dirty");
-  valueInputParent.classList.add("invisible");
+  if (inputInfoName != null) {
+    infoName = inputInfoName.value;
+    inputInfoName.value = "";
+    const inputInfoNameParent = <HTMLElement>inputInfoName.parentNode;
+    inputInfoNameParent.classList.remove("is-dirty");
+    inputInfoNameParent.classList.add("invisible");
+  }
+
+  const valueInput = <HTMLInputElement | null>document.getElementById("other-type-value");
+  if (valueInput != null) {
+    infoValue = valueInput.value;
+    valueInput.value = "";
+    const valueInputParent = <HTMLElement>valueInput.parentNode;
+    valueInputParent.classList.remove("is-dirty");
+    valueInputParent.classList.add("invisible");
+  }
   if (infoName === "" || infoValue === "") { return; }
   addOptionalInfoRow(infoName, infoValue);
 }
@@ -145,12 +165,12 @@ function addInfo() {
 function applyCategoryFilters() {
   // Get all activated categories organisations
   let selectedCategories: Array<string> = [];
-  document.querySelectorAll(".mdl-chip." + categoryFilterClass)
-    .forEach((categoryButton: HTMLElement) => {
+  document.querySelectorAll<HTMLElement>(".mdl-chip." + categoryFilterClass)
+    .forEach((categoryButton) => {
       if (categoryButton.classList.contains("mdl-chip--active")) {
-        if (categoryButton.dataset.organisations) {
+        if (categoryButton.dataset['organisations']) {
           const parsedOrganisations: Array<string> =
-            JSON.parse(categoryButton.dataset.organisations);
+            JSON.parse(categoryButton.dataset['organisations']);
           parsedOrganisations.forEach((parsedOrganisation) => {
             if (!selectedCategories.includes(parsedOrganisation)) {
               selectedCategories.push(parsedOrganisation);
@@ -162,11 +182,16 @@ function applyCategoryFilters() {
   console.log("Selected organisations: ", selectedCategories);
 
   // Show / Hide Checkboxes
-  document.querySelectorAll('.' + invitedGroupsCheckboxClass)
-    .forEach((invitedGroupCheckbox: HTMLInputElement) => {
-      const groupName: string = invitedGroupCheckbox.dataset.groupName;
-      const isSelected = selectedCategories.some((selectedCategory) =>
-        groupName.toLowerCase().includes(selectedCategory.toLowerCase()))
+  document.querySelectorAll<HTMLInputElement>('.' + invitedGroupsCheckboxClass)
+    .forEach((invitedGroupCheckbox) => {
+      const groupName: string | undefined = invitedGroupCheckbox.dataset['groupName'];
+      const isSelected = selectedCategories.some((selectedCategory) => {
+        if (groupName == null) {
+          return false;
+        } else {
+          return groupName.toLowerCase().includes(selectedCategory.toLowerCase());
+        }
+      });
       let shouldBeFilteredOut = !isSelected;
       if (selectedCategories.length === 0) {
         shouldBeFilteredOut = false;
@@ -174,9 +199,9 @@ function applyCategoryFilters() {
 
       const thead = findAncestor(invitedGroupCheckbox, (el) => el.nodeName === "DIV");
       if (shouldBeFilteredOut) {
-        thead.classList.add("invisible");
+        thead?.classList.add("invisible");
       } else {
-        thead.classList.remove("invisible");
+        thead?.classList.remove("invisible");
       }
     });
 }
@@ -193,8 +218,8 @@ function onClickFilterButton(button: HTMLElement) {
 }
 
 function onClickRemoveFilter() {
-  document.querySelectorAll(".mdl-chip." + categoryFilterClass)
-    .forEach((categoryButton: HTMLElement) => categoryButton.classList.remove("mdl-chip--active"));
+  document.querySelectorAll<HTMLElement>(".mdl-chip." + categoryFilterClass)
+    .forEach((categoryButton) => categoryButton.classList.remove("mdl-chip--active"));
   applyCategoryFilters()
 }
 
@@ -215,10 +240,9 @@ function setupDynamicUsagerInfosButtons() {
   document
     .querySelectorAll("." + usagerInfosInputClass)
     .forEach((element) => {
-      element.addEventListener('keydown', (event: KeyboardEvent) => {
-        if (event.keyCode === 13) {
+      element.addEventListener('keydown', (event) => {
+        if ((<KeyboardEvent>event).keyCode === 13) {
           addInfo();
-          return false;
         }
       });
     });
@@ -230,8 +254,8 @@ function setupDynamicUsagerInfosButtons() {
     });
 
   document
-    .querySelectorAll("." + categoryFilterClass)
-    .forEach((element: HTMLElement) => {
+    .querySelectorAll<HTMLElement>("." + categoryFilterClass)
+    .forEach((element) => {
       element.addEventListener('click', () => onClickFilterButton(element));
     });
 
@@ -255,7 +279,7 @@ function setupInvitedGroups() {
         const infosDiv = document.getElementById(`invite-${ groupId }-additional-infos`);
         if (input.checked) {
           infosDiv && infosDiv.classList.remove('invisible');
-          const groupName = input.dataset.groupName;
+          const groupName = input.dataset['groupName'];
           groupName && addInvitedGroupInfos(groupName);
         } else {
           infosDiv && infosDiv.classList.add('invisible');
@@ -310,38 +334,48 @@ function setupMandatSmsForm() {
     }
   }
 
-  function validateForm() {
+  function validateForm(): { isValid: boolean, data: SmsMandatFormData | null } {
     const prenom = validateNonEmptyInput(inputPrenom);
     const nom = validateNonEmptyInput(inputNom);
     const birthDate = validateNonEmptyInput(inputBirthDate);
     const phoneNumber = validatePhoneNumber(inputPhoneNumber);
-    const isValid = prenom && nom && birthDate && phoneNumber;
-
-    return {
-      isValid: isValid,
-      data: {
-        prenom: prenom,
-        nom: nom,
-        birthDate: birthDate,
-        phoneNumber: phoneNumber
+    if ((prenom != null) && (nom != null) && (birthDate != null) && (phoneNumber != null)) {
+      return {
+        isValid: true,
+        data: {
+          prenom: prenom,
+          nom: nom,
+          birthDate: birthDate,
+          phoneNumber: phoneNumber
+        }
+      };
+    } else {
+      return {
+        isValid: false,
+        data: null,
       }
-    };
+    }
   }
 
-  function sendForm(data, callbackSuccess, callbackServerError, callbackBrowserError) {
+  function sendForm(
+    data: SmsMandatFormData,
+    callbackSuccess: (mandat: Mandat) => void,
+    callbackServerError: () => void,
+    callbackBrowserError: () => void
+  ) {
     try {
       const xhr = new XMLHttpRequest();
       xhr.onreadystatechange = function() {
         if (xhr.readyState == XMLHttpRequest.DONE) {   // XMLHttpRequest.DONE == 4
           try {
             if (Math.floor(xhr.status / 100) === 2) {
-              callbackSuccess(JSON.parse(xhr.responseText));
+              callbackSuccess(<Mandat>JSON.parse(xhr.responseText));
             } else {
               callbackServerError();
             }
           } catch (error) {
             console.error(error);
-            callbackBrowserError(error);
+            callbackBrowserError();
           }
         }
       };
@@ -356,30 +390,36 @@ function setupMandatSmsForm() {
       xhr.send(JSON.stringify(data));
     } catch (error) {
       console.error(error);
-      callbackBrowserError(error);
+      callbackBrowserError();
     }
   }
 
   if (sendButton) {
     sendButton.onclick = function(event) {
       event.preventDefault();
+      if (successMessage == null ||
+        validationFailedMessage == null ||
+        serverErrorMessage == null ||
+        browserErrorMessage == null) { return; }
       successMessage.classList.add("hidden");
       validationFailedMessage.classList.add("hidden");
       serverErrorMessage.classList.add("hidden");
       browserErrorMessage.classList.add("hidden");
       const formData = validateForm();
-      if (formData.isValid) {
+      if (formData.isValid && formData.data != null) {
         sendButton.disabled = true;
         sendForm(
           formData.data,
           // Success
-          function(mandat) {
+          function(mandat: Mandat) {
             const link = successMessage.querySelector("a");
-            link.href = "/mandats/" + mandat.id;
+            if (link) {
+              link.href = "/mandats/" + mandat.id;
+            }
             linkedMandatInput.value = mandat.id;
             successMessage.classList.remove("hidden");
             // Note: mandatTypeSmsRadio.checked = true does not show the radio as checked
-            mandatTypeSmsRadio.click();
+            mandatTypeSmsRadio?.click();
           },
           // Server error (= logged by Sentry)
           function() {
@@ -400,3 +440,10 @@ function setupMandatSmsForm() {
     }
   }
 }
+
+
+
+
+setupDynamicUsagerInfosButtons();
+setupInvitedGroups();
+setupMandatSmsForm();

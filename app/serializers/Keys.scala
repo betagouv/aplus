@@ -1,8 +1,7 @@
 package serializers
 
-/** Contains string values shared everywhere,
-  * but which need to be the same across the code.
-  * eg: a name value in the view and the corresponding key in the Mapping
+/** Contains string values shared everywhere, but which need to be the same across the code. eg: a
+  * name value in the view and the corresponding key in the Mapping
   */
 object Keys {
 
@@ -32,7 +31,6 @@ object Keys {
   object Session {
     val userId: String = "userId"
     val signupId: String = "signupId"
-    val areaId: String = "areaId"
   }
 
   // Important note: do not forget to check the `SentryFilter` whitelist
@@ -61,6 +59,11 @@ object Keys {
     val limit: String = "limit"
     val fromUserId: String = "fromUserId"
     val date: String = "date"
+
+    // Groups
+
+    val redirect: String = "redirect"
+    val groupId: String = "groupId"
 
     // Admin
 

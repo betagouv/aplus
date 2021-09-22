@@ -1,6 +1,6 @@
 @import cats.implicits.catsSyntaxEq
 @import models._
-@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], allUsers: List[User], applications: List[Application], selectedArea: Area)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 @display(users: Seq[User], id: Option[String] = None)(header: Html)(footer: Html) = {
     <div class="mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white" style="padding: 24px;" @if(id.isDefined){ id="@id.get" } >
@@ -23,22 +23,23 @@
 
               </td>
               <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
-                @if(user.disabled) {
-                  <span class="tag tag--disabled">Désactivé</span>
+                @user.disabledRoleName.map { role =>
+                  <span class="tag tag--disabled">@role</span>
                 }
-                @if(user.groupAdmin) {
-                  <span class="tag tag--responsable">Responsable</span>
+                @user.groupAdminRoleName.map { role =>
+                  <span class="tag tag--responsable">@role</span>
                 }
-                @if(user.admin) {
-                  <span class="tag tag--admin">Admin</span>
+                @user.adminRoleName.map { role =>
+                  <span class="tag tag--admin">@role</span>
                 }
               </td>
               <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
-                @if(user.instructor) {
-                  <span class="tag tag--instructor">Instructeur</span>
+                @user.instructorRoleName.map { role =>
+                  <span class="tag tag--instructor">@role</span>
                 }
-                @if(user.helper) {
-                  <span class="tag tag--aidant">Aidant</span>
+
+                @user.helperRoleName.map { role =>
+                  <span class="tag tag--aidant">@role</span>
                 }
               </td>
 
@@ -58,11 +59,6 @@
             <div>
                 @footer
             </div>
-            <div class="invisible">
-                <div style="text-align: center;">
-                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="clearSearch()">Supprimer le filtre et afficher toutes les demandes</button>
-                </div>
-            </div>
         </div>
     </div>
 }
@@ -70,9 +66,6 @@
 
 @main(currentUser, currentUserRights)(s"Gestion des groupes utilisateurs - ${selectedArea.name}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
-
-  <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/auto-complete.css")'>
-  <script src='@routes.Assets.versioned("javascripts/auto-complete.min.js")'></script>
 }{
 
   @if(currentUser.admin) {
@@ -82,24 +75,21 @@
   }
   @if(currentUser.areas.length > 1) {
     <p class="mdl-cell mdl-cell--12-col">Territoire :
-      <select id="area-selector" name="area-selector" onchange="changeAreaApps()">
-        <option value="@Area.allArea.id" @if(selectedArea.id == Area.allArea.id) { selected }>tous les territoires</option>
-        @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-          <option value="@area.id" @if(selectedArea.id == area.id) { selected }>@area</option>
-        }
+      <select id="changeAreaSelect"
+              name="area-selector"
+              data-current-area="@{selectedArea.id}">
+        @for(area <- (Area.allArea :: currentUser.areas.flatMap(Area.fromId))) {
+          <option value="@area.id"
+                  data-redirect-url="@{routes.UserController.all(area.id).url + "?vue=classique"}"
+                  @if(area.id === selectedArea.id) { selected }>
+            @if(area.id === Area.allArea.id) { tous les territoires } else { @area }
+          </option>
+          }
       </select>
-      <script>
-              function changeAreaApps() {
-                var areaSelected = document.getElementById("area-selector").value;
-                if(areaSelected != "@selectedArea.id") {
-                  document.location = jsRoutes.controllers.UserController.all(areaSelected).url + "?vue=classique";
-                }
-              }
-      </script>
     </p>
   }
   @if(currentUser.admin) {
-    <button class="mdl-button mdl-js-button mdl-button--raised" onclick="document.location = '@routes.UserController.allCSV(selectedArea.id)'">
+    <button class="mdl-button mdl-js-button mdl-button--raised onclick-change-location" data-location="@routes.UserController.allCSV(selectedArea.id)">
       Télécharger export CSV
     </button>
   }
@@ -131,11 +121,11 @@
                 @helper.CSRF.formField
                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width: unset; margin-right: 24px;">
                   <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="rows" name="rows" value="1">
-                  <label class="mdl-textfield__label" for="rows">Nombre d'utilisateur à ajouter</label>
-                  <span class="mdl-textfield__error">Ce n'est pas un nombre</span>
+                  <label class="mdl-textfield__label" for="rows">Nombre de comptes à créer</label>
+                  <span class="mdl-textfield__error">Ce n’est pas un nombre</span>
                 </div>
                 <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
-                  Ajouter des utilisateurs dans le groupe
+                  Créer de nouveaux comptes dans ce groupe
                 </button>
               }
             }
@@ -155,42 +145,7 @@
         }
       }
     @if(currentUser.admin) {
-      <div class="mdl-cell mdl-cell--12-col  mdl-grid">
-        <h4 class="mdl-cell mdl-cell--12-col">Ajouter un groupe</h4> <br>
-        @helper.form(routes.GroupController.addGroup, "method" -> "post", "class" -> "mdl-cell mdl-cell--9-col") {
-          @helper.CSRF.formField
-          <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="mdl-textfield__input" type="text" id="name" name="name" maxlength="50">
-            <label class="mdl-textfield__label" for="name">Nom du groupe</label>
-          </div>
-          <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="mdl-textfield__input" type="text" id="description" name="description">
-            <label class="mdl-textfield__label" for="description">Description du groupe</label>
-          </div>
-          <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="mdl-textfield__input" type="text" id="email" name="email" maxlength="200">
-            <label class="mdl-textfield__label" for="email">Email du groupe (BAL générique pour inscription et notification, champ facultatif)</label>
-          </div>
-          <div class="mdl-cell mdl-cell--12-col">
-            <select id="organisation" name="organisation">
-              <option selected style="font-weight: bold;" value="">Organisme non-référencé</option>
-              @for(organisation <- Organisation.all) {
-                <option value="@organisation.shortName">@organisation.shortName : @organisation.name</option>
-              }
-            </select>
-          </div>
-          <div class="mdl-cell mdl-cell--12-col">
-            <select id="area-ids" name="area-ids[]" multiple size="5" >
-            @for(area <- currentUser.areas.flatMap(Area.fromId)) {
-              <option value="@area.id" @if(selectedArea.id === area.id) { selected }>@area.name</option>
-            }
-            </select>
-          </div>
-          <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
-            Ajouter le groupe
-          </button>
-        }
-      </div>
+      @toHtml(views.addGroup.innerForm(currentUser, selectedArea))
     }
 }{
 }

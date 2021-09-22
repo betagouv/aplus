@@ -40,7 +40,7 @@ class AuthorizationSpec extends Specification {
           val userId = randomUUID()
           val rights = UserRights(Set(Helper))
           val fileExpirationDate = 10
-          val overrun = -3
+          val overrun: Long = -3
 
           val answers = List.empty[Answer]
 
@@ -70,7 +70,7 @@ class AuthorizationSpec extends Specification {
           val userId = randomUUID()
           val rights = UserRights(Set(Helper))
           val fileExpirationDate = 10
-          val overrun = 10
+          val overrun: Long = 10
 
           val answers = List.empty[Answer]
 
@@ -132,7 +132,7 @@ class AuthorizationSpec extends Specification {
           val userId = randomUUID()
           val rights = UserRights(Set(Helper))
           val fileExpirationDate = 10
-          val overrun = -3
+          val overrun: Long = -3
 
           val answer = createAnswer(applicationId, now().minusDays(fileExpirationDate + overrun))
 
@@ -165,7 +165,7 @@ class AuthorizationSpec extends Specification {
           val userId = randomUUID()
           val rights = UserRights(Set(Helper))
           val fileExpirationDate = 10
-          val overrun = 2
+          val overrun: Long = 2
 
           val answer = createAnswer(applicationId, now().minusDays(fileExpirationDate + overrun))
 
@@ -205,7 +205,7 @@ class AuthorizationSpec extends Specification {
           val userId = randomUUID()
           val rights = UserRights(Set(InstructorOfGroups(Set.empty[UUID])))
           val fileExpirationDate = 10
-          val overrun = -3
+          val overrun: Long = -3
 
           val answers = List.empty[Answer]
 
@@ -235,7 +235,7 @@ class AuthorizationSpec extends Specification {
           val userId = randomUUID()
           val rights = UserRights(Set(InstructorOfGroups(Set.empty[UUID])))
           val fileExpirationDate = 10
-          val overrun = 10
+          val overrun: Long = 10
 
           val answers = List.empty[Answer]
 
@@ -297,7 +297,7 @@ class AuthorizationSpec extends Specification {
           val userId = randomUUID()
           val rights = UserRights(Set(InstructorOfGroups(Set.empty[UUID])))
           val fileExpirationDate = 10
-          val overrun = -3
+          val overrun: Long = -3
 
           val answer = createAnswer(applicationId, now().minusDays(fileExpirationDate + overrun))
 
@@ -330,7 +330,7 @@ class AuthorizationSpec extends Specification {
           val userId = randomUUID()
           val rights = UserRights(Set(InstructorOfGroups(Set.empty[UUID])))
           val fileExpirationDate = 10
-          val overrun = 2
+          val overrun: Long = 2
 
           val answer = createAnswer(applicationId, now().minusDays(fileExpirationDate + overrun))
 

@@ -7,8 +7,43 @@ import org.webjars.play.WebJarsUtil
 import play.api.mvc.Flash
 import scalatags.Text.all._
 import scalatags.Text.tags2
+import views.MainInfos
 
 object common {
+
+  def optionalDemoVersionHeader(implicit mainInfos: MainInfos): Option[Frag] =
+    mainInfos.isDemo.some
+      .filter(identity)
+      .map(_ =>
+        div(
+          cls := "mdl-layout__header-row mdl-color--pink-500 mdl-color-text--white",
+          span(
+            cls := "mdl-layout-title aplus-demo-header__title",
+            "Version de démonstration d’Administration+"
+          )
+        )
+      )
+
+  def topHeaderConnected(implicit mainInfos: MainInfos): Frag = {
+    val headerLines = List[Option[Frag]](
+      optionalDemoVersionHeader,
+      mainInfos.topHeaderWarningMessage.map(message =>
+        div(
+          cls := "mdl-layout__header-row mdl-color--deep-purple-400 mdl-color-text--white",
+          message
+        )
+      )
+    ).flatten
+
+    headerLines match {
+      case Nil => frag()
+      case lines =>
+        div(
+          cls := "mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100",
+          frag(lines)
+        )
+    }
+  }
 
   def loggedInPage(title: String, userEmail: String, inner: Frag)(implicit
       webJarsUtil: WebJarsUtil,

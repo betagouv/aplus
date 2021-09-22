@@ -1,4 +1,4 @@
-package serializers
+package services
 
 import java.io.File
 import java.nio.file.{FileAlreadyExistsException, Files, Path, Paths}
@@ -46,11 +46,9 @@ object AttachmentHelper {
       filesPath: String,
       prefix: String
   ): Map[String, Long] =
-    getAttachmentsToStore
-      .flatMap({ case (attachmentPath, attachmentName) =>
-        storeAttachment(attachmentPath, attachmentName, applicationId, filesPath, prefix)
-      })
-      .toMap
+    getAttachmentsToStore.flatMap { case (attachmentPath, attachmentName) =>
+      storeAttachment(attachmentPath, attachmentName, applicationId, filesPath, prefix)
+    }.toMap
 
   private def getAttachments(
       applicationId: UUID,
@@ -60,7 +58,7 @@ object AttachmentHelper {
     val path = new File(s"$filesPath")
     path.listFiles
       .filter(_.isFile)
-      .filter(_.getName.startsWith(s"${prefix}$applicationId"))
+      .filter(_.getName.startsWith(s"$prefix$applicationId"))
       .map(path =>
         storageFilenameToClientFilename(path.getName, applicationId.toString, prefix) -> path
           .length()
@@ -73,7 +71,7 @@ object AttachmentHelper {
       applicationId: String,
       prefix: String
   ): String =
-    storageFilename.replaceFirst(s"${prefix}$applicationId-", "")
+    storageFilename.replaceFirst(s"$prefix$applicationId-", "")
 
   def storeAttachment(
       attachmentPath: Path,
