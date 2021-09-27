@@ -34,7 +34,7 @@ spec:
         tier: frontend
     spec:
       containers:
-      - image: metabase/metabase:v0.39.1
+      - image: metabase/metabase:v0.40.5
         name: metabase-app
         env:
         - name: MB_DB_CONNECTION_URI
