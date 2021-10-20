@@ -360,26 +360,26 @@ case class UserController @Inject() (
       asUserWithAuthorization(Authorization.canSeeEditUserPage) { () =>
         ViewUserUnauthorized -> s"Accès non autorisé pour voir $userId"
       } { () =>
-        userService.byId(userId, includeDisabled = true) match {
-          case None =>
-            eventService.log(UserNotFound, s"L'utilisateur $userId n'existe pas")
-            Future(NotFound("Nous n'avons pas trouvé cet utilisateur"))
-          case Some(user) if Authorization.canSeeOtherUser(user)(request.rights) =>
-            val form = EditUserFormData.form.fill(EditUserFormData.fromUser(user))
+        withUser(userId, includeDisabled = true) { otherUser: User =>
+          asUserWithAuthorization(Authorization.canSeeOtherUser(otherUser))(
+            () => ViewUserUnauthorized -> s"Accès non autorisé pour voir $userId",
+            errorInvolvesUser = otherUser.id.some
+          ) { () =>
+            val form = EditUserFormData.form.fill(EditUserFormData.fromUser(otherUser))
             val groups = groupService.allGroups
-            val unused = not(isAccountUsed(user))
+            val unused = not(isAccountUsed(otherUser))
             val Token(tokenName, tokenValue) = CSRF.getToken.get
             eventService
               .log(
                 UserShowed,
                 "Visualise la vue de modification l'utilisateur ",
-                involvesUser = Some(user.id)
+                involvesUser = Some(otherUser.id)
               )
             Future(
               Ok(
                 views.html.editUser(request.currentUser, request.rights)(
                   form,
-                  user,
+                  otherUser,
                   groups,
                   unused,
                   tokenName = tokenName,
@@ -387,13 +387,7 @@ case class UserController @Inject() (
                 )
               )
             )
-          case _ =>
-            eventService.log(
-              ViewUserUnauthorized,
-              s"Accès non autorisé pour voir $userId",
-              involvesUser = userId.some
-            )
-            Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
+          }
         }
       }
     }

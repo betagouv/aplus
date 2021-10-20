@@ -55,7 +55,8 @@ case class ApplicationController @Inject() (
     extends InjectedController
     with play.api.i18n.I18nSupport
     with Operators.Common
-    with Operators.ApplicationOperators {
+    with Operators.ApplicationOperators
+    with Operators.UserOperators {
 
   private val filesPath = configuration.underlying.getString("app.filesPath")
   private val featureMandatSms: Boolean = configuration.get[Boolean]("app.features.smsMandat")
@@ -512,16 +513,14 @@ case class ApplicationController @Inject() (
       applications <- applicationService.allForUserIds(users.map(_.id))
     } yield (users, applications)
 
-  private def generateStats[A](
+  private def generateStats(
       areaIds: List[UUID],
       organisationIds: List[Organisation.Id],
       groupIds: List[UUID],
       creationMinDate: LocalDate,
-      creationMaxDate: LocalDate
-  )(implicit
-      webJarsUtil: org.webjars.play.WebJarsUtil,
-      request: RequestWithUserData[A]
-  ): Future[Html] = {
+      creationMaxDate: LocalDate,
+      rights: Authorization.UserRights
+  )(implicit webJarsUtil: WebJarsUtil): Future[Html] = {
     val usersAndApplications: Future[(List[User], List[Application])] =
       (areaIds, organisationIds, groupIds) match {
         case (Nil, Nil, Nil) =>
@@ -592,7 +591,7 @@ case class ApplicationController @Inject() (
       users <- usersAndApplications.map { case (users, _) => users }
       applications <- applicationsFuture
       relatedUsers <- relatedUsersFuture
-    } yield views.html.stats.charts(Authorization.isAdmin(request.rights))(
+    } yield views.html.stats.charts(Authorization.isAdmin(rights))(
       statsAggregates(applications, relatedUsers),
       users
     )
@@ -615,93 +614,97 @@ case class ApplicationController @Inject() (
 
   def stats: Action[AnyContent] =
     loginAction.async { implicit request =>
-      // TODO: remove `.get`
-      val (areaIds, organisationIds, groupIds, creationMinDate, creationMaxDate) =
-        statsForm.bindFromRequest().value.get
+      statsPage(routes.ApplicationController.stats, request.currentUser, request.rights)
+    }
 
-      val observableOrganisationIds = if (Authorization.isAdmin(request.rights)) {
-        organisationIds
-      } else {
-        organisationIds.filter(id => Authorization.canObserveOrganisation(id)(request.rights))
-      }
-
-      val observableGroupIds = if (Authorization.isAdmin(request.rights)) {
-        groupIds
-      } else {
-        groupIds.intersect(request.currentUser.groupIds)
-      }
-
-      val cacheKey =
-        Authorization.isAdmin(request.rights).toString +
-          ".stats." +
-          Hash.sha256(
-            areaIds.toString + observableOrganisationIds.toString + observableGroupIds.toString +
-              creationMinDate.toString + creationMaxDate.toString
-          )
-
-      userGroupService.byIdsFuture(request.currentUser.groupIds).flatMap { currentUserGroups =>
-        cache
-          .getOrElseUpdate[Html](cacheKey, 1.hours)(
-            generateStats(
-              areaIds,
-              observableOrganisationIds,
-              observableGroupIds,
-              creationMinDate,
-              creationMaxDate
-            )
-          )
-          .map { html =>
-            eventService.log(StatsShowed, "Visualise les stats")
-            Ok(
-              views.html.stats.page(request.currentUser, request.rights)(
-                html,
-                groupsThatCanBeFilteredBy = currentUserGroups,
-                areaIds,
-                organisationIds,
-                groupIds,
-                creationMinDate,
-                creationMaxDate
-              )
-            ).withHeaders(CONTENT_SECURITY_POLICY -> statsCSP)
+  def statsAs(otherUserId: UUID): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      withUser(otherUserId) { otherUser: User =>
+        asUserWithAuthorization(Authorization.canSeeOtherUserNonPrivateViews(otherUser))(
+          () =>
+            EventType.MasqueradeUnauthorized -> s"Accès non autorisé pour voir la page stats de $otherUserId",
+          errorInvolvesUser = Some(otherUser.id)
+        ) { () =>
+          LoginAction.readUserRights(otherUser).flatMap { userRights =>
+            statsPage(routes.ApplicationController.statsAs(otherUserId), otherUser, userRights)
           }
+        }
       }
     }
 
+  private def statsPage(formUrl: Call, user: User, rights: Authorization.UserRights)(implicit
+      request: RequestWithUserData[_]
+  ): Future[Result] = {
+    // TODO: remove `.get`
+    val (areaIds, organisationIds, groupIds, creationMinDate, creationMaxDate) =
+      statsForm.bindFromRequest().value.get
+
+    val observableOrganisationIds = if (Authorization.isAdmin(rights)) {
+      organisationIds
+    } else {
+      organisationIds.filter(id => Authorization.canObserveOrganisation(id)(rights))
+    }
+
+    val observableGroupIds = if (Authorization.isAdmin(rights)) {
+      groupIds
+    } else {
+      groupIds.intersect(user.groupIds)
+    }
+
+    val cacheKey =
+      Authorization.isAdmin(rights).toString +
+        ".stats." +
+        Hash.sha256(
+          areaIds.toString + observableOrganisationIds.toString + observableGroupIds.toString +
+            creationMinDate.toString + creationMaxDate.toString
+        )
+
+    userGroupService.byIdsFuture(user.groupIds).flatMap { currentUserGroups =>
+      cache
+        .getOrElseUpdate[Html](cacheKey, 1.hours)(
+          generateStats(
+            areaIds,
+            observableOrganisationIds,
+            observableGroupIds,
+            creationMinDate,
+            creationMaxDate,
+            rights
+          )
+        )
+        .map { html =>
+          eventService.log(StatsShowed, "Visualise les stats")
+          Ok(
+            views.html.stats.page(user, rights)(
+              formUrl,
+              html,
+              groupsThatCanBeFilteredBy = currentUserGroups,
+              areaIds,
+              organisationIds,
+              groupIds,
+              creationMinDate,
+              creationMaxDate
+            )
+          ).withHeaders(CONTENT_SECURITY_POLICY -> statsCSP)
+        }
+    }
+  }
+
   def allAs(userId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      val userOption = userService.byId(userId)
-      (request.currentUser.admin, userOption) match {
-        case (false, Some(user)) =>
-          eventService.log(
-            AllAsUnauthorized,
-            s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur $userId",
-            involvesUser = Some(user.id)
-          )
-          Future(
-            Unauthorized(
-              s"Vous n'avez pas le droit de faire ça, vous n'êtes pas administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-            )
-          )
-        case (true, Some(user)) if user.admin =>
-          eventService.log(
-            AllAsUnauthorized,
-            s"L'utilisateur n'a pas de droit d'afficher la vue de l'utilisateur admin $userId",
-            involvesUser = Some(user.id)
-          )
-          Future(
-            Unauthorized(
-              s"Vous n'avez pas le droit de faire ça avec un compte administrateur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-            )
-          )
-        case (true, Some(user)) if request.currentUser.areas.intersect(user.areas).nonEmpty =>
-          LoginAction.readUserRights(user).map { userRights =>
-            val targetUserId = user.id
+      withUser(userId) { otherUser: User =>
+        asUserWithAuthorization(Authorization.canSeeOtherUserNonPrivateViews(otherUser))(
+          () =>
+            EventType.AllAsUnauthorized -> s"Accès non autorisé pour voir la liste des demandes de $userId",
+          errorInvolvesUser = Some(otherUser.id)
+        ) { () =>
+          LoginAction.readUserRights(otherUser).map { userRights =>
+            val targetUserId = otherUser.id
             val applicationsFromTheArea = List.empty[Application]
             eventService
               .log(
                 AllAsShowed,
                 s"Visualise la vue de l'utilisateur $userId",
-                involvesUser = Some(user.id)
+                involvesUser = Some(otherUser.id)
               )
             val applications = applicationService.allForUserId(
               userId = targetUserId,
@@ -709,20 +712,14 @@ case class ApplicationController @Inject() (
             )
             val (closedApplications, openApplications) = applications.partition(_.closed)
             Ok(
-              views.html.myApplications(user, userRights)(
+              views.html.myApplications(otherUser, userRights)(
                 myOpenApplications = openApplications,
                 myClosedApplications = closedApplications,
                 applicationsFromTheArea = applicationsFromTheArea
               )
             )
           }
-        case _ =>
-          eventService.log(AllAsNotFound, s"L'utilisateur $userId n'existe pas")
-          Future(
-            BadRequest(
-              s"L'utilisateur n'existe pas ou vous n'avez pas le droit d'accéder à cette page. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-            )
-          )
+        }
       }
     }
 
