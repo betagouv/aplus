@@ -86,8 +86,6 @@ spec:
               key: FEATURE_WEEKLY_EMAILS
         - name: FILES_EXPIRATION_IN_DAYS
           value: "15"
-        - name: FILES_SECOND_INSTANCE_HOST
-          value: "https://aplusprodapp.azurewebsites.net/"
 
         - name: FILES_PATH
           value: "/app/files"
