@@ -84,7 +84,7 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.2.24",
+  "org.postgresql" % "postgresql" % "42.3.0",
   anormDependency,
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
@@ -93,7 +93,7 @@ libraryDependencies ++= Seq(
   "com.google.guava" % "guava" % "28.1-jre",
   "com.github.tototoshi" %% "scala-csv" % "1.3.8",
   ws,
-  "com.lihaoyi" %% "scalatags" % "0.9.4",
+  "com.lihaoyi" %% "scalatags" % "0.10.0",
   "org.typelevel" %% "cats-core" % "2.6.1",
   // To ensure that the version of jackson that do not have
   // known security vulnerabilities is used
@@ -113,7 +113,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "font-awesome" % "5.15.4",
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "5.2.2"
+libraryDependencies += "io.sentry" % "sentry-logback" % "5.2.4"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
