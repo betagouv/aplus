@@ -906,9 +906,7 @@ case class ApplicationController @Inject() (
     loginAction.async { implicit request =>
       withApplication(id) { application =>
         val selectedArea: Area =
-          request.currentUser.expert.some
-            .filter(identity)
-            .flatMap(_ => areaInQueryString)
+          areaInQueryString
             .getOrElse(Area.fromId(application.area).getOrElse(Area.all.head))
         val selectedAreaId = selectedArea.id
         usersWhoCanBeInvitedOn(application, selectedAreaId).flatMap { usersWhoCanBeInvited =>
