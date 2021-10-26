@@ -131,7 +131,7 @@
 
           <b class="mdl-cell mdl-cell--12-col">Utilisateur actuellement présent dans ces groupes :</b><br/>
           @for(user <- form.value) {
-              @for(group <- user.groupIds.flatMap(groupId => userGroups.find(_.id === groupId))) {
+              @for(group <- user.groupIds.distinct.flatMap(groupId => userGroups.find(_.id === groupId)).sortBy(_.name)) {
                   <a class="mdl-cell mdl-cell--10-col" href="@routes.GroupController.editGroup(group.id)">@{group.name}</a><br/>
               }
           }
