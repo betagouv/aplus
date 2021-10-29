@@ -80,7 +80,7 @@ object dataModels {
           .map(_.getOrElse(List.empty[UUID]))
       )(models.Answer.apply _)
 
-    //implicit val answerWrite: Writes[Answer] = Json.writes[Answer]
+    // implicit val answerWrite: Writes[Answer] = Json.writes[Answer]
     implicit val answerWrite: Writes[Answer] =
       (JsPath \ "id")
         .write[UUID]
