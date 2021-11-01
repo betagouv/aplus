@@ -17,7 +17,7 @@ lazy val root = (project in file("."))
 
 inThisBuild(
   List(
-    scalaVersion := "2.13.6",
+    scalaVersion := "2.13.7",
     semanticdbEnabled := true, // enable SemanticDB
     semanticdbVersion := scalafixSemanticdb.revision // use Scalafix compatible version
   )
