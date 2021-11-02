@@ -242,7 +242,7 @@ class LoginAction @Inject() (
         Future(userNotLogged("Une erreur s'est produite, votre utilisateur n'existe plus"))
       case Some(user) =>
         LoginAction.readUserRights(user).map { userRights =>
-          //hack: we need RequestWithUserData to call the logger
+          // hack: we need RequestWithUserData to call the logger
           implicit val requestWithUserData =
             new RequestWithUserData(user, userRights, request)
 

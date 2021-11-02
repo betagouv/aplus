@@ -78,28 +78,28 @@ object Organisation {
     Organisation("ANTS", "Agence nationale des titres sécurisés"),
     association,
     Organisation("BDF", "Banque de France"),
-    caf, //Département
+    caf, // Département
     Organisation("CARSAT", "Caisse d'assurance retraite et de la santé au travail"), //
-    Organisation("CCAS", "Centre communal d'action sociale"), //Ville
-    Organisation("CDAD", "Conseils départementaux d'accès au droit"), //Département
-    Organisation("CNAV", "Caisse nationale d'assurance vieillesse"), //Département
-    cpam, //Département
+    Organisation("CCAS", "Centre communal d'action sociale"), // Ville
+    Organisation("CDAD", "Conseils départementaux d'accès au droit"), // Département
+    Organisation("CNAV", "Caisse nationale d'assurance vieillesse"), // Département
+    cpam, // Département
     Organisation("CNAM", "Caisse nationale d'assurance maladie"),
-    Organisation("CRAM", "Caisse régionale d'assurance maladie"), //Région
-    Organisation("DDFIP", "Direction départementale des Finances publiques"), //Département
+    Organisation("CRAM", "Caisse régionale d'assurance maladie"), // Région
+    Organisation("DDFIP", "Direction départementale des Finances publiques"), // Département
     Organisation("Département", "Conseil départemental"),
-    Organisation("DRFIP", "Direction régionale des Finances publiques"), //Région
-    hopital, //Ville
-    Organisation("OFPRA", "Office français de protection des réfugiés et apatrides"), //Nationale
+    Organisation("DRFIP", "Direction régionale des Finances publiques"), // Région
+    hopital, // Ville
+    Organisation("OFPRA", "Office français de protection des réfugiés et apatrides"), // Nationale
     Organisation("La Poste", "La Poste"),
-    Organisation("Mairie", "Mairie"), //Ville
+    Organisation("Mairie", "Mairie"), // Ville
     Organisation("MDPH", "Maison départementale des personnes handicapées"),
     franceServices,
-    Organisation("Mission locale", "Mission locale"), //Ville
+    Organisation("Mission locale", "Mission locale"), // Ville
     Organisation("MSA", "Mutualité sociale agricole"),
     msap, // Ville
     Organisation("Pôle emploi", "Pôle emploi"),
-    pref, //Département
+    pref, // Département
     sousPref,
     Organisation(
       "URSSAF",

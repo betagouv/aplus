@@ -34,7 +34,7 @@ object Keys {
   }
 
   // Important note: do not forget to check the `SentryFilter` whitelist
-  //.queryString .getQueryString
+  // .queryString .getQueryString
   object QueryParam {
 
     // Login
