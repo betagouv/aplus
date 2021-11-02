@@ -20,7 +20,7 @@
   "devDependencies": {
     "@types/tabulator-tables": "4.9.4",
     "copy-webpack-plugin": "9.0.1",
-    "css-loader": "6.4.0",
+    "css-loader": "6.5.0",
     "mini-css-extract-plugin": "2.4.3",
     "rimraf": "3.0.2",
     "ts-loader": "9.2.6",
