@@ -14,6 +14,7 @@ object Authorization {
       Set[Option[UserRight]](
         HasUserId(user.id).some,
         IsInGroups(user.groupIds.toSet).some,
+        IsInAreas(user.areas.toSet).some,
         if (user.helper && not(user.disabled)) Helper.some else none,
         if (user.expert && not(user.disabled))
           ExpertOfAreas(user.areas.toSet).some
@@ -39,6 +40,7 @@ object Authorization {
   object UserRight {
     case class HasUserId(id: UUID) extends UserRight
     case class IsInGroups(groups: Set[UUID]) extends UserRight
+    case class IsInAreas(areas: Set[UUID]) extends UserRight
     case object Helper extends UserRight
     case class ExpertOfAreas(expertOfAreas: Set[UUID]) extends UserRight
     case class InstructorOfGroups(groupsManaged: Set[UUID]) extends UserRight
@@ -146,6 +148,18 @@ object Authorization {
       isObserver
     )
 
+  def isInArea(areaId: UUID): Check =
+    _.rights.exists {
+      case UserRight.IsInAreas(areas) if areas.contains(areaId) => true
+      case _                                                    => false
+    }
+
+  def isInOneOfAreas(thoseAreas: Set[UUID]): Check =
+    _.rights.exists {
+      case UserRight.IsInAreas(areas) if areas.intersect(thoseAreas).nonEmpty => true
+      case _                                                                  => false
+    }
+
   def canObserveOrganisation(organisationId: Organisation.Id): Check =
     _.rights.exists {
       case UserRight.ObserverOfOrganisations(organisations) =>
@@ -215,6 +229,9 @@ object Authorization {
 
   def canSeeApplicationsAsAdmin: Check =
     atLeastOneIsAuthorized(isAdmin, isManager)
+
+  def canSeeOtherUserNonPrivateViews(otherUser: User): Check =
+    rights => isAdmin(rights) && !otherUser.admin && isInOneOfAreas(otherUser.areas.toSet)(rights)
 
   def isApplicationCreator(application: Application): Check =
     _.rights.exists {

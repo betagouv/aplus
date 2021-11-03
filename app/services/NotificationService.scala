@@ -75,7 +75,11 @@ class NotificationService @Inject() (
 
   private val https = configuration.underlying.getString("app.https") === "true"
 
-  private val from = s"Administration+ <${Constants.supportEmail}>"
+  private val from: String = configuration
+    .getOptional[String]("app.emailsFrom")
+    .getOrElse(s"Administration+ <${Constants.supportEmail}>")
+
+  private val replyTo = List(s"Administration+ <${Constants.supportEmail}>")
 
   private def emailIsBlacklisted(email: Email): Boolean =
     notificationEmailBlacklist.exists(black => email.to.exists(_.contains(black)))
@@ -230,6 +234,7 @@ class NotificationService @Inject() (
     val email = Email(
       subject = common.magicLinkSubject,
       from = from,
+      replyTo = replyTo,
       to = List(
         userName
           .filter(_.nonEmpty)
@@ -248,6 +253,7 @@ class NotificationService @Inject() (
     val email = Email(
       subject = common.mandatSmsSentSubject,
       from = from,
+      replyTo = replyTo,
       to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
       bodyHtml = Some(common.renderEmail(bodyInner))
     )
@@ -261,6 +267,7 @@ class NotificationService @Inject() (
     val email = Email(
       subject = common.mandatSmsClosedSubject,
       from = from,
+      replyTo = replyTo,
       to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
       bodyHtml = Some(common.renderEmail(bodyInner))
     )
@@ -289,6 +296,7 @@ class NotificationService @Inject() (
     Email(
       subject = subject,
       from = from,
+      replyTo = replyTo,
       to = List(s"${quoteEmailPhrase(group.name)} <${group.email.get}>"),
       bodyHtml = Some(bodyHtml)
     )
@@ -299,6 +307,7 @@ class NotificationService @Inject() (
     Email(
       subject = "[A+] Bienvenue sur Administration+",
       from = from,
+      replyTo = replyTo,
       to = List(
         userName
           .filter(_.nonEmpty)
@@ -318,6 +327,7 @@ class NotificationService @Inject() (
     Email(
       subject = s"[A+] Nouvelle demande d'aide : ${application.subject}",
       from = from,
+      replyTo = replyTo,
       to = List(s"${quoteEmailPhrase(invitedUser.name)} <${invitedUser.email}>"),
       bodyHtml = Some(common.renderEmail(bodyInner))
     )
@@ -330,6 +340,7 @@ class NotificationService @Inject() (
     Email(
       subject = s"[A+] Nouvelle réponse pour : ${application.subject}",
       from = from,
+      replyTo = replyTo,
       to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
       bodyHtml = Some(common.renderEmail(bodyInner))
     )
@@ -370,6 +381,7 @@ class NotificationService @Inject() (
     val email = Email(
       subject = common.weeklyEmailSubject,
       from = from,
+      replyTo = replyTo,
       to = List(s"${quoteEmailPhrase(infos.user.name)} <${infos.user.email}>"),
       bodyHtml = Some(common.renderEmail(bodyInner))
     )

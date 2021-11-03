@@ -80,7 +80,7 @@ object Operators {
     def withUser(
         userId: UUID,
         includeDisabled: Boolean = false,
-        errorMessage: String = "Tentative d'accès à un utilisateur inexistant",
+        errorMessage: Option[String] = none,
         errorResult: Option[Result] = none
     )(
         payload: User => Future[Result]
@@ -88,15 +88,21 @@ object Operators {
       userService
         .byId(userId, includeDisabled)
         .fold({
-          eventService.log(UserNotFound, description = errorMessage)
+          eventService.log(
+            UserNotFound,
+            description =
+              errorMessage.getOrElse(s"Tentative d'accès à un utilisateur inexistant ($userId)"),
+            involvesUser = Some(userId)
+          )
           Future.successful(
-            errorResult.getOrElse(NotFound("Utilisateur inexistant"))
+            errorResult.getOrElse(NotFound(s"L'utilisateur n'existe pas."))
           )
         })({ user: User => payload(user) })
 
     def asUserWithAuthorization(authorizationCheck: Authorization.Check)(
         errorEvent: () => (EventType, String),
-        errorResult: Option[Result] = none
+        errorResult: Option[Result] = none,
+        errorInvolvesUser: Option[UUID] = none,
     )(
         payload: () => Future[Result]
     )(implicit request: RequestWithUserData[_]): Future[Result] =
@@ -104,7 +110,7 @@ object Operators {
         payload()
       } else {
         val (eventType, description) = errorEvent()
-        eventService.log(eventType, description = description)
+        eventService.log(eventType, description = description, involvesUser = errorInvolvesUser)
         Future.successful(
           errorResult.getOrElse(Unauthorized("Vous n'avez pas le droit de faire ça"))
         )

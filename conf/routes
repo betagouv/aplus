@@ -36,7 +36,11 @@ POST        /mandats/sms/webhook                                                
 + nocsp
 GET         /stats                                                                           controllers.ApplicationController.stats
 + nocsp
+GET         /as/:userId/stats                                                                controllers.ApplicationController.statsAs(userId: java.util.UUID)
++ nocsp
 POST        /stats                                                                           controllers.ApplicationController.stats
++ nocsp
+POST        /as/:userId/stats                                                                controllers.ApplicationController.statsAs(userId: java.util.UUID)
 
 
 # Signup
@@ -73,6 +77,7 @@ POST        /importation/import                                                 
 # Groups
 POST        /groups                                                                          controllers.GroupController.addGroup
 GET         /groups                                                                          controllers.GroupController.showEditMyGroups
+GET         /as/:userId/groups                                                               controllers.GroupController.showEditMyGroupsAs(userId: java.util.UUID)
 POST        /groups/:groupId/remove/:userId                                                  controllers.GroupController.removeFromGroup(userId: java.util.UUID, groupId: java.util.UUID)
 POST        /groups/:groupId/add                                                             controllers.GroupController.addToGroup(groupId: java.util.UUID)
 GET         /groups/:groupId                                                                 controllers.GroupController.editGroup(groupId: java.util.UUID)
