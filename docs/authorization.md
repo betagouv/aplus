@@ -1,7 +1,7 @@
 # Droits d'accès (autorisations) et rôles
 
 
-## Listes des rôles
+## Liste des rôles
 
 - Aidant
     - Travailleurs Sociaux
@@ -279,6 +279,24 @@ Note
 | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
 
 
+#### Voir la liste de mes groupes (page "mes groupes")
+
+* `/groups`
+
+|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+
+
+#### Visualiser la page "mes groupes" d'un autre utilisateur
+
+* `/as/:userId/groups`
+
+|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| ✔ | ✔ (même zone) | ✖ | ✖ | ✖ | ✖ | ✖ |
+
+
 #### Créer un compte utilisateur dans A+
 
 * `/groups/:groupId/users`
@@ -342,6 +360,7 @@ Note
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✔ | ✖ | ✖ | ✖ | ✖ |
 
+Valable pour le responsable de groupes seulement à la création de compte, pas possible après.
 
 #### Nommer un responsable de groupe
 
@@ -351,6 +370,7 @@ Note
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✔ | ✖ | ✖ | ✖ | ✖ |
 
+Valable pour le responsable de groupes seulement à la création de compte, pas possible après.
 
 #### Nommer un administrateur de zone
 
@@ -490,6 +510,15 @@ Note
 |Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✔ (ses groupes) | ✔ (ses groupes) | ✔ (ses groupes) | ✖ | ✖ |
+
+
+#### Visualiser la page stats d'un autre utilisateur
+
+* `/as/:userId/stats`
+
+|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| ✔ | ✔ (même zone) | ✖ | ✖ | ✖ | ✖ | ✖ |
 
 
 #### Voir le log d'évènements (sans données personnelles)

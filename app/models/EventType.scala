@@ -153,6 +153,8 @@ object EventType {
   object WipeDataComplete extends Info
   object WipeDataError extends Error
 
+  object MasqueradeUnauthorized extends Warn
+
   // Signups
   object SignupFormShowed extends Info
   object SignupFormValidationError extends Warn
