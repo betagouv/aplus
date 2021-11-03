@@ -217,7 +217,22 @@
     <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col">
         <b>Outils</b>
         <p>
-            <a href="@routes.ApplicationController.allAs(uneditedUser.id)">Aperçu de l'écran de toutes les demandes de l'utilisateur</a><br>
+
+          @if(Authorization.canSeeOtherUserNonPrivateViews(uneditedUser)(currentUserRights)) {
+            <a href="@routes.ApplicationController.allAs(uneditedUser.id)">
+              Aperçu de l’écran de toutes les demandes de l’utilisateur
+            </a>
+            <br/>
+            <a href="@routes.GroupController.showEditMyGroupsAs(uneditedUser.id)">
+              Vue "Mes Groupes" de l’utilisateur
+            </a>
+            <br/>
+            <a href="@routes.ApplicationController.statsAs(uneditedUser.id)">
+              Vue "Stats" de l’utilisateur
+            </a>
+            <br/>
+          }
+
             <a href="@routes.UserController.allEvents?fromUserId=@{uneditedUser.id}">Log d'événements de l'utilisateur</a>
         </p>
     </div>

@@ -78,7 +78,7 @@ case class GroupController @Inject() (
             val message = "L’adresse email n'est pas correcte"
             eventService.log(EventType.AddUserToGroupBadUserInput, message)
             if (originIsGroupPage) withGroup(groupId)(group => editGroupPage(group, err))
-            else editMyGroupsPage(err)
+            else editMyGroupsPage(request.currentUser, request.rights, err)
           },
           data =>
             userService
@@ -130,7 +130,7 @@ case class GroupController @Inject() (
       withUser(
         userId,
         includeDisabled = true,
-        errorMessage = s"L'utilisateur $userId n'existe pas et ne peut pas être réactivé",
+        errorMessage = s"L'utilisateur $userId n'existe pas et ne peut pas être réactivé".some,
         errorResult = Redirect(redirectPage)
           .flashing(
             "error" -> ("L’utilisateur n’existe pas dans Administration+. " +
@@ -173,7 +173,7 @@ case class GroupController @Inject() (
       withUser(
         userId,
         includeDisabled = true,
-        errorMessage = s"L'utilisateur $userId n'existe pas et ne peut pas être désactivé",
+        errorMessage = s"L'utilisateur $userId n'existe pas et ne peut pas être désactivé".some,
         errorResult = Redirect(redirectPage)
           .flashing(
             "error" -> ("L’utilisateur n’existe pas dans Administration+. " +
@@ -218,9 +218,24 @@ case class GroupController @Inject() (
       }
     }
 
-  def showEditMyGroups =
+  def showEditMyGroups: Action[AnyContent] =
     loginAction.async { implicit request =>
-      editMyGroupsPage(AddUserToGroupFormData.form)
+      editMyGroupsPage(request.currentUser, request.rights, AddUserToGroupFormData.form)
+    }
+
+  def showEditMyGroupsAs(otherUserId: UUID): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      withUser(otherUserId) { otherUser: User =>
+        asUserWithAuthorization(Authorization.canSeeOtherUserNonPrivateViews(otherUser))(
+          () =>
+            EventType.MasqueradeUnauthorized -> s"Accès non autorisé pour voir la page mes groupes de $otherUserId",
+          errorInvolvesUser = Some(otherUser.id)
+        ) { () =>
+          LoginAction.readUserRights(otherUser).flatMap { userRights =>
+            editMyGroupsPage(otherUser, userRights, AddUserToGroupFormData.form)
+          }
+        }
+      }
     }
 
   def deleteUnusedGroupById(groupId: UUID): Action[AnyContent] =
@@ -387,10 +402,12 @@ case class GroupController @Inject() (
     }
 
   private def editMyGroupsPage(
+      user: User,
+      rights: Authorization.UserRights,
       addUserForm: Form[AddUserToGroupFormData]
   )(implicit request: RequestWithUserData[_]): Future[Result] =
     for {
-      groups <- groupService.byIdsFuture(request.currentUser.groupIds)
+      groups <- groupService.byIdsFuture(user.groupIds)
       users <- userService.byGroupIdsFuture(groups.map(_.id), includeDisabled = true)
       applications <- applicationService.allForUserIds(users.map(_.id))
     } yield {
@@ -398,8 +415,8 @@ case class GroupController @Inject() (
       Ok(
         views.editMyGroups
           .page(
-            request.currentUser,
-            request.rights,
+            user,
+            rights,
             addUserForm,
             groups,
             users,
