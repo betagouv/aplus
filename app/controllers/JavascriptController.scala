@@ -18,9 +18,9 @@ class JavascriptController() extends InjectedController {
           routes.javascript.GroupController.editGroup,
           routes.javascript.ApplicationController.all,
           routes.javascript.UserController.all,
-          routes.javascript.UserController.allJson,
           routes.javascript.UserController.deleteUnusedUserById,
-          routes.javascript.UserController.editUser
+          routes.javascript.UserController.editUser,
+          routes.javascript.UserController.search,
         )
       ).as(MimeTypes.JAVASCRIPT)
     }
