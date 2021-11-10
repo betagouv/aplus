@@ -434,12 +434,10 @@ dialog {
                 Ajouter une réponse
             </a>
 
-            @if(groupsWithUsersThatCanBeInvited.nonEmpty || groupsThatCanBeInvited.nonEmpty || currentUser.expert) {
-                <a href="#invite" class="mdl-tabs__tab mdl-tabs__tab--multiline-text mdl-color-text--primary single--display-flex single--align-items-center @if(openedTab =="invite"){ is-active }">
-                    <i class="material-icons single--margin-right-8px single--hidden-phone">person_add</i>
-                    Inviter
-                </a>
-            }
+            <a href="#invite" class="mdl-tabs__tab mdl-tabs__tab--multiline-text mdl-color-text--primary single--display-flex single--align-items-center @if(openedTab =="invite"){ is-active }">
+              <i class="material-icons single--margin-right-8px single--hidden-phone">person_add</i>
+              Inviter
+            </a>
 
             <span class="single--flex-grow-1"></span>
 
@@ -578,82 +576,11 @@ dialog {
             </form>
         </div>
 
-                    @if(groupsWithUsersThatCanBeInvited.nonEmpty || groupsThatCanBeInvited.nonEmpty || currentUser.expert) {
-                        <div class="mdl-tabs__panel @if(openedTab =="invite"){ is-active }" id="invite">
-                            <form action='@routes.ApplicationController.invite(application.id)' class="mdl-cell mdl-cell--12-col mdl-grid aplus-protected-form" method="post">
 
-                                <input type="hidden"
-                                       name="@{Keys.Application.areaId}"
-                                       readonly
-                                       value="@{selectedArea.id}">
+        <div class="mdl-tabs__panel @if(openedTab =="invite"){ is-active }" id="invite">
+          @toHtml(views.application.inviteForm(currentUser, currentUserRights, groupsWithUsersThatCanBeInvited, groupsThatCanBeInvited, application, selectedArea))
+        </div>
 
-                                @if(currentUser.expert) {
-                                    <div>
-                                        Territoire concerné :
-                                    @helpers.changeAreaSelect(selectedArea, currentUser.areas.flatMap(Area.fromId), routes.ApplicationController.show(application.id))
-                                    </div>
-                                }
-                                @helper.CSRF.formField
-
-                                @if(groupsWithUsersThatCanBeInvited.nonEmpty) {
-                                  <fieldset class="mdl-cell mdl-cell--12-col mdl-grid">
-                                    <legend class="single--padding-top-16px single--padding-bottom-16px mdl-typography--title">
-                                      Inviter une autre personne sur la discussion
-                                    </legend>
-                                <table class="mdl-data-table mdl-js-data-table mdl-cell mdl-cell--12-col" style="border: none;">
-                                    <thead>
-                                        <tr>
-                                            <th class="mdl-data-table__cell--non-numeric"></th>
-                                            <th class="mdl-data-table__cell--non-numeric">Structure</th>
-                                            <th class="mdl-data-table__cell--non-numeric">Nom</th>
-                                            <th class="mdl-data-table__cell--non-numeric">Qualité</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    @for((group, users) <- groupsWithUsersThatCanBeInvited.sortBy(_._1.name)) {
-                                        @for(user <- users.sortBy(_.name)) {
-                                            <tr>
-                                                <td>
-                                                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events">
-                                                        <input type="checkbox" class="mdl-checkbox__input" name="users[]" value="@user.id">
-                                                    </label>
-                                                </td>
-                                                <td class="mdl-data-table__cell--non-numeric">@group.name</td>
-                                                <td class="mdl-data-table__cell--non-numeric">@user.name</td>
-                                                <td class="mdl-data-table__cell--non-numeric">@user.qualite</td>
-                                            </tr>
-                                        }
-                                    }
-                                    </tbody>
-                                </table>
-                                  </fieldset>
-                                }
-
-                                @if(groupsThatCanBeInvited.nonEmpty) {
-                                  @toHtml(views.helpers.applications.inviteTargetGroups(groupsThatCanBeInvited))
-                                }
-
-                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mdl-cell mdl-cell--12-col">
-                                    <textarea class="mdl-textfield__input" type="text" rows= "5" id="agents-invitation-message" style="width: 100%;" name="message"></textarea>
-                                    <label class="mdl-textfield__label" for="agents-invitation-message"><i class="material-icons" style="vertical-align: middle;">message</i> Laisser ici un message pour l’invitation...</label>
-                                </div>
-                                @if(currentUser.instructor || currentUser.expert) {
-                                    <div id="private-invitation">
-                                        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle">
-                                            <input type="checkbox" class="mdl-checkbox__input" name="privateToHelpers" value="true">
-                                            <span class="mdl-checkbox__label"></span>Restreindre le message d’invitation aux Agents Administration+ <i class="icon material-icons icon--light">info</i>
-                                        </label>
-                                    </div>
-                                    <div class="mdl-tooltip" for="private-invitation">
-                                        Le message d’invitation ne sera pas visible par l’aidant.
-                                    </div>
-                                } else {
-                                    <br>
-                                }
-                                <button id="application-complete" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col">Inviter</button>
-                            </form>
-                        </div>
-                    }
                 </div>
         </div>
     <!--

@@ -4,7 +4,7 @@ import anorm._
 import aplus.macros.Macros
 import cats.syntax.all._
 import helper.StringHelper.StringOps
-import helper.{Hash, Time, UUIDHelper}
+import helper.{Hash, StringHelper, Time, UUIDHelper}
 import java.sql.Connection
 import java.util.UUID
 import javax.inject.Inject
@@ -193,6 +193,40 @@ class UserService @Inject() (
 
   def byEmailsFuture(emails: List[String]): Future[Either[Error, List[User]]] =
     Future(byEmails(emails).asRight)
+
+  // Note: empty string will return an `Error`
+  //
+  // The configuration is
+  // CREATE TEXT SEARCH CONFIGURATION french_unaccent ( COPY = french );
+  // ALTER TEXT SEARCH CONFIGURATION french_unaccent alter mapping for hword, hword_part, word with unaccent, french_stem;
+  def search(searchQuery: String, limit: Int): Future[Either[Error, List[User]]] =
+    Future(
+      Try(
+        db.withConnection { implicit connection =>
+          val query =
+            StringHelper.commonStringInputNormalization(searchQuery).replace(' ', '+') + ":*"
+          SQL(s"""SELECT $fieldsInSelect
+                  FROM "user"
+                  WHERE (
+                    to_tsvector('french_unaccent', coalesce(first_name, '')) ||
+                    to_tsvector('french_unaccent', coalesce(last_name, '')) ||
+                    to_tsvector('french_unaccent', name) ||
+                    to_tsvector('french_unaccent', qualite) ||
+                    to_tsvector('french_unaccent', translate(email, '@.', '  '))
+                  ) @@ to_tsquery('french_unaccent', {query})
+                  LIMIT {limit}""")
+            .on("query" -> query, "limit" -> limit)
+            .as(simpleUser.*)
+        }.map(_.toUser)
+      ).toEither.left
+        .map(e =>
+          Error.SqlException(
+            EventType.SearchUsersError,
+            s"Impossible de rechercher '$searchQuery'",
+            e
+          )
+        )
+    )
 
   def deleteById(userId: UUID): Boolean =
     db.withTransaction { implicit connection =>

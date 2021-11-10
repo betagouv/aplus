@@ -4,6 +4,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 import actions.{LoginAction, RequestWithUserData}
+import cats.data.EitherT
 import cats.syntax.all._
 import controllers.Operators.{GroupOperators, UserOperators}
 import helper.BooleanHelper.not
@@ -64,7 +65,7 @@ import play.filters.csrf.CSRF.Token
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 import serializers.{Keys, UserAndGroupCsvSerializer}
-import serializers.ApiModel.UserInfos
+import serializers.ApiModel.{SearchResult, UserGroupInfos, UserInfos}
 import services._
 
 @Singleton
@@ -163,39 +164,55 @@ case class UserController @Inject() (
       TemporaryRedirect(routes.UserController.all(Area.allArea.id).url)
     }
 
-  def usersAndGroups(selectedArea: Area)(implicit request: RequestWithUserData[_]) = {
-    val allAreasGroupsFuture: Future[List[UserGroup]] =
-      if (Authorization.isAdmin(request.rights)) {
-        if (selectedArea.id === Area.allArea.id) {
-          groupService.byAreas(request.currentUser.areas)
-        } else {
-          groupService.byArea(selectedArea.id)
-        }
-      } else if (Authorization.isObserver(request.rights)) {
-        groupService.byOrganisationIds(request.currentUser.observableOrganisationIds)
-      } else if (Authorization.isManager(request.rights)) {
-        groupService.byIdsFuture(request.currentUser.groupIds)
-      } else {
-        eventService.log(AllUserIncorrectSetup, "Erreur d'accès aux groupes")
-        Future(Nil)
-      }
-    val groupsFuture: Future[List[UserGroup]] =
-      allAreasGroupsFuture.map(groups =>
-        if (selectedArea.id === Area.allArea.id) {
-          groups
-        } else {
-          groups.filter(_.areaIds.contains[UUID](selectedArea.id))
-        }
-      )
+  private def groupsInAllAreas(implicit request: RequestWithUserData[_]): Future[List[UserGroup]] =
+    if (Authorization.isAdmin(request.rights)) {
+      groupService.byAreas(request.currentUser.areas)
+    } else if (Authorization.isObserver(request.rights)) {
+      groupService.byOrganisationIds(request.currentUser.observableOrganisationIds)
+    } else {
+      groupService.byIdsFuture(request.currentUser.groupIds)
+    }
+
+  private def usersInAllAreas(implicit request: RequestWithUserData[_]) = {
+    val groupsFuture = groupsInAllAreas
     val usersFuture: Future[List[User]] =
-      if (Authorization.isAdmin(request.rights) && selectedArea.id === Area.allArea.id) {
+      if (Authorization.isAdmin(request.rights)) {
         // Includes users without any group for debug purpose
         userService.all
       } else {
-        groupsFuture.map(groups => userService.byGroupIds(groups.map(_.id), includeDisabled = true))
+        groupsFuture.map(groups =>
+          userService.byGroupIds(groups.map(_.id).toSet.toList, includeDisabled = true)
+        )
       }
     usersFuture.zip(groupsFuture)
   }
+
+  private def groupsInArea(selectedArea: Area)(implicit request: RequestWithUserData[_]) = {
+    val allAreasGroupsFuture: Future[List[UserGroup]] =
+      if (Authorization.isAdmin(request.rights)) {
+        groupService.byArea(selectedArea.id)
+      } else if (Authorization.isObserver(request.rights)) {
+        groupService.byOrganisationIds(request.currentUser.observableOrganisationIds)
+      } else {
+        groupService.byIdsFuture(request.currentUser.groupIds)
+      }
+    allAreasGroupsFuture.map(_.filter(_.areaIds.contains[UUID](selectedArea.id)))
+  }
+
+  private def usersInArea(selectedArea: Area)(implicit request: RequestWithUserData[_]) = {
+    val groupsFuture = groupsInArea(selectedArea)
+    val usersFuture: Future[List[User]] =
+      groupsFuture.map(groups =>
+        userService.byGroupIds(groups.map(_.id).toSet.toList, includeDisabled = true)
+      )
+    usersFuture.zip(groupsFuture)
+  }
+
+  private def usersAndGroups(selectedArea: Area)(implicit request: RequestWithUserData[_]) =
+    if (selectedArea.id === Area.allArea.id)
+      usersInAllAreas
+    else
+      usersInArea(selectedArea)
 
   def all(areaId: UUID): Action[AnyContent] =
     loginAction.async { implicit request: RequestWithUserData[AnyContent] =>
@@ -208,7 +225,7 @@ case class UserController @Inject() (
           eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
           val result = request.getQueryString(Keys.QueryParam.vue).getOrElse("nouvelle") match {
             case "nouvelle" if request.currentUser.admin =>
-              views.html.allUsersNew(request.currentUser, request.rights)(selectedArea)
+              views.users.page(request.currentUser, request.rights, selectedArea)
             case _ =>
               views.html.allUsersByGroup(request.currentUser, request.rights)(
                 groups,
@@ -218,52 +235,6 @@ case class UserController @Inject() (
               )
           }
           Ok(result)
-        }
-      }
-    }
-
-  def allJson(areaId: UUID): Action[AnyContent] =
-    loginAction.async { implicit request: RequestWithUserData[AnyContent] =>
-      asUserWhoSeesUsersOfArea(areaId) { () =>
-        AllUserUnauthorized -> "Accès non autorisé à l'admin des utilisateurs"
-      } { () =>
-        val selectedArea = Area.fromId(areaId).get
-        usersAndGroups(selectedArea).map { case (users, groups) =>
-          eventService.log(UsersShowed, "Appelle la liste des utilisateurs")
-          val idToGroup = groups.map(group => (group.id, group)).toMap
-          val userInfos = users.map { user =>
-            val completeName = {
-              val firstName = user.firstName.getOrElse("")
-              val lastName = user.lastName.getOrElse("")
-              if (firstName.nonEmpty || lastName.nonEmpty) s"${user.name} ($lastName $firstName)"
-              else user.name
-            }
-            UserInfos(
-              id = user.id,
-              firstName = user.firstName,
-              lastName = user.lastName,
-              name = user.name,
-              completeName = completeName,
-              qualite = user.qualite,
-              email = user.email,
-              phoneNumber = user.phoneNumber,
-              helper = user.helperRoleName.nonEmpty,
-              instructor = user.instructorRoleName.nonEmpty,
-              areas = user.areas.flatMap(Area.fromId).map(_.toString),
-              groupNames = user.groupIds.flatMap(idToGroup.get).map(_.name),
-              groups = user.groupIds
-                .flatMap(idToGroup.get)
-                .map(group => UserInfos.Group(group.id, group.name)),
-              groupEmails = user.groupIds.flatMap(idToGroup.get).flatMap(_.email),
-              groupAdmin = user.groupAdminRoleName.nonEmpty,
-              admin = user.adminRoleName.nonEmpty,
-              expert = user.expert,
-              disabled = user.disabledRoleName.nonEmpty,
-              sharedAccount = user.sharedAccount,
-              cgu = user.cguAcceptationDate.nonEmpty,
-            )
-          }
-          Ok(Json.toJson(userInfos))
         }
       }
     }
@@ -353,6 +324,78 @@ case class UserController @Inject() (
             .as("text/csv")
         }
       }
+    }
+
+  def search: Action[AnyContent] =
+    loginAction.async { implicit request =>
+      def toUserInfos(usersAndGroups: (List[User], List[UserGroup])): List[UserInfos] = {
+        val (users, groups) = usersAndGroups
+        val idToGroup = groups.map(group => (group.id, group)).toMap
+        users.map(user => UserInfos.fromUser(user, idToGroup))
+      }
+      val area = request
+        .getQueryString(Keys.QueryParam.searchAreaId)
+        .flatMap(UUIDHelper.fromString)
+        .flatMap(Area.fromId)
+        .filter(_.id =!= Area.allArea.id)
+      val (usersT, groupsT) =
+        request.getQueryString(Keys.QueryParam.searchQuery).map(_.trim).filter(_.nonEmpty) match {
+          case None =>
+            val usersWithGroups = area.fold(usersInAllAreas)(area => usersInArea(area))
+            val users = usersWithGroups.map(toUserInfos).map(_.asRight[Error])
+            val groups = usersWithGroups.map { case (_, groups) =>
+              groups.map(UserGroupInfos.fromUserGroup).asRight[Error]
+            }
+            eventService.log(EventType.SearchUsersDone, s"Liste les utilisateurs")
+            (EitherT(users), EitherT(groups))
+          case Some(queryString) =>
+            val users = EitherT(
+              userService
+                .search(queryString, 1000)
+                .flatMap(
+                  _.fold(
+                    e => Future(e.asLeft),
+                    users => {
+                      val groupIds = users.flatMap(_.groupIds).toSet
+                      groupService
+                        .byIdsFuture(groupIds.toList)
+                        .map(groups =>
+                          area.fold((users, groups)) { area =>
+                            val filteredGroups = groups.filter(_.areaIds.contains[UUID](area.id))
+                            val groupIds = filteredGroups.map(_.id).toSet
+                            val filteredUsers =
+                              users.filter(_.groupIds.toSet.intersect(groupIds).nonEmpty)
+                            (filteredUsers, filteredGroups)
+                          }
+                        )
+                        .map(toUserInfos)
+                        .map(_.asRight)
+                    }
+                  )
+                )
+            )
+            val groups = EitherT(groupService.search(queryString, 1000)).map(groups =>
+              area
+                .fold(groups)(area => groups.filter(_.areaIds.contains[UUID](area.id)))
+                .map(UserGroupInfos.fromUserGroup)
+            )
+            eventService.log(
+              EventType.SearchUsersDone,
+              s"Recherche les utilisateurs '$queryString'"
+            )
+            (users, groups)
+        }
+      usersT
+        .flatMap(users =>
+          groupsT.map { groups =>
+            val data = SearchResult(users, groups)
+            Ok(Json.toJson(data))
+          }
+        )
+        .valueOr { error =>
+          eventService.logError(error)
+          InternalServerError(Json.toJson(SearchResult(Nil, Nil)))
+        }
     }
 
   def editUser(userId: UUID): Action[AnyContent] =
