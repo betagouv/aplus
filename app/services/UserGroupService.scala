@@ -6,13 +6,13 @@ import java.util.UUID
 import anorm._
 import aplus.macros.Macros
 import cats.syntax.all._
-import helper.{Time, UUIDHelper}
+import helper.{StringHelper, Time, UUIDHelper}
 import javax.inject.Inject
-import models.{Organisation, UserGroup}
+import models.{Error, EventType, Organisation, UserGroup}
 import org.postgresql.util.PSQLException
 import play.api.db.Database
-
 import scala.concurrent.Future
+import scala.util.Try
 
 @javax.inject.Singleton
 class UserGroupService @Inject() (
@@ -192,5 +192,34 @@ class UserGroupService @Inject() (
           .as(simpleUserGroup.*)
       }
     }
+
+  def search(searchQuery: String, limit: Int): Future[Either[Error, List[UserGroup]]] =
+    Future(
+      Try(
+        db.withConnection { implicit connection =>
+          val query =
+            StringHelper.commonStringInputNormalization(searchQuery).replace(' ', '+') + ":*"
+          SQL(s"""SELECT $fieldsInSelect
+                  FROM "user_group"
+                  WHERE (
+                    to_tsvector('french_unaccent', name) ||
+                    to_tsvector('french_unaccent', coalesce(description, '')) ||
+                    to_tsvector('french_unaccent', coalesce(array_to_string(insee_code, ' ', ' '), '')) ||
+                    to_tsvector('french_unaccent', coalesce(organisation, '')) ||
+                    to_tsvector('french_unaccent', translate(coalesce(email, ''), '@.', '  '))
+                  ) @@ to_tsquery('french_unaccent', {query})
+                  LIMIT {limit}""")
+            .on("query" -> query, "limit" -> limit)
+            .as(simpleUserGroup.*)
+        }
+      ).toEither.left
+        .map(e =>
+          Error.SqlException(
+            EventType.SearchUsersError,
+            s"Impossible de rechercher '$searchQuery'",
+            e
+          )
+        )
+    )
 
 }
