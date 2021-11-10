@@ -10,6 +10,7 @@
 // const Tabulator = require('tabulator-tables').default;
 import Tabulator from 'tabulator-tables';
 import "tabulator-tables/dist/css/tabulator.css";
+import { debounceAsync } from './helpers';
 
 
 const usersTableId = "tabulator-users-table";
@@ -67,14 +68,15 @@ interface SearchResult {
 }
 
 
+const debouncedFetch = debounceAsync(fetch, 500);
+
 async function callSearch(searchString: string): Promise<SearchResult> {
   let url: string = jsRoutes.controllers.UserController.search().url +
     "?q=" + encodeURIComponent(searchString);
   if (selectedAreaId != null) {
     url = url + "&areaId=" + selectedAreaId;
   }
-  const result = await fetch(url).then((response) => response.json())
-  return result;
+  return await debouncedFetch(url).then((response) => response.json());
 }
 
 if (window.document.getElementById(usersTableId)) {
