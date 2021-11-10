@@ -12,7 +12,6 @@ export function debounceAsync<A, R>(
   let timeoutID: number;
 
   if (!Number.isInteger(waitFor)) {
-    console.warn("Called debounce without a valid number")
     waitFor = 300;
   }
 
@@ -23,4 +22,4 @@ export function debounceAsync<A, R>(
     timeoutID = window.setTimeout(() => resolve(fn(args)), waitFor);
   });
   return debouncedFn;
-};
+}

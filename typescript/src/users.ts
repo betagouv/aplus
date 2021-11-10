@@ -289,18 +289,18 @@ if (window.document.getElementById(usersTableId)) {
 
 
   const searchBox = <HTMLInputElement | null>document.getElementById(searchBoxId);
-  if (searchBox != null) {
+  if (searchBox) {
     const fillData = () => {
       const searchString = searchBox.value;
       callSearch(searchString).then((data) => {
-        if (usersTable != null) {
+        if (usersTable) {
           if (searchString.trim() === "") {
-            if (usersTable.options.height != "80vh") {
+            if (usersTable.options.height !== "80vh") {
               usersTable.setHeight("80vh");
               groupsTable?.setHeight("70vh");
             }
           } else {
-            if (usersTable.options.height == "80vh") {
+            if (usersTable.options.height === "80vh") {
               usersTable.setHeight("40vh");
               groupsTable?.setHeight("40vh");
             }
@@ -309,7 +309,7 @@ if (window.document.getElementById(usersTableId)) {
           groupsTable?.setData(data.groups);
         }
       });
-    }
+    };
     searchBox.addEventListener("input", fillData);
 
     fillData();
