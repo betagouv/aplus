@@ -328,78 +328,74 @@ case class UserController @Inject() (
 
   def search: Action[AnyContent] =
     loginAction.async { implicit request =>
-      asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
-        EventType.SearchUsersNotAuthorized -> "Accès non autorisé à la recherche d'utilisateurs"
-      } { () =>
-        def toUserInfos(usersAndGroups: (List[User], List[UserGroup])): List[UserInfos] = {
-          val (users, groups) = usersAndGroups
-          val idToGroup = groups.map(group => (group.id, group)).toMap
-          users.map(user => UserInfos.fromUser(user, idToGroup))
-        }
-        val area = request
-          .getQueryString(Keys.QueryParam.searchAreaId)
-          .flatMap(UUIDHelper.fromString)
-          .flatMap(Area.fromId)
-          .filter(_.id =!= Area.allArea.id)
-        val (usersT, groupsT) =
-          request.getQueryString(Keys.QueryParam.searchQuery).map(_.trim).filter(_.nonEmpty) match {
-            case None =>
-              val usersWithGroups = area.fold(usersInAllAreas)(area => usersInArea(area))
-              val users = usersWithGroups.map(toUserInfos).map(_.asRight[Error])
-              val groups = usersWithGroups.map { case (_, groups) =>
-                groups.map(UserGroupInfos.fromUserGroup).asRight[Error]
-              }
-              eventService.log(EventType.SearchUsersDone, s"Liste les utilisateurs")
-              (EitherT(users), EitherT(groups))
-            case Some(queryString) =>
-              val users = EitherT(
-                userService
-                  .search(queryString, 1000)
-                  .flatMap(
-                    _.fold(
-                      e => Future(e.asLeft),
-                      users => {
-                        val groupIds = users.flatMap(_.groupIds).toSet
-                        groupService
-                          .byIdsFuture(groupIds.toList)
-                          .map(groups =>
-                            area.fold((users, groups)) { area =>
-                              val filteredGroups = groups.filter(_.areaIds.contains[UUID](area.id))
-                              val groupIds = filteredGroups.map(_.id).toSet
-                              val filteredUsers =
-                                users.filter(_.groupIds.toSet.intersect(groupIds).nonEmpty)
-                              (filteredUsers, filteredGroups)
-                            }
-                          )
-                          .map(toUserInfos)
-                          .map(_.asRight)
-                      }
-                    )
-                  )
-              )
-              val groups = EitherT(groupService.search(queryString, 1000)).map(groups =>
-                area
-                  .fold(groups)(area => groups.filter(_.areaIds.contains[UUID](area.id)))
-                  .map(UserGroupInfos.fromUserGroup)
-              )
-              eventService.log(
-                EventType.SearchUsersDone,
-                s"Recherche les utilisateurs '$queryString'"
-              )
-              (users, groups)
-          }
-        usersT
-          .flatMap(users =>
-            groupsT.map { groups =>
-              val data = SearchResult(users, groups)
-              Ok(Json.toJson(data))
-            }
-          )
-          .valueOr { error =>
-            eventService.logError(error)
-            InternalServerError(Json.toJson(SearchResult(Nil, Nil)))
-          }
+      def toUserInfos(usersAndGroups: (List[User], List[UserGroup])): List[UserInfos] = {
+        val (users, groups) = usersAndGroups
+        val idToGroup = groups.map(group => (group.id, group)).toMap
+        users.map(user => UserInfos.fromUser(user, idToGroup))
       }
+      val area = request
+        .getQueryString(Keys.QueryParam.searchAreaId)
+        .flatMap(UUIDHelper.fromString)
+        .flatMap(Area.fromId)
+        .filter(_.id =!= Area.allArea.id)
+      val (usersT, groupsT) =
+        request.getQueryString(Keys.QueryParam.searchQuery).map(_.trim).filter(_.nonEmpty) match {
+          case None =>
+            val usersWithGroups = area.fold(usersInAllAreas)(area => usersInArea(area))
+            val users = usersWithGroups.map(toUserInfos).map(_.asRight[Error])
+            val groups = usersWithGroups.map { case (_, groups) =>
+              groups.map(UserGroupInfos.fromUserGroup).asRight[Error]
+            }
+            eventService.log(EventType.SearchUsersDone, s"Liste les utilisateurs")
+            (EitherT(users), EitherT(groups))
+          case Some(queryString) =>
+            val users = EitherT(
+              userService
+                .search(queryString, 1000)
+                .flatMap(
+                  _.fold(
+                    e => Future(e.asLeft),
+                    users => {
+                      val groupIds = users.flatMap(_.groupIds).toSet
+                      groupService
+                        .byIdsFuture(groupIds.toList)
+                        .map(groups =>
+                          area.fold((users, groups)) { area =>
+                            val filteredGroups = groups.filter(_.areaIds.contains[UUID](area.id))
+                            val groupIds = filteredGroups.map(_.id).toSet
+                            val filteredUsers =
+                              users.filter(_.groupIds.toSet.intersect(groupIds).nonEmpty)
+                            (filteredUsers, filteredGroups)
+                          }
+                        )
+                        .map(toUserInfos)
+                        .map(_.asRight)
+                    }
+                  )
+                )
+            )
+            val groups = EitherT(groupService.search(queryString, 1000)).map(groups =>
+              area
+                .fold(groups)(area => groups.filter(_.areaIds.contains[UUID](area.id)))
+                .map(UserGroupInfos.fromUserGroup)
+            )
+            eventService.log(
+              EventType.SearchUsersDone,
+              s"Recherche les utilisateurs '$queryString'"
+            )
+            (users, groups)
+        }
+      usersT
+        .flatMap(users =>
+          groupsT.map { groups =>
+            val data = SearchResult(users, groups)
+            Ok(Json.toJson(data))
+          }
+        )
+        .valueOr { error =>
+          eventService.logError(error)
+          InternalServerError(Json.toJson(SearchResult(Nil, Nil)))
+        }
     }
 
   def editUser(userId: UUID): Action[AnyContent] =
