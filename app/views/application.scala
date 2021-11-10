@@ -54,36 +54,37 @@ object application {
                 )
               ),
               tbody(
-                groupsWithUsersThatCanBeInvited.sortBy(_._1.name).flatMap { case (group, users) =>
-                  users
-                    .sortBy(_.name)
-                    .map(user =>
-                      tr(
-                        td(
-                          label(
-                            cls := "mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events",
-                            input(
-                              `type` := "checkbox",
-                              cls := "mdl-checkbox__input",
-                              name := "users[]",
-                              value := user.id.toString
-                            ),
+                groupsWithUsersThatCanBeInvited.sortBy { case (group, _) => group.name }.flatMap {
+                  case (group, users) =>
+                    users
+                      .sortBy(_.name)
+                      .map(user =>
+                        tr(
+                          td(
+                            label(
+                              cls := "mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events",
+                              input(
+                                `type` := "checkbox",
+                                cls := "mdl-checkbox__input",
+                                name := "users[]",
+                                value := user.id.toString
+                              ),
+                            )
+                          ),
+                          td(
+                            cls := "mdl-data-table__cell--non-numeric",
+                            group.name
+                          ),
+                          td(
+                            cls := "mdl-data-table__cell--non-numeric",
+                            user.name
+                          ),
+                          td(
+                            cls := "mdl-data-table__cell--non-numeric",
+                            user.qualite
                           )
-                        ),
-                        td(
-                          cls := "mdl-data-table__cell--non-numeric",
-                          group.name
-                        ),
-                        td(
-                          cls := "mdl-data-table__cell--non-numeric",
-                          user.name
-                        ),
-                        td(
-                          cls := "mdl-data-table__cell--non-numeric",
-                          user.qualite
                         )
                       )
-                    )
                 }
               )
             )
