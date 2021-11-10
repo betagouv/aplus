@@ -50,7 +50,8 @@ object Organisation {
     all.find(_.shortName.stripSpecialChars === standardShortName)
   }
 
-  def byId(id: Id): Option[Organisation] = all.find(org => org.id === id)
+  private lazy val byIdMap = all.map(organisation => (organisation.id, organisation)).toMap
+  def byId(id: Id): Option[Organisation] = byIdMap.get(id)
 
   val association = Organisation("Association", "Association")
   val cafId = Organisation.Id("CAF")

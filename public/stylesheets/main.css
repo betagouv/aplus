@@ -1063,3 +1063,8 @@ Tabs
     border: 1px solid #9E9E9E;
     border-radius: 8px;
 }
+
+.row--disabled {
+  background-color: grey !important;
+  text-decoration: line-through;
+}

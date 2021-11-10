@@ -155,6 +155,10 @@ object EventType {
 
   object MasqueradeUnauthorized extends Warn
 
+  object SearchUsersDone extends Info
+  object SearchUsersNotAuthorized extends Warn
+  object SearchUsersError extends Error
+
   // Signups
   object SignupFormShowed extends Info
   object SignupFormValidationError extends Warn

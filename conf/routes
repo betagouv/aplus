@@ -113,7 +113,7 @@ GET         /status                                                             
 
 GET         /api/deploiement/france-service                                                  controllers.ApiController.franceServiceDeployment
 GET         /api/deploiement/operateurs                                                      controllers.ApiController.deploymentData
-GET         /api/territoires/:areaId/utilisateurs                                            controllers.UserController.allJson(areaId: java.util.UUID)
+GET         /api/search                                                                      controllers.UserController.search
 
 # Javascript resource
 GET         /jsRoutes                                                                        controllers.JavascriptController.javascriptRoutes

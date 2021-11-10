@@ -59,6 +59,8 @@ object Keys {
     val limit: String = "limit"
     val fromUserId: String = "fromUserId"
     val date: String = "date"
+    val searchQuery: String = "q"
+    val searchAreaId: String = "areaId"
 
     // Groups
 
