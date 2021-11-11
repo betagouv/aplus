@@ -737,6 +737,17 @@ case class UserController @Inject() (
   def validateAccount: Action[AnyContent] =
     loginAction.async { implicit request =>
       val user = request.currentUser
+
+      def validateRedirect(uncheckedRedirect: String): String =
+        if (PathValidator.isValidPath(uncheckedRedirect)) uncheckedRedirect
+        else {
+          eventService.log(
+            EventType.CGUInvalidRedirect,
+            s"URL de redirection après les CGU invalide '$uncheckedRedirect'"
+          )
+          routes.HomeController.index.url
+        }
+
       ValidateSubscriptionForm
         .validate(user)
         .bindFromRequest()
@@ -747,13 +758,14 @@ case class UserController @Inject() (
           },
           {
             case ValidateSubscriptionForm(
-                  Some(redirect),
+                  Some(uncheckedRedirect),
                   true,
                   firstName,
                   lastName,
                   qualite,
                   phoneNumber
-                ) if redirect =!= routes.ApplicationController.myApplications.url =>
+                ) if uncheckedRedirect =!= routes.ApplicationController.myApplications.url =>
+              val redirect = validateRedirect(uncheckedRedirect)
               validateAndUpdateUser(request.currentUser)(firstName, lastName, qualite, phoneNumber)
                 .map { updatedUser =>
                   val logMessage =
@@ -771,8 +783,9 @@ case class UserController @Inject() (
                   Redirect(routes.HomeController.welcome)
                     .flashing("success" -> "Merci d’avoir accepté les CGU")
                 }
-            case ValidateSubscriptionForm(Some(redirect), false, _, _, _, _)
-                if redirect =!= routes.ApplicationController.myApplications.url =>
+            case ValidateSubscriptionForm(Some(uncheckedRedirect), false, _, _, _, _)
+                if uncheckedRedirect =!= routes.ApplicationController.myApplications.url =>
+              val redirect = validateRedirect(uncheckedRedirect)
               Future(Redirect(Call("GET", redirect)))
             case ValidateSubscriptionForm(_, false, _, _, _, _) =>
               Future(Redirect(routes.HomeController.welcome))
