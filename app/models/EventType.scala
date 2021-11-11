@@ -66,6 +66,7 @@ object EventType {
   object CGUShowed extends Info
   object CGUValidated extends Info
   object CGUValidationError extends Error
+  object CGUInvalidRedirect extends Warn
   object ChangeAreaUnauthorized extends Warn
   object DeleteUserUnauthorized extends Warn
   object DeploymentDashboardUnauthorized extends Warn
@@ -142,6 +143,7 @@ object EventType {
   object StatsIncorrectSetup extends Warn
   object TryLoginByKey extends Info
   object UnknownEmail extends Warn
+  object LoginInvalidPath extends Warn
 
   object UserProfileShowed extends Info
   object UserProfileShowedError extends Error
