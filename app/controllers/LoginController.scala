@@ -6,14 +6,13 @@ import helper.{StringHelper, Time}
 import java.time.ZoneId
 import javax.inject.{Inject, Singleton}
 import models.EventType.{GenerateToken, UnknownEmail}
-import models.{Authorization, LoginToken, User}
+import models.{Authorization, EventType, LoginToken, User}
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
 import play.api.mvc.{Action, AnyContent, InjectedController, Request}
 import serializers.Keys
 import services.{EventService, NotificationService, SignupService, TokenService, UserService}
 import views.home.LoginPanel
-
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -159,7 +158,16 @@ class LoginController @Inject() (
         request.getQueryString(Keys.QueryParam.token),
         request.getQueryString(Keys.QueryParam.path)
       ) match {
-        case (Some(token), Some(path)) =>
+        case (Some(token), Some(uncheckedPath)) =>
+          val path =
+            if (PathValidator.isValidPath(uncheckedPath)) uncheckedPath
+            else {
+              eventService.logSystem(
+                EventType.LoginInvalidPath,
+                s"Redirection invalide après le login '$uncheckedPath'"
+              )
+              routes.HomeController.index.url
+            }
           Ok(
             views.html.magicLinkAntiConsumptionPage(
               token = token,
