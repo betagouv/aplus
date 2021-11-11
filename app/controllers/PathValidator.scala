@@ -8,7 +8,10 @@ import scala.util.matching.Regex
 
 object PathValidator {
 
-  // We cannot check a url with Play's router
+  // We put in the whitelist paths used in emails and
+  // paths that might be used as bookmarks.
+  //
+  // Note that we cannot use Play's router to validate an url, hence the regexes.
   private val pathWhitelist: List[Regex] = {
     val placeholder = "00000000-0000-0000-0000-000000000000"
     val placeholderUUID = UUID.fromString(placeholder)
@@ -20,8 +23,6 @@ object PathValidator {
       routes.ApplicationController.myApplications,
       routes.ApplicationController.show(placeholderUUID),
       routes.MandatController.mandat(placeholderUUID),
-      routes.ApplicationController.stats,
-      routes.SignupController.signupForm,
       routes.ApplicationController.stats,
       routes.UserController.showEditProfile,
       routes.UserController.home,

@@ -737,6 +737,17 @@ case class UserController @Inject() (
   def validateAccount: Action[AnyContent] =
     loginAction.async { implicit request =>
       val user = request.currentUser
+
+      def validateRedirect(uncheckedRedirect: String): String =
+        if (PathValidator.isValidPath(uncheckedRedirect)) uncheckedRedirect
+        else {
+          eventService.log(
+            EventType.CGUInvalidRedirect,
+            s"URL de redirection après les CGU invalide '$uncheckedRedirect'"
+          )
+          routes.HomeController.index.url
+        }
+
       ValidateSubscriptionForm
         .validate(user)
         .bindFromRequest()
@@ -754,15 +765,7 @@ case class UserController @Inject() (
                   qualite,
                   phoneNumber
                 ) if uncheckedRedirect =!= routes.ApplicationController.myApplications.url =>
-              val redirect =
-                if (PathValidator.isValidPath(uncheckedRedirect)) uncheckedRedirect
-                else {
-                  eventService.log(
-                    EventType.CGUInvalidRedirect,
-                    s"URL de redirection après les CGU invalide '$uncheckedRedirect'"
-                  )
-                  routes.HomeController.index.url
-                }
+              val redirect = validateRedirect(uncheckedRedirect)
               validateAndUpdateUser(request.currentUser)(firstName, lastName, qualite, phoneNumber)
                 .map { updatedUser =>
                   val logMessage =
@@ -782,15 +785,7 @@ case class UserController @Inject() (
                 }
             case ValidateSubscriptionForm(Some(uncheckedRedirect), false, _, _, _, _)
                 if uncheckedRedirect =!= routes.ApplicationController.myApplications.url =>
-              val redirect =
-                if (PathValidator.isValidPath(uncheckedRedirect)) uncheckedRedirect
-                else {
-                  eventService.log(
-                    EventType.CGUInvalidRedirect,
-                    s"URL de redirection après les CGU invalide '$uncheckedRedirect'"
-                  )
-                  routes.HomeController.index.url
-                }
+              val redirect = validateRedirect(uncheckedRedirect)
               Future(Redirect(Call("GET", redirect)))
             case ValidateSubscriptionForm(_, false, _, _, _, _) =>
               Future(Redirect(routes.HomeController.welcome))
