@@ -198,7 +198,11 @@ class UserGroupService @Inject() (
       Try(
         db.withConnection { implicit connection =>
           val query =
-            StringHelper.commonStringInputNormalization(searchQuery).replace(' ', '+') + ":*"
+            StringHelper
+              .commonStringInputNormalization(searchQuery)
+              .replace(' ', '+')
+              .replace('@', '+')
+              .replace('.', '+') + ":*"
           SQL(s"""SELECT $fieldsInSelect
                   FROM "user_group"
                   WHERE (
