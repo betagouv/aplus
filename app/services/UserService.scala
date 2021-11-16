@@ -204,7 +204,11 @@ class UserService @Inject() (
       Try(
         db.withConnection { implicit connection =>
           val query =
-            StringHelper.commonStringInputNormalization(searchQuery).replace(' ', '+') + ":*"
+            StringHelper
+              .commonStringInputNormalization(searchQuery)
+              .replace(' ', '+')
+              .replace('@', '+') // emails are considered single tokens
+              .replace('.', '+') + ":*"
           SQL(s"""SELECT $fieldsInSelect
                   FROM "user"
                   WHERE (
