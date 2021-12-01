@@ -2,12 +2,103 @@ package views
 
 import cats.syntax.all._
 import controllers.routes.ApplicationController
+import helpers.forms.CSRFInput
+import java.util.UUID
 import models.{Application, Area, Authorization, User, UserGroup}
+import org.webjars.play.WebJarsUtil
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
 import serializers.Keys
 
 object application {
+
+  def closeApplicationModal(
+      applicationId: UUID
+  )(implicit webJarsUtil: WebJarsUtil, request: RequestHeader): Tag =
+    tag("dialog")(
+      cls := "mdl-dialog",
+      id := "dialog-terminate",
+      h4(
+        cls := "mdl-dialog__title",
+        "Est-ce que la réponse vous semble utile pour l'usager ?"
+      ),
+      form(
+        action := ApplicationController.terminate(applicationId).path,
+        method := ApplicationController.terminate(applicationId).method,
+        CSRFInput,
+        div(
+          cls := "mdl-dialog__content",
+          div(
+            cls := "inputs--row",
+            input(
+              id := "yes",
+              cls := "input--sweet",
+              `type` := "radio",
+              name := "usefulness",
+              value := "Oui"
+            ),
+            label(
+              `for` := "yes",
+              img(cls := "input__icon", src := webJarsUtil.locate("1f600.svg").url.get, "Oui")
+            ),
+            input(
+              id := "neutral",
+              cls := "input--sweet",
+              `type` := "radio",
+              name := "usefulness",
+              value := "Je ne sais pas"
+            ),
+            label(
+              `for` := "neutral",
+              img(cls := "input__icon", src := webJarsUtil.locate("1f610.svg").url.get),
+              span(style := "width: 100%", "Je ne sais pas")
+            ),
+            input(
+              id := "no",
+              cls := "input--sweet",
+              `type` := "radio",
+              name := "usefulness",
+              value := "Non"
+            ),
+            label(
+              `for` := "no",
+              img(cls := "input__icon", src := webJarsUtil.locate("1f61e.svg").url.get, "Non")
+            )
+          ),
+          br,
+          b("Vous devez sélectionner une réponse pour archiver la demande.")
+        ),
+        div(
+          cls := "mdl-dialog__actions",
+          button(
+            id := "close-dialog-quit",
+            `type` := "button",
+            cls := "mdl-button mdl-button--raised",
+            "Quitter"
+          ),
+          button(
+            `type` := "submit",
+            disabled := "disabled",
+            cls := "mdl-button mdl-button--raised mdl-button--colored",
+            "Archiver"
+          )
+        )
+      )
+    )
+
+  def reopenButton(applicationId: UUID)(implicit request: RequestHeader): Tag =
+    div(
+      cls := "mdl-cell mdl-cell--3-col mdl-cell--9-offset-desktop mdl-cell--12-col-phone",
+      form(
+        action := ApplicationController.reopen(applicationId).path,
+        method := ApplicationController.reopen(applicationId).method,
+        CSRFInput,
+        button(
+          cls := "mdl-button mdl-button--raised mdl-button--primary mdl-js-button do-not-print single--width-100pc",
+          "Réouvrir l’échange"
+        )
+      )
+    )
 
   def inviteForm(
       currentUser: User,
