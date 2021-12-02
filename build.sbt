@@ -93,7 +93,7 @@ libraryDependencies ++= Seq(
   "com.google.guava" % "guava" % "28.1-jre",
   "com.github.tototoshi" %% "scala-csv" % "1.3.8",
   ws,
-  "com.lihaoyi" %% "scalatags" % "0.10.0",
+  "com.lihaoyi" %% "scalatags" % "0.11.0",
   "org.typelevel" %% "cats-core" % "2.6.1",
   // To ensure that the version of jackson that do not have
   // known security vulnerabilities is used
