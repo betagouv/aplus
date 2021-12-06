@@ -15,14 +15,7 @@
 
   }
 
-
-    <dialog class="mdl-dialog dialog--50percent-width" id="dialog-delete-group">
-        <h4 class="mdl-dialog__title">Veuillez confirmer la suppression du groupe.</h4>
-        <div class="mdl-dialog__actions">
-            <button type="button" class="mdl-button mdl-button" id="dialog-delete-group-cancel">Annuler</button>
-            <button type="button" class="mdl-button mdl-button" id="dialog-delete-group-confirm" data-uuid="@userGroup.id">Confirmer</button>
-        </div>
-    </dialog>
+  @toHtml(views.group.deleteGroupModal(userGroup))
 
 }
 
