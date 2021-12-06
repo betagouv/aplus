@@ -65,7 +65,7 @@ GET         /utilisateurs                                                       
 GET         /utilisateurs/:userId                                                            controllers.UserController.editUser(userId: java.util.UUID)
 POST        /utilisateurs/:userId                                                            controllers.UserController.editUserPost(userId: java.util.UUID)
 POST        /utilisateurs/:userId/reactivation                                               controllers.GroupController.enableUser(userId: java.util.UUID)
-GET         /user/delete/unused/:userId                                                      controllers.UserController.deleteUnusedUserById(userId: java.util.UUID)
+POST        /utilisateurs/:userId/suppression                                                controllers.UserController.deleteUnusedUserById(userId: java.util.UUID)
 
 
 # Importation
@@ -84,7 +84,7 @@ GET         /groups/:groupId                                                    
 POST        /groups/:groupId                                                                 controllers.GroupController.editGroupPost(groupId: java.util.UUID)
 GET         /groups/:groupId/users                                                           controllers.UserController.add(groupId: java.util.UUID)
 POST        /groups/:groupId/users                                                           controllers.UserController.addPost(groupId: java.util.UUID)
-GET         /group/delete/unused/:groupId                                                    controllers.GroupController.deleteUnusedGroupById(groupId: java.util.UUID)
+POST        /groups/:groupId/suppression                                                     controllers.GroupController.deleteUnusedGroupById(groupId: java.util.UUID)
 
 # Events
 GET         /events                                                                          controllers.UserController.allEvents
