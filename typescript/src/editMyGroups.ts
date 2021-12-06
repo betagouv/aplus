@@ -8,11 +8,6 @@ const closeModalClass = "close-modal"
 
 
 
-setupRemoveUserFromGroupModal();
-
-
-
-
 function setupRemoveUserFromGroupModal() {
 
   Array.from(document.querySelectorAll<HTMLElement>("." + removeUserFromGroupButtonClass))
@@ -32,3 +27,7 @@ function setupRemoveUserFromGroupModal() {
     })
 
 }
+
+
+
+setupRemoveUserFromGroupModal();
