@@ -9,6 +9,7 @@ import org.webjars.play.WebJarsUtil
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
 import serializers.Keys
+import views.helpers.common.webJarImg
 
 object application {
 
@@ -39,7 +40,7 @@ object application {
             ),
             label(
               `for` := "yes",
-              img(cls := "input__icon", src := webJarsUtil.locate("1f600.svg").url.get, "Oui")
+              webJarImg("1f600.svg")(cls := "input__icon", "Oui"),
             ),
             input(
               id := "neutral",
@@ -50,7 +51,7 @@ object application {
             ),
             label(
               `for` := "neutral",
-              img(cls := "input__icon", src := webJarsUtil.locate("1f610.svg").url.get),
+              webJarImg("1f610.svg")(cls := "input__icon"),
               span(style := "width: 100%", "Je ne sais pas")
             ),
             input(
@@ -62,7 +63,7 @@ object application {
             ),
             label(
               `for` := "no",
-              img(cls := "input__icon", src := webJarsUtil.locate("1f61e.svg").url.get, "Non")
+              webJarImg("1f61e.svg")(cls := "input__icon", "Non"),
             )
           ),
           br,
