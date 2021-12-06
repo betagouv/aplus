@@ -8,7 +8,7 @@
 @(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[EditUserFormData], uneditedUser: User, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 
-@main(currentUser, currentUserRights)(s"Utilisateur ${form("name").value.getOrElse("")}") {
+@main(currentUser, currentUserRights, modals = toHtml(views.user.deleteUserModal(uneditedUser)))(s"Utilisateur ${form("name").value.getOrElse("")}") {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
 }{
 @defining(form.value.exists(user => Authorization.canEditOtherUser(uneditedUser)(currentUserRights))) { canEditUser =>
@@ -237,17 +237,6 @@
         </p>
     </div>
     }
-
-    <dialog class="mdl-dialog" id="dialog-delete-user">
-        <h4 class="mdl-dialog__title">Suppression d'un utilisateur inutilisé.</h4>
-        <div class="mdl-dialog__content">
-            <b>Êtes-vous certain de vouloir supprimer le compte de cet utilisateur?</b>
-        </div>
-        <div class="mdl-dialog__actions">
-            <button id="delete-user-modal-confirm-button" type="button" class="mdl-button mdl-button--raised mdl-button--colored" data-user-id="@uneditedUser.id">Confirmer</button>
-            <button id="delete-user-modal-quit-button" type="button" class="mdl-button mdl-button--raised">Annuler</button>
-        </div>
-    </dialog>
 
     }
 }
