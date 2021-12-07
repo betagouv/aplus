@@ -1359,11 +1359,18 @@ case class ApplicationController @Inject() (
       }
     }
 
+  private val closeApplicationForm = Form(
+    single(
+      "usefulness" -> text,
+    )
+  )
+
   def terminate(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application: Application =>
-        request.getQueryString(Keys.QueryParam.usefulness) match {
-          case None =>
+        val form = closeApplicationForm.bindFromRequest()
+        form.fold(
+          formWithErrors => {
             eventService
               .log(
                 TerminateIncompleted,
@@ -1371,11 +1378,12 @@ case class ApplicationController @Inject() (
                 application = application.some
               )
             Future(
-              BadGateway(
+              InternalServerError(
                 s"L'utilité de la demande n'est pas présente, il s'agit sûrement d'une erreur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
               )
             )
-          case Some(usefulness) =>
+          },
+          usefulness => {
             val finalUsefulness =
               usefulness.some.filter(_ => request.currentUser.id === application.creatorUserId)
             if (application.canBeClosedBy(request.currentUser)) {
@@ -1418,7 +1426,8 @@ case class ApplicationController @Inject() (
                 Unauthorized("Seul le créateur de la demande ou un expert peut archiver la demande")
               )
             }
-        }
+          }
+        )
       }
     }
 
