@@ -49,7 +49,6 @@ object Keys {
     val areaId: String = "areaId"
     val action: String = "action"
     val uniquementFs: String = "uniquement-fs"
-    val usefulness: String = "usefulness"
     val filterIsOpen: String = "filtre-ouverte"
 
     // Users

@@ -4,12 +4,35 @@ import cats.syntax.all._
 import constants.Constants
 import controllers.routes.{ApplicationController, Assets, HomeController}
 import org.webjars.play.WebJarsUtil
+import play.api.Logger
 import play.api.mvc.Flash
+import scala.util.{Failure, Success}
 import scalatags.Text.all._
 import scalatags.Text.tags2
 import views.MainInfos
 
 object common {
+
+  private val logger = Logger("views")
+
+  /** See
+    * https://github.com/webjars/webjars-play/blob/v2.8.0-1/src/main/scala/org/webjars/play/WebJarsUtil.scala#L35
+    */
+  def webJarAsset(file: String, urlToTag: String => Tag)(implicit
+      webJarsUtil: WebJarsUtil
+  ): Frag = {
+    val asset = webJarsUtil.locate(file)
+    asset.url match {
+      case Success(url) => urlToTag(url)
+      case Failure(err) =>
+        val errMsg = s"couldn't find asset ${asset.path}"
+        logger.error(errMsg, err)
+        frag()
+    }
+  }
+
+  def webJarImg(file: String)(frags: Modifier*)(implicit webJarsUtil: WebJarsUtil): Frag =
+    webJarAsset(file, url => img(src := url, frags))
 
   def optionalDemoVersionHeader(implicit mainInfos: MainInfos): Option[Frag] =
     mainInfos.isDemo.some
