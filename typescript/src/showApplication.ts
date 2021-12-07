@@ -6,7 +6,6 @@ const reviewValidationButton = <HTMLButtonElement | null>document.getElementById
 const customAnswerInput = <HTMLInputElement | null>document.getElementById('custom-answer');
 const nonInstructorAnswerInput = <HTMLInputElement | null>document.getElementById('non-instructor-answer');
 const dialog = <HTMLDialogElement | null>document.querySelector('#dialog-terminate');
-const reopenButton = <HTMLElement | null>document.getElementById('reopen-button');
 const archiveButton1 = document.getElementById('archive-button-1');
 const archiveButton2 = document.getElementById('archive-button-2');
 const archiveButton3 = document.getElementById('archive-button-3');
@@ -14,7 +13,6 @@ const quickAnswer1Button = document.getElementById('option-1');
 const quickAnswer2Button = document.getElementById('option-2');
 const quickAnswer3Button = document.getElementById('option-3');
 const quickAnswer4Button = document.getElementById('option-4');
-const closeDialogTerminateButton = document.getElementById('close-dialog-terminate');
 const closeDialogQuitButton = document.getElementById('close-dialog-quit');
 
 
@@ -30,16 +28,6 @@ const showDialog = () => {
     .forEach((input: HTMLInputElement) => input.checked = false);
   dialog?.showModal();
 }
-
-const confirmTerminate = () => {
-  const targetUrl = closeDialogTerminateButton?.dataset['targetUrl'];
-  const checked = <HTMLInputElement | null>document.querySelector('input[name="usefulness"]:checked');
-  if (checked != null) {
-    const usefulness = checked.value;
-    document.location.href = targetUrl + '?usefulness=' + usefulness;
-  }
-}
-
 
 const enableButtonAndDisableCustomAnswer = () => {
   if (reviewValidationButton) {
@@ -66,7 +54,6 @@ quickAnswer1Button?.addEventListener('click', enableButtonAndDisableCustomAnswer
 quickAnswer2Button?.addEventListener('click', enableButtonAndDisableCustomAnswer);
 quickAnswer3Button?.addEventListener('click', enableButtonAndDisableCustomAnswer);
 quickAnswer4Button?.addEventListener('click', disableButtonAndEnableCustomAnswer);
-closeDialogTerminateButton?.addEventListener('click', confirmTerminate);
 closeDialogQuitButton?.addEventListener('click', closeDialog);
 archiveButton1?.addEventListener('click', showDialog);
 archiveButton2?.addEventListener('click', showDialog);
@@ -82,16 +69,6 @@ if (nonInstructorAnswerInput && reviewValidationButton) {
   nonInstructorAnswerInput.addEventListener("keyup", () => {
     reviewValidationButton.disabled = nonInstructorAnswerInput.value === '';
   });
-}
-
-
-
-if (reopenButton != null) {
-  const targetUrl = reopenButton.dataset['targetUrl'];
-  if (targetUrl != null) {
-    const reopen = () => document.location.href = targetUrl;
-    reopenButton.addEventListener('click', () => reopen());
-  }
 }
 
 

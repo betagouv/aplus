@@ -4,14 +4,11 @@ import cats.syntax.all._
 import constants.BuildInfo
 import controllers.routes.{Assets, JavascriptController}
 import org.webjars.play.WebJarsUtil
-import play.api.Logger
-import scala.util.{Failure, Success}
 import scalatags.Text.all._
 import scalatags.Text.tags2
+import views.helpers.common.webJarAsset
 
 object head {
-
-  private val logger = Logger("views")
 
   def main(headTitle: String, additionalTags: Modifier = modifier())(implicit
       webJarsUtil: WebJarsUtil
@@ -82,22 +79,6 @@ object head {
       `type` := "application/javascript",
       src := Assets.versioned(path).url
     )
-
-  /** See
-    * https://github.com/webjars/webjars-play/blob/v2.8.0-1/src/main/scala/org/webjars/play/WebJarsUtil.scala#L35
-    */
-  private def webJarAsset(file: String, urlToTag: String => Tag)(implicit
-      webJarsUtil: WebJarsUtil
-  ): Frag = {
-    val asset = webJarsUtil.locate(file)
-    asset.url match {
-      case Success(url) => urlToTag(url)
-      case Failure(err) =>
-        val errMsg = s"couldn't find asset ${asset.path}"
-        logger.error(errMsg, err)
-        frag()
-    }
-  }
 
   /** See
     * https://github.com/webjars/webjars-play/blob/v2.8.0-1/src/main/scala/org/webjars/play/WebJarsUtil.scala#L51
