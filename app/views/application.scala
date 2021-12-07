@@ -78,6 +78,7 @@ object application {
             "Quitter"
           ),
           button(
+            id := "close-dialog-terminate",
             `type` := "submit",
             disabled := "disabled",
             cls := "mdl-button mdl-button--raised mdl-button--colored",
