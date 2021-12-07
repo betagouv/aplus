@@ -5,9 +5,9 @@ on: [push, pull_request]
 jobs:
   scala-build:
     name: Scala Build
-
     runs-on: ubuntu-latest
-
+    env:
+      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK
@@ -45,7 +45,7 @@ jobs:
       run: "sbt coverage test coverageReport || sbt coverage test coverageReport || sbt coverage test coverageReport"
     - name: Run codacy-coverage-reporter
       uses: codacy/codacy-coverage-reporter-action@v1
-      if: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      if: ${{ env.CODACY_PROJECT_TOKEN }}
       with:
         project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
         coverage-reports: target/scala-2.13/coverage-report/cobertura.xml
