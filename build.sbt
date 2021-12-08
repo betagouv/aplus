@@ -93,8 +93,8 @@ libraryDependencies ++= Seq(
   "com.google.guava" % "guava" % "28.1-jre",
   "com.github.tototoshi" %% "scala-csv" % "1.3.8",
   ws,
-  "com.lihaoyi" %% "scalatags" % "0.10.0",
-  "org.typelevel" %% "cats-core" % "2.6.1",
+  "com.lihaoyi" %% "scalatags" % "0.11.0",
+  "org.typelevel" %% "cats-core" % "2.7.0",
   // To ensure that the version of jackson that do not have
   // known security vulnerabilities is used
   // It is also compatible with play-json
@@ -113,7 +113,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "font-awesome" % "5.15.4",
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "5.4.1"
+libraryDependencies += "io.sentry" % "sentry-logback" % "5.4.3"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
