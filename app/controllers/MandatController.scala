@@ -115,6 +115,7 @@ case class MandatController @Inject() (
               eventService.logSystem(
                 error.eventType,
                 error.description,
+                error.unsafeData,
                 underlyingException = error.underlyingException
               )
               Future(InternalServerError)
@@ -128,6 +129,7 @@ case class MandatController @Inject() (
                       eventService.logSystem(
                         error.eventType,
                         error.description,
+                        error.unsafeData,
                         underlyingException = error.underlyingException
                       )
                       if (error.eventType === EventType.MandatNotFound)
@@ -145,6 +147,7 @@ case class MandatController @Inject() (
                                 error.eventType,
                                 (s"Après ajout de la réponse par SMS ${sms.apiId.underlying}. " +
                                   error.description),
+                                error.unsafeData,
                                 underlyingException = error.underlyingException
                               )
                               Ok

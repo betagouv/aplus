@@ -40,7 +40,8 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
 
   def log(
       event: EventType,
-      description: String,
+      descriptionSanitized: String,
+      additionalUnsafeData: Option[String] = None,
       application: Option[Application] = None,
       /** Not the logged-in `User`, but if the op is about some other `User`. */
       involvesUser: Option[UUID] = None,
@@ -51,7 +52,10 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       request.currentUser,
       request.remoteAddress,
       event.code,
-      s"$description. ${request.method} ${request.path}",
+      // Note: here we should have gone through the router, so
+      //       request.path is supposed to be valid
+      s"$descriptionSanitized. ${request.method} ${request.path}",
+      additionalUnsafeData,
       application,
       involvesUser,
       underlyingException
@@ -64,7 +68,8 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
   )(implicit request: RequestWithUserData[_]) =
     log(
       event = error.eventType,
-      description = error.description,
+      descriptionSanitized = error.description,
+      additionalUnsafeData = error.unsafeData,
       application = application,
       involvesUser = involvesUser,
       underlyingException = error.underlyingException
@@ -78,7 +83,8 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
   )(implicit request: Request[_]) =
     logSystem(
       event = error.eventType,
-      description = error.description,
+      descriptionSanitized = error.description,
+      additionalUnsafeData = error.unsafeData,
       application = application,
       involvesUser = involvesUser,
       underlyingException = error.underlyingException
@@ -91,7 +97,8 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
   /** When there are no logged in user */
   def logSystem(
       event: EventType,
-      description: String,
+      descriptionSanitized: String,
+      additionalUnsafeData: Option[String] = None,
       application: Option[Application] = None,
       involvesUser: Option[UUID] = None,
       underlyingException: Option[Throwable] = None
@@ -100,7 +107,8 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       currentUser = User.systemUser,
       request.remoteAddress,
       event.code,
-      s"$description. ${request.method} ${request.path}",
+      s"$descriptionSanitized. ${request.method} ${request.path}",
+      additionalUnsafeData,
       application = application,
       involvesUser = involvesUser,
       underlyingException = underlyingException
@@ -110,11 +118,16 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       currentUser: User,
       remoteAddress: String,
       code: String,
-      description: String,
+      descriptionSanitized: String,
+      additionalUnsafeData: Option[String],
       application: Option[Application],
       involvesUser: Option[UUID],
       underlyingException: Option[Throwable]
   ): Unit = {
+    // DB type is 'text', but we don't want arbitrarily long strings here
+    val dbDescription = additionalUnsafeData.fold(descriptionSanitized)(unsafe =>
+      s"$descriptionSanitized [${unsafe.take(100000)}]"
+    )
     val eventId = UUID.randomUUID()
     val event = Event(
       eventId,
@@ -123,7 +136,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       currentUser.name,
       currentUser.id,
       Instant.now(),
-      description,
+      dbDescription,
       Area.notApplicable.id,
       application.map(_.id),
       involvesUser,
@@ -131,7 +144,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
     )
     addEvent(event)
 
-    val message = s"${currentUser.name}/$description [$eventId]"
+    val message = s"${currentUser.name}/$descriptionSanitized [$eventId]"
     level match {
       case "INFO" =>
         underlyingException.fold(logger.info(message))(e => logger.info(message, e))

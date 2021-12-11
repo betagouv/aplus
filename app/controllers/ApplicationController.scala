@@ -253,7 +253,7 @@ case class ApplicationController @Inject() (
             case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
               eventService.log(
                 ApplicationCreationInvalid,
-                s"L'utilisateur essaie de créer une demande invalide ${formWithErrors.errors.map(_.message)}"
+                s"L'utilisateur essaie de créer une demande invalide ${formErrorsLog(formWithErrors)}"
               )
 
               BadRequest(
@@ -340,8 +340,8 @@ case class ApplicationController @Inject() (
                       eventService.log(
                         ApplicationLinkedToMandatError,
                         s"Erreur pour faire le lien entre le mandat $mandatId et la demande $applicationId",
-                        Some(application),
-                        underlyingException = Some(error)
+                        application = application.some,
+                        underlyingException = error.some
                       )
                     case Success(Left(error)) =>
                       eventService.logError(error, application = application.some)
@@ -349,7 +349,7 @@ case class ApplicationController @Inject() (
                       eventService.log(
                         ApplicationLinkedToMandat,
                         s"La demande ${application.id} a été liée au mandat $mandatId",
-                        Some(application)
+                        application = application.some
                       )
                   }
               }
@@ -364,7 +364,7 @@ case class ApplicationController @Inject() (
               eventService.log(
                 ApplicationCreationError,
                 s"La demande ${application.id} n'a pas pu être créée",
-                Some(application)
+                application = application.some
               )
               InternalServerError(
                 "Erreur Interne: Votre demande n'a pas pu être envoyée. Merci de réessayer ou de contacter l'administrateur"
@@ -621,9 +621,9 @@ case class ApplicationController @Inject() (
     loginAction.async { implicit request =>
       withUser(otherUserId) { otherUser: User =>
         asUserWithAuthorization(Authorization.canSeeOtherUserNonPrivateViews(otherUser))(
-          () =>
-            EventType.MasqueradeUnauthorized -> s"Accès non autorisé pour voir la page stats de $otherUserId",
-          errorInvolvesUser = Some(otherUser.id)
+          EventType.MasqueradeUnauthorized,
+          s"Accès non autorisé pour voir la page stats de $otherUserId",
+          errorInvolvesUser = otherUser.id.some
         ) { () =>
           LoginAction.readUserRights(otherUser).flatMap { userRights =>
             statsPage(routes.ApplicationController.statsAs(otherUserId), otherUser, userRights)
@@ -693,8 +693,8 @@ case class ApplicationController @Inject() (
     loginAction.async { implicit request =>
       withUser(userId) { otherUser: User =>
         asUserWithAuthorization(Authorization.canSeeOtherUserNonPrivateViews(otherUser))(
-          () =>
-            EventType.AllAsUnauthorized -> s"Accès non autorisé pour voir la liste des demandes de $userId",
+          EventType.AllAsUnauthorized,
+          s"Accès non autorisé pour voir la liste des demandes de $userId",
           errorInvolvesUser = Some(otherUser.id)
         ) { () =>
           LoginAction.readUserRights(otherUser).map { userRights =>
@@ -916,7 +916,11 @@ case class ApplicationController @Inject() (
             }
 
             val openedTab = request.flash.get("opened-tab").getOrElse("answer")
-            eventService.log(ApplicationShowed, s"Demande $id consultée", Some(application))
+            eventService.log(
+              ApplicationShowed,
+              s"Demande $id consultée",
+              application = application.some
+            )
             Ok(
               views.html.showApplication(request.currentUser, request.rights)(
                 groupsWithUsersThatCanBeInvited,
@@ -983,7 +987,8 @@ case class ApplicationController @Inject() (
               } else {
                 eventService.log(
                   FileNotFound,
-                  s"La requête vers le serveur distant $url a échoué (status ${response.status})"
+                  s"La requête vers le serveur distant a échoué (status ${response.status})",
+                  s"Url '$url'".some
                 )
                 NotFound("Nous n'avons pas trouvé ce fichier")
               }
@@ -1049,7 +1054,7 @@ case class ApplicationController @Inject() (
             eventService.log(
               FileUnauthorized,
               s"L'accès aux fichiers sur la demande $applicationId n'est pas autorisé",
-              Some(application)
+              application = application.some
             )
             Future(
               Unauthorized(
@@ -1135,7 +1140,7 @@ case class ApplicationController @Inject() (
               eventService.log(
                 AnswerCreated,
                 s"La réponse ${answer.id} a été créée sur la demande $applicationId",
-                application.some
+                application = application.some
               )
               notificationsService.newAnswer(application, answer)
               Future(
@@ -1151,7 +1156,7 @@ case class ApplicationController @Inject() (
               eventService.log(
                 AnswerNotCreated,
                 s"La réponse ${answer.id} n'a pas été créée sur la demande $applicationId : problème BDD",
-                application.some
+                application = application.some
               )
               Future(InternalServerError("Votre réponse n'a pas pu être envoyée"))
             }
@@ -1312,7 +1317,7 @@ case class ApplicationController @Inject() (
               eventService.log(
                 AddExpertNotCreated,
                 s"L'invitation d'experts ${answer.id} n'a pas été créée sur la demande $applicationId : problème BDD",
-                Some(application)
+                application = application.some
               )
               InternalServerError("L'expert n'a pas pu être invité")
             }
@@ -1321,7 +1326,7 @@ case class ApplicationController @Inject() (
           eventService.log(
             AddExpertUnauthorized,
             s"L'invitation d'experts pour la demande $applicationId n'est pas autorisée",
-            Some(application)
+            application = application.some
           )
           Future(
             Unauthorized(
@@ -1343,17 +1348,17 @@ case class ApplicationController @Inject() (
               .filter(identity)
               .map { _ =>
                 val message = "La demande a bien été réouverte"
-                eventService.log(ReopenCompleted, message, application.some)
+                eventService.log(ReopenCompleted, message, application = application.some)
                 Redirect(routes.ApplicationController.myApplications).flashing(success -> message)
               }
               .recover { _ =>
                 val message = "La demande n'a pas pu être réouverte"
-                eventService.log(ReopenError, message, application.some)
+                eventService.log(ReopenError, message, application = application.some)
                 InternalServerError(message)
               }
           case false =>
             val message = s"Non autorisé à réouvrir la demande $applicationId"
-            eventService.log(ReopenUnauthorized, message, application.some)
+            eventService.log(ReopenUnauthorized, message, application = application.some)
             successful(Unauthorized(message))
         }
       }
@@ -1395,7 +1400,7 @@ case class ApplicationController @Inject() (
                   .log(
                     TerminateCompleted,
                     s"La demande $applicationId est archivée",
-                    Some(application)
+                    application = application.some
                   )
                 val successMessage =
                   s"""|La demande "${application.subject}" a bien été archivée. 
@@ -1408,7 +1413,7 @@ case class ApplicationController @Inject() (
                 eventService.log(
                   TerminateError,
                   s"La demande $applicationId n'a pas pu être archivée en BDD",
-                  Some(application)
+                  application = application.some
                 )
                 Future(
                   InternalServerError(
@@ -1420,7 +1425,7 @@ case class ApplicationController @Inject() (
               eventService.log(
                 TerminateUnauthorized,
                 s"L'utilisateur n'a pas le droit de clôturer la demande $applicationId",
-                Some(application)
+                application = application.some
               )
               Future(
                 Unauthorized("Seul le créateur de la demande ou un expert peut archiver la demande")

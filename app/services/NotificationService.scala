@@ -208,8 +208,9 @@ class NotificationService @Inject() (
         eventService.logErrorNoUser(
           Error.MiscException(
             EventType.SignupEmailError,
-            s"Impossible d'envoyer l'email de bienvenue à ${signup.email} pour la préinscription ${signup.id}",
-            e
+            s"Impossible d'envoyer l'email de bienvenue pour la préinscription ${signup.id}",
+            e,
+            s"Email ${signup.email}".some
           )
         )
       }
@@ -366,6 +367,7 @@ class NotificationService @Inject() (
           "0.0.0.0",
           EventType.WeeklyEmailsSent.code,
           s"Les emails hebdomadaires ont été envoyés ($count)",
+          None,
           None,
           None,
           None

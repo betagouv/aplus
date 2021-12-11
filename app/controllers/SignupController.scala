@@ -103,9 +103,8 @@ case class SignupController @Inject() (
                     // this is most likely a case of the email being already used for a user.
                     eventService.logSystem(
                       EventType.SignupFormError,
-                      s"Erreur lors de l'ajout d'un utilisateur par préinscription ${signupRequest.id} : " +
-                        errorMessage +
-                        s" Utilisateur ayant échoué : ${user.toLogString}"
+                      s"Erreur lors de l'ajout d'un utilisateur par préinscription ${signupRequest.id}.",
+                      s"Message : '$errorMessage' / Utilisateur ayant échoué : ${user.toLogString}".some
                     )
                     val userMessage =
                       "Une erreur imprévue est survenue. Ce n’est pas de votre faute. " +
@@ -122,8 +121,8 @@ case class SignupController @Inject() (
                       eventService.log(
                         EventType.SignupFormSuccessful,
                         s"Utilisateur créé via le formulaire d'inscription ${signupRequest.id} " +
-                          s"(créateur de la préinscription : ${signupRequest.invitingUserId}). " +
-                          s"Utilisateur : ${user.toLogString}",
+                          s"(créateur de la préinscription : ${signupRequest.invitingUserId})",
+                        s"Utilisateur : ${user.toLogString}".some,
                         involvesUser = signupRequest.invitingUserId.some
                       )(new RequestWithUserData(user, userRights, request))
                       Redirect(routes.HomeController.welcome)
@@ -142,18 +141,20 @@ case class SignupController @Inject() (
 
   def signupRequests: Action[AnyContent] =
     loginAction.async { implicit request: RequestWithUserData[AnyContent] =>
-      asUserWithAuthorization(Authorization.canSeeSignupsPage) { () =>
-        EventType.SignupsUnauthorized -> s"Accès non autorisé à la page des préinscriptions"
-      } { () =>
+      asUserWithAuthorization(Authorization.canSeeSignupsPage)(
+        EventType.SignupsUnauthorized,
+        s"Accès non autorisé à la page des préinscriptions"
+      ) { () =>
         showAllSignupsPage(AddSignupsFormData.form)
       }
     }
 
   def addSignupRequests: Action[AnyContent] =
     loginAction.async { implicit request =>
-      asUserWithAuthorization(Authorization.canSeeSignupsPage) { () =>
-        EventType.SignupsUnauthorized -> s"Tentative non autorisée d'ajout de préinscriptions"
-      } { () =>
+      asUserWithAuthorization(Authorization.canSeeSignupsPage)(
+        EventType.SignupsUnauthorized,
+        s"Tentative non autorisée d'ajout de préinscriptions"
+      ) { () =>
         AddSignupsFormData.form
           .bindFromRequest()
           .fold(
@@ -214,7 +215,8 @@ case class SignupController @Inject() (
                             notificationsService.newSignup(signup)
                             eventService.log(
                               EventType.SignupCreated,
-                              s"Préinscription créée ${signup.toLogString}"
+                              s"Préinscription ${signup.id} créée",
+                              s"${signup.toLogString}".some
                             )
                           }
                         }

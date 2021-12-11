@@ -12,6 +12,9 @@ object PlayFormHelper {
     s"($prettyKey : $prettyMessages)"
   }
 
+  /** According to Play's source, `error.format` does not contain form values (this is what we want
+    * here)
+    */
   def formErrorsLog(formWithErrors: Form[_])(implicit messages: MessagesProvider): String =
     formWithErrors.errors
       .map(error => "['" + error.key + "' => " + error.format + "]")

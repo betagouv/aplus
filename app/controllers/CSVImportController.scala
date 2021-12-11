@@ -68,11 +68,10 @@ case class CSVImportController @Inject() (
 
   def importUsersFromCSV: Action[AnyContent] =
     loginAction.async { implicit request =>
-      asAdmin(() => ImportUserUnauthorized -> "Accès non autorisé pour importer les utilisateurs") {
-        () =>
-          Future(
-            Ok(views.html.importUsersCSV(request.currentUser, request.rights)(csvImportContentForm))
-          )
+      asAdmin(ImportUserUnauthorized, "Accès non autorisé pour importer les utilisateurs") { () =>
+        Future(
+          Ok(views.html.importUsersCSV(request.currentUser, request.rights)(csvImportContentForm))
+        )
       }
     }
 
@@ -235,16 +234,17 @@ case class CSVImportController @Inject() (
     */
   def importUsersReview: Action[AnyContent] =
     loginAction.async { implicit request =>
-      asAdmin { () =>
-        ImportGroupUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
-      } { () =>
+      asAdmin(
+        ImportGroupUnauthorized,
+        "Accès non autorisé pour importer les utilisateurs"
+      ) { () =>
         csvImportContentForm
           .bindFromRequest()
           .fold(
             { csvImportContentFormWithError =>
               eventService.log(
                 CsvImportInputEmpty,
-                description = "Le champ d'import de CSV est vide ou le séparateur n'est pas défini."
+                "Le champ d'import de CSV est vide ou le séparateur n'est pas défini"
               )
               Future(
                 BadRequest(
@@ -265,7 +265,7 @@ case class CSVImportController @Inject() (
                     val csvImportContentFormWithError =
                       csvImportContentForm.fill(csvImportData).withGlobalError(error)
                     eventService
-                      .log(CSVImportFormError, description = "Erreur de formulaire Importation")
+                      .log(CSVImportFormError, "Erreur de formulaire Importation")
                     Future(
                       BadRequest(
                         views.html.importUsersCSV(request.currentUser, request.rights)(
@@ -349,15 +349,16 @@ case class CSVImportController @Inject() (
   /** Import the reviewed CSV. */
   def importUsersAfterReview: Action[AnyContent] =
     loginAction.async { implicit request =>
-      asAdmin(() =>
-        ImportUsersUnauthorized -> "Accès non autorisé pour importer les utilisateurs"
+      asAdmin(
+        ImportUsersUnauthorized,
+        "Accès non autorisé pour importer les utilisateurs"
       ) { () =>
         val currentDate = Time.nowParis()
         importUsersAfterReviewForm(currentDate)
           .bindFromRequest()
           .fold(
             { importUsersAfterReviewFormWithError =>
-              eventService.log(ImportUserFormError, description = "Erreur de formulaire de review")
+              eventService.log(ImportUserFormError, "Erreur de formulaire de review")
               Future(
                 BadRequest(
                   views.html.reviewUsersImport(request.currentUser, request.rights)(
@@ -379,11 +380,15 @@ case class CSVImportController @Inject() (
                 .add(groupsToInsert)
                 .fold(
                   { error: String =>
-                    val description = s"Impossible d'importer les groupes : $error"
-                    eventService.log(ImportUserError, description)
+                    eventService.log(
+                      ImportUserError,
+                      "Impossible d'importer les groupes",
+                      s"Erreur '$error'".some
+                    )
+                    val message = s"Impossible d'importer les groupes : $error"
                     val formWithError = importUsersAfterReviewForm(currentDate)
                       .fill(augmentedUserGroupInformation)
-                      .withGlobalError(description)
+                      .withGlobalError(message)
                     Future(
                       InternalServerError(
                         views.html
@@ -393,7 +398,11 @@ case class CSVImportController @Inject() (
                   },
                   { _ =>
                     groupsToInsert.foreach { userGroup =>
-                      eventService.log(UserGroupCreated, s"Groupe ajouté ${userGroup.toLogString}")
+                      eventService.log(
+                        UserGroupCreated,
+                        "Groupe ajouté",
+                        s"Groupe ${userGroup.toLogString}".some
+                      )
                     }
                     val usersToInsert: List[User] = augmentedUserGroupInformation
                       .flatMap(group => group.users.flatMap(user => toInsertableUser(user, group)))
@@ -415,11 +424,15 @@ case class CSVImportController @Inject() (
                       .add(usersToInsert)
                       .fold(
                         { error: String =>
-                          val description = s"Impossible d'importer les utilisateurs : $error"
-                          eventService.log(ImportUserError, description)
+                          eventService.log(
+                            ImportUserError,
+                            "Impossible d'importer les utilisateurs",
+                            s"Erreur : $error".some
+                          )
+                          val message = s"Impossible d'importer les utilisateurs : $error"
                           val formWithError = importUsersAfterReviewForm(currentDate)
                             .fill(augmentedUserGroupInformation)
-                            .withGlobalError(description)
+                            .withGlobalError(message)
                           Future(
                             InternalServerError(
                               views.html
@@ -434,7 +447,8 @@ case class CSVImportController @Inject() (
                             notificationsService.newUser(user)
                             eventService.log(
                               UserCreated,
-                              s"Utilisateur ajouté ${user.toLogString}",
+                              "Utilisateur ajouté",
+                              s"Utilisateur ${user.toLogString}".some,
                               involvesUser = Some(user.id)
                             )
                           }

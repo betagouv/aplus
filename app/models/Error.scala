@@ -3,9 +3,14 @@ package models
 sealed trait Error {
 
   /** The `description` as logged by `EventService` ie will be displayed in the admin events on the
-    * app
+    * app. It SHOULD NOT contain user controlled data (because it is logged to stdout).
     */
   def description: String
+
+  /** This is where arbitrary data controlled by users must be logged. This field is only saved in
+    * DB and not sent to stdout.
+    */
+  def unsafeData: Option[String]
 
   def eventType: EventType
 
@@ -15,13 +20,24 @@ sealed trait Error {
 
 object Error {
 
-  case class Authentication(eventType: EventType, description: String) extends Error
-  case class Authorization(eventType: EventType, description: String) extends Error
-  case class EntityNotFound(eventType: EventType, description: String) extends Error
-  case class Database(eventType: EventType, description: String) extends Error
+  case class Authentication(eventType: EventType, description: String, unsafeData: Option[String])
+      extends Error
 
-  case class SqlException(eventType: EventType, description: String, underlying: Throwable)
-      extends Error {
+  case class Authorization(eventType: EventType, description: String, unsafeData: Option[String])
+      extends Error
+
+  case class EntityNotFound(eventType: EventType, description: String, unsafeData: Option[String])
+      extends Error
+
+  case class Database(eventType: EventType, description: String, unsafeData: Option[String])
+      extends Error
+
+  case class SqlException(
+      eventType: EventType,
+      description: String,
+      underlying: Throwable,
+      unsafeData: Option[String]
+  ) extends Error {
     override val underlyingException = Some(underlying)
   }
 
@@ -29,18 +45,27 @@ object Error {
       eventType: EventType,
       description: String,
       status: Int,
-      underlying: Throwable
+      underlying: Throwable,
+      unsafeData: Option[String]
   ) extends Error {
     override val underlyingException = Some(underlying)
   }
 
-  case class Timeout(eventType: EventType, description: String, underlying: Throwable)
-      extends Error {
+  case class Timeout(
+      eventType: EventType,
+      description: String,
+      underlying: Throwable,
+      unsafeData: Option[String]
+  ) extends Error {
     override val underlyingException = Some(underlying)
   }
 
-  case class MiscException(eventType: EventType, description: String, underlying: Throwable)
-      extends Error {
+  case class MiscException(
+      eventType: EventType,
+      description: String,
+      underlying: Throwable,
+      unsafeData: Option[String]
+  ) extends Error {
     override val underlyingException = Some(underlying)
   }
 
