@@ -1,4 +1,4 @@
-# --- !Ups
+-- !Ups
 
 -- because answer_metadata depends on it
 DROP VIEW user_group_is_invited_on_application;
@@ -51,7 +51,7 @@ UNION
 
 
 
-# --- !Downs
+-- !Downs
 
 DROP VIEW user_group_is_invited_on_application;
 DROP VIEW answer_metadata;
