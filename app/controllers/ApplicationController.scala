@@ -466,7 +466,7 @@ case class ApplicationController @Inject() (
           myOpenApplications,
           myClosedApplications
         )
-      )
+      ).withHeaders(CACHE_CONTROL -> "no-store")
     }
 
   private def statsAggregates(applications: List[Application], users: List[User]): StatsData = {
@@ -796,7 +796,8 @@ case class ApplicationController @Inject() (
       eventService.log(MyCSVShowed, s"Visualise le CSV de mes demandes")
       Ok(csvContent)
         .withHeaders(
-          "Content-Disposition" -> s"""attachment; filename="aplus-demandes-$date.csv""""
+          CONTENT_DISPOSITION -> s"""attachment; filename="aplus-demandes-$date.csv"""",
+          CACHE_CONTROL -> "no-store"
         )
         .as("text/csv")
     }
@@ -928,7 +929,7 @@ case class ApplicationController @Inject() (
                 readSharedAccountUserSignature(request.session),
                 fileExpiryDayCount = filesExpirationInDays
               )
-            )
+            ).withHeaders(CACHE_CONTROL -> "no-store")
           }
         }
       }
@@ -951,7 +952,7 @@ case class ApplicationController @Inject() (
           { _: Path =>
             Some(filename)
           }
-        )
+        ).withHeaders(CACHE_CONTROL -> "no-store")
       )
     } else {
       filesSecondInstanceHost match {
@@ -979,7 +980,7 @@ case class ApplicationController @Inject() (
                   contentLength = contentLength,
                   `inline` = true,
                   fileName = Some(filename)
-                )
+                ).withHeaders(CACHE_CONTROL -> "no-store")
               } else {
                 eventService.log(
                   FileNotFound,

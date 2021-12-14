@@ -199,6 +199,7 @@ case class MandatController @Inject() (
           mandat => {
             eventService.log(EventType.MandatShowed, s"Mandat $rawId consulté")
             Ok(views.html.showMandat(request.currentUser, request.rights)(mandat))
+              .withHeaders(CACHE_CONTROL -> "no-store")
           }
         )
       )
