@@ -55,9 +55,8 @@ case class Application(
       .getOrElse(answers)
   }
 
-  lazy val allFiles: Map[String, Long] = {
+  lazy val allFiles: Map[String, Long] =
     files ++ answers.flatMap(_.files).flatten
-  }
 
   lazy val searchData = {
     val stripChars = "\"<>'"
