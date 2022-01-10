@@ -427,7 +427,7 @@ case class CSVImportController @Inject() (
                           eventService.log(
                             ImportUserError,
                             "Impossible d'importer les utilisateurs",
-                            s"Erreur : $error".some
+                            s"Erreur '$error'".some
                           )
                           val message = s"Impossible d'importer les utilisateurs : $error"
                           val formWithError = importUsersAfterReviewForm(currentDate)

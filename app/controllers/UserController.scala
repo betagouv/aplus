@@ -457,7 +457,7 @@ case class UserController @Inject() (
       withUser(userId, includeDisabled = true) { user: User =>
         asAdminOfUserZone(user)(
           DeleteUserUnauthorized,
-          s"Suppression de l'utilisateur $userId refusée."
+          s"Suppression de l'utilisateur $userId refusée"
         ) { () =>
           if (isAccountUsed(user)) {
             eventService.log(

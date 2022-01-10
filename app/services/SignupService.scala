@@ -147,7 +147,7 @@ class SignupService @Inject() (
             Error
               .Database(
                 EventType.SignupsError,
-                s"Nombre incorrect de lignes ($nrOfRows) lors de l'ajout de la préinscription.",
+                s"Nombre incorrect de lignes ($nrOfRows) lors de l'ajout de la préinscription",
                 s"Préinscription '$request'".some
               )
               .asLeft

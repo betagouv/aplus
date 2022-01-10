@@ -46,7 +46,7 @@ object Operators {
         .groupById(groupId)
         .fold({
           eventService
-            .log(UserGroupNotFound, "Tentative d'accès à un groupe inexistant.")
+            .log(UserGroupNotFound, "Tentative d'accès à un groupe inexistant")
           Future(NotFound("Groupe inexistant."))
         })({ group: UserGroup => payload(group) })
 
@@ -62,7 +62,7 @@ object Operators {
         } else {
           eventService.log(
             AdminOutOfRange,
-            "L'administrateur n'est pas dans son périmètre de responsabilité."
+            "L'administrateur n'est pas dans son périmètre de responsabilité"
           )
           Future(Unauthorized("Vous n'êtes pas en charge de la zone de ce groupe."))
         }
@@ -160,7 +160,7 @@ object Operators {
         if (request.currentUser.areas.intersect(user.areas).isEmpty) {
           eventService.log(
             AdminOutOfRange,
-            "L'administrateur n'est pas dans son périmètre de responsabilité."
+            "L'administrateur n'est pas dans son périmètre de responsabilité"
           )
           Future(Unauthorized("Vous n'êtes pas en charge de la zone de cet utilisateur."))
         } else {

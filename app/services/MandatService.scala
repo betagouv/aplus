@@ -81,7 +81,7 @@ class MandatService @Inject() (
             Left(
               Error.EntityNotFound(
                 EventType.MandatNotFound,
-                s"Tentative d'accès à un mandat non existant: ${id.underlying}",
+                s"Tentative d'accès à un mandat non existant : ${id.underlying}",
                 none
               )
             )
@@ -105,7 +105,7 @@ class MandatService @Inject() (
           Left(
             Error.Authorization(
               EventType.MandatUnauthorized,
-              s"Tentative d'accès à un mandat non autorisé: ${id.underlying}",
+              s"Tentative d'accès à un mandat non autorisé : ${id.underlying}",
               none
             )
           )

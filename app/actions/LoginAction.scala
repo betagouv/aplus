@@ -133,7 +133,7 @@ class LoginAction @Inject() (
           eventService.log(
             UserAccessDisabled,
             s"Utilisateur désactivé essaye d'accéder à une page",
-            s"Path ${request.path}}".some
+            s"Path ${request.path}".some
           )
           userNotLogged(
             s"Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème."
