@@ -72,7 +72,8 @@ class MandatService @Inject() (
           Error.SqlException(
             EventType.MandatError,
             s"Impossible d'accéder au mandat ${id.underlying}",
-            e
+            e,
+            none
           )
         )
         .flatMap {
@@ -80,7 +81,8 @@ class MandatService @Inject() (
             Left(
               Error.EntityNotFound(
                 EventType.MandatNotFound,
-                s"Tentative d'accès à un mandat non existant: ${id.underlying}"
+                s"Tentative d'accès à un mandat non existant : ${id.underlying}",
+                none
               )
             )
           case Some(mandat) => Right(mandat)
@@ -103,7 +105,8 @@ class MandatService @Inject() (
           Left(
             Error.Authorization(
               EventType.MandatUnauthorized,
-              s"Tentative d'accès à un mandat non autorisé: ${id.underlying}"
+              s"Tentative d'accès à un mandat non autorisé : ${id.underlying}",
+              none
             )
           )
         }
@@ -150,7 +153,8 @@ class MandatService @Inject() (
         Error.SqlException(
           EventType.MandatError,
           s"Impossible de créer un mandat par l'utilisateur ${user.id}",
-          error
+          error,
+          none
         )
       }
     }
@@ -171,7 +175,8 @@ class MandatService @Inject() (
             Error.SqlException(
               EventType.ApplicationLinkedToMandatError,
               s"Impossible de faire le lien entre le mandat $id et la demande $applicationId",
-              e
+              e,
+              none
             )
           ),
         (nrOfRows: Int) =>
@@ -182,7 +187,8 @@ class MandatService @Inject() (
               Error.Database(
                 EventType.ApplicationLinkedToMandatError,
                 s"Impossible de faire le lien entre le mandat $id et la demande $applicationId : " +
-                  s"nombre de lignes mises à jour incorrect ($nrOfRows)"
+                  s"nombre de lignes mises à jour incorrect ($nrOfRows)",
+                none
               )
             )
       )
@@ -205,7 +211,8 @@ class MandatService @Inject() (
           EventType.MandatError,
           s"Impossible d'ajouter le SMS ${sms.apiId.underlying} " +
             s"créé à ${sms.creationDate} au mandat $id",
-          e
+          e,
+          none
         )
       )
     )
@@ -231,7 +238,8 @@ class MandatService @Inject() (
                 Error.Database(
                   EventType.MandatNotFound,
                   s"Le SMS ${sms.apiId.underlying} émis à ${sms.creationDate} " +
-                    s"n'a pas de mandat en cours de validation toujours ouvert"
+                    s"n'a pas de mandat en cours de validation toujours ouvert",
+                  none
                 )
               )
             case Some(mandat) =>
@@ -252,7 +260,8 @@ class MandatService @Inject() (
             EventType.MandatError,
             s"Impossible d'ajouter le SMS ${sms.apiId.underlying} " +
               s"émis à ${sms.creationDate} à un mandat en cours",
-            e
+            e,
+            none
           )
         )
         .flatten
@@ -313,7 +322,8 @@ class MandatService @Inject() (
           Error.SqlException(
             EventType.WipeDataError,
             s"Impossible de supprimer les informations personnelles des mandats",
-            e
+            e,
+            none
           )
         )
     )

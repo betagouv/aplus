@@ -136,7 +136,7 @@ class ApplicationService @Inject() (
         result match {
           case None =>
             val message = s"Tentative d'accès à une application inexistante: $id"
-            Error.EntityNotFound(EventType.ApplicationNotFound, message).asLeft[Application]
+            Error.EntityNotFound(EventType.ApplicationNotFound, message, none).asLeft[Application]
           case Some(application) =>
             if (Authorization.canSeeApplication(application)(rights)) {
               if (Authorization.canSeePrivateDataOfApplication(application)(rights))
@@ -145,7 +145,7 @@ class ApplicationService @Inject() (
             } else {
               val message = s"Tentative d'accès à une application non autorisé: $id"
               Error
-                .Authorization(EventType.ApplicationUnauthorized, message)
+                .Authorization(EventType.ApplicationUnauthorized, message, none)
                 .asLeft[Application]
             }
         }

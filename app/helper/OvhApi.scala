@@ -108,7 +108,8 @@ final class OvhApi(
               Error.MiscException(
                 EventType.SmsSendError,
                 errorMessage,
-                new Exception(errorMessage)
+                new Exception(errorMessage),
+                none
               )
             )
           }
@@ -117,7 +118,8 @@ final class OvhApi(
             Error.MiscException(
               EventType.SmsSendError,
               errorMessage,
-              new Exception(errorMessage)
+              new Exception(errorMessage),
+              none
             )
           )
       }
@@ -150,8 +152,9 @@ final class OvhApi(
         Left(
           Error.MiscException(
             EventType.SmsCallbackError,
-            s"Impossible de lire le callback",
-            e
+            "Impossible de lire le callback",
+            e,
+            none
           )
         )
       )
@@ -255,7 +258,8 @@ final class OvhApi(
           new Exception(
             s"Unexpected response from OVH server (status ${response.status})" +
               s": $response - ${response.body}"
-          )
+          ),
+          s"Réponse '$response' / '${response.body}'".some
         )
         .asLeft
     }
@@ -266,9 +270,9 @@ final class OvhApi(
       errorDescription: String
   ): Either[Error, A] = e match {
     case e: java.util.concurrent.TimeoutException =>
-      Error.Timeout(errorType, errorDescription, e).asLeft
+      Error.Timeout(errorType, errorDescription, e, none).asLeft
     case e =>
-      Error.MiscException(errorType, errorDescription, e).asLeft
+      Error.MiscException(errorType, errorDescription, e, none).asLeft
   }
 
   private def requestHeaders(method: String, query: String, body: String): Seq[(String, String)] = {

@@ -46,16 +46,15 @@ object Operators {
         .groupById(groupId)
         .fold({
           eventService
-            .log(UserGroupNotFound, description = "Tentative d'accès à un groupe inexistant.")
+            .log(UserGroupNotFound, "Tentative d'accès à un groupe inexistant")
           Future(NotFound("Groupe inexistant."))
         })({ group: UserGroup => payload(group) })
 
-    def asAdminOfGroupZone(group: UserGroup)(event: () => (EventType, String))(
+    def asAdminOfGroupZone(group: UserGroup)(errorEventType: EventType, errorMessage: => String)(
         payload: () => Future[Result]
     )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
       if (not(request.currentUser.admin)) {
-        val (eventType, description) = event()
-        eventService.log(eventType, description = description)
+        eventService.log(errorEventType, errorMessage)
         Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
       } else {
         if (group.areaIds.forall(request.currentUser.areas.contains)) {
@@ -63,7 +62,7 @@ object Operators {
         } else {
           eventService.log(
             AdminOutOfRange,
-            description = "L'administrateur n'est pas dans son périmètre de responsabilité."
+            "L'administrateur n'est pas dans son périmètre de responsabilité"
           )
           Future(Unauthorized("Vous n'êtes pas en charge de la zone de ce groupe."))
         }
@@ -90,9 +89,8 @@ object Operators {
         .fold({
           eventService.log(
             UserNotFound,
-            description =
-              errorMessage.getOrElse(s"Tentative d'accès à un utilisateur inexistant ($userId)"),
-            involvesUser = Some(userId)
+            errorMessage.getOrElse(s"Tentative d'accès à un utilisateur inexistant ($userId)"),
+            involvesUser = userId.some
           )
           Future.successful(
             errorResult.getOrElse(NotFound(s"L'utilisateur n'existe pas."))
@@ -100,7 +98,8 @@ object Operators {
         })({ user: User => payload(user) })
 
     def asUserWithAuthorization(authorizationCheck: Authorization.Check)(
-        errorEvent: () => (EventType, String),
+        errorEventType: EventType,
+        errorMessage: => String,
         errorResult: Option[Result] = none,
         errorInvolvesUser: Option[UUID] = none,
     )(
@@ -109,36 +108,33 @@ object Operators {
       if (authorizationCheck(request.rights)) {
         payload()
       } else {
-        val (eventType, description) = errorEvent()
-        eventService.log(eventType, description = description, involvesUser = errorInvolvesUser)
+        eventService.log(errorEventType, errorMessage, involvesUser = errorInvolvesUser)
         Future.successful(
           errorResult.getOrElse(Unauthorized("Vous n'avez pas le droit de faire ça"))
         )
       }
 
-    def asAdmin(event: () => (EventType, String))(
+    def asAdmin(errorEventType: EventType, errorMessage: => String)(
         payload: () => Future[Result]
     )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
       if (not(request.currentUser.admin)) {
-        val (eventType, description) = event()
-        eventService.log(eventType, description = description)
+        eventService.log(errorEventType, errorMessage)
         Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
       } else {
         payload()
       }
 
-    def asAdminWhoSeesUsersOfArea(areaId: UUID)(event: () => (EventType, String))(
+    def asAdminWhoSeesUsersOfArea(areaId: UUID)(errorEventType: EventType, errorMessage: => String)(
         payload: () => Future[Result]
     )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
       if (not(request.currentUser.admin) || not(request.currentUser.canSeeUsersInArea(areaId))) {
-        val (eventType, description) = event()
-        eventService.log(eventType, description = description)
+        eventService.log(errorEventType, errorMessage)
         Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
       } else {
         payload()
       }
 
-    def asUserWhoSeesUsersOfArea(areaId: UUID)(event: () => (EventType, String))(
+    def asUserWhoSeesUsersOfArea(areaId: UUID)(errorEventType: EventType, errorMessage: => String)(
         payload: () => Future[Result]
     )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
       // TODO: use only Authorization
@@ -148,25 +144,23 @@ object Operators {
             Authorization.isObserver(request.rights)
         )
       ) {
-        val (eventType, description) = event()
-        eventService.log(eventType, description = description)
+        eventService.log(errorEventType, errorMessage)
         Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
       } else {
         payload()
       }
 
-    def asAdminOfUserZone(user: User)(event: () => (EventType, String))(
+    def asAdminOfUserZone(user: User)(errorEventType: EventType, errorMessage: => String)(
         payload: () => Future[Result]
     )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
       if (not(request.currentUser.admin)) {
-        val (eventType, description) = event()
-        eventService.log(eventType, description = description)
+        eventService.log(errorEventType, errorMessage)
         Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
       } else {
         if (request.currentUser.areas.intersect(user.areas).isEmpty) {
           eventService.log(
             AdminOutOfRange,
-            description = "L'administrateur n'est pas dans son périmètre de responsabilité."
+            "L'administrateur n'est pas dans son périmètre de responsabilité"
           )
           Future(Unauthorized("Vous n'êtes pas en charge de la zone de cet utilisateur."))
         } else {

@@ -60,7 +60,11 @@ class LoginController @Inject() (
                   {
                     case None =>
                       eventService
-                        .logSystem(UnknownEmail, s"Aucun compte actif à cette adresse mail $email")
+                        .logSystem(
+                          UnknownEmail,
+                          s"Aucun compte actif à cette adresse mail",
+                          s"Email '$email'".some
+                        )
                       val message =
                         """Aucun compte actif n’est associé à cette adresse e-mail.
                           |Merci de vérifier qu’il s’agit bien de votre adresse professionnelle et nominative.""".stripMargin
@@ -123,9 +127,10 @@ class LoginController @Inject() (
       request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty
     val emailInFlash = request.flash.get("email").nonEmpty
     val logMessage =
-      s"Génère un token pour une connexion par email body=$emailInBody&flash=$emailInFlash"
+      s"Génère un token pour une connexion par email"
+    val data = s"Body '$emailInBody' Flash '$emailInFlash'"
     requestWithUserData.fold(
-      eventService.logSystem(GenerateToken, logMessage)
+      eventService.logSystem(GenerateToken, logMessage, data.some)
     ) { implicit userData =>
       eventService.log(GenerateToken, logMessage)
     }
@@ -164,7 +169,8 @@ class LoginController @Inject() (
             else {
               eventService.logSystem(
                 EventType.LoginInvalidPath,
-                s"Redirection invalide après le login '$uncheckedPath'"
+                "Redirection invalide après le login",
+                s"Path '$uncheckedPath'".some
               )
               routes.HomeController.index.url
             }

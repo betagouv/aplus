@@ -132,7 +132,8 @@ class LoginAction @Inject() (
             new RequestWithUserData(user, userRights, request)
           eventService.log(
             UserAccessDisabled,
-            s"Utilisateur désactivé essaye d'accéder à la page ${request.path}}"
+            s"Utilisateur désactivé essaye d'accéder à une page",
+            s"Path ${request.path}".some
           )
           userNotLogged(
             s"Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème."
@@ -144,7 +145,9 @@ class LoginAction @Inject() (
         if (routes.HomeController.index.url.contains(path)) {
           Future(userNotLoggedOnLoginPage)
         } else {
-          log.warn(s"Accès à la ${request.path} non autorisé")
+          // Here request.path is supposed to be safe, because it was previously
+          // validated by the router (this class is a Play Action and not a Play Filter)
+          log.warn(s"Accès à la page ${request.path} non autorisé")
           Future(userNotLogged("Vous devez vous identifier pour accéder à cette page."))
         }
     }
@@ -183,10 +186,11 @@ class LoginAction @Inject() (
                 User.systemUser,
                 request.remoteAddress,
                 "UNKNOWN_TOKEN",
-                s"Token $rawToken est inconnu",
-                None,
-                None,
-                None
+                s"Token inconnu",
+                s"Token '$rawToken'".some,
+                none,
+                none,
+                none
               )
               Future(
                 userNotLogged(
@@ -238,7 +242,11 @@ class LoginAction @Inject() (
     val userOption: Option[User] = userService.byId(userId)
     userOption match {
       case None =>
-        log.error(s"Try to login by token ${token.token} for an unknown user : $userId")
+        eventService.logSystem(
+          EventType.UserNotFound,
+          s"Tentative de connexion par token valide ${token.token} " +
+            s"mais l'utilisateur $userId n'existe pas (peut-être supprimé ?)"
+        )
         Future(userNotLogged("Une erreur s'est produite, votre utilisateur n'existe plus"))
       case Some(user) =>
         LoginAction.readUserRights(user).map { userRights =>
@@ -290,7 +298,7 @@ class LoginAction @Inject() (
             case None =>
               eventService.logSystem(
                 EventType.MissingSignup,
-                s"Tentative de connexion par token ${token.token} " +
+                s"Tentative de connexion par token valide ${token.token} " +
                   s"avec une préinscription inconnue : $signupId"
               )
               userNotLogged(

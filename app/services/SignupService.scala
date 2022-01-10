@@ -41,7 +41,8 @@ class SignupService @Inject() (
           Error.SqlException(
             EventType.SignupsError,
             s"Impossible de chercher la préinscription ayant l'id $signupId",
-            e
+            e,
+            none
           )
         )
     )
@@ -60,8 +61,9 @@ class SignupService @Inject() (
         .map(e =>
           Error.SqlException(
             EventType.SignupsError,
-            s"Impossible de chercher la préinscription de $email",
-            e
+            s"Impossible de chercher une préinscription par email",
+            e,
+            s"Email '$email'".some
           )
         )
     )
@@ -80,8 +82,9 @@ class SignupService @Inject() (
         .map(e =>
           Error.SqlException(
             EventType.SignupsError,
-            s"Impossible de chercher les préinscriptions avec les emails $emails",
-            e
+            s"Impossible de chercher les préinscriptions avec certains emails",
+            e,
+            s"Emails '$emails'".some
           )
         )
     )
@@ -105,7 +108,8 @@ class SignupService @Inject() (
         Error.SqlException(
           EventType.SignupsError,
           s"Impossible de chercher les préinscriptions après $afterDate",
-          error
+          error,
+          none
         )
       }
     )
@@ -132,8 +136,9 @@ class SignupService @Inject() (
         .map { error =>
           Error.SqlException(
             EventType.SignupsError,
-            s"Impossible d'ajouter la préinscription $request",
-            error
+            s"Impossible d'ajouter la préinscription",
+            error,
+            s"Préinscription '$request'".some
           )
         }
         .flatMap { nrOfRows =>
@@ -142,7 +147,8 @@ class SignupService @Inject() (
             Error
               .Database(
                 EventType.SignupsError,
-                s"Nombre incorrect de lignes ($nrOfRows) lors de l'ajout de la préinscription $request"
+                s"Nombre incorrect de lignes ($nrOfRows) lors de l'ajout de la préinscription",
+                s"Préinscription '$request'".some
               )
               .asLeft
         }

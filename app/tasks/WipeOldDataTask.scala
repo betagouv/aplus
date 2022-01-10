@@ -89,6 +89,7 @@ class WipeOldDataTask @Inject() (
       description,
       None,
       None,
+      None,
       None
     )
 
@@ -98,6 +99,7 @@ class WipeOldDataTask @Inject() (
       "0.0.0.0",
       eventType.code,
       description,
+      None,
       None,
       None,
       exception

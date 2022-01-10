@@ -121,7 +121,8 @@ class TokenService @Inject() (
           Error.SqlException(
             EventType.TokenError,
             s"Impossible de créer un token",
-            e
+            e,
+            none
           )
         )
         .flatMap(nrOfRows =>
@@ -130,13 +131,14 @@ class TokenService @Inject() (
             Error
               .Database(
                 EventType.TokenError,
-                s"Nombre de lignes ajoutées incorrect ($nrOfRows) lors de la création d'un token"
+                s"Nombre de lignes ajoutées incorrect ($nrOfRows) lors de la création d'un token",
+                none
               )
               .asLeft
         )
     )
 
-  def byTokenThenDelete(token: String): Future[Either[Error, Option[LoginToken]]] =
+  def byTokenThenDelete(rawToken: String): Future[Either[Error, Option[LoginToken]]] =
     Future(
       Try(
         db.withTransaction { implicit connection =>
@@ -150,20 +152,21 @@ class TokenService @Inject() (
                 host(ip_address) AS ip_address,
                 signup_id
               FROM login_token
-              WHERE token = $token"""
+              WHERE token = $rawToken"""
               .as(simpleLoginToken.singleOpt)
           // To be sure the token is used only once, we remove it from the database
           tokenOpt match {
             case None => none
             case Some(row) =>
-              val deletion = SQL"""DELETE FROM login_token WHERE token = $token""".executeUpdate()
+              val deletion =
+                SQL"""DELETE FROM login_token WHERE token = $rawToken""".executeUpdate()
               if (deletion === 1) {
                 row.toModel
               } else {
                 // Kills the transaction, it will be catched by the Try then recovered
                 throw UnexpectedException(
                   Some(
-                    s"Impossible de supprimer le token $token (transaction aborted for byTokenThenDelete)"
+                    s"Impossible de supprimer le token (transaction aborted for byTokenThenDelete)"
                   )
                 )
               }
@@ -174,13 +177,15 @@ class TokenService @Inject() (
           case UnexpectedException(Some(message), _) if message.contains("transaction aborted") =>
             Error.Authentication(
               EventType.TokenDoubleUsage,
-              message
+              message,
+              s"Token '$rawToken'".some
             )
           case e =>
             Error.SqlException(
               EventType.TokenError,
               s"Impossible de retrouver un token",
-              e
+              e,
+              none
             )
         }
     )

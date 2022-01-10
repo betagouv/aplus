@@ -220,8 +220,9 @@ class UserGroupService @Inject() (
         .map(e =>
           Error.SqlException(
             EventType.SearchUsersError,
-            s"Impossible de rechercher '$searchQuery'",
-            e
+            s"Impossible de faire une recherche",
+            e,
+            s"Recherche '$searchQuery'".some
           )
         )
     )

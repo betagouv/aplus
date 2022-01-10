@@ -108,7 +108,8 @@ final class MessageBirdApi(
           Error.MiscException(
             EventType.SmsSendError,
             s"Impossible d'envoyer un SMS à partir du numéro $aplusPhoneNumber",
-            e
+            e,
+            none
           )
         )
       }
@@ -177,7 +178,8 @@ final class MessageBirdApi(
             Error.MiscException(
               EventType.SmsCallbackError,
               s"Impossible de lire le callback",
-              e
+              e,
+              none
             )
           )
         ),
@@ -204,7 +206,8 @@ final class MessageBirdApi(
           Error.MiscException(
             EventType.SmsReadError,
             s"Impossible de lire le SMS ${id.underlying} chez le provider distant",
-            e
+            e,
+            none
           )
         )
       }
@@ -227,7 +230,8 @@ final class MessageBirdApi(
           Error.MiscException(
             EventType.SmsDeleteError,
             s"Impossible de supprimer le SMS ${id.underlying} chez le provider distant",
-            e
+            e,
+            none
           )
         )
       }

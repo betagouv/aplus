@@ -62,9 +62,10 @@ case class ApiController @Inject() (
 
   def franceServiceDeployment: Action[AnyContent] =
     loginAction.async { implicit request =>
-      asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
-        DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
-      } { () =>
+      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+        DeploymentDashboardUnauthorized,
+        "Accès non autorisé au dashboard de déploiement"
+      ) { () =>
         val userGroups = userGroupService.allGroups.filter(
           _.organisationSetOrDeducted.exists(_.id === Organisation.franceServicesId)
         )
@@ -150,9 +151,10 @@ case class ApiController @Inject() (
 
   def deploymentData: Action[AnyContent] =
     loginAction.async { implicit request =>
-      asUserWithAuthorization(Authorization.isAdminOrObserver) { () =>
-        DeploymentDashboardUnauthorized -> "Accès non autorisé au dashboard de déploiement"
-      } { () =>
+      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+        DeploymentDashboardUnauthorized,
+        "Accès non autorisé au dashboard de déploiement"
+      ) { () =>
         val userGroups = userGroupService.allGroups
         userService.allNoNameNoEmail.map { users =>
           def usersIn(area: Area, organisationSet: Set[Organisation]): List[User] =

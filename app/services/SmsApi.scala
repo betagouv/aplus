@@ -1,6 +1,7 @@
 package services
 
 import akka.stream.Materializer
+import cats.syntax.all._
 import helper.{MessageBirdApi, OvhApi, Time}
 import java.time.ZonedDateTime
 import models.{Error, EventType, Sms, User}
@@ -140,7 +141,8 @@ object SmsApi {
                 Error.MiscException(
                   EventType.SmsDeleteError,
                   s"Impossible d'utiliser l'id ${id.underlying} sur l'api OVH.",
-                  e
+                  e,
+                  none
                 )
               )
             ),
@@ -156,9 +158,8 @@ object SmsApi {
                     Error.MiscException(
                       EventType.SmsDeleteError,
                       s"Impossible de supprimer le SMS ${id.underlying} sur l'api OVH.",
-                      new Exception(
-                        s"Cannot delete OVH SMS. Outgoing: $outResult / Incoming: $inResult"
-                      )
+                      new Exception(s"Cannot delete OVH SMS."),
+                      s"Outgoing: $outResult / Incoming: $inResult".some
                     )
                   )
               }
@@ -217,6 +218,7 @@ object SmsApi {
                 s"Impossible d'envoyer un message de test (faux webhook). SMS id: ${inId.underlying}",
                 None,
                 None,
+                None,
                 Some(e)
               ),
             _ =>
@@ -225,6 +227,7 @@ object SmsApi {
                 "0.0.0.0",
                 EventType.SmsCallbackError.code,
                 s"Un message de test (faux webhook) a été envoyé. SMS id: ${inId.underlying}",
+                None,
                 None,
                 None,
                 None
