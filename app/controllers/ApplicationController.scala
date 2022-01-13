@@ -1,6 +1,7 @@
 package controllers
 
 import actions._
+import cats.data.EitherT
 import cats.syntax.all._
 import constants.Constants
 import forms.FormsPlusMap
@@ -40,16 +41,17 @@ import scala.util.{Failure, Success, Try}
   */
 @Singleton
 case class ApplicationController @Inject() (
-    loginAction: LoginAction,
-    cache: AsyncCacheApi,
-    userService: UserService,
     applicationService: ApplicationService,
-    notificationsService: NotificationService,
+    cache: AsyncCacheApi,
+    configuration: play.api.Configuration,
     eventService: EventService,
+    fileService: FileService,
+    loginAction: LoginAction,
     mandatService: MandatService,
+    notificationsService: NotificationService,
     organisationService: OrganisationService,
     userGroupService: UserGroupService,
-    configuration: play.api.Configuration,
+    userService: UserService,
     ws: WSClient,
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
@@ -78,31 +80,6 @@ case class ApplicationController @Inject() (
   }
 
   private val success = "success"
-
-  private def applicationForm(currentUser: User) =
-    Form(
-      mapping(
-        "subject" -> nonEmptyText.verifying(maxLength(150)),
-        "description" -> nonEmptyText,
-        "usagerPrenom" -> nonEmptyText.verifying(maxLength(30)),
-        "usagerNom" -> nonEmptyText.verifying(maxLength(30)),
-        "usagerBirthDate" -> nonEmptyText.verifying(maxLength(30)),
-        "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(30))),
-        "users" -> list(uuid),
-        "groups" -> list(uuid)
-          .verifying("Vous devez sélectionner au moins une structure", _.nonEmpty),
-        "category" -> optional(text),
-        "selected-subject" -> optional(text),
-        "signature" -> (
-          if (currentUser.sharedAccount)
-            nonEmptyText.transform[Option[String]](Some.apply, _.getOrElse(""))
-          else ignored(Option.empty[String])
-        ),
-        "mandatType" -> text,
-        "mandatDate" -> nonEmptyText,
-        "linkedMandat" -> optional(uuid)
-      )(ApplicationFormData.apply)(ApplicationFormData.unapply)
-    )
 
   private def filterVisibleGroups(areaId: UUID, user: User, rights: Authorization.UserRights)(
       groups: List[UserGroup]
@@ -199,7 +176,7 @@ case class ApplicationController @Inject() (
                 featureMandatSms = featureMandatSms,
                 featureCanSendApplicationsAnywhere = featureCanSendApplicationsAnywhere,
                 categories,
-                applicationForm(request.currentUser)
+                ApplicationFormData.form(request.currentUser)
               )
             )
         }
@@ -232,146 +209,191 @@ case class ApplicationController @Inject() (
       s"$capitalizedUserName ${contexts.mkString(",")}"
   }
 
+  private def handlingFiles(applicationId: UUID, answerId: Option[UUID])(
+      onError: models.Error => Future[Result]
+  )(
+      onSuccess: List[FileMetadata] => Future[Result]
+  )(implicit request: RequestWithUserData[AnyContent]): Future[Result] = {
+    val tmpFiles = computeAttachmentsToStore(request)
+    val document = answerId match {
+      case None           => FileMetadata.Attached.Application(applicationId)
+      case Some(answerId) => FileMetadata.Attached.Answer(applicationId, answerId)
+    }
+    val newFilesF = fileService.saveFiles(tmpFiles.toList, document, request.currentUser)
+    val pendingFilesF = answerId match {
+      case None           => fileService.byApplicationId(applicationId)
+      case Some(answerId) => fileService.byAnswerId(answerId)
+    }
+    (for {
+      newFiles <- EitherT(newFilesF)
+      pendingFiles <- EitherT(pendingFilesF)
+      // Note that the 2 futures insert and select file_metadata in a very racy way
+      // but we don't care about the actual status here, only filenames
+      uniqueNewFiles = newFiles.filter(file => pendingFiles.forall(_.id =!= file.id))
+      result <- EitherT(onSuccess(pendingFiles ::: uniqueNewFiles).map(_.asRight[models.Error]))
+    } yield result).value.flatMap(_.fold(onError, Future.successful))
+  }
+
   def createPost: Action[AnyContent] =
     loginAction.async { implicit request =>
-      val form = applicationForm(request.currentUser).bindFromRequest()
-      val applicationId = AttachmentHelper.retrieveOrGenerateApplicationId(form.data)
+      val form = ApplicationFormData.form(request.currentUser).bindFromRequest()
+      val applicationId =
+        ApplicationFormData.extractApplicationId(form).getOrElse(UUID.randomUUID())
 
       // Get `areaId` from the form, to avoid losing it in case of errors
       val currentArea: Area = extractAreaOutOfFormOrThrow(form, "Application creation form")
 
-      val (pendingAttachments, newAttachments) =
-        AttachmentHelper.computeStoreAndRemovePendingAndNewApplicationAttachment(
-          applicationId,
-          computeAttachmentsToStore(request),
-          filesPath
-        )
-      form.fold(
-        formWithErrors =>
-          // binding failure, you retrieve the form containing errors:
-          fetchGroupsWithInstructors(currentArea.id, request.currentUser, request.rights).map {
-            case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
-              eventService.log(
-                ApplicationCreationInvalid,
-                s"L'utilisateur essaie de créer une demande invalide ${formErrorsLog(formWithErrors)}"
-              )
-
-              BadRequest(
-                views.html
-                  .createApplication(request.currentUser, request.rights, currentArea)(
-                    instructorsOfGroups,
-                    groupsOfAreaWithInstructor,
-                    coworkers,
-                    None,
-                    canCreatePhoneMandat = currentArea === Area.calvados,
-                    featureMandatSms = featureMandatSms,
-                    featureCanSendApplicationsAnywhere = featureCanSendApplicationsAnywhere,
-                    organisationService.categories,
-                    formWithErrors,
-                    pendingAttachments.keys ++ newAttachments.keys
-                  )
-              )
-          },
-        applicationData =>
-          Future {
-            // Note: we will deprecate .currentArea as a variable stored in the cookies
-            val currentAreaId: UUID = currentArea.id
-            val usersInGroups = userService.byGroupIds(applicationData.groups)
-            val instructors: List[User] = usersInGroups.filter(_.instructor)
-            val coworkers: List[User] = applicationData.users.flatMap(id => userService.byId(id))
-            val invitedUsers: Map[UUID, String] = (instructors ::: coworkers)
-              .map(user => user.id -> contextualizedUserName(user, currentAreaId))
-              .toMap
-
-            val description: String =
-              applicationData.signature
-                .fold(applicationData.description)(signature =>
-                  applicationData.description + "\n\n" + signature
+      handlingFiles(applicationId, none) { error =>
+        eventService.logError(error)
+        fetchGroupsWithInstructors(currentArea.id, request.currentUser, request.rights).map {
+          case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
+            val message =
+              "Erreur lors de l'envoi de fichiers. Cette erreur est possiblement temporaire."
+            BadRequest(
+              views.html
+                .createApplication(request.currentUser, request.rights, currentArea)(
+                  instructorsOfGroups,
+                  groupsOfAreaWithInstructor,
+                  coworkers,
+                  None,
+                  canCreatePhoneMandat = currentArea === Area.calvados,
+                  featureMandatSms = featureMandatSms,
+                  featureCanSendApplicationsAnywhere = featureCanSendApplicationsAnywhere,
+                  organisationService.categories,
+                  form,
+                  Nil,
                 )
-            val usagerInfos: Map[String, String] =
-              Map(
-                "Prénom" -> applicationData.usagerPrenom,
-                "Nom de famille" -> applicationData.usagerNom,
-                "Date de naissance" -> applicationData.usagerBirthDate
-              ) ++ applicationData.usagerOptionalInfos.collect {
-                case (infoName, infoValue) if infoName.trim.nonEmpty && infoValue.trim.nonEmpty =>
-                  infoName.trim -> infoValue.trim
-              }
-            val application = Application(
-              applicationId,
-              Time.nowParis(),
-              contextualizedUserName(request.currentUser, currentAreaId),
-              request.currentUser.id,
-              applicationData.subject,
-              description,
-              usagerInfos,
-              invitedUsers,
-              currentArea.id,
-              irrelevant = false,
-              hasSelectedSubject =
-                applicationData.selectedSubject.contains[String](applicationData.subject),
-              category = applicationData.category,
-              files = newAttachments ++ pendingAttachments,
-              mandatType = dataModels.Application.MandatType
-                .dataModelDeserialization(applicationData.mandatType),
-              mandatDate = Some(applicationData.mandatDate),
-              invitedGroupIdsAtCreation = applicationData.groups
             )
-            if (applicationService.createApplication(application)) {
-              notificationsService.newApplication(application)
-              eventService.log(
-                ApplicationCreated,
-                s"La demande ${application.id} a été créée",
-                application = application.some
+              .flashing("application-error" -> message)
+        }
+      } { files =>
+        form.fold(
+          formWithErrors =>
+            // binding failure, you retrieve the form containing errors:
+            fetchGroupsWithInstructors(currentArea.id, request.currentUser, request.rights).map {
+              case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
+                eventService.log(
+                  ApplicationCreationInvalid,
+                  s"L'utilisateur essaie de créer une demande invalide ${formErrorsLog(formWithErrors)}"
+                )
+
+                BadRequest(
+                  views.html
+                    .createApplication(request.currentUser, request.rights, currentArea)(
+                      instructorsOfGroups,
+                      groupsOfAreaWithInstructor,
+                      coworkers,
+                      None,
+                      canCreatePhoneMandat = currentArea === Area.calvados,
+                      featureMandatSms = featureMandatSms,
+                      featureCanSendApplicationsAnywhere = featureCanSendApplicationsAnywhere,
+                      organisationService.categories,
+                      formWithErrors,
+                      files,
+                    )
+                )
+            },
+          applicationData =>
+            Future {
+              // Note: we will deprecate .currentArea as a variable stored in the cookies
+              val currentAreaId: UUID = currentArea.id
+              val usersInGroups = userService.byGroupIds(applicationData.groups)
+              val instructors: List[User] = usersInGroups.filter(_.instructor)
+              val coworkers: List[User] = applicationData.users.flatMap(id => userService.byId(id))
+              val invitedUsers: Map[UUID, String] = (instructors ::: coworkers)
+                .map(user => user.id -> contextualizedUserName(user, currentAreaId))
+                .toMap
+
+              val description: String =
+                applicationData.signature
+                  .fold(applicationData.description)(signature =>
+                    applicationData.description + "\n\n" + signature
+                  )
+              val usagerInfos: Map[String, String] =
+                Map(
+                  "Prénom" -> applicationData.usagerPrenom,
+                  "Nom de famille" -> applicationData.usagerNom,
+                  "Date de naissance" -> applicationData.usagerBirthDate
+                ) ++ applicationData.usagerOptionalInfos.collect {
+                  case (infoName, infoValue) if infoName.trim.nonEmpty && infoValue.trim.nonEmpty =>
+                    infoName.trim -> infoValue.trim
+                }
+              val application = Application(
+                applicationId,
+                Time.nowParis(),
+                contextualizedUserName(request.currentUser, currentAreaId),
+                request.currentUser.id,
+                applicationData.subject,
+                description,
+                usagerInfos,
+                invitedUsers,
+                currentArea.id,
+                irrelevant = false,
+                hasSelectedSubject =
+                  applicationData.selectedSubject.contains[String](applicationData.subject),
+                category = applicationData.category,
+                files = Map.empty,
+                mandatType = dataModels.Application.MandatType
+                  .dataModelDeserialization(applicationData.mandatType),
+                mandatDate = Some(applicationData.mandatDate),
+                invitedGroupIdsAtCreation = applicationData.groups
               )
-              application.invitedUsers.foreach { case (userId, _) =>
+              if (applicationService.createApplication(application)) {
+                notificationsService.newApplication(application)
                 eventService.log(
                   ApplicationCreated,
-                  s"Envoi de la nouvelle demande ${application.id} à l'utilisateur $userId",
-                  application = application.some,
-                  involvesUser = userId.some
+                  s"La demande ${application.id} a été créée",
+                  application = application.some
                 )
-              }
-              applicationData.linkedMandat.foreach { mandatId =>
-                mandatService
-                  .linkToApplication(Mandat.Id(mandatId), applicationId)
-                  .onComplete {
-                    case Failure(error) =>
-                      eventService.log(
-                        ApplicationLinkedToMandatError,
-                        s"Erreur pour faire le lien entre le mandat $mandatId et la demande $applicationId",
-                        application = application.some,
-                        underlyingException = error.some
-                      )
-                    case Success(Left(error)) =>
-                      eventService.logError(error, application = application.some)
-                    case Success(Right(_)) =>
-                      eventService.log(
-                        ApplicationLinkedToMandat,
-                        s"La demande ${application.id} a été liée au mandat $mandatId",
-                        application = application.some
-                      )
-                  }
-              }
-              Redirect(routes.ApplicationController.myApplications)
-                .withSession(
-                  applicationData.signature.fold(removeSharedAccountUserSignature(request.session))(
-                    signature => saveSharedAccountUserSignature(request.session, signature)
+                application.invitedUsers.foreach { case (userId, _) =>
+                  eventService.log(
+                    ApplicationCreated,
+                    s"Envoi de la nouvelle demande ${application.id} à l'utilisateur $userId",
+                    application = application.some,
+                    involvesUser = userId.some
                   )
+                }
+                applicationData.linkedMandat.foreach { mandatId =>
+                  mandatService
+                    .linkToApplication(Mandat.Id(mandatId), applicationId)
+                    .onComplete {
+                      case Failure(error) =>
+                        eventService.log(
+                          ApplicationLinkedToMandatError,
+                          s"Erreur pour faire le lien entre le mandat $mandatId et la demande $applicationId",
+                          application = application.some,
+                          underlyingException = error.some
+                        )
+                      case Success(Left(error)) =>
+                        eventService.logError(error, application = application.some)
+                      case Success(Right(_)) =>
+                        eventService.log(
+                          ApplicationLinkedToMandat,
+                          s"La demande ${application.id} a été liée au mandat $mandatId",
+                          application = application.some
+                        )
+                    }
+                }
+                Redirect(routes.ApplicationController.myApplications)
+                  .withSession(
+                    applicationData.signature.fold(
+                      removeSharedAccountUserSignature(request.session)
+                    )(signature => saveSharedAccountUserSignature(request.session, signature))
+                  )
+                  .flashing(success -> "Votre demande a bien été envoyée")
+              } else {
+                eventService.log(
+                  ApplicationCreationError,
+                  s"La demande ${application.id} n'a pas pu être créée",
+                  application = application.some
                 )
-                .flashing(success -> "Votre demande a bien été envoyée")
-            } else {
-              eventService.log(
-                ApplicationCreationError,
-                s"La demande ${application.id} n'a pas pu être créée",
-                application = application.some
-              )
-              InternalServerError(
-                "Erreur Interne: Votre demande n'a pas pu être envoyée. Merci de réessayer ou de contacter l'administrateur"
-              )
+                InternalServerError(
+                  "Erreur Interne: Votre demande n'a pas pu être envoyée. Merci de réessayer ou de contacter l'administrateur"
+                )
+              }
             }
-          }
-      )
+        )
+      }
     }
 
   private def computeAttachmentsToStore(
@@ -826,22 +848,6 @@ case class ApplicationController @Inject() (
       }
     }
 
-  private def answerForm(currentUser: User) =
-    Form(
-      mapping(
-        "answer_type" -> nonEmptyText.verifying(maxLength(20)),
-        "message" -> optional(nonEmptyText),
-        "irrelevant" -> boolean,
-        "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(30))),
-        "privateToHelpers" -> boolean,
-        "signature" -> (
-          if (currentUser.sharedAccount)
-            nonEmptyText.transform[Option[String]](Some.apply, _.orEmpty)
-          else ignored(Option.empty[String])
-        )
-      )(AnswerFormData.apply)(AnswerFormData.unapply)
-    )
-
   private def usersWhoCanBeInvitedOn(application: Application, currentAreaId: UUID)(implicit
       request: RequestWithUserData[_]
   ): Future[List[User]] =
@@ -908,32 +914,48 @@ case class ApplicationController @Inject() (
             .getOrElse(Area.fromId(application.area).getOrElse(Area.all.head))
         val selectedAreaId = selectedArea.id
         usersWhoCanBeInvitedOn(application, selectedAreaId).flatMap { usersWhoCanBeInvited =>
-          groupsWhichCanBeInvited(selectedAreaId, application).map { invitableGroups =>
-            val groups = userGroupService
-              .byIds(usersWhoCanBeInvited.flatMap(_.groupIds))
-              .filter(_.areaIds.contains[UUID](selectedAreaId))
-            val groupsWithUsersThatCanBeInvited = groups.map { group =>
-              group -> usersWhoCanBeInvited.filter(_.groupIds.contains[UUID](group.id))
-            }
+          groupsWhichCanBeInvited(selectedAreaId, application).flatMap { invitableGroups =>
+            fileService
+              .byApplicationId(id)
+              .map(
+                _.fold(
+                  error => {
+                    eventService.logError(error)
+                    val message = "Une erreur interne est survenue. " +
+                      "Celle-ci est probablement temporaire. " +
+                      "Si elle venait à persister, vous pouvez contacter le support Administration+."
+                    InternalServerError(message)
+                  },
+                  files => {
+                    val groups = userGroupService
+                      .byIds(usersWhoCanBeInvited.flatMap(_.groupIds))
+                      .filter(_.areaIds.contains[UUID](selectedAreaId))
+                    val groupsWithUsersThatCanBeInvited = groups.map { group =>
+                      group -> usersWhoCanBeInvited.filter(_.groupIds.contains[UUID](group.id))
+                    }
 
-            val openedTab = request.flash.get("opened-tab").getOrElse("answer")
-            eventService.log(
-              ApplicationShowed,
-              s"Demande $id consultée",
-              application = application.some
-            )
-            Ok(
-              views.html.showApplication(request.currentUser, request.rights)(
-                groupsWithUsersThatCanBeInvited,
-                invitableGroups,
-                application,
-                answerForm(request.currentUser),
-                openedTab,
-                selectedArea,
-                readSharedAccountUserSignature(request.session),
-                fileExpiryDayCount = filesExpirationInDays
+                    val openedTab = request.flash.get("opened-tab").getOrElse("answer")
+                    eventService.log(
+                      ApplicationShowed,
+                      s"Demande $id consultée",
+                      application = application.some
+                    )
+                    Ok(
+                      views.html.showApplication(request.currentUser, request.rights)(
+                        groupsWithUsersThatCanBeInvited,
+                        invitableGroups,
+                        application,
+                        AnswerFormData.form(request.currentUser),
+                        openedTab,
+                        selectedArea,
+                        readSharedAccountUserSignature(request.session),
+                        files,
+                        fileExpiryDayCount = filesExpirationInDays
+                      )
+                    ).withHeaders(CACHE_CONTROL -> "no-store")
+                  }
+                )
               )
-            ).withHeaders(CACHE_CONTROL -> "no-store")
           }
         }
       }
@@ -997,6 +1019,99 @@ case class ApplicationController @Inject() (
       }
     }
 
+  private def sendFileFromMetadata(
+      filename: String,
+      application: Application,
+      legacyPath: Path,
+      legacyUrlPath: String,
+      legacyDocument: String,
+      legacyFallback: () => Future[Result]
+  )(implicit
+      request: actions.RequestWithUserData[_]
+  ): Future[Result] =
+    fileService
+      .fileMetadata(filename)
+      .flatMap(
+        _.fold(
+          error => {
+            eventService.logError(error)
+            Future.successful(
+              InternalServerError(
+                "Une erreur est survenue pour trouver le fichier. " +
+                  "Cette erreur est probablement temporaire."
+              )
+            )
+          },
+          metadataOpt => {
+            metadataOpt match {
+              case None =>
+                legacyFallback()
+              case Some((path, metadata)) =>
+                metadata.status match {
+                  case FileMetadata.Status.Scanning =>
+                    eventService.log(
+                      FileNotFound,
+                      s"Le fichier ${metadata.id} du document ${metadata.attached} est en cours de scan",
+                      application = application.some
+                    )
+                    Future(
+                      NotFound(
+                        "Le fichier est en cours de scan par un antivirus. Il devrait être disponible d'ici peu."
+                      )
+                    )
+                  case FileMetadata.Status.Quarantined =>
+                    eventService.log(
+                      EventType.FileQuarantined,
+                      s"Le fichier ${metadata.id} du document ${metadata.attached} est en quarantaine",
+                      application = application.some
+                    )
+                    Future(
+                      NotFound(
+                        "L'antivirus a mis en quarantaine le fichier. Si vous avez envoyé ce fichier, il est conseillé de vérifier votre ordinateur avec un antivirus. Si vous pensez qu'il s'agit d'un faux positif, nous vous invitons à changer le format, puis envoyer à nouveau sous un nouveau format."
+                      )
+                    )
+                  case FileMetadata.Status.Available =>
+                    eventService.log(
+                      FileOpened,
+                      s"Le fichier du document ${metadata.attached} a été ouvert",
+                      application = application.some
+                    )
+                    val call = metadata.attached match {
+                      case FileMetadata.Attached.Application(applicationId) =>
+                        routes.ApplicationController.applicationFile(applicationId, filename)
+                      case FileMetadata.Attached.Answer(applicationId, answerId) =>
+                        routes.ApplicationController.answerFile(applicationId, answerId, filename)
+                    }
+                    sendFile(
+                      path,
+                      filename,
+                      call.url
+                    )
+                  case FileMetadata.Status.Expired =>
+                    eventService.log(
+                      EventType.FileNotFound,
+                      s"Le fichier ${metadata.id} du document ${metadata.attached} est expiré",
+                      application = application.some
+                    )
+                    Future(NotFound("Ce fichier à expiré."))
+                  case FileMetadata.Status.Error =>
+                    eventService.log(
+                      EventType.FileNotFound,
+                      s"Le fichier ${metadata.id} du document ${metadata.attached} a une erreur",
+                      application = application.some
+                    )
+                    Future(
+                      NotFound(
+                        "Une erreur est survenue lors de l'enregistrement du fichier. Celui-ci n'est pas disponible."
+                      )
+                    )
+                }
+            }
+          }
+        )
+      )
+
+  // TODO: once legacy file upload is not used anymore, keep only filename parameter as UUID
   private def file(applicationId: UUID, answerIdOption: Option[UUID], filename: String) =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application: Application =>
@@ -1007,16 +1122,38 @@ case class ApplicationController @Inject() (
                 request.rights
               ) =>
             application.answers.find(_.id === answerId) match {
-              case Some(answer) if answer.files.getOrElse(Map.empty).contains(filename) =>
-                eventService.log(
-                  FileOpened,
-                  s"Le fichier de la réponse $answerId sur la demande $applicationId a été ouvert",
-                  application = application.some
-                )
-                sendFile(
-                  Paths.get(s"$filesPath/ans_$answerId-$filename"),
-                  filename,
+              case Some(answer) =>
+                val legacyPath = Paths.get(s"$filesPath/ans_$answerId-$filename")
+                val legacyUrlPath =
                   s"/toutes-les-demandes/$applicationId/messages/$answerId/fichiers/$filename"
+                val legacyDocument = s"la réponse $answerId sur la demande $applicationId"
+                sendFileFromMetadata(
+                  filename,
+                  application,
+                  legacyPath,
+                  legacyUrlPath,
+                  legacyDocument,
+                  () => {
+                    if (answer.files.getOrElse(Map.empty).contains(filename)) {
+                      eventService.log(
+                        FileOpened,
+                        s"Le fichier de $legacyDocument a été ouvert",
+                        application = application.some
+                      )
+                      sendFile(
+                        legacyPath,
+                        filename,
+                        legacyUrlPath
+                      )
+                    } else {
+                      eventService.log(
+                        FileNotFound,
+                        s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas",
+                        application = application.some
+                      )
+                      Future.successful(NotFound("Nous n'avons pas trouvé ce fichier"))
+                    }
+                  }
                 )
               case _ =>
                 eventService.log(
@@ -1024,33 +1161,44 @@ case class ApplicationController @Inject() (
                   s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas",
                   application = application.some
                 )
-                Future(NotFound("Nous n'avons pas trouvé ce fichier"))
+                Future.successful(NotFound("Nous n'avons pas trouvé ce fichier"))
             }
           case None
               if Authorization.applicationFileCanBeShowed(filesExpirationInDays)(application)(
                 request.currentUser.id,
                 request.rights
               ) =>
-            if (application.files.contains(filename)) {
-              eventService
-                .log(
-                  FileOpened,
-                  s"Le fichier de la demande $applicationId a été ouvert",
-                  application = application.some
-                )
-              sendFile(
-                Paths.get(s"$filesPath/app_$applicationId-$filename"),
-                filename,
-                s"/toutes-les-demandes/$applicationId/fichiers/$filename"
-              )
-            } else {
-              eventService.log(
-                FileNotFound,
-                s"Le fichier de la demande $applicationId n'existe pas",
-                application = application.some
-              )
-              Future(NotFound("Nous n'avons pas trouvé ce fichier"))
-            }
+            val legacyPath = Paths.get(s"$filesPath/app_$applicationId-$filename")
+            val legacyUrlPath = s"/toutes-les-demandes/$applicationId/fichiers/$filename"
+            val legacyDocument = s"la demande $applicationId"
+            sendFileFromMetadata(
+              filename,
+              application,
+              legacyPath,
+              legacyUrlPath,
+              legacyDocument,
+              () => {
+                if (application.files.contains(filename)) {
+                  eventService.log(
+                    FileOpened,
+                    s"Le fichier de $legacyDocument a été ouvert",
+                    application = application.some
+                  )
+                  sendFile(
+                    legacyPath,
+                    filename,
+                    legacyUrlPath
+                  )
+                } else {
+                  eventService.log(
+                    FileNotFound,
+                    s"Le fichier de la demande $applicationId n'existe pas",
+                    application = application.some
+                  )
+                  Future.successful(NotFound("Nous n'avons pas trouvé ce fichier"))
+                }
+              }
+            )
           case _ =>
             eventService.log(
               FileUnauthorized,
@@ -1076,93 +1224,102 @@ case class ApplicationController @Inject() (
   def answer(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application =>
-        val form = answerForm(request.currentUser).bindFromRequest()
-        val answerId = AttachmentHelper.retrieveOrGenerateAnswerId(form.data)
-        val (pendingAttachments, newAttachments) =
-          AttachmentHelper.computeStoreAndRemovePendingAndNewAnswerAttachment(
-            answerId,
-            computeAttachmentsToStore(request),
-            filesPath
+        val form = AnswerFormData.form(request.currentUser).bindFromRequest()
+        val answerId = AnswerFormData.extractAnswerId(form).getOrElse(UUID.randomUUID())
+        handlingFiles(applicationId, answerId.some) { error =>
+          eventService.logError(error)
+          val message =
+            "Erreur lors de l'envoi de fichiers. Cette erreur est possiblement temporaire. " +
+              "Votre réponse n'a pas pu être enregistrée."
+          Future.successful(
+            Redirect(
+              routes.ApplicationController.show(applicationId).withFragment("answer-error")
+            )
+              .flashing("answer-error" -> message, "opened-tab" -> "anwser")
           )
-        form.fold(
-          formWithErrors => {
-            val message =
-              s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.format).mkString(", ")})."
-            val error =
-              s"Erreur dans le formulaire de réponse (${formErrorsLog(formWithErrors)})"
-            eventService.log(AnswerNotCreated, error, application = application.some)
-            Future(
-              Redirect(
-                routes.ApplicationController.show(applicationId).withFragment("answer-error")
-              )
-                .flashing("answer-error" -> message, "opened-tab" -> "anwser")
-            )
-          },
-          answerData => {
-            val answerType = AnswerType.fromString(answerData.answerType)
-            val currentAreaId = application.area
-
-            val message = (answerType, answerData.message) match {
-              case (AnswerType.Custom, Some(message)) =>
-                buildAnswerMessage(message, answerData.signature)
-              case (AnswerType.ApplicationProcessed, _) =>
-                buildAnswerMessage(ApplicationProcessedMessage, answerData.signature)
-              case (AnswerType.WorkInProgress, _) =>
-                buildAnswerMessage(WorkInProgressMessage, answerData.signature)
-              case (AnswerType.WrongInstructor, _) =>
-                buildAnswerMessage(WrongInstructorMessage, answerData.signature)
-              case (AnswerType.Custom, None) => buildAnswerMessage("", answerData.signature)
-            }
-
-            val answer = Answer(
-              answerId,
-              applicationId,
-              Time.nowParis(),
-              answerType,
-              message,
-              request.currentUser.id,
-              contextualizedUserName(request.currentUser, currentAreaId),
-              Map.empty[UUID, String],
-              not(answerData.privateToHelpers),
-              answerData.applicationIsDeclaredIrrelevant,
-              answerData.usagerOptionalInfos.collect {
-                case (NonEmptyTrimmedString(infoName), NonEmptyTrimmedString(infoValue)) =>
-                  (infoName, infoValue)
-              }.some,
-              files = (newAttachments ++ pendingAttachments).some,
-              invitedGroupIds = List.empty[UUID]
-            )
-            // If the new answer creator is the application creator, we force the application reopening
-            val shouldBeOpened = answer.creatorUserID === application.creatorUserId
-            val answerAdded =
-              applicationService.addAnswer(applicationId, answer, false, shouldBeOpened)
-
-            if (answerAdded === 1) {
-              eventService.log(
-                AnswerCreated,
-                s"La réponse ${answer.id} a été créée sur la demande $applicationId",
-                application = application.some
-              )
-              notificationsService.newAnswer(application, answer)
+        } { _ =>
+          form.fold(
+            formWithErrors => {
+              val message =
+                s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.format).mkString(", ")})."
+              val error =
+                s"Erreur dans le formulaire de réponse (${formErrorsLog(formWithErrors)})"
+              eventService.log(AnswerNotCreated, error, application = application.some)
               Future(
-                Redirect(s"${routes.ApplicationController.show(applicationId)}#answer-${answer.id}")
-                  .withSession(
-                    answerData.signature.fold(removeSharedAccountUserSignature(request.session))(
-                      signature => saveSharedAccountUserSignature(request.session, signature)
-                    )
+                Redirect(
+                  routes.ApplicationController.show(applicationId).withFragment("answer-error")
+                )
+                  .flashing("answer-error" -> message, "opened-tab" -> "anwser")
+              )
+            },
+            answerData => {
+              val answerType = AnswerType.fromString(answerData.answerType)
+              val currentAreaId = application.area
+
+              val message = (answerType, answerData.message) match {
+                case (AnswerType.Custom, Some(message)) =>
+                  buildAnswerMessage(message, answerData.signature)
+                case (AnswerType.ApplicationProcessed, _) =>
+                  buildAnswerMessage(ApplicationProcessedMessage, answerData.signature)
+                case (AnswerType.WorkInProgress, _) =>
+                  buildAnswerMessage(WorkInProgressMessage, answerData.signature)
+                case (AnswerType.WrongInstructor, _) =>
+                  buildAnswerMessage(WrongInstructorMessage, answerData.signature)
+                case (AnswerType.Custom, None) => buildAnswerMessage("", answerData.signature)
+              }
+
+              val answer = Answer(
+                answerId,
+                applicationId,
+                Time.nowParis(),
+                answerType,
+                message,
+                request.currentUser.id,
+                contextualizedUserName(request.currentUser, currentAreaId),
+                Map.empty[UUID, String],
+                not(answerData.privateToHelpers),
+                answerData.applicationIsDeclaredIrrelevant,
+                answerData.usagerOptionalInfos.collect {
+                  case (NonEmptyTrimmedString(infoName), NonEmptyTrimmedString(infoValue)) =>
+                    (infoName, infoValue)
+                }.some,
+                files = none,
+                invitedGroupIds = List.empty[UUID]
+              )
+              // If the new answer creator is the application creator, we force the application reopening
+              val shouldBeOpened = answer.creatorUserID === application.creatorUserId
+              val answerAdded =
+                applicationService.addAnswer(applicationId, answer, false, shouldBeOpened)
+
+              if (answerAdded === 1) {
+                eventService.log(
+                  AnswerCreated,
+                  s"La réponse ${answer.id} a été créée sur la demande $applicationId",
+                  application = application.some
+                )
+                notificationsService.newAnswer(application, answer)
+                Future(
+                  Redirect(
+                    s"${routes.ApplicationController.show(applicationId)}#answer-${answer.id}"
                   )
-                  .flashing(success -> "Votre réponse a bien été envoyée")
-              )
-            } else {
-              eventService.log(
-                AnswerNotCreated,
-                s"La réponse ${answer.id} n'a pas été créée sur la demande $applicationId : problème BDD",
-                application = application.some
-              )
-              Future(InternalServerError("Votre réponse n'a pas pu être envoyée"))
+                    .withSession(
+                      answerData.signature.fold(removeSharedAccountUserSignature(request.session))(
+                        signature => saveSharedAccountUserSignature(request.session, signature)
+                      )
+                    )
+                    .flashing(success -> "Votre réponse a bien été envoyée")
+                )
+              } else {
+                eventService.log(
+                  AnswerNotCreated,
+                  s"La réponse ${answer.id} n'a pas été créée sur la demande $applicationId : problème BDD",
+                  application = application.some
+                )
+                Future(InternalServerError("Votre réponse n'a pas pu être envoyée"))
+              }
             }
-          }
-        )
+          )
+        }
       }
     }
 

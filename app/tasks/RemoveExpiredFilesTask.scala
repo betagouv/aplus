@@ -7,13 +7,18 @@ import java.time.temporal.ChronoUnit.DAYS
 
 import akka.actor.ActorSystem
 import javax.inject.Inject
+import models.EventType
+import play.api.Configuration
+import services.{EventService, FileService}
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 
 class RemoveExpiredFilesTask @Inject() (
     actorSystem: ActorSystem,
-    configuration: play.api.Configuration
+    configuration: Configuration,
+    eventService: EventService,
+    fileService: FileService,
 )(implicit executionContext: ExecutionContext) {
   private val filesPath = configuration.underlying.getString("app.filesPath")
 
@@ -26,10 +31,15 @@ class RemoveExpiredFilesTask @Inject() (
   val initialDelay = java.time.Duration.between(now, startDate).getSeconds.seconds
 
   actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = 24.hours)(
-    new Runnable { override def run(): Unit = removeExpiredFile() }
+    new Runnable { override def run(): Unit = removeExpiredFiles() }
   )
 
-  def removeExpiredFile(): Unit = {
+  def removeExpiredFiles(): Unit = {
+    val beforeDate = Instant.now().minus(filesExpirationInDays.toLong + 1, DAYS)
+    eventService.logNoRequest(
+      EventType.FilesDeletion,
+      s"Début de la suppression des fichiers avant $beforeDate"
+    )
     val dir = new File(filesPath)
     if (dir.exists() && dir.isDirectory) {
       val fileToDelete = dir
@@ -41,6 +51,7 @@ class RemoveExpiredFilesTask @Inject() (
         }
       fileToDelete.foreach(_.delete())
     }
+    fileService.deleteBefore(beforeDate)
   }
 
 }

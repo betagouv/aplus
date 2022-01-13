@@ -82,27 +82,13 @@ class WipeOldDataTask @Inject() (
    */
 
   private def logSuccess(description: String) =
-    eventService.info(
-      User.systemUser,
-      "0.0.0.0",
-      EventType.WipeDataComplete.code,
-      description,
-      None,
-      None,
-      None,
-      None
-    )
+    eventService.logNoRequest(EventType.WipeDataComplete, description)
 
   private def logError(description: String, eventType: EventType, exception: Option[Throwable]) =
-    eventService.error(
-      User.systemUser,
-      "0.0.0.0",
-      eventType.code,
+    eventService.logNoRequest(
+      eventType,
       description,
-      None,
-      None,
-      None,
-      exception
+      underlyingException = exception
     )
 
 }
