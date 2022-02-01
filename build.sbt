@@ -92,7 +92,7 @@ libraryDependencies ++= Seq(
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
   ws,
-  "com.lihaoyi" %% "scalatags" % "0.11.0",
+  "com.lihaoyi" %% "scalatags" % "0.11.1",
   "org.typelevel" %% "cats-core" % "2.7.0",
   // To ensure that the version of jackson that do not have
   // known security vulnerabilities is used
@@ -112,7 +112,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "font-awesome" % "5.15.4",
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "5.5.2"
+libraryDependencies += "io.sentry" % "sentry-logback" % "5.5.3"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
