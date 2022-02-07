@@ -84,7 +84,7 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.3.1",
+  "org.postgresql" % "postgresql" % "42.3.2",
   anormDependency,
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
