@@ -51,7 +51,7 @@ class RemoveExpiredFilesTask @Inject() (
         }
       fileToDelete.foreach(_.delete())
     }
-    fileService.deleteBefore(beforeDate)
+    val _ = fileService.deleteBefore(beforeDate)
   }
 
 }
