@@ -22,7 +22,7 @@ lazy val root = (project in file("."))
 
 inThisBuild(
   List(
-    scalaVersion := "2.13.7",
+    scalaVersion := "2.13.8",
     semanticdbEnabled := true, // enable SemanticDB
     semanticdbVersion := scalafixSemanticdb.revision // use Scalafix compatible version
   )
@@ -89,7 +89,7 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.3.1",
+  "org.postgresql" % "postgresql" % "42.3.2",
   anormDependency,
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
@@ -97,7 +97,7 @@ libraryDependencies ++= Seq(
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
   ws,
-  "com.lihaoyi" %% "scalatags" % "0.11.0",
+  "com.lihaoyi" %% "scalatags" % "0.11.1",
   "org.typelevel" %% "cats-core" % "2.7.0",
   // To ensure that the version of jackson that do not have
   // known security vulnerabilities is used
@@ -117,7 +117,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "font-awesome" % "5.15.4",
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "5.5.2"
+libraryDependencies += "io.sentry" % "sentry-logback" % "5.6.1"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
