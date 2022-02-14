@@ -138,7 +138,7 @@
     @********* Experimental (testing by admins for now) **********@
     @if(Authorization.canSeeExperimentalAdminFeatures(currentUserRights)) {
       @defining(views.editMyGroups.creationsAndInvitationsCounts(groupApplications)) { case (creations, invitations) =>
-        @toHtml(views.editMyGroups.groupBlock(userGroup, groupUsers, groupApplications, creations, invitations, addUserForm, addRedirectQueryParam, currentUser, currentUserRights))
+        @toHtml(views.editMyGroups.groupBlock(userGroup, groupUsers, creations, invitations, addUserForm, addRedirectQueryParam, currentUser, currentUserRights))
       }
     }
 

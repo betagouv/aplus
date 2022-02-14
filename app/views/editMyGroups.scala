@@ -51,7 +51,6 @@ object editMyGroups {
       } yield groupBlock(
         group,
         users,
-        applications,
         creationsCount,
         invitationsCount,
         addUserForm,
@@ -84,7 +83,6 @@ object editMyGroups {
   def groupBlock(
       group: UserGroup,
       users: List[User],
-      applications: List[Application],
       applicationCreationsCount: Map[UUID, Int],
       applicationInvitationsCount: Map[UUID, Int],
       addUserForm: Form[AddUserToGroupFormData],
