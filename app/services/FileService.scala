@@ -80,7 +80,7 @@ class FileService @Inject() (
       case _ =>
     }
 
-    result.map(_.map(_._2)).value
+    result.map(_.map { case (_, metadata) => metadata }).value
   }
 
   def fileMetadata(filename: String): Future[Either[Error, Option[(Path, FileMetadata)]]] =
