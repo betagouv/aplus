@@ -149,7 +149,7 @@ class FileService @Inject() (
             eventService.logSystem(
               EventType.FileAvailable,
               s"Le fichier ${metadata.id} est disponible. ClamAV est désactivé. " +
-                "Aucun scan n'a été effectué."
+                "Aucun scan n'a été effectué"
             )
             val fileDestination = Paths.get(s"$filesPath/${metadata.id}")
             Files.copy(path, fileDestination)
