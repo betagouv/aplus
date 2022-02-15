@@ -90,6 +90,16 @@ class FileService @Inject() (
         byId(fileId).map(_.map(_.map(metadata => (Paths.get(s"$filesPath/$fileId"), metadata))))
     }
 
+  // TODO: remove that once saving names in DB is known to be working
+  //       this piece of code is here just in case we need reverting
+  def legacyFilePath(metadata: FileMetadata): Path =
+    metadata.attached match {
+      case FileMetadata.Attached.Application(applicationId) =>
+        Paths.get(s"$filesPath/app_$applicationId-${metadata.filename}")
+      case FileMetadata.Attached.Answer(applicationId, _) =>
+        Paths.get(s"$filesPath/ans_$applicationId-${metadata.filename}")
+    }
+
   private def scanFilesBackground(metadataList: List[(Path, FileMetadata)], uploader: User)(implicit
       request: Request[_]
   ): Future[Done] =
@@ -113,6 +123,7 @@ class FileService @Inject() (
                     )
                     val fileDestination = Paths.get(s"$filesPath/${metadata.id}")
                     Files.copy(path, fileDestination)
+                    Files.copy(path, legacyFilePath(metadata))
                     Files.deleteIfExists(path)
                     FileMetadata.Status.Available
                   case VirusFound(message) =>
@@ -142,6 +153,7 @@ class FileService @Inject() (
             )
             val fileDestination = Paths.get(s"$filesPath/${metadata.id}")
             Files.copy(path, fileDestination)
+            Files.copy(path, legacyFilePath(metadata))
             Files.deleteIfExists(path)
             updateStatus(metadata.id, FileMetadata.Status.Available)
           }
