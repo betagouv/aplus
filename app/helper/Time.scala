@@ -22,8 +22,9 @@ object Time {
   def formatPatternFr(date: LocalDate, pattern: String): String =
     date.format(DateTimeFormatter.ofPattern(pattern, Locale.FRANCE))
 
+  // Note that .atDay(1) will yield incorrect format value
   def formatMonthYearAllLetters(month: YearMonth): String =
-    month.atDay(1).format(monthYearAllLettersFormatter)
+    month.atDay(15).format(monthYearAllLettersFormatter)
 
   val adminsFormatter = DateTimeFormatter.ofPattern("dd/MM/YY-HH:mm", Locale.FRANCE)
   private val monthYearAllLettersFormatter = DateTimeFormatter.ofPattern("MMMM YYYY", Locale.FRANCE)
