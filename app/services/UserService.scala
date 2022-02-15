@@ -96,7 +96,7 @@ class UserService @Inject() (
   def byAreaIds(areaIds: List[UUID]): List[User] =
     db.withConnection { implicit connection =>
       SQL(s"""SELECT $fieldsInSelect FROM "user" WHERE ARRAY[{areaIds}]::uuid[] && areas""")
-        .on("areaIds" -> areaIds)
+        .on("areaIds" -> areaIds.distinct)
         .as(simpleUser.*)
     }.map(_.toUser)
 
@@ -120,7 +120,7 @@ class UserService @Inject() (
       SQL(s"""SELECT $fieldsInSelect
               FROM "user"
               WHERE ARRAY[{ids}]::uuid[] && group_ids $disabledSQL""")
-        .on("ids" -> ids)
+        .on("ids" -> ids.distinct)
         .as(simpleUser.*)
     }.map(_.toUser)
 
@@ -132,7 +132,7 @@ class UserService @Inject() (
         SQL(s"""SELECT $fieldsInSelect, '' as name, '' as email, '' as qualite
                 FROM "user"
                 WHERE ARRAY[{ids}]::uuid[] && group_ids""")
-          .on("ids" -> ids)
+          .on("ids" -> ids.distinct)
           .as(simpleUser.*)
       }.map(_.toUser)
     }
@@ -181,7 +181,7 @@ class UserService @Inject() (
   def byEmailFuture(email: String): Future[Option[User]] = Future(byEmail(email))
 
   def byEmails(emails: List[String]): List[User] = {
-    val lowerCaseEmails = emails.map(_.toLowerCase)
+    val lowerCaseEmails = emails.map(_.toLowerCase).distinct
     db.withConnection { implicit connection =>
       SQL(s"""SELECT $fieldsInSelect
               FROM "user"
