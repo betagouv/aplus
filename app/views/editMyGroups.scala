@@ -30,35 +30,61 @@ object editMyGroups {
       request: RequestHeader,
       webJarsUtil: WebJarsUtil,
       mainInfos: MainInfos
-  ): Html =
+  ): Html = {
+    // Precompute here to speedup page rendering
+    val (creationsCount, invitationsCount) = creationsAndInvitationsCounts(applications)
+    val groupsWithTheirUsers: List[(UserGroup, List[User])] =
+      for {
+        userGroup <- userGroups.sortBy(_.name)
+        groupUsers = users.filter(_.groupIds.contains(userGroup.id))
+      } yield (userGroup, groupUsers)
+    val dialogs =
+      for {
+        groupAndUsers <- groupsWithTheirUsers
+        (group, users) = groupAndUsers
+        user <- users
+      } yield removeUserFromGroupDialog(user, group.id, addRedirectQueryParam)
+    val blocks =
+      for {
+        groupAndUsers <- groupsWithTheirUsers
+        (group, users) = groupAndUsers
+      } yield groupBlock(
+        group,
+        users,
+        creationsCount,
+        invitationsCount,
+        addUserForm,
+        addRedirectQueryParam,
+        currentUser,
+        currentUserRights
+      )
+
     views.html.main(currentUser, currentUserRights)("Mes groupes")(
       views.helpers.head.publicCss("stylesheets/newForm.css")
     )(
-      frag(
-        (for {
-          userGroup <- userGroups.sortBy(_.name)
-          user <- users
-        } yield removeUserFromGroupDialog(user, userGroup.id, addRedirectQueryParam)) ::: (
-          for {
-            userGroup <- userGroups.sortBy(_.name)
-            groupUsers = users.filter(_.groupIds.contains(userGroup.id))
-          } yield groupBlock(
-            userGroup,
-            groupUsers,
-            applications,
-            addUserForm,
-            addRedirectQueryParam,
-            currentUser,
-            currentUserRights
-          )
-        )
-      )
+      frag(dialogs ::: blocks)
     )(Nil)
+  }
+
+  def creationsAndInvitationsCounts(
+      applications: List[Application]
+  ): (Map[UUID, Int], Map[UUID, Int]) = {
+    val userCreations = scala.collection.mutable.HashMap.empty[UUID, Int]
+    val userInvitations = scala.collection.mutable.HashMap.empty[UUID, Int]
+    applications.foreach { application =>
+      userCreations.updateWith(application.creatorUserId)(_.map(_ + 1).getOrElse(1).some)
+      application.invitedUsers.foreach { case (userId, _) =>
+        userInvitations.updateWith(userId)(_.map(_ + 1).getOrElse(1).some)
+      }
+    }
+    (userCreations.toMap, userInvitations.toMap)
+  }
 
   def groupBlock(
       group: UserGroup,
       users: List[User],
-      applications: List[Application],
+      applicationCreationsCount: Map[UUID, Int],
+      applicationInvitationsCount: Map[UUID, Int],
       addUserForm: Form[AddUserToGroupFormData],
       addRedirectQueryParam: String => String,
       currentUser: User,
@@ -90,7 +116,8 @@ object editMyGroups {
             userLine(
               user,
               group.id,
-              applications,
+              applicationCreationsCount,
+              applicationInvitationsCount,
               addRedirectQueryParam,
               currentUser,
               currentUserRights
@@ -199,7 +226,8 @@ object editMyGroups {
   def userLine(
       user: User,
       groupId: UUID,
-      applications: List[Application],
+      applicationCreationsCount: Map[UUID, Int],
+      applicationInvitationsCount: Map[UUID, Int],
       addRedirectQueryParam: String => String,
       currentUser: User,
       currentUserRights: Authorization.UserRights
@@ -240,13 +268,13 @@ object editMyGroups {
           i(cls := "material-icons icon--light", "chat_bubble"),
           span(
             cls := "application__anwsers",
-            s"${applications.count(_.creatorUserId === user.id)} demandes"
+            s"${applicationCreationsCount.getOrElse(user.id, 0)} demandes"
           ),
           br,
           i(cls := "material-icons icon--light", "question_answer"),
           span(
             cls := "application__anwsers",
-            s"${applications.count(_.invitedUsers.contains(user.id))} sollicitations"
+            s"${applicationInvitationsCount.getOrElse(user.id, 0)} sollicitations"
           )
         )
       ),
