@@ -115,7 +115,7 @@ object application {
         if (status.isEmpty || status === Some(Available))
           frag(
             "le fichier ",
-            a(href := fileUrl, target := "_blank", filename)
+            a(href := fileUrl, filename)
           )
         else
           s"le fichier $filename"

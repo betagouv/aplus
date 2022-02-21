@@ -961,11 +961,11 @@ case class ApplicationController @Inject() (
       }
     }
 
-  def answerFile(applicationId: UUID, answerId: UUID, filename: String): Action[AnyContent] =
-    file(applicationId, Some(answerId), filename)
+  def answerFile(applicationId: UUID, answerId: UUID, fileId: String): Action[AnyContent] =
+    file(applicationId, Some(answerId), fileId)
 
-  def applicationFile(applicationId: UUID, filename: String): Action[AnyContent] =
-    file(applicationId, None, filename)
+  def applicationFile(applicationId: UUID, fileId: String): Action[AnyContent] =
+    file(applicationId, None, fileId)
 
   private def sendFile(localPath: Path, filename: String, remoteUrlPath: String)(implicit
       request: actions.RequestWithUserData[_]
@@ -974,10 +974,10 @@ case class ApplicationController @Inject() (
       Future(
         Ok.sendPath(
           localPath,
-          true,
-          { _: Path =>
-            Some(filename)
-          }
+          // Will set "Content-Disposition: attachment"
+          // This avoids potential security issues if a malicious HTML page is uploaded
+          `inline` = false,
+          fileName = (_: Path) => Some(filename)
         ).withHeaders(CACHE_CONTROL -> "no-store")
       )
     } else {
@@ -1004,7 +1004,7 @@ case class ApplicationController @Inject() (
                 Ok.streamed(
                   content = body,
                   contentLength = contentLength,
-                  `inline` = true,
+                  `inline` = false,
                   fileName = Some(filename)
                 ).withHeaders(CACHE_CONTROL -> "no-store")
               } else {
@@ -1020,7 +1020,7 @@ case class ApplicationController @Inject() (
     }
 
   private def sendFileFromMetadata(
-      filename: String,
+      fileId: String,
       application: Application,
       legacyPath: Path,
       legacyUrlPath: String,
@@ -1030,7 +1030,7 @@ case class ApplicationController @Inject() (
       request: actions.RequestWithUserData[_]
   ): Future[Result] =
     fileService
-      .fileMetadata(filename)
+      .fileMetadata(fileId)
       .flatMap(
         _.fold(
           error => {
@@ -1078,13 +1078,13 @@ case class ApplicationController @Inject() (
                     )
                     val call = metadata.attached match {
                       case FileMetadata.Attached.Application(applicationId) =>
-                        routes.ApplicationController.applicationFile(applicationId, filename)
+                        routes.ApplicationController.applicationFile(applicationId, fileId)
                       case FileMetadata.Attached.Answer(applicationId, answerId) =>
-                        routes.ApplicationController.answerFile(applicationId, answerId, filename)
+                        routes.ApplicationController.answerFile(applicationId, answerId, fileId)
                     }
                     sendFile(
                       path,
-                      filename,
+                      metadata.filename,
                       call.url
                     )
                   case FileMetadata.Status.Expired =>
@@ -1111,8 +1111,8 @@ case class ApplicationController @Inject() (
         )
       )
 
-  // TODO: once legacy file upload is not used anymore, keep only filename parameter as UUID
-  private def file(applicationId: UUID, answerIdOption: Option[UUID], filename: String) =
+  // TODO: once legacy file upload is not used anymore, keep only fileId parameter as UUID
+  private def file(applicationId: UUID, answerIdOption: Option[UUID], fileId: String) =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application: Application =>
         answerIdOption match {
@@ -1123,18 +1123,18 @@ case class ApplicationController @Inject() (
               ) =>
             application.answers.find(_.id === answerId) match {
               case Some(answer) =>
-                val legacyPath = Paths.get(s"$filesPath/ans_$answerId-$filename")
+                val legacyPath = Paths.get(s"$filesPath/ans_$answerId-$fileId")
                 val legacyUrlPath =
-                  s"/toutes-les-demandes/$applicationId/messages/$answerId/fichiers/$filename"
+                  s"/toutes-les-demandes/$applicationId/messages/$answerId/fichiers/$fileId"
                 val legacyDocument = s"la réponse $answerId sur la demande $applicationId"
                 sendFileFromMetadata(
-                  filename,
+                  fileId,
                   application,
                   legacyPath,
                   legacyUrlPath,
                   legacyDocument,
                   () => {
-                    if (answer.files.getOrElse(Map.empty).contains(filename)) {
+                    if (answer.files.getOrElse(Map.empty).contains(fileId)) {
                       eventService.log(
                         FileOpened,
                         s"Le fichier de $legacyDocument a été ouvert",
@@ -1142,7 +1142,7 @@ case class ApplicationController @Inject() (
                       )
                       sendFile(
                         legacyPath,
-                        filename,
+                        fileId,
                         legacyUrlPath
                       )
                     } else {
@@ -1168,17 +1168,17 @@ case class ApplicationController @Inject() (
                 request.currentUser.id,
                 request.rights
               ) =>
-            val legacyPath = Paths.get(s"$filesPath/app_$applicationId-$filename")
-            val legacyUrlPath = s"/toutes-les-demandes/$applicationId/fichiers/$filename"
+            val legacyPath = Paths.get(s"$filesPath/app_$applicationId-$fileId")
+            val legacyUrlPath = s"/toutes-les-demandes/$applicationId/fichiers/$fileId"
             val legacyDocument = s"la demande $applicationId"
             sendFileFromMetadata(
-              filename,
+              fileId,
               application,
               legacyPath,
               legacyUrlPath,
               legacyDocument,
               () => {
-                if (application.files.contains(filename)) {
+                if (application.files.contains(fileId)) {
                   eventService.log(
                     FileOpened,
                     s"Le fichier de $legacyDocument a été ouvert",
@@ -1186,7 +1186,7 @@ case class ApplicationController @Inject() (
                   )
                   sendFile(
                     legacyPath,
-                    filename,
+                    fileId,
                     legacyUrlPath
                   )
                 } else {
