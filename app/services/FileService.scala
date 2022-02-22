@@ -123,7 +123,8 @@ class FileService @Inject() (
                     )
                     val fileDestination = Paths.get(s"$filesPath/${metadata.id}")
                     Files.copy(path, fileDestination)
-                    Files.copy(path, legacyFilePath(metadata))
+                    // Can throw java.nio.file.FileAlreadyExistsException
+                    Try(Files.copy(path, legacyFilePath(metadata)))
                     Files.deleteIfExists(path)
                     FileMetadata.Status.Available
                   case VirusFound(message) =>

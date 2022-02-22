@@ -96,7 +96,7 @@ object common {
     ) ::: commonEmailFooter
 
   val fileQuarantinedSubject =
-    "[A+] Un virus a été détecté dans votre fichier envoyé sur A+"
+    "[A+] Un virus a été détecté dans votre fichier envoyé sur Administration+"
 
   def fileQuarantinedBody(absoluteUrl: String): List[Modifier] =
     List[Modifier](
@@ -105,10 +105,12 @@ object common {
         a(href := absoluteUrl, target := "_blank", rel := "noopener", absoluteUrl),
         " et a détecté un virus. ",
         br,
+        br,
         span(
           style := "color: red; font-weight: 800",
           "Il est fortement recommandé de passer un antivirus sur votre poste de travail. "
         ),
+        br,
         br,
         "Il peut cependant s’agir d’un faux positif. ",
         "Vous pouvez joindre le document dans autre format (jpeg, etc.) sur le site Administration+ ",
@@ -119,14 +121,19 @@ object common {
     ) ::: commonEmailFooter
 
   val fileErrorSubject =
-    "[A+] Une erreur s’est produite lors de l’enregistrement de votre fichier"
+    "[A+] Erreur lors de l’enregistrement de votre fichier"
 
   def fileErrorBody(absoluteUrl: String): List[Modifier] =
     List[Modifier](
       span(
         "Une erreur s’est produite lors de votre envoi récent de fichier sur la demande ",
         a(href := absoluteUrl, target := "_blank", rel := "noopener", absoluteUrl),
-        " . Administration+ n’a pas été en mesure de sauvegarder le fichier. ",
+        " . ",
+        br,
+        br,
+        "Administration+ n’a pas été en mesure de sauvegarder le fichier. ",
+        br,
+        br,
         "L’erreur est probablement temporaire. ",
         "Il est possible d’envoyer à nouveau le fichier ",
         "en utilisant le formulaire de réponse à la demande ",
