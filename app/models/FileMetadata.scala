@@ -1,9 +1,9 @@
 package models
 
-import java.time.Instant
-import java.util.UUID
 import cats.kernel.Eq
 import cats.syntax.all._
+import java.time.Instant
+import java.util.UUID
 
 case class FileMetadata(
     id: UUID,

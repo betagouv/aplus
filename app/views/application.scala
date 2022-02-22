@@ -128,8 +128,7 @@ object application {
           case None                   => "Fichier expiré et supprimé"
           case Some(expirationInDays) => s"Suppression du fichier dans $expirationInDays jours"
         }
-      case Some(Scanning) => "Scan par un antivirus en cours"
-      // case Some(Quarantined) => "Attention ! Un virus a été détecté par l’antivirus. Il est fortement recommandé de")
+      case Some(Scanning)    => "Scan par un antivirus en cours"
       case Some(Quarantined) => "Fichier supprimé par l’antivirus"
       case Some(Expired)     => "Fichier expiré et supprimé"
       case Some(Error) =>

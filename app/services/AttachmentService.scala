@@ -6,9 +6,6 @@ import java.util.UUID
 
 import helper.StringHelper.normalizeNFKC
 
-import net.scalytica.clammyscan._
-import net.scalytica.clammyscan.streams.{ClamError, FileOk, ScannedBody, VirusFound}
-
 object AttachmentHelper {
 
   private val APPLICATION_PREFIX = "app_"
