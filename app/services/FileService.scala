@@ -153,7 +153,8 @@ class FileService @Inject() (
             )
             val fileDestination = Paths.get(s"$filesPath/${metadata.id}")
             Files.copy(path, fileDestination)
-            Files.copy(path, legacyFilePath(metadata))
+            // Can throw java.nio.file.FileAlreadyExistsException
+            Try(Files.copy(path, legacyFilePath(metadata)))
             Files.deleteIfExists(path)
             updateStatus(metadata.id, FileMetadata.Status.Available)
           }
@@ -182,6 +183,15 @@ class FileService @Inject() (
           }
       }
       .run()
+      .recover { case error =>
+        eventService.logSystem(
+          EventType.FileScanError,
+          s"Erreur imprévue (bug) durant la recherche de virus dans les fichiers " +
+            metadataList.map { case (_, metadata) => metadata.id },
+          underlyingException = Some(error)
+        )
+        Done
+      }
 
   private val (fileMetadataRowParser, tableFields) = Macros.parserWithFields[FileMetadataRow](
     "id",
