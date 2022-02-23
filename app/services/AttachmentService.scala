@@ -7,8 +7,7 @@ import java.util.UUID
 import helper.StringHelper.normalizeNFKC
 
 object AttachmentHelper {
-  private val APPLICATION_ID_KEY = "application-id"
-  private val ANSWER_ID_KEY = "answer-id"
+
   private val APPLICATION_PREFIX = "app_"
   private val ANSWER_PREFIX = "ans_"
 
@@ -33,12 +32,6 @@ object AttachmentHelper {
     val pendingAttachments = getAttachments(applicationId, filesPath, ANSWER_PREFIX)
     pendingAttachments -> newAttachments
   }
-
-  def retrieveOrGenerateApplicationId(formContent: Map[String, String]): UUID =
-    formContent.get(APPLICATION_ID_KEY).map(UUID.fromString).getOrElse(UUID.randomUUID())
-
-  def retrieveOrGenerateAnswerId(formContent: Map[String, String]): UUID =
-    formContent.get(ANSWER_ID_KEY).map(UUID.fromString).getOrElse(UUID.randomUUID())
 
   private def storeAttachments(
       getAttachmentsToStore: => Iterable[(Path, String)],

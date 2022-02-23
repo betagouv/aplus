@@ -7,9 +7,11 @@ import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 
 import cats.syntax.all._
 import constants.Constants
+import forms.FormsPlusMap
 import helper.StringHelper.commonStringInputNormalization
 import java.util.UUID
 import serializers.Keys
+import scala.util.Try
 
 object formModels {
 
@@ -148,6 +150,40 @@ object formModels {
       linkedMandat: Option[UUID]
   )
 
+  object ApplicationFormData {
+
+    private val applicationIdKey = "application-id"
+
+    def extractApplicationId(form: Form[ApplicationFormData]): Option[UUID] =
+      form.data.get(applicationIdKey).flatMap(id => Try(UUID.fromString(id)).toOption)
+
+    def form(currentUser: User) =
+      Form(
+        mapping(
+          "subject" -> nonEmptyText.verifying(maxLength(150)),
+          "description" -> nonEmptyText,
+          "usagerPrenom" -> nonEmptyText.verifying(maxLength(30)),
+          "usagerNom" -> nonEmptyText.verifying(maxLength(30)),
+          "usagerBirthDate" -> nonEmptyText.verifying(maxLength(30)),
+          "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(30))),
+          "users" -> list(uuid),
+          "groups" -> list(uuid)
+            .verifying("Vous devez sélectionner au moins une structure", _.nonEmpty),
+          "category" -> optional(text),
+          "selected-subject" -> optional(text),
+          "signature" -> (
+            if (currentUser.sharedAccount)
+              nonEmptyText.transform[Option[String]](Some.apply, _.getOrElse(""))
+            else ignored(Option.empty[String])
+          ),
+          "mandatType" -> text,
+          "mandatDate" -> nonEmptyText,
+          "linkedMandat" -> optional(uuid)
+        )(ApplicationFormData.apply)(ApplicationFormData.unapply)
+      )
+
+  }
+
   case class AnswerFormData(
       answerType: String,
       message: Option[String],
@@ -156,6 +192,31 @@ object formModels {
       privateToHelpers: Boolean,
       signature: Option[String]
   )
+
+  object AnswerFormData {
+
+    private val answerIdKey = "answer-id"
+
+    def extractAnswerId(form: Form[AnswerFormData]): Option[UUID] =
+      form.data.get(answerIdKey).flatMap(id => Try(UUID.fromString(id)).toOption)
+
+    def form(currentUser: User) =
+      Form(
+        mapping(
+          "answer_type" -> nonEmptyText.verifying(maxLength(20)),
+          "message" -> optional(nonEmptyText),
+          "irrelevant" -> boolean,
+          "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(30))),
+          "privateToHelpers" -> boolean,
+          "signature" -> (
+            if (currentUser.sharedAccount)
+              nonEmptyText.transform[Option[String]](Some.apply, _.orEmpty)
+            else ignored(Option.empty[String])
+          )
+        )(AnswerFormData.apply)(AnswerFormData.unapply)
+      )
+
+  }
 
   case class InvitationFormData(
       message: String,
