@@ -17,7 +17,7 @@ FROM adoptopenjdk:11-jdk-hotspot AS scalabuilder
 
 # We need nodejs to run in a reasonable amount of time sbt-web
 # see step `Optimizing JavaScript with RequireJS`
-RUN apt-get update && apt-get install -y --no-install-recommends nodejs
+RUN apt-get update && apt-get install -y --no-install-recommends nodejs git
 
 # Env variables
 ENV SBT_VERSION 1.5.1

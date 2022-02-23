@@ -114,6 +114,40 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       underlyingException = underlyingException
     )
 
+  /** Internal errors without requests: jobs, etc. */
+  def logErrorNoRequest(
+      error: models.Error,
+      application: Option[Application] = None,
+      involvesUser: Option[UUID] = None
+  ) = logNoRequest(
+    error.eventType,
+    error.description,
+    error.unsafeData,
+    application = application,
+    involvesUser = involvesUser,
+    underlyingException = error.underlyingException
+  )
+
+  /** Internal errors without requests: jobs, etc. */
+  def logNoRequest(
+      event: EventType,
+      descriptionSanitized: String,
+      additionalUnsafeData: Option[String] = None,
+      application: Option[Application] = None,
+      involvesUser: Option[UUID] = None,
+      underlyingException: Option[Throwable] = None
+  ) =
+    register(event.level)(
+      currentUser = User.systemUser,
+      "0.0.0.0",
+      event.code,
+      descriptionSanitized,
+      additionalUnsafeData,
+      application,
+      involvesUser,
+      underlyingException
+    )
+
   private def register(level: String)(
       currentUser: User,
       remoteAddress: String,

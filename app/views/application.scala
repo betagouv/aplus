@@ -4,7 +4,7 @@ import cats.syntax.all._
 import controllers.routes.ApplicationController
 import helpers.forms.CSRFInput
 import java.util.UUID
-import models.{Application, Area, Authorization, User, UserGroup}
+import models.{Answer, Application, Area, Authorization, FileMetadata, User, UserGroup}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
@@ -12,6 +12,138 @@ import serializers.Keys
 import views.helpers.common.webJarImg
 
 object application {
+
+  def applicationFilesLinks(
+      files: List[FileMetadata],
+      application: Application,
+      currentUser: User,
+      currentUserRights: Authorization.UserRights,
+      fileExpiryDayCount: Int,
+  ): Frag = {
+    val isAuthorized = Authorization.applicationFileCanBeShowed(fileExpiryDayCount)(application)(
+      currentUser.id,
+      currentUserRights
+    )
+    val daysRemaining = Application.filesAvailabilityLeftInDays(fileExpiryDayCount)(application)
+    frag(
+      // Legacy
+      application.files.map { case (filename, _) =>
+        fileLink(
+          isAuthorized,
+          ApplicationController.applicationFile(application.id, filename).url,
+          filename,
+          daysRemaining,
+          application.creatorUserName,
+          "",
+          None
+        )
+      }.toList,
+      files
+        .filter(_.attached.isApplication)
+        .map(file =>
+          fileLink(
+            isAuthorized,
+            ApplicationController.applicationFile(application.id, file.id.toString).url,
+            file.filename,
+            daysRemaining,
+            application.creatorUserName,
+            "",
+            Some(file.status)
+          )
+        )
+    )
+  }
+
+  def answerFilesLinks(
+      files: List[FileMetadata],
+      answer: Answer,
+      application: Application,
+      currentUser: User,
+      currentUserRights: Authorization.UserRights,
+      fileExpiryDayCount: Int
+  ): Frag = {
+    val isAuthorized =
+      Authorization.answerFileCanBeShowed(fileExpiryDayCount)(application, answer.id)(
+        currentUser.id,
+        currentUserRights
+      )
+    val daysRemaining = Answer.filesAvailabilityLeftInDays(fileExpiryDayCount)(answer)
+    frag(
+      // Legacy
+      answer.files
+        .getOrElse(Map.empty)
+        .map { case (filename, _) =>
+          fileLink(
+            isAuthorized,
+            ApplicationController.answerFile(application.id, answer.id, filename).url,
+            filename,
+            daysRemaining,
+            answer.creatorUserName,
+            "mdl-cell mdl-cell--12-col typography--text-align-center",
+            None
+          )
+        }
+        .toList,
+      files
+        .filter(_.attached.answerIdOpt === answer.id.some)
+        .map(file =>
+          fileLink(
+            isAuthorized,
+            ApplicationController.answerFile(application.id, answer.id, file.id.toString).url,
+            file.filename,
+            daysRemaining,
+            answer.creatorUserName,
+            "mdl-cell mdl-cell--12-col typography--text-align-center",
+            Some(file.status)
+          )
+        )
+    )
+  }
+
+  def fileLink(
+      isAuthorized: Boolean,
+      fileUrl: String,
+      filename: String,
+      daysRemaining: Option[Int],
+      uploaderName: String,
+      additionalClasses: String,
+      status: Option[FileMetadata.Status]
+  ): Tag = {
+    import FileMetadata.Status._
+    val link: Frag =
+      if (isAuthorized)
+        if (status.isEmpty || status === Some(Available))
+          frag(
+            "le fichier ",
+            a(href := fileUrl, filename)
+          )
+        else
+          s"le fichier $filename"
+      else
+        "un fichier"
+
+    val statusMessage: Frag = status match {
+      case None | Some(Available) =>
+        daysRemaining match {
+          case None                   => "Fichier expiré et supprimé"
+          case Some(expirationInDays) => s"Suppression du fichier dans $expirationInDays jours"
+        }
+      case Some(Scanning)    => "Scan par un antivirus en cours"
+      case Some(Quarantined) => "Fichier supprimé par l’antivirus"
+      case Some(Expired)     => "Fichier expiré et supprimé"
+      case Some(Error) =>
+        "Une erreur est survenue lors de l’envoi du fichier, celui-ci n’est pas disponible"
+    }
+    div(
+      cls := "vertical-align--middle mdl-color-text--black single--font-size-14px single--font-weight-600 single--margin-top-8px" + additionalClasses,
+      i(cls := "icon material-icons icon--light", "attach_file"),
+      s" $uploaderName a ajouté ",
+      link,
+      " ( ",
+      statusMessage,
+      " ) "
+    )
+  }
 
   def closeApplicationModal(
       applicationId: UUID

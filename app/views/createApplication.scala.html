@@ -5,7 +5,7 @@
 @import play.api.libs.json.Json
 @import serializers.Keys
 
-@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], canCreatePhoneMandat: Boolean, featureMandatSms: Boolean, featureCanSendApplicationsAnywhere: Boolean, categories: List[Category], applicationForm: Form[models.formModels.ApplicationFormData], attachments: Iterable[String] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider, mainInfos: MainInfos)
+@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], canCreatePhoneMandat: Boolean, featureMandatSms: Boolean, featureCanSendApplicationsAnywhere: Boolean, categories: List[Category], applicationForm: Form[models.formModels.ApplicationFormData], attachments: List[FileMetadata] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider, mainInfos: MainInfos)
 
 @main(currentUser, currentUserRights)(s"Nouvelle demande")  {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
@@ -170,8 +170,8 @@
                         }
                         Ajouter un ou plusieurs fichiers ( 5Mo maximum au total ) :
                         <ul>
-                            @for((attachment,index) <- attachments.zipWithIndex) {
-                                <li>@attachment</li>
+                            @for(attachment <- attachments) {
+                                <li>@{attachment.filename}</li>
                             }
                         </ul>
                         <ul id="attachment-list">

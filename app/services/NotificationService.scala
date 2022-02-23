@@ -275,6 +275,40 @@ class NotificationService @Inject() (
     sendMail(email)
   }
 
+  def fileUploadStatus(
+      document: FileMetadata.Attached,
+      status: FileMetadata.Status,
+      user: User
+  ): Unit = {
+    val applicationId = document match {
+      case FileMetadata.Attached.Application(id) => id
+      case FileMetadata.Attached.Answer(id, _)   => id
+    }
+    val absoluteUrl =
+      routes.ApplicationController.show(applicationId).absoluteURL(https, host)
+    status match {
+      case FileMetadata.Status.Quarantined =>
+        val email = Email(
+          subject = common.fileQuarantinedSubject,
+          from = from,
+          replyTo = replyTo,
+          to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
+          bodyHtml = Some(common.renderEmail(common.fileQuarantinedBody(absoluteUrl)))
+        )
+        sendMail(email)
+      case FileMetadata.Status.Error =>
+        val email = Email(
+          subject = common.fileErrorSubject,
+          from = from,
+          replyTo = replyTo,
+          to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
+          bodyHtml = Some(common.renderEmail(common.fileErrorBody(absoluteUrl)))
+        )
+        sendMail(email)
+      case _ =>
+    }
+  }
+
   private def generateNotificationBALEmail(
       application: Application,
       answerOption: Option[Answer],

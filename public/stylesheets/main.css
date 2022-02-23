@@ -864,6 +864,10 @@ a {
     font-weight: 600;
 }
 
+.single--font-weight-bold {
+    font-weight: bold;
+}
+
 .single--line-height-24px {
     line-height: 24px !important;
 }

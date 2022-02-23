@@ -78,9 +78,6 @@ object EventType {
   object EditUserUnauthorized extends Warn
   object EventsShowed extends Info
   object EventsUnauthorized extends Warn
-  object FileNotFound extends Error
-  object FileOpened extends Info
-  object FileUnauthorized extends Warn
   object GroupDeletionUnauthorized extends Warn
   object ImportGroupUnauthorized extends Warn
   object ImportUserError extends Error
@@ -182,5 +179,16 @@ object EventType {
   object AuthWithDifferentIp extends Warn
   object LoginByKey extends Info
   object AuthBySignupToken extends Info
+
+  // Files
+  object FileNotFound extends Error
+  object FileOpened extends Info
+  object FileUnauthorized extends Warn
+  object FileMetadataError extends Error
+  object FileAvailable extends Info
+  object FileQuarantined extends Warn
+  object FileScanError extends Error
+  object FilesDeletion extends Info
+  object FileDeletionError extends Error
 
 }
