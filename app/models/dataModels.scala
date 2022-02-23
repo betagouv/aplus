@@ -1,10 +1,10 @@
 package models
 
+import anorm.SqlMappingError
+import cats.syntax.all._
+import helper.{PlayFormHelper, Time}
 import java.time.{Instant, ZonedDateTime}
 import java.util.UUID
-
-import anorm.SqlMappingError
-import helper.{PlayFormHelper, Time}
 import models.Answer
 import models.Answer.AnswerType
 import models.Application.{MandatType, SeenByUser}
@@ -140,6 +140,76 @@ object dataModels {
           )
         )
 
+    }
+
+  }
+
+  case class FileMetadataRow(
+      id: UUID,
+      uploadDate: Instant,
+      filename: String,
+      filesize: Int,
+      status: String,
+      applicationId: Option[UUID],
+      answerId: Option[UUID]
+  ) {
+    import FileMetadata._
+
+    def modelStatus = status match {
+      case "scanning"    => Status.Scanning.some
+      case "quarantined" => Status.Quarantined.some
+      case "available"   => Status.Available.some
+      case "expired"     => Status.Expired.some
+      case "error"       => Status.Error.some
+      case _             => none
+    }
+
+    def toFileMetadata: Option[FileMetadata] = {
+      val document = (applicationId, answerId) match {
+        case (Some(applicationId), None)           => Attached.Application(applicationId).some
+        case (Some(applicationId), Some(answerId)) => Attached.Answer(applicationId, answerId).some
+        case _                                     => none
+      }
+      document.zip(modelStatus).map { case (attached, status) =>
+        FileMetadata(
+          id = id,
+          uploadDate = uploadDate,
+          filename = filename,
+          filesize = filesize,
+          status = status,
+          attached = attached
+        )
+      }
+    }
+
+  }
+
+  object FileMetadataRow {
+    import FileMetadata._
+
+    def statusFromFileMetadata(status: Status): String =
+      status match {
+        case Status.Scanning    => "scanning"
+        case Status.Quarantined => "quarantined"
+        case Status.Available   => "available"
+        case Status.Expired     => "expired"
+        case Status.Error       => "error"
+      }
+
+    def fromFileMetadata(metadata: FileMetadata): FileMetadataRow = {
+      val (applicationId, answerId) = metadata.attached match {
+        case Attached.Application(applicationId)      => (applicationId.some, none)
+        case Attached.Answer(applicationId, answerId) => (applicationId.some, answerId.some)
+      }
+      FileMetadataRow(
+        id = metadata.id,
+        uploadDate = metadata.uploadDate,
+        filename = metadata.filename,
+        filesize = metadata.filesize,
+        status = statusFromFileMetadata(metadata.status),
+        applicationId = applicationId,
+        answerId = answerId
+      )
     }
 
   }

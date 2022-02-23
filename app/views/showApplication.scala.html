@@ -5,7 +5,7 @@
 @import models.Answer.AnswerType
 @import serializers.Keys
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, selectedArea: Area, userSignature: Option[String], attachments: Iterable[String] = Nil, fileExpiryDayCount: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, selectedArea: Area, userSignature: Option[String], attachments: List[FileMetadata], fileExpiryDayCount: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 @organisationIcon(creatorUserName: String) = {
     @Map("A+" -> "aplus",
@@ -206,7 +206,7 @@ dialog {
             </div>
             @if(currentUser.admin) {
                 <div class="mdl-card__supporting-text mdl-card--border do-not-print">
-                    <span style="font-weight: bold; color:red" class="do-not-print">
+                    <span class="do-not-print mdl-color-text--red single--font-weight-bold">
                         Référence interne pour les administrateurs : @application.internalId
                     </span>
                 </div>
@@ -245,20 +245,8 @@ dialog {
                         @for(mandatDate <- application.mandatDate) { (@mandatDate) }
                     </span>
                 }
-                @for((filename, fileSize) <- application.files) {
-                        <div class="vertical-align--middle" style="
-                            color: #000000d6;
-                            font-size: 14px;
-                            font-weight: 600;
-                            line-height: 16px;">
-                            <i class="icon material-icons icon--light">attach_file</i>
-                            @application.creatorUserName a ajouté @if(Authorization.applicationFileCanBeShowed(fileExpiryDayCount)(application)(currentUser.id, currentUserRights)) { le fichier <a href="@routes.ApplicationController.applicationFile(application.id, filename)" target="_blank">@filename</a> } else { un fichier }
-                            @Application.filesAvailabilityLeftInDays(fileExpiryDayCount)(application) match {
-                                case None => { ( Fichier expiré et supprimé ) }
-                                case Some(expirationInDays) => { ( Suppression du fichier dans @expirationInDays jours ) }
-                            }
-                        </div> <br>
-                }
+                @toHtml(views.application.applicationFilesLinks(attachments, application, currentUser, currentUserRights, fileExpiryDayCount))
+
             </div>
         </div>
         <div class="mdl-card mdl-cell mdl-cell--4-col mdl-cell--12-col-phone mdl-grid mdl-color--blue-grey-100 do-not-print">
@@ -322,22 +310,8 @@ dialog {
                 </div>
             }
             @if(currentUser.instructor || currentUser.admin || currentUser.groupAdmin || answer.visibleByHelpers || answer.creatorUserID == currentUser.id) {
-                @if(answer.files.getOrElse(Map()).nonEmpty) {
-                    @for((filename, fileSize) <- answer.files.getOrElse(Map())) {
-                        <div class="mdl-cell mdl-cell--12-col vertical-align--middle" style="text-align: center;
-                            color: #000000d6;
-                            font-size: 14px;
-                            font-weight: 600;
-                            line-height: 16px;">
-                            <i class="icon material-icons icon--light">attach_file</i>
-                            @answer.creatorUserName a ajouté @if(Authorization.answerFileCanBeShowed(fileExpiryDayCount)(application, answer.id)(currentUser.id, currentUserRights)) { le fichier <a href="@routes.ApplicationController.answerFile(application.id, answer.id, filename)" target="_blank">@filename</a> } else { un fichier }
-                            @Answer.filesAvailabilityLeftInDays(fileExpiryDayCount)(answer) match {
-                                case None => { ( Fichier expiré et supprimé ) }
-                                case Some(expirationInDays) => { ( Suppression du fichier dans @expirationInDays jours ) }
-                            }
-                        </div>
-                    }
-                }
+                @toHtml(views.application.answerFilesLinks(attachments, answer, application, currentUser, currentUserRights, fileExpiryDayCount))
+
                 @if(answer.message.nonEmpty) {
                     <div class="mdl-card mdl-cell mdl-cell--10-col mdl-cell--12-col-phone @if(answer.creatorUserID == currentUser.id){ mdl-cell--2-offset mdl-cell--0-offset-phone } answer" id="answer-@answer.id">
                         <div class="answer-card mdl-card__supporting-text mdl-card--border @if(!answer.visibleByHelpers) { mdl-color--grey-50 }" >
@@ -353,7 +327,7 @@ dialog {
                                 <div class="mdl-list__item">
                                     <div class="mdl-list__item-primary-content">
                                         @organisationIcon(answer.creatorUserName)
-                                        <span class="single--font-weight-600">@answer.creatorUserName</span>@if(currentUser.admin){ <span style="font-weight: bold; color:red" class="do-not-print"> <a href="@routes.UserController.editUser(answer.creatorUserID)"> Voir fiche utilisateur</a></span>}
+                                        <span class="single--font-weight-600">@answer.creatorUserName</span>@if(currentUser.admin){ <span class="do-not-print mdl-color-text--red single--font-weight-bold"> <a href="@routes.UserController.editUser(answer.creatorUserID)"> Voir fiche utilisateur</a></span>}
                                         <span class="mdl-list__item-sub-title"></span>
                                     </div>
                                     <div class="mdl-list__item-secondary-content">
@@ -504,13 +478,6 @@ dialog {
 
                                 <div class="mdl-cell mdl-cell--12-col">
                                     <b>Ajouter un ou plusieurs fichiers ( 5Mo maximum au total ) :</b>
-                                    <ul class="single--list-style-type-none">
-                                        @for((attachment,index) <- attachments.zipWithIndex) {
-                                        <li>
-                                            <input type="checkbox" checked value="@attachment" id="pending-file[@index]" name="pending-file[@index]"><label for="pending-file[@index]">@attachment</label>
-                                        </li>
-                                        }
-                                    </ul>
                                     <ul id="attachment-list">
                                         <li><input type="file" name="file[0]"></li>
                                     </ul>
