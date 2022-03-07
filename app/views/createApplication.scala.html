@@ -5,7 +5,7 @@
 @import play.api.libs.json.Json
 @import serializers.Keys
 
-@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], canCreatePhoneMandat: Boolean, featureMandatSms: Boolean, featureCanSendApplicationsAnywhere: Boolean, categories: List[Category], applicationForm: Form[models.formModels.ApplicationFormData], attachments: List[FileMetadata] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider, mainInfos: MainInfos)
+@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], canCreatePhoneMandat: Boolean, categories: List[Category], applicationForm: Form[models.formModels.ApplicationFormData], attachments: List[FileMetadata] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider, mainInfos: MainInfos)
 
 @main(currentUser, currentUserRights)(s"Nouvelle demande")  {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>
@@ -32,7 +32,7 @@
                 Les champs marqués d’un <span class="mdl-color-text--red-500">*</span> sont obligatoires
             </div>
 
-            @if(featureCanSendApplicationsAnywhere) {
+            @if(mainInfos.config.featureCanSendApplicationsAnywhere) {
               <h5 class="title--addline">Territoire concerné</h5>
               <div>
                 @toHtml(views.helpers.changeAreaSelect(currentArea, Area.all, routes.ApplicationController.create))
@@ -272,7 +272,7 @@
                         <br>
                         </div>
 
-                        @if(featureMandatSms) {
+                        @if(mainInfos.config.featureMandatSms) {
                             <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet">
                                 @helpers.smsMandatAjaxForm()
                             </div>

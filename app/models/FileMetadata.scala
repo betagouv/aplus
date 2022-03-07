@@ -2,19 +2,22 @@ package models
 
 import cats.kernel.Eq
 import cats.syntax.all._
+import helper.Crypto.EncryptedField
 import java.time.Instant
 import java.util.UUID
 
 case class FileMetadata(
     id: UUID,
     uploadDate: Instant,
-    filename: String,
+    filename: EncryptedField,
     filesize: Int,
     status: FileMetadata.Status,
     attached: FileMetadata.Attached,
 )
 
 object FileMetadata {
+
+  def filenameAAD(id: UUID): String = s"FileMetadata_$id"
 
   sealed trait Status
 

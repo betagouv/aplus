@@ -10,8 +10,8 @@ import controllers.Operators.UserOperators
 import javax.inject.{Inject, Singleton}
 import models.mandat.{Mandat, SmsMandatInitiation}
 import models.{Error, EventType, Sms}
+import modules.AppConfig
 import org.webjars.play.WebJarsUtil
-import play.api.Configuration
 import play.api.libs.json.{JsError, JsString, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, InjectedController, PlayBodyParsers}
 import serializers.JsonFormats._
@@ -22,7 +22,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 case class MandatController @Inject() (
     bodyParsers: PlayBodyParsers,
-    val configuration: Configuration,
+    config: AppConfig,
     eventService: EventService,
     loginAction: LoginAction,
     mandatService: MandatService,

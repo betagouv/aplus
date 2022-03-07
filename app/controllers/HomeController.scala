@@ -3,7 +3,8 @@ package controllers
 import javax.inject.{Inject, Singleton}
 import actions.LoginAction
 import org.webjars.play.WebJarsUtil
-import play.api.{Configuration, Logger}
+import modules.AppConfig
+import play.api.Logger
 import play.api.mvc._
 import play.api.db.Database
 import serializers.Keys
@@ -13,7 +14,7 @@ import views.home.LoginPanel
   */
 @Singleton
 class HomeController @Inject() (
-    val configuration: Configuration,
+    val config: AppConfig,
     loginAction: LoginAction,
     db: Database
 )(implicit webJarsUtil: WebJarsUtil)

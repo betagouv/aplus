@@ -10,12 +10,13 @@ import helper.CSVUtil.escape
 import helper.PlayFormHelper.formErrorsLog
 import helper.StringHelper.{CanonizeString, NonEmptyTrimmedString}
 import helper.Time.zonedDateTimeOrdering
-import helper.{Hash, Time, UUIDHelper}
+import helper.{Crypto, Hash, Time, UUIDHelper}
 import models.Answer.AnswerType
 import models.EventType._
 import models._
 import models.formModels.{AnswerFormData, ApplicationFormData, InvitationFormData}
 import models.mandat.Mandat
+import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.cache.AsyncCacheApi
 import play.api.data.Forms._
@@ -43,7 +44,7 @@ import scala.util.{Failure, Success, Try}
 case class ApplicationController @Inject() (
     applicationService: ApplicationService,
     cache: AsyncCacheApi,
-    configuration: play.api.Configuration,
+    config: AppConfig,
     eventService: EventService,
     fileService: FileService,
     loginAction: LoginAction,
@@ -59,25 +60,6 @@ case class ApplicationController @Inject() (
     with Operators.Common
     with Operators.ApplicationOperators
     with Operators.UserOperators {
-
-  private val filesPath = configuration.underlying.getString("app.filesPath")
-  private val featureMandatSms: Boolean = configuration.get[Boolean]("app.features.smsMandat")
-
-  private val featureCanSendApplicationsAnywhere: Boolean =
-    configuration.get[Boolean]("app.features.canSendApplicationsAnywhere")
-
-  // This is a feature that is temporary and should be activated
-  // for short period of time during migrations for smooth handling of files.
-  // Just remove the env variable FILES_SECOND_INSTANCE_HOST to deactivate.
-  private val filesSecondInstanceHost: Option[String] =
-    configuration.getOptional[String]("app.filesSecondInstanceHost")
-
-  private val filesExpirationInDays: Int = configuration.get[Int]("app.filesExpirationInDays")
-
-  private val dir = Paths.get(s"$filesPath")
-  if (!Files.isDirectory(dir)) {
-    Files.createDirectories(dir)
-  }
 
   private val success = "success"
 
@@ -173,8 +155,6 @@ case class ApplicationController @Inject() (
                 coworkers,
                 readSharedAccountUserSignature(request.session),
                 canCreatePhoneMandat = currentArea === Area.calvados,
-                featureMandatSms = featureMandatSms,
-                featureCanSendApplicationsAnywhere = featureCanSendApplicationsAnywhere,
                 categories,
                 ApplicationFormData.form(request.currentUser)
               )
@@ -257,8 +237,6 @@ case class ApplicationController @Inject() (
                   coworkers,
                   None,
                   canCreatePhoneMandat = currentArea === Area.calvados,
-                  featureMandatSms = featureMandatSms,
-                  featureCanSendApplicationsAnywhere = featureCanSendApplicationsAnywhere,
                   organisationService.categories,
                   form,
                   Nil,
@@ -285,8 +263,6 @@ case class ApplicationController @Inject() (
                       coworkers,
                       None,
                       canCreatePhoneMandat = currentArea === Area.calvados,
-                      featureMandatSms = featureMandatSms,
-                      featureCanSendApplicationsAnywhere = featureCanSendApplicationsAnywhere,
                       organisationService.categories,
                       formWithErrors,
                       files,
@@ -950,7 +926,6 @@ case class ApplicationController @Inject() (
                         selectedArea,
                         readSharedAccountUserSignature(request.session),
                         files,
-                        fileExpiryDayCount = filesExpirationInDays
                       )
                     ).withHeaders(CACHE_CONTROL -> "no-store")
                   }
@@ -981,7 +956,7 @@ case class ApplicationController @Inject() (
         ).withHeaders(CACHE_CONTROL -> "no-store")
       )
     } else {
-      filesSecondInstanceHost match {
+      config.filesSecondInstanceHost match {
         case None =>
           eventService.log(
             FileNotFound,
@@ -1082,9 +1057,14 @@ case class ApplicationController @Inject() (
                       case FileMetadata.Attached.Answer(applicationId, answerId) =>
                         routes.ApplicationController.answerFile(applicationId, answerId, fileId)
                     }
+                    val filename = metadata.filename
+                      .decrypt(config.fieldEncryptionKeys)
+                      // Compat with legacy, can be removed once field is encrypted
+                      .toOption
+                      .getOrElse(metadata.filename.cipherTextBase64)
                     sendFile(
                       path,
-                      metadata.filename,
+                      filename,
                       call.url
                     )
                   case FileMetadata.Status.Expired =>
@@ -1117,13 +1097,16 @@ case class ApplicationController @Inject() (
       withApplication(applicationId) { application: Application =>
         answerIdOption match {
           case Some(answerId)
-              if Authorization.answerFileCanBeShowed(filesExpirationInDays)(application, answerId)(
+              if Authorization.answerFileCanBeShowed(config.filesExpirationInDays)(
+                application,
+                answerId
+              )(
                 request.currentUser.id,
                 request.rights
               ) =>
             application.answers.find(_.id === answerId) match {
               case Some(answer) =>
-                val legacyPath = Paths.get(s"$filesPath/ans_$answerId-$fileId")
+                val legacyPath = Paths.get(s"${config.filesPath}/ans_$answerId-$fileId")
                 val legacyUrlPath =
                   s"/toutes-les-demandes/$applicationId/messages/$answerId/fichiers/$fileId"
                 val legacyDocument = s"la réponse $answerId sur la demande $applicationId"
@@ -1164,11 +1147,13 @@ case class ApplicationController @Inject() (
                 Future.successful(NotFound("Nous n'avons pas trouvé ce fichier"))
             }
           case None
-              if Authorization.applicationFileCanBeShowed(filesExpirationInDays)(application)(
+              if Authorization.applicationFileCanBeShowed(config.filesExpirationInDays)(
+                application
+              )(
                 request.currentUser.id,
                 request.rights
               ) =>
-            val legacyPath = Paths.get(s"$filesPath/app_$applicationId-$fileId")
+            val legacyPath = Paths.get(s"${config.filesPath}/app_$applicationId-$fileId")
             val legacyUrlPath = s"/toutes-les-demandes/$applicationId/fichiers/$fileId"
             val legacyDocument = s"la demande $applicationId"
             sendFileFromMetadata(

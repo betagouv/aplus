@@ -1,4 +1,4 @@
-@(infos: views.home.LoginPanel.EmailSentFeedback)
+@(infos: views.home.LoginPanel.EmailSentFeedback)(implicit mainInfos: MainInfos)
 
 <div class="mdl-cell mdl-cell--12-col mdl-cell--middle">
     <h3 class="mdl-typography--text-uppercase mdl-typography--font-medium">
@@ -6,9 +6,9 @@
     </h3>
 
     <p>
-      Nous avons envoyé par e-mail un lien de connexion sécurisée <b>valable @infos.tokenExpirationInMinutes minutes</b>
+      Nous avons envoyé par e-mail un lien de connexion sécurisée <b>valable @mainInfos.config.tokenExpirationInMinutes minutes</b>
       à l’adresse <b>@infos.email</b>.
-      Cliquez sur le lien contenu dans l’e-mail « @views.emails.common.magicLinkSubject » avant @{java.time.ZonedDateTime.now(infos.timeZone).plusMinutes(infos.tokenExpirationInMinutes.toLong).format(_root_.helper.Time.hourAndMinutesFormatter)} pour accéder à Administration+.
+      Cliquez sur le lien contenu dans l’e-mail « @views.emails.common.magicLinkSubject » avant @{java.time.ZonedDateTime.now(infos.timeZone).plusMinutes(mainInfos.config.tokenExpirationInMinutes.toLong).format(_root_.helper.Time.hourAndMinutesFormatter)} pour accéder à Administration+.
     </p>
 
     <p><i>

@@ -12,7 +12,6 @@ object LoginPanel {
   case class EmailSentFeedback(
       email: String,
       timeZone: ZoneId,
-      tokenExpirationInMinutes: Int,
       successMessage: Option[String]
   ) extends LoginPanel
 

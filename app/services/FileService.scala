@@ -6,6 +6,7 @@ import anorm._
 import aplus.macros.Macros
 import cats.syntax.all._
 import cats.data.EitherT
+import helper.Crypto
 import helper.StringHelper.normalizeNFKC
 import java.nio.file.{Files, Path, Paths}
 import java.time.Instant
@@ -13,17 +14,18 @@ import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models.{Error, EventType, FileMetadata, User}
 import models.dataModels.FileMetadataRow
+import modules.AppConfig
 import net.scalytica.clammyscan.streams.{ClamError, ClamIO, FileOk, VirusFound}
 import play.api.Configuration
 import play.api.mvc.Request
 import play.api.libs.concurrent.{ActorSystemProvider, MaterializerProvider}
 import play.api.db.Database
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration._
 import scala.util.{Success, Try}
 
 @Singleton
 class FileService @Inject() (
+    config: AppConfig,
     configuration: Configuration,
     db: Database,
     eventService: EventService,
@@ -33,21 +35,10 @@ class FileService @Inject() (
 )(implicit ec: ExecutionContext) {
   implicit val actorSystem = system.get
 
-  val filesPath: String = {
-    val path = configuration.get[String]("app.filesPath")
-    val dir = Paths.get(path)
-    if (!Files.isDirectory(dir)) {
-      Files.createDirectories(dir)
-    }
-    path
-  }
-
-  val clamAvIsEnabled = configuration.get[Boolean]("app.clamav.enabled")
-
   val clamIo = ClamIO(
-    configuration.get[String]("app.clamav.host"),
-    configuration.get[Int]("app.clamav.port"),
-    configuration.get[Int]("app.clamav.timeoutInSeconds").seconds,
+    config.clamAvHost,
+    config.clamAvPort,
+    config.clamAvTimeout,
     // maxBytes = 10M
     10000000
   )
@@ -62,15 +53,37 @@ class FileService @Inject() (
   ): Future[Either[Error, List[FileMetadata]]] = {
     val result: EitherT[Future, Error, List[(Path, FileMetadata)]] = pathsWithFilenames.traverse {
       case (path, filename) =>
-        val metadata = FileMetadata(
-          id = UUID.randomUUID(),
-          uploadDate = Instant.now(),
-          filename = normalizeNFKC(filename),
-          filesize = path.toFile.length().toInt,
-          status = FileMetadata.Status.Scanning,
-          attached = document,
-        )
-        EitherT(insertMetadata(metadata)).map(_ => (path, metadata))
+        val id = UUID.randomUUID()
+        EitherT
+          .fromEither[Future](
+            Crypto.EncryptedField
+              .fromPlainText(
+                normalizeNFKC(filename),
+                FileMetadata.filenameAAD(id),
+                config.fieldEncryptionKeys
+              )
+              .toEither
+              .left
+              .map(error =>
+                Error.MiscException(
+                  EventType.FieldEncryptionError,
+                  s"Impossible de chiffrer le nom de fichier pour $document",
+                  error,
+                  none
+                )
+              )
+          )
+          .flatMap { filename =>
+            val metadata = FileMetadata(
+              id = id,
+              uploadDate = Instant.now(),
+              filename = filename,
+              filesize = path.toFile.length().toInt,
+              status = FileMetadata.Status.Scanning,
+              attached = document,
+            )
+            EitherT(insertMetadata(metadata)).map(_ => (path, metadata))
+          }
     }
 
     // Scan in background, only on success, and sequentially
@@ -87,7 +100,9 @@ class FileService @Inject() (
     Try(UUID.fromString(filename)).toOption match {
       case None => Future.successful(none.asRight)
       case Some(fileId) =>
-        byId(fileId).map(_.map(_.map(metadata => (Paths.get(s"$filesPath/$fileId"), metadata))))
+        byId(fileId).map(
+          _.map(_.map(metadata => (Paths.get(s"${config.filesPath}/$fileId"), metadata)))
+        )
     }
 
   // TODO: remove that once saving names in DB is known to be working
@@ -95,9 +110,9 @@ class FileService @Inject() (
   def legacyFilePath(metadata: FileMetadata): Path =
     metadata.attached match {
       case FileMetadata.Attached.Application(applicationId) =>
-        Paths.get(s"$filesPath/app_$applicationId-${metadata.filename}")
+        Paths.get(s"${config.filesPath}/app_$applicationId-${metadata.filename}")
       case FileMetadata.Attached.Answer(applicationId, _) =>
-        Paths.get(s"$filesPath/ans_$applicationId-${metadata.filename}")
+        Paths.get(s"${config.filesPath}/ans_$applicationId-${metadata.filename}")
     }
 
   private def scanFilesBackground(metadataList: List[(Path, FileMetadata)], uploader: User)(implicit
@@ -109,7 +124,7 @@ class FileService @Inject() (
       .mapAsync(1) { case (path, metadata) =>
         val sink = clamIo.scan(metadata.id.toString)
         val scanResult: Future[Either[Error, Unit]] =
-          if (clamAvIsEnabled)
+          if (config.clamAvIsEnabled)
             FileIO
               .fromPath(path)
               .toMat(sink)(Keep.right)
@@ -121,7 +136,7 @@ class FileService @Inject() (
                       EventType.FileAvailable,
                       s"Aucun virus détecté par ClamAV dans le fichier ${metadata.id}"
                     )
-                    val fileDestination = Paths.get(s"$filesPath/${metadata.id}")
+                    val fileDestination = Paths.get(s"${config.filesPath}/${metadata.id}")
                     Files.copy(path, fileDestination)
                     // Can throw java.nio.file.FileAlreadyExistsException
                     Try(Files.copy(path, legacyFilePath(metadata)))
@@ -152,7 +167,7 @@ class FileService @Inject() (
               s"Le fichier ${metadata.id} est disponible. ClamAV est désactivé. " +
                 "Aucun scan n'a été effectué"
             )
-            val fileDestination = Paths.get(s"$filesPath/${metadata.id}")
+            val fileDestination = Paths.get(s"${config.filesPath}/${metadata.id}")
             Files.copy(path, fileDestination)
             // Can throw java.nio.file.FileAlreadyExistsException
             Try(Files.copy(path, legacyFilePath(metadata)))
@@ -304,7 +319,7 @@ class FileService @Inject() (
             Source
               .fromIterator(() => files.iterator)
               .mapAsync(1) { metadata =>
-                val path = Paths.get(s"$filesPath/${metadata.id}")
+                val path = Paths.get(s"${config.filesPath}/${metadata.id}")
                 Files.deleteIfExists(path)
                 updateStatus(metadata.id, FileMetadata.Status.Expired)
                   .map(_.fold(e => eventService.logErrorNoRequest(e), identity))

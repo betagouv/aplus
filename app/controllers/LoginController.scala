@@ -7,8 +7,8 @@ import java.time.ZoneId
 import javax.inject.{Inject, Singleton}
 import models.EventType.{GenerateToken, UnknownEmail}
 import models.{Authorization, EventType, LoginToken, User}
+import modules.AppConfig
 import org.webjars.play.WebJarsUtil
-import play.api.Configuration
 import play.api.mvc.{Action, AnyContent, InjectedController, Request}
 import serializers.Keys
 import services.{EventService, NotificationService, SignupService, TokenService, UserService}
@@ -17,18 +17,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class LoginController @Inject() (
+    val config: AppConfig,
     userService: UserService,
     notificationService: NotificationService,
     tokenService: TokenService,
-    val configuration: Configuration,
     eventService: EventService,
     signupService: SignupService
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with Operators.Common {
-
-  private lazy val tokenExpirationInMinutes =
-    configuration.get[Int]("app.tokenExpirationInMinutes")
 
   /** Security Note: when the email is in the query "?email=xxx", we do not check the CSRF token
     * because the API is used externally.
@@ -73,7 +70,11 @@ class LoginController @Inject() (
                     case Some(signup) =>
                       val loginToken =
                         LoginToken
-                          .forSignupId(signup.id, tokenExpirationInMinutes, request.remoteAddress)
+                          .forSignupId(
+                            signup.id,
+                            config.tokenExpirationInMinutes,
+                            request.remoteAddress
+                          )
                       loginHappyPath(loginToken, signup.email, None)
                   }
                 )
@@ -81,7 +82,8 @@ class LoginController @Inject() (
           } { user: User =>
             LoginAction.readUserRights(user).map { userRights =>
               val loginToken =
-                LoginToken.forUserId(user.id, tokenExpirationInMinutes, request.remoteAddress)
+                LoginToken
+                  .forUserId(user.id, config.tokenExpirationInMinutes, request.remoteAddress)
               val requestWithUserData =
                 new RequestWithUserData(user, userRights, request)
               loginHappyPath(loginToken, user.email, requestWithUserData.some)
@@ -150,7 +152,6 @@ class LoginController @Inject() (
         LoginPanel.EmailSentFeedback(
           email,
           requestWithUserData.map(_.currentUser.timeZone).getOrElse(Time.timeZoneParis),
-          tokenExpirationInMinutes,
           successMessage
         )
       )
@@ -177,8 +178,7 @@ class LoginController @Inject() (
           Ok(
             views.html.magicLinkAntiConsumptionPage(
               token = token,
-              pathToRedirectTo = path,
-              tokenExpirationInMinutes = tokenExpirationInMinutes
+              pathToRedirectTo = path
             )
           )
         case _ =>

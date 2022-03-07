@@ -2,9 +2,11 @@ package views
 
 import cats.syntax.all._
 import controllers.routes.ApplicationController
+import helper.Crypto.{EncryptedField, KeySet}
 import helpers.forms.CSRFInput
 import java.util.UUID
 import models.{Answer, Application, Area, Authorization, FileMetadata, User, UserGroup}
+import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
@@ -18,24 +20,30 @@ object application {
       application: Application,
       currentUser: User,
       currentUserRights: Authorization.UserRights,
-      fileExpiryDayCount: Int,
+      config: AppConfig,
   ): Frag = {
-    val isAuthorized = Authorization.applicationFileCanBeShowed(fileExpiryDayCount)(application)(
-      currentUser.id,
-      currentUserRights
-    )
-    val daysRemaining = Application.filesAvailabilityLeftInDays(fileExpiryDayCount)(application)
+    val isAuthorized =
+      Authorization.applicationFileCanBeShowed(config.filesExpirationInDays)(application)(
+        currentUser.id,
+        currentUserRights
+      )
+    val daysRemaining =
+      Application.filesAvailabilityLeftInDays(config.filesExpirationInDays)(application)
     frag(
       // Legacy
       application.files.map { case (filename, _) =>
         fileLink(
           isAuthorized,
           ApplicationController.applicationFile(application.id, filename).url,
-          filename,
+          EncryptedField.fromCipherText(
+            filename,
+            FileMetadata.filenameAAD(UUID.fromString("dummy"))
+          ),
           daysRemaining,
           application.creatorUserName,
           "",
-          None
+          None,
+          config
         )
       }.toList,
       files
@@ -48,7 +56,8 @@ object application {
             daysRemaining,
             application.creatorUserName,
             "",
-            Some(file.status)
+            Some(file.status),
+            config
           )
         )
     )
@@ -60,14 +69,14 @@ object application {
       application: Application,
       currentUser: User,
       currentUserRights: Authorization.UserRights,
-      fileExpiryDayCount: Int
+      config: AppConfig,
   ): Frag = {
     val isAuthorized =
-      Authorization.answerFileCanBeShowed(fileExpiryDayCount)(application, answer.id)(
+      Authorization.answerFileCanBeShowed(config.filesExpirationInDays)(application, answer.id)(
         currentUser.id,
         currentUserRights
       )
-    val daysRemaining = Answer.filesAvailabilityLeftInDays(fileExpiryDayCount)(answer)
+    val daysRemaining = Answer.filesAvailabilityLeftInDays(config.filesExpirationInDays)(answer)
     frag(
       // Legacy
       answer.files
@@ -76,11 +85,13 @@ object application {
           fileLink(
             isAuthorized,
             ApplicationController.answerFile(application.id, answer.id, filename).url,
-            filename,
+            EncryptedField
+              .fromCipherText(filename, FileMetadata.filenameAAD(UUID.fromString("dummy"))),
             daysRemaining,
             answer.creatorUserName,
             "mdl-cell mdl-cell--12-col typography--text-align-center",
-            None
+            None,
+            config
           )
         }
         .toList,
@@ -94,7 +105,8 @@ object application {
             daysRemaining,
             answer.creatorUserName,
             "mdl-cell mdl-cell--12-col typography--text-align-center",
-            Some(file.status)
+            Some(file.status),
+            config
           )
         )
     )
@@ -103,21 +115,27 @@ object application {
   def fileLink(
       isAuthorized: Boolean,
       fileUrl: String,
-      filename: String,
+      filename: EncryptedField,
       daysRemaining: Option[Int],
       uploaderName: String,
       additionalClasses: String,
-      status: Option[FileMetadata.Status]
+      status: Option[FileMetadata.Status],
+      config: AppConfig,
   ): Tag = {
     import FileMetadata.Status._
     val link: Frag =
       if (isAuthorized)
-        if (status.isEmpty || status === Some(Available))
+        if (status.isEmpty || status === Some(Available)) {
+          // Note: legacy is not encrypted
+          val decryptedFilename: String = filename
+            .decrypt(config.fieldEncryptionKeys)
+            .toOption
+            .getOrElse(filename.cipherTextBase64)
           frag(
             "le fichier ",
-            a(href := fileUrl, filename)
+            a(href := fileUrl, decryptedFilename)
           )
-        else
+        } else
           s"le fichier $filename"
       else
         "un fichier"

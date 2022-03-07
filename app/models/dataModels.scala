@@ -2,7 +2,7 @@ package models
 
 import anorm.SqlMappingError
 import cats.syntax.all._
-import helper.{PlayFormHelper, Time}
+import helper.{Crypto, PlayFormHelper, Time}
 import java.time.{Instant, ZonedDateTime}
 import java.util.UUID
 import models.Answer
@@ -174,7 +174,7 @@ object dataModels {
         FileMetadata(
           id = id,
           uploadDate = uploadDate,
-          filename = filename,
+          filename = Crypto.EncryptedField.fromCipherText(filename, FileMetadata.filenameAAD(id)),
           filesize = filesize,
           status = status,
           attached = attached
@@ -204,7 +204,7 @@ object dataModels {
       FileMetadataRow(
         id = metadata.id,
         uploadDate = metadata.uploadDate,
-        filename = metadata.filename,
+        filename = metadata.filename.cipherTextBase64,
         filesize = metadata.filesize,
         status = statusFromFileMetadata(metadata.status),
         applicationId = applicationId,

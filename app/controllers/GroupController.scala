@@ -12,7 +12,6 @@ import javax.inject.{Inject, Singleton}
 import models.{Area, Authorization, Error, EventType, Organisation, User, UserGroup}
 import models.formModels.{normalizedOptionalText, normalizedText, AddUserToGroupFormData}
 import org.webjars.play.WebJarsUtil
-import play.api.Configuration
 import play.api.data.Form
 import play.api.data.Forms.{email, ignored, list, mapping, of, optional, text, uuid}
 import play.api.data.validation.Constraints.maxLength
@@ -36,17 +35,18 @@ import models.EventType.{
   UserGroupDeletionUnauthorized,
   UserGroupEdited
 }
+import modules.AppConfig
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
 
 @Singleton
 case class GroupController @Inject() (
+    config: AppConfig,
     applicationService: ApplicationService,
     loginAction: LoginAction,
     groupService: UserGroupService,
     notificationService: NotificationService,
     eventService: EventService,
-    configuration: Configuration,
     ws: WSClient,
     userService: UserService
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)

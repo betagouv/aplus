@@ -50,7 +50,7 @@ object common {
   def topHeaderConnected(implicit mainInfos: MainInfos): Frag = {
     val headerLines = List[Option[Frag]](
       optionalDemoVersionHeader,
-      mainInfos.topHeaderWarningMessage.map(message =>
+      mainInfos.config.topHeaderWarningMessage.map(message =>
         div(
           cls := "mdl-layout__header-row mdl-color--deep-purple-400 mdl-color-text--white",
           message

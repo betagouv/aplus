@@ -31,8 +31,8 @@ import models.formModels.{
   CSVUserGroupFormData
 }
 import models.{Area, Organisation, User, UserGroup}
+import modules.AppConfig
 import org.webjars.play.WebJarsUtil
-import play.api.Configuration
 import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.{Form, Mapping}
@@ -44,7 +44,7 @@ import services.{EventService, NotificationService, UserGroupService, UserServic
 import scala.concurrent.{ExecutionContext, Future}
 
 case class CSVImportController @Inject() (
-    val configuration: Configuration,
+    config: AppConfig,
     loginAction: LoginAction,
     userService: UserService,
     groupService: UserGroupService,

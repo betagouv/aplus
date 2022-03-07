@@ -48,6 +48,9 @@ object Crypto {
 
   case class KeySet(validKey: Key, oldKeys: List[Key])
 
+  /** This class wraps the ciphertext in order to avoid keeping the plaintext in memory when this is
+    * not necessary.
+    */
   case class EncryptedField private (cipherTextBase64: String, aad: String) {
 
     def decrypt(keyset: KeySet): Try[String] =
