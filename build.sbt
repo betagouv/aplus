@@ -87,7 +87,6 @@ libraryDependencies ++= Seq(
 
 pipelineStages := Seq(digest, gzip)
 
-libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
@@ -120,6 +119,14 @@ libraryDependencies ++= Seq(
 )
 // Crash
 libraryDependencies += "io.sentry" % "sentry-logback" % "5.6.1"
+
+// Test
+libraryDependencies ++= Seq(
+  specs2 % Test, // Play Plugin
+  // Note: 4.8.3 is the current version compatible with Play 2.8, newer versions are not compatible
+  "org.specs2" %% "specs2-scalacheck" % "4.8.3" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.15.4" % Test
+)
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
