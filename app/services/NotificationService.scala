@@ -1,55 +1,38 @@
 package services
 
-import java.util.UUID
-
-import akka.stream.scaladsl.{RestartSource, Sink, Source}
-import akka.stream.{ActorAttributes, Materializer, RestartSettings, Supervision}
+import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.{ActorAttributes, Materializer, Supervision}
 import cats.syntax.all._
 import constants.Constants
 import controllers.routes
 import helper.EmailHelper.quoteEmailPhrase
 import java.time.ZoneId
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models._
 import models.mandat.Mandat
-import play.api.Logger
 import play.api.libs.concurrent.MaterializerProvider
-import play.api.libs.mailer.{Email, MailerClient}
+import play.api.libs.mailer.Email
 import play.api.mvc.Request
-import views.emails.{common, WeeklyEmailInfos}
-
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
+import views.emails.{common, WeeklyEmailInfos}
 
 @Singleton
 class NotificationService @Inject() (
     applicationService: ApplicationService,
     configuration: play.api.Configuration,
-    dependencies: ServicesDependencies,
+    emailsService: EmailsService,
     eventService: EventService,
     groupService: UserGroupService,
-    mailerClient: MailerClient,
     materializerProvider: MaterializerProvider,
     userService: UserService
 )(implicit executionContext: ExecutionContext) {
 
   implicit val materializer: Materializer = materializerProvider.get
 
-  private val log = Logger(classOf[NotificationService])
-
   private lazy val tokenExpirationInMinutes =
     configuration.get[Int]("app.tokenExpirationInMinutes")
-
-  // This blacklist if mainly for experts who do not need emails
-  // Note: be careful with the empty string
-  private lazy val notificationEmailBlacklist: Set[String] =
-    configuration
-      .get[String]("app.notificationEmailBlacklist")
-      .split(",")
-      .map(_.trim)
-      .filterNot(_.isEmpty)
-      .toSet
 
   private val daySinceLastAgentAnswerForApplicationsThatShouldBeClosed = 10
 
@@ -81,52 +64,6 @@ class NotificationService @Inject() (
 
   private val replyTo = List(s"Administration+ <${Constants.supportEmail}>")
 
-  private def emailIsBlacklisted(email: Email): Boolean =
-    notificationEmailBlacklist.exists(black => email.to.exists(_.contains(black)))
-
-  // TODO: seems to be blocking
-  // https://github.com/playframework/play-mailer/blob/7.0.x/play-mailer/src/main/scala/play/api/libs/mailer/MailerClient.scala#L15
-  private def sendMail(email: Email): Unit = {
-    val emailWithText = email.copy(
-      bodyText = email.bodyHtml.map(_.replaceAll("<[^>]*>", "")),
-      headers = email.headers ++ Set(
-        "X-MJ-MonitoringCategory" -> "aplus",
-        "X-Mailjet-TrackClick" -> "0",
-        "X-MAILJET-TRACKOPEN" -> "0"
-      )
-    )
-    if (emailIsBlacklisted(email) && (email.subject =!= common.magicLinkSubject)) {
-      log.info(s"Did not send email to ${email.to.mkString(", ")} because it is in the blacklist")
-    } else {
-      mailerClient.send(emailWithText)
-      log.info(s"Email sent to ${email.to.mkString(", ")}")
-    }
-  }
-
-  // Non blocking, will apply a backoff if the `Future` is `Failed`
-  // (ie if `mailerClient.send` throws)
-  //
-  // Doc for the exponential backoff
-  // https://doc.akka.io/docs/akka/current/stream/stream-error.html#delayed-restarts-with-a-backoff-operator
-  //
-  // Note: we might want to use a queue as the inner source, and enqueue emails in it.
-  private def sendEmail(email: Email): Future[Unit] =
-    RestartSource
-      .onFailuresWithBackoff(
-        RestartSettings(
-          minBackoff = 10.seconds,
-          maxBackoff = 40.seconds,
-          randomFactor = 0.2
-        )
-          .withMaxRestarts(count = 3, within = 10.seconds)
-      ) { () =>
-        Source.future {
-          // `sendMail` is executed on the `dependencies.mailerExecutionContext` thread pool
-          Future(sendMail(email))(dependencies.mailerExecutionContext)
-        }
-      }
-      .runWith(Sink.last)
-
   def newApplication(application: Application): Unit = {
     val userIds = (application.invitedUsers).keys
     val users = userService.byIds(userIds.toList)
@@ -136,11 +73,11 @@ class NotificationService @Inject() (
 
     users
       .map(generateInvitationEmail(application))
-      .foreach(sendMail)
+      .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
 
     groups
       .map(generateNotificationBALEmail(application, None, users))
-      .foreach(sendMail)
+      .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
   }
 
   // Note: application does not contain answer at this point
@@ -179,7 +116,7 @@ class NotificationService @Inject() (
           Some(generateAnswerEmail(application, answer)(user))
         }
       }
-      .foreach(sendMail)
+      .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
 
     // Send emails to groups
     allGroups
@@ -189,21 +126,24 @@ class NotificationService @Inject() (
         case group if !alreadyPresentGroupIds.contains(group.id) =>
           generateNotificationBALEmail(application, Option.empty[Answer], users)(group)
       }
-      .foreach(sendMail)
+      .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
 
     if (answer.visibleByHelpers && answer.creatorUserID =!= application.creatorUserId) {
       userService
         .byId(application.creatorUserId)
         .map(generateAnswerEmail(application, answer))
-        .foreach(sendMail)
+        .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
     }
   }
 
   def newUser(newUser: User) =
-    sendMail(generateWelcomeEmail(newUser.name.some, newUser.email))
+    emailsService.sendBlocking(
+      generateWelcomeEmail(newUser.name.some, newUser.email),
+      EmailPriority.Normal
+    )
 
   def newSignup(signup: SignupRequest)(implicit request: Request[_]) =
-    Try(sendMail(generateWelcomeEmail(none, signup.email)))
+    Try(emailsService.sendBlocking(generateWelcomeEmail(none, signup.email), EmailPriority.Normal))
       .recover { case e =>
         eventService.logErrorNoUser(
           Error.MiscException(
@@ -244,7 +184,7 @@ class NotificationService @Inject() (
       ),
       bodyHtml = Some(common.renderEmail(bodyInner))
     )
-    sendMail(email)
+    emailsService.sendBlocking(email, EmailPriority.Urgent)
   }
 
   def mandatSmsSent(mandatId: Mandat.Id, user: User): Unit = {
@@ -258,7 +198,7 @@ class NotificationService @Inject() (
       to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
       bodyHtml = Some(common.renderEmail(bodyInner))
     )
-    sendMail(email)
+    emailsService.sendBlocking(email, EmailPriority.Normal)
   }
 
   def mandatSmsClosed(mandatId: Mandat.Id, user: User): Unit = {
@@ -272,7 +212,7 @@ class NotificationService @Inject() (
       to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
       bodyHtml = Some(common.renderEmail(bodyInner))
     )
-    sendMail(email)
+    emailsService.sendBlocking(email, EmailPriority.Normal)
   }
 
   def fileUploadStatus(
@@ -295,7 +235,7 @@ class NotificationService @Inject() (
           to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
           bodyHtml = Some(common.renderEmail(common.fileQuarantinedBody(absoluteUrl)))
         )
-        sendMail(email)
+        emailsService.sendBlocking(email, EmailPriority.Normal)
       case FileMetadata.Status.Error =>
         val email = Email(
           subject = common.fileErrorSubject,
@@ -304,7 +244,7 @@ class NotificationService @Inject() (
           to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
           bodyHtml = Some(common.renderEmail(common.fileErrorBody(absoluteUrl)))
         )
-        sendMail(email)
+        emailsService.sendBlocking(email, EmailPriority.Normal)
       case _ =>
     }
   }
@@ -421,7 +361,7 @@ class NotificationService @Inject() (
       to = List(s"${quoteEmailPhrase(infos.user.name)} <${infos.user.email}>"),
       bodyHtml = Some(common.renderEmail(bodyInner))
     )
-    sendEmail(email)
+    emailsService.sendNonBlocking(email, EmailPriority.Normal)
   }
 
   private def fetchWeeklyEmailInfos(user: User): Future[WeeklyEmailInfos] =
