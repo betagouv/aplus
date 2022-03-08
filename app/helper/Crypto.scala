@@ -8,7 +8,7 @@ import javax.crypto.{Cipher, KeyGenerator, SecretKey}
 import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
 import scala.util.{Failure, Try}
 
-// This class wraps AEAD using ChaCha20-Poly1305
+// This class regroups high level functions using AEAD with ChaCha20-Poly1305
 //
 // Libsodium gives a summary of limitations of AEAD schemes:
 // https://doc.libsodium.org/secret-key_cryptography/aead
