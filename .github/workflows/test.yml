@@ -21,7 +21,7 @@ jobs:
          postgresql password: 'mysecretpassword'
 
     - name: Set up Node
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
       with:
         node-version: '14'
     - name: Install npm dependencies
@@ -56,7 +56,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Set up Node
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
       with:
         node-version: '14'
     - name: Install npm dependencies
