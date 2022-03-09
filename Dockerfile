@@ -53,7 +53,7 @@ RUN sbt clean stage
 # Final Image
 #
 #
-FROM eclipse-temurin:11-jdk
+FROM eclipse-temurin:11-jre
 
 ENV PLAY_APP_NAME aplus
 ENV PLAY_APP_DIR /var/www/$PLAY_APP_NAME
