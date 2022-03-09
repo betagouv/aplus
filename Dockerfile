@@ -13,7 +13,7 @@ RUN npm run build
 # Builder image for the Scala app
 # based on https://github.com/hseeberger/scala-sbt
 #
-FROM adoptopenjdk:11-jdk-hotspot AS scalabuilder
+FROM eclipse-temurin:11-jdk AS scalabuilder
 
 # We need nodejs to run in a reasonable amount of time sbt-web
 # see step `Optimizing JavaScript with RequireJS`
@@ -53,7 +53,7 @@ RUN sbt clean stage
 # Final Image
 #
 #
-FROM adoptopenjdk:11-jre-hotspot
+FROM eclipse-temurin:11-jdk
 
 ENV PLAY_APP_NAME aplus
 ENV PLAY_APP_DIR /var/www/$PLAY_APP_NAME
