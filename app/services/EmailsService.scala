@@ -2,7 +2,9 @@ package services
 
 import akka.stream.scaladsl.{RestartSource, Sink, Source}
 import akka.stream.{Materializer, RestartSettings}
+import cats.data.NonEmptyList
 import cats.syntax.all._
+import helper.MiscHelpers
 import javax.inject.{Inject, Singleton}
 import models.EmailPriority
 import play.api.{Configuration, Logger}
@@ -12,7 +14,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.javaapi.CollectionConverters.asScala
-import scala.util.{Random, Try}
+import scala.util.Try
 
 object EmailsService {
 
@@ -26,24 +28,11 @@ object EmailsService {
 
   case class SMTPPickers(urgent: SMTPPicker, normal: SMTPPicker)
 
-  case class SMTPPicker(smtpList: List[WeightedSMTP]) {
+  case class SMTPPicker(smtpList: NonEmptyList[WeightedSMTP]) {
 
-    require(smtpList.nonEmpty)
-
-    def choose(): WeightedSMTP = {
-      val weightSum = smtpList.map(_.weight).sum
-      val random: Double = Random.between(0.0, 1.0)
-      val randomSmtp = smtpList
-        .foldLeft[(Option[WeightedSMTP], Double)]((None, 0.0)) {
-          case ((lastChosen, lastBound), smtp) =>
-            val bound = lastBound + smtp.weight / weightSum
-            val chosen = lastChosen.orElse(if (random <= bound) Some(smtp) else None)
-            (chosen, bound)
-        }
-        ._1
-      // .getOrElse here is for rare case of float arithmetics that would not sum to 1.0
-      randomSmtp.getOrElse(smtpList.last)
-    }
+    def choose(): WeightedSMTP =
+      MiscHelpers
+        .chooseByFrequency[WeightedSMTP](smtpList.map(smtp => (smtp.weight, smtp)))
 
   }
 
@@ -100,21 +89,23 @@ class EmailsService @Inject() (
       .map { raw =>
         val rootConfig = ConfigFactory.parseString(raw)
         def readWeightedConfig(key: String) =
-          SMTPPicker(asScala(rootConfig.getObjectList(key)).toList.map { obj =>
-            val topConfig = obj.toConfig
-            val weight = topConfig.getDouble("weight")
-            val smtpConfig = SMTPConfiguration(
-              topConfig.getObject("smtpConfig").toConfig.withFallback(defaultConfig)
-            )
-            val extraHeaders = Try(topConfig.getObject("extraHeaders")).toOption
-              .map { obj =>
-                val conf = obj.toConfig
-                val keys = asScala(obj.keySet).toList
-                keys.map(key => (key, conf.getString(key))).toMap
-              }
-              .getOrElse(Map.empty)
-            WeightedSMTP(weight, smtpConfig, extraHeaders)
-          })
+          SMTPPicker(
+            NonEmptyList.fromListUnsafe(asScala(rootConfig.getObjectList(key)).toList).map { obj =>
+              val topConfig = obj.toConfig
+              val weight = topConfig.getDouble("weight")
+              val smtpConfig = SMTPConfiguration(
+                topConfig.getObject("smtpConfig").toConfig.withFallback(defaultConfig)
+              )
+              val extraHeaders = Try(topConfig.getObject("extraHeaders")).toOption
+                .map { obj =>
+                  val conf = obj.toConfig
+                  val keys = asScala(obj.keySet).toList
+                  keys.map(key => (key, conf.getString(key))).toMap
+                }
+                .getOrElse(Map.empty)
+              WeightedSMTP(weight, smtpConfig, extraHeaders)
+            }
+          )
         SMTPPickers(readWeightedConfig("urgent"), readWeightedConfig("normal"))
       }
 
