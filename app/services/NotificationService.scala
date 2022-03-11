@@ -136,24 +136,28 @@ class NotificationService @Inject() (
     }
   }
 
-  def newUser(newUser: User) =
+  def newUser(newUser: User): Option[String] =
     emailsService.sendBlocking(
       generateWelcomeEmail(newUser.name.some, newUser.email),
       EmailPriority.Normal
     )
 
-  def newSignup(signup: SignupRequest)(implicit request: Request[_]) =
+  def newSignup(signup: SignupRequest)(implicit request: Request[_]): Option[String] =
     Try(emailsService.sendBlocking(generateWelcomeEmail(none, signup.email), EmailPriority.Normal))
-      .recover { case e =>
-        eventService.logErrorNoUser(
-          Error.MiscException(
-            EventType.SignupEmailError,
-            s"Impossible d'envoyer l'email de bienvenue pour la préinscription ${signup.id}",
-            e,
-            s"Email ${signup.email}".some
+      .fold(
+        { error =>
+          eventService.logErrorNoUser(
+            Error.MiscException(
+              EventType.SignupEmailError,
+              s"Impossible d'envoyer l'email de bienvenue pour la préinscription ${signup.id}",
+              error,
+              s"Email ${signup.email}".some
+            )
           )
-        )
-      }
+          none
+        },
+        identity
+      )
 
   def newMagicLinkEmail(
       userName: Option[String],
@@ -187,7 +191,7 @@ class NotificationService @Inject() (
     emailsService.sendBlocking(email, EmailPriority.Urgent)
   }
 
-  def mandatSmsSent(mandatId: Mandat.Id, user: User): Unit = {
+  def mandatSmsSent(mandatId: Mandat.Id, user: User): Option[String] = {
     val absoluteUrl: String =
       routes.MandatController.mandat(mandatId.underlying).absoluteURL(https, host)
     val bodyInner = common.mandatSmsSentBody(absoluteUrl)
@@ -201,7 +205,7 @@ class NotificationService @Inject() (
     emailsService.sendBlocking(email, EmailPriority.Normal)
   }
 
-  def mandatSmsClosed(mandatId: Mandat.Id, user: User): Unit = {
+  def mandatSmsClosed(mandatId: Mandat.Id, user: User): Option[String] = {
     val absoluteUrl: String =
       routes.MandatController.mandat(mandatId.underlying).absoluteURL(https, host)
     val bodyInner = common.mandatSmsSentBody(absoluteUrl)
@@ -235,7 +239,7 @@ class NotificationService @Inject() (
           to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
           bodyHtml = Some(common.renderEmail(common.fileQuarantinedBody(absoluteUrl)))
         )
-        emailsService.sendBlocking(email, EmailPriority.Normal)
+        val _ = emailsService.sendBlocking(email, EmailPriority.Normal)
       case FileMetadata.Status.Error =>
         val email = Email(
           subject = common.fileErrorSubject,
@@ -244,7 +248,7 @@ class NotificationService @Inject() (
           to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
           bodyHtml = Some(common.renderEmail(common.fileErrorBody(absoluteUrl)))
         )
-        emailsService.sendBlocking(email, EmailPriority.Normal)
+        val _ = emailsService.sendBlocking(email, EmailPriority.Normal)
       case _ =>
     }
   }
@@ -348,7 +352,7 @@ class NotificationService @Inject() (
         )
       }
 
-  private def sendWeeklyEmail(infos: WeeklyEmailInfos): Future[Unit] = {
+  private def sendWeeklyEmail(infos: WeeklyEmailInfos): Future[Option[String]] = {
     val bodyInner = common.weeklyEmailBody(
       infos,
       application => routes.ApplicationController.show(application.id).absoluteURL(https, host),

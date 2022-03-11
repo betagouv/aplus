@@ -660,10 +660,10 @@ case class UserController @Inject() (
                       },
                       { _ =>
                         users.foreach { user =>
-                          notificationsService.newUser(user)
+                          val host = notificationsService.newUser(user)
                           eventService.log(
                             EventType.UserCreated,
-                            s"Utilisateur ${user.id} ajouté",
+                            s"Utilisateur ${user.id} ajouté [email envoyé via '$host']",
                             s"Utilisateur ${user.toLogString}".some,
                             involvesUser = Some(user.id)
                           )

@@ -40,8 +40,11 @@ object EmailsService {
 
 /** Play-Mailer Documentation: https://github.com/playframework/play-mailer
   *
-  * List of SMTP services with weights. Randomly chooses a service according proportionally to their
-  * weights.
+  * List of SMTP services with weights.
+  *
+  * Randomly chooses a service with probability proportional to their weights.
+  *
+  * Config `play.mailer` is used as "base" config (default parameters are taken from it)
   *
   * Example config (HOCON): { urgent:[ {weight:1,smtpConfig:{port:1111,mock:true}},
   * {weight:5,smtpConfig:{port:1111,mock:true}} ], normal:[ {weight:1,
@@ -74,8 +77,9 @@ class EmailsService @Inject() (
   private def emailIsBlacklisted(email: Email): Boolean =
     notificationEmailBlacklist.exists(black => email.to.exists(_.contains(black)))
 
-  private val defaultConfig = configuration.underlying.getObject("play.mailer").toConfig
-  private val defaultSMTP = new SMTPMailer(SMTPConfiguration(defaultConfig))
+  private val defaultMailerConfig = configuration.underlying.getObject("play.mailer").toConfig
+  private val defaultSMTPConfig = SMTPConfiguration(defaultMailerConfig)
+  private val defaultSMTP = new SMTPMailer(defaultSMTPConfig)
 
   private val defaultHeaders = List[(String, String)](
     "X-MJ-MonitoringCategory" -> "aplus",
@@ -94,7 +98,7 @@ class EmailsService @Inject() (
               val topConfig = obj.toConfig
               val weight = topConfig.getDouble("weight")
               val smtpConfig = SMTPConfiguration(
-                topConfig.getObject("smtpConfig").toConfig.withFallback(defaultConfig)
+                topConfig.getObject("smtpConfig").toConfig.withFallback(defaultMailerConfig)
               )
               val extraHeaders = Try(topConfig.getObject("extraHeaders")).toOption
                 .map { obj =>
@@ -110,15 +114,18 @@ class EmailsService @Inject() (
       }
 
   // https://github.com/playframework/play-mailer/blob/7.0.x/play-mailer/src/main/scala/play/api/libs/mailer/MailerClient.scala#L15
-  def sendBlocking(email: Email, priority: EmailPriority): Unit =
+  // Sends back the `host` of the SMTP used
+  def sendBlocking(email: Email, priority: EmailPriority): Option[String] =
     if (emailIsBlacklisted(email) && (email.subject =!= views.emails.common.magicLinkSubject)) {
       log.info(s"Did not send email to ${email.to.mkString(", ")} because it is in the blacklist")
+      none
     } else {
       val emailWithText = email.copy(bodyText = email.bodyHtml.map(_.replaceAll("<[^>]*>", "")))
-      pickers match {
+      val host = pickers match {
         case None =>
           val finalEmail = emailWithText.copy(headers = email.headers ++ defaultHeaders)
           defaultSMTP.send(finalEmail)
+          defaultSMTPConfig.host
         case Some(pickers) =>
           val picker = priority match {
             case EmailPriority.Normal => pickers.normal
@@ -126,9 +133,11 @@ class EmailsService @Inject() (
           }
           val smtp = picker.choose()
           val finalEmail = emailWithText.copy(headers = email.headers ++ smtp.extraHeaders)
-          defaultSMTP.send(finalEmail)
+          smtp.mailer.send(finalEmail)
+          smtp.config.host
       }
-      log.info(s"Email sent to ${email.to.mkString(", ")}")
+      log.info(s"Email sent to ${email.to.mkString(", ")} via $host")
+      host.some
     }
 
   // Non blocking, will apply a backoff if the `Future` is `Failed`
@@ -138,7 +147,7 @@ class EmailsService @Inject() (
   // https://doc.akka.io/docs/akka/current/stream/stream-error.html#delayed-restarts-with-a-backoff-operator
   //
   // Note: we might want to use a queue as the inner source, and enqueue emails in it.
-  def sendNonBlocking(email: Email, priority: EmailPriority): Future[Unit] =
+  def sendNonBlocking(email: Email, priority: EmailPriority): Future[Option[String]] =
     RestartSource
       .onFailuresWithBackoff(
         RestartSettings(

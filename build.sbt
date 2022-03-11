@@ -95,7 +95,6 @@ libraryDependencies ++= Seq(
   anormDependency,
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
-  "com.typesafe.play" %% "play-mailer-guice" % "8.0.1",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
   ws,
