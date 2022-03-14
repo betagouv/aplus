@@ -48,6 +48,7 @@ object myApplications {
       infosCol(application),
       creationCol(application),
       activityCol(currentUser, application),
+      searchResultCol,
       externalLinkCol(application)
     )
   }
@@ -132,6 +133,7 @@ object myApplications {
         id := s"answers-${application.id}",
         cls := "vertical-align--middle",
         i(cls := "material-icons icon--light", "chat_bubble"),
+        " ",
         span(
           cls := "application__anwsers badge-holder",
           s"${application.answers.length} messages",
@@ -154,6 +156,11 @@ object myApplications {
       )
     )
   }
+
+  private def searchResultCol: Tag =
+    td(
+      cls := "mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size hidden--small-screen"
+    )
 
   private def externalLinkCol(application: Application): Tag =
     td(
