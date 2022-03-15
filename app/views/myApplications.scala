@@ -24,7 +24,7 @@ object myApplications {
         "tag mdl-color--deep-purple-100 mdl-color-text--black"
     }
     span(
-      cls := classes,
+      cls := classes + " single--pointer-events-all",
       status.show
     )
   }
@@ -39,7 +39,7 @@ object myApplications {
       else "td--clear-border"
     val backgroundClass =
       if (application.hasBeenDisplayedFor(currentUser.id)) "" else "td--blue-background"
-    val classes = s"onclick-change-location searchable-row $borderClass $backgroundClass"
+    val classes = s"searchable-row $borderClass $backgroundClass"
     tr(
       data("location") := ApplicationController.show(application.id).url,
       data("search") := application.searchData,
@@ -53,6 +53,12 @@ object myApplications {
     )
   }
 
+  private def backgroundLink(application: Application): Tag =
+    a(
+      href := ApplicationController.show(application.id).url,
+      cls := "overlay-background"
+    )
+
   private def statusCol(
       currentUser: User,
       currentUserRights: Authorization.UserRights,
@@ -60,42 +66,52 @@ object myApplications {
   ): Tag =
     td(
       cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size",
-      statusTag(application, currentUser),
-      Authorization
-        .isAdmin(currentUserRights)
-        .some
-        .filter(identity)
-        .map(_ =>
-          frag(
-            br,
-            div(
-              cls := "single--margin-top-8px single--display-flex single--justify-content-center",
+      div(
+        cls := "typography--text-align-center typography--text-line-height-2 overlay-foreground single--pointer-events-none ",
+        statusTag(application, currentUser),
+        Authorization
+          .isAdmin(currentUserRights)
+          .some
+          .filter(identity)
+          .map(_ =>
+            frag(
+              br,
               span(
-                cls := "mdl-typography--font-bold mdl-color-text--red-A700",
+                cls := "mdl-typography--font-bold mdl-color-text--red-A700 single--pointer-events-all",
                 application.internalId,
               )
             )
           )
-        )
+      ),
+      backgroundLink(application)
     )
 
+  // Note: we use pointer-events to let the background link go through the foreground box
+  //       this gives the effect that the text can be selected and background is a link
   private def infosCol(application: Application): Tag =
     td(
       cls := "mdl-data-table__cell--non-numeric",
-      span(
-        cls := "application__name",
-        application.userInfos.get(Application.USER_LAST_NAME_KEY),
-        " ",
-        application.userInfos.get(Application.USER_FIRST_NAME_KEY)
+      div(
+        cls := "overlay-foreground single--pointer-events-none",
+        span(
+          cls := "application__name single--pointer-events-all",
+          application.userInfos.get(Application.USER_LAST_NAME_KEY),
+          " ",
+          application.userInfos.get(Application.USER_FIRST_NAME_KEY)
+        ),
+        i(
+          cls := "single--pointer-events-all",
+          application.userInfos
+            .get(Application.USER_CAF_NUMBER_KEY)
+            .map(caf => s" (Num. CAF: $caf)"),
+          application.userInfos
+            .get(Application.USER_SOCIAL_SECURITY_NUMBER_KEY)
+            .map(nir => s" (NIR: $nir)")
+        ),
+        br,
+        span(cls := "application__subject single--pointer-events-all", application.subject)
       ),
-      i(
-        application.userInfos.get(Application.USER_CAF_NUMBER_KEY).map(caf => s" (Num. CAF: $caf)"),
-        application.userInfos
-          .get(Application.USER_SOCIAL_SECURITY_NUMBER_KEY)
-          .map(nir => s" (NIR: $nir)")
-      ),
-      br,
-      span(cls := "application__subject", application.subject)
+      backgroundLink(application)
     )
 
   private def creationCol(application: Application): Tag =
@@ -103,7 +119,7 @@ object myApplications {
       cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size",
       div(
         id := s"date-${application.id}",
-        cls := "vertical-align--middle",
+        cls := "vertical-align--middle overlay-foreground",
         span(
           cls := "application__age",
           "Créé il y a ",
@@ -116,7 +132,8 @@ object myApplications {
         cls := "mdl-tooltip",
         data("mdl-for") := s"date-${application.id}",
         Time.formatPatternFr(application.creationDate, "dd MMM YYYY - HH:mm")
-      )
+      ),
+      backgroundLink(application)
     )
 
   private def activityCol(currentUser: User, application: Application): Tag = {
@@ -131,7 +148,7 @@ object myApplications {
       cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size hidden--small-screen",
       div(
         id := s"answers-${application.id}",
-        cls := "vertical-align--middle",
+        cls := "vertical-align--middle overlay-foreground",
         i(cls := "material-icons icon--light", "chat_bubble"),
         " ",
         span(
@@ -153,7 +170,8 @@ object myApplications {
             )
           )
         )
-      )
+      ),
+      backgroundLink(application)
     )
   }
 
@@ -168,9 +186,10 @@ object myApplications {
       style := "width: 20px",
       a(
         href := ApplicationController.show(application.id).url,
-        cls := "mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon",
+        cls := "mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon overlay-foreground",
         i(cls := "material-icons", "info_outline")
-      )
+      ),
+      backgroundLink(application)
     )
 
   def applicationsList(
