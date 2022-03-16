@@ -168,17 +168,24 @@ class UserService @Inject() (
         .as(simpleUser.singleOpt)
     }.map(_.toUser)
 
-  def byEmail(email: String): Option[User] =
+  def byEmail(email: String, includeDisabled: Boolean = false): Option[User] =
     db.withConnection { implicit connection =>
+      val disabledSQL: String = if (includeDisabled) {
+        ""
+      } else {
+        " AND disabled = false"
+      }
       SQL(s"""SELECT $fieldsInSelect
               FROM "user"
               WHERE lower(email) = {email}
-              AND disabled = false""")
+              $disabledSQL""")
         .on("email" -> email.toLowerCase)
         .as(simpleUser.singleOpt)
     }.map(_.toUser)
 
-  def byEmailFuture(email: String): Future[Option[User]] = Future(byEmail(email))
+  def byEmailFuture(email: String, includeDisabled: Boolean = false): Future[Option[User]] = Future(
+    byEmail(email, includeDisabled)
+  )
 
   def byEmails(emails: List[String]): List[User] = {
     val lowerCaseEmails = emails.map(_.toLowerCase).distinct
