@@ -6,72 +6,13 @@
 
 
 @display(applications: Seq[Application]) = {
-    <div class="mdl-cell mdl-cell--12-col pem-container">
-        Toutes (@applications.size) :  @applications.groupBy(_.longStatus(user)).view.mapValues(_.size).map{case (k,v) => @k ( @v ) }.mkString(" / ")
-        <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
-            <tfoot class="invisible">
-                <tr>
-                    <td class="mdl-data-table__cell--non-numeric" colspan="5" style="text-align: center"><button id="clear-search" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">Supprimer le filtre et afficher toutes les demandes</button></td>
-                </tr>
-            </tfoot>
-            <tbody>
-            @for((application) <- applications.sortBy(_.closed)) {
-                <tr data-location="@routes.ApplicationController.show(application.id)" data-search="@application.searchData" class="onclick-change-location searchable-row @if(application.longStatus(user) === New) {td--important-border} else {td--clear-border} @if(!application.hasBeenDisplayedFor(user.id)) {td--blue-background}">
-                  <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
-                    @toHtml(views.helpers.applications.statusTag(application, user))
-                    @if(Authorization.isAdmin(currentUserRights)) {
-                      <br>
-                      <div class="single--margin-top-8px single--display-flex single--justify-content-center">
-                        <span class="mdl-typography--font-bold mdl-color-text--red-A700">
-                          @application.internalId
-                        </span>
-                      </div>
-                    }
-                  </td>
-                    <td class="mdl-data-table__cell--non-numeric"><span class="application__name">@application.userInfos.get(Application.USER_LAST_NAME_KEY) @application.userInfos.get(Application.USER_FIRST_NAME_KEY)</span><i>@application.userInfos.get(Application.USER_CAF_NUMBER_KEY).map(caf => s" (Num. CAF: $caf)")@application.userInfos.get(Application.USER_SOCIAL_SECURITY_NUMBER_KEY).map(nir => s" (NIR: $nir)")</i>
-                    <br><span class="application__subject">@application.subject</span></td>
-                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size">
-                        <div id="date-@application.id" class="vertical-align--middle">
-                            <span class="application__age">Créé il y a <b>@application.ageString</b></span>
-                            <i class="icon material-icons icon--light">info</i>
-                        </div>
-                        <div class="mdl-tooltip" data-mdl-for="date-@application.id">
-                        @{Time.formatPatternFr(application.creationDate, "dd MMM YYYY - HH:mm")}
-                        </div>
-                    </td>
-                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size hidden--small-screen">
-                        <div id="answers-@application.id" class="vertical-align--middle">
-                            <i class="material-icons icon--light">chat_bubble</i>
-                            <span class="application__anwsers badge-holder">@application.answers.length messages
-                                @if(application.newAnswersFor(user.id).length > 0 && !application.closed) {
-                                    <span class="mdl-color--pink-500 badge">@{application.newAnswersFor(user.id).length}</span>
-                                }
-                            </span>
-                        </div>
-                        <div class="mdl-tooltip" for="answers-@application.id">
-                        @for(answer <- application.answers) {
-                            @{Time.formatPatternFr(answer.creationDate, "dd MMM YYYY")} : @answer.creatorUserName.split("\\(").head<br>
-                            }
-                        </div>
-                    </td>
-                    <td class="mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size hidden--small-screen"></td>
-                    <td class="mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size hidden--small-screen" style="width: 20px"><a href="@routes.ApplicationController.show(application.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
-                        <i class="material-icons">info_outline</i>
-                    </a></td>
-                </tr>
-            }
-            </tbody>
-        </table>
-    </div>
+  @toHtml(views.myApplications.applicationsList(user, currentUserRights, applications.toList))
 }
 
 @main(user, currentUserRights)(s"Mes demandes")  {
 <style>
     .pem-table {
         width: 100%;
-    }
-    td {
-        cursor: pointer;
     }
     #search-input {
         font-size: 17px;
