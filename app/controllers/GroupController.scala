@@ -44,7 +44,6 @@ case class GroupController @Inject() (
     applicationService: ApplicationService,
     loginAction: LoginAction,
     groupService: UserGroupService,
-    notificationService: NotificationService,
     eventService: EventService,
     configuration: Configuration,
     ws: WSClient,
@@ -83,7 +82,7 @@ case class GroupController @Inject() (
           },
           data =>
             userService
-              .byEmailFuture(data.email)
+              .byEmailFuture(data.email, includeDisabled = true)
               .zip(userService.byGroupIdsFuture(List(groupId), includeDisabled = true))
               .flatMap {
                 case (None, _) =>
