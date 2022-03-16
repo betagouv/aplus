@@ -44,7 +44,6 @@ case class GroupController @Inject() (
     applicationService: ApplicationService,
     loginAction: LoginAction,
     groupService: UserGroupService,
-    notificationService: NotificationService,
     eventService: EventService,
     configuration: Configuration,
     ws: WSClient,
