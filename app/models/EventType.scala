@@ -84,7 +84,7 @@ object EventType {
   object ImportUserUnauthorized extends Warn
   object ImportUsersUnauthorized extends Warn
   object InviteFormValidationError extends Warn
-  object MandatInitiationBySmsInvalid extends Error
+  object MandatInitiationBySmsFormValidationError extends Warn
   object MandatInitiationBySmsWarn extends Warn
   object MandatInitiationBySmsDone extends Info
   object MandatBySmsResponseSaved extends Info
