@@ -14,6 +14,8 @@ import 'core-js/web/dom-collections';
 import 'unfetch/polyfill';
 // String.prototype.normalize
 import 'unorm';
+// Proxy (needed by tabulator)
+import 'proxy-polyfill';
 
 // Our scripts
 import "./admin";
