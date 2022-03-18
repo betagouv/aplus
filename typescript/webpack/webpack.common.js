@@ -25,7 +25,7 @@ module.exports = {
       },
       {
         test: /.js$/,
-        exclude: (_) => /node_modules/.test(_) && !/node_modules\/tabulator-tables/.test(_),
+        exclude: (_) => /node_modules/.test(_) && !/node_modules\/(tabulator-tables|proxy-polyfill)/.test(_),
         use: {
           loader: 'babel-loader',
           options: {
