@@ -25,7 +25,7 @@
     "@types/tabulator-tables": "5.1.1",
     "babel-loader": "8.2.3",
     "copy-webpack-plugin": "10.2.4",
-    "css-loader": "6.5.1",
+    "css-loader": "6.7.1",
     "mini-css-extract-plugin": "2.4.5",
     "rimraf": "3.0.2",
     "ts-loader": "9.2.6",
