@@ -1,4 +1,4 @@
-import Tabulator from 'tabulator-tables';
+import { Tabulator, TabulatorFull } from 'tabulator-tables';
 import "tabulator-tables/dist/css/tabulator.css";
 
 
@@ -74,7 +74,7 @@ const franceServiceDeploymentColumns: Array<Tabulator.ColumnDefinition> = [
 ]
 
 if (window.document.getElementById(franceServiceDeploymentTableTagId)) {
-  const franceServiceDeploymentTable = new Tabulator("#" + franceServiceDeploymentTableTagId, {
+  const franceServiceDeploymentTable = new TabulatorFull("#" + franceServiceDeploymentTableTagId, {
     ajaxURL: jsRoutes.controllers.ApiController.franceServiceDeployment().url,
     ajaxResponse: function(url, params, response) {
       // http://tabulator.info/docs/4.5/callbacks#ajax
@@ -266,7 +266,7 @@ if (window.document.getElementById(deploymentTableTagId)) {
     };
     data.push(lastRow);
 
-    const table = new Tabulator("#" + deploymentTableTagId, {
+    const table = new TabulatorFull("#" + deploymentTableTagId, {
       data,
       layout: "fitColumns",
       responsiveLayout: "hide",

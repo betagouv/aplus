@@ -1,17 +1,6 @@
-// Important Note:
-// import * as Tabulator from 'tabulator-tables'
-// fails with error
-// TS2306: File '.../node_modules/@types/tabulator-tables/index.d.ts' is not a module.
-// We have to do a bit of contrivances to make it work.
-// In global.d.ts, there is
-// declare module "tabulator-tables" { export default Tabulator; }
-// To be noted that we can make it work like this, however, without TS types
-// import 'tabulator-tables';
-// const Tabulator = require('tabulator-tables').default;
-import Tabulator from 'tabulator-tables';
+import { Tabulator, TabulatorFull } from 'tabulator-tables';
 import "tabulator-tables/dist/css/tabulator.css";
 import { debounceAsync } from './helpers';
-
 
 const usersTableId = "tabulator-users-table";
 const groupsTableId = "tabulator-groups-table";
@@ -232,59 +221,39 @@ if (window.document.getElementById(usersTableId)) {
 
   const usersOptions: Tabulator.Options = {
     height: "80vh",
-    columnMaxWidth: 300,
     rowFormatter,
     langs: {
       "fr-fr": {
-        pagination: {
-          page_size: "Taille de la page",
-          first: "Premier",
-          first_title: "Première Page",
-          last: "Dernier",
-          last_title: "Dernière Page",
-          prev: "Précédent",
-          prev_title: "Page Précédente",
-          next: "Suivant",
-          next_title: "Page Suivante"
-        },
         headerFilters: {
-          default: "filtrer..." //default header filter placeholder text
+          "default": "filtrer..."
         }
       }
     },
     columns: usersColumns,
   };
-  usersTable = new Tabulator("#" + usersTableId, usersOptions);
-  usersTable.setLocale("fr-fr");
-  usersTable.setSort("name", "asc");
+  usersTable = new TabulatorFull("#" + usersTableId, usersOptions);
+  usersTable.on("tableBuilt", function() {
+    usersTable?.setLocale("fr-fr");
+    usersTable?.setSort("name", "asc");
+  });
 
   const groupsOptions: Tabulator.Options = {
     height: "60vh",
-    columnMaxWidth: 300,
     rowFormatter,
     langs: {
       "fr-fr": {
-        pagination: {
-          page_size: "Taille de la page",
-          first: "Premier",
-          first_title: "Première Page",
-          last: "Dernier",
-          last_title: "Dernière Page",
-          prev: "Précédent",
-          prev_title: "Page Précédente",
-          next: "Suivant",
-          next_title: "Page Suivante"
-        },
         headerFilters: {
-          default: "filtrer..." //default header filter placeholder text
+          "default": "filtrer..."
         }
       }
     },
     columns: groupsColumns,
   };
-  groupsTable = new Tabulator("#" + groupsTableId, groupsOptions);
-  groupsTable.setLocale("fr-fr");
-  groupsTable.setSort("name", "asc");
+  groupsTable = new TabulatorFull("#" + groupsTableId, groupsOptions);
+  groupsTable.on("tableBuilt", function() {
+    groupsTable?.setLocale("fr-fr");
+    groupsTable?.setSort("name", "asc");
+  });
 
 
 
