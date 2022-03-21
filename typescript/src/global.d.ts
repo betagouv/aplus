@@ -4,5 +4,3 @@ declare var jsRoutes: any;
 // This is from MDL JS
 // TODO: type it correctly
 declare var componentHandler: any;
-
-declare module "tabulator-tables" { export default Tabulator; }

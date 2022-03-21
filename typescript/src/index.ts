@@ -4,12 +4,18 @@ import 'ts-polyfill/lib/es2015-core';
 // new Promise
 import 'ts-polyfill/lib/es2015-promise';
 import 'ts-polyfill/lib/es2016-array-include';
+// Needed by tabulator:
+// Object.values() https://github.com/zloirock/core-js#ecmascript-object
+import 'ts-polyfill/lib/es2017-object';
+
 // This adds NodeList.forEach, etc.
 import 'core-js/web/dom-collections';
 // fetch
 import 'unfetch/polyfill';
 // String.prototype.normalize
 import 'unorm';
+// Proxy (needed by tabulator)
+import 'proxy-polyfill';
 
 // Our scripts
 import "./admin";
