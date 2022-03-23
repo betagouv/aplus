@@ -37,10 +37,22 @@ jobs:
     # We compile the tests here so the test command can run faster
     - name: Compile tests
       run: "sbt Test/compile"
+
+    - name: Display geckodriver and firefox versions
+      run: |
+        echo "geckodriver/firefox"
+        which geckodriver
+        geckodriver --version
+        which firefox
+        firefox --version
+
     # Due to transient errors thrown by HTMLUnit, we try
     # to run the tests a few times
     - name: Run tests
       run: "sbt coverage test coverageReport || sbt coverage test coverageReport || sbt coverage test coverageReport"
+      env:
+        GECKO_DRIVER: /usr/bin/geckodriver
+
     - name: Run codacy-coverage-reporter
       uses: codacy/codacy-coverage-reporter-action@v1
       env:

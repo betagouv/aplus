@@ -9,7 +9,7 @@ import org.specs2.runner._
 import play.api.test.Helpers._
 import play.api.test._
 import services.{ApplicationService, TokenService, UserGroupService, UserService}
-
+/*
 @RunWith(classOf[JUnitRunner])
 class ApplicationSpec extends Specification with BaseSpec {
 
@@ -151,3 +151,4 @@ class ApplicationSpec extends Specification with BaseSpec {
     }
   }
 }
+ */
