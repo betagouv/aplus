@@ -169,7 +169,12 @@ if (window.document.getElementById(applicationsTableId)) {
       headerFilter: "select",
       headerFilterParams: { values: true, multiselect: true }
     },
-    { title: "Créateur", field: "creatorUserName", headerFilter: "input" },
+    {
+      title: "Créateur",
+      field: "creatorUserName",
+      headerFilter: "input",
+      maxWidth: 300,
+    },
     {
       title: "Invités",
       field: "stats.numberOfInvitedUsers",
@@ -222,12 +227,14 @@ if (window.document.getElementById(applicationsTableId)) {
     {
       title: "Groupes du demandeur",
       field: "creatorGroupNames",
-      headerFilter: "input"
+      headerFilter: "input",
+      maxWidth: 300,
     },
     {
       title: "Groupes invités",
       field: "invitedGroupNames",
-      headerFilter: "input"
+      headerFilter: "input",
+      maxWidth: 300,
     },
     {
       title: "Délais de première réponse (Jours)",
