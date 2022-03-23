@@ -10,92 +10,96 @@ const downloadBtnXlsx = "applications-download-btn-xlsx";
 const queryParamAreaId = "areaId";
 const queryParamNumOfMonthsDisplayed = "nombreDeMoisAffiche";
 
-let applicationsTable: Tabulator | null = null;
-
-const ajaxUrl: string = jsRoutes.controllers.ApplicationController.applicationsMetadata().url;
 
 
-
-function extractQueryParams(): { areaId: string | null, nombreDeMoisAffiche: string } {
-  const params = new URL(window.location.href).searchParams;
-  const areaIdOpt = params.get(queryParamAreaId);
-  const numOfMonthsDisplayedOpt = params.get(queryParamNumOfMonthsDisplayed);
-  return {
-    areaId: areaIdOpt,
-    nombreDeMoisAffiche: numOfMonthsDisplayedOpt ? numOfMonthsDisplayedOpt : "3",
-  };
-}
-
-// Changed by event listeners
-let ajaxParams = extractQueryParams();
-
-
-
-// Set the initial area id
-const areaSelect = <HTMLSelectElement | null>document.getElementById(applicationsAreaId);
-if (areaSelect) {
-  areaSelect.addEventListener('change', (e) => {
-    const target = e.target as HTMLSelectElement;
-    const id: string = target.value;
-    ajaxParams.areaId = id;
-    applicationsTable?.setData(ajaxUrl);
-  });
-}
-
-// Set number of months
-const monthsInput = <HTMLElement | null>document.getElementById(applicationsNumOfMonthsDisplayedId);
-if (monthsInput) {
-  monthsInput.addEventListener('input', (e) => {
-    const target = e.target as HTMLInputElement;
-    const num: string = target.value;
-    ajaxParams.nombreDeMoisAffiche = num;
-    applicationsTable?.setData(ajaxUrl);
-  });
-}
-
-
-
-// Download
-function downloadFilename(): string {
-  let areaName: string = "";
-  if (areaSelect) {
-    const selected = areaSelect.options[areaSelect.selectedIndex];
-    if (selected && selected.text) {
-      areaName = selected.text + " - ";
-    }
-  }
-  const date = new Date().toLocaleDateString('fr-fr', { year: "numeric", month: "numeric", day: "numeric" });
-  const filename = 'Demandes Administration+ - ' + areaName + date;
-  return filename;
-}
-
-const csvDownloadBtn = <HTMLElement | null>document.getElementById(downloadBtnCsv);
-if (csvDownloadBtn) {
-  csvDownloadBtn.addEventListener('click', (_) => {
-    applicationsTable?.download(
-      'csv',
-      downloadFilename() + '.csv',
-      { delimiter: ";" }
-    );
-  });
-}
-
-const xlsxDownloadBtn = <HTMLElement | null>document.getElementById(downloadBtnXlsx);
-if (xlsxDownloadBtn) {
-  xlsxDownloadBtn.addEventListener('click', (_) => {
-    applicationsTable?.download(
-      'xlsx',
-      downloadFilename() + '.xlsx',
-      { sheetName: "Demandes Administration+" }
-    );
-  });
-}
-
-
-
-// Setup Tabulator
 if (window.document.getElementById(applicationsTableId)) {
 
+
+
+  let applicationsTable: Tabulator | null = null;
+
+  const ajaxUrl: string = jsRoutes.controllers.ApplicationController.applicationsMetadata().url;
+
+
+
+  const extractQueryParams: () => { areaId: string | null, nombreDeMoisAffiche: string } = () => {
+    const params = new URL(window.location.href).searchParams;
+    const areaIdOpt = params.get(queryParamAreaId);
+    const numOfMonthsDisplayedOpt = params.get(queryParamNumOfMonthsDisplayed);
+    return {
+      areaId: areaIdOpt,
+      nombreDeMoisAffiche: numOfMonthsDisplayedOpt ? numOfMonthsDisplayedOpt : "3",
+    };
+  }
+
+  // Changed by event listeners
+  let ajaxParams: { areaId: string | null, nombreDeMoisAffiche: string } = extractQueryParams();
+
+
+
+  // Set the initial area id
+  const areaSelect = <HTMLSelectElement | null>document.getElementById(applicationsAreaId);
+  if (areaSelect) {
+    areaSelect.addEventListener('change', (e) => {
+      const target = e.target as HTMLSelectElement;
+      const id: string = target.value;
+      ajaxParams.areaId = id;
+      applicationsTable?.setData(ajaxUrl);
+    });
+  }
+
+  // Set number of months
+  const monthsInput = <HTMLElement | null>document.getElementById(applicationsNumOfMonthsDisplayedId);
+  if (monthsInput) {
+    monthsInput.addEventListener('input', (e) => {
+      const target = e.target as HTMLInputElement;
+      const num: string = target.value;
+      ajaxParams.nombreDeMoisAffiche = num;
+      applicationsTable?.setData(ajaxUrl);
+    });
+  }
+
+
+
+  // Download
+  const downloadFilename: () => string = () => {
+    let areaName: string = "";
+    if (areaSelect) {
+      const selected = areaSelect.options[areaSelect.selectedIndex];
+      if (selected && selected.text) {
+        areaName = selected.text + " - ";
+      }
+    }
+    const date = new Date().toLocaleDateString('fr-fr', { year: "numeric", month: "numeric", day: "numeric" });
+    const filename = 'Demandes Administration+ - ' + areaName + date;
+    return filename;
+  }
+
+  const csvDownloadBtn = <HTMLElement | null>document.getElementById(downloadBtnCsv);
+  if (csvDownloadBtn) {
+    csvDownloadBtn.addEventListener('click', (_) => {
+      applicationsTable?.download(
+        'csv',
+        downloadFilename() + '.csv',
+        { delimiter: ";" }
+      );
+    });
+  }
+
+  const xlsxDownloadBtn = <HTMLElement | null>document.getElementById(downloadBtnXlsx);
+  if (xlsxDownloadBtn) {
+    xlsxDownloadBtn.addEventListener('click', (_) => {
+      applicationsTable?.download(
+        'xlsx',
+        downloadFilename() + '.xlsx',
+        { sheetName: "Demandes Administration+" }
+      );
+    });
+  }
+
+
+
+  // Setup Tabulator
   const linkFormatter: Tabulator.Formatter = (cell) => {
     let uuid = cell.getRow().getData().id;
     let authorized = cell.getRow().getData().currentUserCanSeeAnonymousApplication;
