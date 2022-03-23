@@ -12,8 +12,8 @@ import play.api.test._
 import services._
 /*
 /** Tests are broken as unit instead of using tables to allow the CI to pass those tests (doesn't
-  * work otherwise).
-  */
+ * work otherwise).
+ */
 @RunWith(classOf[JUnitRunner])
 class ApplicationAccessSpec extends Specification with BaseSpec {
 
