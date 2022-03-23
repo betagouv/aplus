@@ -21,10 +21,12 @@ import play.api.cache.AsyncCacheApi
 import play.api.data.Forms._
 import play.api.data._
 import play.api.data.validation.Constraints._
+import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
 import play.api.mvc._
 import play.twirl.api.Html
 import serializers.Keys
+import serializers.ApiModel.{ApplicationMetadata, ApplicationMetadataResult}
 import services._
 import views.stats.StatsData
 
@@ -429,7 +431,18 @@ case class ApplicationController @Inject() (
         Future(Nil)
     }
 
-  def all(areaId: UUID): Action[AnyContent] =
+  private def extractApplicationsAdminQuery(implicit
+      request: RequestWithUserData[_]
+  ): (Option[Area], Int) = {
+    val areaOpt = areaInQueryString.filterNot(_.id === Area.allArea.id)
+    val numOfMonthsDisplayed: Int = request
+      .getQueryString(Keys.QueryParam.numOfMonthsDisplayed)
+      .flatMap(s => Try(s.toInt).toOption)
+      .getOrElse(3)
+    (areaOpt, numOfMonthsDisplayed)
+  }
+
+  def applicationsAdmin: Action[AnyContent] =
     loginAction.async { implicit request =>
       (request.currentUser.admin, request.currentUser.groupAdmin) match {
         case (false, false) =>
@@ -443,29 +456,60 @@ case class ApplicationController @Inject() (
             )
           )
         case _ =>
-          val numOfMonthsDisplayed: Int = request
-            .getQueryString(Keys.QueryParam.numOfMonthsDisplayed)
-            .flatMap(s => Try(s.toInt).toOption)
-            .getOrElse(3)
-          val area = if (areaId === Area.allArea.id) None else Area.fromId(areaId)
-          allApplicationVisibleByUserAdmin(request.currentUser, area, numOfMonthsDisplayed).map {
-            unfilteredApplications =>
-              val filteredApplications =
-                request.getQueryString(Keys.QueryParam.filterIsOpen) match {
-                  case Some(_) => unfilteredApplications.filterNot(_.closed)
-                  case None    => unfilteredApplications
-                }
+          val (areaOpt, numOfMonthsDisplayed) = extractApplicationsAdminQuery
+          eventService.log(
+            AllApplicationsShowed,
+            s"Accède à la page des métadonnées des demandes [$areaOpt ; $numOfMonthsDisplayed]"
+          )
+          Future(
+            Ok(
+              views.applicationsAdmin
+                .page(request.currentUser, request.rights, areaOpt, numOfMonthsDisplayed)
+            )
+          )
+      }
+    }
+
+  def applicationsMetadata: Action[AnyContent] =
+    loginAction.async { implicit request =>
+      (request.currentUser.admin, request.currentUser.groupAdmin) match {
+        case (false, false) =>
+          eventService.log(
+            AllApplicationsUnauthorized,
+            "Liste des metadata des demandes non autorisée"
+          )
+          Future.successful(Unauthorized(Json.toJson(ApplicationMetadataResult(Nil))))
+        case _ =>
+          val (areaOpt, numOfMonthsDisplayed) = extractApplicationsAdminQuery
+          allApplicationVisibleByUserAdmin(request.currentUser, areaOpt, numOfMonthsDisplayed).map {
+            applications =>
               eventService.log(
                 AllApplicationsShowed,
-                s"Visualise la liste des demandes de $areaId - taille = ${filteredApplications.size}"
+                "Accède à la liste des metadata des demandes " +
+                  s"[territoire ${areaOpt.map(_.name).getOrElse("tous")} ; " +
+                  s"taille : ${applications.size}]"
               )
-              Ok(
-                views.html
-                  .allApplications(request.currentUser, request.rights)(
-                    filteredApplications,
-                    area.getOrElse(Area.allArea)
+              val userIds: List[UUID] = (applications.flatMap(_.invitedUsers.keys) ++
+                applications.map(_.creatorUserId)).toList.distinct
+              val users = userService.byIds(userIds, includeDisabled = true)
+              val groupIds =
+                (users.flatMap(_.groupIds) ::: applications.flatMap(application =>
+                  application.invitedGroupIdsAtCreation ::: application.answers.flatMap(
+                    _.invitedGroupIds
                   )
+                )).distinct
+              val groups = userGroupService.byIds(groupIds)
+              val idToUser = users.map(user => (user.id, user)).toMap
+              val idToGroup = groups.map(group => (group.id, group)).toMap
+              val metadata = applications.map(application =>
+                ApplicationMetadata.fromApplication(
+                  application,
+                  request.rights,
+                  idToUser,
+                  idToGroup
+                )
               )
+              Ok(Json.toJson(ApplicationMetadataResult(metadata)))
           }
       }
     }
@@ -822,30 +866,6 @@ case class ApplicationController @Inject() (
           CACHE_CONTROL -> "no-store"
         )
         .as("text/csv")
-    }
-
-  def allCSV(areaId: UUID): Action[AnyContent] =
-    loginAction.async { implicit request =>
-      val area = if (areaId === Area.allArea.id) Option.empty else Area.fromId(areaId)
-      val exportedApplicationsFuture =
-        if (request.currentUser.admin || request.currentUser.groupAdmin) {
-          allApplicationVisibleByUserAdmin(request.currentUser, area, 24)
-        } else {
-          Future(Nil)
-        }
-
-      exportedApplicationsFuture.map { exportedApplications =>
-        val date = Time.formatPatternFr(Time.nowParis(), "YYY-MM-dd-HH'h'mm")
-        val csvContent = applicationsToCSV(exportedApplications)
-
-        eventService.log(AllCSVShowed, s"Visualise un CSV pour la zone $area")
-        val filenameAreaPart: String = area.map(_.name.stripSpecialChars).getOrElse("tous")
-        Ok(csvContent)
-          .withHeaders(
-            "Content-Disposition" -> s"""attachment; filename="aplus-demandes-$date-$filenameAreaPart.csv""""
-          )
-          .as("text/csv")
-      }
     }
 
   private def usersWhoCanBeInvitedOn(application: Application, currentAreaId: UUID)(implicit

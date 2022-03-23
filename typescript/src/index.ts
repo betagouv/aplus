@@ -22,6 +22,7 @@ import "./admin";
 import "./application";
 import "./applicationMandatFields";
 import "./applicationAttachment";
+import "./applicationsAdmin";
 //import "./autolinker";
 import "./changeArea";
 import "./domHelpers";
