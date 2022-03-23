@@ -10,6 +10,8 @@ import 'ts-polyfill/lib/es2017-object';
 
 // This adds NodeList.forEach, etc.
 import 'core-js/web/dom-collections';
+// URLSearchParams
+import 'core-js/stable/url-search-params';
 // fetch
 import 'unfetch/polyfill';
 // String.prototype.normalize
