@@ -1,3 +1,4 @@
+/* global jsRoutes */
 import { Tabulator, TabulatorFull } from 'tabulator-tables';
 import "tabulator-tables/dist/css/tabulator.css";
 
@@ -104,7 +105,7 @@ if (window.document.getElementById(applicationsTableId)) {
     } else {
       return "";
     }
-  }
+  };
 
   const usefulnessFormatter: Tabulator.Formatter = (cell) => {
     let value = cell.getValue();
@@ -116,7 +117,7 @@ if (window.document.getElementById(applicationsTableId)) {
       }
     }
     return value;
-  }
+  };
 
   const pertinenceFormatter: Tabulator.Formatter = (cell) => {
     let value = cell.getValue();
@@ -124,7 +125,7 @@ if (window.document.getElementById(applicationsTableId)) {
       cell.getElement().classList.add("mdl-color--red");
     }
     return value;
-  }
+  };
 
   const usersColumns: Array<Tabulator.ColumnDefinition> = [
     {
@@ -264,7 +265,7 @@ if (window.document.getElementById(applicationsTableId)) {
       visible: false,
       download: true
     },
-  ]
+  ];
 
   const usersOptions: Tabulator.Options = {
     height: "75vh",
@@ -282,7 +283,7 @@ if (window.document.getElementById(applicationsTableId)) {
     columns: usersColumns,
     ajaxURL: ajaxUrl,
     ajaxParams: () => ajaxParams,
-    ajaxResponse: function(_url, _params, response) {
+    ajaxResponse(_url, _params, response) {
       return response.applications;
     }
   };
