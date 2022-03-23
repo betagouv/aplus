@@ -421,14 +421,14 @@ case class ApplicationController @Inject() (
         applicationService.allForAreas(List(area.id), numOfMonthsDisplayed.some)
       case (false, None) if user.groupAdmin =>
         val userIds = userService.byGroupIds(user.groupIds, includeDisabled = true).map(_.id)
-        applicationService.allForUserIds(userIds)
+        applicationService.allForUserIds(userIds, numOfMonthsDisplayed.some)
       case (false, Some(area)) if user.groupAdmin =>
-        val userGroupIds =
-          userGroupService.byIds(user.groupIds).filter(_.areaIds.contains[UUID](area.id)).map(_.id)
-        val userIds = userService.byGroupIds(userGroupIds, includeDisabled = true).map(_.id)
-        applicationService.allForUserIds(userIds)
+        val userIds = userService.byGroupIds(user.groupIds, includeDisabled = true).map(_.id)
+        applicationService
+          .allForUserIds(userIds, numOfMonthsDisplayed.some)
+          .map(_.filter(application => application.area === area.id))
       case _ =>
-        Future(Nil)
+        Future.successful(Nil)
     }
 
   private def extractApplicationsAdminQuery(implicit
@@ -576,7 +576,7 @@ case class ApplicationController @Inject() (
   ): Future[(List[User], List[Application])] =
     for {
       users <- userService.byGroupIdsAnonymous(groups.map(_.id))
-      applications <- applicationService.allForUserIds(users.map(_.id))
+      applications <- applicationService.allForUserIds(users.map(_.id), none)
     } yield (users, applications)
 
   private def generateStats(
@@ -606,7 +606,7 @@ case class ApplicationController @Inject() (
               .map(_.filter(_.areaIds.intersect(areaIds).nonEmpty))
             users <- userService.byGroupIdsAnonymous(groups.map(_.id))
             applications <- applicationService
-              .allForUserIds(users.map(_.id))
+              .allForUserIds(users.map(_.id), none)
               .map(_.filter(application => areaIds.contains(application.area)))
           } yield (users, applications)
         case (_, _ :: _, _) =>
