@@ -9,13 +9,13 @@ import org.specs2.runner._
 import play.api.test.Helpers._
 import play.api.test._
 import services.{ApplicationService, TokenService, UserGroupService, UserService}
-/*
+
 @RunWith(classOf[JUnitRunner])
 class ApplicationSpec extends Specification with BaseSpec {
 
   "Application" should {
     "Create Application with success" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = webDriver,
       app = applicationWithBrowser
     ) {
       val tokenService = app.injector.instanceOf[TokenService]
@@ -151,4 +151,3 @@ class ApplicationSpec extends Specification with BaseSpec {
     }
   }
 }
- */

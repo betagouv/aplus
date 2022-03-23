@@ -10,7 +10,7 @@ import org.specs2.runner._
 import play.api.test.Helpers._
 import play.api.test._
 import services.{ApplicationService, TokenService, UserGroupService, UserService}
-/*
+
 @RunWith(classOf[JUnitRunner])
 class AnswerSpec extends Specification with Tables with BaseSpec {
 
@@ -103,7 +103,7 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
 
   "Application" should {
     "Allow answer from certain type of users" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = webDriver,
       app = applicationWithBrowser
     ) {
       "userCodeName" |
@@ -246,4 +246,3 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
     }
   }
 }
- */

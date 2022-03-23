@@ -11,7 +11,7 @@ trait BaseSpec {
       .configure("app.filesPath" -> "files", "app.host" -> "localhost", "play.mailer.mock" -> true)
       .build()
 
-  def testWebDriver: WebDriver = {
+  def webDriver: WebDriver = {
     val options = new FirefoxOptions()
       .setHeadless(true)
     new FirefoxDriver(options)
