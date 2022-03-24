@@ -103,7 +103,7 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
 
   "Application" should {
     "Allow answer from certain type of users" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = webDriver,
       app = applicationWithBrowser
     ) {
       "userCodeName" |
