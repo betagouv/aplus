@@ -15,7 +15,7 @@ class ApplicationSpec extends Specification with BaseSpec {
 
   "Application" should {
     "Create Application with success" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = webDriver,
       app = applicationWithBrowser
     ) {
       val tokenService = app.injector.instanceOf[TokenService]
@@ -105,9 +105,13 @@ class ApplicationSpec extends Specification with BaseSpec {
       val description = s"John a un problème $number"
       val birthDate = "1988"
 
-      browser.waitUntil(browser.el(s"input[value='${instructorGroup.id}']").clickable())
+      // Note: mdl reduce checkboxes to size 0
+      // The driver will not be able to scroll to the element selected by,
+      // for example, input[value='validate'] and will fail with
+      // org.openqa.selenium.ElementNotInteractableException: Element <input id="checkbox-mandat" class="mdl-checkbox__input" name="validate" type="checkbox"> could not be scrolled into view
+      browser.waitUntil(browser.el(s"label[for*='${instructorGroup.id}']").clickable())
 
-      browser.el(s"input[value='${instructorGroup.id}']").click()
+      browser.el(s"label[for*='${instructorGroup.id}']").click()
       browser.el(s"input[value='${instructorGroup.id}']").selected() mustEqual true
 
       browser.el("input[name='subject']").fill().withText(subject)
@@ -115,11 +119,13 @@ class ApplicationSpec extends Specification with BaseSpec {
       browser.el("input[name='usagerNom']").fill().withText(lastName)
       browser.el("input[name='usagerBirthDate']").fill().withText(birthDate)
       browser.el("textarea[name='description']").fill().withText(description)
-      browser.el("input[name='validate']").click()
+      // Checkbox
+      browser.el("label[for='checkbox-mandat']").click()
 
       browser.waitUntil(browser.el("input[name='validate']").selected)
 
-      browser.el("#mandatType_paper").click()
+      // Radio
+      browser.el("label[for='mandatType_paper']").click()
       browser.el("input[name='mandatDate']").fill().withText(java.time.ZonedDateTime.now().toString)
 
       browser.el("form").submit()
