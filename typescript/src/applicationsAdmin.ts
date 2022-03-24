@@ -84,7 +84,7 @@ if (window.document.getElementById(applicationsTableId)) {
         { delimiter: ";" }
       );
     });
-  };
+  }
 
   const xlsxDownloadBtn = <HTMLElement | null>document.getElementById(downloadBtnXlsx);
   if (xlsxDownloadBtn) {
