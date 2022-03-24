@@ -30,7 +30,7 @@ if (window.document.getElementById(applicationsTableId)) {
       areaId: areaIdOpt,
       nombreDeMoisAffiche: numOfMonthsDisplayedOpt ? numOfMonthsDisplayedOpt : "3",
     };
-  }
+  };
 
   // Changed by event listeners
   let ajaxParams: { areaId: string | null, nombreDeMoisAffiche: string } = extractQueryParams();
