@@ -73,7 +73,7 @@ if (window.document.getElementById(applicationsTableId)) {
     const date = new Date().toLocaleDateString('fr-fr', { year: "numeric", month: "numeric", day: "numeric" });
     const filename = 'Demandes Administration+ - ' + areaName + date;
     return filename;
-  }
+  };
 
   const csvDownloadBtn = <HTMLElement | null>document.getElementById(downloadBtnCsv);
   if (csvDownloadBtn) {
@@ -84,7 +84,7 @@ if (window.document.getElementById(applicationsTableId)) {
         { delimiter: ";" }
       );
     });
-  }
+  };
 
   const xlsxDownloadBtn = <HTMLElement | null>document.getElementById(downloadBtnXlsx);
   if (xlsxDownloadBtn) {
