@@ -11,7 +11,7 @@ class HomeSpec extends Specification with BaseSpec {
 
   "Home" should {
     "Stay on / when disconnected" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = webDriver,
       app = applicationWithBrowser
     ) {
       val homeUrl = controllers.routes.HomeController.index.absoluteURL(false, s"localhost:$port")
@@ -22,7 +22,7 @@ class HomeSpec extends Specification with BaseSpec {
     }
 
     "Status up" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = webDriver,
       app = applicationWithBrowser
     ) {
       val loginURL =

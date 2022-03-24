@@ -17,7 +17,10 @@ lazy val root = (project in file("."))
       "gitHeadCommit" -> git.gitHeadCommit.value,
       "gitHeadCommitDate" -> git.gitHeadCommitDate.value
     ),
-    buildInfoPackage := "constants"
+    buildInfoPackage := "constants",
+    // Test with Firefox
+    // Note that sbt does not forward system properties from the cli to the tests
+    Test / javaOptions += ("-Dwebdriver.gecko.driver=" + scala.sys.env("GECKO_DRIVER"))
   )
   .dependsOn(macrosProject)
   .dependsOn(clammyStreams)

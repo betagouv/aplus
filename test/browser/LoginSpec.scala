@@ -46,8 +46,9 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
   }
 
   "Login" should {
+
     "Login with valid or invalid emails" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = webDriver,
       app = applicationWithBrowser
     ) {
       "email" | "result" |
@@ -61,12 +62,14 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
             browser.el("input[name='email']").fill().withText(email)
             browser.el("form").submit()
 
-            browser.pageSource must contain(expected)
+            eventually {
+              browser.pageSource must contain(expected)
+            }
         }
     }
 
     "Use token with success" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = webDriver,
       app = applicationWithBrowser
     ) {
       val tokenService = app.injector.instanceOf[TokenService]
@@ -87,7 +90,7 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
     }
 
     "Use expired token without success" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = webDriver,
       app = applicationWithBrowser
     ) {
       val tokenService = app.injector.instanceOf[TokenService]
@@ -108,7 +111,7 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
     }
 
     "Use token without success" in new WithBrowser(
-      webDriver = WebDriverFactory(HTMLUNIT),
+      webDriver = webDriver,
       app = applicationWithBrowser
     ) {
       val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
@@ -123,5 +126,6 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
         )
       }
     }
+
   }
 }
