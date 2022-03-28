@@ -24,6 +24,8 @@ POST        /toutes-les-demandes/:applicationId/reopen                          
 GET         /toutes-les-demandes/:applicationId/fichiers/:fileId                             controllers.ApplicationController.applicationFile(applicationId: java.util.UUID, fileId: String)
 GET         /toutes-les-demandes/:applicationId/messages/:answerId/fichiers/:fileId          controllers.ApplicationController.answerFile(applicationId: java.util.UUID, answerId: java.util.UUID, fileId: String)
 
+GET         /demandes/metadonnees                                                            controllers.ApplicationController.applicationsAdmin
+
 
 # Mandat
 GET         /mandats/:id                                                                     controllers.MandatController.mandat(id: java.util.UUID)
@@ -101,8 +103,6 @@ POST        /newsletter                                                         
 GET         /territoires                                                                     controllers.AreaController.all
 GET         /territoires/deploiement                                                         controllers.AreaController.deploymentDashboard
 GET         /territoires/deploiement/france-service                                          controllers.AreaController.franceServiceDeploymentDashboard
-GET         /territoires/:areaId/demandes                                                    controllers.ApplicationController.all(areaId: java.util.UUID)
-GET         /territoires/:areaId/demandes.csv                                                controllers.ApplicationController.allCSV(areaId: java.util.UUID)
 GET         /territoires/:areaId/utilisateurs                                                controllers.UserController.all(areaId: java.util.UUID)
 GET         /territoires/:areaId/utilisateurs.csv                                            controllers.UserController.allCSV(areaId: java.util.UUID)
 
@@ -114,6 +114,7 @@ GET         /status                                                             
 GET         /api/deploiement/france-service                                                  controllers.ApiController.franceServiceDeployment
 GET         /api/deploiement/operateurs                                                      controllers.ApiController.deploymentData
 GET         /api/search                                                                      controllers.UserController.search
+GET         /api/applications/metadata                                                       controllers.ApplicationController.applicationsMetadata
 
 # Javascript resource
 GET         /jsRoutes                                                                        controllers.JavascriptController.javascriptRoutes

@@ -213,14 +213,29 @@ class ApplicationService @Inject() (
       }
     }
 
-  def allForUserIds(userIds: List[UUID]): Future[List[Application]] =
+  private def monthsFilter(numOfMonths: Option[Int]): String =
+    numOfMonths
+      .filter(_ >= 1)
+      .map(months =>
+        "AND creation_date >= date_trunc('month', now()) - " +
+          s"interval '$months month'"
+      )
+      .orEmpty
+
+  def allForUserIds(userIds: List[UUID], numOfMonths: Option[Int]): Future[List[Application]] =
     Future {
       db.withConnection { implicit connection =>
+        val additionalFilter = monthsFilter(numOfMonths)
         SQL(
           s"""SELECT $fieldsInSelect
               FROM application
-              WHERE ARRAY[{userIds}]::uuid[] @> ARRAY[creator_user_id]::uuid[]
-              OR ARRAY(select jsonb_object_keys(invited_users))::uuid[] && ARRAY[{userIds}]::uuid[]
+              WHERE
+                (
+                ARRAY[{userIds}]::uuid[] @> ARRAY[creator_user_id]::uuid[]
+                OR
+                ARRAY(select jsonb_object_keys(invited_users))::uuid[] && ARRAY[{userIds}]::uuid[]
+                )
+              $additionalFilter
               ORDER BY creation_date DESC"""
         ).on("userIds" -> userIds)
           .as(simpleApplication.*)
@@ -248,13 +263,7 @@ class ApplicationService @Inject() (
   def allForAreas(areaIds: List[UUID], numOfMonths: Option[Int]): Future[List[Application]] =
     Future {
       db.withConnection { implicit connection =>
-        val additionalFilter = numOfMonths
-          .filter(_ >= 1)
-          .map(months =>
-            "AND creation_date >= date_trunc('month', now()) - " +
-              s"interval '$months month'"
-          )
-          .orEmpty
+        val additionalFilter = monthsFilter(numOfMonths)
         SQL(s"""SELECT $fieldsInSelect
                 FROM application
                 WHERE ARRAY[{areaIds}]::uuid[] @> ARRAY[area]::uuid[]

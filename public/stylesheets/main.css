@@ -784,6 +784,10 @@ a {
     width: 100%;
 }
 
+.single--width-48px {
+    width: 48px;
+}
+
 .single--width-max-content {
     width: max-content;
 }
