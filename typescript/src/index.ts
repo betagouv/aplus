@@ -10,6 +10,9 @@ import 'ts-polyfill/lib/es2017-object';
 
 // This adds NodeList.forEach, etc.
 import 'core-js/web/dom-collections';
+// URLSearchParams
+import 'core-js/stable/url';
+import 'core-js/stable/url-search-params';
 // fetch
 import 'unfetch/polyfill';
 // String.prototype.normalize
@@ -22,6 +25,7 @@ import "./admin";
 import "./application";
 import "./applicationMandatFields";
 import "./applicationAttachment";
+import "./applicationsAdmin";
 //import "./autolinker";
 import "./changeArea";
 import "./domHelpers";

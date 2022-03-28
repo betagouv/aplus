@@ -34,7 +34,7 @@ object PathValidator {
       routes.AreaController.all,
       routes.AreaController.deploymentDashboard,
       routes.AreaController.franceServiceDeploymentDashboard,
-      routes.ApplicationController.all(placeholderUUID),
+      routes.ApplicationController.applicationsAdmin,
       routes.UserController.all(placeholderUUID),
     )
     val uuidRegex = "([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})"
