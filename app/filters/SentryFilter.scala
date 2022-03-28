@@ -20,8 +20,7 @@ class SentryFilter @Inject() (implicit val mat: Materializer, ec: ExecutionConte
   val queryParamsWhitelist = List(
     Keys.QueryParam.vue,
     Keys.QueryParam.uniquementFs,
-    Keys.QueryParam.numOfMonthsDisplayed,
-    Keys.QueryParam.filterIsOpen
+    Keys.QueryParam.numOfMonthsDisplayed
   )
 
   def apply(
