@@ -586,7 +586,7 @@ case class ApplicationController @Inject() (
       creationMinDate: LocalDate,
       creationMaxDate: LocalDate,
       rights: Authorization.UserRights
-  )(implicit webJarsUtil: WebJarsUtil): Future[Html] = {
+  ): Future[Html] = {
     val usersAndApplications: Future[(List[User], List[Application])] =
       (areaIds, organisationIds, groupIds) match {
         case (Nil, Nil, Nil) =>

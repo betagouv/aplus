@@ -1,7 +1,7 @@
 package views
 
 import cats.syntax.all._
-import controllers.routes.ApplicationController
+import controllers.routes.{ApplicationController, Assets}
 import helpers.forms.CSRFInput
 import java.util.UUID
 import models.{Answer, Application, Area, Authorization, FileMetadata, User, UserGroup}
@@ -9,7 +9,6 @@ import org.webjars.play.WebJarsUtil
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
 import serializers.Keys
-import views.helpers.common.webJarImg
 
 object application {
 
@@ -147,7 +146,7 @@ object application {
 
   def closeApplicationModal(
       applicationId: UUID
-  )(implicit webJarsUtil: WebJarsUtil, request: RequestHeader): Tag =
+  )(implicit request: RequestHeader): Tag =
     tag("dialog")(
       cls := "mdl-dialog",
       id := "dialog-terminate",
@@ -172,7 +171,11 @@ object application {
             ),
             label(
               `for` := "yes",
-              webJarImg("1f600.svg")(cls := "input__icon", "Oui"),
+              img(
+                cls := "input__icon",
+                src := Assets.versioned("images/twemoji/1f600.svg").url,
+                "Oui"
+              )
             ),
             input(
               id := "neutral",
@@ -183,7 +186,10 @@ object application {
             ),
             label(
               `for` := "neutral",
-              webJarImg("1f610.svg")(cls := "input__icon"),
+              img(
+                cls := "input__icon",
+                src := Assets.versioned("images/twemoji/1f610.svg").url
+              ),
               span(style := "width: 100%", "Je ne sais pas")
             ),
             input(
@@ -195,7 +201,11 @@ object application {
             ),
             label(
               `for` := "no",
-              webJarImg("1f61e.svg")(cls := "input__icon", "Non"),
+              img(
+                cls := "input__icon",
+                src := Assets.versioned("images/twemoji/1f61e.svg").url,
+                "Non"
+              ),
             )
           ),
           br,
