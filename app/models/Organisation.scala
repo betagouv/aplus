@@ -55,7 +55,7 @@ object Organisation {
 
   val association = Organisation("Association", "Association")
   val cafId = Organisation.Id("CAF")
-  val caf = Organisation(cafId, "CAF", "Caisse d’allocations familiale")
+  val caf = Organisation(cafId, "CAF", "Caisse d’allocations familiales")
   val cpamId = Organisation.Id("CPAM")
   val cpam = Organisation(cpamId, "CPAM", "Caisse primaire d'assurance maladie")
   val franceServicesId = Organisation.Id("MFS")
