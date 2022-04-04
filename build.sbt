@@ -120,7 +120,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "font-awesome" % "6.1.0",
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "5.7.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "5.7.1"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
