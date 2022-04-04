@@ -246,6 +246,18 @@ object Application {
   val USER_BIRTHDAY_KEY = "Date de naissance"
   val USER_SOCIAL_SECURITY_NUMBER_KEY = "Numéro de sécurité sociale"
   val USER_CAF_NUMBER_KEY = "Identifiant CAF"
+  val USER_ADDRESS_KEY = "Adresse postale"
+  val USER_PHONE_NUMBER_KEY = "Numéro de téléphone"
   val USER_APPLICATION_NUMBER_KEY = "Numéro de dossier"
-  val USER_BIRTHNAME_KEY = "Nom de Naissance"
+  val USER_BIRTHNAME_KEY = "Nom de naissance"
+
+  val optionalUserInfosKeys: List[String] = List(
+    USER_SOCIAL_SECURITY_NUMBER_KEY,
+    USER_CAF_NUMBER_KEY,
+    USER_ADDRESS_KEY,
+    USER_PHONE_NUMBER_KEY,
+    USER_APPLICATION_NUMBER_KEY,
+    USER_BIRTHNAME_KEY
+  )
+
 }
