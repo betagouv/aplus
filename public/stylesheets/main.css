@@ -403,11 +403,6 @@ html, body {
     color: black;
 }
 
-.tag--aidant {
-    background-color: greenyellow;
-    color: black;
-}
-
 .tag--disabled {
     background-color: #646464;
     color: white;
