@@ -77,7 +77,7 @@ class AutoAddExpertTask @Inject() (
             "ADD_EXPERT_CREATED",
             s"Les experts ont été automatiquement ajoutés ${answer.id} sur la demande ${application.id}",
             none,
-            application.some,
+            application.id.some,
             expert.id.some,
             Option.empty[Throwable]
           )
@@ -88,7 +88,7 @@ class AutoAddExpertTask @Inject() (
             "ANSWER_NOT_CREATED",
             s"Les experts n'ont pas pu être automatiquement ajoutés ${answer.id} sur la demande ${application.id} : problème BDD",
             none,
-            application.some,
+            application.id.some,
             expert.id.some,
             Option.empty[Throwable]
           )

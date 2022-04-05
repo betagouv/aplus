@@ -286,7 +286,7 @@ object Authorization {
       validCase1 || validCase2
     }
 
-  def answerFileCanBeShowed(filesExpirationInDays: Int)(
+  private def answerFileCanBeShowed(filesExpirationInDays: Int)(
       application: Application,
       answerId: UUID
   )(userId: UUID, rights: UserRights): Boolean =
@@ -312,7 +312,7 @@ object Authorization {
         validCase1 || validCase2
     }
 
-  def applicationFileCanBeShowed(filesExpirationInDays: Int)(
+  private def applicationFileCanBeShowed(filesExpirationInDays: Int)(
       application: Application
   )(userId: UUID, rights: UserRights): Boolean =
     Application.filesAvailabilityLeftInDays(filesExpirationInDays)(application).nonEmpty && not(
@@ -321,5 +321,16 @@ object Authorization {
       (isInstructor(rights) && application.invitedUsers.keys.toList.contains(userId)) ||
         (isHelper(rights) && userId === application.creatorUserId)
     )
+
+  def fileCanBeShowed(filesExpirationInDays: Int)(
+      metadata: FileMetadata.Attached,
+      application: Application,
+  )(userId: UUID, rights: UserRights): Boolean =
+    metadata match {
+      case FileMetadata.Attached.Application(_) =>
+        applicationFileCanBeShowed(filesExpirationInDays)(application)(userId, rights)
+      case FileMetadata.Attached.Answer(_, answerId) =>
+        answerFileCanBeShowed(filesExpirationInDays)(application, answerId)(userId, rights)
+    }
 
 }

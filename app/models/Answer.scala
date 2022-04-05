@@ -19,6 +19,7 @@ case class Answer(
     visibleByHelpers: Boolean,
     declareApplicationHasIrrelevant: Boolean,
     userInfos: Option[Map[String, String]],
+    // TODO: this is legacy and can be removed after removing old upload
     files: Option[Map[String, Long]] = Map.empty[String, Long].some,
     invitedGroupIds: List[UUID]
 ) extends AgeModel

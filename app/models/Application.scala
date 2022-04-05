@@ -31,6 +31,7 @@ case class Application(
     expertInvited: Boolean = false,
     hasSelectedSubject: Boolean = false,
     category: Option[String] = Option.empty[String],
+    // TODO: this is legacy and can be removed after removing old upload
     files: Map[String, Long] = Map.empty[String, Long],
     mandatType: Option[Application.MandatType],
     mandatDate: Option[String],

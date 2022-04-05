@@ -19,31 +19,17 @@ object application {
       currentUserRights: Authorization.UserRights,
       fileExpiryDayCount: Int,
   ): Frag = {
-    val isAuthorized = Authorization.applicationFileCanBeShowed(fileExpiryDayCount)(application)(
-      currentUser.id,
-      currentUserRights
-    )
     val daysRemaining = Application.filesAvailabilityLeftInDays(fileExpiryDayCount)(application)
     frag(
-      // Legacy
-      application.files.map { case (filename, _) =>
-        fileLink(
-          isAuthorized,
-          ApplicationController.applicationFile(application.id, filename).url,
-          filename,
-          daysRemaining,
-          application.creatorUserName,
-          "",
-          None
-        )
-      }.toList,
       files
         .filter(_.attached.isApplication)
         .map(file =>
           fileLink(
-            isAuthorized,
-            ApplicationController.applicationFile(application.id, file.id.toString).url,
-            file.filename,
+            Authorization.fileCanBeShowed(fileExpiryDayCount)(file.attached, application)(
+              currentUser.id,
+              currentUserRights
+            ),
+            file,
             daysRemaining,
             application.creatorUserName,
             "",
@@ -61,35 +47,17 @@ object application {
       currentUserRights: Authorization.UserRights,
       fileExpiryDayCount: Int
   ): Frag = {
-    val isAuthorized =
-      Authorization.answerFileCanBeShowed(fileExpiryDayCount)(application, answer.id)(
-        currentUser.id,
-        currentUserRights
-      )
     val daysRemaining = Answer.filesAvailabilityLeftInDays(fileExpiryDayCount)(answer)
     frag(
-      // Legacy
-      answer.files
-        .getOrElse(Map.empty)
-        .map { case (filename, _) =>
-          fileLink(
-            isAuthorized,
-            ApplicationController.answerFile(application.id, answer.id, filename).url,
-            filename,
-            daysRemaining,
-            answer.creatorUserName,
-            "mdl-cell mdl-cell--12-col typography--text-align-center",
-            None
-          )
-        }
-        .toList,
       files
         .filter(_.attached.answerIdOpt === answer.id.some)
         .map(file =>
           fileLink(
-            isAuthorized,
-            ApplicationController.answerFile(application.id, answer.id, file.id.toString).url,
-            file.filename,
+            Authorization.fileCanBeShowed(fileExpiryDayCount)(file.attached, application)(
+              currentUser.id,
+              currentUserRights
+            ),
+            file,
             daysRemaining,
             answer.creatorUserName,
             "mdl-cell mdl-cell--12-col typography--text-align-center",
@@ -101,8 +69,7 @@ object application {
 
   def fileLink(
       isAuthorized: Boolean,
-      fileUrl: String,
-      filename: String,
+      metadata: FileMetadata,
       daysRemaining: Option[Int],
       uploaderName: String,
       additionalClasses: String,
@@ -114,10 +81,10 @@ object application {
         if (status.isEmpty || status === Some(Available))
           frag(
             "le fichier ",
-            a(href := fileUrl, filename)
+            a(href := ApplicationController.file(metadata.id).url, metadata.filename)
           )
         else
-          s"le fichier $filename"
+          s"le fichier ${metadata.filename}"
       else
         "un fichier"
 

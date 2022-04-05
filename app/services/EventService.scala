@@ -9,7 +9,7 @@ import aplus.macros.Macros
 import cats.syntax.all._
 import helper.Time
 import javax.inject.Inject
-import models._
+import models.{Area, Event, EventType, User}
 import play.api.Logger
 import play.api.db.Database
 import play.api.mvc.Request
@@ -42,7 +42,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       event: EventType,
       descriptionSanitized: String,
       additionalUnsafeData: Option[String] = None,
-      application: Option[Application] = None,
+      applicationId: Option[UUID] = None,
       /** Not the logged-in `User`, but if the op is about some other `User`. */
       involvesUser: Option[UUID] = None,
       /** If the warn/error has an exception as cause. */
@@ -56,21 +56,21 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       //       request.path is supposed to be valid
       s"$descriptionSanitized. ${request.method} ${request.path}",
       additionalUnsafeData,
-      application,
+      applicationId,
       involvesUser,
       underlyingException
     )
 
   def logError(
       error: models.Error,
-      application: Option[Application] = None,
+      applicationId: Option[UUID] = None,
       involvesUser: Option[UUID] = None
   )(implicit request: RequestWithUserData[_]) =
     log(
       event = error.eventType,
       descriptionSanitized = error.description,
       additionalUnsafeData = error.unsafeData,
-      application = application,
+      applicationId = applicationId,
       involvesUser = involvesUser,
       underlyingException = error.underlyingException
     )
@@ -78,14 +78,14 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
   /** Logs an `Error` when no user is authenticated. */
   def logErrorNoUser(
       error: models.Error,
-      application: Option[Application] = None,
+      applicationId: Option[UUID] = None,
       involvesUser: Option[UUID] = None
   )(implicit request: Request[_]) =
     logSystem(
       event = error.eventType,
       descriptionSanitized = error.description,
       additionalUnsafeData = error.unsafeData,
-      application = application,
+      applicationId = applicationId,
       involvesUser = involvesUser,
       underlyingException = error.underlyingException
     )
@@ -99,7 +99,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       event: EventType,
       descriptionSanitized: String,
       additionalUnsafeData: Option[String] = None,
-      application: Option[Application] = None,
+      applicationId: Option[UUID] = None,
       involvesUser: Option[UUID] = None,
       underlyingException: Option[Throwable] = None
   )(implicit request: Request[_]): Unit =
@@ -109,7 +109,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       event.code,
       s"$descriptionSanitized. ${request.method} ${request.path}",
       additionalUnsafeData,
-      application = application,
+      applicationId = applicationId,
       involvesUser = involvesUser,
       underlyingException = underlyingException
     )
@@ -117,13 +117,13 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
   /** Internal errors without requests: jobs, etc. */
   def logErrorNoRequest(
       error: models.Error,
-      application: Option[Application] = None,
+      applicationId: Option[UUID] = None,
       involvesUser: Option[UUID] = None
   ) = logNoRequest(
     error.eventType,
     error.description,
     error.unsafeData,
-    application = application,
+    applicationId = applicationId,
     involvesUser = involvesUser,
     underlyingException = error.underlyingException
   )
@@ -133,7 +133,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       event: EventType,
       descriptionSanitized: String,
       additionalUnsafeData: Option[String] = None,
-      application: Option[Application] = None,
+      applicationId: Option[UUID] = None,
       involvesUser: Option[UUID] = None,
       underlyingException: Option[Throwable] = None
   ) =
@@ -143,7 +143,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       event.code,
       descriptionSanitized,
       additionalUnsafeData,
-      application,
+      applicationId,
       involvesUser,
       underlyingException
     )
@@ -154,7 +154,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       code: String,
       descriptionSanitized: String,
       additionalUnsafeData: Option[String],
-      application: Option[Application],
+      applicationId: Option[UUID],
       involvesUser: Option[UUID],
       underlyingException: Option[Throwable]
   ): Unit = {
@@ -172,7 +172,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       Instant.now(),
       dbDescription,
       Area.notApplicable.id,
-      application.map(_.id),
+      applicationId,
       involvesUser,
       remoteAddress
     )
