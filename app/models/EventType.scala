@@ -51,8 +51,6 @@ object EventType {
   object AllUserCsvShowed extends Info
   object AllUserIncorrectSetup extends Info
   object AllUserUnauthorized extends Warn
-  object AnswerCreated extends Info
-  object AnswerNotCreated extends Error
   object ApplicationCreated extends Info
   object ApplicationCreationError extends Error
   object ApplicationCreationUnauthorized extends Warn
@@ -132,6 +130,11 @@ object EventType {
   object UsersShowed extends Info
   object ViewUserUnauthorized extends Warn
   object WeeklyEmailsSent extends Info
+
+  // Applications
+  object AnswerCreated extends Info
+  object AnswerFormError extends Warn
+  object AnswerCreationError extends Error
 
   object ApplicationCreationInvalid extends Info
   object CSVImportFormError extends Warn

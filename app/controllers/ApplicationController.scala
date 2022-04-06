@@ -1166,7 +1166,11 @@ case class ApplicationController @Inject() (
                 s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.format).mkString(", ")})."
               val error =
                 s"Erreur dans le formulaire de réponse (${formErrorsLog(formWithErrors)})"
-              eventService.log(AnswerNotCreated, error, applicationId = application.id.some)
+              eventService.log(
+                EventType.AnswerFormError,
+                error,
+                applicationId = application.id.some
+              )
               Future(
                 Redirect(
                   routes.ApplicationController.show(applicationId).withFragment("answer-error")
@@ -1233,7 +1237,7 @@ case class ApplicationController @Inject() (
                 )
               } else {
                 eventService.log(
-                  AnswerNotCreated,
+                  EventType.AnswerCreationError,
                   s"La réponse ${answer.id} n'a pas été créée sur la demande $applicationId : problème BDD",
                   applicationId = application.id.some
                 )

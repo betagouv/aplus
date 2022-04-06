@@ -95,17 +95,17 @@ object myApplications {
         cls := "overlay-foreground single--pointer-events-none",
         span(
           cls := "application__name single--pointer-events-all",
-          application.userInfos.get(Application.USER_LAST_NAME_KEY),
+          application.userInfos.get(Application.UserLastNameKey),
           " ",
-          application.userInfos.get(Application.USER_FIRST_NAME_KEY)
+          application.userInfos.get(Application.UserFirstNameKey)
         ),
         i(
           cls := "single--pointer-events-all",
           application.userInfos
-            .get(Application.USER_CAF_NUMBER_KEY)
+            .get(Application.UserCafNumberKey)
             .map(caf => s" (Num. CAF: $caf)"),
           application.userInfos
-            .get(Application.USER_SOCIAL_SECURITY_NUMBER_KEY)
+            .get(Application.UserSocialSecurityNumberKey)
             .map(nir => s" (NIR: $nir)")
         ),
         br,
