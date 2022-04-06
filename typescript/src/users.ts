@@ -110,8 +110,19 @@ if (window.document.getElementById(usersTableId)) {
 
   const usersColumns: Array<Tabulator.ColumnDefinition> = [
     { title: "", formatter: editIcon, width: 40, frozen: true },
-    { title: "Email", field: "email", headerFilter: "input" },
-    { title: "Groupes", field: "groupNames", formatter: groupsFormatter, headerFilter: "input" },
+    {
+      title: "Email",
+      field: "email",
+      headerFilter: "input",
+      maxWidth: 300,
+    },
+    {
+      title: "Groupes",
+      field: "groupNames",
+      formatter: groupsFormatter,
+      headerFilter: "input",
+      maxWidth: 400,
+    },
     { title: "Nom Complet", field: "completeName", headerFilter: "input", formatter: "html" },
     { title: "BALs", field: "groupEmails", headerFilter: "input" },
     { title: "Qualité", field: "qualite", headerFilter: "input" },
