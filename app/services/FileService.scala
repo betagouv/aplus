@@ -83,12 +83,8 @@ class FileService @Inject() (
     result.map(_.map { case (_, metadata) => metadata }).value
   }
 
-  def fileMetadata(filename: String): Future[Either[Error, Option[(Path, FileMetadata)]]] =
-    Try(UUID.fromString(filename)).toOption match {
-      case None => Future.successful(none.asRight)
-      case Some(fileId) =>
-        byId(fileId).map(_.map(_.map(metadata => (Paths.get(s"$filesPath/$fileId"), metadata))))
-    }
+  def fileMetadata(fileId: UUID): Future[Either[Error, Option[(Path, FileMetadata)]]] =
+    byId(fileId).map(_.map(_.map(metadata => (Paths.get(s"$filesPath/$fileId"), metadata))))
 
   // TODO: remove that once saving names in DB is known to be working
   //       this piece of code is here just in case we need reverting
