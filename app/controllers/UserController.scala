@@ -349,50 +349,76 @@ case class UserController @Inject() (
         .flatMap(UUIDHelper.fromString)
         .flatMap(Area.fromId)
         .filter(_.id =!= Area.allArea.id)
-      val (usersT, groupsT) =
-        request.getQueryString(Keys.QueryParam.searchQuery).map(_.trim).filter(_.nonEmpty) match {
+      val limit = 1000
+      val groupsOnly: Boolean =
+        request
+          .getQueryString(Keys.QueryParam.searchGroupsOnly)
+          .map(_.trim)
+          .filter(_.nonEmpty) === Some("true")
+      val searchQuery =
+        request.getQueryString(Keys.QueryParam.searchQuery).map(_.trim).filter(_.nonEmpty)
+      val (
+        usersT: EitherT[Future, Error, List[UserInfos]],
+        groupsT: EitherT[Future, Error, List[UserGroupInfos]]
+      ) =
+        searchQuery match {
           case None =>
-            val usersWithGroups = area.fold(usersInAllAreas)(area => usersInArea(area))
-            val users = usersWithGroups.map(toUserInfos).map(_.asRight[Error])
-            val groups = usersWithGroups.map { case (_, groups) =>
-              groups.map(UserGroupInfos.fromUserGroup).asRight[Error]
+            if (groupsOnly) {
+              val groups = area
+                .fold(groupsInAllAreas)(area => groupsInArea(area))
+                .map(_.map(UserGroupInfos.fromUserGroup).asRight[Error])
+              eventService.log(EventType.SearchUsersDone, s"Liste les groupes")
+              (EitherT.rightT[Future, Error](List.empty[UserInfos]), EitherT(groups))
+            } else {
+              val usersWithGroups = area.fold(usersInAllAreas)(area => usersInArea(area))
+              val users = usersWithGroups.map(toUserInfos).map(_.asRight[Error])
+              val groups = usersWithGroups.map { case (_, groups) =>
+                groups.map(UserGroupInfos.fromUserGroup).asRight[Error]
+              }
+              eventService.log(EventType.SearchUsersDone, s"Liste les utilisateurs")
+              (EitherT(users), EitherT(groups))
             }
-            eventService.log(EventType.SearchUsersDone, s"Liste les utilisateurs")
-            (EitherT(users), EitherT(groups))
           case Some(queryString) =>
-            val users = EitherT(
-              userService
-                .search(queryString, 1000)
-                .flatMap(
-                  _.fold(
-                    e => Future(e.asLeft),
-                    users => {
-                      val groupIds = users.flatMap(_.groupIds).toSet
-                      groupService
-                        .byIdsFuture(groupIds.toList)
-                        .map(groups =>
-                          area.fold((users, groups)) { area =>
-                            val filteredGroups = groups.filter(_.areaIds.contains[UUID](area.id))
-                            val groupIds = filteredGroups.map(_.id).toSet
-                            val filteredUsers =
-                              users.filter(_.groupIds.toSet.intersect(groupIds).nonEmpty)
-                            (filteredUsers, filteredGroups)
-                          }
-                        )
-                        .map(toUserInfos)
-                        .map(_.asRight)
-                    }
-                  )
-                )
-            )
-            val groups = EitherT(groupService.search(queryString, 1000)).map(groups =>
+            val groups = EitherT(groupService.search(queryString, limit)).map(groups =>
               area
                 .fold(groups)(area => groups.filter(_.areaIds.contains[UUID](area.id)))
                 .map(UserGroupInfos.fromUserGroup)
             )
+            val users =
+              if (groupsOnly)
+                EitherT.rightT[Future, Error](List.empty[UserInfos])
+              else
+                EitherT(
+                  userService
+                    .search(queryString, limit)
+                    .flatMap(
+                      _.fold(
+                        e => Future(e.asLeft),
+                        users => {
+                          val groupIds = users.flatMap(_.groupIds).toSet
+                          groupService
+                            .byIdsFuture(groupIds.toList)
+                            .map(groups =>
+                              area.fold((users, groups)) { area =>
+                                val filteredGroups =
+                                  groups.filter(_.areaIds.contains[UUID](area.id))
+                                val groupIds = filteredGroups.map(_.id).toSet
+                                val filteredUsers =
+                                  users.filter(_.groupIds.toSet.intersect(groupIds).nonEmpty)
+                                (filteredUsers, filteredGroups)
+                              }
+                            )
+                            .map(toUserInfos)
+                            .map(_.asRight)
+                        }
+                      )
+                    )
+                )
             eventService.log(
               EventType.SearchUsersDone,
-              "Recherche des utilisateurs",
+              "Recherche des " +
+                (if (groupsOnly) "groupes" else "utilisateurs") +
+                s" [limite $limit]",
               s"Recherche '$queryString'".some
             )
             (users, groups)

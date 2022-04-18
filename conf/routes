@@ -103,6 +103,7 @@ POST        /newsletter                                                         
 GET         /territoires                                                                     controllers.AreaController.all
 GET         /territoires/deploiement                                                         controllers.AreaController.deploymentDashboard
 GET         /territoires/deploiement/france-service                                          controllers.AreaController.franceServiceDeploymentDashboard
+GET         /territoires/deploiement/france-services                                         controllers.AreaController.franceServices
 GET         /territoires/:areaId/utilisateurs                                                controllers.UserController.all(areaId: java.util.UUID)
 GET         /territoires/:areaId/utilisateurs.csv                                            controllers.UserController.allCSV(areaId: java.util.UUID)
 
@@ -112,6 +113,10 @@ GET         /status                                                             
 # API
 
 GET         /api/deploiement/france-service                                                  controllers.ApiController.franceServiceDeployment
+GET         /api/deploiement/france-services                                                 controllers.ApiController.franceServices
+POST        /api/deploiement/france-services/add                                             controllers.ApiController.addFranceServices
+POST        /api/deploiement/france-services/update                                          controllers.ApiController.updateFranceService
+POST        /api/deploiement/france-services/:matricule/delete                               controllers.ApiController.deleteFranceService(matricule: Int)
 GET         /api/deploiement/operateurs                                                      controllers.ApiController.deploymentData
 GET         /api/search                                                                      controllers.UserController.search
 GET         /api/applications/metadata                                                       controllers.ApplicationController.applicationsMetadata

@@ -29,6 +29,13 @@ object Error {
   case class EntityNotFound(eventType: EventType, description: String, unsafeData: Option[String])
       extends Error
 
+  // Invalid data from user, ...
+  case class RequirementFailed(
+      eventType: EventType,
+      description: String,
+      unsafeData: Option[String]
+  ) extends Error
+
   case class Database(eventType: EventType, description: String, unsafeData: Option[String])
       extends Error
 

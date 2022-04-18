@@ -8,17 +8,18 @@ import aplus.macros.Macros
 import cats.syntax.all._
 import helper.{StringHelper, Time, UUIDHelper}
 import javax.inject.Inject
-import models.{Error, EventType, Organisation, UserGroup}
+import models.{Error, EventType, FranceService, Organisation, UserGroup}
 import org.postgresql.util.PSQLException
+import play.api.Configuration
 import play.api.db.Database
 import scala.concurrent.Future
 import scala.util.Try
 
 @javax.inject.Singleton
 class UserGroupService @Inject() (
-    configuration: play.api.Configuration,
-    db: Database,
-    dependencies: ServicesDependencies
+    configuration: Configuration,
+    val db: Database,
+    val dependencies: ServicesDependencies
 ) {
 
   import dependencies.databaseExecutionContext
@@ -225,6 +226,227 @@ class UserGroupService @Inject() (
             s"Recherche '$searchQuery'".some
           )
         )
+    )
+
+  private val (fsParser, fsTableFields) = Macros.parserWithFields[FranceService](
+    "group_id",
+    "matricule",
+  )
+
+  private val fsFieldsInSelect: String = fsTableFields.mkString(", ")
+
+  def franceServices: Future[Either[Error, List[(Option[FranceService], Option[UserGroup])]]] =
+    Future(
+      Try(
+        db.withConnection { implicit connection =>
+          val fields = fsFieldsInSelect + "," + fieldsInSelect
+          SQL(s"""SELECT $fields
+                FROM france_service
+                LEFT JOIN user_group
+                  ON user_group.id = france_service.group_id
+                UNION
+                SELECT
+                  null as matricule,
+                  null as group_id,
+                  $fieldsInSelect
+                FROM user_group
+                WHERE user_group.id NOT IN (
+                  SELECT group_id FROM france_service
+                )
+                AND organisation = 'MFS'
+             """).as((fsParser.? ~ simpleUserGroup.?).map(SqlParser.flatten).*)
+        }
+      ).toEither.left
+        .map(e =>
+          Error.SqlException(
+            EventType.FSMatriculeError,
+            "Impossible de lister les matricules des France Services",
+            e,
+            none
+          )
+        )
+    )
+
+  def addFSMatricule(groupId: UUID, matricule: Int): Future[Either[Error, Unit]] =
+    Future(
+      Try(
+        db.withConnection { implicit connection =>
+          val existing =
+            SQL"""SELECT *
+                  FROM france_service
+                  WHERE matricule = $matricule
+               """.as(fsParser.*)
+          existing match {
+            case Nil =>
+              val numRows =
+                SQL"""INSERT INTO france_service (group_id, matricule)
+                      VALUES ($groupId::uuid, $matricule)
+                   """.executeUpdate()
+              assert(numRows === 1)
+              ().asRight
+            case matricules =>
+              Error
+                .RequirementFailed(
+                  EventType.FSMatriculeInvalidData,
+                  s"Impossible d'assigner le matricule $matricule au groupe $groupId : " +
+                    s"matricule déjà assigné au groupe " + matricules.map(_.groupId).mkString(", "),
+                  none
+                )
+                .asLeft
+          }
+        }
+      ).toEither.left
+        .map(e =>
+          Error.SqlException(
+            EventType.FSMatriculeError,
+            s"Impossible d'ajouter le matricule '$matricule' au groupe $groupId" +
+              " : erreur de base de donnée",
+            e,
+            none
+          )
+        )
+        .flatten
+    )
+
+  /** Updates the matricule of a group */
+  def updateFSMatricule(groupId: UUID, newMatricule: Int): Future[Either[Error, Unit]] =
+    Future(
+      Try(
+        db.withConnection { implicit connection =>
+          val existing =
+            SQL"""SELECT *
+                  FROM france_service
+                  WHERE matricule = $newMatricule
+               """.as(fsParser.*)
+          existing match {
+            case Nil =>
+              val existingMatricule =
+                SQL"""SELECT *
+                      FROM france_service
+                      WHERE group_id = $groupId::uuid
+                   """.as(fsParser.*)
+              existingMatricule match {
+                case Nil =>
+                  val numRows =
+                    SQL"""INSERT INTO france_service (group_id, matricule)
+                          VALUES ($groupId::uuid, $newMatricule)
+                       """.executeUpdate()
+                  assert(numRows === 1)
+                case _ =>
+                  val numRows =
+                    SQL"""UPDATE france_service
+                          SET matricule = $newMatricule
+                          WHERE group_id = $groupId::uuid
+                       """.executeUpdate()
+                  assert(
+                    numRows <= 1,
+                    s"$numRows mises à jour pour le nouveau matricule '$newMatricule' groupe $groupId"
+                  )
+              }
+              ().asRight
+            case matricules =>
+              Error
+                .RequirementFailed(
+                  EventType.FSMatriculeInvalidData,
+                  s"Impossible d'assigner le nouveau matricule '$newMatricule' au groupe $groupId : " +
+                    "le matricule est déjà assigné au groupe " +
+                    matricules.map(_.groupId).mkString(", "),
+                  none
+                )
+                .asLeft
+          }
+        }
+      ).toEither.left
+        .map(e =>
+          Error.SqlException(
+            EventType.FSMatriculeError,
+            s"Impossible de mettre à jour le matricule du groupe $groupId " +
+              s"(nouveau matricule '$newMatricule') : erreur de base de donnée",
+            e,
+            none
+          )
+        )
+        .flatten
+    )
+
+  /** Updates the group with a certain matricule */
+  def updateFSGroup(matricule: Int, newGroupId: UUID): Future[Either[Error, Unit]] =
+    Future(
+      Try(
+        db.withConnection { implicit connection =>
+          val existing =
+            SQL"""SELECT *
+                  FROM france_service
+                  WHERE matricule = $matricule
+               """.as(fsParser.*)
+          existing match {
+            case Nil =>
+              val numRows =
+                SQL"""INSERT INTO france_service (group_id, matricule)
+                      VALUES ($newGroupId::uuid, $matricule)
+                   """.executeUpdate()
+              assert(numRows === 1)
+              ().asRight
+            case _ =>
+              val numRows =
+                SQL"""UPDATE france_service
+                      SET group_id = $newGroupId::uuid
+                      WHERE matricule = $matricule
+                   """.executeUpdate()
+              assert(
+                numRows <= 1,
+                s"$numRows mises à jour pour le matricule '$matricule' nouveau groupe $newGroupId"
+              )
+              ().asRight
+          }
+        }
+      ).toEither.left
+        .map(e =>
+          Error.SqlException(
+            EventType.FSMatriculeError,
+            s"Impossible de mettre à jour le groupe du matricule $matricule " +
+              s"(nouveau groupe '$newGroupId') : erreur de base de donnée",
+            e,
+            none
+          )
+        )
+        .flatten
+    )
+
+  def deleteFSMatricule(matricule: Int): Future[Either[Error, Unit]] =
+    Future(
+      Try(
+        db.withConnection { implicit connection =>
+          val existing =
+            SQL"""SELECT *
+                  FROM france_service
+                  WHERE matricule = $matricule
+               """.as(fsParser.*)
+          existing match {
+            case Nil =>
+              Error
+                .RequirementFailed(
+                  EventType.FSMatriculeInvalidData,
+                  s"Matricule '$matricule' n'existe pas",
+                  none
+                )
+                .asLeft
+            case _ =>
+              SQL"""DELETE FROM france_service WHERE matricule = $matricule""".executeUpdate()
+              ().asRight
+          }
+        }
+      ).toEither.left
+        .map(e =>
+          Error.SqlException(
+            EventType.FSMatriculeError,
+            s"Impossible de supprimer le matricule '$matricule'" +
+              " : erreur de base de donnée",
+            e,
+            none
+          )
+        )
+        .flatten
     )
 
 }

@@ -33,6 +33,7 @@ import "./editGroup";
 import "./editMyGroups";
 import "./editUser";
 import "./formExitAlert";
+import "./franceServices";
 import "./magicLinkAntiConsumption";
 import "./mdl-extensions";
 import "./myApplications";
