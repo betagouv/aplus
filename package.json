@@ -23,7 +23,7 @@
     "@babel/core": "7.17.9",
     "@babel/preset-env": "7.16.11",
     "@types/tabulator-tables": "5.1.1",
-    "babel-loader": "8.2.4",
+    "babel-loader": "8.2.5",
     "copy-webpack-plugin": "10.2.4",
     "css-loader": "6.7.1",
     "mini-css-extract-plugin": "2.6.0",
