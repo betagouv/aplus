@@ -161,7 +161,7 @@ if (window.document.getElementById(tableId)) {
       }
       const bodyData: NewMatricules = {
         'matricules': newMatricules,
-      }
+      };
       fetch(
         jsRoutes.controllers.ApiController.addFranceServices().url,
         {
@@ -245,7 +245,7 @@ if (window.document.getElementById(tableId)) {
         .catch((_e) => {
           printAlerts(alerts, [], ['Une erreur est survenue dans la mise à jour']);
           onFailure();
-        })
+        });
     }
   }).catch((_e) => {
     printAlerts(
@@ -390,7 +390,6 @@ if (window.document.getElementById(tableId)) {
       const group = groupList.find((g) => g.id === groupId);
       if (group) {
         cell.getRow().update({ 'name': group.name });
-        console.log(group);
       }
     };
 
