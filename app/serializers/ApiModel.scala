@@ -21,6 +21,12 @@ object ApiModel {
     implicit val organisationFormat = Json.format[Organisation]
   }
 
+  case class ApiError(message: String)
+
+  object ApiError {
+    implicit val apiErrorWrites = Json.writes[ApiError]
+  }
+
   // API model for the admin deploiement
   case class FranceServiceInstanceLine(
       nomFranceService: String,
@@ -35,6 +41,58 @@ object ApiModel {
   )
 
   implicit val franceServiceInstanceLineFormat = Json.format[FranceServiceInstanceLine]
+
+  case class FranceServices(franceServices: List[FranceServices.Line])
+
+  object FranceServices {
+
+    case class Line(
+        matricule: Option[Int],
+        groupId: UUID,
+        name: Option[String],
+        description: Option[String],
+        areas: String,
+        organisation: Option[String],
+        email: Option[String],
+        publicNote: Option[String],
+    )
+
+    case class NewMatricule(
+        matricule: Option[Int],
+        groupId: Option[UUID]
+    )
+
+    case class NewMatricules(
+        matricules: List[NewMatricule],
+    )
+
+    case class MatriculeUpdate(matricule: Int, groupId: UUID)
+    case class GroupUpdate(matricule: Int, groupId: UUID)
+
+    case class Update(
+        matriculeUpdate: Option[MatriculeUpdate],
+        groupUpdate: Option[GroupUpdate],
+    )
+
+    case class InsertResult(matricule: Option[Int], groupId: Option[UUID], error: Option[String])
+    case class InsertsResult(inserts: List[InsertResult])
+
+    object NewMatricules {
+      implicit val franceServicesNewMatriculeReads = Json.reads[NewMatricule]
+      implicit val franceServicesNewMatriculesReads = Json.reads[NewMatricules]
+    }
+
+    object Update {
+      implicit val franceServicesMatriculeUpdateReads = Json.reads[MatriculeUpdate]
+      implicit val franceServicesGroupUpdateReads = Json.reads[GroupUpdate]
+      implicit val franceServicesUpdateReads = Json.reads[Update]
+    }
+
+    implicit val franceServicesLineWrites = Json.writes[FranceServices.Line]
+    implicit val franceServicesWrites = Json.writes[FranceServices]
+    implicit val franceServicesInsertResult = Json.writes[InsertResult]
+    implicit val franceServicesInsertsResult = Json.writes[InsertsResult]
+  }
 
   object DeploymentData {
     import implicits.organisationFormat
