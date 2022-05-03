@@ -97,9 +97,9 @@ if (window.document.getElementById(tableId)) {
 
       alertsEl.innerHTML = '<div class="mdl-cell mdl-cell--12-col">' +
         errorMessagesHtml + successMessagesHtml +
-        '</div>'
+        '</div>';
     }
-  }
+  };
 
   //
   // Callbacks
@@ -194,7 +194,7 @@ if (window.document.getElementById(tableId)) {
                 } else {
                   const groupLink = '<a href="' +
                     jsRoutes.controllers.GroupController.editGroup(insert.groupId).url +
-                    '">' + insert.groupId + '</a>'
+                    '">' + insert.groupId + '</a>';
                   successMessages.push(`Ajout du matricule ${ insert.matricule } au groupe ${ groupLink }`);
                   const groupId = insert.groupId;
                   if (groupId) {
@@ -214,7 +214,7 @@ if (window.document.getElementById(tableId)) {
         printAlerts(addAlerts, successMessages, errorMessages);
 
         table?.setData(ajaxUrl);
-      })
+      });
     });
   }
 

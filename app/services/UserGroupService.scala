@@ -272,10 +272,12 @@ class UserGroupService @Inject() (
       Try(
         db.withConnection { implicit connection =>
           val existing =
-            SQL"""SELECT *
-                  FROM france_service
-                  WHERE matricule = $matricule
-               """.as(fsParser.*)
+            SQL(s"""SELECT $fsFieldsInSelect
+                    FROM france_service
+                    WHERE matricule = {matricule}
+                 """)
+              .on("matricule" -> matricule)
+              .as(fsParser.*)
           existing match {
             case Nil =>
               val numRows =
@@ -314,17 +316,21 @@ class UserGroupService @Inject() (
       Try(
         db.withConnection { implicit connection =>
           val existing =
-            SQL"""SELECT *
-                  FROM france_service
-                  WHERE matricule = $newMatricule
-               """.as(fsParser.*)
+            SQL(s"""SELECT $fsFieldsInSelect
+                    FROM france_service
+                    WHERE matricule = {matricule}
+                 """)
+              .on("matricule" -> newMatricule)
+              .as(fsParser.*)
           existing match {
             case Nil =>
               val existingMatricule =
-                SQL"""SELECT *
-                      FROM france_service
-                      WHERE group_id = $groupId::uuid
-                   """.as(fsParser.*)
+                SQL(s"""SELECT $fsFieldsInSelect
+                        FROM france_service
+                        WHERE group_id = {groupId}::uuid
+                     """)
+                  .on("groupId" -> groupId)
+                  .as(fsParser.*)
               existingMatricule match {
                 case Nil =>
                   val numRows =
@@ -375,10 +381,12 @@ class UserGroupService @Inject() (
       Try(
         db.withConnection { implicit connection =>
           val existing =
-            SQL"""SELECT *
-                  FROM france_service
-                  WHERE matricule = $matricule
-               """.as(fsParser.*)
+            SQL(s"""SELECT $fsFieldsInSelect
+                    FROM france_service
+                    WHERE matricule = {matricule}
+                 """)
+              .on("matricule" -> matricule)
+              .as(fsParser.*)
           existing match {
             case Nil =>
               val numRows =
@@ -418,10 +426,12 @@ class UserGroupService @Inject() (
       Try(
         db.withConnection { implicit connection =>
           val existing =
-            SQL"""SELECT *
-                  FROM france_service
-                  WHERE matricule = $matricule
-               """.as(fsParser.*)
+            SQL(s"""SELECT $fsFieldsInSelect
+                    FROM france_service
+                    WHERE matricule = {matricule}
+                 """)
+              .on("matricule" -> matricule)
+              .as(fsParser.*)
           existing match {
             case Nil =>
               Error
