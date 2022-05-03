@@ -289,7 +289,7 @@ if (window.document.getElementById(tableId)) {
         .catch((_e) => {
           printAlerts(alerts, [], ['Impossible de supprimer la ligne']);
           onFailure();
-        })
+        });
     }
   }).catch((_e) => {
     printAlerts(
@@ -378,7 +378,7 @@ if (window.document.getElementById(tableId)) {
         return {
           label: group.name,
           value: group.id
-        }
+        };
       });
       groupList = groups;
       return options;
