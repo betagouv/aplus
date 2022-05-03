@@ -59,6 +59,7 @@ object Keys {
     val date: String = "date"
     val searchQuery: String = "q"
     val searchAreaId: String = "areaId"
+    val searchGroupsOnly: String = "groupsOnly"
 
     // Groups
 

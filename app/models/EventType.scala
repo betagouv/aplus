@@ -194,4 +194,10 @@ object EventType {
   object FilesDeletion extends Info
   object FileDeletionError extends Error
 
+  // Matricules
+  object FSApiAccessUnauthorized extends Warn
+  object FSMatriculeInvalidData extends Warn
+  object FSMatriculeError extends Error
+  object FSMatriculeChanged extends Info
+
 }

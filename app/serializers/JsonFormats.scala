@@ -89,7 +89,8 @@ object JsonFormats {
             )
           )
         )
-      case _: Error.EntityNotFound | _: Error.Authorization | _: Error.Authentication =>
+      case _: Error.EntityNotFound | _: Error.Authorization | _: Error.Authentication |
+          _: Error.RequirementFailed =>
         InternalServerError(
           Json.obj(
             "message" -> JsString(

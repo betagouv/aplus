@@ -182,7 +182,7 @@ case class MandatController @Inject() (
           error => {
             eventService.logError(error)
             error match {
-              case _: Error.EntityNotFound =>
+              case _: Error.EntityNotFound | _: Error.RequirementFailed =>
                 NotFound("Nous n'avons pas trouvé ce mandat.")
               case _: Error.Authorization | _: Error.Authentication =>
                 Unauthorized(
