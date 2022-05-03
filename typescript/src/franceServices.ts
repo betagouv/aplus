@@ -384,6 +384,16 @@ if (window.document.getElementById(tableId)) {
       return options;
     });
 
+  const addTableGroupColEdited: Tabulator.CellEditEventCallback =
+    (cell) => {
+      const groupId = cell.getValue();
+      const group = groupList.find((g) => g.id === groupId);
+      if (group) {
+        cell.getRow().update({ 'name': group.name });
+        console.log(group);
+      }
+    };
+
   const groupColBase: Tabulator.ColumnDefinition = {
     title: 'Groupe',
     field: 'groupId',
@@ -410,7 +420,7 @@ if (window.document.getElementById(tableId)) {
     title: 'Nom',
     field: 'name',
     headerFilter: 'input',
-    maxWidth: 300,
+    width: 300,
   };
 
   const descriptionCol: Tabulator.ColumnDefinition = {
@@ -493,7 +503,8 @@ if (window.document.getElementById(tableId)) {
     },
     columns: [
       Object.assign({}, matriculeColBase),
-      groupCol,
+      Object.assign({ cellEdited: addTableGroupColEdited }, groupCol),
+      nameCol,
       Object.assign(
         { cellClick: addTableDeleteColCellClick, formatter: addTableDeleteColCellFormatter },
         deleteColBase
