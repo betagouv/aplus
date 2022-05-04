@@ -66,7 +66,23 @@ object franceServices {
             " Ajouter un CSV"
           )
         ),
-        div(cls := "mdl-cell mdl-cell--6-col"),
+        div(
+          cls := "mdl-cell mdl-cell--3-col",
+          a(
+            id := "add-france-services-download-csv",
+            href := "#",
+            i(cls := "fas fa-download"),
+            " Télécharger en CSV"
+          )
+        ),
+        div(
+          cls := "mdl-cell mdl-cell--3-col",
+          a(
+            id := "add-france-services-dedup",
+            href := "#",
+            "Déduplication"
+          )
+        ),
         div(id := "france-services-add-alerts", cls := "mdl-cell mdl-cell--12-col"),
         div(
           cls := "mdl-cell mdl-cell--3-col",
