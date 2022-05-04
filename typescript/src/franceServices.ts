@@ -151,7 +151,7 @@ if (window.document.getElementById(tableId)) {
               'groupId': row.groupId?.toString(),
               'name': row.name?.toString(),
             };
-            if (row.groupId != null && row.groupId != '') {
+            if (row.groupId != null && row.groupId !== '') {
               const group = groupList.find((g) => g.id === row.groupId);
               newRow.name = group?.name;
             }
