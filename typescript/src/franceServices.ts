@@ -10,6 +10,8 @@ const alertsId = 'france-services-alerts';
 const addTableId = 'tabulator-france-services-add-table';
 const addLineBtnId = 'add-france-services-new-line';
 const addCsvBtnId = 'add-france-services-csv';
+const addDownloadCsvBtnId = 'add-france-services-download-csv';
+const addDedupBtnId = 'add-france-services-dedup';
 const addUploadBtnId = 'add-france-services-upload';
 const addAlertsId = 'france-services-add-alerts';
 
@@ -83,7 +85,7 @@ if (window.document.getElementById(tableId)) {
       if (successMessages.length > 0) {
         successMessagesHtml =
           '<div class="notification notification--success single--flex-wrap-wrap">' +
-          successMessages.map((m) => '<div class="single--width-100pc">' + m + '</div>').join("") +
+          successMessages.map((m) => '<div class="single--width-100pc">' + m + '</div>').join('') +
           '</div>';
       }
 
@@ -91,7 +93,7 @@ if (window.document.getElementById(tableId)) {
       if (errorMessages.length > 0) {
         errorMessagesHtml =
           '<div class="notification notification--error single--flex-wrap-wrap">' +
-          errorMessages.map((m) => '<div class="single--width-100pc">' + m + '</div>').join("") +
+          errorMessages.map((m) => '<div class="single--width-100pc">' + m + '</div>').join('') +
           '</div>';
       }
 
@@ -110,7 +112,7 @@ if (window.document.getElementById(tableId)) {
     csvDownloadBtn.onclick = () => {
       const date = new Date().toLocaleDateString(
         'fr-fr',
-        { year: "numeric", month: "numeric", day: "numeric" }
+        { year: 'numeric', month: 'numeric', day: 'numeric' }
       );
       const filename = 'France Services - ' + date;
       table?.download('csv', filename + '.csv');
@@ -122,10 +124,10 @@ if (window.document.getElementById(tableId)) {
     xlsxDownloadBtn.onclick = () => {
       const date = new Date().toLocaleDateString(
         'fr-fr',
-        { year: "numeric", month: "numeric", day: "numeric" }
+        { year: 'numeric', month: 'numeric', day: 'numeric' }
       );
       const filename = 'France Services - ' + date;
-      table?.download('xlsx', filename + '.xlsx', { sheetName: "France Services" });
+      table?.download('xlsx', filename + '.xlsx', { sheetName: 'France Services' });
     };
   }
 
@@ -133,10 +135,116 @@ if (window.document.getElementById(tableId)) {
   if (addCsvBtn) {
     addCsvBtn.addEventListener('click', (_) => {
       if (addTable) {
+        const previousData = addTable?.getData().map((row) => {
+          return {
+            'matricule': parseInt(row.matricule),
+            'groupId': row.groupId?.toString(),
+            'name': row.name?.toString(),
+          };
+        });
+
         // .import not in types
-        (<any>addTable).import('csv', '.csv');
+        (<any>addTable).import('csv', '.csv').then(() => {
+          const importedData = addTable?.getData().map((row) => {
+            let newRow = {
+              'matricule': parseInt(row.matricule),
+              'groupId': row.groupId?.toString(),
+              'name': row.name?.toString(),
+            };
+            if (row.groupId != null && row.groupId != '') {
+              const group = groupList.find((g) => g.id === row.groupId);
+              newRow.name = group?.name;
+            }
+            return newRow;
+          }) || [];
+          addTable?.setData(previousData.concat(importedData));
+        });
       }
     });
+  }
+
+  const addTableCsvDownloadBtn = window.document.getElementById(addDownloadCsvBtnId);
+  if (addTableCsvDownloadBtn) {
+    addTableCsvDownloadBtn.onclick = () => {
+      const date = new Date().toLocaleDateString(
+        'fr-fr',
+        { year: 'numeric', month: 'numeric', day: 'numeric' }
+      );
+      const filename = 'France Services - ' + date;
+      addTable?.download('csv', filename + '.csv');
+    };
+  }
+
+  const dedupBtn = window.document.getElementById(addDedupBtnId);
+  if (dedupBtn) {
+    dedupBtn.onclick = () => {
+      if (table != null && addTable != null) {
+        let matriculeToGroupId: Map<number, string> = new Map();
+        let groupIdToMatricule: Map<string, number> = new Map();
+        for (let row of table.getData()) {
+          const matricule = parseInt(row.matricule);
+          const groupId = row.groupId.toString();
+          if (!isNaN(matricule)) {
+            matriculeToGroupId.set(matricule, groupId);
+            groupIdToMatricule.set(groupId, matricule);
+          }
+        }
+        let successMessages: string[] = [];
+        let errorMessages: string[] = [];
+        let addTableMatriculeToGroupId: Map<number, string> = new Map();
+        let addTableGroupIdToMatricule: Map<string, number> = new Map();
+        for (let row of addTable.getRows()) {
+          const matricule = parseInt(row.getData().matricule);
+          const groupId = row.getData().groupId?.toString();
+          let rowDeleted = false;
+          // Dedup from main table
+          if (matriculeToGroupId.has(matricule)) {
+            const existingGroupId = matriculeToGroupId.get(matricule);
+            if (existingGroupId === groupId) {
+              successMessages.push(`Duplicat : matricule ${ matricule } groupe ${ groupId } supprimé`);
+              row.delete();
+              rowDeleted = true;
+            } else {
+              errorMessages.push(
+                `Matricule ${ matricule } groupe ${ groupId } : déjà lié au groupe ${ existingGroupId }`
+              );
+            }
+          } else if (groupIdToMatricule.has(groupId)) {
+            const existingMatricule = groupIdToMatricule.get(groupId);
+            errorMessages.push(
+              `Groupe ${ groupId } matricule ${ matricule } : déjà lié au matricule ${ existingMatricule }`
+            );
+          }
+          if (!rowDeleted) {
+            // Dedup add table
+            if (addTableMatriculeToGroupId.has(matricule)) {
+              const existingGroupId = addTableMatriculeToGroupId.get(matricule);
+              if (existingGroupId === groupId) {
+                successMessages.push(`Duplicat : matricule ${ matricule } groupe ${ groupId } supprimé`);
+                row.delete();
+              } else {
+                errorMessages.push(
+                  `Table d'ajout : 2 groupes pour le matricule ${ matricule } : ` +
+                  `${ existingGroupId } et ${ groupId }`
+                );
+              }
+            } else if (addTableGroupIdToMatricule.has(groupId)) {
+              const existingMatricule = addTableGroupIdToMatricule.get(groupId);
+              errorMessages.push(
+                `Table d'ajout : 2 matricules pour le groupe ${ groupId } : ` +
+                `${ existingMatricule } et ${ matricule }`
+              );
+            }
+            if (!isNaN(matricule)) {
+              addTableMatriculeToGroupId.set(matricule, groupId);
+            }
+            addTableGroupIdToMatricule.set(groupId, matricule);
+          }
+        }
+
+        printAlerts(addAlerts, successMessages, errorMessages);
+      }
+    };
   }
 
   const addLineBtn = <HTMLElement | null>document.getElementById(addLineBtnId);
@@ -311,11 +419,12 @@ if (window.document.getElementById(tableId)) {
     hozAlign: 'center',
     headerSort: false,
     frozen: true,
+    download: false,
   };
 
   const addTableDeleteColCellFormatter: Tabulator.Formatter =
     (cell) => {
-      cell.getElement().classList.add("mdl-color--red-200");
+      cell.getElement().classList.add('mdl-color--red-200');
       return '<i class="fas fa-close"></i>';
     };
 
@@ -400,7 +509,7 @@ if (window.document.getElementById(tableId)) {
     headerSort: false,
     width: 100,
     bottomCalc: 'count',
-    titleDownload: 'Numéro',
+    titleDownload: 'Identifiant Groupe A+',
   };
 
   const groupColEditorParams = {
@@ -480,7 +589,7 @@ if (window.document.getElementById(tableId)) {
       descriptionCol,
       publicNoteCol,
     ],
-    initialSort: [{ column: "matricule", dir: "asc" }],
+    initialSort: [{ column: 'matricule', dir: 'asc' }],
     ajaxURL: ajaxUrl,
     ajaxResponse(_url, _params, response) {
       return response.franceServices;
