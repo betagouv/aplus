@@ -29,6 +29,11 @@ interface Group {
 interface NewMatricule {
   matricule: number | null;
   groupId: string | null;
+  name: string | null;
+  description: string | null;
+  areaCode: string | null;
+  email: string | null;
+  internalSupportComment: string | null;
 }
 
 interface NewMatricules {
@@ -36,8 +41,10 @@ interface NewMatricules {
 }
 
 interface InsertResult {
+  hasInsertedGroup: boolean;
   matricule: number | null;
   groupId: string | null;
+  groupName: string | null;
   error: string | null;
 }
 
@@ -261,10 +268,16 @@ if (window.document.getElementById(tableId)) {
       let newMatricules: NewMatricule[] = [];
       if (data) {
         newMatricules = data.map((line) => {
-          return {
+          let update: NewMatricule = {
             matricule: parseInt(line.matricule),
             groupId: <string>line.groupId,
+            name: <string | null>line.name,
+            description: <string | null>line.description,
+            areaCode: <string | null>line.areaCode,
+            email: <string | null>line.email,
+            internalSupportComment: <string | null>line.internalSupportComment,
           };
+          return update;
         });
       }
       const bodyData: NewMatricules = {
@@ -303,13 +316,29 @@ if (window.document.getElementById(tableId)) {
                   const groupLink = '<a href="' +
                     jsRoutes.controllers.GroupController.editGroup(insert.groupId).url +
                     '">' + insert.groupId + '</a>';
-                  successMessages.push(`Ajout du matricule ${ insert.matricule } au groupe ${ groupLink }`);
-                  const groupId = insert.groupId;
-                  if (groupId) {
-                    const rows = addTable?.searchRows('groupId', '=', groupId);
-                    if (rows) {
-                      for (let row of rows) {
-                        row.delete();
+                  if (insert.hasInsertedGroup) {
+                    successMessages.push(
+                      `Nouveau groupe '${ insert.groupName }' ${ groupLink } ` +
+                      `ajouté avec le matricule ${ insert.matricule }`
+                    );
+                    const groupName = insert.groupName;
+                    if (groupName) {
+                      const rows = addTable?.searchRows('name', '=', groupName);
+                      if (rows) {
+                        for (let row of rows) {
+                          row.delete();
+                        }
+                      }
+                    }
+                  } else {
+                    successMessages.push(`Ajout du matricule ${ insert.matricule } au groupe ${ groupLink }`);
+                    const groupId = insert.groupId;
+                    if (groupId) {
+                      const rows = addTable?.searchRows('groupId', '=', groupId);
+                      if (rows) {
+                        for (let row of rows) {
+                          row.delete();
+                        }
                       }
                     }
                   }
@@ -532,7 +561,7 @@ if (window.document.getElementById(tableId)) {
   };
 
   const descriptionCol: Tabulator.ColumnDefinition = {
-    title: 'Decription',
+    title: 'Description',
     field: 'description',
     headerFilter: 'input',
     maxWidth: 300,
@@ -555,6 +584,7 @@ if (window.document.getElementById(tableId)) {
     title: 'BAL',
     field: 'email',
     headerFilter: 'input',
+    minWidth: 100,
     maxWidth: 300,
   };
 
@@ -565,6 +595,20 @@ if (window.document.getElementById(tableId)) {
     maxWidth: 300,
   };
 
+  const addTableAreaCodeCol: Tabulator.ColumnDefinition = {
+    title: 'Code INSEE',
+    field: 'areaCode',
+    headerFilter: 'input',
+    editor: 'input',
+  };
+
+  const addTableInternalCommentCol: Tabulator.ColumnDefinition = {
+    title: 'Commentaire interne',
+    field: 'internalSupportComment',
+    headerFilter: 'input',
+    editor: 'input',
+    maxWidth: 300,
+  };
 
   const options: Tabulator.Options = {
     height: '50vh',
@@ -612,7 +656,11 @@ if (window.document.getElementById(tableId)) {
     columns: [
       Object.assign({}, matriculeColBase),
       Object.assign({ cellEdited: addTableGroupColEdited }, groupCol),
-      nameCol,
+      Object.assign({ editor: 'input' }, nameCol),
+      Object.assign({ editor: 'input' }, emailCol),
+      addTableAreaCodeCol,
+      Object.assign({ editor: 'input' }, descriptionCol),
+      addTableInternalCommentCol,
       Object.assign(
         { cellClick: addTableDeleteColCellClick, formatter: addTableDeleteColCellFormatter },
         deleteColBase

@@ -74,6 +74,7 @@ object EventType {
   object EditUserGroupError extends Error
   object EditUserShowed extends Info
   object EditUserUnauthorized extends Warn
+  object EditUserGroupBadRequest extends Warn
   object EventsShowed extends Info
   object EventsUnauthorized extends Warn
   object GroupDeletionUnauthorized extends Warn

@@ -59,7 +59,12 @@ object ApiModel {
 
     case class NewMatricule(
         matricule: Option[Int],
-        groupId: Option[UUID]
+        groupId: Option[UUID],
+        name: Option[String],
+        description: Option[String],
+        areaCode: Option[String],
+        email: Option[String],
+        internalSupportComment: Option[String],
     )
 
     case class NewMatricules(
@@ -74,7 +79,14 @@ object ApiModel {
         groupUpdate: Option[GroupUpdate],
     )
 
-    case class InsertResult(matricule: Option[Int], groupId: Option[UUID], error: Option[String])
+    case class InsertResult(
+        hasInsertedGroup: Boolean,
+        matricule: Option[Int],
+        groupId: Option[UUID],
+        groupName: Option[String],
+        error: Option[String]
+    )
+
     case class InsertsResult(inserts: List[InsertResult])
 
     object NewMatricules {
