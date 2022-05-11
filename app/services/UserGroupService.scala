@@ -78,6 +78,54 @@ class UserGroupService @Inject() (
 
   def add(group: UserGroup): Either[String, Unit] = add(List(group))
 
+  def addGroup(group: UserGroup): Future[Either[Error, Unit]] =
+    Future(
+      Try(
+        db.withTransaction { implicit connection =>
+          SQL"""INSERT INTO user_group(
+                  id,
+                  name,
+                  description,
+                  insee_code,
+                  creation_date,
+                  create_by_user_id,
+                  area_ids,
+                  organisation,
+                  email
+                ) VALUES (
+                  ${group.id}::uuid,
+                  ${group.name},
+                  ${group.description},
+                  array[${group.inseeCode}]::character varying(5)[],
+                  ${group.creationDate},
+                  ${UUIDHelper.namedFrom("deprecated")}::uuid,
+                  array[${group.areaIds}]::uuid[],
+                  ${group.organisation.map(_.id)},
+                  ${group.email})
+             """.executeUpdate()
+          ().asRight
+        }
+      ).toEither.left.map {
+        case sqlerror: PSQLException
+            if sqlerror.getServerErrorMessage.toString.contains(
+              "duplicate key value violates unique constraint \"name_user_group_unique_idx\""
+            ) =>
+          Error.SqlException(
+            EventType.EditUserGroupBadRequest,
+            "Un groupe avec le même nom existe déjà",
+            sqlerror,
+            s"Nom '${group.name}'".some
+          )
+        case e =>
+          Error.SqlException(
+            EventType.EditUserGroupError,
+            "Impossible d'ajouter un groupe : erreur de base de données",
+            e,
+            none
+          )
+      }.flatten
+    )
+
   def edit(group: UserGroup): Boolean =
     db.withConnection { implicit connection =>
       SQL"""

@@ -4,6 +4,7 @@ import actions.{LoginAction, RequestWithUserData}
 import cats.syntax.all._
 import controllers.Operators.UserOperators
 import helper.StringHelper
+import java.time.ZonedDateTime
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models.{Area, Authorization, Error, EventType, Organisation, User, UserGroup}
@@ -78,34 +79,123 @@ case class ApiController @Inject() (
               Future.successful(BadRequest(Json.toJson(ApiError(errorMessage))))
             },
             newMatricules => {
-              val inserts = newMatricules.matricules.traverse {
-                case FranceServices.NewMatricule(Some(matricule), Some(groupId)) =>
-                  userGroupService
-                    .addFSMatricule(groupId, matricule)
-                    .map(
-                      _.fold(
-                        e => {
-                          eventService.logError(e)
-                          FranceServices
-                            .InsertResult(matricule.some, groupId.some, e.description.some)
-                        },
-                        _ => {
-                          eventService.log(
-                            EventType.FSMatriculeChanged,
-                            s"Ajout du matricule '$matricule' au groupe $groupId"
-                          )
-                          FranceServices.InsertResult(matricule.some, groupId.some, none)
-                        }
+              val inserts = newMatricules.matricules.traverse { newLine =>
+                (newLine.matricule, newLine.groupId) match {
+                  case (Some(matricule), Some(groupId)) =>
+                    userGroupService
+                      .addFSMatricule(groupId, matricule)
+                      .map(
+                        _.fold(
+                          e => {
+                            eventService.logError(e)
+                            FranceServices
+                              .InsertResult(
+                                false,
+                                matricule.some,
+                                groupId.some,
+                                none,
+                                errorToMessage(e).some
+                              )
+                          },
+                          _ => {
+                            eventService.log(
+                              EventType.FSMatriculeChanged,
+                              s"Ajout du matricule '$matricule' au groupe $groupId"
+                            )
+                            FranceServices
+                              .InsertResult(false, matricule.some, groupId.some, newLine.name, none)
+                          }
+                        )
+                      )
+                  case (Some(matricule), None) if !newLine.name.isEmpty =>
+                    val groupId = UUID.randomUUID()
+                    val group = UserGroup(
+                      id = groupId,
+                      name =
+                        newLine.name.map(StringHelper.commonStringInputNormalization).getOrElse(""),
+                      description =
+                        newLine.description.map(StringHelper.commonStringInputNormalization),
+                      inseeCode = Nil,
+                      creationDate = ZonedDateTime.now(),
+                      areaIds = newLine.areaCode
+                        .flatMap(code => Area.fromInseeCode(code.trim))
+                        .map(_.id)
+                        .toList,
+                      organisation = Organisation.franceServicesId.some,
+                      email = newLine.email.map(StringHelper.commonStringInputNormalization),
+                      publicNote = none,
+                      internalSupportComment = newLine.internalSupportComment
+                        .map(StringHelper.commonStringInputNormalization),
+                    )
+
+                    userGroupService
+                      .addGroup(group)
+                      .flatMap(
+                        _.fold(
+                          e => {
+                            eventService.logError(e)
+                            Future.successful(
+                              FranceServices
+                                .InsertResult(
+                                  false,
+                                  matricule.some,
+                                  none,
+                                  none,
+                                  errorToMessage(e).some
+                                )
+                            )
+                          },
+                          _ => {
+                            eventService.log(
+                              EventType.UserGroupCreated,
+                              s"Groupe ${group.id} ajouté par l'utilisateur d'id ${request.currentUser.id}",
+                              s"Groupe ${group.toLogString}".some
+                            )
+                            userGroupService
+                              .addFSMatricule(groupId, matricule)
+                              .map(
+                                _.fold(
+                                  e => {
+                                    eventService.logError(e)
+                                    FranceServices
+                                      .InsertResult(
+                                        true,
+                                        matricule.some,
+                                        groupId.some,
+                                        newLine.name,
+                                        errorToMessage(e).some
+                                      )
+                                  },
+                                  _ => {
+                                    eventService.log(
+                                      EventType.FSMatriculeChanged,
+                                      s"Ajout du matricule '$matricule' au groupe $groupId"
+                                    )
+                                    FranceServices
+                                      .InsertResult(
+                                        true,
+                                        matricule.some,
+                                        groupId.some,
+                                        newLine.name,
+                                        none
+                                      )
+                                  }
+                                )
+                              )
+                          }
+                        )
+                      )
+                  case _ =>
+                    Future.successful(
+                      FranceServices.InsertResult(
+                        false,
+                        newLine.matricule,
+                        newLine.groupId,
+                        none,
+                        "Impossible de traiter la ligne: matricule vide ou informations manquantes".some
                       )
                     )
-                case newLine =>
-                  Future.successful(
-                    FranceServices.InsertResult(
-                      newLine.matricule,
-                      newLine.groupId,
-                      "Impossible de lier matricule et groupe (matricule ou groupe vide)".some
-                    )
-                  )
+                }
               }
               inserts.map { resultList =>
                 val result = FranceServices.InsertsResult(resultList)
@@ -189,14 +279,17 @@ case class ApiController @Inject() (
       }
     }
 
+  private def errorToMessage(error: Error): String =
+    error.description + error.unsafeData.map(data => " [" + data + "]").getOrElse("")
+
   private def toFSApiError(error: Error)(implicit request: RequestWithUserData[_]): Result = {
     eventService.logError(error)
     if (error.eventType === EventType.FSMatriculeInvalidData)
-      BadRequest(Json.toJson(ApiError(error.description)))
+      BadRequest(Json.toJson(ApiError(errorToMessage(error))))
     else if (error.eventType === EventType.FSMatriculeError)
-      InternalServerError(Json.toJson(ApiError(error.description)))
+      InternalServerError(Json.toJson(ApiError(errorToMessage(error))))
     else
-      InternalServerError(Json.toJson(ApiError(error.description)))
+      InternalServerError(Json.toJson(ApiError(errorToMessage(error))))
   }
 
   private def matchFranceServiceInstance(
