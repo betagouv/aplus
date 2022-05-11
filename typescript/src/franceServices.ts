@@ -245,7 +245,9 @@ if (window.document.getElementById(tableId)) {
             if (!isNaN(matricule)) {
               addTableMatriculeToGroupId.set(matricule, groupId);
             }
-            addTableGroupIdToMatricule.set(groupId, matricule);
+            if (groupId.length !== 0) {
+              addTableGroupIdToMatricule.set(groupId, matricule);
+            }
           }
         }
 
@@ -268,9 +270,13 @@ if (window.document.getElementById(tableId)) {
       let newMatricules: NewMatricule[] = [];
       if (data) {
         newMatricules = data.map((line) => {
+          let groupId = line.groupId.toString();
+          if (groupId.length === 0) {
+            groupId = null;
+          }
           let update: NewMatricule = {
             matricule: parseInt(line.matricule),
-            groupId: <string>line.groupId,
+            groupId,
             name: <string | null>line.name,
             description: <string | null>line.description,
             areaCode: <string | null>line.areaCode,
