@@ -131,7 +131,7 @@ if (window.document.getElementById(applicationsTableId)) {
     return value;
   };
 
-  const usersColumns: Array<Tabulator.ColumnDefinition> = [
+  const columns: Array<Tabulator.ColumnDefinition> = [
     {
       title: "",
       field: "id",
@@ -164,14 +164,12 @@ if (window.document.getElementById(applicationsTableId)) {
     {
       title: "Territoire",
       field: "areaName",
-      headerFilter: "select",
-      headerFilterParams: { values: true, multiselect: true }
+      headerFilter: "input",
     },
     {
       title: "Avancement",
       field: "status",
-      headerFilter: "select",
-      headerFilterParams: { values: true, multiselect: true }
+      headerFilter: "input",
     },
     {
       title: "Créateur",
@@ -205,16 +203,14 @@ if (window.document.getElementById(applicationsTableId)) {
       field: "usefulness",
       hozAlign: "center",
       formatter: usefulnessFormatter,
-      headerFilter: "select",
-      headerFilterParams: { values: true, multiselect: true }
+      headerFilter: "input",
     },
     {
       title: "Pertinente",
       field: "pertinence",
       hozAlign: "center",
       formatter: pertinenceFormatter,
-      headerFilter: "select",
-      headerFilterParams: { values: true, multiselect: true }
+      headerFilter: "input",
     },
     {
       title: "Clôture",
@@ -278,7 +274,7 @@ if (window.document.getElementById(applicationsTableId)) {
     },
   ];
 
-  const usersOptions: Tabulator.Options = {
+  const options: Tabulator.Options = {
     height: "75vh",
     langs: {
       "fr-fr": {
@@ -291,14 +287,14 @@ if (window.document.getElementById(applicationsTableId)) {
         }
       }
     },
-    columns: usersColumns,
+    columns,
     ajaxURL: ajaxUrl,
     ajaxParams: () => ajaxParams,
     ajaxResponse(_url, _params, response) {
       return response.applications;
     }
   };
-  applicationsTable = new TabulatorFull("#" + applicationsTableId, usersOptions);
+  applicationsTable = new TabulatorFull("#" + applicationsTableId, options);
   applicationsTable.on("tableBuilt", function() {
     applicationsTable?.setLocale("fr-fr");
     // Weird behevior: setSort throws TypeError if applied now
