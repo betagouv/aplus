@@ -20,6 +20,7 @@ import org.webjars.play.WebJarsUtil
 import play.api.cache.AsyncCacheApi
 import play.api.data.Forms._
 import play.api.data._
+import play.api.data.format.{Formats, Formatter}
 import play.api.data.validation.Constraints._
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
@@ -663,6 +664,18 @@ case class ApplicationController @Inject() (
     )
   }
 
+  // Handles some edge cases from browser compatibility
+  private val localDateMapping: Mapping[LocalDate] = {
+    val formatter = new Formatter[LocalDate] {
+      val defaultCase = Formats.localDateFormat
+      val fallback = Formats.localDateFormat("dd-MM-yyyy")
+      def bind(key: String, data: Map[String, String]) =
+        defaultCase.bind(key, data).orElse(fallback.bind(key, data))
+      def unbind(key: String, value: LocalDate) = defaultCase.unbind(key, value)
+    }
+    of(formatter)
+  }
+
   // A `def` for the LocalDate.now()
   private def statsForm =
     Form(
@@ -670,8 +683,8 @@ case class ApplicationController @Inject() (
         "areas" -> default(list(uuid), List()),
         "organisations" -> default(list(of[Organisation.Id]), List()),
         "groups" -> default(list(uuid), List()),
-        "creationMinDate" -> default(localDate, LocalDate.now().minusDays(30)),
-        "creationMaxDate" -> default(localDate, LocalDate.now())
+        "creationMinDate" -> default(localDateMapping, LocalDate.now().minusDays(30)),
+        "creationMaxDate" -> default(localDateMapping, LocalDate.now())
       )
     )
 
