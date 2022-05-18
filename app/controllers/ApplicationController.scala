@@ -702,26 +702,28 @@ case class ApplicationController @Inject() (
       request: RequestWithUserData[_]
   ): Future[Result] = {
     // TODO: remove `.get`
-    val (areaIds, organisationIds, groupIds, creationMinDate, creationMaxDate) =
+    val (areaIds, queryOrganisationIds, queryGroupIds, creationMinDate, creationMaxDate) =
       statsForm.bindFromRequest().value.get
 
-    val observableOrganisationIds = if (Authorization.isAdmin(rights)) {
-      organisationIds
+    val organisationIds = if (Authorization.isAdmin(rights)) {
+      queryOrganisationIds
     } else {
-      organisationIds.filter(id => Authorization.canObserveOrganisation(id)(rights))
+      queryOrganisationIds.filter(id => Authorization.canObserveOrganisation(id)(rights))
     }
 
-    val observableGroupIds = if (Authorization.isAdmin(rights)) {
-      groupIds
-    } else {
-      groupIds.intersect(user.groupIds)
-    }
+    val groupIds =
+      if (organisationIds.nonEmpty) Nil
+      else if (Authorization.isAdmin(rights)) {
+        queryGroupIds
+      } else {
+        queryGroupIds.intersect(user.groupIds)
+      }
 
     val cacheKey =
       Authorization.isAdmin(rights).toString +
         ".stats." +
         Hash.sha256(
-          areaIds.toString + observableOrganisationIds.toString + observableGroupIds.toString +
+          areaIds.toString + organisationIds.toString + groupIds.toString +
             creationMinDate.toString + creationMaxDate.toString
         )
 
@@ -730,8 +732,8 @@ case class ApplicationController @Inject() (
         .getOrElseUpdate[Html](cacheKey, 1.hours)(
           generateStats(
             areaIds,
-            observableOrganisationIds,
-            observableGroupIds,
+            organisationIds,
+            groupIds,
             creationMinDate,
             creationMaxDate,
             rights
