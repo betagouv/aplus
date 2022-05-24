@@ -941,10 +941,7 @@ case class ApplicationController @Inject() (
                 _.fold(
                   error => {
                     eventService.logError(error)
-                    val message = "Une erreur interne est survenue. " +
-                      "Celle-ci est probablement temporaire. " +
-                      "Si elle venait à persister, vous pouvez contacter le support Administration+."
-                    InternalServerError(message)
+                    InternalServerError(Constants.genericError500Message)
                   },
                   files => {
                     val groups = userGroupService

@@ -399,6 +399,12 @@ case class GroupController @Inject() (
       )(() => inner(request))
     }
 
+  private def adminLastActivity(ids: List[UUID], rights: Authorization.UserRights) =
+    if (Authorization.isAdmin(rights))
+      eventService.lastActivity(ids)
+    else
+      Future.successful(Nil.asRight)
+
   private def editMyGroupsPage(
       user: User,
       rights: Authorization.UserRights,
@@ -408,19 +414,29 @@ case class GroupController @Inject() (
       groups <- groupService.byIdsFuture(user.groupIds)
       users <- userService.byGroupIdsFuture(groups.map(_.id), includeDisabled = true)
       applications <- applicationService.allForUserIds(users.map(_.id), none)
+      lastActivityResult <- adminLastActivity(users.map(_.id), rights)
     } yield {
-      eventService.log(EventType.EditMyGroupShowed, "Visualise la modification de ses groupes")
-      Ok(
-        views.editMyGroups
-          .page(
-            user,
-            rights,
-            addUserForm,
-            groups,
-            users,
-            applications,
-            identity
+      lastActivityResult.fold(
+        error => {
+          eventService.logError(error)
+          InternalServerError(Constants.genericError500Message)
+        },
+        lastActivity => {
+          eventService.log(EventType.EditMyGroupShowed, "Visualise la modification de ses groupes")
+          Ok(
+            views.editMyGroups
+              .page(
+                user,
+                rights,
+                addUserForm,
+                groups,
+                users,
+                applications,
+                lastActivity.toMap,
+                identity
+              )
           )
+        }
       )
     }
 
@@ -430,23 +446,33 @@ case class GroupController @Inject() (
     val groupUsers = userService.byGroupIds(List(group.id), includeDisabled = true)
     eventService.log(EditGroupShowed, s"Visualise la vue de modification du groupe")
     val isEmpty = groupService.isGroupEmpty(group.id)
+    val lastActivityFuture = adminLastActivity(groupUsers.map(_.id), request.rights)
     applicationService
       .allForUserIds(groupUsers.map(_.id), none)
-      .map(applications =>
-        Ok(
-          views.html.editGroup(request.currentUser, request.rights)(
-            group,
-            groupUsers,
-            isEmpty,
-            applications,
-            addUserForm,
-            url =>
-              (url + "?" +
-                Keys.QueryParam.redirect + "=" + groupPageRedirectValue + "&" +
-                Keys.QueryParam.groupId + "=" + group.id.toString)
-          )
+      .zip(lastActivityFuture)
+      .map { case (applications, lastActivityResult) =>
+        lastActivityResult.fold(
+          error => {
+            eventService.logError(error)
+            InternalServerError(Constants.genericError500Message)
+          },
+          lastActivity =>
+            Ok(
+              views.html.editGroup(request.currentUser, request.rights)(
+                group,
+                groupUsers,
+                isEmpty,
+                applications,
+                lastActivity.toMap,
+                addUserForm,
+                url =>
+                  (url + "?" +
+                    Keys.QueryParam.redirect + "=" + groupPageRedirectValue + "&" +
+                    Keys.QueryParam.groupId + "=" + group.id.toString)
+              )
+            )
         )
-      )
+      }
   }
 
   private def addGroupForm[A](timeZone: ZoneId)(implicit request: RequestWithUserData[A]) =

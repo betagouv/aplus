@@ -77,6 +77,7 @@ object EventType {
   object EditUserGroupBadRequest extends Warn
   object EventsShowed extends Info
   object EventsUnauthorized extends Warn
+  object EventsError extends Error
   object GroupDeletionUnauthorized extends Warn
   object ImportGroupUnauthorized extends Warn
   object ImportUserError extends Error
@@ -200,5 +201,13 @@ object EventType {
   object FSMatriculeInvalidData extends Warn
   object FSMatriculeError extends Error
   object FSMatriculeChanged extends Info
+
+  val unauthenticatedEvents: List[EventType] = List(
+    GenerateToken,
+    ExpiredToken,
+    TokenDoubleUsage,
+    TokenError,
+    TryLoginByKey,
+  )
 
 }
