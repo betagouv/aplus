@@ -142,11 +142,15 @@ if (window.document.getElementById(tableId)) {
   if (addCsvBtn) {
     addCsvBtn.addEventListener('click', (_) => {
       if (addTable) {
-        const previousData = addTable?.getData().map((row) => {
+        const previousData: NewMatricule[] = addTable?.getData().map((row) => {
           return {
             'matricule': parseInt(row.matricule),
             'groupId': row.groupId?.toString(),
             'name': row.name?.toString(),
+            'description': row.description?.toString(),
+            'areaCode': row.areaCode?.toString(),
+            'email': row.email?.toString(),
+            'internalSupportComment': row.internalSupportComment?.toString(),
           };
         });
 
@@ -157,6 +161,10 @@ if (window.document.getElementById(tableId)) {
               'matricule': parseInt(row.matricule),
               'groupId': row.groupId?.toString(),
               'name': row.name?.toString(),
+              'description': row.description?.toString(),
+              'areaCode': row.areaCode?.toString(),
+              'email': row.email?.toString(),
+              'internalSupportComment': row.internalSupportComment?.toString(),
             };
             if (row.groupId != null && row.groupId !== '') {
               const group = groupList.find((g) => g.id === row.groupId);
