@@ -22,14 +22,14 @@
                         <option value="@organisation.id.id" @if(selectedOrganisationIds.contains(organisation.id)){ selected } >@organisation.name</option>
                     }
                 </select>
-            } else {
+            }
                 <select id="groups-selector" name="groups[]">
                     <option @if(selectedGroupIds.isEmpty){ selected } value>Tous les groupes du département</option>
                     @for(group <- groupsThatCanBeFilteredBy) {
                         <option value="@group.id" @if(selectedGroupIds.contains(group.id)){ selected }>@group.name</option>
                     }
                 </select>
-            }
+
             <br>
             Création des demandes entre le : <input name="creationMinDate" value="@creationMinDate" type="date">
             et le : <input name="creationMaxDate" value="@creationMaxDate" type="date">
