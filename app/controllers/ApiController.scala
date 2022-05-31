@@ -1,14 +1,14 @@
 package controllers
 
-import actions.LoginAction
+import actions.{LoginAction, RequestWithUserData}
 import cats.syntax.all._
 import controllers.Operators.UserOperators
 import helper.StringHelper
+import java.time.ZonedDateTime
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import models.EventType.DeploymentDashboardUnauthorized
-import models.{Area, Authorization, Organisation, User, UserGroup}
-import play.api.libs.json.Json
+import models.{Area, Authorization, Error, EventType, Organisation, User, UserGroup}
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
@@ -26,6 +26,274 @@ case class ApiController @Inject() (
     extends InjectedController
     with UserOperators {
   import OrganisationService.FranceServiceInstance
+
+  def franceServices: Action[AnyContent] =
+    loginAction.async { implicit request =>
+      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+        EventType.FSApiAccessUnauthorized,
+        "Accès non autorisé à l'API de liste des France Services"
+      ) { () =>
+        userGroupService.franceServices.map(
+          _.fold(
+            toFSApiError,
+            franceServices => {
+              val lines = franceServices.flatMap { case (fsOpt, groupOpt) =>
+                fsOpt
+                  .map(_.groupId)
+                  .orElse(groupOpt.map(_.id))
+                  .map(groupId =>
+                    FranceServices.Line(
+                      matricule = fsOpt.map(_.matricule),
+                      groupId = groupId,
+                      name = groupOpt.map(_.name),
+                      description = groupOpt.flatMap(_.description),
+                      areas = groupOpt
+                        .map(_.areaIds.flatMap(Area.fromId).map(_.toString).mkString(", "))
+                        .getOrElse(""),
+                      organisation = groupOpt
+                        .flatMap(_.organisation.flatMap(Organisation.byId).map(_.shortName)),
+                      email = groupOpt.flatMap(_.email),
+                      publicNote = groupOpt.flatMap(_.publicNote),
+                    )
+                  )
+              }
+              Ok(Json.toJson(FranceServices(lines)))
+            }
+          )
+        )
+      }
+    }
+
+  def addFranceServices: Action[JsValue] =
+    loginAction[JsValue](parse.json).async { implicit request: RequestWithUserData[JsValue] =>
+      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+        EventType.FSApiAccessUnauthorized,
+        "Accès non autorisé à l'API d'ajout de France Services"
+      ) { () =>
+        request.body
+          .validate[FranceServices.NewMatricules]
+          .fold(
+            errors => {
+              val errorMessage = helper.PlayFormHelper.prettifyJsonFormInvalidErrors(errors)
+              eventService.log(EventType.FSMatriculeInvalidData, s"$errorMessage")
+              Future.successful(BadRequest(Json.toJson(ApiError(errorMessage))))
+            },
+            newMatricules => {
+              val inserts = newMatricules.matricules.traverse { newLine =>
+                (newLine.matricule, newLine.groupId) match {
+                  case (Some(matricule), Some(groupId)) =>
+                    userGroupService
+                      .addFSMatricule(groupId, matricule)
+                      .map(
+                        _.fold(
+                          e => {
+                            eventService.logError(e)
+                            FranceServices
+                              .InsertResult(
+                                false,
+                                matricule.some,
+                                groupId.some,
+                                none,
+                                errorToMessage(e).some
+                              )
+                          },
+                          _ => {
+                            eventService.log(
+                              EventType.FSMatriculeChanged,
+                              s"Ajout du matricule '$matricule' au groupe $groupId"
+                            )
+                            FranceServices
+                              .InsertResult(false, matricule.some, groupId.some, newLine.name, none)
+                          }
+                        )
+                      )
+                  case (Some(matricule), None) if !newLine.name.isEmpty =>
+                    val groupId = UUID.randomUUID()
+                    val group = UserGroup(
+                      id = groupId,
+                      name =
+                        newLine.name.map(StringHelper.commonStringInputNormalization).getOrElse(""),
+                      description =
+                        newLine.description.map(StringHelper.commonStringInputNormalization),
+                      inseeCode = Nil,
+                      creationDate = ZonedDateTime.now(),
+                      areaIds = newLine.areaCode
+                        .flatMap { code =>
+                          val rawCode = code.trim
+                          Area.fromInseeCode(if (rawCode.size === 1) "0" + rawCode else rawCode)
+                        }
+                        .map(_.id)
+                        .toList,
+                      organisation = Organisation.franceServicesId.some,
+                      email = newLine.email.map(StringHelper.commonStringInputNormalization),
+                      publicNote = none,
+                      internalSupportComment = newLine.internalSupportComment
+                        .map(StringHelper.commonStringInputNormalization),
+                    )
+
+                    userGroupService
+                      .addGroup(group)
+                      .flatMap(
+                        _.fold(
+                          e => {
+                            eventService.logError(e)
+                            Future.successful(
+                              FranceServices
+                                .InsertResult(
+                                  false,
+                                  matricule.some,
+                                  none,
+                                  none,
+                                  errorToMessage(e).some
+                                )
+                            )
+                          },
+                          _ => {
+                            eventService.log(
+                              EventType.UserGroupCreated,
+                              s"Groupe ${group.id} ajouté par l'utilisateur d'id ${request.currentUser.id}",
+                              s"Groupe ${group.toLogString}".some
+                            )
+                            userGroupService
+                              .addFSMatricule(groupId, matricule)
+                              .map(
+                                _.fold(
+                                  e => {
+                                    eventService.logError(e)
+                                    FranceServices
+                                      .InsertResult(
+                                        true,
+                                        matricule.some,
+                                        groupId.some,
+                                        newLine.name,
+                                        errorToMessage(e).some
+                                      )
+                                  },
+                                  _ => {
+                                    eventService.log(
+                                      EventType.FSMatriculeChanged,
+                                      s"Ajout du matricule '$matricule' au groupe $groupId"
+                                    )
+                                    FranceServices
+                                      .InsertResult(
+                                        true,
+                                        matricule.some,
+                                        groupId.some,
+                                        newLine.name,
+                                        none
+                                      )
+                                  }
+                                )
+                              )
+                          }
+                        )
+                      )
+                  case _ =>
+                    Future.successful(
+                      FranceServices.InsertResult(
+                        false,
+                        newLine.matricule,
+                        newLine.groupId,
+                        none,
+                        "Impossible de traiter la ligne: matricule vide ou informations manquantes".some
+                      )
+                    )
+                }
+              }
+              inserts.map { resultList =>
+                val result = FranceServices.InsertsResult(resultList)
+                Ok(Json.toJson(result))
+              }
+            }
+          )
+      }
+    }
+
+  def updateFranceService: Action[JsValue] =
+    loginAction[JsValue](parse.json).async { implicit request: RequestWithUserData[JsValue] =>
+      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+        EventType.FSApiAccessUnauthorized,
+        "Accès non autorisé à l'API de mise à jour des France Services"
+      ) { () =>
+        request.body
+          .validate[FranceServices.Update]
+          .fold(
+            errors => {
+              val errorMessage = helper.PlayFormHelper.prettifyJsonFormInvalidErrors(errors)
+              eventService.log(EventType.FSMatriculeInvalidData, s"$errorMessage")
+              Future.successful(BadRequest(Json.toJson(ApiError(errorMessage))))
+            },
+            {
+              case FranceServices.Update(Some(matriculeUpdate), _) =>
+                userGroupService
+                  .updateFSMatricule(matriculeUpdate.groupId, matriculeUpdate.matricule)
+                  .map(
+                    _.fold(
+                      toFSApiError,
+                      _ => {
+                        eventService.log(
+                          EventType.FSMatriculeChanged,
+                          s"Mise à jour du matricule du groupe ${matriculeUpdate.groupId} : '${matriculeUpdate.matricule}'"
+                        )
+                        Ok(Json.toJson(Json.obj()))
+                      }
+                    )
+                  )
+              case FranceServices.Update(_, Some(groupUpdate)) =>
+                userGroupService
+                  .updateFSGroup(groupUpdate.matricule, groupUpdate.groupId)
+                  .map(
+                    _.fold(
+                      toFSApiError,
+                      _ => {
+                        eventService.log(
+                          EventType.FSMatriculeChanged,
+                          s"Mise à jour du groupe associé au matricule ${groupUpdate.matricule} : '${groupUpdate.groupId}'"
+                        )
+                        Ok(Json.toJson(Json.obj()))
+                      }
+                    )
+                  )
+              case FranceServices.Update(None, None) =>
+                Future.successful(Ok(Json.toJson(Json.obj())))
+            }
+          )
+      }
+    }
+
+  def deleteFranceService(matricule: Int): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+        EventType.FSApiAccessUnauthorized,
+        "Accès non autorisé à l'API de suppression des France Services"
+      ) { () =>
+        userGroupService
+          .deleteFSMatricule(matricule)
+          .map(
+            _.fold(
+              toFSApiError,
+              _ => {
+                eventService
+                  .log(EventType.FSMatriculeChanged, s"Suppression du matricule $matricule")
+                Ok(Json.obj())
+              }
+            )
+          )
+      }
+    }
+
+  private def errorToMessage(error: Error): String =
+    error.description + error.unsafeData.map(data => " [" + data + "]").getOrElse("")
+
+  private def toFSApiError(error: Error)(implicit request: RequestWithUserData[_]): Result = {
+    eventService.logError(error)
+    if (error.eventType === EventType.FSMatriculeInvalidData)
+      BadRequest(Json.toJson(ApiError(errorToMessage(error))))
+    else if (error.eventType === EventType.FSMatriculeError)
+      InternalServerError(Json.toJson(ApiError(errorToMessage(error))))
+    else
+      InternalServerError(Json.toJson(ApiError(errorToMessage(error))))
+  }
 
   private def matchFranceServiceInstance(
       franceServiceInstance: FranceServiceInstance,
@@ -63,7 +331,7 @@ case class ApiController @Inject() (
   def franceServiceDeployment: Action[AnyContent] =
     loginAction.async { implicit request =>
       asUserWithAuthorization(Authorization.isAdminOrObserver)(
-        DeploymentDashboardUnauthorized,
+        EventType.DeploymentDashboardUnauthorized,
         "Accès non autorisé au dashboard de déploiement"
       ) { () =>
         val userGroups = userGroupService.allGroups.filter(
@@ -152,7 +420,7 @@ case class ApiController @Inject() (
   def deploymentData: Action[AnyContent] =
     loginAction.async { implicit request =>
       asUserWithAuthorization(Authorization.isAdminOrObserver)(
-        DeploymentDashboardUnauthorized,
+        EventType.DeploymentDashboardUnauthorized,
         "Accès non autorisé au dashboard de déploiement"
       ) { () =>
         val userGroups = userGroupService.allGroups

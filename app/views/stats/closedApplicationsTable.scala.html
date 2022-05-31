@@ -1,4 +1,4 @@
-@(data: views.stats.StatsData.ApplicationAggregates)(implicit webJarsUtil: org.webjars.play.WebJarsUtil)
+@(data: views.stats.StatsData.ApplicationAggregates)
 
 <table class="mdl-data-table mdl-data-table--initial-white-space  mdl-js-data-table mdl-cell mdl-cell--12-col">
     <thead>
@@ -6,9 +6,9 @@
             <th class="mdl-data-table__cell--non-numeric">Semaine</th>
             <th>Archivées</th>
             <th>Non Pertinentes</th>
-            <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"> Oui</th>
-            <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"> Je ne sais pas</th>
-            <th><img class="usefulness__icon" src="@webJarsUtil.locate("1f61e.svg").url.get"> Non</th>
+            <th><img class="usefulness__icon" src="@routes.Assets.versioned("images/twemoji/1f600.svg")"> Oui</th>
+            <th><img class="usefulness__icon" src="@routes.Assets.versioned("images/twemoji/1f610.svg")"> Je ne sais pas</th>
+            <th><img class="usefulness__icon" src="@routes.Assets.versioned("images/twemoji/1f61e.svg")"> Non</th>
             <th>?</th>
         </tr>
     </thead>
@@ -18,9 +18,9 @@
                 <td class="mdl-data-table__cell--non-numeric">@month</td>
                 <td>@applications.length</td>
                 <td class="mdl-color-text--red mdl-typography--font-bold">@applications.count(_.irrelevant)</td>
-                <td>@applications.count(_.usefulness.contains("Oui")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f600.svg").url.get"></td>
-                <td>@applications.count(_.usefulness.contains("Je ne sais pas")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f610.svg").url.get"></td>
-                <td>@applications.count(_.usefulness.contains("Non")) <img class="usefulness__icon" src="@webJarsUtil.locate("1f61e.svg").url.get"></td>
+                <td>@applications.count(_.usefulness.contains("Oui")) <img class="usefulness__icon" src="@routes.Assets.versioned("images/twemoji/1f600.svg")"></td>
+                <td>@applications.count(_.usefulness.contains("Je ne sais pas")) <img class="usefulness__icon" src="@routes.Assets.versioned("images/twemoji/1f610.svg")"></td>
+                <td>@applications.count(_.usefulness.contains("Non")) <img class="usefulness__icon" src="@routes.Assets.versioned("images/twemoji/1f61e.svg")"></td>
                 <td>@applications.count(_.usefulness.isEmpty) ?</td>
             </tr>
         }

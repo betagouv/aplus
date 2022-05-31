@@ -24,6 +24,16 @@ module.exports = {
         loader: 'ts-loader',
       },
       {
+        test: /.js$/,
+        exclude: (_) => /node_modules/.test(_) && !/node_modules\/(tabulator-tables|proxy-polyfill)/.test(_),
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env'],
+          }
+        }
+      },
+      {
         test: /\.css$/,
         use: [
           MiniCssExtractPlugin.loader,

@@ -8,13 +8,14 @@ import play.api.Configuration
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
-import services.{ApplicationService, EventService, MandatService, SmsService}
+import services.{ApplicationService, EventService, FileService, MandatService, SmsService}
 
 class WipeOldDataTask @Inject() (
     actorSystem: ActorSystem,
     applicationService: ApplicationService,
     configuration: Configuration,
     eventService: EventService,
+    fileService: FileService,
     mandatService: MandatService,
     smsService: SmsService
 )(implicit executionContext: ExecutionContext) {
@@ -33,7 +34,7 @@ class WipeOldDataTask @Inject() (
     }
   )
 
-  def wipeOldData(retentionInMonths: Long): Unit =
+  def wipeOldData(retentionInMonths: Long): Unit = {
     applicationService
       .wipePersonalData(retentionInMonths)
       .onComplete {
@@ -54,6 +55,16 @@ class WipeOldDataTask @Inject() (
             Some(error)
           )
       }
+
+    fileService
+      .wipeFilenames(retentionInMonths)
+      .foreach(
+        _.fold(
+          error => eventService.logErrorNoRequest(error),
+          numOfRows => logSuccess(s"Suppression de $numOfRows noms de fichiers")
+        )
+      )
+  }
 
   // Not wiping these data, pending legal validation
   /*

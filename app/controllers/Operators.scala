@@ -180,7 +180,7 @@ object Operators {
     ): Future[Result] = {
       val result =
         error match {
-          case _: Error.EntityNotFound =>
+          case _: Error.EntityNotFound | _: Error.RequirementFailed =>
             NotFound("Nous n'avons pas trouvé cette demande")
           case _: Error.Authorization | _: Error.Authentication =>
             Unauthorized(

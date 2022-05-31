@@ -57,7 +57,7 @@ case class MandatController @Inject() (
       .fold(
         errors => {
           val errorMessage = helper.PlayFormHelper.prettifyJsonFormInvalidErrors(errors)
-          eventService.log(EventType.MandatInitiationBySmsInvalid, s"$errorMessage")
+          eventService.log(EventType.MandatInitiationBySmsFormValidationError, s"$errorMessage")
           Future(
             BadRequest(
               Json.obj("message" -> JsString(errorMessage), "errors" -> JsError.toJson(errors))
@@ -182,7 +182,7 @@ case class MandatController @Inject() (
           error => {
             eventService.logError(error)
             error match {
-              case _: Error.EntityNotFound =>
+              case _: Error.EntityNotFound | _: Error.RequirementFailed =>
                 NotFound("Nous n'avons pas trouvé ce mandat.")
               case _: Error.Authorization | _: Error.Authentication =>
                 Unauthorized(

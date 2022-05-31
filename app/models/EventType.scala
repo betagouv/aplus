@@ -51,8 +51,6 @@ object EventType {
   object AllUserCsvShowed extends Info
   object AllUserIncorrectSetup extends Info
   object AllUserUnauthorized extends Warn
-  object AnswerCreated extends Info
-  object AnswerNotCreated extends Error
   object ApplicationCreated extends Info
   object ApplicationCreationError extends Error
   object ApplicationCreationUnauthorized extends Warn
@@ -76,6 +74,7 @@ object EventType {
   object EditUserGroupError extends Error
   object EditUserShowed extends Info
   object EditUserUnauthorized extends Warn
+  object EditUserGroupBadRequest extends Warn
   object EventsShowed extends Info
   object EventsUnauthorized extends Warn
   object GroupDeletionUnauthorized extends Warn
@@ -84,7 +83,7 @@ object EventType {
   object ImportUserUnauthorized extends Warn
   object ImportUsersUnauthorized extends Warn
   object InviteFormValidationError extends Warn
-  object MandatInitiationBySmsInvalid extends Error
+  object MandatInitiationBySmsFormValidationError extends Warn
   object MandatInitiationBySmsWarn extends Warn
   object MandatInitiationBySmsDone extends Info
   object MandatBySmsResponseSaved extends Info
@@ -132,6 +131,11 @@ object EventType {
   object UsersShowed extends Info
   object ViewUserUnauthorized extends Warn
   object WeeklyEmailsSent extends Info
+
+  // Applications
+  object AnswerCreated extends Info
+  object AnswerFormError extends Warn
+  object AnswerCreationError extends Error
 
   object ApplicationCreationInvalid extends Info
   object CSVImportFormError extends Warn
@@ -192,5 +196,11 @@ object EventType {
   object FileScanError extends Error
   object FilesDeletion extends Info
   object FileDeletionError extends Error
+
+  // Matricules
+  object FSApiAccessUnauthorized extends Warn
+  object FSMatriculeInvalidData extends Warn
+  object FSMatriculeError extends Error
+  object FSMatriculeChanged extends Info
 
 }

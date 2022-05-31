@@ -49,7 +49,6 @@ object Keys {
     val areaId: String = "areaId"
     val action: String = "action"
     val uniquementFs: String = "uniquement-fs"
-    val filterIsOpen: String = "filtre-ouverte"
 
     // Users
 
@@ -60,6 +59,7 @@ object Keys {
     val date: String = "date"
     val searchQuery: String = "q"
     val searchAreaId: String = "areaId"
+    val searchGroupsOnly: String = "groupsOnly"
 
     // Groups
 

@@ -1,7 +1,7 @@
 package views
 
 import cats.syntax.all._
-import controllers.routes.ApplicationController
+import controllers.routes.{ApplicationController, Assets}
 import helper.Crypto.{EncryptedField, KeySet}
 import helpers.forms.CSRFInput
 import java.util.UUID
@@ -11,7 +11,6 @@ import org.webjars.play.WebJarsUtil
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
 import serializers.Keys
-import views.helpers.common.webJarImg
 
 object application {
 
@@ -22,41 +21,22 @@ object application {
       currentUserRights: Authorization.UserRights,
       config: AppConfig,
   ): Frag = {
-    val isAuthorized =
-      Authorization.applicationFileCanBeShowed(config.filesExpirationInDays)(application)(
-        currentUser.id,
-        currentUserRights
-      )
     val daysRemaining =
       Application.filesAvailabilityLeftInDays(config.filesExpirationInDays)(application)
     frag(
-      // Legacy
-      application.files.map { case (filename, _) =>
-        fileLink(
-          isAuthorized,
-          ApplicationController.applicationFile(application.id, filename).url,
-          EncryptedField.fromCipherText(
-            filename,
-            FileMetadata.filenameAAD(UUID.fromString("dummy"))
-          ),
-          daysRemaining,
-          application.creatorUserName,
-          "",
-          None,
-          config
-        )
-      }.toList,
       files
         .filter(_.attached.isApplication)
         .map(file =>
           fileLink(
-            isAuthorized,
-            ApplicationController.applicationFile(application.id, file.id.toString).url,
-            file.filename,
+            Authorization.fileCanBeShowed(config.filesExpirationInDays)(file.attached, application)(
+              currentUser.id,
+              currentUserRights
+            ),
+            file,
             daysRemaining,
             application.creatorUserName,
             "",
-            Some(file.status),
+            file.status,
             config
           )
         )
@@ -71,41 +51,21 @@ object application {
       currentUserRights: Authorization.UserRights,
       config: AppConfig,
   ): Frag = {
-    val isAuthorized =
-      Authorization.answerFileCanBeShowed(config.filesExpirationInDays)(application, answer.id)(
-        currentUser.id,
-        currentUserRights
-      )
     val daysRemaining = Answer.filesAvailabilityLeftInDays(config.filesExpirationInDays)(answer)
     frag(
-      // Legacy
-      answer.files
-        .getOrElse(Map.empty)
-        .map { case (filename, _) =>
-          fileLink(
-            isAuthorized,
-            ApplicationController.answerFile(application.id, answer.id, filename).url,
-            EncryptedField
-              .fromCipherText(filename, FileMetadata.filenameAAD(UUID.fromString("dummy"))),
-            daysRemaining,
-            answer.creatorUserName,
-            "mdl-cell mdl-cell--12-col typography--text-align-center",
-            None,
-            config
-          )
-        }
-        .toList,
       files
         .filter(_.attached.answerIdOpt === answer.id.some)
         .map(file =>
           fileLink(
-            isAuthorized,
-            ApplicationController.answerFile(application.id, answer.id, file.id.toString).url,
-            file.filename,
+            Authorization.fileCanBeShowed(config.filesExpirationInDays)(file.attached, application)(
+              currentUser.id,
+              currentUserRights
+            ),
+            file,
             daysRemaining,
             answer.creatorUserName,
             "mdl-cell mdl-cell--12-col typography--text-align-center",
-            Some(file.status),
+            file.status,
             config
           )
         )
@@ -114,42 +74,41 @@ object application {
 
   def fileLink(
       isAuthorized: Boolean,
-      fileUrl: String,
-      filename: EncryptedField,
+      metadata: FileMetadata,
       daysRemaining: Option[Int],
       uploaderName: String,
       additionalClasses: String,
-      status: Option[FileMetadata.Status],
+      status: FileMetadata.Status,
       config: AppConfig,
   ): Tag = {
     import FileMetadata.Status._
     val link: Frag =
-      if (isAuthorized)
-        if (status.isEmpty || status === Some(Available)) {
-          // Note: legacy is not encrypted
-          val decryptedFilename: String = filename
-            .decrypt(config.fieldEncryptionKeys)
-            .toOption
-            .getOrElse(filename.cipherTextBase64)
+      if (isAuthorized) {
+        // Note: legacy is not encrypted
+        val decryptedFilename: String = metadata.filename
+          .decrypt(config.fieldEncryptionKeys)
+          .toOption
+          .getOrElse(metadata.filename.cipherTextBase64)
+        if (status === Available)
           frag(
             "le fichier ",
-            a(href := fileUrl, decryptedFilename)
+            a(href := ApplicationController.file(metadata.id).url, decryptedFilename)
           )
-        } else
-          s"le fichier $filename"
-      else
+        else
+          s"le fichier $decryptedFilename"
+      } else
         "un fichier"
 
     val statusMessage: Frag = status match {
-      case None | Some(Available) =>
+      case Available =>
         daysRemaining match {
           case None                   => "Fichier expiré et supprimé"
           case Some(expirationInDays) => s"Suppression du fichier dans $expirationInDays jours"
         }
-      case Some(Scanning)    => "Scan par un antivirus en cours"
-      case Some(Quarantined) => "Fichier supprimé par l’antivirus"
-      case Some(Expired)     => "Fichier expiré et supprimé"
-      case Some(Error) =>
+      case Scanning    => "Scan par un antivirus en cours"
+      case Quarantined => "Fichier supprimé par l’antivirus"
+      case Expired     => "Fichier expiré et supprimé"
+      case Error =>
         "Une erreur est survenue lors de l’envoi du fichier, celui-ci n’est pas disponible"
     }
     div(
@@ -165,7 +124,7 @@ object application {
 
   def closeApplicationModal(
       applicationId: UUID
-  )(implicit webJarsUtil: WebJarsUtil, request: RequestHeader): Tag =
+  )(implicit request: RequestHeader): Tag =
     tag("dialog")(
       cls := "mdl-dialog",
       id := "dialog-terminate",
@@ -190,7 +149,11 @@ object application {
             ),
             label(
               `for` := "yes",
-              webJarImg("1f600.svg")(cls := "input__icon", "Oui"),
+              img(
+                cls := "input__icon",
+                src := Assets.versioned("images/twemoji/1f600.svg").url,
+                "Oui"
+              )
             ),
             input(
               id := "neutral",
@@ -201,7 +164,10 @@ object application {
             ),
             label(
               `for` := "neutral",
-              webJarImg("1f610.svg")(cls := "input__icon"),
+              img(
+                cls := "input__icon",
+                src := Assets.versioned("images/twemoji/1f610.svg").url
+              ),
               span(style := "width: 100%", "Je ne sais pas")
             ),
             input(
@@ -213,7 +179,11 @@ object application {
             ),
             label(
               `for` := "no",
-              webJarImg("1f61e.svg")(cls := "input__icon", "Non"),
+              img(
+                cls := "input__icon",
+                src := Assets.versioned("images/twemoji/1f61e.svg").url,
+                "Non"
+              ),
             )
           ),
           br,

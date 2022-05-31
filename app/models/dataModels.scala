@@ -72,7 +72,6 @@ object dataModels {
           .readNullable[Map[String, String]]
           .or((JsPath \ "userInfos").readNullable[Map[String, String]])
       )
-      .and((JsPath \ "files").readNullable[Map[String, Long]])
       .and(
         (JsPath \ "invited_group_ids")
           .readNullable[List[UUID]]
@@ -80,7 +79,6 @@ object dataModels {
           .map(_.getOrElse(List.empty[UUID]))
       )(models.Answer.apply _)
 
-    // implicit val answerWrite: Writes[Answer] = Json.writes[Answer]
     implicit val answerWrite: Writes[Answer] =
       (JsPath \ "id")
         .write[UUID]
@@ -94,7 +92,6 @@ object dataModels {
         .and((JsPath \ "visible_by_helpers").write[Boolean])
         .and((JsPath \ "declare_application_has_irrelevant").write[Boolean])
         .and((JsPath \ "user_infos").writeNullable[Map[String, String]])
-        .and((JsPath \ "files").writeNullable[Map[String, Long]])
         .and((JsPath \ "invited_group_ids").write[List[UUID]])(unlift(models.Answer.unapply))
 
   }

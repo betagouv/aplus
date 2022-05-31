@@ -239,7 +239,15 @@ object editMyGroups {
           (if (user.disabled) " text--strikethrough mdl-color-text--grey-600" else ""),
         (
           if (Authorization.canSeeEditUserPage(currentUserRights))
-            a(href := UserController.editUser(user.id).url, user.name)
+            frag(
+              a(href := UserController.editUser(user.id).url, user.name),
+              " ",
+              a(
+                href := UserController.editUser(user.id).url,
+                target := "_blank",
+                i(cls := "fas fa-arrow-up-right-from-square")
+              )
+            )
           else
             span(
               cls := (if (user.disabled) "mdl-color-text--grey-600" else "application__name"),
@@ -298,8 +306,6 @@ object editMyGroups {
         user.instructor.some
           .filter(identity)
           .map(_ => span(cls := "tag tag--instructor", "Instructeur")),
-        " ",
-        user.helperRoleName.map(role => span(cls := "tag tag--aidant", role)),
       )
 
   private def lineActionButton(

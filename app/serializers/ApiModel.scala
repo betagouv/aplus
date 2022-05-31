@@ -1,8 +1,10 @@
 package serializers
 
+import cats.syntax.all._
+import helper.Time
 import java.time.Instant
 import java.util.UUID
-import models.{Area, Organisation, User, UserGroup}
+import models.{Application, Area, Authorization, Organisation, User, UserGroup}
 import play.api.libs.json._
 
 object ApiModel {
@@ -19,6 +21,12 @@ object ApiModel {
     implicit val organisationFormat = Json.format[Organisation]
   }
 
+  case class ApiError(message: String)
+
+  object ApiError {
+    implicit val apiErrorWrites = Json.writes[ApiError]
+  }
+
   // API model for the admin deploiement
   case class FranceServiceInstanceLine(
       nomFranceService: String,
@@ -33,6 +41,70 @@ object ApiModel {
   )
 
   implicit val franceServiceInstanceLineFormat = Json.format[FranceServiceInstanceLine]
+
+  case class FranceServices(franceServices: List[FranceServices.Line])
+
+  object FranceServices {
+
+    case class Line(
+        matricule: Option[Int],
+        groupId: UUID,
+        name: Option[String],
+        description: Option[String],
+        areas: String,
+        organisation: Option[String],
+        email: Option[String],
+        publicNote: Option[String],
+    )
+
+    case class NewMatricule(
+        matricule: Option[Int],
+        groupId: Option[UUID],
+        name: Option[String],
+        description: Option[String],
+        areaCode: Option[String],
+        email: Option[String],
+        internalSupportComment: Option[String],
+    )
+
+    case class NewMatricules(
+        matricules: List[NewMatricule],
+    )
+
+    case class MatriculeUpdate(matricule: Int, groupId: UUID)
+    case class GroupUpdate(matricule: Int, groupId: UUID)
+
+    case class Update(
+        matriculeUpdate: Option[MatriculeUpdate],
+        groupUpdate: Option[GroupUpdate],
+    )
+
+    case class InsertResult(
+        hasInsertedGroup: Boolean,
+        matricule: Option[Int],
+        groupId: Option[UUID],
+        groupName: Option[String],
+        error: Option[String]
+    )
+
+    case class InsertsResult(inserts: List[InsertResult])
+
+    object NewMatricules {
+      implicit val franceServicesNewMatriculeReads = Json.reads[NewMatricule]
+      implicit val franceServicesNewMatriculesReads = Json.reads[NewMatricules]
+    }
+
+    object Update {
+      implicit val franceServicesMatriculeUpdateReads = Json.reads[MatriculeUpdate]
+      implicit val franceServicesGroupUpdateReads = Json.reads[GroupUpdate]
+      implicit val franceServicesUpdateReads = Json.reads[Update]
+    }
+
+    implicit val franceServicesLineWrites = Json.writes[FranceServices.Line]
+    implicit val franceServicesWrites = Json.writes[FranceServices]
+    implicit val franceServicesInsertResult = Json.writes[InsertResult]
+    implicit val franceServicesInsertsResult = Json.writes[InsertsResult]
+  }
 
   object DeploymentData {
     import implicits.organisationFormat
@@ -166,6 +238,113 @@ object ApiModel {
 
   object SearchResult {
     implicit val searchResultFormat = Json.format[SearchResult]
+  }
+
+  // Embedded classes are here to avoid the 22 fields limit in Play Json
+  case class ApplicationMetadata(
+      id: UUID,
+      creationDateFormatted: String,
+      creationDay: String,
+      creatorUserName: String,
+      creatorUserId: UUID,
+      areaName: String,
+      pertinence: String,
+      internalId: Int,
+      closed: Boolean,
+      usefulness: String,
+      closedDateFormatted: Option[String],
+      closedDay: Option[String],
+      status: String,
+      currentUserCanSeeAnonymousApplication: Boolean,
+      creatorGroupNames: String,
+      invitedGroupNames: String,
+      stats: ApplicationMetadata.Stats,
+  )
+
+  object ApplicationMetadata {
+
+    case class Stats(
+        numberOfInvitedUsers: Int,
+        numberOfMessages: Int,
+        numberOfAnswers: Int,
+        firstAnswerTimeInMinutes: String,
+        resolutionTimeInMinutes: String,
+        firstAnswerTimeInDays: String,
+        resolutionTimeInDays: String,
+    )
+
+    implicit val applicationMetadataStatsWrites = Json.writes[ApplicationMetadata.Stats]
+    implicit val applicationMetadataWrites = Json.writes[ApplicationMetadata]
+
+    def fromApplication(
+        application: Application,
+        rights: Authorization.UserRights,
+        idToUser: Map[UUID, User],
+        idToGroup: Map[UUID, UserGroup]
+    ) = {
+      val areaName = Area.fromId(application.area).map(_.name).getOrElse("Sans territoire")
+      val pertinence = if (!application.irrelevant) "Oui" else "Non"
+      val creatorUser = idToUser.get(application.creatorUserId)
+      val creatorUserGroupNames = creatorUser.toList
+        .flatMap(_.groupIds)
+        .distinct
+        .flatMap(idToGroup.get)
+        .map(_.name)
+        .mkString(",")
+      val invitedGroupNames = application.answers
+        .flatMap(_.invitedGroupIds)
+        .distinct
+        .flatMap(idToGroup.get)
+        .map(_.name)
+        .mkString(",")
+      ApplicationMetadata(
+        id = application.id,
+        creationDateFormatted = Time.formatForAdmins(application.creationDate.toInstant),
+        creationDay = Time.formatPatternFr(application.creationDate, "YYY-MM-dd"),
+        creatorUserName = application.creatorUserName,
+        creatorUserId = application.creatorUserId,
+        areaName = areaName,
+        pertinence = pertinence,
+        internalId = application.internalId,
+        closed = application.closed,
+        usefulness = application.usefulness.getOrElse(""),
+        closedDateFormatted =
+          application.closedDate.map(date => Time.formatForAdmins(date.toInstant)),
+        closedDay = application.closedDate.map(date =>
+          Time.formatPatternFr(application.creationDate, "YYY-MM-dd")
+        ),
+        status = application.status.show,
+        currentUserCanSeeAnonymousApplication =
+          Authorization.canSeeApplication(application)(rights),
+        creatorGroupNames = creatorUserGroupNames,
+        invitedGroupNames = invitedGroupNames,
+        stats = ApplicationMetadata.Stats(
+          numberOfInvitedUsers = application.invitedUsers.size,
+          numberOfMessages = application.answers.length + 1,
+          numberOfAnswers =
+            application.answers.count(_.creatorUserID =!= application.creatorUserId),
+          firstAnswerTimeInMinutes =
+            application.firstAnswerTimeInMinutes.map(_.toString).getOrElse(""),
+          resolutionTimeInMinutes =
+            application.resolutionTimeInMinutes.map(_.toString).getOrElse(""),
+          firstAnswerTimeInDays = application.firstAnswerTimeInMinutes
+            .map(_.toDouble / (60.0 * 24.0))
+            .map(days => f"$days%.2f".reverse.dropWhile(_ === '0').reverse.stripSuffix("."))
+            .getOrElse(""),
+          resolutionTimeInDays = application.resolutionTimeInMinutes
+            .map(_.toDouble / (60.0 * 24.0))
+            .map(days => f"$days%.2f".reverse.dropWhile(_ === '0').reverse.stripSuffix("."))
+            .getOrElse("")
+        )
+      )
+    }
+
+  }
+
+  case class ApplicationMetadataResult(applications: List[ApplicationMetadata])
+
+  object ApplicationMetadataResult {
+    implicit val applicationMetadataResultWrites = Json.writes[ApplicationMetadataResult]
   }
 
 }

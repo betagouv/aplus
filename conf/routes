@@ -21,8 +21,10 @@ POST        /toutes-les-demandes/:applicationId/inviter_des_experts             
 POST        /toutes-les-demandes/:applicationId/messages                                     controllers.ApplicationController.answer(applicationId: java.util.UUID)
 POST        /toutes-les-demandes/:applicationId/terminer                                     controllers.ApplicationController.terminate(applicationId: java.util.UUID)
 POST        /toutes-les-demandes/:applicationId/reopen                                       controllers.ApplicationController.reopen(applicationId: java.util.UUID)
-GET         /toutes-les-demandes/:applicationId/fichiers/:fileId                             controllers.ApplicationController.applicationFile(applicationId: java.util.UUID, fileId: String)
-GET         /toutes-les-demandes/:applicationId/messages/:answerId/fichiers/:fileId          controllers.ApplicationController.answerFile(applicationId: java.util.UUID, answerId: java.util.UUID, fileId: String)
+
+GET         /demandes/metadonnees                                                            controllers.ApplicationController.applicationsAdmin
+
+GET         /fichiers/:fileId                                                                controllers.ApplicationController.file(fileId: java.util.UUID)
 
 
 # Mandat
@@ -101,8 +103,7 @@ POST        /newsletter                                                         
 GET         /territoires                                                                     controllers.AreaController.all
 GET         /territoires/deploiement                                                         controllers.AreaController.deploymentDashboard
 GET         /territoires/deploiement/france-service                                          controllers.AreaController.franceServiceDeploymentDashboard
-GET         /territoires/:areaId/demandes                                                    controllers.ApplicationController.all(areaId: java.util.UUID)
-GET         /territoires/:areaId/demandes.csv                                                controllers.ApplicationController.allCSV(areaId: java.util.UUID)
+GET         /territoires/deploiement/france-services                                         controllers.AreaController.franceServices
 GET         /territoires/:areaId/utilisateurs                                                controllers.UserController.all(areaId: java.util.UUID)
 GET         /territoires/:areaId/utilisateurs.csv                                            controllers.UserController.allCSV(areaId: java.util.UUID)
 
@@ -112,8 +113,13 @@ GET         /status                                                             
 # API
 
 GET         /api/deploiement/france-service                                                  controllers.ApiController.franceServiceDeployment
+GET         /api/deploiement/france-services                                                 controllers.ApiController.franceServices
+POST        /api/deploiement/france-services/add                                             controllers.ApiController.addFranceServices
+POST        /api/deploiement/france-services/update                                          controllers.ApiController.updateFranceService
+POST        /api/deploiement/france-services/:matricule/delete                               controllers.ApiController.deleteFranceService(matricule: Int)
 GET         /api/deploiement/operateurs                                                      controllers.ApiController.deploymentData
 GET         /api/search                                                                      controllers.UserController.search
+GET         /api/applications/metadata                                                       controllers.ApplicationController.applicationsMetadata
 
 # Javascript resource
 GET         /jsRoutes                                                                        controllers.JavascriptController.javascriptRoutes

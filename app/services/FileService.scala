@@ -9,7 +9,7 @@ import cats.data.EitherT
 import helper.Crypto
 import helper.StringHelper.normalizeNFKC
 import java.nio.file.{Files, Path, Paths}
-import java.time.Instant
+import java.time.{Instant, ZonedDateTime}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models.{Error, EventType, FileMetadata, User}
@@ -96,24 +96,10 @@ class FileService @Inject() (
     result.map(_.map { case (_, metadata) => metadata }).value
   }
 
-  def fileMetadata(filename: String): Future[Either[Error, Option[(Path, FileMetadata)]]] =
-    Try(UUID.fromString(filename)).toOption match {
-      case None => Future.successful(none.asRight)
-      case Some(fileId) =>
-        byId(fileId).map(
-          _.map(_.map(metadata => (Paths.get(s"${config.filesPath}/$fileId"), metadata)))
-        )
-    }
-
-  // TODO: remove that once saving names in DB is known to be working
-  //       this piece of code is here just in case we need reverting
-  def legacyFilePath(metadata: FileMetadata): Path =
-    metadata.attached match {
-      case FileMetadata.Attached.Application(applicationId) =>
-        Paths.get(s"${config.filesPath}/app_$applicationId-${metadata.filename}")
-      case FileMetadata.Attached.Answer(applicationId, _) =>
-        Paths.get(s"${config.filesPath}/ans_$applicationId-${metadata.filename}")
-    }
+  def fileMetadata(fileId: UUID): Future[Either[Error, Option[(Path, FileMetadata)]]] =
+    byId(fileId).map(
+      _.map(_.map(metadata => (Paths.get(s"${config.filesPath}/$fileId"), metadata)))
+    )
 
   private def scanFilesBackground(metadataList: List[(Path, FileMetadata)], uploader: User)(implicit
       request: Request[_]
@@ -138,8 +124,6 @@ class FileService @Inject() (
                     )
                     val fileDestination = Paths.get(s"${config.filesPath}/${metadata.id}")
                     Files.copy(path, fileDestination)
-                    // Can throw java.nio.file.FileAlreadyExistsException
-                    Try(Files.copy(path, legacyFilePath(metadata)))
                     Files.deleteIfExists(path)
                     FileMetadata.Status.Available
                   case VirusFound(message) =>
@@ -169,8 +153,6 @@ class FileService @Inject() (
             )
             val fileDestination = Paths.get(s"${config.filesPath}/${metadata.id}")
             Files.copy(path, fileDestination)
-            // Can throw java.nio.file.FileAlreadyExistsException
-            Try(Files.copy(path, legacyFilePath(metadata)))
             Files.deleteIfExists(path)
             updateStatus(metadata.id, FileMetadata.Status.Available)
           }
@@ -339,6 +321,29 @@ class FileService @Inject() (
         logException(error)
       }
   }
+
+  def wipeFilenames(retentionInMonths: Long): Future[Either[Error, Int]] =
+    Future(
+      Try(
+        db.withConnection { implicit connection =>
+          val before = ZonedDateTime.now().minusMonths(retentionInMonths)
+          SQL(s"""UPDATE file_metadata
+                  SET filename = 'fichier-non-existant'
+                  WHERE upload_date < {before}
+                  AND filename != 'fichier-non-existant'""")
+            .on("before" -> before)
+            .executeUpdate()
+        }
+      ).toEither.left
+        .map(e =>
+          Error.SqlException(
+            EventType.FileMetadataError,
+            s"Impossible de supprimer les noms de fichiers",
+            e,
+            none
+          )
+        )
+    )
 
   private def before(beforeDate: Instant): Future[Either[Error, List[FileMetadata]]] =
     Future(

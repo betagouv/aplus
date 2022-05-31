@@ -45,7 +45,6 @@ case class GroupController @Inject() (
     applicationService: ApplicationService,
     loginAction: LoginAction,
     groupService: UserGroupService,
-    notificationService: NotificationService,
     eventService: EventService,
     ws: WSClient,
     userService: UserService
@@ -83,7 +82,7 @@ case class GroupController @Inject() (
           },
           data =>
             userService
-              .byEmailFuture(data.email)
+              .byEmailFuture(data.email, includeDisabled = true)
               .zip(userService.byGroupIdsFuture(List(groupId), includeDisabled = true))
               .flatMap {
                 case (None, _) =>
@@ -408,7 +407,7 @@ case class GroupController @Inject() (
     for {
       groups <- groupService.byIdsFuture(user.groupIds)
       users <- userService.byGroupIdsFuture(groups.map(_.id), includeDisabled = true)
-      applications <- applicationService.allForUserIds(users.map(_.id))
+      applications <- applicationService.allForUserIds(users.map(_.id), none)
     } yield {
       eventService.log(EventType.EditMyGroupShowed, "Visualise la modification de ses groupes")
       Ok(
@@ -432,7 +431,7 @@ case class GroupController @Inject() (
     eventService.log(EditGroupShowed, s"Visualise la vue de modification du groupe")
     val isEmpty = groupService.isGroupEmpty(group.id)
     applicationService
-      .allForUserIds(groupUsers.map(_.id))
+      .allForUserIds(groupUsers.map(_.id), none)
       .map(applications =>
         Ok(
           views.html.editGroup(request.currentUser, request.rights)(

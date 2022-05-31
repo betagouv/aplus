@@ -73,4 +73,16 @@ case class AreaController @Inject() (
       }
     }
 
+  def franceServices =
+    loginAction.async { implicit request =>
+      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+        DeploymentDashboardUnauthorized,
+        "Accès non autorisé aux France Services"
+      ) { () =>
+        Future.successful(
+          Ok(views.franceServices.page(request.currentUser, request.rights))
+        )
+      }
+    }
+
 }

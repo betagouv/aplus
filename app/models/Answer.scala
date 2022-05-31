@@ -7,6 +7,9 @@ import cats.kernel.Eq
 import cats.syntax.all._
 import models.Answer.AnswerType
 
+/** To cast `creationDate` to a valid PG type, use `regexp_replace(creation_date, '\[.*\]',
+  * '')::timestamptz::timestamp`
+  */
 case class Answer(
     id: UUID,
     applicationId: UUID,
@@ -19,7 +22,6 @@ case class Answer(
     visibleByHelpers: Boolean,
     declareApplicationHasIrrelevant: Boolean,
     userInfos: Option[Map[String, String]],
-    files: Option[Map[String, Long]] = Map.empty[String, Long].some,
     invitedGroupIds: List[UUID]
 ) extends AgeModel
 

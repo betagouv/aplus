@@ -17,7 +17,10 @@ lazy val root = (project in file("."))
       "gitHeadCommit" -> git.gitHeadCommit.value,
       "gitHeadCommitDate" -> git.gitHeadCommitDate.value
     ),
-    buildInfoPackage := "constants"
+    buildInfoPackage := "constants",
+    // Test with Firefox
+    // Note that sbt does not forward system properties from the cli to the tests
+    Test / javaOptions += ("-Dwebdriver.gecko.driver=" + scala.sys.env("GECKO_DRIVER"))
   )
   .dependsOn(macrosProject)
   .dependsOn(clammyStreams)
@@ -90,11 +93,10 @@ pipelineStages := Seq(digest, gzip)
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.3.3",
+  "org.postgresql" % "postgresql" % "42.3.6",
   anormDependency,
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
-  "com.typesafe.play" %% "play-mailer-guice" % "8.0.1",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
   ws,
@@ -113,12 +115,11 @@ libraryDependencies ++= Seq(
   "org.webjars.bower" % "material-design-lite" % "1.3.0",
   "org.webjars" % "material-design-icons" % "4.0.0",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
-  "org.webjars.npm" % "twemoji" % "2.5.1",
   "org.webjars" % "chartjs" % "2.9.4",
-  "org.webjars" % "font-awesome" % "5.15.4",
+  "org.webjars" % "font-awesome" % "6.1.0",
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "5.6.1"
+libraryDependencies += "io.sentry" % "sentry-logback" % "5.7.4"
 
 // Test
 libraryDependencies ++= Seq(

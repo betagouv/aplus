@@ -21,11 +21,14 @@ import org.webjars.play.WebJarsUtil
 import play.api.cache.AsyncCacheApi
 import play.api.data.Forms._
 import play.api.data._
+import play.api.data.format.{Formats, Formatter}
 import play.api.data.validation.Constraints._
+import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
 import play.api.mvc._
 import play.twirl.api.Html
 import serializers.Keys
+import serializers.ApiModel.{ApplicationMetadata, ApplicationMetadataResult}
 import services._
 import views.stats.StatsData
 
@@ -194,7 +197,15 @@ case class ApplicationController @Inject() (
   )(
       onSuccess: List[FileMetadata] => Future[Result]
   )(implicit request: RequestWithUserData[AnyContent]): Future[Result] = {
-    val tmpFiles = computeAttachmentsToStore(request)
+    val tmpFiles: List[(Path, String)] =
+      request.body.asMultipartFormData
+        .map(_.files.filter(_.key.matches("file\\[\\d+\\]")))
+        .getOrElse(Nil)
+        .collect {
+          case attachment if attachment.filename.nonEmpty =>
+            attachment.ref.path -> attachment.filename
+        }
+        .toList
     val document = answerId match {
       case None           => FileMetadata.Attached.Application(applicationId)
       case Some(answerId) => FileMetadata.Attached.Answer(applicationId, answerId)
@@ -308,7 +319,6 @@ case class ApplicationController @Inject() (
                 hasSelectedSubject =
                   applicationData.selectedSubject.contains[String](applicationData.subject),
                 category = applicationData.category,
-                files = Map.empty,
                 mandatType = dataModels.Application.MandatType
                   .dataModelDeserialization(applicationData.mandatType),
                 mandatDate = Some(applicationData.mandatDate),
@@ -319,13 +329,13 @@ case class ApplicationController @Inject() (
                 eventService.log(
                   ApplicationCreated,
                   s"La demande ${application.id} a été créée",
-                  application = application.some
+                  applicationId = application.id.some
                 )
                 application.invitedUsers.foreach { case (userId, _) =>
                   eventService.log(
                     ApplicationCreated,
                     s"Envoi de la nouvelle demande ${application.id} à l'utilisateur $userId",
-                    application = application.some,
+                    applicationId = application.id.some,
                     involvesUser = userId.some
                   )
                 }
@@ -337,16 +347,16 @@ case class ApplicationController @Inject() (
                         eventService.log(
                           ApplicationLinkedToMandatError,
                           s"Erreur pour faire le lien entre le mandat $mandatId et la demande $applicationId",
-                          application = application.some,
+                          applicationId = application.id.some,
                           underlyingException = error.some
                         )
                       case Success(Left(error)) =>
-                        eventService.logError(error, application = application.some)
+                        eventService.logError(error, applicationId = application.id.some)
                       case Success(Right(_)) =>
                         eventService.log(
                           ApplicationLinkedToMandat,
                           s"La demande ${application.id} a été liée au mandat $mandatId",
-                          application = application.some
+                          applicationId = application.id.some
                         )
                     }
                 }
@@ -361,7 +371,7 @@ case class ApplicationController @Inject() (
                 eventService.log(
                   ApplicationCreationError,
                   s"La demande ${application.id} n'a pas pu être créée",
-                  application = application.some
+                  applicationId = application.id.some
                 )
                 InternalServerError(
                   "Erreur Interne: Votre demande n'a pas pu être envoyée. Merci de réessayer ou de contacter l'administrateur"
@@ -371,17 +381,6 @@ case class ApplicationController @Inject() (
         )
       }
     }
-
-  private def computeAttachmentsToStore(
-      request: RequestWithUserData[AnyContent]
-  ): Iterable[(Path, String)] =
-    request.body.asMultipartFormData
-      .map(_.files.filter(_.key.matches("file\\[\\d+\\]")))
-      .getOrElse(Nil)
-      .collect {
-        case attachment if attachment.filename.nonEmpty =>
-          attachment.ref.path -> attachment.filename
-      }
 
   private def allApplicationVisibleByUserAdmin(
       user: User,
@@ -395,17 +394,28 @@ case class ApplicationController @Inject() (
         applicationService.allForAreas(List(area.id), numOfMonthsDisplayed.some)
       case (false, None) if user.groupAdmin =>
         val userIds = userService.byGroupIds(user.groupIds, includeDisabled = true).map(_.id)
-        applicationService.allForUserIds(userIds)
+        applicationService.allForUserIds(userIds, numOfMonthsDisplayed.some)
       case (false, Some(area)) if user.groupAdmin =>
-        val userGroupIds =
-          userGroupService.byIds(user.groupIds).filter(_.areaIds.contains[UUID](area.id)).map(_.id)
-        val userIds = userService.byGroupIds(userGroupIds, includeDisabled = true).map(_.id)
-        applicationService.allForUserIds(userIds)
+        val userIds = userService.byGroupIds(user.groupIds, includeDisabled = true).map(_.id)
+        applicationService
+          .allForUserIds(userIds, numOfMonthsDisplayed.some)
+          .map(_.filter(application => application.area === area.id))
       case _ =>
-        Future(Nil)
+        Future.successful(Nil)
     }
 
-  def all(areaId: UUID): Action[AnyContent] =
+  private def extractApplicationsAdminQuery(implicit
+      request: RequestWithUserData[_]
+  ): (Option[Area], Int) = {
+    val areaOpt = areaInQueryString.filterNot(_.id === Area.allArea.id)
+    val numOfMonthsDisplayed: Int = request
+      .getQueryString(Keys.QueryParam.numOfMonthsDisplayed)
+      .flatMap(s => Try(s.toInt).toOption)
+      .getOrElse(3)
+    (areaOpt, numOfMonthsDisplayed)
+  }
+
+  def applicationsAdmin: Action[AnyContent] =
     loginAction.async { implicit request =>
       (request.currentUser.admin, request.currentUser.groupAdmin) match {
         case (false, false) =>
@@ -419,29 +429,60 @@ case class ApplicationController @Inject() (
             )
           )
         case _ =>
-          val numOfMonthsDisplayed: Int = request
-            .getQueryString(Keys.QueryParam.numOfMonthsDisplayed)
-            .flatMap(s => Try(s.toInt).toOption)
-            .getOrElse(3)
-          val area = if (areaId === Area.allArea.id) None else Area.fromId(areaId)
-          allApplicationVisibleByUserAdmin(request.currentUser, area, numOfMonthsDisplayed).map {
-            unfilteredApplications =>
-              val filteredApplications =
-                request.getQueryString(Keys.QueryParam.filterIsOpen) match {
-                  case Some(_) => unfilteredApplications.filterNot(_.closed)
-                  case None    => unfilteredApplications
-                }
+          val (areaOpt, numOfMonthsDisplayed) = extractApplicationsAdminQuery
+          eventService.log(
+            AllApplicationsShowed,
+            s"Accède à la page des métadonnées des demandes [$areaOpt ; $numOfMonthsDisplayed]"
+          )
+          Future(
+            Ok(
+              views.applicationsAdmin
+                .page(request.currentUser, request.rights, areaOpt, numOfMonthsDisplayed)
+            )
+          )
+      }
+    }
+
+  def applicationsMetadata: Action[AnyContent] =
+    loginAction.async { implicit request =>
+      (request.currentUser.admin, request.currentUser.groupAdmin) match {
+        case (false, false) =>
+          eventService.log(
+            AllApplicationsUnauthorized,
+            "Liste des metadata des demandes non autorisée"
+          )
+          Future.successful(Unauthorized(Json.toJson(ApplicationMetadataResult(Nil))))
+        case _ =>
+          val (areaOpt, numOfMonthsDisplayed) = extractApplicationsAdminQuery
+          allApplicationVisibleByUserAdmin(request.currentUser, areaOpt, numOfMonthsDisplayed).map {
+            applications =>
               eventService.log(
                 AllApplicationsShowed,
-                s"Visualise la liste des demandes de $areaId - taille = ${filteredApplications.size}"
+                "Accède à la liste des metadata des demandes " +
+                  s"[territoire ${areaOpt.map(_.name).getOrElse("tous")} ; " +
+                  s"taille : ${applications.size}]"
               )
-              Ok(
-                views.html
-                  .allApplications(request.currentUser, request.rights)(
-                    filteredApplications,
-                    area.getOrElse(Area.allArea)
+              val userIds: List[UUID] = (applications.flatMap(_.invitedUsers.keys) ++
+                applications.map(_.creatorUserId)).toList.distinct
+              val users = userService.byIds(userIds, includeDisabled = true)
+              val groupIds =
+                (users.flatMap(_.groupIds) ::: applications.flatMap(application =>
+                  application.invitedGroupIdsAtCreation ::: application.answers.flatMap(
+                    _.invitedGroupIds
                   )
+                )).distinct
+              val groups = userGroupService.byIds(groupIds)
+              val idToUser = users.map(user => (user.id, user)).toMap
+              val idToGroup = groups.map(group => (group.id, group)).toMap
+              val metadata = applications.map(application =>
+                ApplicationMetadata.fromApplication(
+                  application,
+                  request.rights,
+                  idToUser,
+                  idToGroup
+                )
               )
+              Ok(Json.toJson(ApplicationMetadataResult(metadata)))
           }
       }
     }
@@ -508,7 +549,7 @@ case class ApplicationController @Inject() (
   ): Future[(List[User], List[Application])] =
     for {
       users <- userService.byGroupIdsAnonymous(groups.map(_.id))
-      applications <- applicationService.allForUserIds(users.map(_.id))
+      applications <- applicationService.allForUserIds(users.map(_.id), none)
     } yield (users, applications)
 
   private def generateStats(
@@ -518,7 +559,7 @@ case class ApplicationController @Inject() (
       creationMinDate: LocalDate,
       creationMaxDate: LocalDate,
       rights: Authorization.UserRights
-  )(implicit webJarsUtil: WebJarsUtil): Future[Html] = {
+  ): Future[Html] = {
     val usersAndApplications: Future[(List[User], List[Application])] =
       (areaIds, organisationIds, groupIds) match {
         case (Nil, Nil, Nil) =>
@@ -538,7 +579,7 @@ case class ApplicationController @Inject() (
               .map(_.filter(_.areaIds.intersect(areaIds).nonEmpty))
             users <- userService.byGroupIdsAnonymous(groups.map(_.id))
             applications <- applicationService
-              .allForUserIds(users.map(_.id))
+              .allForUserIds(users.map(_.id), none)
               .map(_.filter(application => areaIds.contains(application.area)))
           } yield (users, applications)
         case (_, _ :: _, _) =>
@@ -595,6 +636,22 @@ case class ApplicationController @Inject() (
     )
   }
 
+  // Handles some edge cases from browser compatibility
+  private val localDateMapping: Mapping[LocalDate] = {
+    val formatter = new Formatter[LocalDate] {
+      val defaultCase = Formats.localDateFormat
+      val fallback1 = Formats.localDateFormat("dd-MM-yyyy")
+      val fallback2 = Formats.localDateFormat("dd.MM.yy")
+      def bind(key: String, data: Map[String, String]) =
+        defaultCase
+          .bind(key, data)
+          .orElse(fallback1.bind(key, data))
+          .orElse(fallback2.bind(key, data))
+      def unbind(key: String, value: LocalDate) = defaultCase.unbind(key, value)
+    }
+    of(formatter)
+  }
+
   // A `def` for the LocalDate.now()
   private def statsForm =
     Form(
@@ -602,8 +659,8 @@ case class ApplicationController @Inject() (
         "areas" -> default(list(uuid), List()),
         "organisations" -> default(list(of[Organisation.Id]), List()),
         "groups" -> default(list(uuid), List()),
-        "creationMinDate" -> default(localDate, LocalDate.now().minusDays(30)),
-        "creationMaxDate" -> default(localDate, LocalDate.now())
+        "creationMinDate" -> default(localDateMapping, LocalDate.now().minusDays(30)),
+        "creationMaxDate" -> default(localDateMapping, LocalDate.now())
       )
     )
 
@@ -634,26 +691,28 @@ case class ApplicationController @Inject() (
       request: RequestWithUserData[_]
   ): Future[Result] = {
     // TODO: remove `.get`
-    val (areaIds, organisationIds, groupIds, creationMinDate, creationMaxDate) =
+    val (areaIds, queryOrganisationIds, queryGroupIds, creationMinDate, creationMaxDate) =
       statsForm.bindFromRequest().value.get
 
-    val observableOrganisationIds = if (Authorization.isAdmin(rights)) {
-      organisationIds
+    val organisationIds = if (Authorization.isAdmin(rights)) {
+      queryOrganisationIds
     } else {
-      organisationIds.filter(id => Authorization.canObserveOrganisation(id)(rights))
+      queryOrganisationIds.filter(id => Authorization.canObserveOrganisation(id)(rights))
     }
 
-    val observableGroupIds = if (Authorization.isAdmin(rights)) {
-      groupIds
-    } else {
-      groupIds.intersect(user.groupIds)
-    }
+    val groupIds =
+      if (organisationIds.nonEmpty) Nil
+      else if (Authorization.isAdmin(rights)) {
+        queryGroupIds
+      } else {
+        queryGroupIds.intersect(user.groupIds)
+      }
 
     val cacheKey =
       Authorization.isAdmin(rights).toString +
         ".stats." +
         Hash.sha256(
-          areaIds.toString + observableOrganisationIds.toString + observableGroupIds.toString +
+          areaIds.toString + organisationIds.toString + groupIds.toString +
             creationMinDate.toString + creationMaxDate.toString
         )
 
@@ -662,8 +721,8 @@ case class ApplicationController @Inject() (
         .getOrElseUpdate[Html](cacheKey, 1.hours)(
           generateStats(
             areaIds,
-            observableOrganisationIds,
-            observableGroupIds,
+            organisationIds,
+            groupIds,
             creationMinDate,
             creationMaxDate,
             rights
@@ -800,30 +859,6 @@ case class ApplicationController @Inject() (
         .as("text/csv")
     }
 
-  def allCSV(areaId: UUID): Action[AnyContent] =
-    loginAction.async { implicit request =>
-      val area = if (areaId === Area.allArea.id) Option.empty else Area.fromId(areaId)
-      val exportedApplicationsFuture =
-        if (request.currentUser.admin || request.currentUser.groupAdmin) {
-          allApplicationVisibleByUserAdmin(request.currentUser, area, 24)
-        } else {
-          Future(Nil)
-        }
-
-      exportedApplicationsFuture.map { exportedApplications =>
-        val date = Time.formatPatternFr(Time.nowParis(), "YYY-MM-dd-HH'h'mm")
-        val csvContent = applicationsToCSV(exportedApplications)
-
-        eventService.log(AllCSVShowed, s"Visualise un CSV pour la zone $area")
-        val filenameAreaPart: String = area.map(_.name.stripSpecialChars).getOrElse("tous")
-        Ok(csvContent)
-          .withHeaders(
-            "Content-Disposition" -> s"""attachment; filename="aplus-demandes-$date-$filenameAreaPart.csv""""
-          )
-          .as("text/csv")
-      }
-    }
-
   private def usersWhoCanBeInvitedOn(application: Application, currentAreaId: UUID)(implicit
       request: RequestWithUserData[_]
   ): Future[List[User]] =
@@ -914,7 +949,7 @@ case class ApplicationController @Inject() (
                     eventService.log(
                       ApplicationShowed,
                       s"Demande $id consultée",
-                      application = application.some
+                      applicationId = application.id.some
                     )
                     Ok(
                       views.html.showApplication(request.currentUser, request.rights)(
@@ -936,15 +971,120 @@ case class ApplicationController @Inject() (
       }
     }
 
-  def answerFile(applicationId: UUID, answerId: UUID, fileId: String): Action[AnyContent] =
-    file(applicationId, Some(answerId), fileId)
+  def file(fileId: UUID): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      fileService
+        .fileMetadata(fileId)
+        .flatMap(
+          _.fold(
+            error => {
+              eventService.logError(error)
+              Future.successful(
+                InternalServerError(
+                  "Une erreur est survenue pour trouver le fichier. " +
+                    "Cette erreur est probablement temporaire."
+                )
+              )
+            },
+            metadataOpt => {
+              metadataOpt match {
+                case None =>
+                  eventService.log(FileNotFound, s"Le fichier $fileId n'existe pas")
+                  Future.successful(NotFound("Nous n'avons pas trouvé ce fichier"))
+                case Some((path, metadata)) =>
+                  val applicationId = metadata.attached match {
+                    case FileMetadata.Attached.Application(id)          => id
+                    case FileMetadata.Attached.Answer(applicationId, _) => applicationId
+                  }
+                  withApplication(applicationId) { application: Application =>
+                    val isAuthorized =
+                      Authorization
+                        .fileCanBeShowed(config.filesExpirationInDays)(
+                          metadata.attached,
+                          application
+                        )(
+                          request.currentUser.id,
+                          request.rights
+                        )
+                    if (isAuthorized) {
+                      metadata.status match {
+                        case FileMetadata.Status.Scanning =>
+                          eventService.log(
+                            FileNotFound,
+                            s"Le fichier ${metadata.id} du document ${metadata.attached} est en cours de scan",
+                            applicationId = applicationId.some
+                          )
+                          Future.successful(
+                            NotFound(
+                              "Le fichier est en cours de scan par un antivirus. Il devrait être disponible d'ici peu."
+                            )
+                          )
+                        case FileMetadata.Status.Quarantined =>
+                          eventService.log(
+                            EventType.FileQuarantined,
+                            s"Le fichier ${metadata.id} du document ${metadata.attached} est en quarantaine",
+                            applicationId = applicationId.some
+                          )
+                          Future.successful(
+                            NotFound(
+                              "L'antivirus a mis en quarantaine le fichier. Si vous avez envoyé ce fichier, il est conseillé de vérifier votre ordinateur avec un antivirus. Si vous pensez qu'il s'agit d'un faux positif, nous vous invitons à changer le format, puis envoyer à nouveau sous un nouveau format."
+                            )
+                          )
+                        case FileMetadata.Status.Available =>
+                          eventService.log(
+                            FileOpened,
+                            s"Le fichier ${metadata.id} du document ${metadata.attached} a été ouvert",
+                            applicationId = applicationId.some
+                          )
+                          sendFile(path, metadata)
+                        case FileMetadata.Status.Expired =>
+                          eventService.log(
+                            EventType.FileNotFound,
+                            s"Le fichier ${metadata.id} du document ${metadata.attached} est expiré",
+                            applicationId = applicationId.some
+                          )
+                          Future.successful(NotFound("Ce fichier à expiré."))
+                        case FileMetadata.Status.Error =>
+                          eventService.log(
+                            EventType.FileNotFound,
+                            s"Le fichier ${metadata.id} du document ${metadata.attached} a une erreur",
+                            applicationId = applicationId.some
+                          )
+                          Future.successful(
+                            NotFound(
+                              "Une erreur est survenue lors de l'enregistrement du fichier. Celui-ci n'est pas disponible."
+                            )
+                          )
+                      }
+                    } else {
+                      eventService.log(
+                        FileUnauthorized,
+                        s"L'accès aux fichiers sur la demande $applicationId n'est pas autorisé (fichier $fileId)",
+                        applicationId = application.id.some
+                      )
+                      Future.successful(
+                        Unauthorized(
+                          s"Vous n'avez pas les droits suffisants pour voir les fichiers sur cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+                        )
+                      )
 
-  def applicationFile(applicationId: UUID, fileId: String): Action[AnyContent] =
-    file(applicationId, None, fileId)
+                    }
+                  }
+              }
+            }
+          )
+        )
 
-  private def sendFile(localPath: Path, filename: String, remoteUrlPath: String)(implicit
+    }
+
+  private def sendFile(localPath: Path, metadata: FileMetadata)(implicit
       request: actions.RequestWithUserData[_]
-  ): Future[Result] =
+  ): Future[Result] = {
+    val filename = metadata.filename
+      .decrypt(config.fieldEncryptionKeys)
+      // Compat with legacy, can be removed once field is encrypted
+      .toOption
+      .getOrElse(metadata.filename.cipherTextBase64)
     if (Files.exists(localPath)) {
       Future(
         Ok.sendPath(
@@ -965,7 +1105,7 @@ case class ApplicationController @Inject() (
           Future(NotFound("Nous n'avons pas trouvé ce fichier"))
         case Some(domain) =>
           val cookies = request.headers.getAll(COOKIE)
-          val url = domain + remoteUrlPath
+          val url = domain + routes.ApplicationController.file(metadata.id).url
           ws.url(url)
             .addHttpHeaders(cookies.map(cookie => (COOKIE, cookie)): _*)
             .get()
@@ -993,211 +1133,7 @@ case class ApplicationController @Inject() (
             }
       }
     }
-
-  private def sendFileFromMetadata(
-      fileId: String,
-      application: Application,
-      legacyPath: Path,
-      legacyUrlPath: String,
-      legacyDocument: String,
-      legacyFallback: () => Future[Result]
-  )(implicit
-      request: actions.RequestWithUserData[_]
-  ): Future[Result] =
-    fileService
-      .fileMetadata(fileId)
-      .flatMap(
-        _.fold(
-          error => {
-            eventService.logError(error)
-            Future.successful(
-              InternalServerError(
-                "Une erreur est survenue pour trouver le fichier. " +
-                  "Cette erreur est probablement temporaire."
-              )
-            )
-          },
-          metadataOpt => {
-            metadataOpt match {
-              case None =>
-                legacyFallback()
-              case Some((path, metadata)) =>
-                metadata.status match {
-                  case FileMetadata.Status.Scanning =>
-                    eventService.log(
-                      FileNotFound,
-                      s"Le fichier ${metadata.id} du document ${metadata.attached} est en cours de scan",
-                      application = application.some
-                    )
-                    Future(
-                      NotFound(
-                        "Le fichier est en cours de scan par un antivirus. Il devrait être disponible d'ici peu."
-                      )
-                    )
-                  case FileMetadata.Status.Quarantined =>
-                    eventService.log(
-                      EventType.FileQuarantined,
-                      s"Le fichier ${metadata.id} du document ${metadata.attached} est en quarantaine",
-                      application = application.some
-                    )
-                    Future(
-                      NotFound(
-                        "L'antivirus a mis en quarantaine le fichier. Si vous avez envoyé ce fichier, il est conseillé de vérifier votre ordinateur avec un antivirus. Si vous pensez qu'il s'agit d'un faux positif, nous vous invitons à changer le format, puis envoyer à nouveau sous un nouveau format."
-                      )
-                    )
-                  case FileMetadata.Status.Available =>
-                    eventService.log(
-                      FileOpened,
-                      s"Le fichier du document ${metadata.attached} a été ouvert",
-                      application = application.some
-                    )
-                    val call = metadata.attached match {
-                      case FileMetadata.Attached.Application(applicationId) =>
-                        routes.ApplicationController.applicationFile(applicationId, fileId)
-                      case FileMetadata.Attached.Answer(applicationId, answerId) =>
-                        routes.ApplicationController.answerFile(applicationId, answerId, fileId)
-                    }
-                    val filename = metadata.filename
-                      .decrypt(config.fieldEncryptionKeys)
-                      // Compat with legacy, can be removed once field is encrypted
-                      .toOption
-                      .getOrElse(metadata.filename.cipherTextBase64)
-                    sendFile(
-                      path,
-                      filename,
-                      call.url
-                    )
-                  case FileMetadata.Status.Expired =>
-                    eventService.log(
-                      EventType.FileNotFound,
-                      s"Le fichier ${metadata.id} du document ${metadata.attached} est expiré",
-                      application = application.some
-                    )
-                    Future(NotFound("Ce fichier à expiré."))
-                  case FileMetadata.Status.Error =>
-                    eventService.log(
-                      EventType.FileNotFound,
-                      s"Le fichier ${metadata.id} du document ${metadata.attached} a une erreur",
-                      application = application.some
-                    )
-                    Future(
-                      NotFound(
-                        "Une erreur est survenue lors de l'enregistrement du fichier. Celui-ci n'est pas disponible."
-                      )
-                    )
-                }
-            }
-          }
-        )
-      )
-
-  // TODO: once legacy file upload is not used anymore, keep only fileId parameter as UUID
-  private def file(applicationId: UUID, answerIdOption: Option[UUID], fileId: String) =
-    loginAction.async { implicit request =>
-      withApplication(applicationId) { application: Application =>
-        answerIdOption match {
-          case Some(answerId)
-              if Authorization.answerFileCanBeShowed(config.filesExpirationInDays)(
-                application,
-                answerId
-              )(
-                request.currentUser.id,
-                request.rights
-              ) =>
-            application.answers.find(_.id === answerId) match {
-              case Some(answer) =>
-                val legacyPath = Paths.get(s"${config.filesPath}/ans_$answerId-$fileId")
-                val legacyUrlPath =
-                  s"/toutes-les-demandes/$applicationId/messages/$answerId/fichiers/$fileId"
-                val legacyDocument = s"la réponse $answerId sur la demande $applicationId"
-                sendFileFromMetadata(
-                  fileId,
-                  application,
-                  legacyPath,
-                  legacyUrlPath,
-                  legacyDocument,
-                  () => {
-                    if (answer.files.getOrElse(Map.empty).contains(fileId)) {
-                      eventService.log(
-                        FileOpened,
-                        s"Le fichier de $legacyDocument a été ouvert",
-                        application = application.some
-                      )
-                      sendFile(
-                        legacyPath,
-                        fileId,
-                        legacyUrlPath
-                      )
-                    } else {
-                      eventService.log(
-                        FileNotFound,
-                        s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas",
-                        application = application.some
-                      )
-                      Future.successful(NotFound("Nous n'avons pas trouvé ce fichier"))
-                    }
-                  }
-                )
-              case _ =>
-                eventService.log(
-                  FileNotFound,
-                  s"Le fichier de la réponse $answerId sur la demande $applicationId n'existe pas",
-                  application = application.some
-                )
-                Future.successful(NotFound("Nous n'avons pas trouvé ce fichier"))
-            }
-          case None
-              if Authorization.applicationFileCanBeShowed(config.filesExpirationInDays)(
-                application
-              )(
-                request.currentUser.id,
-                request.rights
-              ) =>
-            val legacyPath = Paths.get(s"${config.filesPath}/app_$applicationId-$fileId")
-            val legacyUrlPath = s"/toutes-les-demandes/$applicationId/fichiers/$fileId"
-            val legacyDocument = s"la demande $applicationId"
-            sendFileFromMetadata(
-              fileId,
-              application,
-              legacyPath,
-              legacyUrlPath,
-              legacyDocument,
-              () => {
-                if (application.files.contains(fileId)) {
-                  eventService.log(
-                    FileOpened,
-                    s"Le fichier de $legacyDocument a été ouvert",
-                    application = application.some
-                  )
-                  sendFile(
-                    legacyPath,
-                    fileId,
-                    legacyUrlPath
-                  )
-                } else {
-                  eventService.log(
-                    FileNotFound,
-                    s"Le fichier de la demande $applicationId n'existe pas",
-                    application = application.some
-                  )
-                  Future.successful(NotFound("Nous n'avons pas trouvé ce fichier"))
-                }
-              }
-            )
-          case _ =>
-            eventService.log(
-              FileUnauthorized,
-              s"L'accès aux fichiers sur la demande $applicationId n'est pas autorisé",
-              application = application.some
-            )
-            Future(
-              Unauthorized(
-                s"Vous n'avez pas les droits suffisants pour voir les fichiers sur cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-              )
-            )
-        }
-      }
-    }
+  }
 
   private def buildAnswerMessage(message: String, signature: Option[String]) =
     signature.map(s => message + "\n\n" + s).getOrElse(message)
@@ -1229,7 +1165,11 @@ case class ApplicationController @Inject() (
                 s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.format).mkString(", ")})."
               val error =
                 s"Erreur dans le formulaire de réponse (${formErrorsLog(formWithErrors)})"
-              eventService.log(AnswerNotCreated, error, application = application.some)
+              eventService.log(
+                EventType.AnswerFormError,
+                error,
+                applicationId = application.id.some
+              )
               Future(
                 Redirect(
                   routes.ApplicationController.show(applicationId).withFragment("answer-error")
@@ -1268,7 +1208,6 @@ case class ApplicationController @Inject() (
                   case (NonEmptyTrimmedString(infoName), NonEmptyTrimmedString(infoValue)) =>
                     (infoName, infoValue)
                 }.some,
-                files = none,
                 invitedGroupIds = List.empty[UUID]
               )
               // If the new answer creator is the application creator, we force the application reopening
@@ -1280,7 +1219,7 @@ case class ApplicationController @Inject() (
                 eventService.log(
                   AnswerCreated,
                   s"La réponse ${answer.id} a été créée sur la demande $applicationId",
-                  application = application.some
+                  applicationId = application.id.some
                 )
                 notificationsService.newAnswer(application, answer)
                 Future(
@@ -1296,9 +1235,9 @@ case class ApplicationController @Inject() (
                 )
               } else {
                 eventService.log(
-                  AnswerNotCreated,
+                  EventType.AnswerCreationError,
                   s"La réponse ${answer.id} n'a pas été créée sur la demande $applicationId : problème BDD",
-                  application = application.some
+                  applicationId = application.id.some
                 )
                 Future(InternalServerError("Votre réponse n'a pas pu être envoyée"))
               }
@@ -1329,7 +1268,7 @@ case class ApplicationController @Inject() (
               s"Erreur dans le formulaire d’invitation (${formWithErrors.errors.map(_.format).mkString(", ")})."
             val error =
               s"Erreur dans le formulaire d’invitation (${formErrorsLog(formWithErrors)})"
-            eventService.log(InviteFormValidationError, error, application = application.some)
+            eventService.log(InviteFormValidationError, error, applicationId = application.id.some)
             Future(
               Redirect(
                 routes.ApplicationController.show(applicationId).withFragment("answer-error")
@@ -1341,7 +1280,11 @@ case class ApplicationController @Inject() (
             if (inviteData.invitedUsers.isEmpty && inviteData.invitedGroups.isEmpty) {
               val error =
                 s"Erreur dans le formulaire d’invitation (une personne ou un organisme doit être sélectionné)"
-              eventService.log(InviteFormValidationError, error, application = application.some)
+              eventService.log(
+                InviteFormValidationError,
+                error,
+                applicationId = application.id.some
+              )
               Future(
                 Redirect(
                   routes.ApplicationController.show(applicationId).withFragment("answer-error")
@@ -1389,13 +1332,13 @@ case class ApplicationController @Inject() (
                       eventService.log(
                         AgentsAdded,
                         s"L'ajout d'utilisateur (réponse ${answer.id}) a été créé sur la demande $applicationId",
-                        application = application.some
+                        applicationId = application.id.some
                       )
                       answer.invitedUsers.foreach { case (userId, _) =>
                         eventService.log(
                           AgentsAdded,
                           s"Utilisateur $userId invité sur la demande $applicationId (réponse ${answer.id})",
-                          application = application.some,
+                          applicationId = application.id.some,
                           involvesUser = userId.some
                         )
                       }
@@ -1405,7 +1348,7 @@ case class ApplicationController @Inject() (
                       eventService.log(
                         AgentsNotAdded,
                         s"L'ajout d'utilisateur ${answer.id} n'a pas été créé sur la demande $applicationId : problème BDD",
-                        application = application.some
+                        applicationId = application.id.some
                       )
                       InternalServerError("Les utilisateurs n'ont pas pu être invités")
                     }
@@ -1444,13 +1387,13 @@ case class ApplicationController @Inject() (
               eventService.log(
                 AddExpertCreated,
                 s"La réponse ${answer.id} a été créée sur la demande $applicationId",
-                application = application.some
+                applicationId = application.id.some
               )
               answer.invitedUsers.foreach { case (userId, _) =>
                 eventService.log(
                   AddExpertCreated,
                   s"Expert $userId invité sur la demande $applicationId (réponse ${answer.id})",
-                  application = application.some,
+                  applicationId = application.id.some,
                   involvesUser = userId.some
                 )
               }
@@ -1460,7 +1403,7 @@ case class ApplicationController @Inject() (
               eventService.log(
                 AddExpertNotCreated,
                 s"L'invitation d'experts ${answer.id} n'a pas été créée sur la demande $applicationId : problème BDD",
-                application = application.some
+                applicationId = application.id.some
               )
               InternalServerError("L'expert n'a pas pu être invité")
             }
@@ -1469,7 +1412,7 @@ case class ApplicationController @Inject() (
           eventService.log(
             AddExpertUnauthorized,
             s"L'invitation d'experts pour la demande $applicationId n'est pas autorisée",
-            application = application.some
+            applicationId = application.id.some
           )
           Future(
             Unauthorized(
@@ -1491,17 +1434,17 @@ case class ApplicationController @Inject() (
               .filter(identity)
               .map { _ =>
                 val message = "La demande a bien été réouverte"
-                eventService.log(ReopenCompleted, message, application = application.some)
+                eventService.log(ReopenCompleted, message, applicationId = application.id.some)
                 Redirect(routes.ApplicationController.myApplications).flashing(success -> message)
               }
               .recover { _ =>
                 val message = "La demande n'a pas pu être réouverte"
-                eventService.log(ReopenError, message, application = application.some)
+                eventService.log(ReopenError, message, applicationId = application.id.some)
                 InternalServerError(message)
               }
           case false =>
             val message = s"Non autorisé à réouvrir la demande $applicationId"
-            eventService.log(ReopenUnauthorized, message, application = application.some)
+            eventService.log(ReopenUnauthorized, message, applicationId = application.id.some)
             successful(Unauthorized(message))
         }
       }
@@ -1523,7 +1466,7 @@ case class ApplicationController @Inject() (
               .log(
                 TerminateIncompleted,
                 s"La demande de clôture pour $applicationId est incomplète",
-                application = application.some
+                applicationId = application.id.some
               )
             Future(
               InternalServerError(
@@ -1543,7 +1486,7 @@ case class ApplicationController @Inject() (
                   .log(
                     TerminateCompleted,
                     s"La demande $applicationId est archivée",
-                    application = application.some
+                    applicationId = application.id.some
                   )
                 val successMessage =
                   s"""|La demande "${application.subject}" a bien été archivée. 
@@ -1556,7 +1499,7 @@ case class ApplicationController @Inject() (
                 eventService.log(
                   TerminateError,
                   s"La demande $applicationId n'a pas pu être archivée en BDD",
-                  application = application.some
+                  applicationId = application.id.some
                 )
                 Future(
                   InternalServerError(
@@ -1568,7 +1511,7 @@ case class ApplicationController @Inject() (
               eventService.log(
                 TerminateUnauthorized,
                 s"L'utilisateur n'a pas le droit de clôturer la demande $applicationId",
-                application = application.some
+                applicationId = application.id.some
               )
               Future(
                 Unauthorized("Seul le créateur de la demande ou un expert peut archiver la demande")

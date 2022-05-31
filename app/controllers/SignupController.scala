@@ -212,10 +212,10 @@ case class SignupController @Inject() (
                           }
                         if (!form.dryRun) {
                           successes.foreach { signup =>
-                            notificationsService.newSignup(signup)
+                            val host = notificationsService.newSignup(signup)
                             eventService.log(
                               EventType.SignupCreated,
-                              s"Préinscription ${signup.id} créée",
+                              s"Préinscription ${signup.id} créée [email envoyé via '$host']",
                               s"${signup.toLogString}".some
                             )
                           }

@@ -403,11 +403,6 @@ html, body {
     color: black;
 }
 
-.tag--aidant {
-    background-color: greenyellow;
-    color: black;
-}
-
 .tag--disabled {
     background-color: #646464;
     color: white;
@@ -784,6 +779,10 @@ a {
     width: 100%;
 }
 
+.single--width-48px {
+    width: 48px;
+}
+
 .single--width-max-content {
     width: max-content;
 }
@@ -880,6 +879,14 @@ a {
     background-color: white !important;
 }
 
+.single--pointer-events-none {
+    pointer-events: none;
+}
+
+.single--pointer-events-all {
+    pointer-events: all;
+}
+
 
 @media (max-width: 479px) {
     .single--hidden-phone {
@@ -918,6 +925,10 @@ Typographie
  */
 .typography--text-line-height-1-3 {
     line-height: 1.3;
+}
+
+.typography--text-line-height-2 {
+    line-height: 2;
 }
 
 .typography--text-align-center {
@@ -1071,4 +1082,17 @@ Tabs
 .row--disabled {
   background-color: grey !important;
   text-decoration: line-through;
+}
+
+.overlay-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.overlay-foreground {
+  position: relative;
+  z-index: 1;
 }

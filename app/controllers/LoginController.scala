@@ -118,7 +118,7 @@ class LoginController @Inject() (
         tmpPath
       }
     }
-    notificationService.newMagicLinkEmail(
+    val smtpHost = notificationService.newMagicLinkEmail(
       requestWithUserData.map(_.currentUser.name),
       email,
       requestWithUserData.map(_.currentUser.timeZone).getOrElse(Time.timeZoneParis),
@@ -129,7 +129,7 @@ class LoginController @Inject() (
       request.body.asFormUrlEncoded.flatMap(_.get("email")).nonEmpty
     val emailInFlash = request.flash.get("email").nonEmpty
     val logMessage =
-      s"Génère un token pour une connexion par email"
+      s"Génère un token pour une connexion par email via '$smtpHost'"
     val data = s"Body '$emailInBody' Flash '$emailInFlash'"
     requestWithUserData.fold(
       eventService.logSystem(GenerateToken, logMessage, data.some)

@@ -1,17 +1,6 @@
-// Important Note:
-// import * as Tabulator from 'tabulator-tables'
-// fails with error
-// TS2306: File '.../node_modules/@types/tabulator-tables/index.d.ts' is not a module.
-// We have to do a bit of contrivances to make it work.
-// In global.d.ts, there is
-// declare module "tabulator-tables" { export default Tabulator; }
-// To be noted that we can make it work like this, however, without TS types
-// import 'tabulator-tables';
-// const Tabulator = require('tabulator-tables').default;
-import Tabulator from 'tabulator-tables';
+import { Tabulator, TabulatorFull } from 'tabulator-tables';
 import "tabulator-tables/dist/css/tabulator.css";
 import { debounceAsync } from './helpers';
-
 
 const usersTableId = "tabulator-users-table";
 const groupsTableId = "tabulator-groups-table";
@@ -121,79 +110,113 @@ if (window.document.getElementById(usersTableId)) {
 
   const usersColumns: Array<Tabulator.ColumnDefinition> = [
     { title: "", formatter: editIcon, width: 40, frozen: true },
-    { title: "Email", field: "email", headerFilter: "input" },
-    { title: "Groupes", field: "groupNames", formatter: groupsFormatter, headerFilter: "input" },
-    { title: "Nom Complet", field: "completeName", headerFilter: "input", formatter: "html" },
-    { title: "BALs", field: "groupEmails", headerFilter: "input" },
-    { title: "Qualité", field: "qualite", headerFilter: "input" },
-    { title: "Téléphone", field: "phoneNumber", headerFilter: "input" },
     {
-      title: "Droits",
-      columns: [
-        {
-          title: "Aidant",
-          field: "helper",
-          formatter: "tickCross",
-          headerFilter: "tickCross",
-          headerFilterParams: { tristate: true },
-          headerVertical: verticalHeader,
-          bottomCalc: "count"
-        },
-        {
-          title: "Instructeur",
-          field: "instructor",
-          formatter: "tickCross",
-          headerFilter: "tickCross",
-          headerFilterParams: { tristate: true },
-          headerVertical: verticalHeader,
-          bottomCalc: "count"
-        },
-        {
-          title: "Responsable",
-          field: "groupAdmin",
-          formatter: "tickCross",
-          headerFilter: "tickCross",
-          headerFilterParams: { tristate: true },
-          headerVertical: verticalHeader,
-          bottomCalc: "count"
-        },
-        {
-          title: "Partagé",
-          field: "sharedAccount",
-          formatter: "tickCross",
-          headerFilter: "tickCross",
-          headerFilterParams: { tristate: true },
-          headerVertical: verticalHeader,
-          bottomCalc: "count"
-        },
-        {
-          title: "Expert",
-          field: "expert",
-          formatter: "tickCross",
-          headerFilter: "tickCross",
-          headerFilterParams: { tristate: true },
-          headerVertical: verticalHeader,
-          bottomCalc: "count"
-        },
-        {
-          title: "Admin",
-          field: "admin",
-          formatter: "tickCross",
-          headerFilter: "tickCross",
-          headerFilterParams: { tristate: true },
-          headerVertical: verticalHeader,
-          bottomCalc: "count"
-        },
-        {
-          title: "Désactivé",
-          field: "disabled",
-          formatter: "tickCross",
-          headerFilter: "tickCross",
-          headerFilterParams: { tristate: true },
-          headerVertical: verticalHeader,
-          bottomCalc: "count"
-        }
-      ]
+      title: "Email",
+      field: "email",
+      headerFilter: "input",
+      width: 250,
+    },
+    {
+      title: "Groupes",
+      field: "groupNames",
+      formatter: groupsFormatter,
+      headerFilter: "input",
+      width: 400,
+    },
+    {
+      title: "Nom Complet",
+      field: "completeName",
+      headerFilter: "input",
+      formatter: "html",
+      width: 150,
+    },
+    {
+      title: "BALs",
+      field: "groupEmails",
+      headerFilter: "input",
+      width: 200,
+    },
+    {
+      title: "Qualité",
+      field: "qualite",
+      headerFilter: "input",
+      width: 150,
+    },
+    {
+      title: "Téléphone",
+      field: "phoneNumber",
+      headerFilter: "input",
+      width: 120,
+    },
+    {
+      title: "Aidant",
+      field: "helper",
+      formatter: "tickCross",
+      headerFilter: "tickCross",
+      headerFilterParams: { tristate: true },
+      headerVertical: verticalHeader,
+      bottomCalc: "count",
+      width: 80,
+    },
+    {
+      title: "Instructeur",
+      field: "instructor",
+      formatter: "tickCross",
+      headerFilter: "tickCross",
+      headerFilterParams: { tristate: true },
+      headerVertical: verticalHeader,
+      bottomCalc: "count",
+      width: 80,
+    },
+    {
+      title: "Responsable",
+      field: "groupAdmin",
+      formatter: "tickCross",
+      headerFilter: "tickCross",
+      headerFilterParams: { tristate: true },
+      headerVertical: verticalHeader,
+      bottomCalc: "count",
+      width: 80,
+    },
+    {
+      title: "Partagé",
+      field: "sharedAccount",
+      formatter: "tickCross",
+      headerFilter: "tickCross",
+      headerFilterParams: { tristate: true },
+      headerVertical: verticalHeader,
+      bottomCalc: "count",
+      width: 80,
+    },
+    {
+      title: "Expert",
+      field: "expert",
+      formatter: "tickCross",
+      headerFilter: "tickCross",
+      headerFilterParams: { tristate: true },
+      headerVertical: verticalHeader,
+      bottomCalc: "count",
+      width: 80,
+    },
+    {
+      title: "Admin",
+      field: "admin",
+      formatter: "tickCross",
+      headerFilter: "tickCross",
+      headerFilterParams: { tristate: true },
+      headerVertical: verticalHeader,
+      bottomCalc: "count",
+      width: 80,
+    },
+    {
+      title: "Désactivé",
+      field: "disabled",
+      formatter: "tickCross",
+      headerFilter: "tickCross",
+      headerFilterParams: { tristate: true },
+      headerVertical: verticalHeader,
+      bottomCalc: "count",
+      width: 80,
     },
     {
       title: "CGU",
@@ -202,22 +225,77 @@ if (window.document.getElementById(usersTableId)) {
       headerFilter: "tickCross",
       headerFilterParams: { tristate: true },
       headerVertical: verticalHeader,
-      bottomCalc: "count"
+      bottomCalc: "count",
+      width: 80,
     },
-    { title: "Départements", field: "areas", headerFilter: "input" },
-    { title: "Nom et Prénom", field: "name", headerFilter: "input", formatter: "html" },
-    { title: "Nom", field: "lastName", headerFilter: "input", formatter: "html" },
-    { title: "Prénom", field: "firstName", headerFilter: "input", formatter: "html" },
+    {
+      title: "Départements",
+      field: "areas",
+      headerFilter: "input",
+      width: 200,
+    },
+    {
+      title: "Nom et Prénom",
+      field: "name",
+      headerFilter: "input",
+      formatter: "html",
+      width: 200,
+    },
+    {
+      title: "Nom",
+      field: "lastName",
+      headerFilter: "input",
+      formatter: "html",
+      width: 200,
+    },
+    {
+      title: "Prénom",
+      field: "firstName",
+      headerFilter: "input",
+      formatter: "html",
+      width: 200,
+    },
   ];
 
 
   const groupsColumns: Array<Tabulator.ColumnDefinition> = [
-    { title: "Nom", field: "name", headerFilter: "input", formatter: groupNameFormatter },
-    { title: "Organisme", field: "organisation", headerFilter: "input" },
-    { title: "BAL", field: "email", headerFilter: "input" },
-    { title: "Départements", field: "areas", headerFilter: "input" },
-    { title: "Description", field: "description", headerFilter: "input" },
-    { title: "Description détaillée", field: "publicNote", headerFilter: "input" },
+    {
+      title: "Nom",
+      field: "name",
+      headerFilter: "input",
+      formatter: groupNameFormatter,
+      width: 300,
+    },
+    {
+      title: "Organisme",
+      field: "organisation",
+      headerFilter: "input",
+      width: 150,
+    },
+    {
+      title: "BAL",
+      field: "email",
+      headerFilter: "input",
+      width: 300,
+    },
+    {
+      title: "Départements",
+      field: "areas",
+      headerFilter: "input",
+      width: 200,
+    },
+    {
+      title: "Description",
+      field: "description",
+      headerFilter: "input",
+      width: 300,
+    },
+    {
+      title: "Description détaillée",
+      field: "publicNote",
+      headerFilter: "input",
+      width: 500,
+    },
   ];
 
 
@@ -231,60 +309,40 @@ if (window.document.getElementById(usersTableId)) {
   }
 
   const usersOptions: Tabulator.Options = {
-    height: "80vh",
-    columnMaxWidth: 300,
+    height: "48vh",
     rowFormatter,
     langs: {
       "fr-fr": {
-        pagination: {
-          page_size: "Taille de la page",
-          first: "Premier",
-          first_title: "Première Page",
-          last: "Dernier",
-          last_title: "Dernière Page",
-          prev: "Précédent",
-          prev_title: "Page Précédente",
-          next: "Suivant",
-          next_title: "Page Suivante"
-        },
         headerFilters: {
-          default: "filtrer..." //default header filter placeholder text
+          "default": "filtrer..."
         }
       }
     },
     columns: usersColumns,
   };
-  usersTable = new Tabulator("#" + usersTableId, usersOptions);
-  usersTable.setLocale("fr-fr");
-  usersTable.setSort("name", "asc");
+  usersTable = new TabulatorFull("#" + usersTableId, usersOptions);
+  usersTable.on("tableBuilt", function() {
+    usersTable?.setLocale("fr-fr");
+    usersTable?.setSort("name", "asc");
+  });
 
   const groupsOptions: Tabulator.Options = {
-    height: "60vh",
-    columnMaxWidth: 300,
+    height: "25vh",
     rowFormatter,
     langs: {
       "fr-fr": {
-        pagination: {
-          page_size: "Taille de la page",
-          first: "Premier",
-          first_title: "Première Page",
-          last: "Dernier",
-          last_title: "Dernière Page",
-          prev: "Précédent",
-          prev_title: "Page Précédente",
-          next: "Suivant",
-          next_title: "Page Suivante"
-        },
         headerFilters: {
-          default: "filtrer..." //default header filter placeholder text
+          "default": "filtrer..."
         }
       }
     },
     columns: groupsColumns,
   };
-  groupsTable = new Tabulator("#" + groupsTableId, groupsOptions);
-  groupsTable.setLocale("fr-fr");
-  groupsTable.setSort("name", "asc");
+  groupsTable = new TabulatorFull("#" + groupsTableId, groupsOptions);
+  groupsTable.on("tableBuilt", function() {
+    groupsTable?.setLocale("fr-fr");
+    groupsTable?.setSort("name", "asc");
+  });
 
 
 
@@ -293,21 +351,8 @@ if (window.document.getElementById(usersTableId)) {
     const fillData = () => {
       const searchString = searchBox.value;
       callSearch(searchString).then((data) => {
-        if (usersTable) {
-          if (searchString.trim() === "") {
-            if (usersTable.options.height !== "80vh") {
-              usersTable.setHeight("80vh");
-              groupsTable?.setHeight("70vh");
-            }
-          } else {
-            if (usersTable.options.height === "80vh") {
-              usersTable.setHeight("40vh");
-              groupsTable?.setHeight("40vh");
-            }
-          }
-          usersTable.setData(data.users);
-          groupsTable?.setData(data.groups);
-        }
+        usersTable?.setData(data.users);
+        groupsTable?.setData(data.groups);
       });
     };
     searchBox.addEventListener("input", fillData);
