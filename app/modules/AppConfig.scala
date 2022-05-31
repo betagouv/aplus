@@ -1,5 +1,6 @@
 package modules
 
+import com.typesafe.config.{Config, ConfigFactory}
 import helper.UUIDHelper
 import java.nio.file.{Files, Path, Paths}
 import java.util.UUID
@@ -16,6 +17,10 @@ class AppConfig @Inject() (configuration: Configuration) {
     configuration.get[Int]("app.tokenExpirationInMinutes")
 
   val featureMandatSms: Boolean = configuration.get[Boolean]("app.features.smsMandat")
+
+  val useLiveSmsApi: Boolean = configuration
+    .getOptional[Boolean]("app.smsUseLiveApi")
+    .getOrElse(false)
 
   val featureCanSendApplicationsAnywhere: Boolean =
     configuration.get[Boolean]("app.features.canSendApplicationsAnywhere")
@@ -52,5 +57,24 @@ class AppConfig @Inject() (configuration: Configuration) {
   val clamAvHost: String = configuration.get[String]("app.clamav.host")
   val clamAvPort: Int = configuration.get[Int]("app.clamav.port")
   val clamAvTimeout: FiniteDuration = configuration.get[Int]("app.clamav.timeoutInSeconds").seconds
+
+  // This blacklist if mainly for experts who do not need emails
+  // Note: be careful with the empty string
+  val notificationEmailBlacklist: Set[String] =
+    configuration
+      .get[String]("app.notificationEmailBlacklist")
+      .split(",")
+      .map(_.trim)
+      .filterNot(_.isEmpty)
+      .toSet
+
+  val defaultMailerConfig: Config = configuration.underlying.getObject("play.mailer").toConfig
+
+  val emailPickersConfig: Option[Config] =
+    configuration
+      .getOptional[String]("app.mailer.pickersConfig")
+      .map { raw =>
+        ConfigFactory.parseString(raw)
+      }
 
 }

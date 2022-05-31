@@ -7,7 +7,7 @@ import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
 import models.{Error, EventType, LoginToken}
-import play.api.{Configuration, UnexpectedException}
+import play.api.UnexpectedException
 import play.api.db.Database
 import scala.concurrent.Future
 import scala.util.Try
@@ -77,7 +77,6 @@ object TokenService {
 
 @javax.inject.Singleton
 class TokenService @Inject() (
-    configuration: Configuration,
     db: Database,
     dependencies: ServicesDependencies
 ) {

@@ -10,14 +10,12 @@ import helper.{StringHelper, Time, UUIDHelper}
 import javax.inject.Inject
 import models.{Error, EventType, FranceService, Organisation, UserGroup}
 import org.postgresql.util.PSQLException
-import play.api.Configuration
 import play.api.db.Database
 import scala.concurrent.Future
 import scala.util.Try
 
 @javax.inject.Singleton
 class UserGroupService @Inject() (
-    configuration: Configuration,
     val db: Database,
     val dependencies: ServicesDependencies
 ) {
