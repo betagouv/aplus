@@ -31,8 +31,6 @@ case class Application(
     expertInvited: Boolean = false,
     hasSelectedSubject: Boolean = false,
     category: Option[String] = Option.empty[String],
-    // TODO: this is legacy and can be removed after removing old upload
-    files: Map[String, Long] = Map.empty[String, Long],
     mandatType: Option[Application.MandatType],
     mandatDate: Option[String],
     invitedGroupIdsAtCreation: List[UUID],
@@ -55,9 +53,6 @@ case class Application(
       .map(seenLastDate => answers.filter(_.creationDate.toInstant.isAfter(seenLastDate)))
       .getOrElse(answers)
   }
-
-  lazy val allFiles: Map[String, Long] =
-    files ++ answers.flatMap(_.files).flatten
 
   lazy val searchData = {
     val stripChars = "\"<>'"

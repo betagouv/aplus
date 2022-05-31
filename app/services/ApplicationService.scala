@@ -77,7 +77,6 @@ class ApplicationService @Inject() (
     "expert_invited",
     "has_selected_subject",
     "category",
-    "files",
     "mandat_type",
     "mandat_date",
     "invited_group_ids",
@@ -304,7 +303,6 @@ class ApplicationService @Inject() (
             area,
             has_selected_subject,
             category,
-            files,
             mandat_type,
             mandat_date,
             invited_group_ids
@@ -320,7 +318,6 @@ class ApplicationService @Inject() (
             ${newApplication.area}::uuid,
             ${newApplication.hasSelectedSubject},
             ${newApplication.category},
-            ${toJson(newApplication.files)}::jsonb,
             $mandatType,
             ${newApplication.mandatDate},
             array[${newApplication.invitedGroupIdsAtCreation}]::uuid[]
@@ -406,21 +403,14 @@ class ApplicationService @Inject() (
             answer.copy(
               message = "",
               userInfos = answer.userInfos.map(_.map { case (key, _) => (key, "") }),
-              files = answer.files.map(_.zipWithIndex.map { case ((_, size), i) =>
-                (s"fichier-non-existant-$i", size)
-              }.toMap),
             )
           )
-          val wipedFiles: Map[String, Long] = application.files.zipWithIndex.map {
-            case ((_, size), i) => (s"fichier-non-existant-$i", size)
-          }.toMap
           SQL(s"""UPDATE application
                   SET
                     subject = '',
                     description = '',
                     user_infos = {usagerInfos}::jsonb,
                     answers = {answers}::jsonb,
-                    files = {files}::jsonb,
                     personal_data_wiped = true
                   WHERE id = {id}::uuid
                   RETURNING $fieldsInSelect;""")
@@ -428,7 +418,6 @@ class ApplicationService @Inject() (
               "id" -> application.id,
               "usagerInfos" -> toJson(wipedUsagerInfos),
               "answers" -> toJson(wipedAnswers),
-              "files" -> toJson(wipedFiles)
             )
             .as(simpleApplication.singleOpt)
         }

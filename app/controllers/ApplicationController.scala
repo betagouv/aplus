@@ -216,7 +216,15 @@ case class ApplicationController @Inject() (
   )(
       onSuccess: List[FileMetadata] => Future[Result]
   )(implicit request: RequestWithUserData[AnyContent]): Future[Result] = {
-    val tmpFiles = computeAttachmentsToStore(request)
+    val tmpFiles: List[(Path, String)] =
+      request.body.asMultipartFormData
+        .map(_.files.filter(_.key.matches("file\\[\\d+\\]")))
+        .getOrElse(Nil)
+        .collect {
+          case attachment if attachment.filename.nonEmpty =>
+            attachment.ref.path -> attachment.filename
+        }
+        .toList
     val document = answerId match {
       case None           => FileMetadata.Attached.Application(applicationId)
       case Some(answerId) => FileMetadata.Attached.Answer(applicationId, answerId)
@@ -334,7 +342,6 @@ case class ApplicationController @Inject() (
                 hasSelectedSubject =
                   applicationData.selectedSubject.contains[String](applicationData.subject),
                 category = applicationData.category,
-                files = Map.empty,
                 mandatType = dataModels.Application.MandatType
                   .dataModelDeserialization(applicationData.mandatType),
                 mandatDate = Some(applicationData.mandatDate),
@@ -397,17 +404,6 @@ case class ApplicationController @Inject() (
         )
       }
     }
-
-  private def computeAttachmentsToStore(
-      request: RequestWithUserData[AnyContent]
-  ): Iterable[(Path, String)] =
-    request.body.asMultipartFormData
-      .map(_.files.filter(_.key.matches("file\\[\\d+\\]")))
-      .getOrElse(Nil)
-      .collect {
-        case attachment if attachment.filename.nonEmpty =>
-          attachment.ref.path -> attachment.filename
-      }
 
   private def allApplicationVisibleByUserAdmin(
       user: User,
@@ -1209,7 +1205,6 @@ case class ApplicationController @Inject() (
                   case (NonEmptyTrimmedString(infoName), NonEmptyTrimmedString(infoValue)) =>
                     (infoName, infoValue)
                 }.some,
-                files = none,
                 invitedGroupIds = List.empty[UUID]
               )
               // If the new answer creator is the application creator, we force the application reopening
