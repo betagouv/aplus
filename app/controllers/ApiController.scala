@@ -118,7 +118,10 @@ case class ApiController @Inject() (
                       inseeCode = Nil,
                       creationDate = ZonedDateTime.now(),
                       areaIds = newLine.areaCode
-                        .flatMap(code => Area.fromInseeCode(code.trim))
+                        .flatMap { code =>
+                          val rawCode = code.trim
+                          Area.fromInseeCode(if (rawCode.size === 1) "0" + rawCode else rawCode)
+                        }
                         .map(_.id)
                         .toList,
                       organisation = Organisation.franceServicesId.some,

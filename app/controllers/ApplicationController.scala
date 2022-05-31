@@ -20,6 +20,7 @@ import org.webjars.play.WebJarsUtil
 import play.api.cache.AsyncCacheApi
 import play.api.data.Forms._
 import play.api.data._
+import play.api.data.format.{Formats, Formatter}
 import play.api.data.validation.Constraints._
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
@@ -216,7 +217,15 @@ case class ApplicationController @Inject() (
   )(
       onSuccess: List[FileMetadata] => Future[Result]
   )(implicit request: RequestWithUserData[AnyContent]): Future[Result] = {
-    val tmpFiles = computeAttachmentsToStore(request)
+    val tmpFiles: List[(Path, String)] =
+      request.body.asMultipartFormData
+        .map(_.files.filter(_.key.matches("file\\[\\d+\\]")))
+        .getOrElse(Nil)
+        .collect {
+          case attachment if attachment.filename.nonEmpty =>
+            attachment.ref.path -> attachment.filename
+        }
+        .toList
     val document = answerId match {
       case None           => FileMetadata.Attached.Application(applicationId)
       case Some(answerId) => FileMetadata.Attached.Answer(applicationId, answerId)
@@ -334,7 +343,6 @@ case class ApplicationController @Inject() (
                 hasSelectedSubject =
                   applicationData.selectedSubject.contains[String](applicationData.subject),
                 category = applicationData.category,
-                files = Map.empty,
                 mandatType = dataModels.Application.MandatType
                   .dataModelDeserialization(applicationData.mandatType),
                 mandatDate = Some(applicationData.mandatDate),
@@ -397,17 +405,6 @@ case class ApplicationController @Inject() (
         )
       }
     }
-
-  private def computeAttachmentsToStore(
-      request: RequestWithUserData[AnyContent]
-  ): Iterable[(Path, String)] =
-    request.body.asMultipartFormData
-      .map(_.files.filter(_.key.matches("file\\[\\d+\\]")))
-      .getOrElse(Nil)
-      .collect {
-        case attachment if attachment.filename.nonEmpty =>
-          attachment.ref.path -> attachment.filename
-      }
 
   private def allApplicationVisibleByUserAdmin(
       user: User,
@@ -663,6 +660,22 @@ case class ApplicationController @Inject() (
     )
   }
 
+  // Handles some edge cases from browser compatibility
+  private val localDateMapping: Mapping[LocalDate] = {
+    val formatter = new Formatter[LocalDate] {
+      val defaultCase = Formats.localDateFormat
+      val fallback1 = Formats.localDateFormat("dd-MM-yyyy")
+      val fallback2 = Formats.localDateFormat("dd.MM.yy")
+      def bind(key: String, data: Map[String, String]) =
+        defaultCase
+          .bind(key, data)
+          .orElse(fallback1.bind(key, data))
+          .orElse(fallback2.bind(key, data))
+      def unbind(key: String, value: LocalDate) = defaultCase.unbind(key, value)
+    }
+    of(formatter)
+  }
+
   // A `def` for the LocalDate.now()
   private def statsForm =
     Form(
@@ -670,8 +683,8 @@ case class ApplicationController @Inject() (
         "areas" -> default(list(uuid), List()),
         "organisations" -> default(list(of[Organisation.Id]), List()),
         "groups" -> default(list(uuid), List()),
-        "creationMinDate" -> default(localDate, LocalDate.now().minusDays(30)),
-        "creationMaxDate" -> default(localDate, LocalDate.now())
+        "creationMinDate" -> default(localDateMapping, LocalDate.now().minusDays(30)),
+        "creationMaxDate" -> default(localDateMapping, LocalDate.now())
       )
     )
 
@@ -702,26 +715,28 @@ case class ApplicationController @Inject() (
       request: RequestWithUserData[_]
   ): Future[Result] = {
     // TODO: remove `.get`
-    val (areaIds, organisationIds, groupIds, creationMinDate, creationMaxDate) =
+    val (areaIds, queryOrganisationIds, queryGroupIds, creationMinDate, creationMaxDate) =
       statsForm.bindFromRequest().value.get
 
-    val observableOrganisationIds = if (Authorization.isAdmin(rights)) {
-      organisationIds
+    val organisationIds = if (Authorization.isAdmin(rights)) {
+      queryOrganisationIds
     } else {
-      organisationIds.filter(id => Authorization.canObserveOrganisation(id)(rights))
+      queryOrganisationIds.filter(id => Authorization.canObserveOrganisation(id)(rights))
     }
 
-    val observableGroupIds = if (Authorization.isAdmin(rights)) {
-      groupIds
-    } else {
-      groupIds.intersect(user.groupIds)
-    }
+    val groupIds =
+      if (organisationIds.nonEmpty) Nil
+      else if (Authorization.isAdmin(rights)) {
+        queryGroupIds
+      } else {
+        queryGroupIds.intersect(user.groupIds)
+      }
 
     val cacheKey =
       Authorization.isAdmin(rights).toString +
         ".stats." +
         Hash.sha256(
-          areaIds.toString + observableOrganisationIds.toString + observableGroupIds.toString +
+          areaIds.toString + organisationIds.toString + groupIds.toString +
             creationMinDate.toString + creationMaxDate.toString
         )
 
@@ -730,8 +745,8 @@ case class ApplicationController @Inject() (
         .getOrElseUpdate[Html](cacheKey, 1.hours)(
           generateStats(
             areaIds,
-            observableOrganisationIds,
-            observableGroupIds,
+            organisationIds,
+            groupIds,
             creationMinDate,
             creationMaxDate,
             rights
@@ -1206,7 +1221,6 @@ case class ApplicationController @Inject() (
                   case (NonEmptyTrimmedString(infoName), NonEmptyTrimmedString(infoValue)) =>
                     (infoName, infoValue)
                 }.some,
-                files = none,
                 invitedGroupIds = List.empty[UUID]
               )
               // If the new answer creator is the application creator, we force the application reopening
