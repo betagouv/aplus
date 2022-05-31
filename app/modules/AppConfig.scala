@@ -1,6 +1,6 @@
 package modules
 
-import helper.{Crypto, UUIDHelper}
+import helper.UUIDHelper
 import java.nio.file.{Files, Path, Paths}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
@@ -14,15 +14,6 @@ class AppConfig @Inject() (configuration: Configuration) {
 
   val tokenExpirationInMinutes: Int =
     configuration.get[Int]("app.tokenExpirationInMinutes")
-
-  val fieldEncryptionKeys: Crypto.KeySet = {
-    val key = Crypto.decodeKeyBase64(configuration.get[String]("app.fieldsEncryption.key"))
-    val oldKeys = configuration
-      .getOptional[String]("app.fieldsEncryption.oldKeys")
-      .toList
-      .flatMap(_.split(',').filter(_.nonEmpty).map(Crypto.decodeKeyBase64))
-    Crypto.KeySet(key, oldKeys)
-  }
 
   val featureMandatSms: Boolean = configuration.get[Boolean]("app.features.smsMandat")
 

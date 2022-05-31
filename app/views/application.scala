@@ -2,7 +2,6 @@ package views
 
 import cats.syntax.all._
 import controllers.routes.{ApplicationController, Assets}
-import helper.Crypto.{EncryptedField, KeySet}
 import helpers.forms.CSRFInput
 import java.util.UUID
 import models.{Answer, Application, Area, Authorization, FileMetadata, User, UserGroup}
@@ -84,18 +83,13 @@ object application {
     import FileMetadata.Status._
     val link: Frag =
       if (isAuthorized) {
-        // Note: legacy is not encrypted
-        val decryptedFilename: String = metadata.filename
-          .decrypt(config.fieldEncryptionKeys)
-          .toOption
-          .getOrElse(metadata.filename.cipherTextBase64)
         if (status === Available)
           frag(
             "le fichier ",
-            a(href := ApplicationController.file(metadata.id).url, decryptedFilename)
+            a(href := ApplicationController.file(metadata.id).url, metadata.filename)
           )
         else
-          s"le fichier $decryptedFilename"
+          s"le fichier ${metadata.filename}"
       } else
         "un fichier"
 

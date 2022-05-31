@@ -6,7 +6,6 @@ import anorm._
 import aplus.macros.Macros
 import cats.syntax.all._
 import cats.data.EitherT
-import helper.Crypto
 import helper.StringHelper.normalizeNFKC
 import java.nio.file.{Files, Path, Paths}
 import java.time.{Instant, ZonedDateTime}
@@ -53,37 +52,15 @@ class FileService @Inject() (
   ): Future[Either[Error, List[FileMetadata]]] = {
     val result: EitherT[Future, Error, List[(Path, FileMetadata)]] = pathsWithFilenames.traverse {
       case (path, filename) =>
-        val id = UUID.randomUUID()
-        EitherT
-          .fromEither[Future](
-            Crypto.EncryptedField
-              .fromPlainText(
-                normalizeNFKC(filename),
-                FileMetadata.filenameAAD(id),
-                config.fieldEncryptionKeys
-              )
-              .toEither
-              .left
-              .map(error =>
-                Error.MiscException(
-                  EventType.FieldEncryptionError,
-                  s"Impossible de chiffrer le nom de fichier pour $document",
-                  error,
-                  none
-                )
-              )
-          )
-          .flatMap { filename =>
-            val metadata = FileMetadata(
-              id = id,
-              uploadDate = Instant.now(),
-              filename = filename,
-              filesize = path.toFile.length().toInt,
-              status = FileMetadata.Status.Scanning,
-              attached = document,
-            )
-            EitherT(insertMetadata(metadata)).map(_ => (path, metadata))
-          }
+        val metadata = FileMetadata(
+          id = UUID.randomUUID(),
+          uploadDate = Instant.now(),
+          filename = normalizeNFKC(filename),
+          filesize = path.toFile.length().toInt,
+          status = FileMetadata.Status.Scanning,
+          attached = document,
+        )
+        EitherT(insertMetadata(metadata)).map(_ => (path, metadata))
     }
 
     // Scan in background, only on success, and sequentially
