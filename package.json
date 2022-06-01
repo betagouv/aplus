@@ -13,14 +13,14 @@
     "dialog-polyfill": "0.5.6",
     "proxy-polyfill": "0.3.2",
     "slim-select": "1.27.1",
-    "tabulator-tables": "5.2.4",
+    "tabulator-tables": "5.2.5",
     "ts-polyfill": "3.8.2",
     "unfetch": "4.2.0",
     "unorm": "1.6.0",
     "xlsx": "0.18.5"
   },
   "devDependencies": {
-    "@babel/core": "7.18.0",
+    "@babel/core": "7.18.2",
     "@babel/preset-env": "7.18.2",
     "@types/tabulator-tables": "5.1.2",
     "babel-loader": "8.2.5",

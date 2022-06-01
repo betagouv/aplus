@@ -9,12 +9,12 @@ import aplus.macros.Macros
 import cats.syntax.all._
 import helper.Time
 import javax.inject.Inject
-import models.{Area, Event, EventType, User}
+import models.{Area, Error, Event, EventType, User}
 import play.api.Logger
 import play.api.db.Database
 import play.api.mvc.Request
-
 import scala.concurrent.Future
+import scala.util.Try
 
 @javax.inject.Singleton
 class EventService @Inject() (db: Database, dependencies: ServicesDependencies) {
@@ -248,5 +248,35 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
         }
       }
     }
+
+  // Supported by index event (from_user_id, creation_date DESC)
+  def lastActivity(userIds: List[UUID]): Future[Either[Error, List[(UUID, Instant)]]] =
+    Future(
+      Try {
+        val ids = userIds.distinct
+        db.withConnection { implicit connection =>
+          SQL(s"""SELECT DISTINCT ON (from_user_id) from_user_id, creation_date
+                  FROM event
+                  WHERE from_user_id = ANY(array[{ids}]::uuid[])
+                  AND code <> ALL(array[{unauthenticated_events}])
+                  ORDER BY from_user_id, creation_date DESC
+               """)
+            .on(
+              "ids" -> ids,
+              "unauthenticated_events" -> EventType.unauthenticatedEvents.map(_.code)
+            )
+            .as((SqlParser.get[UUID]("from_user_id") ~ SqlParser.get[Instant]("creation_date")).*)
+            .map(SqlParser.flatten)
+        }
+      }.toEither.left
+        .map(error =>
+          Error.SqlException(
+            EventType.EventsError,
+            "Impossible de lire les dernières activités",
+            error,
+            none
+          )
+        )
+    )
 
 }

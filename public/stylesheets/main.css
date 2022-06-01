@@ -839,6 +839,10 @@ a {
     flex-wrap: wrap;
 }
 
+.single--flex-direction-column {
+  flex-direction: column;
+}
+
 .single--white-space-nowrap {
     white-space: nowrap;
 }

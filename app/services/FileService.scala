@@ -16,7 +16,6 @@ import models.{Error, EventType, FileMetadata, User}
 import models.dataModels.FileMetadataRow
 import modules.AppConfig
 import net.scalytica.clammyscan.streams.{ClamError, ClamIO, FileOk, VirusFound}
-import play.api.Configuration
 import play.api.mvc.Request
 import play.api.libs.concurrent.{ActorSystemProvider, MaterializerProvider}
 import play.api.db.Database
@@ -26,7 +25,6 @@ import scala.util.{Success, Try}
 @Singleton
 class FileService @Inject() (
     config: AppConfig,
-    configuration: Configuration,
     db: Database,
     eventService: EventService,
     materializer: MaterializerProvider,
