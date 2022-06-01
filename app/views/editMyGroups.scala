@@ -3,7 +3,9 @@ package views
 import cats.syntax.all._
 import controllers.routes.{GroupController, UserController}
 import helpers.forms.CSRFInput
+import helper.Time
 import helper.TwirlImports.toHtml
+import java.time.Instant
 import java.util.UUID
 import models.{Application, Authorization, User, UserGroup}
 import models.formModels.AddUserToGroupFormData
@@ -23,6 +25,7 @@ object editMyGroups {
       userGroups: List[UserGroup],
       users: List[User],
       applications: List[Application],
+      lastActivity: Map[UUID, Instant],
       addRedirectQueryParam: String => String
   )(implicit
       flash: Flash,
@@ -32,7 +35,9 @@ object editMyGroups {
       mainInfos: MainInfos
   ): Html = {
     // Precompute here to speedup page rendering
-    val (creationsCount, invitationsCount) = creationsAndInvitationsCounts(applications)
+    val (creationsCount, invitationsCount, participationsCount) = creationsAndInvitationsCounts(
+      applications
+    )
     val groupsWithTheirUsers: List[(UserGroup, List[User])] =
       for {
         userGroup <- userGroups.sortBy(_.name)
@@ -53,6 +58,8 @@ object editMyGroups {
         users,
         creationsCount,
         invitationsCount,
+        participationsCount,
+        lastActivity,
         addUserForm,
         addRedirectQueryParam,
         currentUser,
@@ -68,16 +75,25 @@ object editMyGroups {
 
   def creationsAndInvitationsCounts(
       applications: List[Application]
-  ): (Map[UUID, Int], Map[UUID, Int]) = {
+  ): (Map[UUID, Int], Map[UUID, Int], Map[UUID, Int]) = {
     val userCreations = scala.collection.mutable.HashMap.empty[UUID, Int]
     val userInvitations = scala.collection.mutable.HashMap.empty[UUID, Int]
+    val userParticipations = scala.collection.mutable.HashMap.empty[UUID, Int]
     applications.foreach { application =>
       userCreations.updateWith(application.creatorUserId)(_.map(_ + 1).getOrElse(1).some)
       application.invitedUsers.foreach { case (userId, _) =>
         userInvitations.updateWith(userId)(_.map(_ + 1).getOrElse(1).some)
       }
+      application.answers
+        .map(_.creatorUserID)
+        .toSet
+        .foreach((id: UUID) =>
+          if (id =!= application.creatorUserId) {
+            userParticipations.updateWith(id)(_.map(_ + 1).getOrElse(1).some)
+          }
+        )
     }
-    (userCreations.toMap, userInvitations.toMap)
+    (userCreations.toMap, userInvitations.toMap, userParticipations.toMap)
   }
 
   def groupBlock(
@@ -85,6 +101,8 @@ object editMyGroups {
       users: List[User],
       applicationCreationsCount: Map[UUID, Int],
       applicationInvitationsCount: Map[UUID, Int],
+      applicationParticipationsCount: Map[UUID, Int],
+      lastActivity: Map[UUID, Instant],
       addUserForm: Form[AddUserToGroupFormData],
       addRedirectQueryParam: String => String,
       currentUser: User,
@@ -118,6 +136,8 @@ object editMyGroups {
               group.id,
               applicationCreationsCount,
               applicationInvitationsCount,
+              applicationParticipationsCount,
+              lastActivity,
               addRedirectQueryParam,
               currentUser,
               currentUserRights
@@ -228,6 +248,8 @@ object editMyGroups {
       groupId: UUID,
       applicationCreationsCount: Map[UUID, Int],
       applicationInvitationsCount: Map[UUID, Int],
+      applicationParticipationsCount: Map[UUID, Int],
+      lastActivity: Map[UUID, Instant],
       addRedirectQueryParam: String => String,
       currentUser: User,
       currentUserRights: Authorization.UserRights
@@ -263,7 +285,19 @@ object editMyGroups {
       td(
         cls := "mdl-data-table__cell--non-numeric" +
           (if (user.disabled) " text--strikethrough mdl-color-text--grey-600" else ""),
-        user.email
+        user.email,
+        lastActivity
+          .get(user.id)
+          .map(time =>
+            frag(
+              br,
+              span(
+                cls := "single--font-size-12px mdl-color-text--grey-600",
+                "Dernière activité ",
+                Time.formatForAdmins(time)
+              )
+            )
+          )
       ),
       td(
         cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size",
@@ -271,25 +305,51 @@ object editMyGroups {
       ),
       td(
         cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size",
-        div(
-          cls := "vertical-align--middle",
-          i(cls := "material-icons icon--light", "chat_bubble"),
-          span(
-            cls := "application__anwsers",
-            s"${applicationCreationsCount.getOrElse(user.id, 0)} demandes"
-          ),
-          br,
-          i(cls := "material-icons icon--light", "question_answer"),
-          span(
-            cls := "application__anwsers",
-            s"${applicationInvitationsCount.getOrElse(user.id, 0)} sollicitations"
-          )
+        userStatsCell(
+          applicationCreationsCount.getOrElse(user.id, 0),
+          applicationInvitationsCount.getOrElse(user.id, 0),
+          applicationParticipationsCount.getOrElse(user.id, 0)
         )
       ),
       td(
         cls := "remove-link-panel",
         lineActionButton(user, groupId, addRedirectQueryParam, currentUser, currentUserRights)
       )
+    )
+
+  private def userStatsCell(
+      applicationCreationsCount: Int,
+      applicationInvitationsCount: Int,
+      applicationParticipationsCount: Int
+  ) =
+    div(
+      cls := "single--display-flex single--flex-direction-column",
+      applicationCreationsCount.some
+        .filter(_ > 0)
+        .map(count =>
+          span(
+            cls := "typography--text-line-height-1-3 single--font-size-12px",
+            s"$count ",
+            if (count <= 1) "demande" else "demandes",
+            " "
+          )
+        ),
+      span(
+        cls := "typography--text-line-height-1-3 single--font-size-12px",
+        s"$applicationInvitationsCount ",
+        if (applicationInvitationsCount <= 1) "sollicitation" else "sollicitations",
+        " "
+      ),
+      applicationParticipationsCount.some
+        .filter(_ > 0)
+        .map(count =>
+          span(
+            cls := "typography--text-line-height-1-3 single--font-size-12px",
+            s"$count ",
+            if (count <= 1) "participation" else "participations",
+            " "
+          )
+        )
     )
 
   private def userRoleTags(user: User): Modifier =
