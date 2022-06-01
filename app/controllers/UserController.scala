@@ -51,9 +51,9 @@ import models.formModels.{
   EditUserFormData,
   ValidateSubscriptionForm
 }
+import modules.AppConfig
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
-import play.api.Configuration
 import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.data.{Form, Mapping}
@@ -70,12 +70,12 @@ import services._
 
 @Singleton
 case class UserController @Inject() (
+    config: AppConfig,
     loginAction: LoginAction,
     userService: UserService,
     groupService: UserGroupService,
     applicationService: ApplicationService,
     notificationsService: NotificationService,
-    configuration: Configuration,
     eventService: EventService
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController

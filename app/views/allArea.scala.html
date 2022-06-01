@@ -1,6 +1,6 @@
 @import models._
 @import java.util.UUID
-@(user: User, currentUserRights: Authorization.UserRights)(areas: List[Area], areasWithLoginByKey: List[UUID], userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
+@(user: User, currentUserRights: Authorization.UserRights)(areas: List[Area], userGroups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 
 @main(user, currentUserRights)(s"Gestion des territoires"){
@@ -15,7 +15,7 @@
                         @area.name
                         @if(user.admin) { /
                             @area.id /
-                            @if(areasWithLoginByKey.contains[UUID](area.id)) {
+                            @if(mainInfos.config.areasWithLoginByKey.contains[UUID](area.id)) {
                                 <i class="material-icons">warning</i> Login par clé possible<i class="material-icons">warning</i> /
                             }
                             <a href="@routes.ApplicationController.applicationsAdmin?areaId=@area.id" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--raised">

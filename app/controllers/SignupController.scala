@@ -13,8 +13,8 @@ import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models.{Authorization, Error, EventType, SignupRequest, User}
 import models.formModels.{AddSignupsFormData, SignupFormData}
+import modules.AppConfig
 import org.webjars.play.WebJarsUtil
-import play.api.Configuration
 import play.api.data.Form
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result}
@@ -24,7 +24,7 @@ import services.{EventService, NotificationService, SignupService, UserGroupServ
 
 @Singleton
 case class SignupController @Inject() (
-    configuration: Configuration,
+    config: AppConfig,
     eventService: EventService,
     groupService: UserGroupService,
     loginAction: LoginAction,

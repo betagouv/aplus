@@ -5,7 +5,7 @@
 @import models.Answer.AnswerType
 @import serializers.Keys
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, selectedArea: Area, userSignature: Option[String], attachments: List[FileMetadata], fileExpiryDayCount: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, selectedArea: Area, userSignature: Option[String], attachments: List[FileMetadata])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 @organisationIcon(creatorUserName: String) = {
     @Map("A+" -> "aplus",
@@ -245,7 +245,7 @@ dialog {
                         @for(mandatDate <- application.mandatDate) { (@mandatDate) }
                     </span>
                 }
-                @toHtml(views.application.applicationFilesLinks(attachments, application, currentUser, currentUserRights, fileExpiryDayCount))
+                @toHtml(views.application.applicationFilesLinks(attachments, application, currentUser, currentUserRights, mainInfos.config))
 
             </div>
         </div>
@@ -310,7 +310,7 @@ dialog {
                 </div>
             }
             @if(currentUser.instructor || currentUser.admin || currentUser.groupAdmin || answer.visibleByHelpers || answer.creatorUserID == currentUser.id) {
-                @toHtml(views.application.answerFilesLinks(attachments, answer, application, currentUser, currentUserRights, fileExpiryDayCount))
+                @toHtml(views.application.answerFilesLinks(attachments, answer, application, currentUser, currentUserRights, mainInfos.config))
 
                 @if(answer.message.nonEmpty) {
                     <div class="mdl-card mdl-cell mdl-cell--10-col mdl-cell--12-col-phone @if(answer.creatorUserID == currentUser.id){ mdl-cell--2-offset mdl-cell--0-offset-phone } answer" id="answer-@answer.id">

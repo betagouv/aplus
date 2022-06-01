@@ -13,18 +13,17 @@ import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models.{Error, EventType, FileMetadata, User}
 import models.dataModels.FileMetadataRow
+import modules.AppConfig
 import net.scalytica.clammyscan.streams.{ClamError, ClamIO, FileOk, VirusFound}
-import play.api.Configuration
 import play.api.mvc.Request
 import play.api.libs.concurrent.{ActorSystemProvider, MaterializerProvider}
 import play.api.db.Database
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration._
 import scala.util.{Success, Try}
 
 @Singleton
 class FileService @Inject() (
-    configuration: Configuration,
+    config: AppConfig,
     db: Database,
     eventService: EventService,
     materializer: MaterializerProvider,
@@ -33,21 +32,10 @@ class FileService @Inject() (
 )(implicit ec: ExecutionContext) {
   implicit val actorSystem = system.get
 
-  val filesPath: String = {
-    val path = configuration.get[String]("app.filesPath")
-    val dir = Paths.get(path)
-    if (!Files.isDirectory(dir)) {
-      Files.createDirectories(dir)
-    }
-    path
-  }
-
-  val clamAvIsEnabled = configuration.get[Boolean]("app.clamav.enabled")
-
   val clamIo = ClamIO(
-    configuration.get[String]("app.clamav.host"),
-    configuration.get[Int]("app.clamav.port"),
-    configuration.get[Int]("app.clamav.timeoutInSeconds").seconds,
+    config.clamAvHost,
+    config.clamAvPort,
+    config.clamAvTimeout,
     // maxBytes = 10M
     10000000
   )
@@ -84,7 +72,9 @@ class FileService @Inject() (
   }
 
   def fileMetadata(fileId: UUID): Future[Either[Error, Option[(Path, FileMetadata)]]] =
-    byId(fileId).map(_.map(_.map(metadata => (Paths.get(s"$filesPath/$fileId"), metadata))))
+    byId(fileId).map(
+      _.map(_.map(metadata => (Paths.get(s"${config.filesPath}/$fileId"), metadata)))
+    )
 
   private def scanFilesBackground(metadataList: List[(Path, FileMetadata)], uploader: User)(implicit
       request: Request[_]
@@ -95,7 +85,7 @@ class FileService @Inject() (
       .mapAsync(1) { case (path, metadata) =>
         val sink = clamIo.scan(metadata.id.toString)
         val scanResult: Future[Either[Error, Unit]] =
-          if (clamAvIsEnabled)
+          if (config.clamAvIsEnabled)
             FileIO
               .fromPath(path)
               .toMat(sink)(Keep.right)
@@ -107,7 +97,7 @@ class FileService @Inject() (
                       EventType.FileAvailable,
                       s"Aucun virus détecté par ClamAV dans le fichier ${metadata.id}"
                     )
-                    val fileDestination = Paths.get(s"$filesPath/${metadata.id}")
+                    val fileDestination = Paths.get(s"${config.filesPath}/${metadata.id}")
                     Files.copy(path, fileDestination)
                     Files.deleteIfExists(path)
                     FileMetadata.Status.Available
@@ -136,7 +126,7 @@ class FileService @Inject() (
               s"Le fichier ${metadata.id} est disponible. ClamAV est désactivé. " +
                 "Aucun scan n'a été effectué"
             )
-            val fileDestination = Paths.get(s"$filesPath/${metadata.id}")
+            val fileDestination = Paths.get(s"${config.filesPath}/${metadata.id}")
             Files.copy(path, fileDestination)
             Files.deleteIfExists(path)
             updateStatus(metadata.id, FileMetadata.Status.Available)
@@ -286,7 +276,7 @@ class FileService @Inject() (
             Source
               .fromIterator(() => files.iterator)
               .mapAsync(1) { metadata =>
-                val path = Paths.get(s"$filesPath/${metadata.id}")
+                val path = Paths.get(s"${config.filesPath}/${metadata.id}")
                 Files.deleteIfExists(path)
                 updateStatus(metadata.id, FileMetadata.Status.Expired)
                   .map(_.fold(e => eventService.logErrorNoRequest(e), identity))

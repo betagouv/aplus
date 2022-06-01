@@ -5,6 +5,7 @@ import cats.syntax.all._
 import javax.inject.{Inject, Singleton}
 import models.mandat.Mandat
 import models.{Error, EventType, Organisation, Sms, User, UserGroup}
+import modules.AppConfig
 import play.api.Configuration
 import play.api.libs.concurrent.{Futures, MaterializerProvider}
 import play.api.libs.ws.WSClient
@@ -15,6 +16,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class SmsService @Inject() (
     bodyParsers: PlayBodyParsers,
+    config: AppConfig,
     configuration: Configuration,
     eventService: EventService,
     futures: Futures,
@@ -22,12 +24,9 @@ class SmsService @Inject() (
     ws: WSClient
 )(implicit ec: ExecutionContext) {
 
-  private val useLiveApi: Boolean = configuration
-    .getOptional[Boolean]("app.smsUseLiveApi")
-    .getOrElse(false)
-
   private val api: SmsApi =
-    if (useLiveApi) new SmsApi.OvhSmsApi(bodyParsers, configuration, ws, ec, materializer.get)
+    if (config.useLiveSmsApi)
+      new SmsApi.OvhSmsApi(bodyParsers, configuration, ws, ec, materializer.get)
     else new SmsApi.FakeSmsApi(configuration, eventService, futures, ws, ec)
 
   def sendMandatSms(

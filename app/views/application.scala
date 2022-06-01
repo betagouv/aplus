@@ -5,6 +5,7 @@ import controllers.routes.{ApplicationController, Assets}
 import helpers.forms.CSRFInput
 import java.util.UUID
 import models.{Answer, Application, Area, Authorization, FileMetadata, User, UserGroup}
+import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
@@ -17,15 +18,16 @@ object application {
       application: Application,
       currentUser: User,
       currentUserRights: Authorization.UserRights,
-      fileExpiryDayCount: Int,
+      config: AppConfig,
   ): Frag = {
-    val daysRemaining = Application.filesAvailabilityLeftInDays(fileExpiryDayCount)(application)
+    val daysRemaining =
+      Application.filesAvailabilityLeftInDays(config.filesExpirationInDays)(application)
     frag(
       files
         .filter(_.attached.isApplication)
         .map(file =>
           fileLink(
-            Authorization.fileCanBeShowed(fileExpiryDayCount)(file.attached, application)(
+            Authorization.fileCanBeShowed(config.filesExpirationInDays)(file.attached, application)(
               currentUser.id,
               currentUserRights
             ),
@@ -33,7 +35,8 @@ object application {
             daysRemaining,
             application.creatorUserName,
             "",
-            Some(file.status)
+            file.status,
+            config
           )
         )
     )
@@ -45,15 +48,15 @@ object application {
       application: Application,
       currentUser: User,
       currentUserRights: Authorization.UserRights,
-      fileExpiryDayCount: Int
+      config: AppConfig,
   ): Frag = {
-    val daysRemaining = Answer.filesAvailabilityLeftInDays(fileExpiryDayCount)(answer)
+    val daysRemaining = Answer.filesAvailabilityLeftInDays(config.filesExpirationInDays)(answer)
     frag(
       files
         .filter(_.attached.answerIdOpt === answer.id.some)
         .map(file =>
           fileLink(
-            Authorization.fileCanBeShowed(fileExpiryDayCount)(file.attached, application)(
+            Authorization.fileCanBeShowed(config.filesExpirationInDays)(file.attached, application)(
               currentUser.id,
               currentUserRights
             ),
@@ -61,7 +64,8 @@ object application {
             daysRemaining,
             answer.creatorUserName,
             "mdl-cell mdl-cell--12-col typography--text-align-center",
-            Some(file.status)
+            file.status,
+            config
           )
         )
     )
@@ -73,31 +77,32 @@ object application {
       daysRemaining: Option[Int],
       uploaderName: String,
       additionalClasses: String,
-      status: Option[FileMetadata.Status]
+      status: FileMetadata.Status,
+      config: AppConfig,
   ): Tag = {
     import FileMetadata.Status._
     val link: Frag =
-      if (isAuthorized)
-        if (status.isEmpty || status === Some(Available))
+      if (isAuthorized) {
+        if (status === Available)
           frag(
             "le fichier ",
             a(href := ApplicationController.file(metadata.id).url, metadata.filename)
           )
         else
           s"le fichier ${metadata.filename}"
-      else
+      } else
         "un fichier"
 
     val statusMessage: Frag = status match {
-      case None | Some(Available) =>
+      case Available =>
         daysRemaining match {
           case None                   => "Fichier expiré et supprimé"
           case Some(expirationInDays) => s"Suppression du fichier dans $expirationInDays jours"
         }
-      case Some(Scanning)    => "Scan par un antivirus en cours"
-      case Some(Quarantined) => "Fichier supprimé par l’antivirus"
-      case Some(Expired)     => "Fichier expiré et supprimé"
-      case Some(Error) =>
+      case Scanning    => "Scan par un antivirus en cours"
+      case Quarantined => "Fichier supprimé par l’antivirus"
+      case Expired     => "Fichier expiré et supprimé"
+      case Error =>
         "Une erreur est survenue lors de l’envoi du fichier, celui-ci n’est pas disponible"
     }
     div(

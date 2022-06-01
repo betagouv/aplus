@@ -1,12 +1,9 @@
 package controllers
 
-import java.util.UUID
-
 import actions.LoginAction
 import cats.syntax.all._
 import constants.Constants
 import controllers.Operators.UserOperators
-import helper.UUIDHelper
 import javax.inject.{Inject, Singleton}
 import models.EventType.{
   AllAreaUnauthorized,
@@ -15,30 +12,24 @@ import models.EventType.{
   DeploymentDashboardUnauthorized
 }
 import models._
+import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
+import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
 import services.{EventService, UserGroupService, UserService}
 
-import scala.concurrent.{ExecutionContext, Future}
-
 @Singleton
 case class AreaController @Inject() (
+    config: AppConfig,
     loginAction: LoginAction,
     eventService: EventService,
     userService: UserService,
     userGroupService: UserGroupService,
-    configuration: play.api.Configuration
 )(implicit ec: ExecutionContext, val webJarsUtil: WebJarsUtil)
     extends InjectedController
     with Operators.Common
     with UserOperators {
-
-  private lazy val areasWithLoginByKey: List[UUID] = configuration.underlying
-    .getString("app.areasWithLoginByKey")
-    .split(",")
-    .flatMap(UUIDHelper.fromString)
-    .toList
 
   def all =
     loginAction.async { implicit request =>
@@ -55,14 +46,7 @@ case class AreaController @Inject() (
           Future(userGroupService.byIds(request.currentUser.groupIds))
         }
         userGroupsFuture.map { userGroups =>
-          Ok(
-            views.html
-              .allArea(request.currentUser, request.rights)(
-                Area.all,
-                areasWithLoginByKey,
-                userGroups
-              )
-          )
+          Ok(views.html.allArea(request.currentUser, request.rights)(Area.all, userGroups))
         }
       }
     }

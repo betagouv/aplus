@@ -13,7 +13,6 @@ import scala.util.Try
 
 @javax.inject.Singleton
 class SignupService @Inject() (
-    configuration: play.api.Configuration,
     db: Database,
     dependencies: ServicesDependencies
 ) {

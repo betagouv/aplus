@@ -7,7 +7,8 @@ import cats.syntax.all._
 import helper.MiscHelpers
 import javax.inject.{Inject, Singleton}
 import models.EmailPriority
-import play.api.{Configuration, Logger}
+import modules.AppConfig
+import play.api.Logger
 import play.api.libs.concurrent.MaterializerProvider
 import play.api.libs.mailer.{Email, SMTPConfiguration, SMTPMailer}
 import com.typesafe.config.{Config, ConfigFactory}
@@ -54,7 +55,7 @@ object EmailsService {
   */
 @Singleton
 class EmailsService @Inject() (
-    configuration: Configuration,
+    config: AppConfig,
     dependencies: ServicesDependencies,
     materializerProvider: MaterializerProvider,
 ) {
@@ -64,21 +65,10 @@ class EmailsService @Inject() (
 
   private val log = Logger(classOf[EmailsService])
 
-  // This blacklist if mainly for experts who do not need emails
-  // Note: be careful with the empty string
-  private lazy val notificationEmailBlacklist: Set[String] =
-    configuration
-      .get[String]("app.notificationEmailBlacklist")
-      .split(",")
-      .map(_.trim)
-      .filterNot(_.isEmpty)
-      .toSet
-
   private def emailIsBlacklisted(email: Email): Boolean =
-    notificationEmailBlacklist.exists(black => email.to.exists(_.contains(black)))
+    config.notificationEmailBlacklist.exists(black => email.to.exists(_.contains(black)))
 
-  private val defaultMailerConfig = configuration.underlying.getObject("play.mailer").toConfig
-  private val defaultSMTPConfig = SMTPConfiguration(defaultMailerConfig)
+  private val defaultSMTPConfig = SMTPConfiguration(config.defaultMailerConfig)
   private val defaultSMTP = new SMTPMailer(defaultSMTPConfig)
 
   private val defaultHeaders = List[(String, String)](
@@ -88,17 +78,15 @@ class EmailsService @Inject() (
   )
 
   private val pickers: Option[SMTPPickers] =
-    configuration
-      .getOptional[String]("app.mailer.pickersConfig")
-      .map { raw =>
-        val rootConfig = ConfigFactory.parseString(raw)
+    config.emailPickersConfig
+      .map { rootConfig =>
         def readWeightedConfig(key: String) =
           SMTPPicker(
             NonEmptyList.fromListUnsafe(asScala(rootConfig.getObjectList(key)).toList).map { obj =>
               val topConfig = obj.toConfig
               val weight = topConfig.getDouble("weight")
               val smtpConfig = SMTPConfiguration(
-                topConfig.getObject("smtpConfig").toConfig.withFallback(defaultMailerConfig)
+                topConfig.getObject("smtpConfig").toConfig.withFallback(config.defaultMailerConfig)
               )
               val extraHeaders = Try(topConfig.getObject("extraHeaders")).toOption
                 .map { obj =>
