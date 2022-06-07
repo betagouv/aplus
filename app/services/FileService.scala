@@ -75,7 +75,7 @@ class FileService @Inject() (
             val metadata = FileMetadata(
               id = id,
               uploadDate = Instant.now(),
-              filename = filename,
+              filename = filename.some,
               filesize = path.toFile.length().toInt,
               status = FileMetadata.Status.Scanning,
               attached = document,
@@ -326,9 +326,8 @@ class FileService @Inject() (
         db.withConnection { implicit connection =>
           val before = ZonedDateTime.now().minusMonths(retentionInMonths)
           SQL(s"""UPDATE file_metadata
-                  SET filename = 'fichier-non-existant'
-                  WHERE upload_date < {before}
-                  AND filename != 'fichier-non-existant'""")
+                  SET filename = NULL
+                  WHERE upload_date < {before}""")
             .on("before" -> before)
             .executeUpdate()
         }

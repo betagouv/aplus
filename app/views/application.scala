@@ -86,9 +86,13 @@ object application {
       if (isAuthorized) {
         // Note: legacy is not encrypted
         val decryptedFilename: String = metadata.filename
-          .decrypt(config.fieldEncryptionKeys)
-          .toOption
-          .getOrElse(metadata.filename.cipherTextBase64)
+          .map(
+            _.decrypt(config.fieldEncryptionKeys).toOption
+              .getOrElse(
+                metadata.filename.map(_.cipherTextBase64).getOrElse("Fichier non existant")
+              )
+          )
+          .getOrElse("Fichier non existant")
         if (status === Available)
           frag(
             "le fichier ",

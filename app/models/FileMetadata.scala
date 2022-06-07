@@ -9,7 +9,7 @@ import java.util.UUID
 case class FileMetadata(
     id: UUID,
     uploadDate: Instant,
-    filename: EncryptedField,
+    filename: Option[EncryptedField],
     filesize: Int,
     status: FileMetadata.Status,
     attached: FileMetadata.Attached,

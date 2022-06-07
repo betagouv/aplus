@@ -144,7 +144,7 @@ object dataModels {
   case class FileMetadataRow(
       id: UUID,
       uploadDate: Instant,
-      filename: String,
+      filename: Option[String],
       filesize: Int,
       status: String,
       applicationId: Option[UUID],
@@ -171,7 +171,8 @@ object dataModels {
         FileMetadata(
           id = id,
           uploadDate = uploadDate,
-          filename = Crypto.EncryptedField.fromCipherText(filename, FileMetadata.filenameAAD(id)),
+          filename = filename
+            .map(name => Crypto.EncryptedField.fromCipherText(name, FileMetadata.filenameAAD(id))),
           filesize = filesize,
           status = status,
           attached = attached
@@ -201,7 +202,7 @@ object dataModels {
       FileMetadataRow(
         id = metadata.id,
         uploadDate = metadata.uploadDate,
-        filename = metadata.filename.cipherTextBase64,
+        filename = metadata.filename.map(_.cipherTextBase64),
         filesize = metadata.filesize,
         status = statusFromFileMetadata(metadata.status),
         applicationId = applicationId,
