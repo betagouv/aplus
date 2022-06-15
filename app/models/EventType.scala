@@ -163,6 +163,8 @@ object EventType {
   object SearchUsersNotAuthorized extends Warn
   object SearchUsersError extends Error
 
+  object FieldEncryptionRekeyComplete extends Info
+  object FieldEncryptionRekeyError extends Error
   object FieldEncryptionError extends Error
 
   // Signups

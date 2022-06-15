@@ -25,6 +25,14 @@ class AppConfig @Inject() (configuration: Configuration) {
     Crypto.KeySet(key, oldKeys)
   }
 
+  val fieldEncryptionKeyRotationExecute: Boolean = configuration
+    .getOptional[Boolean]("app.fieldsEncryption.keyRotation.execute")
+    .getOrElse(false)
+
+  val fieldEncryptionKeyRotationEncryptIfPlainText: Boolean = configuration
+    .getOptional[Boolean]("app.fieldsEncryption.keyRotation.encryptIfPlainText")
+    .getOrElse(false)
+
   val featureMandatSms: Boolean = configuration.get[Boolean]("app.features.smsMandat")
 
   val useLiveSmsApi: Boolean = configuration

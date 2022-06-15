@@ -6,7 +6,7 @@ import java.security.SecureRandom
 import java.util.Base64
 import javax.crypto.{Cipher, KeyGenerator, SecretKey}
 import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
-import scala.util.{Failure, Try}
+import scala.util.{Failure, Success, Try}
 
 // This class regroups high level functions using AEAD with ChaCha20-Poly1305
 //
@@ -46,6 +46,10 @@ object Crypto {
 
   case class Key(key: SecretKey)
 
+  /** A `KeySet` holds an encrypt/decrypt key `validKey` and 'decrypt-only' keys `oldKeys`. This is
+    * used in order to smoothly rotate keys. `oldKeys` are assumed to be insecure for encrypting new
+    * data (due to scheduled rotation or compromise).
+    */
   case class KeySet(validKey: Key, oldKeys: List[Key])
 
   /** This class wraps the ciphertext in order to avoid keeping the plaintext in memory when this is
@@ -53,16 +57,46 @@ object Crypto {
     */
   case class EncryptedField private (cipherTextBase64: String, aad: String) {
 
+    private def decryptWithOldKeys(keyset: KeySet, noOldKeysError: Throwable): Try[String] =
+      keyset.oldKeys.foldLeft[Try[String]](Failure(noOldKeysError)) { case (acc, oldKey) =>
+        if (acc.isSuccess)
+          acc
+        else
+          decryptField(cipherTextBase64, aad, oldKey)
+      }
+
     def decrypt(keyset: KeySet): Try[String] =
       decryptField(cipherTextBase64, aad, keyset.validKey)
         .recoverWith { case firstError: javax.crypto.AEADBadTagException =>
-          keyset.oldKeys.foldLeft[Try[String]](Failure(firstError)) { case (acc, oldKey) =>
-            if (acc.isSuccess)
-              acc
-            else
-              decryptField(cipherTextBase64, aad, oldKey)
-          }
+          decryptWithOldKeys(keyset, firstError)
         }
+
+    /** Does nothing if the encrypting key has been used to encrypt the field. Decrypt and encrypt
+      * if one of the old keys has been used to encrypt the field. Use for key rotation. Returns
+      * None if nothing has been done, Some if rekey has occured.
+      *
+      * `encryptIfPlainText` is used for updating a plain text field to a encrypted field. The field
+      * is encrypted if it fails base64 decoding or decryption.
+      */
+    def updateKey(keyset: KeySet, encryptIfPlainText: Boolean): Try[Option[EncryptedField]] =
+      decryptField(cipherTextBase64, aad, keyset.validKey) match {
+        case Success(_) => Success(None)
+        case Failure(firstError: javax.crypto.AEADBadTagException) =>
+          decryptWithOldKeys(keyset, firstError) match {
+            case Success(plainText) =>
+              EncryptedField.fromPlainText(plainText, aad, keyset).map(Some.apply)
+            case Failure(e) =>
+              if (encryptIfPlainText)
+                EncryptedField.fromPlainText(cipherTextBase64, aad, keyset).map(Some.apply)
+              else
+                Failure(e)
+          }
+        case Failure(e) =>
+          if (encryptIfPlainText)
+            EncryptedField.fromPlainText(cipherTextBase64, aad, keyset).map(Some.apply)
+          else
+            Failure(e)
+      }
 
   }
 

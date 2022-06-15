@@ -98,6 +98,63 @@ class CryptoHelperSpec extends Specification with ScalaCheck {
       }
     }
 
+    "Rekeying should do nothing if new key was used" >> {
+      prop { (pt: String, newKey: Key, oldKey: Key, oldKey2: Key, aad: String) =>
+        val keySet = KeySet(newKey, List(oldKey, oldKey2))
+        val field = EncryptedField.fromPlainText(pt, aad, keySet).toOption.get
+        val updatedField = field.updateKey(keySet, false)
+        Success(None) === updatedField
+      }
+    }
+
+    "Rekeying should change an old encrypting key" >> {
+      prop { (pt: String, newKey: Key, oldKey: Key, oldKey2: Key, aad: String) =>
+        val oldKeySet = KeySet(oldKey, List(oldKey2))
+        val oldField = EncryptedField.fromPlainText(pt, aad, oldKeySet).toOption.get
+        val newKeySet = KeySet(newKey, List(oldKey))
+        val updatedField = oldField.updateKey(newKeySet, false).toOption.get.get
+        val newKeyOnlySet = KeySet(newKey, Nil)
+        val decrypted = updatedField.decrypt(newKeyOnlySet)
+        val decryptedWithOldKeySet = updatedField.decrypt(oldKeySet)
+        Success(pt) === decrypted && decryptedWithOldKeySet.isFailure
+      }
+    }
+
+    "Rekeying should change an old encrypting key" >> {
+      prop { (pt: String, newKey: Key, oldKey: Key, oldKey2: Key, aad: String) =>
+        val oldKeySet = KeySet(oldKey, List(oldKey2))
+        val oldField = EncryptedField.fromPlainText(pt, aad, oldKeySet).toOption.get
+        val newKeySet = KeySet(newKey, List(oldKey))
+        val updatedField = oldField.updateKey(newKeySet, false).toOption.get.get
+        val newKeyOnlySet = KeySet(newKey, Nil)
+        val decrypted = updatedField.decrypt(newKeyOnlySet)
+        val decryptedWithOldKeySet = updatedField.decrypt(oldKeySet)
+        Success(pt) === decrypted && decryptedWithOldKeySet.isFailure
+      }
+    }
+
+    "Rekeying should encrypt plaintext if explicit boolean is set" >> {
+      prop { (pt: String, newKey: Key, oldKey: Key, aad: String) =>
+        val field = Crypto.EncryptedField.fromCipherText(pt, aad)
+        val keySet1 = KeySet(newKey, Nil)
+        val keySet2 = KeySet(newKey, List(oldKey))
+        val updatedField1 = field.updateKey(keySet1, true).toOption.get.get
+        val updatedField2 = field.updateKey(keySet2, true).toOption.get.get
+        val decrypted1 = updatedField1.decrypt(keySet1)
+        val decrypted2 = updatedField2.decrypt(keySet1) // here keySet1 should work
+        Success(pt) === decrypted1 && Success(pt) === decrypted2
+      }
+    }
+
+    "Rekeying should not encrypt plaintext without explicit boolean set" >> {
+      prop { (pt: String, newKey: Key, oldKey: Key, aad: String) =>
+        val field = Crypto.EncryptedField.fromCipherText(pt, aad)
+        val keySet = KeySet(newKey, List(oldKey))
+        val updatedField = field.updateKey(keySet, false)
+        updatedField.isFailure
+      }
+    }
+
   }
 
 }

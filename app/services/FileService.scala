@@ -342,6 +342,93 @@ class FileService @Inject() (
         )
     )
 
+  /** Returns (number of no-ops, number of updates) */
+  def rekeyFilenames(encryptIfPlainText: Boolean): Future[Either[Error, (Int, Int)]] =
+    Future(
+      Try(
+        db.withConnection { implicit connection =>
+          val files: List[Either[Error, Int]] = SQL(
+            s"""SELECT $fieldsInSelect FROM file_metadata WHERE filename IS NOT NULL"""
+          )
+            .as(fileMetadataRowParser.*)
+            .map { file =>
+              file.filename
+                .toRight(
+                  Error.Database(
+                    EventType.FieldEncryptionRekeyError,
+                    s"Changement de la clé de chiffrement des noms de fichiers : " +
+                      s"SELECT a renvoyé un fichier (${file.id}) avec un nom NULL",
+                    none
+                  )
+                )
+                .flatMap(cipherText =>
+                  Crypto.EncryptedField
+                    .fromCipherText(cipherText, FileMetadata.filenameAAD(file.id))
+                    .updateKey(config.fieldEncryptionKeys, encryptIfPlainText)
+                    .toEither
+                    .left
+                    .map(e =>
+                      Error.MiscException(
+                        EventType.FieldEncryptionRekeyError,
+                        s"Impossible de re-chiffrer le nom du fichier ${file.id}",
+                        e,
+                        none
+                      )
+                    )
+                )
+                .flatMap {
+                  case None => 0.asRight: Either[Error, Int]
+                  case Some(newField) =>
+                    val newFilename: String = newField.cipherTextBase64
+                    Try(
+                      SQL(s"""UPDATE file_metadata
+                          SET filename = {filename}
+                          WHERE id = {fileId}::uuid""")
+                        .on("fileId" -> file.id, "filename" -> newFilename)
+                        .executeUpdate()
+                    ).toEither.left
+                      .map(error =>
+                        Error.SqlException(
+                          EventType.FieldEncryptionRekeyError,
+                          s"Impossible de mettre à jour le nom re-chiffré du fichier ${file.id}",
+                          error,
+                          none
+                        )
+                      )
+                }
+            }
+          val errors: List[Error] = files.flatMap(_.left.toOption)
+          val successes: List[Int] = files.flatMap(_.toOption)
+          val noops: Int = successes.count(_ === 0)
+          val updates: Int = successes.sum
+          errors match {
+            case Nil => (noops, updates).asRight[Error]
+            case errors =>
+              val message =
+                s"Re-chiffrement des noms de fichiers : " +
+                  s"$noops no-ops / $updates updates / ${errors.size} erreurs. " +
+                  errors
+                    .map(error =>
+                      error.description + error.underlyingException
+                        .map(e => ": " + e.toString)
+                        .getOrElse("")
+                    )
+                    .mkString(" ; ")
+              Error.Database(EventType.FieldEncryptionRekeyError, message, none).asLeft[(Int, Int)]
+          }
+        }
+      ).toEither.left
+        .map(e =>
+          Error.SqlException(
+            EventType.FieldEncryptionRekeyError,
+            s"Impossible de changer la clé de chiffrement des noms de fichiers",
+            e,
+            none
+          )
+        )
+        .flatten
+    )
+
   private def before(beforeDate: Instant): Future[Either[Error, List[FileMetadata]]] =
     Future(
       Try(
