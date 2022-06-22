@@ -117,7 +117,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "material-design-icons" % "4.0.0",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
   "org.webjars" % "chartjs" % "2.9.4",
-  "org.webjars" % "font-awesome" % "6.1.0",
+  "org.webjars" % "font-awesome" % "6.1.1",
 )
 // Crash
 libraryDependencies += "io.sentry" % "sentry-logback" % "5.7.4"
