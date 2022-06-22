@@ -8,12 +8,12 @@ import javax.crypto.{Cipher, KeyGenerator, SecretKey}
 import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
 import scala.util.{Failure, Success, Try}
 
-// This class regroups high level functions using AEAD with ChaCha20-Poly1305
+// This singleton regroups high level functions using AEAD with ChaCha20-Poly1305
 //
 // Libsodium gives a summary of limitations of AEAD schemes:
 // https://doc.libsodium.org/secret-key_cryptography/aead
 //
-// Java code from can be found here:
+// Java code for ChaCha20-Poly1305 can be found here:
 // https://openjdk.java.net/jeps/329
 //
 // Rekeying:
@@ -25,9 +25,9 @@ import scala.util.{Failure, Success, Try}
 //     If the protected data is retained, it should be re-protected using
 //     an approved algorithm and key size that will protect the information
 //     for the remainder of its security life.
-// - Here `KeySet` is a pair of (encrypting key, old keys used to encrypt)
-//   It should be sufficient for fields for which we destroy data after some time
-//   It is not sufficient for fields for which data should be kept
+// - Here `KeySet` is a pair of (encrypting key, old keys previously used to encrypt)
+//   It is useful for smooth key rotation and fields that do not require key rotation
+//   because they are wiped after a fixed amount of time.
 //
 object Crypto {
 
@@ -72,8 +72,9 @@ object Crypto {
         }
 
     /** Does nothing if the encrypting key has been used to encrypt the field. Decrypt and encrypt
-      * if one of the old keys has been used to encrypt the field. Use for key rotation. Returns
-      * None if nothing has been done, Some if rekey has occured.
+      * if one of the old keys has been used to encrypt the field. Used for key rotation.
+      *
+      * Returns None if nothing has been done, Some if key rotation has occured.
       *
       * `encryptIfPlainText` is used for updating a plain text field to a encrypted field. The field
       * is encrypted if it fails base64 decoding or decryption.

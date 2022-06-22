@@ -9,6 +9,7 @@ import java.util.UUID
 case class FileMetadata(
     id: UUID,
     uploadDate: Instant,
+    // None if it has been wiped (avoids encrypting tons of empty strings)
     filename: Option[EncryptedField],
     filesize: Int,
     status: FileMetadata.Status,

@@ -44,6 +44,8 @@ jobs:
       run: "sbt coverage test coverageReport"
       env:
         GECKO_DRIVER: /usr/bin/geckodriver
+        # Only used for tests
+        APP_FIELDS_ENCRYPTION_KEY: 'J/MFqTCQ7CooH2Qs5KT8wqUGUx3ZpExnhUwFyLHPv+Y='
 
     - name: Run codacy-coverage-reporter
       uses: codacy/codacy-coverage-reporter-action@v1
