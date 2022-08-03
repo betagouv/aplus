@@ -38,6 +38,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
 
   private val fieldsInSelect: String = tableFields.mkString(", ")
 
+  // If there are no connected user, use `logSystem` (see `SignupController`)
   def log(
       event: EventType,
       descriptionSanitized: String,

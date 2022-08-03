@@ -176,6 +176,7 @@ object ApiModel {
         disabled = user.disabledRoleName.nonEmpty,
         sharedAccount = user.sharedAccount,
         cgu = user.cguAcceptationDate.nonEmpty,
+        passwordActivated = user.passwordActivated,
       )
     }
 
@@ -201,7 +202,8 @@ object ApiModel {
       expert: Boolean,
       disabled: Boolean,
       sharedAccount: Boolean,
-      cgu: Boolean
+      cgu: Boolean,
+      passwordActivated: Boolean,
   )
 
   object UserGroupInfos {

@@ -2,12 +2,13 @@ package models
 
 import play.api.data.{Form, Mapping}
 import play.api.data.Forms._
-import play.api.data.validation.Constraints.{maxLength, nonEmpty}
+import play.api.data.validation.Constraints.{maxLength, minLength, nonEmpty}
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 
 import cats.syntax.all._
 import constants.Constants
 import forms.FormsPlusMap
+import helper.StringHelper
 import helper.StringHelper.commonStringInputNormalization
 import java.util.UUID
 import serializers.Keys
@@ -24,11 +25,53 @@ object formModels {
       _.map(commonStringInputNormalization).filter(_.nonEmpty)
     )
 
+  val passwordText: Mapping[String] =
+    text
+      .transform[String](StringHelper.normalizeNFKC, _ => "")
+      .verifying(minLength(8))
+      .verifying(maxLength(1000))
+      .verifying(
+        "Le mot de passe ne peut pas commencer ou terminer par une espace " +
+          "(Cependant, les espaces sont autorisés à l’intérieur du mot de passe).",
+        password => password.trim === password
+      )
+
   def inOption[T](constraint: Constraint[T]): Constraint[Option[T]] =
     Constraint[Option[T]](constraint.name, constraint.args) {
       case None    => Valid
       case Some(t) => constraint(t)
     }
+
+  case class PasswordCredentials(email: String, password: String)
+
+  object PasswordCredentials {
+
+    val form = Form(
+      mapping(
+        "email" -> normalizedText.verifying(maxLength(User.emailMaxLength)),
+        "password" -> passwordText,
+      )(PasswordCredentials.apply)(PasswordCredentials.unapply)
+    )
+
+  }
+
+  case class PasswordChange(token: String, newPassword: String, passwordConfirmation: String)
+
+  object PasswordChange {
+
+    val form = Form(
+      mapping(
+        "token" -> text.transform[String](_.take(100), identity),
+        "new-password" -> passwordText,
+        "password-confirmation" -> passwordText,
+      )(PasswordChange.apply)(PasswordChange.unapply)
+        .verifying(
+          "Les deux mots de passe doivent correspondre",
+          form => form.newPassword === form.passwordConfirmation
+        )
+    )
+
+  }
 
   final case class SignupFormData(
       firstName: Option[String],
@@ -243,7 +286,7 @@ object formModels {
           }
         ),
       "qualite" -> default(normalizedText.verifying(maxLength(100)), ""),
-      "email" -> email.verifying(maxLength(200), nonEmpty),
+      "email" -> email.verifying(maxLength(User.emailMaxLength), nonEmpty),
       "instructor" -> boolean,
       "groupAdmin" -> boolean,
       "phoneNumber" -> normalizedOptionalText,
@@ -312,7 +355,7 @@ object formModels {
               }
             ),
           "qualite" -> normalizedText.verifying(maxLength(100)),
-          "email" -> email.verifying(maxLength(200), nonEmpty),
+          "email" -> email.verifying(maxLength(User.emailMaxLength), nonEmpty),
           "helper" -> boolean,
           "instructor" -> boolean,
           "areas" -> list(uuid)

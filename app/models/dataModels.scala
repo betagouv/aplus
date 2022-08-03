@@ -17,6 +17,21 @@ import serializers.JsonFormats.mapUUIDFormat
 /** Only to serialize/deserialize in PG. */
 object dataModels {
 
+  case class PasswordRow(
+      userId: UUID,
+      passwordHash: String,
+      lastUpdate: Instant,
+  )
+
+  case class PasswordRecoveryTokenRow(
+      token: String,
+      userId: UUID,
+      creationDate: Instant,
+      expirationDate: Instant,
+      ipAddress: String,
+      used: Boolean,
+  )
+
   object Answer {
 
     object AnswerType {
@@ -291,6 +306,7 @@ object dataModels {
         observableOrganisationIds = user.observableOrganisationIds.distinct.map(_.id),
         sharedAccount = user.sharedAccount,
         internalSupportComment = user.internalSupportComment,
+        passwordActivated = user.passwordActivated,
       )
     }
 
@@ -319,7 +335,8 @@ object dataModels {
       phoneNumber: Option[String],
       observableOrganisationIds: List[String],
       sharedAccount: Boolean,
-      internalSupportComment: Option[String]
+      internalSupportComment: Option[String],
+      passwordActivated: Boolean,
   ) {
 
     def toUser: User = User(
@@ -345,7 +362,8 @@ object dataModels {
       phoneNumber = phoneNumber,
       observableOrganisationIds = observableOrganisationIds.map(Organisation.Id.apply),
       sharedAccount = sharedAccount,
-      internalSupportComment = internalSupportComment
+      internalSupportComment = internalSupportComment,
+      passwordActivated = passwordActivated,
     )
 
   }

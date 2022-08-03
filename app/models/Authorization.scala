@@ -211,6 +211,8 @@ object Authorization {
 
   def canSeeEditUserPage: Check = isAdminOrObserver
 
+  def canActivateUserPassword: Check = isAdmin
+
   def canSeeSignupsPage: Check = isAdmin
 
   def canCreateSignups: Check = isAdmin

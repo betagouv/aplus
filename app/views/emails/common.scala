@@ -42,7 +42,7 @@ object common {
       br,
       br,
       p(
-        "Vous pouvez maintenant accéder au service Administration+ en cliquant sur le lien suivant :",
+        "Vous pouvez maintenant accéder au service Administration+ en cliquant sur le lien suivant : ",
         br,
         a(href := raw(url).render, raw(url)),
         br,
@@ -72,6 +72,40 @@ object common {
       )
     ) ::: commonEmailFooter
   }
+
+  val recoverPasswordSubject = "Réinitialisation du mot de passe Administration+"
+
+  def recoverPasswordBody(
+      userName: Option[String],
+      userTimeZone: ZoneId,
+      absoluteUrl: String,
+      expirationDate: ZonedDateTime,
+  ): List[Modifier] =
+    List[Modifier](
+      s"${userName.filter(_.nonEmpty).map(n => s"Bonjour $n,").getOrElse("Bonjour,")}",
+      br,
+      br,
+      p(
+        "Une demande de réinitialisation de mot de passe a été faite pour " +
+          "votre compte Administration+. Pour terminer la procédure, " +
+          "veuillez cliquer sur le lien suivant : ",
+        br,
+        a(href := raw(absoluteUrl).render, raw(absoluteUrl)),
+        br,
+        br,
+        " ",
+        "Ce lien est valide jusqu’à ",
+        b(expirationDate.format(Time.hourAndMinutesFormatter)),
+        ".",
+        br,
+        br,
+        "Si vous n’avez pas effectué de demande de réinitialisation de mot de passe, ",
+        "vous pouvez ignorer cet email.",
+        br,
+        " ",
+        "Equipe Administration+"
+      )
+    ) ::: commonEmailFooter
 
   val mandatSmsSentSubject = "[A+] Mandat initié par SMS"
 

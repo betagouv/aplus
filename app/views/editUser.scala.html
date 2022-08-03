@@ -214,7 +214,17 @@
             Sauvegarder
         </button>
     </div>
-    <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col">
+    }
+
+    }
+
+    @if(canEditUser) {
+
+      @if(currentUser.admin) {
+        @toHtml(views.user.passwordActivationButton(uneditedUser))
+      }
+
+    <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col single--padding-8px">
         <b>Outils</b>
         <p>
 
@@ -239,6 +249,6 @@
     }
 
     }
-}
+
 }{
 }

@@ -44,7 +44,8 @@ case class User(
     observableOrganisationIds: List[Organisation.Id] = Nil,
     sharedAccount: Boolean = false,
     // This is a comment only visible by the admins
-    internalSupportComment: Option[String]
+    internalSupportComment: Option[String],
+    passwordActivated: Boolean
 ) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"
 
@@ -202,7 +203,12 @@ object User {
     "75056",
     groupAdmin = false,
     disabled = true,
-    internalSupportComment = None
+    internalSupportComment = None,
+    passwordActivated = false,
   )
+
+  // DB field size is varchar(200) - UTF8 if correctly configured
+  // No chars outside BMP plane should be a safe assumption here...
+  val emailMaxLength = 200
 
 }

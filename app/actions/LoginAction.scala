@@ -251,20 +251,19 @@ class LoginAction @Inject() (
       case Some(user) =>
         LoginAction.readUserRights(user).map { userRights =>
           // hack: we need RequestWithUserData to call the logger
-          implicit val requestWithUserData =
-            new RequestWithUserData(user, userRights, request)
+          val requestWithUserData = new RequestWithUserData(user, userRights, request)
 
           if (token.ipAddress =!= request.remoteAddress) {
             eventService.log(
               AuthWithDifferentIp,
               s"Utilisateur $userId à une adresse ip différente pour l'essai de connexion"
-            )
+            )(requestWithUserData)
           }
           if (token.isActive) {
             val url = request.path + queryToString(
               request.queryString - Keys.QueryParam.key - Keys.QueryParam.token
             )
-            eventService.log(AuthByKey, s"Identification par token")
+            eventService.log(AuthByKey, s"Identification par token")(requestWithUserData)
             Left(
               TemporaryRedirect(Call(request.method, url).url)
                 .withSession(
@@ -273,7 +272,7 @@ class LoginAction @Inject() (
                 )
             )
           } else {
-            eventService.log(ExpiredToken, s"Token expiré pour $userId")
+            eventService.log(ExpiredToken, s"Token expiré pour $userId")(requestWithUserData)
             redirectToHomeWithEmailSendbackButton(
               user.email,
               s"Votre lien de connexion a expiré, il est valable $tokenExpirationInMinutes minutes à réception."

@@ -6,6 +6,7 @@ import java.util.UUID
 import actions.{LoginAction, RequestWithUserData}
 import cats.data.EitherT
 import cats.syntax.all._
+import constants.Constants
 import controllers.Operators.{GroupOperators, UserOperators}
 import helper.BooleanHelper.not
 import helper.StringHelper.{capitalizeName, commonStringInputNormalization}
@@ -70,13 +71,14 @@ import services._
 
 @Singleton
 case class UserController @Inject() (
-    config: AppConfig,
-    loginAction: LoginAction,
-    userService: UserService,
-    groupService: UserGroupService,
     applicationService: ApplicationService,
+    config: AppConfig,
+    eventService: EventService,
+    groupService: UserGroupService,
+    loginAction: LoginAction,
     notificationsService: NotificationService,
-    eventService: EventService
+    passwordService: PasswordService,
+    userService: UserService,
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with I18nSupport
@@ -509,6 +511,51 @@ case class UserController @Inject() (
       }
     }
 
+  def activateUserPassword(userId: UUID): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      withUser(
+        userId,
+        includeDisabled = true,
+        errorMessage =
+          s"L'utilisateur $userId n'existe pas et ne peut pas avoir de mot de passe".some,
+        errorResult = Redirect(routes.UserController.all(Area.allArea.id))
+          .flashing(
+            "error" -> ("L’utilisateur n’existe pas dans Administration+. " +
+              "S’il s’agit d’une erreur, vous pouvez contacter le support.")
+          )
+          .some
+      ) { otherUser =>
+        asUserWithAuthorization(Authorization.canActivateUserPassword)(
+          EventType.EditUserUnauthorized,
+          (if (otherUser.passwordActivated) "Désactivation" else "Activation") +
+            s" du mot de passe de l'utilisateur $userId non autorisée"
+        ) { () =>
+          val action =
+            if (otherUser.passwordActivated) userService.deactivatePassword(userId)
+            else userService.activatePassword(userId)
+          action.map(
+            _.fold(
+              error => {
+                eventService.logError(error)
+                Redirect(routes.UserController.editUser(userId))
+                  .flashing("error" -> Constants.error500FlashMessage)
+              },
+              _ => {
+                val status = if (otherUser.passwordActivated) "désactivé" else "activé"
+                eventService.log(
+                  EventType.UserEdited,
+                  s"Mot de passe de l'utilisateur $userId " + status,
+                  involvesUser = userId.some
+                )
+                Redirect(routes.UserController.editUser(userId))
+                  .flashing("success" -> s"Le mot de passe de l’utilisateur a bien été ${status}.")
+              }
+            )
+          )
+        }
+      }
+    }
+
   def editUserPost(userId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(PostEditUserUnauthorized, s"Accès non autorisé à modifier $userId") { () =>
@@ -659,7 +706,8 @@ case class UserController @Inject() (
                       phoneNumber = userToAdd.phoneNumber,
                       observableOrganisationIds = Nil,
                       sharedAccount = userToAdd.sharedAccount,
-                      internalSupportComment = None
+                      internalSupportComment = None,
+                      passwordActivated = false,
                     )
                   )
                   userService
