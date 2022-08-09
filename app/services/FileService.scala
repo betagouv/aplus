@@ -6,6 +6,7 @@ import anorm._
 import aplus.macros.Macros
 import cats.syntax.all._
 import cats.data.EitherT
+import helper.Crypto
 import helper.StringHelper.normalizeNFKC
 import java.nio.file.{Files, Path, Paths}
 import java.time.{Instant, ZonedDateTime}
@@ -50,15 +51,37 @@ class FileService @Inject() (
   ): Future[Either[Error, List[FileMetadata]]] = {
     val result: EitherT[Future, Error, List[(Path, FileMetadata)]] = pathsWithFilenames.traverse {
       case (path, filename) =>
-        val metadata = FileMetadata(
-          id = UUID.randomUUID(),
-          uploadDate = Instant.now(),
-          filename = normalizeNFKC(filename),
-          filesize = path.toFile.length().toInt,
-          status = FileMetadata.Status.Scanning,
-          attached = document,
-        )
-        EitherT(insertMetadata(metadata)).map(_ => (path, metadata))
+        val id = UUID.randomUUID()
+        EitherT
+          .fromEither[Future](
+            Crypto.EncryptedField
+              .fromPlainText(
+                normalizeNFKC(filename),
+                FileMetadata.filenameAAD(id),
+                config.fieldEncryptionKeys
+              )
+              .toEither
+              .left
+              .map(error =>
+                Error.MiscException(
+                  EventType.FieldEncryptionError,
+                  s"Impossible de chiffrer le nom de fichier pour $document",
+                  error,
+                  none
+                )
+              )
+          )
+          .flatMap { filename =>
+            val metadata = FileMetadata(
+              id = id,
+              uploadDate = Instant.now(),
+              filename = filename.some,
+              filesize = path.toFile.length().toInt,
+              status = FileMetadata.Status.Scanning,
+              attached = document,
+            )
+            EitherT(insertMetadata(metadata)).map(_ => (path, metadata))
+          }
     }
 
     // Scan in background, only on success, and sequentially
@@ -303,9 +326,8 @@ class FileService @Inject() (
         db.withConnection { implicit connection =>
           val before = ZonedDateTime.now().minusMonths(retentionInMonths)
           SQL(s"""UPDATE file_metadata
-                  SET filename = 'fichier-non-existant'
-                  WHERE upload_date < {before}
-                  AND filename != 'fichier-non-existant'""")
+                  SET filename = NULL
+                  WHERE upload_date < {before}""")
             .on("before" -> before)
             .executeUpdate()
         }
@@ -318,6 +340,93 @@ class FileService @Inject() (
             none
           )
         )
+    )
+
+  /** Returns (number of no-ops, number of updates) */
+  def rekeyFilenames(encryptIfPlainText: Boolean): Future[Either[Error, (Int, Int)]] =
+    Future(
+      Try(
+        db.withConnection { implicit connection =>
+          val files: List[Either[Error, Int]] = SQL(
+            s"""SELECT $fieldsInSelect FROM file_metadata WHERE filename IS NOT NULL"""
+          )
+            .as(fileMetadataRowParser.*)
+            .map { file =>
+              file.filename
+                .toRight(
+                  Error.Database(
+                    EventType.FieldEncryptionRekeyError,
+                    s"Changement de la clé de chiffrement des noms de fichiers : " +
+                      s"SELECT a renvoyé un fichier (${file.id}) avec un nom NULL",
+                    none
+                  )
+                )
+                .flatMap(cipherText =>
+                  Crypto.EncryptedField
+                    .fromCipherText(cipherText, FileMetadata.filenameAAD(file.id))
+                    .updateKey(config.fieldEncryptionKeys, encryptIfPlainText)
+                    .toEither
+                    .left
+                    .map(e =>
+                      Error.MiscException(
+                        EventType.FieldEncryptionRekeyError,
+                        s"Impossible de re-chiffrer le nom du fichier ${file.id}",
+                        e,
+                        none
+                      )
+                    )
+                )
+                .flatMap {
+                  case None => 0.asRight: Either[Error, Int]
+                  case Some(newField) =>
+                    val newFilename: String = newField.cipherTextBase64
+                    Try(
+                      SQL(s"""UPDATE file_metadata
+                          SET filename = {filename}
+                          WHERE id = {fileId}::uuid""")
+                        .on("fileId" -> file.id, "filename" -> newFilename)
+                        .executeUpdate()
+                    ).toEither.left
+                      .map(error =>
+                        Error.SqlException(
+                          EventType.FieldEncryptionRekeyError,
+                          s"Impossible de mettre à jour le nom re-chiffré du fichier ${file.id}",
+                          error,
+                          none
+                        )
+                      )
+                }
+            }
+          val errors: List[Error] = files.flatMap(_.left.toOption)
+          val successes: List[Int] = files.flatMap(_.toOption)
+          val noops: Int = successes.count(_ === 0)
+          val updates: Int = successes.sum
+          errors match {
+            case Nil => (noops, updates).asRight[Error]
+            case errors =>
+              val message =
+                s"Re-chiffrement des noms de fichiers : " +
+                  s"$noops no-ops / $updates updates / ${errors.size} erreurs. " +
+                  errors
+                    .map(error =>
+                      error.description + error.underlyingException
+                        .map(e => ": " + e.toString)
+                        .getOrElse("")
+                    )
+                    .mkString(" ; ")
+              Error.Database(EventType.FieldEncryptionRekeyError, message, none).asLeft[(Int, Int)]
+          }
+        }
+      ).toEither.left
+        .map(e =>
+          Error.SqlException(
+            EventType.FieldEncryptionRekeyError,
+            s"Impossible de changer la clé de chiffrement des noms de fichiers",
+            e,
+            none
+          )
+        )
+        .flatten
     )
 
   private def before(beforeDate: Instant): Future[Either[Error, List[FileMetadata]]] =

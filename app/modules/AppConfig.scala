@@ -1,7 +1,7 @@
 package modules
 
 import com.typesafe.config.{Config, ConfigFactory}
-import helper.UUIDHelper
+import helper.{Crypto, UUIDHelper}
 import java.nio.file.{Files, Path, Paths}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
@@ -15,6 +15,23 @@ class AppConfig @Inject() (configuration: Configuration) {
 
   val tokenExpirationInMinutes: Int =
     configuration.get[Int]("app.tokenExpirationInMinutes")
+
+  val fieldEncryptionKeys: Crypto.KeySet = {
+    val key = Crypto.decodeKeyBase64(configuration.get[String]("app.fieldsEncryption.key"))
+    val oldKeys = configuration
+      .getOptional[String]("app.fieldsEncryption.oldKeys")
+      .toList
+      .flatMap(_.split(',').filter(_.nonEmpty).map(Crypto.decodeKeyBase64))
+    Crypto.KeySet(key, oldKeys)
+  }
+
+  val fieldEncryptionKeyRotationExecute: Boolean = configuration
+    .getOptional[Boolean]("app.fieldsEncryption.keyRotation.execute")
+    .getOrElse(false)
+
+  val fieldEncryptionKeyRotationEncryptIfPlainText: Boolean = configuration
+    .getOptional[Boolean]("app.fieldsEncryption.keyRotation.encryptIfPlainText")
+    .getOrElse(false)
 
   val featureMandatSms: Boolean = configuration.get[Boolean]("app.features.smsMandat")
 

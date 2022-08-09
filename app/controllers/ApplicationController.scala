@@ -10,7 +10,7 @@ import helper.CSVUtil.escape
 import helper.PlayFormHelper.formErrorsLog
 import helper.StringHelper.{CanonizeString, NonEmptyTrimmedString}
 import helper.Time.zonedDateTimeOrdering
-import helper.{Hash, Time, UUIDHelper}
+import helper.{Crypto, Hash, Time, UUIDHelper}
 import models.Answer.AnswerType
 import models.EventType._
 import models._
@@ -1076,7 +1076,15 @@ case class ApplicationController @Inject() (
 
   private def sendFile(localPath: Path, metadata: FileMetadata)(implicit
       request: actions.RequestWithUserData[_]
-  ): Future[Result] =
+  ): Future[Result] = {
+    val decryptedFilename = metadata.filename
+      .map(
+        _.decrypt(config.fieldEncryptionKeys)
+          // Compat with legacy, can be removed once field is encrypted
+          .toOption
+          .getOrElse(metadata.filename.map(_.cipherTextBase64).getOrElse("Fichier non existant"))
+      )
+      .getOrElse("Fichier non existant")
     if (Files.exists(localPath)) {
       Future(
         Ok.sendPath(
@@ -1084,7 +1092,7 @@ case class ApplicationController @Inject() (
           // Will set "Content-Disposition: attachment"
           // This avoids potential security issues if a malicious HTML page is uploaded
           `inline` = false,
-          fileName = (_: Path) => Some(metadata.filename)
+          fileName = (_: Path) => Some(decryptedFilename)
         ).withHeaders(CACHE_CONTROL -> "no-store")
       )
     } else {
@@ -1112,7 +1120,7 @@ case class ApplicationController @Inject() (
                   content = body,
                   contentLength = contentLength,
                   `inline` = false,
-                  fileName = Some(metadata.filename)
+                  fileName = Some(decryptedFilename)
                 ).withHeaders(CACHE_CONTROL -> "no-store")
               } else {
                 eventService.log(
@@ -1125,6 +1133,7 @@ case class ApplicationController @Inject() (
             }
       }
     }
+  }
 
   private def buildAnswerMessage(message: String, signature: Option[String]) =
     signature.map(s => message + "\n\n" + s).getOrElse(message)
