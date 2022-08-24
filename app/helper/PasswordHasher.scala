@@ -1,7 +1,6 @@
 package helper
 
-import de.mkammerer.argon2.Argon2
-import de.mkammerer.argon2.Argon2Factory
+import de.mkammerer.argon2.{Argon2, Argon2Factory}
 import scala.util.Try
 
 object PasswordHasher {
