@@ -31,7 +31,8 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
     "75056",
     groupAdmin = true,
     disabled = false,
-    internalSupportComment = None
+    internalSupportComment = None,
+    passwordActivated = false,
   )
 
   def beforeAll(): Unit = {

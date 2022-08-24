@@ -66,7 +66,8 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       expert = isExpert,
       cguAcceptationDate = Some(Time.nowParis()),
       groupIds = groups.map(_.id),
-      internalSupportComment = None
+      internalSupportComment = None,
+      passwordActivated = false,
     )
     val result = userService.add(List(user))
     result.isRight must beTrue

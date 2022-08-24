@@ -54,7 +54,8 @@ class ApplicationSpec extends Specification with BaseSpec {
         disabled = false,
         cguAcceptationDate = Some(Time.nowParis()),
         groupIds = List(instructorGroup.id),
-        internalSupportComment = None
+        internalSupportComment = None,
+        passwordActivated = false,
       )
       val helperUser = User(
         UUIDHelper.randomUUID,
@@ -73,7 +74,8 @@ class ApplicationSpec extends Specification with BaseSpec {
         groupAdmin = false,
         disabled = false,
         cguAcceptationDate = Some(Time.nowParis()),
-        internalSupportComment = None
+        internalSupportComment = None,
+        passwordActivated = false,
       )
       userService.add(List(instructorUser, helperUser))
       userService.validateCGU(helperUser.id)
