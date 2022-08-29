@@ -37,7 +37,7 @@ class SmsService @Inject() (
   )(implicit request: RequestWithUserData[_]): Future[Either[Error, Sms.Outgoing]] = {
     val franceServiceGroups: List[UserGroup] = userGroups
       .filter(group =>
-        group.organisation
+        group.organisationId
           .map(organisationId =>
             Organisation.organismesAidants.map(_.id).toSet.contains(organisationId: Organisation.Id)
           )

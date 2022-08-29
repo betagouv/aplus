@@ -21,7 +21,7 @@ object UserAndGroupCsvSerializer {
       name: String,
       description: Option[String],
       areaIds: List[UUID],
-      organisation: Option[Organisation.Id],
+      organisationId: Option[Organisation.Id],
       email: Option[String]
   )
 
