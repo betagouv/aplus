@@ -184,12 +184,12 @@ function applyCategoryFilters() {
   // Show / Hide Checkboxes
   document.querySelectorAll<HTMLInputElement>('.' + invitedGroupsCheckboxClass)
     .forEach((invitedGroupCheckbox) => {
-      const groupName: string | undefined = invitedGroupCheckbox.dataset['groupName'];
+      const groupOrgId: string | undefined = invitedGroupCheckbox.dataset['organisationId'];
       const isSelected = selectedCategories.some((selectedCategory) => {
-        if (groupName == null) {
+        if (groupOrgId == null) {
           return false;
         } else {
-          return groupName.toLowerCase().includes(selectedCategory.toLowerCase());
+          return groupOrgId === selectedCategory;
         }
       });
       let shouldBeFilteredOut = !isSelected;
