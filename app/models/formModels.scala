@@ -165,7 +165,7 @@ object formModels {
           "usagerPrenom" -> nonEmptyText.verifying(maxLength(30)),
           "usagerNom" -> nonEmptyText.verifying(maxLength(30)),
           "usagerBirthDate" -> nonEmptyText.verifying(maxLength(30)),
-          "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(30))),
+          "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(200))),
           "users" -> list(uuid),
           "groups" -> list(uuid)
             .verifying("Vous devez sélectionner au moins une structure", _.nonEmpty),
@@ -206,7 +206,7 @@ object formModels {
           "answer_type" -> nonEmptyText.verifying(maxLength(20)),
           "message" -> optional(nonEmptyText),
           "irrelevant" -> boolean,
-          "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(30))),
+          "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(200))),
           "privateToHelpers" -> boolean,
           "signature" -> (
             if (currentUser.sharedAccount)
