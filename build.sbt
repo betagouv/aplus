@@ -94,7 +94,7 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.4.2",
+  "org.postgresql" % "postgresql" % "42.5.0",
   anormDependency,
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
@@ -120,7 +120,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "font-awesome" % "6.1.2",
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "6.3.1"
+libraryDependencies += "io.sentry" % "sentry-logback" % "6.4.0"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
