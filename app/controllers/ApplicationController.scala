@@ -559,7 +559,16 @@ case class ApplicationController @Inject() (
       creationMinDate: LocalDate,
       creationMaxDate: LocalDate,
       rights: Authorization.UserRights
-  ): Future[Html] = {
+  )(implicit request: RequestWithUserData[_]): Future[Html] = {
+    eventService.log(
+      StatsShowed,
+      "Génère les stats pour les paramètres [Territoires '" + areaIds.mkString(",") +
+        "' ; Organismes '" + organisationIds.mkString(",") +
+        "' ; Groupes '" + groupIds.mkString(",") +
+        "' ; Date début '" + creationMinDate +
+        "' ; Date fin '" + creationMaxDate + "']"
+    )
+
     val usersAndApplications: Future[(List[User], List[Application])] =
       (areaIds, organisationIds, groupIds) match {
         case (Nil, Nil, Nil) =>
@@ -729,7 +738,14 @@ case class ApplicationController @Inject() (
           )
         )
         .map { html =>
-          eventService.log(StatsShowed, "Visualise les stats")
+          eventService.log(
+            StatsShowed,
+            "Visualise les stats [Territoires '" + areaIds.mkString(",") +
+              "' ; Organismes '" + queryOrganisationIds.mkString(",") +
+              "' ; Groupes '" + queryGroupIds.mkString(",") +
+              "' ; Date début '" + creationMinDate +
+              "' ; Date fin '" + creationMaxDate + "']"
+          )
           Ok(
             views.html.stats.page(user, rights)(
               formUrl,
