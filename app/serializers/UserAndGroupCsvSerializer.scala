@@ -222,9 +222,10 @@ object UserAndGroupCsvSerializer {
 
           val detectedAreas: List[Area] = if (inseeCodes.nonEmpty) {
             inseeCodes.flatMap(Area.fromInseeCode)
-          } else {
-            areas.split(",").flatMap(_.split(";")).flatMap(Area.searchFromName).toList
-          }.distinct
+          } else
+            {
+              areas.split(",").flatMap(_.split(";")).flatMap(Area.searchFromName).toList
+            }.distinct
 
           if (detectedAreas.isEmpty)
             defaultAreas
