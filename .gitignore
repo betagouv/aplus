@@ -20,11 +20,6 @@ server.pid
 *.eml
 /dist/
 .cache
-.*
-!.scalafmt.conf
-!.github/
-!.dockerignore
-!.scalafix.conf
 files
 package-lock.json
 node_modules/
