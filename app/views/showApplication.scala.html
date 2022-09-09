@@ -227,7 +227,7 @@ dialog {
                         }
                     }
                 </div>
-                <p class="application__message use-autolinker">@application.description</p>
+                <p class="application__message">@application.description</p>
                 @for(mandatType <- application.mandatType) {
                     <span>
                         J’atteste avoir recueilli l’autorisation de l’usager
@@ -348,7 +348,7 @@ dialog {
                                     }
                                 </ul>
                             }
-                            <p class="answer__message use-autolinker">@answer.message</p>
+                            <p class="answer__message">@answer.message</p>
                             @if(answer.answerType === AnswerType.ApplicationProcessed && application.creatorUserId == currentUser.id && not(application.closed) && answer.creatorUserID != currentUser.id) {
                                 <div class="info-box do-not-print">
                                     Cette demande a bien été traitée. Je vous invite à archiver l’échange en cliquant sur le bouton ci-dessous&nbsp;:<br><br>
