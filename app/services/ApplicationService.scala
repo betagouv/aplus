@@ -274,14 +274,15 @@ class ApplicationService @Inject() (
       }
     }
 
-  def all(): Future[List[Application]] =
-    Future {
-      db.withConnection { implicit connection =>
-        SQL(s"""SELECT $fieldsInSelect FROM application""")
-          .as(simpleApplication.*)
-          .map(_.anonymousApplication)
-      }
+  def allOrThrow: List[Application] =
+    db.withConnection { implicit connection =>
+      SQL(s"""SELECT $fieldsInSelect FROM application""")
+        .as(simpleApplication.*)
+        .map(_.anonymousApplication)
     }
+
+  def all(): Future[List[Application]] =
+    Future(allOrThrow)
 
   def createApplication(newApplication: Application) =
     db.withConnection { implicit connection =>
@@ -396,15 +397,7 @@ class ApplicationService @Inject() (
       }
       applications.flatMap { application =>
         db.withConnection { implicit connection =>
-          val wipedUsagerInfos: Map[String, String] = application.userInfos.map { case (key, _) =>
-            (key, "")
-          }
-          val wipedAnswers: List[Answer] = application.answers.map(answer =>
-            answer.copy(
-              message = "",
-              userInfos = answer.userInfos.map(_.map { case (key, _) => (key, "") }),
-            )
-          )
+          val wiped = application.withWipedPersonalData
           SQL(s"""UPDATE application
                   SET
                     subject = '',
@@ -416,8 +409,8 @@ class ApplicationService @Inject() (
                   RETURNING $fieldsInSelect;""")
             .on(
               "id" -> application.id,
-              "usagerInfos" -> toJson(wipedUsagerInfos),
-              "answers" -> toJson(wipedAnswers),
+              "usagerInfos" -> toJson(wiped.userInfos),
+              "answers" -> toJson(wiped.answers),
             )
             .as(simpleApplication.singleOpt)
         }

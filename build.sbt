@@ -72,6 +72,9 @@ scalacOptions ++= Seq(
   "-Wvalue-discard"
 )
 
+// https://typelevel.org/cats-effect/docs/getting-started
+addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+
 lazy val anormDependency = "org.playframework.anorm" %% "anorm" % "2.6.10"
 
 libraryDependencies ++= Seq(
@@ -98,6 +101,7 @@ libraryDependencies ++= Seq(
   ws,
   "com.lihaoyi" %% "scalatags" % "0.11.1",
   "org.typelevel" %% "cats-core" % "2.8.0",
+  "org.typelevel" %% "cats-effect" % "3.3.14",
   // To ensure that the version of jackson that do not have
   // known security vulnerabilities is used
   // It is also compatible with play-json

@@ -334,7 +334,7 @@ case class ApiController @Inject() (
         EventType.DeploymentDashboardUnauthorized,
         "Accès non autorisé au dashboard de déploiement"
       ) { () =>
-        val userGroups = userGroupService.allGroups.filter(group =>
+        val userGroups = userGroupService.allOrThrow.filter(group =>
           group.organisation
             .orElse(Organisation.deductedFromName(group.name))
             .exists(_.id === Organisation.franceServicesId)
@@ -425,7 +425,7 @@ case class ApiController @Inject() (
         EventType.DeploymentDashboardUnauthorized,
         "Accès non autorisé au dashboard de déploiement"
       ) { () =>
-        val userGroups = userGroupService.allGroups
+        val userGroups = userGroupService.allOrThrow
         userService.allNoNameNoEmail.map { users =>
           def usersIn(area: Area, organisationSet: Set[Organisation]): List[User] =
             for {
