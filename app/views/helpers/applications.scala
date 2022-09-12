@@ -152,7 +152,8 @@ object applications {
             `type` := "checkbox",
             name := "groups[]",
             value := s"${group.id}",
-            attr("data-group-name") := s"${group.name}",
+            data("group-name") := s"${group.name}",
+            data("organisation-id") := group.organisation.map(_.id).getOrElse(""),
             if (groupIsChecked) checked := "checked"
             else ()
           ),
