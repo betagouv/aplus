@@ -153,7 +153,7 @@ object applications {
             name := "groups[]",
             value := s"${group.id}",
             data("group-name") := s"${group.name}",
-            data("organisation-id") := group.organisation.map(_.id).getOrElse(""),
+            data("organisation-id") := group.organisationId.map(_.id).getOrElse(""),
             if (groupIsChecked) checked := "checked"
             else ()
           ),
