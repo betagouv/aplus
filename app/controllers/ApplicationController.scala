@@ -76,7 +76,7 @@ case class ApplicationController @Inject() (
       // Users are basically segmented between 2 overall types or `Organisation`
       // `Organisation.organismesAidants` & `Organisation.organismesOperateurs`
       val visibleOrganisations = groups
-        .map(_.organisation)
+        .map(_.organisationId)
         .collect {
           case Some(organisationId)
               if Organisation.organismesAidants
@@ -89,7 +89,7 @@ case class ApplicationController @Inject() (
         .toSet
 
       groups.filter(group =>
-        group.organisation match {
+        group.organisationId match {
           case None     => false
           case Some(id) => visibleOrganisations.contains(id)
         }
@@ -174,8 +174,7 @@ case class ApplicationController @Inject() (
         if (user.instructor) {
           for {
             areaInseeCode <- userGroup.areaIds.flatMap(Area.fromId).map(_.inseeCode).headOption
-            organisationId <- userGroup.organisation
-            organisation <- Organisation.byId(organisationId)
+            organisation <- userGroup.organisation
           } yield {
             s"(${organisation.name} - $areaInseeCode)"
           }

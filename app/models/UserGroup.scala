@@ -18,7 +18,7 @@ case class UserGroup(
     inseeCode: List[String],
     creationDate: ZonedDateTime,
     areaIds: List[UUID],
-    organisation: Option[Organisation.Id] = None,
+    organisationId: Option[Organisation.Id] = None,
     email: Option[String] = None,
     // This is a note displayed to users trying to select this group
     publicNote: Option[String],
@@ -26,15 +26,12 @@ case class UserGroup(
     internalSupportComment: Option[String]
 ) {
 
-  lazy val organisationSetOrDeducted: Option[Organisation] =
-    organisation
-      .flatMap(Organisation.byId)
-      .orElse(Organisation.deductedFromName(name))
+  lazy val organisation: Option[Organisation] = organisationId.flatMap(Organisation.byId)
 
   lazy val nameLog: String = withQuotes(name)
   lazy val descriptionLog: String = description.map(withQuotes).getOrElse("<vide>")
   lazy val emailLog: String = email.map(withQuotes).getOrElse("<vide>")
-  lazy val organisationLog: String = organisation.map(_.id).getOrElse("<vide>")
+  lazy val organisationLog: String = organisationId.map(_.id).getOrElse("<vide>")
   lazy val areaIdsLog: String = areaIds.mkString(", ")
   lazy val publicNoteLog: String = publicNote.map(withQuotes).getOrElse("<vide>")
 
@@ -59,7 +56,12 @@ case class UserGroup(
       ("Nom", name =!= other.name, nameLog, other.nameLog),
       ("Description", description =!= other.description, descriptionLog, other.descriptionLog),
       ("BAL", email =!= other.email, emailLog, other.emailLog),
-      ("Organisme", organisation =!= other.organisation, organisationLog, other.organisationLog),
+      (
+        "Organisme",
+        organisationId =!= other.organisationId,
+        organisationLog,
+        other.organisationLog
+      ),
       ("Territoires", areaIds =!= other.areaIds, areaIdsLog, other.areaIdsLog),
       ("Notice", publicNote =!= other.publicNote, publicNoteLog, other.publicNoteLog),
       (
