@@ -51,7 +51,7 @@ case class ApiController @Inject() (
                         .map(_.areaIds.flatMap(Area.fromId).map(_.toString).mkString(", "))
                         .getOrElse(""),
                       organisation = groupOpt
-                        .flatMap(_.organisation.flatMap(Organisation.byId).map(_.shortName)),
+                        .flatMap(_.organisation.map(_.shortName)),
                       email = groupOpt.flatMap(_.email),
                       publicNote = groupOpt.flatMap(_.publicNote),
                     )
@@ -124,7 +124,7 @@ case class ApiController @Inject() (
                         }
                         .map(_.id)
                         .toList,
-                      organisation = Organisation.franceServicesId.some,
+                      organisationId = Organisation.franceServicesId.some,
                       email = newLine.email.map(StringHelper.commonStringInputNormalization),
                       publicNote = none,
                       internalSupportComment = newLine.internalSupportComment
@@ -334,8 +334,10 @@ case class ApiController @Inject() (
         EventType.DeploymentDashboardUnauthorized,
         "Accès non autorisé au dashboard de déploiement"
       ) { () =>
-        val userGroups = userGroupService.allGroups.filter(
-          _.organisationSetOrDeducted.exists(_.id === Organisation.franceServicesId)
+        val userGroups = userGroupService.allGroups.filter(group =>
+          group.organisation
+            .orElse(Organisation.deductedFromName(group.name))
+            .exists(_.id === Organisation.franceServicesId)
         )
         val franceServiceInstances = organisationService.franceServiceInfos.instances
         val doNotMatchTheseEmails =
@@ -429,7 +431,11 @@ case class ApiController @Inject() (
             for {
               group <- userGroups.filter(group =>
                 group.areaIds.contains[UUID](area.id)
-                  && organisationSet.exists(group.organisationSetOrDeducted.contains[Organisation])
+                  && organisationSet.exists(
+                    group.organisation
+                      .orElse(Organisation.deductedFromName(group.name))
+                      .contains[Organisation]
+                  )
               )
               user <- users if user.groupIds.contains[UUID](group.id)
             } yield user

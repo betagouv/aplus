@@ -94,11 +94,13 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.4.0",
+  "org.postgresql" % "postgresql" % "42.5.0",
   anormDependency,
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
+  // Note: we force snakeyaml version here because moultingyaml is not updated
+  "org.yaml" % "snakeyaml" % "1.31",
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.11.1",
@@ -120,7 +122,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "font-awesome" % "6.1.2",
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "6.3.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "6.4.1"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"

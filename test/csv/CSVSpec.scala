@@ -70,7 +70,7 @@ class CSVSpec extends Specification {
         inseeCode = Nil,
         creationDate = Time.nowParis(),
         areaIds = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten.map(_.id),
-        organisation = None,
+        organisationId = None,
         email = Some("sip.laon@dgfip.finances.gouv.fr"),
         publicNote = None,
         internalSupportComment = None
@@ -82,7 +82,7 @@ class CSVSpec extends Specification {
       dgfip.get.group.name must equalTo(expectedUserGroup.name)
       dgfip.get.group.description must equalTo(expectedUserGroup.description)
       dgfip.get.group.areaIds must equalTo(expectedUserGroup.areaIds)
-      dgfip.get.group.organisation must equalTo(expectedUserGroup.organisation)
+      dgfip.get.group.organisationId must equalTo(expectedUserGroup.organisationId)
       dgfip.get.group.email must equalTo(expectedUserGroup.email)
       dgfip.get.users must have size 3
 
@@ -105,7 +105,7 @@ class CSVSpec extends Specification {
       errors must have size 0
       val group = data.find(_.group.name.eqv("d’Aubigny sur Nère - Ardennes"))
       group must beSome
-      group.get.group.organisation must beSome(Organisation.Id("MSAP"))
+      group.get.group.organisationId must beSome(Organisation.Id("MSAP"))
       data must have size 2
     }
   }
