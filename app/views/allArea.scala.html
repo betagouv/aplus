@@ -36,7 +36,7 @@
                                 <a href="@routes.GroupController.editGroup(userGroup.id)" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                                     <i class="material-icons" style="vertical-align: middle;">edit</i>
                                 </a>
-                            } Groupe : @userGroup.name @userGroup.organisationSetOrDeducted match {
+                            } Groupe : @userGroup.name @userGroup.organisation match {
                             case Some(organisation) => { ( @organisation.name ) }
                             case None => {}
                             }

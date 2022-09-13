@@ -21,7 +21,7 @@ object UserAndGroupCsvSerializer {
       name: String,
       description: Option[String],
       areaIds: List[UUID],
-      organisation: Option[Organisation.Id],
+      organisationId: Option[Organisation.Id],
       email: Option[String]
   )
 
@@ -220,11 +220,10 @@ object UserAndGroupCsvSerializer {
         case Some(areas) =>
           val inseeCodes = stringToInseeCodeList(areas)
 
-          val detectedAreas: List[Area] = if (inseeCodes.nonEmpty) {
-            inseeCodes.flatMap(Area.fromInseeCode)
-          } else {
-            areas.split(",").flatMap(_.split(";")).flatMap(Area.searchFromName).toList
-          }.distinct
+          val detectedAreas: List[Area] = (
+            if (inseeCodes.nonEmpty) inseeCodes.flatMap(Area.fromInseeCode)
+            else areas.split(",").flatMap(_.split(";")).flatMap(Area.searchFromName).toList
+          ).distinct
 
           if (detectedAreas.isEmpty)
             defaultAreas
