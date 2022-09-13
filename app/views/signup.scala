@@ -85,7 +85,7 @@ object signup {
         Json.toJson(
           for {
             group <- groups
-            organisationId <- group.organisation.toList
+            organisationId <- group.organisationId.toList
             areaId <- group.areaIds
           } yield SelectableGroup(
             id = group.id,
@@ -149,7 +149,7 @@ object signup {
         organisationId <- selectedOrganisation.toList
         areaId <- selectedArea.toList
         group <- groups
-        if group.organisation.map(_.id) === organisationId.some
+        if group.organisationId.map(_.id) === organisationId.some
         if group.areaIds.contains[UUID](areaId)
       } yield (group.name, group.id.toString)
     val options = ("Sélectionnez votre structure", "") :: selectableGroups

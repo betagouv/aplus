@@ -60,16 +60,16 @@
             </div>
             <div class="mdl-cell mdl-cell--12-col">
                 <select id="organisation" name="organisation" @if(!canEditAny) {disabled}>
-                    <option @if(userGroup.organisationSetOrDeducted.isEmpty){selected} style="font-weight: bold" value="">Organisme non-référencé</option>
+                    <option @if(userGroup.organisation.isEmpty){selected} style="font-weight: bold" value="">Organisme non-référencé</option>
                     @for(organisation <- Organisation.all) {
-                        <option value="@organisation.id.id" @if(userGroup.organisationSetOrDeducted.map(_.id).contains[Organisation.Id](organisation.id)){selected}>@organisation.shortName : @organisation.name</option>
+                        <option value="@organisation.id.id" @if(userGroup.organisation.map(_.id).contains[Organisation.Id](organisation.id)){selected}>@organisation.shortName : @organisation.name</option>
                     }
                 </select>
                 @if(!canEditAny) {
                   <select id="organisation-hidden" name="organisation" class="hidden">
                     <option value="">Organisme non-référencé</option>
                     @for(organisation <- Organisation.all) {
-                        <option value="@organisation.id.id" @if(userGroup.organisationSetOrDeducted.map(_.id).contains[Organisation.Id](organisation.id)){selected}>@organisation.shortName : @organisation.name</option>
+                        <option value="@organisation.id.id" @if(userGroup.organisation.map(_.id).contains[Organisation.Id](organisation.id)){selected}>@organisation.shortName : @organisation.name</option>
                     }
                   </select>
                 }

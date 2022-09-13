@@ -69,7 +69,7 @@ object applications {
   /** Restriction: to work with the JS part, it must be unique per page */
   def groupCheckboxes(groups: List[UserGroup], formData: Map[String, String]): List[Tag] =
     groups.sortBy(_.name).map { group =>
-      val organisation: Option[Organisation] = group.organisationSetOrDeducted
+      val organisation: Option[Organisation] = group.organisation
       val groupIsChecked =
         formData.exists { case (k, v) => k.startsWith("groups[") && v === group.id.toString }
 
@@ -152,7 +152,8 @@ object applications {
             `type` := "checkbox",
             name := "groups[]",
             value := s"${group.id}",
-            attr("data-group-name") := s"${group.name}",
+            data("group-name") := s"${group.name}",
+            data("organisation-id") := group.organisationId.map(_.id).getOrElse(""),
             if (groupIsChecked) checked := "checked"
             else ()
           ),

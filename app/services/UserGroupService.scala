@@ -54,7 +54,7 @@ class UserGroupService @Inject() (
          ${group.creationDate},
          ${UUIDHelper.namedFrom("deprecated")}::uuid,
          array[${group.areaIds}]::uuid[],
-         ${group.organisation.map(_.id)},
+         ${group.organisationId.map(_.id)},
          ${group.email})
       """.executeUpdate() === 1
         }
@@ -98,7 +98,7 @@ class UserGroupService @Inject() (
                   ${group.creationDate},
                   ${UUIDHelper.namedFrom("deprecated")}::uuid,
                   array[${group.areaIds}]::uuid[],
-                  ${group.organisation.map(_.id)},
+                  ${group.organisationId.map(_.id)},
                   ${group.email})
              """.executeUpdate()
           ().asRight
@@ -130,7 +130,7 @@ class UserGroupService @Inject() (
           UPDATE user_group SET
           name = ${group.name},
           description = ${group.description},
-          organisation = ${group.organisation.map(_.id)},
+          organisation = ${group.organisationId.map(_.id)},
           area_ids = array[${group.areaIds}]::uuid[],
           email = ${group.email},
           public_note = ${group.publicNote},

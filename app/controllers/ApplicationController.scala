@@ -76,7 +76,7 @@ case class ApplicationController @Inject() (
       // Users are basically segmented between 2 overall types or `Organisation`
       // `Organisation.organismesAidants` & `Organisation.organismesOperateurs`
       val visibleOrganisations = groups
-        .map(_.organisation)
+        .map(_.organisationId)
         .collect {
           case Some(organisationId)
               if Organisation.organismesAidants
@@ -89,7 +89,7 @@ case class ApplicationController @Inject() (
         .toSet
 
       groups.filter(group =>
-        group.organisation match {
+        group.organisationId match {
           case None     => false
           case Some(id) => visibleOrganisations.contains(id)
         }
@@ -174,8 +174,7 @@ case class ApplicationController @Inject() (
         if (user.instructor) {
           for {
             areaInseeCode <- userGroup.areaIds.flatMap(Area.fromId).map(_.inseeCode).headOption
-            organisationId <- userGroup.organisation
-            organisation <- Organisation.byId(organisationId)
+            organisation <- userGroup.organisation
           } yield {
             s"(${organisation.name} - $areaInseeCode)"
           }
@@ -559,7 +558,16 @@ case class ApplicationController @Inject() (
       creationMinDate: LocalDate,
       creationMaxDate: LocalDate,
       rights: Authorization.UserRights
-  ): Future[Html] = {
+  )(implicit request: RequestWithUserData[_]): Future[Html] = {
+    eventService.log(
+      StatsShowed,
+      "Génère les stats pour les paramètres [Territoires '" + areaIds.mkString(",") +
+        "' ; Organismes '" + organisationIds.mkString(",") +
+        "' ; Groupes '" + groupIds.mkString(",") +
+        "' ; Date début '" + creationMinDate +
+        "' ; Date fin '" + creationMaxDate + "']"
+    )
+
     val usersAndApplications: Future[(List[User], List[Application])] =
       (areaIds, organisationIds, groupIds) match {
         case (Nil, Nil, Nil) =>
@@ -729,7 +737,14 @@ case class ApplicationController @Inject() (
           )
         )
         .map { html =>
-          eventService.log(StatsShowed, "Visualise les stats")
+          eventService.log(
+            StatsShowed,
+            "Visualise les stats [Territoires '" + areaIds.mkString(",") +
+              "' ; Organismes '" + queryOrganisationIds.mkString(",") +
+              "' ; Groupes '" + queryGroupIds.mkString(",") +
+              "' ; Date début '" + creationMinDate +
+              "' ; Date fin '" + creationMaxDate + "']"
+          )
           Ok(
             views.html.stats.page(user, rights)(
               formUrl,
