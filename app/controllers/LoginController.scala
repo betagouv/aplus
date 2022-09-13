@@ -325,7 +325,10 @@ class LoginController @Inject() (
                       views.password.loginPage(
                         formWithoutPassword,
                         successMessage =
-                          "Un lien d’accès au formulaire de changement de mot de passe vient de vous être envoyé par email.".some
+                          ("Un lien d’accès au formulaire de changement de mot de passe " +
+                            "(valide " +
+                            config.passwordRecoveryTokenExpirationInMinutes +
+                            " minutes) vient de vous être envoyé par email.").some
                       )
                     )
                   )
