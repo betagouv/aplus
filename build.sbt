@@ -125,11 +125,6 @@ TwirlKeys.templateImports += "views.MainInfos"
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "fr.gouv.beta.binders._"
 
-// See https://github.com/sbt/sbt/issues/6997
-ThisBuild / libraryDependencySchemes ++= Seq(
-  "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
-)
-
 /////////////////////////////////////
 //              Macros             //
 /////////////////////////////////////

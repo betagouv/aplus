@@ -45,6 +45,9 @@ jobs:
       env:
         GECKO_DRIVER: /usr/bin/geckodriver
 
+    - name: Generate coverage report
+      run: "sbt coverageReport"
+
     - name: Run codacy-coverage-reporter
       uses: codacy/codacy-coverage-reporter-action@v1
       env:
