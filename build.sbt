@@ -3,12 +3,6 @@ organization := "fr.gouv.beta"
 
 version := "1.0-SNAPSHOT"
 
-// https://gitlab.com/kpmeen/clammyscan
-lazy val clammyStreams = ProjectRef(
-  uri(s"https://gitlab.com/kpmeen/clammyscan.git#6a98b2e836a1991e892ef2556d674263d5d80df7"),
-  "clammyscan-streams"
-)
-
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala)
   .enablePlugins(BuildInfoPlugin)
@@ -23,7 +17,6 @@ lazy val root = (project in file("."))
     Test / javaOptions += ("-Dwebdriver.gecko.driver=" + scala.sys.env("GECKO_DRIVER"))
   )
   .dependsOn(macrosProject)
-  .dependsOn(clammyStreams)
 
 inThisBuild(
   List(
