@@ -3,12 +3,6 @@ organization := "fr.gouv.beta"
 
 version := "1.0-SNAPSHOT"
 
-// https://gitlab.com/kpmeen/clammyscan
-lazy val clammyStreams = ProjectRef(
-  uri(s"https://gitlab.com/kpmeen/clammyscan.git#6a98b2e836a1991e892ef2556d674263d5d80df7"),
-  "clammyscan-streams"
-)
-
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala)
   .enablePlugins(BuildInfoPlugin)
@@ -23,11 +17,10 @@ lazy val root = (project in file("."))
     Test / javaOptions += ("-Dwebdriver.gecko.driver=" + scala.sys.env("GECKO_DRIVER"))
   )
   .dependsOn(macrosProject)
-  .dependsOn(clammyStreams)
 
 inThisBuild(
   List(
-    scalaVersion := "2.13.8",
+    scalaVersion := "2.13.9",
     semanticdbEnabled := true, // enable SemanticDB
     semanticdbVersion := scalafixSemanticdb.revision // use Scalafix compatible version
   )
@@ -131,6 +124,11 @@ TwirlKeys.templateImports += "views.MainInfos"
 
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "fr.gouv.beta.binders._"
+
+// See https://github.com/sbt/sbt/issues/6997
+ThisBuild / libraryDependencySchemes ++= Seq(
+  "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+)
 
 /////////////////////////////////////
 //              Macros             //
