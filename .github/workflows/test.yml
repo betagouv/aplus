@@ -41,7 +41,7 @@ jobs:
       run: "sbt Test/compile"
 
     - name: Run tests
-      run: "sbt coverage test coverageReport"
+      run: "sbt coverage test"
       env:
         GECKO_DRIVER: /usr/bin/geckodriver
 
