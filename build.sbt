@@ -93,7 +93,7 @@ libraryDependencies ++= Seq(
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   // Note: we force snakeyaml version here because moultingyaml is not updated
-  "org.yaml" % "snakeyaml" % "1.32",
+  "org.yaml" % "snakeyaml" % "1.33",
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.12.0",
