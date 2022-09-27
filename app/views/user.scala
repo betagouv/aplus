@@ -37,4 +37,26 @@ object user {
       )
     )
 
+  def passwordActivationButton(user: User)(implicit request: RequestHeader): Tag =
+    div(
+      cls := "single--display-flex single--justify-content-flex-end single--width-100pc single--margin-8px",
+      form(
+        action := UserController.activateUserPassword(user.id).path,
+        method := UserController.activateUserPassword(user.id).method,
+        CSRFInput,
+        div(
+          cls := "mdl-dialog__actions",
+          button(
+            `type` := "submit",
+            cls := "mdl-button mdl-button--raised" +
+              (if (user.passwordActivated) "" else " mdl-color--red-500 mdl-color-text--white"),
+            if (user.passwordActivated)
+              "Désactiver le mot de passe"
+            else
+              "Activer le mot de passe"
+          ),
+        )
+      )
+    )
+
 }

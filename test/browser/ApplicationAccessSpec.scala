@@ -141,7 +141,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
       groupIds = List(instructorGroup.id),
-      internalSupportComment = None
+      internalSupportComment = None,
+      passwordActivated = false,
     )
     val unrelatedInstructorUser = User(
       UUIDHelper.namedFrom(s"instructor-test-unrelated$number"),
@@ -161,7 +162,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
       groupIds = Nil,
-      internalSupportComment = None
+      internalSupportComment = None,
+      passwordActivated = false,
     )
     val helperUser = User(
       UUIDHelper.namedFrom(s"helper-test$number"),
@@ -181,7 +183,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
       groupIds = List(helperGroup.id),
-      internalSupportComment = None
+      internalSupportComment = None,
+      passwordActivated = false,
     )
     val helperFriendUser = User(
       UUIDHelper.namedFrom(s"helper-test-friend$number"),
@@ -201,7 +204,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
       groupIds = List(helperGroup.id),
-      internalSupportComment = None
+      internalSupportComment = None,
+      passwordActivated = false,
     )
     val unrelatedHelperUser = User(
       UUIDHelper.namedFrom(s"helper-test-unrelated$number"),
@@ -221,7 +225,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
       groupIds = List(helperGroup.id),
-      internalSupportComment = None
+      internalSupportComment = None,
+      passwordActivated = false,
     )
     val unrelatedExpertUser = User(
       UUIDHelper.namedFrom(s"expert-test-unrelated$number"),
@@ -241,7 +246,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
       groupIds = List(helperGroup.id),
-      internalSupportComment = None
+      internalSupportComment = None,
+      passwordActivated = false,
     )
     val managerUser = User(
       UUIDHelper.namedFrom(s"helper-test-manager$number"),
@@ -261,7 +267,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
       groupIds = List(helperGroup.id),
-      internalSupportComment = None
+      internalSupportComment = None,
+      passwordActivated = false,
     )
 
     val users = List(

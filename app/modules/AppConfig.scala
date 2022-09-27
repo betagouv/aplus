@@ -16,6 +16,9 @@ class AppConfig @Inject() (configuration: Configuration) {
   val tokenExpirationInMinutes: Int =
     configuration.get[Int]("app.tokenExpirationInMinutes")
 
+  val passwordRecoveryTokenExpirationInMinutes: Int =
+    configuration.get[Int]("app.passwordRecoveryTokenExpirationInMinutes")
+
   val featureMandatSms: Boolean = configuration.get[Boolean]("app.features.smsMandat")
 
   val useLiveSmsApi: Boolean = configuration
