@@ -41,9 +41,12 @@ jobs:
       run: "sbt Test/compile"
 
     - name: Run tests
-      run: "sbt coverage test coverageReport"
+      run: "sbt coverage test"
       env:
         GECKO_DRIVER: /usr/bin/geckodriver
+
+    - name: Generate coverage report
+      run: "sbt coverageReport"
 
     - name: Run codacy-coverage-reporter
       uses: codacy/codacy-coverage-reporter-action@v1
