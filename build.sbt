@@ -3,12 +3,6 @@ organization := "fr.gouv.beta"
 
 version := "1.0-SNAPSHOT"
 
-// https://gitlab.com/kpmeen/clammyscan
-lazy val clammyStreams = ProjectRef(
-  uri(s"https://gitlab.com/kpmeen/clammyscan.git#6a98b2e836a1991e892ef2556d674263d5d80df7"),
-  "clammyscan-streams"
-)
-
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala)
   .enablePlugins(BuildInfoPlugin)
@@ -23,11 +17,10 @@ lazy val root = (project in file("."))
     Test / javaOptions += ("-Dwebdriver.gecko.driver=" + scala.sys.env("GECKO_DRIVER"))
   )
   .dependsOn(macrosProject)
-  .dependsOn(clammyStreams)
 
 inThisBuild(
   List(
-    scalaVersion := "2.13.8",
+    scalaVersion := "2.13.9",
     semanticdbEnabled := true, // enable SemanticDB
     semanticdbVersion := scalafixSemanticdb.revision // use Scalafix compatible version
   )
@@ -94,11 +87,13 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.4.0",
+  "org.postgresql" % "postgresql" % "42.5.0",
   anormDependency,
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
+  // Note: we force snakeyaml version here because moultingyaml is not updated
+  "org.yaml" % "snakeyaml" % "1.32",
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.11.1",
@@ -122,7 +117,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "font-awesome" % "6.1.2",
 )
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "6.3.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "6.4.2"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
@@ -131,6 +126,11 @@ TwirlKeys.templateImports += "views.MainInfos"
 
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "fr.gouv.beta.binders._"
+
+// See https://github.com/sbt/sbt/issues/6997
+ThisBuild / libraryDependencySchemes ++= Seq(
+  "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+)
 
 /////////////////////////////////////
 //              Macros             //

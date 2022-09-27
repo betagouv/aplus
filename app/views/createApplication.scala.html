@@ -69,7 +69,7 @@
                             @for(category <- categories) {
                                 <button type="button"
                                         class="mdl-chip aplus-application-form-category-filter-button single--margin-4px single--cursor-pointer"
-                                        data-organisations="@Json.stringify(Json.toJson(category.defaultOrganisations.map(_.shortName)))">
+                                        data-organisations="@Json.stringify(Json.toJson(category.defaultOrganisations.map(_.id.id)))">
                                     <span class="mdl-chip__text">@category.name</span>
                                 </button>
                             }

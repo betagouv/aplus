@@ -139,7 +139,7 @@ case class CSVImportController @Inject() (
           inseeCode = Nil,
           creationDate = Time.nowParis(),
           areaIds = group.group.areaIds,
-          organisation = group.group.organisation,
+          organisationId = group.group.organisationId,
           email = group.group.email,
           publicNote = None,
           internalSupportComment = None

@@ -218,7 +218,7 @@ object ApiModel {
         description = group.description,
         creationDate = group.creationDate.toInstant,
         areas = group.areaIds.flatMap(Area.fromId).map(_.toString),
-        organisation = group.organisation.flatMap(Organisation.byId).map(_.shortName),
+        organisation = group.organisation.map(_.shortName),
         email = group.email,
         publicNote = group.publicNote
       )

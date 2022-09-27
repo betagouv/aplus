@@ -298,7 +298,6 @@ case class UserController @Inject() (
               userGroups.map(_.name).mkString(", "),
               userGroups
                 .flatMap(_.organisation)
-                .flatMap(Organisation.byId)
                 .map(_.shortName)
                 .mkString(", "),
               if (user.cguAcceptationDate.nonEmpty) "CGU Acceptées" else "",
