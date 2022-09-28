@@ -72,7 +72,7 @@ scalacOptions ++= Seq(
   "-Wvalue-discard"
 )
 
-lazy val anormDependency = "org.playframework.anorm" %% "anorm" % "2.7.0"
+lazy val anormDependency = "org.playframework.anorm" %% "anorm" % "2.6.10"
 
 libraryDependencies ++= Seq(
   ws,
