@@ -44,8 +44,8 @@ class Pseudonymizer(uuid: UUID) {
 
   val (firstName: String, lastName: String) = {
     val (first, gender) = names(random.between(0, names.size))
-    val adjective = adjectives(random.between(0, adjectives.size))
-    val last = StringHelper.capitalizeName(if (gender) adjective._2 else adjective._1)
+    val (adjectiveM, adjectiveF) = adjectives(random.between(0, adjectives.size))
+    val last = StringHelper.capitalizeName(if (gender) adjectiveF else adjectiveM)
     (first, last)
   }
 
