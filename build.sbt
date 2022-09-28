@@ -93,10 +93,10 @@ libraryDependencies ++= Seq(
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   // Note: we force snakeyaml version here because moultingyaml is not updated
-  "org.yaml" % "snakeyaml" % "1.32",
+  "org.yaml" % "snakeyaml" % "1.33",
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
   ws,
-  "com.lihaoyi" %% "scalatags" % "0.11.1",
+  "com.lihaoyi" %% "scalatags" % "0.12.0",
   "org.typelevel" %% "cats-core" % "2.8.0",
   // To ensure that the version of jackson that do not have
   // known security vulnerabilities is used
