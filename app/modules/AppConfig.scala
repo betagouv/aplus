@@ -13,6 +13,8 @@ import scala.concurrent.duration._
 @Singleton
 class AppConfig @Inject() (configuration: Configuration) {
 
+  val appSecret = configuration.get[String]("play.http.secret.key")
+
   val tokenExpirationInMinutes: Int =
     configuration.get[Int]("app.tokenExpirationInMinutes")
 
@@ -76,5 +78,16 @@ class AppConfig @Inject() (configuration: Configuration) {
       .map { raw =>
         ConfigFactory.parseString(raw)
       }
+
+  val groupsWhichCannotHaveInstructors: Set[UUID] =
+    configuration
+      .get[String]("app.groupsWhichCannotHaveInstructors")
+      .split(",")
+      .map(_.trim)
+      .filterNot(_.isEmpty)
+      .flatMap(UUIDHelper.fromString)
+      .toSet
+
+  val anonymizedExportEnabled: Boolean = configuration.get[Boolean]("app.anonymizedExport.enabled")
 
 }

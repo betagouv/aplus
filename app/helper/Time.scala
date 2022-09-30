@@ -11,6 +11,14 @@ object Time {
   private val timeZoneString = "Europe/Paris"
   val timeZoneParis = ZoneId.of(timeZoneString)
 
+  def truncateAtHour(zone: ZoneId)(instant: Instant, hour: Int): Instant =
+    instant
+      .atZone(zone)
+      .toLocalDate
+      .atStartOfDay(zone)
+      .withHour(hour)
+      .toInstant
+
   implicit def zonedDateTimeOrdering: Ordering[ZonedDateTime] =
     Ordering.fromLessThan(_.isBefore(_))
 

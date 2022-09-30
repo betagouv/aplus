@@ -2,6 +2,7 @@ package models
 
 import cats.syntax.all._
 import cats.{Eq, Show}
+import helper.{Pseudonymizer, Time}
 import models.Answer.AnswerType.ApplicationProcessed
 import models.Application.SeenByUser
 import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
@@ -180,6 +181,81 @@ case class Application(
 
   lazy val firstAnswerTimeInMinutes: Option[Int] = firstAgentAnswerDate.map { firstAnswerDate =>
     MINUTES.between(creationDate, firstAnswerDate).toInt
+  }
+
+  def withWipedPersonalData: Application = {
+    val wipedUsagerInfos: Map[String, String] =
+      userInfos.map { case (key, _) => (key, "") }
+    val wipedAnswers: List[Answer] = answers.map(answer =>
+      answer.copy(
+        message = "",
+        userInfos = answer.userInfos.map(_.map { case (key, _) => (key, "") }),
+      )
+    )
+    copy(
+      subject = "",
+      description = "",
+      userInfos = wipedUsagerInfos,
+      answers = wipedAnswers,
+    )
+  }
+
+  def anonymize: Application = {
+    val wiped = withWipedPersonalData
+    val zone = creationDate.getZone
+    val anonCreationDate = creationDate.toLocalDate.atStartOfDay(zone).withHour(10)
+    val anonMandatDate = mandatDate.map(_ => anonCreationDate.format(Time.dateWithHourFormatter))
+    val anonClosedDate = closedDate.map(date => date.toLocalDate.atStartOfDay(zone).withHour(14))
+    val pseudoCreatorName = new Pseudonymizer(creatorUserId).fullName
+    val pseudoInvitedUsers = invitedUsers.map { case (id, _) =>
+      (id, new Pseudonymizer(id).fullName)
+    }
+    val anonSeenByUsers = seenByUsers.map { case SeenByUser(id, date) =>
+      SeenByUser(id, date.atZone(zone).toLocalDate.atStartOfDay(zone).withHour(12).toInstant)
+    }
+    val anonAnswers = wiped.answers.map(answer =>
+      Answer(
+        id = answer.id,
+        applicationId = answer.applicationId,
+        creationDate = answer.creationDate.toLocalDate.atStartOfDay(zone).withHour(12),
+        answerType = answer.answerType,
+        message = answer.message,
+        creatorUserID = answer.creatorUserID,
+        creatorUserName = new Pseudonymizer(answer.creatorUserID).fullName,
+        invitedUsers = answer.invitedUsers.map { case (id, _) =>
+          (id, new Pseudonymizer(id).fullName)
+        },
+        visibleByHelpers = answer.visibleByHelpers,
+        declareApplicationHasIrrelevant = answer.declareApplicationHasIrrelevant,
+        userInfos = answer.userInfos,
+        invitedGroupIds = answer.invitedGroupIds,
+      )
+    )
+    Application(
+      id = id,
+      creationDate = anonCreationDate,
+      creatorUserName = pseudoCreatorName,
+      creatorUserId = wiped.creatorUserId,
+      subject = wiped.subject,
+      description = wiped.description,
+      userInfos = wiped.userInfos,
+      invitedUsers = pseudoInvitedUsers,
+      area = wiped.area,
+      irrelevant = wiped.irrelevant,
+      answers = anonAnswers,
+      internalId = wiped.internalId,
+      closed = wiped.closed,
+      seenByUsers = anonSeenByUsers,
+      usefulness = wiped.usefulness,
+      closedDate = anonClosedDate,
+      expertInvited = wiped.expertInvited,
+      hasSelectedSubject = wiped.hasSelectedSubject,
+      category = wiped.category,
+      mandatType = wiped.mandatType,
+      mandatDate = anonMandatDate,
+      invitedGroupIdsAtCreation = wiped.invitedGroupIdsAtCreation,
+      personalDataWiped = wiped.personalDataWiped,
+    )
   }
 
 }

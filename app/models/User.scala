@@ -5,9 +5,9 @@ import java.util.UUID
 
 import cats.syntax.all._
 import constants.Constants
-import helper.{Hash, Time, UUIDHelper}
+import helper.{Hash, Pseudonymizer, Time, UUIDHelper}
 import helper.Time.zonedDateTimeInstance
-import helper.StringHelper.withQuotes
+import helper.StringHelper.{notLetterNorNumberRegex, withQuotes}
 
 case class User(
     id: UUID,
@@ -180,6 +180,37 @@ case class User(
       ),
     ).collect { case (name, true, thisValue, thatValue) => s"$name : $thisValue -> $thatValue" }
     "[" + diffs.mkString(" | ") + "]"
+  }
+
+  def pseudonymize: User = {
+    val pseudo = new Pseudonymizer(id)
+    val pseudoEmail = pseudo.emailKeepingDomain(email)
+    val pseudoPhone = phoneNumber.map(_.trim).filter(_.nonEmpty).map(n => n.take(4) + "0000")
+    User(
+      id = id,
+      key = "",
+      firstName = pseudo.firstName.some,
+      lastName = pseudo.lastName.some,
+      name = pseudo.fullName,
+      qualite = qualite,
+      email = pseudoEmail,
+      helper = helper,
+      instructor = instructor,
+      admin = admin,
+      areas = areas,
+      creationDate = creationDate,
+      communeCode = communeCode,
+      groupAdmin = groupAdmin,
+      disabled = disabled,
+      expert = expert,
+      groupIds = groupIds,
+      cguAcceptationDate = cguAcceptationDate,
+      newsletterAcceptationDate = newsletterAcceptationDate,
+      phoneNumber = pseudoPhone,
+      observableOrganisationIds = observableOrganisationIds,
+      sharedAccount = sharedAccount,
+      internalSupportComment = none,
+    )
   }
 
 }

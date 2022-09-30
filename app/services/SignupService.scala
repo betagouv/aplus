@@ -88,6 +88,19 @@ class SignupService @Inject() (
         )
     )
 
+  def allOrThrow: List[(SignupRequest, Option[UUID])] =
+    db.withTransaction { implicit connection =>
+      val fields = tableFields.map(field => s"signup_request.$field").mkString(", ")
+      SQL(s"""SELECT
+              $fields,
+              "user".id AS signedup_user_id
+              FROM signup_request
+              LEFT JOIN "user" ON LOWER("user".email) = LOWER(signup_request.email)
+           """)
+        .as((signupRequestRowParser ~ SqlParser.get[Option[UUID]]("signedup_user_id")).*)
+        .map { case a ~ b => (a, b) }
+    }
+
   def allAfter(afterDate: Instant): Future[Either[Error, List[(SignupRequest, Option[UUID])]]] =
     Future(
       Try(
