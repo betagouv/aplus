@@ -247,13 +247,20 @@ html, body {
         overflow: visible !important;
     }
 
-    .mdl-grid, .mdl-card, .mdl-card__title {
-        display: block !important;
-
-    }
-
     .do-not-print {
         display: none !important;
+    }
+
+    .mandat-print-wrapper h4 {
+      margin-top: 0px;
+    }
+
+    .mandat-print-wrapper ul {
+      margin-top: 0px;
+    }
+
+    .mandat-print-wrapper p,ul,li {
+      font-size: 12px;
     }
 }
 
@@ -619,16 +626,16 @@ a {
 
 
 /** List of classes with only 1 property (prefixed by `single--`) **/
-.single--margin-top-8px {
-    margin-top: 8px;
-}
-
 .single--margin-top--8px {
     margin-top: -8px;
 }
 
 .single--margin-top--16px {
     margin-top: -16px;
+}
+
+.single--margin-top-8px {
+    margin-top: 8px;
 }
 
 .single--margin-top-10px {
@@ -655,6 +662,10 @@ a {
     margin-bottom: -24px;
 }
 
+.single--margin-bottom-0px {
+    margin-bottom: 0px;
+}
+
 .single--margin-bottom-8px {
     margin-bottom: 8px;
 }
@@ -667,8 +678,16 @@ a {
     margin-bottom: 24px;
 }
 
+.single--margin-bottom-32px {
+    margin-bottom: 32px;
+}
+
 .single--margin-bottom-40px {
     margin-bottom: 40px;
+}
+
+.single--margin-bottom-60px {
+    margin-bottom: 60px;
 }
 
 .single--margin-right-8px {
@@ -699,12 +718,20 @@ a {
     margin-left: 24px;
 }
 
+.single--margin-left-32px {
+    margin-left: 32px;
+}
+
 .single--margin-0px {
     margin: 0px;
 }
 
 .single--margin-4px {
     margin: 4px;
+}
+
+.single--margin-16px {
+    margin: 16px;
 }
 
 
@@ -738,6 +765,10 @@ a {
 
 .single--padding-left-48px {
     padding-left: 48px;
+}
+
+.single--padding-right-16px {
+    padding-right: 16px;
 }
 
 .single--max-width-160px {
@@ -912,6 +943,10 @@ Colors
 
 .aplus-color-text--black {
     color: #00234d !important;
+}
+
+.aplus-color-text--error {
+    color: #d50000;
 }
 
 /* from --blue: #0053b3;

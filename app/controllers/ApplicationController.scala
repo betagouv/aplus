@@ -15,7 +15,6 @@ import models.Answer.AnswerType
 import models.EventType._
 import models._
 import models.formModels.{AnswerFormData, ApplicationFormData, InvitationFormData}
-import models.mandat.Mandat
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.cache.AsyncCacheApi
@@ -340,8 +339,7 @@ case class ApplicationController @Inject() (
                   hasSelectedSubject =
                     applicationData.selectedSubject.contains[String](applicationData.subject),
                   category = applicationData.category,
-                  mandatType = dataModels.Application.MandatType
-                    .dataModelDeserialization(applicationData.mandatType),
+                  mandatType = Application.MandatType.Paper.some,
                   mandatDate = Some(applicationData.mandatDate),
                   invitedGroupIdsAtCreation = applicationData.groups
                 )
@@ -361,25 +359,29 @@ case class ApplicationController @Inject() (
                     )
                   }
                   applicationData.linkedMandat.foreach { mandatId =>
-                    mandatService
-                      .linkToApplication(Mandat.Id(mandatId), applicationId)
-                      .onComplete {
-                        case Failure(error) =>
-                          eventService.log(
-                            ApplicationLinkedToMandatError,
-                            s"Erreur pour faire le lien entre le mandat $mandatId et la demande $applicationId",
-                            applicationId = application.id.some,
-                            underlyingException = error.some
-                          )
-                        case Success(Left(error)) =>
-                          eventService.logError(error, applicationId = application.id.some)
-                        case Success(Right(_)) =>
-                          eventService.log(
-                            ApplicationLinkedToMandat,
-                            s"La demande ${application.id} a été liée au mandat $mandatId",
-                            applicationId = application.id.some
-                          )
-                      }
+                    if (
+                      applicationData.mandatGenerationType === ApplicationFormData.mandatGenerationTypeIsNew
+                    ) {
+                      mandatService
+                        .linkToApplication(Mandat.Id(mandatId), applicationId)
+                        .onComplete {
+                          case Failure(error) =>
+                            eventService.log(
+                              ApplicationLinkedToMandatError,
+                              s"Erreur pour faire le lien entre le mandat $mandatId et la demande $applicationId",
+                              applicationId = application.id.some,
+                              underlyingException = error.some
+                            )
+                          case Success(Left(error)) =>
+                            eventService.logError(error, applicationId = application.id.some)
+                          case Success(Right(_)) =>
+                            eventService.log(
+                              ApplicationLinkedToMandat,
+                              s"La demande ${application.id} a été liée au mandat $mandatId",
+                              applicationId = application.id.some
+                            )
+                        }
+                    }
                   }
                   Redirect(routes.ApplicationController.myApplications)
                     .withSession(
