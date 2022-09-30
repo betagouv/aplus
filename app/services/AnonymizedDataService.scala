@@ -52,14 +52,6 @@ class AnonymizedDataService @Inject() (
       insertUserGroups()(anonConn)
     }
 
-  private def truncateAtHour(instant: Instant, hour: Int): Instant =
-    instant
-      .atZone(Time.timeZoneParis)
-      .toLocalDate
-      .atStartOfDay(Time.timeZoneParis)
-      .withHour(hour)
-      .toInstant
-
   private def truncateData()(implicit connection: Connection): Unit = {
     val _ = SQL("""DELETE FROM application""").execute()
     val _ = SQL("""DELETE FROM event""").execute()
@@ -137,7 +129,7 @@ class AnonymizedDataService @Inject() (
         "area" -> row.area,
         "irrelevant" -> row.irrelevant,
         "internalId" -> row.internalId,
-        "answers" -> (Json.toJson(row.answers): ParameterValue),
+        "answers" -> Json.toJson(row.answers),
         "closed" -> row.closed,
         "usefulness" -> row.usefulness,
         "closedDate" -> row.closedDate,
@@ -194,7 +186,7 @@ class AnonymizedDataService @Inject() (
           "code" -> row.code,
           "fromUserName" -> row.fromUserName,
           "fromUserId" -> row.fromUserId,
-          "creationDate" -> truncateAtHour(row.creationDate, 8),
+          "creationDate" -> Time.truncateAtHour(Time.timeZoneParis)(row.creationDate, 8),
           "description" -> row.description,
           "area" -> row.area,
           "toApplicationId" -> row.toApplicationId,
@@ -236,7 +228,7 @@ class AnonymizedDataService @Inject() (
            {answerId}::uuid
          )"""
     rows.foreach { row =>
-      val uploadDate = truncateAtHour(row.uploadDate, 12)
+      val uploadDate = Time.truncateAtHour(Time.timeZoneParis)(row.uploadDate, 12)
       val filename =
         if (row.filename === "fichier-non-existant") "fichier-non-existant" else "fichier-anonyme"
       val params = Seq[NamedParameter](
