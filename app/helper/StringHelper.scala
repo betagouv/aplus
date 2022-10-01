@@ -19,6 +19,11 @@ object StringHelper {
 
   }
 
+  def unaccent(string: String): String =
+    Normalizer
+      .normalize(string, Normalizer.Form.NFD)
+      .replaceAll("""\p{InCombiningDiacriticalMarks}+""", "")
+
   def camelToUnderscoresUpperCase(name: String) =
     "_?[A-Z][a-z\\d]+".r
       .findAllMatchIn(name)
