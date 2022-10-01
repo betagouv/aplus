@@ -16,7 +16,7 @@ import views.home.LoginPanel
 class HomeController @Inject() (
     val config: AppConfig,
     loginAction: LoginAction,
-    db: Database
+    db: Database,
 )(implicit webJarsUtil: WebJarsUtil)
     extends InjectedController
     with play.api.i18n.I18nSupport

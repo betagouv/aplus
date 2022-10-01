@@ -209,6 +209,18 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       """.executeUpdate() === 1
     }
 
+  def beforeOrThrow(beforeExcluded: Instant, limit: Int): List[Event] =
+    db.withConnection { implicit connection =>
+      SQL(s"""SELECT $fieldsInSelect, host(ip_address)::TEXT AS ip_address
+              FROM "event"
+              WHERE creation_date < {beforeExcluded}
+              ORDER BY creation_date DESC
+              LIMIT {limit}
+              """)
+        .on("beforeExcluded" -> beforeExcluded, "limit" -> limit)
+        .as(simpleEvent.*)
+    }
+
   def all(limit: Int, fromUserId: Option[UUID], date: Option[LocalDate]): Future[List[Event]] =
     Future {
       db.withConnection { implicit connection =>

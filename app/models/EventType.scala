@@ -157,6 +157,9 @@ object EventType {
   object WipeDataComplete extends Info
   object WipeDataError extends Error
 
+  object AnonymizedDataExportMessage extends Info
+  object AnonymizedDataExportError extends Error
+
   object MasqueradeUnauthorized extends Warn
 
   object SearchUsersDone extends Info

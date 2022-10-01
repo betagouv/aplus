@@ -217,6 +217,11 @@ class FileService @Inject() (
         .map(_.flatMap(_.toFileMetadata))
     )
 
+  def allOrThrow: List[FileMetadataRow] =
+    db.withConnection { implicit connection =>
+      SQL(s"""SELECT $fieldsInSelect FROM file_metadata""").as(fileMetadataRowParser.*)
+    }
+
   def deleteBefore(beforeDate: Instant): Future[Unit] = {
     def logException(exception: Throwable) =
       eventService.logNoRequest(

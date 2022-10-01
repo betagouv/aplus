@@ -140,17 +140,12 @@ class UserGroupService @Inject() (
     // TODO: insee_code = array[${group.inseeCode}]::character varying(5)[], have been remove temporary
     }
 
-  def allGroups: List[UserGroup] =
+  def allOrThrow: List[UserGroup] =
     db.withConnection { implicit connection =>
       SQL(s"SELECT $fieldsInSelect FROM user_group").as(simpleUserGroup.*)
     }
 
-  def all: Future[List[UserGroup]] =
-    Future {
-      db.withConnection { implicit connection =>
-        SQL(s"SELECT $fieldsInSelect FROM user_group").as(simpleUserGroup.*)
-      }
-    }
+  def all: Future[List[UserGroup]] = Future(allOrThrow)
 
   def byIds(groupIds: List[UUID]): List[UserGroup] =
     db.withConnection { implicit connection =>
@@ -280,6 +275,12 @@ class UserGroupService @Inject() (
   )
 
   private val fsFieldsInSelect: String = fsTableFields.mkString(", ")
+
+  def franceServiceRowsOrThrow: List[FranceService] =
+    db.withConnection { implicit connection =>
+      SQL(s"""SELECT $fsFieldsInSelect FROM france_service""")
+        .as(fsParser.*)
+    }
 
   def franceServices: Future[Either[Error, List[(Option[FranceService], Option[UserGroup])]]] =
     Future(

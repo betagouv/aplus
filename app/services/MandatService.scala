@@ -267,6 +267,11 @@ class MandatService @Inject() (
         .flatten
     )
 
+  def allOrThrow: List[Mandat] =
+    db.withConnection { implicit connection =>
+      SQL(s"""SELECT $fieldsInSelect FROM mandat""").as(mandatRowParser.*)
+    }
+
   def wipePersonalData(retentionInMonths: Long): Future[Either[Error, List[Mandat]]] =
     Future(
       Try {
@@ -288,18 +293,7 @@ class MandatService @Inject() (
         }
         mandats.flatMap { mandat =>
           db.withConnection { implicit connection =>
-            val wipedSms: List[Sms] = mandat.smsThread.map {
-              case sms: Sms.Outgoing =>
-                sms.copy(
-                  recipient = Sms.PhoneNumber("+330" + "0" * 8),
-                  body = ""
-                )
-              case sms: Sms.Incoming =>
-                sms.copy(
-                  originator = Sms.PhoneNumber("+330" + "0" * 8),
-                  body = ""
-                )
-            }
+            val wiped = mandat.withWipedPersonalData
             SQL(s"""UPDATE mandat
                     SET
                       usager_prenom = '',
@@ -312,7 +306,7 @@ class MandatService @Inject() (
                     RETURNING $fieldsInSelect;""")
               .on(
                 "id" -> mandat.id.underlying,
-                "smsThread" -> Json.toJson(wipedSms)
+                "smsThread" -> Json.toJson(wiped.smsThread)
               )
               .as(mandatRowParser.singleOpt)
           }

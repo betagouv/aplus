@@ -1,5 +1,6 @@
 package models.mandat
 
+import cats.syntax.all._
 import java.util.UUID
 import java.time.ZonedDateTime
 import models.Sms
@@ -32,5 +33,33 @@ case class Mandat(
       usagerPhoneLocal = usagerPhoneLocal.map(phone => phone.map(_ => '*')),
       smsThread = Nil
     )
+
+  def withWipedPersonalData: Mandat = {
+    val wipedSms: List[Sms] = smsThread.map {
+      case sms: Sms.Outgoing =>
+        sms.copy(
+          recipient = Sms.PhoneNumber("+330" + "0" * 8),
+          body = ""
+        )
+      case sms: Sms.Incoming =>
+        sms.copy(
+          originator = Sms.PhoneNumber("+330" + "0" * 8),
+          body = ""
+        )
+    }
+    Mandat(
+      id = id,
+      userId = userId,
+      creationDate = creationDate,
+      applicationId = applicationId,
+      usagerPrenom = "".some,
+      usagerNom = "".some,
+      usagerBirthDate = "".some,
+      usagerPhoneLocal = "".some,
+      smsThread = wipedSms,
+      smsThreadClosed = smsThreadClosed,
+      personalDataWiped = personalDataWiped,
+    )
+  }
 
 }
