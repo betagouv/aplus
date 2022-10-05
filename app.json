@@ -1,8 +1,5 @@
 {
   "name": "aplus",
-  "scripts": {
-    "postdeploy": "bin/init_database.sh"
-  },
   "env": {
     "STAGING_DATABASE_URL": {
       "required": true
