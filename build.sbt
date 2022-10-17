@@ -3,12 +3,6 @@ organization := "fr.gouv.beta"
 
 version := "1.0-SNAPSHOT"
 
-// https://gitlab.com/kpmeen/clammyscan
-lazy val clammyStreams = ProjectRef(
-  uri(s"https://gitlab.com/kpmeen/clammyscan.git#6a98b2e836a1991e892ef2556d674263d5d80df7"),
-  "clammyscan-streams"
-)
-
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala)
   .enablePlugins(BuildInfoPlugin)
@@ -23,11 +17,10 @@ lazy val root = (project in file("."))
     Test / javaOptions += ("-Dwebdriver.gecko.driver=" + scala.sys.env("GECKO_DRIVER"))
   )
   .dependsOn(macrosProject)
-  .dependsOn(clammyStreams)
 
 inThisBuild(
   List(
-    scalaVersion := "2.13.8",
+    scalaVersion := "2.13.9",
     semanticdbEnabled := true, // enable SemanticDB
     semanticdbVersion := scalafixSemanticdb.revision // use Scalafix compatible version
   )
@@ -79,6 +72,9 @@ scalacOptions ++= Seq(
   "-Wvalue-discard"
 )
 
+// https://typelevel.org/cats-effect/docs/getting-started
+addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+
 lazy val anormDependency = "org.playframework.anorm" %% "anorm" % "2.6.10"
 
 libraryDependencies ++= Seq(
@@ -99,17 +95,16 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
-  // Note: we force snakeyaml version here because moultingyaml is not updated
-  "org.yaml" % "snakeyaml" % "1.32",
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
   ws,
-  "com.lihaoyi" %% "scalatags" % "0.11.1",
+  "com.lihaoyi" %% "scalatags" % "0.12.0",
   "org.typelevel" %% "cats-core" % "2.8.0",
+  "org.typelevel" %% "cats-effect" % "3.3.14",
   // To ensure that the version of jackson that do not have
   // known security vulnerabilities is used
   // It is also compatible with play-json
   // https://github.com/playframework/play-json/blob/main/build.sbt#L34
-  "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.4"
+  "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.4",
 )
 
 // UI
@@ -119,10 +114,17 @@ libraryDependencies ++= Seq(
   "org.webjars" % "material-design-icons" % "4.0.0",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
   "org.webjars" % "chartjs" % "2.9.4",
-  "org.webjars" % "font-awesome" % "6.1.2",
+  "org.webjars" % "font-awesome" % "6.2.0",
 )
+
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "6.4.1"
+libraryDependencies += "io.sentry" % "sentry-logback" % "6.4.4"
+
+// Overrides
+dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
+
+// Note: we force snakeyaml version here because moultingyaml is not updated
+dependencyOverrides += "org.yaml" % "snakeyaml" % "1.33"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
@@ -131,6 +133,11 @@ TwirlKeys.templateImports += "views.MainInfos"
 
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "fr.gouv.beta.binders._"
+
+// See https://github.com/sbt/sbt/issues/6997
+ThisBuild / libraryDependencySchemes ++= Seq(
+  "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+)
 
 /////////////////////////////////////
 //              Macros             //

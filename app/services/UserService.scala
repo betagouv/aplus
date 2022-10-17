@@ -10,6 +10,7 @@ import java.util.UUID
 import javax.inject.Inject
 import models.{Error, EventType, User}
 import models.dataModels.UserRow
+import modules.AppConfig
 import org.postgresql.util.PSQLException
 import play.api.db.Database
 import scala.concurrent.Future
@@ -17,22 +18,11 @@ import scala.util.Try
 
 @javax.inject.Singleton
 class UserService @Inject() (
-    configuration: play.api.Configuration,
+    config: AppConfig,
     db: Database,
     dependencies: ServicesDependencies
 ) {
   import dependencies.databaseExecutionContext
-
-  private lazy val cryptoSecret = configuration.underlying.getString("play.http.secret.key ")
-
-  private lazy val groupsWhichCannotHaveInstructors: Set[UUID] =
-    configuration
-      .get[String]("app.groupsWhichCannotHaveInstructors")
-      .split(",")
-      .map(_.trim)
-      .filterNot(_.isEmpty)
-      .flatMap(UUIDHelper.fromString)
-      .toSet
 
   private val (simpleUser, tableFields) = Macros.parserWithFields[UserRow](
     "id",
@@ -70,12 +60,13 @@ class UserService @Inject() (
       }.map(_.toUser)
     }
 
+  def allOrThrow: List[User] =
+    db.withConnection(implicit connection =>
+      SQL(s"""SELECT $fieldsInSelect FROM "user"""").as(simpleUser.*)
+    ).map(_.toUser)
+
   def all: Future[List[User]] =
-    Future {
-      db.withConnection(implicit connection =>
-        SQL(s"""SELECT $fieldsInSelect FROM "user"""").as(simpleUser.*)
-      ).map(_.toUser)
-    }
+    Future(allOrThrow)
 
   def allNotDisabled: Future[List[User]] =
     Future {
@@ -249,13 +240,13 @@ class UserService @Inject() (
     try {
       val result = db.withTransaction { implicit connection =>
         users.foldRight(true) { (user, success) =>
-          val row = UserRow.fromUser(user, groupsWhichCannotHaveInstructors)
+          val row = UserRow.fromUser(user, config.groupsWhichCannotHaveInstructors)
           assert(row.areas.nonEmpty)
           success && SQL"""
         INSERT INTO "user" (id, key, first_name, last_name, name, qualite, email, helper, instructor, admin, areas, creation_date,
                             commune_code, group_admin, group_ids, cgu_acceptation_date, expert, phone_number, shared_account) VALUES (
            ${row.id}::uuid,
-           ${Hash.sha256(s"${row.id}$cryptoSecret")},
+           ${Hash.sha256(s"${row.id}${config.appSecret}")},
            ${row.firstName},
            ${row.lastName},
            ${row.name},
@@ -296,7 +287,7 @@ class UserService @Inject() (
 
   def update(user: User): Future[Boolean] =
     Future(db.withConnection { implicit connection =>
-      val row = UserRow.fromUser(user, groupsWhichCannotHaveInstructors)
+      val row = UserRow.fromUser(user, config.groupsWhichCannotHaveInstructors)
       SQL"""
           UPDATE "user" SET
           first_name = ${row.firstName},

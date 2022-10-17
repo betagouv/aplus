@@ -14,7 +14,6 @@ import javax.inject.{Inject, Singleton}
 import models.{Error, EventType, FileMetadata, User}
 import models.dataModels.FileMetadataRow
 import modules.AppConfig
-import net.scalytica.clammyscan.streams.{ClamError, ClamIO, FileOk, VirusFound}
 import play.api.mvc.Request
 import play.api.libs.concurrent.{ActorSystemProvider, MaterializerProvider}
 import play.api.db.Database
@@ -31,14 +30,6 @@ class FileService @Inject() (
     system: ActorSystemProvider
 )(implicit ec: ExecutionContext) {
   implicit val actorSystem = system.get
-
-  val clamIo = ClamIO(
-    config.clamAvHost,
-    config.clamAvPort,
-    config.clamAvTimeout,
-    // maxBytes = 10M
-    10000000
-  )
 
   // Play is supposed to give us temporary files here
   def saveFiles(
@@ -83,54 +74,20 @@ class FileService @Inject() (
     Source
       .fromIterator(() => metadataList.iterator)
       .mapAsync(1) { case (path, metadata) =>
-        val sink = clamIo.scan(metadata.id.toString)
-        val scanResult: Future[Either[Error, Unit]] =
-          if (config.clamAvIsEnabled)
-            FileIO
-              .fromPath(path)
-              .toMat(sink)(Keep.right)
-              .run()
-              .flatMap { clamResult =>
-                val status = clamResult match {
-                  case FileOk =>
-                    eventService.logSystem(
-                      EventType.FileAvailable,
-                      s"Aucun virus détecté par ClamAV dans le fichier ${metadata.id}"
-                    )
-                    val fileDestination = Paths.get(s"${config.filesPath}/${metadata.id}")
-                    Files.copy(path, fileDestination)
-                    Files.deleteIfExists(path)
-                    FileMetadata.Status.Available
-                  case VirusFound(message) =>
-                    eventService.logSystem(
-                      EventType.FileQuarantined,
-                      s"Signature de virus détectée par ClamAV dans le fichier ${metadata.id}: " +
-                        message
-                    )
-                    Files.deleteIfExists(path)
-                    FileMetadata.Status.Quarantined
-                  case error: ClamError =>
-                    eventService.logSystem(
-                      EventType.FileScanError,
-                      s"Erreur de ClamAV pour le fichier ${metadata.id}: ${error.message}"
-                    )
-                    Files.deleteIfExists(path)
-                    FileMetadata.Status.Error
-                }
-                notificationsService.fileUploadStatus(metadata.attached, status, uploader)
-                updateStatus(metadata.id, status)
-              }
-          else {
-            eventService.logSystem(
-              EventType.FileAvailable,
-              s"Le fichier ${metadata.id} est disponible. ClamAV est désactivé. " +
-                "Aucun scan n'a été effectué"
-            )
-            val fileDestination = Paths.get(s"${config.filesPath}/${metadata.id}")
-            Files.copy(path, fileDestination)
-            Files.deleteIfExists(path)
-            updateStatus(metadata.id, FileMetadata.Status.Available)
-          }
+        val scanResult: Future[Either[Error, Unit]] = {
+          // TODO: rewrite this with cats-effect
+          // if (config.clamAvIsEnabled) {
+          // } else {
+          eventService.logSystem(
+            EventType.FileAvailable,
+            s"Le fichier ${metadata.id} est disponible. ClamAV est désactivé. " +
+              "Aucun scan n'a été effectué"
+          )
+          val fileDestination = Paths.get(s"${config.filesPath}/${metadata.id}")
+          Files.copy(path, fileDestination)
+          Files.deleteIfExists(path)
+          updateStatus(metadata.id, FileMetadata.Status.Available)
+        }
 
         scanResult
           .map {
@@ -259,6 +216,11 @@ class FileService @Inject() (
         )
         .map(_.flatMap(_.toFileMetadata))
     )
+
+  def allOrThrow: List[FileMetadataRow] =
+    db.withConnection { implicit connection =>
+      SQL(s"""SELECT $fieldsInSelect FROM file_metadata""").as(fileMetadataRowParser.*)
+    }
 
   def deleteBefore(beforeDate: Instant): Future[Unit] = {
     def logException(exception: Throwable) =

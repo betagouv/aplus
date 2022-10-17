@@ -448,7 +448,7 @@ case class UserController @Inject() (
             errorInvolvesUser = otherUser.id.some
           ) { () =>
             val form = EditUserFormData.form.fill(EditUserFormData.fromUser(otherUser))
-            val groups = groupService.allGroups
+            val groups = groupService.allOrThrow
             val unused = not(isAccountUsed(otherUser))
             val Token(tokenName, tokenValue) = CSRF.getToken.get
             eventService
@@ -521,7 +521,7 @@ case class UserController @Inject() (
                   Future(NotFound("Nous n'avons pas trouvé cet utilisateur"))
                 case Some(userId) =>
                   withUser(userId, includeDisabled = true) { user: User =>
-                    val groups = groupService.allGroups
+                    val groups = groupService.allOrThrow
                     eventService.log(
                       AddUserError,
                       s"Essai de modification de l'utilisateur $userId avec des erreurs de validation",
@@ -589,7 +589,7 @@ case class UserController @Inject() (
                         .withGlobalError(
                           s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)"
                         )
-                      val groups = groupService.allGroups
+                      val groups = groupService.allOrThrow
                       eventService.log(
                         EditUserError,
                         s"Impossible de modifier l'utilisateur $userId dans la BDD",

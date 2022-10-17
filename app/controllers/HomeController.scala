@@ -16,7 +16,7 @@ import views.home.LoginPanel
 class HomeController @Inject() (
     val config: AppConfig,
     loginAction: LoginAction,
-    db: Database
+    db: Database,
 )(implicit webJarsUtil: WebJarsUtil)
     extends InjectedController
     with play.api.i18n.I18nSupport
@@ -26,11 +26,10 @@ class HomeController @Inject() (
 
   def index: Action[AnyContent] =
     Action { implicit request =>
-      val needsRedirect = request.session
-        .get(Keys.Session.userId)
-        .orElse(request.queryString.get(Keys.QueryParam.token))
-        .orElse(request.queryString.get(Keys.QueryParam.key))
-        .isDefined
+      val needsRedirect =
+        request.session.get(Keys.Session.userId).isDefined ||
+          request.queryString.get(Keys.QueryParam.token).isDefined ||
+          request.queryString.get(Keys.QueryParam.key).isDefined
       if (needsRedirect)
         TemporaryRedirect(
           s"${routes.ApplicationController.myApplications}?${request.rawQueryString}"
