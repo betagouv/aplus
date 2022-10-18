@@ -20,7 +20,7 @@ lazy val root = (project in file("."))
 
 inThisBuild(
   List(
-    scalaVersion := "2.13.9",
+    scalaVersion := "2.13.10",
     semanticdbEnabled := true, // enable SemanticDB
     semanticdbVersion := scalafixSemanticdb.revision // use Scalafix compatible version
   )
@@ -95,8 +95,6 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
-  // Note: we force snakeyaml version here because moultingyaml is not updated
-  "org.yaml" % "snakeyaml" % "1.33",
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.12.0",
@@ -106,7 +104,7 @@ libraryDependencies ++= Seq(
   // known security vulnerabilities is used
   // It is also compatible with play-json
   // https://github.com/playframework/play-json/blob/main/build.sbt#L34
-  "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.4"
+  "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.4",
 )
 
 // UI
@@ -118,8 +116,15 @@ libraryDependencies ++= Seq(
   "org.webjars" % "chartjs" % "2.9.4",
   "org.webjars" % "font-awesome" % "6.2.0",
 )
+
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "6.4.2"
+libraryDependencies += "io.sentry" % "sentry-logback" % "6.4.4"
+
+// Overrides
+dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
+
+// Note: we force snakeyaml version here because moultingyaml is not updated
+dependencyOverrides += "org.yaml" % "snakeyaml" % "1.33"
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
