@@ -93,6 +93,7 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.5.0",
   anormDependency,
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
+  "com.typesafe.play" %% "play-json" % "2.9.3",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
@@ -100,11 +101,6 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" %% "scalatags" % "0.12.0",
   "org.typelevel" %% "cats-core" % "2.8.0",
   "org.typelevel" %% "cats-effect" % "3.3.14",
-  // To ensure that the version of jackson that do not have
-  // known security vulnerabilities is used
-  // It is also compatible with play-json
-  // https://github.com/playframework/play-json/blob/main/build.sbt#L34
-  "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.4",
 )
 
 // UI
@@ -125,6 +121,30 @@ dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
 
 // Note: we force snakeyaml version here because moultingyaml is not updated
 dependencyOverrides += "org.yaml" % "snakeyaml" % "1.33"
+
+// Jackson CVE fix
+// https://github.com/playframework/playframework/discussions/11222
+val jacksonVersion = "2.13.4"
+val jacksonDatabindVersion = "2.13.4.2"
+
+val jacksonOverrides = Seq(
+  "com.fasterxml.jackson.core" % "jackson-core",
+  "com.fasterxml.jackson.core" % "jackson-annotations",
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8",
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310"
+).map(_ % jacksonVersion)
+
+val jacksonDatabindOverrides = Seq(
+  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonDatabindVersion
+)
+
+val akkaSerializationJacksonOverrides = Seq(
+  "com.fasterxml.jackson.dataformat" % "jackson-dataformat-cbor",
+  "com.fasterxml.jackson.module" % "jackson-module-parameter-names",
+  "com.fasterxml.jackson.module" %% "jackson-module-scala",
+).map(_ % jacksonVersion)
+
+libraryDependencies ++= jacksonDatabindOverrides ++ jacksonOverrides ++ akkaSerializationJacksonOverrides
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
