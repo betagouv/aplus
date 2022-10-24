@@ -158,16 +158,7 @@ class UserGroupService @Inject() (
     }
 
   def byIdsFuture(groupIds: List[UUID]): Future[List[UserGroup]] =
-    Future {
-      db.withConnection { implicit connection =>
-        val ids = groupIds.distinct
-        SQL(s"""SELECT $fieldsInSelect
-                FROM user_group
-                WHERE ARRAY[{ids}]::uuid[] @> ARRAY[id]::uuid[]""")
-          .on("ids" -> ids)
-          .as(simpleUserGroup.*)
-      }
-    }
+    Future(byIds(groupIds))
 
   def groupById(groupId: UUID): Option[UserGroup] =
     db.withConnection { implicit connection =>
@@ -175,6 +166,9 @@ class UserGroupService @Inject() (
         .on("groupId" -> groupId)
         .as(simpleUserGroup.singleOpt)
     }
+
+  def groupByIdFuture(groupId: UUID): Future[Option[UserGroup]] =
+    Future(groupById(groupId))
 
   def groupByName(groupName: String): Option[UserGroup] =
     db.withConnection { implicit connection =>

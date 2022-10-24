@@ -140,6 +140,7 @@ object formModels {
       usagerNom: String,
       usagerBirthDate: String,
       usagerOptionalInfos: Map[String, String],
+      creatorGroupId: Option[UUID],
       users: List[UUID],
       groups: List[UUID],
       category: Option[String],
@@ -166,6 +167,7 @@ object formModels {
           "usagerNom" -> nonEmptyText.verifying(maxLength(30)),
           "usagerBirthDate" -> nonEmptyText.verifying(maxLength(30)),
           "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(200))),
+          "creatorGroupId" -> optional(uuid),
           "users" -> list(uuid),
           "groups" -> list(uuid)
             .verifying("Vous devez sélectionner au moins une structure", _.nonEmpty),
