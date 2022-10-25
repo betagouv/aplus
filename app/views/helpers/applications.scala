@@ -38,34 +38,55 @@ object applications {
           )
         case oneGroup :: Nil =>
           frag(
-            oneGroup.name,
+            p(
+              span(
+                cls := "single--font-size-16px single--font-weight-bold",
+                oneGroup.name,
+              ),
+              " ",
+              br,
+              em(
+                cls := "single--font-size-12px",
+                "( Si le nom de la structure est incorrect, ",
+                "il est conseillé de contacter le support en précisant ",
+                "le nom de votre structure actuelle. )"
+              )
+            ),
             input(
               `type` := "hidden",
               name := "creatorGroupId",
               value := oneGroup.id.toString
-            ),
-            p(
-              "S’il s’agit d’une erreur, il est conseillé de contacter le support ",
-              "avec votre structure actuelle."
             )
           )
         case groups =>
-          selectInput(
-            formCreatorGroup,
-            ("Vous êtes dans plusieurs structures, " +
-              "veuillez choisir celle qui est mandatée pour faire la demande"),
-            false,
-            groups.map { group =>
-              val formValue: String = group.id.toString
-              option(
-                value := formValue,
-                (formCreatorGroup.value === formValue.some).some
-                  .filter(identity)
-                  .map(_ => selected),
-                group.name
+          frag(
+            selectInput(
+              formCreatorGroup,
+              ("Vous êtes membre de plusieurs structures, " +
+                "veuillez choisir celle qui est mandatée pour faire cette demande"),
+              false,
+              groups.map { group =>
+                val formValue: String = group.id.toString
+                option(
+                  value := formValue,
+                  (formCreatorGroup.value === formValue.some).some
+                    .filter(identity)
+                    .map(_ => selected),
+                  group.name
+                )
+              },
+              fieldId = "aplus-application-form-creator-group".some,
+              outerDivClass = "single--margin-bottom-8px",
+              innerDivClass = "",
+            ),
+            p(
+              em(
+                cls := "single--font-size-12px",
+                "( Si votre structure n’apparaît pas dans la liste, ",
+                "veuillez contacter le support en précisant ",
+                "le nom de votre structure actuelle. )"
               )
-            },
-            "aplus-application-form-creator-group".some
+            )
           )
       }
     )
