@@ -32,8 +32,9 @@ object applications {
             ),
             p(
               "S’il s’agit d’une erreur, il est conseillé de demander à un collègue ",
-              "d’ajouter votre compte dans son onglet « Mes Groupes » ",
-              "ou à défault de contacter le support avec votre structure actuelle."
+              "d’ajouter votre compte à son groupe via son onglet « Mes Groupes » ",
+              "ou à défaut de contacter le support en précisant le nom des structures ",
+              "auxquelles vous souhaitez être rattaché."
             )
           )
         case oneGroup :: Nil =>
@@ -82,9 +83,9 @@ object applications {
             p(
               em(
                 cls := "single--font-size-12px",
-                "( Si votre structure n’apparaît pas dans la liste, ",
+                "( Si votre structure n’apparaît pas dans cette liste, ",
                 "veuillez contacter le support en précisant ",
-                "le nom de votre structure actuelle. )"
+                "le nom de vos structures manquantes. )"
               )
             )
           )
