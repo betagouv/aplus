@@ -148,21 +148,26 @@ case class ApplicationController @Inject() (
     loginAction.async { implicit request =>
       eventService.log(ApplicationFormShowed, "Visualise le formulaire de création de demande")
       currentArea.flatMap(currentArea =>
-        fetchGroupsWithInstructors(currentArea.id, request.currentUser, request.rights).map {
-          case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
-            val categories = organisationService.categories
-            Ok(
-              views.html.createApplication(request.currentUser, request.rights, currentArea)(
-                instructorsOfGroups,
-                groupsOfAreaWithInstructor,
-                coworkers,
-                readSharedAccountUserSignature(request.session),
-                canCreatePhoneMandat = currentArea === Area.calvados,
-                categories,
-                ApplicationFormData.form(request.currentUser)
-              )
-            )
-        }
+        userGroupService
+          .byIdsFuture(request.currentUser.groupIds)
+          .flatMap(userGroups =>
+            fetchGroupsWithInstructors(currentArea.id, request.currentUser, request.rights).map {
+              case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
+                val categories = organisationService.categories
+                Ok(
+                  views.html.createApplication(request.currentUser, request.rights, currentArea)(
+                    userGroups,
+                    instructorsOfGroups,
+                    groupsOfAreaWithInstructor,
+                    coworkers,
+                    readSharedAccountUserSignature(request.session),
+                    canCreatePhoneMandat = currentArea === Area.calvados,
+                    categories,
+                    ApplicationFormData.form(request.currentUser)
+                  )
+                )
+            }
+          )
       )
     }
 
@@ -235,148 +240,165 @@ case class ApplicationController @Inject() (
 
       handlingFiles(applicationId, none) { error =>
         eventService.logError(error)
-        fetchGroupsWithInstructors(currentArea.id, request.currentUser, request.rights).map {
-          case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
-            val message =
-              "Erreur lors de l'envoi de fichiers. Cette erreur est possiblement temporaire."
-            BadRequest(
-              views.html
-                .createApplication(request.currentUser, request.rights, currentArea)(
-                  instructorsOfGroups,
-                  groupsOfAreaWithInstructor,
-                  coworkers,
-                  None,
-                  canCreatePhoneMandat = currentArea === Area.calvados,
-                  organisationService.categories,
-                  form,
-                  Nil,
-                )
-            )
-              .flashing("application-error" -> message)
-        }
-      } { files =>
-        form.fold(
-          formWithErrors =>
-            // binding failure, you retrieve the form containing errors:
+        userGroupService
+          .byIdsFuture(request.currentUser.groupIds)
+          .flatMap(userGroups =>
             fetchGroupsWithInstructors(currentArea.id, request.currentUser, request.rights).map {
               case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
-                eventService.log(
-                  ApplicationCreationInvalid,
-                  s"L'utilisateur essaie de créer une demande invalide ${formErrorsLog(formWithErrors)}"
-                )
-
+                val message =
+                  "Erreur lors de l'envoi de fichiers. Cette erreur est possiblement temporaire."
                 BadRequest(
                   views.html
                     .createApplication(request.currentUser, request.rights, currentArea)(
+                      userGroups,
                       instructorsOfGroups,
                       groupsOfAreaWithInstructor,
                       coworkers,
                       None,
                       canCreatePhoneMandat = currentArea === Area.calvados,
                       organisationService.categories,
-                      formWithErrors,
-                      files,
+                      form,
+                      Nil,
                     )
                 )
-            },
+                  .flashing("application-error" -> message)
+            }
+          )
+      } { files =>
+        form.fold(
+          formWithErrors =>
+            // binding failure, you retrieve the form containing errors:
+            userGroupService
+              .byIdsFuture(request.currentUser.groupIds)
+              .flatMap(userGroups =>
+                fetchGroupsWithInstructors(currentArea.id, request.currentUser, request.rights)
+                  .map { case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
+                    eventService.log(
+                      ApplicationCreationInvalid,
+                      s"L'utilisateur essaie de créer une demande invalide ${formErrorsLog(formWithErrors)}"
+                    )
+                    BadRequest(
+                      views.html
+                        .createApplication(request.currentUser, request.rights, currentArea)(
+                          userGroups,
+                          instructorsOfGroups,
+                          groupsOfAreaWithInstructor,
+                          coworkers,
+                          None,
+                          canCreatePhoneMandat = currentArea === Area.calvados,
+                          organisationService.categories,
+                          formWithErrors,
+                          files,
+                        )
+                    )
+                  }
+              ),
           applicationData =>
-            Future {
-              // Note: we will deprecate .currentArea as a variable stored in the cookies
-              val currentAreaId: UUID = currentArea.id
-              val usersInGroups = userService.byGroupIds(applicationData.groups)
-              val instructors: List[User] = usersInGroups.filter(_.instructor)
-              val coworkers: List[User] = applicationData.users.flatMap(id => userService.byId(id))
-              val invitedUsers: Map[UUID, String] = (instructors ::: coworkers)
-                .map(user => user.id -> contextualizedUserName(user, currentAreaId))
-                .toMap
-
-              val description: String =
-                applicationData.signature
-                  .fold(applicationData.description)(signature =>
-                    applicationData.description + "\n\n" + signature
-                  )
-              val usagerInfos: Map[String, String] =
-                Map(
-                  "Prénom" -> applicationData.usagerPrenom,
-                  "Nom de famille" -> applicationData.usagerNom,
-                  "Date de naissance" -> applicationData.usagerBirthDate
-                ) ++ applicationData.usagerOptionalInfos.collect {
-                  case (infoName, infoValue) if infoName.trim.nonEmpty && infoValue.trim.nonEmpty =>
-                    infoName.trim -> infoValue.trim
-                }
-              val application = Application(
-                applicationId,
-                Time.nowParis(),
-                contextualizedUserName(request.currentUser, currentAreaId),
-                request.currentUser.id,
-                applicationData.subject,
-                description,
-                usagerInfos,
-                invitedUsers,
-                currentArea.id,
-                irrelevant = false,
-                hasSelectedSubject =
-                  applicationData.selectedSubject.contains[String](applicationData.subject),
-                category = applicationData.category,
-                mandatType = dataModels.Application.MandatType
-                  .dataModelDeserialization(applicationData.mandatType),
-                mandatDate = Some(applicationData.mandatDate),
-                invitedGroupIdsAtCreation = applicationData.groups
+            applicationData.creatorGroupId
+              .fold(Future.successful[Option[UserGroup]](none))(groupId =>
+                userGroupService.groupByIdFuture(groupId)
               )
-              if (applicationService.createApplication(application)) {
-                notificationsService.newApplication(application)
-                eventService.log(
-                  ApplicationCreated,
-                  s"La demande ${application.id} a été créée",
-                  applicationId = application.id.some
+              .map { creatorGroup =>
+                // Note: we will deprecate .currentArea as a variable stored in the cookies
+                val currentAreaId: UUID = currentArea.id
+                val usersInGroups = userService.byGroupIds(applicationData.groups)
+                val instructors: List[User] = usersInGroups.filter(_.instructor)
+                val coworkers: List[User] =
+                  applicationData.users.flatMap(id => userService.byId(id))
+                val invitedUsers: Map[UUID, String] = (instructors ::: coworkers)
+                  .map(user => user.id -> contextualizedUserName(user, currentAreaId))
+                  .toMap
+
+                val description: String =
+                  applicationData.signature
+                    .fold(applicationData.description)(signature =>
+                      applicationData.description + "\n\n" + signature
+                    )
+                val usagerInfos: Map[String, String] =
+                  Map(
+                    "Prénom" -> applicationData.usagerPrenom,
+                    "Nom de famille" -> applicationData.usagerNom,
+                    "Date de naissance" -> applicationData.usagerBirthDate
+                  ) ++ applicationData.usagerOptionalInfos.collect {
+                    case (infoName, infoValue)
+                        if infoName.trim.nonEmpty && infoValue.trim.nonEmpty =>
+                      infoName.trim -> infoValue.trim
+                  }
+                val application = Application(
+                  applicationId,
+                  Time.nowParis(),
+                  contextualizedUserName(request.currentUser, currentAreaId),
+                  request.currentUser.id,
+                  creatorGroup.map(_.id),
+                  creatorGroup.map(_.name),
+                  applicationData.subject,
+                  description,
+                  usagerInfos,
+                  invitedUsers,
+                  currentArea.id,
+                  irrelevant = false,
+                  hasSelectedSubject =
+                    applicationData.selectedSubject.contains[String](applicationData.subject),
+                  category = applicationData.category,
+                  mandatType = dataModels.Application.MandatType
+                    .dataModelDeserialization(applicationData.mandatType),
+                  mandatDate = Some(applicationData.mandatDate),
+                  invitedGroupIdsAtCreation = applicationData.groups
                 )
-                application.invitedUsers.foreach { case (userId, _) =>
+                if (applicationService.createApplication(application)) {
+                  notificationsService.newApplication(application)
                   eventService.log(
                     ApplicationCreated,
-                    s"Envoi de la nouvelle demande ${application.id} à l'utilisateur $userId",
-                    applicationId = application.id.some,
-                    involvesUser = userId.some
+                    s"La demande ${application.id} a été créée",
+                    applicationId = application.id.some
+                  )
+                  application.invitedUsers.foreach { case (userId, _) =>
+                    eventService.log(
+                      ApplicationCreated,
+                      s"Envoi de la nouvelle demande ${application.id} à l'utilisateur $userId",
+                      applicationId = application.id.some,
+                      involvesUser = userId.some
+                    )
+                  }
+                  applicationData.linkedMandat.foreach { mandatId =>
+                    mandatService
+                      .linkToApplication(Mandat.Id(mandatId), applicationId)
+                      .onComplete {
+                        case Failure(error) =>
+                          eventService.log(
+                            ApplicationLinkedToMandatError,
+                            s"Erreur pour faire le lien entre le mandat $mandatId et la demande $applicationId",
+                            applicationId = application.id.some,
+                            underlyingException = error.some
+                          )
+                        case Success(Left(error)) =>
+                          eventService.logError(error, applicationId = application.id.some)
+                        case Success(Right(_)) =>
+                          eventService.log(
+                            ApplicationLinkedToMandat,
+                            s"La demande ${application.id} a été liée au mandat $mandatId",
+                            applicationId = application.id.some
+                          )
+                      }
+                  }
+                  Redirect(routes.ApplicationController.myApplications)
+                    .withSession(
+                      applicationData.signature.fold(
+                        removeSharedAccountUserSignature(request.session)
+                      )(signature => saveSharedAccountUserSignature(request.session, signature))
+                    )
+                    .flashing(success -> "Votre demande a bien été envoyée")
+                } else {
+                  eventService.log(
+                    ApplicationCreationError,
+                    s"La demande ${application.id} n'a pas pu être créée",
+                    applicationId = application.id.some
+                  )
+                  InternalServerError(
+                    "Erreur Interne: Votre demande n'a pas pu être envoyée. Merci de réessayer ou de contacter l'administrateur"
                   )
                 }
-                applicationData.linkedMandat.foreach { mandatId =>
-                  mandatService
-                    .linkToApplication(Mandat.Id(mandatId), applicationId)
-                    .onComplete {
-                      case Failure(error) =>
-                        eventService.log(
-                          ApplicationLinkedToMandatError,
-                          s"Erreur pour faire le lien entre le mandat $mandatId et la demande $applicationId",
-                          applicationId = application.id.some,
-                          underlyingException = error.some
-                        )
-                      case Success(Left(error)) =>
-                        eventService.logError(error, applicationId = application.id.some)
-                      case Success(Right(_)) =>
-                        eventService.log(
-                          ApplicationLinkedToMandat,
-                          s"La demande ${application.id} a été liée au mandat $mandatId",
-                          applicationId = application.id.some
-                        )
-                    }
-                }
-                Redirect(routes.ApplicationController.myApplications)
-                  .withSession(
-                    applicationData.signature.fold(
-                      removeSharedAccountUserSignature(request.session)
-                    )(signature => saveSharedAccountUserSignature(request.session, signature))
-                  )
-                  .flashing(success -> "Votre demande a bien été envoyée")
-              } else {
-                eventService.log(
-                  ApplicationCreationError,
-                  s"La demande ${application.id} n'a pas pu être créée",
-                  applicationId = application.id.some
-                )
-                InternalServerError(
-                  "Erreur Interne: Votre demande n'a pas pu être envoyée. Merci de réessayer ou de contacter l'administrateur"
-                )
               }
-            }
         )
       }
     }

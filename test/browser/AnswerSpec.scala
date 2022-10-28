@@ -85,6 +85,8 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       creationDate = Time.nowParis(),
       creatorUserName = user.nameWithQualite,
       creatorUserId = user.id,
+      creatorGroupId = None,
+      creatorGroupName = None,
       subject = s"Sujet de la demande (aidant ${user.name})",
       description = s"John a un problème (aidant ${user.name})",
       userInfos = Map("Prénom" -> "John", "Nom de famille" -> "Doe", "Date de naissance" -> "1988"),
