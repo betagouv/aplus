@@ -2,13 +2,96 @@ package views.helpers
 
 import cats.syntax.all._
 import helper.MiscHelpers.intersperseList
+import java.util.UUID
 import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
 import models.{Application, Organisation, User, UserGroup}
-import play.api.data.FormError
+import models.formModels.ApplicationFormData
+import play.api.data.{Form, FormError}
 import play.api.i18n.Messages
 import scalatags.Text.all._
+import views.helpers.forms.selectInput
 
 object applications {
+
+  def creatorGroup(form: Form[ApplicationFormData], creatorGroups: List[UserGroup])(implicit
+      messagesProvider: Messages
+  ) = {
+    val formCreatorGroup = form("creatorGroupId")
+    frag(
+      h5(
+        cls := "title--addline",
+        "Structure demandeuse"
+      ),
+      creatorGroups match {
+        case Nil =>
+          frag(
+            p(
+              cls := "mdl-color-text--red-A700",
+              "Votre compte n’est rattaché à aucune structure, ",
+              "la demande sera faite en votre nom. ",
+            ),
+            p(
+              "S’il s’agit d’une erreur, il est conseillé de demander à un collègue ",
+              "d’ajouter votre compte à son groupe via son onglet « Mes Groupes » ",
+              "ou à défaut de contacter le support en précisant le nom des structures ",
+              "auxquelles vous souhaitez être rattaché."
+            )
+          )
+        case oneGroup :: Nil =>
+          frag(
+            p(
+              span(
+                cls := "single--font-size-16px single--font-weight-bold",
+                oneGroup.name,
+              ),
+              " ",
+              br,
+              em(
+                cls := "single--font-size-12px",
+                "( Si le nom de la structure est incorrect, ",
+                "il est conseillé de contacter le support en précisant ",
+                "le nom de votre structure actuelle. )"
+              )
+            ),
+            input(
+              `type` := "hidden",
+              name := "creatorGroupId",
+              value := oneGroup.id.toString
+            )
+          )
+        case groups =>
+          frag(
+            selectInput(
+              formCreatorGroup,
+              ("Vous êtes membre de plusieurs structures, " +
+                "veuillez choisir celle qui est mandatée pour faire cette demande"),
+              false,
+              groups.map { group =>
+                val formValue: String = group.id.toString
+                option(
+                  value := formValue,
+                  (formCreatorGroup.value === formValue.some).some
+                    .filter(identity)
+                    .map(_ => selected),
+                  group.name
+                )
+              },
+              fieldId = "aplus-application-form-creator-group".some,
+              outerDivClass = "single--margin-bottom-8px",
+              innerDivClass = "",
+            ),
+            p(
+              em(
+                cls := "single--font-size-12px",
+                "( Si votre structure n’apparaît pas dans cette liste, ",
+                "veuillez contacter le support en précisant ",
+                "le nom de vos structures manquantes. )"
+              )
+            )
+          )
+      }
+    )
+  }
 
   /** This is for the Application creation form Some fields here are from `Form`
     * https://www.playframework.com/documentation/2.8.x/api/scala/play/api/data/Form.html

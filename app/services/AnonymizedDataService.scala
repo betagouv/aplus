@@ -72,6 +72,8 @@ class AnonymizedDataService @Inject() (
            creation_date,
            creator_user_name,
            creator_user_id,
+           creator_group_id,
+           creator_group_name,
            subject,
            description,
            user_infos,
@@ -96,6 +98,8 @@ class AnonymizedDataService @Inject() (
            {creationDate},
            {creatorUserName},
            {creatorUserId}::uuid,
+           {creatorGroupId}::uuid,
+           {creatorGroupName},
            '',
            '',
            {userInfos}::jsonb,
@@ -122,6 +126,8 @@ class AnonymizedDataService @Inject() (
         "creationDate" -> row.creationDate,
         "creatorUserName" -> row.creatorUserName,
         "creatorUserId" -> row.creatorUserId,
+        "creatorGroupId" -> row.creatorGroupId,
+        "creatorGroupName" -> row.creatorGroupName,
         "userInfos" -> Json.toJson(row.userInfos),
         "invitedUsers" -> Json.toJson(
           row.invitedUsers.map { case (key, value) => key.toString -> value }
