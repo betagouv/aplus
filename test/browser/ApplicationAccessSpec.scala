@@ -283,6 +283,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       creationDate = Time.nowParis(),
       creatorUserName = helperUser.nameWithQualite,
       creatorUserId = helperUser.id,
+      creatorGroupId = None,
+      creatorGroupName = None,
       subject = s"Sujet de la demande $number",
       description = s"John a un problème $number",
       userInfos = Map("Prénom" -> "John", "Nom de famille" -> "Doe", "Date de naissance" -> "1988"),

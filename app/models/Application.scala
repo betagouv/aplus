@@ -16,6 +16,9 @@ case class Application(
     creationDate: ZonedDateTime,
     creatorUserName: String,
     creatorUserId: UUID,
+    creatorGroupId: Option[UUID],
+    // Name of the group "at the time of application creation"
+    creatorGroupName: Option[String],
     subject: String,
     description: String,
     // TODO: rename `userInfos` => `usagerInfos`
@@ -59,6 +62,8 @@ case class Application(
     val stripChars = "\"<>'"
     val areaName: String = Area.fromId(area).map(_.name).orEmpty
     val creatorName: String = creatorUserName.filterNot(stripChars contains _)
+    val creatorGroupNameAtCreation: String =
+      creatorGroupName.map(_.filterNot(stripChars contains _)).orEmpty
     val userInfosStripped: String =
       userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")
     val subjectStripped: String = subject.filterNot(stripChars contains _)
@@ -70,6 +75,7 @@ case class Application(
 
     areaName + " " +
       creatorName + " " +
+      creatorGroupNameAtCreation + " " +
       userInfosStripped + " " +
       subjectStripped + " " +
       descriptionStripped + " " +
@@ -236,6 +242,8 @@ case class Application(
       creationDate = anonCreationDate,
       creatorUserName = pseudoCreatorName,
       creatorUserId = wiped.creatorUserId,
+      creatorGroupId = wiped.creatorGroupId,
+      creatorGroupName = wiped.creatorGroupName,
       subject = wiped.subject,
       description = wiped.description,
       userInfos = wiped.userInfos,
