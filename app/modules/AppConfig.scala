@@ -27,6 +27,9 @@ class AppConfig @Inject() (configuration: Configuration) {
   val featureCanSendApplicationsAnywhere: Boolean =
     configuration.get[Boolean]("app.features.canSendApplicationsAnywhere")
 
+  val featureAutoAddExpert: Boolean =
+    configuration.get[Boolean]("app.features.autoAddExpert")
+
   val filesPath: String = configuration.get[String]("app.filesPath")
 
   val filesDirectory: Path = {
