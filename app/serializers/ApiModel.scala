@@ -256,8 +256,7 @@ object ApiModel {
       closedDay: Option[String],
       status: String,
       currentUserCanSeeAnonymousApplication: Boolean,
-      creatorGroupNames: String,
-      invitedGroupNames: String,
+      groups: ApplicationMetadata.Groups,
       stats: ApplicationMetadata.Stats,
   )
 
@@ -273,9 +272,18 @@ object ApiModel {
         resolutionTimeInDays: String,
     )
 
+    case class Groups(
+        creatorUserGroupsNames: String,
+        creatorGroupName: String,
+        groupNamesInvitedAtCreation: String,
+        groupNamesInvitedOnAnswers: String,
+    )
+
     implicit val applicationMetadataStatsWrites = Json.writes[ApplicationMetadata.Stats]
+    implicit val applicationMetadataGroupsWrites = Json.writes[ApplicationMetadata.Groups]
     implicit val applicationMetadataWrites = Json.writes[ApplicationMetadata]
 
+    // Groups needed: creator groups + invited groups at creation + invited groups on answers
     def fromApplication(
         application: Application,
         rights: Authorization.UserRights,
@@ -285,13 +293,19 @@ object ApiModel {
       val areaName = Area.fromId(application.area).map(_.name).getOrElse("Sans territoire")
       val pertinence = if (!application.irrelevant) "Oui" else "Non"
       val creatorUser = idToUser.get(application.creatorUserId)
-      val creatorUserGroupNames = creatorUser.toList
+      val creatorUserGroupsNames = creatorUser.toList
         .flatMap(_.groupIds)
         .distinct
         .flatMap(idToGroup.get)
         .map(_.name)
         .mkString(",")
-      val invitedGroupNames = application.answers
+      val creatorGroupName =
+        application.creatorGroupId.toList.flatMap(idToGroup.get).map(_.name).mkString(",")
+      val groupNamesInvitedAtCreation = application.invitedGroupIdsAtCreation.distinct
+        .flatMap(idToGroup.get)
+        .map(_.name)
+        .mkString(",")
+      val groupNamesInvitedOnAnswers = application.answers
         .flatMap(_.invitedGroupIds)
         .distinct
         .flatMap(idToGroup.get)
@@ -316,8 +330,12 @@ object ApiModel {
         status = application.status.show,
         currentUserCanSeeAnonymousApplication =
           Authorization.canSeeApplication(application)(rights),
-        creatorGroupNames = creatorUserGroupNames,
-        invitedGroupNames = invitedGroupNames,
+        groups = ApplicationMetadata.Groups(
+          creatorUserGroupsNames = creatorUserGroupsNames,
+          creatorGroupName = creatorGroupName,
+          groupNamesInvitedAtCreation = groupNamesInvitedAtCreation,
+          groupNamesInvitedOnAnswers = groupNamesInvitedOnAnswers,
+        ),
         stats = ApplicationMetadata.Stats(
           numberOfInvitedUsers = application.invitedUsers.size,
           numberOfMessages = application.answers.length + 1,

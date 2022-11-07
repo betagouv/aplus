@@ -226,13 +226,19 @@ if (window.document.getElementById(applicationsTableId)) {
     },
     {
       title: "Groupes du demandeur",
-      field: "creatorGroupNames",
+      field: "groups.creatorUserGroupsNames",
+      headerFilter: "input",
+      maxWidth: 300,
+    },
+    {
+      title: "Groupes solicités",
+      field: "groups.groupNamesInvitedAtCreation",
       headerFilter: "input",
       maxWidth: 300,
     },
     {
       title: "Groupes invités",
-      field: "invitedGroupNames",
+      field: "groups.groupNamesInvitedOnAnswers",
       headerFilter: "input",
       maxWidth: 300,
     },
