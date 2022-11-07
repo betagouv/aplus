@@ -124,7 +124,7 @@ dependencyOverrides += "org.yaml" % "snakeyaml" % "1.33"
 
 // Jackson CVE fix
 // https://github.com/playframework/playframework/discussions/11222
-val jacksonVersion = "2.13.4"
+val jacksonVersion = "2.14.0"
 val jacksonDatabindVersion = "2.13.4.2"
 
 val jacksonOverrides = Seq(
