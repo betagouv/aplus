@@ -231,7 +231,7 @@ if (window.document.getElementById(applicationsTableId)) {
       maxWidth: 300,
     },
     {
-      title: "Groupes solicités",
+      title: "Groupes sollicités",
       field: "groups.groupNamesInvitedAtCreation",
       headerFilter: "input",
       maxWidth: 300,
