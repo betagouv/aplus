@@ -785,7 +785,7 @@ case class ApplicationController @Inject() (
 
   def allAs(userId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withUser(userId) { otherUser: User =>
+      withUser(userId, includeDisabled = request.currentUser.admin) { otherUser: User =>
         asUserWithAuthorization(Authorization.canSeeOtherUserNonPrivateViews(otherUser))(
           EventType.AllAsUnauthorized,
           s"Accès non autorisé pour voir la liste des demandes de $userId",

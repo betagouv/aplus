@@ -8,7 +8,7 @@ import helper.Time
 import javax.inject.Inject
 import models.Answer.AnswerType
 import models._
-import play.api.Configuration
+import modules.AppConfig
 import services._
 
 import scala.concurrent.duration._
@@ -17,7 +17,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class AutoAddExpertTask @Inject() (
     actorSystem: ActorSystem,
     applicationService: ApplicationService,
-    configuration: Configuration,
+    config: AppConfig,
     eventService: EventService,
     notificationService: NotificationService,
     userService: UserService
@@ -36,15 +36,19 @@ class AutoAddExpertTask @Inject() (
   val daySinceLastAgentAnswer = 15
 
   def inviteExpertsInApplication() =
-    if (configuration.get[Boolean]("app.features.autoAddExpert")) {
+    if (config.featureAutoAddExpert) {
       applicationService.openAndOlderThan(dayWithoutAgentAnswer).foreach { application =>
-        application.answers.filter(_.creatorUserID =!= application.creatorUserId).lastOption match {
-          case None => // No answer for someone else the creator
-            inviteExpert(application, dayWithoutAgentAnswer)
-          case Some(answer)
-              if answer.ageInDays > daySinceLastAgentAnswer => // The last answer is older than X days
-            inviteExpert(application, daySinceLastAgentAnswer)
-          case _ =>
+        if (application.status =!= Application.Status.Processed) {
+          application.answers
+            .filter(_.creatorUserID =!= application.creatorUserId)
+            .lastOption match {
+            case None => // No answer for someone else the creator
+              inviteExpert(application, dayWithoutAgentAnswer)
+            case Some(answer)
+                if answer.ageInDays > daySinceLastAgentAnswer => // The last answer is older than X days
+              inviteExpert(application, daySinceLastAgentAnswer)
+            case _ =>
+          }
         }
       }
     }
