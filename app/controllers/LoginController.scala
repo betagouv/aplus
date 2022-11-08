@@ -40,7 +40,7 @@ class LoginController @Inject() (
         Future(Ok(views.html.home.page(LoginPanel.ConnectionForm)))
       } { email =>
         userService
-          .byEmail(email)
+          .byEmail(email, includeDisabled = true)
           .fold {
             signupService
               .byEmail(email)
@@ -56,17 +56,7 @@ class LoginController @Inject() (
                   },
                   {
                     case None =>
-                      eventService
-                        .logSystem(
-                          UnknownEmail,
-                          s"Aucun compte actif à cette adresse mail",
-                          s"Email '$email'".some
-                        )
-                      val message =
-                        """Aucun compte actif n’est associé à cette adresse e-mail.
-                          |Merci de vérifier qu’il s’agit bien de votre adresse professionnelle et nominative.""".stripMargin
-                      Redirect(routes.LoginController.login)
-                        .flashing("error" -> message, "email-value" -> email)
+                      accountDoesNotExist(email)
                     case Some(signup) =>
                       val loginToken =
                         LoginToken
@@ -80,17 +70,34 @@ class LoginController @Inject() (
                 )
               )
           } { user: User =>
-            LoginAction.readUserRights(user).map { userRights =>
-              val loginToken =
-                LoginToken
-                  .forUserId(user.id, config.tokenExpirationInMinutes, request.remoteAddress)
-              val requestWithUserData =
-                new RequestWithUserData(user, userRights, request)
-              loginHappyPath(loginToken, user.email, requestWithUserData.some)
-            }
+            if (user.disabled)
+              Future(accountDoesNotExist(email))
+            else
+              LoginAction.readUserRights(user).map { userRights =>
+                val loginToken =
+                  LoginToken
+                    .forUserId(user.id, config.tokenExpirationInMinutes, request.remoteAddress)
+                val requestWithUserData =
+                  new RequestWithUserData(user, userRights, request)
+                loginHappyPath(loginToken, user.email, requestWithUserData.some)
+              }
           }
       }
     }
+
+  private def accountDoesNotExist(email: String)(implicit request: Request[AnyContent]) = {
+    eventService
+      .logSystem(
+        UnknownEmail,
+        s"Aucun compte actif à cette adresse mail",
+        s"Email '$email'".some
+      )
+    val message =
+      """Aucun compte actif n’est associé à cette adresse e-mail.
+        |Merci de vérifier qu’il s’agit bien de votre adresse professionnelle et nominative.""".stripMargin
+    Redirect(routes.LoginController.login)
+      .flashing("error" -> message, "email-value" -> email)
+  }
 
   private def loginHappyPath(
       token: LoginToken,
