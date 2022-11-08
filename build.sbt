@@ -105,7 +105,7 @@ libraryDependencies ++= Seq(
 
 // UI
 libraryDependencies ++= Seq(
-  "org.webjars" %% "webjars-play" % "2.8.13",
+  "org.webjars" %% "webjars-play" % "2.8.18",
   "org.webjars.bower" % "material-design-lite" % "1.3.0",
   "org.webjars" % "material-design-icons" % "4.0.0",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
@@ -114,7 +114,7 @@ libraryDependencies ++= Seq(
 )
 
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "6.6.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "6.7.0"
 
 // Overrides
 dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
