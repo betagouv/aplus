@@ -3,7 +3,7 @@ function setupMandatPrintButton() {
   const printButton = <HTMLButtonElement>document
     .getElementById("print-mandat-button");
 
-  printButton?.addEventListener('click', () => { window.print() });
+  printButton?.addEventListener('click', () => { window.print(); });
 
 }
 

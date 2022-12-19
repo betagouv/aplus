@@ -396,25 +396,29 @@ function setupMandatForm() {
     const isValid = (prenom != null) && (nom != null) && (birthdate != null);
 
     return {
-      prenom: prenom,
-      nom: nom,
-      birthdate: birthdate,
-      creatorGroup: creatorGroup,
-      isValid: isValid,
+      prenom,
+      nom,
+      birthdate,
+      creatorGroup,
+      isValid,
     };
   }
 
   function showMandatFieldValues(formData: MandatFormData) {
-    const setDataText = (el: HTMLElement | null, data: string | null) => {
+    const setDataText = (el: HTMLElement | null, data: string | null, showError: boolean) => {
       if (el) {
         if (data) {
           el.classList.remove("aplus-color-text--error");
           el.classList.add("single--font-weight-bold");
           el.innerText = data;
         } else {
-          el.classList.add("aplus-color-text--error");
           el.classList.remove("single--font-weight-bold");
-          el.innerText = "(invalide)";
+          if (showError) {
+            el.classList.add("aplus-color-text--error");
+            el.innerText = "(invalide)";
+          } else {
+            el.innerText = "(aucune)";
+          }
         }
       }
     }
@@ -423,10 +427,10 @@ function setupMandatForm() {
     const birthdateEl = document.getElementById("mandat-form-data-birthdate");
     const creatorGroupEl = document.getElementById("mandat-form-data-creator-group");
 
-    setDataText(prenomEl, formData.prenom);
-    setDataText(nomEl, formData.nom);
-    setDataText(birthdateEl, formData.birthdate);
-    setDataText(creatorGroupEl, formData.creatorGroup ? formData.creatorGroup.name : null);
+    setDataText(prenomEl, formData.prenom, true);
+    setDataText(nomEl, formData.nom, true);
+    setDataText(birthdateEl, formData.birthdate, true);
+    setDataText(creatorGroupEl, formData.creatorGroup ? formData.creatorGroup.name : null, false);
 
     const button = <HTMLElement | null>document.getElementById("mandat-generate-button");
     if (button) {
@@ -548,7 +552,7 @@ function setupMandatForm() {
       }).then((mandat: Mandat) => {
         if (mandat) {
           ajaxRequestIsRunning = false;
-          lastMandatGenerationData = { form: payload, mandat: mandat };
+          lastMandatGenerationData = { form: payload, mandat };
           const mandatUrl: string = mandatPageUrl(mandat);
 
           successLink?.classList.remove("hidden");
