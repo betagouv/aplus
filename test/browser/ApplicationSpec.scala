@@ -125,7 +125,7 @@ class ApplicationSpec extends Specification with BaseSpec {
       browser.waitUntil(browser.el("input[name='validate']").selected)
 
       // Radio
-      browser.el("label[for='mandatType_paper']").click()
+      browser.el("label[for='mandat-option-already']").click()
       browser.el("input[name='mandatDate']").fill().withText(java.time.ZonedDateTime.now().toString)
 
       browser.el("form").submit()
