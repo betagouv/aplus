@@ -164,7 +164,7 @@ object mandat {
       div(
         cls := "mdl-cell mdl-cell--12-col mdl-grid mandat-print-wrapper single--justify-content-center",
         div(
-          cls := "mdl-card single--width-unset single--max-width-800px single--padding-left-16px single--padding-right-16px single--padding-bottom-16px",
+          cls := "single--max-width-800px single--padding-left-16px single--padding-right-16px single--padding-bottom-16px single--background-color-white",
           h4(
             cls := "typography--text-align-center",
             "Mandat Administration+"
