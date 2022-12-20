@@ -24,7 +24,7 @@ object mandat {
       mainInfos: MainInfos
   ): Html =
     views.html.main(currentUser, currentUserRights, maxWidth = false)(
-      s"""Mandat du ${Time.formatPatternFr(mandat.creationDate, "dd MMM YYYY - HH:mm")}"""
+      "Mandat du " + Time.formatPatternFr(mandat.creationDate, "dd MMM YYYY - HH'h'mm")
     )(Html(""))(mandatV1(mandat))(Nil)
 
   def pageV2(
@@ -39,7 +39,7 @@ object mandat {
       mainInfos: MainInfos
   ): Html =
     views.html.main(currentUser, currentUserRights, maxWidth = false)(
-      s"""Mandat du ${Time.formatPatternFr(mandat.creationDate, "dd MMM YYYY - HH:mm")}"""
+      "Mandat du " + Time.formatPatternFr(mandat.creationDate, "dd MMM YYYY - HH'h'mm")
     )(Html(""))(mandatV2(mandat, creatorGroup))(Nil)
 
   def mandatDoesNotExist(
@@ -184,7 +184,9 @@ object mandat {
             br,
             "Je mandate ",
             groupNameBold,
-            " (c’est le mandataire) pour débloquer ma situation administrative via/en utilisant la plateforme Administration+.",
+            " ",
+            i("(c’est le mandataire)"),
+            " pour débloquer ma situation administrative via/en utilisant la plateforme Administration+.",
             br,
             "J’autorise ",
             groupNameBold,
