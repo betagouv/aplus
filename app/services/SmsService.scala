@@ -3,8 +3,7 @@ package services
 import actions.RequestWithUserData
 import cats.syntax.all._
 import javax.inject.{Inject, Singleton}
-import models.mandat.Mandat
-import models.{Error, EventType, Organisation, Sms, User, UserGroup}
+import models.{Error, EventType, Mandat, Organisation, Sms, User, UserGroup}
 import modules.AppConfig
 import play.api.Configuration
 import play.api.libs.concurrent.{Futures, MaterializerProvider}

@@ -10,7 +10,6 @@ import java.time.ZoneId
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models._
-import models.mandat.Mandat
 import play.api.libs.concurrent.MaterializerProvider
 import play.api.libs.mailer.Email
 import play.api.mvc.Request
@@ -189,6 +188,20 @@ class NotificationService @Inject() (
       bodyHtml = Some(common.renderEmail(bodyInner))
     )
     emailsService.sendBlocking(email, EmailPriority.Urgent)
+  }
+
+  def mandatV2Generated(mandatId: Mandat.Id, user: User): Option[String] = {
+    val absoluteUrl: String =
+      routes.MandatController.mandat(mandatId.underlying).absoluteURL(https, host)
+    val bodyInner = common.mandatV2Body(absoluteUrl)
+    val email = Email(
+      subject = common.mandatV2Subject,
+      from = from,
+      replyTo = replyTo,
+      to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
+      bodyHtml = Some(common.renderEmail(bodyInner))
+    )
+    emailsService.sendBlocking(email, EmailPriority.Normal)
   }
 
   def mandatSmsSent(mandatId: Mandat.Id, user: User): Option[String] = {
