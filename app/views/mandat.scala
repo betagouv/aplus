@@ -140,12 +140,12 @@ object mandat {
           div(
             cls := "notification notification--error",
             span(
-              "Votre structure n'est pas renseignée dans l'outil Administration+, ",
+              "Votre structure n’est pas renseignée dans l’outil Administration+, ",
               "le mandat suivant est un mandat de structure. ",
-              "Il est possible d’imprimer le présent mandat puis de remplir ",
-              "à la main le nom de structure (ce message n'est pas imprimé). ",
+              "Vous pouvez l’imprimer puis remplir ",
+              "à la main le nom de votre structure (ce message n'est pas imprimé). ",
               "Alternativement vous pouvez utiliser votre propre mandat. ",
-              "Si vous ne disposez pas de mandat, le mandat à ",
+              "Si vous n’en disposez pas, le mandat à ",
               a(
                 href := Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf").url,
                 target := "_blank",
@@ -271,8 +271,8 @@ object mandat {
         cls := "do-not-print",
         p(
           cls := "single--font-size-12px",
-          "Le précédent mandat Administration+, qui reste valide juridiquement, ",
-          "est disponible au téléchargement en ",
+          "Sinon, le précédent mandat Administration+ version 2019, à remplir entièrement à la main, ",
+          "reste valide juridiquement et est disponible au téléchargement en ",
           a(
             href := Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf").url,
             target := "_blank",
