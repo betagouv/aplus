@@ -11,12 +11,6 @@ function mandatFieldsAreFilled(): boolean {
     }
   }
 
-  // 2. Date input
-  const dateInput = <HTMLInputElement | null>document.getElementById("mandatDate");
-  if (dateInput && !dateInput.value) {
-    return false;
-  }
-
   return true;
 }
 
@@ -35,13 +29,7 @@ function onMandatFieldChange() {
 
 // Mandat
 const checkboxMandat = document.getElementById("checkbox-mandat");
-const dateMandat = document.getElementById("mandatDate");
+
 if (checkboxMandat) {
   checkboxMandat.addEventListener('change', onMandatFieldChange);
-}
-if (dateMandat) {
-  dateMandat.addEventListener('change', onMandatFieldChange);
-  dateMandat.addEventListener('keyup', onMandatFieldChange);
-  dateMandat.addEventListener('paste', onMandatFieldChange);
-  dateMandat.addEventListener('input', onMandatFieldChange);
 }

@@ -132,6 +132,40 @@
                       </div>
                     </div>
 
+
+                    <h5 class="title--addline">
+                        Autorisation de l’usager <span class="mdl-color-text--red-500">*</span>
+                    </h5>
+
+                    @toHtml(views.helpers.applications.mandatPart(applicationForm))
+
+                    <div class="single--align-items-center mdl-grid mdl-grid--no-spacing single--margin-bottom-40px">
+
+                        <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet">
+
+                      Date et heure <span class="mdl-color-text--red-500">*</span> :
+                                <br>
+
+                    @helper.input(applicationForm("mandatDate"),
+                                  "class" -> " single--padding-top-8px") { (id, name, value, args) =>
+                    <input class="mdl-textfield__input"
+                           type="text"
+                           name="@name"
+                           id="@id"
+                           value="@value"
+                           @toHtmlArgs(args)>
+
+                    <span class="mdl-color-text--grey-600 single--font-size-14px">
+                      ex. : @{java.time.ZonedDateTime.now().format(_root_.helper.Time.dateWithHourFormatter)}
+                    </span>
+                    }
+
+                        </div>
+
+                    </div>
+
+
+
                     <h5 class="title--addline">Autres informations utiles pour traiter la demande <em class="mdl-typography--body-1">(facultatif)</em></h5>
 
                     @helpers.usersInformations(applicationForm, Nil, true)
@@ -199,38 +233,16 @@
                       <br>
                     }
 
-                    <h5 class="title--addline">
-                        Autorisation de l’usager <span class="mdl-color-text--red-500">*</span>
-                    </h5>
 
-                    @toHtml(views.helpers.applications.mandatPart(applicationForm))
+                    <div class="single--align-items-center mdl-grid mdl-grid--no-spacing single--margin-top-40px">
 
-                    <div class="single--align-items-center mdl-grid mdl-grid--no-spacing">
+                        <div class="mdl-cell mdl-cell--12-col single--margin-bottom-40px">
 
-                        <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet single--margin-top-30px single--margin-bottom-40px">
                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect single--margin-bottom-16px" for="checkbox-mandat">
                             <input type="checkbox" id="checkbox-mandat" name="validate" class="mdl-checkbox__input" value="true">
                             <span class="mdl-checkbox__label single--font-size-14px">J’atteste avoir recueilli l’autorisation de l’usager <span class="mdl-color-text--red-500">*</span></span>
                             </label>
 
-                                <br>
-                      Date et heure <span class="mdl-color-text--red-500">*</span> :
-                                <br>
-
-                    @helper.input(applicationForm("mandatDate"),
-                                  "class" -> " single--padding-top-8px") { (id, name, value, args) =>
-                    <input class="mdl-textfield__input"
-                           type="text"
-                           name="@name"
-                           id="@id"
-                           value="@value"
-                           @toHtmlArgs(args)>
-
-                    <span class="mdl-color-text--grey-600 single--font-size-14px">
-                      ex. : @{java.time.ZonedDateTime.now().format(_root_.helper.Time.dateWithHourFormatter)}
-                    </span>
-                    }
-                    <br>
 
                     @* Use a <input type="submit"> because there is another <button> *@
                         <input type="submit"
@@ -238,8 +250,7 @@
                                class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
                                value="Envoyer ma demande"
                                disabled>
-                        <br>
-                        <br>
+
                         </div>
 
                     </div>
