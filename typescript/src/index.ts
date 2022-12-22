@@ -34,6 +34,7 @@ import "./editUser";
 import "./formExitAlert";
 import "./franceServices";
 import "./magicLinkAntiConsumption";
+import "./mandat";
 import "./mdl-extensions";
 import "./myApplications";
 import "./notificationBanner";

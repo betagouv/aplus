@@ -11,25 +11,6 @@ function mandatFieldsAreFilled(): boolean {
     }
   }
 
-  // 2. Radios
-  const radios = document.querySelectorAll<HTMLInputElement>("[id^=mandatType]");
-  // Note: same as oneRadioIsChecked = radios.exists(r => r.checked)
-  let oneRadioIsChecked = false;
-  radios.forEach((radio) => {
-    if (radio.checked) {
-      oneRadioIsChecked = true;
-    }
-  });
-  if (!oneRadioIsChecked) {
-    return false;
-  }
-
-  // 3. Date input
-  const dateInput = <HTMLInputElement | null>document.getElementById("mandatDate");
-  if (dateInput && !dateInput.value) {
-    return false;
-  }
-
   return true;
 }
 
@@ -48,17 +29,7 @@ function onMandatFieldChange() {
 
 // Mandat
 const checkboxMandat = document.getElementById("checkbox-mandat");
-const radiosMandat = document.querySelectorAll("[id^=mandatType]");
-const dateMandat = document.getElementById("mandatDate");
+
 if (checkboxMandat) {
   checkboxMandat.addEventListener('change', onMandatFieldChange);
-}
-radiosMandat.forEach((radio) => {
-  radio.addEventListener('change', onMandatFieldChange);
-});
-if (dateMandat) {
-  dateMandat.addEventListener('change', onMandatFieldChange);
-  dateMandat.addEventListener('keyup', onMandatFieldChange);
-  dateMandat.addEventListener('paste', onMandatFieldChange);
-  dateMandat.addEventListener('input', onMandatFieldChange);
 }

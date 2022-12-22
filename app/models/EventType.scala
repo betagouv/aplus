@@ -88,6 +88,8 @@ object EventType {
   object MandatInitiationBySmsWarn extends Warn
   object MandatInitiationBySmsDone extends Info
   object MandatBySmsResponseSaved extends Info
+  object MandatGenerationFormValidationError extends Warn
+  object MandatGenerated extends Info
   object MandatShowed extends Info
   object MandatError extends Error
   object MandatNotFound extends Error

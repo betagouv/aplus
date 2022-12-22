@@ -146,7 +146,7 @@ object formModels {
       category: Option[String],
       selectedSubject: Option[String],
       signature: Option[String],
-      mandatType: String,
+      mandatGenerationType: String,
       mandatDate: String,
       linkedMandat: Option[UUID]
   )
@@ -154,6 +154,8 @@ object formModels {
   object ApplicationFormData {
 
     private val applicationIdKey = "application-id"
+
+    val mandatGenerationTypeIsNew = "generateNew"
 
     def extractApplicationId(form: Form[ApplicationFormData]): Option[UUID] =
       form.data.get(applicationIdKey).flatMap(id => Try(UUID.fromString(id)).toOption)
@@ -178,7 +180,7 @@ object formModels {
               nonEmptyText.transform[Option[String]](Some.apply, _.getOrElse(""))
             else ignored(Option.empty[String])
           ),
-          "mandatType" -> text,
+          "mandatGenerationType" -> text,
           "mandatDate" -> nonEmptyText,
           "linkedMandat" -> optional(uuid)
         )(ApplicationFormData.apply)(ApplicationFormData.unapply)
