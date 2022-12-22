@@ -73,6 +73,17 @@ object common {
     ) ::: commonEmailFooter
   }
 
+  val mandatV2Subject = "[A+] Mandat créé"
+
+  def mandatV2Body(absoluteUrl: String): List[Modifier] =
+    List[Modifier](
+      span(
+        "Vous avez généré un nouveau mandat. ",
+        "Il est accessible, après connexion, sur Administration+ en cliquant sur ce lien : ",
+        a(href := absoluteUrl, absoluteUrl)
+      )
+    ) ::: commonEmailFooter
+
   val mandatSmsSentSubject = "[A+] Mandat initié par SMS"
 
   def mandatSmsSentBody(absoluteUrl: String): List[Modifier] =

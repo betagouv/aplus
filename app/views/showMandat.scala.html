@@ -1,6 +1,6 @@
 @import _root_.helper.Time
 
-@(user: User, currentUserRights: Authorization.UserRights)(mandat: models.mandat.Mandat)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
+@(user: User, currentUserRights: Authorization.UserRights)(mandat: Mandat)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 @main(user, currentUserRights)(s"""Mandat du ${Time.formatPatternFr(mandat.creationDate, "dd MMM YYYY - HH:mm")}""")  {
 

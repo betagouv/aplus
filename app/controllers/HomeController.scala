@@ -7,6 +7,7 @@ import modules.AppConfig
 import play.api.Logger
 import play.api.mvc._
 import play.api.db.Database
+import play.api.i18n.I18nSupport
 import serializers.Keys
 import views.home.LoginPanel
 
@@ -19,7 +20,7 @@ class HomeController @Inject() (
     db: Database,
 )(implicit webJarsUtil: WebJarsUtil)
     extends InjectedController
-    with play.api.i18n.I18nSupport
+    with I18nSupport
     with Operators.Common {
 
   private val log = Logger(classOf[HomeController])
