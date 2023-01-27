@@ -134,7 +134,7 @@ object application {
       "DDFIP" -> "dgfip",
       "DRFIP" -> "dgfip",
       "Défenseur des droits".toUpperCase() -> "ddd"
-    ).find(a => creatorUserName.toUpperCase.contains(a._1)) match {
+    ).find { case (name, _) => creatorUserName.toUpperCase.contains(name) } match {
       case Some((_, icon)) =>
         img(
           cls := "mdl-list__item-avatar",
