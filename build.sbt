@@ -110,7 +110,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "material-design-icons" % "4.0.0",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
   "org.webjars" % "chartjs" % "2.9.4",
-  "org.webjars" % "font-awesome" % "6.2.0",
+  "org.webjars" % "font-awesome" % "6.2.1",
 )
 
 // Crash
