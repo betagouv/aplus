@@ -1,12 +1,14 @@
 package views
 
 import cats.syntax.all._
-import controllers.routes.{ApplicationController, Assets}
+import controllers.routes.{ApplicationController, Assets, UserController}
+import helper.Time
 import helpers.forms.CSRFInput
 import java.util.UUID
 import models.{Answer, Application, Area, Authorization, FileMetadata, User, UserGroup}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
+import play.api.data.Form
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
 import serializers.Keys
@@ -116,6 +118,32 @@ object application {
     )
   }
 
+  def organisationIcon(creatorUserName: String): Tag =
+    Map(
+      "A+" -> "aplus",
+      "Pôle Emploi".toUpperCase() -> "pe",
+      "MSA" -> "msa",
+      "CPAM" -> "cpam",
+      "CRAM" -> "cpam",
+      "CNAM" -> "cpam",
+      "CAF" -> "caf",
+      "CNAF" -> "caf",
+      "CNAV" -> "cnav",
+      "CARSAT" -> "cnav",
+      "DGFIP" -> "dgfip",
+      "DDFIP" -> "dgfip",
+      "DRFIP" -> "dgfip",
+      "Défenseur des droits".toUpperCase() -> "ddd"
+    ).find { case (name, _) => creatorUserName.toUpperCase.contains(name) } match {
+      case Some((_, icon)) =>
+        img(
+          cls := "mdl-list__item-avatar",
+          src := Assets.versioned("images/admin/" + icon + "-icon.png").url
+        )
+      case None =>
+        i(cls := "material-icons mdl-list__item-avatar", "person")
+    }
+
   def closeApplicationModal(
       applicationId: UUID
   )(implicit request: RequestHeader): Tag =
@@ -215,6 +243,241 @@ object application {
         )
       )
     )
+
+  def answerFormError(form: Form[_]): Frag =
+    form.hasErrors.some
+      .filter(identity)
+      .map(_ =>
+        div(
+          cls := "notification notification--error",
+          span(
+            a(
+              href := s"#answer",
+              "Votre réponse n’a pas été envoyée en raison d’une erreur dans le formulaire. ",
+              i(cls := "fa-solid fa-arrow-down")
+            )
+          )
+        )
+      )
+
+  def noAnswerError(form: Form[_]): Frag =
+    form.hasErrors.some.filter(identity).map { _ =>
+      val message = "Oups ! Il semblerait que vous ayez oublié de remplir le contenu du message " +
+        "que vous souhaitez envoyer à vos interlocuteurs. Merci de reprendre la procédure. "
+      div(
+        cls := "notification notification--error",
+        span(message)
+      )
+    }
+
+  def answerThread(
+      application: Application,
+      attachments: List[FileMetadata],
+      currentUser: User,
+      currentUserRights: Authorization.UserRights,
+      config: AppConfig,
+  ): Frag =
+    frag(
+      application.answers.map { answer =>
+        val canSeeAnswerMessage =
+          currentUser.instructor ||
+            currentUser.admin ||
+            currentUser.groupAdmin ||
+            answer.visibleByHelpers ||
+            answer.creatorUserID === currentUser.id
+        frag(
+          answer.invitedUsers.nonEmpty.some
+            .filter(identity)
+            .map(_ =>
+              div(
+                cls := "mdl-cell mdl-cell--12-col vertical-align--middle",
+                style := "text-align: center; color: #000000d6; font-size: 14px; font-weight: 600; line-height: 16px;",
+                i(cls := "icon material-icons icon--light", "people"),
+                " ",
+                answer.creatorUserName,
+                " a invité ",
+                answer.invitedUsers.values.mkString(", "),
+                " - ",
+                span(
+                  id := s"date-inviteds-${answer.id}",
+                  cls := "vertical-align--middle",
+                  span(
+                    cls := "application__age",
+                    " Il y a ",
+                    answer.ageString,
+                    " (",
+                    Time.formatPatternFr(answer.creationDate, "dd MMM YYYY - HH:mm"),
+                    ")"
+                  )
+                )
+              )
+            ),
+          canSeeAnswerMessage.some
+            .filter(identity)
+            .map(_ =>
+              frag(
+                answerFilesLinks(
+                  attachments,
+                  answer,
+                  application,
+                  currentUser,
+                  currentUserRights,
+                  config
+                ),
+                answer.message.nonEmpty.some
+                  .filter(identity)
+                  .map(_ =>
+                    div(
+                      cls := ("mdl-card mdl-cell mdl-cell--10-col mdl-cell--12-col-phone answer" +
+                        (if (answer.creatorUserID === currentUser.id)
+                           " mdl-cell--2-offset mdl-cell--0-offset-phone"
+                         else "")),
+                      id := s"answer-${answer.id}",
+                      div(
+                        cls := ("answer-card mdl-card__supporting-text mdl-card--border" +
+                          (if (!answer.visibleByHelpers) " mdl-color--grey-50" else "")),
+                        (!answer.visibleByHelpers).some
+                          .filter(identity)
+                          .map(_ =>
+                            frag(
+                              div(
+                                id := s"reserved-${answer.id}",
+                                cls := "vertical-align--middle",
+                                "Réponse réservée aux instructeurs ",
+                                i(cls := "icon material-icons icon--light", "info"),
+                              ),
+                              div(
+                                cls := "mdl-tooltip",
+                                `for` := s"reserved-${answer.id}",
+                                "L’aidant ne voit pas ce message"
+                              )
+                            )
+                          ),
+                        div(
+                          cls := "mdl-list",
+                          div(
+                            cls := "mdl-list__item",
+                            div(
+                              cls := "mdl-list__item-primary-content",
+                              organisationIcon(answer.creatorUserName),
+                              span(cls := "single--font-weight-600", answer.creatorUserName),
+                              (currentUser.admin).some
+                                .filter(identity)
+                                .map(_ =>
+                                  span(
+                                    cls := "do-not-print mdl-color-text--red single--font-weight-bold",
+                                    " ",
+                                    a(
+                                      href := UserController.editUser(answer.creatorUserID).url,
+                                      " Voir fiche utilisateur "
+                                    )
+                                  )
+                                )
+                            ),
+                            div(
+                              cls := "mdl-list__item-secondary-content",
+                              div(
+                                id := s"date-${answer.id}",
+                                cls := "vertical-align--middle",
+                                span(
+                                  cls := "application__age",
+                                  s"Il y a ${answer.ageString} (",
+                                  Time.formatPatternFr(answer.creationDate, "dd MMM YYYY - HH:mm"),
+                                  ")"
+                                )
+                              )
+                            )
+                          )
+                        ),
+                        (answer.declareApplicationHasIrrelevant).some
+                          .filter(identity)
+                          .map(_ =>
+                            div(
+                              cls := "info-box info-box--orange do-not-print",
+                              answer.creatorUserName,
+                              " a indiqué qu’",
+                              b(
+                                "il existe une procédure standard que vous pouvez utiliser pour cette demande"
+                              ),
+                              ", vous aurez plus de détails dans sa réponse."
+                            )
+                          ),
+                        (answer.userInfos
+                          .getOrElse(Map.empty)
+                          .nonEmpty)
+                          .some
+                          .filter(identity)
+                          .map(_ =>
+                            ul(
+                              frag(
+                                answer.userInfos.getOrElse(Map.empty).toList.map {
+                                  case (key, value) =>
+                                    li(key, ": ", b(value))
+                                }
+                              )
+                            )
+                          ),
+                        p(cls := "answer__message", answer.message),
+                        (answer.answerType === Answer.AnswerType.ApplicationProcessed &&
+                          application.creatorUserId === currentUser.id &&
+                          !application.closed &&
+                          (answer.creatorUserID =!= currentUser.id)).some
+                          .filter(identity)
+                          .map(_ =>
+                            div(
+                              cls := "info-box do-not-print",
+                              "Cette demande a bien été traitée. Je vous invite à archiver l’échange en cliquant sur le bouton ci-dessous :",
+                              br,
+                              br,
+                              button(
+                                id := "archive-button-2",
+                                cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect",
+                                "Archiver l’échange"
+                              ),
+                              br,
+                              br
+                            )
+                          )
+                      )
+                    )
+                  )
+              )
+            )
+        )
+      }
+    )
+
+  def applicationProcessedCheckbox(currentUser: User): Frag =
+    currentUser.instructor.some
+      .filter(identity)
+      .map(_ =>
+        frag(
+          div(
+            id := "application-processed-checkbox",
+            cls := "mdl-cell mdl-cell--12-col",
+            label(
+              cls := "mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events vertical-align--middle",
+              input(
+                `type` := "checkbox",
+                cls := "mdl-checkbox__input",
+                name := "applicationHasBeenProcessed",
+                value := "true"
+              ),
+              span(
+                cls := "mdl-checkbox__label",
+                "Indiquer que j’ai traité la demande"
+              ),
+              " ",
+              i(cls := "icon material-icons icon--light", "info")
+            )
+          ),
+          div(
+            cls := "mdl-tooltip",
+            `for` := "application-processed-checkbox",
+            "Invite l’aidant à fermer la demande. ",
+          )
+        )
+      )
 
   def inviteForm(
       currentUser: User,
