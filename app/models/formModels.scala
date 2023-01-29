@@ -194,6 +194,7 @@ object formModels {
       applicationIsDeclaredIrrelevant: Boolean,
       usagerOptionalInfos: Map[String, String],
       privateToHelpers: Boolean,
+      applicationHasBeenProcessed: Boolean,
       signature: Option[String]
   )
 
@@ -207,17 +208,22 @@ object formModels {
     def form(currentUser: User) =
       Form(
         mapping(
-          "answer_type" -> nonEmptyText.verifying(maxLength(20)),
-          "message" -> optional(nonEmptyText),
+          "answer_type" -> normalizedText.verifying(maxLength(20)),
+          "message" -> normalizedOptionalText,
           "irrelevant" -> boolean,
-          "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(200))),
+          "usagerOptionalInfos" -> FormsPlusMap.map(normalizedText.verifying(maxLength(200))),
           "privateToHelpers" -> boolean,
+          "applicationHasBeenProcessed" -> boolean,
           "signature" -> (
             if (currentUser.sharedAccount)
               nonEmptyText.transform[Option[String]](Some.apply, _.orEmpty)
             else ignored(Option.empty[String])
           )
         )(AnswerFormData.apply)(AnswerFormData.unapply)
+          .verifying(
+            "La formulaire doit comporter une réponse.",
+            form => (form.applicationHasBeenProcessed || form.message.nonEmpty)
+          )
       )
 
   }
