@@ -93,14 +93,14 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.5.1",
   anormDependency,
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
-  "com.typesafe.play" %% "play-json" % "2.9.3",
+  "com.typesafe.play" %% "play-json" % "2.9.4",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.12.0",
   "org.typelevel" %% "cats-core" % "2.9.0",
-  "org.typelevel" %% "cats-effect" % "3.4.2",
+  "org.typelevel" %% "cats-effect" % "3.4.5",
 )
 
 // UI
@@ -110,11 +110,11 @@ libraryDependencies ++= Seq(
   "org.webjars" % "material-design-icons" % "4.0.0",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
   "org.webjars" % "chartjs" % "2.9.4",
-  "org.webjars" % "font-awesome" % "6.2.0",
+  "org.webjars" % "font-awesome" % "6.2.1",
 )
 
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "6.9.1"
+libraryDependencies += "io.sentry" % "sentry-logback" % "6.11.0"
 
 // Overrides
 dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
@@ -124,8 +124,8 @@ dependencyOverrides += "org.yaml" % "snakeyaml" % "1.33"
 
 // Jackson CVE fix
 // https://github.com/playframework/playframework/discussions/11222
-val jacksonVersion = "2.13.4"
-val jacksonDatabindVersion = "2.13.4.2"
+val jacksonVersion = "2.13.5"
+val jacksonDatabindVersion = "2.13.5"
 
 val jacksonOverrides = Seq(
   "com.fasterxml.jackson.core" % "jackson-core",

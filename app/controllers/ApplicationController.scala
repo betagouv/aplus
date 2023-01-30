@@ -15,7 +15,6 @@ import models.Answer.AnswerType
 import models.EventType._
 import models._
 import models.formModels.{AnswerFormData, ApplicationFormData, InvitationFormData}
-import models.mandat.Mandat
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.cache.AsyncCacheApi
@@ -340,8 +339,7 @@ case class ApplicationController @Inject() (
                   hasSelectedSubject =
                     applicationData.selectedSubject.contains[String](applicationData.subject),
                   category = applicationData.category,
-                  mandatType = dataModels.Application.MandatType
-                    .dataModelDeserialization(applicationData.mandatType),
+                  mandatType = Application.MandatType.Paper.some,
                   mandatDate = Some(applicationData.mandatDate),
                   invitedGroupIdsAtCreation = applicationData.groups
                 )
@@ -361,25 +359,29 @@ case class ApplicationController @Inject() (
                     )
                   }
                   applicationData.linkedMandat.foreach { mandatId =>
-                    mandatService
-                      .linkToApplication(Mandat.Id(mandatId), applicationId)
-                      .onComplete {
-                        case Failure(error) =>
-                          eventService.log(
-                            ApplicationLinkedToMandatError,
-                            s"Erreur pour faire le lien entre le mandat $mandatId et la demande $applicationId",
-                            applicationId = application.id.some,
-                            underlyingException = error.some
-                          )
-                        case Success(Left(error)) =>
-                          eventService.logError(error, applicationId = application.id.some)
-                        case Success(Right(_)) =>
-                          eventService.log(
-                            ApplicationLinkedToMandat,
-                            s"La demande ${application.id} a été liée au mandat $mandatId",
-                            applicationId = application.id.some
-                          )
-                      }
+                    if (
+                      applicationData.mandatGenerationType === ApplicationFormData.mandatGenerationTypeIsNew
+                    ) {
+                      mandatService
+                        .linkToApplication(Mandat.Id(mandatId), applicationId)
+                        .onComplete {
+                          case Failure(error) =>
+                            eventService.log(
+                              ApplicationLinkedToMandatError,
+                              s"Erreur pour faire le lien entre le mandat $mandatId et la demande $applicationId",
+                              applicationId = application.id.some,
+                              underlyingException = error.some
+                            )
+                          case Success(Left(error)) =>
+                            eventService.logError(error, applicationId = application.id.some)
+                          case Success(Right(_)) =>
+                            eventService.log(
+                              ApplicationLinkedToMandat,
+                              s"La demande ${application.id} a été liée au mandat $mandatId",
+                              applicationId = application.id.some
+                            )
+                        }
+                    }
                   }
                   Redirect(routes.ApplicationController.myApplications)
                     .withSession(
@@ -954,53 +956,65 @@ case class ApplicationController @Inject() (
     }
   }
 
+  private def showApplication(
+      application: Application,
+      form: Form[AnswerFormData],
+      openedTab: String
+  )(toResult: Html => Result)(implicit request: RequestWithUserData[_]): Future[Result] = {
+    val selectedArea: Area =
+      areaInQueryString
+        .getOrElse(Area.fromId(application.area).getOrElse(Area.all.head))
+    val selectedAreaId = selectedArea.id
+    usersWhoCanBeInvitedOn(application, selectedAreaId).flatMap { usersWhoCanBeInvited =>
+      groupsWhichCanBeInvited(selectedAreaId, application).flatMap { invitableGroups =>
+        fileService
+          .byApplicationId(application.id)
+          .map(
+            _.fold(
+              error => {
+                eventService.logError(error)
+                InternalServerError(Constants.genericError500Message)
+              },
+              files => {
+                val groups = userGroupService
+                  .byIds(usersWhoCanBeInvited.flatMap(_.groupIds))
+                  .filter(_.areaIds.contains[UUID](selectedAreaId))
+                val groupsWithUsersThatCanBeInvited = groups.map { group =>
+                  group -> usersWhoCanBeInvited.filter(_.groupIds.contains[UUID](group.id))
+                }
+                toResult(
+                  views.html.showApplication(request.currentUser, request.rights)(
+                    groupsWithUsersThatCanBeInvited,
+                    invitableGroups,
+                    application,
+                    form,
+                    openedTab,
+                    selectedArea,
+                    readSharedAccountUserSignature(request.session),
+                    files,
+                  )
+                ).withHeaders(CACHE_CONTROL -> "no-store")
+              }
+            )
+          )
+      }
+    }
+  }
+
   def show(id: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(id) { application =>
-        val selectedArea: Area =
-          areaInQueryString
-            .getOrElse(Area.fromId(application.area).getOrElse(Area.all.head))
-        val selectedAreaId = selectedArea.id
-        usersWhoCanBeInvitedOn(application, selectedAreaId).flatMap { usersWhoCanBeInvited =>
-          groupsWhichCanBeInvited(selectedAreaId, application).flatMap { invitableGroups =>
-            fileService
-              .byApplicationId(id)
-              .map(
-                _.fold(
-                  error => {
-                    eventService.logError(error)
-                    InternalServerError(Constants.genericError500Message)
-                  },
-                  files => {
-                    val groups = userGroupService
-                      .byIds(usersWhoCanBeInvited.flatMap(_.groupIds))
-                      .filter(_.areaIds.contains[UUID](selectedAreaId))
-                    val groupsWithUsersThatCanBeInvited = groups.map { group =>
-                      group -> usersWhoCanBeInvited.filter(_.groupIds.contains[UUID](group.id))
-                    }
-
-                    val openedTab = request.flash.get("opened-tab").getOrElse("answer")
-                    eventService.log(
-                      ApplicationShowed,
-                      s"Demande $id consultée",
-                      applicationId = application.id.some
-                    )
-                    Ok(
-                      views.html.showApplication(request.currentUser, request.rights)(
-                        groupsWithUsersThatCanBeInvited,
-                        invitableGroups,
-                        application,
-                        AnswerFormData.form(request.currentUser),
-                        openedTab,
-                        selectedArea,
-                        readSharedAccountUserSignature(request.session),
-                        files,
-                      )
-                    ).withHeaders(CACHE_CONTROL -> "no-store")
-                  }
-                )
-              )
-          }
+        showApplication(
+          application,
+          AnswerFormData.form(request.currentUser),
+          openedTab = request.flash.get("opened-tab").getOrElse("answer")
+        ) { html =>
+          eventService.log(
+            ApplicationShowed,
+            s"Demande $id consultée",
+            applicationId = application.id.some
+          )
+          Ok(html)
         }
       }
     }
@@ -1166,7 +1180,7 @@ case class ApplicationController @Inject() (
   private def buildAnswerMessage(message: String, signature: Option[String]) =
     signature.map(s => message + "\n\n" + s).getOrElse(message)
 
-  private val ApplicationProcessedMessage = "J’ai traité la demande."
+  private val defaultApplicationProcessedMessage = "J’ai traité la demande."
   private val WorkInProgressMessage = "Je m’en occupe."
   private val WrongInstructorMessage = "Je ne suis pas le bon interlocuteur."
 
@@ -1189,31 +1203,33 @@ case class ApplicationController @Inject() (
         } { _ =>
           form.fold(
             formWithErrors => {
-              val message =
-                s"Erreur dans le formulaire de réponse (${formWithErrors.errors.map(_.format).mkString(", ")})."
-              val error =
-                s"Erreur dans le formulaire de réponse (${formErrorsLog(formWithErrors)})"
-              eventService.log(
-                EventType.AnswerFormError,
-                error,
-                applicationId = application.id.some
-              )
-              Future(
-                Redirect(
-                  routes.ApplicationController.show(applicationId).withFragment("answer-error")
+              showApplication(application, formWithErrors, openedTab = "answer") { html =>
+                val error =
+                  s"Erreur dans le formulaire de réponse (${formErrorsLog(formWithErrors)})"
+                eventService.log(
+                  EventType.AnswerFormError,
+                  error,
+                  applicationId = application.id.some
                 )
-                  .flashing("answer-error" -> message, "opened-tab" -> "anwser")
-              )
+                BadRequest(html)
+              }
             },
             answerData => {
-              val answerType = AnswerType.fromString(answerData.answerType)
+              val answerType =
+                if (answerData.applicationHasBeenProcessed)
+                  AnswerType.ApplicationProcessed
+                else
+                  AnswerType.fromString(answerData.answerType)
               val currentAreaId = application.area
 
               val message = (answerType, answerData.message) match {
                 case (AnswerType.Custom, Some(message)) =>
                   buildAnswerMessage(message, answerData.signature)
-                case (AnswerType.ApplicationProcessed, _) =>
-                  buildAnswerMessage(ApplicationProcessedMessage, answerData.signature)
+                case (AnswerType.ApplicationProcessed, message) =>
+                  buildAnswerMessage(
+                    message.getOrElse(defaultApplicationProcessedMessage),
+                    answerData.signature
+                  )
                 case (AnswerType.WorkInProgress, _) =>
                   buildAnswerMessage(WorkInProgressMessage, answerData.signature)
                 case (AnswerType.WrongInstructor, _) =>

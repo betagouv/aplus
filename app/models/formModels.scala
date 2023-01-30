@@ -146,7 +146,7 @@ object formModels {
       category: Option[String],
       selectedSubject: Option[String],
       signature: Option[String],
-      mandatType: String,
+      mandatGenerationType: String,
       mandatDate: String,
       linkedMandat: Option[UUID]
   )
@@ -154,6 +154,8 @@ object formModels {
   object ApplicationFormData {
 
     private val applicationIdKey = "application-id"
+
+    val mandatGenerationTypeIsNew = "generateNew"
 
     def extractApplicationId(form: Form[ApplicationFormData]): Option[UUID] =
       form.data.get(applicationIdKey).flatMap(id => Try(UUID.fromString(id)).toOption)
@@ -178,7 +180,7 @@ object formModels {
               nonEmptyText.transform[Option[String]](Some.apply, _.getOrElse(""))
             else ignored(Option.empty[String])
           ),
-          "mandatType" -> text,
+          "mandatGenerationType" -> text,
           "mandatDate" -> nonEmptyText,
           "linkedMandat" -> optional(uuid)
         )(ApplicationFormData.apply)(ApplicationFormData.unapply)
@@ -192,6 +194,7 @@ object formModels {
       applicationIsDeclaredIrrelevant: Boolean,
       usagerOptionalInfos: Map[String, String],
       privateToHelpers: Boolean,
+      applicationHasBeenProcessed: Boolean,
       signature: Option[String]
   )
 
@@ -205,17 +208,22 @@ object formModels {
     def form(currentUser: User) =
       Form(
         mapping(
-          "answer_type" -> nonEmptyText.verifying(maxLength(20)),
-          "message" -> optional(nonEmptyText),
+          "answer_type" -> normalizedText.verifying(maxLength(20)),
+          "message" -> normalizedOptionalText,
           "irrelevant" -> boolean,
-          "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(200))),
+          "usagerOptionalInfos" -> FormsPlusMap.map(normalizedText.verifying(maxLength(200))),
           "privateToHelpers" -> boolean,
+          "applicationHasBeenProcessed" -> boolean,
           "signature" -> (
             if (currentUser.sharedAccount)
               nonEmptyText.transform[Option[String]](Some.apply, _.orEmpty)
             else ignored(Option.empty[String])
           )
         )(AnswerFormData.apply)(AnswerFormData.unapply)
+          .verifying(
+            "La formulaire doit comporter une réponse.",
+            form => (form.applicationHasBeenProcessed || form.message.nonEmpty)
+          )
       )
 
   }

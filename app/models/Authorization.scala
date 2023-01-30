@@ -4,7 +4,6 @@ import java.util.UUID
 
 import cats.syntax.all._
 import helper.BooleanHelper.not
-import models.mandat.Mandat
 
 object Authorization {
 

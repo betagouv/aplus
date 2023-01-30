@@ -1,4 +1,4 @@
-package models.mandat
+package models
 
 import cats.syntax.all._
 import java.util.UUID
@@ -12,9 +12,11 @@ object Mandat {
 
 case class Mandat(
     id: Mandat.Id,
+    version: Int,
     userId: UUID,
     creationDate: ZonedDateTime,
     applicationId: Option[UUID],
+    groupId: Option[UUID],
     usagerPrenom: Option[String],
     usagerNom: Option[String],
     usagerBirthDate: Option[String],
@@ -49,9 +51,11 @@ case class Mandat(
     }
     Mandat(
       id = id,
+      version = version,
       userId = userId,
       creationDate = creationDate,
       applicationId = applicationId,
+      groupId = groupId,
       usagerPrenom = "".some,
       usagerNom = "".some,
       usagerBirthDate = "".some,
