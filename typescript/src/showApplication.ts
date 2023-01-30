@@ -1,4 +1,3 @@
-import type { HTMLDialogElement } from "./dialog";
 import dialogPolyfill from "dialog-polyfill";
 import "dialog-polyfill/dist/dialog-polyfill.css";
 
