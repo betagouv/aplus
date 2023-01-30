@@ -1,4 +1,3 @@
-import type { HTMLDialogElement } from "./dialog";
 import { addDialogButtonsClickListeners } from "./dialog";
 
 const removeUserFromGroupButtonClass = "remove-user-from-group-button";
