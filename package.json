@@ -24,13 +24,13 @@
     "@types/tabulator-tables": "5.2.0",
     "babel-loader": "8.2.5",
     "copy-webpack-plugin": "11.0.0",
-    "css-loader": "6.7.1",
-    "mini-css-extract-plugin": "2.6.1",
-    "rimraf": "3.0.2",
-    "ts-loader": "9.3.1",
-    "typescript": "4.6.4",
-    "webpack": "5.74.0",
-    "webpack-cli": "4.10.0",
+    "css-loader": "6.7.3",
+    "mini-css-extract-plugin": "2.7.2",
+    "rimraf": "4.1.2",
+    "ts-loader": "9.4.2",
+    "typescript": "4.9.4",
+    "webpack": "5.75.0",
+    "webpack-cli": "5.0.1",
     "webpack-merge": "5.8.0"
   }
 }
