@@ -222,7 +222,10 @@ object formModels {
         )(AnswerFormData.apply)(AnswerFormData.unapply)
           .verifying(
             "La formulaire doit comporter une réponse.",
-            form => (form.applicationHasBeenProcessed || form.message.nonEmpty)
+            form =>
+              (form.answerType === Answer.AnswerType.WorkInProgress.name) ||
+                (form.answerType === Answer.AnswerType.WrongInstructor.name) ||
+                (form.applicationHasBeenProcessed || form.message.nonEmpty)
           )
       )
 
