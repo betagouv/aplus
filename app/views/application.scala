@@ -314,7 +314,18 @@ object application {
             ),
           canSeeAnswerMessage.some
             .filter(identity)
-            .map(_ =>
+            .map { _ =>
+              val showArchiveButton =
+                answer.answerType === Answer.AnswerType.ApplicationProcessed &&
+                  application.creatorUserId === currentUser.id &&
+                  !application.closed &&
+                  (answer.creatorUserID =!= currentUser.id)
+              val messageHasInfos =
+                // Note: always true for admins "** Message de 0 caractères **"
+                answer.message.nonEmpty ||
+                  answer.declareApplicationHasIrrelevant ||
+                  answer.userInfos.getOrElse(Map.empty).nonEmpty ||
+                  showArchiveButton
               frag(
                 answerFilesLinks(
                   attachments,
@@ -324,7 +335,7 @@ object application {
                   currentUserRights,
                   config
                 ),
-                answer.message.nonEmpty.some
+                messageHasInfos.some
                   .filter(identity)
                   .map(_ =>
                     div(
@@ -418,10 +429,7 @@ object application {
                             )
                           ),
                         p(cls := "answer__message", answer.message),
-                        (answer.answerType === Answer.AnswerType.ApplicationProcessed &&
-                          application.creatorUserId === currentUser.id &&
-                          !application.closed &&
-                          (answer.creatorUserID =!= currentUser.id)).some
+                        showArchiveButton.some
                           .filter(identity)
                           .map(_ =>
                             div(
@@ -442,7 +450,7 @@ object application {
                     )
                   )
               )
-            )
+            }
         )
       }
     )

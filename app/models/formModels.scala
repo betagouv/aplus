@@ -205,7 +205,7 @@ object formModels {
     def extractAnswerId(form: Form[AnswerFormData]): Option[UUID] =
       form.data.get(answerIdKey).flatMap(id => Try(UUID.fromString(id)).toOption)
 
-    def form(currentUser: User) =
+    def form(currentUser: User, containsFiles: Boolean) =
       Form(
         mapping(
           "answer_type" -> normalizedText.verifying(maxLength(20)),
@@ -223,9 +223,12 @@ object formModels {
           .verifying(
             "La formulaire doit comporter une réponse.",
             form =>
-              (form.answerType === Answer.AnswerType.WorkInProgress.name) ||
+              containsFiles ||
+                form.usagerOptionalInfos.filter { case (_, value) => value.nonEmpty }.nonEmpty ||
+                (form.answerType === Answer.AnswerType.WorkInProgress.name) ||
                 (form.answerType === Answer.AnswerType.WrongInstructor.name) ||
-                (form.applicationHasBeenProcessed || form.message.nonEmpty)
+                form.applicationHasBeenProcessed ||
+                form.message.nonEmpty
           )
       )
 
