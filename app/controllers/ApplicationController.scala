@@ -1006,7 +1006,7 @@ case class ApplicationController @Inject() (
       withApplication(id) { application =>
         showApplication(
           application,
-          AnswerFormData.form(request.currentUser),
+          AnswerFormData.form(request.currentUser, false),
           openedTab = request.flash.get("opened-tab").getOrElse("answer")
         ) { html =>
           eventService.log(
@@ -1187,8 +1187,9 @@ case class ApplicationController @Inject() (
   def answer(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application =>
-        val form = AnswerFormData.form(request.currentUser).bindFromRequest()
-        val answerId = AnswerFormData.extractAnswerId(form).getOrElse(UUID.randomUUID())
+        val answerId = AnswerFormData
+          .extractAnswerId(AnswerFormData.form(request.currentUser, false).bindFromRequest())
+          .getOrElse(UUID.randomUUID())
         handlingFiles(applicationId, answerId.some) { error =>
           eventService.logError(error)
           val message =
@@ -1200,7 +1201,8 @@ case class ApplicationController @Inject() (
             )
               .flashing("answer-error" -> message, "opened-tab" -> "anwser")
           )
-        } { _ =>
+        } { files =>
+          val form = AnswerFormData.form(request.currentUser, files.nonEmpty).bindFromRequest()
           form.fold(
             formWithErrors => {
               showApplication(application, formWithErrors, openedTab = "answer") { html =>
