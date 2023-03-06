@@ -554,6 +554,11 @@ case class UserController @Inject() (
                     )
                   Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
                 } else {
+                  val cguDate =
+                    if (oldUser.email === updatedUserData.email)
+                      oldUser.cguAcceptationDate
+                    else
+                      none
                   val userToUpdate = oldUser.copy(
                     firstName = updatedUserData.firstName,
                     lastName = updatedUserData.lastName,
@@ -567,6 +572,7 @@ case class UserController @Inject() (
                     groupAdmin = updatedUserData.groupAdmin,
                     disabled = updatedUserData.disabled,
                     groupIds = updatedUserData.groupIds.distinct,
+                    cguAcceptationDate = cguDate,
                     phoneNumber = updatedUserData.phoneNumber,
                     observableOrganisationIds = updatedUserData.observableOrganisationIds.distinct,
                     sharedAccount = updatedUserData.sharedAccount,
@@ -757,26 +763,31 @@ case class UserController @Inject() (
       )
     }
 
-  private def validateAndUpdateUser(user: User)(
+  private def validateCguAndUpdateUser(user: User)(
       firstName: Option[String],
       lastName: Option[String],
       qualite: Option[String],
       phoneNumber: Option[String]
-  ): Future[User] =
-    userService
-      .update(
-        user.validateWith(
-          firstName.map(commonStringInputNormalization).map(capitalizeName),
-          lastName.map(commonStringInputNormalization).map(capitalizeName),
-          qualite.map(commonStringInputNormalization),
-          phoneNumber.map(commonStringInputNormalization)
-        )
-      )
-      .map { _ =>
-        userService.validateCGU(user.id)
-        // Safe, in theory
-        userService.byId(user.id).head
-      }
+  ): Future[User] = {
+    val updated =
+      if (user.sharedAccount)
+        Future.successful(true)
+      else
+        userService
+          .update(
+            user.validateWith(
+              firstName.map(commonStringInputNormalization).map(capitalizeName),
+              lastName.map(commonStringInputNormalization).map(capitalizeName),
+              qualite.map(commonStringInputNormalization),
+              phoneNumber.map(commonStringInputNormalization)
+            )
+          )
+    updated.map { _ =>
+      userService.validateCGU(user.id)
+      // Safe, in theory
+      userService.byId(user.id).head
+    }
+  }
 
   def validateAccount: Action[AnyContent] =
     loginAction.async { implicit request =>
@@ -811,7 +822,12 @@ case class UserController @Inject() (
                   phoneNumber
                 ) if uncheckedRedirect =!= routes.ApplicationController.myApplications.url =>
               val redirect = validateRedirect(uncheckedRedirect)
-              validateAndUpdateUser(request.currentUser)(firstName, lastName, qualite, phoneNumber)
+              validateCguAndUpdateUser(request.currentUser)(
+                firstName,
+                lastName,
+                qualite,
+                phoneNumber
+              )
                 .map { updatedUser =>
                   eventService.log(
                     CGUValidated,
@@ -822,7 +838,12 @@ case class UserController @Inject() (
                     .flashing("success" -> "Merci d’avoir accepté les CGU")
                 }
             case ValidateSubscriptionForm(_, true, firstName, lastName, qualite, phoneNumber) =>
-              validateAndUpdateUser(request.currentUser)(firstName, lastName, qualite, phoneNumber)
+              validateCguAndUpdateUser(request.currentUser)(
+                firstName,
+                lastName,
+                qualite,
+                phoneNumber
+              )
                 .map { updatedUser =>
                   eventService.log(
                     CGUValidated,

@@ -301,6 +301,7 @@ class UserService @Inject() (
           commune_code = ${row.communeCode},
           group_admin = ${row.groupAdmin},
           group_ids = array[${row.groupIds}]::uuid[],
+          cgu_acceptation_date = ${row.cguAcceptationDate},
           phone_number = ${row.phoneNumber},
           disabled = ${row.disabled},
           observable_organisation_ids = array[${row.observableOrganisationIds}]::varchar[],
