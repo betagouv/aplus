@@ -170,9 +170,14 @@ case class ApplicationController @Inject() (
       )
     }
 
-  private def contextualizedUserName(user: User, currentAreaId: UUID): String = {
+  private def contextualizedUserName(
+      user: User,
+      currentAreaId: UUID,
+      creatorGroupId: Option[UUID]
+  ): String = {
     val groups = userGroupService.byIds(user.groupIds)
-    val contexts = groups
+
+    val defaultContexts: List[String] = groups
       .filter(_.areaIds.contains[UUID](currentAreaId))
       .flatMap { userGroup: UserGroup =>
         if (user.instructor) {
@@ -187,6 +192,31 @@ case class ApplicationController @Inject() (
         }
       }
       .distinct
+
+    val creatorGroup = creatorGroupId.flatMap(id => groups.find(_.id === id))
+    val isInCreatorGroup: Boolean =
+      creatorGroupId.map(id => user.groupIds.contains[UUID](id)).getOrElse(false)
+
+    val contexts: List[String] =
+      if (isInCreatorGroup)
+        creatorGroup.fold(defaultContexts) { group =>
+          val creatorGroupIsInApplicationArea: Boolean =
+            group.areaIds.contains[UUID](currentAreaId)
+          val name: String =
+            if (creatorGroupIsInApplicationArea)
+              group.name
+            else
+              group.areaIds
+                .flatMap(Area.fromId)
+                .map(_.inseeCode)
+                .headOption
+                .fold(group.name)(code =>
+                  if (group.name.contains(code)) group.name else s"${group.name} - $code"
+                )
+          s"($name)" :: Nil
+        }
+      else
+        defaultContexts
 
     val capitalizedUserName = user.name.split(' ').map(_.capitalize).mkString(" ")
     if (contexts.isEmpty)
@@ -305,7 +335,9 @@ case class ApplicationController @Inject() (
                 val coworkers: List[User] =
                   applicationData.users.flatMap(id => userService.byId(id))
                 val invitedUsers: Map[UUID, String] = (instructors ::: coworkers)
-                  .map(user => user.id -> contextualizedUserName(user, currentAreaId))
+                  .map(user =>
+                    user.id -> contextualizedUserName(user, currentAreaId, creatorGroup.map(_.id))
+                  )
                   .toMap
 
                 val description: String =
@@ -326,7 +358,11 @@ case class ApplicationController @Inject() (
                 val application = Application(
                   applicationId,
                   Time.nowParis(),
-                  contextualizedUserName(request.currentUser, currentAreaId),
+                  contextualizedUserName(
+                    request.currentUser,
+                    currentAreaId,
+                    creatorGroup.map(_.id)
+                  ),
                   request.currentUser.id,
                   creatorGroup.map(_.id),
                   creatorGroup.map(_.name),
@@ -1246,7 +1282,11 @@ case class ApplicationController @Inject() (
                 answerType,
                 message,
                 request.currentUser.id,
-                contextualizedUserName(request.currentUser, currentAreaId),
+                contextualizedUserName(
+                  request.currentUser,
+                  currentAreaId,
+                  application.creatorGroupId
+                ),
                 Map.empty[UUID, String],
                 not(answerData.privateToHelpers),
                 answerData.applicationIsDeclaredIrrelevant,
@@ -1355,7 +1395,12 @@ case class ApplicationController @Inject() (
                       .filter(user => inviteData.invitedUsers.contains[UUID](user.id))
                     val invitedUsers: Map[UUID, String] =
                       (invitedUsersFromGroups ::: directlyInvitedUsers)
-                        .map(user => (user.id, contextualizedUserName(user, currentArea.id)))
+                        .map(user =>
+                          (
+                            user.id,
+                            contextualizedUserName(user, currentArea.id, application.creatorGroupId)
+                          )
+                        )
                         .toMap
 
                     val answer = Answer(
@@ -1365,7 +1410,11 @@ case class ApplicationController @Inject() (
                       AnswerType.Custom,
                       inviteData.message,
                       request.currentUser.id,
-                      contextualizedUserName(request.currentUser, currentArea.id),
+                      contextualizedUserName(
+                        request.currentUser,
+                        currentArea.id,
+                        application.creatorGroupId
+                      ),
                       invitedUsers,
                       not(inviteData.privateToHelpers),
                       declareApplicationHasIrrelevant = false,
@@ -1412,7 +1461,9 @@ case class ApplicationController @Inject() (
         if (application.canHaveExpertsInvitedBy(request.currentUser)) {
           userService.allExperts.map { expertUsers =>
             val experts: Map[UUID, String] = expertUsers
-              .map(user => user.id -> contextualizedUserName(user, currentAreaId))
+              .map(user =>
+                user.id -> contextualizedUserName(user, currentAreaId, application.creatorGroupId)
+              )
               .toMap
             val answer = Answer(
               UUID.randomUUID(),
@@ -1421,7 +1472,11 @@ case class ApplicationController @Inject() (
               AnswerType.Custom,
               "J'ajoute un expert",
               request.currentUser.id,
-              contextualizedUserName(request.currentUser, currentAreaId),
+              contextualizedUserName(
+                request.currentUser,
+                currentAreaId,
+                application.creatorGroupId
+              ),
               experts,
               visibleByHelpers = true,
               declareApplicationHasIrrelevant = false,
