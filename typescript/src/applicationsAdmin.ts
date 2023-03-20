@@ -235,6 +235,8 @@ if (window.document.getElementById(applicationsTableId)) {
       field: "groups.creatorUserGroupsNames",
       headerFilter: "input",
       maxWidth: 300,
+      visible: false,
+      download: true
     },
     {
       title: "Groupes sollicités",
