@@ -90,7 +90,7 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.5.4",
+  "org.postgresql" % "postgresql" % "42.6.0",
   anormDependency,
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
   "com.typesafe.play" %% "play-json" % "2.9.4",
@@ -114,7 +114,7 @@ libraryDependencies ++= Seq(
 )
 
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "6.15.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "6.16.0"
 
 // Overrides
 dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
