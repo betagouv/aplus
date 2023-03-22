@@ -178,6 +178,12 @@ if (window.document.getElementById(applicationsTableId)) {
       maxWidth: 300,
     },
     {
+      title: "Structure mandatée",
+      field: "groups.creatorGroupName",
+      headerFilter: "input",
+      maxWidth: 300,
+    },
+    {
       title: "Invités",
       field: "stats.numberOfInvitedUsers",
       hozAlign: "right",
@@ -229,6 +235,8 @@ if (window.document.getElementById(applicationsTableId)) {
       field: "groups.creatorUserGroupsNames",
       headerFilter: "input",
       maxWidth: 300,
+      visible: false,
+      download: true
     },
     {
       title: "Groupes sollicités",
