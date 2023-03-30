@@ -14,7 +14,7 @@
     "slim-select": "1.27.1",
     "tabulator-tables": "5.2.7",
     "ts-polyfill": "3.8.2",
-    "unfetch": "4.2.0",
+    "unfetch": "5.0.0",
     "unorm": "1.6.0",
     "xlsx": "0.18.5"
   },
