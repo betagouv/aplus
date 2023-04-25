@@ -162,6 +162,9 @@ object EventType {
   object AnonymizedDataExportMessage extends Info
   object AnonymizedDataExportError extends Error
 
+  object ViewsRefreshMessage extends Info
+  object ViewsRefreshError extends Error
+
   object MasqueradeUnauthorized extends Warn
 
   object SearchUsersDone extends Info
