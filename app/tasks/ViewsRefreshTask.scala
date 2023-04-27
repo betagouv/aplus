@@ -10,13 +10,13 @@ import models.{Error, EventType}
 import modules.AppConfig
 import play.api.inject.ApplicationLifecycle
 import scala.concurrent.duration._
-import services.{AnonymizedDataService, EventService, ServicesDependencies}
+import services.{DbMaintenanceService, EventService, ServicesDependencies}
 
-class ExportAnonymizedDataTask @Inject() (
-    anonymizedDataService: AnonymizedDataService,
+class ViewsRefreshTask @Inject() (
     config: AppConfig,
     dependencies: ServicesDependencies,
     val eventService: EventService,
+    dbService: DbMaintenanceService,
     lifecycle: ApplicationLifecycle,
 ) extends TasksHelpers {
 
@@ -28,31 +28,22 @@ class ExportAnonymizedDataTask @Inject() (
       .toLocalDate
       .atStartOfDay(ZoneOffset.UTC)
       .plusDays(1)
-      .withHour(4)
-      .withMinute(15)
+      .withHour(2)
+      .withMinute(10)
       .toInstant
     now.until(nextInstant, ChronoUnit.MILLIS).millis
   }.flatTap(duration =>
-    logMessage(
-      EventType.AnonymizedDataExportMessage,
-      s"Prochain export anonymisé de la BDD dans $duration"
-    )
+    logMessage(EventType.ViewsRefreshMessage, s"Prochains REFRESH MATERIALIZED VIEW dans $duration")
   )
 
   val cancelCallback = repeatWithDelay(durationUntilNextTick)(
-    if (config.anonymizedExportEnabled)
-      loggingResult(
-        IO.blocking(anonymizedDataService.transferData().asRight[Error]),
-        EventType.AnonymizedDataExportMessage,
-        "Export anonymisé de la BDD terminé",
-        EventType.AnonymizedDataExportError,
-        "Erreur lors de l'export anonymisé de la BDD",
-      )
-    else
-      logMessage(
-        EventType.AnonymizedDataExportMessage,
-        "Export anonymisé de la BDD non activé (aucune action effectuée)"
-      )
+    loggingResult(
+      dbService.refreshViews(),
+      EventType.ViewsRefreshMessage,
+      "Commande REFRESH MATERIALIZED VIEW exécutée",
+      EventType.ViewsRefreshError,
+      "Erreur lors de l'exécution des commandes REFRESH MATERIALIZED VIEW"
+    )
   ).unsafeRunCancelable()
 
   lifecycle.addStopHook { () =>
