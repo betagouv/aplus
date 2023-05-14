@@ -121,7 +121,8 @@ POST        /api/deploiement/france-services/:matricule/delete                  
 GET         /api/deploiement/operateurs                                                      controllers.ApiController.deploymentData
 GET         /api/search                                                                      controllers.UserController.search
 GET         /api/applications/metadata                                                       controllers.ApplicationController.applicationsMetadata
-GET         /api/anonymized-database/refresh                                                 controllers.ApiController.refreshAnonymizedDatabase
++nocsrf
+POST        /api/anonymized-database/refresh                                                 controllers.ApiController.refreshAnonymizedDatabase
 
 # Javascript resource
 GET         /jsRoutes                                                                        controllers.JavascriptController.javascriptRoutes
