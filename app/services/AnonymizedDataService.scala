@@ -276,9 +276,11 @@ class AnonymizedDataService @Inject() (
     val query =
       """INSERT INTO mandat (
            id,
+           version,
            user_id,
            creation_date,
            application_id,
+           group_id,
            usager_prenom,
            usager_nom,
            usager_birth_date,
@@ -288,9 +290,11 @@ class AnonymizedDataService @Inject() (
            personal_data_wiped
          ) VALUES (
            {id}::uuid,
+           {version},
            {userId}::uuid,
            {creationDate},
            {applicationId}::uuid,
+           {groupId}::uuid,
            {usagerPrenom},
            {usagerNom},
            {usagerBirthDate},
@@ -302,11 +306,13 @@ class AnonymizedDataService @Inject() (
     rows.foreach { row =>
       val params = Seq[NamedParameter](
         "id" -> row.id.underlying,
+        "version" -> row.version,
         "userId" -> row.userId,
         "creationDate" -> row.creationDate.toLocalDate
           .atStartOfDay(Time.timeZoneParis)
           .withHour(12),
         "applicationId" -> row.applicationId,
+        "groupId" -> row.groupId,
         "usagerPrenom" -> row.usagerPrenom,
         "usagerNom" -> row.usagerNom,
         "usagerBirthDate" -> row.usagerBirthDate,
