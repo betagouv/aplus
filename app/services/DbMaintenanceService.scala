@@ -1,19 +1,28 @@
 package services
 
 import anorm._
+import cats.data.EitherT
 import cats.effect.IO
 import cats.syntax.all._
 import javax.inject.Inject
 import models.{Error, EventType}
 import play.api.db.Database
+import play.db.NamedDatabase
 
 @javax.inject.Singleton
-class DbMaintenanceService @Inject() (db: Database, dependencies: ServicesDependencies) {
+class DbMaintenanceService @Inject() (
+    @NamedDatabase("anonymized-data") anonymizedDatabase: Database,
+    db: Database,
+    dependencies: ServicesDependencies
+) {
   import dependencies.databaseExecutionContext
 
   def refreshViews(): IO[Either[Error, Unit]] =
+    (EitherT(refreshDbViews(db)) >> EitherT(refreshDbViews(anonymizedDatabase))).value
+
+  private def refreshDbViews(database: Database): IO[Either[Error, Unit]] =
     IO.blocking {
-      db.withTransaction { implicit connection =>
+      database.withTransaction { implicit connection =>
         val _ = SQL("""REFRESH MATERIALIZED VIEW answer_metadata""").execute()
         val _ = SQL("""REFRESH MATERIALIZED VIEW application_metadata""").execute()
         val _ = SQL("""REFRESH MATERIALIZED VIEW application_seen_by_user""").execute()
@@ -27,7 +36,7 @@ class DbMaintenanceService @Inject() (db: Database, dependencies: ServicesDepend
         _.left.map(e =>
           Error.SqlException(
             EventType.ViewsRefreshError,
-            s"Impossible d'exécuter REFRESH MATERIALIZED VIEW",
+            s"Impossible d'exécuter REFRESH MATERIALIZED VIEW sur la BDD '${database.name}'",
             e,
             none
           )

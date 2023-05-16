@@ -53,7 +53,7 @@ class AnonymizedDataService @Inject() (
       insertUsers()(anonConn)
       insertUserGroups()(anonConn)
     }
-    // The event table is big
+    // The event table is big and rows are not mutated
     insertEvents()
   }
 
