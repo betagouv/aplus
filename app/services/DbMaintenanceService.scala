@@ -6,19 +6,24 @@ import cats.effect.IO
 import cats.syntax.all._
 import javax.inject.Inject
 import models.{Error, EventType}
+import modules.AppConfig
 import play.api.db.Database
 import play.db.NamedDatabase
 
 @javax.inject.Singleton
 class DbMaintenanceService @Inject() (
     @NamedDatabase("anonymized-data") anonymizedDatabase: Database,
+    config: AppConfig,
     db: Database,
     dependencies: ServicesDependencies
 ) {
   import dependencies.databaseExecutionContext
 
   def refreshViews(): IO[Either[Error, Unit]] =
-    (EitherT(refreshDbViews(db)) >> EitherT(refreshDbViews(anonymizedDatabase))).value
+    if (config.anonymizedExportEnabled)
+      (EitherT(refreshDbViews(db)) >> EitherT(refreshDbViews(anonymizedDatabase))).value
+    else
+      refreshDbViews(db)
 
   private def refreshDbViews(database: Database): IO[Either[Error, Unit]] =
     IO.blocking {
