@@ -461,7 +461,11 @@ case class ApiController @Inject() (
               for {
                 organisations <- organisationSets
                 users = usersIn(area, organisations)
-                userSum = users.count(_.instructor)
+                userSum = users
+                  .filter(user => user.instructor && !user.disabled)
+                  .map(_.id)
+                  .distinct
+                  .size
               } yield (organisations, userSum)
             ).toMap
 
