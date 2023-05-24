@@ -114,7 +114,7 @@ libraryDependencies ++= Seq(
 )
 
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "6.18.1"
+libraryDependencies += "io.sentry" % "sentry-logback" % "6.19.1"
 
 // Overrides
 dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
