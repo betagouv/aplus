@@ -51,7 +51,8 @@ class Pseudonymizer(uuid: UUID) {
 
   def fullName: String = firstName + " " + lastName
 
-  def emailName: String = StringHelper.unaccent(fullName.toLowerCase).replaceAll("[^a-z]+", ".")
+  def emailName: String = StringHelper.unaccent(fullName.toLowerCase).replaceAll("[^a-z]+", ".") +
+    "." + uuid.toString.take(4)
 
   def emailKeepingDomain(originEmail: String): String = {
     val domain = originEmail

@@ -1,10 +1,12 @@
 package services
 
 import anorm._
+import anorm.SqlParser.scalar
 import cats.syntax.all._
 import helper.{Pseudonymizer, Time, UUIDHelper}
 import java.sql.Connection
 import java.time.{Instant, LocalDate}
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import javax.inject.Inject
 import models.{dataModels, EventType, SignupRequest}
@@ -14,6 +16,7 @@ import modules.AppConfig
 import play.api.db.Database
 import play.api.libs.json.Json
 import play.db.NamedDatabase
+import scala.annotation.tailrec
 import scala.util.Try
 
 /** Note that the origin database is not passed as parameter here, in order to maximize the
@@ -39,11 +42,10 @@ class AnonymizedDataService @Inject() (
   import serializers.Anorm._
 
   // The table `login_token` has data but is not exported
-  def transferData(): Unit =
+  def transferData(): Unit = {
     anonymizedDatabase.withTransaction { anonConn =>
       truncateData()(anonConn)
       insertApplications()(anonConn)
-      insertEvents()(anonConn)
       insertFileMetadata()(anonConn)
       insertFranceServices()(anonConn)
       insertMandats()(anonConn)
@@ -51,10 +53,12 @@ class AnonymizedDataService @Inject() (
       insertUsers()(anonConn)
       insertUserGroups()(anonConn)
     }
+    // The event table is big and rows are not mutated
+    insertEvents()
+  }
 
   private def truncateData()(implicit connection: Connection): Unit = {
     val _ = SQL("""DELETE FROM application""").execute()
-    val _ = SQL("""DELETE FROM event""").execute()
     val _ = SQL("""DELETE FROM file_metadata""").execute()
     val _ = SQL("""DELETE FROM france_service""").execute()
     val _ = SQL("""DELETE FROM mandat""").execute()
@@ -155,12 +159,14 @@ class AnonymizedDataService @Inject() (
     logMessage(s"Table application : " + rows.size + " lignes")
   }
 
-  private def insertEvents()(implicit connection: Connection): Unit = {
-    val batchSize = 10
-    def insertBatch(before: Instant): Option[(Int, Instant)] = {
-      val rows = eventService.beforeOrThrow(before, batchSize)
-      val query =
-        """INSERT INTO event (
+  private def insertEvents(): Unit = {
+    val batchSize = 100
+
+    def insertBatch(before: Instant): Option[(Int, Instant)] = anonymizedDatabase.withConnection {
+      implicit conn =>
+        val rows = eventService.beforeOrThrow(before, batchSize)
+        val query =
+          """INSERT INTO event (
              id,
              level,
              code,
@@ -184,32 +190,55 @@ class AnonymizedDataService @Inject() (
              {toApplicationId}::uuid,
              {toUserId}::uuid,
              {ipAddress}::inet
-           )"""
-      rows.foreach { row =>
-        val params = Seq[NamedParameter](
-          "id" -> row.id,
-          "level" -> row.level,
-          "code" -> row.code,
-          "fromUserName" -> row.fromUserName,
-          "fromUserId" -> row.fromUserId,
-          "creationDate" -> Time.truncateAtHour(Time.timeZoneParis)(row.creationDate, 8),
-          "description" -> row.description,
-          "area" -> row.area,
-          "toApplicationId" -> row.toApplicationId,
-          "toUserId" -> row.toUserId,
-          "ipAddress" -> "0.0.0.0",
-        )
-        SQL(query).on(params: _*).execute()
-      }
-      val lastDate = rows.map(_.creationDate).minOption
-      lastDate.map(date => (rows.size, date))
+           ) ON CONFLICT (id) DO NOTHING"""
+        val numberOfUpdates = rows.foldLeft(0) { (acc, row) =>
+          val params = Seq[NamedParameter](
+            "id" -> row.id,
+            "level" -> row.level,
+            "code" -> row.code,
+            "fromUserName" -> row.fromUserName,
+            "fromUserId" -> row.fromUserId,
+            "creationDate" -> Time.truncateAtHour(Time.timeZoneParis)(row.creationDate, 8),
+            "description" -> row.description,
+            "area" -> row.area,
+            "toApplicationId" -> row.toApplicationId,
+            "toUserId" -> row.toUserId,
+            "ipAddress" -> "0.0.0.0",
+          )
+          val updates = SQL(query).on(params: _*).executeUpdate()
+          acc + updates
+        }
+        val lastDate = rows.map(_.creationDate).minOption
+        lastDate.map(date => (numberOfUpdates, date))
     }
-    def insertRecursive(before: Instant): Int =
-      insertBatch(before) match {
-        case None                         => 0
-        case Some((rowsNumber, lastDate)) => insertRecursive(lastDate) + rowsNumber
+
+    @tailrec
+    def insertRecursive(before: Instant, after: Option[Instant], totalRows: Int): Int =
+      after match {
+        case Some(afterDate) if afterDate.isAfter(before) => totalRows
+        case _ =>
+          insertBatch(before) match {
+            case None => totalRows
+            case Some((rowsNumber, lastDate)) =>
+              insertRecursive(lastDate, after, totalRows + rowsNumber)
+          }
       }
-    val rowsNumber = insertRecursive(Instant.now())
+
+    val earliestEventDate = anonymizedDatabase.withConnection { implicit conn =>
+      SQL"""SELECT MIN(creation_date) FROM event""".as(scalar[Instant].singleOpt)
+    }
+    val latestEventDate = anonymizedDatabase.withConnection { implicit conn =>
+      SQL"""SELECT MAX(creation_date) FROM event""".as(scalar[Instant].singleOpt)
+    }
+
+    val rowsNumber = (earliestEventDate, latestEventDate) match {
+      case (Some(earliest), Some(latest)) =>
+        val olderEvents = insertRecursive(earliest.plus(24, ChronoUnit.HOURS), None, 0)
+        val newerEvents =
+          insertRecursive(Instant.now(), Some(latest.minus(24, ChronoUnit.HOURS)), 0)
+        olderEvents + newerEvents
+      case _ => insertRecursive(Instant.now(), None, 0)
+    }
     logMessage(s"Table event : " + rowsNumber + " lignes")
   }
 
@@ -276,9 +305,11 @@ class AnonymizedDataService @Inject() (
     val query =
       """INSERT INTO mandat (
            id,
+           version,
            user_id,
            creation_date,
            application_id,
+           group_id,
            usager_prenom,
            usager_nom,
            usager_birth_date,
@@ -288,9 +319,11 @@ class AnonymizedDataService @Inject() (
            personal_data_wiped
          ) VALUES (
            {id}::uuid,
+           {version},
            {userId}::uuid,
            {creationDate},
            {applicationId}::uuid,
+           {groupId}::uuid,
            {usagerPrenom},
            {usagerNom},
            {usagerBirthDate},
@@ -302,11 +335,13 @@ class AnonymizedDataService @Inject() (
     rows.foreach { row =>
       val params = Seq[NamedParameter](
         "id" -> row.id.underlying,
+        "version" -> row.version,
         "userId" -> row.userId,
         "creationDate" -> row.creationDate.toLocalDate
           .atStartOfDay(Time.timeZoneParis)
           .withHour(12),
         "applicationId" -> row.applicationId,
+        "groupId" -> row.groupId,
         "usagerPrenom" -> row.usagerPrenom,
         "usagerNom" -> row.usagerNom,
         "usagerBirthDate" -> row.usagerBirthDate,

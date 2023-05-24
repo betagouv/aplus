@@ -13,10 +13,17 @@ import play.api.mvc._
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
 import serializers.ApiModel._
-import services.{EventService, OrganisationService, UserGroupService, UserService}
+import services.{
+  AnonymizedDataService,
+  EventService,
+  OrganisationService,
+  UserGroupService,
+  UserService
+}
 
 @Singleton
 case class ApiController @Inject() (
+    anonymizedDataService: AnonymizedDataService,
     loginAction: LoginAction,
     eventService: EventService,
     organisationService: OrganisationService,
@@ -454,7 +461,11 @@ case class ApiController @Inject() (
               for {
                 organisations <- organisationSets
                 users = usersIn(area, organisations)
-                userSum = users.count(_.instructor)
+                userSum = users
+                  .filter(user => user.instructor && !user.disabled)
+                  .map(_.id)
+                  .distinct
+                  .size
               } yield (organisations, userSum)
             ).toMap
 
@@ -490,6 +501,21 @@ case class ApiController @Inject() (
           )
           Ok(Json.toJson(data))
         }
+      }
+    }
+
+  def refreshAnonymizedDatabase: Action[AnyContent] =
+    loginAction.async { implicit request =>
+      asUserWithAuthorization(Authorization.isAdmin)(
+        EventType.AnonymizedDataExportError,
+        "Accès non autorisé à l'export anonymisé par API de la BDD"
+      ) { () =>
+        anonymizedDataService.transferData()
+        eventService.log(
+          EventType.AnonymizedDataExportMessage,
+          "Export anonymisé par API de la BDD terminé"
+        )
+        Future.successful(Ok(Json.obj()))
       }
     }
 
