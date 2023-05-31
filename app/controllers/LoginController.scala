@@ -33,57 +33,68 @@ class LoginController @Inject() (
   def login: Action[AnyContent] =
     Action.async { implicit request =>
       val emailFromRequestOrQueryParamOrFlash: Option[String] = request.body.asFormUrlEncoded
-        .flatMap(_.get("email").flatMap(_.headOption.map(_.trim)))
+        .flatMap(_.get("email").flatMap(_.headOption))
         .orElse(request.getQueryString(Keys.QueryParam.email))
         .orElse(request.flash.get("email"))
+        .map(_.trim)
       emailFromRequestOrQueryParamOrFlash.fold {
         Future(Ok(views.html.home.page(LoginPanel.ConnectionForm)))
       } { email =>
-        userService
-          .byEmail(email, includeDisabled = true)
-          .fold {
-            signupService
-              .byEmail(email)
-              .map(
-                _.fold(
-                  e => {
-                    eventService.logErrorNoUser(e)
-                    val message = "Une erreur interne est survenue. " +
-                      "Celle-ci étant possiblement temporaire, " +
-                      "nous vous invitons à réessayer plus tard."
-                    Redirect(routes.LoginController.login)
-                      .flashing("error" -> message, "email-value" -> email)
-                  },
-                  {
-                    case None =>
-                      accountDoesNotExist(email)
-                    case Some(signup) =>
-                      val loginToken =
-                        LoginToken
-                          .forSignupId(
-                            signup.id,
-                            config.tokenExpirationInMinutes,
-                            request.remoteAddress
-                          )
-                      loginHappyPath(loginToken, signup.email, None)
-                  }
+        if (email.isEmpty) {
+          Future.successful(emailIsEmpty)
+        } else {
+          userService
+            .byEmail(email, includeDisabled = true)
+            .fold {
+              signupService
+                .byEmail(email)
+                .map(
+                  _.fold(
+                    e => {
+                      eventService.logErrorNoUser(e)
+                      val message = "Une erreur interne est survenue. " +
+                        "Celle-ci étant possiblement temporaire, " +
+                        "nous vous invitons à réessayer plus tard."
+                      Redirect(routes.LoginController.login)
+                        .flashing("error" -> message, "email-value" -> email)
+                    },
+                    {
+                      case None =>
+                        accountDoesNotExist(email)
+                      case Some(signup) =>
+                        val loginToken =
+                          LoginToken
+                            .forSignupId(
+                              signup.id,
+                              config.tokenExpirationInMinutes,
+                              request.remoteAddress
+                            )
+                        loginHappyPath(loginToken, signup.email, None)
+                    }
+                  )
                 )
-              )
-          } { user: User =>
-            if (user.disabled)
-              Future(accountDoesNotExist(email))
-            else
-              LoginAction.readUserRights(user).map { userRights =>
-                val loginToken =
-                  LoginToken
-                    .forUserId(user.id, config.tokenExpirationInMinutes, request.remoteAddress)
-                val requestWithUserData =
-                  new RequestWithUserData(user, userRights, request)
-                loginHappyPath(loginToken, user.email, requestWithUserData.some)
-              }
-          }
+            } { user: User =>
+              if (user.disabled)
+                Future(accountDoesNotExist(email))
+              else
+                LoginAction.readUserRights(user).map { userRights =>
+                  val loginToken =
+                    LoginToken
+                      .forUserId(user.id, config.tokenExpirationInMinutes, request.remoteAddress)
+                  val requestWithUserData =
+                    new RequestWithUserData(user, userRights, request)
+                  loginHappyPath(loginToken, user.email, requestWithUserData.some)
+                }
+            }
+        }
       }
     }
+
+  private def emailIsEmpty = {
+    val message = "Veuillez saisir votre adresse professionnelle"
+    Redirect(routes.LoginController.login)
+      .flashing("error" -> message)
+  }
 
   private def accountDoesNotExist(email: String)(implicit request: Request[AnyContent]) = {
     eventService
