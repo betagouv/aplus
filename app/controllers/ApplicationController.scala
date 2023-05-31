@@ -8,6 +8,7 @@ import forms.FormsPlusMap
 import helper.BooleanHelper.not
 import helper.CSVUtil.escape
 import helper.PlayFormHelper.formErrorsLog
+import helper.ScalatagsHelpers.writeableOf_Modifier
 import helper.StringHelper.{CanonizeString, NonEmptyTrimmedString}
 import helper.Time.zonedDateTimeOrdering
 import helper.{Hash, Time, UUIDHelper}
@@ -735,8 +736,10 @@ case class ApplicationController @Inject() (
   private val statsCSP =
     "connect-src 'self' https://stats.data.gouv.fr; base-uri 'none'; img-src 'self' data: stats.data.gouv.fr; form-action 'self'; frame-src 'self'; style-src 'self' 'unsafe-inline' stats.data.gouv.fr; object-src 'none'; script-src 'self' 'unsafe-inline' stats.data.gouv.fr; default-src 'none'; font-src 'self'; frame-ancestors 'self'"
 
+  val statsAction = loginAction.withPublicPage(Ok(views.publicStats.page))
+
   def stats: Action[AnyContent] =
-    loginAction.async { implicit request =>
+    statsAction.async { implicit request =>
       statsPage(routes.ApplicationController.stats, request.currentUser, request.rights)
     }
 
