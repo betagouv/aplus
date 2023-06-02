@@ -14,7 +14,7 @@ import models.formModels.{normalizedOptionalText, normalizedText, AddUserToGroup
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.data.Forms.{email, ignored, list, mapping, of, optional, text, uuid}
-import play.api.data.validation.Constraints.maxLength
+import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, Call, InjectedController, RequestHeader, Result}
 import play.libs.ws.WSClient
@@ -479,7 +479,7 @@ case class GroupController @Inject() (
     Form(
       mapping(
         "id" -> ignored(UUID.randomUUID()),
-        "name" -> normalizedText.verifying(maxLength(UserGroup.nameMaxLength)),
+        "name" -> normalizedText.verifying(maxLength(UserGroup.nameMaxLength), nonEmpty),
         "description" -> normalizedOptionalText,
         "insee-code" -> list(text),
         "creationDate" -> ignored(ZonedDateTime.now(timeZone)),

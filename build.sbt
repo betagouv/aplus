@@ -100,7 +100,7 @@ libraryDependencies ++= Seq(
   ws,
   "com.lihaoyi" %% "scalatags" % "0.12.0",
   "org.typelevel" %% "cats-core" % "2.9.0",
-  "org.typelevel" %% "cats-effect" % "3.4.10",
+  "org.typelevel" %% "cats-effect" % "3.4.11",
 )
 
 // UI
@@ -114,7 +114,7 @@ libraryDependencies ++= Seq(
 )
 
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "6.18.1"
+libraryDependencies += "io.sentry" % "sentry-logback" % "6.21.0"
 
 // Overrides
 dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"

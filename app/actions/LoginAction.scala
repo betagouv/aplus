@@ -20,10 +20,9 @@ import models._
 import play.api.{Configuration, Logger}
 import play.api.mvc.Results.{InternalServerError, TemporaryRedirect}
 import play.api.mvc._
+import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
 import services.{EventService, SignupService, TokenService, UserService}
-
-import scala.concurrent.{ExecutionContext, Future}
 
 class RequestWithUserData[A](
     val currentUser: User,
@@ -46,16 +45,48 @@ object LoginAction {
 
 @Singleton
 class LoginAction @Inject() (
-    val parser: BodyParsers.Default,
+    parser: BodyParsers.Default,
     userService: UserService,
     eventService: EventService,
     tokenService: TokenService,
     configuration: Configuration,
     signupService: SignupService
 )(implicit ec: ExecutionContext)
-    extends ActionBuilder[RequestWithUserData, AnyContent]
+    extends BaseLoginAction(
+      parser,
+      userService,
+      eventService,
+      tokenService,
+      configuration,
+      signupService,
+      ec
+    ) {
+
+  def withPublicPage(publicPage: Result): BaseLoginAction =
+    new BaseLoginAction(
+      parser,
+      userService,
+      eventService,
+      tokenService,
+      configuration,
+      signupService,
+      ec,
+      publicPage.some
+    )
+
+}
+
+class BaseLoginAction(
+    val parser: BodyParsers.Default,
+    userService: UserService,
+    eventService: EventService,
+    tokenService: TokenService,
+    configuration: Configuration,
+    signupService: SignupService,
+    implicit val executionContext: ExecutionContext,
+    publicPage: Option[Result] = none,
+) extends ActionBuilder[RequestWithUserData, AnyContent]
     with ActionRefiner[Request, RequestWithUserData] {
-  def executionContext = ec
 
   private val log = Logger(classOf[LoginAction])
 
@@ -145,10 +176,15 @@ class LoginAction @Inject() (
         if (routes.HomeController.index.url.contains(path)) {
           Future(userNotLoggedOnLoginPage)
         } else {
-          // Here request.path is supposed to be safe, because it was previously
-          // validated by the router (this class is a Play Action and not a Play Filter)
-          log.warn(s"Accès à la page ${request.path} non autorisé")
-          Future(userNotLogged("Vous devez vous identifier pour accéder à cette page."))
+          publicPage match {
+            case None =>
+              // Here request.path is supposed to be safe, because it was previously
+              // validated by the router (this class is a Play Action and not a Play Filter)
+              log.warn(s"Accès à la page ${request.path} non autorisé")
+              Future(userNotLogged("Vous devez vous identifier pour accéder à cette page."))
+            case Some(page) =>
+              Future.successful(page.asLeft)
+          }
         }
     }
   }
