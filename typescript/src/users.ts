@@ -1,4 +1,4 @@
-import { Tabulator, TabulatorFull } from 'tabulator-tables';
+import { ColumnDefinition, CustomAccessor, Formatter, Options, RowComponent, Tabulator, TabulatorFull } from 'tabulator-tables';
 import "tabulator-tables/dist/css/tabulator.css";
 import { debounceAsync } from './helpers';
 
@@ -70,14 +70,14 @@ async function callSearch(searchString: string): Promise<SearchResult> {
 
 if (window.document.getElementById(usersTableId)) {
   const verticalHeader = false;
-  const editIcon: Tabulator.Formatter = function(cell) {
+  const editIcon: Formatter = function(cell) {
     //plain text value
     let uuid = cell.getRow().getData().id;
     let url = jsRoutes.controllers.UserController.editUser(uuid).url;
     return "<a href='" + url + "' target=\"_blank\" ><i class='fas fa-user-edit'></i></a>";
   };
 
-  const groupsFormatter: Tabulator.Formatter = function(cell) {
+  const groupsFormatter: Formatter = function(cell) {
     const groups = <Array<UserInfosGroup>>cell.getRow().getData().groups;
     let links = "";
     let isNotFirst = false;
@@ -93,14 +93,22 @@ if (window.document.getElementById(usersTableId)) {
     return links;
   };
 
-  const groupNameFormatter: Tabulator.Formatter = function(cell) {
+  const joinWithCommaDownload: CustomAccessor = function(value) {
+    if (value != null) {
+      return value.join(", ");
+    } else {
+      return value;
+    }
+  }
+
+  const groupNameFormatter: Formatter = function(cell) {
     const group = <UserGroupInfos>cell.getRow().getData();
     const groupUrl = jsRoutes.controllers.GroupController.editGroup(group.id).url;
     const html = "<a href=\"" + groupUrl + "\" target=\"_blank\" >" + group.name + "</a>";
     return html;
   };
 
-  const rowFormatter = function(row: Tabulator.RowComponent) {
+  const rowFormatter = function(row: RowComponent) {
     let element = row.getElement(),
       data = row.getData();
     if (data.disabled) {
@@ -108,8 +116,15 @@ if (window.document.getElementById(usersTableId)) {
     }
   };
 
-  const usersColumns: Array<Tabulator.ColumnDefinition> = [
-    { title: "", formatter: editIcon, width: 40, frozen: true },
+  const adminColumns: Array<ColumnDefinition> = [
+    {
+      title: "",
+      field: "id",
+      formatter: editIcon,
+      hozAlign: "center",
+      width: 40,
+      frozen: true,
+    },
     {
       title: "Email",
       field: "email",
@@ -120,8 +135,10 @@ if (window.document.getElementById(usersTableId)) {
       title: "Groupes",
       field: "groupNames",
       formatter: groupsFormatter,
+      sorter: "string",
       headerFilter: "input",
       width: 400,
+      accessorDownload: joinWithCommaDownload,
     },
     {
       title: "Nom Complet",
@@ -133,8 +150,10 @@ if (window.document.getElementById(usersTableId)) {
     {
       title: "BALs",
       field: "groupEmails",
+      sorter: "string",
       headerFilter: "input",
       width: 200,
+      accessorDownload: joinWithCommaDownload,
     },
     {
       title: "Qualité",
@@ -231,8 +250,10 @@ if (window.document.getElementById(usersTableId)) {
     {
       title: "Départements",
       field: "areas",
+      sorter: "string",
       headerFilter: "input",
       width: 200,
+      accessorDownload: joinWithCommaDownload,
     },
     {
       title: "Nom et Prénom",
@@ -257,8 +278,7 @@ if (window.document.getElementById(usersTableId)) {
     },
   ];
 
-
-  const groupsColumns: Array<Tabulator.ColumnDefinition> = [
+  const groupsColumns: Array<ColumnDefinition> = [
     {
       title: "Nom",
       field: "name",
@@ -308,7 +328,19 @@ if (window.document.getElementById(usersTableId)) {
     }
   }
 
-  const usersOptions: Tabulator.Options = {
+  let isAdmin = false;
+  let canSeeEditUserPage = false;
+  const roleDataField = <HTMLElement | null>document.getElementById("user-role");
+  if (roleDataField != null) {
+    if (roleDataField.dataset["isAdmin"] === "true") {
+      isAdmin = true;
+    }
+    if (roleDataField.dataset["canSeeEditUserPage"] === "true") {
+      canSeeEditUserPage = true;
+    }
+  }
+
+  const usersOptionsForAdmins: Options = {
     height: "48vh",
     rowFormatter,
     langs: {
@@ -318,31 +350,67 @@ if (window.document.getElementById(usersTableId)) {
         }
       }
     },
-    columns: usersColumns,
+    columns: adminColumns,
   };
-  usersTable = new TabulatorFull("#" + usersTableId, usersOptions);
-  usersTable.on("tableBuilt", function() {
-    usersTable?.setLocale("fr-fr");
-    usersTable?.setSort("name", "asc");
-  });
 
-  const groupsOptions: Tabulator.Options = {
-    height: "25vh",
+  const excludedFieldsForNonAdmins = ["name", "lastName", "firstName", "helper", "expert", "admin"];
+  if (!canSeeEditUserPage) {
+    excludedFieldsForNonAdmins.push("id");
+  }
+  const usersOptionsForNonAdmins: Options = {
+    height: "75vh",
     rowFormatter,
     langs: {
       "fr-fr": {
+        "data": {
+          "loading": "Chargement",
+          "error": "Erreur",
+        },
         headerFilters: {
           "default": "filtrer..."
         }
       }
     },
-    columns: groupsColumns,
+    columns: adminColumns
+      .filter(item => {
+        if (item.field) {
+          return !excludedFieldsForNonAdmins.includes(item.field);
+        } else {
+          return true;
+        }
+      }),
+    initialSort: [{ column: "areas", dir: "asc" }],
+    ajaxURL: jsRoutes.controllers.UserController.search().url,
+    ajaxResponse(_url, _params, response) {
+      return response.users;
+    }
   };
-  groupsTable = new TabulatorFull("#" + groupsTableId, groupsOptions);
-  groupsTable.on("tableBuilt", function() {
-    groupsTable?.setLocale("fr-fr");
-    groupsTable?.setSort("name", "asc");
+
+  const usersOptions: Options = isAdmin ? usersOptionsForAdmins : usersOptionsForNonAdmins;
+  usersTable = new TabulatorFull("#" + usersTableId, usersOptions);
+  usersTable.on("tableBuilt", function() {
+    usersTable?.setLocale("fr-fr");
   });
+
+  if (document.getElementById(groupsTableId) != null) {
+    const groupsOptions: Options = {
+      height: "25vh",
+      rowFormatter,
+      langs: {
+        "fr-fr": {
+          headerFilters: {
+            "default": "filtrer..."
+          }
+        }
+      },
+      columns: groupsColumns,
+    };
+    groupsTable = new TabulatorFull("#" + groupsTableId, groupsOptions);
+    groupsTable.on("tableBuilt", function() {
+      groupsTable?.setLocale("fr-fr");
+      groupsTable?.setSort("name", "asc");
+    });
+  }
 
 
 
@@ -358,6 +426,30 @@ if (window.document.getElementById(usersTableId)) {
     searchBox.addEventListener("input", fillData);
 
     fillData();
+  }
+
+  const csvDownloadBtn = window.document.getElementById("users-download-btn-csv");
+  if (csvDownloadBtn) {
+    csvDownloadBtn.onclick = () => {
+      const date = new Date().toLocaleDateString(
+        'fr-fr',
+        { year: 'numeric', month: 'numeric', day: 'numeric' }
+      );
+      const filename = 'Utilisateurs - ' + date;
+      usersTable?.download('csv', filename + '.csv');
+    };
+  }
+
+  const xlsxDownloadBtn = window.document.getElementById("users-download-btn-xlsx");
+  if (xlsxDownloadBtn) {
+    xlsxDownloadBtn.onclick = () => {
+      const date = new Date().toLocaleDateString(
+        'fr-fr',
+        { year: 'numeric', month: 'numeric', day: 'numeric' }
+      );
+      const filename = 'Utilisateurs - ' + date;
+      usersTable?.download('xlsx', filename + '.xlsx', { sheetName: 'Utilisateurs' });
+    };
   }
 
 }

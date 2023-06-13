@@ -124,16 +124,6 @@ object Operators {
         payload()
       }
 
-    def asAdminWhoSeesUsersOfArea(areaId: UUID)(errorEventType: EventType, errorMessage: => String)(
-        payload: () => Future[Result]
-    )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
-      if (not(request.currentUser.admin) || not(request.currentUser.canSeeUsersInArea(areaId))) {
-        eventService.log(errorEventType, errorMessage)
-        Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
-      } else {
-        payload()
-      }
-
     def asUserWhoSeesUsersOfArea(areaId: UUID)(errorEventType: EventType, errorMessage: => String)(
         payload: () => Future[Result]
     )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =

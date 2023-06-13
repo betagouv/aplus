@@ -13,7 +13,7 @@
     "dialog-polyfill": "0.5.6",
     "proxy-polyfill": "0.3.2",
     "slim-select": "1.27.1",
-    "tabulator-tables": "5.2.7",
+    "tabulator-tables": "5.5.0",
     "ts-polyfill": "3.8.2",
     "unfetch": "4.2.0",
     "unorm": "1.6.0",
@@ -22,7 +22,7 @@
   "devDependencies": {
     "@babel/core": "7.21.8",
     "@babel/preset-env": "7.21.5",
-    "@types/tabulator-tables": "5.2.0",
+    "@types/tabulator-tables": "5.4.8",
     "babel-loader": "9.1.2",
     "copy-webpack-plugin": "11.0.0",
     "css-loader": "6.7.4",
