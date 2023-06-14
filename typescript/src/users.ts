@@ -1,3 +1,4 @@
+/* global jsRoutes */
 import { ColumnDefinition, CustomAccessor, Formatter, Options, RowComponent, Tabulator, TabulatorFull } from 'tabulator-tables';
 import "tabulator-tables/dist/css/tabulator.css";
 import { debounceAsync } from './helpers';
@@ -99,7 +100,7 @@ if (window.document.getElementById(usersTableId)) {
     } else {
       return value;
     }
-  }
+  };
 
   const groupNameFormatter: Formatter = function(cell) {
     const group = <UserGroupInfos>cell.getRow().getData();
@@ -372,7 +373,7 @@ if (window.document.getElementById(usersTableId)) {
       }
     },
     columns: adminColumns
-      .filter(item => {
+      .filter((item) => {
         if (item.field) {
           return !excludedFieldsForNonAdmins.includes(item.field);
         } else {
