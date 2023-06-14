@@ -252,7 +252,7 @@ case class UserController @Inject() (
       def toUserInfos(usersAndGroups: (List[User], List[UserGroup])): List[UserInfos] = {
         val (users, groups) = usersAndGroups
         val idToGroup = groups.map(group => (group.id, group)).toMap
-        users.map(user => UserInfos.fromUser(user, idToGroup))
+        users.map(user => UserInfos.fromUser(user, request.rights, idToGroup))
       }
       val area = request
         .getQueryString(Keys.QueryParam.searchAreaId)

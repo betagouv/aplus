@@ -141,12 +141,16 @@ object ApiModel {
   }
 
   object UserInfos {
-    case class Group(id: UUID, name: String)
+    case class Group(id: UUID, name: String, currentUserCanEditGroup: Boolean)
 
     implicit val userInfosGroupFormat = Json.format[UserInfos.Group]
     implicit val userInfosFormat = Json.format[UserInfos]
 
-    def fromUser(user: User, idToGroup: Map[UUID, UserGroup]): UserInfos = {
+    def fromUser(
+        user: User,
+        rights: Authorization.UserRights,
+        idToGroup: Map[UUID, UserGroup]
+    ): UserInfos = {
       val completeName =
         if (user.sharedAccount)
           user.name
@@ -171,7 +175,9 @@ object ApiModel {
         groupNames = user.groupIds.flatMap(idToGroup.get).map(_.name),
         groups = user.groupIds
           .flatMap(idToGroup.get)
-          .map(group => UserInfos.Group(group.id, group.name)),
+          .map(group =>
+            UserInfos.Group(group.id, group.name, Authorization.canEditGroup(group)(rights))
+          ),
         groupEmails = user.groupIds.flatMap(idToGroup.get).flatMap(_.email),
         groupAdmin = user.groupAdminRoleName.nonEmpty,
         admin = user.adminRoleName.nonEmpty,

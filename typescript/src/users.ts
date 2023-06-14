@@ -16,6 +16,7 @@ let groupsTable: Tabulator | null = null;
 interface UserInfosGroup {
   id: string;
   name: string;
+  currentUserCanEditGroup: boolean;
 }
 
 interface UserInfos {
@@ -88,7 +89,11 @@ if (window.document.getElementById(usersTableId)) {
       if (isNotFirst) {
         links += ", ";
       }
-      links += "<a href=\"" + groupUrl + "\" target=\"_blank\" >" + groupName + "</a>";
+      if (group.currentUserCanEditGroup) {
+        links += "<a href=\"" + groupUrl + "\" target=\"_blank\" >" + groupName + "</a>";
+      } else {
+        links += groupName;
+      }
       isNotFirst = true;
     });
     return links;
