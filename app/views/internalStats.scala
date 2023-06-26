@@ -1,11 +1,11 @@
 package views
 
 import cats.syntax.all._
-import scalatags.Text.all._
 import java.time.LocalDate
 import java.util.UUID
 import models.Organisation
 import modules.AppConfig
+import scalatags.Text.all._
 
 object internalStats {
 

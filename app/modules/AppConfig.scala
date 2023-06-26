@@ -97,15 +97,15 @@ class AppConfig @Inject() (configuration: Configuration) {
     configuration.getOptional[String]("app.statistics.numberOfNewApplicationsUrl")
 
   val statisticsPercentOfRelevantApplicationsUrl: Option[String] =
-    configuration.getOptional[String](" app.statistics.percentOfRelevantApplicationsUrl")
+    configuration.getOptional[String]("app.statistics.percentOfRelevantApplicationsUrl")
 
   val statisticsPercentOfApplicationsByStatusUrl: Option[String] =
-    configuration.getOptional[String](" app.statistics.percentOfApplicationsByStatusUrl")
+    configuration.getOptional[String]("app.statistics.percentOfApplicationsByStatusUrl")
 
   val statisticsNumberOfApplicationsByUsefulnessUrl: Option[String] =
-    configuration.getOptional[String](" app.statistics.numberOfApplicationsByUsefulnessUrl")
+    configuration.getOptional[String]("app.statistics.numberOfApplicationsByUsefulnessUrl")
 
   val statisticsTimeToProcessApplicationsUrl: Option[String] =
-    configuration.getOptional[String](" app.statistics.timeToProcessApplicationsUrl")
+    configuration.getOptional[String]("app.statistics.timeToProcessApplicationsUrl")
 
 }
