@@ -12,6 +12,7 @@ import helper.ScalatagsHelpers.writeableOf_Modifier
 import helper.StringHelper.{CanonizeString, NonEmptyTrimmedString}
 import helper.Time.zonedDateTimeOrdering
 import helper.{Hash, Time, UUIDHelper}
+import helper.TwirlImports.toHtml
 import models.Answer.AnswerType
 import models.EventType._
 import models._
@@ -734,7 +735,7 @@ case class ApplicationController @Inject() (
     )
 
   private val statsCSP =
-    "connect-src 'self' https://stats.data.gouv.fr; base-uri 'none'; img-src 'self' data: stats.data.gouv.fr; form-action 'self'; frame-src 'self'; style-src 'self' 'unsafe-inline' stats.data.gouv.fr; object-src 'none'; script-src 'self' 'unsafe-inline' stats.data.gouv.fr; default-src 'none'; font-src 'self'; frame-ancestors 'self'"
+    "connect-src 'self' https://stats.data.gouv.fr; base-uri 'none'; img-src 'self' data: stats.data.gouv.fr; form-action 'self'; frame-src 'self' *.aplus.beta.gouv.fr; style-src 'self' 'unsafe-inline' stats.data.gouv.fr; object-src 'none'; script-src 'self' 'unsafe-inline' stats.data.gouv.fr; default-src 'none'; font-src 'self'; frame-ancestors 'self'"
 
   val statsAction = loginAction.withPublicPage(Ok(views.publicStats.page))
 
@@ -771,7 +772,7 @@ case class ApplicationController @Inject() (
       queryOrganisationIds.filter(id => Authorization.canObserveOrganisation(id)(rights))
     }
 
-    val groupIds =
+    val validQueryGroupIds =
       if (organisationIds.nonEmpty) Nil
       else if (Authorization.isAdmin(rights)) {
         queryGroupIds
@@ -779,26 +780,63 @@ case class ApplicationController @Inject() (
         queryGroupIds.intersect(user.groupIds)
       }
 
-    val cacheKey =
-      Authorization.isAdmin(rights).toString +
-        ".stats." +
-        Hash.sha256(
-          areaIds.toString + organisationIds.toString + groupIds.toString +
-            creationMinDate.toString + creationMaxDate.toString
-        )
+    val dropdownGroupIds = user.groupIds
 
-    userGroupService.byIdsFuture(user.groupIds).flatMap { currentUserGroups =>
-      cache
-        .getOrElseUpdate[Html](cacheKey, 1.hours)(
-          generateStats(
-            areaIds,
-            organisationIds,
-            groupIds,
-            creationMinDate,
-            creationMaxDate,
-            rights
+    val allGroupsIds = (dropdownGroupIds ::: validQueryGroupIds).distinct
+    userGroupService.byIdsFuture(allGroupsIds).flatMap { groups =>
+      val groupsThatCanBeFilteredBy =
+        groups.filter(group => dropdownGroupIds.contains[UUID](group.id))
+      val charts: Future[Html] =
+        if (
+          (Authorization.isAdmin(rights) && request.getQueryString("oldstats").isEmpty) ||
+          request.getQueryString("newstats").nonEmpty
+        ) {
+          val validQueryGroups = groups.filter(group => validQueryGroupIds.contains[UUID](group.id))
+          val creatorGroupIds = validQueryGroups
+            .filter(group =>
+              group.organisationId
+                .map(id => Organisation.organismesAidants.map(_.id).contains[Organisation.Id](id))
+                .getOrElse(false)
+            )
+            .map(_.id)
+          val invitedGroupIds =
+            validQueryGroupIds.filterNot(id => creatorGroupIds.contains[UUID](id))
+
+          Future.successful(
+            views.internalStats.charts(
+              views.internalStats.Filters(
+                startDate = creationMinDate,
+                endDate = creationMaxDate,
+                areaIds,
+                organisationIds,
+                creatorGroupIds,
+                invitedGroupIds,
+              ),
+              config
+            )
           )
-        )
+        } else {
+          val cacheKey =
+            Authorization.isAdmin(rights).toString +
+              ".stats." +
+              Hash.sha256(
+                areaIds.toString + organisationIds.toString + validQueryGroupIds.toString +
+                  creationMinDate.toString + creationMaxDate.toString
+              )
+
+          cache
+            .getOrElseUpdate[Html](cacheKey, 1.hours)(
+              generateStats(
+                areaIds,
+                organisationIds,
+                validQueryGroupIds,
+                creationMinDate,
+                creationMaxDate,
+                rights
+              )
+            )
+        }
+      charts
         .map { html =>
           eventService.log(
             StatsShowed,
@@ -812,10 +850,10 @@ case class ApplicationController @Inject() (
             views.html.stats.page(user, rights)(
               formUrl,
               html,
-              groupsThatCanBeFilteredBy = currentUserGroups,
+              groupsThatCanBeFilteredBy,
               areaIds,
               organisationIds,
-              groupIds,
+              validQueryGroupIds,
               creationMinDate,
               creationMaxDate
             )
