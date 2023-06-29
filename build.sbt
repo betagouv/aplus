@@ -75,7 +75,7 @@ scalacOptions ++= Seq(
 // https://typelevel.org/cats-effect/docs/getting-started
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
-lazy val anormDependency = "org.playframework.anorm" %% "anorm" % "2.7.0"
+lazy val anormDependency = "org.playframework.anorm" %% "anorm" % "2.6.10"
 
 libraryDependencies ++= Seq(
   ws,
