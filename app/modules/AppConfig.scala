@@ -93,4 +93,19 @@ class AppConfig @Inject() (configuration: Configuration) {
 
   val anonymizedExportEnabled: Boolean = configuration.get[Boolean]("app.anonymizedExport.enabled")
 
+  val statisticsNumberOfNewApplicationsUrl: Option[String] =
+    configuration.getOptional[String]("app.statistics.numberOfNewApplicationsUrl")
+
+  val statisticsPercentOfRelevantApplicationsUrl: Option[String] =
+    configuration.getOptional[String]("app.statistics.percentOfRelevantApplicationsUrl")
+
+  val statisticsPercentOfApplicationsByStatusUrl: Option[String] =
+    configuration.getOptional[String]("app.statistics.percentOfApplicationsByStatusUrl")
+
+  val statisticsNumberOfApplicationsByUsefulnessUrl: Option[String] =
+    configuration.getOptional[String]("app.statistics.numberOfApplicationsByUsefulnessUrl")
+
+  val statisticsTimeToProcessApplicationsUrl: Option[String] =
+    configuration.getOptional[String]("app.statistics.timeToProcessApplicationsUrl")
+
 }
