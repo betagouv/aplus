@@ -20,8 +20,8 @@ object internalStats {
 
   def charts(filters: Filters, config: AppConfig): Frag = {
     // https://www.metabase.com/docs/latest/questions/sharing/public-links#appearance-parameters
-    val appearance = "#titled=false&bordered=false" +
-      "&hide_parameters=start_date,end_date"
+    val appearance = "#bordered=false" +
+      "&hide_parameters=start_date,end_date,area_id,organisation_id,creator_user_group_id,invited_user_group_id"
     val startDate = s"start_date=${filters.startDate.toString}"
     val endDate = s"end_date=${filters.endDate.toString}"
     val areas =
