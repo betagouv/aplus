@@ -279,12 +279,6 @@ object application {
   ): Frag =
     frag(
       application.answers.map { answer =>
-        val canSeeAnswerMessage =
-          currentUser.instructor ||
-            currentUser.admin ||
-            currentUser.groupAdmin ||
-            answer.visibleByHelpers ||
-            answer.creatorUserID === currentUser.id
         frag(
           answer.invitedUsers.nonEmpty.some
             .filter(identity)
@@ -312,7 +306,9 @@ object application {
                 )
               )
             ),
-          canSeeAnswerMessage.some
+          Authorization
+            .canSeeAnswer(answer, application)(currentUserRights)
+            .some
             .filter(identity)
             .map { _ =>
               val showArchiveButton =
