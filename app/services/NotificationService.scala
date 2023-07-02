@@ -109,6 +109,10 @@ class NotificationService @Inject() (
       .flatMap { user =>
         if (user.id === answer.creatorUserID) {
           None
+        } else if (
+          !Authorization.canSeeAnswer(answer, application)(Authorization.readUserRights(user))
+        ) {
+          None
         } else if (answer.invitedUsers.contains(user.id)) {
           Some(generateInvitationEmail(application, Some(answer))(user))
         } else {
@@ -117,13 +121,17 @@ class NotificationService @Inject() (
       }
       .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
 
+    val usersEmails: Set[String] = users.map(_.email).toSet
+
     // Send emails to groups
     allGroups
       .collect {
-        case group if alreadyPresentGroupIds.contains(group.id) =>
-          generateNotificationBALEmail(application, answer.some, users)(group)
-        case group if !alreadyPresentGroupIds.contains(group.id) =>
-          generateNotificationBALEmail(application, Option.empty[Answer], users)(group)
+        case group @ UserGroup(id, _, _, _, _, _, _, Some(email), _, _)
+            if !usersEmails.contains(email) =>
+          if (alreadyPresentGroupIds.contains(id))
+            generateNotificationBALEmail(application, answer.some, users)(group)
+          else
+            generateNotificationBALEmail(application, Option.empty[Answer], users)(group)
       }
       .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
 
