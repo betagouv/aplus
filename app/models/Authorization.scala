@@ -238,6 +238,12 @@ object Authorization {
       case _                       => false
     }
 
+  def isAnswerCreator(answer: Answer): Check =
+    _.rights.exists {
+      case UserRight.HasUserId(id) => answer.creatorUserID === id
+      case _                       => false
+    }
+
   def isInvitedOn(application: Application): Check =
     _.rights.exists {
       case UserRight.HasUserId(id) => application.invitedUsers.isDefinedAt(id)
@@ -257,6 +263,16 @@ object Authorization {
         )
       validCase1 || validCase2 || validCase3 || validCase4
     }
+
+  def canSeeAnswer(answer: Answer, application: Application): Check =
+    rights =>
+      canSeeApplication(application)(rights) && {
+        isInstructor(rights) ||
+        isAdmin(rights) ||
+        (isManager(rights) && answer.visibleByHelpers) ||
+        answer.visibleByHelpers ||
+        isAnswerCreator(answer)(rights)
+      }
 
   def canSeePrivateDataOfApplication(application: Application): Check =
     rights => {
