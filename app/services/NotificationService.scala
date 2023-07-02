@@ -109,6 +109,10 @@ class NotificationService @Inject() (
       .flatMap { user =>
         if (user.id === answer.creatorUserID) {
           None
+        } else if (
+          !Authorization.canSeeAnswer(answer, application)(Authorization.readUserRights(user))
+        ) {
+          None
         } else if (answer.invitedUsers.contains(user.id)) {
           Some(generateInvitationEmail(application, Some(answer))(user))
         } else {
