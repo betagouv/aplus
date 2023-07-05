@@ -115,19 +115,6 @@ class UserService @Inject() (
         .as(simpleUser.*)
     }.map(_.toUser)
 
-  // Note: this function is used in the stats,
-  // pseudonymization is possible (removing name, etc.)
-  def byGroupIdsAnonymous(ids: List[UUID]): Future[List[User]] =
-    Future {
-      db.withConnection { implicit connection =>
-        SQL(s"""SELECT $fieldsInSelect, '' as name, '' as email, '' as qualite
-                FROM "user"
-                WHERE ARRAY[{ids}]::uuid[] && group_ids""")
-          .on("ids" -> ids.distinct)
-          .as(simpleUser.*)
-      }.map(_.toUser)
-    }
-
   def byId(id: UUID, includeDisabled: Boolean = false): Option[User] = {
     val results = byIds(List(id), includeDisabled)
     assert(results.length <= 1)

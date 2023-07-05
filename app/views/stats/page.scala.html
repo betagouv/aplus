@@ -4,7 +4,6 @@
 @(currentUser: User, currentUserRights: Authorization.UserRights)(formUrl: Call, result: Html, groupsThatCanBeFilteredBy: List[UserGroup], selectedAreaIds: List[UUID], selectedOrganisationIds: List[Organisation.Id], selectedGroupIds: List[UUID], creationMinDate: LocalDate, creationMaxDate: LocalDate)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 @main(currentUser, currentUserRights)(s"Stats")  {
-    @webJarsUtil.locate("Chart.bundle.min.js").script()
 }{
     <div class="mdl-cell mdl-cell--12-col">
         @helper.form(formUrl, "method" -> "post") {
