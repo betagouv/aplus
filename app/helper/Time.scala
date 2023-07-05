@@ -71,7 +71,7 @@ object Time {
     recursion(toDate).toList
   }
 
-  implicit final val zonedDateTimeInstance =
+  implicit final val zonedDateTimeInstance: Order[ZonedDateTime] =
     new Order[ZonedDateTime] {
       override def compare(x: ZonedDateTime, y: ZonedDateTime): Int = x.compareTo(y)
     }
