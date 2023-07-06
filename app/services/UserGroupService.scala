@@ -137,7 +137,7 @@ class UserGroupService @Inject() (
           internal_support_comment = ${group.internalSupportComment}
           WHERE id = ${group.id}::uuid
        """.executeUpdate() === 1
-    // TODO: insee_code = array[${group.inseeCode}]::character varying(5)[], have been remove temporary
+      // TODO: insee_code = array[${group.inseeCode}]::character varying(5)[], have been remove temporary
     }
 
   def allOrThrow: List[UserGroup] =
