@@ -277,7 +277,7 @@ object Application {
     @SuppressWarnings(Array("scalafix:DisableSyntax.=="))
     implicit val Eq: Eq[Status] = (x: Status, y: Status) => x == y
 
-    implicit val Show = new Show[Status] {
+    implicit val Show: Show[Status] = new Show[Status] {
 
       override def show(status: Status) = status match {
         case Archived   => "Archivée"

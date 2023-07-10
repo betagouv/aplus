@@ -21,10 +21,12 @@ object dataModels {
 
     object AnswerType {
 
-      implicit val answerTypeReads =
+      implicit val answerTypeReads: Reads[AnswerType] =
         implicitly[Reads[String]].map(models.Answer.AnswerType.fromString)
 
-      implicit val answerTypeWrites = implicitly[Writes[String]].contramap[AnswerType](_.name)
+      implicit val answerTypeWrites: Writes[AnswerType] =
+        implicitly[Writes[String]].contramap[AnswerType](_.name)
+
     }
 
     import AnswerType.{answerTypeReads, answerTypeWrites}
@@ -124,7 +126,7 @@ object dataModels {
         .read[UUID]
         .and((__ \ "last_seen_date").read[Instant])(models.Application.SeenByUser.apply _)
 
-      implicit val seenByUserWrites = (__ \ "user_id")
+      implicit val seenByUserWrites: Writes[SeenByUser] = (__ \ "user_id")
         .write[UUID]
         .and((__ \ "last_seen_date").write[Instant])(unlift(models.Application.SeenByUser.unapply))
 
@@ -213,14 +215,15 @@ object dataModels {
 
   object SmsFormats {
     import models.Sms
-    implicit val smsIdReads = implicitly[Reads[String]].map(Sms.ApiId.apply)
+    implicit val smsIdReads: Reads[Sms.ApiId] = implicitly[Reads[String]].map(Sms.ApiId.apply)
 
-    implicit val smsIdWrites =
+    implicit val smsIdWrites: Writes[Sms.ApiId] =
       implicitly[Writes[String]].contramap((id: Sms.ApiId) => id.underlying)
 
-    implicit val smsPhoneNumberReads = implicitly[Reads[String]].map(Sms.PhoneNumber.apply)
+    implicit val smsPhoneNumberReads: Reads[Sms.PhoneNumber] =
+      implicitly[Reads[String]].map(Sms.PhoneNumber.apply)
 
-    implicit val smsPhoneNumberWrites =
+    implicit val smsPhoneNumberWrites: Writes[Sms.PhoneNumber] =
       implicitly[Writes[String]].contramap((id: Sms.PhoneNumber) => id.internationalPhoneNumber)
 
     // Not implicits, so they are not picked as serializers/deserializers of `Sms`
