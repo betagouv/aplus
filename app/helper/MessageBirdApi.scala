@@ -23,7 +23,7 @@ object MessageBirdApi {
   case class SendSmsRequest(originator: String, body: String, recipients: List[String])
 
   object SendSmsRequest {
-    implicit val writes = Json.writes[SendSmsRequest]
+    implicit val writes: Writes[SendSmsRequest] = Json.writes[SendSmsRequest]
   }
 
   /** https://developers.messagebird.com/api/sms-messaging/#the-message-object */
@@ -40,8 +40,11 @@ object MessageBirdApi {
     case class Id(underlying: String)
 
     object Id {
-      implicit val reads = implicitly[Reads[String]].map(Id.apply)
-      implicit val writes = implicitly[Writes[String]].contramap((id: Sms.Id) => id.underlying)
+      implicit val reads: Reads[Id] = implicitly[Reads[String]].map(Id.apply)
+
+      implicit val writes: Writes[Id] =
+        implicitly[Writes[String]].contramap((id: Sms.Id) => id.underlying)
+
     }
 
     case class RecipientItem(
@@ -53,10 +56,10 @@ object MessageBirdApi {
 
     case class Recipients(items: List[RecipientItem])
 
-    implicit val itemFormats = Json.format[RecipientItem]
-    implicit val recipientFormats = Json.format[Recipients]
-    implicit val reads = Json.reads[Sms]
-    implicit val writes = Json.writes[Sms]
+    implicit val itemFormats: Format[RecipientItem] = Json.format[RecipientItem]
+    implicit val recipientFormats: Format[Recipients] = Json.format[Recipients]
+    implicit val reads: Reads[Sms] = Json.reads[Sms]
+    implicit val writes: Writes[Sms] = Json.writes[Sms]
 
   }
 
