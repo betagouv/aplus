@@ -7,7 +7,7 @@ import views.html.helper.FieldConstructor
 
 /** Independent from the model. */
 object MDLForms {
-  implicit val inputFields = FieldConstructor(views.html.helpers.input.f)
+  implicit val inputFields: FieldConstructor = FieldConstructor(views.html.helpers.input.f)
 
   object repeatMap {
 

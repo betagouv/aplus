@@ -20,8 +20,11 @@ object OvhApi {
   case class SmsId(underlying: Long)
 
   object SmsId {
-    implicit val reads = implicitly[Reads[Long]].map(SmsId.apply)
-    implicit val writes = implicitly[Writes[Long]].contramap((id: SmsId) => id.underlying)
+    implicit val reads: Reads[SmsId] = implicitly[Reads[Long]].map(SmsId.apply)
+
+    implicit val writes: Writes[SmsId] =
+      implicitly[Writes[Long]].contramap((id: SmsId) => id.underlying)
+
   }
 
   /** https://eu.api.ovh.com/console/#/sms/{serviceName}/jobs#POST */
@@ -35,8 +38,8 @@ object OvhApi {
   )
 
   object SmsJob {
-    implicit val reads = Json.reads[SmsJob]
-    implicit val writes = Json.writes[SmsJob]
+    implicit val reads: Reads[SmsJob] = Json.reads[SmsJob]
+    implicit val writes: Writes[SmsJob] = Json.writes[SmsJob]
   }
 
   case class SmsSendingReport(
@@ -47,8 +50,8 @@ object OvhApi {
   )
 
   object SmsSendingReport {
-    implicit val reads = Json.reads[SmsSendingReport]
-    implicit val writes = Json.writes[SmsSendingReport]
+    implicit val reads: Reads[SmsSendingReport] = Json.reads[SmsSendingReport]
+    implicit val writes: Writes[SmsSendingReport] = Json.writes[SmsSendingReport]
   }
 
   case class IncomingSms(
@@ -60,8 +63,8 @@ object OvhApi {
   )
 
   object IncomingSms {
-    implicit val reads = Json.reads[IncomingSms]
-    implicit val writes = Json.writes[IncomingSms]
+    implicit val reads: Reads[IncomingSms] = Json.reads[IncomingSms]
+    implicit val writes: Writes[IncomingSms] = Json.writes[IncomingSms]
   }
 
 }
