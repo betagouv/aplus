@@ -624,6 +624,17 @@ a {
     text-align: center;
 }
 
+.disabled-users-toggle {
+    cursor: pointer;
+    padding: 4px;
+    text-decoration: underline;
+    text-align: center;
+}
+
+.disabled-users-toggle:hover {
+    background: #f3f4f6;
+}
+
 
 /** List of classes with only 1 property (prefixed by `single--`) **/
 .single--margin-top--8px {
