@@ -63,7 +63,7 @@ function setupDisabledUsersToggle() {
       toggle.addEventListener('keydown', function(e) {
         // '13' is the key code for Enter
         if (e.keyCode === 13) {
-          toggleHiddenRows()
+          toggleHiddenRows();
         }
       });
     });
