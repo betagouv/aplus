@@ -1,5 +1,5 @@
 /* global jsRoutes */
-import { Tabulator, TabulatorFull } from 'tabulator-tables';
+import { CellEditEventCallback, CellEventCallback, ColumnDefinition, Formatter, Options, Tabulator, TabulatorFull } from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.css';
 
 const tableId = 'tabulator-france-services-table';
@@ -456,7 +456,7 @@ if (window.document.getElementById(tableId)) {
   // Tables Config
   //
 
-  const deleteColBase: Tabulator.ColumnDefinition = {
+  const deleteColBase: ColumnDefinition = {
     title: '',
     field: '',
     hozAlign: 'center',
@@ -465,18 +465,18 @@ if (window.document.getElementById(tableId)) {
     download: false,
   };
 
-  const addTableDeleteColCellFormatter: Tabulator.Formatter =
+  const addTableDeleteColCellFormatter: Formatter =
     (cell) => {
       cell.getElement().classList.add('mdl-color--red-200');
       return '<i class="fas fa-close"></i>';
     };
 
-  const addTableDeleteColCellClick: Tabulator.CellEventCallback =
+  const addTableDeleteColCellClick: CellEventCallback =
     (_e, cell) => {
       cell.getRow().delete();
     };
 
-  const matriculeColBase: Tabulator.ColumnDefinition = {
+  const matriculeColBase: ColumnDefinition = {
     title: 'Matricule',
     field: 'matricule',
     hozAlign: 'right',
@@ -492,7 +492,7 @@ if (window.document.getElementById(tableId)) {
     },
   };
 
-  const matriculeColEdited: Tabulator.CellEditEventCallback =
+  const matriculeColEdited: CellEditEventCallback =
     (cell) => {
       const oldMatricule = cell.getOldValue();
       const matricule = cell.getValue();
@@ -536,7 +536,7 @@ if (window.document.getElementById(tableId)) {
       return options;
     });
 
-  const addTableGroupColEdited: Tabulator.CellEditEventCallback =
+  const addTableGroupColEdited: CellEditEventCallback =
     (cell) => {
       const groupId = cell.getValue();
       const group = groupList.find((g) => g.id === groupId);
@@ -545,7 +545,7 @@ if (window.document.getElementById(tableId)) {
       }
     };
 
-  const groupColBase: Tabulator.ColumnDefinition = {
+  const groupColBase: ColumnDefinition = {
     title: 'Groupe',
     field: 'groupId',
     headerFilter: 'input',
@@ -565,36 +565,36 @@ if (window.document.getElementById(tableId)) {
     }
   };
 
-  const groupCol: Tabulator.ColumnDefinition = Object.assign(groupColEditorParams, groupColBase);
+  const groupCol: ColumnDefinition = Object.assign(groupColEditorParams, groupColBase);
 
-  const nameCol: Tabulator.ColumnDefinition = {
+  const nameCol: ColumnDefinition = {
     title: 'Nom',
     field: 'name',
     headerFilter: 'input',
     width: 300,
   };
 
-  const descriptionCol: Tabulator.ColumnDefinition = {
+  const descriptionCol: ColumnDefinition = {
     title: 'Description',
     field: 'description',
     headerFilter: 'input',
     maxWidth: 300,
   };
 
-  const areasCol: Tabulator.ColumnDefinition = {
+  const areasCol: ColumnDefinition = {
     title: 'Départements',
     field: 'areas',
     headerFilter: 'input',
     maxWidth: 300,
   };
 
-  const organisationCol: Tabulator.ColumnDefinition = {
+  const organisationCol: ColumnDefinition = {
     title: 'Organisme',
     field: 'organisation',
     headerFilter: 'input',
   };
 
-  const emailCol: Tabulator.ColumnDefinition = {
+  const emailCol: ColumnDefinition = {
     title: 'BAL',
     field: 'email',
     headerFilter: 'input',
@@ -602,21 +602,21 @@ if (window.document.getElementById(tableId)) {
     maxWidth: 300,
   };
 
-  const publicNoteCol: Tabulator.ColumnDefinition = {
+  const publicNoteCol: ColumnDefinition = {
     title: 'Description détaillée',
     field: 'publicNote',
     headerFilter: 'input',
     maxWidth: 300,
   };
 
-  const addTableAreaCodeCol: Tabulator.ColumnDefinition = {
+  const addTableAreaCodeCol: ColumnDefinition = {
     title: 'Code INSEE',
     field: 'areaCode',
     headerFilter: 'input',
     editor: 'input',
   };
 
-  const addTableInternalCommentCol: Tabulator.ColumnDefinition = {
+  const addTableInternalCommentCol: ColumnDefinition = {
     title: 'Commentaire interne',
     field: 'internalSupportComment',
     headerFilter: 'input',
@@ -624,7 +624,7 @@ if (window.document.getElementById(tableId)) {
     maxWidth: 300,
   };
 
-  const options: Tabulator.Options = {
+  const options: Options = {
     height: '50vh',
     langs: {
       'fr-fr': {
@@ -655,7 +655,7 @@ if (window.document.getElementById(tableId)) {
   };
   table = new TabulatorFull('#' + tableId, options);
 
-  const addOptions: Tabulator.Options = {
+  const addOptions: Options = {
     langs: {
       'fr-fr': {
         'data': {

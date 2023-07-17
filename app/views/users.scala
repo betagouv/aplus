@@ -22,7 +22,7 @@ object users {
       mainInfos: MainInfos
   ): Html =
     views.html.main(currentUser, currentUserRights, maxWidth = false)(
-      s"Gestion des groupes utilisateurs - ${selectedArea.name}"
+      s"Gestion des utilisateurs - ${selectedArea.name}"
     )(
       views.helpers.head.publicCss("stylesheets/newForm.css")
     )(
@@ -75,14 +75,43 @@ object users {
             )
           ),
         div(id := "current-area-value", data("area-id") := selectedArea.id.toString),
+        div(
+          id := "user-role",
+          data("is-admin") := currentUser.admin.toString,
+          data("can-see-edit-user-page") := Authorization
+            .canSeeEditUserPage(currentUserRights)
+            .toString,
+        ),
         currentUser.admin.some.filter(identity).map(_ => searchForm()),
         div(cls := "mdl-cell mdl-cell--12-col", id := "tabulator-users-table"),
-        div(cls := "mdl-cell mdl-cell--12-col", id := "tabulator-groups-table"),
         currentUser.admin.some
           .filter(identity)
-          .map(_ => views.addGroup.innerForm(currentUser, selectedArea))
+          .map(_ => div(cls := "mdl-cell mdl-cell--12-col", id := "tabulator-groups-table")),
+        currentUser.admin.some
+          .filter(identity)
+          .map(_ => views.addGroup.innerForm(currentUser, selectedArea)),
+        div(
+          cls := "mdl-cell",
+          a(
+            id := "users-download-btn-csv",
+            href := "#",
+            i(cls := "fas fa-download"),
+            " Téléchargement au format CSV"
+          )
+        ),
+        div(
+          cls := "mdl-cell",
+          a(
+            id := "users-download-btn-xlsx",
+            href := "#",
+            i(cls := "fas fa-download"),
+            " Téléchargement au format XLSX"
+          )
+        ),
       )
-    )(Nil)
+    )(
+      views.helpers.head.publicScript("generated-js/xlsx.full.min.js")
+    )
 
   def searchForm(): Tag =
     div(

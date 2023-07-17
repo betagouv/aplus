@@ -13,8 +13,6 @@ import helper.{Time, UUIDHelper}
 import javax.inject.{Inject, Singleton}
 import models.EventType.{
   AddUserError,
-  AllUserCSVUnauthorized,
-  AllUserCsvShowed,
   AllUserIncorrectSetup,
   AllUserUnauthorized,
   CGUShowed,
@@ -64,7 +62,7 @@ import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
-import serializers.{Keys, UserAndGroupCsvSerializer}
+import serializers.Keys
 import serializers.ApiModel.{SearchResult, UserGroupInfos, UserInfos}
 import services._
 
@@ -234,7 +232,7 @@ case class UserController @Inject() (
           val applications = applicationService.allByArea(selectedArea.id, anonymous = true)
           eventService.log(UsersShowed, "Visualise la vue des utilisateurs")
           val result = request.getQueryString(Keys.QueryParam.vue).getOrElse("nouvelle") match {
-            case "nouvelle" if request.currentUser.admin =>
+            case "nouvelle" =>
               views.users.page(request.currentUser, request.rights, selectedArea)
             case _ =>
               views.html.allUsersByGroup(request.currentUser, request.rights)(
@@ -249,99 +247,12 @@ case class UserController @Inject() (
       }
     }
 
-  def allCSV(areaId: UUID): Action[AnyContent] =
-    loginAction.async { implicit request: RequestWithUserData[AnyContent] =>
-      asAdminWhoSeesUsersOfArea(areaId)(
-        AllUserCSVUnauthorized,
-        "Accès non autorisé à l'export utilisateur"
-      ) { () =>
-        val area = Area.fromId(areaId).get
-        val usersFuture: Future[List[User]] = if (areaId === Area.allArea.id) {
-          if (Authorization.isAdmin(request.rights)) {
-            // Includes users without any group for debug purpose
-            userService.all
-          } else {
-            groupService.byAreas(request.currentUser.areas).map { groupsOfArea =>
-              userService.byGroupIds(groupsOfArea.map(_.id), includeDisabled = true)
-            }
-          }
-        } else {
-          groupService.byArea(areaId).map { groupsOfArea =>
-            userService.byGroupIds(groupsOfArea.map(_.id), includeDisabled = true)
-          }
-        }
-        val groupsFuture: Future[List[UserGroup]] =
-          groupService.byAreas(request.currentUser.areas)
-        eventService.log(AllUserCsvShowed, "Visualise le CSV de tous les zones de l'utilisateur")
-
-        usersFuture.zip(groupsFuture).map { case (users, groups) =>
-          def userToCSV(user: User): String = {
-            val userGroups = user.groupIds.flatMap(id => groups.find(_.id === id))
-            List[String](
-              user.id.toString,
-              user.firstName.orEmpty,
-              user.lastName.orEmpty,
-              user.email,
-              Time.formatPatternFr(user.creationDate, "dd-MM-YYYY-HHhmm"),
-              if (user.sharedAccount) "Compte Partagé" else " ",
-              if (user.sharedAccount) user.name else " ",
-              user.helperRoleName.getOrElse(""),
-              if (user.instructor) "Instructeur" else " ",
-              if (user.groupAdmin) "Responsable" else " ",
-              if (user.expert) "Expert" else " ",
-              if (user.admin) "Admin" else " ",
-              if (user.disabled) "Désactivé" else " ",
-              user.communeCode,
-              user.areas.flatMap(Area.fromId).map(_.name).mkString(", "),
-              userGroups.map(_.name).mkString(", "),
-              userGroups
-                .flatMap(_.organisation)
-                .map(_.shortName)
-                .mkString(", "),
-              if (user.cguAcceptationDate.nonEmpty) "CGU Acceptées" else "",
-              if (user.newsletterAcceptationDate.nonEmpty) "Newsletter Acceptée" else ""
-            ).mkString(";")
-          }
-
-          val headers = List[String](
-            "Id",
-            UserAndGroupCsvSerializer.USER_FIRST_NAME.prefixes.head,
-            UserAndGroupCsvSerializer.USER_LAST_NAME.prefixes.head,
-            UserAndGroupCsvSerializer.USER_EMAIL.prefixes.head,
-            "Création",
-            UserAndGroupCsvSerializer.USER_ACCOUNT_IS_SHARED.prefixes.head,
-            UserAndGroupCsvSerializer.SHARED_ACCOUNT_NAME.prefixes.head,
-            "Aidant",
-            UserAndGroupCsvSerializer.USER_INSTRUCTOR.prefixes.head,
-            UserAndGroupCsvSerializer.USER_GROUP_MANAGER.prefixes.head,
-            "Expert",
-            "Admin",
-            "Actif",
-            "Commune INSEE",
-            UserAndGroupCsvSerializer.GROUP_AREAS_IDS.prefixes.head,
-            UserAndGroupCsvSerializer.GROUP_NAME.prefixes.head,
-            UserAndGroupCsvSerializer.GROUP_ORGANISATION.prefixes.head,
-            "CGU",
-            "Newsletter"
-          ).mkString(";")
-
-          val csvContent = (List(headers) ++ users.map(userToCSV)).mkString("\n")
-          val date = Time.formatPatternFr(Time.nowParis(), "dd-MMM-YYY-HH'h'mm")
-          val filename = "aplus-" + date + "-users-" + area.name.replace(" ", "-") + ".csv"
-
-          Ok(csvContent)
-            .withHeaders("Content-Disposition" -> s"""attachment; filename="$filename"""")
-            .as("text/csv")
-        }
-      }
-    }
-
   def search: Action[AnyContent] =
     loginAction.async { implicit request =>
       def toUserInfos(usersAndGroups: (List[User], List[UserGroup])): List[UserInfos] = {
         val (users, groups) = usersAndGroups
         val idToGroup = groups.map(group => (group.id, group)).toMap
-        users.map(user => UserInfos.fromUser(user, idToGroup))
+        users.map(user => UserInfos.fromUser(user, request.rights, idToGroup))
       }
       val area = request
         .getQueryString(Keys.QueryParam.searchAreaId)
