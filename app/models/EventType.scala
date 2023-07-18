@@ -47,8 +47,6 @@ object EventType {
   object AllAsShowed extends Info
   object AllAsUnauthorized extends Warn
   object AllCSVShowed extends Info
-  object AllUserCSVUnauthorized extends Warn
-  object AllUserCsvShowed extends Info
   object AllUserIncorrectSetup extends Info
   object AllUserUnauthorized extends Warn
   object ApplicationCreated extends Info

@@ -1,5 +1,5 @@
 /* global jsRoutes */
-import { Tabulator, TabulatorFull } from 'tabulator-tables';
+import { ColumnDefinition, Formatter, Options, Tabulator, TabulatorFull } from 'tabulator-tables';
 import "tabulator-tables/dist/css/tabulator.css";
 
 const applicationsTableId = "tabulator-applications-table";
@@ -100,7 +100,7 @@ if (window.document.getElementById(applicationsTableId)) {
 
 
   // Setup Tabulator
-  const linkFormatter: Tabulator.Formatter = (cell) => {
+  const linkFormatter: Formatter = (cell) => {
     let uuid = cell.getRow().getData().id;
     let authorized = cell.getRow().getData().currentUserCanSeeAnonymousApplication;
     let url = jsRoutes.controllers.ApplicationController.show(uuid).url;
@@ -111,7 +111,7 @@ if (window.document.getElementById(applicationsTableId)) {
     }
   };
 
-  const usefulnessFormatter: Tabulator.Formatter = (cell) => {
+  const usefulnessFormatter: Formatter = (cell) => {
     let value = cell.getValue();
     if (value) {
       if (value === "Oui") {
@@ -123,7 +123,7 @@ if (window.document.getElementById(applicationsTableId)) {
     return value;
   };
 
-  const pertinenceFormatter: Tabulator.Formatter = (cell) => {
+  const pertinenceFormatter: Formatter = (cell) => {
     let value = cell.getValue();
     if (value && value === "Non") {
       cell.getElement().classList.add("mdl-color--red");
@@ -131,7 +131,7 @@ if (window.document.getElementById(applicationsTableId)) {
     return value;
   };
 
-  const columns: Array<Tabulator.ColumnDefinition> = [
+  const columns: Array<ColumnDefinition> = [
     {
       title: "",
       field: "id",
@@ -288,7 +288,7 @@ if (window.document.getElementById(applicationsTableId)) {
     },
   ];
 
-  const options: Tabulator.Options = {
+  const options: Options = {
     height: "75vh",
     langs: {
       "fr-fr": {

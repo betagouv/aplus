@@ -150,18 +150,25 @@ object ApiModel {
   }
 
   object UserInfos {
-    case class Group(id: UUID, name: String)
+    case class Group(id: UUID, name: String, currentUserCanEditGroup: Boolean)
 
     implicit val userInfosGroupFormat: Format[UserInfos.Group] = Json.format[UserInfos.Group]
     implicit val userInfosFormat: Format[UserInfos] = Json.format[UserInfos]
 
-    def fromUser(user: User, idToGroup: Map[UUID, UserGroup]): UserInfos = {
-      val completeName = {
-        val firstName = user.firstName.getOrElse("")
-        val lastName = user.lastName.getOrElse("")
-        if (firstName.nonEmpty || lastName.nonEmpty) s"${user.name} ($lastName $firstName)"
-        else user.name
-      }
+    def fromUser(
+        user: User,
+        rights: Authorization.UserRights,
+        idToGroup: Map[UUID, UserGroup]
+    ): UserInfos = {
+      val completeName =
+        if (user.sharedAccount)
+          user.name
+        else {
+          val firstName = user.firstName.getOrElse("")
+          val lastName = user.lastName.getOrElse("")
+          if (firstName.nonEmpty || lastName.nonEmpty) User.standardName(firstName, lastName)
+          else user.name
+        }
       UserInfos(
         id = user.id,
         firstName = user.firstName,
@@ -173,11 +180,13 @@ object ApiModel {
         phoneNumber = user.phoneNumber,
         helper = user.helperRoleName.nonEmpty,
         instructor = user.instructorRoleName.nonEmpty,
-        areas = user.areas.flatMap(Area.fromId).map(_.toString),
+        areas = user.areas.flatMap(Area.fromId).map(_.toString).sorted,
         groupNames = user.groupIds.flatMap(idToGroup.get).map(_.name),
         groups = user.groupIds
           .flatMap(idToGroup.get)
-          .map(group => UserInfos.Group(group.id, group.name)),
+          .map(group =>
+            UserInfos.Group(group.id, group.name, Authorization.canEditGroup(group)(rights))
+          ),
         groupEmails = user.groupIds.flatMap(idToGroup.get).flatMap(_.email),
         groupAdmin = user.groupAdminRoleName.nonEmpty,
         admin = user.adminRoleName.nonEmpty,

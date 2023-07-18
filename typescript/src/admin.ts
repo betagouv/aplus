@@ -1,4 +1,4 @@
-import { Tabulator, TabulatorFull } from 'tabulator-tables';
+import { ColumnDefinition, Formatter, TabulatorFull } from 'tabulator-tables';
 import "tabulator-tables/dist/css/tabulator.css";
 
 
@@ -19,7 +19,7 @@ const franceServiceDeploymentDownloadBtnXlsxId = "aplus-admin-deployment-france-
 
 
 // TODO: macro that will generate field names from the scala case class (Scala => TS)
-const franceServiceDeploymentColumns: Array<Tabulator.ColumnDefinition> = [
+const franceServiceDeploymentColumns: Array<ColumnDefinition> = [
   { title: "Nom", field: "nomFranceService", sorter: "string", width: 200 },
   {
     title: "Département",
@@ -175,7 +175,7 @@ if (window.document.getElementById(deploymentTableTagId)) {
   }
   fetch(url).then((response) => response.json()).then((deploymentData: DeploymentData) => {
 
-    const organisationFormatter: Tabulator.Formatter = (cell) => {
+    const organisationFormatter: Formatter = (cell) => {
       const value = cell.getValue();
       const areaName = cell.getRow().getData().areaName;
 
@@ -208,7 +208,7 @@ if (window.document.getElementById(deploymentTableTagId)) {
       const title = orgSet.organisations.map((organisation) => organisation.shortName).join(" / ");
       const field = orgSet.id;
 
-      const column: Tabulator.ColumnDefinition = {
+      const column: ColumnDefinition = {
         title,
         field,
         sorter: "number",
@@ -218,12 +218,12 @@ if (window.document.getElementById(deploymentTableTagId)) {
       return column;
     });
 
-    const areaColumn: Tabulator.ColumnDefinition =
+    const areaColumn: ColumnDefinition =
     {
       title: "Département", field: "areaName", sorter: "string", width: 150,
       frozen: true
     };
-    const totalColumn: Tabulator.ColumnDefinition =
+    const totalColumn: ColumnDefinition =
     {
       title: "Couverture",
       field: "total",
