@@ -144,6 +144,17 @@ object editMyGroups {
             )
           )
       ),
+      users
+        .collect { case user if user.disabled => () }
+        .size
+        .some
+        .filter(_ > 0)
+        .map(_ =>
+          div(
+            cls := "disabled-users-toggle",
+            "Voir les membres désactivés"
+          )
+        ),
       (
         if (Authorization.canEditGroup(group)(currentUserRights)) {
           div(
@@ -255,7 +266,7 @@ object editMyGroups {
       currentUserRights: Authorization.UserRights
   )(implicit request: RequestHeader): Tag =
     tr(
-      cls := "no-hover td--clear-border",
+      cls := "no-hover td--clear-border" + (if (user.disabled) " user-is-disabled hidden" else ""),
       td(
         cls := "mdl-data-table__cell--non-numeric" +
           (if (user.disabled) " text--strikethrough mdl-color-text--grey-600" else ""),
