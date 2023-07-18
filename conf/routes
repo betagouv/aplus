@@ -106,7 +106,6 @@ GET         /territoires/deploiement                                            
 GET         /territoires/deploiement/france-service                                          controllers.AreaController.franceServiceDeploymentDashboard
 GET         /territoires/deploiement/france-services                                         controllers.AreaController.franceServices
 GET         /territoires/:areaId/utilisateurs                                                controllers.UserController.all(areaId: java.util.UUID)
-GET         /territoires/:areaId/utilisateurs.csv                                            controllers.UserController.allCSV(areaId: java.util.UUID)
 
 # Check
 GET         /status                                                                          controllers.HomeController.status

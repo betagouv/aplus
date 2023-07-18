@@ -7,7 +7,12 @@ import cats.syntax.all._
 import constants.Constants
 import helper.{Hash, Pseudonymizer, Time, UUIDHelper}
 import helper.Time.zonedDateTimeInstance
-import helper.StringHelper.{notLetterNorNumberRegex, withQuotes}
+import helper.StringHelper.{
+  capitalizeName,
+  commonStringInputNormalization,
+  notLetterNorNumberRegex,
+  withQuotes
+}
 
 case class User(
     id: UUID,
@@ -235,5 +240,11 @@ object User {
     disabled = true,
     internalSupportComment = None
   )
+
+  def standardName(firstName: String, lastName: String): String = {
+    val normalizedFirstName = commonStringInputNormalization(firstName)
+    val normalizedLastName = commonStringInputNormalization(lastName)
+    s"${normalizedLastName.toUpperCase} ${capitalizeName(normalizedFirstName)}"
+  }
 
 }

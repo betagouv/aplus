@@ -84,11 +84,6 @@
       </select>
     </p>
   }
-  @if(currentUser.admin) {
-    <button class="mdl-button mdl-js-button mdl-button--raised onclick-change-location" data-location="@routes.UserController.allCSV(selectedArea.id)">
-      Télécharger export CSV
-    </button>
-  }
       @for(userGroup <- userGroups.sortBy(_.name)) {
         @defining(allUsers.filter(_.groupIds.contains(userGroup.id))){ groupUsers =>
           @display(groupUsers.filter(_.groupIds.length == 1), Some(s"group-${userGroup.id}")){
