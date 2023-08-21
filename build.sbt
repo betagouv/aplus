@@ -99,7 +99,7 @@ libraryDependencies ++= Seq(
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.12.0",
-  "org.typelevel" %% "cats-core" % "2.9.0",
+  "org.typelevel" %% "cats-core" % "2.10.0",
   "org.typelevel" %% "cats-effect" % "3.5.1",
 )
 
@@ -110,11 +110,11 @@ libraryDependencies ++= Seq(
   "org.webjars" % "material-design-icons" % "4.0.0",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
   "org.webjars" % "chartjs" % "2.9.4",
-  "org.webjars" % "font-awesome" % "6.4.0",
+  "org.webjars" % "font-awesome" % "6.4.2",
 )
 
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "6.24.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "6.28.0"
 
 // Overrides
 dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
