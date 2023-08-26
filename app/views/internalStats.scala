@@ -1,6 +1,7 @@
 package views
 
 import cats.syntax.all._
+import helper.Time
 import java.time.LocalDate
 import java.util.UUID
 import models.Organisation
@@ -68,6 +69,19 @@ object internalStats {
       config.statisticsPercentOfRelevantApplicationsUrl.map(iframe6Cols),
       config.statisticsNumberOfApplicationsByUsefulnessUrl.map(iframe12Cols),
       config.statisticsTimeToProcessApplicationsUrl.map(iframe12Cols),
+      (filters.endDate
+        .isAfter(LocalDate.now().minusDays(2)))
+        .some
+        .filter(identity)
+        .map(_ =>
+          p(
+            "Attention, certaines demandes du ",
+            Time.formatPatternFr(LocalDate.now().minusDays(1), "dd/MM/YY"),
+            " et du ",
+            Time.formatPatternFr(LocalDate.now(), "dd/MM/YY"),
+            " peuvent ne pas être comptabilisées."
+          )
+        )
     )
   }
 
