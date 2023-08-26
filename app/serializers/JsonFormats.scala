@@ -7,9 +7,11 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 object JsonFormats {
-  implicit val jsonConfiguration = JsonConfiguration(naming = JsonNaming.SnakeCase)
 
-  implicit val mapUUIDReads = new Reads[Map[UUID, String]] {
+  implicit val jsonConfiguration: JsonConfiguration =
+    JsonConfiguration(naming = JsonNaming.SnakeCase)
+
+  implicit val mapUUIDReads: Reads[Map[UUID, String]] = new Reads[Map[UUID, String]] {
 
     def reads(jv: JsValue): JsResult[Map[UUID, String]] =
       JsSuccess(jv.as[Map[String, String]].map { case (k, v) =>
@@ -18,7 +20,7 @@ object JsonFormats {
 
   }
 
-  implicit val mapUUIDWrites = new Writes[Map[UUID, String]] {
+  implicit val mapUUIDWrites: Writes[Map[UUID, String]] = new Writes[Map[UUID, String]] {
 
     def writes(map: Map[UUID, String]): JsValue =
       Json.obj(map.map { case (s, o) =>
@@ -28,6 +30,6 @@ object JsonFormats {
 
   }
 
-  implicit val mapUUIDFormat = Format(mapUUIDReads, mapUUIDWrites)
+  implicit val mapUUIDFormat: Format[Map[UUID, String]] = Format(mapUUIDReads, mapUUIDWrites)
 
 }

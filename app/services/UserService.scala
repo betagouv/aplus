@@ -329,7 +329,7 @@ class UserService @Inject() (
         val normalizedFirstName = firstName.normalized
         val normalizedLastName = lastName.normalized
         val normalizedQualite = qualite.normalized
-        val name = s"${normalizedLastName.toUpperCase} ${normalizedFirstName.capitalizeWords}"
+        val name = User.standardName(firstName, lastName)
         SQL"""
         UPDATE "user" SET
         name = $name,

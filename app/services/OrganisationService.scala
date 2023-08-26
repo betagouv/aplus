@@ -28,8 +28,8 @@ object OrganisationService {
 
     }
 
-    implicit val subjectFormat = yamlFormat2(Subject.apply)
-    implicit val categoryFormat = yamlFormat4(Category.apply)
+    implicit val subjectFormat: YamlFormat[Subject] = yamlFormat2(Subject.apply)
+    implicit val categoryFormat: YamlFormat[Category] = yamlFormat4(Category.apply)
   }
 
   implicit private object fsCsvFormat extends DefaultCSVFormat {

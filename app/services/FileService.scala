@@ -1,6 +1,7 @@
 package services
 
 import akka.Done
+import akka.actor.ActorSystem
 import akka.stream.scaladsl._
 import anorm._
 import aplus.macros.Macros
@@ -29,7 +30,7 @@ class FileService @Inject() (
     notificationsService: NotificationService,
     system: ActorSystemProvider
 )(implicit ec: ExecutionContext) {
-  implicit val actorSystem = system.get
+  implicit val actorSystem: ActorSystem = system.get
 
   // Play is supposed to give us temporary files here
   def saveFiles(

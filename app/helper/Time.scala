@@ -39,7 +39,7 @@ object Time {
 
   val dateWithHourFormatter = DateTimeFormatter.ofPattern("dd/MM/YYYY H'h'", Locale.FRANCE)
 
-  implicit final val zonedDateTimeInstance =
+  implicit final val zonedDateTimeInstance: Order[ZonedDateTime] =
     new Order[ZonedDateTime] {
       override def compare(x: ZonedDateTime, y: ZonedDateTime): Int = x.compareTo(y)
     }

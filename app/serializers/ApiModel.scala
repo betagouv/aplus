@@ -10,21 +10,21 @@ import play.api.libs.json._
 object ApiModel {
 
   object implicits {
-    implicit val areaFormat = Json.format[Area]
+    implicit val areaFormat: Format[Area] = Json.format[Area]
 
-    implicit val organisationIdReads =
+    implicit val organisationIdReads: Reads[Organisation.Id] =
       implicitly[Reads[String]].map(Organisation.Id.apply)
 
-    implicit val organisationIdWrites =
+    implicit val organisationIdWrites: Writes[Organisation.Id] =
       implicitly[Writes[String]].contramap[Organisation.Id](_.id)
 
-    implicit val organisationFormat = Json.format[Organisation]
+    implicit val organisationFormat: Format[Organisation] = Json.format[Organisation]
   }
 
   case class ApiError(message: String)
 
   object ApiError {
-    implicit val apiErrorWrites = Json.writes[ApiError]
+    implicit val apiErrorWrites: Writes[ApiError] = Json.writes[ApiError]
   }
 
   // API model for the admin deploiement
@@ -40,7 +40,8 @@ object ApiModel {
       phone: Option[String]
   )
 
-  implicit val franceServiceInstanceLineFormat = Json.format[FranceServiceInstanceLine]
+  implicit val franceServiceInstanceLineFormat: Format[FranceServiceInstanceLine] =
+    Json.format[FranceServiceInstanceLine]
 
   case class FranceServices(franceServices: List[FranceServices.Line])
 
@@ -90,20 +91,28 @@ object ApiModel {
     case class InsertsResult(inserts: List[InsertResult])
 
     object NewMatricules {
-      implicit val franceServicesNewMatriculeReads = Json.reads[NewMatricule]
-      implicit val franceServicesNewMatriculesReads = Json.reads[NewMatricules]
+      implicit val franceServicesNewMatriculeReads: Reads[NewMatricule] = Json.reads[NewMatricule]
+
+      implicit val franceServicesNewMatriculesReads: Reads[NewMatricules] =
+        Json.reads[NewMatricules]
+
     }
 
     object Update {
-      implicit val franceServicesMatriculeUpdateReads = Json.reads[MatriculeUpdate]
-      implicit val franceServicesGroupUpdateReads = Json.reads[GroupUpdate]
-      implicit val franceServicesUpdateReads = Json.reads[Update]
+
+      implicit val franceServicesMatriculeUpdateReads: Reads[MatriculeUpdate] =
+        Json.reads[MatriculeUpdate]
+
+      implicit val franceServicesGroupUpdateReads: Reads[GroupUpdate] = Json.reads[GroupUpdate]
+      implicit val franceServicesUpdateReads: Reads[Update] = Json.reads[Update]
     }
 
-    implicit val franceServicesLineWrites = Json.writes[FranceServices.Line]
-    implicit val franceServicesWrites = Json.writes[FranceServices]
-    implicit val franceServicesInsertResult = Json.writes[InsertResult]
-    implicit val franceServicesInsertsResult = Json.writes[InsertsResult]
+    implicit val franceServicesLineWrites: Writes[FranceServices.Line] =
+      Json.writes[FranceServices.Line]
+
+    implicit val franceServicesWrites: Writes[FranceServices] = Json.writes[FranceServices]
+    implicit val franceServicesInsertResult: Writes[InsertResult] = Json.writes[InsertResult]
+    implicit val franceServicesInsertsResult: Writes[InsertsResult] = Json.writes[InsertsResult]
   }
 
   object DeploymentData {
@@ -121,9 +130,9 @@ object ApiModel {
         numOfOrganisationSetWithOneInstructor: Int
     )
 
-    implicit val organisationSetFormat = Json.format[OrganisationSet]
-    implicit val areaDataFormat = Json.format[AreaData]
-    implicit val deploymentDataFormat = Json.format[DeploymentData]
+    implicit val organisationSetFormat: Format[OrganisationSet] = Json.format[OrganisationSet]
+    implicit val areaDataFormat: Format[AreaData] = Json.format[AreaData]
+    implicit val deploymentDataFormat: Format[DeploymentData] = Json.format[DeploymentData]
 
   }
 
@@ -137,22 +146,29 @@ object ApiModel {
   case class SelectableGroup(id: UUID, name: String, organisationId: String, areaId: UUID)
 
   object SelectableGroup {
-    implicit val format = Json.format[SelectableGroup]
+    implicit val format: Format[SelectableGroup] = Json.format[SelectableGroup]
   }
 
   object UserInfos {
-    case class Group(id: UUID, name: String)
+    case class Group(id: UUID, name: String, currentUserCanEditGroup: Boolean)
 
-    implicit val userInfosGroupFormat = Json.format[UserInfos.Group]
-    implicit val userInfosFormat = Json.format[UserInfos]
+    implicit val userInfosGroupFormat: Format[UserInfos.Group] = Json.format[UserInfos.Group]
+    implicit val userInfosFormat: Format[UserInfos] = Json.format[UserInfos]
 
-    def fromUser(user: User, idToGroup: Map[UUID, UserGroup]): UserInfos = {
-      val completeName = {
-        val firstName = user.firstName.getOrElse("")
-        val lastName = user.lastName.getOrElse("")
-        if (firstName.nonEmpty || lastName.nonEmpty) s"${user.name} ($lastName $firstName)"
-        else user.name
-      }
+    def fromUser(
+        user: User,
+        rights: Authorization.UserRights,
+        idToGroup: Map[UUID, UserGroup]
+    ): UserInfos = {
+      val completeName =
+        if (user.sharedAccount)
+          user.name
+        else {
+          val firstName = user.firstName.getOrElse("")
+          val lastName = user.lastName.getOrElse("")
+          if (firstName.nonEmpty || lastName.nonEmpty) User.standardName(firstName, lastName)
+          else user.name
+        }
       UserInfos(
         id = user.id,
         firstName = user.firstName,
@@ -164,11 +180,13 @@ object ApiModel {
         phoneNumber = user.phoneNumber,
         helper = user.helperRoleName.nonEmpty,
         instructor = user.instructorRoleName.nonEmpty,
-        areas = user.areas.flatMap(Area.fromId).map(_.toString),
+        areas = user.areas.flatMap(Area.fromId).map(_.toString).sorted,
         groupNames = user.groupIds.flatMap(idToGroup.get).map(_.name),
         groups = user.groupIds
           .flatMap(idToGroup.get)
-          .map(group => UserInfos.Group(group.id, group.name)),
+          .map(group =>
+            UserInfos.Group(group.id, group.name, Authorization.canEditGroup(group)(rights))
+          ),
         groupEmails = user.groupIds.flatMap(idToGroup.get).flatMap(_.email),
         groupAdmin = user.groupAdminRoleName.nonEmpty,
         admin = user.adminRoleName.nonEmpty,
@@ -207,7 +225,7 @@ object ApiModel {
   object UserGroupInfos {
     import implicits._
 
-    implicit val userGroupInfosFormat = Json.format[UserGroupInfos]
+    implicit val userGroupInfosFormat: Format[UserGroupInfos] = Json.format[UserGroupInfos]
 
     def fromUserGroup(group: UserGroup): UserGroupInfos =
       UserGroupInfos(
@@ -237,7 +255,7 @@ object ApiModel {
   case class SearchResult(users: List[UserInfos], groups: List[UserGroupInfos])
 
   object SearchResult {
-    implicit val searchResultFormat = Json.format[SearchResult]
+    implicit val searchResultFormat: Format[SearchResult] = Json.format[SearchResult]
   }
 
   // Embedded classes are here to avoid the 22 fields limit in Play Json
@@ -279,9 +297,14 @@ object ApiModel {
         groupNamesInvitedOnAnswers: String,
     )
 
-    implicit val applicationMetadataStatsWrites = Json.writes[ApplicationMetadata.Stats]
-    implicit val applicationMetadataGroupsWrites = Json.writes[ApplicationMetadata.Groups]
-    implicit val applicationMetadataWrites = Json.writes[ApplicationMetadata]
+    implicit val applicationMetadataStatsWrites: Writes[ApplicationMetadata.Stats] =
+      Json.writes[ApplicationMetadata.Stats]
+
+    implicit val applicationMetadataGroupsWrites: Writes[ApplicationMetadata.Groups] =
+      Json.writes[ApplicationMetadata.Groups]
+
+    implicit val applicationMetadataWrites: Writes[ApplicationMetadata] =
+      Json.writes[ApplicationMetadata]
 
     // Groups needed: creator groups + invited groups at creation + invited groups on answers
     def fromApplication(
@@ -362,7 +385,10 @@ object ApiModel {
   case class ApplicationMetadataResult(applications: List[ApplicationMetadata])
 
   object ApplicationMetadataResult {
-    implicit val applicationMetadataResultWrites = Json.writes[ApplicationMetadataResult]
+
+    implicit val applicationMetadataResultWrites: Writes[ApplicationMetadataResult] =
+      Json.writes[ApplicationMetadataResult]
+
   }
 
 }
