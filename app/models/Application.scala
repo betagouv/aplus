@@ -41,10 +41,6 @@ case class Application(
     personalDataWiped: Boolean = false,
 ) extends AgeModel {
 
-  // Legacy case, can be removed once data has been cleaned up.
-  val isWithoutInvitedGroupIdsLegacyCase: Boolean =
-    invitedGroupIdsAtCreation.isEmpty
-
   val invitedGroups: Set[UUID] =
     (invitedGroupIdsAtCreation ::: answers.flatMap(_.invitedGroupIds)).toSet
 
@@ -119,9 +115,6 @@ case class Application(
   def invitedUsers(users: List[User]): List[User] =
     invitedUsers.keys.flatMap(userId => users.find(_.id === userId)).toList
 
-  def creatorUserQualite(users: List[User]): Option[String] =
-    users.find(_.id === creatorUserId).map(_.qualite)
-
   def allUserInfos = userInfos ++ answers.flatMap(_.userInfos.getOrElse(Map()))
 
   lazy val anonymousApplication = {
@@ -168,13 +161,6 @@ case class Application(
 
 // TODO: remove
   def haveUserInvitedOn(user: User) = invitedUsers.keys.toList.contains(user.id)
-
-  // Stats
-  lazy val estimatedClosedDate = (closedDate, closed) match {
-    case (Some(date), _) => Some(date)
-    case (_, true)       => Some(answers.lastOption.map(_.creationDate).getOrElse(creationDate))
-    case _               => None
-  }
 
   lazy val resolutionTimeInMinutes: Option[Int] = if (closed) {
     val lastDate = answers.lastOption.map(_.creationDate).orElse(closedDate).getOrElse(creationDate)

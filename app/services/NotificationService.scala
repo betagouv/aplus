@@ -84,25 +84,15 @@ class NotificationService @Inject() (
     // Retrieve data
     val userIds = (application.invitedUsers ++ answer.invitedUsers).keys
     val users = userService.byIds(userIds.toList)
-    val (allGroups, alreadyPresentGroupIds): (List[UserGroup], Set[UUID]) =
-      // This legacy case can be removed once data has been fixed
-      if (application.isWithoutInvitedGroupIdsLegacyCase) {
-        (
-          groupService
-            .byIds(users.flatMap(_.groupIds))
-            .filter(_.email.nonEmpty)
-            .filter(_.areaIds.contains(application.area)),
-          users.filter(user => application.invitedUsers.contains(user.id)).flatMap(_.groupIds).toSet
-        )
-      } else {
-        val allGroupIds = application.invitedGroups.union(answer.invitedGroupIds.toSet)
-        (
-          groupService
-            .byIds(allGroupIds.toList)
-            .filter(_.email.nonEmpty),
-          application.invitedGroups
-        )
-      }
+    val (allGroups, alreadyPresentGroupIds): (List[UserGroup], Set[UUID]) = {
+      val allGroupIds = application.invitedGroups.union(answer.invitedGroupIds.toSet)
+      (
+        groupService
+          .byIds(allGroupIds.toList)
+          .filter(_.email.nonEmpty),
+        application.invitedGroups
+      )
+    }
 
     // Send emails to users
     users
