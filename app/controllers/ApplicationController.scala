@@ -19,7 +19,6 @@ import models._
 import models.formModels.{AnswerFormData, ApplicationFormData, InvitationFormData}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
-import play.api.cache.AsyncCacheApi
 import play.api.data.Forms._
 import play.api.data._
 import play.api.data.format.{Formats, Formatter}
@@ -31,7 +30,6 @@ import play.twirl.api.Html
 import serializers.Keys
 import serializers.ApiModel.{ApplicationMetadata, ApplicationMetadataResult}
 import services._
-import views.stats.StatsData
 
 import java.nio.file.{Files, Path, Paths}
 import java.time.{LocalDate, ZonedDateTime}
@@ -47,7 +45,6 @@ import scala.util.{Failure, Success, Try}
 @Singleton
 case class ApplicationController @Inject() (
     applicationService: ApplicationService,
-    cache: AsyncCacheApi,
     config: AppConfig,
     eventService: EventService,
     fileService: FileService,
@@ -569,143 +566,6 @@ case class ApplicationController @Inject() (
       ).withHeaders(CACHE_CONTROL -> "no-store")
     }
 
-  private def statsAggregates(applications: List[Application], users: List[User]): StatsData = {
-    val now = Time.nowParis()
-    val applicationsByArea: Map[Area, List[Application]] =
-      applications
-        .groupBy(_.area)
-        .flatMap { case (areaId: UUID, applications: Seq[Application]) =>
-          Area.all
-            .find(area => area.id === areaId)
-            .map(area => (area, applications))
-        }
-
-    val firstDate: ZonedDateTime =
-      if (applications.isEmpty) now else applications.map(_.creationDate).min
-    val months = Time.monthsBetween(firstDate, now)
-    val allApplications = applicationsByArea.flatMap(_._2).toList
-    val allApplicationsByArea = applicationsByArea.map { case (area, applications) =>
-      StatsData.AreaAggregates(
-        area = area,
-        StatsData.ApplicationAggregates(
-          applications = applications,
-          months = months,
-          usersRelatedToApplications = users
-        )
-      )
-    }.toList
-    val data = StatsData(
-      all = StatsData.ApplicationAggregates(
-        applications = allApplications,
-        months = months,
-        usersRelatedToApplications = users
-      ),
-      aggregatesByArea = allApplicationsByArea
-    )
-    data
-  }
-
-  private def anonymousGroupsAndUsers(
-      groups: List[UserGroup]
-  ): Future[(List[User], List[Application])] =
-    for {
-      users <- userService.byGroupIdsAnonymous(groups.map(_.id))
-      applications <- applicationService.allForUserIds(users.map(_.id), none)
-    } yield (users, applications)
-
-  private def generateStats(
-      areaIds: List[UUID],
-      organisationIds: List[Organisation.Id],
-      groupIds: List[UUID],
-      creationMinDate: LocalDate,
-      creationMaxDate: LocalDate,
-      rights: Authorization.UserRights
-  )(implicit request: RequestWithUserData[_]): Future[Html] = {
-    eventService.log(
-      StatsShowed,
-      "Génère les stats pour les paramètres [Territoires '" + areaIds.mkString(",") +
-        "' ; Organismes '" + organisationIds.mkString(",") +
-        "' ; Groupes '" + groupIds.mkString(",") +
-        "' ; Date début '" + creationMinDate +
-        "' ; Date fin '" + creationMaxDate + "']"
-    )
-
-    val usersAndApplications: Future[(List[User], List[Application])] =
-      (areaIds, organisationIds, groupIds) match {
-        case (Nil, Nil, Nil) =>
-          userService.allNoNameNoEmail.zip(applicationService.all())
-        case (_ :: _, Nil, Nil) =>
-          for {
-            groups <- userGroupService.byAreas(areaIds)
-            users <- (
-              userService.byGroupIdsAnonymous(groups.map(_.id)),
-              applicationService.allForAreas(areaIds, None)
-            ).mapN(Tuple2.apply)
-          } yield users
-        case (_ :: _, _ :: _, Nil) =>
-          for {
-            groups <- userGroupService
-              .byOrganisationIds(organisationIds)
-              .map(_.filter(_.areaIds.intersect(areaIds).nonEmpty))
-            users <- userService.byGroupIdsAnonymous(groups.map(_.id))
-            applications <- applicationService
-              .allForUserIds(users.map(_.id), none)
-              .map(_.filter(application => areaIds.contains(application.area)))
-          } yield (users, applications)
-        case (_, _ :: _, _) =>
-          userGroupService.byOrganisationIds(organisationIds).flatMap(anonymousGroupsAndUsers)
-        case (_, Nil, _) =>
-          userGroupService
-            .byIdsFuture(groupIds)
-            .flatMap(anonymousGroupsAndUsers)
-            .map { case (users, allApplications) =>
-              val applications = allApplications.filter { application =>
-                application.isWithoutInvitedGroupIdsLegacyCase ||
-                application.invitedGroups.intersect(groupIds.toSet).nonEmpty ||
-                users.exists(user => user.id === application.creatorUserId)
-              }
-              (users, applications)
-            }
-      }
-
-    // Filter creation dates
-    def isBeforeOrEqual(d1: LocalDate, d2: LocalDate): Boolean = !d1.isAfter(d2)
-
-    val applicationsFuture = usersAndApplications.map { case (_, applications) =>
-      applications.filter(application =>
-        isBeforeOrEqual(creationMinDate, application.creationDate.toLocalDate) &&
-          isBeforeOrEqual(application.creationDate.toLocalDate, creationMaxDate)
-      )
-    }
-
-    // Users whose id is in the `Application`
-    val relatedUsersFuture: Future[List[User]] = applicationsFuture.flatMap { applications =>
-      val ids: Set[UUID] = applications.flatMap { application =>
-        application.creatorUserId :: application.invitedUsers.keys.toList
-      }.toSet
-      if (ids.size > 1000) {
-        // We don't want to send a giga-query to PG
-        // it fails with
-        // IOException
-        // Tried to send an out-of-range integer as a 2-byte value: 33484
-        userService.all.map(_.filter(user => ids.contains(user.id)))
-      } else {
-        userService.byIdsFuture(ids.toList, includeDisabled = true)
-      }
-    }
-
-    // Note: `users` are Users on which we make stats (count, ...)
-    // `relatedUsers` are Users to help Applications stats (linked orgs, ...)
-    for {
-      users <- usersAndApplications.map { case (users, _) => users }
-      applications <- applicationsFuture
-      relatedUsers <- relatedUsersFuture
-    } yield views.html.stats.charts(Authorization.isAdmin(rights))(
-      statsAggregates(applications, relatedUsers),
-      users
-    )
-  }
-
   // Handles some edge cases from browser compatibility
   private val localDateMapping: Mapping[LocalDate] = {
     val formatter = new Formatter[LocalDate] {
@@ -733,9 +593,6 @@ case class ApplicationController @Inject() (
         "creationMaxDate" -> default(localDateMapping, LocalDate.now())
       )
     )
-
-  private val statsCSP =
-    "connect-src 'self' https://stats.data.gouv.fr; base-uri 'none'; img-src 'self' data: stats.data.gouv.fr; form-action 'self'; frame-src 'self' *.aplus.beta.gouv.fr; style-src 'self' 'unsafe-inline' stats.data.gouv.fr; object-src 'none'; script-src 'self' 'unsafe-inline' stats.data.gouv.fr; default-src 'none'; font-src 'self'; frame-ancestors 'self'"
 
   val statsAction = loginAction.withPublicPage(Ok(views.publicStats.page))
 
@@ -786,56 +643,33 @@ case class ApplicationController @Inject() (
     userGroupService.byIdsFuture(allGroupsIds).flatMap { groups =>
       val groupsThatCanBeFilteredBy =
         groups.filter(group => dropdownGroupIds.contains[UUID](group.id))
-      val charts: Future[Html] =
-        if (
-          (Authorization.isAdmin(rights) && request.getQueryString("oldstats").isEmpty) ||
-          request.getQueryString("newstats").nonEmpty
-        ) {
-          val validQueryGroups = groups.filter(group => validQueryGroupIds.contains[UUID](group.id))
-          val creatorGroupIds = validQueryGroups
-            .filter(group =>
-              group.organisationId
-                .map(id => Organisation.organismesAidants.map(_.id).contains[Organisation.Id](id))
-                .getOrElse(false)
-            )
-            .map(_.id)
-          val invitedGroupIds =
-            validQueryGroupIds.filterNot(id => creatorGroupIds.contains[UUID](id))
-
-          Future.successful(
-            views.internalStats.charts(
-              views.internalStats.Filters(
-                startDate = creationMinDate,
-                endDate = creationMaxDate,
-                areaIds,
-                organisationIds,
-                creatorGroupIds,
-                invitedGroupIds,
-              ),
-              config
-            )
+      val charts: Future[Html] = {
+        val validQueryGroups = groups.filter(group => validQueryGroupIds.contains[UUID](group.id))
+        val creatorGroupIds = validQueryGroups
+          .filter(group =>
+            group.organisationId
+              .map(id => Organisation.organismesAidants.map(_.id).contains[Organisation.Id](id))
+              .getOrElse(false)
           )
-        } else {
-          val cacheKey =
-            Authorization.isAdmin(rights).toString +
-              ".stats." +
-              Hash.sha256(
-                areaIds.toString + organisationIds.toString + validQueryGroupIds.toString +
-                  creationMinDate.toString + creationMaxDate.toString
-              )
+          .map(_.id)
+        val invitedGroupIds =
+          validQueryGroupIds.filterNot(id => creatorGroupIds.contains[UUID](id))
 
-          cache
-            .getOrElseUpdate[Html](cacheKey, 1.hours)(
-              generateStats(
-                areaIds,
-                organisationIds,
-                validQueryGroupIds,
-                creationMinDate,
-                creationMaxDate,
-                rights
-              )
-            )
-        }
+        Future.successful(
+          views.internalStats.charts(
+            views.internalStats.Filters(
+              startDate = creationMinDate,
+              endDate = creationMaxDate,
+              areaIds,
+              organisationIds,
+              creatorGroupIds,
+              invitedGroupIds,
+            ),
+            config
+          )
+        )
+      }
+
       charts
         .map { html =>
           eventService.log(
@@ -857,7 +691,7 @@ case class ApplicationController @Inject() (
               creationMinDate,
               creationMaxDate
             )
-          ).withHeaders(CONTENT_SECURITY_POLICY -> statsCSP)
+          )
         }
     }
   }
