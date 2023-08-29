@@ -7,9 +7,6 @@
 
 @main(user, currentUserRights, maxWidth = false)(s"Gestion des utilisateurs") {
   <style>
-          .pem-table {
-            width: 100%;
-          }
           .smaller-textfield > .mdl-textfield {
               width: 130px;
           }
@@ -23,7 +20,7 @@
     }
       <em>Attribuer le rôle d’instructeur à : </em><a href="#" class="onclick-check-all" data-selector=".instructor">Tous</a> / <a href="#" class="onclick-uncheck-all" data-selector=".instructor">Aucuns</a>
 
-      <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table" style="white-space: normal;">
+      <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp" style="white-space: normal;">
       <thead>
         <tr>
           <th></th>

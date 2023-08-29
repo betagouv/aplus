@@ -1,13 +1,238 @@
 package views
 
 import cats.syntax.all._
+import constants.Constants
 import controllers.routes.ApplicationController
 import helper.Time
+import helper.TwirlImports.toHtml
+import java.util.UUID
+import models.formModels.ApplicationsInfos
 import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
-import models.{Application, Authorization, User}
+import models.{Application, Authorization, User, UserGroup}
+import org.webjars.play.WebJarsUtil
+import play.api.mvc.{Flash, RequestHeader}
+import play.twirl.api.Html
 import scalatags.Text.all._
 
 object myApplications {
+
+  def page(
+      currentUser: User,
+      currentUserRights: Authorization.UserRights,
+      applications: List[Application],
+      groups: List[UserGroup],
+      filters: ApplicationsInfos,
+  )(implicit
+      flash: Flash,
+      request: RequestHeader,
+      webJarsUtil: WebJarsUtil,
+      mainInfos: MainInfos
+  ): Html =
+    views.html.main(currentUser, currentUserRights, maxWidth = false)(
+      "Mes demandes"
+    )(frag())(
+      div(
+        cls := "mdl-cell mdl-cell--12-col mdl-grid--no-spacing",
+        if (filters.allGroupsOpenCount <= 0)
+          noApplications(currentUser, currentUserRights)
+        else
+          openApplications(currentUser, currentUserRights, applications, groups, filters),
+      )
+    )(frag())
+
+  private def noApplications(currentUser: User, currentUserRights: Authorization.UserRights) =
+    div(
+      cls := "info-box",
+      h4("Bienvenue sur Administration+"),
+      br,
+      "La page d'accueil d'Administration+ vous permet de consulter la liste de vos demandes en cours. ",
+      br,
+      "Les demandes permettent la résolution d'un blocage administratif rencontré par un usager. ",
+      br,
+      br,
+      currentUser.instructor.some
+        .filter(identity)
+        .map(_ =>
+          frag(
+            "Vous êtes instructeur : vous recevrez un email lorsqu'un aidant sollicitera votre administration ou organisme. ",
+            br,
+            br,
+          )
+        ),
+      Authorization
+        .canCreateApplication(currentUserRights)
+        .some
+        .filter(identity)
+        .map(_ =>
+          frag(
+            "Pour créer votre première demande, vous pouvez utiliser le bouton suivant. ",
+            br,
+            button(
+              cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-cell mdl-cell--4-col mdl-cell--12-col-phone onclick-change-location",
+              data("location") := ApplicationController.create.url,
+              "Créer une demande"
+            ),
+            br,
+            br,
+            i(
+              "Un doute sur la nature du blocage ? Posez-nous la question par mail : ",
+              a(href := "mailto:@Constants.supportEmail?subject=Question", Constants.supportEmail),
+              "."
+            )
+          )
+        )
+    )
+
+  private def openApplications(
+      currentUser: User,
+      currentUserRights: Authorization.UserRights,
+      applications: List[Application],
+      groups: List[UserGroup],
+      filters: ApplicationsInfos,
+  ) =
+    frag(
+      div(
+        cls := "mdl-grid mdl-grid--no-spacing",
+        div(
+          cls := "mdl-cell mdl-cell--8-col mdl-cell--12-col-phone single--display-flex",
+          div(
+            cls := "single--margin-right-32px",
+            h4(
+              cls := "single--margin-0px",
+              "Mes demandes"
+            )
+          ),
+          div(
+            Authorization
+              .canCreateApplication(currentUserRights)
+              .some
+              .filter(identity)
+              .map(_ =>
+                button(
+                  cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--primary onclick-change-location",
+                  data("location") := ApplicationController.create.url,
+                  "Créer une demande"
+                )
+              )
+          ),
+        ),
+        div(
+          cls := " mdl-cell mdl-cell--4-col mdl-cell--12-col-phone",
+          input(
+            cls := "single--font-size-16px single--padding-4px single--width-100pc",
+            `type` := "search",
+            placeholder := "Rechercher",
+            id := "search-input"
+          )
+        )
+      ),
+      div(
+        cls := "mdl-grid mdl-grid--no-spacing single--margin-bottom-8px single--margin-top-24px",
+        div(
+          cls := "mdl-cell mdl-cell--12-col mdl-cell--12-col-phone",
+          groupsFilters(groups, filters),
+          otherFilters(currentUser, filters),
+        )
+      ),
+      applicationsList(currentUser, currentUserRights, applications)
+    )
+
+  private def groupsFilters(groups: List[UserGroup], infos: ApplicationsInfos) =
+    if (groups.length <= 1)
+      frag()
+    else
+      div(
+        cls := "single--display-flex",
+        frag(
+          groups.map(group =>
+            div(
+              label(
+                `for` := s"group-filter-${group.id}",
+                cls := "mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect single--height-auto single--margin-right-32px",
+                input(
+                  id := s"group-filter-${group.id}",
+                  cls := "mdl-checkbox__input application-form-invited-groups-checkbox trigger-group-filter",
+                  `type` := "checkbox",
+                  name := ApplicationsInfos.groupFilterKey,
+                  value := s"${group.id}",
+                  data("on-checked-url") := infos.filters.withGroup(group.id).toUrl,
+                  data("on-unchecked-url") := infos.filters.withoutGroup(group.id).toUrl,
+                  if (infos.filters.groupIsFiltered(group.id)) checked := "checked" else (),
+                ),
+                span(
+                  cls := "mdl-checkbox__label single--font-size-14px single--line-height-22px",
+                  group.name,
+                  " ",
+                  infos.groupsCounts.get(group.id).map(count => s"($count)")
+                ),
+              ),
+            ),
+          )
+        )
+      )
+
+  private def otherFilters(currentUser: User, infos: ApplicationsInfos) = {
+    val filters = infos.filters
+
+    val filterLink = (isSelected: Boolean, text: String, uri: String) =>
+      div(
+        cls := "single--margin-right-16px " + (
+          if (isSelected)
+            "single--border-bottom-2px"
+          else
+            ""
+        ),
+        if (isSelected)
+          span(
+            cls := "mdl-color-text--black single--font-weight-500",
+            text
+          )
+        else
+          a(
+            cls := "single--text-decoration-none",
+            href := uri,
+            text
+          )
+      )
+
+    div(
+      cls := "single--display-flex single--margin-top-16px",
+      filterLink(
+        filters.hasNoStatus,
+        s"Toutes (${infos.filteredByGroupsOpenCount}) ",
+        filters.withoutStatus.toUrl,
+      ),
+      filterLink(
+        filters.isMine,
+        s"Mes demandes (${infos.interactedCount}) ",
+        filters.withStatusMine.toUrl,
+      ),
+      filterLink(
+        filters.isNew,
+        s"Nouvelles demandes (${infos.newCount}) ",
+        filters.withStatusNew.toUrl,
+      ),
+      filterLink(
+        filters.isProcessing,
+        s"En cours (${infos.processingCount}) ",
+        filters.withStatusProcessing.toUrl,
+      ),
+      currentUser.instructor.some
+        .filter(identity)
+        .map(_ =>
+          filterLink(
+            filters.isLate,
+            s"En souffrance (${infos.lateCount}) ",
+            filters.withStatusLate.toUrl,
+          )
+        ),
+      filterLink(
+        filters.isArchived,
+        s"Archivées (${infos.filteredByGroupsClosedCount}) ",
+        filters.withStatusArchived.toUrl,
+      ),
+    )
+  }
 
   private def statusTag(application: Application, user: User): Tag = {
     val status = application.longStatus(user)
@@ -182,8 +407,7 @@ object myApplications {
 
   private def externalLinkCol(application: Application): Tag =
     td(
-      cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size hidden--small-screen",
-      style := "width: 20px",
+      cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size hidden--small-screen single--width-20px",
       a(
         href := ApplicationController.show(application.id).url,
         cls := "mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon overlay-foreground",
@@ -198,24 +422,14 @@ object myApplications {
       applications: List[Application]
   ): Tag =
     div(
-      cls := "mdl-cell mdl-cell--12-col pem-container",
-      s"Toutes (${applications.size}) :  " +
-        applications
-          .groupBy(_.longStatus(currentUser))
-          .view
-          .mapValues(_.size)
-          .map { case (status, number) => status.show + s" ( $number )" }
-          .mkString(" / "),
       table(
-        cls := "mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp",
-        style := "white-space: normal;",
+        cls := "mdl-data-table mdl-js-data-table mdl-shadow--2dp single--white-space-normal",
         tfoot(
           cls := "invisible",
           tr(
             td(
-              cls := "mdl-data-table__cell--non-numeric",
+              cls := "mdl-data-table__cell--non-numeric typography--text-align-center-important",
               colspan := "5",
-              style := "text-align: center",
               button(
                 id := "clear-search",
                 cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--colored",
