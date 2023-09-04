@@ -5,7 +5,16 @@ import controllers.routes.{ApplicationController, Assets, UserController}
 import helper.Time
 import helpers.forms.CSRFInput
 import java.util.UUID
-import models.{Answer, Application, Area, Authorization, FileMetadata, User, UserGroup}
+import models.{
+  Answer,
+  Application,
+  Area,
+  Authorization,
+  FileMetadata,
+  Organisation,
+  User,
+  UserGroup
+}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
@@ -118,24 +127,35 @@ object application {
     )
   }
 
-  def organisationIcon(creatorUserName: String): Tag =
-    Map(
-      "A+" -> "aplus",
-      "Pôle Emploi".toUpperCase() -> "pe",
-      "MSA" -> "msa",
-      "CPAM" -> "cpam",
-      "CRAM" -> "cpam",
-      "CNAM" -> "cpam",
-      "CAF" -> "caf",
-      "CNAF" -> "caf",
-      "CNAV" -> "cnav",
-      "CARSAT" -> "cnav",
-      "DGFIP" -> "dgfip",
-      "DDFIP" -> "dgfip",
-      "DRFIP" -> "dgfip",
-      "Défenseur des droits".toUpperCase() -> "ddd"
-    ).find { case (name, _) => creatorUserName.toUpperCase.contains(name) } match {
-      case Some((_, icon)) =>
+  def organisationIcon(
+      userId: UUID,
+      creatorUserName: String,
+      usersOrganisations: Map[UUID, List[Organisation.Id]]
+  ): Tag = {
+    val icons = Map(
+      Organisation.poleEmploiId -> "pe",
+      Organisation.msaId -> "msa",
+      Organisation.cpamId -> "cpam",
+      Organisation.cramId -> "cpam",
+      Organisation.cnamId -> "cpam",
+      Organisation.cafId -> "caf",
+      Organisation.cnavId -> "cnav",
+      Organisation.carsatId -> "cnav",
+      Organisation.ddfipId -> "dgfip",
+      Organisation.drfipId -> "dgfip",
+    )
+    val iconName: Option[String] = for {
+      organisations <- usersOrganisations.get(userId)
+      name <- organisations.flatMap(id => icons.get(id)).headOption
+    } yield name
+
+    iconName.orElse(
+      Map(
+        "A+" -> "aplus",
+        "Défenseur des droits".toUpperCase() -> "ddd"
+      ).find { case (name, _) => creatorUserName.toUpperCase.contains(name) }.map(_._2)
+    ) match {
+      case Some(icon) =>
         img(
           cls := "mdl-list__item-avatar",
           src := Assets.versioned("images/admin/" + icon + "-icon.png").url
@@ -143,6 +163,7 @@ object application {
       case None =>
         i(cls := "material-icons mdl-list__item-avatar", "person")
     }
+  }
 
   def closeApplicationModal(
       applicationId: UUID
@@ -275,6 +296,7 @@ object application {
       attachments: List[FileMetadata],
       currentUser: User,
       currentUserRights: Authorization.UserRights,
+      usersOrganisations: Map[UUID, List[Organisation.Id]],
       config: AppConfig,
   ): Frag =
     frag(
@@ -366,7 +388,11 @@ object application {
                             cls := "mdl-list__item",
                             div(
                               cls := "mdl-list__item-primary-content",
-                              organisationIcon(answer.creatorUserName),
+                              organisationIcon(
+                                answer.creatorUserID,
+                                answer.creatorUserName,
+                                usersOrganisations
+                              ),
                               span(cls := "single--font-weight-600", answer.creatorUserName),
                               (currentUser.admin).some
                                 .filter(identity)

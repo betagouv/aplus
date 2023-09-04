@@ -876,17 +876,24 @@ case class ApplicationController @Inject() (
       areaInQueryString
         .getOrElse(Area.fromId(application.area).getOrElse(Area.all.head))
     val selectedAreaId = selectedArea.id
+    val applicationUsers: List[UUID] =
+      application.creatorUserId :: application.invitedUsers.map(_._1).toList :::
+        application.answers.map(_.creatorUserID)
     usersWhoCanBeInvitedOn(application, selectedAreaId).flatMap { usersWhoCanBeInvited =>
       groupsWhichCanBeInvited(selectedAreaId, application).flatMap { invitableGroups =>
-        fileService
-          .byApplicationId(application.id)
+        val filesF = EitherT(fileService.byApplicationId(application.id))
+        val organisationsF = EitherT(userService.usersOrganisations(applicationUsers))
+        (for {
+          files <- filesF
+          organisations <- organisationsF
+        } yield (files, organisations)).value
           .map(
             _.fold(
               error => {
                 eventService.logError(error)
                 InternalServerError(Constants.genericError500Message)
               },
-              files => {
+              { case (files, organisations) =>
                 val groups = userGroupService
                   .byIds(usersWhoCanBeInvited.flatMap(_.groupIds))
                   .filter(_.areaIds.contains[UUID](selectedAreaId))
@@ -903,6 +910,7 @@ case class ApplicationController @Inject() (
                     selectedArea,
                     readSharedAccountUserSignature(request.session),
                     files,
+                    organisations
                   )
                 ).withHeaders(CACHE_CONTROL -> "no-store")
               }

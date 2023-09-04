@@ -56,12 +56,20 @@ object Organisation {
   val association = Organisation("Association", "Association")
   val cafId = Organisation.Id("CAF")
   val caf = Organisation(cafId, "CAF", "Caisse d’allocations familiales")
+  val carsatId = Organisation.Id("CARSAT")
   val cpamId = Organisation.Id("CPAM")
   val cpam = Organisation(cpamId, "CPAM", "Caisse primaire d'assurance maladie")
+  val cnavId = Organisation.Id("CNAV")
+  val cnamId = Organisation.Id("CNAM")
+  val cramId = Organisation.Id("CRAM")
+  val ddfipId = Organisation.Id("DDFIP")
+  val drfipId = Organisation.Id("DRFIP")
   val franceServicesId = Organisation.Id("MFS")
   val franceServices = Organisation(franceServicesId, "FS", "France Services")
+  val msaId = Organisation.Id("MSA")
   val msap = Organisation("MSAP", "Maison de services au public")
   val hopital = Organisation("Hôpital", "Hôpital")
+  val poleEmploiId = Organisation.Id("Pôle emploi")
   val prefId = Organisation.Id("Préf")
   val pref = Organisation(prefId, "Préf", "Préfecture")
   val sousPrefId = Organisation.Id("Sous-Préf")
@@ -80,16 +88,20 @@ object Organisation {
     association,
     Organisation("BDF", "Banque de France"),
     caf, // Département
-    Organisation("CARSAT", "Caisse d'assurance retraite et de la santé au travail"), //
+    Organisation(carsatId, "CARSAT", "Caisse d'assurance retraite et de la santé au travail"),
     Organisation("CCAS", "Centre communal d'action sociale"), // Ville
     Organisation("CDAD", "Conseils départementaux d'accès au droit"), // Département
-    Organisation("CNAV", "Caisse nationale d'assurance vieillesse"), // Département
+    Organisation(cnavId, "CNAV", "Caisse nationale d'assurance vieillesse"), // Département
     cpam, // Département
-    Organisation("CNAM", "Caisse nationale d'assurance maladie"),
-    Organisation("CRAM", "Caisse régionale d'assurance maladie"), // Région
-    Organisation("DDFIP", "Direction départementale des Finances publiques"), // Département
+    Organisation(cnamId, "CNAM", "Caisse nationale d'assurance maladie"),
+    Organisation(cramId, "CRAM", "Caisse régionale d'assurance maladie"), // Région
+    Organisation(
+      ddfipId,
+      "DDFIP",
+      "Direction départementale des Finances publiques"
+    ), // Département
     Organisation("Département", "Conseil départemental"),
-    Organisation("DRFIP", "Direction régionale des Finances publiques"), // Région
+    Organisation(drfipId, "DRFIP", "Direction régionale des Finances publiques"), // Région
     hopital, // Ville
     Organisation("OFPRA", "Office français de protection des réfugiés et apatrides"), // Nationale
     Organisation("La Poste", "La Poste"),
@@ -97,9 +109,9 @@ object Organisation {
     Organisation("MDPH", "Maison départementale des personnes handicapées"),
     franceServices,
     Organisation("Mission locale", "Mission locale"), // Ville
-    Organisation("MSA", "Mutualité sociale agricole"),
+    Organisation(msaId, "MSA", "Mutualité sociale agricole"),
     msap, // Ville
-    Organisation("Pôle emploi", "Pôle emploi"),
+    Organisation(poleEmploiId, "Pôle emploi", "Pôle emploi"),
     pref, // Département
     sousPref,
     Organisation(

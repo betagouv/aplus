@@ -8,7 +8,7 @@ import helper.{Hash, StringHelper, Time, UUIDHelper}
 import java.sql.Connection
 import java.util.UUID
 import javax.inject.Inject
-import models.{Error, EventType, User}
+import models.{Error, EventType, Organisation, User}
 import models.dataModels.UserRow
 import modules.AppConfig
 import org.postgresql.util.PSQLException
@@ -178,6 +178,38 @@ class UserService @Inject() (
 
   def byEmailsFuture(emails: List[String]): Future[Either[Error, List[User]]] =
     Future(byEmails(emails).asRight)
+
+  def usersOrganisations(
+      userIds: List[UUID]
+  ): Future[Either[Error, Map[UUID, List[Organisation.Id]]]] =
+    Future(
+      Try {
+        val ids = userIds.distinct
+        db.withConnection { implicit connection =>
+          SQL(s"""SELECT u.id as user_id, g.organisation
+                    FROM "user" u, UNNEST(u.group_ids) as gid
+                    JOIN user_group g ON g.id = gid
+                    WHERE g.organisation IS NOT NULL
+                    AND ARRAY[{ids}]::uuid[] @> ARRAY[u.id]::uuid[]
+                 """)
+            .on("ids" -> ids)
+            .as((SqlParser.get[UUID]("user_id") ~ SqlParser.get[String]("organisation")).*)
+            .map(SqlParser.flatten)
+            .groupBy(_._1)
+            .view
+            .mapValues(_.map { case (_, id) => Organisation.Id(id) })
+            .toMap
+        }
+      }.toEither.left
+        .map(e =>
+          Error.SqlException(
+            EventType.UsersQueryError,
+            s"Impossible de lister les organismes d'un utilisateur",
+            e,
+            none
+          )
+        )
+    )
 
   // Note: empty string will return an `Error`
   //
