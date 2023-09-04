@@ -153,7 +153,8 @@ object application {
       Map(
         "A+" -> "aplus",
         "Défenseur des droits".toUpperCase() -> "ddd"
-      ).find { case (name, _) => creatorUserName.toUpperCase.contains(name) }.map(_._2)
+      ).find { case (name, _) => creatorUserName.toUpperCase.contains(name) }
+        .map { case (_, icon) => icon }
     ) match {
       case Some(icon) =>
         img(

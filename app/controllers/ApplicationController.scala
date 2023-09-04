@@ -877,7 +877,8 @@ case class ApplicationController @Inject() (
         .getOrElse(Area.fromId(application.area).getOrElse(Area.all.head))
     val selectedAreaId = selectedArea.id
     val applicationUsers: List[UUID] =
-      application.creatorUserId :: application.invitedUsers.map(_._1).toList :::
+      application.creatorUserId ::
+        application.invitedUsers.map { case (id, _) => id }.toList :::
         application.answers.map(_.creatorUserID)
     usersWhoCanBeInvitedOn(application, selectedAreaId).flatMap { usersWhoCanBeInvited =>
       groupsWhichCanBeInvited(selectedAreaId, application).flatMap { invitableGroups =>

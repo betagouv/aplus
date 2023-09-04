@@ -195,7 +195,7 @@ class UserService @Inject() (
             .on("ids" -> ids)
             .as((SqlParser.get[UUID]("user_id") ~ SqlParser.get[String]("organisation")).*)
             .map(SqlParser.flatten)
-            .groupBy(_._1)
+            .groupBy { case (id, _) => id }
             .view
             .mapValues(_.map { case (_, id) => Organisation.Id(id) })
             .toMap
