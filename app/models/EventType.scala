@@ -169,6 +169,8 @@ object EventType {
   object SearchUsersNotAuthorized extends Warn
   object SearchUsersError extends Error
 
+  object UsersQueryError extends Error
+
   // Signups
   object SignupFormShowed extends Info
   object SignupFormValidationError extends Warn

@@ -5,7 +5,7 @@
 @import models.Answer.AnswerType
 @import serializers.Keys
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, selectedArea: Area, userSignature: Option[String], attachments: List[FileMetadata])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, selectedArea: Area, userSignature: Option[String], attachments: List[FileMetadata], usersOrganisations: Map[java.util.UUID, List[Organisation.Id]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 
 @main(currentUser, currentUserRights, modals = toHtml(views.application.closeApplicationModal(application.id)))(s"Demande de ${application.creatorUserName} - ${Area.fromId(application.area).get.name}")  {
@@ -232,7 +232,7 @@ dialog {
                 Créée par
                 <div class="mdl-list__item">
                     <div class="mdl-list__item-primary-content">
-                        @toHtml(views.application.organisationIcon(application.creatorUserName))
+                        @toHtml(views.application.organisationIcon(application.creatorUserId, application.creatorUserName, usersOrganisations))
                         <span>
                           @application.creatorUserName
                           @if(Authorization.isAdmin(currentUserRights)) {
@@ -249,7 +249,7 @@ dialog {
                 @for((userId, userName) <- application.invitedUsers) {
                     <div class="mdl-list__item">
                         <div class="mdl-list__item-primary-content">
-                            @toHtml(views.application.organisationIcon(userName))
+                            @toHtml(views.application.organisationIcon(userId, userName, usersOrganisations))
                             <span>
                               @userName
                               @if(Authorization.isAdmin(currentUserRights)) {
@@ -279,7 +279,7 @@ dialog {
             </div>
         </div>
 
-        @toHtml(views.application.answerThread(application, attachments, currentUser, currentUserRights, mainInfos.config))
+        @toHtml(views.application.answerThread(application, attachments, currentUser, currentUserRights, usersOrganisations, mainInfos.config))
 
 
 
