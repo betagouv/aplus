@@ -263,14 +263,15 @@ object formModels {
       "instructor" -> boolean,
       "groupAdmin" -> boolean,
       "phoneNumber" -> normalizedOptionalText,
-      Keys.User.sharedAccount -> boolean
+      Keys.User.sharedAccount -> boolean,
     )(AddUserFormData.apply)(AddUserFormData.unapply)
 
-    val addUsersForm: Form[List[AddUserFormData]] =
+    val addUsersForm: Form[AddUsersFormData] =
       Form(
-        single(
-          "users" -> list(formMapping)
-        )
+        mapping(
+          "users" -> list(formMapping),
+          "confirmInstructors" -> boolean,
+        )(AddUsersFormData.apply)(AddUsersFormData.unapply)
       )
 
   }
@@ -284,8 +285,10 @@ object formModels {
       instructor: Boolean,
       groupAdmin: Boolean,
       phoneNumber: Option[String],
-      sharedAccount: Boolean
+      sharedAccount: Boolean,
   )
+
+  case class AddUsersFormData(users: List[AddUserFormData], confirmInstructors: Boolean)
 
   object EditUserFormData {
 

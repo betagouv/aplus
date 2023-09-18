@@ -2,9 +2,12 @@ package views
 
 import cats.syntax.all._
 import controllers.routes.UserController
+import helper.MiscHelpers.intersperseList
 import helper.TwirlImports.toHtml
 import models.{Area, Authorization, User}
+import models.formModels.AddUsersFormData
 import org.webjars.play.WebJarsUtil
+import play.api.data.Form
 import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
@@ -125,6 +128,84 @@ object users {
         id := "searchBox",
         name := "searchBox"
       ),
+    )
+
+  def addInstructorsConfirmationMessage(
+      form: Form[AddUsersFormData],
+      numberOfOldApplications: Int
+  ): Tag =
+    div(
+      cls := "single--max-width-800px single--padding-left-16px single--padding-right-16px single--padding-bottom-16px single--align-self-center single--display-flex single--flex-direction-column single--background-color-white",
+      h4(cls := "typography--text-align-center", "Confirmation"),
+      div(
+        cls := "single--margin-bottom-16px",
+        p(
+          "Attribuer le rôle d’instructeur aux agents suivants leur donnera accès au contenu ",
+          em("(données personnelles des usagers, pièces-jointes)"),
+          " des ",
+          b(numberOfOldApplications.toString),
+          " demandes en cours d’instruction du groupe ainsi qu’aux demandes à venir :",
+        ),
+        form.value.map(formData =>
+          ul(
+            frag(
+              formData.users
+                .filter(_.instructor)
+                .map(newUser =>
+                  li(
+                    newUser.name,
+                    " ",
+                    newUser.lastName,
+                    " ",
+                    newUser.firstName,
+                    " (",
+                    newUser.email,
+                    ")",
+                  )
+                )
+            )
+          )
+        ),
+        form.value.map { formData =>
+          val nonInstructors = formData.users.filter(!_.instructor)
+          if (nonInstructors.size <= 0)
+            frag()
+          else
+            p(
+              "Par ailleurs, ",
+              (if (nonInstructors.size === 1) "le compte"
+               else "les comptes"),
+              " ",
+              intersperseList[Frag](nonInstructors.map(newUser => newUser.name), ", "),
+              " ",
+              (if (nonInstructors.size === 1) "sera créé"
+               else "seront créés"),
+              " sans rôle d’instructeur. Pour effectuer des corrections, veuillez utiliser le bouton page précédente."
+            )
+        }
+      ),
+      div(
+        cls := "single--margin-bottom-8px",
+        label(
+          `for` := "checkbox-instructors-confirmation",
+          cls := "mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect single--margin-bottom-8px",
+          input(
+            id := s"checkbox-instructors-confirmation",
+            cls := "mdl-checkbox__input",
+            `type` := "checkbox",
+            name := "confirmInstructors",
+            value := "true",
+          ),
+          span(
+            cls := "mdl-checkbox__label",
+            "Je confirme que les personnes citées ci-dessus sont habilitées à recevoir le rôle d’instructeur sur Administration+"
+          )
+        ),
+      ),
+      button(
+        cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--colored single--margin-top-8px single--margin-bottom-8px single--width-300px single--align-self-center",
+        "Créer les comptes"
+      )
     )
 
 }
