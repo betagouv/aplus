@@ -3,7 +3,7 @@
 //                 of jackson is set in build.sbt (with the patch version that is not vulnerable)
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.20")
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1")
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.8")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.9")
 addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.4")
 addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.2")
 
@@ -16,7 +16,7 @@ addSbtPlugin("com.github.sbt" % "sbt-git" % "2.0.1")
 // Makes available sbt commands results to project scala code
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.11.0")
 
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.11.0")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.11.1")
 
 // See https://github.com/sbt/sbt/issues/6997
 ThisBuild / libraryDependencySchemes ++= Seq(
