@@ -239,7 +239,9 @@ object mandat {
             ),
           ),
           p(
-            "A partir du moment où un aidant habilité par Nom de la structure réalise à ma place une démarche [via Administration+], il accepte de le faire dans les conditions décrites dans ce document."
+            "A partir du moment où un aidant habilité par ",
+            groupNameBold,
+            " réalise à ma place une démarche [via Administration+], il accepte de le faire dans les conditions décrites dans ce document."
           ),
           p(
             "Le présent mandat prend fin à compter de la notification du déblocage de ma situation administrative. À défaut, il est valable pour une durée d’un an renouvelable."
