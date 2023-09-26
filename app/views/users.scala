@@ -5,7 +5,7 @@ import controllers.routes.UserController
 import helper.MiscHelpers.intersperseList
 import helper.TwirlImports.toHtml
 import models.{Area, Authorization, User}
-import models.formModels.AddUsersFormData
+import models.formModels.{AddUserFormData, AddUsersFormData}
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.mvc.{Flash, RequestHeader}
@@ -146,41 +146,49 @@ object users {
           b(numberOfOldApplications.toString),
           " demandes en cours d’instruction du groupe ainsi qu’aux demandes à venir :",
         ),
-        form.value.map(formData =>
-          ul(
-            frag(
-              formData.users
-                .filter(_.instructor)
-                .map(newUser =>
-                  li(
-                    newUser.name,
-                    " ",
-                    newUser.lastName,
-                    " ",
-                    newUser.firstName,
-                    " (",
-                    newUser.email,
-                    ")",
-                  )
-                )
-            )
-          )
-        ),
         form.value.map { formData =>
+          val displayName = (user: AddUserFormData) =>
+            frag(
+              user.name,
+              " ",
+              user.lastName,
+              " ",
+              user.firstName,
+              " (",
+              user.email,
+              ")",
+            )
+
+          val instructorList =
+            ul(
+              frag(
+                formData.users
+                  .filter(_.instructor)
+                  .map(newUser =>
+                    li(
+                      displayName(newUser)
+                    )
+                  )
+              )
+            )
+
           val nonInstructors = formData.users.filter(!_.instructor)
           if (nonInstructors.size <= 0)
-            frag()
+            frag(instructorList)
           else
-            p(
-              "Par ailleurs, ",
-              (if (nonInstructors.size === 1) "le compte"
-               else "les comptes"),
-              " ",
-              intersperseList[Frag](nonInstructors.map(newUser => newUser.name), ", "),
-              " ",
-              (if (nonInstructors.size === 1) "sera créé"
-               else "seront créés"),
-              " sans rôle d’instructeur. Pour effectuer des corrections, veuillez utiliser le bouton page précédente."
+            frag(
+              instructorList,
+              p(
+                "Par ailleurs, ",
+                (if (nonInstructors.size === 1) "le compte"
+                 else "les comptes"),
+                " ",
+                intersperseList[Frag](nonInstructors.map(displayName), ", "),
+                " ",
+                (if (nonInstructors.size === 1) "sera créé"
+                 else "seront créés"),
+                " sans rôle d’instructeur. Pour effectuer des corrections, veuillez utiliser le bouton page précédente."
+              )
             )
         }
       ),
