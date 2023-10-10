@@ -7,7 +7,7 @@ object BusinessDaysCalculator {
 
   def isBusinessDay(date: ZonedDateTime): Boolean = {
     val dayOfWeek = date.getDayOfWeek
-    dayOfWeek != DayOfWeek.SATURDAY && dayOfWeek != DayOfWeek.SUNDAY
+    !Set(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY).contains(dayOfWeek)
   }
 
   def businessHoursBetween(startTime: ZonedDateTime, endTime: ZonedDateTime): Int = {
