@@ -14,6 +14,7 @@ object BusinessDaysCalculator {
     val (start, end) =
       if (endTime.isAfter(startTime)) (startTime, endTime) else (endTime, startTime)
 
+    // scalastyle:ignore var.local
     var totalHours: Int = 0
 
     if (start.truncatedTo(ChronoUnit.DAYS).isEqual(end.truncatedTo(ChronoUnit.DAYS))) {
@@ -21,7 +22,9 @@ object BusinessDaysCalculator {
         totalHours = end.getHour - start.getHour
       }
     } else {
+      // scalastyle:ignore var.local
       var current = start.truncatedTo(ChronoUnit.DAYS)
+      // scalastyle:ignore while
       while (!current.isAfter(end)) {
         if (isBusinessDay(current)) {
           if (current.isEqual(start.truncatedTo(ChronoUnit.DAYS))) {
