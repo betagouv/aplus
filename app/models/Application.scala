@@ -326,4 +326,58 @@ object Application {
     UserBirthnameKey,
   )
 
+  def invitedUserContextualizedName(
+      user: User,
+      userGroups: List[UserGroup],
+      currentAreaId: Option[UUID],
+      creatorGroupId: Option[UUID]
+  ): String = {
+    val defaultContexts: List[String] = currentAreaId
+      .fold(userGroups)(areaId => userGroups.filter(_.areaIds.contains[UUID](areaId)))
+      .flatMap { userGroup: UserGroup =>
+        if (user.instructor) {
+          for {
+            areaInseeCode <- userGroup.areaIds.flatMap(Area.fromId).map(_.inseeCode).headOption
+            organisation <- userGroup.organisation
+          } yield {
+            s"(${organisation.name} - $areaInseeCode)"
+          }
+        } else {
+          List(s"(${userGroup.name})")
+        }
+      }
+      .distinct
+
+    val creatorGroup = creatorGroupId.flatMap(id => userGroups.find(_.id === id))
+    val isInCreatorGroup: Boolean =
+      creatorGroupId.map(id => user.groupIds.contains[UUID](id)).getOrElse(false)
+
+    val contexts: List[String] =
+      if (isInCreatorGroup)
+        creatorGroup.fold(defaultContexts) { group =>
+          val creatorGroupIsInApplicationArea: Boolean =
+            currentAreaId.map(areaId => group.areaIds.contains[UUID](areaId)).getOrElse(true)
+          val name: String =
+            if (creatorGroupIsInApplicationArea)
+              group.name
+            else
+              group.areaIds
+                .flatMap(Area.fromId)
+                .map(_.inseeCode)
+                .headOption
+                .fold(group.name)(code =>
+                  if (group.name.contains(code)) group.name else s"${group.name} - $code"
+                )
+          s"($name)" :: Nil
+        }
+      else
+        defaultContexts
+
+    val capitalizedUserName = user.name.split(' ').map(_.capitalize).mkString(" ")
+    if (contexts.isEmpty)
+      s"$capitalizedUserName ( ${user.qualite} )"
+    else
+      s"$capitalizedUserName ${contexts.mkString(",")}"
+  }
+
 }
