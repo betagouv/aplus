@@ -831,6 +831,10 @@ a {
     width: 48px;
 }
 
+.single--width-300px {
+    width: 300px;
+}
+
 .single--width-400px {
     width: 400px;
 }
@@ -884,6 +888,12 @@ a {
 .single--align-content-flex-start {
     -ms-flex-line-pack: start;
     align-content: flex-start;
+}
+
+.single--align-self-center {
+    -ms-flex-item-align: center;
+    -ms-grid-row-align: center;
+    align-self: center;
 }
 
 .single--align-self-flex-end {

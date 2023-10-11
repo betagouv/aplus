@@ -174,59 +174,13 @@ case class ApplicationController @Inject() (
       )
     }
 
-  private def contextualizedUserName(
+  def contextualizedUserName(
       user: User,
       currentAreaId: UUID,
       creatorGroupId: Option[UUID]
   ): String = {
-    val groups = userGroupService.byIds(user.groupIds)
-
-    val defaultContexts: List[String] = groups
-      .filter(_.areaIds.contains[UUID](currentAreaId))
-      .flatMap { userGroup: UserGroup =>
-        if (user.instructor) {
-          for {
-            areaInseeCode <- userGroup.areaIds.flatMap(Area.fromId).map(_.inseeCode).headOption
-            organisation <- userGroup.organisation
-          } yield {
-            s"(${organisation.name} - $areaInseeCode)"
-          }
-        } else {
-          List(s"(${userGroup.name})")
-        }
-      }
-      .distinct
-
-    val creatorGroup = creatorGroupId.flatMap(id => groups.find(_.id === id))
-    val isInCreatorGroup: Boolean =
-      creatorGroupId.map(id => user.groupIds.contains[UUID](id)).getOrElse(false)
-
-    val contexts: List[String] =
-      if (isInCreatorGroup)
-        creatorGroup.fold(defaultContexts) { group =>
-          val creatorGroupIsInApplicationArea: Boolean =
-            group.areaIds.contains[UUID](currentAreaId)
-          val name: String =
-            if (creatorGroupIsInApplicationArea)
-              group.name
-            else
-              group.areaIds
-                .flatMap(Area.fromId)
-                .map(_.inseeCode)
-                .headOption
-                .fold(group.name)(code =>
-                  if (group.name.contains(code)) group.name else s"${group.name} - $code"
-                )
-          s"($name)" :: Nil
-        }
-      else
-        defaultContexts
-
-    val capitalizedUserName = user.name.split(' ').map(_.capitalize).mkString(" ")
-    if (contexts.isEmpty)
-      s"$capitalizedUserName ( ${user.qualite} )"
-    else
-      s"$capitalizedUserName ${contexts.mkString(",")}"
+    val userGroups = userGroupService.byIds(user.groupIds)
+    Application.invitedUserContextualizedName(user, userGroups, currentAreaId.some, creatorGroupId)
   }
 
   private def handlingFiles(applicationId: UUID, answerId: Option[UUID])(
