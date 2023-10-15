@@ -448,4 +448,86 @@ object formModels {
 
   }
 
+  object ApplicationsInfos {
+    val groupFilterKey = "filtre-groupe"
+    val statusFilterKey = "filtre-status"
+    val statusMine = "mes-demandes"
+    val statusNew = "nouvelles"
+    val statusProcessing = "en-cours"
+    val statusLate = "souffrante"
+    val statusArchived = "archive"
+
+    case class Filters(selectedGroups: Option[Set[UUID]], status: Option[String]) {
+
+      def groupIsFiltered(id: UUID): Boolean =
+        selectedGroups.map(groups => groups.contains(id)).getOrElse(false)
+
+      def isMine: Boolean = status === Some(statusMine)
+      def isNew: Boolean = status === Some(statusNew)
+      def isProcessing: Boolean = status === Some(statusProcessing)
+      def isLate: Boolean = status === Some(statusLate)
+      def isArchived: Boolean = status === Some(statusArchived)
+      def hasNoStatus: Boolean = !isMine && !isNew && !isProcessing && !isLate && !isArchived
+
+      def toUrl: String = {
+        val base = controllers.routes.ApplicationController.myApplications.url
+        val groups: List[String] =
+          selectedGroups.map(_.map(id => s"$groupFilterKey=$id").toList).getOrElse(Nil)
+        val statusFilter: List[String] = status.toList.map(status => s"$statusFilterKey=$status")
+        val filters = statusFilter ::: groups
+        if (filters.isEmpty)
+          base
+        else
+          base + "?" + filters.mkString("&")
+      }
+
+      def withGroup(id: UUID) = {
+        val newGroups = selectedGroups match {
+          case None                                => Some(Set(id))
+          case Some(groups) if groups.contains(id) => Some(groups)
+          case Some(groups)                        => Some(groups.incl(id))
+        }
+        copy(selectedGroups = newGroups)
+      }
+
+      def withoutGroup(id: UUID) = {
+        val newGroups = selectedGroups match {
+          case None         => None
+          case Some(groups) => Some(groups.excl(id))
+        }
+        copy(selectedGroups = newGroups)
+      }
+
+      def withoutStatus: Filters = copy(status = None)
+      def withStatusMine: Filters = copy(status = Some(statusMine))
+      def withStatusNew: Filters = copy(status = Some(statusNew))
+      def withStatusProcessing: Filters = copy(status = Some(statusProcessing))
+      def withStatusLate: Filters = copy(status = Some(statusLate))
+      def withStatusArchived: Filters = copy(status = Some(statusArchived))
+    }
+
+  }
+
+  case class ApplicationsInfos(
+      filters: ApplicationsInfos.Filters,
+      groupsCounts: Map[UUID, Int],
+      allGroupsOpenCount: Int,
+      allGroupsClosedCount: Int,
+      filteredByGroupsOpenCount: Int,
+      filteredByGroupsClosedCount: Int,
+      interactedCount: Int,
+      newCount: Int,
+      processingCount: Int,
+      lateCount: Int,
+  ) {
+
+    def countsLog: String = {
+      val groups: String = filters.selectedGroups.map(_.mkString).getOrElse("")
+      s"ouvertes=$allGroupsOpenCount/archivées=$allGroupsClosedCount " +
+        s"[groupes=$groups/mes demandes=$interactedCount/nouvelles=$newCount/" +
+        s"en cours=$processingCount/retard=$lateCount]"
+    }
+
+  }
+
 }
