@@ -5,7 +5,7 @@
 @import serializers.Keys
 @import cats.implicits.catsSyntaxEq
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[EditUserFormData], uneditedUser: User, userGroups: List[UserGroup], unused: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[EditUserFormData], uneditedUser: User, userGroups: List[UserGroup], canDeleteUser: Boolean = false, tokenName: String = "", tokenValue: String = "")(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 
 @main(currentUser, currentUserRights, modals = toHtml(views.user.deleteUserModal(uneditedUser)))(s"Utilisateur ${form("name").value.getOrElse("")}") {
@@ -200,7 +200,7 @@
                      value="@uneditedUser.internalSupportComment">
           }
 
-          @if(unused && canEditUser) {
+          @if(canDeleteUser && canEditUser) {
             <button id="delete-user-button" class="mdl-button mdl-js-button mdl-button--raised" type="button">Supprimer cet utilisateur inutilisé</button>
             <br>
           }

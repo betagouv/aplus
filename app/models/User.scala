@@ -1,12 +1,12 @@
 package models
 
-import java.time.{ZoneId, ZonedDateTime}
+import java.time.{Instant, ZoneId, ZonedDateTime}
 import java.util.UUID
 
 import cats.syntax.all._
 import constants.Constants
 import helper.{Hash, Pseudonymizer, Time, UUIDHelper}
-import helper.Time.zonedDateTimeInstance
+import helper.Time.{instantInstance, zonedDateTimeInstance}
 import helper.StringHelper.{
   capitalizeName,
   commonStringInputNormalization,
@@ -40,6 +40,7 @@ case class User(
     groupIds: List[UUID] = Nil,
     cguAcceptationDate: Option[ZonedDateTime] = None,
     newsletterAcceptationDate: Option[ZonedDateTime] = None,
+    firstLoginDate: Option[Instant],
     phoneNumber: Option[String] = None,
     // If this field is non empty, then the User
     // is considered to be an observer:
@@ -49,7 +50,7 @@ case class User(
     observableOrganisationIds: List[Organisation.Id] = Nil,
     sharedAccount: Boolean = false,
     // This is a comment only visible by the admins
-    internalSupportComment: Option[String]
+    internalSupportComment: Option[String],
 ) extends AgeModel {
   def nameWithQualite = s"$name ( $qualite )"
 
@@ -105,6 +106,9 @@ case class User(
   lazy val newsletterAcceptationDateLog: String =
     newsletterAcceptationDate.map(Time.adminsFormatter.format).getOrElse("<vide>")
 
+  lazy val firstLoginDateLog: String =
+    firstLoginDate.map(Time.adminsFormatter.format).getOrElse("<vide>")
+
   lazy val phoneNumberLog: String = phoneNumber.map(withQuotes).getOrElse("<vide>")
   lazy val observableOrganisationIdsLog: String = observableOrganisationIds.map(_.id).mkString(", ")
   lazy val sharedAccountLog: String = sharedAccount.toString
@@ -132,6 +136,7 @@ case class User(
       ("Territoires", areasLog),
       ("Date CGU", cguAcceptationDateLog),
       ("Newsletter", newsletterAcceptationDateLog),
+      ("Première connexion", firstLoginDateLog),
       ("Observation des organismes", observableOrganisationIdsLog),
       ("Information Support", internalSupportCommentLog),
     ).map { case (fieldName, value) => s"$fieldName : $value" }.mkString(" | ") + "]"
@@ -170,6 +175,12 @@ case class User(
         newsletterAcceptationDate =!= other.newsletterAcceptationDate,
         newsletterAcceptationDateLog,
         other.newsletterAcceptationDateLog
+      ),
+      (
+        "Première connexion",
+        firstLoginDate =!= other.firstLoginDate,
+        firstLoginDateLog,
+        other.firstLoginDateLog
       ),
       (
         "Observation des organismes",
@@ -211,6 +222,7 @@ case class User(
       groupIds = groupIds,
       cguAcceptationDate = cguAcceptationDate,
       newsletterAcceptationDate = newsletterAcceptationDate,
+      firstLoginDate = firstLoginDate,
       phoneNumber = pseudoPhone,
       observableOrganisationIds = observableOrganisationIds,
       sharedAccount = sharedAccount,
@@ -238,6 +250,7 @@ object User {
     "75056",
     groupAdmin = false,
     disabled = true,
+    firstLoginDate = none,
     internalSupportComment = None
   )
 

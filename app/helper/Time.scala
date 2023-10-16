@@ -44,4 +44,9 @@ object Time {
       override def compare(x: ZonedDateTime, y: ZonedDateTime): Int = x.compareTo(y)
     }
 
+  implicit final val instantInstance: Order[Instant] =
+    new Order[Instant] {
+      override def compare(x: Instant, y: Instant): Int = x.compareTo(y)
+    }
+
 }

@@ -140,6 +140,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = List(instructorGroup.id),
       internalSupportComment = None
     )
@@ -160,6 +161,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = Nil,
       internalSupportComment = None
     )
@@ -180,6 +182,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = List(helperGroup.id),
       internalSupportComment = None
     )
@@ -200,6 +203,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = List(helperGroup.id),
       internalSupportComment = None
     )
@@ -220,6 +224,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = List(helperGroup.id),
       internalSupportComment = None
     )
@@ -240,6 +245,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = List(helperGroup.id),
       internalSupportComment = None
     )
@@ -260,6 +266,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = List(helperGroup.id),
       internalSupportComment = None
     )

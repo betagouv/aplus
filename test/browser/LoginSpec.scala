@@ -29,6 +29,7 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
     Area.all.map(_.id),
     ZonedDateTime.parse("2017-11-01T00:00+01:00"),
     "75056",
+    firstLoginDate = None,
     groupAdmin = true,
     disabled = false,
     internalSupportComment = None

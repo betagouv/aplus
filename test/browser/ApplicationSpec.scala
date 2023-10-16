@@ -53,6 +53,7 @@ class ApplicationSpec extends Specification with BaseSpec {
         groupAdmin = false,
         disabled = false,
         cguAcceptationDate = Some(Time.nowParis()),
+        firstLoginDate = None,
         groupIds = List(instructorGroup.id),
         internalSupportComment = None
       )
@@ -73,6 +74,7 @@ class ApplicationSpec extends Specification with BaseSpec {
         groupAdmin = false,
         disabled = false,
         cguAcceptationDate = Some(Time.nowParis()),
+        firstLoginDate = None,
         internalSupportComment = None
       )
       userService.add(List(instructorUser, helperUser))
