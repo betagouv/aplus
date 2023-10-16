@@ -92,7 +92,7 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.6.0",
   anormDependency,
   "com.typesafe.play" %% "play-mailer" % "8.0.1",
-  "com.typesafe.play" %% "play-json" % "2.9.4",
+  "com.typesafe.play" %% "play-json" % "2.10.1",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
@@ -122,8 +122,8 @@ dependencyOverrides += "org.yaml" % "snakeyaml" % "1.33"
 
 // Jackson CVE fix
 // https://github.com/playframework/playframework/discussions/11222
-val jacksonVersion = "2.13.5"
-val jacksonDatabindVersion = "2.13.5"
+val jacksonVersion = "2.14.3"
+val jacksonDatabindVersion = "2.14.3"
 
 val jacksonOverrides = Seq(
   "com.fasterxml.jackson.core" % "jackson-core",
