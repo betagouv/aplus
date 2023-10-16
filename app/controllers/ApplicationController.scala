@@ -11,12 +11,17 @@ import helper.PlayFormHelper.formErrorsLog
 import helper.ScalatagsHelpers.writeableOf_Modifier
 import helper.StringHelper.{CanonizeString, NonEmptyTrimmedString}
 import helper.Time.zonedDateTimeOrdering
-import helper.{Hash, Time, UUIDHelper}
+import helper.{BusinessDaysCalculator, Hash, Time, UUIDHelper}
 import helper.TwirlImports.toHtml
 import models.Answer.AnswerType
 import models.EventType._
 import models._
-import models.formModels.{AnswerFormData, ApplicationFormData, InvitationFormData}
+import models.formModels.{
+  AnswerFormData,
+  ApplicationFormData,
+  ApplicationsInfos,
+  InvitationFormData
+}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.data.Forms._
@@ -169,59 +174,13 @@ case class ApplicationController @Inject() (
       )
     }
 
-  private def contextualizedUserName(
+  def contextualizedUserName(
       user: User,
       currentAreaId: UUID,
       creatorGroupId: Option[UUID]
   ): String = {
-    val groups = userGroupService.byIds(user.groupIds)
-
-    val defaultContexts: List[String] = groups
-      .filter(_.areaIds.contains[UUID](currentAreaId))
-      .flatMap { userGroup: UserGroup =>
-        if (user.instructor) {
-          for {
-            areaInseeCode <- userGroup.areaIds.flatMap(Area.fromId).map(_.inseeCode).headOption
-            organisation <- userGroup.organisation
-          } yield {
-            s"(${organisation.name} - $areaInseeCode)"
-          }
-        } else {
-          List(s"(${userGroup.name})")
-        }
-      }
-      .distinct
-
-    val creatorGroup = creatorGroupId.flatMap(id => groups.find(_.id === id))
-    val isInCreatorGroup: Boolean =
-      creatorGroupId.map(id => user.groupIds.contains[UUID](id)).getOrElse(false)
-
-    val contexts: List[String] =
-      if (isInCreatorGroup)
-        creatorGroup.fold(defaultContexts) { group =>
-          val creatorGroupIsInApplicationArea: Boolean =
-            group.areaIds.contains[UUID](currentAreaId)
-          val name: String =
-            if (creatorGroupIsInApplicationArea)
-              group.name
-            else
-              group.areaIds
-                .flatMap(Area.fromId)
-                .map(_.inseeCode)
-                .headOption
-                .fold(group.name)(code =>
-                  if (group.name.contains(code)) group.name else s"${group.name} - $code"
-                )
-          s"($name)" :: Nil
-        }
-      else
-        defaultContexts
-
-    val capitalizedUserName = user.name.split(' ').map(_.capitalize).mkString(" ")
-    if (contexts.isEmpty)
-      s"$capitalizedUserName ( ${user.qualite} )"
-    else
-      s"$capitalizedUserName ${contexts.mkString(",")}"
+    val userGroups = userGroupService.byIds(user.groupIds)
+    Application.invitedUserContextualizedName(user, userGroups, currentAreaId.some, creatorGroupId)
   }
 
   private def handlingFiles(applicationId: UUID, answerId: Option[UUID])(
@@ -545,25 +504,140 @@ case class ApplicationController @Inject() (
       }
     }
 
-  def myApplications: Action[AnyContent] =
-    loginAction { implicit request =>
-      val myApplications = applicationService.allOpenOrRecentForUserId(
-        request.currentUser.id,
-        request.currentUser.admin,
+  private def myApplicationsBoard(
+      user: User,
+      userRights: Authorization.UserRights,
+      asAdmin: Boolean
+  )(log: ApplicationsInfos => Unit)(implicit request: play.api.mvc.RequestHeader): Future[Result] =
+    userGroupService.byIdsFuture(user.groupIds).map { userGroups =>
+      val selectedGroupsFilter = request.queryString
+        .get(ApplicationsInfos.groupFilterKey)
+        .map(_.flatMap(id => Try(UUID.fromString(id)).toOption).toSet)
+      val statusFilter = request.getQueryString(ApplicationsInfos.statusFilterKey)
+      val filters = ApplicationsInfos.Filters(
+        selectedGroups = selectedGroupsFilter,
+        status = statusFilter,
+      )
+
+      val allApplications = applicationService.allOpenOrRecentForUserId(
+        user.id,
+        asAdmin,
         Time.nowParis()
       )
-      val (myClosedApplications, myOpenApplications) = myApplications.partition(_.closed)
+      val (allClosedApplications, allOpenApplications) = allApplications.partition(_.closed)
 
-      eventService.log(
-        MyApplicationsShowed,
-        s"Visualise la liste des applications : open=${myOpenApplications.size}/closed=${myClosedApplications.size}"
-      )
-      Ok(
-        views.html.myApplications(request.currentUser, request.rights)(
-          myOpenApplications,
-          myClosedApplications
+      val allGroupsOpenCount = allOpenApplications.length
+      val allGroupsClosedCount = allClosedApplications.length
+
+      val openApplicationsByGroupCounts: Map[UUID, Int] =
+        userGroups
+          .map(group =>
+            (
+              group.id,
+              allOpenApplications.count(application =>
+                application.creatorGroupId
+                  .map(id => id === group.id)
+                  .getOrElse(false) || application.invitedGroups.contains(group.id)
+              )
+            )
+          )
+          .toMap
+
+      val filteredByGroups = selectedGroupsFilter match {
+        case None => allApplications
+        case Some(filteringGroups) =>
+          allApplications.filter { application =>
+            application.creatorGroupId.map(filteringGroups.contains).getOrElse(false) ||
+            filteringGroups.intersect(application.invitedGroups).nonEmpty
+          }
+      }
+
+      val (closedFilteredByGroups, openFilteredByGroups) = filteredByGroups.partition(_.closed)
+      val filteredByGroupsOpenCount = openFilteredByGroups.length
+      val filteredByGroupsClosedCount = closedFilteredByGroups.length
+
+      val interactedApplications = openFilteredByGroups.filter { application =>
+        application.creatorUserId === user.id ||
+        application.answers.exists(answer =>
+          answer.creatorUserID === user.id && !answer.message
+            .contains("Les nouveaux instructeurs rejoignent automatiquement la demande")
         )
+      }
+      val interactedApplicationsCount = interactedApplications.length
+
+      val applicationsByStatus =
+        openFilteredByGroups.groupBy(application => application.longStatus(user))
+      val newApplications: List[Application] =
+        applicationsByStatus.get(Application.Status.New).getOrElse(Nil)
+      val newApplicationsCount = newApplications.length
+      val processingApplications: List[Application] =
+        applicationsByStatus.get(Application.Status.Processing).getOrElse(Nil)
+      val processingApplicationsCount = processingApplications.length
+
+      val lateApplications = openFilteredByGroups
+        .filter(_.status =!= Application.Status.Processed)
+        .filter { application =>
+          application.answers
+            .filter(_.creatorUserID =!= application.creatorUserId)
+            .filter(answer =>
+              !answer.message.contains("rejoins la conversation automatiquement comme expert") &&
+                !answer.message
+                  .contains("Les nouveaux instructeurs rejoignent automatiquement la demande")
+            )
+            .lastOption match {
+            case None =>
+              BusinessDaysCalculator
+                .businessHoursBetween(application.creationDate, ZonedDateTime.now()) > (3 * 24)
+            case Some(lastAnswer) =>
+              BusinessDaysCalculator
+                .businessHoursBetween(lastAnswer.creationDate, ZonedDateTime.now()) > (15 * 24)
+          }
+        }
+
+      val lateCount = lateApplications.length
+
+      val filteredByStatus =
+        if (filters.isMine)
+          interactedApplications
+        else if (filters.isNew)
+          newApplications
+        else if (filters.isProcessing)
+          processingApplications
+        else if (filters.isLate)
+          lateApplications
+        else if (filters.isArchived)
+          closedFilteredByGroups
+        else
+          openFilteredByGroups
+
+      val infos = ApplicationsInfos(
+        filters = filters,
+        groupsCounts = openApplicationsByGroupCounts,
+        allGroupsOpenCount = allGroupsOpenCount,
+        allGroupsClosedCount = allGroupsClosedCount,
+        filteredByGroupsOpenCount = filteredByGroupsOpenCount,
+        filteredByGroupsClosedCount = filteredByGroupsClosedCount,
+        interactedCount = interactedApplicationsCount,
+        newCount = newApplicationsCount,
+        processingCount = processingApplicationsCount,
+        lateCount = lateCount,
+      )
+
+      log(infos)
+
+      Ok(
+        views.myApplications.page(user, userRights, filteredByStatus, userGroups, infos)
       ).withHeaders(CACHE_CONTROL -> "no-store")
+    }
+
+  def myApplications: Action[AnyContent] =
+    loginAction.async { implicit request =>
+      myApplicationsBoard(request.currentUser, request.rights, request.currentUser.admin) { infos =>
+        eventService.log(
+          MyApplicationsShowed,
+          s"Visualise la liste des demandes : ${infos.countsLog}"
+        )
+      }
     }
 
   // Handles some edge cases from browser compatibility
@@ -704,27 +778,15 @@ case class ApplicationController @Inject() (
           s"Accès non autorisé pour voir la liste des demandes de $userId",
           errorInvolvesUser = Some(otherUser.id)
         ) { () =>
-          LoginAction.readUserRights(otherUser).map { userRights =>
-            val targetUserId = otherUser.id
-            val applicationsFromTheArea = List.empty[Application]
-            eventService
-              .log(
-                AllAsShowed,
-                s"Visualise la vue de l'utilisateur $userId",
-                involvesUser = Some(otherUser.id)
-              )
-            val applications = applicationService.allForUserId(
-              userId = targetUserId,
-              anonymous = request.currentUser.admin
-            )
-            val (closedApplications, openApplications) = applications.partition(_.closed)
-            Ok(
-              views.html.myApplications(otherUser, userRights)(
-                myOpenApplications = openApplications,
-                myClosedApplications = closedApplications,
-                applicationsFromTheArea = applicationsFromTheArea
-              )
-            )
+          LoginAction.readUserRights(otherUser).flatMap { userRights =>
+            myApplicationsBoard(otherUser, userRights, request.currentUser.admin) { infos =>
+              eventService
+                .log(
+                  AllAsShowed,
+                  s"Visualise la vue de l'utilisateur $userId : ${infos.countsLog}",
+                  involvesUser = Some(otherUser.id)
+                )
+            }
           }
         }
       }

@@ -597,12 +597,6 @@ a {
     min-height: calc(100% - 120px);
 }
 
-.usefulness__icon {
-    width: 20px;
-    height: 20px;
-    vertical-align: middle;
-}
-
 .chart-container {
     position: relative;
     margin: auto;
@@ -717,6 +711,10 @@ a {
     margin-right: 24px;
 }
 
+.single--margin-right-32px {
+    margin-right: 32px;
+}
+
 .single--margin-left-2px {
     margin-left: 2px;
 }
@@ -748,6 +746,10 @@ a {
 
 .single--padding-0px {
     padding: 0px;
+}
+
+.single--padding-4px {
+    padding: 4px;
 }
 
 .single--padding-top-8px {
@@ -821,8 +823,20 @@ a {
     width: 100%;
 }
 
+.single--width-20px {
+    width: 20px;
+}
+
 .single--width-48px {
     width: 48px;
+}
+
+.single--width-300px {
+    width: 300px;
+}
+
+.single--width-400px {
+    width: 400px;
 }
 
 .single--width-max-content {
@@ -876,6 +890,17 @@ a {
     align-content: flex-start;
 }
 
+.single--align-self-center {
+    -ms-flex-item-align: center;
+    -ms-grid-row-align: center;
+    align-self: center;
+}
+
+.single--align-self-flex-end {
+    -ms-flex-item-align: end;
+    align-self: flex-end;
+}
+
 .single--flex-wrap-wrap {
     -ms-flex-wrap: wrap;
     flex-wrap: wrap;
@@ -885,12 +910,20 @@ a {
   flex-direction: column;
 }
 
+.single--white-space-normal {
+    white-space: normal;
+}
+
 .single--white-space-nowrap {
     white-space: nowrap;
 }
 
 .single--cursor-pointer {
     cursor: pointer;
+}
+
+.single--text-decoration-none {
+    text-decoration: none;
 }
 
 .single--text-decoration-underline {
@@ -905,12 +938,20 @@ a {
     list-style-type: none;
 }
 
+.single--font-weight-500 {
+    font-weight: 500;
+}
+
 .single--font-weight-600 {
     font-weight: 600;
 }
 
 .single--font-weight-bold {
     font-weight: bold;
+}
+
+.single--line-height-22px {
+    line-height: 22px !important;
 }
 
 .single--line-height-24px {
@@ -931,6 +972,10 @@ a {
 
 .single--pointer-events-all {
     pointer-events: all;
+}
+
+.single--border-bottom-2px {
+    border-bottom: 2px solid;
 }
 
 
@@ -983,6 +1028,10 @@ Typographie
 
 .typography--text-align-center {
     text-align: center;
+}
+
+.typography--text-align-center-important {
+    text-align: center !important;
 }
 
 /*************

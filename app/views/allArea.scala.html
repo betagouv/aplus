@@ -6,9 +6,9 @@
 @main(user, currentUserRights)(s"Gestion des territoires"){
 
 }{
-    <div class="mdl-cell mdl-cell--12-col pem-container mdl-grid">
+    <div class="mdl-cell mdl-cell--12-col mdl-grid">
         @for(area <- Area.all.filter(area => user.areas.contains[UUID](area.id))) {
-        <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
+        <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table mdl-shadow--2dp" style="white-space: normal;">
             <thead>
                 <tr>
                     <th class="mdl-data-table__cell--non-numeric">

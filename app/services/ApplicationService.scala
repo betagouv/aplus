@@ -276,6 +276,32 @@ class ApplicationService @Inject() (
       }
     }
 
+  def byInvitedGroupIdAndOpen(groupId: UUID): Future[List[Application]] =
+    Future {
+      db.withConnection { implicit connection =>
+        val _ = SQL("""REFRESH MATERIALIZED VIEW answer_metadata""").execute()
+        val _ = SQL("""REFRESH MATERIALIZED VIEW user_group_is_invited_on_application""").execute()
+
+        val result = SQL(
+          s"""SELECT $fieldsInSelect
+              FROM application
+              WHERE
+                application.id IN (
+                  SELECT application_id
+                  FROM user_group_is_invited_on_application
+                  WHERE user_group_is_invited_on_application.group_id = {groupId}::uuid
+                )
+              AND
+                closed_date IS NULL
+              ORDER BY creation_date DESC"""
+        )
+          .on("groupId" -> groupId)
+          .as(simpleApplication.*)
+
+        result
+      }
+    }
+
   def allOrThrow: List[Application] =
     db.withConnection { implicit connection =>
       SQL(s"""SELECT $fieldsInSelect FROM application""")
