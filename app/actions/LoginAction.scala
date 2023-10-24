@@ -297,6 +297,7 @@ class BaseLoginAction(
             )
           }
           if (token.isActive) {
+            userService.recordLogin(user.id)
             val url = request.path + queryToString(
               request.queryString - Keys.QueryParam.key - Keys.QueryParam.token
             )

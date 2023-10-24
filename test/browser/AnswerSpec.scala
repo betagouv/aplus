@@ -65,6 +65,7 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       disabled = false,
       expert = isExpert,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = groups.map(_.id),
       internalSupportComment = None
     )

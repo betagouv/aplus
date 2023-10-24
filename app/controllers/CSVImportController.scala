@@ -338,10 +338,11 @@ case class CSVImportController @Inject() (
           groupIds = groupId :: Nil,
           cguAcceptationDate = None,
           newsletterAcceptationDate = None,
+          firstLoginDate = none,
           phoneNumber = userData.user.phoneNumber,
           observableOrganisationIds = Nil,
           sharedAccount = userData.user.name.nonEmpty,
-          internalSupportComment = None
+          internalSupportComment = None,
         )
       )
     }

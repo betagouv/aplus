@@ -89,6 +89,7 @@ case class SignupController @Inject() (
               groupIds = form.groupId :: Nil,
               cguAcceptationDate = Time.nowParis().some,
               newsletterAcceptationDate = None,
+              firstLoginDate = Instant.now().some,
               phoneNumber = form.phoneNumber,
               observableOrganisationIds = Nil,
               sharedAccount = form.sharedAccount,
