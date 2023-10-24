@@ -6,6 +6,7 @@ import cats.syntax.all._
 import helper.StringHelper.StringOps
 import helper.{Hash, StringHelper, Time, UUIDHelper}
 import java.sql.Connection
+import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
 import models.{Error, EventType, Organisation, User}
@@ -44,6 +45,7 @@ class UserService @Inject() (
     "group_ids",
     "cgu_acceptation_date",
     "newsletter_acceptation_date",
+    "first_login_date",
     "phone_number",
     "observable_organisation_ids",
     "shared_account",
@@ -211,6 +213,32 @@ class UserService @Inject() (
         )
     )
 
+  def isAccountUsed(userId: UUID): Future[Boolean] =
+    Future {
+      db.withConnection { implicit connection =>
+        SQL(
+          """
+            SELECT
+              CASE
+                WHEN first_login_date IS NOT NULL
+                AND EXISTS (
+                  SELECT 1
+                  FROM application
+                  WHERE creator_user_id = {userId}::uuid
+                  OR invited_users ?? {userId}
+                ) THEN TRUE
+                ELSE FALSE
+              END AS result
+            FROM
+              "user"
+            WHERE
+              id = {userId}::uuid
+           """
+        ).on("userId" -> userId)
+          .as(SqlParser.scalar[Boolean].single)
+      }
+    }
+
   // Note: empty string will return an `Error`
   //
   // The configuration is
@@ -263,7 +291,7 @@ class UserService @Inject() (
           assert(row.areas.nonEmpty)
           success && SQL"""
         INSERT INTO "user" (id, key, first_name, last_name, name, qualite, email, helper, instructor, admin, areas, creation_date,
-                            commune_code, group_admin, group_ids, cgu_acceptation_date, expert, phone_number, shared_account) VALUES (
+                            commune_code, group_admin, group_ids, cgu_acceptation_date, first_login_date, expert, phone_number, shared_account) VALUES (
            ${row.id}::uuid,
            ${Hash.sha256(s"${row.id}${config.appSecret}")},
            ${row.firstName},
@@ -280,6 +308,7 @@ class UserService @Inject() (
            ${row.groupAdmin},
            array[${row.groupIds}]::uuid[],
            ${row.cguAcceptationDate},
+           ${row.firstLoginDate},
            ${row.expert},
            ${row.phoneNumber},
            ${row.sharedAccount})
@@ -348,6 +377,18 @@ class UserService @Inject() (
         newsletter_acceptation_date = $now
         WHERE id = $userId::uuid
      """.executeUpdate()
+    }
+
+  def recordLogin(userId: UUID) =
+    db.withConnection { implicit connection =>
+      SQL"""
+        UPDATE "user"
+        SET
+          first_login_date = NOW()
+        WHERE
+              id = $userId::uuid
+          AND first_login_date IS NULL
+      """.executeUpdate()
     }
 
   def editProfile(userId: UUID)(

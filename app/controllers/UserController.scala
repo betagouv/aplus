@@ -361,15 +361,15 @@ case class UserController @Inject() (
           ) { () =>
             val form = EditUserFormData.form.fill(EditUserFormData.fromUser(otherUser))
             val groups = groupService.allOrThrow
-            val unused = not(isAccountUsed(otherUser))
-            val Token(tokenName, tokenValue) = CSRF.getToken.get
-            eventService
-              .log(
-                UserShowed,
-                "Visualise la vue de modification l'utilisateur",
-                involvesUser = Some(otherUser.id)
-              )
-            Future(
+            userService.isAccountUsed(userId).map { isAccountUsed =>
+              val unused = not(isAccountUsed)
+              val Token(tokenName, tokenValue) = CSRF.getToken.get
+              eventService
+                .log(
+                  UserShowed,
+                  "Visualise la vue de modification l'utilisateur",
+                  involvesUser = Some(otherUser.id)
+                )
               Ok(
                 views.html.editUser(request.currentUser, request.rights)(
                   form,
@@ -380,14 +380,11 @@ case class UserController @Inject() (
                   tokenValue = tokenValue
                 )
               )
-            )
+            }
           }
         }
       }
     }
-
-  def isAccountUsed(user: User): Boolean =
-    applicationService.allForUserId(userId = user.id, anonymous = false).nonEmpty
 
   def deleteUnusedUserById(userId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
@@ -396,25 +393,25 @@ case class UserController @Inject() (
           DeleteUserUnauthorized,
           s"Suppression de l'utilisateur $userId refusée"
         ) { () =>
-          if (isAccountUsed(user)) {
-            eventService.log(
-              UserIsUsed,
-              s"Le compte ${user.id} est utilisé",
-              involvesUser = user.id.some
-            )
-            Future(Unauthorized("User is not unused."))
-          } else {
-            userService.deleteById(userId)
-            val flashMessage = s"Utilisateur $userId / ${user.email} supprimé"
-            eventService.log(
-              UserDeleted,
-              s"Utilisateur ${user.id} supprimé",
-              s"Utilisateur ${user.toLogString}".some,
-              involvesUser = Some(user.id)
-            )
-            Future(
+          userService.isAccountUsed(userId).map { isAccountUsed =>
+            if (isAccountUsed) {
+              eventService.log(
+                UserIsUsed,
+                s"Le compte ${user.id} est utilisé",
+                involvesUser = user.id.some
+              )
+              Unauthorized("User is not unused.")
+            } else {
+              userService.deleteById(userId)
+              val flashMessage = s"Utilisateur $userId / ${user.email} supprimé"
+              eventService.log(
+                UserDeleted,
+                s"Utilisateur ${user.id} supprimé",
+                s"Utilisateur ${user.toLogString}".some,
+                involvesUser = Some(user.id)
+              )
               Redirect(routes.UserController.home).flashing("success" -> flashMessage)
-            )
+            }
           }
         }
       }
@@ -606,6 +603,7 @@ case class UserController @Inject() (
           groupIds = group.id :: Nil,
           cguAcceptationDate = None,
           newsletterAcceptationDate = None,
+          firstLoginDate = none,
           phoneNumber = userToAdd.phoneNumber,
           observableOrganisationIds = Nil,
           sharedAccount = userToAdd.sharedAccount,

@@ -75,7 +75,7 @@ scalacOptions ++= Seq(
 // https://typelevel.org/cats-effect/docs/getting-started
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
-lazy val anormDependency = "org.playframework.anorm" %% "anorm" % "2.6.10"
+lazy val anormDependency = "org.playframework.anorm" %% "anorm" % "2.7.0"
 
 libraryDependencies ++= Seq(
   ws,
@@ -112,7 +112,7 @@ libraryDependencies ++= Seq(
 )
 
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "6.30.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "6.32.0"
 
 // Overrides
 dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
