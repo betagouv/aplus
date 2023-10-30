@@ -14,7 +14,7 @@ object BusinessDaysCalculator {
   def businessHoursBetween(
       startTime: ZonedDateTime,
       endTime: ZonedDateTime,
-      holidays: Set[LocalDate]
+      holidays: Set[LocalDate] = Set.empty
   ): Int = {
     val (start, end) =
       if (endTime.isAfter(startTime)) (startTime, endTime) else (endTime, startTime)
