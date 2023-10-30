@@ -1,48 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration>
+
 <!-- https://www.playframework.com/documentation/latest/SettingsLogger -->
 <configuration>
+  <import class="ch.qos.logback.classic.encoder.PatternLayoutEncoder"/>
+  <import class="ch.qos.logback.classic.AsyncAppender"/>
+  <import class="io.sentry.logback.SentryAppender"/>
+  <import class="ch.qos.logback.classic.filter.ThresholdFilter"/>
+  <import class="ch.qos.logback.core.ConsoleAppender"/>
 
-  <conversionRule conversionWord="coloredLevel" converterClass="play.api.libs.logback.ColoredLevel" />
-
-  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder>
-      <pattern>%coloredLevel %d %logger{15} - %message%n%xException{10}</pattern>
+  <appender name="STDOUT" class="ConsoleAppender">
+    <encoder class="PatternLayoutEncoder">
+      <pattern>%highlight(%-5level) %d %logger{15} - %message%n%xException{10}</pattern>
     </encoder>
   </appender>
 
-  <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
-    <appender-ref ref="STDOUT" />
+  <appender name="ASYNCSTDOUT" class="AsyncAppender">
+    <!-- increases the default queue size -->
+    <queueSize>512</queueSize>
+    <!-- don't discard messages -->
+    <discardingThreshold>0</discardingThreshold>
+    <!-- block when queue is full -->
+    <neverBlock>false</neverBlock>
+    <appender-ref ref="STDOUT"/>
   </appender>
 
-  <logger name="play" level="INFO" />
-  <logger name="application" level="DEBUG" />
+  <logger name="play" level="INFO"/>
+  <logger name="application" level="DEBUG"/>
 
-  <!-- Off these ones as they are annoying, and anyway we manage configuration ourselves -->
-  <logger name="com.avaje.ebean.config.PropertyMapLoader" level="OFF" />
-  <logger name="com.avaje.ebeaninternal.server.core.XmlConfigLoader" level="OFF" />
-  <logger name="com.avaje.ebeaninternal.server.lib.BackgroundThread" level="OFF" />
-  <logger name="com.gargoylesoftware.htmlunit.javascript" level="OFF" />
-  <logger name="play.filters.https.RedirectHttpsFilter" level="WARN" />
+  <logger name="com.gargoylesoftware.htmlunit.javascript" level="OFF"/>
+  <logger name="play.filters.https.RedirectHttpsFilter" level="WARN"/>
 
   <!-- Configure the Console appender -->
-  <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder>
+  <appender name="Console" class="ConsoleAppender">
+    <encoder class="PatternLayoutEncoder">
       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
     </encoder>
   </appender>
 
   <!-- Configure the Sentry appender, overriding the logging threshold to the WARN level -->
-  <appender name="Sentry" class="io.sentry.logback.SentryAppender">
-    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+  <appender name="Sentry" class="SentryAppender">
+    <filter class="ThresholdFilter">
       <level>WARN</level>
     </filter>
   </appender>
 
   <root level="WARN">
     <!--<appender-ref ref="ASYNCFILE" />-->
-    <appender-ref ref="ASYNCSTDOUT" />
-  </root>
-  <root level="INFO">
-    <appender-ref ref="Sentry" />
+    <appender-ref ref="ASYNCSTDOUT"/>
   </root>
 
+  <root level="INFO">
+    <appender-ref ref="Sentry"/>
+  </root>
 </configuration>

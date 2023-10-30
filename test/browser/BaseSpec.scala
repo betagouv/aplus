@@ -13,7 +13,7 @@ trait BaseSpec {
 
   def webDriver: WebDriver = {
     val options = new FirefoxOptions()
-      .setHeadless(true)
+    options.addArguments("--headless")
     new FirefoxDriver(options)
   }
 
