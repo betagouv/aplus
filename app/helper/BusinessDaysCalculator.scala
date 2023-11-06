@@ -1,16 +1,21 @@
 package helper
 
-import java.time.{DayOfWeek, ZonedDateTime}
+import java.time.{DayOfWeek, LocalDate, ZonedDateTime}
 import java.time.temporal.ChronoUnit
 
 object BusinessDaysCalculator {
 
-  def isBusinessDay(date: ZonedDateTime): Boolean = {
+  def isBusinessDay(date: ZonedDateTime, holidays: Set[LocalDate]): Boolean = {
+    val localDate = date.toLocalDate
     val dayOfWeek = date.getDayOfWeek
-    !Set(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY).contains(dayOfWeek)
+    !Set(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY).contains(dayOfWeek) && !holidays.contains(localDate)
   }
 
-  def businessHoursBetween(startTime: ZonedDateTime, endTime: ZonedDateTime): Int = {
+  def businessHoursBetween(
+      startTime: ZonedDateTime,
+      endTime: ZonedDateTime,
+      holidays: Set[LocalDate] = Set.empty
+  ): Int = {
     val (start, end) =
       if (endTime.isAfter(startTime)) (startTime, endTime) else (endTime, startTime)
 
@@ -18,7 +23,7 @@ object BusinessDaysCalculator {
     var totalHours: Int = 0
 
     if (start.truncatedTo(ChronoUnit.DAYS).isEqual(end.truncatedTo(ChronoUnit.DAYS))) {
-      if (isBusinessDay(start)) {
+      if (isBusinessDay(start, holidays)) {
         totalHours = end.getHour - start.getHour
       }
     } else {
@@ -26,7 +31,7 @@ object BusinessDaysCalculator {
       var current = start.truncatedTo(ChronoUnit.DAYS)
       // scalastyle:ignore while
       while (!current.isAfter(end)) {
-        if (isBusinessDay(current)) {
+        if (isBusinessDay(current, holidays)) {
           if (current.isEqual(start.truncatedTo(ChronoUnit.DAYS))) {
             // For the start day, count hours from start time to end of day
             totalHours += 24 - start.getHour
