@@ -11,7 +11,7 @@ import helper.PlayFormHelper.formErrorsLog
 import helper.ScalatagsHelpers.writeableOf_Modifier
 import helper.StringHelper.{CanonizeString, NonEmptyTrimmedString}
 import helper.Time.zonedDateTimeOrdering
-import helper.{BusinessDaysCalculator, Hash, Time, UUIDHelper}
+import helper.{Hash, Time, UUIDHelper}
 import helper.TwirlImports.toHtml
 import models.Answer.AnswerType
 import models.EventType._
@@ -50,6 +50,7 @@ import scala.util.{Failure, Success, Try}
 @Singleton
 case class ApplicationController @Inject() (
     applicationService: ApplicationService,
+    businessDaysService: BusinessDaysService,
     config: AppConfig,
     eventService: EventService,
     fileService: FileService,
@@ -586,10 +587,10 @@ case class ApplicationController @Inject() (
             )
             .lastOption match {
             case None =>
-              BusinessDaysCalculator
+              businessDaysService
                 .businessHoursBetween(application.creationDate, ZonedDateTime.now()) > (3 * 24)
             case Some(lastAnswer) =>
-              BusinessDaysCalculator
+              businessDaysService
                 .businessHoursBetween(lastAnswer.creationDate, ZonedDateTime.now()) > (15 * 24)
           }
         }
