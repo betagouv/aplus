@@ -33,7 +33,7 @@ object myApplications {
     )(frag())(
       div(
         cls := "mdl-cell mdl-cell--12-col mdl-grid--no-spacing",
-        if (filters.allGroupsOpenCount <= 0)
+        if (filters.allGroupsOpenCount <= 0 && filters.allGroupsClosedCount <= 0)
           noApplications(currentUser, currentUserRights)
         else
           openApplications(currentUser, currentUserRights, applications, groups, filters),
