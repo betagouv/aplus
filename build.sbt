@@ -91,7 +91,7 @@ libraryDependencies += guice
 libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.6.0",
   anormDependency,
-  "com.typesafe.play" %% "play-mailer" % "8.0.1",
+  "com.typesafe.play" %% "play-mailer" % "9.0.0",
   "com.typesafe.play" %% "play-json" % "2.10.3",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
@@ -104,7 +104,7 @@ libraryDependencies ++= Seq(
 
 // UI
 libraryDependencies ++= Seq(
-  "org.webjars" %% "webjars-play" % "2.8.18",
+  "org.webjars" %% "webjars-play" % "2.9.0",
   "org.webjars.bower" % "material-design-lite" % "1.3.0",
   "org.webjars" % "material-design-icons" % "4.0.0",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
