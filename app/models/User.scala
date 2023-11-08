@@ -107,7 +107,7 @@ case class User(
     newsletterAcceptationDate.map(Time.adminsFormatter.format).getOrElse("<vide>")
 
   lazy val firstLoginDateLog: String =
-    firstLoginDate.map(Time.adminsFormatter.format).getOrElse("<vide>")
+    firstLoginDate.map(Time.formatForAdmins).getOrElse("<vide>")
 
   lazy val phoneNumberLog: String = phoneNumber.map(withQuotes).getOrElse("<vide>")
   lazy val observableOrganisationIdsLog: String = observableOrganisationIds.map(_.id).mkString(", ")
