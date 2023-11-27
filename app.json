@@ -46,7 +46,6 @@
       "quantity": 1
     }
   },
-  "stack": "heroku-18",
   "addons": [
     "heroku-postgresql"
   ],
