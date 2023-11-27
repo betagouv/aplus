@@ -11,8 +11,8 @@ jobs:
     - name: Set up JDK
       uses: actions/setup-java@v3
       with:
-        distribution: 'adopt'
-        java-version: '11'
+        distribution: 'temurin'
+        java-version: '17'
     - uses: harmon758/postgresql-action@v1
       with:
          postgresql version: '10'
