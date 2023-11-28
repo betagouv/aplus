@@ -457,7 +457,7 @@ object formModels {
     val statusLate = "souffrante"
     val statusArchived = "archive"
 
-    case class Filters(selectedGroups: Option[Set[UUID]], status: Option[String]) {
+    case class Filters(selectedGroups: Option[Set[UUID]], status: Option[String], urlBase: String) {
 
       def groupIsFiltered(id: UUID): Boolean =
         selectedGroups.map(groups => groups.contains(id)).getOrElse(false)
@@ -470,15 +470,14 @@ object formModels {
       def hasNoStatus: Boolean = !isMine && !isNew && !isProcessing && !isLate && !isArchived
 
       def toUrl: String = {
-        val base = controllers.routes.ApplicationController.myApplications.url
         val groups: List[String] =
           selectedGroups.map(_.map(id => s"$groupFilterKey=$id").toList).getOrElse(Nil)
         val statusFilter: List[String] = status.toList.map(status => s"$statusFilterKey=$status")
         val filters = statusFilter ::: groups
         if (filters.isEmpty)
-          base
+          urlBase
         else
-          base + "?" + filters.mkString("&")
+          urlBase + "?" + filters.mkString("&")
       }
 
       def withGroup(id: UUID) = {

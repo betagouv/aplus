@@ -508,7 +508,8 @@ case class ApplicationController @Inject() (
   private def myApplicationsBoard(
       user: User,
       userRights: Authorization.UserRights,
-      asAdmin: Boolean
+      asAdmin: Boolean,
+      urlBase: String,
   )(log: ApplicationsInfos => Unit)(implicit request: play.api.mvc.RequestHeader): Future[Result] =
     userGroupService.byIdsFuture(user.groupIds).map { userGroups =>
       val selectedGroupsFilter = request.queryString
@@ -518,6 +519,7 @@ case class ApplicationController @Inject() (
       val filters = ApplicationsInfos.Filters(
         selectedGroups = selectedGroupsFilter,
         status = statusFilter,
+        urlBase = urlBase,
       )
 
       val allApplications = applicationService.allOpenOrRecentForUserId(
@@ -633,7 +635,12 @@ case class ApplicationController @Inject() (
 
   def myApplications: Action[AnyContent] =
     loginAction.async { implicit request =>
-      myApplicationsBoard(request.currentUser, request.rights, request.currentUser.admin) { infos =>
+      myApplicationsBoard(
+        request.currentUser,
+        request.rights,
+        request.currentUser.admin,
+        controllers.routes.ApplicationController.myApplications.url
+      ) { infos =>
         eventService.log(
           MyApplicationsShowed,
           s"Visualise la liste des demandes : ${infos.countsLog}"
@@ -780,7 +787,12 @@ case class ApplicationController @Inject() (
           errorInvolvesUser = Some(otherUser.id)
         ) { () =>
           LoginAction.readUserRights(otherUser).flatMap { userRights =>
-            myApplicationsBoard(otherUser, userRights, request.currentUser.admin) { infos =>
+            myApplicationsBoard(
+              otherUser,
+              userRights,
+              request.currentUser.admin,
+              controllers.routes.ApplicationController.allAs(userId).url
+            ) { infos =>
               eventService
                 .log(
                   AllAsShowed,
