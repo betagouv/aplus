@@ -169,6 +169,9 @@ object ApiModel {
           if (firstName.nonEmpty || lastName.nonEmpty) User.standardName(firstName, lastName)
           else user.name
         }
+      val groups = user.groupIds.flatMap(idToGroup.get)
+      val organisations: List[String] =
+        groups.flatMap(_.organisation.map(_.shortName)).toSet.toList.sorted
       UserInfos(
         id = user.id,
         firstName = user.firstName,
@@ -181,13 +184,13 @@ object ApiModel {
         helper = user.helperRoleName.nonEmpty,
         instructor = user.instructorRoleName.nonEmpty,
         areas = user.areas.flatMap(Area.fromId).map(_.toString).sorted,
-        groupNames = user.groupIds.flatMap(idToGroup.get).map(_.name),
-        groups = user.groupIds
-          .flatMap(idToGroup.get)
+        groupNames = groups.map(_.name),
+        groups = groups
           .map(group =>
             UserInfos.Group(group.id, group.name, Authorization.canEditGroup(group)(rights))
           ),
-        groupEmails = user.groupIds.flatMap(idToGroup.get).flatMap(_.email),
+        groupEmails = groups.flatMap(_.email),
+        organisations = organisations,
         groupAdmin = user.groupAdminRoleName.nonEmpty,
         admin = user.adminRoleName.nonEmpty,
         expert = user.expert,
@@ -214,6 +217,7 @@ object ApiModel {
       groupNames: List[String],
       groups: List[UserInfos.Group],
       groupEmails: List[String],
+      organisations: List[String],
       groupAdmin: Boolean,
       admin: Boolean,
       expert: Boolean,
