@@ -254,6 +254,14 @@ if (window.document.getElementById(usersTableId)) {
       width: 80,
     },
     {
+      title: "Organismes",
+      field: "organisations",
+      sorter: "string",
+      headerFilter: "input",
+      width: 200,
+      accessorDownload: joinWithCommaDownload,
+    },
+    {
       title: "Départements",
       field: "areas",
       sorter: "string",
