@@ -5,9 +5,9 @@ import java.io.File
 import java.time.Instant
 import java.time.temporal.ChronoUnit.DAYS
 
-import akka.actor.ActorSystem
 import javax.inject.Inject
 import models.EventType
+import org.apache.pekko.actor.ActorSystem
 import play.api.Configuration
 import services.{EventService, FileService}
 

@@ -1,9 +1,9 @@
 package filters
 
-import akka.stream.Materializer
 import cats.syntax.all._
 import io.sentry.{ITransaction, Sentry, SpanStatus}
 import javax.inject.Inject
+import org.apache.pekko.stream.Materializer
 import play.api.mvc.{Filter, RequestHeader, Result}
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys

@@ -3,11 +3,11 @@ package tasks
 import java.time.temporal.ChronoUnit
 import java.time.{DayOfWeek, ZonedDateTime}
 
-import akka.actor.ActorSystem
 import cats.Eq
 import cats.syntax.all._
 import helper.Time
 import javax.inject.Inject
+import org.apache.pekko.actor.ActorSystem
 import play.api.Configuration
 import services.NotificationService
 

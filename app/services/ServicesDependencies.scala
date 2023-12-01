@@ -1,8 +1,8 @@
 package services
 
-import akka.actor.ActorSystem
 import cats.effect.unsafe.IORuntime
 import javax.inject.{Inject, Singleton}
+import org.apache.pekko.actor.ActorSystem
 import play.api.inject.ApplicationLifecycle
 import scala.concurrent.{ExecutionContext, Future}
 

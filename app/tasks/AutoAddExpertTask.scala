@@ -2,13 +2,13 @@ package tasks
 
 import java.util.UUID
 
-import akka.actor._
 import cats.syntax.all._
 import helper.Time
 import javax.inject.Inject
 import models.Answer.AnswerType
 import models._
 import modules.AppConfig
+import org.apache.pekko.actor._
 import services._
 
 import scala.concurrent.duration._

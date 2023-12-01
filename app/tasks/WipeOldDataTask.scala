@@ -1,9 +1,9 @@
 package tasks
 
-import akka.actor.ActorSystem
 import java.time.{Duration, ZonedDateTime}
 import javax.inject.Inject
 import models.{EventType, User}
+import org.apache.pekko.actor.ActorSystem
 import play.api.Configuration
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
