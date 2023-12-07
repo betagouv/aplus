@@ -1,7 +1,7 @@
 // The Play plugin
 // Important note: when upgrading the play version, check that the correct minor version
 //                 of jackson is set in build.sbt (with the patch version that is not vulnerable)
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.9.0")
+addSbtPlugin("org.playframework" % "sbt-plugin" % "3.0.0")
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.9")
 addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.4")
