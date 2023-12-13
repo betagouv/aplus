@@ -4,10 +4,10 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import java.time.ZonedDateTime
 
-import akka.stream.Materializer
-import akka.util.ByteString
 import cats.syntax.all._
 import models.{Error, EventType}
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.util.ByteString
 import play.api.libs.json.{JsValue, Json, Reads, Writes}
 import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.mvc.{PlayBodyParsers, Request}

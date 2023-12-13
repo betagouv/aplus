@@ -1,8 +1,5 @@
 package services
 
-import akka.Done
-import akka.actor.ActorSystem
-import akka.stream.scaladsl._
 import anorm._
 import aplus.macros.Macros
 import cats.syntax.all._
@@ -15,6 +12,9 @@ import javax.inject.{Inject, Singleton}
 import models.{Error, EventType, FileMetadata, User}
 import models.dataModels.FileMetadataRow
 import modules.AppConfig
+import org.apache.pekko.Done
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.scaladsl._
 import play.api.mvc.Request
 import play.api.libs.concurrent.{ActorSystemProvider, MaterializerProvider}
 import play.api.db.Database
