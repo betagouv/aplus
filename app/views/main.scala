@@ -33,9 +33,24 @@ object main {
       additionalFooterTags: Frag = frag()
   )(implicit
       request: RequestHeader,
+  ) = dsfrLayout(pageName, content, loggedInNavBar(), additionalHeadTags, additionalFooterTags)
+
+  def publicLayout(
+      pageName: String,
+      content: Frag,
+      additionalHeadTags: Frag = frag(),
+      additionalFooterTags: Frag = frag()
+  ) = dsfrLayout(pageName, content, frag(), additionalHeadTags, additionalFooterTags)
+
+  private def dsfrLayout(
+      pageName: String,
+      content: Frag,
+      navBar: Frag,
+      additionalHeadTags: Frag,
+      additionalFooterTags: Frag
   ) =
     html(
-      head(attr("lang") := "fr", attr("data-fr-scheme") := "system")(
+      head(lang := "fr", attr("data-fr-scheme") := "system")(
         meta(charset := "utf-8"),
         meta(name := "format-detection", attr("content") := "telephone=no"),
         meta(
@@ -100,30 +115,7 @@ object main {
               )
             ),
           ),
-          div(cls := "fr-header__menu fr-modal")(
-            div(cls := "fr-container")(
-              tag("nav")(cls := "fr-nav")(
-                ul(cls := "fr-nav__list")(
-                  generateLink(controllers.routes.ApplicationController.dashboard.url, "Accueil"),
-                  generateLink(
-                    controllers.routes.ApplicationController.myApplications.url,
-                    "Mes demandes"
-                  ),
-                  generateLink(
-                    controllers.routes.GroupController.showEditMyGroups.url,
-                    "Mes groupes"
-                  ),
-                  generateLink(controllers.routes.UserController.home.url, "Utilisateurs"),
-                  generateLink(controllers.routes.AreaController.all.url, "Déploiment"),
-                  generateLink(controllers.routes.ApplicationController.stats.url, "Stats"),
-                  generateLink(
-                    Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf").url,
-                    "Mandat"
-                  )
-                )
-              ),
-            )
-          )
+          navBar
         )
       ),
       div(cls := "main-container")(
@@ -201,6 +193,32 @@ object main {
           src := Assets.versioned("generated-js/dsfr/dsfr.module.min.js").url
         ),
         additionalFooterTags
+      )
+    )
+
+  def loggedInNavBar()(implicit request: RequestHeader) =
+    div(cls := "fr-header__menu fr-modal")(
+      div(cls := "fr-container")(
+        tag("nav")(cls := "fr-nav")(
+          ul(cls := "fr-nav__list")(
+            generateLink(controllers.routes.ApplicationController.dashboard.url, "Accueil"),
+            generateLink(
+              controllers.routes.ApplicationController.myApplications.url,
+              "Mes demandes"
+            ),
+            generateLink(
+              controllers.routes.GroupController.showEditMyGroups.url,
+              "Mes groupes"
+            ),
+            generateLink(controllers.routes.UserController.home.url, "Utilisateurs"),
+            generateLink(controllers.routes.AreaController.all.url, "Déploiment"),
+            generateLink(controllers.routes.ApplicationController.stats.url, "Stats"),
+            generateLink(
+              Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf").url,
+              "Mandat"
+            )
+          )
+        )
       )
     )
 

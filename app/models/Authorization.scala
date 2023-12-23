@@ -27,6 +27,13 @@ object Authorization {
         if (user.groupAdmin && not(user.disabled))
           Some(ManagerOfGroups(user.groupIds.toSet))
         else None,
+        if (
+          (user.managingAreaIds.nonEmpty || user.managingOrganisationIds.nonEmpty) && not(
+            user.disabled
+          )
+        )
+          Some(ManagerOfAreas(user.managingAreaIds.toSet, user.managingOrganisationIds.toSet))
+        else None,
         if (user.observableOrganisationIds.nonEmpty && not(user.disabled))
           Some(ObserverOfOrganisations(user.observableOrganisationIds.toSet))
         else None
@@ -45,6 +52,10 @@ object Authorization {
     case class InstructorOfGroups(groupsManaged: Set[UUID]) extends UserRight
     case class AdminOfAreas(administeredAreas: Set[UUID]) extends UserRight
     case class ManagerOfGroups(groupsManaged: Set[UUID]) extends UserRight
+
+    case class ManagerOfAreas(areas: Set[UUID], organisations: Set[Organisation.Id])
+        extends UserRight
+
     case class ObserverOfOrganisations(organisations: Set[Organisation.Id]) extends UserRight
   }
 
@@ -130,6 +141,13 @@ object Authorization {
     _.rights.exists {
       case UserRight.ManagerOfGroups(managedGroups) if managedGroups.contains(groupId) => true
       case _                                                                           => false
+    }
+
+  def isAreaManager(areaIds: Set[UUID], organisationIds: Set[Organisation.Id]): Check =
+    _.rights.exists {
+      case UserRight.ManagerOfAreas(managingAreaIds, managingOrganisationIds) =>
+        areaIds.subsetOf(managingAreaIds) && organisationIds.subsetOf(managingOrganisationIds)
+      case _ => false
     }
 
   def isObserver: Check =
@@ -347,5 +365,11 @@ object Authorization {
       case FileMetadata.Attached.Answer(_, answerId) =>
         answerFileCanBeShowed(filesExpirationInDays)(application, answerId)(userId, rights)
     }
+
+  def canManageAccountCreationForm(form: AccountCreationRequest): Check =
+    atLeastOneIsAuthorized(
+      isAdmin,
+      isAreaManager(form.areaIds.toSet, form.organisationId.toSet)
+    )
 
 }

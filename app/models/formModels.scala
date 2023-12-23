@@ -308,6 +308,8 @@ object formModels {
         groupIds = user.groupIds,
         phoneNumber = user.phoneNumber,
         observableOrganisationIds = user.observableOrganisationIds,
+        managingOrganisationIds = user.managingOrganisationIds,
+        managingAreaIds = user.managingAreaIds,
         sharedAccount = user.sharedAccount,
         internalSupportComment = user.internalSupportComment
       )
@@ -341,6 +343,8 @@ object formModels {
           "groupIds" -> default(list(uuid), Nil),
           "phoneNumber" -> normalizedOptionalText,
           "observableOrganisationIds" -> list(of[Organisation.Id]),
+          "managingOrganisationIds" -> list(of[Organisation.Id]),
+          "managingAreaIds" -> list(uuid),
           Keys.User.sharedAccount -> boolean,
           "internalSupportComment" -> normalizedOptionalText
         )(EditUserFormData.apply)(EditUserFormData.unapply)
@@ -363,6 +367,8 @@ object formModels {
       groupIds: List[UUID],
       phoneNumber: Option[String],
       observableOrganisationIds: List[Organisation.Id],
+      managingOrganisationIds: List[Organisation.Id],
+      managingAreaIds: List[UUID],
       sharedAccount: Boolean,
       internalSupportComment: Option[String]
   )
@@ -528,6 +534,75 @@ object formModels {
         s"[groupes=$groups/mes demandes=$interactedCount/nouvelles=$newCount/" +
         s"en cours=$processingCount/retard=$lateCount]"
     }
+
+  }
+
+  case class AccountCreationFormData(
+      email: String,
+      isNamedAccount: Boolean,
+      firstName: String,
+      lastName: String,
+      phoneNumber: Option[String],
+      area: List[UUID],
+      qualite: Option[String],
+      organisation: Option[Organisation.Id],
+      miscOrganisation: Option[String],
+      isManager: Boolean,
+      isInstructor: Boolean,
+      message: Option[String],
+      signatures: List[AccountCreationFormData.Signature],
+      groups: List[UUID],
+  )
+
+  object AccountCreationFormData {
+
+    case class Signature(
+        firstName: String,
+        lastName: String,
+        phoneNumber: Option[String]
+    )
+
+    val signatureForm: Form[Signature] =
+      Form(
+        mapping(
+          "firstName" -> nonEmptyText,
+          "lastName" -> nonEmptyText,
+          "phoneNumber" -> optional(text)
+        )(Signature.apply)(Signature.unapply)
+      )
+
+    // TODO: add character constraints
+    // TODO: unicode
+    val form: Form[AccountCreationFormData] =
+      Form(
+        mapping(
+          "email" -> email,
+          "isNamedAccount" -> boolean,
+          "firstName" -> nonEmptyText,
+          "lastName" -> nonEmptyText,
+          "phoneNumber" -> optional(text),
+          // TODO: validate
+          "area" -> list(uuid),
+          "qualite" -> optional(text),
+          // TODO: validate
+          "organisation" -> optional(of[Organisation.Id]),
+          "miscOrganisation" -> optional(text),
+          "isManager" -> boolean,
+          "isInstructor" -> boolean,
+          "message" -> optional(text),
+          "signatures" -> list(signatureForm.mapping),
+          "groups" -> list(uuid),
+        )(AccountCreationFormData.apply)(AccountCreationFormData.unapply)
+      )
+
+    case class AccountType(isNamedAccount: Boolean)
+
+    val accountTypeForm: Form[AccountType] =
+      Form(
+        mapping(
+          "isNamedAccount" -> boolean,
+        )(AccountType.apply)(AccountType.unapply)
+      )
 
   }
 

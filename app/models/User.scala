@@ -48,6 +48,8 @@ case class User(
     // * can see all users,
     // * can see one user but not edit it
     observableOrganisationIds: List[Organisation.Id] = Nil,
+    managingOrganisationIds: List[Organisation.Id],
+    managingAreaIds: List[UUID],
     sharedAccount: Boolean = false,
     // This is a comment only visible by the admins
     internalSupportComment: Option[String],
@@ -111,6 +113,8 @@ case class User(
 
   lazy val phoneNumberLog: String = phoneNumber.map(withQuotes).getOrElse("<vide>")
   lazy val observableOrganisationIdsLog: String = observableOrganisationIds.map(_.id).mkString(", ")
+  lazy val managingOrganisationIdsLog: String = managingOrganisationIds.map(_.id).mkString(", ")
+  lazy val managingAreaIdsLog: String = managingAreaIds.mkString(", ")
   lazy val sharedAccountLog: String = sharedAccount.toString
 
   lazy val internalSupportCommentLog: String =
@@ -138,6 +142,8 @@ case class User(
       ("Newsletter", newsletterAcceptationDateLog),
       ("Première connexion", firstLoginDateLog),
       ("Observation des organismes", observableOrganisationIdsLog),
+      ("Responsable des organismes", managingOrganisationIdsLog),
+      ("Responsable des territoires", managingAreaIdsLog),
       ("Information Support", internalSupportCommentLog),
     ).map { case (fieldName, value) => s"$fieldName : $value" }.mkString(" | ") + "]"
 
@@ -189,6 +195,18 @@ case class User(
         other.observableOrganisationIdsLog
       ),
       (
+        "Responsable des organismes",
+        managingOrganisationIds =!= other.managingOrganisationIds,
+        managingOrganisationIdsLog,
+        other.managingOrganisationIdsLog
+      ),
+      (
+        "Responsable des territoires",
+        managingAreaIds =!= other.managingAreaIds,
+        managingAreaIdsLog,
+        other.managingAreaIdsLog
+      ),
+      (
         "Information Support",
         internalSupportCommentLog =!= other.internalSupportCommentLog,
         internalSupportCommentLog,
@@ -225,6 +243,8 @@ case class User(
       firstLoginDate = firstLoginDate,
       phoneNumber = pseudoPhone,
       observableOrganisationIds = observableOrganisationIds,
+      managingOrganisationIds = managingOrganisationIds,
+      managingAreaIds = managingAreaIds,
       sharedAccount = sharedAccount,
       internalSupportComment = none,
     )
@@ -251,6 +271,8 @@ object User {
     groupAdmin = false,
     disabled = true,
     firstLoginDate = none,
+    managingOrganisationIds = Nil,
+    managingAreaIds = Nil,
     internalSupportComment = None
   )
 

@@ -1,7 +1,7 @@
 package views
 
 import cats.syntax.all._
-import controllers.routes.{GroupController, UserController}
+import controllers.routes.{AccountCreationController, GroupController, UserController}
 import helpers.forms.CSRFInput
 import helper.Time
 import helper.TwirlImports.toHtml
@@ -15,6 +15,7 @@ import play.api.i18n.MessagesProvider
 import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
+import models.AccountCreation
 
 object editMyGroups {
 
@@ -26,6 +27,7 @@ object editMyGroups {
       users: List[User],
       applications: List[Application],
       lastActivity: Map[UUID, Instant],
+      accountCreationForms: List[AccountCreation],
       addRedirectQueryParam: String => String
   )(implicit
       flash: Flash,
@@ -49,7 +51,7 @@ object editMyGroups {
         (group, users) = groupAndUsers
         user <- users
       } yield removeUserFromGroupDialog(user, group.id, addRedirectQueryParam)
-    val blocks =
+    val groupBlocks =
       for {
         groupAndUsers <- groupsWithTheirUsers
         (group, users) = groupAndUsers
@@ -66,12 +68,64 @@ object editMyGroups {
         currentUserRights
       )
 
+    val blocks = accountCreationRequestsBlock(accountCreationForms) :: groupBlocks
+
     views.html.main(currentUser, currentUserRights)("Mes groupes")(
       views.helpers.head.publicCss("stylesheets/newForm.css")
     )(
       frag(dialogs ::: blocks)
     )(Nil)
   }
+
+  def accountCreationRequestsBlock(accountCreationForms: List[AccountCreation]): Frag =
+    if (accountCreationForms.isEmpty)
+      ()
+    else
+      div(cls := "mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white")(
+        div(cls := "header")(
+          "Demandes de création de compte"
+        ),
+        table(cls := "group-table mdl-data-table mdl-js-data-table")(
+          frag(
+            accountCreationForms.map(form =>
+              tr(cls := "td--clear-border")(
+                td(
+                  form.form.lastName,
+                  " ",
+                  form.form.firstName,
+                ),
+                td(
+                  form.form.qualite
+                ),
+                td(
+                  form.form.email
+                ),
+                td(
+                  (
+                    if (form.form.isInstructor)
+                      span("Instructeur")
+                    else
+                      ()
+                  ),
+                  " ",
+                  (
+                    if (form.form.isManager)
+                      span("Responsable")
+                    else
+                      ()
+                  ),
+                ),
+                td(
+                  a(
+                    href := AccountCreationController.managerValidation(form.form.id).url,
+                    "Voir la demande"
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
 
   def creationsAndInvitationsCounts(
       applications: List[Application]

@@ -4,6 +4,7 @@ target
 .metals
 .bsp
 .vscode
+.ammonite
 /.idea
 /.idea_modules
 /.classpath
@@ -28,6 +29,7 @@ files
 package-lock.json
 node_modules/
 /public/generated-js/
+metals.sbt
 project/metals.sbt
 project/project/metals.sbt
 project/project/project/metals.sbt
