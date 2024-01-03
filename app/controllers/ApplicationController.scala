@@ -512,19 +512,21 @@ case class ApplicationController @Inject() (
       urlBase: String,
   )(log: ApplicationsInfos => Unit)(implicit request: play.api.mvc.RequestHeader): Future[Result] =
     applicationBoardInfos(user, userRights, asAdmin, urlBase).map {
-      case (infos, filteredByStatus, userGroups) => 
+      case (infos, filteredByStatus, userGroups) =>
         log(infos)
         Ok(
           views.myApplications.page(user, userRights, filteredByStatus, userGroups, infos)
         ).withHeaders(CACHE_CONTROL -> "no-store")
     }
 
-  def applicationBoardInfos (
+  def applicationBoardInfos(
       user: User,
       userRights: Authorization.UserRights,
       asAdmin: Boolean,
       urlBase: String
-  )(implicit request: play.api.mvc.RequestHeader): Future[(ApplicationsInfos, List[Application], List[UserGroup])] =
+  )(implicit
+      request: play.api.mvc.RequestHeader
+  ): Future[(ApplicationsInfos, List[Application], List[UserGroup])] =
     userGroupService.byIdsFuture(user.groupIds).map { userGroups =>
       val selectedGroupsFilter = request.queryString
         .get(ApplicationsInfos.groupFilterKey)
@@ -639,17 +641,24 @@ case class ApplicationController @Inject() (
         processingCount = processingApplicationsCount,
         lateCount = lateCount,
       )
-      
+
       (infos, filteredByStatus, userGroups)
-  }
+    }
 
   def dashboard: Action[AnyContent] =
     loginAction.async { implicit request =>
-    
-    applicationBoardInfos(request.currentUser, request.rights, false, controllers.routes.ApplicationController.dashboard.url).map { 
-      case (infos, filteredByStatus, userGroups) => Ok(views.dashboard.page(request.currentUser, request.rights, filteredByStatus, userGroups, infos, config))
+      applicationBoardInfos(
+        request.currentUser,
+        request.rights,
+        false,
+        controllers.routes.ApplicationController.dashboard.url
+      ).map { case (infos, filteredByStatus, userGroups) =>
+        Ok(
+          views.dashboard
+            .page(request.currentUser, request.rights, filteredByStatus, userGroups, infos, config)
+        )
+      }
     }
-  }
 
   def myApplications: Action[AnyContent] =
     loginAction.async { implicit request =>

@@ -5,14 +5,12 @@ import play.twirl.api.Html
 import helper.TwirlImports.toHtml
 import controllers.routes.Assets
 import views.helpers.head.publicCss
-import play.api.mvc.{ RequestHeader }
-
-
+import play.api.mvc.RequestHeader
 
 object main {
 
   def generateLink(route: String, text: String)(implicit
-    request: RequestHeader,
+      request: RequestHeader,
   ) =
     li(cls := "fr-nav__item")(
       a(
@@ -27,7 +25,7 @@ object main {
     )
 
   def layout(pageName: String, scripts: Frag, content: Frag)(implicit
-    request: RequestHeader,
+      request: RequestHeader,
   ) =
     html(
       head(
@@ -41,7 +39,6 @@ object main {
           src := Assets.versioned("generated-js/dsfr/dsfr.module.min.js").url
         ),
         publicCss("generated-js/dsfr/dsfr.min.css"),
-
         scripts
       ),
       body(
@@ -57,11 +54,11 @@ object main {
                         br,
                         "Française"
                       ),
-                      div(cls:="fr-header__operator")(
+                      div(cls := "fr-header__operator")(
                         img(
-                          cls:="fr-responsive-img", 
-                          src:=Assets.versioned("images/logo_small_150x160.png").url, 
-                          alt:="logo administration +"
+                          cls := "fr-responsive-img",
+                          src := Assets.versioned("images/logo_small_150x160.png").url,
+                          alt := "logo administration +"
                         )
                       ),
                     )
@@ -71,13 +68,12 @@ object main {
                   a(
                     href := "/",
                     title := "Accueil - Administration +"
-                  ) 
-                  (
+                  )(
                     p(cls := "fr-header__service-title")(
                       "Administration +"
                     ),
                     p(cls := "fr-header__service-tagline")(
-                        "Ensemble pour débloquer, rapidement et efficacement"
+                      "Ensemble pour débloquer, rapidement et efficacement"
                     )
                   )
                 )
@@ -89,21 +85,30 @@ object main {
               tag("nav")(cls := "fr-nav")(
                 ul(cls := "fr-nav__list")(
                   generateLink(controllers.routes.ApplicationController.dashboard.url, "Accueil"),
-                  generateLink(controllers.routes.ApplicationController.myApplications.url, "Mes demandes"),
-                  generateLink(controllers.routes.GroupController.showEditMyGroups.url, "Mes groupes"),
+                  generateLink(
+                    controllers.routes.ApplicationController.myApplications.url,
+                    "Mes demandes"
+                  ),
+                  generateLink(
+                    controllers.routes.GroupController.showEditMyGroups.url,
+                    "Mes groupes"
+                  ),
                   generateLink(controllers.routes.UserController.home.url, "Utilisateurs"),
                   generateLink(controllers.routes.AreaController.all.url, "Déploiment"),
                   generateLink(controllers.routes.ApplicationController.stats.url, "Stats"),
-                  generateLink(Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf").url, "Mandat")
+                  generateLink(
+                    Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf").url,
+                    "Mandat"
+                  )
                 )
-              ), 
+              ),
             )
           )
         )
       ),
-      div(cls:="main-container")(
+      div(cls := "main-container")(
         tag("main")()(
-          tag("nav")(cls := "fr-breadcrumb") (
+          tag("nav")(cls := "fr-breadcrumb")(
             div(cls := "fr-collapse")(
               ol(cls := "fr-breadcrumb__list")(
                 li()(
@@ -131,7 +136,7 @@ object main {
       ),
       footer(cls := "fr-footer", role := "contentinfo", id := "footer")(
         div(cls := "fr-container")(
-          div(cls := "fr-footer__bottom") (
+          div(cls := "fr-footer__bottom")(
             ul(cls := "fr-footer__bottom-list")(
               li(cls := "fr-footer__bottom-item")(
                 a(cls := "fr-footer__bottom-link")(
@@ -160,9 +165,9 @@ object main {
               p(cls := "fr-footer__bottom-copy-text")(
                 "Sauf mention explicite de propriété intellectuelle détenue par des tiers, les contenus de ce site sont proposés sous ",
                 a(
-                  href := "https://github.com/etalab/licence-ouverte/blob/master/LO.md", 
+                  href := "https://github.com/etalab/licence-ouverte/blob/master/LO.md",
                   target := "_blank",
-                  rel := "noopener external", 
+                  rel := "noopener external",
                   title := "licence etalab - nouvelle fenêtre"
                 )(
                   "licence etalab-2.0"
@@ -173,4 +178,5 @@ object main {
         )
       )
     )
+
 }
