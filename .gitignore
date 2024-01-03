@@ -1,5 +1,9 @@
 logs
 target
+.bloop
+.metals
+.bsp
+.vscode
 /.idea
 /.idea_modules
 /.classpath

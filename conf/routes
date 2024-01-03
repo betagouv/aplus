@@ -11,6 +11,7 @@ GET         /bienvenue                                                          
 # Application
 GET         /nouvelle-demande                                                                controllers.ApplicationController.create
 POST        /nouvelle-demande                                                                controllers.ApplicationController.createPost
+GET         /dashboard                                                                       controllers.ApplicationController.dashboard
 GET         /toutes-les-demandes                                                             controllers.ApplicationController.myApplications
 GET         /as/:userId/toutes-les-demandes                                                  controllers.ApplicationController.allAs(userId: java.util.UUID)
 GET         /toutes-les-demandes.csv                                                         controllers.ApplicationController.myCSV

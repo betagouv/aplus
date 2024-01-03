@@ -1,0 +1,90 @@
+#!/bin/sh
+
+export APP_HOST='localhost:9000'
+
+export MAIL_MOCK="true"
+
+export APPLICATION_SECRET='Q5VruXEZ?Z9m_aq[eFE_BUE`0I>9;Tsw4Bj/O;RM/nu/BpPjT2Te1kDy6^ng1:_2'
+
+export FILES_PATH=files
+export TOKEN_EXPIRATION_IN_MINUTES=1
+export PASSWORD_RECOVERY_TOKEN_EXPIRATION_IN_MINUTES=100
+export FEATURE_SEND_APPLICATIONS_ANYWHERE=true
+export FEATURE_SMS_MANDAT=true
+export SMS_USE_LIVE_API=false
+
+export OVH_SERVICE_NAME=""
+export OVH_APPLICATION_KEY=""
+export OVH_APPLICATION_SECRET=""
+export OVH_CONSUMER_KEY=""
+
+export FEATURE_WEEKLY_EMAILS=true
+export WEEKLY_EMAILS_DEBUG_SEND_HOURLY_DANGEROUS=true
+export WEEKLY_EMAILS_DAY_OF_WEEK="wednesday"
+export WEEKLY_EMAILS_HOUR_OF_DAY=10
+
+export NOTIFICATION_EMAIL_BLACKLIST="marie-france.services@lozere.fr,marie-france.services@seineetmarne.fr"
+
+#export EVOLUTIONS_AUTOAPPLY=true
+#export EVOLUTIONS_AUTOAPPLY_DOWNS=true
+
+export GROUPS_WHICH_CANNOT_HAVE_INSTRUCTORS="a6d51009-9d0d-42ef-92ae-e8f06d1ffecd"
+
+# create dev DB:
+# from postgres user:
+# postgres=# \c aplus
+# You are now connected to database "aplus" as user "postgres".
+# aplus=# CREATE EXTENSION IF NOT EXISTS "unaccent";
+export DATABASE_URL='jdbc:postgresql://127.0.0.1:5432/aplus?user=aplus&password=mysecretpassword'
+export ANON_DATABASE_URL='jdbc:postgresql://127.0.0.1:15666/test?user=toto&password=test'
+export APP_ANONYMIZED_EXPORT_ENABLED=false
+#export ANON_DATABASE_EVOLUTIONS_AUTOAPPLY=true
+#export ANON_DATABASE_EVOLUTIONS_AUTOAPPLY_DOWNS=true
+
+export PERSONAL_DATA_RETENTION_IN_MONTHS="26"
+
+export APP_CLAMAV_ENABLED=false
+export APP_CLAMAV_HOST="192.168.64.6"
+export APP_CLAMAV_TIMEOUT_SECS=10
+
+export JAVA_HOME=`/usr/libexec/java_home -v 17`
+
+export APP_MAILER_PICKERS_CONFIG='{
+urgent:[
+  {weight:1,smtpConfig:{host:"urg1",port:1111,mock:true}},
+  {weight:5,smtpConfig:{host:"urg2",port:1111,mock:true}}
+],
+normal:[
+  {weight:1,
+   smtpConfig:{host:"normal1",port:1111,mock:true},
+   extraHeaders:{
+        "X-MJ-MonitoringCategory":"aplus",
+        "X-Mailjet-TrackClick":"0",
+        "X-MAILJET-TRACKOPEN":"0"
+   }
+  },
+  {weight:3,
+   smtpConfig:{host:"normal2",port:1111,mock:true},
+   extraHeaders:{
+        "TEST-HEADER":"toto"
+   }
+  }
+]
+}'
+
+export APP_STATISTICS_NUMBER_OF_NEW_APPLICATIONS_URL="https://statistiques.aplus.beta.gouv.fr/public/question/67a509e0-6d45-487c-ad82-9a460952f34d"
+export APP_STATISTICS_PERCENT_OF_RELEVANT_APPLICATIONS_URL="https://statistiques.aplus.beta.gouv.fr/public/question/3df29354-399d-405a-a27f-17c194a0deb3"
+export APP_STATISTICS_PERCENT_OF_APPLICATIONS_BY_STATUS_URL="https://statistiques.aplus.beta.gouv.fr/public/question/c6c5abc2-d300-48f2-848b-4298fbe6ed72"
+export APP_STATISTICS_NUMBER_OF_APPLICATIONS_BY_USEFULNESS_URL="https://statistiques.aplus.beta.gouv.fr/public/question/49a801fe-2514-42d4-b061-7ef02079a11a"
+export APP_STATISTICS_TIME_TO_PROCESS_APPLICATIONS_URL="https://statistiques.aplus.beta.gouv.fr/public/question/d25cd8a1-b561-4945-86c6-eed7d6e6e93c"
+
+
+export APP_FIELDS_ENCRYPTION_KEY_ROTATION_EXECUTE=true
+export APP_FIELDS_ENCRYPTION_KEY_ROTATION_ENCRYPT_IF_PLAINTEXT=true
+
+export GECKO_DRIVER="/Users/alex/backups/work/beta/aplus/gecko/geckodriver"
+
+#export DEBUG=true
+
+
+sbt -J-Xms1G -J-Xmx3G -J-XX:MaxMetaspaceSize=2G -Djna.library.path=/opt/local/lib
