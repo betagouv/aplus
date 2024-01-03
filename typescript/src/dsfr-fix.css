@@ -73,3 +73,9 @@ div.fr-footer__bottom {
     display: flex;
     flex-wrap: wrap;
 }
+.aplus-alert {
+    color: #ef000f !important; 
+}
+.aplus-paragraph {
+    margin: .75rem 0;
+}
