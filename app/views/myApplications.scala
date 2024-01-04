@@ -28,9 +28,16 @@ object myApplications {
       webJarsUtil: WebJarsUtil,
       mainInfos: MainInfos
   ): Html =
-    views.html.main(currentUser, currentUserRights, maxWidth = false)(
-      "Mes demandes"
-    )(frag())(
+    views.main.layout("Mes demandes", frag(content(currentUser, currentUserRights, maxWidth = false, filters, applications, groups)), frag())
+    
+    def content(
+        currentUser: User,
+        currentUserRights: Authorization.UserRights,
+        maxWidth: Boolean,
+        filters: ApplicationsInfos,
+        applications: List[Application],
+        groups: List[UserGroup],
+    ) : Tag = 
       div(
         cls := "mdl-cell mdl-cell--12-col mdl-grid--no-spacing",
         if (filters.allGroupsOpenCount <= 0 && filters.allGroupsClosedCount <= 0)
@@ -38,7 +45,7 @@ object myApplications {
         else
           openApplications(currentUser, currentUserRights, applications, groups, filters),
       )
-    )(frag())
+  
 
   private def noApplications(currentUser: User, currentUserRights: Authorization.UserRights) =
     div(
@@ -91,85 +98,74 @@ object myApplications {
       filters: ApplicationsInfos,
   ) =
     frag(
-      div(
-        cls := "mdl-grid mdl-grid--no-spacing",
+      div(cls := "fr-grid-row")(
         div(
-          cls := "mdl-cell mdl-cell--8-col mdl-cell--12-col-phone single--display-flex",
-          div(
-            cls := "single--margin-right-32px",
-            h4(
-              cls := "single--margin-0px",
-              "Mes demandes"
+          cls := "fr-col-8",
+            div(
+              h4(cls := "aplus-title")(
+                "Mes demandes"
+              )
+            ),
+            p()(
+              "Ici, vous pouvez gérer vos propres demandes ainsi que celles de votre/vos groupe(s). ",
+            ),
+            if(filters.lateCount > 0)(
+              div(cls :="fr-alert fr-alert--warning")(
+                h3(cls := "fr-alert__title")("Attention"),
+                p(s"Il y a ${filters.lateCount} dossier souffrants dans vos groupes")
+              )
+            ),
+            div(
+              Authorization
+                .canCreateApplication(currentUserRights)
+                .some
+                .filter(identity)
+                .map(_ =>
+                  button(
+                    cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--primary onclick-change-location",
+                    data("location") := ApplicationController.create.url,
+                    "Créer une demande"
+                  )
+                )
+            ),
+          div(cls := " fr-search-bar")(
+            label(cls := "fr-label", `for` := "application-search"),
+            input(
+              cls := "fr-input",
+              `role` := "search",
+              placeholder := "Rechercher",
+              id := "application-search"
+            ),
+            button(cls :="fr-btn", title :="Rechercher")(
+              "Rechercher"
             )
           ),
-          div(
-            Authorization
-              .canCreateApplication(currentUserRights)
-              .some
-              .filter(identity)
-              .map(_ =>
-                button(
-                  cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--primary onclick-change-location",
-                  data("location") := ApplicationController.create.url,
-                  "Créer une demande"
-                )
+          if (groups.length > 0)(
+            div(cls := "fr-select-group")(
+              label(cls := "fr-label", `for` := "group-select"),
+              select(
+                cls := "fr-select",
+                id := "group-select",
+                name := "group-select",
+                option(value := "")("Tous les groupes"),
+                groups.map(group => option(value := s"${group.id}")(group.name))
               )
-          ),
-        ),
-        div(
-          cls := " mdl-cell mdl-cell--4-col mdl-cell--12-col-phone",
-          input(
-            cls := "single--font-size-16px single--padding-4px single--width-100pc",
-            `type` := "search",
-            placeholder := "Rechercher",
-            id := "search-input"
+            )
           )
+        ),
+        div(cls := "fr-col fr-col-4 fr-grid-row fr-grid-row--center")(
+          button(cls := "fr-btn fr-btn--height-fix")("+ Créer une demande")
         )
       ),
       div(
         cls := "mdl-grid mdl-grid--no-spacing single--margin-bottom-8px single--margin-top-24px",
         div(
           cls := "mdl-cell mdl-cell--12-col mdl-cell--12-col-phone",
-          groupsFilters(groups, filters),
           otherFilters(currentUser, filters),
         )
       ),
       applicationsList(currentUser, currentUserRights, applications)
     )
-
-  private def groupsFilters(groups: List[UserGroup], infos: ApplicationsInfos) =
-    if (groups.length <= 1)
-      frag()
-    else
-      div(
-        cls := "single--display-flex",
-        frag(
-          groups.map(group =>
-            div(
-              label(
-                `for` := s"group-filter-${group.id}",
-                cls := "mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect single--height-auto single--margin-right-32px",
-                input(
-                  id := s"group-filter-${group.id}",
-                  cls := "mdl-checkbox__input application-form-invited-groups-checkbox trigger-group-filter",
-                  `type` := "checkbox",
-                  name := ApplicationsInfos.groupFilterKey,
-                  value := s"${group.id}",
-                  data("on-checked-url") := infos.filters.withGroup(group.id).toUrl,
-                  data("on-unchecked-url") := infos.filters.withoutGroup(group.id).toUrl,
-                  if (infos.filters.groupIsFiltered(group.id)) checked := "checked" else (),
-                ),
-                span(
-                  cls := "mdl-checkbox__label single--font-size-14px single--line-height-22px",
-                  group.name,
-                  " ",
-                  infos.groupsCounts.get(group.id).map(count => s"($count)")
-                ),
-              ),
-            ),
-          )
-        )
-      )
 
   private def otherFilters(currentUser: User, infos: ApplicationsInfos) = {
     val filters = infos.filters
@@ -290,7 +286,7 @@ object myApplications {
       application: Application
   ): Tag =
     td(
-      cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size",
+      cls := "fr-table",
       div(
         cls := "typography--text-align-center typography--text-line-height-2 overlay-foreground single--pointer-events-none ",
         statusTag(application, currentUser),

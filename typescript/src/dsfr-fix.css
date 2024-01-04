@@ -1,6 +1,7 @@
 .main-container {
-    display: flex;
     padding: .75rem 1.5rem;
+    max-width: 78rem;
+    margin: 0 auto;
 }
 
 .fr-header__logo {
@@ -98,16 +99,6 @@ div.fr-footer__bottom {
 .aplus-paragraph {
     margin: .75rem 0;
 }
-
-.fr_card a {
-    background-image: none !important;
-    text-decoration: none !important;
-}
-
-.fr_card i {
-    color: #666;
-}
-
-.external-link {
-    font-size: 1rem !important;
+.fr-btn--height-fix {
+    height: 2.5rem;
 }
