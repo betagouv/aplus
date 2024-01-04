@@ -35,6 +35,7 @@ import play.twirl.api.Html
 import serializers.Keys
 import serializers.ApiModel.{ApplicationMetadata, ApplicationMetadataResult}
 import services._
+import views.dashboard.DashboardInfos
 
 import java.nio.file.{Files, Path, Paths}
 import java.time.{LocalDate, ZonedDateTime}
@@ -505,6 +506,26 @@ case class ApplicationController @Inject() (
       }
     }
 
+  private def applicationIsLate(application: Application): Boolean =
+    !application.closed &&
+      application.status =!= Application.Status.Processed && (
+        application.answers
+          .filter(_.creatorUserID =!= application.creatorUserId)
+          .filter(answer =>
+            !answer.message.contains("rejoins la conversation automatiquement comme expert") &&
+              !answer.message
+                .contains("Les nouveaux instructeurs rejoignent automatiquement la demande")
+          )
+          .lastOption match {
+          case None =>
+            businessDaysService
+              .businessHoursBetween(application.creationDate, ZonedDateTime.now()) > (3 * 24)
+          case Some(lastAnswer) =>
+            businessDaysService
+              .businessHoursBetween(lastAnswer.creationDate, ZonedDateTime.now()) > (15 * 24)
+        }
+      )
+
   private def myApplicationsBoard(
       user: User,
       userRights: Authorization.UserRights,
@@ -519,7 +540,7 @@ case class ApplicationController @Inject() (
         ).withHeaders(CACHE_CONTROL -> "no-store")
     }
 
-  def applicationBoardInfos(
+  private def applicationBoardInfos(
       user: User,
       userRights: Authorization.UserRights,
       asAdmin: Boolean,
@@ -593,26 +614,7 @@ case class ApplicationController @Inject() (
         applicationsByStatus.get(Application.Status.Processing).getOrElse(Nil)
       val processingApplicationsCount = processingApplications.length
 
-      val lateApplications = openFilteredByGroups
-        .filter(_.status =!= Application.Status.Processed)
-        .filter { application =>
-          application.answers
-            .filter(_.creatorUserID =!= application.creatorUserId)
-            .filter(answer =>
-              !answer.message.contains("rejoins la conversation automatiquement comme expert") &&
-                !answer.message
-                  .contains("Les nouveaux instructeurs rejoignent automatiquement la demande")
-            )
-            .lastOption match {
-            case None =>
-              businessDaysService
-                .businessHoursBetween(application.creationDate, ZonedDateTime.now()) > (3 * 24)
-            case Some(lastAnswer) =>
-              businessDaysService
-                .businessHoursBetween(lastAnswer.creationDate, ZonedDateTime.now()) > (15 * 24)
-          }
-        }
-
+      val lateApplications = openFilteredByGroups.filter(applicationIsLate)
       val lateCount = lateApplications.length
 
       val filteredByStatus =
@@ -645,19 +647,35 @@ case class ApplicationController @Inject() (
       (infos, filteredByStatus, userGroups)
     }
 
+  private def dashboardInfos(user: User): Future[DashboardInfos] =
+    userGroupService.byIdsFuture(user.groupIds).map { userGroups =>
+      val allApplications =
+        applicationService.allOpenOrRecentForUserId(user.id, false, Time.nowParis())
+
+      val groupInfos = userGroups
+        .map { group =>
+          val applications = allApplications.filter(application =>
+            application.creatorGroupId.map(id => id === group.id).getOrElse(false) ||
+              application.invitedGroups.contains(group.id)
+          )
+
+          DashboardInfos.Group(
+            group,
+            newCount = applications.count(_.status === Application.Status.New),
+            lateCount = applications.count(applicationIsLate),
+          )
+        }
+      DashboardInfos(
+        newCount = allApplications.count(_.status === Application.Status.New),
+        lateCount = allApplications.count(applicationIsLate),
+        groupInfos
+      )
+    }
+
   def dashboard: Action[AnyContent] =
     loginAction.async { implicit request =>
-      applicationBoardInfos(
-        request.currentUser,
-        request.rights,
-        false,
-        controllers.routes.ApplicationController.dashboard.url
-      ).map { case (infos, filteredByStatus, userGroups) =>
-        Ok(
-          views.dashboard
-            .page(request.currentUser, request.rights, filteredByStatus, userGroups, infos, config)
-        )
-      }
+      dashboardInfos(request.currentUser)
+        .map(infos => Ok(views.dashboard.page(request.currentUser, request.rights, infos, config)))
     }
 
   def myApplications: Action[AnyContent] =

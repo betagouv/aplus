@@ -1,50 +1,64 @@
 package views
 
-import play.twirl.api.Html
-import scalatags.Text.all._
-import models.{Application, Authorization, User, UserGroup}
 import controllers.routes.ApplicationController
+import helper.Time
+import models.{Application, Authorization, User, UserGroup}
 import models.formModels.ApplicationsInfos
+import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.RequestHeader
-import models.{Application, Authorization, User, UserGroup}
-import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
-import helper.Time
-import internalStats.charts
-import modules.AppConfig
-import internalStats.Filters
+import play.twirl.api.Html
+import scalatags.Text.all._
+
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
+import internalStats.charts
+import internalStats.Filters
 
 object dashboard {
+
+  object DashboardInfos {
+
+    case class Group(
+        group: UserGroup,
+        newCount: Int,
+        lateCount: Int
+    )
+
+  }
+
+  case class DashboardInfos(
+      newCount: Int,
+      lateCount: Int,
+      groupInfos: List[DashboardInfos.Group]
+  )
 
   def page(
       currentUser: User,
       currentUserRights: Authorization.UserRights,
-      applications: List[Application],
-      groups: List[UserGroup],
-      filters: ApplicationsInfos,
+      infos: DashboardInfos,
       config: AppConfig,
   )(implicit
       request: RequestHeader,
   ): Tag =
     views.main.layout(
       "Dashboard",
-      frag(content(currentUser, currentUserRights, applications, groups, filters, config))
+      frag(content(currentUser, currentUserRights, infos, config))
     )
 
   def content(
       currentUser: User,
       currentUserRights: Authorization.UserRights,
-      applications: List[Application],
-      groups: List[UserGroup],
-      filters: ApplicationsInfos,
+      infos: DashboardInfos,
       config: AppConfig,
   ): Tag =
     div()(
       h3(cls := "aplus-title")(s"Bonjour, ${currentUser.name}"),
       p("Bienvenue sur votre tableau de bord. Vous y trouverez le résumé de votre journée."),
       p(cls := "aplus-dashboard-date")(
-        s"aujourd’hui ${java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy"))}"
+        "aujourd’hui ",
+        LocalDate.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
       ),
       div(cls := "fr-grid-row fr-grid-row--gutters fr-mb-1w")(
         div(cls := "fr_card__outer_container fr-col-md-6 fr-col")(
@@ -78,22 +92,22 @@ object dashboard {
                   a(cls := "aplus-alert")("Validation de compte")
                 )
               ),
-            if (groups.nonEmpty)
+            if (infos.groupInfos.nonEmpty)
               (
                 table(cls := "fr-table fr-table--striped fr-table--compact")(
                   thead(
                     tr(
                       th("Groupes"),
-                      th("Nouvelles demandes (x)"),
-                      th("Demandes souffrantes (x)"),
+                      th(s"Nouvelles demandes (${infos.newCount})"),
+                      th(s"Demandes souffrantes (${infos.lateCount})"),
                     )
                   ),
                   tbody(
-                    for (group <- groups) yield {
+                    for (groupInfos <- infos.groupInfos) yield {
                       tr(
-                        td(group.name),
-                        td("yy"),
-                        td("xx"),
+                        td(groupInfos.group.name),
+                        td(groupInfos.newCount),
+                        td(groupInfos.lateCount),
                       )
                     }
                   )
