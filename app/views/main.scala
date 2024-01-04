@@ -1,11 +1,13 @@
 package views
 
-import scalatags.Text.all._
-import play.twirl.api.Html
+import cats.syntax.all._
+import controllers.routes.{Assets, HomeController, UserController}
 import helper.TwirlImports.toHtml
-import controllers.routes.Assets
-import views.helpers.head.publicCss
 import play.api.mvc.RequestHeader
+import play.twirl.api.Html
+import scalatags.Text.all._
+import scalatags.Text.tags2
+import views.helpers.head.publicCss
 
 object main {
 
@@ -18,13 +20,18 @@ object main {
         title := text,
         cls := "fr-nav__link",
         target := "_self",
-        attr("aria-current") := (if (request.path == route) "true" else "false")
+        attr("aria-current") := (if (request.path === route) "true" else "false")
       )(
         text
       )
     )
 
-  def layout(pageName: String, scripts: Frag, content: Frag)(implicit
+  def layout(
+      pageName: String,
+      content: Frag,
+      additionalHeadTags: Frag = frag(),
+      additionalFooterTags: Frag = frag()
+  )(implicit
       request: RequestHeader,
   ) =
     html(
@@ -34,12 +41,9 @@ object main {
           media := "screen,print",
           href := Assets.versioned("generated-js/index.css").url
         ),
-        script(
-          `type` := "module",
-          src := Assets.versioned("generated-js/dsfr/dsfr.module.min.js").url
-        ),
         publicCss("generated-js/dsfr/dsfr.min.css"),
-        scripts
+        tags2.title(pageName),
+        additionalHeadTags
       ),
       body(
         header(role := "banner", cls := "fr-header")(
@@ -50,9 +54,13 @@ object main {
                   div(cls := "fr-header__brand-top")(
                     div(cls := "fr-header__logo")(
                       div(cls := "fr-logo")(
-                        "République",
+                        "Agence",
                         br,
-                        "Française"
+                        "Nationale",
+                        br,
+                        "de la Cohésion",
+                        br,
+                        "des Territoires"
                       ),
                       div(cls := "fr-header__operator")(
                         img(
@@ -140,13 +148,13 @@ object main {
             ul(cls := "fr-footer__bottom-list")(
               li(cls := "fr-footer__bottom-item")(
                 a(cls := "fr-footer__bottom-link")(
-                  href := "/",
+                  href := HomeController.index.url,
                   "Administration +"
                 )
               ),
               li(cls := "fr-footer__bottom-item")(
                 a(
-                  href := controllers.routes.HomeController.help.url,
+                  href := HomeController.help.url,
                   cls := "fr-footer__bottom-link",
                 )(
                   "Aide"
@@ -154,7 +162,7 @@ object main {
               ),
               li(cls := "fr-footer__bottom-item")(
                 a(
-                  href := controllers.routes.UserController.showValidateAccount.url,
+                  href := UserController.showValidateAccount.url,
                   cls := "fr-footer__bottom-link",
                 )(
                   "CGU"
@@ -175,7 +183,12 @@ object main {
               )
             )
           )
-        )
+        ),
+        script(
+          `type` := "module",
+          src := Assets.versioned("generated-js/dsfr/dsfr.module.min.js").url
+        ),
+        additionalFooterTags
       )
     )
 
