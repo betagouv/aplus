@@ -9,12 +9,10 @@ import org.webjars.play.WebJarsUtil
 import play.api.mvc.RequestHeader
 import play.twirl.api.Html
 import scalatags.Text.all._
+import views.internalStats.{charts, Filters}
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-
-import internalStats.charts
-import internalStats.Filters
 
 object dashboard {
 
@@ -31,7 +29,8 @@ object dashboard {
   case class DashboardInfos(
       newCount: Int,
       lateCount: Int,
-      groupInfos: List[DashboardInfos.Group]
+      groupInfos: List[DashboardInfos.Group],
+      chartFilters: Filters,
   )
 
   def page(
@@ -121,17 +120,7 @@ object dashboard {
         ),
         div(cls := "fr_card__outer_container fr-col-md-12 fr-col")(
           div(cls := "fr_card fr-enlarge-link fr-card--horizontal aplus-flex")(
-            charts(
-              Filters(
-                startDate = LocalDate.now().minusDays(30),
-                endDate = LocalDate.now(),
-                areaIds = Nil,
-                organisationIds = Nil,
-                creatorGroupIds = Nil,
-                invitedGroupIds = Nil
-              ),
-              config
-            )
+            charts(infos.chartFilters, config)
           )
         )
       )

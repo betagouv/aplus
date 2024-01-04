@@ -665,10 +665,36 @@ case class ApplicationController @Inject() (
             lateCount = applications.count(applicationIsLate),
           )
         }
+
+      val startDate = LocalDate.now().minusDays(30)
+      val endDate = LocalDate.now()
+      val chartFilters =
+        if (user.admin)
+          views.internalStats.Filters(
+            startDate = startDate,
+            endDate = endDate,
+            areaIds = Nil,
+            organisationIds = Nil,
+            creatorGroupIds = Nil,
+            invitedGroupIds = Nil,
+          )
+        else {
+          val (creatorGroupIds, invitedGroupIds) = divideStatsGroups(userGroups)
+          views.internalStats.Filters(
+            startDate = startDate,
+            endDate = endDate,
+            areaIds = Nil,
+            organisationIds = Nil,
+            creatorGroupIds = creatorGroupIds,
+            invitedGroupIds = invitedGroupIds
+          )
+        }
+
       DashboardInfos(
         newCount = allApplications.count(_.status === Application.Status.New),
         lateCount = allApplications.count(applicationIsLate),
-        groupInfos
+        groupInfos,
+        chartFilters
       )
     }
 
@@ -743,6 +769,20 @@ case class ApplicationController @Inject() (
       }
     }
 
+  private def divideStatsGroups(groups: List[UserGroup]): (List[UUID], List[UUID]) = {
+    val creatorGroupIds = groups
+      .filter(group =>
+        group.organisationId
+          .map(id => Organisation.organismesAidants.map(_.id).contains[Organisation.Id](id))
+          .getOrElse(false)
+      )
+      .map(_.id)
+    val invitedGroupIds =
+      groups.map(_.id).filterNot(id => creatorGroupIds.contains[UUID](id))
+
+    (creatorGroupIds, invitedGroupIds)
+  }
+
   private def statsPage(formUrl: Call, user: User, rights: Authorization.UserRights)(implicit
       request: RequestWithUserData[_]
   ): Future[Result] = {
@@ -772,15 +812,7 @@ case class ApplicationController @Inject() (
         groups.filter(group => dropdownGroupIds.contains[UUID](group.id))
       val charts: Future[Html] = {
         val validQueryGroups = groups.filter(group => validQueryGroupIds.contains[UUID](group.id))
-        val creatorGroupIds = validQueryGroups
-          .filter(group =>
-            group.organisationId
-              .map(id => Organisation.organismesAidants.map(_.id).contains[Organisation.Id](id))
-              .getOrElse(false)
-          )
-          .map(_.id)
-        val invitedGroupIds =
-          validQueryGroupIds.filterNot(id => creatorGroupIds.contains[UUID](id))
+        val (creatorGroupIds, invitedGroupIds) = divideStatsGroups(validQueryGroups)
 
         Future.successful(
           views.internalStats.charts(

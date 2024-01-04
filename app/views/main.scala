@@ -35,19 +35,24 @@ object main {
       request: RequestHeader,
   ) =
     html(
-      head(attr("lang") :="fr", attr("data-fr-scheme") :="system")(
+      head(attr("lang") := "fr", attr("data-fr-scheme") := "system")(
         meta(charset := "utf-8"),
-        meta(name:="format-detection", attr("content") := "telephone=no"),
-        meta(name := "viewport", attr("content") := "width=device-width, initial-scale=1, shrink-to-fit=no"),
+        meta(name := "format-detection", attr("content") := "telephone=no"),
+        meta(
+          name := "viewport",
+          attr("content") := "width=device-width, initial-scale=1, shrink-to-fit=no"
+        ),
         link(
           rel := "stylesheet",
           media := "screen,print",
           href := Assets.versioned("generated-js/index.css").url
         ),
-
         meta(name := "theme-color", attr("content") := "#000091"),
-        link(attr("rel") :="icon", href := Assets.versioned("images/favicon.png").url, attr("type"):="image/svg+xml"),
-
+        link(
+          attr("rel") := "icon",
+          href := Assets.versioned("images/favicon.png").url,
+          attr("type") := "image/svg+xml"
+        ),
         publicCss("generated-js/dsfr/dsfr.min.css"),
         tags2.title(pageName),
         additionalHeadTags
