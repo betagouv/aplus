@@ -1045,7 +1045,8 @@ case class ApplicationController @Inject() (
   private def showApplication(
       application: Application,
       form: Form[AnswerFormData],
-      openedTab: String
+      openedTab: String,
+      standaloneVersion: Boolean,
   )(toResult: Html => Result)(implicit request: RequestWithUserData[_]): Future[Result] = {
     val selectedArea: Area =
       areaInQueryString
@@ -1077,17 +1078,20 @@ case class ApplicationController @Inject() (
                   group -> usersWhoCanBeInvited.filter(_.groupIds.contains[UUID](group.id))
                 }
                 toResult(
-                  views.html.showApplication(request.currentUser, request.rights)(
-                    groupsWithUsersThatCanBeInvited,
-                    invitableGroups,
-                    application,
-                    form,
-                    openedTab,
-                    selectedArea,
-                    readSharedAccountUserSignature(request.session),
-                    files,
-                    organisations
-                  )
+                  if (standaloneVersion)
+                    views.html.showApplication(request.currentUser, request.rights)(
+                      groupsWithUsersThatCanBeInvited,
+                      invitableGroups,
+                      application,
+                      form,
+                      openedTab,
+                      selectedArea,
+                      readSharedAccountUserSignature(request.session),
+                      files,
+                      organisations
+                    )
+                  else
+                    views.application.pageContent(application)
                 ).withHeaders(CACHE_CONTROL -> "no-store")
               }
             )
@@ -1102,7 +1106,27 @@ case class ApplicationController @Inject() (
         showApplication(
           application,
           AnswerFormData.form(request.currentUser, false),
-          openedTab = request.flash.get("opened-tab").getOrElse("answer")
+          openedTab = request.flash.get("opened-tab").getOrElse("answer"),
+          standaloneVersion = true,
+        ) { html =>
+          eventService.log(
+            ApplicationShowed,
+            s"Demande $id consultée",
+            applicationId = application.id.some
+          )
+          Ok(html)
+        }
+      }
+    }
+
+  def showEmbedded(id: UUID): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      withApplication(id) { application =>
+        showApplication(
+          application,
+          AnswerFormData.form(request.currentUser, false),
+          openedTab = request.flash.get("opened-tab").getOrElse("answer"),
+          standaloneVersion = false,
         ) { html =>
           eventService.log(
             ApplicationShowed,
@@ -1300,7 +1324,12 @@ case class ApplicationController @Inject() (
           val form = AnswerFormData.form(request.currentUser, files.nonEmpty).bindFromRequest()
           form.fold(
             formWithErrors => {
-              showApplication(application, formWithErrors, openedTab = "answer") { html =>
+              showApplication(
+                application,
+                formWithErrors,
+                openedTab = "answer",
+                standaloneVersion = true
+              ) { html =>
                 val error =
                   s"Erreur dans le formulaire de réponse (${formErrorsLog(formWithErrors)})"
                 eventService.log(
