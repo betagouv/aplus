@@ -704,6 +704,22 @@ case class ApplicationController @Inject() (
         .map(infos => Ok(views.dashboard.page(request.currentUser, request.rights, infos, config)))
     }
 
+  def dashboardAs(otherUserId: UUID): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      withUser(otherUserId) { otherUser: User =>
+        asUserWithAuthorization(Authorization.canSeeOtherUserNonPrivateViews(otherUser))(
+          EventType.MasqueradeUnauthorized,
+          s"Accès non autorisé pour voir le dashboard de $otherUserId",
+          errorInvolvesUser = otherUser.id.some
+        ) { () =>
+          LoginAction.readUserRights(otherUser).flatMap { userRights =>
+            dashboardInfos(otherUser)
+              .map(infos => Ok(views.dashboard.page(otherUser, userRights, infos, config)))
+          }
+        }
+      }
+    }
+
   def myApplications: Action[AnyContent] =
     loginAction.async { implicit request =>
       myApplicationsBoard(

@@ -43,7 +43,7 @@ object dashboard {
   ): Tag =
     views.main.layout(
       "Dashboard",
-      frag(content(currentUser, currentUserRights, infos, config))
+      content(currentUser, currentUserRights, infos, config)
     )
 
   def content(
