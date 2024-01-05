@@ -18,6 +18,7 @@ GET         /as/:userId/toutes-les-demandes                                     
 GET         /toutes-les-demandes.csv                                                         controllers.ApplicationController.myCSV
 GET         /exporter-mes-demandes                                                           controllers.ApplicationController.showExportMyApplicationsCSV
 GET         /toutes-les-demandes/:id                                                         controllers.ApplicationController.show(id: java.util.UUID)
+GET         /toutes-les-demandes/:id/embedded                                                controllers.ApplicationController.showEmbedded(id: java.util.UUID)
 POST        /toutes-les-demandes/:applicationId/inviter_des_utilisateurs                     controllers.ApplicationController.invite(applicationId: java.util.UUID)
 POST        /toutes-les-demandes/:applicationId/inviter_des_experts                          controllers.ApplicationController.inviteExpert(applicationId: java.util.UUID)
 POST        /toutes-les-demandes/:applicationId/messages                                     controllers.ApplicationController.answer(applicationId: java.util.UUID)
