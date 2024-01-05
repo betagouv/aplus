@@ -113,7 +113,8 @@ object common {
                       href := ApplicationController.showExportMyApplicationsCSV.url,
                       "Exporter mes demandes en CSV"
                     )
-                  )
+                  ),
+                  li("Accessibilité : non conforme")
                 )
               )
             )
