@@ -98,3 +98,16 @@ div.fr-footer__bottom {
 .aplus-paragraph {
     margin: .75rem 0;
 }
+
+.fr_card a {
+    background-image: none !important;
+    text-decoration: none !important;
+}
+
+i {
+    color: #666;
+}
+
+.external-link {
+    font-size: 1rem !important;
+}

@@ -63,7 +63,7 @@ object dashboard {
       div(cls := "fr-grid-row fr-grid-row--gutters fr-mb-1w")(
         div(cls := "fr_card__outer_container fr-col-md-6 fr-col")(
           div(
-            cls := "fr_card fr-enlarge-link fr-card--horizontal fr-card--horizontal-half fr_card__highlight"
+            cls := "fr_card fr-card--horizontal fr-card--horizontal-half fr_card__highlight"
           )(
             div(cls := "fr_card__body")(
               div(cls := "fr_card__content")(
@@ -84,7 +84,7 @@ object dashboard {
           )
         ),
         div(cls := "fr_card__outer_container fr-col-md-12 fr-col")(
-          div(cls := "fr_card fr-enlarge-link fr-card--horizontal")(
+          div(cls := "fr_card fr-card--horizontal")(
             strong(cls := "fr_card__title")("Mon compte"),
             if (currentUser.admin)
               (
@@ -120,7 +120,10 @@ object dashboard {
                             href := infos.applicationsPageEmptyFilters
                               .withGroup(groupInfos.group.id)
                               .toUrl
-                          )(groupInfos.group.name)
+                          )(
+                            groupInfos.group.name,
+                            i(cls := "material-icons material-icons-outlined external-link")("arrow_outward")
+                          )
                         ),
                         td(
                           a(
@@ -128,7 +131,11 @@ object dashboard {
                               .withGroup(groupInfos.group.id)
                               .withStatusNew
                               .toUrl
-                          )(groupInfos.newCount)
+                          )(
+                            groupInfos.newCount,
+                            i(cls := "material-icons material-icons-outlined external-link")("arrow_outward")
+                          )
+
                         ),
                         td(
                           a(
@@ -136,7 +143,10 @@ object dashboard {
                               .withGroup(groupInfos.group.id)
                               .withStatusLate
                               .toUrl
-                          )(groupInfos.lateCount)
+                          )(
+                            groupInfos.lateCount,
+                            i(cls := "material-icons material-icons-outlined external-link")("arrow_outward")
+                          ),
                         ),
                       )
                     }
@@ -150,7 +160,7 @@ object dashboard {
           )
         ),
         div(cls := "fr_card__outer_container fr-col-md-12 fr-col")(
-          div(cls := "fr_card fr-enlarge-link fr-card--horizontal aplus-flex")(
+          div(cls := "fr_card fr-card--horizontal aplus-flex")(
             charts(infos.chartFilters, config)
           )
         )
