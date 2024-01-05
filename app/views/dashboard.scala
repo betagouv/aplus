@@ -1,6 +1,6 @@
 package views
 
-import controllers.routes.ApplicationController
+import controllers.routes.{ApplicationController, GroupController, UserController}
 import helper.Time
 import models.{Application, Authorization, User, UserGroup}
 import models.formModels.ApplicationsInfos
@@ -31,6 +31,7 @@ object dashboard {
       lateCount: Int,
       groupInfos: List[DashboardInfos.Group],
       chartFilters: Filters,
+      applicationsPageEmptyFilters: ApplicationsInfos.Filters,
   )
 
   def page(
@@ -68,7 +69,7 @@ object dashboard {
               div(cls := "fr_card__content")(
                 div(cls := "fr_card__container")(
                   strong(cls := "fr_card__title")("Mon compte"),
-                  a()(
+                  a(href := UserController.showEditProfile.url)(
                     i(cls := "material-icons material-icons-outlined")("edit"),
                   )
                 ),
@@ -85,10 +86,12 @@ object dashboard {
         div(cls := "fr_card__outer_container fr-col-md-12 fr-col")(
           div(cls := "fr_card fr-enlarge-link fr-card--horizontal")(
             strong(cls := "fr_card__title")("Mon compte"),
-            if (!currentUser.groupAdmin)
+            if (currentUser.admin)
               (
                 p(cls := "aplus-paragraph")(
-                  a(cls := "aplus-alert")("Validation de compte")
+                  a(href := GroupController.showEditMyGroups.url, cls := "aplus-alert")(
+                    "Validation de compte"
+                  )
                 )
               ),
             if (infos.groupInfos.nonEmpty)
@@ -97,16 +100,44 @@ object dashboard {
                   thead(
                     tr(
                       th("Groupes"),
-                      th(s"Nouvelles demandes (${infos.newCount})"),
-                      th(s"Demandes souffrantes (${infos.lateCount})"),
+                      th(
+                        a(href := infos.applicationsPageEmptyFilters.withStatusNew.toUrl)(
+                          s"Nouvelles demandes (${infos.newCount})"
+                        )
+                      ),
+                      th(
+                        a(href := infos.applicationsPageEmptyFilters.withStatusLate.toUrl)(
+                          s"Demandes souffrantes (${infos.lateCount})"
+                        )
+                      ),
                     )
                   ),
                   tbody(
                     for (groupInfos <- infos.groupInfos) yield {
                       tr(
-                        td(groupInfos.group.name),
-                        td(groupInfos.newCount),
-                        td(groupInfos.lateCount),
+                        td(
+                          a(
+                            href := infos.applicationsPageEmptyFilters
+                              .withGroup(groupInfos.group.id)
+                              .toUrl
+                          )(groupInfos.group.name)
+                        ),
+                        td(
+                          a(
+                            href := infos.applicationsPageEmptyFilters
+                              .withGroup(groupInfos.group.id)
+                              .withStatusNew
+                              .toUrl
+                          )(groupInfos.newCount)
+                        ),
+                        td(
+                          a(
+                            href := infos.applicationsPageEmptyFilters
+                              .withGroup(groupInfos.group.id)
+                              .withStatusLate
+                              .toUrl
+                          )(groupInfos.lateCount)
+                        ),
                       )
                     }
                   )

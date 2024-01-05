@@ -647,7 +647,7 @@ case class ApplicationController @Inject() (
       (infos, filteredByStatus, userGroups)
     }
 
-  private def dashboardInfos(user: User): Future[DashboardInfos] =
+  private def dashboardInfos(user: User, adminMasquerade: Boolean): Future[DashboardInfos] =
     userGroupService.byIdsFuture(user.groupIds).map { userGroups =>
       val allApplications =
         applicationService.allOpenOrRecentForUserId(user.id, false, Time.nowParis())
@@ -690,17 +690,24 @@ case class ApplicationController @Inject() (
           )
         }
 
+      val applicationsPageEmptyFilters = ApplicationsInfos.emptyFilters(
+        if (adminMasquerade)
+          controllers.routes.ApplicationController.allAs(user.id).url
+        else
+          controllers.routes.ApplicationController.myApplications.url
+      )
       DashboardInfos(
         newCount = allApplications.count(_.status === Application.Status.New),
         lateCount = allApplications.count(applicationIsLate),
         groupInfos,
-        chartFilters
+        chartFilters,
+        applicationsPageEmptyFilters,
       )
     }
 
   def dashboard: Action[AnyContent] =
     loginAction.async { implicit request =>
-      dashboardInfos(request.currentUser)
+      dashboardInfos(request.currentUser, adminMasquerade = false)
         .map(infos => Ok(views.dashboard.page(request.currentUser, request.rights, infos, config)))
     }
 
@@ -713,7 +720,7 @@ case class ApplicationController @Inject() (
           errorInvolvesUser = otherUser.id.some
         ) { () =>
           LoginAction.readUserRights(otherUser).flatMap { userRights =>
-            dashboardInfos(otherUser)
+            dashboardInfos(otherUser, adminMasquerade = true)
               .map(infos => Ok(views.dashboard.page(otherUser, userRights, infos, config)))
           }
         }
