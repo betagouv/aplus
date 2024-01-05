@@ -35,6 +35,7 @@ import play.twirl.api.Html
 import serializers.Keys
 import serializers.ApiModel.{ApplicationMetadata, ApplicationMetadataResult}
 import services._
+import views.dashboard.DashboardInfos
 
 import java.nio.file.{Files, Path, Paths}
 import java.time.{LocalDate, ZonedDateTime}
@@ -505,12 +506,48 @@ case class ApplicationController @Inject() (
       }
     }
 
+  private def applicationIsLate(application: Application): Boolean =
+    !application.closed &&
+      application.status =!= Application.Status.Processed && (
+        application.answers
+          .filter(_.creatorUserID =!= application.creatorUserId)
+          .filter(answer =>
+            !answer.message.contains("rejoins la conversation automatiquement comme expert") &&
+              !answer.message
+                .contains("Les nouveaux instructeurs rejoignent automatiquement la demande")
+          )
+          .lastOption match {
+          case None =>
+            businessDaysService
+              .businessHoursBetween(application.creationDate, ZonedDateTime.now()) > (3 * 24)
+          case Some(lastAnswer) =>
+            businessDaysService
+              .businessHoursBetween(lastAnswer.creationDate, ZonedDateTime.now()) > (15 * 24)
+        }
+      )
+
   private def myApplicationsBoard(
       user: User,
       userRights: Authorization.UserRights,
       asAdmin: Boolean,
       urlBase: String,
   )(log: ApplicationsInfos => Unit)(implicit request: play.api.mvc.RequestHeader): Future[Result] =
+    applicationBoardInfos(user, userRights, asAdmin, urlBase).map {
+      case (infos, filteredByStatus, userGroups) =>
+        log(infos)
+        Ok(
+          views.myApplications.page(user, userRights, filteredByStatus, userGroups, infos)
+        ).withHeaders(CACHE_CONTROL -> "no-store")
+    }
+
+  private def applicationBoardInfos(
+      user: User,
+      userRights: Authorization.UserRights,
+      asAdmin: Boolean,
+      urlBase: String
+  )(implicit
+      request: play.api.mvc.RequestHeader
+  ): Future[(ApplicationsInfos, List[Application], List[UserGroup])] =
     userGroupService.byIdsFuture(user.groupIds).map { userGroups =>
       val selectedGroupsFilter = request.queryString
         .get(ApplicationsInfos.groupFilterKey)
@@ -577,26 +614,7 @@ case class ApplicationController @Inject() (
         applicationsByStatus.get(Application.Status.Processing).getOrElse(Nil)
       val processingApplicationsCount = processingApplications.length
 
-      val lateApplications = openFilteredByGroups
-        .filter(_.status =!= Application.Status.Processed)
-        .filter { application =>
-          application.answers
-            .filter(_.creatorUserID =!= application.creatorUserId)
-            .filter(answer =>
-              !answer.message.contains("rejoins la conversation automatiquement comme expert") &&
-                !answer.message
-                  .contains("Les nouveaux instructeurs rejoignent automatiquement la demande")
-            )
-            .lastOption match {
-            case None =>
-              businessDaysService
-                .businessHoursBetween(application.creationDate, ZonedDateTime.now()) > (3 * 24)
-            case Some(lastAnswer) =>
-              businessDaysService
-                .businessHoursBetween(lastAnswer.creationDate, ZonedDateTime.now()) > (15 * 24)
-          }
-        }
-
+      val lateApplications = openFilteredByGroups.filter(applicationIsLate)
       val lateCount = lateApplications.length
 
       val filteredByStatus =
@@ -626,11 +644,87 @@ case class ApplicationController @Inject() (
         lateCount = lateCount,
       )
 
-      log(infos)
+      (infos, filteredByStatus, userGroups)
+    }
 
-      Ok(
-        views.myApplications.page(user, userRights, filteredByStatus, userGroups, infos)
-      ).withHeaders(CACHE_CONTROL -> "no-store")
+  private def dashboardInfos(user: User, adminMasquerade: Boolean): Future[DashboardInfos] =
+    userGroupService.byIdsFuture(user.groupIds).map { userGroups =>
+      val allApplications =
+        applicationService.allOpenOrRecentForUserId(user.id, false, Time.nowParis())
+
+      val groupInfos = userGroups
+        .map { group =>
+          val applications = allApplications.filter(application =>
+            application.creatorGroupId.map(id => id === group.id).getOrElse(false) ||
+              application.invitedGroups.contains(group.id)
+          )
+
+          DashboardInfos.Group(
+            group,
+            newCount = applications.count(_.status === Application.Status.New),
+            lateCount = applications.count(applicationIsLate),
+          )
+        }
+
+      val startDate = LocalDate.now().minusDays(30)
+      val endDate = LocalDate.now()
+      val chartFilters =
+        if (user.admin)
+          views.internalStats.Filters(
+            startDate = startDate,
+            endDate = endDate,
+            areaIds = Nil,
+            organisationIds = Nil,
+            creatorGroupIds = Nil,
+            invitedGroupIds = Nil,
+          )
+        else {
+          val (creatorGroupIds, invitedGroupIds) = divideStatsGroups(userGroups)
+          views.internalStats.Filters(
+            startDate = startDate,
+            endDate = endDate,
+            areaIds = Nil,
+            organisationIds = Nil,
+            creatorGroupIds = creatorGroupIds,
+            invitedGroupIds = invitedGroupIds
+          )
+        }
+
+      val applicationsPageEmptyFilters = ApplicationsInfos.emptyFilters(
+        if (adminMasquerade)
+          controllers.routes.ApplicationController.allAs(user.id).url
+        else
+          controllers.routes.ApplicationController.myApplications.url
+      )
+      DashboardInfos(
+        newCount = allApplications.count(_.status === Application.Status.New),
+        lateCount = allApplications.count(applicationIsLate),
+        groupInfos,
+        chartFilters,
+        applicationsPageEmptyFilters,
+      )
+    }
+
+  def dashboard: Action[AnyContent] =
+    loginAction.async { implicit request =>
+      dashboardInfos(request.currentUser, adminMasquerade = false)
+        .map(infos => Ok(views.dashboard.page(request.currentUser, request.rights, infos, config)))
+    }
+
+  def dashboardAs(otherUserId: UUID): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      withUser(otherUserId) { otherUser: User =>
+        asUserWithAuthorization(Authorization.canSeeOtherUserNonPrivateViews(otherUser))(
+          EventType.MasqueradeUnauthorized,
+          s"Accès non autorisé pour voir le dashboard de $otherUserId",
+          errorInvolvesUser = otherUser.id.some
+        ) { () =>
+          LoginAction.readUserRights(otherUser).flatMap { userRights =>
+            dashboardInfos(otherUser, adminMasquerade = true)
+              .map(infos => Ok(views.dashboard.page(otherUser, userRights, infos, config)))
+          }
+        }
+      }
     }
 
   def myApplications: Action[AnyContent] =
@@ -698,6 +792,20 @@ case class ApplicationController @Inject() (
       }
     }
 
+  private def divideStatsGroups(groups: List[UserGroup]): (List[UUID], List[UUID]) = {
+    val creatorGroupIds = groups
+      .filter(group =>
+        group.organisationId
+          .map(id => Organisation.organismesAidants.map(_.id).contains[Organisation.Id](id))
+          .getOrElse(false)
+      )
+      .map(_.id)
+    val invitedGroupIds =
+      groups.map(_.id).filterNot(id => creatorGroupIds.contains[UUID](id))
+
+    (creatorGroupIds, invitedGroupIds)
+  }
+
   private def statsPage(formUrl: Call, user: User, rights: Authorization.UserRights)(implicit
       request: RequestWithUserData[_]
   ): Future[Result] = {
@@ -727,15 +835,7 @@ case class ApplicationController @Inject() (
         groups.filter(group => dropdownGroupIds.contains[UUID](group.id))
       val charts: Future[Html] = {
         val validQueryGroups = groups.filter(group => validQueryGroupIds.contains[UUID](group.id))
-        val creatorGroupIds = validQueryGroups
-          .filter(group =>
-            group.organisationId
-              .map(id => Organisation.organismesAidants.map(_.id).contains[Organisation.Id](id))
-              .getOrElse(false)
-          )
-          .map(_.id)
-        val invitedGroupIds =
-          validQueryGroupIds.filterNot(id => creatorGroupIds.contains[UUID](id))
+        val (creatorGroupIds, invitedGroupIds) = divideStatsGroups(validQueryGroups)
 
         Future.successful(
           views.internalStats.charts(

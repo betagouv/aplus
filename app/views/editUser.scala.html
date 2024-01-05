@@ -231,6 +231,10 @@
               Vue "Stats" de l’utilisateur
             </a>
             <br/>
+            <a href="@routes.ApplicationController.dashboardAs(uneditedUser.id)">
+              Dashboard de l’utilisateur
+            </a>
+            <br/>
           }
 
             <a href="@routes.UserController.allEvents?fromUserId=@{uneditedUser.id}">Log d'événements de l'utilisateur</a>

@@ -53,13 +53,13 @@ object internalStats {
 
     def iframe6Cols(url: String) =
       div(
-        cls := "mdl-cell mdl-cell--6-col mdl-shadow--2dp mdl-color--white typography--text-align-center",
+        cls := "aplus-half-col mdl-cell mdl-cell--6-col mdl-shadow--2dp mdl-color--white typography--text-align-center",
         metabaseIframe(url)
       )
 
     def iframe12Cols(url: String) =
       div(
-        cls := "mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white typography--text-align-center",
+        cls := "aplus-half-col mdl-cell mdl-cell--12-col mdl-shadow--2dp mdl-color--white typography--text-align-center",
         metabaseIframe(url)
       )
 

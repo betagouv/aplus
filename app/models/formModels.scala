@@ -457,6 +457,8 @@ object formModels {
     val statusLate = "souffrante"
     val statusArchived = "archive"
 
+    def emptyFilters(baseUrl: String): Filters = Filters(none, none, baseUrl)
+
     case class Filters(selectedGroups: Option[Set[UUID]], status: Option[String], urlBase: String) {
 
       def groupIsFiltered(id: UUID): Boolean =
