@@ -139,18 +139,6 @@ object myApplications {
             button(cls :="fr-btn", title :="Rechercher")(
               "Rechercher"
             )
-          ),
-          if (groups.length > 0)(
-            div(cls := "fr-select-group")(
-              label(cls := "fr-label", `for` := "group-select"),
-              select(
-                cls := "fr-select",
-                id := "group-select",
-                name := "group-select",
-                option(value := "")("Tous les groupes"),
-                groups.map(group => option(value := s"${group.id}")(group.name))
-              )
-            )
           )
         ),
         div(cls := "fr-col fr-col-4 fr-grid-row fr-grid-row--center")(
@@ -161,11 +149,46 @@ object myApplications {
         cls := "mdl-grid mdl-grid--no-spacing single--margin-bottom-8px single--margin-top-24px",
         div(
           cls := "mdl-cell mdl-cell--12-col mdl-cell--12-col-phone",
+          groupsFilters(groups, filters),
           otherFilters(currentUser, filters),
         )
       ),
       applicationsList(currentUser, currentUserRights, applications)
     )
+
+  private def groupsFilters(groups: List[UserGroup], infos: ApplicationsInfos) =
+    if (groups.length <= 1)
+      frag()
+    else
+      div(
+        cls := "single--display-flex",
+        frag(
+          groups.map(group =>
+            div(
+              label(
+                `for` := s"group-filter-${group.id}",
+                cls := "mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect single--height-auto single--margin-right-32px",
+                input(
+                  id := s"group-filter-${group.id}",
+                  cls := "mdl-checkbox__input application-form-invited-groups-checkbox trigger-group-filter",
+                  `type` := "checkbox",
+                  name := ApplicationsInfos.groupFilterKey,
+                  value := s"${group.id}",
+                  data("on-checked-url") := infos.filters.withGroup(group.id).toUrl,
+                  data("on-unchecked-url") := infos.filters.withoutGroup(group.id).toUrl,
+                  if (infos.filters.groupIsFiltered(group.id)) checked := "checked" else (),
+                ),
+                span(
+                  cls := "mdl-checkbox__label single--font-size-14px single--line-height-22px",
+                  group.name,
+                  " ",
+                  infos.groupsCounts.get(group.id).map(count => s"($count)")
+                ),
+              ),
+            ),
+          )
+        )
+      )
 
   private def otherFilters(currentUser: User, infos: ApplicationsInfos) = {
     val filters = infos.filters
