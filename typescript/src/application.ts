@@ -1,6 +1,8 @@
 /* global jsRoutes */
 import { findAncestor } from "./helpers";
 
+console.log("Application script loaded");
+
 const createApplicationFormId = 'create-application-form';
 const invitedGroupsCheckboxClass = 'application-form-invited-groups-checkbox';
 const usagerInfosTypesSelectId = 'aplus-application-form-user-infos-types-select-id';
@@ -185,6 +187,7 @@ function applyCategoryFilters() {
   // Show / Hide Checkboxes
   document.querySelectorAll<HTMLInputElement>('.' + invitedGroupsCheckboxClass)
     .forEach((invitedGroupCheckbox) => {
+      console.log("invitedGroupCheckbox: ", invitedGroupCheckbox);
       const groupOrgId: string | undefined = invitedGroupCheckbox.dataset['organisationId'];
       const isSelected = selectedCategories.some((selectedCategory) => {
         if (groupOrgId == null) {

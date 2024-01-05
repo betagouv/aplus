@@ -1,7 +1,7 @@
 package views
 
 import cats.syntax.all._
-import controllers.routes.{Assets, HomeController, UserController}
+import controllers.routes.{Assets, HomeController, UserController, JavascriptController}
 import helper.TwirlImports.toHtml
 import play.api.mvc.RequestHeader
 import play.twirl.api.Html
@@ -43,6 +43,25 @@ object main {
           rel := "stylesheet",
           media := "screen,print",
           href := Assets.versioned("generated-js/index.css").url
+        ),
+        script(
+          `type` := "module",
+          src := Assets.versioned("generated-js/dsfr/dsfr.module.min.js").url
+        ),
+        script(
+          `type` := "application/javascript",
+          attr("nomodule").empty,
+          src := Assets.versioned("generated-js/dsfr/dsfr.nomodule.min.js").url
+        ),
+
+        script(
+          `type` := "text/javascript",
+          src := JavascriptController.javascriptRoutes.url
+        ),
+
+        script(
+          `type` :="application/javascript", 
+          src := Assets.versioned("generated-js/index.js").url
         ),
 
         meta(name := "theme-color", attr("content") := "#000091"),
