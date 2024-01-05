@@ -122,7 +122,9 @@ object dashboard {
                               .toUrl
                           )(
                             groupInfos.group.name,
-                            i(cls := "material-icons material-icons-outlined external-link")("arrow_outward")
+                            i(cls := "material-icons material-icons-outlined external-link")(
+                              "arrow_outward"
+                            )
                           )
                         ),
                         td(
@@ -133,9 +135,10 @@ object dashboard {
                               .toUrl
                           )(
                             groupInfos.newCount,
-                            i(cls := "material-icons material-icons-outlined external-link")("arrow_outward")
+                            i(cls := "material-icons material-icons-outlined external-link")(
+                              "arrow_outward"
+                            )
                           )
-
                         ),
                         td(
                           a(
@@ -145,7 +148,9 @@ object dashboard {
                               .toUrl
                           )(
                             groupInfos.lateCount,
-                            i(cls := "material-icons material-icons-outlined external-link")("arrow_outward")
+                            i(cls := "material-icons material-icons-outlined external-link")(
+                              "arrow_outward"
+                            )
                           ),
                         ),
                       )
