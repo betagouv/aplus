@@ -13,6 +13,7 @@ import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
+import org.checkerframework.checker.units.qual.g
 
 object myApplications {
 
@@ -128,7 +129,7 @@ object myApplications {
                   )
                 )
             ),
-          div(cls := " fr-search-bar")(
+          div(cls := " fr-search-bar  aplus-spacer")(
             label(cls := "fr-label", `for` := "application-search"),
             input(
               cls := "fr-input",
@@ -149,12 +150,88 @@ object myApplications {
         cls := "mdl-grid mdl-grid--no-spacing single--margin-bottom-8px single--margin-top-24px",
         div(
           cls := "mdl-cell mdl-cell--12-col mdl-cell--12-col-phone",
-          groupsFilters(groups, filters),
+          div(cls := "aplus-spacer aplus-slimselect-hide-all") (
+            select(cls := "use-slimselect", `name` := "groupIds[]", `multiple`)(
+              option(value := "all", "Tous les groupes"),
+              groups.map(group => option(value := s"${group.id}", group.name))
+            ),
+          ),
           otherFilters(currentUser, filters),
-        )
+        ),
       ),
-      applicationsList(currentUser, currentUserRights, applications)
-    )
+      div(cls := "fr-grid-row aplus-my-application") (
+        div(cls := "fr-col fr-col-4 aplus-my-application--message-list")(
+          applications
+            .sortBy(_.closed)
+            .map(application => 
+              div(cls := "fr-card")(
+                div(cls := "fr-card-inner")(
+                  div(cls := "fr-card-header")(
+                    div(cls := "fr-card-title")(
+                        a(
+                          cls := "aplus-card-title",
+                          href := ApplicationController.show(application.id).url,
+                        )(
+                            span(cls := "fr-card-title-text aplus-title aplus-bold")(
+                              s"#${application.internalId}",
+                            ),
+                            span(cls := "aplus-text-small")(
+                              Time.formatPatternFr(application.creationDate, "dd/mm/YYYY")
+                            ),
+                        )
+                      )               
+                    )
+                  ),
+                  div(cls := "fr-card-inner  aplus-card-section")(
+                    div(cls := "fr-grid-row aplus-text-small fr_card__container")(
+                      application.longStatus(currentUser) match {
+                        case Processing =>
+                          div(cls := "fr-tag fr-tag--sm aplus-tag--pending")(
+                            "en cours"
+                          )
+                        case Processed | ToArchive =>
+                          div(cls := "fr-tag fr-tag--sm aplus-tag--done")(
+                            "traité"
+                          )
+                        case Archived =>
+                          div(cls := "fr-tag fr-tag--sm  aplus-tag--archived")(
+                            "archivé"
+                          )
+                        case New =>
+                          div(cls := "fr-tag fr-tag--sm aplus-tag--new")(
+                            "Nouvelle demande"
+                          )
+                        case Sent =>
+                          div(cls := "fr-tag fr-tag--sm aplus-tag--sent")(
+                            "envoyé"
+                          )
+                      },
+                      span(cls := "aplus-nowrap")(
+                        i(cls := "material-icons material-icons-outlined aplus-icons-small")("mail"),
+                        s"${application.answers.length} messages",
+                      )
+                    ),
+                  ),
+                  
+                  div(cls := "aplus-text-small  aplus-card-section")(
+                      s"de ${application.userInfos.get(Application.UserFirstNameKey).get} ${application.userInfos.get(Application.UserLastNameKey).get}",
+                    ),
+                  div(cls := "aplus-bold aplus-card-section")(
+                    application.subject
+                  )
+                )
+              )
+            ),
+            div(cls := "fr-col fr-col-8", id := "application-message-container")(
+              div(cls := "aplus-no-message--container")(
+                  div(cls := "aplus-no-message")(
+                    i(cls := "material-icons material-icons-outlined ")("forum"),
+                    span("Ce champ est actuellement vide, mais une fois que vous aurez sélectionné la demande, vous pourrez effectuer et lire les échanges dans cet espace")
+                  )
+                )
+              )
+            )
+        )
 
   private def groupsFilters(groups: List[UserGroup], infos: ApplicationsInfos) =
     if (groups.length <= 1)
@@ -195,7 +272,7 @@ object myApplications {
 
     val filterLink = (isSelected: Boolean, text: String, uri: String) =>
       div(
-        cls := "single--margin-right-16px " + (
+        cls := "aplus-filter-header--item " + (
           if (isSelected)
             "single--border-bottom-2px"
           else
@@ -215,7 +292,7 @@ object myApplications {
       )
 
     div(
-      cls := "single--display-flex single--margin-top-16px",
+      cls := "aplus-filter-header",
       filterLink(
         filters.hasNoStatus,
         s"Toutes (${infos.filteredByGroupsOpenCount}) ",
@@ -283,8 +360,8 @@ object myApplications {
       else "td--clear-border"
     val backgroundClass =
       if (application.hasBeenDisplayedFor(currentUser.id)) "" else "td--blue-background"
-    val classes = s"searchable-row $borderClass $backgroundClass"
-    tr(
+    val classes = s"fr-card searchable-row $borderClass $backgroundClass"
+    div(
       data("location") := ApplicationController.show(application.id).url,
       data("search") := application.searchData,
       cls := classes,
@@ -441,12 +518,12 @@ object myApplications {
       applications: List[Application]
   ): Tag =
     div(
-      table(
+      div(
         cls := "mdl-data-table mdl-js-data-table mdl-shadow--2dp single--white-space-normal",
-        tfoot(
+        div(
           cls := "invisible",
-          tr(
-            td(
+          div(
+            div(
               cls := "mdl-data-table__cell--non-numeric typography--text-align-center-important",
               colspan := "5",
               button(
@@ -457,7 +534,7 @@ object myApplications {
             )
           )
         ),
-        tbody(
+        div(
           frag(
             applications
               .sortBy(_.closed)
