@@ -1,61 +1,75 @@
 package views
 
-import play.twirl.api.Html
-import scalatags.Text.all._
+import controllers.routes.{ApplicationController, GroupController, UserController}
+import helper.Time
 import models.{Application, Authorization, User, UserGroup}
-import controllers.routes.ApplicationController
 import models.formModels.ApplicationsInfos
+import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.RequestHeader
-import models.{Application, Authorization, User, UserGroup}
-import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
-import helper.Time
-import internalStats.charts
-import modules.AppConfig
-import internalStats.Filters
+import play.twirl.api.Html
+import scalatags.Text.all._
+import views.internalStats.{charts, Filters}
+
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 object dashboard {
+
+  object DashboardInfos {
+
+    case class Group(
+        group: UserGroup,
+        newCount: Int,
+        lateCount: Int
+    )
+
+  }
+
+  case class DashboardInfos(
+      newCount: Int,
+      lateCount: Int,
+      groupInfos: List[DashboardInfos.Group],
+      chartFilters: Filters,
+      applicationsPageEmptyFilters: ApplicationsInfos.Filters,
+  )
 
   def page(
       currentUser: User,
       currentUserRights: Authorization.UserRights,
-      applications: List[Application],
-      groups: List[UserGroup],
-      filters: ApplicationsInfos,
+      infos: DashboardInfos,
       config: AppConfig,
   )(implicit
       request: RequestHeader,
   ): Tag =
     views.main.layout(
       "Dashboard",
-      frag(content(currentUser, currentUserRights, applications, groups, filters, config))
+      content(currentUser, currentUserRights, infos, config)
     )
 
   def content(
       currentUser: User,
       currentUserRights: Authorization.UserRights,
-      applications: List[Application],
-      groups: List[UserGroup],
-      filters: ApplicationsInfos,
+      infos: DashboardInfos,
       config: AppConfig,
   ): Tag =
     div()(
       h3(cls := "aplus-title")(s"Bonjour, ${currentUser.name}"),
       p("Bienvenue sur votre tableau de bord. Vous y trouverez le résumé de votre journée."),
       p(cls := "aplus-dashboard-date")(
-        s"aujourd’hui ${java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy"))}"
+        "aujourd’hui ",
+        LocalDate.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
       ),
       div(cls := "fr-grid-row fr-grid-row--gutters fr-mb-1w")(
         div(cls := "fr_card__outer_container fr-col-md-6 fr-col")(
           div(
-            cls := "fr_card fr-enlarge-link fr-card--horizontal fr-card--horizontal-half fr_card__highlight"
+            cls := "fr_card fr-card--horizontal fr-card--horizontal-half fr_card__highlight"
           )(
             div(cls := "fr_card__body")(
               div(cls := "fr_card__content")(
                 div(cls := "fr_card__container")(
                   strong(cls := "fr_card__title")("Mon compte"),
-                  a()(
+                  a(href := UserController.showEditProfile.url)(
                     i(cls := "material-icons material-icons-outlined")("edit"),
                   )
                 ),
@@ -70,30 +84,75 @@ object dashboard {
           )
         ),
         div(cls := "fr_card__outer_container fr-col-md-12 fr-col")(
-          div(cls := "fr_card fr-enlarge-link fr-card--horizontal")(
+          div(cls := "fr_card fr-card--horizontal")(
             strong(cls := "fr_card__title")("Mon compte"),
-            if (!currentUser.groupAdmin)
+            if (currentUser.admin)
               (
                 p(cls := "aplus-paragraph")(
-                  a(cls := "aplus-alert")("Validation de compte")
+                  a(href := GroupController.showEditMyGroups.url, cls := "aplus-alert")(
+                    "Validation de compte"
+                  )
                 )
               ),
-            if (groups.nonEmpty)
+            if (infos.groupInfos.nonEmpty)
               (
                 table(cls := "fr-table fr-table--striped fr-table--compact")(
                   thead(
                     tr(
                       th("Groupes"),
-                      th("Nouvelles demandes (x)"),
-                      th("Demandes souffrantes (x)"),
+                      th(
+                        a(href := infos.applicationsPageEmptyFilters.withStatusNew.toUrl)(
+                          s"Nouvelles demandes (${infos.newCount})"
+                        )
+                      ),
+                      th(
+                        a(href := infos.applicationsPageEmptyFilters.withStatusLate.toUrl)(
+                          s"Demandes souffrantes (${infos.lateCount})"
+                        )
+                      ),
                     )
                   ),
                   tbody(
-                    for (group <- groups) yield {
+                    for (groupInfos <- infos.groupInfos) yield {
                       tr(
-                        td(group.name),
-                        td("yy"),
-                        td("xx"),
+                        td(
+                          a(
+                            href := infos.applicationsPageEmptyFilters
+                              .withGroup(groupInfos.group.id)
+                              .toUrl
+                          )(
+                            groupInfos.group.name,
+                            i(cls := "material-icons material-icons-outlined external-link")(
+                              "arrow_outward"
+                            )
+                          )
+                        ),
+                        td(
+                          a(
+                            href := infos.applicationsPageEmptyFilters
+                              .withGroup(groupInfos.group.id)
+                              .withStatusNew
+                              .toUrl
+                          )(
+                            groupInfos.newCount,
+                            i(cls := "material-icons material-icons-outlined external-link")(
+                              "arrow_outward"
+                            )
+                          )
+                        ),
+                        td(
+                          a(
+                            href := infos.applicationsPageEmptyFilters
+                              .withGroup(groupInfos.group.id)
+                              .withStatusLate
+                              .toUrl
+                          )(
+                            groupInfos.lateCount,
+                            i(cls := "material-icons material-icons-outlined external-link")(
+                              "arrow_outward"
+                            )
+                          ),
+                        ),
                       )
                     }
                   )
@@ -106,18 +165,8 @@ object dashboard {
           )
         ),
         div(cls := "fr_card__outer_container fr-col-md-12 fr-col")(
-          div(cls := "fr_card fr-enlarge-link fr-card--horizontal aplus-flex")(
-            charts(
-              Filters(
-                startDate = LocalDate.now().minusDays(30),
-                endDate = LocalDate.now(),
-                areaIds = Nil,
-                organisationIds = Nil,
-                creatorGroupIds = Nil,
-                invitedGroupIds = Nil
-              ),
-              config
-            )
+          div(cls := "fr_card fr-card--horizontal aplus-flex")(
+            charts(infos.chartFilters, config)
           )
         )
       )

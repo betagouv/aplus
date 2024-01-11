@@ -35,10 +35,13 @@ object main {
       request: RequestHeader,
   ) =
     html(
-      head(attr("lang") :="fr", attr("data-fr-scheme") :="system")(
+      head(attr("lang") := "fr", attr("data-fr-scheme") := "system")(
         meta(charset := "utf-8"),
-        meta(name:="format-detection", attr("content") := "telephone=no"),
-        meta(name := "viewport", attr("content") := "width=device-width, initial-scale=1, shrink-to-fit=no"),
+        meta(name := "format-detection", attr("content") := "telephone=no"),
+        meta(
+          name := "viewport",
+          attr("content") := "width=device-width, initial-scale=1, shrink-to-fit=no"
+        ),
         link(
           rel := "stylesheet",
           media := "screen,print",
@@ -60,7 +63,7 @@ object main {
         ),
 
         script(
-          `type` :="application/javascript", 
+          `type` :="application/javascript",
           src := Assets.versioned("generated-js/index.js").url
         ),
 

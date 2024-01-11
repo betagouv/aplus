@@ -24,6 +24,11 @@ import serializers.Keys
 
 object application {
 
+  def pageContent(application: Application): Frag =
+    div(
+      h2(s"Demande ${application.id}")
+    )
+
   def applicationFilesLinks(
       files: List[FileMetadata],
       application: Application,
