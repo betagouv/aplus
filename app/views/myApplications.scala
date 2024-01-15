@@ -154,7 +154,7 @@ object myApplications {
         div(
           cls := "mdl-cell mdl-cell--12-col mdl-cell--12-col-phone",
           div(cls := "aplus-spacer aplus-slimselect-hide-all") (
-            select(cls := "use-slimselect", `name` := "groupIds[]", `multiple`)(
+            select(id := "application-slimselect", `name` := "groupIds[]", `multiple`)(
               option(value := "all", "Tous les groupes"),
               groups.map(group => option(value := s"${group.id}", group.name))
             ),
@@ -178,11 +178,17 @@ object myApplications {
                             span(cls := "fr-card-title-text aplus-title aplus-bold")(
                               s"#${application.internalId}",
                             ),
-                            i(cls := s"material-icons material-icons-outlined aplus-icons-small${if(TODOflag) " aplus-icon--active"}")("flag"),
+                            i(cls := s"material-icons material-icons-outlined aplus-icons-small${if(TODOflag) " aplus-icon--active"}", attr("aria-describedby") := "tooltip-flag")("flag"),
+                            span(cls := "fr-tooltip fr-placement", id := "tooltip-flag", attr("role") := "tooltip", attr("aria-hidden") :="true")(
+                              "Demande urgente"
+                            ),
                             span(cls := "aplus-text-small")(
                               Time.formatPatternFr(application.creationDate, "dd/mm/YYYY")
                             ),
-                            i(cls := s"material-icons material-icons-outlined aplus-icons-small ${if(TODOtimer) " aplus-icon--active"}")("timer"),
+                            i(cls := s"material-icons material-icons-outlined aplus-icons-small ${if(TODOtimer) " aplus-icon--active"}", attr("aria-describedby") := "tooltip-timer")("timer"),
+                            span(cls := "fr-tooltip fr-placement", id := "tooltip-timer", attr("role") := "tooltip", attr("aria-hidden") :="true")(
+                              "Il reste moins de 24h pour traiter la demande"
+                            ),
                         )
                       )               
                     )

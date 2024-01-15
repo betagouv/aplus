@@ -1,5 +1,7 @@
 /* global jsRoutes */
+import { Option } from "slim-select/dist/data";
 import { findAncestor } from "./helpers";
+import SlimSelect from "slim-select";
 
 const createApplicationFormId = 'create-application-form';
 const invitedGroupsCheckboxClass = 'application-form-invited-groups-checkbox';
@@ -16,17 +18,30 @@ const inputBirthdateId = "usagerBirthDate";
 
 // on document loaded
 document.addEventListener('DOMContentLoaded', function () {
+
   const query = new URLSearchParams(window.location.search)
+
+  const selectedFilters =query.getAll('filtre-groupe');
+
+    const slimSelect = new SlimSelect({
+    select: "#application-slimselect",
+    selectByGroup: true,
+    closeOnSelect: false,
+    onChange: (info) => {
+      updateFilters(info, query);
+    },
+  });
+  slimSelect.setSelected(selectedFilters)
 
   if (query.has('messageId')) {
     fetchMessage(`${window.location.origin}${window.location.pathname}/${query.get('messageId')}`);
   }
   document.querySelector('.main-container')?.addEventListener('click', function (event) {
-    loadApplicationMessages(event);
+    loadApplicationMessages(event, query);
   });
 });
 
-  function loadApplicationMessages(event: Event) {
+  function loadApplicationMessages(event: Event, query: URLSearchParams) {
 
   const target = <HTMLElement>event.target;
 
@@ -42,7 +57,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const id = url.split('/').pop();
 
-    window.history.pushState({}, '', `${window.location.origin}${window.location.pathname}?messageId=${id}`);
+    query.set('messageId', id || '');
+
+    window.location.search = query.toString();
 
     fetchMessage(url);
   }
@@ -66,6 +83,29 @@ function fetchMessage(url: string) {
         document.querySelector('.aplus-loading-overlay')?.classList.remove('show');
         console.error('Error:', error);
       });
+}
+
+function updateFilters(info: Option | Option[], query: URLSearchParams) {
+  const selected = Array.isArray(info) ? info.map(i => i.value) : [info.value];
+  const urlFilters = query.getAll('filtre-groupe');
+
+  // If all filters are already selected, do nothing to prevent infinite loop
+  if (
+    urlFilters.length === selected.length &&
+    urlFilters.every((item) => selected.find((value) => value === item))
+  ) {
+    console.log('All filters are already selected');
+    return;
+  };
+
+  query.delete('filtre-groupe');
+
+  selected.forEach((value) => {
+    if(!value) return;
+    query.append('filtre-groupe', value);
+  });
+
+  window.location.search = query.toString();
 }
 
 // Maps to the scala class
