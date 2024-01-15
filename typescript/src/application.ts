@@ -1,8 +1,6 @@
 /* global jsRoutes */
 import { findAncestor } from "./helpers";
 
-console.log("Application script loaded");
-
 const createApplicationFormId = 'create-application-form';
 const invitedGroupsCheckboxClass = 'application-form-invited-groups-checkbox';
 const usagerInfosTypesSelectId = 'aplus-application-form-user-infos-types-select-id';
@@ -16,7 +14,59 @@ const inputPrenomId = "usagerPrenom";
 const inputNomId = "usagerNom";
 const inputBirthdateId = "usagerBirthDate";
 
+// on document loaded
+document.addEventListener('DOMContentLoaded', function () {
+  const query = new URLSearchParams(window.location.search)
 
+  if (query.has('messageId')) {
+    fetchMessage(`${window.location.origin}${window.location.pathname}/${query.get('messageId')}`);
+  }
+  document.querySelector('.main-container')?.addEventListener('click', function (event) {
+    loadApplicationMessages(event);
+  });
+});
+
+  function loadApplicationMessages(event: Event) {
+
+  const target = <HTMLElement>event.target;
+
+  if (target.closest('.aplus-application-link')) {
+    const url = target.closest('.aplus-application-link')?.getAttribute('href');
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!url) return;
+
+    document.querySelector('.aplus-loading-overlay')?.classList.add('show');
+
+    const id = url.split('/').pop();
+
+    window.history.pushState({}, '', `${window.location.origin}${window.location.pathname}?messageId=${id}`);
+
+    fetchMessage(url);
+  }
+}
+
+function fetchMessage(url: string) {
+    fetch(`${url}/embedded`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'text/html'
+      }
+    })
+      .then(response => response.text())
+      .then(data => {
+        document.querySelector('.aplus-loading-overlay')?.classList.remove('show');
+        const container = document.getElementById("application-message-container");
+        if (!container) return;
+        container.innerHTML = data;
+      })
+      .catch((error) => {
+        document.querySelector('.aplus-loading-overlay')?.classList.remove('show');
+        console.error('Error:', error);
+      });
+}
 
 // Maps to the scala class
 interface MandatGeneration {
@@ -182,12 +232,10 @@ function applyCategoryFilters() {
         }
       }
     });
-  console.log("Selected organisations: ", selectedCategories);
 
   // Show / Hide Checkboxes
   document.querySelectorAll<HTMLInputElement>('.' + invitedGroupsCheckboxClass)
     .forEach((invitedGroupCheckbox) => {
-      console.log("invitedGroupCheckbox: ", invitedGroupCheckbox);
       const groupOrgId: string | undefined = invitedGroupCheckbox.dataset['organisationId'];
       const isSelected = selectedCategories.some((selectedCategory) => {
         if (groupOrgId == null) {

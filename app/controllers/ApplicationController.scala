@@ -1091,7 +1091,7 @@ case class ApplicationController @Inject() (
                       organisations
                     )
                   else
-                    views.application.pageContent(application)
+                    views.applicationMessages.page(request.currentUser, request.rights, application)                  
                 ).withHeaders(CACHE_CONTROL -> "no-store")
               }
             )

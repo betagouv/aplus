@@ -8,6 +8,14 @@
     margin: 1.5rem 0;
 }
 
+.aplus-hr-in-card {
+    margin: -1rem;
+}
+
+.aplus-border-bottom {
+    border-bottom: 1px solid #ccc;
+}
+
 .aplus-bold {
     font-weight: bold;
 }
@@ -76,6 +84,10 @@ div.fr-footer__bottom {
     border-radius: 0;
     box-shadow: none;
     padding: 0.75rem;
+}
+
+.fr_dard--darker {
+    border-color : #ccc
 }
 
 .fr_card__body .fr-tag {
@@ -170,6 +182,7 @@ div.fr-footer__bottom {
     right: 0;
     background: #eee;
     display: block;
+    z-index: 9999;
 }
 
 .main-container .ss-option {
@@ -288,4 +301,46 @@ div.fr-footer__bottom {
     color: #A558A0;
     font-size: 4rem;
     display: block;
+}
+
+.aplus-loading-overlay {
+    transition: opacity .5s ease-in-out;
+    position: fixed;
+    left: -9999px;
+    background: #fff;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    border: 1px solid #ccc;
+    opacity: 0;
+
+}
+
+.aplus-loading-overlay.show {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: .7;
+    top: 50%;
+    left: 50%;
+    width: 150px;
+    height: 100px;
+}
+
+.aplus-loading-overlay i {
+    font-size: 3rem;
+    color: #3a3a3a;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(-359deg); }
+}
+
+#application-message-container {
+    padding: 1rem;
+}
+
+.aplus-icon--active {
+    color: #ef000f;
 }

@@ -211,6 +211,9 @@ object main {
                 )
               )
             )
+          ),
+          div(cls := "aplus-loading-overlay")(
+            i(cls := "material-icons material-icons-outlined")("cached")
           )
         ),
         script(

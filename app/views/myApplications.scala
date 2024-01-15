@@ -14,8 +14,11 @@ import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
 import org.checkerframework.checker.units.qual.g
+import views.helpers.applications.statusTag
 
 object myApplications {
+  val TODOflag = true
+  val TODOtimer = true
 
   def page(
       currentUser: User,
@@ -143,7 +146,7 @@ object myApplications {
           )
         ),
         div(cls := "fr-col fr-col-4 fr-grid-row fr-grid-row--center")(
-          button(cls := "fr-btn fr-btn--height-fix")("+ Créer une demande")
+          a(cls := "fr-btn fr-btn--height-fix", href := ApplicationController.create.url)("+ Créer une demande")
         )
       ),
       div(
@@ -156,7 +159,6 @@ object myApplications {
               groups.map(group => option(value := s"${group.id}", group.name))
             ),
           ),
-          otherFilters(currentUser, filters),
         ),
       ),
       div(cls := "fr-grid-row aplus-my-application") (
@@ -164,48 +166,30 @@ object myApplications {
           applications
             .sortBy(_.closed)
             .map(application => 
+
               div(cls := "fr-card")(
                 div(cls := "fr-card-inner")(
                   div(cls := "fr-card-header")(
                     div(cls := "fr-card-title")(
                         a(
-                          cls := "aplus-card-title",
+                          cls := "aplus-card-title aplus-application-link",
                           href := ApplicationController.show(application.id).url,
                         )(
                             span(cls := "fr-card-title-text aplus-title aplus-bold")(
                               s"#${application.internalId}",
                             ),
+                            i(cls := s"material-icons material-icons-outlined aplus-icons-small${if(TODOflag) " aplus-icon--active"}")("flag"),
                             span(cls := "aplus-text-small")(
                               Time.formatPatternFr(application.creationDate, "dd/mm/YYYY")
                             ),
+                            i(cls := s"material-icons material-icons-outlined aplus-icons-small ${if(TODOtimer) " aplus-icon--active"}")("timer"),
                         )
                       )               
                     )
                   ),
                   div(cls := "fr-card-inner  aplus-card-section")(
                     div(cls := "fr-grid-row aplus-text-small fr_card__container")(
-                      application.longStatus(currentUser) match {
-                        case Processing =>
-                          div(cls := "fr-tag fr-tag--sm aplus-tag--pending")(
-                            "en cours"
-                          )
-                        case Processed | ToArchive =>
-                          div(cls := "fr-tag fr-tag--sm aplus-tag--done")(
-                            "traité"
-                          )
-                        case Archived =>
-                          div(cls := "fr-tag fr-tag--sm  aplus-tag--archived")(
-                            "archivé"
-                          )
-                        case New =>
-                          div(cls := "fr-tag fr-tag--sm aplus-tag--new")(
-                            "Nouvelle demande"
-                          )
-                        case Sent =>
-                          div(cls := "fr-tag fr-tag--sm aplus-tag--sent")(
-                            "envoyé"
-                          )
-                      },
+                      frag(statusTag(currentUser, application)),
                       span(cls := "aplus-nowrap")(
                         i(cls := "material-icons material-icons-outlined aplus-icons-small")("mail"),
                         s"${application.answers.length} messages",
@@ -232,316 +216,5 @@ object myApplications {
               )
             )
         )
-
-  private def groupsFilters(groups: List[UserGroup], infos: ApplicationsInfos) =
-    if (groups.length <= 1)
-      frag()
-    else
-      div(
-        cls := "single--display-flex",
-        frag(
-          groups.map(group =>
-            div(
-              label(
-                `for` := s"group-filter-${group.id}",
-                cls := "mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect single--height-auto single--margin-right-32px",
-                input(
-                  id := s"group-filter-${group.id}",
-                  cls := "mdl-checkbox__input application-form-invited-groups-checkbox trigger-group-filter",
-                  `type` := "checkbox",
-                  name := ApplicationsInfos.groupFilterKey,
-                  value := s"${group.id}",
-                  data("on-checked-url") := infos.filters.withGroup(group.id).toUrl,
-                  data("on-unchecked-url") := infos.filters.withoutGroup(group.id).toUrl,
-                  if (infos.filters.groupIsFiltered(group.id)) checked := "checked" else (),
-                ),
-                span(
-                  cls := "mdl-checkbox__label single--font-size-14px single--line-height-22px",
-                  group.name,
-                  " ",
-                  infos.groupsCounts.get(group.id).map(count => s"($count)")
-                ),
-              ),
-            ),
-          )
-        )
-      )
-
-  private def otherFilters(currentUser: User, infos: ApplicationsInfos) = {
-    val filters = infos.filters
-
-    val filterLink = (isSelected: Boolean, text: String, uri: String) =>
-      div(
-        cls := "aplus-filter-header--item " + (
-          if (isSelected)
-            "single--border-bottom-2px"
-          else
-            ""
-        ),
-        if (isSelected)
-          span(
-            cls := "mdl-color-text--black single--font-weight-500",
-            text
-          )
-        else
-          a(
-            cls := "single--text-decoration-none",
-            href := uri,
-            text
-          )
-      )
-
-    div(
-      cls := "aplus-filter-header",
-      filterLink(
-        filters.hasNoStatus,
-        s"Toutes (${infos.filteredByGroupsOpenCount}) ",
-        filters.withoutStatus.toUrl,
-      ),
-      filterLink(
-        filters.isMine,
-        s"Mes demandes (${infos.interactedCount}) ",
-        filters.withStatusMine.toUrl,
-      ),
-      filterLink(
-        filters.isNew,
-        s"Nouvelles demandes (${infos.newCount}) ",
-        filters.withStatusNew.toUrl,
-      ),
-      filterLink(
-        filters.isProcessing,
-        s"En cours (${infos.processingCount}) ",
-        filters.withStatusProcessing.toUrl,
-      ),
-      currentUser.instructor.some
-        .filter(identity)
-        .map(_ =>
-          filterLink(
-            filters.isLate,
-            s"En souffrance (${infos.lateCount}) ",
-            filters.withStatusLate.toUrl,
-          )
-        ),
-      filterLink(
-        filters.isArchived,
-        s"Archivées (${infos.filteredByGroupsClosedCount}) ",
-        filters.withStatusArchived.toUrl,
-      ),
-    )
-  }
-
-  private def statusTag(application: Application, user: User): Tag = {
-    val status = application.longStatus(user)
-    val classes: String = status match {
-      case Processing =>
-        "tag mdl-color--light-blue-300 mdl-color-text--black"
-      case Processed | ToArchive =>
-        "tag mdl-color--grey-500 mdl-color-text--white"
-      case Archived =>
-        "tag mdl-color--grey-200 mdl-color-text--black"
-      case New =>
-        "tag mdl-color--pink-400 mdl-color-text--white"
-      case Sent =>
-        "tag mdl-color--deep-purple-100 mdl-color-text--black"
-    }
-    span(
-      cls := classes + " single--pointer-events-all",
-      status.show
-    )
-  }
-
-  private def applicationLine(
-      currentUser: User,
-      currentUserRights: Authorization.UserRights,
-      application: Application
-  ): Tag = {
-    val borderClass =
-      if (application.longStatus(currentUser) === New) "td--important-border"
-      else "td--clear-border"
-    val backgroundClass =
-      if (application.hasBeenDisplayedFor(currentUser.id)) "" else "td--blue-background"
-    val classes = s"fr-card searchable-row $borderClass $backgroundClass"
-    div(
-      data("location") := ApplicationController.show(application.id).url,
-      data("search") := application.searchData,
-      cls := classes,
-      statusCol(currentUser, currentUserRights, application),
-      infosCol(application),
-      creationCol(application),
-      activityCol(currentUser, application),
-      searchResultCol,
-      externalLinkCol(application)
-    )
-  }
-
-  private def backgroundLink(application: Application): Tag =
-    a(
-      href := ApplicationController.show(application.id).url,
-      cls := "overlay-background"
-    )
-
-  private def statusCol(
-      currentUser: User,
-      currentUserRights: Authorization.UserRights,
-      application: Application
-  ): Tag =
-    td(
-      cls := "fr-table",
-      div(
-        cls := "typography--text-align-center typography--text-line-height-2 overlay-foreground single--pointer-events-none ",
-        statusTag(application, currentUser),
-        Authorization
-          .isAdmin(currentUserRights)
-          .some
-          .filter(identity)
-          .map(_ =>
-            frag(
-              br,
-              span(
-                cls := "mdl-typography--font-bold mdl-color-text--red-A700 single--pointer-events-all",
-                application.internalId,
-              )
-            )
-          )
-      ),
-      backgroundLink(application)
-    )
-
-  // Note: we use pointer-events to let the background link go through the foreground box
-  //       this gives the effect that the text can be selected and background is a link
-  private def infosCol(application: Application): Tag =
-    td(
-      cls := "mdl-data-table__cell--non-numeric",
-      div(
-        cls := "overlay-foreground single--pointer-events-none",
-        span(
-          cls := "application__name single--pointer-events-all",
-          application.userInfos.get(Application.UserLastNameKey),
-          " ",
-          application.userInfos.get(Application.UserFirstNameKey)
-        ),
-        i(
-          cls := "single--pointer-events-all",
-          application.userInfos
-            .get(Application.UserCafNumberKey)
-            .map(caf => s" (Num. CAF: $caf)"),
-          application.userInfos
-            .get(Application.UserSocialSecurityNumberKey)
-            .map(nir => s" (NIR: $nir)")
-        ),
-        br,
-        span(cls := "application__subject single--pointer-events-all", application.subject)
-      ),
-      backgroundLink(application)
-    )
-
-  private def creationCol(application: Application): Tag =
-    td(
-      cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size",
-      div(
-        id := s"date-${application.id}",
-        cls := "vertical-align--middle overlay-foreground",
-        span(
-          cls := "application__age",
-          "Créé il y a ",
-          b(application.ageString)
-        ),
-        " ",
-        i(cls := "icon material-icons icon--light", "info")
-      ),
-      div(
-        cls := "mdl-tooltip",
-        data("mdl-for") := s"date-${application.id}",
-        Time.formatPatternFr(application.creationDate, "dd MMM YYYY - HH:mm")
-      ),
-      backgroundLink(application)
-    )
-
-  private def activityCol(currentUser: User, application: Application): Tag = {
-    val newAnswers: Frag =
-      if (application.newAnswersFor(currentUser.id).length > 0 && !application.closed)
-        frag(
-          " ",
-          span(cls := "mdl-color--pink-500 badge", application.newAnswersFor(currentUser.id).length)
-        )
-      else frag()
-    td(
-      cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size hidden--small-screen",
-      div(
-        id := s"answers-${application.id}",
-        cls := "vertical-align--middle overlay-foreground",
-        i(cls := "material-icons icon--light", "chat_bubble"),
-        " ",
-        span(
-          cls := "application__anwsers badge-holder",
-          s"${application.answers.length} messages",
-          newAnswers
-        )
-      ),
-      div(
-        cls := "mdl-tooltip",
-        `for` := s"answers-${application.id}",
-        frag(
-          application.answers.map(answer =>
-            frag(
-              Time.formatPatternFr(answer.creationDate, "dd MMM YYYY"),
-              " : ",
-              answer.creatorUserName.split("\\(").head,
-              br
-            )
-          )
-        )
-      ),
-      backgroundLink(application)
-    )
-  }
-
-  private def searchResultCol: Tag =
-    td(
-      cls := "mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size hidden--small-screen"
-    )
-
-  private def externalLinkCol(application: Application): Tag =
-    td(
-      cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size hidden--small-screen single--width-20px",
-      a(
-        href := ApplicationController.show(application.id).url,
-        cls := "mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon overlay-foreground",
-        i(cls := "material-icons", "info_outline")
-      ),
-      backgroundLink(application)
-    )
-
-  def applicationsList(
-      currentUser: User,
-      currentUserRights: Authorization.UserRights,
-      applications: List[Application]
-  ): Tag =
-    div(
-      div(
-        cls := "mdl-data-table mdl-js-data-table mdl-shadow--2dp single--white-space-normal",
-        div(
-          cls := "invisible",
-          div(
-            div(
-              cls := "mdl-data-table__cell--non-numeric typography--text-align-center-important",
-              colspan := "5",
-              button(
-                id := "clear-search",
-                cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--colored",
-                "Supprimer le filtre et afficher toutes les demandes"
-              )
-            )
-          )
-        ),
-        div(
-          frag(
-            applications
-              .sortBy(_.closed)
-              .map(application => applicationLine(currentUser, currentUserRights, application))
-          )
-        )
-      )
-    )
 
 }
