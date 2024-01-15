@@ -448,7 +448,7 @@ object formModels {
 
   }
 
-  object ApplicationsInfos {
+  object ApplicationsPageInfos {
     val groupFilterKey = "filtre-groupe"
     val statusFilterKey = "filtre-status"
     val statusMine = "mes-demandes"
@@ -509,8 +509,8 @@ object formModels {
 
   }
 
-  case class ApplicationsInfos(
-      filters: ApplicationsInfos.Filters,
+  case class ApplicationsPageInfos(
+      filters: ApplicationsPageInfos.Filters,
       groupsCounts: Map[UUID, Int],
       allGroupsOpenCount: Int,
       allGroupsClosedCount: Int,

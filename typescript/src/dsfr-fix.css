@@ -8,6 +8,51 @@
     margin: 1.5rem 0;
 }
 
+.aplus-spacer--top {
+    margin-top: 1.5rem;
+}
+
+.aplus-spacer--top-small {
+    margin-top: .75rem;
+}
+
+.aplus-spacer--top-xl {
+    margin-top: 3rem;
+}
+
+.aplus-spacer--horizontal {
+    padding-left: 1rem;
+}
+
+.aplus-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.aplus-align-right {
+    text-align: right;
+}
+
+.aplus-align-center {
+    text-align: center;
+}
+
+.aplus-hr-in-card {
+    margin: -1rem;
+}
+
+.aplus-hr-in-card--top-margin {
+    margin-right: -1rem;
+    margin-left: -1rem;
+    margin-top: 2rem;
+    padding-bottom: 1px;
+}
+
+.aplus-border-bottom {
+    border-bottom: 1px solid #ccc;
+}
+
 .aplus-bold {
     font-weight: bold;
 }
@@ -76,6 +121,10 @@ div.fr-footer__bottom {
     border-radius: 0;
     box-shadow: none;
     padding: 0.75rem;
+}
+
+.fr_dard--darker {
+    border-color : #ccc
 }
 
 .fr_card__body .fr-tag {
@@ -170,6 +219,11 @@ div.fr-footer__bottom {
     right: 0;
     background: #eee;
     display: block;
+    z-index: 9999;
+}
+
+.main-container .ss-main {
+    position: relative;
 }
 
 .main-container .ss-option {
@@ -265,8 +319,18 @@ div.fr-footer__bottom {
     border: 1px solid #ccc;
 }
 
+.aplus-my-application .fr-input {
+    position: relative;
+    z-index: 999;
+    margin-top: 1px;
+}
+
 .aplus-my-application--message-list {
     margin: -1px;
+}
+
+.aplus-application-link.invisible {
+    display: none;
 }
 
 .aplus-no-message--container {
@@ -288,4 +352,148 @@ div.fr-footer__bottom {
     color: #A558A0;
     font-size: 4rem;
     display: block;
+}
+
+.aplus-loading-overlay {
+    transition: opacity .5s ease-in-out;
+    position: fixed;
+    left: -9999px;
+    background: #fff;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    border: 1px solid #ccc;
+    opacity: 0;
+
+}
+
+.aplus-loading-overlay.show {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: .7;
+    top: 50%;
+    left: 50%;
+    width: 150px;
+    height: 100px;
+}
+
+.aplus-loading-overlay i {
+    font-size: 3rem;
+    color: #3a3a3a;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(-359deg); }
+}
+
+#application-message-container {
+    padding: 1rem;
+    border-left: 1px solid #ccc;
+}
+
+.aplus-icon--active {
+    color: #ef000f;
+}
+
+.aplus-new-messages {
+    display: inline-block;
+    background: #000091;
+    color: #fff;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 100%;
+    font-size: .875rem;
+    text-align: center;
+    line-height: 1.25rem;
+}
+
+.main-container .fr-checkbox-group i {
+    position: relative;
+    top: 5px;
+    margin-bottom: -10px;
+}
+
+.aplus-my-application .fr-card {
+    height: auto !important;
+}
+
+.main-container .aplus-form .fr-label {
+    margin-top: 1.5rem;
+}
+
+.fr-modal__body {
+    background-color: #f6f6f6 !important;
+}
+
+.aplus-checkbox-highlight {
+    background: #fff;
+    padding: 1rem;
+    border: 1px solid #333;
+    border-radius: 0.25rem;
+}
+
+.aplus-form .aplus-checkbox-highlight .fr-label {
+    margin-top: 0 !important;
+}
+
+.aplus-message-infos {
+    max-width: 49%;
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
+    overflow: hidden;
+}
+
+.aplus-message-infos--multi {
+    max-width: 49%;
+}
+
+.aplus-message-infos--last-reply {
+    color: #27A658
+}
+
+.aplus-message-infos--role {
+    color: #A558A0
+}
+
+.aplus-message-status {
+        padding: 1rem 25%;
+        text-align: center;
+        font-size: 0.875rem;
+        color: #0063cb;
+        border-top: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        margin: 1rem -1rem;
+}
+
+.aplus-dl-arrow {
+    box-shadow: 0px -1px 0px 0px #000091 inset;
+    line-height: 0.7rem;
+    vertical-align: sub;
+    font-size: 1rem !important;
+    margin-left: 0.5rem;
+}
+
+.aplus-attach-link {
+    display: inline-block;
+    border-bottom: 1px solid #000091;
+    color: #000091;
+}
+
+.aplus-text--gray {
+    color: #666;
+}
+
+.searchable-row p {
+    padding: 0 1rem;
+    margin: 0;
+    font-size: .875rem;
+    font-weight: bold;
+}
+
+.searchable-row div {
+    padding: 1rem;
+    background: #F6F7F7;
+    font-size: .875rem;
 }

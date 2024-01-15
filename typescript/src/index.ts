@@ -25,7 +25,6 @@ import 'material-icons/iconfont/material-icons.css'
 
 // Our scripts
 import "./admin";
-import "./application";
 import "./applicationMandatFields";
 import "./applicationAttachment";
 import "./applicationsAdmin";

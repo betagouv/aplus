@@ -1,6 +1,5 @@
 import SlimSelect from "slim-select";
 
-
 const slimSelectClass = "use-slimselect";
 
 //
