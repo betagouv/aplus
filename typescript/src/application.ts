@@ -1,7 +1,7 @@
 /* global jsRoutes */
+import { Option } from "slim-select/dist/data";
 import { findAncestor } from "./helpers";
-
-console.log("Application script loaded");
+import SlimSelect from "slim-select";
 
 const createApplicationFormId = 'create-application-form';
 const invitedGroupsCheckboxClass = 'application-form-invited-groups-checkbox';
@@ -16,7 +16,106 @@ const inputPrenomId = "usagerPrenom";
 const inputNomId = "usagerNom";
 const inputBirthdateId = "usagerBirthDate";
 
+// on document loaded
+document.addEventListener('DOMContentLoaded', function () {
 
+  const query = new URLSearchParams(window.location.search)
+
+  const selectedFilters =query.getAll('filtre-groupe');
+
+    const slimSelect = new SlimSelect({
+    select: "#application-slimselect",
+    selectByGroup: true,
+    closeOnSelect: false,
+      searchPlaceholder: "Rechercher un groupe",
+    placeholder: "Selectionner un ou plusieurs groupes",
+    onChange: (info) => {
+      updateFilters(info, query);
+    },
+  });
+  slimSelect.setSelected(selectedFilters)
+
+  if (query.has('messageId')) {
+    fetchMessage(`${window.location.origin}${window.location.pathname}/${query.get('messageId')}`);
+  }
+  document.querySelector('.main-container')?.addEventListener('click', function (event) {
+    loadApplicationMessages(event, query);
+  });
+});
+
+  function loadApplicationMessages(event: Event, query: URLSearchParams) {
+
+  const target = <HTMLElement>event.target;
+
+  if (target.closest('.aplus-application-link')) {
+    const url = target.closest('.aplus-application-link')?.getAttribute('href');
+
+    console.log(url, "hey");
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!url) return;
+
+    document.querySelector('.aplus-loading-overlay')?.classList.add('show');
+
+    const id = url.split('/').pop();
+
+    query.set('messageId', id || '');
+
+    window.location.search = query.toString();
+
+    fetchMessage(url);
+  }
+}
+
+function fetchMessage(url: string) {
+    fetch(`${url}/embedded`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'text/html'
+      }
+    })
+      .then(response => response.text())
+      .then(data => {
+    
+        document.querySelector('.aplus-loading-overlay')?.classList.remove('show');
+        const container = document.getElementById("application-message-container");
+        if (!container) return;
+        container.innerHTML = data;
+
+        Array.from(document.querySelectorAll(".use-slimselect-in-message")).forEach(function(select) {
+          new SlimSelect({ select, selectByGroup: true, closeOnSelect: false });
+        });
+
+      })
+      .catch((error) => {
+        document.querySelector('.aplus-loading-overlay')?.classList.remove('show');
+        console.error('Error:', error);
+      });
+}
+
+function updateFilters(info: Option | Option[], query: URLSearchParams) {
+  const selected = Array.isArray(info) ? info.map(i => i.value) : [info.value];
+  const urlFilters = query.getAll('filtre-groupe');
+
+  // If all filters are already selected, do nothing to prevent infinite loop
+  if (
+    urlFilters.length === selected.length &&
+    urlFilters.every((item) => selected.find((value) => value === item))
+  ) {
+    return;
+  };
+
+  query.delete('filtre-groupe');
+
+  selected.forEach((value) => {
+    if(!value) return;
+    query.append('filtre-groupe', value);
+  });
+
+  window.location.search = query.toString();
+}
 
 // Maps to the scala class
 interface MandatGeneration {
@@ -182,12 +281,10 @@ function applyCategoryFilters() {
         }
       }
     });
-  console.log("Selected organisations: ", selectedCategories);
 
   // Show / Hide Checkboxes
   document.querySelectorAll<HTMLInputElement>('.' + invitedGroupsCheckboxClass)
     .forEach((invitedGroupCheckbox) => {
-      console.log("invitedGroupCheckbox: ", invitedGroupCheckbox);
       const groupOrgId: string | undefined = invitedGroupCheckbox.dataset['organisationId'];
       const isSelected = selectedCategories.some((selectedCategory) => {
         if (groupOrgId == null) {

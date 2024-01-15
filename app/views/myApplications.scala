@@ -6,47 +6,71 @@ import controllers.routes.ApplicationController
 import helper.Time
 import helper.TwirlImports.toHtml
 import java.util.UUID
-import models.formModels.ApplicationsInfos
+import models.formModels.ApplicationsPageInfos
 import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
-import models.{Application, Authorization, User, UserGroup}
+import models.{Answer, Application, Authorization, User, UserGroup}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
 import org.checkerframework.checker.units.qual.g
+import views.helpers.applications.statusTag
+import controllers.routes.Assets
+import helper.BusinessDaysCalculator.businessHoursBetween
+import java.time.ZonedDateTime
 
 object myApplications {
+  val TODOflag = false
+
+  case class MyApplicationInfos(
+      application: Application,
+      creatorIsInFS: Boolean,
+      creatorGroup: Option[UserGroup],
+      invitedGroups: List[UserGroup],
+      lastOperateurAnswer: Option[Answer],
+      shouldBeAnsweredInTheNext24h: Boolean,
+  )
 
   def page(
       currentUser: User,
       currentUserRights: Authorization.UserRights,
-      applications: List[Application],
+      applications: List[MyApplicationInfos],
       groups: List[UserGroup],
-      filters: ApplicationsInfos,
+      filters: ApplicationsPageInfos,
   )(implicit
       flash: Flash,
       request: RequestHeader,
       webJarsUtil: WebJarsUtil,
-      mainInfos: MainInfos
+      mainInfos: MainInfos,
   ): Html =
-    views.main.layout("Mes demandes", frag(content(currentUser, currentUserRights, maxWidth = false, filters, applications, groups)), frag())
-    
-    def content(
-        currentUser: User,
-        currentUserRights: Authorization.UserRights,
-        maxWidth: Boolean,
-        filters: ApplicationsInfos,
-        applications: List[Application],
-        groups: List[UserGroup],
-    ) : Tag = 
-      div(
-        cls := "mdl-cell mdl-cell--12-col mdl-grid--no-spacing",
-        if (filters.allGroupsOpenCount <= 0 && filters.allGroupsClosedCount <= 0)
-          noApplications(currentUser, currentUserRights)
-        else
-          openApplications(currentUser, currentUserRights, applications, groups, filters),
+    views.main.layout(
+      "Mes demandes",
+      frag(
+        content(currentUser, currentUserRights, maxWidth = false, filters, applications, groups)
+      ),
+      frag(
+        script(
+          `type` := "application/javascript",
+          src := Assets.versioned("generated-js/application.js").url
+        )
       )
-  
+    )
+
+  def content(
+      currentUser: User,
+      currentUserRights: Authorization.UserRights,
+      maxWidth: Boolean,
+      filters: ApplicationsPageInfos,
+      applications: List[MyApplicationInfos],
+      groups: List[UserGroup],
+  ): Tag =
+    div(
+      cls := "mdl-cell mdl-cell--12-col mdl-grid--no-spacing",
+      if (filters.allGroupsOpenCount <= 0 && filters.allGroupsClosedCount <= 0)
+        noApplications(currentUser, currentUserRights)
+      else
+        openApplications(currentUser, currentUserRights, applications, groups, filters),
+    )
 
   private def noApplications(currentUser: User, currentUserRights: Authorization.UserRights) =
     div(
@@ -94,180 +118,212 @@ object myApplications {
   private def openApplications(
       currentUser: User,
       currentUserRights: Authorization.UserRights,
-      applications: List[Application],
+      applications: List[MyApplicationInfos],
       groups: List[UserGroup],
-      filters: ApplicationsInfos,
+      filters: ApplicationsPageInfos,
   ) =
     frag(
       div(cls := "fr-grid-row")(
         div(
           cls := "fr-col-8",
-            div(
-              h4(cls := "aplus-title")(
-                "Mes demandes"
-              )
-            ),
-            p()(
-              "Ici, vous pouvez gérer vos propres demandes ainsi que celles de votre/vos groupe(s). ",
-            ),
-            if(filters.lateCount > 0)(
-              div(cls :="fr-alert fr-alert--warning")(
+          div(
+            h4(cls := "aplus-title")(
+              "Mes demandes"
+            )
+          ),
+          p()(
+            "Ici, vous pouvez gérer vos propres demandes ainsi que celles de votre/vos groupe(s). ",
+          ),
+          if (filters.lateCount > 0)
+            (
+              div(cls := "fr-alert fr-alert--warning")(
                 h3(cls := "fr-alert__title")("Attention"),
                 p(s"Il y a ${filters.lateCount} dossier souffrants dans vos groupes")
               )
             ),
-            div(
-              Authorization
-                .canCreateApplication(currentUserRights)
-                .some
-                .filter(identity)
-                .map(_ =>
-                  button(
-                    cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--primary onclick-change-location",
-                    data("location") := ApplicationController.create.url,
-                    "Créer une demande"
-                  )
+          div(
+            Authorization
+              .canCreateApplication(currentUserRights)
+              .some
+              .filter(identity)
+              .map(_ =>
+                button(
+                  cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--primary onclick-change-location",
+                  data("location") := ApplicationController.create.url,
+                  "Créer une demande"
                 )
-            ),
-          div(cls := " fr-search-bar  aplus-spacer")(
-            label(cls := "fr-label", `for` := "application-search"),
-            input(
-              cls := "fr-input",
-              `role` := "search",
-              placeholder := "Rechercher",
-              id := "application-search"
-            ),
-            button(cls :="fr-btn", title :="Rechercher")(
-              "Rechercher"
-            )
-          )
+              )
+          ),
         ),
         div(cls := "fr-col fr-col-4 fr-grid-row fr-grid-row--center")(
-          button(cls := "fr-btn fr-btn--height-fix")("+ Créer une demande")
+          a(cls := "fr-btn fr-btn--height-fix", href := ApplicationController.create.url)(
+            "+ Créer une demande"
+          )
         )
       ),
       div(
-        cls := "mdl-grid mdl-grid--no-spacing single--margin-bottom-8px single--margin-top-24px",
+        cls := "fr-grid-row",
         div(
-          cls := "mdl-cell mdl-cell--12-col mdl-cell--12-col-phone",
-          div(cls := "aplus-spacer aplus-slimselect-hide-all") (
-            select(cls := "use-slimselect", `name` := "groupIds[]", `multiple`)(
+          cls := "fr-col-6",
+          div(cls := "aplus-spacer aplus-slimselect-hide-all")(
+            select(id := "application-slimselect", `name` := "groupIds[]", `multiple`)(
               option(value := "all", "Tous les groupes"),
               groups.map(group => option(value := s"${group.id}", group.name))
             ),
           ),
-          otherFilters(currentUser, filters),
         ),
+        div(cls := "fr-col-6")(
+        )
       ),
-      div(cls := "fr-grid-row aplus-my-application") (
+      otherFilters(currentUser, filters),
+      div(cls := "fr-grid-row aplus-my-application")(
         div(cls := "fr-col fr-col-4 aplus-my-application--message-list")(
+          input(
+            cls := "fr-input",
+            `role` := "search",
+            placeholder := "Rechercher",
+            id := "search-input"
+          ),
           applications
-            .sortBy(_.closed)
-            .map(application => 
-              div(cls := "fr-card")(
-                div(cls := "fr-card-inner")(
-                  div(cls := "fr-card-header")(
-                    div(cls := "fr-card-title")(
-                        a(
-                          cls := "aplus-card-title",
-                          href := ApplicationController.show(application.id).url,
-                        )(
+            .sortBy(_.application.closed)
+            .map(application => {
+              frag(
+                div(cls := "fr-card")(
+                  a(
+                    cls := "aplus-application-link",
+                    href := ApplicationController.show(application.application.id).url,
+                  )(
+                    div(cls := "fr-card-inner")(
+                      div(cls := "fr-card-header")(
+                        div(cls := "fr-card-title")(
+                          span(cls := "aplus-card-title")(
                             span(cls := "fr-card-title-text aplus-title aplus-bold")(
-                              s"#${application.internalId}",
+                              s"#${application.application.internalId}",
                             ),
+                            if (TODOflag) {
+                              frag(
+                                i(
+                                  cls := s"material-icons material-icons-outlined aplus-icons-small aplus-icon--active",
+                                  attr("aria-describedby") := "tooltip-flag"
+                                )("flag"),
+                                span(
+                                  cls := "fr-tooltip fr-placement",
+                                  id := "tooltip-flag",
+                                  attr("role") := "tooltip",
+                                  attr("aria-hidden") := "true"
+                                )(
+                                  s"Demande urgente"
+                                ),
+                              )
+                            },
                             span(cls := "aplus-text-small")(
-                              Time.formatPatternFr(application.creationDate, "dd/mm/YYYY")
+                              Time
+                                .formatPatternFr(application.application.creationDate, "dd/mm/YYYY")
                             ),
+                            if (application.shouldBeAnsweredInTheNext24h) {
+                              frag(
+                                i(
+                                  cls := s"material-icons material-icons-outlined aplus-icons-small aplus-icon--active",
+                                  attr("aria-describedby") := "tooltip-timer"
+                                )("timer"),
+                                span(
+                                  cls := "fr-tooltip fr-placement",
+                                  id := "tooltip-timer",
+                                  attr("role") := "tooltip",
+                                  attr("aria-hidden") := "true"
+                                )(
+                                  s"Il reste moins de 24h pour traiter la demande"
+                                )
+                              )
+                            }
+                          )
                         )
-                      )               
-                    )
-                  ),
-                  div(cls := "fr-card-inner  aplus-card-section")(
-                    div(cls := "fr-grid-row aplus-text-small fr_card__container")(
-                      application.longStatus(currentUser) match {
-                        case Processing =>
-                          div(cls := "fr-tag fr-tag--sm aplus-tag--pending")(
-                            "en cours"
-                          )
-                        case Processed | ToArchive =>
-                          div(cls := "fr-tag fr-tag--sm aplus-tag--done")(
-                            "traité"
-                          )
-                        case Archived =>
-                          div(cls := "fr-tag fr-tag--sm  aplus-tag--archived")(
-                            "archivé"
-                          )
-                        case New =>
-                          div(cls := "fr-tag fr-tag--sm aplus-tag--new")(
-                            "Nouvelle demande"
-                          )
-                        case Sent =>
-                          div(cls := "fr-tag fr-tag--sm aplus-tag--sent")(
-                            "envoyé"
-                          )
-                      },
-                      span(cls := "aplus-nowrap")(
-                        i(cls := "material-icons material-icons-outlined aplus-icons-small")("mail"),
-                        s"${application.answers.length} messages",
                       )
                     ),
-                  ),
-                  
-                  div(cls := "aplus-text-small  aplus-card-section")(
-                      s"de ${application.userInfos.get(Application.UserFirstNameKey).get} ${application.userInfos.get(Application.UserLastNameKey).get}",
+                    div(cls := "fr-card-inner  aplus-card-section")(
+                      div(cls := "aplus-align-right")(
+                        span(
+                          cls := "aplus-new-messages",
+                          attr("aria-describedby") := "tooltip-new"
+                        )(
+                          application.application.newAnswersFor(currentUser.id).length
+                        ),
+                        span(
+                          cls := "fr-tooltip fr-placement",
+                          id := "tooltip-new",
+                          attr("role") := "tooltip",
+                          attr("aria-hidden") := "true"
+                        )(
+                          s"Vous avez ${application.application.newAnswersFor(currentUser.id).length} nouveaux messages"
+                        ),
+                      ),
+                      div(cls := "fr-grid-row aplus-text-small fr_card__container")(
+                        frag(statusTag(currentUser, application.application)),
+                        span(cls := "aplus-nowrap")(
+                          i(cls := "material-icons material-icons-outlined aplus-icons-small")(
+                            "mail"
+                          ),
+                          s"${application.application.answers.length} messages",
+                        )
+                      ),
                     ),
-                  div(cls := "aplus-bold aplus-card-section")(
-                    application.subject
+                    div(cls := "aplus-text-small  aplus-card-section ")(
+                      div(cls := "aplus-between")(
+                        span(cls := "aplus-message-infos")(
+                          s"de ${application.application.userInfos.get(Application.UserFirstNameKey).get} ${application.application.userInfos.get(Application.UserLastNameKey).get}",
+                        ),
+                        if (application.invitedGroups.length > 1) {
+                          frag(
+                            span(cls := "aplus-message-infos-multi")(
+                              s"à ${application.invitedGroups(0).name} + ${application.invitedGroups.length - 1} autres"
+                            )
+                          )
+                        } else if (application.invitedGroups.length == 1) {
+                          frag(
+                            span(cls := "aplus-message-infos")(
+                              s"à ${application.invitedGroups(0).name}"
+                            )
+                          )
+                        }
+                      ),
+                      div(cls := "aplus-between")(
+                        span(cls := "aplus-message-infos aplus-message-infos--role")(
+                          application.creatorGroup.map(_.name),
+                        ),
+                        span(cls := "aplus-message-infos aplus-message-infos--last-reply")(
+                          application.lastOperateurAnswer.map(answer =>
+                            if (answer.creatorUserID == currentUser.id) "Vous"
+                            else answer.creatorUserName
+                          ),
+                        ),
+                      ),
+                    ),
+                    div(cls := "aplus-bold aplus-card-section")(
+                      application.application.subject
+                    ),
+                    div(
+                      cls := "searchable-row",
+                      attr("data-search") := application.application.searchData
+                    )
                   )
                 )
               )
-            ),
-            div(cls := "fr-col fr-col-8", id := "application-message-container")(
-              div(cls := "aplus-no-message--container")(
-                  div(cls := "aplus-no-message")(
-                    i(cls := "material-icons material-icons-outlined ")("forum"),
-                    span("Ce champ est actuellement vide, mais une fois que vous aurez sélectionné la demande, vous pourrez effectuer et lire les échanges dans cet espace")
-                  )
-                )
+            })
+        ),
+        div(cls := "fr-col fr-col-8", id := "application-message-container")(
+          div(cls := "aplus-no-message--container")(
+            div(cls := "aplus-no-message")(
+              i(cls := "material-icons material-icons-outlined ")("forum"),
+              span(
+                "Ce champ est actuellement vide, mais une fois que vous aurez sélectionné la demande, vous pourrez effectuer et lire les échanges dans cet espace"
               )
             )
-        )
-
-  private def groupsFilters(groups: List[UserGroup], infos: ApplicationsInfos) =
-    if (groups.length <= 1)
-      frag()
-    else
-      div(
-        cls := "single--display-flex",
-        frag(
-          groups.map(group =>
-            div(
-              label(
-                `for` := s"group-filter-${group.id}",
-                cls := "mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect single--height-auto single--margin-right-32px",
-                input(
-                  id := s"group-filter-${group.id}",
-                  cls := "mdl-checkbox__input application-form-invited-groups-checkbox trigger-group-filter",
-                  `type` := "checkbox",
-                  name := ApplicationsInfos.groupFilterKey,
-                  value := s"${group.id}",
-                  data("on-checked-url") := infos.filters.withGroup(group.id).toUrl,
-                  data("on-unchecked-url") := infos.filters.withoutGroup(group.id).toUrl,
-                  if (infos.filters.groupIsFiltered(group.id)) checked := "checked" else (),
-                ),
-                span(
-                  cls := "mdl-checkbox__label single--font-size-14px single--line-height-22px",
-                  group.name,
-                  " ",
-                  infos.groupsCounts.get(group.id).map(count => s"($count)")
-                ),
-              ),
-            ),
           )
         )
       )
+    )
 
-  private def otherFilters(currentUser: User, infos: ApplicationsInfos) = {
+  private def otherFilters(currentUser: User, infos: ApplicationsPageInfos) = {
     val filters = infos.filters
 
     val filterLink = (isSelected: Boolean, text: String, uri: String) =>
@@ -292,7 +348,7 @@ object myApplications {
       )
 
     div(
-      cls := "aplus-filter-header",
+      cls := "aplus-filter-header aplus-spacer--top-xl",
       filterLink(
         filters.hasNoStatus,
         s"Toutes (${infos.filteredByGroupsOpenCount}) ",
@@ -327,221 +383,30 @@ object myApplications {
         s"Archivées (${infos.filteredByGroupsClosedCount}) ",
         filters.withStatusArchived.toUrl,
       ),
-    )
-  }
-
-  private def statusTag(application: Application, user: User): Tag = {
-    val status = application.longStatus(user)
-    val classes: String = status match {
-      case Processing =>
-        "tag mdl-color--light-blue-300 mdl-color-text--black"
-      case Processed | ToArchive =>
-        "tag mdl-color--grey-500 mdl-color-text--white"
-      case Archived =>
-        "tag mdl-color--grey-200 mdl-color-text--black"
-      case New =>
-        "tag mdl-color--pink-400 mdl-color-text--white"
-      case Sent =>
-        "tag mdl-color--deep-purple-100 mdl-color-text--black"
-    }
-    span(
-      cls := classes + " single--pointer-events-all",
-      status.show
-    )
-  }
-
-  private def applicationLine(
-      currentUser: User,
-      currentUserRights: Authorization.UserRights,
-      application: Application
-  ): Tag = {
-    val borderClass =
-      if (application.longStatus(currentUser) === New) "td--important-border"
-      else "td--clear-border"
-    val backgroundClass =
-      if (application.hasBeenDisplayedFor(currentUser.id)) "" else "td--blue-background"
-    val classes = s"fr-card searchable-row $borderClass $backgroundClass"
-    div(
-      data("location") := ApplicationController.show(application.id).url,
-      data("search") := application.searchData,
-      cls := classes,
-      statusCol(currentUser, currentUserRights, application),
-      infosCol(application),
-      creationCol(application),
-      activityCol(currentUser, application),
-      searchResultCol,
-      externalLinkCol(application)
-    )
-  }
-
-  private def backgroundLink(application: Application): Tag =
-    a(
-      href := ApplicationController.show(application.id).url,
-      cls := "overlay-background"
-    )
-
-  private def statusCol(
-      currentUser: User,
-      currentUserRights: Authorization.UserRights,
-      application: Application
-  ): Tag =
-    td(
-      cls := "fr-table",
-      div(
-        cls := "typography--text-align-center typography--text-line-height-2 overlay-foreground single--pointer-events-none ",
-        statusTag(application, currentUser),
-        Authorization
-          .isAdmin(currentUserRights)
-          .some
-          .filter(identity)
-          .map(_ =>
-            frag(
-              br,
-              span(
-                cls := "mdl-typography--font-bold mdl-color-text--red-A700 single--pointer-events-all",
-                application.internalId,
-              )
-            )
-          )
-      ),
-      backgroundLink(application)
-    )
-
-  // Note: we use pointer-events to let the background link go through the foreground box
-  //       this gives the effect that the text can be selected and background is a link
-  private def infosCol(application: Application): Tag =
-    td(
-      cls := "mdl-data-table__cell--non-numeric",
-      div(
-        cls := "overlay-foreground single--pointer-events-none",
-        span(
-          cls := "application__name single--pointer-events-all",
-          application.userInfos.get(Application.UserLastNameKey),
-          " ",
-          application.userInfos.get(Application.UserFirstNameKey)
+      div(cls := "fr-fieldset__element fr-fieldset__element--inline aplus-filter-header--item")(
+        div(cls := "fr-checkbox-group fr-checkbox-group--sm")(
+          input(
+            name := "checkboxes-hint-el-sm-1",
+            id := "checkboxes-inline-3",
+            attr("type") := "checkbox",
+            attr("aria-describedby") := "checkboxes-inline-3-messages"
+          ),
         ),
-        i(
-          cls := "single--pointer-events-all",
-          application.userInfos
-            .get(Application.UserCafNumberKey)
-            .map(caf => s" (Num. CAF: $caf)"),
-          application.userInfos
-            .get(Application.UserSocialSecurityNumberKey)
-            .map(nir => s" (NIR: $nir)")
-        ),
-        br,
-        span(cls := "application__subject single--pointer-events-all", application.subject)
       ),
-      backgroundLink(application)
-    )
-
-  private def creationCol(application: Application): Tag =
-    td(
-      cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size",
-      div(
-        id := s"date-${application.id}",
-        cls := "vertical-align--middle overlay-foreground",
-        span(
-          cls := "application__age",
-          "Créé il y a ",
-          b(application.ageString)
-        ),
-        " ",
-        i(cls := "icon material-icons icon--light", "info")
-      ),
-      div(
-        cls := "mdl-tooltip",
-        data("mdl-for") := s"date-${application.id}",
-        Time.formatPatternFr(application.creationDate, "dd MMM YYYY - HH:mm")
-      ),
-      backgroundLink(application)
-    )
-
-  private def activityCol(currentUser: User, application: Application): Tag = {
-    val newAnswers: Frag =
-      if (application.newAnswersFor(currentUser.id).length > 0 && !application.closed)
-        frag(
-          " ",
-          span(cls := "mdl-color--pink-500 badge", application.newAnswersFor(currentUser.id).length)
-        )
-      else frag()
-    td(
-      cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size hidden--small-screen",
-      div(
-        id := s"answers-${application.id}",
-        cls := "vertical-align--middle overlay-foreground",
-        i(cls := "material-icons icon--light", "chat_bubble"),
-        " ",
-        span(
-          cls := "application__anwsers badge-holder",
-          s"${application.answers.length} messages",
-          newAnswers
-        )
-      ),
-      div(
-        cls := "mdl-tooltip",
-        `for` := s"answers-${application.id}",
-        frag(
-          application.answers.map(answer =>
-            frag(
-              Time.formatPatternFr(answer.creationDate, "dd MMM YYYY"),
-              " : ",
-              answer.creatorUserName.split("\\(").head,
-              br
-            )
-          )
-        )
-      ),
-      backgroundLink(application)
-    )
-  }
-
-  private def searchResultCol: Tag =
-    td(
-      cls := "mdl-data-table__cell--non-numeric search-cell mdl-data-table__cell--content-size hidden--small-screen"
-    )
-
-  private def externalLinkCol(application: Application): Tag =
-    td(
-      cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size hidden--small-screen single--width-20px",
-      a(
-        href := ApplicationController.show(application.id).url,
-        cls := "mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon overlay-foreground",
-        i(cls := "material-icons", "info_outline")
-      ),
-      backgroundLink(application)
-    )
-
-  def applicationsList(
-      currentUser: User,
-      currentUserRights: Authorization.UserRights,
-      applications: List[Application]
-  ): Tag =
-    div(
-      div(
-        cls := "mdl-data-table mdl-js-data-table mdl-shadow--2dp single--white-space-normal",
-        div(
-          cls := "invisible",
-          div(
-            div(
-              cls := "mdl-data-table__cell--non-numeric typography--text-align-center-important",
-              colspan := "5",
-              button(
-                id := "clear-search",
-                cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--colored",
-                "Supprimer le filtre et afficher toutes les demandes"
-              )
-            )
-          )
-        ),
-        div(
-          frag(
-            applications
-              .sortBy(_.closed)
-              .map(application => applicationLine(currentUser, currentUserRights, application))
-          )
+      div(cls := "fr-fieldset__element fr-fieldset__element--inline aplus-filter-header--item")(
+        div(cls := "fr-checkbox-group fr-checkbox-group--sm")(
+          input(
+            name := "checkboxes-inline-4",
+            id := "checkboxes-inline-4",
+            attr("type") := "checkbox",
+            attr("aria-describedby") := "checkboxes-inline-4-messages"
+          ),
+          label(cls := "fr-label", attr("for") := "checkboxes-inline-4")(
+            i(cls := "material-icons material-icons-outlined aplus-icons-small")("timer"),
+          ),
         )
       )
     )
+  }
 
 }
