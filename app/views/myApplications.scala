@@ -32,24 +32,29 @@ object myApplications {
       webJarsUtil: WebJarsUtil,
       mainInfos: MainInfos
   ): Html =
-    views.main.layout("Mes demandes", frag(content(currentUser, currentUserRights, maxWidth = false, filters, applications, groups)), frag())
-    
-    def content(
-        currentUser: User,
-        currentUserRights: Authorization.UserRights,
-        maxWidth: Boolean,
-        filters: ApplicationsInfos,
-        applications: List[Application],
-        groups: List[UserGroup],
-    ) : Tag = 
-      div(
-        cls := "mdl-cell mdl-cell--12-col mdl-grid--no-spacing",
-        if (filters.allGroupsOpenCount <= 0 && filters.allGroupsClosedCount <= 0)
-          noApplications(currentUser, currentUserRights)
-        else
-          openApplications(currentUser, currentUserRights, applications, groups, filters),
-      )
-  
+    views.main.layout(
+      "Mes demandes",
+      frag(
+        content(currentUser, currentUserRights, maxWidth = false, filters, applications, groups)
+      ),
+      frag()
+    )
+
+  def content(
+      currentUser: User,
+      currentUserRights: Authorization.UserRights,
+      maxWidth: Boolean,
+      filters: ApplicationsInfos,
+      applications: List[Application],
+      groups: List[UserGroup],
+  ): Tag =
+    div(
+      cls := "mdl-cell mdl-cell--12-col mdl-grid--no-spacing",
+      if (filters.allGroupsOpenCount <= 0 && filters.allGroupsClosedCount <= 0)
+        noApplications(currentUser, currentUserRights)
+      else
+        openApplications(currentUser, currentUserRights, applications, groups, filters),
+    )
 
   private def noApplications(currentUser: User, currentUserRights: Authorization.UserRights) =
     div(
@@ -105,33 +110,34 @@ object myApplications {
       div(cls := "fr-grid-row")(
         div(
           cls := "fr-col-8",
-            div(
-              h4(cls := "aplus-title")(
-                "Mes demandes"
-              )
-            ),
-            p()(
-              "Ici, vous pouvez gérer vos propres demandes ainsi que celles de votre/vos groupe(s). ",
-            ),
-            if(filters.lateCount > 0)(
-              div(cls :="fr-alert fr-alert--warning")(
+          div(
+            h4(cls := "aplus-title")(
+              "Mes demandes"
+            )
+          ),
+          p()(
+            "Ici, vous pouvez gérer vos propres demandes ainsi que celles de votre/vos groupe(s). ",
+          ),
+          if (filters.lateCount > 0)
+            (
+              div(cls := "fr-alert fr-alert--warning")(
                 h3(cls := "fr-alert__title")("Attention"),
                 p(s"Il y a ${filters.lateCount} dossier souffrants dans vos groupes")
               )
             ),
-            div(
-              Authorization
-                .canCreateApplication(currentUserRights)
-                .some
-                .filter(identity)
-                .map(_ =>
-                  button(
-                    cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--primary onclick-change-location",
-                    data("location") := ApplicationController.create.url,
-                    "Créer une demande"
-                  )
+          div(
+            Authorization
+              .canCreateApplication(currentUserRights)
+              .some
+              .filter(identity)
+              .map(_ =>
+                button(
+                  cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--primary onclick-change-location",
+                  data("location") := ApplicationController.create.url,
+                  "Créer une demande"
                 )
-            ),
+              )
+          ),
           div(cls := " fr-search-bar  aplus-spacer")(
             label(cls := "fr-label", `for` := "search-input"),
             input(
@@ -140,20 +146,22 @@ object myApplications {
               placeholder := "Rechercher",
               id := "search-input"
             ),
-            button(cls :="fr-btn", title :="Rechercher")(
+            button(cls := "fr-btn", title := "Rechercher")(
               "Rechercher"
             )
           )
         ),
         div(cls := "fr-col fr-col-4 fr-grid-row fr-grid-row--center")(
-          a(cls := "fr-btn fr-btn--height-fix", href := ApplicationController.create.url)("+ Créer une demande")
+          a(cls := "fr-btn fr-btn--height-fix", href := ApplicationController.create.url)(
+            "+ Créer une demande"
+          )
         )
       ),
       div(
         cls := "mdl-grid mdl-grid--no-spacing single--margin-bottom-8px single--margin-top-24px",
         div(
           cls := "mdl-cell mdl-cell--12-col mdl-cell--12-col-phone",
-          div(cls := "aplus-spacer aplus-slimselect-hide-all") (
+          div(cls := "aplus-spacer aplus-slimselect-hide-all")(
             select(id := "application-slimselect", `name` := "groupIds[]", `multiple`)(
               option(value := "all", "Tous les groupes"),
               groups.map(group => option(value := s"${group.id}", group.name))
@@ -162,166 +170,199 @@ object myApplications {
         ),
       ),
       otherFilters(currentUser, filters),
-      div(cls := "fr-grid-row aplus-my-application") (
+      div(cls := "fr-grid-row aplus-my-application")(
         div(cls := "fr-col fr-col-4 aplus-my-application--message-list")(
           applications
             .sortBy(_.closed)
-            .map(application => 
-
+            .map(application =>
               div(cls := "fr-card")(
                 div(cls := "fr-card-inner")(
                   div(cls := "fr-card-header")(
                     div(cls := "fr-card-title")(
-                        a(
-                          cls := "aplus-card-title aplus-application-link",
-                          href := ApplicationController.show(application.id).url,
+                      a(
+                        cls := "aplus-card-title aplus-application-link",
+                        href := ApplicationController.show(application.id).url,
+                      )(
+                        span(cls := "fr-card-title-text aplus-title aplus-bold")(
+                          s"#${application.internalId}",
+                        ),
+                        i(
+                          cls := s"material-icons material-icons-outlined aplus-icons-small${if (TODOflag) " aplus-icon--active"}",
+                          attr("aria-describedby") := "tooltip-flag"
+                        )("flag"),
+                        span(
+                          cls := "fr-tooltip fr-placement",
+                          id := "tooltip-flag",
+                          attr("role") := "tooltip",
+                          attr("aria-hidden") := "true"
                         )(
-                            span(cls := "fr-card-title-text aplus-title aplus-bold")(
-                              s"#${application.internalId}",
-                            ),
-                            i(cls := s"material-icons material-icons-outlined aplus-icons-small${if(TODOflag) " aplus-icon--active"}", attr("aria-describedby") := "tooltip-flag")("flag"),
-                            span(cls := "fr-tooltip fr-placement", id := "tooltip-flag", attr("role") := "tooltip", attr("aria-hidden") :="true")(
-                              "Demande urgente"
-                            ),
-                            span(cls := "aplus-text-small")(
-                              Time.formatPatternFr(application.creationDate, "dd/mm/YYYY")
-                            ),
-                            i(cls := s"material-icons material-icons-outlined aplus-icons-small ${if(TODOtimer) " aplus-icon--active"}", attr("aria-describedby") := "tooltip-timer")("timer"),
-                            span(cls := "fr-tooltip fr-placement", id := "tooltip-timer", attr("role") := "tooltip", attr("aria-hidden") :="true")(
-                              "Il reste moins de 24h pour traiter la demande"
-                            ),
-                        )
-                      )               
+                          "Demande urgente"
+                        ),
+                        span(cls := "aplus-text-small")(
+                          Time.formatPatternFr(application.creationDate, "dd/mm/YYYY")
+                        ),
+                        i(
+                          cls := s"material-icons material-icons-outlined aplus-icons-small ${if (TODOtimer) " aplus-icon--active"}",
+                          attr("aria-describedby") := "tooltip-timer"
+                        )("timer"),
+                        span(
+                          cls := "fr-tooltip fr-placement",
+                          id := "tooltip-timer",
+                          attr("role") := "tooltip",
+                          attr("aria-hidden") := "true"
+                        )(
+                          "Il reste moins de 24h pour traiter la demande"
+                        ),
+                      )
+                    )
+                  )
+                ),
+                div(cls := "fr-card-inner  aplus-card-section")(
+                  div(cls := "aplus-align-right")(
+                    span(cls := "aplus-new-messages", attr("aria-describedby") := "tooltip-new")(
+                      application.newAnswersFor(currentUser.id).length
+                    ),
+                    span(
+                      cls := "fr-tooltip fr-placement",
+                      id := "tooltip-new",
+                      attr("role") := "tooltip",
+                      attr("aria-hidden") := "true"
+                    )(
+                      s"Vous avez ${application.newAnswersFor(currentUser.id).length} nouveaux messages"
+                    ),
+                  ),
+                  div(cls := "fr-grid-row aplus-text-small fr_card__container")(
+                    frag(statusTag(currentUser, application)),
+                    span(cls := "aplus-nowrap")(
+                      i(cls := "material-icons material-icons-outlined aplus-icons-small")("mail"),
+                      s"${application.answers.length} messages",
                     )
                   ),
-                  div(cls := "fr-card-inner  aplus-card-section")(
-                    div(cls := "aplus-align-right")(
-                      span(cls := "aplus-new-messages", attr("aria-describedby") := "tooltip-new")(application.newAnswersFor(currentUser.id).length),
-                      span(cls := "fr-tooltip fr-placement", id := "tooltip-new", attr("role") := "tooltip", attr("aria-hidden") :="true")(
-                        s"Vous avez ${application.newAnswersFor(currentUser.id).length} nouveaux messages"
-                      ),
+                ),
+                div(cls := "aplus-text-small  aplus-card-section ")(
+                  div(cls := "aplus-between")(
+                    span()(
+                      s"de ${application.userInfos.get(Application.UserFirstNameKey).get} ${application.userInfos.get(Application.UserLastNameKey).get}",
                     ),
-                    div(cls := "fr-grid-row aplus-text-small fr_card__container")(
-                      frag(statusTag(currentUser, application)),
-                      span(cls := "aplus-nowrap")(
-                        i(cls := "material-icons material-icons-outlined aplus-icons-small")("mail"),
-                        s"${application.answers.length} messages",
-                      )
+                    span()(
+                      "TODO groupe",
+                    )
+                  ),
+                  div(cls := "aplus-between")(
+                    span()(
+                      "TODO role"
+                    ),
+                    span()(
+                      "TODO organisme",
                     ),
                   ),
-                  
-                  div(cls := "aplus-text-small  aplus-card-section ")(
-                    div(cls := "aplus-between")(
-                      span()(
-                        s"de ${application.userInfos.get(Application.UserFirstNameKey).get} ${application.userInfos.get(Application.UserLastNameKey).get}",
-                      ),
-                      span()(
-                        "TODO groupe",
-                      )
-                    ),
-                    div(cls := "aplus-between")(
-                      span()(
-                        "TODO role"
-                      ),
-                      span()(
-                        "TODO organisme",
-                      ),
-                    ),
-                  ),
-                  div(cls := "aplus-bold aplus-card-section")(
-                    application.subject
-                  )
-                )
-              )
-            ),
-            div(cls := "fr-col fr-col-8", id := "application-message-container")(
-              div(cls := "aplus-no-message--container")(
-                  div(cls := "aplus-no-message")(
-                    i(cls := "material-icons material-icons-outlined ")("forum"),
-                    span("Ce champ est actuellement vide, mais une fois que vous aurez sélectionné la demande, vous pourrez effectuer et lire les échanges dans cet espace")
-                  )
+                ),
+                div(cls := "aplus-bold aplus-card-section")(
+                  application.subject
                 )
               )
             )
+        ),
+        div(cls := "fr-col fr-col-8", id := "application-message-container")(
+          div(cls := "aplus-no-message--container")(
+            div(cls := "aplus-no-message")(
+              i(cls := "material-icons material-icons-outlined ")("forum"),
+              span(
+                "Ce champ est actuellement vide, mais une fois que vous aurez sélectionné la demande, vous pourrez effectuer et lire les échanges dans cet espace"
+              )
+            )
+          )
         )
+      )
+    )
 
-        private def otherFilters(currentUser: User, infos: ApplicationsInfos) = {
-            val filters = infos.filters
+  private def otherFilters(currentUser: User, infos: ApplicationsInfos) = {
+    val filters = infos.filters
 
-            val filterLink = (isSelected: Boolean, text: String, uri: String) =>
-              div(
-                cls := "aplus-filter-header--item " + (
-                  if (isSelected)
-                    "single--border-bottom-2px"
-                  else
-                    ""
-                ),
-                if (isSelected)
-                  span(
-                    cls := "mdl-color-text--black single--font-weight-500",
-                    text
-                  )
-                else
-                  a(
-                    cls := "single--text-decoration-none",
-                    href := uri,
-                    text
-                  )
-              )
+    val filterLink = (isSelected: Boolean, text: String, uri: String) =>
+      div(
+        cls := "aplus-filter-header--item " + (
+          if (isSelected)
+            "single--border-bottom-2px"
+          else
+            ""
+        ),
+        if (isSelected)
+          span(
+            cls := "mdl-color-text--black single--font-weight-500",
+            text
+          )
+        else
+          a(
+            cls := "single--text-decoration-none",
+            href := uri,
+            text
+          )
+      )
 
-            div(
-              cls := "aplus-filter-header",
-              filterLink(
-                filters.hasNoStatus,
-                s"Toutes (${infos.filteredByGroupsOpenCount}) ",
-                filters.withoutStatus.toUrl,
-              ),
-              filterLink(
-                filters.isMine,
-                s"Mes demandes (${infos.interactedCount}) ",
-                filters.withStatusMine.toUrl,
-              ),
-              filterLink(
-                filters.isNew,
-                s"Nouvelles demandes (${infos.newCount}) ",
-                filters.withStatusNew.toUrl,
-              ),
-              filterLink(
-                filters.isProcessing,
-                s"En cours (${infos.processingCount}) ",
-                filters.withStatusProcessing.toUrl,
-              ),
-              currentUser.instructor.some
-                .filter(identity)
-                .map(_ =>
-                  filterLink(
-                    filters.isLate,
-                    s"En souffrance (${infos.lateCount}) ",
-                    filters.withStatusLate.toUrl,
-                  )
-                ),
-              filterLink(
-                filters.isArchived,
-                s"Archivées (${infos.filteredByGroupsClosedCount}) ",
-                filters.withStatusArchived.toUrl,
-              ),
-              div(cls :="fr-fieldset__element fr-fieldset__element--inline aplus-filter-header--item")(
-                div(cls :="fr-checkbox-group fr-checkbox-group--sm")(
-                  input(name :="checkboxes-hint-el-sm-1", id :="checkboxes-inline-3", attr("type") :="checkbox", attr("aria-describedby") :="checkboxes-inline-3-messages"),
-                  label(cls :="fr-label", attr("for") :="checkboxes-inline-3")(
-                      i(cls :="material-icons material-icons-outlined aplus-icons-small")("flag"),
-                  ),
-                ),
-              ),
-              div(cls :="fr-fieldset__element fr-fieldset__element--inline aplus-filter-header--item")(
-                div(cls :="fr-checkbox-group fr-checkbox-group--sm")(
-                  input(name :="checkboxes-inline-4", id :="checkboxes-inline-4", attr("type") :="checkbox", attr("aria-describedby") :="checkboxes-inline-4-messages"),
-                  label(cls :="fr-label", attr("for") :="checkboxes-inline-4")(
-                      i(cls :="material-icons material-icons-outlined aplus-icons-small")("timer"),
-                  ),
-                )
-              )                  
-              
-            )
-          }
+    div(
+      cls := "aplus-filter-header",
+      filterLink(
+        filters.hasNoStatus,
+        s"Toutes (${infos.filteredByGroupsOpenCount}) ",
+        filters.withoutStatus.toUrl,
+      ),
+      filterLink(
+        filters.isMine,
+        s"Mes demandes (${infos.interactedCount}) ",
+        filters.withStatusMine.toUrl,
+      ),
+      filterLink(
+        filters.isNew,
+        s"Nouvelles demandes (${infos.newCount}) ",
+        filters.withStatusNew.toUrl,
+      ),
+      filterLink(
+        filters.isProcessing,
+        s"En cours (${infos.processingCount}) ",
+        filters.withStatusProcessing.toUrl,
+      ),
+      currentUser.instructor.some
+        .filter(identity)
+        .map(_ =>
+          filterLink(
+            filters.isLate,
+            s"En souffrance (${infos.lateCount}) ",
+            filters.withStatusLate.toUrl,
+          )
+        ),
+      filterLink(
+        filters.isArchived,
+        s"Archivées (${infos.filteredByGroupsClosedCount}) ",
+        filters.withStatusArchived.toUrl,
+      ),
+      div(cls := "fr-fieldset__element fr-fieldset__element--inline aplus-filter-header--item")(
+        div(cls := "fr-checkbox-group fr-checkbox-group--sm")(
+          input(
+            name := "checkboxes-hint-el-sm-1",
+            id := "checkboxes-inline-3",
+            attr("type") := "checkbox",
+            attr("aria-describedby") := "checkboxes-inline-3-messages"
+          ),
+          label(cls := "fr-label", attr("for") := "checkboxes-inline-3")(
+            i(cls := "material-icons material-icons-outlined aplus-icons-small")("flag"),
+          ),
+        ),
+      ),
+      div(cls := "fr-fieldset__element fr-fieldset__element--inline aplus-filter-header--item")(
+        div(cls := "fr-checkbox-group fr-checkbox-group--sm")(
+          input(
+            name := "checkboxes-inline-4",
+            id := "checkboxes-inline-4",
+            attr("type") := "checkbox",
+            attr("aria-describedby") := "checkboxes-inline-4-messages"
+          ),
+          label(cls := "fr-label", attr("for") := "checkboxes-inline-4")(
+            i(cls := "material-icons material-icons-outlined aplus-icons-small")("timer"),
+          ),
+        )
+      )
+    )
+  }
+
 }

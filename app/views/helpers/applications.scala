@@ -14,30 +14,30 @@ import views.helpers.forms.selectInput
 
 object applications {
 
-  def statusTag(currentUser: User, application: Application): Frag = 
+  def statusTag(currentUser: User, application: Application): Frag =
     frag(
-        application.longStatus(currentUser) match {
-            case Processing =>
-                div(cls := "fr-tag fr-tag--sm aplus-tag--pending")(
-                "en cours"
-                )
-            case Processed | ToArchive =>
-                div(cls := "fr-tag fr-tag--sm aplus-tag--done")(
-                "traité"
-                )
-            case Archived =>
-                div(cls := "fr-tag fr-tag--sm  aplus-tag--archived")(
-                "archivé"
-                )
-            case New =>
-                div(cls := "fr-tag fr-tag--sm aplus-tag--new")(
-                "Nouvelle demande"
-                )
-            case Sent =>
-                div(cls := "fr-tag fr-tag--sm aplus-tag--sent")(
-                "envoyé"
-                )
-            }
+      application.longStatus(currentUser) match {
+        case Processing =>
+          div(cls := "fr-tag fr-tag--sm aplus-tag--pending")(
+            "en cours"
+          )
+        case Processed | ToArchive =>
+          div(cls := "fr-tag fr-tag--sm aplus-tag--done")(
+            "traité"
+          )
+        case Archived =>
+          div(cls := "fr-tag fr-tag--sm  aplus-tag--archived")(
+            "archivé"
+          )
+        case New =>
+          div(cls := "fr-tag fr-tag--sm aplus-tag--new")(
+            "Nouvelle demande"
+          )
+        case Sent =>
+          div(cls := "fr-tag fr-tag--sm aplus-tag--sent")(
+            "envoyé"
+          )
+      }
     )
 
   def creatorGroup(form: Form[ApplicationFormData], creatorGroups: List[UserGroup])(implicit

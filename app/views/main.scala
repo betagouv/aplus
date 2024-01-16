@@ -1,7 +1,7 @@
 package views
 
 import cats.syntax.all._
-import controllers.routes.{Assets, HomeController, UserController, JavascriptController}
+import controllers.routes.{Assets, HomeController, JavascriptController, UserController}
 import helper.TwirlImports.toHtml
 import play.api.mvc.RequestHeader
 import play.twirl.api.Html
@@ -56,20 +56,20 @@ object main {
           attr("nomodule").empty,
           src := Assets.versioned("generated-js/dsfr/dsfr.nomodule.min.js").url
         ),
-
         script(
           `type` := "text/javascript",
           src := JavascriptController.javascriptRoutes.url
         ),
-
         script(
-          `type` :="application/javascript",
+          `type` := "application/javascript",
           src := Assets.versioned("generated-js/index.js").url
         ),
-
         meta(name := "theme-color", attr("content") := "#000091"),
-        link(attr("rel") :="icon", href := Assets.versioned("images/favicon.png").url, attr("type"):="image/svg+xml"),
-
+        link(
+          attr("rel") := "icon",
+          href := Assets.versioned("images/favicon.png").url,
+          attr("type") := "image/svg+xml"
+        ),
         publicCss("generated-js/dsfr/dsfr.min.css"),
         tags2.title(pageName),
         additionalHeadTags
