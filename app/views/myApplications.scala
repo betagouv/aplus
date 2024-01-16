@@ -133,12 +133,12 @@ object myApplications {
                 )
             ),
           div(cls := " fr-search-bar  aplus-spacer")(
-            label(cls := "fr-label", `for` := "application-search"),
+            label(cls := "fr-label", `for` := "search-input"),
             input(
               cls := "fr-input",
               `role` := "search",
               placeholder := "Rechercher",
-              id := "application-search"
+              id := "search-input"
             ),
             button(cls :="fr-btn", title :="Rechercher")(
               "Rechercher"
@@ -161,6 +161,7 @@ object myApplications {
           ),
         ),
       ),
+      otherFilters(currentUser, filters),
       div(cls := "fr-grid-row aplus-my-application") (
         div(cls := "fr-col fr-col-4 aplus-my-application--message-list")(
           applications
@@ -194,6 +195,12 @@ object myApplications {
                     )
                   ),
                   div(cls := "fr-card-inner  aplus-card-section")(
+                    div(cls := "aplus-align-right")(
+                      span(cls := "aplus-new-messages", attr("aria-describedby") := "tooltip-new")(application.newAnswersFor(currentUser.id).length),
+                      span(cls := "fr-tooltip fr-placement", id := "tooltip-new", attr("role") := "tooltip", attr("aria-hidden") :="true")(
+                        s"Vous avez ${application.newAnswersFor(currentUser.id).length} nouveaux messages"
+                      ),
+                    ),
                     div(cls := "fr-grid-row aplus-text-small fr_card__container")(
                       frag(statusTag(currentUser, application)),
                       span(cls := "aplus-nowrap")(
@@ -203,9 +210,24 @@ object myApplications {
                     ),
                   ),
                   
-                  div(cls := "aplus-text-small  aplus-card-section")(
-                      s"de ${application.userInfos.get(Application.UserFirstNameKey).get} ${application.userInfos.get(Application.UserLastNameKey).get}",
+                  div(cls := "aplus-text-small  aplus-card-section ")(
+                    div(cls := "aplus-between")(
+                      span()(
+                        s"de ${application.userInfos.get(Application.UserFirstNameKey).get} ${application.userInfos.get(Application.UserLastNameKey).get}",
+                      ),
+                      span()(
+                        "TODO groupe",
+                      )
                     ),
+                    div(cls := "aplus-between")(
+                      span()(
+                        "TODO role"
+                      ),
+                      span()(
+                        "TODO organisme",
+                      ),
+                    ),
+                  ),
                   div(cls := "aplus-bold aplus-card-section")(
                     application.subject
                   )
@@ -223,4 +245,83 @@ object myApplications {
             )
         )
 
+        private def otherFilters(currentUser: User, infos: ApplicationsInfos) = {
+            val filters = infos.filters
+
+            val filterLink = (isSelected: Boolean, text: String, uri: String) =>
+              div(
+                cls := "aplus-filter-header--item " + (
+                  if (isSelected)
+                    "single--border-bottom-2px"
+                  else
+                    ""
+                ),
+                if (isSelected)
+                  span(
+                    cls := "mdl-color-text--black single--font-weight-500",
+                    text
+                  )
+                else
+                  a(
+                    cls := "single--text-decoration-none",
+                    href := uri,
+                    text
+                  )
+              )
+
+            div(
+              cls := "aplus-filter-header",
+              filterLink(
+                filters.hasNoStatus,
+                s"Toutes (${infos.filteredByGroupsOpenCount}) ",
+                filters.withoutStatus.toUrl,
+              ),
+              filterLink(
+                filters.isMine,
+                s"Mes demandes (${infos.interactedCount}) ",
+                filters.withStatusMine.toUrl,
+              ),
+              filterLink(
+                filters.isNew,
+                s"Nouvelles demandes (${infos.newCount}) ",
+                filters.withStatusNew.toUrl,
+              ),
+              filterLink(
+                filters.isProcessing,
+                s"En cours (${infos.processingCount}) ",
+                filters.withStatusProcessing.toUrl,
+              ),
+              currentUser.instructor.some
+                .filter(identity)
+                .map(_ =>
+                  filterLink(
+                    filters.isLate,
+                    s"En souffrance (${infos.lateCount}) ",
+                    filters.withStatusLate.toUrl,
+                  )
+                ),
+              filterLink(
+                filters.isArchived,
+                s"Archivées (${infos.filteredByGroupsClosedCount}) ",
+                filters.withStatusArchived.toUrl,
+              ),
+              div(cls :="fr-fieldset__element fr-fieldset__element--inline aplus-filter-header--item")(
+                div(cls :="fr-checkbox-group fr-checkbox-group--sm")(
+                  input(name :="checkboxes-hint-el-sm-1", id :="checkboxes-inline-3", attr("type") :="checkbox", attr("aria-describedby") :="checkboxes-inline-3-messages"),
+                  label(cls :="fr-label", attr("for") :="checkboxes-inline-3")(
+                      i(cls :="material-icons material-icons-outlined aplus-icons-small")("flag"),
+                  ),
+                ),
+              ),
+              div(cls :="fr-fieldset__element fr-fieldset__element--inline aplus-filter-header--item")(
+                div(cls :="fr-checkbox-group fr-checkbox-group--sm")(
+                  input(name :="checkboxes-inline-4", id :="checkboxes-inline-4", attr("type") :="checkbox", attr("aria-describedby") :="checkboxes-inline-4-messages"),
+                  label(cls :="fr-label", attr("for") :="checkboxes-inline-4")(
+                      i(cls :="material-icons material-icons-outlined aplus-icons-small")("timer"),
+                  ),
+                )
+              )                  
+              
+            )
+          }
 }

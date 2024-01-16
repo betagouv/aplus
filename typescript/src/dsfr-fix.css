@@ -8,6 +8,16 @@
     margin: 1.5rem 0;
 }
 
+.aplus-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.aplus-align-right {
+    text-align: right;
+}
+
 .aplus-hr-in-card {
     margin: -1rem;
 }
@@ -347,4 +357,21 @@ div.fr-footer__bottom {
 
 .aplus-icon--active {
     color: #ef000f;
+}
+
+.aplus-new-messages {
+    display: inline-block;
+    background: #000091;
+    color: #fff;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 100%;
+    font-size: .875rem;
+    text-align: center;
+    line-height: 1.25rem;
+}
+
+.main-container .fr-checkbox-group i {
+    position: relative;
+    top: 5px;
 }
