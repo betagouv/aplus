@@ -94,7 +94,6 @@ function updateFilters(info: Option | Option[], query: URLSearchParams) {
     urlFilters.length === selected.length &&
     urlFilters.every((item) => selected.find((value) => value === item))
   ) {
-    console.log('All filters are already selected');
     return;
   };
 
