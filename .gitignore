@@ -31,4 +31,4 @@ node_modules/
 project/metals.sbt
 project/project/metals.sbt
 project/project/project/metals.sbt
-start.sh
+run.sh
