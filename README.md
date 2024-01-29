@@ -63,7 +63,7 @@ chmod +x run.sh
 run
 ```
 
-✨ Enjoy ✨ (si vous tombez sur l'erreur _"database 'default' needs evolution"_, cliquez sur _"apply this script now"_) !
+✨ Enjoy ✨ (si vous tombez sur l'erreur *"database 'default' needs evolution"*, cliquez sur *"apply this script now"*) !
 
 http://localhost:9000
 
