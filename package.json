@@ -21,7 +21,7 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.3/xlsx-0.19.3.tgz"
   },
   "devDependencies": {
-    "@babel/core": "7.21.8",
+    "@babel/core": "7.23.9",
     "@babel/preset-env": "7.21.5",
     "@types/tabulator-tables": "5.4.8",
     "babel-loader": "9.1.2",
