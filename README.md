@@ -35,9 +35,9 @@ cd develop/aplus
 docker-compose up db
 ```
 
-Se connecter à la base de données avec Docker (pour connaître le nom de la base de donnée exécuter la commande `docker ps`):
+Se connecter à la base de données avec Docker (pour connaître le nom du container, exécuter la commande `docker ps`):
 
-`docker exec -it <NOM_DE_LA_BD> psql -U aplus`
+`docker exec -it <NOM_DU_CONTAINER_DE_LA_BD> psql -U aplus`
 
 Dans la console PSQL lancer la commande `\d` pour vérifier si des relations existent. Si aucune relation n'existe lancer la commande suivante puis quitter la console PSQL:
 
