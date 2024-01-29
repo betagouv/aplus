@@ -48,7 +48,7 @@ CREATE EXTENSION IF NOT EXISTS "unaccent";
 
 Ajouter un dump de la base de données à votre projet. Pour cela prendre contact avec l'équipe **Administration+** qui vous enverra le fichier correspondant (*contact@aplus.beta.gouv.fr* ou directement sur Mattermost). Ajouter le fichier à la racine du projet puis lancer la commande suivante (des erreurs apparaîtront, ne les prenez pas en compte !):
 
-`docker exec -i <NOM_DE_LA_BD> pg_restore -U aplus -d aplus < <NOM_FICHIER_DUMP>`
+`docker exec -i <NOM_DU_CONTAINER_DE_LA_BD> pg_restore -U aplus -d aplus < <NOM_FICHIER_DUMP>`
 
 Copier run.sh.example dans run.sh :
 
