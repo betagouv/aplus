@@ -14,10 +14,10 @@
 
 #### ⚙️ Pré-requis ⚙️
 
-- Java
-- Docker
-- SBT
-- L'extension VSCode metals pour scala (non obligatoire mais conseillée !)
+-   Java
+-   Docker
+-   SBT
+-   L'extension VSCode metals pour scala (non obligatoire mais conseillée !)
 
 #### 🗝️ Installer le projet clés en main 🗝️
 
