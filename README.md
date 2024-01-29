@@ -4,33 +4,33 @@
 - Fiche produit : https://beta.gouv.fr/startups/aplus.html
 - Statistiques d’usage : https://infogram.com/stats-dusage-dadministration-1hmr6gm9mk5o6nl?live
 
-# Code
+## Code
 
 - [Guidelines code](docs/guidelines-code.md)
 - [Guidelines design](docs/guidelines-design.md)
 - [Wiki](https://github.com/betagouv/aplus/wiki) (Le wiki est visé à être remplacer par la doc dans le repo)
 
-# Commandes
+## Commandes
 
-#### ⚙️ Pré-requis ⚙️
+### ⚙️ Pré-requis ⚙️
 
 - Java
 - Docker
 - SBT
 - L'extension VSCode metals pour scala (non obligatoire mais conseillée !)
 
-#### 🗝️ Installer le projet clés en main 🗝️
+### 🗝️ Installer le projet clés en main 🗝️
 
 Cloner le projet :
 
-```
+```shell
 git clone https://github.com/betagouv/aplus
 cd aplus
 ```
 
 Pour lancer le projet aller dans le dossier `develop/aplus` puis lancer une base de donnée PostgreSQL avec docker-compose :
 
-```
+```shell
 cd develop/aplus
 docker-compose up db
 ```
@@ -41,7 +41,7 @@ Se connecter à la base de données avec Docker (pour connaître le nom du conta
 
 Dans la console PSQL lancer la commande `\d` pour vérifier si des relations existent. Si aucune relation n'existe lancer la commande suivante puis quitter la console PSQL:
 
-```
+```shell
 CREATE EXTENSION IF NOT EXISTS "unaccent";
 \q
 ```
@@ -56,7 +56,7 @@ Copier run.sh.example dans run.sh :
 
 Lancer le projet :
 
-```
+```shell
 npm install
 chmod +x run.sh
 ./run.sh
