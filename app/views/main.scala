@@ -1,7 +1,7 @@
 package views
 
 import cats.syntax.all._
-import controllers.routes.{Assets, HomeController, UserController, JavascriptController}
+import controllers.routes.{Assets, HomeController, JavascriptController, UserController}
 import helper.TwirlImports.toHtml
 import play.api.mvc.RequestHeader
 import play.twirl.api.Html
