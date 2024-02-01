@@ -141,19 +141,19 @@ object myApplications {
                 p(s"Il y a ${filters.lateCount} dossier souffrants dans vos groupes")
               )
             ),
-            div(
-              Authorization
-                .canCreateApplication(currentUserRights)
-                .some
-                .filter(identity)
-                .map(_ =>
-                  button(
-                    cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--primary onclick-change-location",
-                    data("location") := ApplicationController.create.url,
-                    "Créer une demande"
-                  )
+          div(
+            Authorization
+              .canCreateApplication(currentUserRights)
+              .some
+              .filter(identity)
+              .map(_ =>
+                button(
+                  cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--primary onclick-change-location",
+                  data("location") := ApplicationController.create.url,
+                  "Créer une demande"
                 )
-            ),
+              )
+          ),
           div(cls := " fr-search-bar  aplus-spacer")(
             label(cls := "fr-label", `for` := "search-input"),
             input(
@@ -162,7 +162,7 @@ object myApplications {
               placeholder := "Rechercher",
               id := "search-input"
             ),
-            a(cls :="fr-btn", title :="Rechercher", href := "#search-column")(
+            a(cls := "fr-btn", title := "Rechercher", href := "#search-column")(
               "Rechercher"
             )
           )
