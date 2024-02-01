@@ -1,7 +1,7 @@
 package views
 
 import cats.syntax.all._
-import controllers.routes.{Assets, HomeController, UserController}
+import controllers.routes.{Assets, HomeController, UserController, JavascriptController}
 import helper.TwirlImports.toHtml
 import play.api.mvc.RequestHeader
 import play.twirl.api.Html
@@ -41,6 +41,26 @@ object main {
         meta(
           name := "viewport",
           attr("content") := "width=device-width, initial-scale=1, shrink-to-fit=no"
+        ),
+        script(
+          `type` := "module",
+          attr("defer") := "",
+          src := Assets.versioned("generated-js/dsfr/dsfr.module.min.js").url
+        ),
+        script(
+          `type` := "application/javascript",
+          attr("defer") := "",
+          attr("nomodule").empty,
+          src := Assets.versioned("generated-js/dsfr/dsfr.nomodule.min.js").url
+        ),
+        script(
+          `type` := "text/javascript",
+          src := JavascriptController.javascriptRoutes.url
+        ),
+        script(
+          `type` := "application/javascript",
+          attr("defer") := "",
+          src := Assets.versioned("generated-js/index.js").url
         ),
         link(
           rel := "stylesheet",

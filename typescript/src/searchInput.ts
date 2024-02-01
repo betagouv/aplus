@@ -2,7 +2,6 @@ const extract = 9;
 
 const searchInput = <HTMLInputElement | null>document.getElementById("search-input");
 const clearSearch = <HTMLButtonElement | null>document.getElementById("clear-search");
-
 if (searchInput) {
   const onSearch = () => {
     const searchTerm = searchInput.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");

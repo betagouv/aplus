@@ -141,19 +141,31 @@ object myApplications {
                 p(s"Il y a ${filters.lateCount} dossier souffrants dans vos groupes")
               )
             ),
-          div(
-            Authorization
-              .canCreateApplication(currentUserRights)
-              .some
-              .filter(identity)
-              .map(_ =>
-                button(
-                  cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--primary onclick-change-location",
-                  data("location") := ApplicationController.create.url,
-                  "Créer une demande"
+            div(
+              Authorization
+                .canCreateApplication(currentUserRights)
+                .some
+                .filter(identity)
+                .map(_ =>
+                  button(
+                    cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--primary onclick-change-location",
+                    data("location") := ApplicationController.create.url,
+                    "Créer une demande"
+                  )
                 )
-              )
-          ),
+            ),
+          div(cls := " fr-search-bar  aplus-spacer")(
+            label(cls := "fr-label", `for` := "search-input"),
+            input(
+              cls := "fr-input",
+              `role` := "search",
+              placeholder := "Rechercher",
+              id := "search-input"
+            ),
+            a(cls :="fr-btn", title :="Rechercher", href := "#search-column")(
+              "Rechercher"
+            )
+          )
         ),
         div(cls := "fr-col fr-col-4 fr-grid-row fr-grid-row--center")(
           a(cls := "fr-btn fr-btn--height-fix", href := ApplicationController.create.url)(
@@ -178,12 +190,6 @@ object myApplications {
       otherFilters(currentUser, filters),
       div(cls := "fr-grid-row aplus-my-application")(
         div(cls := "fr-col fr-col-4 aplus-my-application--message-list")(
-          input(
-            cls := "fr-input",
-            `role` := "search",
-            placeholder := "Rechercher",
-            id := "search-input"
-          ),
           applications
             .sortBy(_.application.closed)
             .map(application => {
@@ -191,6 +197,7 @@ object myApplications {
                 div(cls := "fr-card")(
                   a(
                     cls := "aplus-application-link",
+                    id := "search-column",
                     href := ApplicationController.show(application.application.id).url,
                   )(
                     div(cls := "fr-card-inner")(
