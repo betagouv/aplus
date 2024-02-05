@@ -79,7 +79,14 @@ case class Application(
       answersStripped
   }
 
-  private def isProcessed = answers.lastOption.exists(_.answerType === ApplicationProcessed)
+  def userAnswers = answers.filter(answer =>
+    !answer.message.contains("rejoins la conversation automatiquement comme expert") &&
+      !answer.message
+        .contains("Les nouveaux instructeurs rejoignent automatiquement la demande") &&
+      !answer.message.contains("Les nouveaux instructeurs ont automatiquement accès à la demande")
+  )
+
+  private def isProcessed = userAnswers.lastOption.exists(_.answerType === ApplicationProcessed)
   private def isCreator(userId: UUID) = userId === creatorUserId
 
   def hasBeenDisplayedFor(userId: UUID) =
