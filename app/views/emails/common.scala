@@ -279,6 +279,96 @@ object common {
     )
   }
 
+  private def formCreationAbuseStats(
+      abuseThreshold: Int,
+      formsByIp: Map[String, Int],
+      abuseByIp: Map[String, Int]
+  ): List[Modifier] =
+    List(
+      p(
+        "Liste des IPs bloquées et nombre de tentatives au-delà du seuil ",
+        s"($abuseThreshold) : "
+      ),
+      ul(
+        abuseByIp.toList.sorted.map { case (ip, count) =>
+          li(
+            b(ip),
+            " : ",
+            count,
+            " "
+          )
+        }
+      ),
+      br,
+      br,
+      p("Nombre de créations par IPs : "),
+      ul(
+        formsByIp.toList.sorted.map { case (ip, count) =>
+          li(
+            b(ip),
+            " : ",
+            count,
+            " "
+          )
+        }
+      ),
+    )
+
+  val formCreationStatsForAdminsSubject = "[A+] Statistiques des demandes de création de compte"
+
+  def formCreationStatsForAdminsBody(
+      stats: Option[AccountCreationStats],
+      abuseThreshold: Int,
+      formsByIp: Map[String, Int],
+      abuseByIp: Map[String, Int]
+  ): List[Modifier] = {
+    val statsPart: List[Modifier] = stats match {
+      case None => List(p(b("Aucune statistique n’est disponible")))
+      case Some(stats) =>
+        def periodStats(period: AccountCreationStats.PeriodStats): Frag =
+          ul(
+            li("Minimum : ", period.minCount),
+            li("Maximum : ", period.maxCount),
+            li(f"1er quartile : ${period.quartile1}%.2f "),
+            li(f"Médiane : ${period.median}%.2f "),
+            li(f"3ème quartile : ${period.quartile3}%.2f "),
+            li(f"99ème pourcentile : ${period.percentile99}%.2f "),
+            li(f"Moyenne : ${period.mean}%.2f "),
+            li(f"Écart type : ${period.stddev}%.2f "),
+          )
+        List(
+          h2("Statistiques du jour"),
+          p("Nombre de formulaire(s) déposé(s) : ", stats.todayCount),
+          h2("Statistiques de l’année"),
+          periodStats(stats.yearStats),
+          h2("Statistiques sur la vie de l’application"),
+          periodStats(stats.allStats),
+        )
+    }
+    List(h1("Statistiques des demandes de création de compte")) :::
+      statsPart :::
+      List(
+        br,
+        br,
+        h2("Statistiques de rate-limit"),
+        br,
+        br,
+      ) ::: formCreationAbuseStats(abuseThreshold, formsByIp, abuseByIp)
+  }
+
+  val formCreationAbuseForAdminsSubject = "[A+] ATTENTION ! Abus possible de demandes d’inscription"
+
+  def formCreationAbuseForAdminsBody(
+      abuseThreshold: Int,
+      formsByIp: Map[String, Int],
+      abuseByIp: Map[String, Int]
+  ): List[Modifier] =
+    List(
+      b("ATTENTION: une adresse IP a créé une grande quantité de demandes d’inscription"),
+      br,
+      br,
+    ) ::: formCreationAbuseStats(abuseThreshold, formsByIp, abuseByIp)
+
   private def applicationEmailFooter: List[Modifier] =
     List(
       br,

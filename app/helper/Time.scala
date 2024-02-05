@@ -4,6 +4,7 @@ import cats.Order
 import java.time.{Instant, LocalDate, ZoneId, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import scala.concurrent.duration.FiniteDuration
 
 object Time {
 
@@ -48,5 +49,12 @@ object Time {
     new Order[Instant] {
       override def compare(x: Instant, y: Instant): Int = x.compareTo(y)
     }
+
+  def formatFiniteDuration(duration: FiniteDuration): String = {
+    val hours = duration.toHours
+    val minutes = duration.toMinutes % 60
+    val seconds = duration.toSeconds % 60
+    f"$hours%02d:$minutes%02d:$seconds%02d"
+  }
 
 }

@@ -180,6 +180,7 @@ object EventType {
   object SignupsValidationError extends Warn
   object SignupsUnauthorized extends Error
   object SignupsError extends Error
+  object SignupsStatistics extends Info
   object SignupEmailError extends Error
   object SignupCreated extends Info
 

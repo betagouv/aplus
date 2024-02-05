@@ -21,6 +21,7 @@ case class AccountCreationRequest(
     isManager: Boolean,
     isInstructor: Boolean,
     message: Option[String],
+    fillingIpAddress: String,
     rejectionUserId: Option[UUID],
     rejectionDate: Option[Instant],
     rejectionReason: Option[String]
@@ -88,3 +89,24 @@ case class AccountCreation(
     ).map { case (fieldName, value) => s"$fieldName : $value" }.mkString(" | ") + "]"
 
 }
+
+object AccountCreationStats {
+
+  case class PeriodStats(
+      minCount: Int,
+      maxCount: Int,
+      median: Double,
+      quartile1: Double,
+      quartile3: Double,
+      percentile99: Double,
+      mean: Double,
+      stddev: Double,
+  )
+
+}
+
+case class AccountCreationStats(
+    todayCount: Int,
+    yearStats: AccountCreationStats.PeriodStats,
+    allStats: AccountCreationStats.PeriodStats,
+)

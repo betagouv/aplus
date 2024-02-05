@@ -14,6 +14,7 @@ CREATE TABLE account_creation_request (
     is_manager boolean NOT NULL,
     is_instructor boolean NOT NULL,
     message character varying(10000),
+    filling_ip_address inet NOT NULL,
 
     rejection_user_id uuid,
     rejection_date timestamp with time zone,

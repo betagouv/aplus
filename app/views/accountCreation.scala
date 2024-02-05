@@ -335,6 +335,7 @@ object accountCreation {
     views.main.publicLayout(
       "Formulaire d’inscription",
       accountCreationForm(form, isNamedAccount),
+      addBreadcrumbs = true,
       helpers.head.publicCss("generated-js/slimselect.min.css"),
       frag(
         script(`type` := "text/javascript", src := JavascriptController.javascriptRoutes.url),

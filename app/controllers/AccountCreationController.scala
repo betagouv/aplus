@@ -1,13 +1,15 @@
 package controllers
 
-import javax.inject.{Inject, Singleton}
-import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents, Result}
-import play.api.i18n.I18nSupport
-import models.formModels.AccountCreationFormData
-import scala.concurrent.{ExecutionContext, Future}
+import actions.{LoginAction, RequestWithUserData}
+import cats.effect.IO
+import cats.syntax.all._
+import constants.Constants
 import helper.ScalatagsHelpers.writeableOf_Modifier
-import helper.PlayFormHelper
-import play.api.Logger
+import helper.{PlayFormHelper, Time}
+import java.time.Instant
+import java.util.UUID
+import javax.inject.{Inject, Singleton}
+import models.formModels.AccountCreationFormData
 import models.{
   AccountCreation,
   AccountCreationRequest,
@@ -17,18 +19,24 @@ import models.{
   User,
   UserGroup
 }
-import java.time.Instant
-import java.util.UUID
-import constants.Constants
-import actions.{LoginAction, RequestWithUserData}
-import services.{AccountCreationService, EventService, UserGroupService, UserService}
-import cats.syntax.all._
-import helper.Time
+import play.api.Logger
+import play.api.i18n.I18nSupport
+import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents, Result}
+import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
+import services.{
+  AccountCreationService,
+  EventService,
+  ServicesDependencies,
+  UserGroupService,
+  UserService
+}
 
 @Singleton
 class AccountCreationController @Inject() (
     accountCreationService: AccountCreationService,
     val controllerComponents: ControllerComponents,
+    dependencies: ServicesDependencies,
     val eventService: EventService,
     loginAction: LoginAction,
     userGroupService: UserGroupService,
@@ -37,6 +45,8 @@ class AccountCreationController @Inject() (
     extends BaseController
     with I18nSupport
     with Operators.UserOperators {
+
+  import dependencies.ioRuntime
 
   // Using Logger here, because we don't want to have the events logged in the db
   private val log = Logger(classOf[AccountCreationController])
@@ -76,7 +86,10 @@ class AccountCreationController @Inject() (
     )
   }
 
-  def transformAccountCreationFormData(formData: AccountCreationFormData): AccountCreation = {
+  def transformAccountCreationFormData(
+      formData: AccountCreationFormData,
+      requestIp: String
+  ): AccountCreation = {
     val accountCreationRequest = AccountCreationRequest(
       id = UUID.randomUUID(),
       requestDate = Instant.now(),
@@ -92,6 +105,7 @@ class AccountCreationController @Inject() (
       isManager = formData.isManager,
       isInstructor = formData.isInstructor,
       message = formData.message,
+      fillingIpAddress = requestIp,
       rejectionUserId = None,
       rejectionDate = None,
       rejectionReason = None
@@ -167,25 +181,36 @@ class AccountCreationController @Inject() (
             )
           },
           formData => {
-            val data = transformAccountCreationFormData(formData)
-            accountCreationService
-              .add(data)
-              .map(
-                _.fold(
-                  error => {
-                    val message = s"${error.eventType.code} ${error.description}"
-                    error.underlyingException.fold(log.error(message))(e => log.error(message, e))
-                    InternalServerError(Constants.genericError500Message)
-                  },
-                  _ => {
-                    val message = s"Demande de création d’un compte " +
-                      (if (isNamedAccount) "nominatif" else "partagé") +
-                      s" : ${data.toLogString}"
-                    log.info(message)
-                    Redirect(routes.AccountCreationController.formSent)
-                  }
+            val ipAddress = request.remoteAddress
+            val isAbusing = accountCreationService.checkIsAbusing(ipAddress)
+            if (isAbusing) {
+              // Random time between 5 and 10 minutes in milliseconds
+              val randomTime = scala.util.Random.between(5, 10) * 60 * 1000
+              IO.sleep(randomTime.milliseconds)
+                .map(_ => InternalServerError(views.errors.public500()))
+                .unsafeToFuture()
+            } else {
+              val data = transformAccountCreationFormData(formData, ipAddress)
+              accountCreationService
+                .add(data)
+                .map(
+                  _.fold(
+                    error => {
+                      val message = s"${error.eventType.code} ${error.description}"
+                      error.underlyingException.fold(log.error(message))(e => log.error(message, e))
+                      InternalServerError(views.errors.public500())
+                    },
+                    _ => {
+
+                      val message = s"Demande de création d’un compte " +
+                        (if (isNamedAccount) "nominatif" else "partagé") +
+                        s" : ${data.toLogString}"
+                      log.info(message)
+                      Redirect(routes.AccountCreationController.formSent)
+                    }
+                  )
                 )
-              )
+            }
           }
         )
     }

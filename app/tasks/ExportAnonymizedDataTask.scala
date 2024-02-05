@@ -22,22 +22,13 @@ class ExportAnonymizedDataTask @Inject() (
 
   import dependencies.ioRuntime
 
-  def durationUntilNextTick(now: Instant): IO[FiniteDuration] = IO {
-    val nextInstant = now
-      .atZone(ZoneOffset.UTC)
-      .toLocalDate
-      .atStartOfDay(ZoneOffset.UTC)
-      .plusDays(1)
-      .withHour(4)
-      .withMinute(15)
-      .toInstant
-    now.until(nextInstant, ChronoUnit.MILLIS).millis
-  }.flatTap(duration =>
-    logMessage(
-      EventType.AnonymizedDataExportMessage,
-      s"Prochain export anonymisé de la BDD dans $duration"
+  def durationUntilNextTick(now: Instant): IO[FiniteDuration] =
+    untilNextDayAt(4, 15)(now).flatTap(duration =>
+      logMessage(
+        EventType.AnonymizedDataExportMessage,
+        s"Prochain export anonymisé de la BDD dans $duration"
+      )
     )
-  )
 
   val cancelCallback = repeatWithDelay(durationUntilNextTick)(
     if (config.anonymizedExportEnabled)

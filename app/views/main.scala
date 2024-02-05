@@ -2,9 +2,7 @@ package views
 
 import cats.syntax.all._
 import controllers.routes.{Assets, HomeController, UserController}
-import helper.TwirlImports.toHtml
 import play.api.mvc.RequestHeader
-import play.twirl.api.Html
 import scalatags.Text.all._
 import scalatags.Text.tags2
 import views.helpers.head.publicCss
@@ -33,17 +31,33 @@ object main {
       additionalFooterTags: Frag = frag()
   )(implicit
       request: RequestHeader,
-  ) = dsfrLayout(pageName, content, loggedInNavBar(), additionalHeadTags, additionalFooterTags)
+  ) = dsfrLayout(
+    pageName,
+    breadcrumbs(pageName),
+    content,
+    loggedInNavBar(),
+    additionalHeadTags,
+    additionalFooterTags
+  )
 
   def publicLayout(
       pageName: String,
       content: Frag,
+      addBreadcrumbs: Boolean = true,
       additionalHeadTags: Frag = frag(),
       additionalFooterTags: Frag = frag()
-  ) = dsfrLayout(pageName, content, frag(), additionalHeadTags, additionalFooterTags)
+  ) = dsfrLayout(
+    pageName,
+    if (addBreadcrumbs) breadcrumbs(pageName) else frag(),
+    content,
+    frag(),
+    additionalHeadTags,
+    additionalFooterTags
+  )
 
   private def dsfrLayout(
       pageName: String,
+      navigation: Frag,
       content: Frag,
       navBar: Frag,
       additionalHeadTags: Frag,
@@ -119,30 +133,8 @@ object main {
         )
       ),
       div(cls := "main-container")(
-        tag("main")()(
-          tag("nav")(cls := "fr-breadcrumb")(
-            div(cls := "fr-collapse")(
-              ol(cls := "fr-breadcrumb__list")(
-                li()(
-                  a(
-                    href := "/",
-                    cls := "fr-breadcrumb__link"
-                  )(
-                    "Accueil"
-                  )
-                ),
-                li()(
-                  a(
-                    href := "/",
-                    attr("aria-current") := "page",
-                    cls := "fr-breadcrumb__link"
-                  )(
-                    pageName
-                  )
-                )
-              )
-            )
-          ),
+        tag("main")(role := "main")(
+          navigation,
           content
         )
       ),
@@ -193,6 +185,31 @@ object main {
           src := Assets.versioned("generated-js/dsfr/dsfr.module.min.js").url
         ),
         additionalFooterTags
+      )
+    )
+
+  private def breadcrumbs(pageName: String): Tag =
+    tag("nav")(cls := "fr-breadcrumb")(
+      div(cls := "fr-collapse")(
+        ol(cls := "fr-breadcrumb__list")(
+          li()(
+            a(
+              href := "/",
+              cls := "fr-breadcrumb__link"
+            )(
+              "Accueil"
+            )
+          ),
+          li()(
+            a(
+              href := "/",
+              attr("aria-current") := "page",
+              cls := "fr-breadcrumb__link"
+            )(
+              pageName
+            )
+          )
+        )
       )
     )
 
