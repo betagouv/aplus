@@ -223,11 +223,15 @@ class ApplicationService @Inject() (
       )
       .orEmpty
 
-  def allForUserIds(userIds: List[UUID], numOfMonths: Option[Int]): Future[List[Application]] =
+  def allForUserIds(
+      userIds: List[UUID],
+      numOfMonths: Option[Int],
+      anonymous: Boolean = true
+  ): Future[List[Application]] =
     Future {
       db.withConnection { implicit connection =>
         val additionalFilter = monthsFilter(numOfMonths)
-        SQL(
+        val result = SQL(
           s"""SELECT $fieldsInSelect
               FROM application
               WHERE
@@ -240,7 +244,10 @@ class ApplicationService @Inject() (
               ORDER BY creation_date DESC"""
         ).on("userIds" -> userIds)
           .as(simpleApplication.*)
-          .map(_.anonymousApplication)
+        if (anonymous)
+          result.map(_.anonymousApplication)
+        else
+          result
       }
     }
 
@@ -261,18 +268,26 @@ class ApplicationService @Inject() (
       }
     }
 
-  def allForAreas(areaIds: List[UUID], numOfMonths: Option[Int]): Future[List[Application]] =
+  def allForAreas(
+      areaIds: List[UUID],
+      numOfMonths: Option[Int],
+      anonymous: Boolean = true
+  ): Future[List[Application]] =
     Future {
       db.withConnection { implicit connection =>
         val additionalFilter = monthsFilter(numOfMonths)
-        SQL(s"""SELECT $fieldsInSelect
+        val result = SQL(s"""SELECT $fieldsInSelect
                 FROM application
                 WHERE ARRAY[{areaIds}]::uuid[] @> ARRAY[area]::uuid[]
                 $additionalFilter
                 ORDER BY creation_date DESC""")
           .on("areaIds" -> areaIds)
           .as(simpleApplication.*)
-          .map(_.anonymousApplication)
+        if (anonymous) {
+          result.map(_.anonymousApplication)
+        } else {
+          result
+        }
       }
     }
 
