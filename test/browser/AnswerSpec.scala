@@ -67,6 +67,9 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       cguAcceptationDate = Some(Time.nowParis()),
       firstLoginDate = None,
       groupIds = groups.map(_.id),
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None
     )
     val result = userService.add(List(user))

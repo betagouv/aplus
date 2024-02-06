@@ -47,7 +47,7 @@ case class User(
     // * can see stats+deployment of all areas,
     // * can see all users,
     // * can see one user but not edit it
-    observableOrganisationIds: List[Organisation.Id] = Nil,
+    observableOrganisationIds: List[Organisation.Id],
     managingOrganisationIds: List[Organisation.Id],
     managingAreaIds: List[UUID],
     sharedAccount: Boolean = false,
@@ -271,6 +271,7 @@ object User {
     groupAdmin = false,
     disabled = true,
     firstLoginDate = none,
+    observableOrganisationIds = Nil,
     managingOrganisationIds = Nil,
     managingAreaIds = Nil,
     internalSupportComment = None
