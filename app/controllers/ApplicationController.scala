@@ -1347,6 +1347,9 @@ case class ApplicationController @Inject() (
   private val WorkInProgressMessage = "Je m’en occupe."
   private val WrongInstructorMessage = "Je ne suis pas le bon interlocuteur."
 
+  def answerApplicationHasBeenSolved(applicationId: UUID): Action[AnyContent] =
+    answer(applicationId)
+
   def answer(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application =>
@@ -1386,7 +1389,7 @@ case class ApplicationController @Inject() (
             },
             answerData => {
               val answerType =
-                if (answerData.applicationHasBeenProcessed)
+                if (answerData.applicationHasBeenProcessed.getOrElse(true))
                   AnswerType.ApplicationProcessed
                 else
                   AnswerType.fromString(answerData.answerType)
