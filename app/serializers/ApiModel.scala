@@ -279,6 +279,37 @@ object ApiModel {
     implicit val searchResultFormat: Format[SearchResult] = Json.format[SearchResult]
   }
 
+  object UserGroupSimpleInfos {
+
+    implicit val format: Format[UserGroupSimpleInfos] = Json.format[UserGroupSimpleInfos]
+
+    def fromUserGroup(group: UserGroup): UserGroupSimpleInfos =
+      UserGroupSimpleInfos(
+        id = group.id,
+        name = group.name,
+        description = group.description,
+        areas = group.areaIds.flatMap(Area.fromId).map(_.toString),
+        organisation = group.organisation.map(_.shortName),
+        publicNote = group.publicNote,
+      )
+
+  }
+
+  case class UserGroupSimpleInfos(
+      id: UUID,
+      name: String,
+      description: Option[String],
+      areas: List[String],
+      organisation: Option[String],
+      publicNote: Option[String],
+  )
+
+  case class InviteInfos(applicationId: UUID, areaId: UUID, groups: List[UserGroupSimpleInfos])
+
+  object InviteInfos {
+    implicit val format: Format[InviteInfos] = Json.format[InviteInfos]
+  }
+
   // Embedded classes are here to avoid the 22 fields limit in Play Json
   case class ApplicationMetadata(
       id: UUID,

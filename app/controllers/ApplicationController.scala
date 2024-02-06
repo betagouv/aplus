@@ -33,7 +33,12 @@ import play.api.libs.ws.WSClient
 import play.api.mvc._
 import play.twirl.api.Html
 import serializers.Keys
-import serializers.ApiModel.{ApplicationMetadata, ApplicationMetadataResult}
+import serializers.ApiModel.{
+  ApplicationMetadata,
+  ApplicationMetadataResult,
+  InviteInfos,
+  UserGroupSimpleInfos
+}
 import services._
 import views.dashboard.DashboardInfos
 
@@ -1033,6 +1038,20 @@ case class ApplicationController @Inject() (
       groupsThatAreNotInvitedWithInstructor.sortBy(_.name)
     }
   }
+
+  def applicationInvitableGroups(applicationId: UUID, areaId: UUID): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      withApplication(applicationId) { application =>
+        groupsWhichCanBeInvited(areaId, application).map { invitableGroups =>
+          val infos = InviteInfos(
+            applicationId = applicationId,
+            areaId = areaId,
+            groups = invitableGroups.map(UserGroupSimpleInfos.fromUserGroup)
+          )
+          Ok(Json.toJson(infos))
+        }
+      }
+    }
 
   private def showApplication(
       application: Application,
