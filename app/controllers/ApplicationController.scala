@@ -408,16 +408,16 @@ case class ApplicationController @Inject() (
   ): Future[List[Application]] =
     (user.admin, areaOption) match {
       case (true, None) =>
-        applicationService.allForAreas(user.areas, numOfMonthsDisplayed.some)
+        applicationService.allForAreas(user.areas, numOfMonthsDisplayed.some, false)
       case (true, Some(area)) =>
-        applicationService.allForAreas(List(area.id), numOfMonthsDisplayed.some)
+        applicationService.allForAreas(List(area.id), numOfMonthsDisplayed.some, false)
       case (false, None) if user.groupAdmin =>
         val userIds = userService.byGroupIds(user.groupIds, includeDisabled = true).map(_.id)
-        applicationService.allForUserIds(userIds, numOfMonthsDisplayed.some)
+        applicationService.allForUserIds(userIds, numOfMonthsDisplayed.some, false)
       case (false, Some(area)) if user.groupAdmin =>
         val userIds = userService.byGroupIds(user.groupIds, includeDisabled = true).map(_.id)
         applicationService
-          .allForUserIds(userIds, numOfMonthsDisplayed.some)
+          .allForUserIds(userIds, numOfMonthsDisplayed.some, false)
           .map(_.filter(application => application.area === area.id))
       case _ =>
         Future.successful(Nil)
@@ -509,13 +509,8 @@ case class ApplicationController @Inject() (
   private def applicationIsLate(application: Application): Boolean =
     !application.closed &&
       application.status =!= Application.Status.Processed && (
-        application.answers
+        application.userAnswers
           .filter(_.creatorUserID =!= application.creatorUserId)
-          .filter(answer =>
-            !answer.message.contains("rejoins la conversation automatiquement comme expert") &&
-              !answer.message
-                .contains("Les nouveaux instructeurs rejoignent automatiquement la demande")
-          )
           .lastOption match {
           case None =>
             businessDaysService
@@ -598,10 +593,7 @@ case class ApplicationController @Inject() (
 
       val interactedApplications = openFilteredByGroups.filter { application =>
         application.creatorUserId === user.id ||
-        application.answers.exists(answer =>
-          answer.creatorUserID === user.id && !answer.message
-            .contains("Les nouveaux instructeurs rejoignent automatiquement la demande")
-        )
+        application.userAnswers.exists(answer => answer.creatorUserID === user.id)
       }
       val interactedApplicationsCount = interactedApplications.length
 

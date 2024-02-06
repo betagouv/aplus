@@ -93,7 +93,7 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.7.1",
   anormDependency,
   "org.playframework" %% "play-mailer" % "10.0.0",
-  "org.playframework" %% "play-json" % "3.0.1",
+  "org.playframework" %% "play-json" % "3.0.2",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
@@ -113,7 +113,7 @@ libraryDependencies ++= Seq(
 )
 
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "6.34.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "7.3.0"
 
 // Overrides
 dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"

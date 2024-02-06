@@ -35,7 +35,7 @@ export GROUPS_WHICH_CANNOT_HAVE_INSTRUCTORS="a6d51009-9d0d-42ef-92ae-e8f06d1ffec
 # postgres=# \c aplus
 # You are now connected to database "aplus" as user "postgres".
 # aplus=# CREATE EXTENSION IF NOT EXISTS "unaccent";
-export DATABASE_URL='https://localhost:5432/aplus?user=aplus&password=mysecretpassword'
+export DATABASE_URL='jdbc:postgresql://localhost:5432/aplus?user=aplus&password=mysecretpassword'
 export ANON_DATABASE_URL='jdbc:postgresql://127.0.0.1:15666/test?user=toto&password=test'
 export APP_ANONYMIZED_EXPORT_ENABLED=false
 #export ANON_DATABASE_EVOLUTIONS_AUTOAPPLY=true
