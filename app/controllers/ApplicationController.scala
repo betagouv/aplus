@@ -161,16 +161,7 @@ case class ApplicationController @Inject() (
               case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
                 val categories = organisationService.categories
                 Ok(
-                  views.html.createApplication(request.currentUser, request.rights, currentArea)(
-                    userGroups,
-                    instructorsOfGroups,
-                    groupsOfAreaWithInstructor,
-                    coworkers,
-                    readSharedAccountUserSignature(request.session),
-                    canCreatePhoneMandat = currentArea === Area.calvados,
-                    categories,
-                    ApplicationFormData.form(request.currentUser)
-                  )
+                  views.createApplication.page(request.currentUser, request.rights, currentArea)
                 )
             }
           )
