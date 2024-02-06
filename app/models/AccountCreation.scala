@@ -49,6 +49,7 @@ case class AccountCreationRequest(
       ("Responsable", isManager.toString),
       ("Instructeur", isInstructor.toString),
       ("Message", message.getOrElse("")),
+      ("Adresse IP", fillingIpAddress),
       ("Utilisateur ayant rejeté", id.toString),
       ("Date de rejet", rejectionDateLog),
       ("Raison du rejet", rejectionReasonLog)
