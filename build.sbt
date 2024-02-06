@@ -63,12 +63,13 @@ scalacOptions ++= Seq(
   "-Woctal-literal",
   // "-Wself-implicit", // Warns about too much useful constructs
   // Note: -Wunused:imports cannot work with twirl
-  // "-Wunused:imports",
+  "-Wunused:imports",
   "-Wunused:patvars",
   "-Wunused:privates",
   "-Wunused:locals",
   // "-Wunused:explicits", TODO: lot of warnings, enable later
   "-Wunused:implicits",
+  "-Wconf:cat=unused:info",
   "-Wvalue-discard"
 )
 
