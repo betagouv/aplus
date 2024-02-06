@@ -21,6 +21,7 @@ class JavascriptController() extends InjectedController {
           routes.javascript.GroupController.deleteUnusedGroupById,
           routes.javascript.GroupController.editGroup,
           routes.javascript.ApplicationController.applicationsAdmin,
+          routes.javascript.ApplicationController.applicationInvitableGroups,
           routes.javascript.ApplicationController.applicationsMetadata,
           routes.javascript.ApplicationController.create,
           routes.javascript.ApplicationController.show,
