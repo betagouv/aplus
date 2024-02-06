@@ -48,6 +48,8 @@ class UserService @Inject() (
     "first_login_date",
     "phone_number",
     "observable_organisation_ids",
+    "managing_organisation_ids",
+    "managing_area_ids",
     "shared_account",
     "internal_support_comment"
   )
@@ -353,6 +355,8 @@ class UserService @Inject() (
           phone_number = ${row.phoneNumber},
           disabled = ${row.disabled},
           observable_organisation_ids = array[${row.observableOrganisationIds}]::varchar[],
+          managing_organisation_ids = array[${row.managingOrganisationIds}]::varchar[],
+          managing_area_ids = array[${row.managingAreaIds}]::uuid[],
           shared_account = ${row.sharedAccount},
           internal_support_comment = ${row.internalSupportComment}
           WHERE id = ${row.id}::uuid

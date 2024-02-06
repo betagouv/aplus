@@ -92,6 +92,8 @@ case class SignupController @Inject() (
               firstLoginDate = Instant.now().some,
               phoneNumber = form.phoneNumber,
               observableOrganisationIds = Nil,
+              managingOrganisationIds = Nil,
+              managingAreaIds = Nil,
               sharedAccount = form.sharedAccount,
               internalSupportComment = None
             )

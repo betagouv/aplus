@@ -19,6 +19,14 @@ interface UserInfosGroup {
   currentUserCanEditGroup: boolean;
 }
 
+interface UserInfosPermissions {
+  helper: boolean;
+  instructor: boolean;
+  groupAdmin: boolean;
+  admin: boolean;
+  expert: boolean;
+}
+
 interface UserInfos {
   id: string;
   firstName: string | null;
@@ -28,18 +36,14 @@ interface UserInfos {
   qualite: string;
   email: string;
   phoneNumber: string | null;
-  helper: boolean;
-  instructor: boolean;
   areas: Array<string>;
   groupNames: Array<String>;
   groups: Array<UserInfosGroup>;
   groupEmails: Array<String>;
-  groupAdmin: boolean;
-  admin: boolean;
-  expert: boolean;
   disabled: boolean;
   sharedAccount: boolean;
   cgu: boolean;
+  permissions: UserInfosPermissions;
 }
 
 interface UserGroupInfos {
@@ -72,14 +76,14 @@ async function callSearch(searchString: string): Promise<SearchResult> {
 
 if (window.document.getElementById(usersTableId)) {
   const verticalHeader = false;
-  const editIcon: Formatter = function(cell) {
+  const editIcon: Formatter = function (cell) {
     //plain text value
     let uuid = cell.getRow().getData().id;
     let url = jsRoutes.controllers.UserController.editUser(uuid).url;
     return "<a href='" + url + "' target=\"_blank\" ><i class='fas fa-user-edit'></i></a>";
   };
 
-  const groupsFormatter: Formatter = function(cell) {
+  const groupsFormatter: Formatter = function (cell) {
     const groups = <Array<UserInfosGroup>>cell.getRow().getData().groups;
     let links = "";
     let isNotFirst = false;
@@ -99,7 +103,7 @@ if (window.document.getElementById(usersTableId)) {
     return links;
   };
 
-  const joinWithCommaDownload: CustomAccessor = function(value) {
+  const joinWithCommaDownload: CustomAccessor = function (value) {
     if (value != null) {
       return value.join(", ");
     } else {
@@ -107,14 +111,14 @@ if (window.document.getElementById(usersTableId)) {
     }
   };
 
-  const groupNameFormatter: Formatter = function(cell) {
+  const groupNameFormatter: Formatter = function (cell) {
     const group = <UserGroupInfos>cell.getRow().getData();
     const groupUrl = jsRoutes.controllers.GroupController.editGroup(group.id).url;
     const html = "<a href=\"" + groupUrl + "\" target=\"_blank\" >" + group.name + "</a>";
     return html;
   };
 
-  const rowFormatter = function(row: RowComponent) {
+  const rowFormatter = function (row: RowComponent) {
     let element = row.getElement(),
       data = row.getData();
     if (data.disabled) {
@@ -175,7 +179,7 @@ if (window.document.getElementById(usersTableId)) {
     },
     {
       title: "Aidant",
-      field: "helper",
+      field: "permissions.helper",
       formatter: "tickCross",
       headerFilter: "tickCross",
       headerFilterParams: { tristate: true },
@@ -185,7 +189,7 @@ if (window.document.getElementById(usersTableId)) {
     },
     {
       title: "Instructeur",
-      field: "instructor",
+      field: "permissions.instructor",
       formatter: "tickCross",
       headerFilter: "tickCross",
       headerFilterParams: { tristate: true },
@@ -195,7 +199,7 @@ if (window.document.getElementById(usersTableId)) {
     },
     {
       title: "Responsable",
-      field: "groupAdmin",
+      field: "permissions.groupAdmin",
       formatter: "tickCross",
       headerFilter: "tickCross",
       headerFilterParams: { tristate: true },
@@ -215,7 +219,7 @@ if (window.document.getElementById(usersTableId)) {
     },
     {
       title: "Expert",
-      field: "expert",
+      field: "permissions.expert",
       formatter: "tickCross",
       headerFilter: "tickCross",
       headerFilterParams: { tristate: true },
@@ -225,7 +229,7 @@ if (window.document.getElementById(usersTableId)) {
     },
     {
       title: "Admin",
-      field: "admin",
+      field: "permissions.admin",
       formatter: "tickCross",
       headerFilter: "tickCross",
       headerFilterParams: { tristate: true },
@@ -289,6 +293,22 @@ if (window.document.getElementById(usersTableId)) {
       headerFilter: "input",
       formatter: "html",
       width: 200,
+    },
+    {
+      title: "Organismes en charge",
+      field: "permissions.managingOrganisations",
+      sorter: "string",
+      headerFilter: "input",
+      width: 200,
+      accessorDownload: joinWithCommaDownload,
+    },
+    {
+      title: "Départements en charge",
+      field: "permissions.managingAreas",
+      sorter: "string",
+      headerFilter: "input",
+      width: 200,
+      accessorDownload: joinWithCommaDownload,
     },
   ];
 
@@ -367,7 +387,16 @@ if (window.document.getElementById(usersTableId)) {
     columns: adminColumns,
   };
 
-  const excludedFieldsForNonAdmins = ["name", "lastName", "firstName", "helper", "expert", "admin"];
+  const excludedFieldsForNonAdmins = [
+    "name",
+    "lastName",
+    "firstName",
+    "permissions.helper",
+    "permissions.expert",
+    "permissions.admin",
+    "permissions.managingOrganisations",
+    "permissions.managingAreas",
+  ];
   if (!canSeeEditUserPage) {
     excludedFieldsForNonAdmins.push("id");
   }
@@ -402,7 +431,7 @@ if (window.document.getElementById(usersTableId)) {
 
   const usersOptions: Options = isAdmin ? usersOptionsForAdmins : usersOptionsForNonAdmins;
   usersTable = new TabulatorFull("#" + usersTableId, usersOptions);
-  usersTable.on("tableBuilt", function() {
+  usersTable.on("tableBuilt", function () {
     usersTable?.setLocale("fr-fr");
   });
 
@@ -420,7 +449,7 @@ if (window.document.getElementById(usersTableId)) {
       columns: groupsColumns,
     };
     groupsTable = new TabulatorFull("#" + groupsTableId, groupsOptions);
-    groupsTable.on("tableBuilt", function() {
+    groupsTable.on("tableBuilt", function () {
       groupsTable?.setLocale("fr-fr");
       groupsTable?.setSort("name", "asc");
     });

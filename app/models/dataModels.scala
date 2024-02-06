@@ -293,6 +293,8 @@ object dataModels {
         firstLoginDate = user.firstLoginDate,
         phoneNumber = user.phoneNumber,
         observableOrganisationIds = user.observableOrganisationIds.distinct.map(_.id),
+        managingOrganisationIds = user.managingOrganisationIds.distinct.map(_.id),
+        managingAreaIds = user.managingAreaIds.distinct,
         sharedAccount = user.sharedAccount,
         internalSupportComment = user.internalSupportComment,
       )
@@ -323,6 +325,8 @@ object dataModels {
       firstLoginDate: Option[Instant],
       phoneNumber: Option[String],
       observableOrganisationIds: List[String],
+      managingOrganisationIds: List[String],
+      managingAreaIds: List[UUID],
       sharedAccount: Boolean,
       internalSupportComment: Option[String]
   ) {
@@ -350,6 +354,8 @@ object dataModels {
       firstLoginDate = firstLoginDate,
       phoneNumber = phoneNumber,
       observableOrganisationIds = observableOrganisationIds.map(Organisation.Id.apply),
+      managingOrganisationIds = managingOrganisationIds.map(Organisation.Id.apply),
+      managingAreaIds = managingAreaIds,
       sharedAccount = sharedAccount,
       internalSupportComment = internalSupportComment
     )
