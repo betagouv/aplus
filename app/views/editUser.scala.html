@@ -125,6 +125,31 @@
                 >@{organisation.shortName} - @{organisation.name}</option>
             }
           </select>
+
+          <b class="mdl-cell mdl-cell--12-col">Responsable d’organismes</b>
+          <select name="managingOrganisationIds[]"
+                  class="use-slimselect"
+                  @if(!currentUser.admin) { disabled }
+                  multiple>
+            @for(organisation <- Organisation.all) {
+              <option value="@{organisation.id.id}"
+              @if(form.value.exists(_.managingOrganisationIds.contains[Organisation.Id](organisation.id))){ selected }
+              >@{organisation.shortName} - @{organisation.name}</option>
+            }
+          </select>
+          <b class="mdl-cell mdl-cell--12-col">Responsable de territoires</b>
+          <select id="user-managing-area-ids"
+                  name="managingAreaIds[]"
+                  class="use-slimselect"
+                  @if(!currentUser.admin) { disabled }
+                  multiple>
+              @for(area <- Area.all) {
+                    <option value="@area.id"
+                        @if(form.value.exists(_.managingAreaIds.contains[UUID](area.id))){ selected }
+                    >@area.name</option>
+              }
+          </select>
+
           @if(form("areas").hasErrors) {
             <p style="color: red; font-weight: bold;">@form("areas").errors.map(_.format).mkString(", ")</p>
           }

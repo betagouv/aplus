@@ -32,6 +32,9 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
     firstLoginDate = None,
     groupAdmin = true,
     disabled = false,
+    observableOrganisationIds = Nil,
+    managingOrganisationIds = Nil,
+    managingAreaIds = Nil,
     internalSupportComment = None
   )
 
