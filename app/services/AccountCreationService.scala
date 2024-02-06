@@ -78,9 +78,9 @@ class AccountCreationService @Inject() (
         """)
           .on("id" -> id)
           .as((accountCreationFormParser ~ accountCreationFormSignatureParser.?).*)
-          .groupBy(_._1)
+          .groupBy { case form ~ _ => form }
           .map { case (form, signatures) =>
-            AccountCreation(form, signatures.flatMap(_._2))
+            AccountCreation(form, signatures.flatMap { case _ ~ signatures => signatures })
           }
           .headOption
       }

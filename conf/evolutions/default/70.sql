@@ -1,4 +1,5 @@
 --- !Ups
+
 CREATE TABLE account_creation_request (
     id uuid PRIMARY KEY,
     request_date timestamp with time zone NOT NULL,
@@ -31,7 +32,10 @@ CREATE TABLE account_creation_request_signature (
     phone_number character varying(40)
 );
 
+
+
 --- !Downs
+
 DROP TABLE account_creation_request_signature;
 DROP INDEX account_creation_request_lower_email_idx;
 DROP INDEX account_creation_request_date_idx;

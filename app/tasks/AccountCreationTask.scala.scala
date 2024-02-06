@@ -46,23 +46,24 @@ class AccountCreationTask @Inject() (
           .sequence
           .map { results =>
             val failures = results.collect { case (email, Left(e)) => (email, e) }
-            if (failures.isEmpty)
-              ().asRight[Error]
-            else
-              Error
-                .MiscException(
-                  EventType.SignupsError,
-                  (
-                    "Erreurs lors de la tentative d'envoi " +
-                      "des statistiques des demandes de création de compte : " +
-                      failures
-                        .map { case (email, e) => s"<$email> : ${e.getMessage}" }
-                        .mkString(" ; ")
-                  ),
-                  failures.last._2,
-                  none
-                )
-                .asLeft[Unit]
+            failures.lastOption match {
+              case None => ().asRight[Error]
+              case Some((_, lastFailure)) =>
+                Error
+                  .MiscException(
+                    EventType.SignupsError,
+                    (
+                      "Erreurs lors de la tentative d'envoi " +
+                        "des statistiques des demandes de création de compte : " +
+                        failures
+                          .map { case (email, e) => s"<$email> : ${e.getMessage}" }
+                          .mkString(" ; ")
+                    ),
+                    lastFailure,
+                    none
+                  )
+                  .asLeft[Unit]
+            }
           }
       )
     }.value

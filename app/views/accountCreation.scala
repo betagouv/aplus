@@ -2,18 +2,14 @@ package views
 
 import cats.syntax.all._
 import controllers.routes.{AccountCreationController, JavascriptController}
-import models.{AccountCreationRequest, Area, Organisation, User, UserGroup}
+import java.util.UUID
 import models.formModels.AccountCreationFormData
-import play.api.data.Field
-import play.api.data.Form
+import models.{Area, Organisation, User, UserGroup}
+import play.api.data.{Field, Form}
 import play.api.i18n.MessagesProvider
-import play.api.mvc.Flash
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
-
-import java.util.UUID
-
-import helpers.forms.{displayFormGlobalErrors, selectInput, textInput, CSRFInput}
+import views.helpers.forms.CSRFInput
 
 object accountCreation {
 

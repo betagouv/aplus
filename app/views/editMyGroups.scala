@@ -2,20 +2,19 @@ package views
 
 import cats.syntax.all._
 import controllers.routes.{AccountCreationController, GroupController, UserController}
-import helpers.forms.CSRFInput
 import helper.Time
 import helper.TwirlImports.toHtml
 import java.time.Instant
 import java.util.UUID
-import models.{Application, Authorization, User, UserGroup}
 import models.formModels.AddUserToGroupFormData
+import models.{AccountCreation, Application, Authorization, User, UserGroup}
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.i18n.MessagesProvider
 import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
-import models.AccountCreation
+import views.helpers.forms.CSRFInput
 
 object editMyGroups {
 
