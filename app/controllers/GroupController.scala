@@ -38,9 +38,11 @@ import models.EventType.{
 import modules.AppConfig
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
+import cats.data.EitherT
 
 @Singleton
 case class GroupController @Inject() (
+    accountCreationService: AccountCreationService,
     config: AppConfig,
     applicationService: ApplicationService,
     loginAction: LoginAction,
@@ -410,35 +412,40 @@ case class GroupController @Inject() (
       rights: Authorization.UserRights,
       addUserForm: Form[AddUserToGroupFormData]
   )(implicit request: RequestWithUserData[_]): Future[Result] =
-    for {
-      groups <- groupService.byIdsFuture(user.groupIds)
-      users <- userService.byGroupIdsFuture(groups.map(_.id), includeDisabled = true)
-      applications <- applicationService.allForUserIds(users.map(_.id), none)
-      lastActivityResult <- adminLastActivity(users.map(_.id), rights)
+    (for {
+      groups <- EitherT.right(groupService.byIdsFuture(user.groupIds))
+      users <- EitherT.right(userService.byGroupIdsFuture(groups.map(_.id), includeDisabled = true))
+      applications <- EitherT.right(applicationService.allForUserIds(users.map(_.id), none))
+      lastActivity <- EitherT(adminLastActivity(users.map(_.id), rights))
+      accountCreationForms <- EitherT(
+        accountCreationService
+          .listByAreasAndOrganisations(user.managingAreaIds, user.managingOrganisationIds)
+      )
     } yield {
-      lastActivityResult.fold(
+      eventService.log(EventType.EditMyGroupShowed, "Visualise la modification de ses groupes")
+      Ok(
+        views.editMyGroups
+          .page(
+            user,
+            rights,
+            addUserForm,
+            groups,
+            users,
+            applications,
+            lastActivity.toMap,
+            accountCreationForms,
+            identity
+          )
+      )
+    }).value.map(
+      _.fold(
         error => {
           eventService.logError(error)
           InternalServerError(Constants.genericError500Message)
         },
-        lastActivity => {
-          eventService.log(EventType.EditMyGroupShowed, "Visualise la modification de ses groupes")
-          Ok(
-            views.editMyGroups
-              .page(
-                user,
-                rights,
-                addUserForm,
-                groups,
-                users,
-                applications,
-                lastActivity.toMap,
-                identity
-              )
-          )
-        }
+        identity
       )
-    }
+    )
 
   private def editGroupPage(group: UserGroup, addUserForm: Form[AddUserToGroupFormData])(implicit
       request: RequestWithUserData[_]

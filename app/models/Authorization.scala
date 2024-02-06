@@ -366,4 +366,10 @@ object Authorization {
         answerFileCanBeShowed(filesExpirationInDays)(application, answerId)(userId, rights)
     }
 
+  def canManageAccountCreationForm(form: AccountCreationRequest): Check =
+    atLeastOneIsAuthorized(
+      isAdmin,
+      isAreaManager(form.areaIds.toSet, form.organisationId.toSet)
+    )
+
 }

@@ -108,4 +108,16 @@ class AppConfig @Inject() (configuration: Configuration) {
   val statisticsTimeToProcessApplicationsUrl: Option[String] =
     configuration.getOptional[String]("app.statistics.timeToProcessApplicationsUrl")
 
+  val accountCreationAbuseThreshold: Int =
+    configuration.get[Int]("app.accountCreation.abuseThreshold")
+
+  val accountCreationAdminEmails: List[String] =
+    configuration
+      .get[String]("app.accountCreation.adminEmails")
+      .split(",")
+      .map(_.trim)
+      .filterNot(_.isEmpty)
+      .distinct
+      .toList
+
 }

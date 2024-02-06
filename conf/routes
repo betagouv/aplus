@@ -49,7 +49,16 @@ GET         /inscription                                                        
 POST        /inscription                                                                     controllers.SignupController.createSignup
 GET         /utilisateurs/inscriptions                                                       controllers.SignupController.signupRequests
 POST        /utilisateurs/inscriptions/add-emails                                            controllers.SignupController.addSignupRequests
-
+GET         /utilisateurs/creation-de-compte/choix-type-de-compte                            controllers.AccountCreationController.accountTypeForm
+POST        /utilisateurs/creation-de-compte/choix-type-de-compte                            controllers.AccountCreationController.handleAccountTypeForm
+GET         /utilisateurs/creation-de-compte/nominatif                                       controllers.AccountCreationController.namedAccountCreationForm
+POST        /utilisateurs/creation-de-compte/nominatif                                       controllers.AccountCreationController.handleNamedAccountCreationForm
+GET         /utilisateurs/creation-de-compte/partage                                         controllers.AccountCreationController.sharedAccountCreationForm
+POST        /utilisateurs/creation-de-compte/partage                                         controllers.AccountCreationController.handleSharedAccountCreationForm
+GET         /utilisateurs/creation-de-compte/formulaire-envoye                               controllers.AccountCreationController.formSent
+GET         /utilisateurs/creation-de-compte/validation/:formId                              controllers.AccountCreationController.managerValidation(formId: java.util.UUID)
+POST        /utilisateurs/creation-de-compte/validation/:formId/ajout                        controllers.AccountCreationController.handleManagerValidation(formId: java.util.UUID)
+POST        /utilisateurs/creation-de-compte/validation/:formId/refus                        controllers.AccountCreationController.handleManagerRejection(formId: java.util.UUID)
 
 # Login
 GET         /login                                                                           controllers.LoginController.login

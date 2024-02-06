@@ -8,7 +8,96 @@ import views.helpers.head.publicCss
 
 object publicStats {
 
-  def page: Tag =
+  def page: Tag = basePage(
+    "Statistiques - Administration+",
+    frag(
+      div(
+        cls := "fr-container fr-my-6w",
+        h1("Statistiques d’Administration+")
+      ),
+      div(
+        cls := "fr-container fr-my-6w",
+        div(
+          cls := "fr-grid-row fr-grid-row--gutters",
+          div(
+            cls := "fr-col-md-8 fr-col-sm-12 fr-col-lg-8",
+            h2("Utilisation du service"),
+            p(
+              "Histogramme du nombre de demandes déposées chaque mois par les aidants ",
+              "actifs sur la plateforme."
+            )
+          )
+        ),
+        div(
+          cls := "fr-grid-row fr-grid-row--gutters fr-mb-4w",
+          div(
+            cls := "fr-col-md-12 fr-col-sm-12 fr-col-lg-12",
+            iframe(
+              src := "https://statistiques.aplus.beta.gouv.fr/public/question/e2ac028c-8311-42cd-9770-f7b28763294b",
+              attr("frameborder") := "0",
+              // Use attr here, otherwise width and height are put in the style attribute
+              attr("width") := "100%",
+              attr("height") := "400",
+              attr("allowtransparency").empty,
+            )
+          )
+        ),
+        div(
+          cls := "fr-grid-row fr-grid-row--gutters",
+          div(
+            cls := "fr-col-md-8 fr-col-sm-12 fr-col-lg-8",
+            h2("Impact sur l’année"),
+            p(
+              "Les calculs sont effectués sur une année glissante. La mise à jour est journalière."
+            )
+          )
+        ),
+        div(
+          cls := "fr-grid-row fr-grid-row--gutters",
+          div(
+            cls := "fr-col-md-6 fr-col-sm-12 fr-col-lg-6",
+            iframe(
+              src := "https://statistiques.aplus.beta.gouv.fr/public/question/2e205bc5-6498-4309-8ae9-3c4a26c47447",
+              attr("frameborder") := "0",
+              attr("width") := "100%",
+              attr("height") := "400",
+              attr("allowtransparency").empty,
+            )
+          ),
+          div(
+            cls := "fr-col-md-6 fr-col-sm-12 fr-col-lg-6",
+            iframe(
+              src := "https://statistiques.aplus.beta.gouv.fr/public/question/6f10c8fc-1d4b-458e-8bd4-f93051c5c5d6",
+              attr("frameborder") := "0",
+              attr("width") := "100%",
+              attr("height") := "400",
+              attr("allowtransparency").empty,
+            )
+          ),
+        ),
+        div(
+          cls := "fr-grid-row fr-grid-row--gutters fr-mb-4w",
+          div(
+            cls := "fr-col-md-12 fr-col-sm-12 fr-col-lg-12",
+            iframe(
+              src := "https://statistiques.aplus.beta.gouv.fr/public/question/511fb17f-6eb1-4e31-802b-183e7187c95d",
+              attr("frameborder") := "0",
+              attr("width") := "100%",
+              attr("height") := "400",
+              attr("allowtransparency").empty,
+            )
+          )
+        ),
+      )
+    )
+  )
+
+  private def basePage(
+      pageTitle: String,
+      inner: Frag,
+      additionalHeadTags: Frag = frag(),
+      additionalFooterTags: Frag = frag()
+  ): Tag =
     html(
       lang := "fr",
       attr("data-fr-scheme") := "system",
@@ -26,7 +115,8 @@ object publicStats {
           `type` := "image/png",
           href := Assets.versioned("images/favicon.png").url
         ),
-        tags2.title(s"Statistiques - Administration+"),
+        tags2.title(pageTitle),
+        additionalHeadTags
       ),
       body(
         header(
@@ -155,84 +245,7 @@ object publicStats {
           )
         ),
         tags2.main(
-          div(
-            cls := "fr-container fr-my-6w",
-            h1("Statistiques d’Administration+")
-          ),
-          div(
-            cls := "fr-container fr-my-6w",
-            div(
-              cls := "fr-grid-row fr-grid-row--gutters",
-              div(
-                cls := "fr-col-md-8 fr-col-sm-12 fr-col-lg-8",
-                h2("Utilisation du service"),
-                p(
-                  "Histogramme du nombre de demandes déposées chaque mois par les aidants ",
-                  "actifs sur la plateforme."
-                )
-              )
-            ),
-            div(
-              cls := "fr-grid-row fr-grid-row--gutters fr-mb-4w",
-              div(
-                cls := "fr-col-md-12 fr-col-sm-12 fr-col-lg-12",
-                iframe(
-                  src := "https://statistiques.aplus.beta.gouv.fr/public/question/e2ac028c-8311-42cd-9770-f7b28763294b",
-                  attr("frameborder") := "0",
-                  // Use attr here, otherwise width and height are put in the style attribute
-                  attr("width") := "100%",
-                  attr("height") := "400",
-                  attr("allowtransparency").empty,
-                )
-              )
-            ),
-            div(
-              cls := "fr-grid-row fr-grid-row--gutters",
-              div(
-                cls := "fr-col-md-8 fr-col-sm-12 fr-col-lg-8",
-                h2("Impact sur l’année"),
-                p(
-                  "Les calculs sont effectués sur une année glissante. La mise à jour est journalière."
-                )
-              )
-            ),
-            div(
-              cls := "fr-grid-row fr-grid-row--gutters",
-              div(
-                cls := "fr-col-md-6 fr-col-sm-12 fr-col-lg-6",
-                iframe(
-                  src := "https://statistiques.aplus.beta.gouv.fr/public/question/2e205bc5-6498-4309-8ae9-3c4a26c47447",
-                  attr("frameborder") := "0",
-                  attr("width") := "100%",
-                  attr("height") := "400",
-                  attr("allowtransparency").empty,
-                )
-              ),
-              div(
-                cls := "fr-col-md-6 fr-col-sm-12 fr-col-lg-6",
-                iframe(
-                  src := "https://statistiques.aplus.beta.gouv.fr/public/question/6f10c8fc-1d4b-458e-8bd4-f93051c5c5d6",
-                  attr("frameborder") := "0",
-                  attr("width") := "100%",
-                  attr("height") := "400",
-                  attr("allowtransparency").empty,
-                )
-              ),
-            ),
-            div(
-              cls := "fr-grid-row fr-grid-row--gutters fr-mb-4w",
-              div(
-                cls := "fr-col-md-12 fr-col-sm-12 fr-col-lg-12",
-                iframe(
-                  src := "https://statistiques.aplus.beta.gouv.fr/public/question/511fb17f-6eb1-4e31-802b-183e7187c95d",
-                  attr("frameborder") := "0",
-                  attr("width") := "100%",
-                  attr("height") := "400",
-                  attr("allowtransparency").empty,
-                )
-              )
-            ),
-          )
+          inner
         ),
         footer(
           cls := "fr-footer",
@@ -392,6 +405,7 @@ object publicStats {
           attr("nomodule").empty,
           src := Assets.versioned("generated-js/dsfr/dsfr.nomodule.min.js").url
         ),
+        additionalFooterTags
       )
     )
 

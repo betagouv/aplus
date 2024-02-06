@@ -2,9 +2,10 @@ package helper
 
 import cats.effect.IO
 import cats.syntax.all._
-import java.time.Instant
+import java.time.{Instant, ZoneOffset}
+import java.time.temporal.ChronoUnit
 import models.{Error, EventType}
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 import services.EventService
 
 trait TasksHelpers {
@@ -58,5 +59,17 @@ trait TasksHelpers {
 
   def repeatWithDelay(delayUntilNextTick: Instant => IO[FiniteDuration])(task: IO[Unit]): IO[Unit] =
     nextTick(delayUntilNextTick) >> task >> repeatWithDelay(delayUntilNextTick)(task)
+
+  def untilNextDayAt(hour: Int, minute: Int)(now: Instant): IO[FiniteDuration] = IO {
+    val nextInstant = now
+      .atZone(ZoneOffset.UTC)
+      .toLocalDate
+      .atStartOfDay(ZoneOffset.UTC)
+      .plusDays(1)
+      .withHour(hour)
+      .withMinute(minute)
+      .toInstant
+    now.until(nextInstant, ChronoUnit.MILLIS).millis
+  }
 
 }

@@ -1,5 +1,6 @@
 package services
 
+import cats.effect.IO
 import cats.syntax.all._
 import constants.Constants
 import controllers.routes
@@ -262,6 +263,42 @@ class NotificationService @Inject() (
         val _ = emailsService.sendBlocking(email, EmailPriority.Normal)
       case _ =>
     }
+  }
+
+  def formCreationStatsForAdmins(
+      userEmail: String,
+      stats: Option[AccountCreationStats],
+      abuseThreshold: Int,
+      formsByIp: Map[String, Int],
+      abuseByIp: Map[String, Int]
+  ): IO[Unit] = {
+    val bodyInner =
+      common.formCreationStatsForAdminsBody(stats, abuseThreshold, formsByIp, abuseByIp)
+    val email = Email(
+      subject = common.formCreationStatsForAdminsSubject,
+      from = from,
+      replyTo = replyTo,
+      to = List(userEmail),
+      bodyHtml = Some(common.renderEmail(bodyInner))
+    )
+    emailsService.sendWithBackoff(email, EmailPriority.Normal).void
+  }
+
+  def formCreationAbuseForAdmins(
+      userEmail: String,
+      abuseThreshold: Int,
+      formsByIp: Map[String, Int],
+      abuseByIp: Map[String, Int]
+  ): Unit = {
+    val bodyInner = common.formCreationAbuseForAdminsBody(abuseThreshold, formsByIp, abuseByIp)
+    val email = Email(
+      subject = common.formCreationAbuseForAdminsSubject,
+      from = from,
+      replyTo = replyTo,
+      to = List(userEmail),
+      bodyHtml = Some(common.renderEmail(bodyInner))
+    )
+    emailsService.sendBackground(email, EmailPriority.Normal)
   }
 
   private def generateNotificationBALEmail(

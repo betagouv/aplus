@@ -1,6 +1,8 @@
 package services
 
 import cats.data.NonEmptyList
+import cats.effect._
+import cats.effect.std.Random
 import cats.syntax.all._
 import helper.MiscHelpers
 import javax.inject.{Inject, Singleton}
@@ -11,9 +13,8 @@ import org.apache.pekko.stream.{Materializer, RestartSettings}
 import play.api.Logger
 import play.api.libs.concurrent.MaterializerProvider
 import play.api.libs.mailer.{Email, SMTPConfiguration, SMTPMailer}
-import com.typesafe.config.{Config, ConfigFactory}
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.javaapi.CollectionConverters.asScala
 import scala.util.Try
 
@@ -59,6 +60,7 @@ class EmailsService @Inject() (
     dependencies: ServicesDependencies,
     materializerProvider: MaterializerProvider,
 ) {
+  import dependencies.ioRuntime
   import EmailsService._
 
   implicit val materializer: Materializer = materializerProvider.get
@@ -151,5 +153,39 @@ class EmailsService @Inject() (
         }
       }
       .runWith(Sink.last)
+
+  def sendWithBackoff(email: Email, priority: EmailPriority): IO[Option[String]] = {
+    def send: IO[Option[String]] = IO.blocking {
+      sendBlocking(email, priority)
+    }
+
+    send
+      .handleErrorWith { e =>
+        Random.scalaUtilRandom[IO].flatMap { random =>
+          val baseDelay = 10.seconds
+          val maxDelay = 40.seconds
+          val randomFactor = 0.2
+
+          def backoff(attempt: Int): IO[FiniteDuration] =
+            random.nextDouble.map { randomDouble =>
+              val randomPart = randomFactor * randomDouble
+              val delay = baseDelay * math.pow(2, attempt.toDouble).toLong
+              (delay + (delay * randomPart.toLong)).min(maxDelay)
+            }
+
+          def loop(attempt: Int): IO[Option[String]] =
+            if (attempt > 3) IO.raiseError(e)
+            else backoff(attempt).flatMap(IO.sleep) *> send.handleErrorWith(_ => loop(attempt + 1))
+
+          loop(1)
+        }
+      }
+  }
+
+  def sendBackground(email: Email, priority: EmailPriority): Unit =
+    sendWithBackoff(email, priority).unsafeRunAsync {
+      case Left(e)  => log.error(s"Impossible d'envoyer un email à ${email.to.mkString(", ")}", e)
+      case Right(_) => // Log is already done at this point
+    }
 
 }

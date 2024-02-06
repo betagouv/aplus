@@ -537,4 +537,73 @@ object formModels {
 
   }
 
+  case class AccountCreationFormData(
+      email: String,
+      isNamedAccount: Boolean,
+      firstName: String,
+      lastName: String,
+      phoneNumber: Option[String],
+      area: List[UUID],
+      qualite: Option[String],
+      organisation: Option[Organisation.Id],
+      miscOrganisation: Option[String],
+      isManager: Boolean,
+      isInstructor: Boolean,
+      message: Option[String],
+      signatures: List[AccountCreationFormData.Signature],
+      groups: List[UUID],
+  )
+
+  object AccountCreationFormData {
+
+    case class Signature(
+        firstName: String,
+        lastName: String,
+        phoneNumber: Option[String]
+    )
+
+    val signatureForm: Form[Signature] =
+      Form(
+        mapping(
+          "firstName" -> nonEmptyText,
+          "lastName" -> nonEmptyText,
+          "phoneNumber" -> optional(text)
+        )(Signature.apply)(Signature.unapply)
+      )
+
+    // TODO: add character constraints
+    // TODO: unicode
+    val form: Form[AccountCreationFormData] =
+      Form(
+        mapping(
+          "email" -> email,
+          "isNamedAccount" -> boolean,
+          "firstName" -> nonEmptyText,
+          "lastName" -> nonEmptyText,
+          "phoneNumber" -> optional(text),
+          // TODO: validate
+          "area" -> list(uuid),
+          "qualite" -> optional(text),
+          // TODO: validate
+          "organisation" -> optional(of[Organisation.Id]),
+          "miscOrganisation" -> optional(text),
+          "isManager" -> boolean,
+          "isInstructor" -> boolean,
+          "message" -> optional(text),
+          "signatures" -> list(signatureForm.mapping),
+          "groups" -> list(uuid),
+        )(AccountCreationFormData.apply)(AccountCreationFormData.unapply)
+      )
+
+    case class AccountType(isNamedAccount: Boolean)
+
+    val accountTypeForm: Form[AccountType] =
+      Form(
+        mapping(
+          "isNamedAccount" -> boolean,
+        )(AccountType.apply)(AccountType.unapply)
+      )
+
+  }
+
 }
