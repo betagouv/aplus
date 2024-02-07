@@ -1,20 +1,18 @@
 package controllers
 
-import java.time.LocalDate
-import java.util.UUID
-
 import actions.{LoginAction, RequestWithUserData}
 import cats.data.EitherT
 import cats.syntax.all._
 import controllers.Operators.{GroupOperators, UserOperators}
+import helper.{Time, UUIDHelper}
 import helper.BooleanHelper.not
 import helper.StringHelper.{capitalizeName, commonStringInputNormalization}
-import helper.{Time, UUIDHelper}
+import java.time.LocalDate
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
+import models.{Answer, Application, Area, Authorization, Error, EventType, User, UserGroup}
 import models.EventType.{
   AddUserError,
-  AllUserIncorrectSetup,
-  AllUserUnauthorized,
   CGUShowed,
   CGUValidated,
   CGUValidationError,
@@ -41,9 +39,7 @@ import models.EventType.{
   UsersShowed,
   ViewUserUnauthorized
 }
-import models._
 import models.formModels.{
-  normalizedOptionalText,
   AddUserFormData,
   AddUsersFormData,
   EditProfileFormData,
@@ -53,19 +49,24 @@ import models.formModels.{
 import modules.AppConfig
 import org.postgresql.util.PSQLException
 import org.webjars.play.WebJarsUtil
+import play.api.data.Form
 import play.api.data.Forms._
-import play.api.data.validation.Constraints.{maxLength, nonEmpty}
-import play.api.data.{Form, Mapping}
 import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
-import play.api.mvc._
+import play.api.mvc.{Action, AnyContent, Call, InjectedController, Result}
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
-import serializers.Keys
 import serializers.ApiModel.{SearchResult, UserGroupInfos, UserInfos}
-import services._
+import serializers.Keys
+import services.{
+  ApplicationService,
+  EventService,
+  NotificationService,
+  UserGroupService,
+  UserService
+}
 
 @Singleton
 case class UserController @Inject() (
@@ -175,6 +176,11 @@ case class UserController @Inject() (
   private def groupsInAllAreas(implicit request: RequestWithUserData[_]): Future[List[UserGroup]] =
     if (Authorization.isAdmin(request.rights)) {
       groupService.byAreas(request.currentUser.areas)
+    } else if (Authorization.isAreaManager(request.rights)) {
+      groupService.byAreasAndOrganisationIds(
+        request.currentUser.managingAreaIds,
+        request.currentUser.managingOrganisationIds
+      )
     } else if (Authorization.isObserver(request.rights)) {
       groupService.byOrganisationIds(request.currentUser.observableOrganisationIds)
     } else {
@@ -199,6 +205,15 @@ case class UserController @Inject() (
     val allAreasGroupsFuture: Future[List[UserGroup]] =
       if (Authorization.isAdmin(request.rights)) {
         groupService.byArea(selectedArea.id)
+      } else if (Authorization.isAreaManager(request.rights)) {
+        if (Authorization.isAreaManagerOfAnyOrganisation(Set(selectedArea.id))(request.rights)) {
+          groupService.byAreasAndOrganisationIds(
+            List(selectedArea.id),
+            request.currentUser.managingOrganisationIds
+          )
+        } else {
+          Future.successful(Nil)
+        }
       } else if (Authorization.isObserver(request.rights)) {
         groupService.byOrganisationIds(request.currentUser.observableOrganisationIds)
       } else {
@@ -222,10 +237,11 @@ case class UserController @Inject() (
     else
       usersInArea(selectedArea)
 
+  // TODO: ajouter les liens vers les pages utilisateurs pour les responsables de territoire ?
   def all(areaId: UUID): Action[AnyContent] =
     loginAction.async { implicit request: RequestWithUserData[AnyContent] =>
-      asUserWhoSeesUsersOfArea(areaId)(
-        AllUserUnauthorized,
+      asUserWithAuthorization(Authorization.canSeeUsersInArea(areaId))(
+        EventType.AllUserUnauthorized,
         "Accès non autorisé à l'admin des utilisateurs"
       ) { () =>
         val selectedArea = Area.fromId(areaId).get

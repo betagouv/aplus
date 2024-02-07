@@ -229,6 +229,22 @@ class UserGroupService @Inject() (
       }
     }
 
+  def byAreasAndOrganisationIds(
+      areaIds: List[UUID],
+      organisationIds: List[Organisation.Id]
+  ): Future[List[UserGroup]] =
+    Future {
+      db.withConnection { implicit connection =>
+        val organisationIdStrings = organisationIds.map(_.id)
+        SQL(s"""SELECT $fieldsInSelect
+                FROM "user_group"
+                WHERE ARRAY[{areaIds}]::uuid[] && area_ids
+                AND ARRAY[{organisationIds}]::varchar[] @> ARRAY[organisation]""")
+          .on("areaIds" -> areaIds, "organisationIds" -> organisationIdStrings)
+          .as(simpleUserGroup.*)
+      }
+    }
+
   def search(searchQuery: String, limit: Int): Future[Either[Error, List[UserGroup]]] =
     Future(
       Try(

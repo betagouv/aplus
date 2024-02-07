@@ -40,7 +40,9 @@ object editMyGroups {
     )
     val groupsWithTheirUsers: List[(UserGroup, List[User])] =
       for {
-        userGroup <- userGroups.sortBy(_.name)
+        userGroup <- userGroups.sortBy(group =>
+          (!currentUser.groupIds.contains[UUID](group.id), group.name)
+        )
         groupUsers = users.filter(_.groupIds.contains(userGroup.id))
       } yield (userGroup, groupUsers)
     val dialogs =
@@ -133,7 +135,7 @@ object editMyGroups {
           .map(user =>
             userLine(
               user,
-              group.id,
+              group,
               applicationCreationsCount,
               applicationInvitationsCount,
               applicationParticipationsCount,
@@ -256,7 +258,7 @@ object editMyGroups {
 
   def userLine(
       user: User,
-      groupId: UUID,
+      group: UserGroup,
       applicationCreationsCount: Map[UUID, Int],
       applicationInvitationsCount: Map[UUID, Int],
       applicationParticipationsCount: Map[UUID, Int],
@@ -324,7 +326,7 @@ object editMyGroups {
       ),
       td(
         cls := "remove-link-panel",
-        lineActionButton(user, groupId, addRedirectQueryParam, currentUser, currentUserRights)
+        lineActionButton(user, group, addRedirectQueryParam, currentUser, currentUserRights)
       )
     )
 
@@ -381,13 +383,13 @@ object editMyGroups {
 
   private def lineActionButton(
       user: User,
-      groupId: UUID,
+      group: UserGroup,
       addRedirectQueryParam: String => String,
       currentUser: User,
       currentUserRights: Authorization.UserRights
   )(implicit request: RequestHeader): Modifier =
     if (user.id =!= currentUser.id) {
-      if (user.disabled && Authorization.canEnableOtherUser(user)(currentUserRights))
+      if (user.disabled && Authorization.canEnableOtherUser(user, group :: Nil)(currentUserRights))
         form(
           action := addRedirectQueryParam(GroupController.enableUser(user.id).path),
           method := GroupController.enableUser(user.id).method,
@@ -400,11 +402,11 @@ object editMyGroups {
         )
       else if (
         user.groupIds.toSet.size === 1 &&
-        Authorization.canAddOrRemoveOtherUser(groupId)(currentUserRights)
+        Authorization.canAddOrRemoveOtherUser(group)(currentUserRights)
       )
         form(
-          action := addRedirectQueryParam(GroupController.removeFromGroup(user.id, groupId).path),
-          method := GroupController.removeFromGroup(user.id, groupId).method,
+          action := addRedirectQueryParam(GroupController.removeFromGroup(user.id, group.id).path),
+          method := GroupController.removeFromGroup(user.id, group.id).method,
           CSRFInput,
           button(
             `type` := "submit",
@@ -414,12 +416,12 @@ object editMyGroups {
         )
       else if (
         user.groupIds.toSet.size > 1 &&
-        Authorization.canAddOrRemoveOtherUser(groupId)(currentUserRights)
+        Authorization.canAddOrRemoveOtherUser(group)(currentUserRights)
       )
         button(
           cls := "remove-link remove-user-from-group-button",
           data("user-id") := user.id.toString,
-          data("group-id") := groupId.toString,
+          data("group-id") := group.id.toString,
           "Retirer du groupe"
         )
       else

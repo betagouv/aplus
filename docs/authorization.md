@@ -9,12 +9,13 @@
     - Agents d'administration
 - Instructeur (Opérateur)
     - Agent d'administration (CAF, CPAM, Impôt, Préfecture, ...)
-- Administrateur général
+- Administrateur
     - Intrapreneuse A+
     - Animateur de communauté d'A+
     - Développeur A+
-- Administrateur de zone
+- Responsable de territoire
     - Chargé de déploiement en région ou département
+    - Animateurs France Services
 - Responsable de groupe
     - Responsable d'agents administratifs
 - Expert
@@ -32,7 +33,7 @@
 Note
 - Zone : zone géographique (département)
 - Groupe : sous-division d'une zone
-- Les administrateurs général et de zone n'ont pas accès aux données personnelles des usagers
+- Les administrateurs et responsables de territoire n'ont pas accès aux données personnelles des usagers
 - Metadonnées d'une demande = tout ce qui ne contient pas de données personnelles (créateur, date de création, utilisateurs invités, ...)
 
 
@@ -47,14 +48,14 @@ Note
 * `/login`
 * `/validation-connexion`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✖ |
 
 
 #### Double authentification (Par SMS) :construction:
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✔ | ✖ | ✖ | ✖ | ✖ |
 
@@ -73,7 +74,7 @@ Note
 * `/nouvelle-demande`
 
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✖ | ✖ | ✖ | ✔ | ✖ | ✖ | ✖ |
 
@@ -82,7 +83,7 @@ Note
 
 * `/toutes-les-demandes/:id`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✖ | ✖ | ✖ | ✔ (créateur ou invité)| ✔ (invité)| ✖ | ✖ |
 
@@ -91,7 +92,7 @@ Note
 
 * `/mandats/sms`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✖ | ✖ | ✖ | ✔ | ✖ | ✖ | ✖ |
 
@@ -100,7 +101,7 @@ Note
 
 * `/mandats/:id`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✖ | ✖ | ✖ | ✔ (créateur) | ✖ | ✖ | ✖ |
 
@@ -109,7 +110,7 @@ Note
 
 * `/mandats/:id`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✖ | ✔ (créateur) | ✖ | ✖ | ✖ |
 
@@ -118,7 +119,7 @@ Note
 
 * `/toutes-les-demandes/:applicationId/terminer`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✖ | ✖ | ✔ (créateur) | ✖ | ✔ (invité) | ✖ |
 
@@ -127,7 +128,7 @@ Note
 
 * `/toutes-les-demandes/:applicationId/reopen`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✖ | ✖ | ✔ (créateur) | ✖ | ✔ (invité) | ✖ |
 
@@ -137,7 +138,7 @@ Note
 
 * `/toutes-les-demandes`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✖ | ✖ | ✖ | ✔ | ✔ | ✔ | ✖ |
 
@@ -146,7 +147,7 @@ Note
 
 * `/toutes-les-demandes`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✖ | ✖ | ✖ | ✔ | ✔ | ✖ | ✖ |
 
@@ -156,16 +157,16 @@ Note
 * `/toutes-les-demandes.csv`
 * `/exporter-mes-demandes`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✖ | ✖ | ✔ | ✔ | ✔ | ✖ | ✖ |
+| ✖ | ✔ | ✔ | ✔ | ✔ | ✖ | ✖ |
 
 
 #### Répondre à une demande
 
 * `/toutes-les-demandes/:applicationId/messages`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✖ | ✖ | ✖ | ✔ | ✔ | ✔ | ✖ |
 
@@ -176,7 +177,7 @@ Note
 
 * `/toutes-les-demandes/:applicationId/inviter_des_experts`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✖ | ✖ | ✖ | ✔ | ✔ | ✖ | ✖ |
 
@@ -187,7 +188,7 @@ Note
 
 * `/toutes-les-demandes/:applicationId/inviter_des_utilisateurs`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✖ | ✖ | ✖ | ✔ (si invité) | ✔ (si invité) | ✔ | ✖ |
 
@@ -198,14 +199,14 @@ Note
 * `/nouvelle-demande`
 * `/toutes-les-demandes/:applicationId/messages`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✖ | ✖ | ✖ | ✔ | ✔ | ✖ | ✖ |
 
 
 #### Supprimer une pièce jointe :construction:
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ |
 
@@ -215,9 +216,9 @@ Note
 * `/toutes-les-demandes/:applicationId/fichiers/:filename`
 * `/toutes-les-demandes/:applicationId/messages/:answerId/fichiers/:filename`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✖ | ✖ | ✖ | ✔ (créateur ET instructeur a marqué le message comme visible) | ✔ (invité) | ✖ | ✖ |
+| ✖ | ✖ | ✖ | ✔ (membre du groupe créateur ET instructeur a marqué le message comme visible) | ✔ (invité) | ✖ | ✖ |
 
 
 
@@ -233,17 +234,17 @@ Note
 * `/territoires/:areaId/demandes`
 * `/territoires/:areaId/demandes.csv`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✖ | ✖ | ✔ | ✖ | ✖ | ✖ | ✖ |
+| ✖ | ✔ | ✔ | ✖ | ✖ | ✖ | ✖ |
 
 
-#### Visualisation des demandes en cours et clôturées de la zone (métadonnées seulement)
+#### Visualisation des demandes en cours et clôturées d'un territoire (métadonnées seulement)
 
 * `/territoires/:areaId/demandes`
 * `/territoires/:areaId/demandes.csv`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✖ | ✖ | ✖ | ✖ | ✖ |
 
@@ -251,7 +252,7 @@ Note
 
 * `/as/:userId/toutes-les-demandes`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✖ | ✖ | ✖ | ✖ | ✖ |
 
@@ -265,7 +266,7 @@ Note
 
 * `/inscription`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✖ | ✖ | ✖ | ✔ | ✖ | ✖ | ✖ |
 
@@ -274,7 +275,7 @@ Note
 
 * `/me`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
 
@@ -283,7 +284,7 @@ Note
 
 * `/groups`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
 
@@ -292,25 +293,25 @@ Note
 
 * `/as/:userId/groups`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✔ | ✔ (même zone) | ✖ | ✖ | ✖ | ✖ | ✖ |
+| ✔ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ |
 
 
 #### Créer un compte utilisateur dans A+
 
 * `/groups/:groupId/users`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✔ | ✔ | ✔ (dans ses groupes) | ✖ | ✖ | ✖ | ✖ |
+| ✔ | ✔ (dans les groupes de son organisme sur son territoire) | ✔ (dans ses groupes) | ✖ | ✖ | ✖ | ✖ |
 
 #### Ajouter un utilisateur créé dans A+ dans l'un de ses groupes
 
 * `/utilisateurs/:userId`
 * `/groups/:groupId/add`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
 
@@ -320,9 +321,9 @@ Note
 * `/groups/:groupId/remove/:userId`
 * `/utilisateurs/:userId`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✔ | ✔ | ✔ (de ses groupes) | ✔ (de ses groupes) | ✔ (de ses groupes) | ✔ (de ses groupes) | ✔ (de ses groupes) |
+| ✔ | ✔ (dans les groupes de son organisme sur son territoire) | ✔ (de ses groupes) | ✔ (de ses groupes) | ✔ (de ses groupes) | ✔ (de ses groupes) | ✔ (de ses groupes) |
 
 #### Réactiver un utilisateur
 
@@ -330,9 +331,9 @@ Note
 * `/utilisateurs/:userId/reactivation`
 * `/utilisateurs/:userId`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✔ | ✔ | ✔ (de ses groupes) | ✔ (de ses groupes) | ✔ (de ses groupes) | ✔ (de ses groupes) | ✔ (de ses groupes) |
+| ✔ | ✔ (dans les groupes de son organisme sur son territoire) | ✔ (de ses groupes) | ✔ (de ses groupes) | ✔ (de ses groupes) | ✔ (de ses groupes) | ✔ (de ses groupes) |
 
 
 #### Supprimer un utilisateur inactif
@@ -340,7 +341,7 @@ Note
 * `/user/delete/unused/:userId`
 * `/utilisateurs/:userId`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✖ | ✖ | ✖ | ✖ | ✖ |
 
@@ -348,7 +349,7 @@ Note
 
 * `/utilisateurs/:userId`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✔ | ✖ | ✖ | ✖ | ✖ |
 
@@ -356,31 +357,31 @@ Note
 
 * `/utilisateurs/:userId`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✔ | ✖ | ✖ | ✖ | ✖ |
 
-Valable pour le responsable de groupes seulement à la création de compte, pas possible après.
+Valable pour le Resp.nsable de groupes seulement à la création de compte, pas possible après.
 
 #### Nommer un responsable de groupe
 
 * `/utilisateurs/:userId`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✔ | ✖ | ✖ | ✖ | ✖ |
 
-Valable pour le responsable de groupes seulement à la création de compte, pas possible après.
+Valable pour le Resp.nsable de groupes seulement à la création de compte, pas possible après.
 
 #### Nommer un administrateur de zone
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ |
 
 #### Nommer un utilisateur expert
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ |
 
@@ -389,16 +390,16 @@ Valable pour le responsable de groupes seulement à la création de compte, pas 
 
 * `/utilisateurs/:userId`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✔ | ✔ | ✔ | ✖ | ✖ | ✖ | ✖ |
+| ✔ | ✔ (dans les groupes de son organisme sur son territoire) | ✔ | ✖ | ✖ | ✖ | ✖ |
 
 
 #### Modifier l'adresse email d'un utilisateur :warning:
 
 * `/utilisateurs/:userId`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ |
 
@@ -408,25 +409,25 @@ Valable pour le responsable de groupes seulement à la création de compte, pas 
 * `/utilisateurs`
 * `/groups`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✔ | ✔ | ✖ | ✖ | ✖ | ✖ | ✖ |
+| ✔ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ |
 
 
 #### Modifier un groupe
 
 * `/groups/:groupId`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✔ | ✔ | ✔ (est dans ce groupe) | ✖ | ✖ | ✖ | ✖ |
+| ✔ | ✔ (groupes de son organisme sur son territoire) | ✔ (est dans ce groupe) | ✖ | ✖ | ✖ | ✖ |
 
 
 #### Supprimer un groupe vide
 
 * `/group/delete/unused/:groupId`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✖ | ✖ | ✖ | ✖ | ✖ |
 
@@ -435,20 +436,21 @@ Valable pour le responsable de groupes seulement à la création de compte, pas 
 * `/utilisateurs`
 * `/territoires/:areaId/utilisateurs`
 * `/territoires/:areaId/utilisateurs.csv`
+* `/api/search`
 
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✔ | ✔ | ✔ (ses groupes) | ✖ | ✖ | ✖ | ✖ |
+| ✔ | ✔ (dans les groupes de son organisme sur son territoire) | ✔ (ses groupes) | ✖ | ✖ | ✖ | ✖ |
 
 #### Lister les groupes
 
 * `/territoires`
 * `/territoires/:areaId` (deprecated)
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✔ | ✔ | ✔ (ses groupes) | ✖ | ✖ | ✖ | ✖ |
+| ✔ | ✖ | ✔ (ses groupes) | ✖ | ✖ | ✖ | ✖ |
 
 
 #### Importer des utilisateurs et groupes par CSV
@@ -457,9 +459,9 @@ Valable pour le responsable de groupes seulement à la création de compte, pas 
 * `/importation/revue-import`
 * `/importation/import`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✔ | ✔ | ✖ | ✖ | ✖ | ✖ | ✖ |
+| ✔ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ |
 
 
 #### Ajouter des emails sans groupes (préinscriptions)
@@ -467,7 +469,7 @@ Valable pour le responsable de groupes seulement à la création de compte, pas 
 * `/utilisateurs/inscriptions`
 * `/utilisateurs/inscriptions/add-emails`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ |
 
@@ -483,7 +485,7 @@ Valable pour le responsable de groupes seulement à la création de compte, pas 
 * `/territoires/deploiement/france-service`
 * `/api/deploiement/france-service`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✖ | ✖ | ✖ | ✖ | ✖ | ✔ |
 
@@ -491,15 +493,15 @@ Valable pour le responsable de groupes seulement à la création de compte, pas 
 
 * `/stats`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
 
-#### Voir les stats de la zone
+#### Voir les stats d'un territoire
 
 * `/stats`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
 
@@ -507,27 +509,27 @@ Valable pour le responsable de groupes seulement à la création de compte, pas 
 
 * `/stats`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✔ | ✔ | ✔ (ses groupes) | ✔ (ses groupes) | ✔ (ses groupes) | ✖ | ✖ |
+| ✔ | ✔ (groupes de son organisme sur son territoire) | ✔ (ses groupes) | ✔ (ses groupes) | ✔ (ses groupes) | ✖ | ✖ |
 
 
 #### Visualiser la page stats d'un autre utilisateur
 
 * `/as/:userId/stats`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✔ | ✔ (même zone) | ✖ | ✖ | ✖ | ✖ | ✖ |
+| ✔ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ |
 
 
 #### Voir le log d'évènements (sans données personnelles)
 
 * `/events`
 
-|Admin Général|Admin zone|Respo Groupe|Aidant|Instructeur|Expert|Observateur|
+|Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✔ | ✔ | ✖ | ✖ | ✖ | ✖ | ✖ |
+| ✔ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ |
 
 
 ### Autres
