@@ -19,7 +19,7 @@ import models._
 import models.formModels.{
   AnswerFormData,
   ApplicationFormData,
-  ApplicationsInfos,
+  ApplicationsPageInfos,
   InvitationFormData
 }
 import modules.AppConfig
@@ -41,6 +41,7 @@ import serializers.ApiModel.{
 }
 import services._
 import views.dashboard.DashboardInfos
+import views.myApplications.MyApplicationInfos
 
 import java.nio.file.{Files, Path, Paths}
 import java.time.{LocalDate, ZonedDateTime}
@@ -511,27 +512,50 @@ case class ApplicationController @Inject() (
       }
     }
 
-  private def applicationIsLate(application: Application): Boolean =
-    !application.closed &&
-      application.status =!= Application.Status.Processed && (
-        application.userAnswers
+  private def lastOperateurAnswer(application: Application): Option[Answer] =
+    application.answers
           .filter(_.creatorUserID =!= application.creatorUserId)
-          .lastOption match {
+          .filter(answer =>
+        !answer.message.contains("rejoins la conversation automatiquement comme expert") &&
+          !answer.message
+            .contains("Les nouveaux instructeurs rejoignent automatiquement la demande")
+      )
+      .lastOption
+
+  private def remainingHoursBeforeLate(application: Application): Option[Int] =
+    if (
+      application.closed ||
+      application.status =!= Application.Status.Processed
+    )
+      None
+    else
+      (
+        Some(lastOperateurAnswer(application) match {
           case None =>
-            businessDaysService
-              .businessHoursBetween(application.creationDate, ZonedDateTime.now()) > (3 * 24)
+            (3 * 24) - businessDaysService
+              .businessHoursBetween(application.creationDate, ZonedDateTime.now())
           case Some(lastAnswer) =>
-            businessDaysService
-              .businessHoursBetween(lastAnswer.creationDate, ZonedDateTime.now()) > (15 * 24)
-        }
+            (15 * 24) - businessDaysService.businessHoursBetween(
+              lastAnswer.creationDate,
+              ZonedDateTime.now()
+            )
+        })
       )
 
+  private def applicationIsLate(application: Application): Boolean =
+    remainingHoursBeforeLate(application) match {
+      case None                 => false
+      case Some(remainingHours) => remainingHours < 0
+    }
+      
   private def myApplicationsBoard(
       user: User,
       userRights: Authorization.UserRights,
       asAdmin: Boolean,
       urlBase: String,
-  )(log: ApplicationsInfos => Unit)(implicit request: play.api.mvc.RequestHeader): Future[Result] =
+  )(
+      log: ApplicationsPageInfos => Unit
+  )(implicit request: play.api.mvc.RequestHeader): Future[Result] =
     applicationBoardInfos(user, userRights, asAdmin, urlBase).map {
       case (infos, filteredByStatus, userGroups) =>
         log(infos)
@@ -547,13 +571,13 @@ case class ApplicationController @Inject() (
       urlBase: String
   )(implicit
       request: play.api.mvc.RequestHeader
-  ): Future[(ApplicationsInfos, List[Application], List[UserGroup])] =
-    userGroupService.byIdsFuture(user.groupIds).map { userGroups =>
+  ): Future[(ApplicationsPageInfos, List[MyApplicationInfos], List[UserGroup])] =
+    userGroupService.byIdsFuture(user.groupIds).flatMap { userGroups =>
       val selectedGroupsFilter = request.queryString
-        .get(ApplicationsInfos.groupFilterKey)
+        .get(ApplicationsPageInfos.groupFilterKey)
         .map(_.flatMap(id => Try(UUID.fromString(id)).toOption).toSet)
-      val statusFilter = request.getQueryString(ApplicationsInfos.statusFilterKey)
-      val filters = ApplicationsInfos.Filters(
+      val statusFilter = request.getQueryString(ApplicationsPageInfos.statusFilterKey)
+      val filters = ApplicationsPageInfos.Filters(
         selectedGroups = selectedGroupsFilter,
         status = statusFilter,
         urlBase = urlBase,
@@ -598,7 +622,10 @@ case class ApplicationController @Inject() (
 
       val interactedApplications = openFilteredByGroups.filter { application =>
         application.creatorUserId === user.id ||
-        application.userAnswers.exists(answer => answer.creatorUserID === user.id)
+        application.answers.exists(answer =>
+          answer.creatorUserID === user.id && !answer.message
+            .contains("Les nouveaux instructeurs rejoignent automatiquement la demande")
+        )
       }
       val interactedApplicationsCount = interactedApplications.length
 
@@ -628,7 +655,7 @@ case class ApplicationController @Inject() (
         else
           openFilteredByGroups
 
-      val infos = ApplicationsInfos(
+      val infos = ApplicationsPageInfos(
         filters = filters,
         groupsCounts = openApplicationsByGroupCounts,
         allGroupsOpenCount = allGroupsOpenCount,
@@ -641,7 +668,35 @@ case class ApplicationController @Inject() (
         lateCount = lateCount,
       )
 
-      (infos, filteredByStatus, userGroups)
+      val allGroupsIds = filteredByStatus
+        .flatMap(application =>
+          application.creatorGroupId.toList ::: application.invitedGroups.toList
+        )
+        .distinct
+      userGroupService.byIdsFuture(allGroupsIds).map { allGroups =>
+        val groupsMap = allGroups.map(group => (group.id, group)).toMap
+        val filteredApplications = filteredByStatus.map { application =>
+          val creatorIsInFS = userGroups.exists(group =>
+            group.organisationId
+              .map(organisation => organisation === Organisation.franceServicesId)
+              .getOrElse(false)
+          )
+          val creatorGroup = application.creatorGroupId.flatMap(groupsMap.get)
+          val invitedGroups = application.invitedGroups.toList.flatMap(groupsMap.get)
+          val shouldBeAnsweredInTheNext24h =
+            remainingHoursBeforeLate(application).map(_ <= 24).getOrElse(false)
+          MyApplicationInfos(
+            application = application,
+            creatorIsInFS = creatorIsInFS,
+            creatorGroup = creatorGroup,
+            invitedGroups = invitedGroups,
+            lastOperateurAnswer = lastOperateurAnswer(application),
+            shouldBeAnsweredInTheNext24h = shouldBeAnsweredInTheNext24h,
+          )
+        }
+
+        (infos, filteredApplications, userGroups)
+      }
     }
 
   private def dashboardInfos(user: User, adminMasquerade: Boolean): Future[DashboardInfos] =
@@ -687,7 +742,7 @@ case class ApplicationController @Inject() (
           )
         }
 
-      val applicationsPageEmptyFilters = ApplicationsInfos.emptyFilters(
+      val applicationsPageEmptyFilters = ApplicationsPageInfos.emptyFilters(
         if (adminMasquerade)
           controllers.routes.ApplicationController.allAs(user.id).url
         else
@@ -1102,7 +1157,13 @@ case class ApplicationController @Inject() (
                       organisations
                     )
                   else
-                    views.application.pageContent(application)
+                    views.applicationMessages.page(
+                      request.currentUser,
+                      request.rights,
+                      application,
+                      files,
+                      config
+                    )
                 ).withHeaders(CACHE_CONTROL -> "no-store")
               }
             )
@@ -1314,6 +1375,9 @@ case class ApplicationController @Inject() (
   private val WorkInProgressMessage = "Je m’en occupe."
   private val WrongInstructorMessage = "Je ne suis pas le bon interlocuteur."
 
+def answerApplicationHasBeenSolved(applicationId: UUID): Action[AnyContent] =
+    answer(applicationId)
+
   def answer(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application =>
@@ -1353,7 +1417,7 @@ case class ApplicationController @Inject() (
             },
             answerData => {
               val answerType =
-                if (answerData.applicationHasBeenProcessed)
+                if (answerData.applicationHasBeenProcessed.getOrElse(true))
                   AnswerType.ApplicationProcessed
                 else
                   AnswerType.fromString(answerData.answerType)

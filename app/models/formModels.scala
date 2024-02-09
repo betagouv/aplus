@@ -194,7 +194,7 @@ object formModels {
       applicationIsDeclaredIrrelevant: Boolean,
       usagerOptionalInfos: Map[String, String],
       privateToHelpers: Boolean,
-      applicationHasBeenProcessed: Boolean,
+      applicationHasBeenProcessed: Option[Boolean],
       signature: Option[String]
   )
 
@@ -213,7 +213,7 @@ object formModels {
           "irrelevant" -> boolean,
           "usagerOptionalInfos" -> FormsPlusMap.map(normalizedText.verifying(maxLength(200))),
           "privateToHelpers" -> boolean,
-          "applicationHasBeenProcessed" -> boolean,
+          "applicationHasBeenProcessed" -> optional(boolean),
           "signature" -> (
             if (currentUser.sharedAccount)
               nonEmptyText.transform[Option[String]](Some.apply, _.orEmpty)
@@ -227,7 +227,7 @@ object formModels {
                 form.usagerOptionalInfos.filter { case (_, value) => value.nonEmpty }.nonEmpty ||
                 (form.answerType === Answer.AnswerType.WorkInProgress.name) ||
                 (form.answerType === Answer.AnswerType.WrongInstructor.name) ||
-                form.applicationHasBeenProcessed ||
+                form.applicationHasBeenProcessed.getOrElse(true) ||
                 form.message.nonEmpty
           )
       )

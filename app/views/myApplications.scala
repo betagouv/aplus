@@ -2,22 +2,21 @@ package views
 
 import cats.syntax.all._
 import constants.Constants
-import controllers.routes.ApplicationController
+import controllers.routes.{ApplicationController, Assets}
+import helper.BusinessDaysCalculator.businessHoursBetween
 import helper.Time
 import helper.TwirlImports.toHtml
+import java.time.ZonedDateTime
 import java.util.UUID
-import models.formModels.ApplicationsPageInfos
-import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
 import models.{Answer, Application, Authorization, User, UserGroup}
+import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
+import models.formModels.ApplicationsPageInfos
+import org.checkerframework.checker.units.qual.g
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
-import org.checkerframework.checker.units.qual.g
 import views.helpers.applications.statusTag
-import controllers.routes.Assets
-import helper.BusinessDaysCalculator.businessHoursBetween
-import java.time.ZonedDateTime
 
 object myApplications {
   val TODOflag = false

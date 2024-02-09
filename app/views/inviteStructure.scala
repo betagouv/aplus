@@ -2,10 +2,11 @@ package views
 
 import scalatags.Text.all._
 import models.{Application, Authorization, User}
+import models.Area
 
 object inviteStructure {
 
-  def inviteStructure(application: Application): Frag =
+  def inviteStructure(application: Application, currentUser: User): Frag =
     frag(
       tag("dialog")(
         aria.labelledby := "fr-modal-title-modal-1",
@@ -41,27 +42,20 @@ object inviteStructure {
                       cls := "fr-fieldset",
                       id := "checkboxes",
                       aria.labelledby := "checkboxes-legend checkboxes-messages",
+                      select(
+                        cls := "fr-select",
+                        id := "structureIdSelect",
+                        name := "structureIds",
+                      )(
+                        option(value := "null")("Selectionner une organisation"),
+                        Area.all.map { area =>
+                          option(value := area.id.toString(), area.name)
+                        }
+                      ),
+
                       div(
                         cls := "fr-fieldset__element",
-                        div(
-                          cls := "fr-checkbox-group aplus-checkbox-highlight",
-                          input(
-                            name := "checkboxes-1",
-                            id := "checkboxes-1",
-                            tpe := "checkbox",
-                            aria.describedby := "checkboxes-1-messages"
-                          ),
-                          label(
-                            cls := "fr-label",
-                            `for` := "checkboxes-1",
-                            "TODO map organisations"
-                          ),
-                          div(
-                            cls := "fr-messages-group",
-                            id := "checkboxes-1-messages",
-                            aria.live := "assertive"
-                          )
-                        )
+                        id :="checkboxes-groups-container",
                       ),
                       div(
                         cls := "fr-messages-group",

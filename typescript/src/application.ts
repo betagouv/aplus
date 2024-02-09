@@ -78,6 +78,7 @@ function fetchMessage(url: string) {
     })
       .then(response => response.text())
       .then(data => {
+        const messageId = new URLSearchParams(window.location.search).get('messageId');
     
         document.querySelector('.aplus-loading-overlay')?.classList.remove('show');
         const container = document.getElementById("application-message-container");
@@ -88,6 +89,43 @@ function fetchMessage(url: string) {
           new SlimSelect({ select, selectByGroup: true, closeOnSelect: false });
         });
 
+        document.getElementById("structureIdSelect")?.addEventListener('change', function (event) {
+          const target = <HTMLSelectElement>event.target;
+          if(target.value === "null") return;
+          fetch(`/demandes/${messageId}/territoire/${target.value}/groupes-invitables`).then(data => {
+            data.json().then((groups) => {
+              const container = document.getElementById("checkboxes-groups-container")
+              if (!container) return;
+              container.innerHTML = "";
+              const div = document.createElement("div");
+              div.innerHTML = "";
+              div.classList.add("fr-checkbox-group");
+              div.classList.add("aplus-checkbox-highlight")
+              
+              if (groups.groups.length === 0) {
+                div.innerHTML = "Il n’y a aucune organisation pour ce territoire."
+              }
+              container?.appendChild(div);
+
+              groups.groups.forEach((group: any) => {
+                const input = document.createElement("input");
+                input.type = "checkbox";
+                input.name = "invitedGroups";
+                input.value = group.id;
+                input.id = `invitedGroups-${group.id}`;
+                input.classList.add("fr-checkbox-input");
+                const label = document.createElement("label");
+                label.classList.add("fr-label");
+                label.htmlFor = `invitedGroups-${group.id}`;
+                label.innerText = group.name;
+                div.appendChild(input);
+                div.appendChild(label);
+
+
+              });
+            });
+          });
+        });
       })
       .catch((error) => {
         document.querySelector('.aplus-loading-overlay')?.classList.remove('show');

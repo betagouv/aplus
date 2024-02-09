@@ -337,7 +337,8 @@ div.fr-footer__bottom {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 10rem;
+    min-height: 10rem;
+    height: 100%;
 }
 
 .aplus-no-message {
@@ -496,4 +497,12 @@ div.fr-footer__bottom {
     padding: 1rem;
     background: #F6F7F7;
     font-size: .875rem;
+}
+
+#fr-modal-add-structure .aplus-form .aplus-checkbox-highlight .fr-label:not(:first-of-type) {
+    margin-top: .75rem !important;
+}
+
+#fr-modal-add-structure .fr-checkbox-group {
+    margin-top: 2rem;
 }
