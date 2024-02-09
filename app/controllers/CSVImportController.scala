@@ -341,6 +341,8 @@ case class CSVImportController @Inject() (
           firstLoginDate = none,
           phoneNumber = userData.user.phoneNumber,
           observableOrganisationIds = Nil,
+          managingOrganisationIds = Nil,
+          managingAreaIds = Nil,
           sharedAccount = userData.user.name.nonEmpty,
           internalSupportComment = None,
         )

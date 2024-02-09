@@ -142,6 +142,9 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       cguAcceptationDate = Some(Time.nowParis()),
       firstLoginDate = None,
       groupIds = List(instructorGroup.id),
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None
     )
     val unrelatedInstructorUser = User(
@@ -163,6 +166,9 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       cguAcceptationDate = Some(Time.nowParis()),
       firstLoginDate = None,
       groupIds = Nil,
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None
     )
     val helperUser = User(
@@ -184,6 +190,9 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       cguAcceptationDate = Some(Time.nowParis()),
       firstLoginDate = None,
       groupIds = List(helperGroup.id),
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None
     )
     val helperFriendUser = User(
@@ -205,6 +214,9 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       cguAcceptationDate = Some(Time.nowParis()),
       firstLoginDate = None,
       groupIds = List(helperGroup.id),
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None
     )
     val unrelatedHelperUser = User(
@@ -226,6 +238,9 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       cguAcceptationDate = Some(Time.nowParis()),
       firstLoginDate = None,
       groupIds = List(helperGroup.id),
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None
     )
     val unrelatedExpertUser = User(
@@ -247,6 +262,9 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       cguAcceptationDate = Some(Time.nowParis()),
       firstLoginDate = None,
       groupIds = List(helperGroup.id),
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None
     )
     val managerUser = User(
@@ -268,6 +286,9 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       cguAcceptationDate = Some(Time.nowParis()),
       firstLoginDate = None,
       groupIds = List(helperGroup.id),
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None
     )
 

@@ -27,6 +27,7 @@ POST        /toutes-les-demandes/:applicationId/terminer                        
 POST        /toutes-les-demandes/:applicationId/reopen                                       controllers.ApplicationController.reopen(applicationId: java.util.UUID)
 
 GET         /demandes/metadonnees                                                            controllers.ApplicationController.applicationsAdmin
+GET         /demandes/:applicationId/territoire/:areaId/groupes-invitables                   controllers.ApplicationController.applicationInvitableGroups(applicationId: java.util.UUID, areaId: java.util.UUID)
 
 GET         /fichiers/:fileId                                                                controllers.ApplicationController.file(fileId: java.util.UUID)
 

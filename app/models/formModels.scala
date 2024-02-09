@@ -308,6 +308,8 @@ object formModels {
         groupIds = user.groupIds,
         phoneNumber = user.phoneNumber,
         observableOrganisationIds = user.observableOrganisationIds,
+        managingOrganisationIds = user.managingOrganisationIds,
+        managingAreaIds = user.managingAreaIds,
         sharedAccount = user.sharedAccount,
         internalSupportComment = user.internalSupportComment
       )
@@ -341,6 +343,8 @@ object formModels {
           "groupIds" -> default(list(uuid), Nil),
           "phoneNumber" -> normalizedOptionalText,
           "observableOrganisationIds" -> list(of[Organisation.Id]),
+          "managingOrganisationIds" -> list(of[Organisation.Id]),
+          "managingAreaIds" -> list(uuid),
           Keys.User.sharedAccount -> boolean,
           "internalSupportComment" -> normalizedOptionalText
         )(EditUserFormData.apply)(EditUserFormData.unapply)
@@ -363,6 +367,8 @@ object formModels {
       groupIds: List[UUID],
       phoneNumber: Option[String],
       observableOrganisationIds: List[Organisation.Id],
+      managingOrganisationIds: List[Organisation.Id],
+      managingAreaIds: List[UUID],
       sharedAccount: Boolean,
       internalSupportComment: Option[String]
   )

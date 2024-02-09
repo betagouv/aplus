@@ -484,6 +484,8 @@ case class UserController @Inject() (
                     cguAcceptationDate = cguDate,
                     phoneNumber = updatedUserData.phoneNumber,
                     observableOrganisationIds = updatedUserData.observableOrganisationIds.distinct,
+                    managingOrganisationIds = updatedUserData.managingOrganisationIds.distinct,
+                    managingAreaIds = updatedUserData.managingAreaIds.distinct,
                     sharedAccount = updatedUserData.sharedAccount,
                     internalSupportComment = updatedUserData.internalSupportComment
                   )
@@ -606,6 +608,8 @@ case class UserController @Inject() (
           firstLoginDate = none,
           phoneNumber = userToAdd.phoneNumber,
           observableOrganisationIds = Nil,
+          managingOrganisationIds = Nil,
+          managingAreaIds = Nil,
           sharedAccount = userToAdd.sharedAccount,
           internalSupportComment = None
         )

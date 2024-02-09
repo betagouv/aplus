@@ -153,7 +153,10 @@ object applicationMessages {
               },
               hr(cls := "aplus-hr-in-card--top-margin"),
               div(cls := "aplus-spacer fr_card__container")(
-                button(cls := "fr-btn fr-btn--secondary", `type` := "button")(
+                button(
+                  cls := "fr-btn fr-btn--secondary", 
+                  attr("formaction") := ApplicationController.answerApplicationHasBeenSolved(application.id).url
+                )(
                   "J’ai traité la demande"
                 ),
                 button(
@@ -168,7 +171,7 @@ object applicationMessages {
           )
         }
       ),
-      inviteStructure(application)
+      inviteStructure(application, currentUser)
     )
 
   def answerFilesLinks(

@@ -55,6 +55,9 @@ class ApplicationSpec extends Specification with BaseSpec {
         cguAcceptationDate = Some(Time.nowParis()),
         firstLoginDate = None,
         groupIds = List(instructorGroup.id),
+        observableOrganisationIds = Nil,
+        managingOrganisationIds = Nil,
+        managingAreaIds = Nil,
         internalSupportComment = None
       )
       val helperUser = User(
@@ -75,6 +78,9 @@ class ApplicationSpec extends Specification with BaseSpec {
         disabled = false,
         cguAcceptationDate = Some(Time.nowParis()),
         firstLoginDate = None,
+        observableOrganisationIds = Nil,
+        managingOrganisationIds = Nil,
+        managingAreaIds = Nil,
         internalSupportComment = None
       )
       userService.add(List(instructorUser, helperUser))

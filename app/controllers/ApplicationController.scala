@@ -33,7 +33,12 @@ import play.api.libs.ws.WSClient
 import play.api.mvc._
 import play.twirl.api.Html
 import serializers.Keys
-import serializers.ApiModel.{ApplicationMetadata, ApplicationMetadataResult}
+import serializers.ApiModel.{
+  ApplicationMetadata,
+  ApplicationMetadataResult,
+  InviteInfos,
+  UserGroupSimpleInfos
+}
 import services._
 import views.dashboard.DashboardInfos
 import views.myApplications.MyApplicationInfos
@@ -400,16 +405,16 @@ case class ApplicationController @Inject() (
   ): Future[List[Application]] =
     (user.admin, areaOption) match {
       case (true, None) =>
-        applicationService.allForAreas(user.areas, numOfMonthsDisplayed.some)
+        applicationService.allForAreas(user.areas, numOfMonthsDisplayed.some, false)
       case (true, Some(area)) =>
-        applicationService.allForAreas(List(area.id), numOfMonthsDisplayed.some)
+        applicationService.allForAreas(List(area.id), numOfMonthsDisplayed.some, false)
       case (false, None) if user.groupAdmin =>
         val userIds = userService.byGroupIds(user.groupIds, includeDisabled = true).map(_.id)
-        applicationService.allForUserIds(userIds, numOfMonthsDisplayed.some)
+        applicationService.allForUserIds(userIds, numOfMonthsDisplayed.some, false)
       case (false, Some(area)) if user.groupAdmin =>
         val userIds = userService.byGroupIds(user.groupIds, includeDisabled = true).map(_.id)
         applicationService
-          .allForUserIds(userIds, numOfMonthsDisplayed.some)
+          .allForUserIds(userIds, numOfMonthsDisplayed.some, false)
           .map(_.filter(application => application.area === area.id))
       case _ =>
         Future.successful(Nil)
@@ -500,8 +505,8 @@ case class ApplicationController @Inject() (
 
   private def lastOperateurAnswer(application: Application): Option[Answer] =
     application.answers
-      .filter(_.creatorUserID =!= application.creatorUserId)
-      .filter(answer =>
+          .filter(_.creatorUserID =!= application.creatorUserId)
+          .filter(answer =>
         !answer.message.contains("rejoins la conversation automatiquement comme expert") &&
           !answer.message
             .contains("Les nouveaux instructeurs rejoignent automatiquement la demande")
@@ -1080,6 +1085,20 @@ case class ApplicationController @Inject() (
     }
   }
 
+  def applicationInvitableGroups(applicationId: UUID, areaId: UUID): Action[AnyContent] =
+    loginAction.async { implicit request =>
+      withApplication(applicationId) { application =>
+        groupsWhichCanBeInvited(areaId, application).map { invitableGroups =>
+          val infos = InviteInfos(
+            applicationId = applicationId,
+            areaId = areaId,
+            groups = invitableGroups.map(UserGroupSimpleInfos.fromUserGroup)
+          )
+          Ok(Json.toJson(infos))
+        }
+      }
+    }
+
   private def showApplication(
       application: Application,
       form: Form[AnswerFormData],
@@ -1347,7 +1366,7 @@ case class ApplicationController @Inject() (
   private val WorkInProgressMessage = "Je m’en occupe."
   private val WrongInstructorMessage = "Je ne suis pas le bon interlocuteur."
 
-  def answerApplicationHasBeenSolved(applicationId: UUID): Action[AnyContent] =
+def answerApplicationHasBeenSolved(applicationId: UUID): Action[AnyContent] =
     answer(applicationId)
 
   def answer(applicationId: UUID): Action[AnyContent] =

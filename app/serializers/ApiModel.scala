@@ -150,9 +150,24 @@ object ApiModel {
   }
 
   object UserInfos {
+
     case class Group(id: UUID, name: String, currentUserCanEditGroup: Boolean)
 
+    case class Permissions(
+        helper: Boolean,
+        instructor: Boolean,
+        groupAdmin: Boolean,
+        admin: Boolean,
+        expert: Boolean,
+        managingOrganisations: List[String],
+        managingAreas: List[String],
+    )
+
     implicit val userInfosGroupFormat: Format[UserInfos.Group] = Json.format[UserInfos.Group]
+
+    implicit val userInfosPermissionsFormat: Format[UserInfos.Permissions] =
+      Json.format[UserInfos.Permissions]
+
     implicit val userInfosFormat: Format[UserInfos] = Json.format[UserInfos]
 
     def fromUser(
@@ -181,8 +196,6 @@ object ApiModel {
         qualite = user.qualite,
         email = user.email,
         phoneNumber = user.phoneNumber,
-        helper = user.helperRoleName.nonEmpty,
-        instructor = user.instructorRoleName.nonEmpty,
         areas = user.areas.flatMap(Area.fromId).map(_.toString).sorted,
         groupNames = groups.map(_.name),
         groups = groups
@@ -191,12 +204,19 @@ object ApiModel {
           ),
         groupEmails = groups.flatMap(_.email),
         organisations = organisations,
-        groupAdmin = user.groupAdminRoleName.nonEmpty,
-        admin = user.adminRoleName.nonEmpty,
-        expert = user.expert,
         disabled = user.disabledRoleName.nonEmpty,
         sharedAccount = user.sharedAccount,
         cgu = user.cguAcceptationDate.nonEmpty,
+        permissions = Permissions(
+          helper = user.helperRoleName.nonEmpty,
+          instructor = user.instructorRoleName.nonEmpty,
+          groupAdmin = user.groupAdminRoleName.nonEmpty,
+          admin = user.adminRoleName.nonEmpty,
+          expert = user.expert,
+          managingOrganisations =
+            user.managingOrganisationIds.flatMap(Organisation.byId).map(_.shortName).sorted,
+          managingAreas = user.managingAreaIds.flatMap(Area.fromId).map(_.toString).sorted,
+        )
       )
     }
 
@@ -211,19 +231,16 @@ object ApiModel {
       qualite: String,
       email: String,
       phoneNumber: Option[String],
-      helper: Boolean,
-      instructor: Boolean,
       areas: List[String],
       groupNames: List[String],
       groups: List[UserInfos.Group],
       groupEmails: List[String],
       organisations: List[String],
-      groupAdmin: Boolean,
-      admin: Boolean,
-      expert: Boolean,
       disabled: Boolean,
       sharedAccount: Boolean,
-      cgu: Boolean
+      cgu: Boolean,
+      // This case class is a workaround for the 22 fields tuple limit in play-json
+      permissions: UserInfos.Permissions,
   )
 
   object UserGroupInfos {
@@ -260,6 +277,37 @@ object ApiModel {
 
   object SearchResult {
     implicit val searchResultFormat: Format[SearchResult] = Json.format[SearchResult]
+  }
+
+  object UserGroupSimpleInfos {
+
+    implicit val format: Format[UserGroupSimpleInfos] = Json.format[UserGroupSimpleInfos]
+
+    def fromUserGroup(group: UserGroup): UserGroupSimpleInfos =
+      UserGroupSimpleInfos(
+        id = group.id,
+        name = group.name,
+        description = group.description,
+        areas = group.areaIds.flatMap(Area.fromId).map(_.toString),
+        organisation = group.organisation.map(_.shortName),
+        publicNote = group.publicNote,
+      )
+
+  }
+
+  case class UserGroupSimpleInfos(
+      id: UUID,
+      name: String,
+      description: Option[String],
+      areas: List[String],
+      organisation: Option[String],
+      publicNote: Option[String],
+  )
+
+  case class InviteInfos(applicationId: UUID, areaId: UUID, groups: List[UserGroupSimpleInfos])
+
+  object InviteInfos {
+    implicit val format: Format[InviteInfos] = Json.format[InviteInfos]
   }
 
   // Embedded classes are here to avoid the 22 fields limit in Play Json
