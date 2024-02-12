@@ -507,12 +507,14 @@ div.fr-footer__bottom {
     margin-top: 2rem;
 }
 
-.aplus-fieldset {
+.fr-fieldset {
     display: block !important;
+    border: 1px solid #ccc !important;
+    padding: 0 1rem 1rem 1rem !important;
 }
 
 .aplus-fieldset .fr-label {
-    width: 33%;
+    width: 75%;
 }
 
 .fr-modal__body .fr-btn--close {
@@ -521,4 +523,17 @@ div.fr-footer__bottom {
 
 .aplus-float-right {
     float: right;
+}
+
+.aplus-notice-small {
+    background: none !important;
+}
+
+.aplus-notice-small p {
+    font-size: .75rem !important;
+}
+
+.aplus-form-step {
+    font-size: .75rem;
+    color: #666;
 }
