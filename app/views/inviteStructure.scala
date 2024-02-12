@@ -49,7 +49,7 @@ object inviteStructure {
                       )(
                         option(value := "null")("Selectionner une organisation"),
                         Area.all.map { area =>
-                          option(value := area.id.toString(), area.name)
+                          option(value := area.id.toString(), s"${area.name} (${area.inseeCode})")
                         }
                       ),
 

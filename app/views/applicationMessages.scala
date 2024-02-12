@@ -34,7 +34,9 @@ object applicationMessages {
             s"Créée le ${application.creationDate.format(DateTimeFormatter.ofPattern("dd/mm/yyyy hh:mm"))} par :"
           ),
           div()(
-            s"${application.userInfos.get(Application.UserFirstNameKey).get} ${application.userInfos.get(Application.UserLastNameKey).get} ",
+            span(cls := "aplus-message-infos--author")(
+              s"${application.userInfos.get(Application.UserFirstNameKey).get} ${application.userInfos.get(Application.UserLastNameKey).get} ",
+            ),
             span(cls := "aplus-message-infos--role")(application.creatorGroupName)
           )
         ),
@@ -58,7 +60,7 @@ object applicationMessages {
             )
           )
         ),
-        div(cls := "fr-col fr-col-4 aplus-align-center")(
+        div(cls := "fr-col fr-col-4 aplus-align-right")(
           button(cls := "fr-btn fr-btn--height-fix fr-btn--secondary")("J’ai traité la demande")
         )
       ),
@@ -111,13 +113,16 @@ object applicationMessages {
               ),
               legend(cls := "fr-fieldset__legend")("Pièces jointes"),
               div(cls := "fr-fieldset__content")(
-                div(cls := "fr-input-group")(
+                div(cls := "fr-upload-group")(
                   input(
-                    cls := "fr-input",
+                    cls := "fr-upload",
                     `type` := "file",
                     name := "file[0]",
                     placeholder := "Ajouter une pièce jointe"
                   ),
+                  label(cls := "fr-label", `for` := "file[0]")(
+                    span(cls := "fr-hint-text")("Taille maximale : xx Mo. Formats supportés : jpg, png, pdf. Plusieurs fichiers possibles. Lorem ipsum dolor sit amet, consectetur adipiscing.")
+                  )
                 )
               ),
               if (currentUser.instructor) {

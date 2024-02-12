@@ -124,7 +124,7 @@ object myApplications {
     frag(
       div(cls := "fr-grid-row")(
         div(
-          cls := "fr-col-8",
+          cls := "fr-col-6",
           div(
             h4(cls := "aplus-title")(
               "Mes demandes"
@@ -229,8 +229,8 @@ object myApplications {
                             if (application.shouldBeAnsweredInTheNext24h) {
                               frag(
                                 i(
-                                  cls := s"material-icons material-icons-outlined aplus-icons-small aplus-icon--active",
-                                  attr("aria-describedby") := "tooltip-timer"
+                                  cls := "material-icons material-icons-outlined aplus-icons-small aplus-icon--active",
+                                  attr("aria-describedby") := s"tooltip-timer-${application.application.id}"
                                 )("timer"),
                                 span(
                                   cls := "fr-tooltip fr-placement",
@@ -250,13 +250,13 @@ object myApplications {
                       div(cls := "aplus-align-right")(
                         span(
                           cls := "aplus-new-messages",
-                          attr("aria-describedby") := "tooltip-new"
+                          attr("aria-describedby") := s"tooltip-new-${application.application.id}"
                         )(
                           application.application.newAnswersFor(currentUser.id).length
                         ),
                         span(
                           cls := "fr-tooltip fr-placement",
-                          id := "tooltip-new",
+                          id := s"tooltip-new-${application.application.id}",
                           attr("role") := "tooltip",
                           attr("aria-hidden") := "true"
                         )(
@@ -386,7 +386,7 @@ object myApplications {
         ),
       filterLink(
         filters.isArchived,
-        s"Archivées (${infos.filteredByGroupsClosedCount}) ",
+        s"A archiver (${infos.filteredByGroupsClosedCount}) ",
         filters.withStatusArchived.toUrl,
       ),
       div(cls := "fr-fieldset__element fr-fieldset__element--inline aplus-filter-header--item")(
@@ -399,7 +399,7 @@ object myApplications {
           ),
         ),
       ),
-      div(cls := "fr-fieldset__element fr-fieldset__element--inline aplus-filter-header--item")(
+      div(cls := "fr-fieldset__element fr-fieldset__element--inline aplus-filter-header--item aplus-float-right")(
         div(cls := "fr-checkbox-group fr-checkbox-group--sm")(
           input(
             name := "checkboxes-inline-4",
@@ -408,7 +408,15 @@ object myApplications {
             attr("aria-describedby") := "checkboxes-inline-4-messages"
           ),
           label(cls := "fr-label", attr("for") := "checkboxes-inline-4")(
-            i(cls := "material-icons material-icons-outlined aplus-icons-small")("timer"),
+            i(cls := "material-icons material-icons-outlined aplus-icons-small", attr("aria-describedby") := "tooltip-timer")("timer"),
+            span(
+              cls := "fr-tooltip fr-placement",
+              id := "tooltip-timer",
+              attr("role") := "tooltip",
+              attr("aria-hidden") := "true"
+            )(
+              s"Il reste moins de 24h pour traiter la demande"
+            )
           ),
         )
       )
