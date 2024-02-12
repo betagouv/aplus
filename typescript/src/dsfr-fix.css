@@ -99,6 +99,18 @@ div.fr-footer__bottom {
     color: #000091
 }
 
+.aplus-hint {
+    margin-bottom: 1rem;
+    display: inline-block;
+}
+
+.aplus-title--background {
+    color: #000091;
+    background: #e3e3fd;
+    padding: .5rem 1rem;
+    margin-bottom: 0.5rem;
+}
+
 .aplus-dashboard-date {
     text-transform: uppercase;
     font-weight: bold;
@@ -115,6 +127,7 @@ div.fr-footer__bottom {
 .fr_card__outer_container {
     padding: .75rem;
 }
+
 
 .fr_card {
     border: 1px solid #f6f6f6;
@@ -505,4 +518,16 @@ div.fr-footer__bottom {
 
 #fr-modal-add-structure .fr-checkbox-group {
     margin-top: 2rem;
+}
+
+.aplus-fieldset {
+    display: block !important;
+}
+
+.aplus-fieldset .fr-label {
+    width: 33%;
+}
+
+.fr-modal__body .fr-btn--close {
+    padding: 0 !important;
 }

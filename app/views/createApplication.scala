@@ -26,90 +26,142 @@ object createApplication {
   def content(
   ): Tag =
     div()(
-      h2(cls := "fr-h2")("Nouvelle demande"),
-      span(cls := "fr-hint")("Les champs marqués d'un * sont obligatoires"),
-      form(cls := "fr-form")(
-        fieldset()(
-          select(
-            cls := "fr-select",
-            id := "input-7"
-          )(
-            option(value := "1")("Option 1"),
-            option(value := "2")("Option 2"),
-            option(value := "3")("Option 3")
-          ),
-          legend(cls := "fr-visually-hidden")("Créer une demande"),
-          div(cls := "fr-field-group")(
-            label(
-              `for` := "input-1",
-              cls := "fr-label"
-            )("Nom de la demande"),
-            input(
-              cls := "fr-input",
-              id := "input-1",
-              `type` := "text",
-              placeholder := "Nom de la demande"
-            )
-          ),
-          div(cls := "fr-field-group")(
-            label(
-              `for` := "input-2",
-              cls := "fr-label"
-            )("Description de la demande"),
-            textarea(
-              cls := "fr-input",
-              id := "input-2",
-              placeholder := "Description de la demande"
-            )
-          ),
-          div(cls := "fr-field-group")(
-            label(
-              `for` := "input-3",
-              cls := "fr-label"
-            )("Type de demande"),
+      h4(cls := "aplus-title--background")("Nouvelle demande"),
+      span(cls := "fr-hint aplus-hint aplus-text-small")("Les champs marqués d'un * sont obligatoires"),
+      form(cls := "aplus-form")(
+        fieldset(cls := "fr-fieldset")(
+          label(
+            cls := "fr-label aplus-bold",
+            `for` := "areaIdSelect",
+            "Territoire concerné",
             select(
               cls := "fr-select",
-              id := "input-3"
             )(
-              option(value := "1")("Option 1"),
-              option(value := "2")("Option 2"),
-              option(value := "3")("Option 3")
-            )
+              option(value := "null")("Selectionner un territoire"),
+              Area.all.map { area =>
+                option(value := area.id.toString(), s"${area.name} (${area.inseeCode})")
+              }
+            ),
           ),
-          div(cls := "fr-field-group")(
-            label(
-              `for` := "input-4",
-              cls := "fr-label"
-            )("Date de début"),
+        ),
+        fieldset(cls := "fr-fieldset")(
+          label(
+            cls := "fr-label aplus-bold",
+            `for` := "areaIdSelect",
+            "Structure demandeuse",
+          ),
+        ),
+        fieldset(cls := "fr-fieldset")(
+          label(
+            cls := "fr-label aplus-bold",
+            `for` := "areaIdSelect",
+            "Selectionner les organismes concernés sur la zone",
+          ),
+        ),
+        fieldset(cls := "fr-fieldset aplus-fieldset")(
+          label(
+            cls := "fr-label aplus-bold",
+            `for` := "areaIdSelect",
+            "Sujet de la demande",
             input(
               cls := "fr-input",
-              id := "input-4",
-              `type` := "date"
-            )
+              `type` := "text",
+              name := "subject",
+            ),
           ),
-          div(cls := "fr-field-group")(
-            label(
-              `for` := "input-5",
-              cls := "fr-label"
-            )("Date de fin"),
+        ),
+        fieldset(cls := "fr-fieldset  aplus-fieldset")(
+          div(cls := "aplus-fieldset-title aplus-bold")("information concernant l’usager"),
+          label(
+            cls := "fr-label",
+            `for` := "areaIdSelect",
+            "Prénom",
             input(
               cls := "fr-input",
-              id := "input-5",
-              `type` := "date"
-            )
-          ),
-          div(cls := "fr-field-group")(
-            label(
-              `for` := "input-6",
-              cls := "fr-label"
-            )("Pièce jointe"),
+              `type` := "text",
+              name := "firstname",
+            ),
+            "Nom de famille",
             input(
               cls := "fr-input",
-              id := "input-6",
-              `type` := "file"
-            )
+              `type` := "text",
+              name := "surname",
+            ),
+            "Date de naissance",
+            input(
+              cls := "fr-input",
+              `type` := "date",
+              name := "birthdate",
+              placeholder := "jj/mm/aaaa",
+            ),
           ),
-        )
+          fieldset(cls := "fr-fieldset aplus-fieldset")(
+            legend(
+              cls := "fr-label",
+              `for` := "areaIdSelect",
+              "Autorisation de l’usager",
+              div(cls := "fr-radio-group")(
+                input(
+                  cls := "fr-radio",
+                  `type` := "radio",
+                  id := "hasMandate",
+                  name := "authorization"
+                ),
+                label(cls := "fr-label", attr("for") := "hasMandate")(
+                  "Ma structure dispose déjà d’un mandat",
+                ),
+                input(
+                  cls := "fr-radio",
+                  `type` := "radio",
+                  id := "noMandate",
+                  name := "authorization"
+                ),
+                label(cls := "fr-label", attr("for") := "noMandate")(
+                  "Créer un manda via Administration+",
+                )
+              ),
+              label(
+                cls := "fr-label",
+                `for` := "areaIdSelect",
+                "Date et heure",
+                input(
+                  cls := "fr-input",
+                  `type` := "text",
+                  required := "required",
+                  name := "dateTime",
+                  placeholder := "ex: 01/01/2021 14:00",
+                ),
+              ),
+            ),
+          ),
+          fieldset(cls := "fr-fieldset aplus-fieldset")(
+            label(
+              cls := "fr-label aplus-bold",
+              `for` := "areaIdSelect",
+              "Autres informations utiles pour traiter la demande (facultatif)",
+              select(
+                cls := "fr-select",
+              )(
+                option(value := "null")("Selectionner une information"),
+                Area.all.map { area =>
+                  option(value := area.id.toString(), s"${area.name} (${area.inseeCode})")
+                }
+              ),
+            ),
+          ),
+          fieldset(cls := "fr-fieldset aplus-fieldset")(
+            label(
+              cls := "fr-label aplus-bold",
+              `for` := "areaIdSelect",
+              "Description du problème",
+              textarea(
+                cls := "fr-input",
+                `type` := "text",
+                name := "description",
+              ),
+            ),
+          ),
+        ),
       )
     )
 }
