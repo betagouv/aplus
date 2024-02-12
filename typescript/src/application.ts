@@ -115,6 +115,7 @@ function fetchMessage(url: string) {
                 input.id = `invitedGroups-${group.id}`;
                 input.classList.add("fr-checkbox-input");
                 const label = document.createElement("label");
+                label.classList.add("aplus-bold");
                 label.classList.add("fr-label");
                 label.htmlFor = `invitedGroups-${group.id}`;
                 label.innerText = group.name;

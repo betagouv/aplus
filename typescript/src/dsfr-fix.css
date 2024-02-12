@@ -63,7 +63,7 @@
 }
 
 .aplus-text-small {
-    font-size: .875rem;
+    font-size: .75rem;
 }
 
 .aplus-icons-small {
@@ -237,7 +237,7 @@ div.fr-footer__bottom {
 }
 
 .main-container .ss-option {
-    font-size: .875rem;
+    font-size: .75rem;
 }
 
 .main-container .ss-option-selected {
@@ -261,7 +261,7 @@ div.fr-footer__bottom {
 .main-container .ss-value-text {
     background: #000091;
     color: #e3e3fd;
-    font-size: .875rem;
+    font-size: .75rem;
     padding: .25rem 1.5rem .25rem .5rem;
     border-radius: 1rem;
 }
@@ -346,7 +346,7 @@ div.fr-footer__bottom {
     align-items: center;
     max-width: 400px;
     flex-direction: column;
-    font-size: .875rem;
+    font-size: .75rem;
 }
 
 .aplus-no-message i {
@@ -405,7 +405,7 @@ div.fr-footer__bottom {
     width: 1.25rem;
     height: 1.25rem;
     border-radius: 100%;
-    font-size: .875rem;
+    font-size: .75rem;
     text-align: center;
     line-height: 1.25rem;
 }
@@ -458,10 +458,14 @@ div.fr-footer__bottom {
     color: #A558A0
 }
 
+.aplus-message-infos--author {
+    color: #0063cb
+}
+
 .aplus-message-status {
         padding: 1rem 25%;
         text-align: center;
-        font-size: 0.875rem;
+        font-size: 0.75rem;
         color: #0063cb;
         border-top: 1px solid #ccc;
         border-bottom: 1px solid #ccc;
@@ -489,14 +493,14 @@ div.fr-footer__bottom {
 .searchable-row p {
     padding: 0 1rem;
     margin: 0;
-    font-size: .875rem;
+    font-size: .75rem;
     font-weight: bold;
 }
 
 .searchable-row div {
     padding: 1rem;
     background: #F6F7F7;
-    font-size: .875rem;
+    font-size: .75rem;
 }
 
 #fr-modal-add-structure .aplus-form .aplus-checkbox-highlight .fr-label:not(:first-of-type) {
@@ -505,4 +509,20 @@ div.fr-footer__bottom {
 
 #fr-modal-add-structure .fr-checkbox-group {
     margin-top: 2rem;
+}
+
+.aplus-fieldset {
+    display: block !important;
+}
+
+.aplus-fieldset .fr-label {
+    width: 33%;
+}
+
+.fr-modal__body .fr-btn--close {
+    padding: 0 !important;
+}
+
+.aplus-float-right {
+    float: right;
 }
