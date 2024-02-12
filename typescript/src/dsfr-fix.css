@@ -68,6 +68,7 @@ div.fr-footer__bottom {
 .fr_card__highlight,
 .fr_card__highlight:hover {
     background: #e3e3fd !important;
+    border: 1px solid #d3d3e5;
 }
 
 .fr-table {
@@ -110,4 +111,9 @@ div.fr-footer__bottom {
 
 .external-link {
     font-size: 1rem !important;
+}
+
+.aplus-space-between {
+    justify-content: space-between;
+    display: flex;
 }
