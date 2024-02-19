@@ -237,7 +237,6 @@ case class UserController @Inject() (
     else
       usersInArea(selectedArea)
 
-  // TODO: ajouter les liens vers les pages utilisateurs pour les responsables de territoire ?
   def all(areaId: UUID): Action[AnyContent] =
     loginAction.async { implicit request: RequestWithUserData[AnyContent] =>
       asUserWithAuthorization(Authorization.canSeeUsersInArea(areaId))(

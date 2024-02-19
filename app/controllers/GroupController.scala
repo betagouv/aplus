@@ -419,19 +419,7 @@ case class GroupController @Inject() (
   )(implicit request: RequestWithUserData[_]): Future[Result] = {
     val groupsFuture =
       if (Authorization.isAreaManager(rights))
-        groupService
-          .byAreasAndOrganisationIds(user.managingAreaIds, user.managingOrganisationIds)
-          .flatMap { areaGroups =>
-            val areaGroupIds = areaGroups.map(_.id).toSet
-            val userGroupIds = user.groupIds.toSet
-            val missingGroupIds = userGroupIds.diff(areaGroupIds)
-            if (missingGroupIds.isEmpty)
-              Future.successful(areaGroups)
-            else
-              groupService
-                .byIdsFuture(missingGroupIds.toList)
-                .map(missingGroups => missingGroups ::: areaGroups)
-          }
+        groupService.allForAreaManager(user)
       else
         groupService.byIdsFuture(user.groupIds)
     for {

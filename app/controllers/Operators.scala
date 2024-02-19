@@ -1,20 +1,19 @@
 package controllers
 
-import java.util.UUID
-
 import actions.RequestWithUserData
 import cats.syntax.all._
 import constants.Constants
 import helper.BooleanHelper.not
-import models.EventType._
+import helper.ScalatagsHelpers.writeableOf_Modifier
+import java.util.UUID
 import models.{Application, Authorization, Error, EventType, User, UserGroup}
+import models.EventType._
 import modules.AppConfig
+import play.api.mvc.{RequestHeader, Result, Results}
 import play.api.mvc.Results.{InternalServerError, NotFound, Unauthorized}
-import play.api.mvc.{AnyContent, RequestHeader, Result, Results}
 import scala.concurrent.{ExecutionContext, Future}
 import services.{ApplicationService, EventService, UserGroupService, UserService}
 import views.MainInfos
-import helper.ScalatagsHelpers.writeableOf_Modifier
 
 object Operators {
 

@@ -11,7 +11,6 @@
     - Agent d'administration (CAF, CPAM, Impôt, Préfecture, ...)
 - Administrateur
     - Intrapreneuse A+
-    - Animateur de communauté d'A+
     - Développeur A+
 - Responsable de territoire
     - Chargé de déploiement en région ou département

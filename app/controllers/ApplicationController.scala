@@ -826,18 +826,7 @@ case class ApplicationController @Inject() (
         val groupIds = (queryGroupIds ::: user.groupIds).distinct
         userGroupService.byIdsFuture(groupIds)
       } else if (Authorization.isAreaManager(rights)) {
-        userGroupService
-          .byAreasAndOrganisationIds(user.managingAreaIds, user.managingOrganisationIds)
-          .flatMap { groups =>
-            val foundGroupIds = groups.map(_.id).toSet
-            val additionalIds = user.groupIds.filterNot(id => foundGroupIds.contains(id))
-            if (additionalIds.isEmpty)
-              Future.successful(groups)
-            else
-              userGroupService
-                .byIdsFuture(additionalIds)
-                .map(additionalGroups => additionalGroups ::: groups)
-          }
+        userGroupService.allForAreaManager(user)
       } else {
         userGroupService.byIdsFuture(user.groupIds)
       }
