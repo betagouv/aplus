@@ -32,8 +32,9 @@ object Area {
 
   val ain: Area = Area("Ain", "Ain", "01")
   val calvados: Area = Area("calvados", "Calvados", "14")
+  val demo: Area = Area("exemple", "Demo", "-1")
 
-  val all = List(
+  val allExcludingDemo = List(
     ain,
     Area("Aisne", "Aisne", "02"),
     Area("Allier", "Allier", "03"),
@@ -135,8 +136,9 @@ object Area {
     Area("Vosges", "Vosges", "88"),
     Area("Yonne", "Yonne", "89"),
     Area("Yvelines", "Yvelines", "78"),
-    Area("exemple", "Demo", "-1")
   )
+
+  val all = allExcludingDemo ::: List(demo)
 
   val allArea = Area(UUIDHelper.namedFrom("all"), "tous les territoires", "0")
 

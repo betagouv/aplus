@@ -122,15 +122,17 @@ class LoginController @Inject() (
     // observer => /stats
     val path: String = {
       val tmpPath = request.flash.get("path").getOrElse(routes.HomeController.index.url)
-      val shouldChangeObserverPath: Boolean =
+      val isHome = tmpPath === routes.HomeController.index.url
+      val shouldChangePathToStats: Boolean =
         requestWithUserData
           .map(data =>
-            Authorization.isObserver(data.rights) &&
+            (Authorization.isObserver(data.rights) ||
+              Authorization.isAreaManager(data.rights)) &&
               data.currentUser.cguAcceptationDate.nonEmpty &&
-              (tmpPath === routes.HomeController.index.url)
+              isHome
           )
           .getOrElse(false)
-      if (shouldChangeObserverPath) {
+      if (shouldChangePathToStats) {
         routes.ApplicationController.stats.url
       } else {
         tmpPath

@@ -1,16 +1,16 @@
 package controllers
 
-import java.util.UUID
-
 import actions.RequestWithUserData
 import cats.syntax.all._
 import constants.Constants
 import helper.BooleanHelper.not
-import models.EventType._
+import helper.ScalatagsHelpers.writeableOf_Modifier
+import java.util.UUID
 import models.{Application, Authorization, Error, EventType, User, UserGroup}
+import models.EventType._
 import modules.AppConfig
+import play.api.mvc.{RequestHeader, Result, Results}
 import play.api.mvc.Results.{InternalServerError, NotFound, Unauthorized}
-import play.api.mvc.{AnyContent, RequestHeader, Result, Results}
 import scala.concurrent.{ExecutionContext, Future}
 import services.{ApplicationService, EventService, UserGroupService, UserService}
 import views.MainInfos
@@ -100,7 +100,7 @@ object Operators {
     def asUserWithAuthorization(authorizationCheck: Authorization.Check)(
         errorEventType: EventType,
         errorMessage: => String,
-        errorResult: Option[Result] = none,
+        errorResult: => Option[Result] = none,
         errorInvolvesUser: Option[UUID] = none,
     )(
         payload: () => Future[Result]
@@ -110,35 +110,17 @@ object Operators {
       } else {
         eventService.log(errorEventType, errorMessage, involvesUser = errorInvolvesUser)
         Future.successful(
-          errorResult.getOrElse(Unauthorized("Vous n'avez pas le droit de faire ça"))
+          errorResult.getOrElse(Forbidden(views.errors.public403()))
         )
       }
 
     def asAdmin(errorEventType: EventType, errorMessage: => String)(
         payload: () => Future[Result]
-    )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
-      if (not(request.currentUser.admin)) {
-        eventService.log(errorEventType, errorMessage)
-        Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
-      } else {
-        payload()
-      }
-
-    def asUserWhoSeesUsersOfArea(areaId: UUID)(errorEventType: EventType, errorMessage: => String)(
-        payload: () => Future[Result]
-    )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
-      // TODO: use only Authorization
-      if (
-        not(
-          request.currentUser.canSeeUsersInArea(areaId) ||
-            Authorization.isObserver(request.rights)
-        )
-      ) {
-        eventService.log(errorEventType, errorMessage)
-        Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
-      } else {
-        payload()
-      }
+    )(implicit request: RequestWithUserData[_]): Future[Result] =
+      asUserWithAuthorization(Authorization.isAdmin)(
+        errorEventType = errorEventType,
+        errorMessage = errorMessage
+      )(payload)
 
     def asAdminOfUserZone(user: User)(errorEventType: EventType, errorMessage: => String)(
         payload: () => Future[Result]

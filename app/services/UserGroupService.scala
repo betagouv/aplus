@@ -1,14 +1,13 @@
 package services
 
-import java.sql.ResultSet
-import java.util.UUID
-
 import anorm._
 import aplus.macros.Macros
 import cats.syntax.all._
 import helper.{StringHelper, Time, UUIDHelper}
+import java.sql.ResultSet
+import java.util.UUID
 import javax.inject.Inject
-import models.{Error, EventType, FranceService, Organisation, UserGroup}
+import models.{Error, EventType, FranceService, Organisation, User, UserGroup}
 import org.postgresql.util.PSQLException
 import play.api.db.Database
 import scala.concurrent.Future
@@ -228,6 +227,35 @@ class UserGroupService @Inject() (
           .as(simpleUserGroup.*)
       }
     }
+
+  def byAreasAndOrganisationIds(
+      areaIds: List[UUID],
+      organisationIds: List[Organisation.Id]
+  ): Future[List[UserGroup]] =
+    Future {
+      db.withConnection { implicit connection =>
+        val organisationIdStrings = organisationIds.map(_.id)
+        SQL(s"""SELECT $fieldsInSelect
+                FROM "user_group"
+                WHERE ARRAY[{areaIds}]::uuid[] && area_ids
+                AND ARRAY[{organisationIds}]::varchar[] @> ARRAY[organisation]""")
+          .on("areaIds" -> areaIds, "organisationIds" -> organisationIdStrings)
+          .as(simpleUserGroup.*)
+      }
+    }
+
+  def allForAreaManager(user: User): Future[List[UserGroup]] =
+    byAreasAndOrganisationIds(user.managingAreaIds, user.managingOrganisationIds)
+      .flatMap { areaGroups =>
+        val areaGroupIds = areaGroups.map(_.id).toSet
+        val userGroupIds = user.groupIds.toSet
+        val missingGroupIds = userGroupIds.diff(areaGroupIds)
+        if (missingGroupIds.isEmpty)
+          Future.successful(areaGroups)
+        else
+          byIdsFuture(missingGroupIds.toList)
+            .map(missingGroups => missingGroups ::: areaGroups)
+      }
 
   def search(searchQuery: String, limit: Int): Future[Either[Error, List[UserGroup]]] =
     Future(
