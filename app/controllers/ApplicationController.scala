@@ -1134,7 +1134,7 @@ case class ApplicationController @Inject() (
                   withApplication(applicationId) { application: Application =>
                     val isAuthorized =
                       Authorization
-                        .fileCanBeShowed(config.filesExpirationInDays)(
+                        .fileCanBeShown(config.filesExpirationInDays)(
                           metadata.attached,
                           application
                         )(

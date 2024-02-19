@@ -31,7 +31,7 @@ class AuthorizationSpec extends Specification {
     invitedGroupIds = List.empty[UUID]
   )
 
-  "Authorization FileCanBeShowed should returns" >> {
+  "Authorization FileCanBeShown should returns" >> {
     "for an helper" >> {
       "for an application file" >> {
 
@@ -65,7 +65,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             userId,
             rights
           ) should beTrue
@@ -101,7 +101,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             userId,
             rights
           ) should beFalse
@@ -136,7 +136,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             userId,
             rights
           ) should beFalse
@@ -175,7 +175,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Answer(application.id, answer.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             userId,
             rights
           ) should beTrue
@@ -211,7 +211,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Answer(application.id, answer.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             userId,
             rights
           ) should beFalse
@@ -254,7 +254,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             userId,
             rights
           ) should beTrue
@@ -290,7 +290,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             userId,
             rights
           ) should beFalse
@@ -325,7 +325,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             userId,
             rights
           ) should beFalse
@@ -364,7 +364,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Answer(application.id, answer.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             userId,
             rights
           ) should beTrue
@@ -400,7 +400,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Answer(application.id, answer.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             userId,
             rights
           ) should beFalse
