@@ -41,7 +41,6 @@ import java.nio.file.{Files, Path, Paths}
 import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.Future.successful
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -446,7 +445,7 @@ case class ApplicationController @Inject() (
 
   def applicationsAdmin: Action[AnyContent] =
     loginAction.async { implicit request =>
-      asUserWithAuthorization(Authorization.canSeeApplicationsAsAdmin)(
+      asUserWithAuthorization(Authorization.canSeeApplicationsMetadata)(
         EventType.AllApplicationsUnauthorized,
         "L'utilisateur n'a pas de droit d'afficher les métadonnées des demandes"
       ) { () =>
@@ -466,7 +465,7 @@ case class ApplicationController @Inject() (
 
   def applicationsMetadata: Action[AnyContent] =
     loginAction.async { implicit request =>
-      asUserWithAuthorization(Authorization.canSeeApplicationsAsAdmin)(
+      asUserWithAuthorization(Authorization.canSeeApplicationsMetadata)(
         EventType.AllApplicationsUnauthorized,
         "Liste des metadonnées des demandes non autorisée",
         errorResult = Forbidden(Json.toJson(ApplicationMetadataResult(Nil))).some
@@ -1167,10 +1166,7 @@ case class ApplicationController @Inject() (
                         .fileCanBeShown(config.filesExpirationInDays)(
                           metadata.attached,
                           application
-                        )(
-                          request.currentUser.id,
-                          request.rights
-                        )
+                        )(request.rights)
                     if (isAuthorized) {
                       metadata.status match {
                         case FileMetadata.Status.Scanning =>
@@ -1609,7 +1605,7 @@ case class ApplicationController @Inject() (
   def reopen(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application: Application =>
-        successful(application.canBeOpenedBy(request.currentUser)).flatMap {
+        Future.successful(Authorization.canOpenApplication(application)(request.rights)).flatMap {
           case true =>
             applicationService
               .reopen(applicationId)
@@ -1627,7 +1623,7 @@ case class ApplicationController @Inject() (
           case false =>
             val message = s"Non autorisé à réouvrir la demande $applicationId"
             eventService.log(ReopenUnauthorized, message, applicationId = application.id.some)
-            successful(Unauthorized(message))
+            Future.successful(Unauthorized(message))
         }
       }
     }
@@ -1658,8 +1654,11 @@ case class ApplicationController @Inject() (
           },
           usefulness => {
             val finalUsefulness =
-              usefulness.some.filter(_ => request.currentUser.id === application.creatorUserId)
-            if (application.canBeClosedBy(request.currentUser)) {
+              usefulness.some.filter(_ =>
+                Authorization.isApplicationCreator(application)(request.rights) ||
+                  Authorization.isInApplicationCreatorGroup(application)(request.rights)
+              )
+            if (Authorization.canCloseApplication(application)(request.rights)) {
               if (
                 applicationService
                   .close(applicationId, finalUsefulness, Time.nowParis())

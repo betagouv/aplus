@@ -23,6 +23,8 @@ case class Application(
     description: String,
     // TODO: rename `userInfos` => `usagerInfos`
     userInfos: Map[String, String],
+    // Contains all the invited users at creation and in all answers
+    // (except the last one, as long as it has not been saved)
     invitedUsers: Map[UUID, String],
     area: UUID,
     irrelevant: Boolean,
@@ -157,14 +159,6 @@ case class Application(
   def canHaveAgentsInvitedBy(user: User) =
     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
       (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)
-
-  def canBeClosedBy(user: User) =
-    (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
-      creatorUserId === user.id || user.admin
-
-  def canBeOpenedBy(user: User) =
-    (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
-      creatorUserId === user.id || user.admin
 
 // TODO: remove
   def haveUserInvitedOn(user: User) = invitedUsers.keys.toList.contains(user.id)

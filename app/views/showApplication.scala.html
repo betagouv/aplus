@@ -3,6 +3,7 @@
 @import _root_.helper.BooleanHelper.not
 @import cats.implicits.catsSyntaxEq
 @import models.Answer.AnswerType
+@import models.Authorization
 @import serializers.Keys
 
 @(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, selectedArea: Area, userSignature: Option[String], attachments: List[FileMetadata], usersOrganisations: Map[java.util.UUID, List[Organisation.Id]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
@@ -164,12 +165,12 @@ dialog {
   @toHtml(views.application.answerFormError(answerToAgentsForm))
 
 
-        @if(application.canBeClosedBy(currentUser) && not(application.closed)) {
+        @if(Authorization.canCloseApplication(application)(currentUserRights) && not(application.closed)) {
             <button id="archive-button-1" class="mdl-cell mdl-cell--3-col mdl-cell--9-offset-desktop mdl-cell--12-col-phone mdl-button mdl-button--raised mdl-button--primary mdl-js-button do-not-print">
                 Archiver l’échange
             </button>
         }
-        @if(application.canBeOpenedBy(currentUser) && application.closed) {
+        @if(Authorization.canOpenApplication(application)(currentUserRights) && application.closed) {
           @toHtml(views.application.reopenButton(application.id))
         }
         <div class="mdl-card mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">
@@ -306,7 +307,7 @@ dialog {
 
             <span class="single--flex-grow-1"></span>
 
-            @if(application.canBeClosedBy(currentUser) && not(application.closed)) {
+            @if(Authorization.canCloseApplication(application)(currentUserRights) && not(application.closed)) {
                 <div>
                     <button id="archive-button-3" class="mdl-button mdl-button--raised mdl-button--primary mdl-button--multiline-text mdl-js-button do-not-print">
                         Archiver l’échange

@@ -39,7 +39,6 @@ object application {
         .map(file =>
           fileLink(
             Authorization.fileCanBeShown(config.filesExpirationInDays)(file.attached, application)(
-              currentUser.id,
               currentUserRights
             ),
             file,
@@ -68,7 +67,6 @@ object application {
         .map(file =>
           fileLink(
             Authorization.fileCanBeShown(config.filesExpirationInDays)(file.attached, application)(
-              currentUser.id,
               currentUserRights
             ),
             file,
