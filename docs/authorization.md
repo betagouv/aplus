@@ -120,7 +120,7 @@ Note
 
 |Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✔ | ✖ | ✖ | ✔ (créateur) | ✖ | ✔ (invité) | ✖ |
+| ✔ | ✖ | ✖ | ✔ (créateur ou membre du groupe créateur) | ✖ | ✔ (invité) | ✖ |
 
 
 #### Désarchiver une demande
@@ -129,7 +129,7 @@ Note
 
 |Admin Général|Resp. Terr.|Resp. Groupe|Aidant|Instructeur|Expert|Observateur|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| ✔ | ✖ | ✖ | ✔ (créateur) | ✖ | ✔ (invité) | ✖ |
+| ✔ | ✖ | ✖ | ✔ (créateur ou membre du groupe créateur) | ✖ | ✔ (invité) | ✖ |
 
 
 

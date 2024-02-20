@@ -283,7 +283,7 @@ object Authorization {
   def canAddUserAsCoworkerToNewApplication(otherUser: User): Check =
     rights => otherUser.helper && isInOneOfGroups(otherUser.groupIds.toSet)(rights)
 
-  def canSeeApplicationsAsAdmin: Check =
+  def canSeeApplicationsMetadata: Check =
     atLeastOneIsAuthorized(isAdmin, isAreaManager, isManager)
 
   def canSeeOtherUserNonPrivateViews(otherUser: User): Check =
@@ -364,53 +364,73 @@ object Authorization {
       validCase1 || validCase2
     }
 
+  def canCloseApplication(application: Application): Check =
+    atLeastOneIsAuthorized(
+      isAdmin,
+      allMustBeAuthorized(isExpert, isInvitedOn(application)),
+      isApplicationCreator(application),
+      isInApplicationCreatorGroup(application),
+    )
+
+  def canOpenApplication(application: Application): Check =
+    canCloseApplication(application)
+
   private def answerFileCanBeShown(filesExpirationInDays: Int)(
       application: Application,
       answerId: UUID
-  )(userId: UUID, rights: UserRights): Boolean =
-    application.answers.find(_.id === answerId) match {
-      case None => false
-      case Some(answer) =>
-        val hasNotExpired =
-          Answer.filesAvailabilityLeftInDays(filesExpirationInDays)(answer).nonEmpty
-        val isCreatorHelper =
-          userId === application.creatorUserId || isInApplicationCreatorGroup(application)(rights)
-        val validCase1 =
-          hasNotExpired &&
-            isHelper(rights) &&
-            answer.visibleByHelpers &&
-            isCreatorHelper
-        val invitedUsersInAnswers: Set[UUID] =
-          (application.answers.takeWhile(_.id =!= answerId) :+ answer)
-            .flatMap(_.invitedUsers.keys)
-            .toSet
-        val validCase2 =
-          hasNotExpired &&
-            isInstructor(rights) &&
-            (application.invitedUsers.keys.toSet ++ invitedUsersInAnswers).contains(userId)
+  ): Check =
+    rights =>
+      application.answers.find(_.id === answerId) match {
+        case None => false
+        case Some(answer) =>
+          val hasNotExpired =
+            Answer.filesAvailabilityLeftInDays(filesExpirationInDays)(answer).nonEmpty
+          val isCreatorHelper =
+            isApplicationCreator(application)(rights) ||
+              isInApplicationCreatorGroup(application)(rights)
+          val validCase1 =
+            hasNotExpired &&
+              isHelper(rights) &&
+              answer.visibleByHelpers &&
+              isCreatorHelper
 
-        validCase1 || validCase2
-    }
+          val isInvitedInPreviousAnswer =
+            rights.rights.exists {
+              case UserRight.HasUserId(userId) =>
+                (application.answers.takeWhile(_.id =!= answerId) :+ answer)
+                  .flatMap(_.invitedUsers.keys)
+                  .toSet
+                  .contains(userId)
+              case _ => false
+            }
+          val validCase2 =
+            hasNotExpired &&
+              isInstructor(rights) &&
+              (isInvitedOn(application)(rights) || isInvitedInPreviousAnswer)
+
+          validCase1 || validCase2
+      }
 
   private def applicationFileCanBeShown(filesExpirationInDays: Int)(
       application: Application
-  )(userId: UUID, rights: UserRights): Boolean =
-    Application.filesAvailabilityLeftInDays(filesExpirationInDays)(application).nonEmpty && not(
-      isExpert(rights)
-    ) && (
-      (isInstructor(rights) && application.invitedUsers.keys.toList.contains(userId)) ||
-        (isHelper(rights) && userId === application.creatorUserId)
-    )
+  ): Check =
+    rights =>
+      Application.filesAvailabilityLeftInDays(filesExpirationInDays)(application).nonEmpty &&
+        not(isExpert(rights)) &&
+        (
+          (isInstructor(rights) && isInvitedOn(application)(rights)) ||
+            (isHelper(rights) && isApplicationCreator(application)(rights))
+        )
 
   def fileCanBeShown(filesExpirationInDays: Int)(
       metadata: FileMetadata.Attached,
       application: Application,
-  )(userId: UUID, rights: UserRights): Boolean =
+  ): Check =
     metadata match {
       case FileMetadata.Attached.Application(_) =>
-        applicationFileCanBeShown(filesExpirationInDays)(application)(userId, rights)
+        applicationFileCanBeShown(filesExpirationInDays)(application)
       case FileMetadata.Attached.Answer(_, answerId) =>
-        answerFileCanBeShown(filesExpirationInDays)(application, answerId)(userId, rights)
+        answerFileCanBeShown(filesExpirationInDays)(application, answerId)
     }
 
 }
