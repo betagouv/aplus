@@ -25,6 +25,7 @@ class ApplicationSpec extends Specification with BaseSpec {
 
       val number = scala.util.Random.nextInt()
       val area = Area.all.head.id
+
       val instructorGroup = UserGroup(
         id = UUIDHelper.randomUUID,
         name = s"Group $number",
@@ -35,7 +36,9 @@ class ApplicationSpec extends Specification with BaseSpec {
         publicNote = None,
         internalSupportComment = None
       )
+
       groupService.add(instructorGroup)
+
       val instructorUser = User(
         UUIDHelper.randomUUID,
         "key",
@@ -60,6 +63,7 @@ class ApplicationSpec extends Specification with BaseSpec {
         managingAreaIds = Nil,
         internalSupportComment = None
       )
+
       val helperUser = User(
         UUIDHelper.randomUUID,
         "key",
@@ -83,6 +87,7 @@ class ApplicationSpec extends Specification with BaseSpec {
         managingAreaIds = Nil,
         internalSupportComment = None
       )
+
       userService.add(List(instructorUser, helperUser))
       userService.validateCGU(helperUser.id)
 
@@ -105,6 +110,7 @@ class ApplicationSpec extends Specification with BaseSpec {
       // Submit an application
       val createApplicationURL =
         controllers.routes.ApplicationController.create.absoluteURL(false, s"localhost:$port")
+
       browser.goTo(createApplicationURL)
 
       val subject = s"Sujet de la demande $number"
