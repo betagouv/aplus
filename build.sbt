@@ -201,6 +201,7 @@ def NpmWatch(base: File) = {
   import scala.sys.process.Process
 
   object NpmWatch {
+
     def apply(base: File): PlayRunHook = {
 
       object NpmProcess extends PlayRunHook {
@@ -222,6 +223,7 @@ def NpmWatch(base: File) = {
 
       NpmProcess
     }
+
   }
 
   NpmWatch(base)

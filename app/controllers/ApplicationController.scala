@@ -742,11 +742,13 @@ case class ApplicationController @Inject() (
       val defaultCase = Formats.localDateFormat
       val fallback1 = Formats.localDateFormat("dd-MM-yyyy")
       val fallback2 = Formats.localDateFormat("dd.MM.yy")
+
       def bind(key: String, data: Map[String, String]) =
         defaultCase
           .bind(key, data)
           .orElse(fallback1.bind(key, data))
           .orElse(fallback2.bind(key, data))
+
       def unbind(key: String, value: LocalDate) = defaultCase.unbind(key, value)
     }
     of(formatter)
