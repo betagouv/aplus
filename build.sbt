@@ -90,7 +90,7 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.7.1",
+  "org.postgresql" % "postgresql" % "42.7.2",
   anormDependency,
   "org.playframework" %% "play-mailer" % "10.0.0",
   "org.playframework" %% "play-json" % "3.0.2",
