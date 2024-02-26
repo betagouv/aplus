@@ -26,7 +26,7 @@ object errors {
       h1Title = "Page non trouvée",
       errorCode = "Erreur 404",
       apologyMessage =
-        "La page que vous cherchez est introuvable. Excusez-nous pour la gène occasionnée.",
+        "La page que vous cherchez est introuvable. Veuillez nous excuser pour la gène occasionnée.",
       helpMessage = frag(
         "Si vous avez tapé l'adresse web dans le navigateur, vérifiez qu'elle est correcte. La page n’est peut-être plus disponible. ",
         br,
@@ -34,7 +34,8 @@ object errors {
         br,
         "Sinon contactez le support Administration+ à l’adresse ",
         Constants.supportEmail,
-        " pour que l’on puisse vous rediriger vers la bonne information."
+        " pour que l’on puisse vous rediriger vers la bonne information. ",
+        "Merci de préciser dans votre email l’adresse web qui a généré ce message d’erreur. "
       ),
       additionalElements = ul(cls := "fr-btns-group fr-btns-group--inline-md")(
         li(a(cls := "fr-btn", href := "/")("Page d'accueil"))
