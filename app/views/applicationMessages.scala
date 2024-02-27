@@ -121,7 +121,9 @@ object applicationMessages {
                     placeholder := "Ajouter une pièce jointe"
                   ),
                   label(cls := "fr-label", `for` := "file[0]")(
-                    span(cls := "fr-hint-text")("Taille maximale : xx Mo. Formats supportés : jpg, png, pdf. Plusieurs fichiers possibles. Lorem ipsum dolor sit amet, consectetur adipiscing.")
+                    span(cls := "fr-hint-text")(
+                      "Taille maximale : xx Mo. Formats supportés : jpg, png, pdf. Plusieurs fichiers possibles. Lorem ipsum dolor sit amet, consectetur adipiscing."
+                    )
                   )
                 )
               ),
@@ -159,8 +161,10 @@ object applicationMessages {
               hr(cls := "aplus-hr-in-card--top-margin"),
               div(cls := "aplus-spacer fr_card__container")(
                 button(
-                  cls := "fr-btn fr-btn--secondary", 
-                  attr("formaction") := ApplicationController.answerApplicationHasBeenSolved(application.id).url
+                  cls := "fr-btn fr-btn--secondary",
+                  attr("formaction") := ApplicationController
+                    .answerApplicationHasBeenSolved(application.id)
+                    .url
                 )(
                   "J’ai traité la demande"
                 ),

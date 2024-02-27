@@ -516,8 +516,8 @@ case class ApplicationController @Inject() (
 
   private def lastOperateurAnswer(application: Application): Option[Answer] =
     application.answers
-          .filter(_.creatorUserID =!= application.creatorUserId)
-          .filter(answer =>
+      .filter(_.creatorUserID =!= application.creatorUserId)
+      .filter(answer =>
         !answer.message.contains("rejoins la conversation automatiquement comme expert") &&
           !answer.message
             .contains("Les nouveaux instructeurs rejoignent automatiquement la demande")
@@ -549,7 +549,7 @@ case class ApplicationController @Inject() (
       case None                 => false
       case Some(remainingHours) => remainingHours < 0
     }
-      
+
   private def myApplicationsBoard(
       user: User,
       userRights: Authorization.UserRights,
@@ -1403,7 +1403,7 @@ case class ApplicationController @Inject() (
   private val WorkInProgressMessage = "Je m’en occupe."
   private val WrongInstructorMessage = "Je ne suis pas le bon interlocuteur."
 
-def answerApplicationHasBeenSolved(applicationId: UUID): Action[AnyContent] =
+  def answerApplicationHasBeenSolved(applicationId: UUID): Action[AnyContent] =
     answer(applicationId)
 
   def answer(applicationId: UUID): Action[AnyContent] =
