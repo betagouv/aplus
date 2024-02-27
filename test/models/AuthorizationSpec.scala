@@ -2,7 +2,7 @@ package models
 
 import models.Answer.AnswerType
 import models.Application.{MandatType, SeenByUser}
-import models.Authorization.UserRight.{Helper, InstructorOfGroups}
+import models.Authorization.UserRight.{HasUserId, Helper, InstructorOfGroups}
 import models.Authorization.UserRights
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
@@ -31,14 +31,14 @@ class AuthorizationSpec extends Specification {
     invitedGroupIds = List.empty[UUID]
   )
 
-  "Authorization FileCanBeShowed should returns" >> {
+  "Authorization FileCanBeShown should returns" >> {
     "for an helper" >> {
       "for an application file" >> {
 
         "true for a not expired date" >> {
           val applicationId = randomUUID()
           val userId = randomUUID()
-          val rights = UserRights(Set(Helper))
+          val rights = UserRights(Set(HasUserId(userId), Helper))
           val fileExpirationDate = 10
           val overrun: Long = -3
 
@@ -65,8 +65,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
-            userId,
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             rights
           ) should beTrue
         }
@@ -74,7 +73,7 @@ class AuthorizationSpec extends Specification {
         "false for an expired date" >> {
           val applicationId = randomUUID()
           val userId = randomUUID()
-          val rights = UserRights(Set(Helper))
+          val rights = UserRights(Set(HasUserId(userId), Helper))
           val fileExpirationDate = 10
           val overrun: Long = 10
 
@@ -101,15 +100,13 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
-            userId,
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             rights
           ) should beFalse
         }
 
         "false if i'm not the creator" >> {
           val applicationId = randomUUID()
-          val userId = randomUUID()
           val rights = UserRights(Set(Helper))
           val fileExpirationDate = 10
 
@@ -136,8 +133,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
-            userId,
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             rights
           ) should beFalse
         }
@@ -148,7 +144,7 @@ class AuthorizationSpec extends Specification {
         "true for a not expired date" >> {
           val applicationId = randomUUID()
           val userId = randomUUID()
-          val rights = UserRights(Set(Helper))
+          val rights = UserRights(Set(HasUserId(userId), Helper))
           val fileExpirationDate = 10
           val overrun: Long = -3
 
@@ -175,8 +171,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Answer(application.id, answer.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
-            userId,
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             rights
           ) should beTrue
         }
@@ -184,7 +179,7 @@ class AuthorizationSpec extends Specification {
         "false for an expired date" >> {
           val applicationId = randomUUID()
           val userId = randomUUID()
-          val rights = UserRights(Set(Helper))
+          val rights = UserRights(Set(HasUserId(userId), Helper))
           val fileExpirationDate = 10
           val overrun: Long = 2
 
@@ -211,8 +206,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Answer(application.id, answer.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
-            userId,
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             rights
           ) should beFalse
         }
@@ -227,7 +221,7 @@ class AuthorizationSpec extends Specification {
         "true for a not expired date" >> {
           val applicationId = randomUUID()
           val userId = randomUUID()
-          val rights = UserRights(Set(InstructorOfGroups(Set.empty[UUID])))
+          val rights = UserRights(Set(HasUserId(userId), InstructorOfGroups(Set.empty[UUID])))
           val fileExpirationDate = 10
           val overrun: Long = -3
 
@@ -254,8 +248,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
-            userId,
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             rights
           ) should beTrue
         }
@@ -263,7 +256,7 @@ class AuthorizationSpec extends Specification {
         "false for an expired date" >> {
           val applicationId = randomUUID()
           val userId = randomUUID()
-          val rights = UserRights(Set(InstructorOfGroups(Set.empty[UUID])))
+          val rights = UserRights(Set(HasUserId(userId), InstructorOfGroups(Set.empty[UUID])))
           val fileExpirationDate = 10
           val overrun: Long = 10
 
@@ -290,15 +283,13 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
-            userId,
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             rights
           ) should beFalse
         }
 
         "false if i'm not invited on the application" >> {
           val applicationId = randomUUID()
-          val userId = randomUUID()
           val rights = UserRights(Set(InstructorOfGroups(Set.empty[UUID])))
           val fileExpirationDate = 10
 
@@ -325,8 +316,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
-            userId,
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             rights
           ) should beFalse
         }
@@ -337,7 +327,7 @@ class AuthorizationSpec extends Specification {
         "true for a not expired date" >> {
           val applicationId = randomUUID()
           val userId = randomUUID()
-          val rights = UserRights(Set(InstructorOfGroups(Set.empty[UUID])))
+          val rights = UserRights(Set(HasUserId(userId), InstructorOfGroups(Set.empty[UUID])))
           val fileExpirationDate = 10
           val overrun: Long = -3
 
@@ -364,8 +354,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Answer(application.id, answer.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
-            userId,
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             rights
           ) should beTrue
         }
@@ -373,7 +362,7 @@ class AuthorizationSpec extends Specification {
         "false for an expired date" >> {
           val applicationId = randomUUID()
           val userId = randomUUID()
-          val rights = UserRights(Set(InstructorOfGroups(Set.empty[UUID])))
+          val rights = UserRights(Set(HasUserId(userId), InstructorOfGroups(Set.empty[UUID])))
           val fileExpirationDate = 10
           val overrun: Long = 2
 
@@ -400,8 +389,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Answer(application.id, answer.id)
-          Authorization.fileCanBeShowed(fileExpirationDate)(metadata, application)(
-            userId,
+          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
             rights
           ) should beFalse
         }

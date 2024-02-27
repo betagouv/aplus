@@ -2,9 +2,7 @@ package views
 
 import cats.syntax.all._
 import controllers.routes.{Assets, HomeController, JavascriptController, UserController}
-import helper.TwirlImports.toHtml
 import play.api.mvc.RequestHeader
-import play.twirl.api.Html
 import scalatags.Text.all._
 import scalatags.Text.tags2
 import views.helpers.head.publicCss
@@ -33,9 +31,40 @@ object main {
       additionalFooterTags: Frag = frag()
   )(implicit
       request: RequestHeader,
+  ) = dsfrLayout(
+    pageName,
+    breadcrumbs(pageName),
+    content,
+    loggedInNavBar(),
+    additionalHeadTags,
+    additionalFooterTags
+  )
+
+  def publicLayout(
+      pageName: String,
+      content: Frag,
+      addBreadcrumbs: Boolean = true,
+      additionalHeadTags: Frag = frag(),
+      additionalFooterTags: Frag = frag()
+  ) = dsfrLayout(
+    pageName,
+    if (addBreadcrumbs) breadcrumbs(pageName) else frag(),
+    content,
+    frag(),
+    additionalHeadTags,
+    additionalFooterTags
+  )
+
+  private def dsfrLayout(
+      pageTitle: String,
+      navigation: Frag,
+      content: Frag,
+      navBar: Frag,
+      additionalHeadTags: Frag,
+      additionalFooterTags: Frag
   ) =
     html(
-      head(attr("lang") := "fr", attr("data-fr-scheme") := "system")(
+      head(lang := "fr", attr("data-fr-scheme") := "system")(
         meta(charset := "utf-8"),
         meta(name := "format-detection", attr("content") := "telephone=no"),
         meta(
@@ -74,7 +103,7 @@ object main {
           attr("type") := "image/svg+xml"
         ),
         publicCss("generated-js/dsfr/dsfr.min.css"),
-        tags2.title(pageName),
+        tags2.title(pageTitle),
         additionalHeadTags
       ),
       body(
@@ -120,57 +149,12 @@ object main {
               )
             ),
           ),
-          div(cls := "fr-header__menu fr-modal")(
-            div(cls := "fr-container")(
-              tag("nav")(cls := "fr-nav")(
-                ul(cls := "fr-nav__list")(
-                  generateLink(controllers.routes.ApplicationController.dashboard.url, "Accueil"),
-                  generateLink(
-                    controllers.routes.ApplicationController.myApplications.url,
-                    "Mes demandes"
-                  ),
-                  generateLink(
-                    controllers.routes.GroupController.showEditMyGroups.url,
-                    "Mes groupes"
-                  ),
-                  generateLink(controllers.routes.UserController.home.url, "Utilisateurs"),
-                  generateLink(controllers.routes.AreaController.all.url, "Déploiment"),
-                  generateLink(controllers.routes.ApplicationController.stats.url, "Stats"),
-                  generateLink(
-                    Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf").url,
-                    "Mandat"
-                  )
-                )
-              ),
-            )
-          )
+          navBar
         )
       ),
       div(cls := "main-container")(
-        tag("main")()(
-          tag("nav")(cls := "fr-breadcrumb")(
-            div(cls := "fr-collapse")(
-              ol(cls := "fr-breadcrumb__list")(
-                li()(
-                  a(
-                    href := "/",
-                    cls := "fr-breadcrumb__link"
-                  )(
-                    "Accueil"
-                  )
-                ),
-                li()(
-                  a(
-                    href := "/",
-                    attr("aria-current") := "page",
-                    cls := "fr-breadcrumb__link"
-                  )(
-                    pageName
-                  )
-                )
-              )
-            )
-          ),
+        tag("main")(role := "main")(
+          navigation,
           content
         )
       ),
@@ -221,6 +205,57 @@ object main {
           src := Assets.versioned("generated-js/dsfr/dsfr.module.min.js").url
         ),
         additionalFooterTags
+      )
+    )
+
+  private def breadcrumbs(pageName: String): Tag =
+    tag("nav")(cls := "fr-breadcrumb")(
+      div(cls := "fr-collapse")(
+        ol(cls := "fr-breadcrumb__list")(
+          li()(
+            a(
+              href := "/",
+              cls := "fr-breadcrumb__link"
+            )(
+              "Accueil"
+            )
+          ),
+          li()(
+            a(
+              href := "/",
+              attr("aria-current") := "page",
+              cls := "fr-breadcrumb__link"
+            )(
+              pageName
+            )
+          )
+        )
+      )
+    )
+
+  def loggedInNavBar()(implicit request: RequestHeader) =
+    div(cls := "fr-header__menu fr-modal")(
+      div(cls := "fr-container")(
+        tag("nav")(cls := "fr-nav")(
+          ul(cls := "fr-nav__list")(
+            generateLink(controllers.routes.ApplicationController.dashboard.url, "Accueil"),
+            generateLink(
+              controllers.routes.ApplicationController.myApplications.url,
+              "Mes demandes"
+            ),
+            generateLink(
+              controllers.routes.GroupController.showEditMyGroups.url,
+              "Mes groupes"
+            ),
+            generateLink(controllers.routes.UserController.home.url, "Utilisateurs"),
+            generateLink(controllers.routes.AreaController.all.url, "Déploiment"),
+            generateLink(controllers.routes.ApplicationController.stats.url, "Stats"),
+            generateLink(
+              Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf").url,
+              "Mandat"
+            )
+          )
+        )
       )
     )
 

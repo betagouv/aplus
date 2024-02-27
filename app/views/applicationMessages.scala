@@ -193,8 +193,7 @@ object applicationMessages {
         .filter(_.attached.answerIdOpt === Option.apply(answer.id))
         .map(file =>
           fileLink(
-            Authorization.fileCanBeShowed(config.filesExpirationInDays)(file.attached, application)(
-              currentUser.id,
+            Authorization.fileCanBeShown(config.filesExpirationInDays)(file.attached, application)(
               currentUserRights
             ),
             file,

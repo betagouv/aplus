@@ -90,7 +90,7 @@ libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.7.1",
+  "org.postgresql" % "postgresql" % "42.7.2",
   anormDependency,
   "org.playframework" %% "play-mailer" % "10.0.0",
   "org.playframework" %% "play-json" % "3.0.2",
@@ -113,7 +113,7 @@ libraryDependencies ++= Seq(
 )
 
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "7.3.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "7.4.0"
 
 // Overrides
 dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
@@ -201,6 +201,7 @@ def NpmWatch(base: File) = {
   import scala.sys.process.Process
 
   object NpmWatch {
+
     def apply(base: File): PlayRunHook = {
 
       object NpmProcess extends PlayRunHook {
@@ -222,6 +223,7 @@ def NpmWatch(base: File) = {
 
       NpmProcess
     }
+
   }
 
   NpmWatch(base)

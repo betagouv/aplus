@@ -43,8 +43,7 @@ object application {
         .filter(_.attached.isApplication)
         .map(file =>
           fileLink(
-            Authorization.fileCanBeShowed(config.filesExpirationInDays)(file.attached, application)(
-              currentUser.id,
+            Authorization.fileCanBeShown(config.filesExpirationInDays)(file.attached, application)(
               currentUserRights
             ),
             file,
@@ -72,8 +71,7 @@ object application {
         .filter(_.attached.answerIdOpt === answer.id.some)
         .map(file =>
           fileLink(
-            Authorization.fileCanBeShowed(config.filesExpirationInDays)(file.attached, application)(
-              currentUser.id,
+            Authorization.fileCanBeShown(config.filesExpirationInDays)(file.attached, application)(
               currentUserRights
             ),
             file,

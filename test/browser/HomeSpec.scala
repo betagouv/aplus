@@ -25,6 +25,7 @@ class HomeSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+
       val loginURL =
         controllers.routes.HomeController.status.absoluteURL(false, s"localhost:$port")
 
