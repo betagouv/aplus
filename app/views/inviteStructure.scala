@@ -52,10 +52,9 @@ object inviteStructure {
                           option(value := area.id.toString(), s"${area.name} (${area.inseeCode})")
                         }
                       ),
-
                       div(
                         cls := "fr-fieldset__element",
-                        id :="checkboxes-groups-container",
+                        id := "checkboxes-groups-container",
                       ),
                       div(
                         cls := "fr-messages-group",
