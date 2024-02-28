@@ -20,7 +20,6 @@ import 'unorm';
 // Proxy (needed by tabulator)
 import 'proxy-polyfill';
 
-import "./dsfr-fix.css"
 import 'material-icons/iconfont/material-icons.css'
 
 // Our scripts

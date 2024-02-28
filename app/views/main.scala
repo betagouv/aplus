@@ -83,6 +83,7 @@ object main {
           attr("type") := "image/svg+xml"
         ),
         publicCss("generated-js/dsfr/dsfr.min.css"),
+        publicCss("stylesheets/aplus-dsfr.css"),
         tags2.title(pageTitle),
         additionalHeadTags
       ),
