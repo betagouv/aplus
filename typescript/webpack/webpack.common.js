@@ -10,7 +10,6 @@ module.exports = {
   target: 'es5',
   entry: {
     index: path.join(__dirname, '../src/index.ts'),
-    application: path.join(__dirname, '../src/application.ts')
   },
   output: {
     path: path.join(__dirname, '../../public/generated-js'),

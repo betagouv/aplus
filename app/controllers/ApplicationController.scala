@@ -41,7 +41,7 @@ import serializers.ApiModel.{
 }
 import services._
 import views.dashboard.DashboardInfos
-import views.myApplications.MyApplicationInfos
+import views.applications.myApplications.MyApplicationInfos
 
 import java.nio.file.{Files, Path, Paths}
 import java.time.{LocalDate, ZonedDateTime}
@@ -562,7 +562,7 @@ case class ApplicationController @Inject() (
       case (infos, filteredByStatus, userGroups) =>
         log(infos)
         Ok(
-          views.myApplications.page(user, userRights, filteredByStatus, userGroups, infos)
+          views.applications.myApplications.page(user, userRights, filteredByStatus, userGroups, infos)
         ).withHeaders(CACHE_CONTROL -> "no-store")
     }
 
@@ -1188,7 +1188,7 @@ case class ApplicationController @Inject() (
                       organisations
                     )
                   else
-                    views.applicationMessages.page(
+                    views.applications.messageThread.page(
                       request.currentUser,
                       request.rights,
                       application,

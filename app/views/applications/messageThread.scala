@@ -1,18 +1,15 @@
-package views
+package views.applications
 
-import scalatags.Text.all._
-import models.{Answer, Application, Authorization, Organisation, User}
-import views.helpers.applications.statusTag
-import views.inviteStructure.inviteStructure
-import java.time.format.DateTimeFormatter
-import scala.annotation.meta.field
-import controllers.routes.{ApplicationController, Assets}
-import models.FileMetadata
-import java.util.UUID
-import modules.AppConfig
 import cats.syntax.all._
+import controllers.routes.{ApplicationController, Assets}
+import java.time.format.DateTimeFormatter
+import java.util.UUID
+import models.{Answer, Application, Authorization, FileMetadata, Organisation, User}
+import modules.AppConfig
+import scalatags.Text.all._
+import views.helpers.applications.statusTag
 
-object applicationMessages {
+object messageThread {
 
   def page(
       currentUser: User,
@@ -180,7 +177,7 @@ object applicationMessages {
           )
         }
       ),
-      inviteStructure(application, currentUser)
+      inviteForm.modal(application, currentUser)
     )
 
   def answerFilesLinks(

@@ -21,29 +21,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const query = new URLSearchParams(window.location.search)
 
-  const selectedFilters =query.getAll('filtre-groupe');
+  const selectedFilters = query.getAll('filtre-groupe');
 
-    const slimSelect = new SlimSelect({
-    select: "#application-slimselect",
-    selectByGroup: true,
-    closeOnSelect: false,
+  const ssSelector = document.querySelector("#application-slimselect")
+
+  if (ssSelector) {
+
+    const ss = new SlimSelect({
+      select: ssSelector,
+      selectByGroup: true,
+      closeOnSelect: false,
       searchPlaceholder: "Rechercher un groupe",
-    placeholder: "Selectionner un ou plusieurs groupes",
-    onChange: (info) => {
-      updateFilters(info, query);
-    },
-  });
-  slimSelect.setSelected(selectedFilters)
+      placeholder: "Selectionner un ou plusieurs groupes",
+      onChange: (info) => {
+        updateFilters(info, query);
+      },
+    });
+    ss.setSelected(selectedFilters)
 
-  if (query.has('messageId')) {
-    fetchMessage(`${window.location.origin}${window.location.pathname}/${query.get('messageId')}`);
+    if (query.has('messageId')) {
+      fetchMessage(`${window.location.origin}${window.location.pathname}/${query.get('messageId')}`);
+    }
+    document.querySelector('.main-container')?.addEventListener('click', function (event) {
+      loadApplicationMessages(event, query);
+    });
   }
-  document.querySelector('.main-container')?.addEventListener('click', function (event) {
-    loadApplicationMessages(event, query);
-  });
 });
 
-  function loadApplicationMessages(event: Event, query: URLSearchParams) {
+function loadApplicationMessages(event: Event, query: URLSearchParams) {
 
   const target = <HTMLElement>event.target;
 
@@ -70,68 +75,68 @@ document.addEventListener('DOMContentLoaded', function () {
 }
 
 function fetchMessage(url: string) {
-    fetch(`${url}/embedded`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'text/html'
-      }
-    })
-      .then(response => response.text())
-      .then(data => {
-        const messageId = new URLSearchParams(window.location.search).get('messageId');
-    
-        document.querySelector('.aplus-loading-overlay')?.classList.remove('show');
-        const container = document.getElementById("application-message-container");
-        if (!container) return;
-        container.innerHTML = data;
+  fetch(`${url}/embedded`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'text/html'
+    }
+  })
+    .then(response => response.text())
+    .then(data => {
+      const messageId = new URLSearchParams(window.location.search).get('messageId');
 
-        Array.from(document.querySelectorAll(".use-slimselect-in-message")).forEach(function(select) {
-          new SlimSelect({ select, selectByGroup: true, closeOnSelect: false });
-        });
+      document.querySelector('.aplus-loading-overlay')?.classList.remove('show');
+      const container = document.getElementById("application-message-container");
+      if (!container) return;
+      container.innerHTML = data;
 
-        document.getElementById("structureIdSelect")?.addEventListener('change', function (event) {
-          const target = <HTMLSelectElement>event.target;
-          if(target.value === "null") return;
-          fetch(`/demandes/${messageId}/territoire/${target.value}/groupes-invitables`).then(data => {
-            data.json().then((groups) => {
-              const container = document.getElementById("checkboxes-groups-container")
-              if (!container) return;
-              container.innerHTML = "";
-              const div = document.createElement("div");
-              div.innerHTML = "";
-              div.classList.add("fr-checkbox-group");
-              div.classList.add("aplus-checkbox-highlight")
-              
-              if (groups.groups.length === 0) {
-                div.innerHTML = "Il n’y a aucune organisation pour ce territoire."
-              }
-              container?.appendChild(div);
+      Array.from(document.querySelectorAll(".use-slimselect-in-message")).forEach(function (select) {
+        new SlimSelect({ select, selectByGroup: true, closeOnSelect: false });
+      });
 
-              groups.groups.forEach((group: any) => {
-                const input = document.createElement("input");
-                input.type = "checkbox";
-                input.name = "invitedGroups";
-                input.value = group.id;
-                input.id = `invitedGroups-${group.id}`;
-                input.classList.add("fr-checkbox-input");
-                const label = document.createElement("label");
-                label.classList.add("aplus-bold");
-                label.classList.add("fr-label");
-                label.htmlFor = `invitedGroups-${group.id}`;
-                label.innerText = group.name;
-                div.appendChild(input);
-                div.appendChild(label);
+      document.getElementById("structureIdSelect")?.addEventListener('change', function (event) {
+        const target = <HTMLSelectElement>event.target;
+        if (target.value === "null") return;
+        fetch(`/demandes/${messageId}/territoire/${target.value}/groupes-invitables`).then(data => {
+          data.json().then((groups) => {
+            const container = document.getElementById("checkboxes-groups-container")
+            if (!container) return;
+            container.innerHTML = "";
+            const div = document.createElement("div");
+            div.innerHTML = "";
+            div.classList.add("fr-checkbox-group");
+            div.classList.add("aplus-checkbox-highlight")
+
+            if (groups.groups.length === 0) {
+              div.innerHTML = "Il n’y a aucune organisation pour ce territoire."
+            }
+            container?.appendChild(div);
+
+            groups.groups.forEach((group: any) => {
+              const input = document.createElement("input");
+              input.type = "checkbox";
+              input.name = "invitedGroups";
+              input.value = group.id;
+              input.id = `invitedGroups-${group.id}`;
+              input.classList.add("fr-checkbox-input");
+              const label = document.createElement("label");
+              label.classList.add("aplus-bold");
+              label.classList.add("fr-label");
+              label.htmlFor = `invitedGroups-${group.id}`;
+              label.innerText = group.name;
+              div.appendChild(input);
+              div.appendChild(label);
 
 
-              });
             });
           });
         });
-      })
-      .catch((error) => {
-        document.querySelector('.aplus-loading-overlay')?.classList.remove('show');
-        console.error('Error:', error);
       });
+    })
+    .catch((error) => {
+      document.querySelector('.aplus-loading-overlay')?.classList.remove('show');
+      console.error('Error:', error);
+    });
 }
 
 function updateFilters(info: Option | Option[], query: URLSearchParams) {
@@ -149,7 +154,7 @@ function updateFilters(info: Option | Option[], query: URLSearchParams) {
   query.delete('filtre-groupe');
 
   selected.forEach((value) => {
-    if(!value) return;
+    if (!value) return;
     query.append('filtre-groupe', value);
   });
 
@@ -416,7 +421,7 @@ function setupInvitedGroups() {
       element.addEventListener('click', (event) => {
         const input = <HTMLInputElement>event.target;
         const groupId = input.value;
-        const infosDiv = document.getElementById(`invite-${ groupId }-additional-infos`);
+        const infosDiv = document.getElementById(`invite-${groupId}-additional-infos`);
         if (input.checked) {
           infosDiv && infosDiv.classList.remove('invisible');
           const groupName = input.dataset['groupName'];

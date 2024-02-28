@@ -1,9 +1,8 @@
-package views
+package views.applications
 
 import cats.syntax.all._
 import constants.Constants
 import controllers.routes.{ApplicationController, Assets}
-import helper.BusinessDaysCalculator.businessHoursBetween
 import helper.Time
 import helper.TwirlImports.toHtml
 import java.time.ZonedDateTime
@@ -11,12 +10,12 @@ import java.util.UUID
 import models.{Answer, Application, Authorization, User, UserGroup}
 import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
 import models.formModels.ApplicationsPageInfos
-import org.checkerframework.checker.units.qual.g
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
 import views.helpers.applications.statusTag
+import views.MainInfos
 
 object myApplications {
   val TODOflag = false
@@ -47,12 +46,6 @@ object myApplications {
       frag(
         content(currentUser, currentUserRights, maxWidth = false, filters, applications, groups)
       ),
-      frag(
-        script(
-          `type` := "application/javascript",
-          src := Assets.versioned("generated-js/application.js").url
-        )
-      )
     )
 
   def content(

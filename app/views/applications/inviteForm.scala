@@ -1,12 +1,11 @@
-package views
+package views.applications
 
+import models.{Application, Area, User}
 import scalatags.Text.all._
-import models.{Application, Authorization, User}
-import models.Area
 
-object inviteStructure {
+object inviteForm {
 
-  def inviteStructure(application: Application, currentUser: User): Frag =
+  def modal(application: Application, currentUser: User): Frag =
     frag(
       tag("dialog")(
         aria.labelledby := "fr-modal-title-modal-1",

@@ -71,26 +71,6 @@ object main {
           name := "viewport",
           attr("content") := "width=device-width, initial-scale=1, shrink-to-fit=no"
         ),
-        script(
-          `type` := "module",
-          attr("defer") := "",
-          src := Assets.versioned("generated-js/dsfr/dsfr.module.min.js").url
-        ),
-        script(
-          `type` := "application/javascript",
-          attr("defer") := "",
-          attr("nomodule").empty,
-          src := Assets.versioned("generated-js/dsfr/dsfr.nomodule.min.js").url
-        ),
-        script(
-          `type` := "text/javascript",
-          src := JavascriptController.javascriptRoutes.url
-        ),
-        script(
-          `type` := "application/javascript",
-          attr("defer") := "",
-          src := Assets.versioned("generated-js/index.js").url
-        ),
         link(
           rel := "stylesheet",
           media := "screen,print",
@@ -202,7 +182,23 @@ object main {
         ),
         script(
           `type` := "module",
+          defer,
           src := Assets.versioned("generated-js/dsfr/dsfr.module.min.js").url
+        ),
+        script(
+          `type` := "application/javascript",
+          defer,
+          attr("nomodule").empty,
+          src := Assets.versioned("generated-js/dsfr/dsfr.nomodule.min.js").url
+        ),
+        script(
+          `type` := "text/javascript",
+          src := JavascriptController.javascriptRoutes.url
+        ),
+        script(
+          `type` := "application/javascript",
+          defer,
+          src := Assets.versioned("generated-js/index.js").url
         ),
         additionalFooterTags
       )
