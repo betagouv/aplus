@@ -6,8 +6,10 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import models.{Answer, Application, Authorization, FileMetadata, Organisation, User}
 import modules.AppConfig
+import play.api.mvc.RequestHeader
 import scalatags.Text.all._
 import views.helpers.applications.statusTag
+import views.helpers.forms.CSRFInput
 
 object messageThread {
 
@@ -17,7 +19,7 @@ object messageThread {
       application: Application,
       files: List[FileMetadata],
       config: AppConfig
-  ): Tag =
+  )(implicit request: RequestHeader): Tag =
     div()(
       div(cls := "fr-grid-row aplus-text-small aplus-")(
         div(cls := "fr-col fr-col-4 ")(
@@ -100,6 +102,7 @@ object messageThread {
               method := "post",
               enctype := "multipart/form-data"
             )(
+              CSRFInput,
               div(cls := "fr-input-group")(
                 textarea(
                   cls := "fr-input",
@@ -160,7 +163,7 @@ object messageThread {
                 button(
                   cls := "fr-btn fr-btn--secondary",
                   attr("formaction") := ApplicationController
-                    .answerApplicationHasBeenSolved(application.id)
+                    .answerApplicationHasBeenProcessed(application.id)
                     .url
                 )(
                   "J’ai traité la demande"

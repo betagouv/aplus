@@ -1407,10 +1407,16 @@ case class ApplicationController @Inject() (
   private val WorkInProgressMessage = "Je m’en occupe."
   private val WrongInstructorMessage = "Je ne suis pas le bon interlocuteur."
 
-  def answerApplicationHasBeenSolved(applicationId: UUID): Action[AnyContent] =
-    answer(applicationId)
+  def answerApplicationHasBeenProcessed(applicationId: UUID): Action[AnyContent] =
+    answerAction(applicationId, applicationHasBeenProcessedForm = true)
 
   def answer(applicationId: UUID): Action[AnyContent] =
+    answerAction(applicationId, applicationHasBeenProcessedForm = false)
+
+  private def answerAction(
+      applicationId: UUID,
+      applicationHasBeenProcessedForm: Boolean
+  ): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application =>
         val answerId = AnswerFormData
@@ -1428,7 +1434,13 @@ case class ApplicationController @Inject() (
               .flashing("answer-error" -> message, "opened-tab" -> "anwser")
           )
         } { files =>
-          val form = AnswerFormData.form(request.currentUser, files.nonEmpty).bindFromRequest()
+          val form =
+            if (applicationHasBeenProcessedForm)
+              AnswerFormData
+                .applicationHasBeenProcessedForm(request.currentUser, files.nonEmpty)
+                .bindFromRequest()
+            else
+              AnswerFormData.form(request.currentUser, files.nonEmpty).bindFromRequest()
           form.fold(
             formWithErrors => {
               showApplication(
@@ -1449,7 +1461,7 @@ case class ApplicationController @Inject() (
             },
             answerData => {
               val answerType =
-                if (answerData.applicationHasBeenProcessed.getOrElse(true))
+                if (answerData.applicationHasBeenProcessed)
                   AnswerType.ApplicationProcessed
                 else
                   AnswerType.fromString(answerData.answerType)
