@@ -1,6 +1,9 @@
 import SlimSelect from "slim-select";
 
+
 const slimSelectClass = "use-slimselect";
+
+
 
 //
 // Transform <select> with SlimSelect

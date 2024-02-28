@@ -515,19 +515,14 @@ case class ApplicationController @Inject() (
     }
 
   private def lastOperateurAnswer(application: Application): Option[Answer] =
-    application.answers
+    application.userAnswers
       .filter(_.creatorUserID =!= application.creatorUserId)
-      .filter(answer =>
-        !answer.message.contains("rejoins la conversation automatiquement comme expert") &&
-          !answer.message
-            .contains("Les nouveaux instructeurs rejoignent automatiquement la demande")
-      )
       .lastOption
 
   private def remainingHoursBeforeLate(application: Application): Option[Int] =
     if (
       application.closed ||
-      application.status =!= Application.Status.Processed
+      application.status === Application.Status.Processed
     )
       None
     else
@@ -550,19 +545,31 @@ case class ApplicationController @Inject() (
       case Some(remainingHours) => remainingHours < 0
     }
 
+  private def shouldServeDsfr(user: User) =
+    user.admin || (
+      config.groupsWithDsfr.intersect(user.groupIds.toSet).nonEmpty &&
+        !user.groupAdmin &&
+        user.observableOrganisationIds.isEmpty &&
+        user.managingAreaIds.isEmpty &&
+        user.managingOrganisationIds.isEmpty
+    )
+
   private def myApplicationsBoard(
       user: User,
       userRights: Authorization.UserRights,
       asAdmin: Boolean,
       urlBase: String,
-  )(
-      log: ApplicationsPageInfos => Unit
-  )(implicit request: play.api.mvc.RequestHeader): Future[Result] =
+  )(log: ApplicationsPageInfos => Unit)(implicit request: RequestHeader): Future[Result] =
     applicationBoardInfos(user, userRights, asAdmin, urlBase).map {
       case (infos, filteredByStatus, userGroups) =>
         log(infos)
         Ok(
-          views.applications.myApplications.page(user, userRights, filteredByStatus, userGroups, infos)
+          if (shouldServeDsfr(user))
+            views.applications.myApplications
+              .page(user, userRights, filteredByStatus, userGroups, infos)
+          else
+            views.applications.myApplicationsLegacy
+              .page(user, userRights, filteredByStatus.map(_.application), userGroups, infos)
         ).withHeaders(CACHE_CONTROL -> "no-store")
     }
 
@@ -624,10 +631,7 @@ case class ApplicationController @Inject() (
 
       val interactedApplications = openFilteredByGroups.filter { application =>
         application.creatorUserId === user.id ||
-        application.answers.exists(answer =>
-          answer.creatorUserID === user.id && !answer.message
-            .contains("Les nouveaux instructeurs rejoignent automatiquement la demande")
-        )
+        application.userAnswers.exists(answer => answer.creatorUserID === user.id)
       }
       val interactedApplicationsCount = interactedApplications.length
 

@@ -9,7 +9,7 @@ const CopyPlugin = require("copy-webpack-plugin");
 module.exports = {
   target: 'es5',
   entry: {
-    index: path.join(__dirname, '../src/index.ts'),
+    index: path.join(__dirname, '../src/index.ts')
   },
   output: {
     path: path.join(__dirname, '../../public/generated-js'),

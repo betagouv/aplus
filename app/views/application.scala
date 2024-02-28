@@ -15,7 +15,6 @@ import models.{
   UserGroup
 }
 import modules.AppConfig
-import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
