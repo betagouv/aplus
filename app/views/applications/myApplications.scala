@@ -1,21 +1,18 @@
-package views
+package views.applications
 
 import cats.syntax.all._
 import constants.Constants
-import controllers.routes.{ApplicationController, Assets}
-import helper.BusinessDaysCalculator.businessHoursBetween
+import controllers.routes.ApplicationController
 import helper.Time
 import helper.TwirlImports.toHtml
-import java.time.ZonedDateTime
-import java.util.UUID
-import models.{Answer, Application, Authorization, User, UserGroup}
-import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
+import models.{Answer, Application, Authorization, FileMetadata, User, UserGroup}
 import models.formModels.ApplicationsPageInfos
-import org.checkerframework.checker.units.qual.g
+import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
+import views.MainInfos
 import views.helpers.applications.statusTag
 
 object myApplications {
@@ -34,8 +31,11 @@ object myApplications {
       currentUser: User,
       currentUserRights: Authorization.UserRights,
       applications: List[MyApplicationInfos],
+      selectedApplication: Option[MyApplicationInfos],
+      selectedApplicationFiles: List[FileMetadata],
       groups: List[UserGroup],
       filters: ApplicationsPageInfos,
+      config: AppConfig,
   )(implicit
       flash: Flash,
       request: RequestHeader,
@@ -45,14 +45,18 @@ object myApplications {
     views.main.layout(
       "Mes demandes",
       frag(
-        content(currentUser, currentUserRights, maxWidth = false, filters, applications, groups)
-      ),
-      frag(
-        script(
-          `type` := "application/javascript",
-          src := Assets.versioned("generated-js/application.js").url
+        content(
+          currentUser,
+          currentUserRights,
+          maxWidth = false,
+          filters,
+          applications,
+          selectedApplication,
+          selectedApplicationFiles,
+          groups,
+          config
         )
-      )
+      ),
     )
 
   def content(
@@ -61,14 +65,26 @@ object myApplications {
       maxWidth: Boolean,
       filters: ApplicationsPageInfos,
       applications: List[MyApplicationInfos],
+      selectedApplication: Option[MyApplicationInfos],
+      selectedApplicationFiles: List[FileMetadata],
       groups: List[UserGroup],
-  ): Tag =
+      config: AppConfig,
+  )(implicit request: RequestHeader): Tag =
     div(
       cls := "mdl-cell mdl-cell--12-col mdl-grid--no-spacing",
       if (filters.allGroupsOpenCount <= 0 && filters.allGroupsClosedCount <= 0)
         noApplications(currentUser, currentUserRights)
       else
-        openApplications(currentUser, currentUserRights, applications, groups, filters),
+        openApplications(
+          currentUser,
+          currentUserRights,
+          applications,
+          selectedApplication,
+          selectedApplicationFiles,
+          groups,
+          filters,
+          config
+        ),
     )
 
   private def noApplications(currentUser: User, currentUserRights: Authorization.UserRights) =
@@ -118,9 +134,12 @@ object myApplications {
       currentUser: User,
       currentUserRights: Authorization.UserRights,
       applications: List[MyApplicationInfos],
+      selectedApplication: Option[MyApplicationInfos],
+      selectedApplicationFiles: List[FileMetadata],
       groups: List[UserGroup],
       filters: ApplicationsPageInfos,
-  ) =
+      config: AppConfig,
+  )(implicit request: RequestHeader) =
     frag(
       div(cls := "fr-grid-row")(
         div(
@@ -197,7 +216,7 @@ object myApplications {
                   a(
                     cls := "aplus-application-link",
                     id := "search-column",
-                    href := ApplicationController.show(application.application.id).url,
+                    href := ApplicationController.myApplications.url + s"?demande-visible=${application.application.id}"
                   )(
                     div(cls := "fr-card-inner")(
                       div(cls := "fr-card-header")(
@@ -230,7 +249,9 @@ object myApplications {
                               frag(
                                 i(
                                   cls := "material-icons material-icons-outlined aplus-icons-small aplus-icon--active",
-                                  attr("aria-describedby") := s"tooltip-timer-${application.application.id}"
+                                  attr(
+                                    "aria-describedby"
+                                  ) := s"tooltip-timer-${application.application.id}"
                                 )("timer"),
                                 span(
                                   cls := "fr-tooltip fr-placement",
@@ -276,7 +297,12 @@ object myApplications {
                     div(cls := "aplus-text-small  aplus-card-section ")(
                       div(cls := "aplus-between")(
                         span(cls := "aplus-message-infos")(
-                          s"de ${application.application.userInfos.get(Application.UserFirstNameKey).get} ${application.application.userInfos.get(Application.UserLastNameKey).get}",
+                          application.application.userInfos
+                            .get(Application.UserFirstNameKey)
+                            .zip(application.application.userInfos.get(Application.UserLastNameKey))
+                            .map { case (firstName, lastName) =>
+                              s"de $firstName $lastName"
+                            },
                         ),
                         if (application.invitedGroups.length > 1) {
                           frag(
@@ -284,7 +310,7 @@ object myApplications {
                               s"à ${application.invitedGroups(0).name} + ${application.invitedGroups.length - 1} autres"
                             )
                           )
-                        } else if (application.invitedGroups.length == 1) {
+                        } else if (application.invitedGroups.length === 1) {
                           frag(
                             span(cls := "aplus-message-infos")(
                               s"à ${application.invitedGroups(0).name}"
@@ -298,7 +324,7 @@ object myApplications {
                         ),
                         span(cls := "aplus-message-infos aplus-message-infos--last-reply")(
                           application.lastOperateurAnswer.map(answer =>
-                            if (answer.creatorUserID == currentUser.id) "Vous"
+                            if (answer.creatorUserID === currentUser.id) "Vous"
                             else answer.creatorUserName
                           ),
                         ),
@@ -317,12 +343,22 @@ object myApplications {
             })
         ),
         div(cls := "fr-col fr-col-8", id := "application-message-container")(
-          div(cls := "aplus-no-message--container")(
-            div(cls := "aplus-no-message")(
-              i(cls := "material-icons material-icons-outlined ")("forum"),
-              span(
-                "Ce champ est actuellement vide, mais une fois que vous aurez sélectionné la demande, vous pourrez effectuer et lire les échanges dans cet espace"
+          selectedApplication.fold[Tag](
+            div(cls := "aplus-no-message--container")(
+              div(cls := "aplus-no-message")(
+                i(cls := "material-icons material-icons-outlined ")("forum"),
+                span(
+                  "Ce champ est actuellement vide, mais une fois que vous aurez sélectionné la demande, vous pourrez effectuer et lire les échanges dans cet espace"
+                )
               )
+            )
+          )(application =>
+            views.applications.messageThread.page(
+              currentUser,
+              currentUserRights,
+              application.application,
+              selectedApplicationFiles,
+              config
             )
           )
         )
@@ -399,7 +435,9 @@ object myApplications {
           ),
         ),
       ),
-      div(cls := "fr-fieldset__element fr-fieldset__element--inline aplus-filter-header--item aplus-float-right")(
+      div(
+        cls := "fr-fieldset__element fr-fieldset__element--inline aplus-filter-header--item aplus-float-right"
+      )(
         div(cls := "fr-checkbox-group fr-checkbox-group--sm")(
           input(
             name := "checkboxes-inline-4",
@@ -408,7 +446,10 @@ object myApplications {
             attr("aria-describedby") := "checkboxes-inline-4-messages"
           ),
           label(cls := "fr-label", attr("for") := "checkboxes-inline-4")(
-            i(cls := "material-icons material-icons-outlined aplus-icons-small", attr("aria-describedby") := "tooltip-timer")("timer"),
+            i(
+              cls := "material-icons material-icons-outlined aplus-icons-small",
+              attr("aria-describedby") := "tooltip-timer"
+            )("timer"),
             span(
               cls := "fr-tooltip fr-placement",
               id := "tooltip-timer",

@@ -98,9 +98,11 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
       app = applicationWithBrowser
     ) {
       val tokenService = app.injector.instanceOf[TokenService]
+
       val loginToken = LoginToken
         .forUserId(existingUser.id, 5, "127.0.0.1")
         .copy(expirationDate = Time.nowParis().minusMinutes(5))
+
       tokenService.create(loginToken)
 
       val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
@@ -118,6 +120,7 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+
       val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
         .absoluteURL(false, s"localhost:$port")
 

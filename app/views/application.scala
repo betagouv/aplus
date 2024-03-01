@@ -15,7 +15,6 @@ import models.{
   UserGroup
 }
 import modules.AppConfig
-import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
@@ -23,11 +22,6 @@ import serializers.Keys
 import views.helpers.forms.CSRFInput
 
 object application {
-
-  def pageContent(application: Application): Frag =
-    div(
-      h2(s"Demande ${application.id}")
-    )
 
   def applicationFilesLinks(
       files: List[FileMetadata],
@@ -43,8 +37,7 @@ object application {
         .filter(_.attached.isApplication)
         .map(file =>
           fileLink(
-            Authorization.fileCanBeShowed(config.filesExpirationInDays)(file.attached, application)(
-              currentUser.id,
+            Authorization.fileCanBeShown(config.filesExpirationInDays)(file.attached, application)(
               currentUserRights
             ),
             file,
@@ -72,8 +65,7 @@ object application {
         .filter(_.attached.answerIdOpt === answer.id.some)
         .map(file =>
           fileLink(
-            Authorization.fileCanBeShowed(config.filesExpirationInDays)(file.attached, application)(
-              currentUser.id,
+            Authorization.fileCanBeShown(config.filesExpirationInDays)(file.attached, application)(
               currentUserRights
             ),
             file,

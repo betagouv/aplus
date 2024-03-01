@@ -1,31 +1,19 @@
 package controllers
 
-import java.time.{ZoneId, ZonedDateTime}
-import java.util.UUID
-
 import actions.{LoginAction, RequestWithUserData}
 import cats.syntax.all._
 import constants.Constants
-import Operators._
+import controllers.Operators._
+import helper.BooleanHelper.not
 import helper.PlayFormHelper.formErrorsLog
+import helper.Time
+import java.time.{ZoneId, ZonedDateTime}
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models.{Area, Authorization, Error, EventType, Organisation, User, UserGroup}
-import models.formModels.{normalizedOptionalText, normalizedText, AddUserToGroupFormData}
-import org.webjars.play.WebJarsUtil
-import play.api.data.Form
-import play.api.data.Forms.{email, ignored, list, mapping, of, optional, text, uuid}
-import play.api.data.validation.Constraints.{maxLength, nonEmpty}
-import play.api.i18n.I18nSupport
-import play.api.mvc.{Action, AnyContent, Call, InjectedController, RequestHeader, Result}
-import play.libs.ws.WSClient
-import services._
-import helper.BooleanHelper.not
-import helper.Time
-import helper.StringHelper.commonStringInputNormalization
 import models.EventType.{
   AddGroupUnauthorized,
   AddUserGroupError,
-  AddUserToGroupUnauthorized,
   EditGroupShowed,
   EditGroupUnauthorized,
   EditUserGroupError,
@@ -35,9 +23,18 @@ import models.EventType.{
   UserGroupDeletionUnauthorized,
   UserGroupEdited
 }
+import models.formModels.{normalizedOptionalText, normalizedText, AddUserToGroupFormData}
 import modules.AppConfig
+import org.webjars.play.WebJarsUtil
+import play.api.data.Form
+import play.api.data.Forms.{email, ignored, list, mapping, of, optional, text, uuid}
+import play.api.data.validation.Constraints.{maxLength, nonEmpty}
+import play.api.i18n.I18nSupport
+import play.api.mvc.{Action, AnyContent, Call, InjectedController, RequestHeader, Result}
+import play.libs.ws.WSClient
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
+import services._
 
 @Singleton
 case class GroupController @Inject() (
@@ -69,7 +66,7 @@ case class GroupController @Inject() (
     }
 
   def addToGroup(groupId: UUID) =
-    addOrRemoveUserAction(groupId) { implicit request =>
+    addOrRemoveUserAction(groupId) { implicit request => group =>
       val (originIsGroupPage, redirectPage) = groupModificationOriginPage
       AddUserToGroupFormData.form
         .bindFromRequest()
@@ -139,35 +136,37 @@ case class GroupController @Inject() (
           )
           .some
       ) { otherUser =>
-        asUserWithAuthorization(Authorization.canEnableOtherUser(otherUser))(
-          EventType.EditUserUnauthorized,
-          s"L'utilisateur n'est pas autorisé à réactiver l'utilisateur $userId"
-        ) { () =>
-          userService
-            .enable(userId)
-            .map(
-              _.fold(
-                error => {
-                  eventService.logError(error)
-                  Redirect(redirectPage).flashing("error" -> Constants.error500FlashMessage)
-                },
-                _ => {
-                  eventService.log(
-                    EventType.UserEdited,
-                    s"Utilisateur $userId réactivé",
-                    involvesUser = userId.some
-                  )
-                  Redirect(redirectPage)
-                    .flashing("success" -> "L’utilisateur a bien été réactivé.")
-                }
+        groupService.byIdsFuture(otherUser.groupIds).flatMap { otherUserGroups =>
+          asUserWithAuthorization(Authorization.canEnableOtherUser(otherUser, otherUserGroups))(
+            EventType.EditUserUnauthorized,
+            s"L'utilisateur n'est pas autorisé à réactiver l'utilisateur $userId"
+          ) { () =>
+            userService
+              .enable(userId)
+              .map(
+                _.fold(
+                  error => {
+                    eventService.logError(error)
+                    Redirect(redirectPage).flashing("error" -> Constants.error500FlashMessage)
+                  },
+                  _ => {
+                    eventService.log(
+                      EventType.UserEdited,
+                      s"Utilisateur $userId réactivé",
+                      involvesUser = userId.some
+                    )
+                    Redirect(redirectPage)
+                      .flashing("success" -> "L’utilisateur a bien été réactivé.")
+                  }
+                )
               )
-            )
+          }
         }
       }
     }
 
   def removeFromGroup(userId: UUID, groupId: UUID) =
-    addOrRemoveUserAction(groupId) { implicit request =>
+    addOrRemoveUserAction(groupId) { implicit request => group =>
       val (_, redirectPage) = groupModificationOriginPage
       withUser(
         userId,
@@ -355,7 +354,13 @@ case class GroupController @Inject() (
                 )
               },
               group => {
-                val newGroup = group.copy(id = groupId)
+                // Only admins can change areas
+                val groupAreaIds =
+                  if (Authorization.isAdmin(request.rights))
+                    group.areaIds
+                  else
+                    currentGroup.areaIds
+                val newGroup = group.copy(id = groupId, areaIds = groupAreaIds)
                 if (groupService.edit(newGroup)) {
                   eventService.log(
                     UserGroupEdited,
@@ -388,15 +393,17 @@ case class GroupController @Inject() (
 
   private def addOrRemoveUserAction(
       groupId: UUID
-  )(inner: RequestWithUserData[_] => Future[Result]): Action[AnyContent] =
+  )(inner: RequestWithUserData[_] => UserGroup => Future[Result]): Action[AnyContent] =
     loginAction.async { implicit request =>
-      asUserWithAuthorization(Authorization.canAddOrRemoveOtherUser(groupId))(
-        EventType.EditGroupUnauthorized,
-        s"L'utilisateur n'est pas autorisé à éditer le groupe $groupId",
-        Redirect(routes.GroupController.showEditMyGroups)
-          .flashing("error" -> "Vous n’avez pas le droit de modifier ce groupe")
-          .some
-      )(() => inner(request))
+      withGroup(groupId) { group =>
+        asUserWithAuthorization(Authorization.canAddOrRemoveOtherUser(group))(
+          EventType.EditGroupUnauthorized,
+          s"L'utilisateur n'est pas autorisé à éditer le groupe $groupId",
+          Redirect(routes.GroupController.showEditMyGroups)
+            .flashing("error" -> "Vous n’avez pas le droit de modifier ce groupe")
+            .some
+        )(() => inner(request)(group))
+      }
     }
 
   private def adminLastActivity(ids: List[UUID], rights: Authorization.UserRights) =
@@ -409,9 +416,14 @@ case class GroupController @Inject() (
       user: User,
       rights: Authorization.UserRights,
       addUserForm: Form[AddUserToGroupFormData]
-  )(implicit request: RequestWithUserData[_]): Future[Result] =
+  )(implicit request: RequestWithUserData[_]): Future[Result] = {
+    val groupsFuture =
+      if (Authorization.isAreaManager(rights))
+        groupService.allForAreaManager(user)
+      else
+        groupService.byIdsFuture(user.groupIds)
     for {
-      groups <- groupService.byIdsFuture(user.groupIds)
+      groups <- groupsFuture
       users <- userService.byGroupIdsFuture(groups.map(_.id), includeDisabled = true)
       applications <- applicationService.allForUserIds(users.map(_.id), none)
       lastActivityResult <- adminLastActivity(users.map(_.id), rights)
@@ -439,6 +451,7 @@ case class GroupController @Inject() (
         }
       )
     }
+  }
 
   private def editGroupPage(group: UserGroup, addUserForm: Form[AddUserToGroupFormData])(implicit
       request: RequestWithUserData[_]
@@ -486,7 +499,9 @@ case class GroupController @Inject() (
         "area-ids" -> list(uuid)
           .verifying(
             "Vous devez sélectionner les territoires sur lequel vous êtes admin",
-            areaIds => areaIds.forall(request.currentUser.areas.contains[UUID])
+            areaIds =>
+              areaIds.forall(request.currentUser.areas.contains[UUID]) ||
+                areaIds.exists(request.currentUser.managingAreaIds.contains[UUID])
           )
           .verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
         "organisation" -> optional(of[Organisation.Id]),

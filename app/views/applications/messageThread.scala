@@ -1,18 +1,17 @@
-package views
+package views.applications
 
-import scalatags.Text.all._
-import models.{Answer, Application, Authorization, Organisation, User}
-import views.helpers.applications.statusTag
-import views.inviteStructure.inviteStructure
-import java.time.format.DateTimeFormatter
-import scala.annotation.meta.field
-import controllers.routes.{ApplicationController, Assets}
-import models.FileMetadata
-import java.util.UUID
-import modules.AppConfig
 import cats.syntax.all._
+import controllers.routes.{ApplicationController, Assets}
+import java.time.format.DateTimeFormatter
+import java.util.UUID
+import models.{Answer, Application, Authorization, FileMetadata, Organisation, User}
+import modules.AppConfig
+import play.api.mvc.RequestHeader
+import scalatags.Text.all._
+import views.helpers.applications.statusTag
+import views.helpers.forms.CSRFInput
 
-object applicationMessages {
+object messageThread {
 
   def page(
       currentUser: User,
@@ -20,7 +19,7 @@ object applicationMessages {
       application: Application,
       files: List[FileMetadata],
       config: AppConfig
-  ): Tag =
+  )(implicit request: RequestHeader): Tag =
     div()(
       div(cls := "fr-grid-row aplus-text-small aplus-")(
         div(cls := "fr-col fr-col-4 ")(
@@ -35,7 +34,10 @@ object applicationMessages {
           ),
           div()(
             span(cls := "aplus-message-infos--author")(
-              s"${application.userInfos.get(Application.UserFirstNameKey).get} ${application.userInfos.get(Application.UserLastNameKey).get} ",
+              application.userInfos
+                .get(Application.UserFirstNameKey)
+                .zip(application.userInfos.get(Application.UserLastNameKey))
+                .map { case (firstName, lastName) => s"$firstName $lastName" },
             ),
             span(cls := "aplus-message-infos--role")(application.creatorGroupName)
           )
@@ -54,7 +56,7 @@ object applicationMessages {
           div(cls := "aplus-spacer--top-small")(
             "Participants à la discussion :",
             div()(
-              application.invitedUsers.map { case (userId, userName) =>
+              application.invitedUsers.map { case (_, userName) =>
                 div(cls := "aplus-message-infos--role aplus-text-small")(s"${userName}")
               }.toList
             )
@@ -103,6 +105,7 @@ object applicationMessages {
               method := "post",
               enctype := "multipart/form-data"
             )(
+              CSRFInput,
               div(cls := "fr-input-group")(
                 textarea(
                   cls := "fr-input",
@@ -121,7 +124,9 @@ object applicationMessages {
                     placeholder := "Ajouter une pièce jointe"
                   ),
                   label(cls := "fr-label", `for` := "file[0]")(
-                    span(cls := "fr-hint-text")("Taille maximale : xx Mo. Formats supportés : jpg, png, pdf. Plusieurs fichiers possibles. Lorem ipsum dolor sit amet, consectetur adipiscing.")
+                    span(cls := "fr-hint-text")(
+                      "Taille maximale : xx Mo. Formats supportés : jpg, png, pdf. Plusieurs fichiers possibles. Lorem ipsum dolor sit amet, consectetur adipiscing."
+                    )
                   )
                 )
               ),
@@ -159,8 +164,10 @@ object applicationMessages {
               hr(cls := "aplus-hr-in-card--top-margin"),
               div(cls := "aplus-spacer fr_card__container")(
                 button(
-                  cls := "fr-btn fr-btn--secondary", 
-                  attr("formaction") := ApplicationController.answerApplicationHasBeenSolved(application.id).url
+                  cls := "fr-btn fr-btn--secondary",
+                  attr("formaction") := ApplicationController
+                    .answerApplicationHasBeenProcessed(application.id)
+                    .url
                 )(
                   "J’ai traité la demande"
                 ),
@@ -176,7 +183,7 @@ object applicationMessages {
           )
         }
       ),
-      inviteStructure(application, currentUser)
+      inviteForm.modal(application, currentUser)
     )
 
   def answerFilesLinks(
@@ -193,8 +200,7 @@ object applicationMessages {
         .filter(_.attached.answerIdOpt === Option.apply(answer.id))
         .map(file =>
           fileLink(
-            Authorization.fileCanBeShowed(config.filesExpirationInDays)(file.attached, application)(
-              currentUser.id,
+            Authorization.fileCanBeShown(config.filesExpirationInDays)(file.attached, application)(
               currentUserRights
             ),
             file,
@@ -229,25 +235,13 @@ object applicationMessages {
               i(cls := "aplus-dl-arrow icon material-icons icon--light", "arrow_downward"),
             ),
             div(cls := "aplus-text-small aplus-text--gray")(
-              s"${extension.get} - ${numberToSize(metadata.filesize)}",
+              s"${extension.getOrElse("")} - ${numberToSize(metadata.filesize)}",
             )
           )
         } else
           s"${metadata.filename}"
       }
 
-    val statusMessage: Frag = status match {
-      case Available =>
-        daysRemaining match {
-          case None                   => "Fichier expiré et supprimé"
-          case Some(expirationInDays) => s"Suppression du fichier dans $expirationInDays jours"
-        }
-      case Scanning    => "Scan par un antivirus en cours"
-      case Quarantined => "Fichier supprimé par l’antivirus"
-      case Expired     => "Fichier expiré et supprimé"
-      case Error =>
-        "Une erreur est survenue lors de l’envoi du fichier, celui-ci n’est pas disponible"
-    }
     div(
       cls := "vertical-align--middle mdl-color-text--black single--font-size-14px single--font-weight-600 single--margin-top-8px" + additionalClasses,
       link,

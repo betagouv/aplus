@@ -194,7 +194,7 @@ object formModels {
       applicationIsDeclaredIrrelevant: Boolean,
       usagerOptionalInfos: Map[String, String],
       privateToHelpers: Boolean,
-      applicationHasBeenProcessed: Option[Boolean],
+      applicationHasBeenProcessed: Boolean,
       signature: Option[String]
   )
 
@@ -206,14 +206,30 @@ object formModels {
       form.data.get(answerIdKey).flatMap(id => Try(UUID.fromString(id)).toOption)
 
     def form(currentUser: User, containsFiles: Boolean) =
+      answerForm(currentUser, containsFiles, normalizedText.verifying(maxLength(20)), boolean)
+
+    def applicationHasBeenProcessedForm(currentUser: User, containsFiles: Boolean) =
+      answerForm(
+        currentUser,
+        containsFiles,
+        ignored(Answer.AnswerType.ApplicationProcessed.name),
+        ignored(true)
+      )
+
+    private def answerForm(
+        currentUser: User,
+        containsFiles: Boolean,
+        answerTypeMapping: Mapping[String],
+        applicationHasBeenProcessedMapping: Mapping[Boolean]
+    ) =
       Form(
         mapping(
-          "answer_type" -> normalizedText.verifying(maxLength(20)),
+          "answer_type" -> answerTypeMapping,
           "message" -> normalizedOptionalText,
           "irrelevant" -> boolean,
           "usagerOptionalInfos" -> FormsPlusMap.map(normalizedText.verifying(maxLength(200))),
           "privateToHelpers" -> boolean,
-          "applicationHasBeenProcessed" -> optional(boolean),
+          "applicationHasBeenProcessed" -> applicationHasBeenProcessedMapping,
           "signature" -> (
             if (currentUser.sharedAccount)
               nonEmptyText.transform[Option[String]](Some.apply, _.orEmpty)
@@ -227,7 +243,7 @@ object formModels {
                 form.usagerOptionalInfos.filter { case (_, value) => value.nonEmpty }.nonEmpty ||
                 (form.answerType === Answer.AnswerType.WorkInProgress.name) ||
                 (form.answerType === Answer.AnswerType.WrongInstructor.name) ||
-                form.applicationHasBeenProcessed.getOrElse(true) ||
+                form.applicationHasBeenProcessed ||
                 form.message.nonEmpty
           )
       )
