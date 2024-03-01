@@ -297,7 +297,12 @@ object myApplications {
                     div(cls := "aplus-text-small  aplus-card-section ")(
                       div(cls := "aplus-between")(
                         span(cls := "aplus-message-infos")(
-                          s"de ${application.application.userInfos.get(Application.UserFirstNameKey).get} ${application.application.userInfos.get(Application.UserLastNameKey).get}",
+                          application.application.userInfos
+                            .get(Application.UserFirstNameKey)
+                            .zip(application.application.userInfos.get(Application.UserLastNameKey))
+                            .map { case (firstName, lastName) =>
+                              s"de $firstName $lastName"
+                            },
                         ),
                         if (application.invitedGroups.length > 1) {
                           frag(
@@ -305,7 +310,7 @@ object myApplications {
                               s"à ${application.invitedGroups(0).name} + ${application.invitedGroups.length - 1} autres"
                             )
                           )
-                        } else if (application.invitedGroups.length == 1) {
+                        } else if (application.invitedGroups.length === 1) {
                           frag(
                             span(cls := "aplus-message-infos")(
                               s"à ${application.invitedGroups(0).name}"
@@ -319,7 +324,7 @@ object myApplications {
                         ),
                         span(cls := "aplus-message-infos aplus-message-infos--last-reply")(
                           application.lastOperateurAnswer.map(answer =>
-                            if (answer.creatorUserID == currentUser.id) "Vous"
+                            if (answer.creatorUserID === currentUser.id) "Vous"
                             else answer.creatorUserName
                           ),
                         ),

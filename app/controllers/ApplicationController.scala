@@ -546,12 +546,13 @@ case class ApplicationController @Inject() (
     }
 
   private def shouldServeDsfr(user: User) =
-    user.admin || (
-      config.groupsWithDsfr.intersect(user.groupIds.toSet).nonEmpty &&
+    config.groupsWithDsfr.intersect(user.groupIds.toSet).nonEmpty && (
+      user.admin || (
         !user.groupAdmin &&
-        user.observableOrganisationIds.isEmpty &&
-        user.managingAreaIds.isEmpty &&
-        user.managingOrganisationIds.isEmpty
+          user.observableOrganisationIds.isEmpty &&
+          user.managingAreaIds.isEmpty &&
+          user.managingOrganisationIds.isEmpty
+      )
     )
 
   private def myApplicationsBoard(

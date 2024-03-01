@@ -34,7 +34,10 @@ object messageThread {
           ),
           div()(
             span(cls := "aplus-message-infos--author")(
-              s"${application.userInfos.get(Application.UserFirstNameKey).get} ${application.userInfos.get(Application.UserLastNameKey).get} ",
+              application.userInfos
+                .get(Application.UserFirstNameKey)
+                .zip(application.userInfos.get(Application.UserLastNameKey))
+                .map { case (firstName, lastName) => s"$firstName $lastName" },
             ),
             span(cls := "aplus-message-infos--role")(application.creatorGroupName)
           )
@@ -53,7 +56,7 @@ object messageThread {
           div(cls := "aplus-spacer--top-small")(
             "Participants à la discussion :",
             div()(
-              application.invitedUsers.map { case (userId, userName) =>
+              application.invitedUsers.map { case (_, userName) =>
                 div(cls := "aplus-message-infos--role aplus-text-small")(s"${userName}")
               }.toList
             )
@@ -232,25 +235,13 @@ object messageThread {
               i(cls := "aplus-dl-arrow icon material-icons icon--light", "arrow_downward"),
             ),
             div(cls := "aplus-text-small aplus-text--gray")(
-              s"${extension.get} - ${numberToSize(metadata.filesize)}",
+              s"${extension.getOrElse("")} - ${numberToSize(metadata.filesize)}",
             )
           )
         } else
           s"${metadata.filename}"
       }
 
-    val statusMessage: Frag = status match {
-      case Available =>
-        daysRemaining match {
-          case None                   => "Fichier expiré et supprimé"
-          case Some(expirationInDays) => s"Suppression du fichier dans $expirationInDays jours"
-        }
-      case Scanning    => "Scan par un antivirus en cours"
-      case Quarantined => "Fichier supprimé par l’antivirus"
-      case Expired     => "Fichier expiré et supprimé"
-      case Error =>
-        "Une erreur est survenue lors de l’envoi du fichier, celui-ci n’est pas disponible"
-    }
     div(
       cls := "vertical-align--middle mdl-color-text--black single--font-size-14px single--font-weight-600 single--margin-top-8px" + additionalClasses,
       link,
