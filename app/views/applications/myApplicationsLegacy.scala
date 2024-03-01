@@ -122,7 +122,7 @@ object myApplicationsLegacy {
             cls := "single--font-size-16px single--padding-4px single--width-100pc",
             `type` := "search",
             placeholder := "Rechercher",
-            id := "search-input"
+            id := "search-input-legacy"
           )
         )
       ),

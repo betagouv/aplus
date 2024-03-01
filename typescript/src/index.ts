@@ -41,6 +41,7 @@ import "./mdl-extensions";
 import "./myApplications";
 import "./notificationBanner";
 import "./searchInput";
+import "./searchInputLegacy";
 import "./showApplication";
 import "./signup";
 import "./slimselect";
