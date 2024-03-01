@@ -54,12 +54,14 @@ object dashboard {
       config: AppConfig,
   ): Tag =
     div()(
-      h3(cls := "aplus-title")(s"Bonjour, ${currentUser.name}"),
-      p("Bienvenue sur votre tableau de bord. Vous y trouverez le résumé de votre journée."),
-      p(cls := "aplus-dashboard-date")(
-        "aujourd’hui ",
-        LocalDate.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+      div(cls := "aplus-space-between")(
+        h3(cls := "aplus-title")(s"Bonjour, ${currentUser.name}"),
+        p(cls := "aplus-dashboard-date")(
+          "aujourd’hui ",
+          LocalDate.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+        ),
       ),
+      p("Bienvenue sur votre tableau de bord. Vous y trouverez le résumé de votre journée."),
       div(cls := "fr-grid-row fr-grid-row--gutters fr-mb-1w")(
         div(cls := "fr_card__outer_container fr-col-md-6 fr-col")(
           div(
@@ -74,8 +76,10 @@ object dashboard {
                   )
                 ),
                 div(cls := "fr_card__container")(
-                  div(cls := "fr_card__desc__content")(currentUser.name),
-                  p(cls := "fr-tag fr-tag--sm ")(currentUser.qualite)
+                  div(
+                    div(cls := "fr_card__desc__content")(currentUser.name),
+                    p(cls := "fr-tag fr-tag--sm ")(currentUser.qualite)
+                  )
                 ),
                 div(cls := "fr_card__container")(currentUser.email),
                 div(cls := "fr_card__container")(currentUser.phoneNumber),
@@ -83,85 +87,87 @@ object dashboard {
             )
           )
         ),
-        div(cls := "fr_card__outer_container fr-col-md-12 fr-col")(
-          div(cls := "fr_card fr-card--horizontal")(
-            strong(cls := "fr_card__title")("Mon compte"),
-            if (currentUser.admin)
-              (
-                p(cls := "aplus-paragraph")(
-                  a(href := GroupController.showEditMyGroups.url, cls := "aplus-alert")(
-                    "Validation de compte"
-                  )
-                )
-              ),
-            if (infos.groupInfos.nonEmpty)
-              (
-                table(cls := "fr-table fr-table--striped fr-table--compact")(
-                  thead(
-                    tr(
-                      th("Groupes"),
-                      th(
-                        a(href := infos.applicationsPageEmptyFilters.withStatusNew.toUrl)(
-                          s"Nouvelles demandes (${infos.newCount})"
-                        )
-                      ),
-                      th(
-                        a(href := infos.applicationsPageEmptyFilters.withStatusLate.toUrl)(
-                          s"Demandes souffrantes (${infos.lateCount})"
-                        )
-                      ),
+        div(cls := "fr-col-md-12 fr-col")(
+          div(cls := "fr_card__outer_container fr-col-md-6 fr-col")(
+            div(cls := "fr_card fr-card--horizontal")(
+              strong(cls := "fr_card__title")("Mes groupes"),
+              if (currentUser.admin)
+                (
+                  p(cls := "aplus-paragraph")(
+                    a(href := GroupController.showEditMyGroups.url, cls := "aplus-alert")(
+                      "Validation de compte"
                     )
-                  ),
-                  tbody(
-                    for (groupInfos <- infos.groupInfos) yield {
+                  )
+                ),
+              if (infos.groupInfos.nonEmpty)
+                (
+                  table(cls := "fr-table fr-table--striped fr-table--compact")(
+                    thead(
                       tr(
-                        td(
-                          a(
-                            href := infos.applicationsPageEmptyFilters
-                              .withGroup(groupInfos.group.id)
-                              .toUrl
-                          )(
-                            groupInfos.group.name,
-                            i(cls := "material-icons material-icons-outlined external-link")(
-                              "arrow_outward"
-                            )
+                        th("Groupes"),
+                        th(
+                          a(href := infos.applicationsPageEmptyFilters.withStatusNew.toUrl)(
+                            s"Nouvelles demandes (${infos.newCount})"
                           )
                         ),
-                        td(
-                          a(
-                            href := infos.applicationsPageEmptyFilters
-                              .withGroup(groupInfos.group.id)
-                              .withStatusNew
-                              .toUrl
-                          )(
-                            groupInfos.newCount,
-                            i(cls := "material-icons material-icons-outlined external-link")(
-                              "arrow_outward"
-                            )
+                        th(
+                          a(href := infos.applicationsPageEmptyFilters.withStatusLate.toUrl)(
+                            s"Demandes souffrantes (${infos.lateCount})"
                           )
-                        ),
-                        td(
-                          a(
-                            href := infos.applicationsPageEmptyFilters
-                              .withGroup(groupInfos.group.id)
-                              .withStatusLate
-                              .toUrl
-                          )(
-                            groupInfos.lateCount,
-                            i(cls := "material-icons material-icons-outlined external-link")(
-                              "arrow_outward"
-                            )
-                          ),
                         ),
                       )
-                    }
+                    ),
+                    tbody(
+                      for (groupInfos <- infos.groupInfos) yield {
+                        tr(
+                          td(
+                            a(
+                              href := infos.applicationsPageEmptyFilters
+                                .withGroup(groupInfos.group.id)
+                                .toUrl
+                            )(
+                              groupInfos.group.name,
+                              i(cls := "material-icons material-icons-outlined external-link")(
+                                "arrow_outward"
+                              )
+                            )
+                          ),
+                          td(
+                            a(
+                              href := infos.applicationsPageEmptyFilters
+                                .withGroup(groupInfos.group.id)
+                                .withStatusNew
+                                .toUrl
+                            )(
+                              groupInfos.newCount,
+                              i(cls := "material-icons material-icons-outlined external-link")(
+                                "arrow_outward"
+                              )
+                            )
+                          ),
+                          td(
+                            a(
+                              href := infos.applicationsPageEmptyFilters
+                                .withGroup(groupInfos.group.id)
+                                .withStatusLate
+                                .toUrl
+                            )(
+                              groupInfos.lateCount,
+                              i(cls := "material-icons material-icons-outlined external-link")(
+                                "arrow_outward"
+                              )
+                            ),
+                          ),
+                        )
+                      }
+                    )
                   )
                 )
-              )
-            else
-              (
-                "vous n'êtes membre d'aucun groupe"
-              )
+              else
+                (
+                  "vous n'êtes membre d'aucun groupe"
+                )
+            )
           )
         ),
         div(cls := "fr_card__outer_container fr-col-md-12 fr-col")(
