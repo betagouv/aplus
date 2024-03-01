@@ -45,6 +45,7 @@ object inviteForm {
                         cls := "fr-select",
                         id := "structureIdSelect",
                         name := "structureIds",
+                        data("application-id") := application.id.toString,
                       )(
                         option(value := "null")("Selectionner une organisation"),
                         Area.all.map { area =>

@@ -2,20 +2,18 @@ package views.applications
 
 import cats.syntax.all._
 import constants.Constants
-import controllers.routes.{ApplicationController, Assets}
+import controllers.routes.ApplicationController
 import helper.Time
 import helper.TwirlImports.toHtml
-import java.time.ZonedDateTime
-import java.util.UUID
-import models.{Answer, Application, Authorization, User, UserGroup}
-import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
+import models.{Answer, Application, Authorization, FileMetadata, User, UserGroup}
 import models.formModels.ApplicationsPageInfos
+import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
-import views.helpers.applications.statusTag
 import views.MainInfos
+import views.helpers.applications.statusTag
 
 object myApplications {
   val TODOflag = false
@@ -33,8 +31,11 @@ object myApplications {
       currentUser: User,
       currentUserRights: Authorization.UserRights,
       applications: List[MyApplicationInfos],
+      selectedApplication: Option[MyApplicationInfos],
+      selectedApplicationFiles: List[FileMetadata],
       groups: List[UserGroup],
       filters: ApplicationsPageInfos,
+      config: AppConfig,
   )(implicit
       flash: Flash,
       request: RequestHeader,
@@ -44,7 +45,17 @@ object myApplications {
     views.main.layout(
       "Mes demandes",
       frag(
-        content(currentUser, currentUserRights, maxWidth = false, filters, applications, groups)
+        content(
+          currentUser,
+          currentUserRights,
+          maxWidth = false,
+          filters,
+          applications,
+          selectedApplication,
+          selectedApplicationFiles,
+          groups,
+          config
+        )
       ),
     )
 
@@ -54,14 +65,26 @@ object myApplications {
       maxWidth: Boolean,
       filters: ApplicationsPageInfos,
       applications: List[MyApplicationInfos],
+      selectedApplication: Option[MyApplicationInfos],
+      selectedApplicationFiles: List[FileMetadata],
       groups: List[UserGroup],
-  ): Tag =
+      config: AppConfig,
+  )(implicit request: RequestHeader): Tag =
     div(
       cls := "mdl-cell mdl-cell--12-col mdl-grid--no-spacing",
       if (filters.allGroupsOpenCount <= 0 && filters.allGroupsClosedCount <= 0)
         noApplications(currentUser, currentUserRights)
       else
-        openApplications(currentUser, currentUserRights, applications, groups, filters),
+        openApplications(
+          currentUser,
+          currentUserRights,
+          applications,
+          selectedApplication,
+          selectedApplicationFiles,
+          groups,
+          filters,
+          config
+        ),
     )
 
   private def noApplications(currentUser: User, currentUserRights: Authorization.UserRights) =
@@ -111,9 +134,12 @@ object myApplications {
       currentUser: User,
       currentUserRights: Authorization.UserRights,
       applications: List[MyApplicationInfos],
+      selectedApplication: Option[MyApplicationInfos],
+      selectedApplicationFiles: List[FileMetadata],
       groups: List[UserGroup],
       filters: ApplicationsPageInfos,
-  ) =
+      config: AppConfig,
+  )(implicit request: RequestHeader) =
     frag(
       div(cls := "fr-grid-row")(
         div(
@@ -190,7 +216,7 @@ object myApplications {
                   a(
                     cls := "aplus-application-link",
                     id := "search-column",
-                    href := ApplicationController.show(application.application.id).url,
+                    href := ApplicationController.myApplications.url + s"?demande-visible=${application.application.id}"
                   )(
                     div(cls := "fr-card-inner")(
                       div(cls := "fr-card-header")(
@@ -312,12 +338,22 @@ object myApplications {
             })
         ),
         div(cls := "fr-col fr-col-8", id := "application-message-container")(
-          div(cls := "aplus-no-message--container")(
-            div(cls := "aplus-no-message")(
-              i(cls := "material-icons material-icons-outlined ")("forum"),
-              span(
-                "Ce champ est actuellement vide, mais une fois que vous aurez sélectionné la demande, vous pourrez effectuer et lire les échanges dans cet espace"
+          selectedApplication.fold[Tag](
+            div(cls := "aplus-no-message--container")(
+              div(cls := "aplus-no-message")(
+                i(cls := "material-icons material-icons-outlined ")("forum"),
+                span(
+                  "Ce champ est actuellement vide, mais une fois que vous aurez sélectionné la demande, vous pourrez effectuer et lire les échanges dans cet espace"
+                )
               )
+            )
+          )(application =>
+            views.applications.messageThread.page(
+              currentUser,
+              currentUserRights,
+              application.application,
+              selectedApplicationFiles,
+              config
             )
           )
         )
