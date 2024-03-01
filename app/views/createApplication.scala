@@ -1,22 +1,19 @@
 package views
 
-import models.{User, Authorization}
-import play.twirl.api.Html
 import helper.TwirlImports.toHtml
-
+import models.{Area, Authorization, User}
+import play.api.mvc.RequestHeader
+import play.twirl.api.Html
 import scalatags.Text.all._
-import models.Area
-import play.api.mvc.{RequestHeader}
-
 
 object createApplication {
 
   def page(
-    currentUser: User,
-    userRights: Authorization.UserRights,
-    currentArea: Area,
+      currentUser: User,
+      userRights: Authorization.UserRights,
+      currentArea: Area,
   )(implicit
-    request: RequestHeader,
+      request: RequestHeader,
   ): Html =
     views.main.layout(
       "Créer une demande",
@@ -27,7 +24,9 @@ object createApplication {
   ): Tag =
     div()(
       h4(cls := "aplus-title--background")("Nouvelle demande"),
-      span(cls := "fr-hint aplus-hint aplus-text-small")("Les champs marqués d'un * sont obligatoires"),
+      span(cls := "fr-hint aplus-hint aplus-text-small")(
+        "Les champs marqués d'un * sont obligatoires"
+      ),
       form(cls := "aplus-form")(
         fieldset(cls := "fr-fieldset aplus-fieldset")(
           span(cls := "aplus-form-step")("1/8"),
@@ -60,7 +59,6 @@ object createApplication {
             cls := "fr-label aplus-bold",
             `for` := "areaIdSelect",
             "Structure demandeuse",
-            
           ),
           "TODO",
           div(cls := "fr-notice fr-notice--info aplus-notice-small")(
@@ -73,7 +71,7 @@ object createApplication {
             )
           )
         ),
-        fieldset(cls := "fr-fieldset")( 
+        fieldset(cls := "fr-fieldset")(
           span(cls := "aplus-form-step")("3/8"),
           label(
             cls := "fr-label aplus-bold",
@@ -101,35 +99,35 @@ object createApplication {
           label(
             cls := "fr-label",
             `for` := "areaIdSelect",
-              "Prénom",
-              input(
-                cls := "fr-input",
-                `type` := "text",
-                name := "firstname",
-              )
+            "Prénom",
+            input(
+              cls := "fr-input",
+              `type` := "text",
+              name := "firstname",
+            )
+          ),
+          label(
+            cls := "fr-label",
+            `for` := "areaIdSelect",
+            "Prénom",
+            "Nom de famille",
+            input(
+              cls := "fr-input",
+              `type` := "text",
+              name := "surname",
+            )
+          ),
+          label(
+            cls := "fr-label",
+            `for` := "areaIdSelect",
+            "Prénom",
+            "Date de naissance",
+            input(
+              cls := "fr-input",
+              `type` := "date",
+              name := "birthdate",
+              placeholder := "jj/mm/aaaa",
             ),
-            label(
-              cls := "fr-label",
-              `for` := "areaIdSelect",
-              "Prénom",
-              "Nom de famille",
-              input(
-                cls := "fr-input",
-                `type` := "text",
-                name := "surname",
-              )
-            ),
-            label(
-              cls := "fr-label",
-              `for` := "areaIdSelect",
-                "Prénom",
-              "Date de naissance",
-              input(
-                cls := "fr-input",
-                `type` := "date",
-                name := "birthdate",
-                placeholder := "jj/mm/aaaa",
-              ),
           ),
         ),
         fieldset(cls := "fr-fieldset aplus-fieldset")(
@@ -203,5 +201,5 @@ object createApplication {
         ),
       ),
     )
-    
+
 }
