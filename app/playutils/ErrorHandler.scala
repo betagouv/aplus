@@ -7,7 +7,7 @@ import javax.inject.{Inject, Provider, Singleton}
 import play.api.{Configuration, Environment, Mode, OptionalSourceMapper, UsefulException}
 import play.api.http.DefaultHttpErrorHandler
 import play.api.mvc.{RequestHeader, Result}
-import play.api.mvc.Results.{InternalServerError, NotFound, ServiceUnavailable}
+import play.api.mvc.Results.{Forbidden, InternalServerError, NotFound, ServiceUnavailable}
 import play.api.routing.Router
 import scala.concurrent.Future
 
@@ -20,6 +20,11 @@ class ErrorHandler @Inject() (
 ) extends DefaultHttpErrorHandler(env, config, sourceMapper, router) {
 
   implicit val modeEqInstance: Eq[Mode] = Eq.fromUniversalEquals
+
+  /** This page is seen when there is no CSRF token with message = "No CSRF token found in body"
+    */
+  override def onForbidden(request: RequestHeader, message: String): Future[Result] =
+    Future.successful(Forbidden(views.errors.public403()))
 
   override def onNotFound(request: RequestHeader, message: String): Future[Result] =
     Future.successful {

@@ -3,7 +3,6 @@ package views
 import cats.syntax.all._
 import controllers.routes.{ApplicationController, Assets, UserController}
 import helper.Time
-import helpers.forms.CSRFInput
 import java.util.UUID
 import models.{
   Answer,
@@ -16,11 +15,11 @@ import models.{
   UserGroup
 }
 import modules.AppConfig
-import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
 import serializers.Keys
+import views.helpers.forms.CSRFInput
 
 object application {
 

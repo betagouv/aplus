@@ -21,6 +21,7 @@ GET         /toutes-les-demandes/:id                                            
 POST        /toutes-les-demandes/:applicationId/inviter_des_utilisateurs                     controllers.ApplicationController.invite(applicationId: java.util.UUID)
 POST        /toutes-les-demandes/:applicationId/inviter_des_experts                          controllers.ApplicationController.inviteExpert(applicationId: java.util.UUID)
 POST        /toutes-les-demandes/:applicationId/messages                                     controllers.ApplicationController.answer(applicationId: java.util.UUID)
+POST        /toutes-les-demandes/:applicationId/messages/resolution-par-l-operateur          controllers.ApplicationController.answerApplicationHasBeenProcessed(applicationId: java.util.UUID)
 POST        /toutes-les-demandes/:applicationId/terminer                                     controllers.ApplicationController.terminate(applicationId: java.util.UUID)
 POST        /toutes-les-demandes/:applicationId/reopen                                       controllers.ApplicationController.reopen(applicationId: java.util.UUID)
 

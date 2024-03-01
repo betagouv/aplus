@@ -1,7 +1,7 @@
 package views
 
 import cats.syntax.all._
-import controllers.routes.{Assets, HomeController, UserController}
+import controllers.routes.{Assets, HomeController, JavascriptController, UserController}
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
 import scalatags.Text.tags2
@@ -83,6 +83,7 @@ object main {
           attr("type") := "image/svg+xml"
         ),
         publicCss("generated-js/dsfr/dsfr.min.css"),
+        publicCss("stylesheets/aplus-dsfr.css"),
         tags2.title(pageTitle),
         additionalHeadTags
       ),
@@ -182,7 +183,23 @@ object main {
         ),
         script(
           `type` := "module",
+          defer,
           src := Assets.versioned("generated-js/dsfr/dsfr.module.min.js").url
+        ),
+        script(
+          `type` := "application/javascript",
+          defer,
+          attr("nomodule").empty,
+          src := Assets.versioned("generated-js/dsfr/dsfr.nomodule.min.js").url
+        ),
+        script(
+          `type` := "text/javascript",
+          src := JavascriptController.javascriptRoutes.url
+        ),
+        script(
+          `type` := "application/javascript",
+          defer,
+          src := Assets.versioned("generated-js/index.js").url
         ),
         additionalFooterTags
       )
