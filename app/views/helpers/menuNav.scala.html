@@ -29,7 +29,7 @@
         </a>
     }
 
-    @if(Authorization.canSeeApplicationsAsAdmin(currentUserRights)) {
+    @if(Authorization.canSeeApplicationsMetadata(currentUserRights)) {
         <a @linkAttrs(routes.ApplicationController.applicationsAdmin, serializers.Keys.QueryParam.numOfMonthsDisplayed + "=3")>
             <i class="material-icons" role="presentation">folder</i>Admin : demandes
         </a>

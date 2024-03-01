@@ -1,5 +1,7 @@
 /* global jsRoutes */
+import { Option } from "slim-select/dist/data";
 import { findAncestor } from "./helpers";
+import SlimSelect from "slim-select";
 
 const createApplicationFormId = 'create-application-form';
 const invitedGroupsCheckboxClass = 'application-form-invited-groups-checkbox';
@@ -15,6 +17,96 @@ const inputNomId = "usagerNom";
 const inputBirthdateId = "usagerBirthDate";
 
 
+const query = new URLSearchParams(window.location.search)
+
+const selectedFilters = query.getAll('filtre-groupe');
+
+const ssSelector = document.querySelector("#application-slimselect")
+
+if (ssSelector) {
+
+  const ss = new SlimSelect({
+    select: ssSelector,
+    selectByGroup: true,
+    closeOnSelect: false,
+    searchPlaceholder: "Rechercher un groupe",
+    placeholder: "Selectionner un ou plusieurs groupes",
+    onChange: (info) => {
+      updateFilters(info, query);
+    },
+  });
+  ss.setSelected(selectedFilters)
+
+  /*Array.from(document.querySelectorAll(".use-slimselect-in-message")).forEach(function (select) {
+      new SlimSelect({ select, selectByGroup: true, closeOnSelect: false });
+    });*/
+
+  document.getElementById("structureIdSelect")?.addEventListener('change', function (event) {
+    const target = <HTMLSelectElement>event.target;
+    if (target.value === "null") return;
+
+    const applicationId = target.dataset['applicationId']
+    if (!applicationId) return;
+
+    fetch(`/demandes/${applicationId}/territoire/${target.value}/groupes-invitables`).then(data => {
+      data.json().then((groups) => {
+        const container = document.getElementById("checkboxes-groups-container")
+        if (!container) return;
+        container.innerHTML = "";
+        const div = document.createElement("div");
+        div.innerHTML = "";
+        div.classList.add("fr-checkbox-group");
+        div.classList.add("aplus-checkbox-highlight")
+
+        if (groups.groups.length === 0) {
+          div.innerHTML = "Il n’y a aucune organisation pour ce territoire."
+        }
+        container?.appendChild(div);
+
+        groups.groups.forEach((group: any) => {
+          const input = document.createElement("input");
+          input.type = "checkbox";
+          input.name = "invitedGroups";
+          input.value = group.id;
+          input.id = `invitedGroups-${group.id}`;
+          input.classList.add("fr-checkbox-input");
+          const label = document.createElement("label");
+          label.classList.add("aplus-bold");
+          label.classList.add("fr-label");
+          label.htmlFor = `invitedGroups-${group.id}`;
+          label.innerText = group.name;
+          div.appendChild(input);
+          div.appendChild(label);
+
+
+        });
+      });
+    });
+  });
+
+}
+
+function updateFilters(info: Option | Option[], query: URLSearchParams) {
+  const selected = Array.isArray(info) ? info.map(i => i.value) : [info.value];
+  const urlFilters = query.getAll('filtre-groupe');
+
+  // If all filters are already selected, do nothing to prevent infinite loop
+  if (
+    urlFilters.length === selected.length &&
+    urlFilters.every((item) => selected.find((value) => value === item))
+  ) {
+    return;
+  };
+
+  query.delete('filtre-groupe');
+
+  selected.forEach((value) => {
+    if (!value) return;
+    query.append('filtre-groupe', value);
+  });
+
+  window.location.search = query.toString();
+}
 
 // Maps to the scala class
 interface MandatGeneration {
@@ -180,7 +272,6 @@ function applyCategoryFilters() {
         }
       }
     });
-  console.log("Selected organisations: ", selectedCategories);
 
   // Show / Hide Checkboxes
   document.querySelectorAll<HTMLInputElement>('.' + invitedGroupsCheckboxClass)
@@ -277,7 +368,7 @@ function setupInvitedGroups() {
       element.addEventListener('click', (event) => {
         const input = <HTMLInputElement>event.target;
         const groupId = input.value;
-        const infosDiv = document.getElementById(`invite-${ groupId }-additional-infos`);
+        const infosDiv = document.getElementById(`invite-${groupId}-additional-infos`);
         if (input.checked) {
           infosDiv && infosDiv.classList.remove('invisible');
           const groupName = input.dataset['groupName'];

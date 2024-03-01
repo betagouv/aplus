@@ -1,6 +1,7 @@
 const attachmentList: HTMLElement | null = document.getElementById("attachment-list");
 
 if (attachmentList) {
+
   let fileInputCount: number = 1;
   let idSequence: number = 1; // In order to avoid id collisions
   let increaseOrDecreaseFileInputList: (event: Event) => void = () => { };

@@ -3,7 +3,7 @@ package views
 import controllers.routes.{ApplicationController, GroupController, UserController}
 import helper.Time
 import models.{Application, Authorization, User, UserGroup}
-import models.formModels.ApplicationsInfos
+import models.formModels.ApplicationsPageInfos
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.RequestHeader
@@ -31,7 +31,7 @@ object dashboard {
       lateCount: Int,
       groupInfos: List[DashboardInfos.Group],
       chartFilters: Filters,
-      applicationsPageEmptyFilters: ApplicationsInfos.Filters,
+      applicationsPageEmptyFilters: ApplicationsPageInfos.Filters,
   )
 
   def page(

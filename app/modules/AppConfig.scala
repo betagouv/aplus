@@ -108,4 +108,13 @@ class AppConfig @Inject() (configuration: Configuration) {
   val statisticsTimeToProcessApplicationsUrl: Option[String] =
     configuration.getOptional[String]("app.statistics.timeToProcessApplicationsUrl")
 
+  val groupsWithDsfr: Set[UUID] =
+    configuration
+      .get[String]("app.groupsWithDsfr")
+      .split(",")
+      .map(_.trim)
+      .filterNot(_.isEmpty)
+      .flatMap(UUIDHelper.fromString)
+      .toSet
+
 }

@@ -28,9 +28,9 @@ object Authorization {
           Some(ManagerOfGroups(user.groupIds.toSet))
         else None,
         if (
-          (user.managingAreaIds.nonEmpty || user.managingOrganisationIds.nonEmpty) && not(
-            user.disabled
-          )
+          user.managingAreaIds.nonEmpty &&
+          user.managingOrganisationIds.nonEmpty &&
+          not(user.disabled)
         )
           Some(ManagerOfAreas(user.managingAreaIds.toSet, user.managingOrganisationIds.toSet))
         else None,
@@ -143,10 +143,32 @@ object Authorization {
       case _                                                                           => false
     }
 
-  def isAreaManager(areaIds: Set[UUID], organisationIds: Set[Organisation.Id]): Check =
+  def isAreaManager: Check =
+    _.rights.exists {
+      case UserRight.ManagerOfAreas(_, _) => true
+      case _                              => false
+    }
+
+  def isAreaManagerOfAnyOrganisation(areaIds: Set[UUID]): Check =
+    _.rights.exists {
+      case UserRight.ManagerOfAreas(managingAreaIds, _) =>
+        areaIds.subsetOf(managingAreaIds)
+      case _ => false
+    }
+
+  def isAreaManagerFor(areaIds: Set[UUID], organisationIds: Set[Organisation.Id]): Check =
     _.rights.exists {
       case UserRight.ManagerOfAreas(managingAreaIds, managingOrganisationIds) =>
         areaIds.subsetOf(managingAreaIds) && organisationIds.subsetOf(managingOrganisationIds)
+      case _ => false
+    }
+
+  def isAreaManagerOfGroup(group: UserGroup): Check =
+    _.rights.exists {
+      case UserRight.ManagerOfAreas(managingAreaIds, managingOrganisationIds) =>
+        managingAreaIds.intersect(group.areaIds.toSet).nonEmpty && managingOrganisationIds
+          .intersect(group.organisationId.toSet)
+          .nonEmpty
       case _ => false
     }
 
@@ -185,7 +207,7 @@ object Authorization {
     }
 
   def canSeeStats: Check =
-    atLeastOneIsAuthorized(isAdmin, isManager, isObserver)
+    atLeastOneIsAuthorized(isAdmin, isAreaManager, isManager, isObserver)
 
   //
   // Authorizations concerning User/UserGroup
@@ -207,15 +229,20 @@ object Authorization {
   def canEditOtherUser(editedUser: User): Check =
     isAdminOfOneOfAreas(editedUser.areas.toSet)
 
-  def canAddOrRemoveOtherUser(otherUserGroupId: UUID): Check =
-    atLeastOneIsAuthorized(isAdmin, isInGroup(otherUserGroupId))
+  def canAddOrRemoveOtherUser(group: UserGroup): Check =
+    atLeastOneIsAuthorized(isAdmin, isAreaManagerOfGroup(group), isInGroup(group.id))
 
-  def canEnableOtherUser(otherUser: User): Check =
-    atLeastOneIsAuthorized(isAdmin, atLeastOneIsAuthorized(otherUser.groupIds.map(isInGroup): _*))
+  def canEnableOtherUser(otherUser: User, otherUserGroups: List[UserGroup]): Check =
+    atLeastOneIsAuthorized(
+      isAdmin,
+      atLeastOneIsAuthorized(otherUser.groupIds.map(isInGroup): _*),
+      atLeastOneIsAuthorized(otherUserGroups.map(isAreaManagerOfGroup): _*)
+    )
 
   def canEditGroup(group: UserGroup): Check =
     atLeastOneIsAuthorized(
       forall(group.areaIds, isAdminOfArea),
+      isAreaManagerOfGroup(group),
       isManagerOfGroup(group.id)
     )
 
@@ -224,7 +251,19 @@ object Authorization {
     forall(group.areaIds, isAdminOfArea)
 
   def canSeeUsers: Check =
-    atLeastOneIsAuthorized(isAdmin, isManager, isObserver)
+    atLeastOneIsAuthorized(isAdmin, isAreaManager, isManager, isObserver)
+
+  def canSeeUsersInArea(areaId: UUID): Check =
+    rights => {
+      val validCase1 = (isAdmin(rights) || isManager(rights)) &&
+        (areaId === Area.allArea.id || isInArea(areaId)(rights))
+      val validCase2 =
+        (isAreaManager(rights) && areaId === Area.allArea.id) || isAreaManagerOfAnyOrganisation(
+          Set(areaId)
+        )(rights)
+      val validCase3 = isObserver(rights)
+      validCase1 || validCase2 || validCase3
+    }
 
   def canSeeEditUserPage: Check = isAdminOrObserver
 
@@ -244,8 +283,8 @@ object Authorization {
   def canAddUserAsCoworkerToNewApplication(otherUser: User): Check =
     rights => otherUser.helper && isInOneOfGroups(otherUser.groupIds.toSet)(rights)
 
-  def canSeeApplicationsAsAdmin: Check =
-    atLeastOneIsAuthorized(isAdmin, isManager)
+  def canSeeApplicationsMetadata: Check =
+    atLeastOneIsAuthorized(isAdmin, isAreaManager, isManager)
 
   def canSeeOtherUserNonPrivateViews(otherUser: User): Check =
     rights => isAdmin(rights) && !otherUser.admin && isInOneOfAreas(otherUser.areas.toSet)(rights)
@@ -261,6 +300,12 @@ object Authorization {
       case UserRight.HasUserId(id) => answer.creatorUserID === id
       case _                       => false
     }
+
+  def isInApplicationCreatorGroup(application: Application): Check =
+    rights =>
+      application.creatorGroupId
+        .map(creatorGroupId => isInGroup(creatorGroupId)(rights))
+        .getOrElse(false)
 
   def isInvitedOn(application: Application): Check =
     _.rights.exists {
@@ -319,51 +364,73 @@ object Authorization {
       validCase1 || validCase2
     }
 
-  private def answerFileCanBeShowed(filesExpirationInDays: Int)(
-      application: Application,
-      answerId: UUID
-  )(userId: UUID, rights: UserRights): Boolean =
-    application.answers.find(_.id === answerId) match {
-      case None => false
-      case Some(answer) =>
-        val hasNotExpired =
-          Answer.filesAvailabilityLeftInDays(filesExpirationInDays)(answer).nonEmpty
-        val validCase1 =
-          hasNotExpired &&
-            isHelper(rights) &&
-            answer.visibleByHelpers &&
-            userId === application.creatorUserId
-        val invitedUsersInAnswers: Set[UUID] =
-          (application.answers.takeWhile(_.id =!= answerId) :+ answer)
-            .flatMap(_.invitedUsers.keys)
-            .toSet
-        val validCase2 =
-          hasNotExpired &&
-            isInstructor(rights) &&
-            (application.invitedUsers.keys.toSet ++ invitedUsersInAnswers).contains(userId)
-
-        validCase1 || validCase2
-    }
-
-  private def applicationFileCanBeShowed(filesExpirationInDays: Int)(
-      application: Application
-  )(userId: UUID, rights: UserRights): Boolean =
-    Application.filesAvailabilityLeftInDays(filesExpirationInDays)(application).nonEmpty && not(
-      isExpert(rights)
-    ) && (
-      (isInstructor(rights) && application.invitedUsers.keys.toList.contains(userId)) ||
-        (isHelper(rights) && userId === application.creatorUserId)
+  def canCloseApplication(application: Application): Check =
+    atLeastOneIsAuthorized(
+      isAdmin,
+      allMustBeAuthorized(isExpert, isInvitedOn(application)),
+      isApplicationCreator(application),
+      isInApplicationCreatorGroup(application),
     )
 
-  def fileCanBeShowed(filesExpirationInDays: Int)(
+  def canOpenApplication(application: Application): Check =
+    canCloseApplication(application)
+
+  private def answerFileCanBeShown(filesExpirationInDays: Int)(
+      application: Application,
+      answerId: UUID
+  ): Check =
+    rights =>
+      application.answers.find(_.id === answerId) match {
+        case None => false
+        case Some(answer) =>
+          val hasNotExpired =
+            Answer.filesAvailabilityLeftInDays(filesExpirationInDays)(answer).nonEmpty
+          val isCreatorHelper =
+            isApplicationCreator(application)(rights) ||
+              isInApplicationCreatorGroup(application)(rights)
+          val validCase1 =
+            hasNotExpired &&
+              isHelper(rights) &&
+              answer.visibleByHelpers &&
+              isCreatorHelper
+
+          val isInvitedInPreviousAnswer =
+            rights.rights.exists {
+              case UserRight.HasUserId(userId) =>
+                (application.answers.takeWhile(_.id =!= answerId) :+ answer)
+                  .flatMap(_.invitedUsers.keys)
+                  .toSet
+                  .contains(userId)
+              case _ => false
+            }
+          val validCase2 =
+            hasNotExpired &&
+              isInstructor(rights) &&
+              (isInvitedOn(application)(rights) || isInvitedInPreviousAnswer)
+
+          validCase1 || validCase2
+      }
+
+  private def applicationFileCanBeShown(filesExpirationInDays: Int)(
+      application: Application
+  ): Check =
+    rights =>
+      Application.filesAvailabilityLeftInDays(filesExpirationInDays)(application).nonEmpty &&
+        not(isExpert(rights)) &&
+        (
+          (isInstructor(rights) && isInvitedOn(application)(rights)) ||
+            (isHelper(rights) && isApplicationCreator(application)(rights))
+        )
+
+  def fileCanBeShown(filesExpirationInDays: Int)(
       metadata: FileMetadata.Attached,
       application: Application,
-  )(userId: UUID, rights: UserRights): Boolean =
+  ): Check =
     metadata match {
       case FileMetadata.Attached.Application(_) =>
-        applicationFileCanBeShowed(filesExpirationInDays)(application)(userId, rights)
+        applicationFileCanBeShown(filesExpirationInDays)(application)
       case FileMetadata.Attached.Answer(_, answerId) =>
-        answerFileCanBeShowed(filesExpirationInDays)(application, answerId)(userId, rights)
+        answerFileCanBeShown(filesExpirationInDays)(application, answerId)
     }
 
 }

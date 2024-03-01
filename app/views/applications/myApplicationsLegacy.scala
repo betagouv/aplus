@@ -1,27 +1,27 @@
-package views
+package views.applications
 
 import cats.syntax.all._
 import constants.Constants
 import controllers.routes.ApplicationController
 import helper.Time
 import helper.TwirlImports.toHtml
-import java.util.UUID
-import models.formModels.ApplicationsInfos
+import models.formModels.ApplicationsPageInfos
 import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
 import models.{Application, Authorization, User, UserGroup}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
+import views.MainInfos
 
-object myApplications {
+object myApplicationsLegacy {
 
   def page(
       currentUser: User,
       currentUserRights: Authorization.UserRights,
       applications: List[Application],
       groups: List[UserGroup],
-      filters: ApplicationsInfos,
+      filters: ApplicationsPageInfos,
   )(implicit
       flash: Flash,
       request: RequestHeader,
@@ -88,7 +88,7 @@ object myApplications {
       currentUserRights: Authorization.UserRights,
       applications: List[Application],
       groups: List[UserGroup],
-      filters: ApplicationsInfos,
+      filters: ApplicationsPageInfos,
   ) =
     frag(
       div(
@@ -122,7 +122,7 @@ object myApplications {
             cls := "single--font-size-16px single--padding-4px single--width-100pc",
             `type` := "search",
             placeholder := "Rechercher",
-            id := "search-input"
+            id := "search-input-legacy"
           )
         )
       ),
@@ -137,7 +137,7 @@ object myApplications {
       applicationsList(currentUser, currentUserRights, applications)
     )
 
-  private def groupsFilters(groups: List[UserGroup], infos: ApplicationsInfos) =
+  private def groupsFilters(groups: List[UserGroup], infos: ApplicationsPageInfos) =
     if (groups.length <= 1)
       frag()
     else
@@ -153,7 +153,7 @@ object myApplications {
                   id := s"group-filter-${group.id}",
                   cls := "mdl-checkbox__input application-form-invited-groups-checkbox trigger-group-filter",
                   `type` := "checkbox",
-                  name := ApplicationsInfos.groupFilterKey,
+                  name := ApplicationsPageInfos.groupFilterKey,
                   value := s"${group.id}",
                   data("on-checked-url") := infos.filters.withGroup(group.id).toUrl,
                   data("on-unchecked-url") := infos.filters.withoutGroup(group.id).toUrl,
@@ -171,7 +171,7 @@ object myApplications {
         )
       )
 
-  private def otherFilters(currentUser: User, infos: ApplicationsInfos) = {
+  private def otherFilters(currentUser: User, infos: ApplicationsPageInfos) = {
     val filters = infos.filters
 
     val filterLink = (isSelected: Boolean, text: String, uri: String) =>

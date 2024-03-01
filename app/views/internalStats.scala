@@ -4,7 +4,7 @@ import cats.syntax.all._
 import helper.Time
 import java.time.LocalDate
 import java.util.UUID
-import models.Organisation
+import models.{Area, Organisation, UserGroup}
 import modules.AppConfig
 import scalatags.Text.all._
 
@@ -17,6 +17,18 @@ object internalStats {
       organisationIds: List[Organisation.Id],
       creatorGroupIds: List[UUID],
       invitedGroupIds: List[UUID]
+  )
+
+  case class SelectionForm(
+      canFilterByOrganisation: Boolean,
+      areasThatCanBeFilteredBy: List[Area],
+      organisationsThatCanBeFilteredBy: List[Organisation],
+      groupsThatCanBeFilteredBy: List[UserGroup],
+      creationMinDate: LocalDate,
+      creationMaxDate: LocalDate,
+      selectedAreaIds: List[UUID],
+      selectedOrganisationIds: List[Organisation.Id],
+      selectedGroupIds: List[UUID]
   )
 
   def charts(filters: Filters, config: AppConfig): Frag = {
