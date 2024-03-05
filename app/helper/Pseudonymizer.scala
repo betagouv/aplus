@@ -1,7 +1,7 @@
 package helper
 
 import cats.syntax.all._
-import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
+import com.github.tototoshi.csv.CSVReader
 import helper.StringHelper
 import java.util.UUID
 import scala.util.Random

@@ -1,18 +1,16 @@
 package tasks
 
-import java.nio.file.Files
 import java.io.File
+import java.nio.file.Files
 import java.time.Instant
 import java.time.temporal.ChronoUnit.DAYS
-
 import javax.inject.Inject
 import models.EventType
 import org.apache.pekko.actor.ActorSystem
 import play.api.Configuration
-import services.{EventService, FileService}
-
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+import services.{EventService, FileService}
 
 class RemoveExpiredFilesTask @Inject() (
     actorSystem: ActorSystem,

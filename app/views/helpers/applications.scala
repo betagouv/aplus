@@ -3,9 +3,8 @@ package views.helpers
 import cats.syntax.all._
 import constants.Constants
 import helper.MiscHelpers.intersperseList
-import java.util.UUID
-import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
 import models.{Application, Organisation, User, UserGroup}
+import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
 import models.formModels.ApplicationFormData
 import play.api.data.{Form, FormError}
 import play.api.i18n.Messages

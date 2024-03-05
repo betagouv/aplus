@@ -1,13 +1,11 @@
 package services
 
-import java.time.{Instant, LocalDate}
-import java.util.UUID
-
 import actions.RequestWithUserData
 import anorm._
 import aplus.macros.Macros
 import cats.syntax.all._
-import helper.Time
+import java.time.{Instant, LocalDate}
+import java.util.UUID
 import javax.inject.Inject
 import models.{Area, Error, Event, EventType, User}
 import play.api.Logger

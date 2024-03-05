@@ -1,22 +1,14 @@
 package controllers
 
 import actions.LoginAction
-import cats.syntax.all._
-import constants.Constants
 import controllers.Operators.UserOperators
 import javax.inject.{Inject, Singleton}
-import models.EventType.{
-  AllAreaUnauthorized,
-  AreaChanged,
-  ChangeAreaUnauthorized,
-  DeploymentDashboardUnauthorized
-}
 import models._
+import models.EventType.{AllAreaUnauthorized, DeploymentDashboardUnauthorized}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.InjectedController
 import scala.concurrent.{ExecutionContext, Future}
-import serializers.Keys
 import services.{EventService, UserGroupService, UserService}
 
 @Singleton

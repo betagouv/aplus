@@ -4,13 +4,12 @@ import cats.syntax.all._
 import helper.{Hash, Time, UUIDHelper}
 import java.time.ZonedDateTime
 import models.{Area, LoginToken, User}
+import org.junit.runner._
 import org.specs2.mutable._
 import org.specs2.runner._
-import org.junit.runner._
-import play.api.test._
-import play.api.test.Helpers._
-import services.{TokenService, UserService}
 import org.specs2.specification.BeforeAfterAll
+import play.api.test._
+import services.{TokenService, UserService}
 
 @RunWith(classOf[JUnitRunner])
 class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfterAll {

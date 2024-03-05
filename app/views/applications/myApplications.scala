@@ -7,10 +7,8 @@ import helper.Time
 import models.{Answer, Application, Authorization, FileMetadata, User, UserGroup}
 import models.formModels.ApplicationsPageInfos
 import modules.AppConfig
-import org.webjars.play.WebJarsUtil
-import play.api.mvc.{Flash, RequestHeader}
+import play.api.mvc.RequestHeader
 import scalatags.Text.all._
-import views.MainInfos
 import views.helpers.applications.statusTag
 
 object myApplications {
@@ -34,12 +32,7 @@ object myApplications {
       groups: List[UserGroup],
       filters: ApplicationsPageInfos,
       config: AppConfig,
-  )(implicit
-      flash: Flash,
-      request: RequestHeader,
-      webJarsUtil: WebJarsUtil,
-      mainInfos: MainInfos,
-  ): Tag =
+  )(implicit request: RequestHeader): Tag =
     views.main.layout(
       currentUser,
       currentUserRights,

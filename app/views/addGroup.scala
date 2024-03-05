@@ -2,10 +2,10 @@ package views
 
 import cats.syntax.all._
 import controllers.routes.GroupController
-import helpers.forms.CSRFInput
 import models.{Area, Organisation, User}
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
+import views.helpers.forms.CSRFInput
 
 object addGroup {
 

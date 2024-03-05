@@ -1,6 +1,5 @@
 package views.helpers
 
-import cats.syntax.all._
 import play.api.data.{Form, FormError}
 import play.api.i18n.Messages
 import scalatags.Text.all._

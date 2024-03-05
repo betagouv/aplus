@@ -1,10 +1,9 @@
 package models
 
 import cats.syntax.all._
-import java.util.UUID
 import java.time.ZonedDateTime
+import java.util.UUID
 import models.Sms
-import play.api.libs.json.{JsArray, JsValue, Json}
 
 object Mandat {
   case class Id(underlying: UUID)

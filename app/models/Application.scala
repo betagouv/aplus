@@ -1,15 +1,14 @@
 package models
 
-import cats.syntax.all._
 import cats.{Eq, Show}
+import cats.syntax.all._
 import helper.{Pseudonymizer, Time}
+import java.time.{Instant, ZonedDateTime}
+import java.time.temporal.ChronoUnit.MINUTES
+import java.util.UUID
 import models.Answer.AnswerType.ApplicationProcessed
 import models.Application.SeenByUser
 import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
-
-import java.time.temporal.ChronoUnit.MINUTES
-import java.time.{Instant, ZonedDateTime}
-import java.util.UUID
 
 case class Application(
     id: UUID,

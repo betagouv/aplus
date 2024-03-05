@@ -1,9 +1,8 @@
 package models
 
-import java.util.UUID
-
 import cats.syntax.all._
 import helper.BooleanHelper.not
+import java.util.UUID
 
 object Authorization {
 

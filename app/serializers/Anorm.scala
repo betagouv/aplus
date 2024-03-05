@@ -1,11 +1,10 @@
 package serializers
 
-import java.util.UUID
-
+import anorm.{Column, MetaDataItem, RowParser, ToStatement, TypeDoesNotMatch}
 import anorm.Column.nonNull
 import anorm.SqlParser.get
-import anorm.{Column, MetaDataItem, RowParser, ToStatement, TypeDoesNotMatch}
 import helper.UUIDHelper
+import java.util.UUID
 import play.api.libs.json.{JsValue, Json}
 
 object Anorm {

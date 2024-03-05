@@ -2,11 +2,11 @@ package tasks
 
 import java.time.{Duration, ZonedDateTime}
 import javax.inject.Inject
-import models.{EventType, User}
+import models.EventType
 import org.apache.pekko.actor.ActorSystem
 import play.api.Configuration
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 import services.{ApplicationService, EventService, FileService, MandatService, SmsService}
 

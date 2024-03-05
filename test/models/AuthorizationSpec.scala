@@ -1,5 +1,9 @@
 package models
 
+import java.time.ZonedDateTime
+import java.time.ZonedDateTime.now
+import java.util.UUID
+import java.util.UUID.randomUUID
 import models.Answer.AnswerType
 import models.Application.{MandatType, SeenByUser}
 import models.Authorization.UserRight.{HasUserId, Helper, InstructorOfGroups}
@@ -7,11 +11,6 @@ import models.Authorization.UserRights
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
-
-import java.time.ZonedDateTime
-import java.time.ZonedDateTime.now
-import java.util.UUID
-import java.util.UUID.randomUUID
 
 @RunWith(classOf[JUnitRunner])
 class AuthorizationSpec extends Specification {

@@ -1,10 +1,8 @@
 package models
 
+import helper.Time
 import java.time.ZonedDateTime
 import java.util.UUID
-
-import helper.Time
-
 import scala.util.Random
 
 case class LoginToken(

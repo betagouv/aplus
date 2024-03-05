@@ -1,14 +1,13 @@
 package models
 
+import java.time.{Instant, ZoneId, ZonedDateTime}
+import java.util.UUID
 import models.Answer.AnswerType
-import models.Application.Status.{Archived, New, Processing}
 import models.Application.{MandatType, SeenByUser}
+import models.Application.Status.{Archived, New, Processing}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
-
-import java.time.{Instant, ZoneId, ZonedDateTime}
-import java.util.UUID
 
 @RunWith(classOf[JUnitRunner])
 class ApplicationSpec extends Specification {

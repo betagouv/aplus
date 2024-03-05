@@ -5,7 +5,6 @@ import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import models.Organisation
 import models.Organisation.{Category, Subject}
 import net.jcazevedo.moultingyaml._
-
 import scala.io.Source
 
 object OrganisationService {

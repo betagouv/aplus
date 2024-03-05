@@ -1,18 +1,16 @@
 package tasks
 
-import java.util.UUID
-
 import cats.syntax.all._
 import helper.Time
+import java.util.UUID
 import javax.inject.Inject
-import models.Answer.AnswerType
 import models._
+import models.Answer.AnswerType
 import modules.AppConfig
 import org.apache.pekko.actor._
-import services._
-
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
+import services.{ApplicationService, EventService, NotificationService, UserService}
 
 class AutoAddExpertTask @Inject() (
     actorSystem: ActorSystem,

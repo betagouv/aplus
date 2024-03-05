@@ -69,7 +69,8 @@ scalacOptions ++= Seq(
   "-Wunused:locals",
   // "-Wunused:explicits", TODO: lot of warnings, enable later
   "-Wunused:implicits",
-  "-Wconf:cat=unused:info",
+  "-Wconf:cat=unused&src=routes/.*:s",
+  "-Wconf:cat=unused&src=twirl/.*:s",
   "-Wvalue-discard"
 )
 

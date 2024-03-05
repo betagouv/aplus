@@ -1,18 +1,13 @@
 package serializers
 
-import java.time.ZonedDateTime
-import java.util.UUID
-
-import cats.syntax.all._
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import helper.{PlayFormHelper, UUIDHelper}
 import helper.StringHelper._
-import models.{Area, Organisation, User, UserGroup}
+import java.util.UUID
+import models.{Area, Organisation}
 import models.formModels.AddUserFormData
 import play.api.data.Forms._
 import play.api.data.Mapping
-import play.api.data.validation.Constraints.maxLength
-
 import scala.io.Source
 
 object UserAndGroupCsvSerializer {

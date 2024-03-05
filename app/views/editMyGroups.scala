@@ -2,7 +2,6 @@ package views
 
 import cats.syntax.all._
 import controllers.routes.{GroupController, UserController}
-import helpers.forms.CSRFInput
 import helper.Time
 import helper.TwirlImports.toHtml
 import java.time.Instant
@@ -15,6 +14,7 @@ import play.api.i18n.MessagesProvider
 import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
+import views.helpers.forms.CSRFInput
 
 object editMyGroups {
 

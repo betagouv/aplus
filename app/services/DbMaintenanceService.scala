@@ -17,7 +17,6 @@ class DbMaintenanceService @Inject() (
     db: Database,
     dependencies: ServicesDependencies
 ) {
-  import dependencies.databaseExecutionContext
 
   def refreshViews(): IO[Either[Error, Unit]] =
     if (config.anonymizedExportEnabled)

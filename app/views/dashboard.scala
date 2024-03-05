@@ -1,18 +1,14 @@
 package views
 
-import controllers.routes.{ApplicationController, GroupController, UserController}
-import helper.Time
-import models.{Application, Authorization, User, UserGroup}
-import models.formModels.ApplicationsPageInfos
-import modules.AppConfig
-import org.webjars.play.WebJarsUtil
-import play.api.mvc.RequestHeader
-import play.twirl.api.Html
-import scalatags.Text.all._
-import views.internalStats.{charts, Filters}
-
+import controllers.routes.{GroupController, UserController}
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import models.{Authorization, User, UserGroup}
+import models.formModels.ApplicationsPageInfos
+import modules.AppConfig
+import play.api.mvc.RequestHeader
+import scalatags.Text.all._
+import views.internalStats.{charts, Filters}
 
 object dashboard {
 

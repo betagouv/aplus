@@ -1,18 +1,16 @@
 package tasks
 
-import java.time.temporal.ChronoUnit
-import java.time.{DayOfWeek, ZonedDateTime}
-
 import cats.Eq
 import cats.syntax.all._
 import helper.Time
+import java.time.{DayOfWeek, ZonedDateTime}
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import org.apache.pekko.actor.ActorSystem
 import play.api.Configuration
-import services.NotificationService
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+import services.NotificationService
 
 class WeeklyEmailsTask @Inject() (
     actorSystem: ActorSystem,

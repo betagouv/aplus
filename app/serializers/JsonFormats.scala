@@ -2,9 +2,8 @@ package serializers
 
 import helper.UUIDHelper
 import java.util.UUID
-import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
-import play.api.libs.functional.syntax._
+import play.api.libs.json.Json.JsValueWrapper
 
 object JsonFormats {
 

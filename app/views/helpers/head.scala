@@ -1,7 +1,5 @@
 package views.helpers
 
-import cats.syntax.all._
-import constants.BuildInfo
 import controllers.routes.{Assets, JavascriptController}
 import org.webjars.play.WebJarsUtil
 import scalatags.Text.all._
