@@ -9,7 +9,6 @@ import play.api.Configuration
 import play.api.libs.concurrent.{Futures, MaterializerProvider}
 import play.api.libs.ws.WSClient
 import play.api.mvc.{PlayBodyParsers, Request}
-
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton

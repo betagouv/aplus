@@ -3,10 +3,9 @@ package services
 import anorm._
 import aplus.macros.Macros
 import cats.syntax.all._
+import helper.{Hash, StringHelper, Time}
 import helper.StringHelper.StringOps
-import helper.{Hash, StringHelper, Time, UUIDHelper}
 import java.sql.Connection
-import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
 import models.{Error, EventType, Organisation, User}

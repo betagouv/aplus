@@ -4,16 +4,14 @@ import anorm._
 import aplus.macros.Macros
 import cats.syntax.all._
 import helper.{PlayFormHelper, Time}
-import java.time.ZonedDateTime
 import java.util.UUID
 import javax.inject.Inject
+import models.{Authorization, Error, EventType, Mandat, Sms, User}
 import models.Authorization.UserRights
 import models.dataModels.SmsFormats._
 import models.jsonApiModels.mandat.{MandatGeneration, SmsMandatInitiation}
-import models.{Authorization, Error, EventType, Mandat, Sms, User}
 import play.api.db.Database
 import play.api.libs.json.{JsValue, Json}
-
 import scala.concurrent.Future
 import scala.util.Try
 

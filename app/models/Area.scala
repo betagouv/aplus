@@ -1,11 +1,10 @@
 package models
 
-import java.util.UUID
-
 import cats.Eq
 import cats.syntax.all._
 import helper.StringHelper.CanonizeString
 import helper.UUIDHelper
+import java.util.UUID
 
 case class Area(id: UUID, name: String, inseeCode: String) {
   override def toString: String = s"$name ($inseeCode)"

@@ -1,18 +1,12 @@
 package models
 
-import java.time.{Instant, ZoneId, ZonedDateTime}
-import java.util.UUID
-
 import cats.syntax.all._
 import constants.Constants
 import helper.{Hash, Pseudonymizer, Time, UUIDHelper}
+import helper.StringHelper.{capitalizeName, commonStringInputNormalization, withQuotes}
 import helper.Time.{instantInstance, zonedDateTimeInstance}
-import helper.StringHelper.{
-  capitalizeName,
-  commonStringInputNormalization,
-  notLetterNorNumberRegex,
-  withQuotes
-}
+import java.time.{Instant, ZoneId, ZonedDateTime}
+import java.util.UUID
 
 case class User(
     id: UUID,

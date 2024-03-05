@@ -1,6 +1,5 @@
 package views.emails
 
-import cats.syntax.all._
 import constants.Constants
 import helper.Time
 import java.time.{ZoneId, ZonedDateTime}

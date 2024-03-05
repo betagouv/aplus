@@ -1,10 +1,9 @@
 package models
 
-import java.time.ZonedDateTime
-import java.util.UUID
-
 import cats.kernel.Eq
 import cats.syntax.all._
+import java.time.ZonedDateTime
+import java.util.UUID
 import models.Answer.AnswerType
 
 /** To cast `creationDate` to a valid PG type, use `regexp_replace(creation_date, '\[.*\]',

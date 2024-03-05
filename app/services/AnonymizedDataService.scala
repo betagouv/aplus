@@ -5,19 +5,17 @@ import anorm.SqlParser.scalar
 import cats.syntax.all._
 import helper.{Pseudonymizer, Time, UUIDHelper}
 import java.sql.Connection
-import java.time.{Instant, LocalDate}
+import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 import javax.inject.Inject
 import models.{dataModels, EventType, SignupRequest}
-import models.Application.SeenByUser
 import models.dataModels.UserRow
 import modules.AppConfig
 import play.api.db.Database
 import play.api.libs.json.Json
 import play.db.NamedDatabase
 import scala.annotation.tailrec
-import scala.util.Try
 
 /** Note that the origin database is not passed as parameter here, in order to maximize the
   * probability of not deleting data by error.

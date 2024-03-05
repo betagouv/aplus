@@ -1,15 +1,14 @@
 package controllers
 
-import java.util.UUID
-
 import actions.LoginAction
 import cats.data.EitherT
 import cats.syntax.all._
 import constants.Constants
 import controllers.Operators.UserOperators
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import models.jsonApiModels.mandat._
 import models.{Error, EventType, Mandat, Sms, UserGroup}
+import models.jsonApiModels.mandat._
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.libs.json.{JsError, JsString, JsValue, Json}

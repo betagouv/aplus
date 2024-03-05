@@ -1,21 +1,34 @@
 package controllers
 
-import actions._
+import actions.{LoginAction, RequestWithUserData}
 import cats.data.EitherT
 import cats.syntax.all._
 import constants.Constants
-import forms.FormsPlusMap
+import helper.{Time, UUIDHelper}
 import helper.BooleanHelper.not
 import helper.CSVUtil.escape
 import helper.PlayFormHelper.formErrorsLog
 import helper.ScalatagsHelpers.writeableOf_Modifier
-import helper.StringHelper.{CanonizeString, NonEmptyTrimmedString}
-import helper.Time.zonedDateTimeOrdering
-import helper.{Hash, Time, UUIDHelper}
+import helper.StringHelper.NonEmptyTrimmedString
 import helper.TwirlImports.toHtml
+import java.nio.file.{Files, Path}
+import java.time.{LocalDate, ZonedDateTime}
+import java.util.UUID
+import javax.inject.{Inject, Singleton}
+import models.{
+  Answer,
+  Application,
+  Area,
+  Authorization,
+  EventType,
+  FileMetadata,
+  Mandat,
+  Organisation,
+  User,
+  UserGroup
+}
 import models.Answer.AnswerType
 import models.EventType._
-import models._
 import models.formModels.{
   AnswerFormData,
   ApplicationFormData,
@@ -24,32 +37,36 @@ import models.formModels.{
 }
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
-import play.api.data.Forms._
 import play.api.data._
+import play.api.data.Forms._
 import play.api.data.format.{Formats, Formatter}
-import play.api.data.validation.Constraints._
+import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
-import play.api.mvc._
+import play.api.mvc.{Action, AnyContent, Call, InjectedController, RequestHeader, Result, Session}
 import play.twirl.api.Html
-import serializers.Keys
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 import serializers.ApiModel.{
   ApplicationMetadata,
   ApplicationMetadataResult,
   InviteInfos,
   UserGroupSimpleInfos
 }
-import services._
-import views.dashboard.DashboardInfos
+import serializers.Keys
+import services.{
+  ApplicationService,
+  BusinessDaysService,
+  EventService,
+  FileService,
+  MandatService,
+  NotificationService,
+  OrganisationService,
+  UserGroupService,
+  UserService
+}
 import views.applications.myApplications.MyApplicationInfos
-
-import java.nio.file.{Files, Path, Paths}
-import java.time.{LocalDate, ZonedDateTime}
-import java.util.UUID
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import views.dashboard.DashboardInfos
 
 /** This controller creates an `Action` to handle HTTP requests to the application's home page.
   */
@@ -69,7 +86,7 @@ case class ApplicationController @Inject() (
     ws: WSClient,
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
-    with play.api.i18n.I18nSupport
+    with I18nSupport
     with Operators.Common
     with Operators.ApplicationOperators
     with Operators.UserOperators {

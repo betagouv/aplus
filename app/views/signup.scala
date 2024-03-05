@@ -4,7 +4,6 @@ import cats.syntax.all._
 import constants.Constants
 import controllers.routes.SignupController
 import helper.UUIDHelper
-import helpers.forms.{displayFormGlobalErrors, selectInput, textInput, CSRFInput}
 import java.util.UUID
 import models.{Area, Organisation, SignupRequest, UserGroup}
 import models.formModels.SignupFormData
@@ -15,8 +14,9 @@ import play.api.libs.json.Json
 import play.api.mvc.{Flash, RequestHeader}
 import scala.util.Try
 import scalatags.Text.all._
-import serializers.Keys
 import serializers.ApiModel.SelectableGroup
+import serializers.Keys
+import views.helpers.forms.{displayFormGlobalErrors, selectInput, textInput, CSRFInput}
 
 object signup {
 

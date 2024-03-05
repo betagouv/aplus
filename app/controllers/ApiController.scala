@@ -11,8 +11,8 @@ import models.{Area, Authorization, Error, EventType, Organisation, User, UserGr
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
 import scala.concurrent.{ExecutionContext, Future}
-import serializers.Keys
 import serializers.ApiModel._
+import serializers.Keys
 import services.{
   AnonymizedDataService,
   EventService,

@@ -1,19 +1,17 @@
 package helper
 
+import cats.syntax.all._
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import java.time.ZonedDateTime
-
-import cats.syntax.all._
 import models.{Error, EventType}
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.ByteString
 import play.api.libs.json.{JsValue, Json, Reads, Writes}
 import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.mvc.{PlayBodyParsers, Request}
-
-import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.FiniteDuration
 
 object OvhApi {
 

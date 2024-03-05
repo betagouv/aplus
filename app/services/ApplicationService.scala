@@ -1,24 +1,22 @@
 package services
 
-import java.sql.Connection
-import java.time.ZonedDateTime
-import java.util.UUID
-
-import anorm.Column.nonNull
 import anorm._
+import anorm.Column.nonNull
 import aplus.macros.Macros
 import cats.syntax.all._
 import helper.StringHelper.StringListOps
 import helper.Time
+import java.sql.Connection
+import java.time.ZonedDateTime
+import java.util.UUID
 import javax.inject.Inject
+import models.{dataModels, Answer, Application, Authorization, Error, EventType}
 import models.Application.SeenByUser
 import models.Authorization.UserRights
-import models.{dataModels, Answer, Application, Authorization, Error, EventType}
 import org.postgresql.util.PGobject
 import play.api.db.Database
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
-
 import scala.Option.empty
 import scala.concurrent.Future
 
@@ -29,7 +27,6 @@ class ApplicationService @Inject() (
 ) {
   import dependencies.databaseExecutionContext
   import serializers.Anorm._
-  import serializers.JsonFormats._
 
   // Note:
   // anorm.Column[String] => anorm.Column[Option[Application.MandatType]] does not work

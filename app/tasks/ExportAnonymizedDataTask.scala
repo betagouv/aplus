@@ -3,7 +3,7 @@ package tasks
 import cats.effect.IO
 import cats.syntax.all._
 import helper.TasksHelpers
-import java.time.{Instant, ZoneOffset, ZonedDateTime}
+import java.time.{Instant, ZoneOffset}
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import models.{Error, EventType}

@@ -1,17 +1,16 @@
 package models
 
-import play.api.data.{Form, Mapping}
-import play.api.data.Forms._
-import play.api.data.validation.Constraints.{maxLength, nonEmpty}
-import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
-
 import cats.syntax.all._
 import constants.Constants
 import forms.FormsPlusMap
 import helper.StringHelper.commonStringInputNormalization
 import java.util.UUID
-import serializers.Keys
+import play.api.data.{Form, Mapping}
+import play.api.data.Forms._
+import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
+import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import scala.util.Try
+import serializers.Keys
 
 object formModels {
 

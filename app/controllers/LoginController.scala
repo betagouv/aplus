@@ -2,18 +2,17 @@ package controllers
 
 import actions.{LoginAction, RequestWithUserData}
 import cats.syntax.all._
-import helper.{StringHelper, Time}
-import java.time.ZoneId
+import helper.Time
 import javax.inject.{Inject, Singleton}
-import models.EventType.{GenerateToken, UnknownEmail}
 import models.{Authorization, EventType, LoginToken, User}
+import models.EventType.{GenerateToken, UnknownEmail}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Action, AnyContent, InjectedController, Request}
+import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
 import services.{EventService, NotificationService, SignupService, TokenService, UserService}
 import views.home.LoginPanel
-import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class LoginController @Inject() (

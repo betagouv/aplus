@@ -7,6 +7,7 @@ import helper.BooleanHelper.not
 import helper.UUIDHelper
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
+import models.{Area, Authorization, EventType, LoginToken, User}
 import models.EventType.{
   AuthByKey,
   AuthWithDifferentIp,
@@ -16,10 +17,9 @@ import models.EventType.{
   TryLoginByKey,
   UserAccessDisabled
 }
-import models._
 import play.api.{Configuration, Logger}
-import play.api.mvc.Results.{InternalServerError, TemporaryRedirect}
 import play.api.mvc._
+import play.api.mvc.Results.{InternalServerError, TemporaryRedirect}
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
 import services.{EventService, SignupService, TokenService, UserService}

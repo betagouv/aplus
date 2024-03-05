@@ -6,7 +6,7 @@ import cats.syntax.all._
 import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
-import models.{Error, EventType, SignupRequest, User}
+import models.{Error, EventType, SignupRequest}
 import play.api.db.Database
 import scala.concurrent.Future
 import scala.util.Try

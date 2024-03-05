@@ -9,8 +9,8 @@ import models.Answer
 import models.Answer.AnswerType
 import models.Application.{MandatType, SeenByUser}
 import play.api.libs.functional.syntax._
-import play.api.libs.json.Reads._
 import play.api.libs.json._
+import play.api.libs.json.Reads._
 import serializers.Anorm.columnToJson
 import serializers.JsonFormats.mapUUIDFormat
 

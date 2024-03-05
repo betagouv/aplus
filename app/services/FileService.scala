@@ -2,8 +2,8 @@ package services
 
 import anorm._
 import aplus.macros.Macros
-import cats.syntax.all._
 import cats.data.EitherT
+import cats.syntax.all._
 import helper.StringHelper.normalizeNFKC
 import java.nio.file.{Files, Path, Paths}
 import java.time.{Instant, ZonedDateTime}
@@ -15,11 +15,11 @@ import modules.AppConfig
 import org.apache.pekko.Done
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl._
-import play.api.mvc.Request
-import play.api.libs.concurrent.{ActorSystemProvider, MaterializerProvider}
 import play.api.db.Database
+import play.api.libs.concurrent.{ActorSystemProvider, MaterializerProvider}
+import play.api.mvc.Request
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Success, Try}
+import scala.util.Try
 
 @Singleton
 class FileService @Inject() (

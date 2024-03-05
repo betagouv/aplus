@@ -1,20 +1,18 @@
 package helper
 
+import cats.syntax.all._
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import java.time.{Instant, ZonedDateTime}
 import java.util.Base64
-
-import cats.syntax.all._
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import models.{Error, EventType}
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.mvc.Request
-
-import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.FiniteDuration
 import scala.util.Try
 
 object MessageBirdApi {

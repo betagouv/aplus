@@ -1,14 +1,14 @@
 package controllers
 
-import java.time.ZonedDateTime
-import java.util.UUID
-
 import actions.LoginAction
 import cats.syntax.all._
 import controllers.Operators.{GroupOperators, UserOperators}
 import helper.StringHelper._
 import helper.Time
+import java.time.ZonedDateTime
+import java.util.UUID
 import javax.inject.Inject
+import models.{Area, Organisation, User, UserGroup}
 import models.EventType.{
   CSVImportFormError,
   CsvImportInputEmpty,
@@ -30,18 +30,16 @@ import models.formModels.{
   CSVUserFormData,
   CSVUserGroupFormData
 }
-import models.{Area, Organisation, User, UserGroup}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
+import play.api.data.{Form, Mapping}
 import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
-import play.api.data.{Form, Mapping}
 import play.api.mvc.{Action, AnyContent, InjectedController}
-import serializers.{Keys, UserAndGroupCsvSerializer}
+import scala.concurrent.{ExecutionContext, Future}
+import serializers.UserAndGroupCsvSerializer
 import serializers.UserAndGroupCsvSerializer.UserGroupBlock
 import services.{EventService, NotificationService, UserGroupService, UserService}
-
-import scala.concurrent.{ExecutionContext, Future}
 
 case class CSVImportController @Inject() (
     config: AppConfig,

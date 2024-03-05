@@ -1,7 +1,7 @@
 package views
 
-import scalatags.Text.all._
 import constants.Constants
+import scalatags.Text.all._
 
 /** https://www.systeme-de-design.gouv.fr/elements-d-interface/modeles/page-d-erreurs */
 object errors {

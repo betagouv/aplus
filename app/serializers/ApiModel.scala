@@ -244,7 +244,6 @@ object ApiModel {
   )
 
   object UserGroupInfos {
-    import implicits._
 
     implicit val userGroupInfosFormat: Format[UserGroupInfos] = Json.format[UserGroupInfos]
 

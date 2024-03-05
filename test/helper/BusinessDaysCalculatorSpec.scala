@@ -1,6 +1,6 @@
 package helper
 
-import BusinessDaysCalculator.businessHoursBetween
+import helper.BusinessDaysCalculator.businessHoursBetween
 import java.time.{ZoneId, ZonedDateTime}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification

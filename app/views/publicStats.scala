@@ -1,6 +1,5 @@
 package views
 
-import cats.syntax.all._
 import controllers.routes.Assets
 import scalatags.Text.all._
 import scalatags.Text.tags2
