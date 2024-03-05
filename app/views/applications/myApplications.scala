@@ -4,13 +4,11 @@ import cats.syntax.all._
 import constants.Constants
 import controllers.routes.ApplicationController
 import helper.Time
-import helper.TwirlImports.toHtml
 import models.{Answer, Application, Authorization, FileMetadata, User, UserGroup}
 import models.formModels.ApplicationsPageInfos
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Flash, RequestHeader}
-import play.twirl.api.Html
 import scalatags.Text.all._
 import views.MainInfos
 import views.helpers.applications.statusTag
@@ -41,8 +39,10 @@ object myApplications {
       request: RequestHeader,
       webJarsUtil: WebJarsUtil,
       mainInfos: MainInfos,
-  ): Html =
+  ): Tag =
     views.main.layout(
+      currentUser,
+      currentUserRights,
       "Mes demandes",
       frag(
         content(

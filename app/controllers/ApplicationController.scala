@@ -564,7 +564,7 @@ case class ApplicationController @Inject() (
     applicationBoardInfos(user, userRights, asAdmin, urlBase).map {
       case (infos, filteredByStatus, userGroups) =>
         log(infos)
-        Ok(
+        (
           if (shouldServeDsfr(user)) {
             val selectedApplication =
               request
@@ -573,20 +573,24 @@ case class ApplicationController @Inject() (
                 .flatMap(id => filteredByStatus.find(_.application.id === id))
             // TODO redirect to this page after failed form
             val selectedApplicationFiles = Nil
-            views.applications.myApplications
-              .page(
-                user,
-                userRights,
-                filteredByStatus,
-                selectedApplication,
-                selectedApplicationFiles,
-                userGroups,
-                infos,
-                config
-              )
+            Ok(
+              views.applications.myApplications
+                .page(
+                  user,
+                  userRights,
+                  filteredByStatus,
+                  selectedApplication,
+                  selectedApplicationFiles,
+                  userGroups,
+                  infos,
+                  config
+                )
+            )
           } else
-            views.applications.myApplicationsLegacy
-              .page(user, userRights, filteredByStatus.map(_.application), userGroups, infos)
+            Ok(
+              views.applications.myApplicationsLegacy
+                .page(user, userRights, filteredByStatus.map(_.application), userGroups, infos)
+            )
         ).withHeaders(CACHE_CONTROL -> "no-store")
     }
 
