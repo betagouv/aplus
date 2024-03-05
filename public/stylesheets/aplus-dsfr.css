@@ -73,10 +73,6 @@
     padding-right: .25rem;
 }
 
-.fr-header__logo {
-    display: flex;
-}
-
 img.fr-responsive-img{
     width: 50px;
 }
@@ -137,10 +133,6 @@ div.fr-footer__bottom {
     justify-content: space-between;
     align-items: center;
     padding: .75rem 0;
-}
-
-.fr-enlarge-link:hover {
-    background-color: inherit !important;
 }
 
 .fr_card__highlight,

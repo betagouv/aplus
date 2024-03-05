@@ -1,9 +1,7 @@
 package views
 
-import helper.TwirlImports.toHtml
 import models.{Area, Authorization, User}
 import play.api.mvc.RequestHeader
-import play.twirl.api.Html
 import scalatags.Text.all._
 
 object createApplication {
@@ -14,14 +12,15 @@ object createApplication {
       currentArea: Area,
   )(implicit
       request: RequestHeader,
-  ): Html =
+  ): Tag =
     views.main.layout(
+      currentUser,
+      userRights,
       "Créer une demande",
       frag(content()),
     )
 
-  def content(
-  ): Tag =
+  def content(): Tag =
     div()(
       h4(cls := "aplus-title--background")("Nouvelle demande"),
       span(cls := "fr-hint aplus-hint aplus-text-small")(

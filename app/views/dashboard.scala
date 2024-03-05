@@ -43,6 +43,8 @@ object dashboard {
       request: RequestHeader,
   ): Tag =
     views.main.layout(
+      currentUser,
+      currentUserRights,
       "Dashboard",
       content(currentUser, currentUserRights, infos, config)
     )
