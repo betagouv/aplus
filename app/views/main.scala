@@ -1,6 +1,7 @@
 package views
 
 import cats.syntax.all._
+import constants.Constants
 import controllers.routes.{
   ApplicationController,
   AreaController,
@@ -32,10 +33,29 @@ object main {
     pageName,
     breadcrumbs(pageName),
     content,
-    loggedInQuickLinks(currentUser),
-    loggedInNavBar(currentUserRights),
-    additionalHeadTags,
-    additionalFooterTags
+    quickLinks = loggedInQuickLinks(currentUser),
+    navBar = loggedInNavBar(currentUserRights),
+    footer = baseBodyFooter(isLoggedIn = true),
+    additionalHeadTags = frag(
+      link(
+        rel := "stylesheet",
+        media := "screen,print",
+        href := Assets.versioned("generated-js/index.css").url
+      ),
+      additionalHeadTags,
+    ),
+    additionalFooterTags = frag(
+      script(
+        `type` := "text/javascript",
+        src := JavascriptController.javascriptRoutes.url
+      ),
+      script(
+        `type` := "application/javascript",
+        defer,
+        src := Assets.versioned("generated-js/index.js").url
+      ),
+      additionalFooterTags
+    )
   )
 
   def publicLayout(
@@ -48,10 +68,25 @@ object main {
     pageName,
     if (addBreadcrumbs) breadcrumbs(pageName) else frag(),
     content,
-    frag(),
-    frag(),
+    quickLinks = publicQuickLinks(),
+    navBar = baseNavBar(frag()),
+    footer = baseBodyFooter(isLoggedIn = false),
     additionalHeadTags,
     additionalFooterTags
+  )
+
+  def publicErrorLayout(
+      pageName: String,
+      content: Frag,
+  ): Tag = dsfrLayout(
+    pageName,
+    frag(),
+    content,
+    quickLinks = frag(),
+    navBar = baseNavBar(frag()),
+    footer = baseBodyFooter(isLoggedIn = false),
+    additionalHeadTags = frag(),
+    additionalFooterTags = frag()
   )
 
   private def dsfrLayout(
@@ -60,6 +95,7 @@ object main {
       content: Frag,
       quickLinks: Frag,
       navBar: Frag,
+      footer: Frag,
       additionalHeadTags: Frag,
       additionalFooterTags: Frag
   ): Tag =
@@ -74,29 +110,34 @@ object main {
         publicCss("generated-js/dsfr/dsfr.min.css"),
         publicCss("generated-js/utility/utility.min.css"),
         publicCss("stylesheets/aplus-dsfr.css"),
-        link(
-          rel := "stylesheet",
-          media := "screen,print",
-          href := Assets.versioned("generated-js/index.css").url
-        ),
         meta(name := "theme-color", attr("content") := "#000091"),
         link(
-          attr("rel") := "icon",
+          rel := "icon",
+          `type` := "image/svg+xml",
           href := Assets.versioned("images/favicon.png").url,
-          attr("type") := "image/svg+xml"
         ),
         tags2.title(pageTitle),
         additionalHeadTags
       ),
       body(
         bodyHeader(quickLinks, navBar),
-        div(cls := "main-container")(
-          tags2.main(role := "main")(
-            navigation,
-            content
-          )
+        tags2.main(cls := "main-container", role := "main")(
+          navigation,
+          content
         ),
-        bodyFooter(additionalFooterTags)
+        footer,
+        script(
+          `type` := "module",
+          defer,
+          src := Assets.versioned("generated-js/dsfr/dsfr.module.min.js").url
+        ),
+        script(
+          `type` := "application/javascript",
+          defer,
+          attr("nomodule").empty,
+          src := Assets.versioned("generated-js/dsfr/dsfr.nomodule.min.js").url
+        ),
+        additionalFooterTags
       )
     )
 
@@ -148,7 +189,7 @@ object main {
                 ),
                 div(cls := "fr-header__operator")(
                   img(
-                    cls := "fr-responsive-img",
+                    cls := "fr-responsive-img aplus-header-img",
                     src := Assets.versioned("images/logo_small_150x160.png").url,
                     alt := "Logo Administration+"
                   )
@@ -156,7 +197,7 @@ object main {
                 div(cls := "fr-header__navbar")(
                   button(
                     cls := "fr-btn--menu fr-btn",
-                    data("fr-opened") := "false",
+                    data.fr.opened := "false",
                     aria.controls := navBarResponsiveMenuModalId,
                     aria.haspopup := "menu",
                     id := navBarResponsiveMenuModalButtonId,
@@ -171,11 +212,11 @@ object main {
                   href := HomeController.index.url,
                   title := "Accueil - Administration+"
                 )(
-                  p(cls := "fr-header__service-title")(
+                  p(cls := "fr-header__service-title fr-link")(
                     "Administration+"
                   ),
                   p(cls := "fr-header__service-tagline")(
-                    "Ensemble pour débloquer, rapidement et efficacement"
+                    "Ensemble pour résoudre les blocages administratifs complexes ou urgents"
                   )
                 )
               )
@@ -199,9 +240,8 @@ object main {
                 a(
                   cls := "fr-btn fr-icon-account-circle-line",
                   href := UserController.editProfile.url,
-                  title := s"Mon profil - ${currentUser.email}"
                 )(
-                  currentUser.email
+                  "Mon profil"
                 )
               )
           ),
@@ -217,9 +257,92 @@ object main {
       )
     )
 
+  private def publicQuickLinks() =
+    div(cls := "fr-header__tools")(
+      div(cls := "fr-header__tools-links")(
+        ul(cls := "fr-btns-group")(
+          li(
+            a(
+              href := "https://docs.aplus.beta.gouv.fr/faq",
+              cls := "fr-btn",
+              target := "_blank",
+              rel := "noopener",
+              "FAQ"
+            )
+          ),
+          li(
+            a(
+              href := "/",
+              cls := "fr-btn fr-icon-lock-line",
+              "Se connecter"
+            )
+          )
+        )
+      )
+    )
+
   private def loggedInNavBar(
       currentUserRights: Authorization.UserRights
   )(implicit request: RequestHeader) =
+    baseNavBar(
+      tags2.nav(
+        cls := "fr-nav",
+        role := "navigation",
+        aria.label := "Menu principal"
+      )(
+        ul(cls := "fr-nav__list")(
+          navItem(
+            "Mes demandes",
+            true,
+            ApplicationController.myApplications,
+          ),
+          navItem(
+            "Mes groupes",
+            true,
+            GroupController.showEditMyGroups,
+          ),
+          navItem(
+            "Admin : demandes",
+            Authorization.canSeeApplicationsMetadata(currentUserRights),
+            ApplicationController.applicationsAdmin,
+            serializers.Keys.QueryParam.numOfMonthsDisplayed + "=3"
+          ),
+          navItem(
+            "Utilisateurs",
+            Authorization.canSeeUsers(currentUserRights),
+            UserController.home,
+          ),
+          navItem(
+            "Déploiment",
+            Authorization.isAdminOrObserver(currentUserRights),
+            AreaController.all,
+          ),
+          navItem(
+            "Evénements",
+            Authorization.isAdmin(currentUserRights),
+            UserController.allEvents,
+          ),
+          navItem(
+            "Stats",
+            Authorization.canSeeStats(currentUserRights),
+            ApplicationController.stats,
+          ),
+          li(cls := "fr-nav__item")(
+            a(
+              href := Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf").url,
+              cls := "fr-nav__link",
+              target := "_blank",
+              rel := "noopener noreferrer",
+              attr("aria-current") := "false"
+            )(
+              "Mandat"
+            )
+          )
+        )
+      )
+    )
+
+  private def baseNavBar(innerNavBar: Frag) =
     div(
       cls := "fr-header__menu fr-modal",
       id := navBarResponsiveMenuModalId,
@@ -234,61 +357,7 @@ object main {
           "Fermer"
         ),
         div(cls := "fr-header__menu-links"),
-        tags2.nav(
-          cls := "fr-nav",
-          role := "navigation",
-          aria.label := "Menu principal"
-        )(
-          ul(cls := "fr-nav__list")(
-            navItem(
-              "Mes demandes",
-              true,
-              ApplicationController.myApplications,
-            ),
-            navItem(
-              "Mes groupes",
-              true,
-              GroupController.showEditMyGroups,
-            ),
-            navItem(
-              "Admin : demandes",
-              Authorization.canSeeApplicationsMetadata(currentUserRights),
-              ApplicationController.applicationsAdmin,
-              serializers.Keys.QueryParam.numOfMonthsDisplayed + "=3"
-            ),
-            navItem(
-              "Utilisateurs",
-              Authorization.canSeeUsers(currentUserRights),
-              UserController.home,
-            ),
-            navItem(
-              "Déploiment",
-              Authorization.isAdminOrObserver(currentUserRights),
-              AreaController.all,
-            ),
-            navItem(
-              "Evénements",
-              Authorization.isAdmin(currentUserRights),
-              UserController.allEvents,
-            ),
-            navItem(
-              "Stats",
-              Authorization.canSeeStats(currentUserRights),
-              ApplicationController.stats,
-            ),
-            li(cls := "fr-nav__item")(
-              a(
-                href := Assets.versioned("pdf/mandat_administration_plus_juillet_2019.pdf").url,
-                cls := "fr-nav__link",
-                target := "_blank",
-                rel := "noopener noreferrer",
-                attr("aria-current") := "false"
-              )(
-                "Mandat"
-              )
-            )
-          )
-        )
+        innerNavBar
       )
     )
 
@@ -315,36 +384,123 @@ object main {
     else
       frag()
 
-  private def bodyFooter(additionalFooterTags: Frag): Tag =
+  private def baseBodyFooter(isLoggedIn: Boolean): Tag =
     footer(cls := "fr-footer", role := "contentinfo", id := "footer")(
+      // Links here are internal links
+      // cf https://www.systeme-de-design.gouv.fr/elements-d-interface/composants/pied-de-page
+      if (isLoggedIn) footerInternalLinks() else frag(),
       div(cls := "fr-container")(
+        div(cls := "fr-footer__body")(
+          div(cls := "fr-footer__brand fr-enlarge-link")(
+            p(cls := "fr-logo")(
+              "Agence",
+              br,
+              "Nationale",
+              br,
+              "de la Cohésion",
+              br,
+              "des Territoires"
+            ),
+            a(
+              cls := "fr-footer__brand-link",
+              href := HomeController.index.url,
+              title := "Retour à l’accueil du site - Administration+",
+              img(
+                cls := "fr-footer__logo aplus-footer-img",
+                src := Assets.versioned("images/logo_small_150x160.png").url,
+                alt := "Logo Administration+"
+              )
+            )
+          ),
+          div(cls := "fr-footer__content")(
+            p(cls := "fr-footer__content-desc")(
+              "Administration+ est le service qui permet de résoudre les blocages ",
+              "administratifs complexes ou urgents et fait partie de l’",
+              a(
+                href := "https://incubateur.anct.gouv.fr/actions/startups-territoires/",
+                target := "_blank",
+                rel := "noopener",
+                "Incubateur des Territoires",
+              ),
+              ", membre du réseau d’incubateurs ",
+              a(
+                href := "https://beta.gouv.fr/startups/aplus.html",
+                target := "_blank",
+                rel := "noopener",
+                "beta.gouv.fr",
+              ),
+              ". "
+            ),
+            ul(cls := "fr-footer__content-list")(
+              li(cls := "fr-footer__content-item")(
+                a(cls := "fr-footer__content-link")(
+                  target := "_blank",
+                  rel := "noopener",
+                  href := "https://legifrance.gouv.fr",
+                  "legifrance.gouv.fr"
+                )
+              ),
+              li(cls := "fr-footer__content-item")(
+                a(cls := "fr-footer__content-link")(
+                  target := "_blank",
+                  rel := "noopener",
+                  href := "https://gouvernement.fr",
+                  "gouvernement.fr"
+                )
+              ),
+              li(cls := "fr-footer__content-item")(
+                a(cls := "fr-footer__content-link")(
+                  target := "_blank",
+                  rel := "noopener",
+                  href := "https://service-public.fr",
+                  "service-public.fr"
+                )
+              ),
+              li(cls := "fr-footer__content-item")(
+                a(cls := "fr-footer__content-link")(
+                  target := "_blank",
+                  rel := "noopener",
+                  href := "https://data.gouv.fr",
+                  "data.gouv.fr"
+                )
+              )
+            )
+          )
+        ),
         div(cls := "fr-footer__bottom")(
+          // Links here are for required and legal things, not internal links
+          // cf https://www.systeme-de-design.gouv.fr/elements-d-interface/composants/pied-de-page
           ul(cls := "fr-footer__bottom-list")(
             li(cls := "fr-footer__bottom-item")(
+              span(cls := "fr-footer__bottom-link", "Accessibilité : non conforme")
+            ),
+            li(cls := "fr-footer__bottom-item")(
               a(cls := "fr-footer__bottom-link")(
-                href := HomeController.index.url,
-                "Administration+"
+                href := "https://docs.aplus.beta.gouv.fr/conditions-generales-dutilisation",
+                target := "_blank",
+                rel := "noopener",
+                "Mentions légales"
               )
             ),
             li(cls := "fr-footer__bottom-item")(
-              a(
-                href := HomeController.help.url,
-                cls := "fr-footer__bottom-link",
-              )(
-                "Aide"
+              a(cls := "fr-footer__bottom-link")(
+                href := "https://docs.aplus.beta.gouv.fr/conditions-generales-dutilisation",
+                target := "_blank",
+                rel := "noopener",
+                "Données personnelles et gestion des cookies"
               )
             ),
             li(cls := "fr-footer__bottom-item")(
-              a(
-                href := UserController.showValidateAccount.url,
-                cls := "fr-footer__bottom-link",
-              )(
-                "CGU"
+              a(cls := "fr-footer__bottom-link")(
+                href := "https://docs.aplus.beta.gouv.fr/conditions-generales-dutilisation",
+                target := "_blank",
+                rel := "noopener",
+                "Conditions générales d’utilisation"
               )
             ),
           ),
           div(cls := "fr-footer__bottom-copy")(
-            p(cls := "fr-footer__bottom-copy-text")(
+            p(
               "Sauf mention explicite de propriété intellectuelle détenue par des tiers, les contenus de ce site sont proposés sous ",
               a(
                 href := "https://github.com/etalab/licence-ouverte/blob/master/LO.md",
@@ -357,28 +513,44 @@ object main {
             )
           )
         )
-      ),
-      script(
-        `type` := "module",
-        defer,
-        src := Assets.versioned("generated-js/dsfr/dsfr.module.min.js").url
-      ),
-      script(
-        `type` := "application/javascript",
-        defer,
-        attr("nomodule").empty,
-        src := Assets.versioned("generated-js/dsfr/dsfr.nomodule.min.js").url
-      ),
-      script(
-        `type` := "text/javascript",
-        src := JavascriptController.javascriptRoutes.url
-      ),
-      script(
-        `type` := "application/javascript",
-        defer,
-        src := Assets.versioned("generated-js/index.js").url
-      ),
-      additionalFooterTags
+      )
+    )
+
+  private def footerInternalLinks(): Tag =
+    div(cls := "fr-footer__top")(
+      div(cls := "fr-container")(
+        div(cls := "fr-grid-row fr-grid-row--start fr-grid-row--gutters")(
+          div(cls := "fr-col-12 fr-col-sm-3 fr-col-md-2")(
+            h3(cls := "fr-footer__top-cat")("Administration+"),
+            ul(cls := "fr-footer__top-list")(
+              li(
+                a(
+                  cls := "fr-footer__top-link",
+                  href := HomeController.help.url
+                )("Aide")
+              ),
+              li(
+                a(
+                  cls := "fr-footer__top-link",
+                  href := ApplicationController.showExportMyApplicationsCSV.url
+                )("Exporter mes demandes en CSV")
+              ),
+            )
+          ),
+          div(cls := "fr-col-12 fr-col-sm-3 fr-col-md-2")(
+            h3(cls := "fr-footer__top-cat")("Nous contacter"),
+            ul(cls := "fr-footer__top-list")(
+              li(
+                a(
+                  cls := "fr-footer__top-link",
+                  href := s"mailto:${Constants.supportEmail}",
+                  title := s"Email de contact - ${Constants.supportEmail}",
+                )(Constants.supportEmail)
+              ),
+            )
+          ),
+        )
+      )
     )
 
 }
