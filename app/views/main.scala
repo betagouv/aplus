@@ -113,7 +113,7 @@ object main {
         meta(name := "theme-color", attr("content") := "#000091"),
         link(
           rel := "icon",
-          `type` := "image/svg+xml",
+          `type` := "image/png",
           href := Assets.versioned("images/favicon.png").url,
         ),
         tags2.title(pageTitle),
