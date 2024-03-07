@@ -86,7 +86,7 @@ object errors {
       helpMessage: Frag,
       additionalElements: Frag = frag(),
   ): Tag =
-    views.main.publicLayout(
+    views.main.publicErrorLayout(
       headTitle,
       div(cls := "fr-container")(
         div(
@@ -100,8 +100,7 @@ object errors {
             additionalElements
           )
         )
-      ),
-      addBreadcrumbs = false,
+      )
     )
 
 }

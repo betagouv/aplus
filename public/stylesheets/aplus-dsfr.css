@@ -73,22 +73,12 @@
     padding-right: .25rem;
 }
 
-img.fr-responsive-img{
+.aplus-header-img {
     width: 50px;
 }
 
-footer.fr-footer {
-    box-shadow: none;
-    padding-top: 0;
-    background: #161616;
-}
-
-li.fr-footer__bottom-item::before {
-    box-shadow: inset 0 0 0 1px #666;
-}
-
-div.fr-footer__bottom {
-    box-shadow: none;
+.aplus-footer-img {
+    width: 100px;
 }
 
 .aplus-title {
