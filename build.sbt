@@ -101,7 +101,7 @@ libraryDependencies ++= Seq(
   ws,
   "com.lihaoyi" %% "scalatags" % "0.12.0",
   "org.typelevel" %% "cats-core" % "2.10.0",
-  "org.typelevel" %% "cats-effect" % "3.5.3",
+  "org.typelevel" %% "cats-effect" % "3.5.4",
 )
 
 // UI
