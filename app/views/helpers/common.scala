@@ -114,7 +114,12 @@ object common {
                       "Exporter mes demandes en CSV"
                     )
                   ),
-                  li("Accessibilité : non conforme")
+                  li(
+                    a(
+                      href := HomeController.declarationAccessibilite.url,
+                      "Accessibilité : non conforme"
+                    )
+                  )
                 )
               )
             )
