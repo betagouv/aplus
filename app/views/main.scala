@@ -123,7 +123,9 @@ object main {
         bodyHeader(quickLinks, navBar),
         tags2.main(cls := "main-container", role := "main")(
           navigation,
-          content
+          div(cls := "fr-container fr-my-6w")(
+            content
+          )
         ),
         footer,
         script(
@@ -142,24 +144,26 @@ object main {
     )
 
   private def breadcrumbs(pageName: String): Tag =
-    tag("nav")(cls := "fr-breadcrumb")(
-      div(cls := "fr-collapse")(
-        ol(cls := "fr-breadcrumb__list")(
-          li()(
-            a(
-              href := "/",
-              cls := "fr-breadcrumb__link"
-            )(
-              "Accueil"
-            )
-          ),
-          li()(
-            a(
-              href := "/",
-              attr("aria-current") := "page",
-              cls := "fr-breadcrumb__link"
-            )(
-              pageName
+    div(cls := "fr-container")(
+      tags2.nav(cls := "fr-breadcrumb")(
+        div(cls := "fr-collapse")(
+          ol(cls := "fr-breadcrumb__list")(
+            li()(
+              a(
+                href := "/",
+                cls := "fr-breadcrumb__link"
+              )(
+                "Accueil"
+              )
+            ),
+            li()(
+              a(
+                href := "/",
+                attr("aria-current") := "page",
+                cls := "fr-breadcrumb__link"
+              )(
+                pageName
+              )
             )
           )
         )
@@ -472,7 +476,10 @@ object main {
           // cf https://www.systeme-de-design.gouv.fr/elements-d-interface/composants/pied-de-page
           ul(cls := "fr-footer__bottom-list")(
             li(cls := "fr-footer__bottom-item")(
-              span(cls := "fr-footer__bottom-link", "Accessibilité : non conforme")
+              a(cls := "fr-footer__bottom-link")(
+                href := HomeController.declarationAccessibilite.url,
+                "Accessibilité : non conforme"
+              )
             ),
             li(cls := "fr-footer__bottom-item")(
               a(cls := "fr-footer__bottom-link")(

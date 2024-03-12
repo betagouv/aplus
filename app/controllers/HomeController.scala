@@ -1,6 +1,7 @@
 package controllers
 
 import actions.LoginAction
+import helper.ScalatagsHelpers.writeableOf_Modifier
 import javax.inject.{Inject, Singleton}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
@@ -73,6 +74,11 @@ class HomeController @Inject() (
   def welcome: Action[AnyContent] =
     loginAction { implicit request =>
       Ok(views.html.welcome(request.currentUser, request.rights))
+    }
+
+  def declarationAccessibilite: Action[AnyContent] =
+    Action {
+      Ok(views.accessibility.declaration())
     }
 
 }

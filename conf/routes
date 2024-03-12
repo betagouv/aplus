@@ -6,6 +6,7 @@
 GET         /                                                                                controllers.HomeController.index
 GET         /aide                                                                            controllers.HomeController.help
 GET         /bienvenue                                                                       controllers.HomeController.welcome
+GET         /accessibilite                                                                   controllers.HomeController.declarationAccessibilite
 GET         /dashboard                                                                       controllers.ApplicationController.dashboard
 GET         /as/:userId/dashboard                                                            controllers.ApplicationController.dashboardAs(userId: java.util.UUID)
 
