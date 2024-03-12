@@ -1,10 +1,9 @@
 package views.applications
 
 import cats.syntax.all._
-import controllers.routes.{ApplicationController, Assets}
+import controllers.routes.ApplicationController
 import java.time.format.DateTimeFormatter
-import java.util.UUID
-import models.{Answer, Application, Authorization, FileMetadata, Organisation, User}
+import models.{Answer, Application, Authorization, FileMetadata, User}
 import modules.AppConfig
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
@@ -246,45 +245,6 @@ object messageThread {
       cls := "vertical-align--middle mdl-color-text--black single--font-size-14px single--font-weight-600 single--margin-top-8px" + additionalClasses,
       link,
     )
-  }
-
-  def organisationIcon(
-      userId: UUID,
-      creatorUserName: String,
-      usersOrganisations: Map[UUID, List[Organisation.Id]]
-  ): Tag = {
-    val icons = Map(
-      Organisation.poleEmploiId -> "pe",
-      Organisation.msaId -> "msa",
-      Organisation.cpamId -> "cpam",
-      Organisation.cramId -> "cpam",
-      Organisation.cnamId -> "cpam",
-      Organisation.cafId -> "caf",
-      Organisation.cnavId -> "cnav",
-      Organisation.carsatId -> "cnav",
-      Organisation.ddfipId -> "dgfip",
-      Organisation.drfipId -> "dgfip",
-    )
-    val iconName: Option[String] = for {
-      organisations <- usersOrganisations.get(userId)
-      name <- organisations.flatMap(id => icons.get(id)).headOption
-    } yield name
-
-    iconName.orElse(
-      Map(
-        "A+" -> "aplus",
-        "Défenseur des droits".toUpperCase() -> "ddd"
-      ).find { case (name, _) => creatorUserName.toUpperCase.contains(name) }
-        .map { case (_, icon) => icon }
-    ) match {
-      case Some(icon) =>
-        img(
-          cls := "mdl-list__item-avatar",
-          src := Assets.versioned("images/admin/" + icon + "-icon.png").url
-        )
-      case None =>
-        i(cls := "material-icons mdl-list__item-avatar", "person")
-    }
   }
 
   def numberToSize(number: Int): String =
