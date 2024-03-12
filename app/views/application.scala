@@ -130,7 +130,7 @@ object application {
       usersOrganisations: Map[UUID, List[Organisation.Id]]
   ): Tag = {
     val icons = Map(
-      Organisation.poleEmploiId -> "pe",
+      Organisation.poleEmploiId -> "france_travail",
       Organisation.msaId -> "msa",
       Organisation.cpamId -> "cpam",
       Organisation.cramId -> "cpam",
