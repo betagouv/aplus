@@ -540,7 +540,12 @@ case class UserController @Inject() (
       }
     }
 
-  private def addUsersToGroupApplications(users: List[User], group: UserGroup)(implicit
+  private def addUsersToGroupApplications(
+      users: List[User],
+      group: UserGroup,
+      userDoingTheAction: User,
+      userDoingTheActionGroups: List[UserGroup]
+  )(implicit
       request: RequestWithUserData[_]
   ): Future[Unit] = {
     val currentAreaId = group.areaIds.headOption
@@ -567,10 +572,10 @@ case class UserController @Inject() (
           Time.nowParis(),
           Answer.AnswerType.Custom,
           "Les nouveaux instructeurs ont automatiquement accès à la demande.",
-          request.currentUser.id,
+          userDoingTheAction.id,
           Application.invitedUserContextualizedName(
-            request.currentUser,
-            group :: Nil, // Not exactly true, but fine for this specific context
+            userDoingTheAction,
+            userDoingTheActionGroups,
             currentAreaId,
             application.creatorGroupId
           ),
@@ -654,21 +659,30 @@ case class UserController @Inject() (
             )
           },
           _ =>
-            addUsersToGroupApplications(users.filter(_.instructor), group).map { _ =>
-              users.foreach { user =>
-                val host = notificationsService.newUser(user)
-                eventService.log(
-                  EventType.UserCreated,
-                  s"Utilisateur ${user.id} ajouté [email envoyé via '$host']",
-                  s"Utilisateur ${user.toLogString}".some,
-                  involvesUser = Some(user.id)
-                )
-              }
-              eventService.log(UsersCreated, "Utilisateurs ajoutés")
+            groupService
+              .byIdsFuture(request.currentUser.groupIds)
+              .flatMap(currentUserGroups =>
+                addUsersToGroupApplications(
+                  users.filter(_.instructor),
+                  group,
+                  request.currentUser,
+                  currentUserGroups
+                ).map { _ =>
+                  users.foreach { user =>
+                    val host = notificationsService.newUser(user)
+                    eventService.log(
+                      EventType.UserCreated,
+                      s"Utilisateur ${user.id} ajouté [email envoyé via '$host']",
+                      s"Utilisateur ${user.toLogString}".some,
+                      involvesUser = Some(user.id)
+                    )
+                  }
+                  eventService.log(UsersCreated, "Utilisateurs ajoutés")
 
-              Redirect(routes.GroupController.editGroup(group.id))
-                .flashing("success" -> "Utilisateurs ajoutés")
-            }
+                  Redirect(routes.GroupController.editGroup(group.id))
+                    .flashing("success" -> "Utilisateurs ajoutés")
+                }
+              )
         )
     } catch {
       case ex: PSQLException =>
