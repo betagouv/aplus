@@ -1,7 +1,7 @@
 @import models.Authorization
 @import models.formModels.AddUserToGroupFormData
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean, groupApplications: List[Application], lastActivity: Map[java.util.UUID, java.time.Instant], addUserForm: Form[AddUserToGroupFormData], addRedirectQueryParam: String => String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean, usersInfos: Map[java.util.UUID, views.editMyGroups.UserInfos], lastActivity: Map[java.util.UUID, java.time.Instant], addUserForm: Form[AddUserToGroupFormData], addRedirectQueryParam: String => String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 
 @modals = {
@@ -137,9 +137,7 @@
 
     @********* Experimental (testing by admins for now) **********@
     @if(Authorization.canSeeExperimentalAdminFeatures(currentUserRights)) {
-      @defining(views.editMyGroups.creationsAndInvitationsCounts(groupApplications)) { case (creations, invitations, participations) =>
-        @toHtml(views.editMyGroups.groupBlock(userGroup, groupUsers, creations, invitations, participations, lastActivity, addUserForm, addRedirectQueryParam, currentUser, currentUserRights))
-      }
+        @toHtml(views.editMyGroups.groupBlock(userGroup, groupUsers, usersInfos, lastActivity, addUserForm, addRedirectQueryParam, currentUser, currentUserRights))
     }
 
 }

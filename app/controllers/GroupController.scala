@@ -10,7 +10,7 @@ import helper.Time
 import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import models.{Area, Authorization, Error, EventType, Organisation, User, UserGroup}
+import models.{Application, Area, Authorization, Error, EventType, Organisation, User, UserGroup}
 import models.EventType.{
   AddGroupUnauthorized,
   AddUserGroupError,
@@ -35,6 +35,7 @@ import play.libs.ws.WSClient
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
 import services._
+import views.editMyGroups.UserInfos
 
 @Singleton
 case class GroupController @Inject() (
@@ -406,6 +407,39 @@ case class GroupController @Inject() (
       }
     }
 
+  private def computeUsersInfos(
+      applications: List[Application]
+  ): Map[UUID, UserInfos] = {
+    val result = scala.collection.mutable.HashMap.empty[UUID, UserInfos]
+    applications.foreach { application =>
+      result.updateWith(application.creatorUserId)(
+        _.map(_.incrementCreations)
+          .getOrElse(UserInfos(creations = 1, invitations = 0, participations = 0))
+          .some
+      )
+      application.invitedUsers.foreach { case (userId, _) =>
+        result.updateWith(userId)(
+          _.map(_.incrementInvitations)
+            .getOrElse(UserInfos(creations = 0, invitations = 1, participations = 0))
+            .some
+        )
+      }
+      application.userAnswers
+        .map(_.creatorUserID)
+        .toSet
+        .foreach((id: UUID) =>
+          if (id =!= application.creatorUserId) {
+            result.updateWith(id)(
+              _.map(_.incrementParticipations)
+                .getOrElse(UserInfos(creations = 0, invitations = 0, participations = 1))
+                .some
+            )
+          }
+        )
+    }
+    result.toMap
+  }
+
   private def adminLastActivity(ids: List[UUID], rights: Authorization.UserRights) =
     if (Authorization.isAdmin(rights))
       eventService.lastActivity(ids)
@@ -425,7 +459,7 @@ case class GroupController @Inject() (
     for {
       groups <- groupsFuture
       users <- userService.byGroupIdsFuture(groups.map(_.id), includeDisabled = true)
-      applications <- applicationService.allForUserIds(users.map(_.id), none)
+      applications <- applicationService.allForUserIds(users.map(_.id), none, false)
       lastActivityResult <- adminLastActivity(users.map(_.id), rights)
     } yield {
       lastActivityResult.fold(
@@ -434,6 +468,7 @@ case class GroupController @Inject() (
           InternalServerError(Constants.genericError500Message)
         },
         lastActivity => {
+          val usersInfos = computeUsersInfos(applications)
           eventService.log(EventType.EditMyGroupShowed, "Visualise la modification de ses groupes")
           Ok(
             views.editMyGroups
@@ -443,7 +478,7 @@ case class GroupController @Inject() (
                 addUserForm,
                 groups,
                 users,
-                applications,
+                usersInfos,
                 lastActivity.toMap,
                 identity
               )
@@ -461,7 +496,7 @@ case class GroupController @Inject() (
     val isEmpty = groupService.isGroupEmpty(group.id)
     val lastActivityFuture = adminLastActivity(groupUsers.map(_.id), request.rights)
     applicationService
-      .allForUserIds(groupUsers.map(_.id), none)
+      .allForUserIds(groupUsers.map(_.id), none, false)
       .zip(lastActivityFuture)
       .map { case (applications, lastActivityResult) =>
         lastActivityResult.fold(
@@ -469,13 +504,14 @@ case class GroupController @Inject() (
             eventService.logError(error)
             InternalServerError(Constants.genericError500Message)
           },
-          lastActivity =>
+          lastActivity => {
+            val usersInfos = computeUsersInfos(applications)
             Ok(
               views.html.editGroup(request.currentUser, request.rights)(
                 group,
                 groupUsers,
                 isEmpty,
-                applications,
+                usersInfos,
                 lastActivity.toMap,
                 addUserForm,
                 url =>
@@ -484,6 +520,7 @@ case class GroupController @Inject() (
                     Keys.QueryParam.groupId + "=" + group.id.toString)
               )
             )
+          }
         )
       }
   }
