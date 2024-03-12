@@ -6,7 +6,7 @@ import helper.Time
 import helper.TwirlImports.toHtml
 import java.time.Instant
 import java.util.UUID
-import models.{Application, Authorization, User, UserGroup}
+import models.{Authorization, User, UserGroup}
 import models.formModels.AddUserToGroupFormData
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
@@ -18,13 +18,19 @@ import views.helpers.forms.CSRFInput
 
 object editMyGroups {
 
+  case class UserInfos(creations: Int, invitations: Int, participations: Int) {
+    def incrementCreations: UserInfos = copy(creations = creations + 1)
+    def incrementInvitations: UserInfos = copy(invitations = invitations + 1)
+    def incrementParticipations: UserInfos = copy(participations = participations + 1)
+  }
+
   def page(
       currentUser: User,
       currentUserRights: Authorization.UserRights,
       addUserForm: Form[AddUserToGroupFormData],
       userGroups: List[UserGroup],
       users: List[User],
-      applications: List[Application],
+      usersInfos: Map[UUID, UserInfos],
       lastActivity: Map[UUID, Instant],
       addRedirectQueryParam: String => String
   )(implicit
@@ -34,10 +40,6 @@ object editMyGroups {
       webJarsUtil: WebJarsUtil,
       mainInfos: MainInfos
   ): Html = {
-    // Precompute here to speedup page rendering
-    val (creationsCount, invitationsCount, participationsCount) = creationsAndInvitationsCounts(
-      applications
-    )
     val groupsWithTheirUsers: List[(UserGroup, List[User])] =
       for {
         userGroup <- userGroups.sortBy(group =>
@@ -58,9 +60,7 @@ object editMyGroups {
       } yield groupBlock(
         group,
         users,
-        creationsCount,
-        invitationsCount,
-        participationsCount,
+        usersInfos,
         lastActivity,
         addUserForm,
         addRedirectQueryParam,
@@ -75,35 +75,10 @@ object editMyGroups {
     )(Nil)
   }
 
-  def creationsAndInvitationsCounts(
-      applications: List[Application]
-  ): (Map[UUID, Int], Map[UUID, Int], Map[UUID, Int]) = {
-    val userCreations = scala.collection.mutable.HashMap.empty[UUID, Int]
-    val userInvitations = scala.collection.mutable.HashMap.empty[UUID, Int]
-    val userParticipations = scala.collection.mutable.HashMap.empty[UUID, Int]
-    applications.foreach { application =>
-      userCreations.updateWith(application.creatorUserId)(_.map(_ + 1).getOrElse(1).some)
-      application.invitedUsers.foreach { case (userId, _) =>
-        userInvitations.updateWith(userId)(_.map(_ + 1).getOrElse(1).some)
-      }
-      application.answers
-        .map(_.creatorUserID)
-        .toSet
-        .foreach((id: UUID) =>
-          if (id =!= application.creatorUserId) {
-            userParticipations.updateWith(id)(_.map(_ + 1).getOrElse(1).some)
-          }
-        )
-    }
-    (userCreations.toMap, userInvitations.toMap, userParticipations.toMap)
-  }
-
   def groupBlock(
       group: UserGroup,
       users: List[User],
-      applicationCreationsCount: Map[UUID, Int],
-      applicationInvitationsCount: Map[UUID, Int],
-      applicationParticipationsCount: Map[UUID, Int],
+      usersInfos: Map[UUID, UserInfos],
       lastActivity: Map[UUID, Instant],
       addUserForm: Form[AddUserToGroupFormData],
       addRedirectQueryParam: String => String,
@@ -136,9 +111,7 @@ object editMyGroups {
             userLine(
               user,
               group,
-              applicationCreationsCount,
-              applicationInvitationsCount,
-              applicationParticipationsCount,
+              usersInfos,
               lastActivity,
               addRedirectQueryParam,
               currentUser,
@@ -259,9 +232,7 @@ object editMyGroups {
   def userLine(
       user: User,
       group: UserGroup,
-      applicationCreationsCount: Map[UUID, Int],
-      applicationInvitationsCount: Map[UUID, Int],
-      applicationParticipationsCount: Map[UUID, Int],
+      usersInfos: Map[UUID, UserInfos],
       lastActivity: Map[UUID, Instant],
       addRedirectQueryParam: String => String,
       currentUser: User,
@@ -319,9 +290,9 @@ object editMyGroups {
       td(
         cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size",
         userStatsCell(
-          applicationCreationsCount.getOrElse(user.id, 0),
-          applicationInvitationsCount.getOrElse(user.id, 0),
-          applicationParticipationsCount.getOrElse(user.id, 0)
+          usersInfos.get(user.id).map(_.creations).getOrElse(0),
+          usersInfos.get(user.id).map(_.invitations).getOrElse(0),
+          usersInfos.get(user.id).map(_.participations).getOrElse(0)
         )
       ),
       td(
