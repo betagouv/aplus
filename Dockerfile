@@ -1,7 +1,7 @@
 #
 # Builder image for the TS pipeline
 #
-FROM node:20-bookworm AS tsbuilder
+FROM node:21-bookworm AS tsbuilder
 COPY package.json /var/www/aplus/package.json
 COPY typescript /var/www/aplus/typescript/
 WORKDIR /var/www/aplus/
