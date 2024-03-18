@@ -205,7 +205,6 @@ object main {
                     aria.controls := navBarResponsiveMenuModalId,
                     aria.haspopup := "menu",
                     id := navBarResponsiveMenuModalButtonId,
-                    title := "Menu"
                   )(
                     "Menu"
                   )
@@ -356,7 +355,6 @@ object main {
         button(
           cls := "fr-btn--close fr-btn",
           aria.controls := navBarResponsiveMenuModalId,
-          title := "Fermer"
         )(
           "Fermer"
         ),
@@ -377,7 +375,6 @@ object main {
             else
               route.url + "?" + queryParams.mkString("&")
           ),
-          title := text,
           cls := "fr-nav__link",
           target := "_self",
           attr("aria-current") := (if (request.path === route.url) "true" else "false")
@@ -408,6 +405,7 @@ object main {
             a(
               cls := "fr-footer__brand-link",
               href := HomeController.index.url,
+              aria.label := "Retour à l’accueil du site - Administration+",
               title := "Retour à l’accueil du site - Administration+",
               img(
                 cls := "fr-footer__logo aplus-footer-img",
@@ -551,6 +549,7 @@ object main {
                 a(
                   cls := "fr-footer__top-link",
                   href := s"mailto:${Constants.supportEmail}",
+                  aria.label := s"Email de contact - ${Constants.supportEmail}",
                   title := s"Email de contact - ${Constants.supportEmail}",
                 )(Constants.supportEmail)
               ),

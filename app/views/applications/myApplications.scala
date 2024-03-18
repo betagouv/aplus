@@ -173,7 +173,7 @@ object myApplications {
               placeholder := "Rechercher",
               id := "search-input"
             ),
-            a(cls := "fr-btn", title := "Rechercher", href := "#search-column")(
+            a(cls := "fr-btn", href := "#search-column")(
               "Rechercher"
             )
           )
