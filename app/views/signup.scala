@@ -6,7 +6,7 @@ import controllers.routes.SignupController
 import helper.UUIDHelper
 import java.util.UUID
 import models.{Area, Organisation, SignupRequest, UserGroup}
-import models.formModels.SignupFormData
+import models.forms.SignupFormData
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.i18n.MessagesProvider

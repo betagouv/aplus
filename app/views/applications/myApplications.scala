@@ -5,7 +5,7 @@ import constants.Constants
 import controllers.routes.ApplicationController
 import helper.Time
 import models.{Answer, Application, Authorization, FileMetadata, User, UserGroup}
-import models.formModels.ApplicationsPageInfos
+import models.forms.ApplicationsPageInfos
 import modules.AppConfig
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._

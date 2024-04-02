@@ -39,7 +39,7 @@ import models.EventType.{
   UsersShowed,
   ViewUserUnauthorized
 }
-import models.formModels.{
+import models.forms.{
   AddUserFormData,
   AddUsersFormData,
   EditProfileFormData,

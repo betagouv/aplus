@@ -1,7 +1,7 @@
 @import models._
-@import _root_.helper.MDLForms._
+@import _root_.helper.forms.MDLForms._
 
-@(user: User, currentUserRights: Authorization.UserRights, cguForm: Form[models.formModels.ValidateSubscriptionForm])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider, mainInfos: MainInfos)
+@(user: User, currentUserRights: Authorization.UserRights, cguForm: Form[models.forms.ValidateSubscriptionForm])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider, mainInfos: MainInfos)
 
     @main(user, currentUserRights)("Conditions générales d’utilisation") {
     } {

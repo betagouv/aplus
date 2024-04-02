@@ -7,7 +7,7 @@ import helper.Time
 import helper.TwirlImports.toHtml
 import models.{Application, Authorization, User, UserGroup}
 import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
-import models.formModels.ApplicationsPageInfos
+import models.forms.ApplicationsPageInfos
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html

@@ -4,7 +4,7 @@ import controllers.routes.{GroupController, UserController}
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import models.{Authorization, User, UserGroup}
-import models.formModels.ApplicationsPageInfos
+import models.forms.ApplicationsPageInfos
 import modules.AppConfig
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._

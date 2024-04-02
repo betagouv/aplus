@@ -5,7 +5,7 @@ import controllers.routes.UserController
 import helper.MiscHelpers.intersperseList
 import helper.TwirlImports.toHtml
 import models.{Area, Authorization, User}
-import models.formModels.{AddUserFormData, AddUsersFormData}
+import models.forms.{AddUserFormData, AddUsersFormData}
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.mvc.{Flash, RequestHeader}

@@ -81,7 +81,7 @@ case class ApiController @Inject() (
           .validate[FranceServices.NewMatricules]
           .fold(
             errors => {
-              val errorMessage = helper.PlayFormHelper.prettifyJsonFormInvalidErrors(errors)
+              val errorMessage = helper.PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)
               eventService.log(EventType.FSMatriculeInvalidData, s"$errorMessage")
               Future.successful(BadRequest(Json.toJson(ApiError(errorMessage))))
             },
@@ -226,7 +226,7 @@ case class ApiController @Inject() (
           .validate[FranceServices.Update]
           .fold(
             errors => {
-              val errorMessage = helper.PlayFormHelper.prettifyJsonFormInvalidErrors(errors)
+              val errorMessage = helper.PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)
               eventService.log(EventType.FSMatriculeInvalidData, s"$errorMessage")
               Future.successful(BadRequest(Json.toJson(ApiError(errorMessage))))
             },

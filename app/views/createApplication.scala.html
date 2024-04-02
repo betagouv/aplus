@@ -1,11 +1,11 @@
-@import _root_.helper.MDLForms._
+@import _root_.helper.forms.MDLForms._
 @import cats.implicits.catsSyntaxEq
 @import models.Organisation.Category
 @import models.dataModels
 @import play.api.libs.json.Json
 @import serializers.Keys
 
-@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(userGroups: List[UserGroup], instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], canCreatePhoneMandat: Boolean, categories: List[Category], applicationForm: Form[models.formModels.ApplicationFormData], attachments: List[FileMetadata] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider, mainInfos: MainInfos)
+@(currentUser: User, currentUserRights: Authorization.UserRights, currentArea: Area)(userGroups: List[UserGroup], instructorsOfGroups: List[User], organisationGroups: List[UserGroup], coworkers: List[User], userSignature: Option[String], canCreatePhoneMandat: Boolean, categories: List[Category], applicationForm: Form[models.forms.ApplicationFormData], attachments: List[FileMetadata] = Nil)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider, mainInfos: MainInfos)
 
 @main(currentUser, currentUserRights)(s"Nouvelle demande")  {
     <link rel="stylesheet" media="screen,print" href='@routes.Assets.versioned("stylesheets/newForm.css")'>

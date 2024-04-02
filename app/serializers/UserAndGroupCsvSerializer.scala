@@ -1,11 +1,11 @@
 package serializers
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import helper.{PlayFormHelper, UUIDHelper}
+import helper.{PlayFormHelpers, UUIDHelper}
 import helper.StringHelper._
 import java.util.UUID
 import models.{Area, Organisation}
-import models.formModels.AddUserFormData
+import models.forms.AddUserFormData
 import play.api.data.Forms._
 import play.api.data.Mapping
 import scala.io.Source
@@ -292,12 +292,12 @@ object UserAndGroupCsvSerializer {
       groupCSVMapping
         .bind(csvMap)
         .fold(
-          errors => Left(errors.map(PlayFormHelper.prettifyFormError).mkString(", ")),
+          errors => Left(errors.map(PlayFormHelpers.prettifyFormError).mkString(", ")),
           group =>
             addUsersForm
               .bind(csvMap)
               .fold(
-                errors => Left(errors.map(PlayFormHelper.prettifyFormError).mkString(", ")),
+                errors => Left(errors.map(PlayFormHelpers.prettifyFormError).mkString(", ")),
                 user =>
                   Right(
                     UserGroupBlock(

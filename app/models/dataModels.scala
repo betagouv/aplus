@@ -2,7 +2,7 @@ package models
 
 import anorm.SqlMappingError
 import cats.syntax.all._
-import helper.{PlayFormHelper, Time}
+import helper.{PlayFormHelpers, Time}
 import java.time.{Instant, ZonedDateTime}
 import java.util.UUID
 import models.Answer
@@ -134,7 +134,7 @@ object dataModels {
         implicitly[anorm.Column[JsValue]].mapResult(
           _.validate[List[SeenByUser]].asEither.left.map(errors =>
             SqlMappingError(
-              s"Cannot parse JSON as List[SeenByUser]: ${PlayFormHelper.prettifyJsonFormInvalidErrors(errors)}"
+              s"Cannot parse JSON as List[SeenByUser]: ${PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)}"
             )
           )
         )

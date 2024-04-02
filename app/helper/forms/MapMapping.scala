@@ -1,4 +1,4 @@
-package forms
+package helper.forms
 
 import play.api.data.{FormError, Mapping}
 import play.api.data.validation.Constraint

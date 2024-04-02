@@ -6,13 +6,13 @@ import cats.syntax.all._
 import constants.Constants
 import controllers.Operators.UserOperators
 import helper.{Time, UUIDHelper}
-import helper.PlayFormHelper.formErrorsLog
+import helper.PlayFormHelpers.formErrorsLog
 import helper.ScalatagsHelpers.writeableOf_Modifier
 import java.time.{Instant, ZonedDateTime}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models.{Authorization, Error, EventType, SignupRequest, User}
-import models.formModels.{AddSignupsFormData, SignupFormData}
+import models.forms.{AddSignupsFormData, SignupFormData}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form

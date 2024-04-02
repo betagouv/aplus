@@ -1,10 +1,28 @@
 package helper
 
-import play.api.data.{Form, FormError}
+import helper.StringHelper.commonStringInputNormalization
+import play.api.data.{Form, FormError, Mapping}
+import play.api.data.Forms.{optional, text}
+import play.api.data.validation.{Constraint, Valid}
 import play.api.i18n.MessagesProvider
 import play.api.libs.json.{JsPath, JsonValidationError}
 
-object PlayFormHelper {
+object PlayFormHelpers {
+
+  val normalizedText: Mapping[String] =
+    text.transform[String](commonStringInputNormalization, commonStringInputNormalization)
+
+  val normalizedOptionalText: Mapping[Option[String]] =
+    optional(text).transform[Option[String]](
+      _.map(commonStringInputNormalization).filter(_.nonEmpty),
+      _.map(commonStringInputNormalization).filter(_.nonEmpty)
+    )
+
+  def inOption[T](constraint: Constraint[T]): Constraint[Option[T]] =
+    Constraint[Option[T]](constraint.name, constraint.args) {
+      case None    => Valid
+      case Some(t) => constraint(t)
+    }
 
   def prettifyFormError(formError: FormError): String = {
     val prettyKey = formError.key.split("\\.").lastOption.getOrElse("")

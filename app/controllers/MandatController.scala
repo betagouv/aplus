@@ -46,7 +46,7 @@ case class MandatController @Inject() (
       .validate[MandatGeneration]
       .fold(
         errors => {
-          val errorMessage = helper.PlayFormHelper.prettifyJsonFormInvalidErrors(errors)
+          val errorMessage = helper.PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)
           eventService.log(EventType.MandatGenerationFormValidationError, s"$errorMessage")
           Future.successful(
             BadRequest(
@@ -97,7 +97,7 @@ case class MandatController @Inject() (
       .validate[SmsMandatInitiation]
       .fold(
         errors => {
-          val errorMessage = helper.PlayFormHelper.prettifyJsonFormInvalidErrors(errors)
+          val errorMessage = helper.PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)
           eventService.log(EventType.MandatInitiationBySmsFormValidationError, s"$errorMessage")
           Future(
             BadRequest(

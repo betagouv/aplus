@@ -1,6 +1,5 @@
-package helper
+package helper.forms
 
-import forms.MapMapping
 import play.api.data.Form
 import play.twirl.api.Html
 import views.html.helper.FieldConstructor
