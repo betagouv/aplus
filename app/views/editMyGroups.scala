@@ -6,7 +6,7 @@ import helper.Time
 import helper.TwirlImports.toHtml
 import java.time.Instant
 import java.util.UUID
-import models.{Authorization, User, UserGroup}
+import models.{Area, Authorization, User, UserGroup}
 import models.formModels.AddUserToGroupFormData
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
@@ -43,7 +43,13 @@ object editMyGroups {
     val groupsWithTheirUsers: List[(UserGroup, List[User])] =
       for {
         userGroup <- userGroups.sortBy(group =>
-          (!currentUser.groupIds.contains[UUID](group.id), group.name)
+          (
+            // Demo groups last
+            group.areaIds.contains[UUID](Area.demo.id),
+            // Own groups first
+            !currentUser.groupIds.contains[UUID](group.id),
+            group.name
+          )
         )
         groupUsers = users.filter(_.groupIds.contains(userGroup.id))
       } yield (userGroup, groupUsers)
