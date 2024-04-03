@@ -91,6 +91,7 @@ object Organisation {
     Organisation(carsatId, "CARSAT", "Caisse d'assurance retraite et de la santé au travail"),
     Organisation("CCAS", "Centre communal d'action sociale"), // Ville
     Organisation("CDAD", "Conseils départementaux d'accès au droit"), // Département
+    Organisation("Chèque énergie", "Chèque énergie"),
     Organisation(cnavId, "CNAV", "Caisse nationale d'assurance vieillesse"), // Département
     cpam, // Département
     Organisation(cnamId, "CNAM", "Caisse nationale d'assurance maladie"),
