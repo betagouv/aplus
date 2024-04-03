@@ -3,6 +3,7 @@ package controllers
 import actions.LoginAction
 import cats.syntax.all._
 import controllers.Operators.{GroupOperators, UserOperators}
+import helper.PlayFormHelpers.{inOption, normalizedOptionalText, normalizedText}
 import helper.StringHelper._
 import helper.Time
 import java.time.ZonedDateTime
@@ -21,10 +22,7 @@ import models.EventType.{
   UserGroupCreated,
   UsersImported
 }
-import models.formModels.{
-  inOption,
-  normalizedOptionalText,
-  normalizedText,
+import models.forms.{
   CSVRawLinesFormData,
   CSVReviewUserFormData,
   CSVUserFormData,
@@ -55,20 +53,15 @@ case class CSVImportController @Inject() (
     with UserOperators
     with GroupOperators {
 
-  private val csvImportContentForm: Form[CSVRawLinesFormData] = Form(
-    mapping(
-      "csv-lines" -> nonEmptyText,
-      "area-default-ids" -> list(uuid),
-      "separator" -> char
-        .verifying("Séparateur incorrect", value => value === ';' || value === ',')
-    )(CSVRawLinesFormData.apply)(CSVRawLinesFormData.unapply)
-  )
-
   def importUsersFromCSV: Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(ImportUserUnauthorized, "Accès non autorisé pour importer les utilisateurs") { () =>
         Future(
-          Ok(views.html.importUsersCSV(request.currentUser, request.rights)(csvImportContentForm))
+          Ok(
+            views.html.importUsersCSV(request.currentUser, request.rights)(
+              CSVRawLinesFormData.contentForm
+            )
+          )
         )
       }
     }
@@ -236,7 +229,7 @@ case class CSVImportController @Inject() (
         ImportGroupUnauthorized,
         "Accès non autorisé pour importer les utilisateurs"
       ) { () =>
-        csvImportContentForm
+        CSVRawLinesFormData.contentForm
           .bindFromRequest()
           .fold(
             { csvImportContentFormWithError =>
@@ -261,7 +254,7 @@ case class CSVImportController @Inject() (
                 .fold(
                   { error: String =>
                     val csvImportContentFormWithError =
-                      csvImportContentForm.fill(csvImportData).withGlobalError(error)
+                      CSVRawLinesFormData.contentForm.fill(csvImportData).withGlobalError(error)
                     eventService
                       .log(CSVImportFormError, "Erreur de formulaire Importation")
                     Future(

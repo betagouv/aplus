@@ -4,7 +4,7 @@ import cats.syntax.all._
 import helper.TwirlImports.toHtml
 import java.util.UUID
 import models.{Authorization, Error, SignupRequest, User}
-import models.formModels.AddSignupsFormData
+import models.forms.AddSignupsFormData
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.mvc.{Flash, RequestHeader}

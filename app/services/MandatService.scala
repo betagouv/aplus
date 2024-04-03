@@ -3,7 +3,7 @@ package services
 import anorm._
 import aplus.macros.Macros
 import cats.syntax.all._
-import helper.{PlayFormHelper, Time}
+import helper.{PlayFormHelpers, Time}
 import java.util.UUID
 import javax.inject.Inject
 import models.{Authorization, Error, EventType, Mandat, Sms, User}
@@ -36,7 +36,7 @@ class MandatService @Inject() (
     implicitly[anorm.Column[JsValue]].mapResult(
       _.validate[List[Sms]].asEither.left.map(errors =>
         SqlMappingError(
-          s"Cannot parse JSON as List[Sms]: ${PlayFormHelper.prettifyJsonFormInvalidErrors(errors)}"
+          s"Cannot parse JSON as List[Sms]: ${PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)}"
         )
       )
     )

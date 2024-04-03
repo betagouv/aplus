@@ -7,7 +7,7 @@ import helper.TwirlImports.toHtml
 import java.time.Instant
 import java.util.UUID
 import models.{Area, Authorization, User, UserGroup}
-import models.formModels.AddUserToGroupFormData
+import models.forms.AddUserToGroupFormData
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.i18n.MessagesProvider

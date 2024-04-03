@@ -1,6 +1,6 @@
 @import models._
-@import models.formModels.AddUsersFormData
-@import _root_.helper.MDLForms._
+@import models.forms.AddUsersFormData
+@import _root_.helper.forms.MDLForms._
 
 @(user: User, currentUserRights: Authorization.UserRights)(form: Form[AddUsersFormData], min: Int, action: Call, mustConfirmInstructors: Boolean, numberOfOldApplications: Int)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 

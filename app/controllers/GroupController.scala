@@ -5,12 +5,11 @@ import cats.syntax.all._
 import constants.Constants
 import controllers.Operators._
 import helper.BooleanHelper.not
-import helper.PlayFormHelper.formErrorsLog
+import helper.PlayFormHelpers.formErrorsLog
 import helper.Time
-import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import models.{Application, Area, Authorization, Error, EventType, Organisation, User, UserGroup}
+import models.{Application, Area, Authorization, Error, EventType, User, UserGroup}
 import models.EventType.{
   AddGroupUnauthorized,
   AddUserGroupError,
@@ -23,12 +22,10 @@ import models.EventType.{
   UserGroupDeletionUnauthorized,
   UserGroupEdited
 }
-import models.formModels.{normalizedOptionalText, normalizedText, AddUserToGroupFormData}
+import models.forms.{AddGroupFormData, AddUserToGroupFormData}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
-import play.api.data.Forms.{email, ignored, list, mapping, of, optional, text, uuid}
-import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, Call, InjectedController, RequestHeader, Result}
 import play.libs.ws.WSClient
@@ -285,7 +282,8 @@ case class GroupController @Inject() (
   def addGroup: Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(AddGroupUnauthorized, s"Accès non autorisé pour ajouter un groupe") { () =>
-        addGroupForm(Time.timeZoneParis)
+        AddGroupFormData
+          .form(Time.timeZoneParis, request.currentUser)
           .bindFromRequest()
           .fold(
             formWithErrors => {
@@ -340,7 +338,8 @@ case class GroupController @Inject() (
           s"Tentative d'édition non autorisée du groupe ${currentGroup.id}",
           Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?").some
         ) { () =>
-          addGroupForm(Time.timeZoneParis)
+          AddGroupFormData
+            .form(Time.timeZoneParis, request.currentUser)
             .bindFromRequest()
             .fold(
               formWithErrors => {
@@ -524,28 +523,5 @@ case class GroupController @Inject() (
         )
       }
   }
-
-  private def addGroupForm[A](timeZone: ZoneId)(implicit request: RequestWithUserData[A]) =
-    Form(
-      mapping(
-        "id" -> ignored(UUID.randomUUID()),
-        "name" -> normalizedText.verifying(maxLength(UserGroup.nameMaxLength), nonEmpty),
-        "description" -> normalizedOptionalText,
-        "insee-code" -> list(text),
-        "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
-        "area-ids" -> list(uuid)
-          .verifying(
-            "Vous devez sélectionner les territoires sur lequel vous êtes admin",
-            areaIds =>
-              areaIds.forall(request.currentUser.areas.contains[UUID]) ||
-                areaIds.exists(request.currentUser.managingAreaIds.contains[UUID])
-          )
-          .verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
-        "organisation" -> optional(of[Organisation.Id]),
-        "email" -> optional(email),
-        "publicNote" -> normalizedOptionalText,
-        "internalSupportComment" -> normalizedOptionalText
-      )(UserGroup.apply)(UserGroup.unapply)
-    )
 
 }

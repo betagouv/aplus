@@ -2,32 +2,19 @@ package models
 
 import cats.syntax.all._
 import constants.Constants
-import forms.FormsPlusMap
-import helper.StringHelper.commonStringInputNormalization
+import helper.PlayFormHelpers.{inOption, normalizedOptionalText, normalizedText}
+import helper.forms.FormsPlusMap
+import java.time.{LocalDate, ZoneId, ZonedDateTime}
 import java.util.UUID
 import play.api.data.{Form, Mapping}
 import play.api.data.Forms._
+import play.api.data.format.{Formats, Formatter}
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import scala.util.Try
 import serializers.Keys
 
-object formModels {
-
-  val normalizedText: Mapping[String] =
-    text.transform[String](commonStringInputNormalization, commonStringInputNormalization)
-
-  val normalizedOptionalText: Mapping[Option[String]] =
-    optional(text).transform[Option[String]](
-      _.map(commonStringInputNormalization).filter(_.nonEmpty),
-      _.map(commonStringInputNormalization).filter(_.nonEmpty)
-    )
-
-  def inOption[T](constraint: Constraint[T]): Constraint[Option[T]] =
-    Constraint[Option[T]](constraint.name, constraint.args) {
-      case None    => Valid
-      case Some(t) => constraint(t)
-    }
+package forms {
 
   final case class SignupFormData(
       firstName: Option[String],
@@ -111,6 +98,33 @@ object formModels {
 
   }
 
+  object AddGroupFormData {
+
+    def form[A](timeZone: ZoneId, currentUser: User) =
+      Form(
+        mapping(
+          "id" -> ignored(UUID.randomUUID()),
+          "name" -> normalizedText.verifying(maxLength(UserGroup.nameMaxLength), nonEmpty),
+          "description" -> normalizedOptionalText,
+          "insee-code" -> list(text),
+          "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
+          "area-ids" -> list(uuid)
+            .verifying(
+              "Vous devez sélectionner les territoires sur lequel vous êtes admin",
+              areaIds =>
+                areaIds.forall(currentUser.areas.contains[UUID]) ||
+                  areaIds.exists(currentUser.managingAreaIds.contains[UUID])
+            )
+            .verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
+          "organisation" -> optional(of[Organisation.Id]),
+          "email" -> optional(email),
+          "publicNote" -> normalizedOptionalText,
+          "internalSupportComment" -> normalizedOptionalText
+        )(UserGroup.apply)(UserGroup.unapply)
+      )
+
+  }
+
   final case class EditProfileFormData(
       firstName: String,
       lastName: String,
@@ -132,7 +146,7 @@ object formModels {
 
   }
 
-  case class ApplicationFormData(
+  final case class ApplicationFormData(
       subject: String,
       description: String,
       usagerPrenom: String,
@@ -187,7 +201,17 @@ object formModels {
 
   }
 
-  case class AnswerFormData(
+  object CloseApplicationFormData {
+
+    val form = Form(
+      single(
+        "usefulness" -> text,
+      )
+    )
+
+  }
+
+  final case class AnswerFormData(
       answerType: String,
       message: Option[String],
       applicationIsDeclaredIrrelevant: Boolean,
@@ -249,12 +273,25 @@ object formModels {
 
   }
 
-  case class InvitationFormData(
+  final case class InvitationFormData(
       message: String,
       invitedUsers: List[UUID],
       invitedGroups: List[UUID],
       privateToHelpers: Boolean
   )
+
+  object InvitationFormData {
+
+    val form = Form(
+      mapping(
+        "message" -> text,
+        "users" -> list(uuid),
+        "groups" -> list(uuid),
+        "privateToHelpers" -> boolean
+      )(InvitationFormData.apply)(InvitationFormData.unapply)
+    )
+
+  }
 
   object AddUserFormData {
 
@@ -291,7 +328,7 @@ object formModels {
 
   }
 
-  case class AddUserFormData(
+  final case class AddUserFormData(
       firstName: Option[String],
       lastName: Option[String],
       name: String,
@@ -303,7 +340,7 @@ object formModels {
       sharedAccount: Boolean,
   )
 
-  case class AddUsersFormData(users: List[AddUserFormData], confirmInstructors: Boolean)
+  final case class AddUsersFormData(users: List[AddUserFormData], confirmInstructors: Boolean)
 
   object EditUserFormData {
 
@@ -367,7 +404,7 @@ object formModels {
 
   }
 
-  case class EditUserFormData(
+  final case class EditUserFormData(
       id: UUID,
       firstName: Option[String],
       lastName: Option[String],
@@ -388,7 +425,7 @@ object formModels {
       internalSupportComment: Option[String]
   )
 
-  case class CSVReviewUserFormData(
+  final case class CSVReviewUserFormData(
       id: UUID,
       firstName: Option[String],
       lastName: Option[String],
@@ -399,7 +436,7 @@ object formModels {
       phoneNumber: Option[String]
   )
 
-  case class CSVUserFormData(
+  final case class CSVUserFormData(
       user: CSVReviewUserFormData,
       line: Int,
       alreadyExists: Boolean,
@@ -407,7 +444,7 @@ object formModels {
       isInMoreThanOneGroup: Option[Boolean] = None
   )
 
-  case class CSVUserGroupFormData(
+  final case class CSVUserGroupFormData(
       group: UserGroup,
       users: List[CSVUserFormData],
       alreadyExistsOrAllUsersAlreadyExist: Boolean,
@@ -415,7 +452,20 @@ object formModels {
       alreadyExistingGroup: Option[UserGroup] = None
   )
 
-  case class CSVRawLinesFormData(csvLines: String, areaIds: List[UUID], separator: Char)
+  final case class CSVRawLinesFormData(csvLines: String, areaIds: List[UUID], separator: Char)
+
+  object CSVRawLinesFormData {
+
+    val contentForm: Form[CSVRawLinesFormData] = Form(
+      mapping(
+        "csv-lines" -> nonEmptyText,
+        "area-default-ids" -> list(uuid),
+        "separator" -> char
+          .verifying("Séparateur incorrect", value => value === ';' || value === ',')
+      )(CSVRawLinesFormData.apply)(CSVRawLinesFormData.unapply)
+    )
+
+  }
 
   final case class ValidateSubscriptionForm(
       redirect: Option[String],
@@ -480,7 +530,11 @@ object formModels {
 
     def emptyFilters(baseUrl: String): Filters = Filters(none, none, baseUrl)
 
-    case class Filters(selectedGroups: Option[Set[UUID]], status: Option[String], urlBase: String) {
+    final case class Filters(
+        selectedGroups: Option[Set[UUID]],
+        status: Option[String],
+        urlBase: String
+    ) {
 
       def groupIsFiltered(id: UUID): Boolean =
         selectedGroups.map(groups => groups.contains(id)).getOrElse(false)
@@ -530,7 +584,7 @@ object formModels {
 
   }
 
-  case class ApplicationsPageInfos(
+  final case class ApplicationsPageInfos(
       filters: ApplicationsPageInfos.Filters,
       groupsCounts: Map[UUID, Int],
       allGroupsOpenCount: Int,
@@ -549,6 +603,40 @@ object formModels {
         s"[groupes=$groups/mes demandes=$interactedCount/nouvelles=$newCount/" +
         s"en cours=$processingCount/retard=$lateCount]"
     }
+
+  }
+
+  object StatsFormData {
+
+    // Handles some edge cases from browser compatibility
+    private val localDateMapping: Mapping[LocalDate] = {
+      val formatter = new Formatter[LocalDate] {
+        val defaultCase = Formats.localDateFormat
+        val fallback1 = Formats.localDateFormat("dd-MM-yyyy")
+        val fallback2 = Formats.localDateFormat("dd.MM.yy")
+
+        def bind(key: String, data: Map[String, String]) =
+          defaultCase
+            .bind(key, data)
+            .orElse(fallback1.bind(key, data))
+            .orElse(fallback2.bind(key, data))
+
+        def unbind(key: String, value: LocalDate) = defaultCase.unbind(key, value)
+      }
+      of(formatter)
+    }
+
+    // A `def` for the LocalDate.now()
+    def form =
+      Form(
+        tuple(
+          "areas" -> default(list(uuid), List()),
+          "organisations" -> default(list(of[Organisation.Id]), List()),
+          "groups" -> default(list(uuid), List()),
+          "creationMinDate" -> default(localDateMapping, LocalDate.now().minusDays(30)),
+          "creationMaxDate" -> default(localDateMapping, LocalDate.now())
+        )
+      )
 
   }
 

@@ -1,6 +1,6 @@
 @import models._
-@import _root_.helper.MDLForms._
-@import models.formModels.CSVRawLinesFormData
+@import _root_.helper.forms.MDLForms._
+@import models.forms.CSVRawLinesFormData
 @import serializers.UserAndGroupCsvSerializer
 
 @(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[CSVRawLinesFormData])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider, mainInfos: MainInfos)

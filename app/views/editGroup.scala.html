@@ -1,5 +1,5 @@
 @import models.Authorization
-@import models.formModels.AddUserToGroupFormData
+@import models.forms.AddUserToGroupFormData
 
 @(currentUser: User, currentUserRights: Authorization.UserRights)(userGroup: UserGroup, groupUsers: List[User], isEmpty: Boolean, usersInfos: Map[java.util.UUID, views.editMyGroups.UserInfos], lastActivity: Map[java.util.UUID, java.time.Instant], addUserForm: Form[AddUserToGroupFormData], addRedirectQueryParam: String => String)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 

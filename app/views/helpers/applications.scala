@@ -5,7 +5,7 @@ import constants.Constants
 import helper.MiscHelpers.intersperseList
 import models.{Application, Organisation, User, UserGroup}
 import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
-import models.formModels.ApplicationFormData
+import models.forms.ApplicationFormData
 import play.api.data.{Form, FormError}
 import play.api.i18n.Messages
 import scalatags.Text.all._

@@ -7,7 +7,7 @@ import constants.Constants
 import helper.{Time, UUIDHelper}
 import helper.BooleanHelper.not
 import helper.CSVUtil.escape
-import helper.PlayFormHelper.formErrorsLog
+import helper.PlayFormHelpers.formErrorsLog
 import helper.ScalatagsHelpers.writeableOf_Modifier
 import helper.StringHelper.NonEmptyTrimmedString
 import helper.TwirlImports.toHtml
@@ -29,17 +29,17 @@ import models.{
 }
 import models.Answer.AnswerType
 import models.EventType._
-import models.formModels.{
+import models.forms.{
   AnswerFormData,
   ApplicationFormData,
   ApplicationsPageInfos,
-  InvitationFormData
+  CloseApplicationFormData,
+  InvitationFormData,
+  StatsFormData
 }
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.data._
-import play.api.data.Forms._
-import play.api.data.format.{Formats, Formatter}
 import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
@@ -838,36 +838,6 @@ case class ApplicationController @Inject() (
       }
     }
 
-  // Handles some edge cases from browser compatibility
-  private val localDateMapping: Mapping[LocalDate] = {
-    val formatter = new Formatter[LocalDate] {
-      val defaultCase = Formats.localDateFormat
-      val fallback1 = Formats.localDateFormat("dd-MM-yyyy")
-      val fallback2 = Formats.localDateFormat("dd.MM.yy")
-
-      def bind(key: String, data: Map[String, String]) =
-        defaultCase
-          .bind(key, data)
-          .orElse(fallback1.bind(key, data))
-          .orElse(fallback2.bind(key, data))
-
-      def unbind(key: String, value: LocalDate) = defaultCase.unbind(key, value)
-    }
-    of(formatter)
-  }
-
-  // A `def` for the LocalDate.now()
-  private def statsForm =
-    Form(
-      tuple(
-        "areas" -> default(list(uuid), List()),
-        "organisations" -> default(list(of[Organisation.Id]), List()),
-        "groups" -> default(list(uuid), List()),
-        "creationMinDate" -> default(localDateMapping, LocalDate.now().minusDays(30)),
-        "creationMaxDate" -> default(localDateMapping, LocalDate.now())
-      )
-    )
-
   val statsAction = loginAction.withPublicPage(Ok(views.publicStats.page))
 
   def stats: Action[AnyContent] =
@@ -909,7 +879,7 @@ case class ApplicationController @Inject() (
   ): Future[Result] = {
     // TODO: remove `.get`
     val (areaIds, queryOrganisationIds, queryGroupIds, creationMinDate, creationMaxDate) =
-      statsForm.bindFromRequest().value.get
+      StatsFormData.form.bindFromRequest().value.get
 
     val organisationIds =
       if (Authorization.isAdmin(rights))
@@ -1547,19 +1517,10 @@ case class ApplicationController @Inject() (
       }
     }
 
-  private val inviteForm = Form(
-    mapping(
-      "message" -> text,
-      "users" -> list(uuid),
-      "groups" -> list(uuid),
-      "privateToHelpers" -> boolean
-    )(InvitationFormData.apply)(InvitationFormData.unapply)
-  )
-
   def invite(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application =>
-        val form = inviteForm.bindFromRequest()
+        val form = InvitationFormData.form.bindFromRequest()
         // Get `areaId` from the form, to avoid losing it in case of errors
         val currentArea: Area = extractAreaOutOfFormOrThrow(form, "Invite User form")
         form.fold(
@@ -1765,16 +1726,10 @@ case class ApplicationController @Inject() (
       }
     }
 
-  private val closeApplicationForm = Form(
-    single(
-      "usefulness" -> text,
-    )
-  )
-
   def terminate(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(applicationId) { application: Application =>
-        val form = closeApplicationForm.bindFromRequest()
+        val form = CloseApplicationFormData.form.bindFromRequest()
         form.fold(
           formWithErrors => {
             eventService
