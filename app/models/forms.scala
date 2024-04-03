@@ -14,7 +14,7 @@ import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import scala.util.Try
 import serializers.Keys
 
-object forms {
+package forms {
 
   final case class SignupFormData(
       firstName: Option[String],
@@ -146,7 +146,7 @@ object forms {
 
   }
 
-  case class ApplicationFormData(
+  final case class ApplicationFormData(
       subject: String,
       description: String,
       usagerPrenom: String,
@@ -211,7 +211,7 @@ object forms {
 
   }
 
-  case class AnswerFormData(
+  final case class AnswerFormData(
       answerType: String,
       message: Option[String],
       applicationIsDeclaredIrrelevant: Boolean,
@@ -273,7 +273,7 @@ object forms {
 
   }
 
-  case class InvitationFormData(
+  final case class InvitationFormData(
       message: String,
       invitedUsers: List[UUID],
       invitedGroups: List[UUID],
@@ -328,7 +328,7 @@ object forms {
 
   }
 
-  case class AddUserFormData(
+  final case class AddUserFormData(
       firstName: Option[String],
       lastName: Option[String],
       name: String,
@@ -340,7 +340,7 @@ object forms {
       sharedAccount: Boolean,
   )
 
-  case class AddUsersFormData(users: List[AddUserFormData], confirmInstructors: Boolean)
+  final case class AddUsersFormData(users: List[AddUserFormData], confirmInstructors: Boolean)
 
   object EditUserFormData {
 
@@ -404,7 +404,7 @@ object forms {
 
   }
 
-  case class EditUserFormData(
+  final case class EditUserFormData(
       id: UUID,
       firstName: Option[String],
       lastName: Option[String],
@@ -425,7 +425,7 @@ object forms {
       internalSupportComment: Option[String]
   )
 
-  case class CSVReviewUserFormData(
+  final case class CSVReviewUserFormData(
       id: UUID,
       firstName: Option[String],
       lastName: Option[String],
@@ -436,7 +436,7 @@ object forms {
       phoneNumber: Option[String]
   )
 
-  case class CSVUserFormData(
+  final case class CSVUserFormData(
       user: CSVReviewUserFormData,
       line: Int,
       alreadyExists: Boolean,
@@ -444,7 +444,7 @@ object forms {
       isInMoreThanOneGroup: Option[Boolean] = None
   )
 
-  case class CSVUserGroupFormData(
+  final case class CSVUserGroupFormData(
       group: UserGroup,
       users: List[CSVUserFormData],
       alreadyExistsOrAllUsersAlreadyExist: Boolean,
@@ -452,7 +452,7 @@ object forms {
       alreadyExistingGroup: Option[UserGroup] = None
   )
 
-  case class CSVRawLinesFormData(csvLines: String, areaIds: List[UUID], separator: Char)
+  final case class CSVRawLinesFormData(csvLines: String, areaIds: List[UUID], separator: Char)
 
   object CSVRawLinesFormData {
 
@@ -530,7 +530,11 @@ object forms {
 
     def emptyFilters(baseUrl: String): Filters = Filters(none, none, baseUrl)
 
-    case class Filters(selectedGroups: Option[Set[UUID]], status: Option[String], urlBase: String) {
+    final case class Filters(
+        selectedGroups: Option[Set[UUID]],
+        status: Option[String],
+        urlBase: String
+    ) {
 
       def groupIsFiltered(id: UUID): Boolean =
         selectedGroups.map(groups => groups.contains(id)).getOrElse(false)
@@ -580,7 +584,7 @@ object forms {
 
   }
 
-  case class ApplicationsPageInfos(
+  final case class ApplicationsPageInfos(
       filters: ApplicationsPageInfos.Filters,
       groupsCounts: Map[UUID, Int],
       allGroupsOpenCount: Int,
