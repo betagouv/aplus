@@ -139,6 +139,21 @@ object main {
           attr("nomodule").empty,
           src := Assets.versioned("generated-js/dsfr/dsfr.nomodule.min.js").url
         ),
+        // Matomo
+        script(
+          `type` := "application/javascript",
+          src := Assets.versioned("javascripts/stats.js").url
+        ),
+        tags2.noscript(
+          // Note: the '&' character is correctly escaped by scalatags
+          p(
+            img(
+              src := "https://stats.beta.gouv.fr/matomo.php?idsite=111&rec=1",
+              style := "border:0;",
+              alt := ""
+            )
+          )
+        ),
         additionalFooterTags
       )
     )

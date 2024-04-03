@@ -39,9 +39,17 @@ object head {
 
   def bottomScripts(implicit webJarsUtil: WebJarsUtil): Frag =
     frag(
+      // Matomo
       publicScript("javascripts/stats.js"),
       tags2.noscript(
-        p(img(src := "//stats.data.gouv.fr/piwik.php?idsite=42", style := "border:0;", alt := ""))
+        // Note: the '&' character is correctly escaped by scalatags
+        p(
+          img(
+            src := "https://stats.beta.gouv.fr/matomo.php?idsite=111&rec=1",
+            style := "border:0;",
+            alt := ""
+          )
+        )
       ),
       webJarScript("material.min.js"),
       script(`type` := "text/javascript", src := JavascriptController.javascriptRoutes.url),
