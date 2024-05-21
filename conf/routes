@@ -68,7 +68,7 @@ POST        /me                                                                 
 GET         /utilisateurs                                                                    controllers.UserController.home
 GET         /utilisateurs/:userId                                                            controllers.UserController.editUser(userId: java.util.UUID)
 POST        /utilisateurs/:userId                                                            controllers.UserController.editUserPost(userId: java.util.UUID)
-POST        /utilisateurs/:userId/reactivation                                               controllers.GroupController.enableUser(userId: java.util.UUID)
+POST        /utilisateurs/:userId/reactivation/groupes/:groupId                              controllers.GroupController.enableUser(userId: java.util.UUID, groupId: java.util.UUID)
 POST        /utilisateurs/:userId/suppression                                                controllers.UserController.deleteUnusedUserById(userId: java.util.UUID)
 
 

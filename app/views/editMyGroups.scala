@@ -368,8 +368,8 @@ object editMyGroups {
     if (user.id =!= currentUser.id) {
       if (user.disabled && Authorization.canEnableOtherUser(user, group :: Nil)(currentUserRights))
         form(
-          action := addRedirectQueryParam(GroupController.enableUser(user.id).path),
-          method := GroupController.enableUser(user.id).method,
+          action := addRedirectQueryParam(GroupController.enableUser(user.id, group.id).path),
+          method := GroupController.enableUser(user.id, group.id).method,
           CSRFInput,
           button(
             `type` := "submit",
