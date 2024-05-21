@@ -94,7 +94,7 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.7.3",
   anormDependency,
   "org.playframework" %% "play-mailer" % "10.0.0",
-  "org.playframework" %% "play-json" % "3.0.2",
+  "org.playframework" %% "play-json" % "3.0.3",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
