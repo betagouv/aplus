@@ -104,11 +104,14 @@ class AppConfig @Inject() (configuration: Configuration) {
 
   val statisticsBottomChartsUrls: List[String] =
     configuration
-      .get[String]("app.statistics.bottomChartsUrls")
-      .split(",")
-      .map(_.trim)
-      .filterNot(_.isEmpty)
+      .getOptional[String]("app.statistics.bottomChartsUrls")
       .toList
+      .flatMap(
+        _.split(",")
+          .map(_.trim)
+          .filterNot(_.isEmpty)
+          .toList
+      )
 
   val groupsWithDsfr: Set[UUID] =
     configuration
