@@ -79,8 +79,7 @@ object internalStats {
       config.statisticsNumberOfNewApplicationsUrl.map(iframe12Cols),
       config.statisticsPercentOfApplicationsByStatusUrl.map(iframe6Cols),
       config.statisticsPercentOfRelevantApplicationsUrl.map(iframe6Cols),
-      config.statisticsNumberOfApplicationsByUsefulnessUrl.map(iframe12Cols),
-      config.statisticsTimeToProcessApplicationsUrl.map(iframe12Cols),
+      frag(config.statisticsBottomChartsUrls.map(iframe12Cols)),
       (filters.endDate
         .isAfter(LocalDate.now().minusDays(2)))
         .some
