@@ -102,11 +102,16 @@ class AppConfig @Inject() (configuration: Configuration) {
   val statisticsPercentOfApplicationsByStatusUrl: Option[String] =
     configuration.getOptional[String]("app.statistics.percentOfApplicationsByStatusUrl")
 
-  val statisticsNumberOfApplicationsByUsefulnessUrl: Option[String] =
-    configuration.getOptional[String]("app.statistics.numberOfApplicationsByUsefulnessUrl")
-
-  val statisticsTimeToProcessApplicationsUrl: Option[String] =
-    configuration.getOptional[String]("app.statistics.timeToProcessApplicationsUrl")
+  val statisticsBottomChartsUrls: List[String] =
+    configuration
+      .getOptional[String]("app.statistics.bottomChartsUrls")
+      .toList
+      .flatMap(
+        _.split(",")
+          .map(_.trim)
+          .filterNot(_.isEmpty)
+          .toList
+      )
 
   val groupsWithDsfr: Set[UUID] =
     configuration
