@@ -100,7 +100,7 @@ libraryDependencies ++= Seq(
   "com.github.tototoshi" %% "scala-csv" % "1.3.10",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.13.1",
-  "org.typelevel" %% "cats-core" % "2.10.0",
+  "org.typelevel" %% "cats-core" % "2.12.0",
   "org.typelevel" %% "cats-effect" % "3.5.4",
 )
 
