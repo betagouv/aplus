@@ -440,15 +440,32 @@ class UserService @Inject() (
       """.executeUpdate()
     }
 
-  def enable(userId: UUID): Future[Either[Error, Unit]] =
-    executeUserUpdate(
+  def enable(userId: UUID, groupId: UUID): Future[Either[Error, Unit]] =
+    executeUserUpdateTransaction(
       s"Impossible de réactiver l'utilisateur $userId"
     ) { implicit connection =>
-      SQL"""
-        UPDATE "user" SET
-          disabled = false
-        WHERE id = $userId::uuid
-      """.executeUpdate()
+      val user =
+        SQL(s"""SELECT $fieldsInSelect
+                FROM "user"
+                WHERE id = {userId}::uuid""")
+          .on("userId" -> userId)
+          .as(simpleUser.single)
+      if (user.groupIds.contains[UUID](groupId) && user.groupIds.size === 2) {
+        // When there are 2 groups, most people actually want to reactivate in one group
+        val newGroupIds = groupId :: Nil
+        SQL"""
+          UPDATE "user" SET
+            disabled = false,
+            group_ids = array[${newGroupIds}]::uuid[]
+          WHERE id = $userId::uuid
+        """.executeUpdate()
+      } else {
+        SQL"""
+          UPDATE "user" SET
+            disabled = false
+          WHERE id = $userId::uuid
+        """.executeUpdate()
+      }
     }
 
   def disable(userId: UUID): Future[Either[Error, Unit]] =
@@ -467,6 +484,23 @@ class UserService @Inject() (
   )(inner: Connection => _): Future[Either[Error, Unit]] =
     Future(
       Try(db.withConnection(inner)).toEither
+        .map(_ => ())
+        .left
+        .map(error =>
+          Error.SqlException(
+            EventType.EditUserError,
+            errorMessage,
+            error,
+            none
+          )
+        )
+    )
+
+  private def executeUserUpdateTransaction(
+      errorMessage: String
+  )(inner: Connection => _): Future[Either[Error, Unit]] =
+    Future(
+      Try(db.withTransaction(inner)).toEither
         .map(_ => ())
         .left
         .map(error =>

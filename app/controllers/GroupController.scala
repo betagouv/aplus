@@ -120,7 +120,7 @@ case class GroupController @Inject() (
         )
     }
 
-  def enableUser(userId: UUID) =
+  def enableUser(userId: UUID, groupId: UUID) =
     loginAction.async { implicit request =>
       val (_, redirectPage) = groupModificationOriginPage
       withUser(
@@ -140,7 +140,7 @@ case class GroupController @Inject() (
             s"L'utilisateur n'est pas autorisé à réactiver l'utilisateur $userId"
           ) { () =>
             userService
-              .enable(userId)
+              .enable(userId, groupId)
               .map(
                 _.fold(
                   error => {
@@ -150,7 +150,7 @@ case class GroupController @Inject() (
                   _ => {
                     eventService.log(
                       EventType.UserEdited,
-                      s"Utilisateur $userId réactivé",
+                      s"Utilisateur $userId réactivé (groupe $groupId)",
                       involvesUser = userId.some
                     )
                     Redirect(redirectPage)
