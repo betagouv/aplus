@@ -228,7 +228,10 @@ object myApplicationsLegacy {
         ),
       filterLink(
         filters.isArchived,
-        s"Archivées (${infos.filteredByGroupsClosedCount}) ",
+        if (currentUser.instructor)
+          s"Traitées (${infos.filteredByGroupsClosedCount}) "
+        else
+          s"Archivées (${infos.filteredByGroupsClosedCount}) ",
         filters.withStatusArchived.toUrl,
       ),
     )

@@ -663,7 +663,17 @@ case class ApplicationController @Inject() (
           }
       }
 
-      val (closedFilteredByGroups, openFilteredByGroups) = filteredByGroups.partition(_.closed)
+      val (closedFilteredByGroups, openFilteredByGroups) =
+        filteredByGroups.partition { application =>
+          if (user.instructor) {
+            val isCreator = Authorization.isApplicationCreator(application)(userRights) ||
+              Authorization.isInApplicationCreatorGroup(application)(userRights)
+            val isProcessed = application.status === Application.Status.Processed && !isCreator
+            application.closed || isProcessed
+          } else {
+            application.closed
+          }
+        }
       val filteredByGroupsOpenCount = openFilteredByGroups.length
       val filteredByGroupsClosedCount = closedFilteredByGroups.length
 
