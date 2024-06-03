@@ -191,58 +191,70 @@ class BaseLoginAction(
 
   private def tryAuthByToken[A](
       rawToken: String
-  )(implicit request: Request[A]): Future[Either[Result, RequestWithUserData[A]]] =
-    tokenService
-      .byTokenThenDelete(rawToken)
-      .flatMap(
-        _.fold(
-          e => {
-            eventService.logErrorNoUser(e)
-            if (e.eventType === EventType.TokenDoubleUsage)
-              // Note: a few users are confused by login errors, we provide here
-              //       a better explanation than the default Play error page.
-              //       A nice HTML page might be better though.
-              Future(
-                userNotLogged(
-                  "Le même lien semble avoir été utilisé 2 fois. " +
-                    "Nous vous invitons à aller sur vos demandes " +
-                    "afin de vérifier si votre première tentative est valide. " +
-                    "Si vous n’accédez pas à vos demandes automatiquement, " +
-                    "un nouveau lien de connexion doit vous être envoyé. " +
-                    "Dans ce cas il vous suffit de saisir votre email dans le champ prévu " +
-                    "à cet effet sur la page d’accueil."
-                )
-              )
-            else
-              Future(generic500.asLeft)
-          },
-          {
-            case None =>
-              eventService.info(
-                User.systemUser,
-                request.remoteAddress,
-                "UNKNOWN_TOKEN",
-                s"Token inconnu",
-                s"Token '$rawToken'".some,
-                none,
-                none,
-                none
-              )
-              Future(
-                userNotLogged(
-                  "Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé. " +
-                    "Vous pouvez générer un nouveau lien en saisissant votre email dans le champ " +
-                    "prévu à cet effet."
-                )
-              )
-            case Some(token) =>
-              token.origin match {
-                case LoginToken.Origin.User(userId)     => manageTokenWithUserId(token, userId)
-                case LoginToken.Origin.Signup(signupId) => manageTokenWithSignupId(token, signupId)
-              }
-          }
-        )
+  )(implicit request: Request[A]): Future[Either[Result, RequestWithUserData[A]]] = {
+    def unknownTokenResponse = Future.successful(
+      userNotLogged(
+        "Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé. " +
+          "Vous pouvez générer un nouveau lien en saisissant votre email dans le champ " +
+          "prévu à cet effet."
       )
+    )
+    if (LoginToken.isValid(rawToken))
+      tokenService
+        .byTokenThenDelete(rawToken)
+        .flatMap(
+          _.fold(
+            e => {
+              eventService.logErrorNoUser(e)
+              if (e.eventType === EventType.TokenDoubleUsage)
+                // Note: a few users are confused by login errors, we provide here
+                //       a better explanation than the default Play error page.
+                //       A nice HTML page might be better though.
+                Future(
+                  userNotLogged(
+                    "Le même lien semble avoir été utilisé 2 fois. " +
+                      "Nous vous invitons à aller sur vos demandes " +
+                      "afin de vérifier si votre première tentative est valide. " +
+                      "Si vous n’accédez pas à vos demandes automatiquement, " +
+                      "un nouveau lien de connexion doit vous être envoyé. " +
+                      "Dans ce cas il vous suffit de saisir votre email dans le champ prévu " +
+                      "à cet effet sur la page d’accueil."
+                  )
+                )
+              else
+                Future(generic500.asLeft)
+            },
+            {
+              case None =>
+                eventService.info(
+                  User.systemUser,
+                  request.remoteAddress,
+                  "UNKNOWN_TOKEN",
+                  s"Token inconnu",
+                  s"Token '$rawToken'".some,
+                  none,
+                  none,
+                  none
+                )
+                unknownTokenResponse
+              case Some(token) =>
+                token.origin match {
+                  case LoginToken.Origin.User(userId) => manageTokenWithUserId(token, userId)
+                  case LoginToken.Origin.Signup(signupId) =>
+                    manageTokenWithSignupId(token, signupId)
+                }
+            }
+          )
+        )
+    else {
+      eventService.logSystem(
+        EventType.InvalidToken,
+        "Token invalide",
+        s"Token '$rawToken'".some
+      )
+      unknownTokenResponse
+    }
+  }
 
   private def manageUserLogged[A](user: User)(implicit request: Request[A]) =
     LoginAction.readUserRights(user).map { userRights =>
