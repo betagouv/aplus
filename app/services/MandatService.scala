@@ -1,6 +1,7 @@
 package services
 
 import anorm._
+import anorm.postgresql.{jsValueColumn, jsValueToStatement}
 import aplus.macros.Macros
 import cats.syntax.all._
 import helper.{PlayFormHelpers, Time}
@@ -27,19 +28,20 @@ class MandatService @Inject() (
     dependencies: ServicesDependencies
 ) {
   import dependencies.databaseExecutionContext
-  import serializers.Anorm._
 
-  implicit val mandatIdAnormParser: anorm.Column[Mandat.Id] =
-    implicitly[anorm.Column[UUID]].map(Mandat.Id.apply)
+  implicit val mandatIdAnormParser: Column[Mandat.Id] =
+    Column.of[UUID].map(Mandat.Id.apply)
 
-  implicit val smsListParser: anorm.Column[List[Sms]] =
-    implicitly[anorm.Column[JsValue]].mapResult(
-      _.validate[List[Sms]].asEither.left.map(errors =>
-        SqlMappingError(
-          s"Cannot parse JSON as List[Sms]: ${PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)}"
+  implicit val smsListParser: Column[List[Sms]] =
+    Column
+      .of[JsValue]
+      .mapResult(
+        _.validate[List[Sms]].asEither.left.map(errors =>
+          SqlMappingError(
+            s"Cannot parse JSON as List[Sms]: ${PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)}"
+          )
         )
       )
-    )
 
   private val (mandatRowParser, tableFields) = Macros.parserWithFields[Mandat](
     "id",

@@ -77,7 +77,14 @@ scalacOptions ++= Seq(
 // https://typelevel.org/cats-effect/docs/getting-started
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
-lazy val anormDependency = "org.playframework.anorm" %% "anorm" % "2.7.0"
+val anormVersion = "2.7.0"
+
+lazy val anormDependency = "org.playframework.anorm" %% "anorm" % anormVersion
+
+lazy val anormDependencies = Seq(
+  anormDependency,
+  "org.playframework.anorm" %% "anorm-postgres" % anormVersion,
+)
 
 libraryDependencies ++= Seq(
   ws,
@@ -92,7 +99,6 @@ libraryDependencies += guice
 
 libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.7.3",
-  anormDependency,
   "org.playframework" %% "play-mailer" % "10.0.0",
   "org.playframework" %% "play-json" % "3.0.3",
   "com.sun.mail" % "javax.mail" % "1.6.2",
@@ -103,6 +109,8 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-core" % "2.12.0",
   "org.typelevel" %% "cats-effect" % "3.5.4",
 )
+
+libraryDependencies ++= anormDependencies
 
 // UI
 libraryDependencies ++= Seq(

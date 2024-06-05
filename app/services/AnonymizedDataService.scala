@@ -2,6 +2,7 @@ package services
 
 import anorm._
 import anorm.SqlParser.scalar
+import anorm.postgresql.jsValueToStatement
 import cats.syntax.all._
 import helper.{Pseudonymizer, Time, UUIDHelper}
 import java.sql.Connection
@@ -10,7 +11,7 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 import javax.inject.Inject
 import models.{dataModels, EventType, SignupRequest}
-import models.dataModels.UserRow
+import models.dataModels.{AnswerRow, ApplicationRow, UserRow}
 import modules.AppConfig
 import play.api.db.Database
 import play.api.libs.json.Json
@@ -34,16 +35,13 @@ class AnonymizedDataService @Inject() (
     userService: UserService,
 ) {
 
-  import dataModels.Answer._
-  import dataModels.Application.SeenByUser._
   import dataModels.SmsFormats._
-  import serializers.Anorm._
 
   // The table `login_token` has data but is not exported
   def transferData(): Unit = {
     anonymizedDatabase.withTransaction { anonConn =>
       truncateData()(anonConn)
-      insertApplications()(anonConn)
+      insertApplicationsAndAnswers()(anonConn)
       insertFileMetadata()(anonConn)
       insertFranceServices()(anonConn)
       insertMandats()(anonConn)
@@ -56,6 +54,7 @@ class AnonymizedDataService @Inject() (
   }
 
   private def truncateData()(implicit connection: Connection): Unit = {
+    val _ = SQL("""DELETE FROM answer""").execute()
     val _ = SQL("""DELETE FROM application""").execute()
     val _ = SQL("""DELETE FROM file_metadata""").execute()
     val _ = SQL("""DELETE FROM france_service""").execute()
@@ -65,10 +64,10 @@ class AnonymizedDataService @Inject() (
     val _ = SQL("""DELETE FROM user_group""").execute()
   }
 
-  private def insertApplications()(implicit connection: Connection): Unit = {
-    val baseApplications = applicationService.allOrThrow
-    val rows = baseApplications.map(_.anonymize)
-    val query =
+  private def insertApplicationsAndAnswers()(implicit connection: Connection): Unit = {
+    val applications = applicationService.allOrThrow.map(_.anonymize)
+    val applicationsRows = applications.map(ApplicationRow.fromApplication)
+    val applicationQuery =
       """INSERT INTO application (
            id,
            creation_date,
@@ -83,7 +82,6 @@ class AnonymizedDataService @Inject() (
            area,
            irrelevant,
            internal_id,
-           answers,
            closed,
            usefulness,
            closed_date,
@@ -109,7 +107,6 @@ class AnonymizedDataService @Inject() (
            {area}::uuid,
            {irrelevant},
            {internalId},
-           {answers}::jsonb,
            {closed},
            {usefulness},
            {closedDate},
@@ -122,7 +119,7 @@ class AnonymizedDataService @Inject() (
            array[{invitedGroupIds}]::uuid[],
            {personalDataWiped}
          )"""
-    rows.foreach { row =>
+    applicationsRows.foreach { row =>
       val params = Seq[NamedParameter](
         "id" -> row.id,
         "creationDate" -> row.creationDate,
@@ -130,31 +127,79 @@ class AnonymizedDataService @Inject() (
         "creatorUserId" -> row.creatorUserId,
         "creatorGroupId" -> row.creatorGroupId,
         "creatorGroupName" -> row.creatorGroupName,
-        "userInfos" -> Json.toJson(row.userInfos),
-        "invitedUsers" -> Json.toJson(
-          row.invitedUsers.map { case (key, value) => key.toString -> value }
-        ),
+        "userInfos" -> row.userInfos,
+        "invitedUsers" -> row.invitedUsers,
         "area" -> row.area,
         "irrelevant" -> row.irrelevant,
         "internalId" -> row.internalId,
-        "answers" -> Json.toJson(row.answers),
         "closed" -> row.closed,
         "usefulness" -> row.usefulness,
         "closedDate" -> row.closedDate,
         "expertInvited" -> row.expertInvited,
         "hasSelectedSubject" -> row.hasSelectedSubject,
         "category" -> row.category,
-        "mandatType" -> row.mandatType.map(
-          dataModels.Application.MandatType.dataModelSerialization
-        ),
+        "mandatType" -> row.mandatType,
         "mandatDate" -> row.mandatDate,
-        "seenByUserIds" -> Json.toJson(row.seenByUsers),
-        "invitedGroupIds" -> row.invitedGroupIdsAtCreation,
+        "seenByUserIds" -> row.seenByUsers,
+        "invitedGroupIds" -> row.invitedGroupIds,
         "personalDataWiped" -> row.personalDataWiped,
       )
-      SQL(query).on(params: _*).execute()
+      SQL(applicationQuery).on(params: _*).execute()
     }
-    logMessage(s"Table application : " + rows.size + " lignes")
+    logMessage(s"Table application : " + applicationsRows.size + " lignes")
+
+    val answersRows = applications.flatMap(_.answers.zipWithIndex.map { case (answer, index) =>
+      AnswerRow.fromAnswer(answer, index + 1)
+    })
+    val answersQuery =
+      """
+        INSERT INTO answer (
+          id,
+          application_id,
+          answer_order,
+          creation_date,
+          answer_type,
+          message,
+          user_infos,
+          creator_user_id,
+          creator_user_name,
+          invited_users,
+          invited_group_ids,
+          visible_by_helpers,
+          declare_application_is_irrelevant
+        ) VALUES (
+          {id}::uuid,
+          {applicationId}::uuid,
+          {answerOrder},
+          {creationDate},
+          {answerType},
+          '',
+          {userInfos},
+          {creatorUserId}::uuid,
+          {creatorUserName},
+          {invitedUsers},
+          array[{invitedGroupIds}]::uuid[],
+          {visibleByHelpers},
+          {declareApplicationIsIrrelevant}
+        )"""
+    answersRows.foreach { row =>
+      val params = Seq[NamedParameter](
+        "id" -> row.id,
+        "applicationId" -> row.applicationId,
+        "answerOrder" -> row.answerOrder,
+        "creationDate" -> row.creationDate,
+        "answerType" -> row.answerType,
+        "userInfos" -> row.userInfos,
+        "creatorUserId" -> row.creatorUserId,
+        "creatorUserName" -> row.creatorUserName,
+        "invitedUsers" -> row.invitedUsers,
+        "invitedGroupIds" -> row.invitedGroupIds,
+        "visibleByHelpers" -> row.visibleByHelpers,
+        "declareApplicationIsIrrelevant" -> row.declareApplicationIsIrrelevant
+      )
+      SQL(answersQuery).on(params: _*).execute()
+    }
+    logMessage(s"Table answer : " + answersRows.size + " lignes")
   }
 
   private def insertEvents(): Unit = {
