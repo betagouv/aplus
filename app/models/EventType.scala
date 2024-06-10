@@ -186,6 +186,7 @@ object EventType {
   object GenerateToken extends Info
   object ExpiredToken extends Warn
   object TokenDoubleUsage extends Warn
+  object InvalidToken extends Warn
   object TokenError extends Error
   object MissingSignup extends Warn
   object AuthByKey extends Info // Incorrectly named (this is an auth by token)

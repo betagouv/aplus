@@ -42,4 +42,9 @@ object LoginToken {
       ipAddress
     )
 
+  private val tokenIsValidRegex = "^[a-zA-Z0-9]{20}$".r
+
+  def isValid(rawToken: String): Boolean =
+    tokenIsValidRegex.matches(rawToken)
+
 }
