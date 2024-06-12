@@ -137,10 +137,10 @@ class ApplicationService @Inject() (
         SELECT $fieldsInApplicationSelect
         FROM application
         WHERE closed = false
-        AND age(creation_date) > '{days} days'
+        AND age(creation_date) > {days}::interval
         AND expert_invited = false
       """)
-        .on("days" -> numberOfDays)
+        .on("days" -> s"$numberOfDays days")
         .as(simpleApplication.*)
       val answersRows = answersForApplications(rows)
       rows.map(_.toApplication(answersRows))
