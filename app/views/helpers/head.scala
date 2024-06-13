@@ -10,7 +10,7 @@ object head {
 
   def main(headTitle: String, additionalTags: Modifier = modifier())(implicit
       webJarsUtil: WebJarsUtil
-  ) =
+  ): Tag =
     scalatags.Text.all.head(
       meta(charset := "utf-8"),
       meta(httpEquiv := "X-UA-Compatible", content := "IE=edge"),

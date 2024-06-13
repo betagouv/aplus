@@ -9,25 +9,25 @@ import org.specs2.runner.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class BusinessDaysCalculatorSpec extends Specification {
 
-  val tz = ZoneId.of("Europe/Paris")
+  val tz: ZoneId = ZoneId.of("Europe/Paris")
 
   // 2023-09-21 = Thursday
-  val date1 = ZonedDateTime.of(2023, 9, 21, 10, 0, 0, 0, tz)
-  val date2 = ZonedDateTime.of(2023, 9, 21, 10, 30, 0, 0, tz)
-  val date3 = ZonedDateTime.of(2023, 9, 21, 15, 0, 0, 0, tz)
-  val date4 = ZonedDateTime.of(2023, 9, 21, 18, 0, 0, 0, tz)
+  val date1: ZonedDateTime = ZonedDateTime.of(2023, 9, 21, 10, 0, 0, 0, tz)
+  val date2: ZonedDateTime = ZonedDateTime.of(2023, 9, 21, 10, 30, 0, 0, tz)
+  val date3: ZonedDateTime = ZonedDateTime.of(2023, 9, 21, 15, 0, 0, 0, tz)
+  val date4: ZonedDateTime = ZonedDateTime.of(2023, 9, 21, 18, 0, 0, 0, tz)
 
-  val date5 = ZonedDateTime.of(2023, 9, 22, 12, 0, 0, 0, tz)
+  val date5: ZonedDateTime = ZonedDateTime.of(2023, 9, 22, 12, 0, 0, 0, tz)
 
-  val date6 = ZonedDateTime.of(2023, 9, 23, 11, 0, 0, 0, tz)
-  val date7 = ZonedDateTime.of(2023, 9, 23, 16, 0, 0, 0, tz)
+  val date6: ZonedDateTime = ZonedDateTime.of(2023, 9, 23, 11, 0, 0, 0, tz)
+  val date7: ZonedDateTime = ZonedDateTime.of(2023, 9, 23, 16, 0, 0, 0, tz)
 
   // 2023-09-24 = Sunday
-  val date8 = ZonedDateTime.of(2023, 9, 24, 12, 0, 0, 0, tz)
+  val date8: ZonedDateTime = ZonedDateTime.of(2023, 9, 24, 12, 0, 0, 0, tz)
 
   // 2023-09-26 = Tuesday
-  val date9 = ZonedDateTime.of(2023, 9, 26, 9, 0, 0, 0, tz)
-  val date10 = ZonedDateTime.of(2023, 9, 26, 16, 0, 0, 0, tz)
+  val date9: ZonedDateTime = ZonedDateTime.of(2023, 9, 26, 9, 0, 0, 0, tz)
+  val date10: ZonedDateTime = ZonedDateTime.of(2023, 9, 26, 16, 0, 0, 0, tz)
 
   "businessHoursBetween should" >> {
     "calculate hours between same day times" >> {

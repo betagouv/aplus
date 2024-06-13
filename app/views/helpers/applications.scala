@@ -41,7 +41,7 @@ object applications {
 
   def creatorGroup(form: Form[ApplicationFormData], creatorGroups: List[UserGroup])(implicit
       messagesProvider: Messages
-  ) = {
+  ): Frag = {
     val formCreatorGroup = form("creatorGroupId")
     frag(
       h5(

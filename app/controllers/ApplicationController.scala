@@ -1,6 +1,6 @@
 package controllers
 
-import actions.{LoginAction, RequestWithUserData}
+import actions.{BaseLoginAction, LoginAction, RequestWithUserData}
 import cats.data.EitherT
 import cats.syntax.all._
 import constants.Constants
@@ -819,7 +819,7 @@ case class ApplicationController @Inject() (
 
   def dashboardAs(otherUserId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withUser(otherUserId) { otherUser: User =>
+      withUser(otherUserId) { (otherUser: User) =>
         asUserWithAuthorization(Authorization.canSeeOtherUserNonPrivateViews(otherUser))(
           EventType.MasqueradeUnauthorized,
           s"Accès non autorisé pour voir le dashboard de $otherUserId",
@@ -848,7 +848,7 @@ case class ApplicationController @Inject() (
       }
     }
 
-  val statsAction = loginAction.withPublicPage(Ok(views.publicStats.page))
+  val statsAction: BaseLoginAction = loginAction.withPublicPage(Ok(views.publicStats.page))
 
   def stats: Action[AnyContent] =
     statsAction.async { implicit request =>
@@ -857,7 +857,7 @@ case class ApplicationController @Inject() (
 
   def statsAs(otherUserId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withUser(otherUserId) { otherUser: User =>
+      withUser(otherUserId) { (otherUser: User) =>
         asUserWithAuthorization(Authorization.canSeeOtherUserNonPrivateViews(otherUser))(
           EventType.MasqueradeUnauthorized,
           s"Accès non autorisé pour voir la page stats de $otherUserId",
@@ -985,7 +985,7 @@ case class ApplicationController @Inject() (
 
   def allAs(userId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withUser(userId, includeDisabled = request.currentUser.admin) { otherUser: User =>
+      withUser(userId, includeDisabled = request.currentUser.admin) { (otherUser: User) =>
         asUserWithAuthorization(Authorization.canSeeOtherUserNonPrivateViews(otherUser))(
           EventType.AllAsUnauthorized,
           s"Accès non autorisé pour voir la liste des demandes de $userId",
@@ -1258,7 +1258,7 @@ case class ApplicationController @Inject() (
                     case FileMetadata.Attached.Application(id)          => id
                     case FileMetadata.Attached.Answer(applicationId, _) => applicationId
                   }
-                  withApplication(applicationId) { application: Application =>
+                  withApplication(applicationId) { (application: Application) =>
                     val isAuthorized =
                       Authorization
                         .fileCanBeShown(config.filesExpirationInDays)(
@@ -1641,7 +1641,7 @@ case class ApplicationController @Inject() (
 
   def inviteExpert(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withApplication(applicationId) { application: Application =>
+      withApplication(applicationId) { (application: Application) =>
         val currentAreaId = application.area
         if (application.canHaveExpertsInvitedBy(request.currentUser)) {
           userService.allExperts.map { expertUsers =>
@@ -1712,7 +1712,7 @@ case class ApplicationController @Inject() (
   // TODO : should be better to handle errors with better types (eg Either) than Boolean
   def reopen(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withApplication(applicationId) { application: Application =>
+      withApplication(applicationId) { (application: Application) =>
         Future.successful(Authorization.canOpenApplication(application)(request.rights)).flatMap {
           case true =>
             applicationService
@@ -1738,7 +1738,7 @@ case class ApplicationController @Inject() (
 
   def terminate(applicationId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withApplication(applicationId) { application: Application =>
+      withApplication(applicationId) { (application: Application) =>
         val form = CloseApplicationFormData.form.bindFromRequest()
         form.fold(
           formWithErrors => {

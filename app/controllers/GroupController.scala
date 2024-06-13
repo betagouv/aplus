@@ -63,7 +63,7 @@ case class GroupController @Inject() (
         (false, routes.GroupController.showEditMyGroups)
     }
 
-  def addToGroup(groupId: UUID) =
+  def addToGroup(groupId: UUID): Action[AnyContent] =
     addOrRemoveUserAction(groupId) { implicit request => group =>
       val (originIsGroupPage, redirectPage) = groupModificationOriginPage
       AddUserToGroupFormData.form
@@ -120,7 +120,7 @@ case class GroupController @Inject() (
         )
     }
 
-  def enableUser(userId: UUID, groupId: UUID) =
+  def enableUser(userId: UUID, groupId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       val (_, redirectPage) = groupModificationOriginPage
       withUser(
@@ -163,7 +163,7 @@ case class GroupController @Inject() (
       }
     }
 
-  def removeFromGroup(userId: UUID, groupId: UUID) =
+  def removeFromGroup(userId: UUID, groupId: UUID): Action[AnyContent] =
     addOrRemoveUserAction(groupId) { implicit request => group =>
       val (_, redirectPage) = groupModificationOriginPage
       withUser(
@@ -221,7 +221,7 @@ case class GroupController @Inject() (
 
   def showEditMyGroupsAs(otherUserId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withUser(otherUserId) { otherUser: User =>
+      withUser(otherUserId) { (otherUser: User) =>
         asUserWithAuthorization(Authorization.canSeeOtherUserNonPrivateViews(otherUser))(
           EventType.MasqueradeUnauthorized,
           s"Accès non autorisé pour voir la page mes groupes de $otherUserId",
@@ -236,7 +236,7 @@ case class GroupController @Inject() (
 
   def deleteUnusedGroupById(groupId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withGroup(groupId) { group: UserGroup =>
+      withGroup(groupId) { (group: UserGroup) =>
         asAdminOfGroupZone(group)(
           GroupDeletionUnauthorized,
           s"Droits insuffisants pour la suppression du groupe $groupId"
@@ -268,7 +268,7 @@ case class GroupController @Inject() (
 
   def editGroup(id: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withGroup(id) { group: UserGroup =>
+      withGroup(id) { (group: UserGroup) =>
         asUserWithAuthorization(Authorization.canEditGroup(group))(
           EditGroupUnauthorized,
           s"Tentative d'accès non autorisé à l'edition du groupe ${group.id}",
@@ -302,7 +302,7 @@ case class GroupController @Inject() (
               groupService
                 .add(group)
                 .fold(
-                  { error: String =>
+                  { (error: String) =>
                     eventService
                       .log(
                         AddUserGroupError,
@@ -332,7 +332,7 @@ case class GroupController @Inject() (
 
   def editGroupPost(groupId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withGroup(groupId) { currentGroup: UserGroup =>
+      withGroup(groupId) { (currentGroup: UserGroup) =>
         asUserWithAuthorization(Authorization.canEditGroup(currentGroup))(
           EditGroupUnauthorized,
           s"Tentative d'édition non autorisée du groupe ${currentGroup.id}",

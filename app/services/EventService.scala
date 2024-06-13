@@ -45,7 +45,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       involvesUser: Option[UUID] = None,
       /** If the warn/error has an exception as cause. */
       underlyingException: Option[Throwable] = None
-  )(implicit request: RequestWithUserData[_]) =
+  )(implicit request: RequestWithUserData[_]): Unit =
     register(event.level)(
       request.currentUser,
       request.remoteAddress,
@@ -63,7 +63,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       error: models.Error,
       applicationId: Option[UUID] = None,
       involvesUser: Option[UUID] = None
-  )(implicit request: RequestWithUserData[_]) =
+  )(implicit request: RequestWithUserData[_]): Unit =
     log(
       event = error.eventType,
       descriptionSanitized = error.description,
@@ -78,7 +78,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       error: models.Error,
       applicationId: Option[UUID] = None,
       involvesUser: Option[UUID] = None
-  )(implicit request: Request[_]) =
+  )(implicit request: Request[_]): Unit =
     logSystem(
       event = error.eventType,
       descriptionSanitized = error.description,
@@ -88,9 +88,20 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       underlyingException = error.underlyingException
     )
 
-  val info = register("INFO") _
-  val warn = register("WARN") _
-  val error = register("ERROR") _
+  type Log = (
+      User,
+      String,
+      String,
+      String,
+      Option[String],
+      Option[UUID],
+      Option[UUID],
+      Option[Throwable]
+  ) => Unit
+
+  val info: Log = register("INFO") _
+  val warn: Log = register("WARN") _
+  val error: Log = register("ERROR") _
 
   /** When there are no logged in user */
   def logSystem(
@@ -117,7 +128,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       error: models.Error,
       applicationId: Option[UUID] = None,
       involvesUser: Option[UUID] = None
-  ) = logNoRequest(
+  ): Unit = logNoRequest(
     error.eventType,
     error.description,
     error.unsafeData,
@@ -134,7 +145,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       applicationId: Option[UUID] = None,
       involvesUser: Option[UUID] = None,
       underlyingException: Option[Throwable] = None
-  ) =
+  ): Unit =
     register(event.level)(
       currentUser = User.systemUser,
       "0.0.0.0",

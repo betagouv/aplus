@@ -13,7 +13,7 @@ import scala.concurrent.duration._
 @Singleton
 class AppConfig @Inject() (configuration: Configuration) {
 
-  val appSecret = configuration.get[String]("play.http.secret.key")
+  val appSecret: String = configuration.get[String]("play.http.secret.key")
 
   val tokenExpirationInMinutes: Int =
     configuration.get[Int]("app.tokenExpirationInMinutes")

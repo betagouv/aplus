@@ -48,7 +48,7 @@ object Operators {
           eventService
             .log(UserGroupNotFound, "Tentative d'accès à un groupe inexistant")
           Future(NotFound("Groupe inexistant."))
-        })({ group: UserGroup => payload(group) })
+        })({ (group: UserGroup) => payload(group) })
 
     def asAdminOfGroupZone(group: UserGroup)(errorEventType: EventType, errorMessage: => String)(
         payload: () => Future[Result]
@@ -95,7 +95,7 @@ object Operators {
           Future.successful(
             errorResult.getOrElse(NotFound(s"L'utilisateur n'existe pas."))
           )
-        })({ user: User => payload(user) })
+        })({ (user: User) => payload(user) })
 
     def asUserWithAuthorization(authorizationCheck: Authorization.Check)(
         errorEventType: EventType,
@@ -186,9 +186,7 @@ object Operators {
         .flatMap(
           _.fold(
             error => manageApplicationError(applicationId, error),
-            { application: Application =>
-              payload(application)
-            }
+            (application: Application) => payload(application)
           )
         )
 

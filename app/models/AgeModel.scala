@@ -13,7 +13,7 @@ trait AgeModel {
   def ageInMonths: Int = MONTHS.between(creationDate, ZonedDateTime.now()).toInt
   def ageInYears: Int = YEARS.between(creationDate, ZonedDateTime.now()).toInt
 
-  def ageString =
+  def ageString: String =
     if (ageInYears > 0) {
       s"$ageInYears années"
     } else if (ageInMonths > 0) {

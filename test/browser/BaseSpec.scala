@@ -2,11 +2,12 @@ package browser
 
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.firefox.{FirefoxDriver, FirefoxOptions}
+import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 
 trait BaseSpec {
 
-  def applicationWithBrowser =
+  def applicationWithBrowser: Application =
     new GuiceApplicationBuilder()
       .configure("app.filesPath" -> "files", "app.host" -> "localhost", "play.mailer.mock" -> true)
       .build()

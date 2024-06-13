@@ -154,7 +154,7 @@ object dataModels {
   ) {
     import FileMetadata._
 
-    def modelStatus = status match {
+    def modelStatus: Option[Status] = status match {
       case "scanning"    => Status.Scanning.some
       case "quarantined" => Status.Quarantined.some
       case "available"   => Status.Available.some

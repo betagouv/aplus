@@ -8,6 +8,7 @@ import javax.inject.Inject
 import models.EventType
 import modules.AppConfig
 import play.api.inject.ApplicationLifecycle
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import services.{DbMaintenanceService, EventService, ServicesDependencies}
 
@@ -35,7 +36,7 @@ class ViewsRefreshTask @Inject() (
     logMessage(EventType.ViewsRefreshMessage, s"Prochains REFRESH MATERIALIZED VIEW dans $duration")
   )
 
-  val cancelCallback = repeatWithDelay(durationUntilNextTick)(
+  val cancelCallback: () => Future[Unit] = repeatWithDelay(durationUntilNextTick)(
     loggingResult(
       dbService.refreshViews(),
       EventType.ViewsRefreshMessage,

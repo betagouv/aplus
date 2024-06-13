@@ -8,7 +8,7 @@ import org.apache.pekko.stream.Materializer
 import play.api.Configuration
 import play.api.libs.concurrent.Futures
 import play.api.libs.json.Json
-import play.api.libs.ws.WSClient
+import play.api.libs.ws.{writeableOf_JsValue, WSClient}
 import play.api.mvc.{PlayBodyParsers, Request}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
