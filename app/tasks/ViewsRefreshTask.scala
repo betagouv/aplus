@@ -1,7 +1,7 @@
 package tasks
 
 import cats.effect.IO
-import helper.TasksHelpers
+import helper.{TasksHelpers, Time}
 import java.time.{Instant, ZoneOffset}
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
@@ -33,7 +33,10 @@ class ViewsRefreshTask @Inject() (
       .toInstant
     now.until(nextInstant, ChronoUnit.MILLIS).millis
   }.flatTap(duration =>
-    logMessage(EventType.ViewsRefreshMessage, s"Prochains REFRESH MATERIALIZED VIEW dans $duration")
+    logMessage(
+      EventType.ViewsRefreshMessage,
+      s"Prochains REFRESH MATERIALIZED VIEW dans ${Time.readableDuration(duration)}"
+    )
   )
 
   val cancelCallback: () => Future[Unit] = repeatWithDelay(durationUntilNextTick)(

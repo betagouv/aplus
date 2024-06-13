@@ -202,6 +202,7 @@ object EventType {
   object FileAvailable extends Info
   object FileQuarantined extends Warn
   object FileScanError extends Error
+  object FileError extends Error
   object FilesDeletion extends Info
   object FileDeletionError extends Error
 

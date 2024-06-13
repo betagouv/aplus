@@ -154,7 +154,8 @@ object dataModels {
       filesize: Int,
       status: String,
       applicationId: Option[UUID],
-      answerId: Option[UUID]
+      answerId: Option[UUID],
+      encryptionKeyId: Option[String],
   ) {
     import FileMetadata._
 
@@ -180,7 +181,8 @@ object dataModels {
           filename = filename,
           filesize = filesize,
           status = status,
-          attached = attached
+          attached = attached,
+          encryptionKeyId = encryptionKeyId,
         )
       }
     }
@@ -211,7 +213,8 @@ object dataModels {
         filesize = metadata.filesize,
         status = statusFromFileMetadata(metadata.status),
         applicationId = applicationId,
-        answerId = answerId
+        answerId = answerId,
+        encryptionKeyId = metadata.encryptionKeyId,
       )
     }
 
