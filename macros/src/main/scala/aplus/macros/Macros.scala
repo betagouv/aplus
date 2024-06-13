@@ -1,21 +1,19 @@
 package aplus.macros
 
 import anorm.RowParser
-import language.experimental.macros
-import scala.reflect.macros.whitebox.Context
+import scala.quoted._
 
 object Macros {
 
-  def parserWithFields[T](names: String*): (RowParser[T], List[String]) =
-    macro parserWithFieldsImpl[T]
+  inline def parserWithFields[T](inline names: String*): (RowParser[T], List[String]) =
+    ${ parserWithFieldsImpl[T]('names) }
 
-  def parserWithFieldsImpl[T: c.WeakTypeTag](c: Context)(names: c.Expr[String]*): c.Expr[T] = {
-    import c.universe._
+  private def parserWithFieldsImpl[T: Type](names: Expr[Seq[String]])(using Quotes): Expr[(RowParser[T], List[String])] = {
+    import quotes.reflect._
+    
+    val anormImpl = '{ anorm.Macro.parser[T]($names:_*) }
 
-    val anormImpl = anorm.Macro.namedParserImpl2[T](c)(names: _*)
-    c.Expr(
-      q"($anormImpl, List(..$names))"
-    )
+    '{ ($anormImpl, $names.toList) }
   }
 
 }

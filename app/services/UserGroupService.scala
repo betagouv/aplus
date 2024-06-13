@@ -79,7 +79,7 @@ class UserGroupService @Inject() (
     Future(
       Try(
         db.withTransaction { implicit connection =>
-          SQL"""INSERT INTO user_group(
+          val _ = SQL"""INSERT INTO user_group(
                   id,
                   name,
                   description,
@@ -511,7 +511,8 @@ class UserGroupService @Inject() (
                 )
                 .asLeft
             case _ =>
-              SQL"""DELETE FROM france_service WHERE matricule = $matricule""".executeUpdate()
+              val _ =
+                SQL"""DELETE FROM france_service WHERE matricule = $matricule""".executeUpdate()
               ().asRight
           }
         }

@@ -2,6 +2,7 @@ package serializers
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import helper.{PlayFormHelpers, UUIDHelper}
+import helper.MiscHelpers.toTupleOpt
 import helper.StringHelper._
 import java.util.UUID
 import models.{Area, Organisation}
@@ -329,7 +330,7 @@ object UserAndGroupCsvSerializer {
           "area-ids" -> list(uuid),
           "organisation" -> optional(of[Organisation.Id]),
           "email" -> optional(email)
-        )(ParsedUserGroup.apply)(ParsedUserGroup.unapply)
+        )(ParsedUserGroup.apply)(toTupleOpt)
     )
 
 }

@@ -31,11 +31,12 @@ class WipeOldDataTask @Inject() (
 
   val initialDelay: FiniteDuration = Duration.between(now, startDate).getSeconds.seconds
 
-  actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = 24.hours)(
-    new Runnable {
-      override def run(): Unit = retentionInMonthsOpt.foreach(retention => wipeOldData(retention))
-    }
-  )
+  val _ =
+    actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = 24.hours)(
+      new Runnable {
+        override def run(): Unit = retentionInMonthsOpt.foreach(retention => wipeOldData(retention))
+      }
+    )
 
   def wipeOldData(retentionInMonths: Long): Unit = {
     applicationService

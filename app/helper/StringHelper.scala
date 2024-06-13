@@ -60,7 +60,7 @@ object StringHelper {
 
   def withQuotes(str: String): String = s"'$str'"
 
-  final object NonEmptyTrimmedString {
+  object NonEmptyTrimmedString {
     def unapply(s: String): Option[String] = s.some.map(_.trim).filter(_.nonEmpty)
   }
 
