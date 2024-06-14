@@ -10,14 +10,14 @@ import serializers.Keys
 
 class SentryFilter @Inject() (implicit val mat: Materializer, ec: ExecutionContext) extends Filter {
 
-  val urisBlacklist = List(
+  val urisBlacklist: List[String] = List(
     "/favicon.ico",
     "/assets/",
     "/webjars/",
     "/jsRoutes"
   )
 
-  val queryParamsWhitelist = List(
+  val queryParamsWhitelist: List[String] = List(
     Keys.QueryParam.vue,
     Keys.QueryParam.uniquementFs,
     Keys.QueryParam.numOfMonthsDisplayed

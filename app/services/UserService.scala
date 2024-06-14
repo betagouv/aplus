@@ -94,7 +94,7 @@ class UserService @Inject() (
         .as(simpleUser.*)
     }.map(_.toUser)
 
-  def allDBOnlybyArea(areaId: UUID) =
+  def allDBOnlybyArea(areaId: UUID): List[User] =
     db.withConnection { implicit connection =>
       SQL(s"""SELECT $fieldsInSelect FROM "user" WHERE areas @> ARRAY[{areaId}]::uuid[]""")
         .on("areaId" -> areaId)
@@ -362,7 +362,7 @@ class UserService @Inject() (
        """.executeUpdate() === 1
     })
 
-  def validateCGU(userId: UUID) =
+  def validateCGU(userId: UUID): Int =
     db.withConnection { implicit connection =>
       val now = Time.nowParis()
       SQL"""
@@ -372,7 +372,7 @@ class UserService @Inject() (
      """.executeUpdate()
     }
 
-  def acceptNewsletter(userId: UUID) =
+  def acceptNewsletter(userId: UUID): Int =
     db.withConnection { implicit connection =>
       val now = Time.nowParis()
       SQL"""
@@ -382,7 +382,7 @@ class UserService @Inject() (
      """.executeUpdate()
     }
 
-  def recordLogin(userId: UUID) =
+  def recordLogin(userId: UUID): Int =
     db.withConnection { implicit connection =>
       SQL"""
         UPDATE "user"
@@ -418,7 +418,7 @@ class UserService @Inject() (
       }
     }
 
-  def addToGroup(userId: UUID, groupId: UUID) =
+  def addToGroup(userId: UUID, groupId: UUID): Future[Int] =
     Future {
       db.withConnection { implicit connection =>
         SQL"""

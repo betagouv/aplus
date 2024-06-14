@@ -9,7 +9,7 @@ import helper.StringHelper
   * (wherever the best information to log is known).
   */
 trait EventType {
-  val code = StringHelper.camelToUnderscoresUpperCase(this.getClass.getSimpleName)
+  val code: String = StringHelper.camelToUnderscoresUpperCase(this.getClass.getSimpleName)
   val level: String
 }
 

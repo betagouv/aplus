@@ -41,7 +41,7 @@ object FileMetadata {
     case class Application(id: UUID) extends Attached {
       val isApplication = true
       val isAnswer = false
-      val answerIdOpt = none
+      val answerIdOpt = none[UUID]
     }
 
     case class Answer(applicationId: UUID, answerId: UUID) extends Attached {

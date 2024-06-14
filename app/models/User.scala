@@ -48,7 +48,7 @@ case class User(
     // This is a comment only visible by the admins
     internalSupportComment: Option[String],
 ) extends AgeModel {
-  def nameWithQualite = s"$name ( $qualite )"
+  def nameWithQualite: String = s"$name ( $qualite )"
 
   // Note: we want to have in DB the actual time zone
   val timeZone: ZoneId = _root_.helper.Time.timeZoneParis
@@ -58,7 +58,7 @@ case class User(
       lastName: Option[String],
       qualite: Option[String],
       phoneNumber: Option[String]
-  ) =
+  ): User =
     copy(
       firstName = firstName,
       lastName = lastName,
@@ -244,7 +244,7 @@ case class User(
 
 object User {
 
-  val systemUser = User(
+  val systemUser: User = User(
     UUIDHelper.namedFrom("system"),
     Hash.sha256(s"system"),
     Option.empty[String],

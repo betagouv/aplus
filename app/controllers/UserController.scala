@@ -84,7 +84,7 @@ case class UserController @Inject() (
     with UserOperators
     with GroupOperators {
 
-  def showEditProfile =
+  def showEditProfile: Action[AnyContent] =
     loginAction.async { implicit request =>
       // Should be better if User could contains List[UserGroup] instead of List[UUID]
       val user = request.currentUser
@@ -111,7 +111,7 @@ case class UserController @Inject() (
         }
     }
 
-  def editProfile =
+  def editProfile: Action[AnyContent] =
     loginAction.async { implicit request =>
       val user = request.currentUser
       if (user.sharedAccount) {
@@ -168,7 +168,7 @@ case class UserController @Inject() (
           )
     }
 
-  def home =
+  def home: Action[AnyContent] =
     loginAction {
       TemporaryRedirect(routes.UserController.all(Area.allArea.id).url)
     }
@@ -368,7 +368,7 @@ case class UserController @Inject() (
         ViewUserUnauthorized,
         s"Accès non autorisé pour voir $userId"
       ) { () =>
-        withUser(userId, includeDisabled = true) { otherUser: User =>
+        withUser(userId, includeDisabled = true) { (otherUser: User) =>
           asUserWithAuthorization(Authorization.canSeeOtherUser(otherUser))(
             ViewUserUnauthorized,
             s"Accès non autorisé pour voir $userId",
@@ -403,7 +403,7 @@ case class UserController @Inject() (
 
   def deleteUnusedUserById(userId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withUser(userId, includeDisabled = true) { user: User =>
+      withUser(userId, includeDisabled = true) { (user: User) =>
         asAdminOfUserZone(user)(
           DeleteUserUnauthorized,
           s"Suppression de l'utilisateur $userId refusée"
@@ -444,7 +444,7 @@ case class UserController @Inject() (
                   eventService.log(UserNotFound, s"L'utilisateur $userId n'existe pas")
                   Future(NotFound("Nous n'avons pas trouvé cet utilisateur"))
                 case Some(userId) =>
-                  withUser(userId, includeDisabled = true) { user: User =>
+                  withUser(userId, includeDisabled = true) { (user: User) =>
                     val groups = groupService.allOrThrow
                     eventService.log(
                       AddUserError,
@@ -464,7 +464,7 @@ case class UserController @Inject() (
                   }
               },
             updatedUserData =>
-              withUser(updatedUserData.id, includeDisabled = true) { oldUser: User =>
+              withUser(updatedUserData.id, includeDisabled = true) { (oldUser: User) =>
                 // Ensure that user include all areas of his group
                 val groups = groupService.byIds(updatedUserData.groupIds)
                 val areaIds = (updatedUserData.areas ++ groups.flatMap(_.areaIds)).distinct
@@ -717,7 +717,7 @@ case class UserController @Inject() (
 
   def addPost(groupId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withGroup(groupId) { group: UserGroup =>
+      withGroup(groupId) { (group: UserGroup) =>
         asUserWithAuthorization(Authorization.canEditGroup(group))(
           PostAddUserUnauthorized,
           s"Tentative non autorisée d'ajout d'utilisateurs au groupe ${group.id}",
@@ -920,7 +920,7 @@ case class UserController @Inject() (
 
   def add(groupId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withGroup(groupId) { group: UserGroup =>
+      withGroup(groupId) { (group: UserGroup) =>
         asUserWithAuthorization(Authorization.canEditGroup(group))(
           ShowAddUserUnauthorized,
           s"Tentative non autorisée d'accès à l'ajout d'utilisateurs dans le groupe ${group.id}",

@@ -131,7 +131,7 @@ class ApplicationService @Inject() (
       }
     }
 
-  def openAndOlderThan(numberOfDays: Int) =
+  def openAndOlderThan(numberOfDays: Int): List[Application] =
     db.withConnection { implicit connection =>
       val rows = SQL(s"""
         SELECT $fieldsInApplicationSelect
@@ -230,7 +230,7 @@ class ApplicationService @Inject() (
       }
     }
 
-  def allByArea(areaId: UUID, anonymous: Boolean) =
+  def allByArea(areaId: UUID, anonymous: Boolean): List[Application] =
     db.withConnection { implicit connection =>
       val rows = SQL(s"""
         SELECT $fieldsInApplicationSelect
@@ -366,7 +366,7 @@ class ApplicationService @Inject() (
       answer: Answer,
       expertInvited: Boolean = false,
       shouldBeOpened: Boolean = false
-  ) =
+  ): Int =
     db.withTransaction { implicit connection =>
       val lastOrder: Option[Int] = SQL"""
         SELECT MAX(answer_order)
@@ -428,7 +428,7 @@ class ApplicationService @Inject() (
         .executeUpdate()
     }
 
-  def close(applicationId: UUID, usefulness: Option[String], closedDate: ZonedDateTime) =
+  def close(applicationId: UUID, usefulness: Option[String], closedDate: ZonedDateTime): Boolean =
     db.withTransaction { implicit connection =>
       SQL(
         """

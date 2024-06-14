@@ -2,7 +2,7 @@ package tasks
 
 import java.io.File
 import java.nio.file.Files
-import java.time.Instant
+import java.time.{Instant, ZonedDateTime}
 import java.time.temporal.ChronoUnit.DAYS
 import javax.inject.Inject
 import models.EventType
@@ -24,9 +24,12 @@ class RemoveExpiredFilesTask @Inject() (
     configuration.underlying.getString("app.filesExpirationInDays").toInt
 
   val startAtHour = 5
-  val now = java.time.ZonedDateTime.now() // Machine Time
-  val startDate = now.toLocalDate.atStartOfDay(now.getZone).plusDays(1).withHour(startAtHour)
-  val initialDelay = java.time.Duration.between(now, startDate).getSeconds.seconds
+  val now: ZonedDateTime = java.time.ZonedDateTime.now() // Machine Time
+
+  val startDate: ZonedDateTime =
+    now.toLocalDate.atStartOfDay(now.getZone).plusDays(1).withHour(startAtHour)
+
+  val initialDelay: FiniteDuration = java.time.Duration.between(now, startDate).getSeconds.seconds
 
   actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = 24.hours)(
     new Runnable { override def run(): Unit = removeExpiredFiles() }

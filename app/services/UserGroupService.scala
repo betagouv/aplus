@@ -187,7 +187,7 @@ class UserGroupService @Inject() (
         SQL"""SELECT COUNT(id) as cardinality FROM "user" WHERE group_ids @> ARRAY[$groupId]::uuid[]"""
           .executeQuery()
           .resultSet
-          .apply[Int]({ rs: ResultSet =>
+          .apply[Int]({ (rs: ResultSet) =>
             rs.next()
             rs.getInt("cardinality")
           })

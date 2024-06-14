@@ -3,11 +3,12 @@ package helper
 import cats.syntax.all._
 import java.text.Normalizer
 import org.apache.commons.lang3.StringUtils
+import scala.util.matching.Regex
 
 object StringHelper {
 
   // Note: `.r` is supposed to compile the regex
-  val notLetterNorNumberRegex = """[^\p{L}\p{N}]+""".r
+  val notLetterNorNumberRegex: Regex = """[^\p{L}\p{N}]+""".r
 
   def stripEverythingButLettersAndNumbers(string: String): String =
     StringUtils.stripAccents(notLetterNorNumberRegex.replaceAllIn(string, "").toLowerCase)
@@ -24,14 +25,14 @@ object StringHelper {
       .normalize(string, Normalizer.Form.NFD)
       .replaceAll("""\p{InCombiningDiacriticalMarks}+""", "")
 
-  def camelToUnderscoresUpperCase(name: String) =
+  def camelToUnderscoresUpperCase(name: String): String =
     "_?[A-Z][a-z\\d]+".r
       .findAllMatchIn(name)
       .map(_.group(0).toLowerCase)
       .mkString("_")
       .toUpperCase()
 
-  val oneOrMoreSpacesRegex = """\p{Z}+""".r
+  val oneOrMoreSpacesRegex: Regex = """\p{Z}+""".r
 
   def stripSpaces(string: String): String =
     oneOrMoreSpacesRegex.replaceAllIn(string, "")
@@ -64,13 +65,13 @@ object StringHelper {
   }
 
   implicit class StringOps(s: String) {
-    def normalized = StringHelper.commonStringInputNormalization(s)
-    def capitalizeWords = StringHelper.capitalizeName(s)
+    def normalized: String = StringHelper.commonStringInputNormalization(s)
+    def capitalizeWords: String = StringHelper.capitalizeName(s)
   }
 
   implicit class StringListOps(list: List[String]) {
 
-    def mkStringIfNonEmpty(start: String, sep: String, end: String) = {
+    def mkStringIfNonEmpty(start: String, sep: String, end: String): String = {
       val s = if (list.nonEmpty) start else ""
       val e = if (list.nonEmpty) end else ""
 

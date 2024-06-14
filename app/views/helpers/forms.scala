@@ -127,7 +127,7 @@ object forms {
       fieldId: Option[String] = None,
       outerDivClass: String = "mdl-cell mdl-cell--12-col",
       innerDivClass: String = "single--margin-top-8px single--margin-bottom-16px",
-  )(implicit messages: MessagesProvider) = {
+  )(implicit messages: MessagesProvider): Tag = {
     val selectId: String = fieldId.getOrElse[String](field.id)
     div(
       cls := outerDivClass,
@@ -162,7 +162,7 @@ object forms {
 
   def textInput(field: Field, fieldId: String, fieldLabel: String, isMandatory: Boolean)(implicit
       messages: MessagesProvider
-  ) =
+  ): Tag =
     div(
       cls := "single--margin-top-16px single--margin-bottom-8px",
       div(
@@ -203,7 +203,7 @@ object forms {
       fieldLabel: Option[String] = None,
       classes: List[String] = Nil,
       floated: Boolean = true
-  )(implicit messages: MessagesProvider) =
+  )(implicit messages: MessagesProvider): Tag =
     div(
       cls := (List[Option[String]](
         "mdl-textfield".some,

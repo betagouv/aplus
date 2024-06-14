@@ -9,6 +9,7 @@ import javax.inject.Inject
 import models.{Error, EventType}
 import modules.AppConfig
 import play.api.inject.ApplicationLifecycle
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import services.{AnonymizedDataService, EventService, ServicesDependencies}
 
@@ -39,7 +40,7 @@ class ExportAnonymizedDataTask @Inject() (
     )
   )
 
-  val cancelCallback = repeatWithDelay(durationUntilNextTick)(
+  val cancelCallback: () => Future[Unit] = repeatWithDelay(durationUntilNextTick)(
     if (config.anonymizedExportEnabled)
       loggingResult(
         IO.blocking(anonymizedDataService.transferData().asRight[Error]),

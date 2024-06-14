@@ -14,7 +14,7 @@ import services.{TokenService, UserService}
 @RunWith(classOf[JUnitRunner])
 class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfterAll {
 
-  val existingUser = User(
+  val existingUser: User = User(
     UUIDHelper.namedFrom("julien.test"),
     Hash.sha256(s"julien.test"),
     "FirstName".some,

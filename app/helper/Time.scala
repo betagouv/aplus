@@ -8,7 +8,7 @@ import java.util.Locale
 object Time {
 
   private val timeZoneString = "Europe/Paris"
-  val timeZoneParis = ZoneId.of(timeZoneString)
+  val timeZoneParis: ZoneId = ZoneId.of(timeZoneString)
 
   def truncateAtHour(zone: ZoneId)(instant: Instant, hour: Int): Instant =
     instant
@@ -21,7 +21,7 @@ object Time {
   implicit def zonedDateTimeOrdering: Ordering[ZonedDateTime] =
     Ordering.fromLessThan(_.isBefore(_))
 
-  def nowParis() = ZonedDateTime.now(timeZoneParis)
+  def nowParis(): ZonedDateTime = ZonedDateTime.now(timeZoneParis)
 
   def formatPatternFr(date: ZonedDateTime, pattern: String): String =
     date.format(DateTimeFormatter.ofPattern(pattern, Locale.FRANCE))
@@ -29,15 +29,18 @@ object Time {
   def formatPatternFr(date: LocalDate, pattern: String): String =
     date.format(DateTimeFormatter.ofPattern(pattern, Locale.FRANCE))
 
-  val adminsFormatter = DateTimeFormatter.ofPattern("dd/MM/YY-HH:mm", Locale.FRANCE)
+  val adminsFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("dd/MM/YY-HH:mm", Locale.FRANCE)
 
   // Note: we use an Instant here to make clear that we will set our own TZ
   def formatForAdmins(date: Instant): String =
     date.atZone(timeZoneParis).format(adminsFormatter)
 
-  val hourAndMinutesFormatter = DateTimeFormatter.ofPattern("HH'h'mm", Locale.FRANCE)
+  val hourAndMinutesFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("HH'h'mm", Locale.FRANCE)
 
-  val dateWithHourFormatter = DateTimeFormatter.ofPattern("dd/MM/YYYY H'h'", Locale.FRANCE)
+  val dateWithHourFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("dd/MM/YYYY H'h'", Locale.FRANCE)
 
   implicit final val zonedDateTimeInstance: Order[ZonedDateTime] =
     new Order[ZonedDateTime] {

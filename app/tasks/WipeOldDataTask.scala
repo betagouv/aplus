@@ -24,9 +24,12 @@ class WipeOldDataTask @Inject() (
     configuration.getOptional[Long]("app.personalDataRetentionInMonths")
 
   val startAtHour = 4
-  val now = ZonedDateTime.now() // Machine Time
-  val startDate = now.toLocalDate.atStartOfDay(now.getZone).plusDays(1).withHour(startAtHour)
-  val initialDelay = Duration.between(now, startDate).getSeconds.seconds
+  val now: ZonedDateTime = ZonedDateTime.now() // Machine Time
+
+  val startDate: ZonedDateTime =
+    now.toLocalDate.atStartOfDay(now.getZone).plusDays(1).withHour(startAtHour)
+
+  val initialDelay: FiniteDuration = Duration.between(now, startDate).getSeconds.seconds
 
   actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = 24.hours)(
     new Runnable {

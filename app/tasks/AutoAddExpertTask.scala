@@ -2,6 +2,7 @@ package tasks
 
 import cats.syntax.all._
 import helper.Time
+import java.time.ZonedDateTime
 import java.util.UUID
 import javax.inject.Inject
 import models._
@@ -21,8 +22,11 @@ class AutoAddExpertTask @Inject() (
     userService: UserService
 )(implicit executionContext: ExecutionContext) {
   val startAtHour = 8
-  val now = java.time.ZonedDateTime.now()
-  val startDate = now.toLocalDate.atStartOfDay(now.getZone).plusDays(1).withHour(startAtHour)
+  val now: ZonedDateTime = java.time.ZonedDateTime.now()
+
+  val startDate: ZonedDateTime =
+    now.toLocalDate.atStartOfDay(now.getZone).plusDays(1).withHour(startAtHour)
+
   val initialDelay: FiniteDuration = java.time.Duration.between(now, startDate).getSeconds.seconds
 
   // https://github.com/akka/akka/blob/v2.6.4/akka-actor/src/main/scala/akka/actor/Scheduler.scala#L403
@@ -33,7 +37,7 @@ class AutoAddExpertTask @Inject() (
   val dayWithoutAgentAnswer = 5
   val daySinceLastAgentAnswer = 15
 
-  def inviteExpertsInApplication() =
+  def inviteExpertsInApplication(): Unit =
     if (config.featureAutoAddExpert) {
       applicationService.openAndOlderThan(dayWithoutAgentAnswer).foreach { application =>
         if (application.status =!= Application.Status.Processed) {
