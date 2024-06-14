@@ -31,41 +31,44 @@ object UserAndGroupCsvSerializer {
   )
 
   case class Header(key: String, prefixes: List[String]) {
-    val lowerPrefixes = prefixes.map(_.toLowerCase().stripSpecialChars)
+    val lowerPrefixes: List[String] = prefixes.map(_.toLowerCase().stripSpecialChars)
   }
 
-  val USER_FIRST_NAME = Header("user.firstName", List("Prénom", "Prenom"))
-  val USER_LAST_NAME = Header("user.lastName", List("Nom", "Nom"))
+  val USER_FIRST_NAME: Header = Header("user.firstName", List("Prénom", "Prenom"))
+  val USER_LAST_NAME: Header = Header("user.lastName", List("Nom", "Nom"))
 
-  val USER_EMAIL =
+  val USER_EMAIL: Header =
     Header("user.email", List("Email", "Adresse e-mail", "Contact mail Agent", "MAIL"))
 
-  val USER_INSTRUCTOR = Header("user.instructor", List("Instructeur"))
-  val USER_GROUP_MANAGER = Header("user.groupAdmin", List("Responsable"))
-  val USER_QUALITY = Header("user.qualite", List("Qualité"))
-  val USER_PHONE_NUMBER = Header("user.phoneNumber", List("Numéro de téléphone", "téléphone"))
+  val USER_INSTRUCTOR: Header = Header("user.instructor", List("Instructeur"))
+  val USER_GROUP_MANAGER: Header = Header("user.groupAdmin", List("Responsable"))
+  val USER_QUALITY: Header = Header("user.qualite", List("Qualité"))
 
-  val USER_ACCOUNT_IS_SHARED = Header("user." + Keys.User.sharedAccount, List("Compte Partagé"))
+  val USER_PHONE_NUMBER: Header =
+    Header("user.phoneNumber", List("Numéro de téléphone", "téléphone"))
 
-  val SHARED_ACCOUNT_NAME =
+  val USER_ACCOUNT_IS_SHARED: Header =
+    Header("user." + Keys.User.sharedAccount, List("Compte Partagé"))
+
+  val SHARED_ACCOUNT_NAME: Header =
     Header(
       "user." + Keys.User.sharedAccountName,
       List("Compte partagé", "Nom du compte partagé")
     )
 
-  val GROUP_AREAS_IDS = Header("group.area-ids", List("Territoire", "DEPARTEMENTS"))
-  val GROUP_ORGANISATION = Header("group.organisation", List("Organisation"))
+  val GROUP_AREAS_IDS: Header = Header("group.area-ids", List("Territoire", "DEPARTEMENTS"))
+  val GROUP_ORGANISATION: Header = Header("group.organisation", List("Organisation"))
 
-  val GROUP_NAME =
+  val GROUP_NAME: Header =
     Header(
       "group.name",
       List("Groupe", "Opérateur partenaire")
     ) // "Nom de la structure labellisable"
-  val GROUP_EMAIL = Header("group.email", List("Bal", "adresse mail générique"))
+  val GROUP_EMAIL: Header = Header("group.email", List("Bal", "adresse mail générique"))
 
   val SEPARATOR = ";"
 
-  val USER_HEADERS = List(
+  val USER_HEADERS: List[Header] = List(
     USER_PHONE_NUMBER,
     USER_FIRST_NAME,
     USER_LAST_NAME,
@@ -75,10 +78,12 @@ object UserAndGroupCsvSerializer {
     SHARED_ACCOUNT_NAME
   )
 
-  val USER_HEADER = USER_HEADERS.map(_.prefixes.head).mkString(SEPARATOR)
+  val USER_HEADER: String = USER_HEADERS.map(_.prefixes.head).mkString(SEPARATOR)
 
-  val GROUP_HEADERS = List(GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL, GROUP_AREAS_IDS)
-  val GROUP_HEADER = GROUP_HEADERS.map(_.prefixes.head).mkString(SEPARATOR)
+  val GROUP_HEADERS: List[Header] =
+    List(GROUP_NAME, GROUP_ORGANISATION, GROUP_EMAIL, GROUP_AREAS_IDS)
+
+  val GROUP_HEADER: String = GROUP_HEADERS.map(_.prefixes.head).mkString(SEPARATOR)
 
   type UUIDGenerator = () => UUID
 
@@ -106,7 +111,7 @@ object UserAndGroupCsvSerializer {
     userGroupFormData
       .groupBy(_.group.name.stripSpecialChars)
       .view
-      .mapValues { sameGroupNameList: List[UserGroupBlock] =>
+      .mapValues { (sameGroupNameList: List[UserGroupBlock]) =>
         val group = sameGroupNameList.head
         val usersFormData = sameGroupNameList.flatMap(_.users)
         group.copy(users = usersFormData)
@@ -156,7 +161,7 @@ object UserAndGroupCsvSerializer {
     }
 
     extractFromCSVToMap(separator)(csvLines)
-      .map { csvExtractResult: CSVExtractResult =>
+      .map { (csvExtractResult: CSVExtractResult) =>
         val result: List[Either[String, UserGroupBlock]] = csvExtractResult.map {
           case (lineNumber: LineNumber, csvMap: CSVMap, rawCSVLine: RawCSVLine) =>
             csvMap
@@ -170,7 +175,7 @@ object UserAndGroupCsvSerializer {
               .fromCsvFieldNameToHtmlFieldName
               .toUserGroupData(lineNumber)
               .left
-              .map { error: String =>
+              .map { (error: String) =>
                 s"Il y au moins une erreur à la ligne $lineNumber : $error (ligne initale : $rawCSVLine )"
               }
         }
@@ -246,7 +251,7 @@ object UserAndGroupCsvSerializer {
     def includeAreasNameInGroupName(): CSVMap = {
       val optionalAreaNames: Option[List[String]] = csvMap
         .get(UserAndGroupCsvSerializer.GROUP_AREAS_IDS.key)
-        .map({ ids: String =>
+        .map({ (ids: String) =>
           ids.split(",").flatMap(UUIDHelper.fromString).flatMap(Area.fromId).toList.map(_.name)
         })
       optionalAreaNames -> csvMap.get(UserAndGroupCsvSerializer.GROUP_NAME.key) match {

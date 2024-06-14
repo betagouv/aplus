@@ -252,7 +252,7 @@ case class CSVImportController @Inject() (
                   csvImportData.csvLines
                 )
                 .fold(
-                  { error: String =>
+                  { (error: String) =>
                     val csvImportContentFormWithError =
                       CSVRawLinesFormData.contentForm.fill(csvImportData).withGlobalError(error)
                     eventService
@@ -361,7 +361,7 @@ case class CSVImportController @Inject() (
                 )
               )
             },
-            { userGroupDataForm: List[CSVUserGroupFormData] =>
+            { (userGroupDataForm: List[CSVUserGroupFormData]) =>
               val augmentedUserGroupInformation: List[CSVUserGroupFormData] =
                 augmentUserGroupsInformation(userGroupDataForm)
 
@@ -373,7 +373,7 @@ case class CSVImportController @Inject() (
               groupService
                 .add(groupsToInsert)
                 .fold(
-                  { error: String =>
+                  { (error: String) =>
                     eventService.log(
                       ImportUserError,
                       "Impossible d'importer les groupes",
@@ -417,7 +417,7 @@ case class CSVImportController @Inject() (
                     userService
                       .add(usersToInsert)
                       .fold(
-                        { error: String =>
+                        { (error: String) =>
                           eventService.log(
                             ImportUserError,
                             "Impossible d'importer les utilisateurs",

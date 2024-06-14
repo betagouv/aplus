@@ -150,7 +150,7 @@ class ApplicationService @Inject() (
       }
     }
 
-  def openAndOlderThan(day: Int) =
+  def openAndOlderThan(day: Int): List[Application] =
     db.withConnection { implicit connection =>
       SQL(
         s"""SELECT $fieldsInSelect
@@ -194,7 +194,7 @@ class ApplicationService @Inject() (
       }
     }
 
-  def allForUserId(userId: UUID, anonymous: Boolean) =
+  def allForUserId(userId: UUID, anonymous: Boolean): List[Application] =
     db.withConnection { implicit connection =>
       val result = SQL(
         s"""SELECT $fieldsInSelect
@@ -248,7 +248,7 @@ class ApplicationService @Inject() (
       }
     }
 
-  def allByArea(areaId: UUID, anonymous: Boolean) =
+  def allByArea(areaId: UUID, anonymous: Boolean): List[Application] =
     db.withConnection { implicit connection =>
       val result =
         SQL(
@@ -324,7 +324,7 @@ class ApplicationService @Inject() (
   def all(): Future[List[Application]] =
     Future(allOrThrow)
 
-  def createApplication(newApplication: Application) =
+  def createApplication(newApplication: Application): Boolean =
     db.withConnection { implicit connection =>
       val invitedUserJson = toJson(newApplication.invitedUsers.map { case (key, value) =>
         key.toString -> value
@@ -375,7 +375,7 @@ class ApplicationService @Inject() (
       answer: Answer,
       expertInvited: Boolean = false,
       shouldBeOpened: Boolean = false
-  ) =
+  ): Int =
     db.withTransaction { implicit connection =>
       val invitedUserJson = toJson(answer.invitedUsers.map { case (key, value) =>
         key.toString -> value
@@ -400,7 +400,7 @@ class ApplicationService @Inject() (
       ).executeUpdate()
     }
 
-  def close(applicationId: UUID, usefulness: Option[String], closedDate: ZonedDateTime) =
+  def close(applicationId: UUID, usefulness: Option[String], closedDate: ZonedDateTime): Boolean =
     db.withTransaction { implicit connection =>
       SQL(
         """

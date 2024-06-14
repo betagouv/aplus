@@ -8,7 +8,7 @@ import models.{Error, EventType}
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.ByteString
 import play.api.libs.json.{JsValue, Json, Reads, Writes}
-import play.api.libs.ws.{WSClient, WSResponse}
+import play.api.libs.ws.{readableAsJson, writeableOf_String, WSClient, WSResponse}
 import play.api.mvc.{PlayBodyParsers, Request}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.FiniteDuration

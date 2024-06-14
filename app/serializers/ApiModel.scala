@@ -363,7 +363,7 @@ object ApiModel {
         rights: Authorization.UserRights,
         idToUser: Map[UUID, User],
         idToGroup: Map[UUID, UserGroup]
-    ) = {
+    ): ApplicationMetadata = {
       val areaName = Area.fromId(application.area).map(_.name).getOrElse("Sans territoire")
       val pertinence = if (!application.irrelevant) "Oui" else "Non"
       val creatorUser = idToUser.get(application.creatorUserId)

@@ -4,7 +4,14 @@ import cats.syntax.all._
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import models.Organisation
 import models.Organisation.{Category, Subject}
-import net.jcazevedo.moultingyaml._
+import net.jcazevedo.moultingyaml.{
+  deserializationError,
+  DefaultYamlProtocol,
+  PimpedString,
+  YamlFormat,
+  YamlString,
+  YamlValue
+}
 import scala.io.Source
 
 object OrganisationService {
@@ -13,12 +20,12 @@ object OrganisationService {
 
     implicit object organisationFormat extends YamlFormat[Organisation] {
 
-      def write(x: Organisation) = {
+      def write(x: Organisation): YamlString = {
         require(x ne null)
         YamlString(x.shortName)
       }
 
-      def read(value: YamlValue) =
+      def read(value: YamlValue): Organisation =
         value match {
           case YamlString(x) => Organisation.fromShortName(x).get
           case x =>
@@ -58,7 +65,7 @@ class OrganisationService {
   import OrganisationService._
   import CustomYaml._
 
-  val categories = {
+  val categories: List[Category] = {
     val yaml = Source.fromFile("data/categories.yaml").getLines().mkString("\n")
     yaml.parseYaml.convertTo[List[Category]]
   }

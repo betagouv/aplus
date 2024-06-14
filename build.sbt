@@ -71,7 +71,8 @@ scalacOptions ++= Seq(
   "-Wunused:implicits",
   "-Wconf:cat=unused&src=routes/.*:s",
   "-Wconf:cat=unused&src=twirl/.*:s",
-  "-Wvalue-discard"
+  "-Wvalue-discard",
+  "-Xsource:3",
 )
 
 // https://typelevel.org/cats-effect/docs/getting-started

@@ -2,13 +2,13 @@ package controllers
 
 import javax.inject.Singleton
 import play.api.http.MimeTypes
-import play.api.mvc.InjectedController
+import play.api.mvc.{Action, AnyContent, InjectedController}
 import play.api.routing.JavaScriptReverseRouter
 
 @Singleton
 class JavascriptController() extends InjectedController {
 
-  def javascriptRoutes =
+  def javascriptRoutes: Action[AnyContent] =
     Action { implicit request =>
       Ok(
         JavaScriptReverseRouter("jsRoutes")(

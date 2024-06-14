@@ -72,7 +72,7 @@ class LoginController @Inject() (
                     }
                   )
                 )
-            } { user: User =>
+            } { (user: User) =>
               if (user.disabled)
                 Future(accountDoesNotExist(email))
               else

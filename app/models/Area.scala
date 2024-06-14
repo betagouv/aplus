@@ -33,7 +33,7 @@ object Area {
   val calvados: Area = Area("calvados", "Calvados", "14")
   val demo: Area = Area("exemple", "Demo", "-1")
 
-  val allExcludingDemo = List(
+  val allExcludingDemo: List[Area] = List(
     ain,
     Area("Aisne", "Aisne", "02"),
     Area("Allier", "Allier", "03"),
@@ -137,11 +137,11 @@ object Area {
     Area("Yvelines", "Yvelines", "78"),
   )
 
-  val all = allExcludingDemo ::: List(demo)
+  val all: List[Area] = allExcludingDemo ::: List(demo)
 
-  val allArea = Area(UUIDHelper.namedFrom("all"), "tous les territoires", "0")
+  val allArea: Area = Area(UUIDHelper.namedFrom("all"), "tous les territoires", "0")
 
-  val notApplicable = Area("notApplicable", "NotApplicable", "-1")
+  val notApplicable: Area = Area("notApplicable", "NotApplicable", "-1")
 
   private lazy val inseeCodeToAreaMap: Map[String, Area] =
     all.map(area => (area.inseeCode, area)).toMap

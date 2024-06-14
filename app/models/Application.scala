@@ -45,17 +45,20 @@ case class Application(
   val invitedGroups: Set[UUID] =
     (invitedGroupIdsAtCreation ::: answers.flatMap(_.invitedGroupIds)).toSet
 
-  val seenByUserIds = seenByUsers.map(_.userId)
-  val seenByUsersMap = seenByUsers.map { case SeenByUser(userId, date) => (userId, date) }.toMap
+  val seenByUserIds: List[UUID] = seenByUsers.map(_.userId)
 
-  def newAnswersFor(userId: UUID) = {
+  val seenByUsersMap: Map[UUID, Instant] = seenByUsers.map { case SeenByUser(userId, date) =>
+    (userId, date)
+  }.toMap
+
+  def newAnswersFor(userId: UUID): List[Answer] = {
     val maybeSeenLastDate = seenByUsers.find(_.userId === userId).map(_.lastSeenDate)
     maybeSeenLastDate
       .map(seenLastDate => answers.filter(_.creationDate.toInstant.isAfter(seenLastDate)))
       .getOrElse(answers)
   }
 
-  lazy val searchData = {
+  lazy val searchData: String = {
     val stripChars = "\"<>'"
     val areaName: String = Area.fromId(area).map(_.name).orEmpty
     val creatorName: String = creatorUserName.filterNot(stripChars contains _)
@@ -80,7 +83,7 @@ case class Application(
       answersStripped
   }
 
-  def userAnswers = answers.filter(answer =>
+  def userAnswers: List[Answer] = answers.filter(answer =>
     !answer.message.contains("rejoins la conversation automatiquement comme expert") &&
       !answer.message
         .contains("Les nouveaux instructeurs rejoignent automatiquement la demande") &&
@@ -90,7 +93,7 @@ case class Application(
   private def isProcessed = userAnswers.lastOption.exists(_.answerType === ApplicationProcessed)
   private def isCreator(userId: UUID) = userId === creatorUserId
 
-  def hasBeenDisplayedFor(userId: UUID) =
+  def hasBeenDisplayedFor(userId: UUID): Boolean =
     isCreator(userId) || seenByUserIds.contains[UUID](userId)
 
   def longStatus(user: User): Application.Status = {
@@ -123,9 +126,9 @@ case class Application(
   def invitedUsers(users: List[User]): List[User] =
     invitedUsers.keys.flatMap(userId => users.find(_.id === userId)).toList
 
-  def allUserInfos = userInfos ++ answers.flatMap(_.userInfos.getOrElse(Map()))
+  def allUserInfos: Map[String, String] = userInfos ++ answers.flatMap(_.userInfos.getOrElse(Map()))
 
-  lazy val anonymousApplication = {
+  lazy val anonymousApplication: Application = {
     val newUsersInfo = userInfos.map { case (key, value) => key -> s"**$key (${value.length})**" }
     val newAnswers = answers.map { answer =>
       answer.copy(
@@ -155,12 +158,12 @@ case class Application(
   // (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
   //  creatorUserId === user.id
 
-  def canHaveAgentsInvitedBy(user: User) =
+  def canHaveAgentsInvitedBy(user: User): Boolean =
     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
       (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)
 
 // TODO: remove
-  def haveUserInvitedOn(user: User) = invitedUsers.keys.toList.contains(user.id)
+  def haveUserInvitedOn(user: User): Boolean = invitedUsers.keys.toList.contains(user.id)
 
   lazy val resolutionTimeInMinutes: Option[Int] = if (closed) {
     val lastDate = answers.lastOption.map(_.creationDate).orElse(closedDate).getOrElse(creationDate)
@@ -169,7 +172,8 @@ case class Application(
     None
   }
 
-  lazy val firstAgentAnswerDate = answers.find(_.id =!= creatorUserId).map(_.creationDate)
+  lazy val firstAgentAnswerDate: Option[ZonedDateTime] =
+    answers.find(_.id =!= creatorUserId).map(_.creationDate)
 
   lazy val firstAnswerTimeInMinutes: Option[Int] = firstAgentAnswerDate.map { firstAnswerDate =>
     MINUTES.between(creationDate, firstAnswerDate).toInt
@@ -287,7 +291,7 @@ object Application {
   final case class SeenByUser(userId: UUID, lastSeenDate: Instant)
 
   object SeenByUser {
-    def now(userId: UUID) = SeenByUser(userId, Instant.now())
+    def now(userId: UUID): SeenByUser = SeenByUser(userId, Instant.now())
   }
 
   def filesAvailabilityLeftInDays(filesExpirationInDays: Int)(
@@ -334,7 +338,7 @@ object Application {
   ): String = {
     val defaultContexts: List[String] = currentAreaId
       .fold(userGroups)(areaId => userGroups.filter(_.areaIds.contains[UUID](areaId)))
-      .flatMap { userGroup: UserGroup =>
+      .flatMap { (userGroup: UserGroup) =>
         if (user.instructor) {
           for {
             areaInseeCode <- userGroup.areaIds.flatMap(Area.fromId).map(_.inseeCode).headOption

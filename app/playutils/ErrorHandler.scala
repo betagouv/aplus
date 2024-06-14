@@ -40,7 +40,10 @@ class ErrorHandler @Inject() (
       }
     }
 
-  override def onProdServerError(request: RequestHeader, exception: UsefulException) =
+  override def onProdServerError(
+      request: RequestHeader,
+      exception: UsefulException
+  ): Future[Result] =
     Future.successful {
       serverError(request, exception)
     }

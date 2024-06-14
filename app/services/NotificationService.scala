@@ -80,7 +80,7 @@ class NotificationService @Inject() (
   }
 
   // Note: application does not contain answer at this point
-  def newAnswer(application: Application, answer: Answer) = {
+  def newAnswer(application: Application, answer: Answer): Unit = {
     // Retrieve data
     val userIds = (application.invitedUsers ++ answer.invitedUsers).keys
     val users = userService.byIds(userIds.toList)
@@ -162,7 +162,7 @@ class NotificationService @Inject() (
       userTimeZone: ZoneId,
       loginToken: LoginToken,
       pathToRedirectTo: String
-  ) = {
+  ): Option[String] = {
     val absoluteUrl: String =
       routes.LoginController.magicLinkAntiConsumptionPage.absoluteURL(https, host)
     val bodyInner = common.magicLinkBody(
@@ -350,7 +350,7 @@ class NotificationService @Inject() (
       .withAttributes(ActorAttributes.supervisionStrategy(Supervision.resumingDecider))
       // Count
       .runWith(Sink.fold(0)((acc, _) => acc + 1))
-      .map { count: Int =>
+      .map { (count: Int) =>
         eventService.info(
           User.systemUser,
           "0.0.0.0",

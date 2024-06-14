@@ -12,6 +12,7 @@ import play.api.data.format.{Formats, Formatter}
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
 import scala.util.Try
+import scala.util.matching.Regex
 import serializers.Keys
 
 package forms {
@@ -75,7 +76,7 @@ package forms {
 
   object AddSignupsFormData {
 
-    val form =
+    val form: Form[AddSignupsFormData] =
       Form(
         mapping(
           "emails" -> text,
@@ -100,7 +101,7 @@ package forms {
 
   object AddGroupFormData {
 
-    def form[A](timeZone: ZoneId, currentUser: User) =
+    def form[A](timeZone: ZoneId, currentUser: User): Form[UserGroup] =
       Form(
         mapping(
           "id" -> ignored(UUID.randomUUID()),
@@ -173,7 +174,7 @@ package forms {
     def extractApplicationId(form: Form[ApplicationFormData]): Option[UUID] =
       form.data.get(applicationIdKey).flatMap(id => Try(UUID.fromString(id)).toOption)
 
-    def form(currentUser: User) =
+    def form(currentUser: User): Form[ApplicationFormData] =
       Form(
         mapping(
           "subject" -> nonEmptyText.verifying(maxLength(150)),
@@ -203,7 +204,7 @@ package forms {
 
   object CloseApplicationFormData {
 
-    val form = Form(
+    val form: Form[String] = Form(
       single(
         "usefulness" -> text,
       )
@@ -228,10 +229,13 @@ package forms {
     def extractAnswerId(form: Form[AnswerFormData]): Option[UUID] =
       form.data.get(answerIdKey).flatMap(id => Try(UUID.fromString(id)).toOption)
 
-    def form(currentUser: User, containsFiles: Boolean) =
+    def form(currentUser: User, containsFiles: Boolean): Form[AnswerFormData] =
       answerForm(currentUser, containsFiles, normalizedText.verifying(maxLength(20)), boolean)
 
-    def applicationHasBeenProcessedForm(currentUser: User, containsFiles: Boolean) =
+    def applicationHasBeenProcessedForm(
+        currentUser: User,
+        containsFiles: Boolean
+    ): Form[AnswerFormData] =
       answerForm(
         currentUser,
         containsFiles,
@@ -282,7 +286,7 @@ package forms {
 
   object InvitationFormData {
 
-    val form = Form(
+    val form: Form[InvitationFormData] = Form(
       mapping(
         "message" -> text,
         "users" -> list(uuid),
@@ -478,7 +482,7 @@ package forms {
 
   object ValidateSubscriptionForm {
 
-    val PhoneNumber = """(\d{2}) (\d{2}) (\d{2}) (\d{2}) (\d{2})""".r
+    val PhoneNumber: Regex = """(\d{2}) (\d{2}) (\d{2}) (\d{2}) (\d{2})""".r
 
     private val validPhoneNumberPrefixes =
       List("01", "02", "03", "04", "05", "06", "07", "08", "09")
@@ -557,7 +561,7 @@ package forms {
           urlBase + "?" + filters.mkString("&")
       }
 
-      def withGroup(id: UUID) = {
+      def withGroup(id: UUID): Filters = {
         val newGroups = selectedGroups match {
           case None                                => Some(Set(id))
           case Some(groups) if groups.contains(id) => Some(groups)
@@ -566,7 +570,7 @@ package forms {
         copy(selectedGroups = newGroups)
       }
 
-      def withoutGroup(id: UUID) = {
+      def withoutGroup(id: UUID): Filters = {
         val newGroups = selectedGroups match {
           case None         => None
           case Some(groups) => Some(groups.excl(id))
@@ -627,7 +631,7 @@ package forms {
     }
 
     // A `def` for the LocalDate.now()
-    def form =
+    def form: Form[(List[UUID], List[Organisation.Id], List[UUID], LocalDate, LocalDate)] =
       Form(
         tuple(
           "areas" -> default(list(uuid), List()),

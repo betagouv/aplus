@@ -6,6 +6,7 @@ import java.util.UUID
 import models.{Error, Mandat}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import play.api.mvc.Result
 import play.api.mvc.Results.InternalServerError
 
 object mandat {
@@ -73,7 +74,7 @@ object mandat {
         MandatGeneration.apply _
       )
 
-  def mandatJsonInternalServerError(error: Error) =
+  def mandatJsonInternalServerError(error: Error): Result =
     error match {
       case _: Error.UnexpectedServerResponse | _: Error.Timeout =>
         InternalServerError(
