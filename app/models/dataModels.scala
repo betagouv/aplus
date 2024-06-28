@@ -1,6 +1,7 @@
 package models
 
-import anorm.SqlMappingError
+import anorm.{Column, SqlMappingError, ToStatement}
+import anorm.postgresql.{jsValueColumn, jsValueToStatement}
 import cats.syntax.all._
 import helper.{PlayFormHelpers, Time}
 import java.time.{Instant, ZonedDateTime}
@@ -11,7 +12,6 @@ import models.Application.{MandatType, SeenByUser}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.api.libs.json.Reads._
-import serializers.Anorm.columnToJson
 import serializers.JsonFormats.mapUUIDFormat
 
 /** Only to serialize/deserialize in PG. */
@@ -28,73 +28,6 @@ object dataModels {
         implicitly[Writes[String]].contramap[AnswerType](_.name)
 
     }
-
-    import AnswerType.{answerTypeReads, answerTypeWrites}
-
-    // .or are due to an old bug
-    implicit val answerReads: Reads[Answer] = (JsPath \ "id")
-      .read[UUID]
-      .and((JsPath \ "application_id").read[UUID].or((JsPath \ "applicationId").read[UUID]))
-      .and(
-        (JsPath \ "creation_date")
-          .read[ZonedDateTime]
-          .or((JsPath \ "creationDate").read[ZonedDateTime])
-      )
-      .and(
-        (JsPath \ "answer_type")
-          .readNullable[AnswerType]
-          .or((JsPath \ "answerType").readNullable[AnswerType])
-          .map {
-            case Some(answerType) => answerType
-            case None             => models.Answer.AnswerType.Custom
-          }
-      )
-      .and((JsPath \ "message").read[String])
-      .and((JsPath \ "creator_user_id").read[UUID].or((JsPath \ "creatorUserID").read[UUID]))
-      .and(
-        (JsPath \ "creator_user_name").read[String].or((JsPath \ "creatorUserName").read[String])
-      )
-      .and(
-        (JsPath \ "invited_users")
-          .read[Map[UUID, String]]
-          .or((JsPath \ "invitedUsers").read[List[(UUID, String)]].map(_.toMap))
-      )
-      .and(
-        (JsPath \ "visible_by_helpers")
-          .read[Boolean]
-          .or((JsPath \ "visibleByHelpers").read[Boolean])
-      )
-      .and(
-        (JsPath \ "declare_application_has_irrelevant")
-          .read[Boolean]
-          .or((JsPath \ "declareApplicationHasIrrelevant").read[Boolean])
-      )
-      .and(
-        (JsPath \ "user_infos")
-          .readNullable[Map[String, String]]
-          .or((JsPath \ "userInfos").readNullable[Map[String, String]])
-      )
-      .and(
-        (JsPath \ "invited_group_ids")
-          .readNullable[List[UUID]]
-          .or((JsPath \ "invitedGroupIds").readNullable[List[UUID]])
-          .map(_.getOrElse(List.empty[UUID]))
-      )(models.Answer.apply _)
-
-    implicit val answerWrite: Writes[Answer] =
-      (JsPath \ "id")
-        .write[UUID]
-        .and((JsPath \ "application_id").write[UUID])
-        .and((JsPath \ "creation_date").write[ZonedDateTime])
-        .and((JsPath \ "answer_type").write[AnswerType])
-        .and((JsPath \ "message").write[String])
-        .and((JsPath \ "creator_user_id").write[UUID])
-        .and((JsPath \ "creator_user_name").write[String])
-        .and((JsPath \ "invited_users").write[Map[UUID, String]])
-        .and((JsPath \ "visible_by_helpers").write[Boolean])
-        .and((JsPath \ "declare_application_has_irrelevant").write[Boolean])
-        .and((JsPath \ "user_infos").writeNullable[Map[String, String]])
-        .and((JsPath \ "invited_group_ids").write[List[UUID]])(unlift(models.Answer.unapply))
 
   }
 
@@ -130,18 +63,89 @@ object dataModels {
         .write[UUID]
         .and((__ \ "last_seen_date").write[Instant])(unlift(models.Application.SeenByUser.unapply))
 
-      implicit val seenByUserListParser: anorm.Column[List[SeenByUser]] =
-        implicitly[anorm.Column[JsValue]].mapResult(
-          _.validate[List[SeenByUser]].asEither.left.map(errors =>
+    }
+
+  }
+
+  object SeenByUsers {
+
+    import models.dataModels.Application.SeenByUser._
+
+    implicit val seenByUsersParser: Column[SeenByUsers] =
+      Column
+        .of[JsValue]
+        .mapResult(
+          _.validate[List[SeenByUser]].asEither
+            .map(SeenByUsers.apply)
+            .left
+            .map(errors =>
+              SqlMappingError(
+                s"Cannot parse JSON as List[SeenByUser]: ${PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)}"
+              )
+            )
+        )
+
+    implicit val seenByUsersToStatement: ToStatement[SeenByUsers] =
+      ToStatement.of[JsValue].contramap(users => Json.toJson(users.users))
+
+  }
+
+  case class SeenByUsers(users: List[SeenByUser])
+
+  object InvitedUsers {
+
+    implicit val invitedUsersReads: Reads[InvitedUsers] =
+      implicitly[Reads[Map[UUID, String]]].map(InvitedUsers.apply)
+
+    implicit val invitedUsersWrites: Writes[InvitedUsers] =
+      implicitly[Writes[Map[String, String]]]
+        .contramap(_.invitedUsers.map { case (key, value) => key.toString -> value })
+
+    implicit val invitedUsersParser: Column[InvitedUsers] =
+      Column
+        .of[JsValue]
+        .mapResult(
+          _.validate[InvitedUsers].asEither.left.map(errors =>
             SqlMappingError(
-              s"Cannot parse JSON as List[SeenByUser]: ${PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)}"
+              s"Cannot parse JSON as InvitedUsers: ${PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)}"
             )
           )
         )
 
-    }
+    implicit val invitedUsersToStatement: ToStatement[InvitedUsers] =
+      ToStatement.of[JsValue].contramap(Json.toJson(_))
 
   }
+
+  /** Convenient wrapper for serialization. */
+  case class InvitedUsers(invitedUsers: Map[UUID, String])
+
+  object UserInfos {
+
+    implicit val userInfosReads: Reads[UserInfos] =
+      implicitly[Reads[Map[String, String]]].map(UserInfos.apply)
+
+    implicit val userInfosWrites: Writes[UserInfos] =
+      implicitly[Writes[Map[String, String]]].contramap(_.userInfos)
+
+    implicit val userInfosParser: Column[UserInfos] =
+      Column
+        .of[JsValue]
+        .mapResult(
+          _.validate[UserInfos].asEither.left.map(errors =>
+            SqlMappingError(
+              s"Cannot parse JSON as UserInfos: ${PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)}"
+            )
+          )
+        )
+
+    implicit val userInfosToStatement: ToStatement[UserInfos] =
+      ToStatement.of[JsValue].contramap(Json.toJson(_))
+
+  }
+
+  /** Convenient wrapper for serialization. */
+  case class UserInfos(userInfos: Map[String, String])
 
   case class FileMetadataRow(
       id: UUID,
@@ -261,6 +265,154 @@ object dataModels {
             case other         => other
           }
       }
+
+  }
+
+  object ApplicationRow {
+
+    def fromApplication(application: Application): ApplicationRow =
+      ApplicationRow(
+        id = application.id,
+        creationDate = application.creationDate.toInstant,
+        creatorUserName = application.creatorUserName,
+        creatorUserId = application.creatorUserId,
+        creatorGroupId = application.creatorGroupId,
+        creatorGroupName = application.creatorGroupName,
+        subject = application.subject,
+        description = application.description,
+        userInfos = UserInfos(application.userInfos),
+        invitedUsers = InvitedUsers(application.invitedUsers),
+        area = application.area,
+        irrelevant = application.irrelevant,
+        internalId = application.internalId,
+        closed = application.closed,
+        seenByUsers = SeenByUsers(application.seenByUsers),
+        usefulness = application.usefulness,
+        closedDate = application.closedDate.map(_.toInstant),
+        expertInvited = application.expertInvited,
+        hasSelectedSubject = application.hasSelectedSubject,
+        category = application.category,
+        mandatType =
+          application.mandatType.map(dataModels.Application.MandatType.dataModelSerialization),
+        mandatDate = application.mandatDate,
+        invitedGroupIds = application.invitedGroupIdsAtCreation,
+        personalDataWiped = application.personalDataWiped
+      )
+
+  }
+
+  case class ApplicationRow(
+      id: UUID,
+      creationDate: Instant,
+      creatorUserName: String,
+      creatorUserId: UUID,
+      creatorGroupId: Option[UUID],
+      creatorGroupName: Option[String],
+      subject: String,
+      description: String,
+      userInfos: UserInfos,
+      invitedUsers: InvitedUsers,
+      area: UUID,
+      irrelevant: Boolean,
+      internalId: Int,
+      closed: Boolean,
+      seenByUsers: SeenByUsers,
+      usefulness: Option[String],
+      closedDate: Option[Instant],
+      expertInvited: Boolean,
+      hasSelectedSubject: Boolean,
+      category: Option[String],
+      mandatType: Option[String],
+      mandatDate: Option[String],
+      invitedGroupIds: List[UUID],
+      personalDataWiped: Boolean,
+  ) {
+
+    def toApplication(relatedAnswers: List[AnswerRow]): Application = {
+      val answers =
+        relatedAnswers.filter(_.applicationId === id).sortBy(_.answerOrder).map(_.toAnswer)
+      models.Application(
+        id = id,
+        creationDate = creationDate.atZone(Time.timeZoneParis),
+        creatorUserName = creatorUserName,
+        creatorUserId = creatorUserId,
+        creatorGroupId = creatorGroupId,
+        creatorGroupName = creatorGroupName,
+        subject = subject,
+        description = description,
+        userInfos = userInfos.userInfos,
+        invitedUsers = invitedUsers.invitedUsers,
+        area = area,
+        irrelevant = irrelevant,
+        answers = answers,
+        internalId = internalId,
+        closed = closed,
+        seenByUsers = seenByUsers.users,
+        usefulness = usefulness,
+        closedDate = closedDate.map(_.atZone(Time.timeZoneParis)),
+        expertInvited = expertInvited,
+        hasSelectedSubject = hasSelectedSubject,
+        category = category,
+        mandatType = mandatType.flatMap(Application.MandatType.dataModelDeserialization),
+        mandatDate = mandatDate,
+        invitedGroupIdsAtCreation = invitedGroupIds,
+        personalDataWiped = personalDataWiped,
+      )
+    }
+
+  }
+
+  object AnswerRow {
+
+    def fromAnswer(answer: Answer, answerOrder: Int): AnswerRow =
+      AnswerRow(
+        id = answer.id,
+        applicationId = answer.applicationId,
+        answerOrder = answerOrder,
+        creationDate = answer.creationDate.toInstant,
+        answerType = answer.answerType.name,
+        message = answer.message,
+        userInfos = UserInfos(answer.userInfos.getOrElse(Map.empty)),
+        creatorUserId = answer.creatorUserID,
+        creatorUserName = answer.creatorUserName,
+        invitedUsers = InvitedUsers(answer.invitedUsers),
+        invitedGroupIds = answer.invitedGroupIds,
+        visibleByHelpers = answer.visibleByHelpers,
+        declareApplicationIsIrrelevant = answer.declareApplicationHasIrrelevant
+      )
+
+  }
+
+  case class AnswerRow(
+      id: UUID,
+      applicationId: UUID,
+      answerOrder: Int,
+      creationDate: Instant,
+      answerType: String,
+      message: String,
+      userInfos: UserInfos,
+      creatorUserId: UUID,
+      creatorUserName: String,
+      invitedUsers: InvitedUsers,
+      invitedGroupIds: List[UUID],
+      visibleByHelpers: Boolean,
+      declareApplicationIsIrrelevant: Boolean,
+  ) {
+
+    def toAnswer: Answer = models.Answer(
+      id = id,
+      applicationId = applicationId,
+      creationDate = creationDate.atZone(Time.timeZoneParis),
+      answerType = models.Answer.AnswerType.fromString(answerType),
+      message = message,
+      creatorUserID = creatorUserId,
+      creatorUserName = creatorUserName,
+      invitedUsers = invitedUsers.invitedUsers,
+      visibleByHelpers = visibleByHelpers,
+      declareApplicationHasIrrelevant = declareApplicationIsIrrelevant,
+      userInfos = Some(userInfos.userInfos),
+      invitedGroupIds = invitedGroupIds,
+    )
 
   }
 
