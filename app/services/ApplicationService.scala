@@ -310,13 +310,27 @@ class ApplicationService @Inject() (
       }
     }
 
-  def allOrThrow: List[Application] =
+  def lastInternalIdOrThrow: Option[Int] =
     db.withConnection { implicit connection =>
-      val rows = SQL(s"""SELECT $fieldsInApplicationSelect FROM application""")
+      SQL"""SELECT max(internal_id) FROM application"""
+        .as(SqlParser.scalar[Int].singleOpt)
+    }
+
+  def byInternalIdBetweenOrThrow(firstId: Int, lastIdExclusive: Int): List[Application] =
+    db.withConnection { implicit connection =>
+      val rows = SQL(s"""
+        SELECT $fieldsInApplicationSelect
+        FROM application
+        WHERE
+          internal_id >= {firstId}
+        AND
+          internal_id < {lastId}
+      """)
+        .on("firstId" -> firstId, "lastId" -> lastIdExclusive)
         .as(simpleApplication.*)
-      val answersRows = SQL(s"""SELECT $fieldsInAnswerSelect FROM answer""")
-        .as(simpleAnswer.*)
-      rows.map(_.toApplication(answersRows))
+      val answersRows = answersForApplications(rows)
+      val applications = rows.map(_.toApplication(answersRows))
+      applications
     }
 
   def createApplication(newApplication: Application): Boolean =

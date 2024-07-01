@@ -10,7 +10,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 import javax.inject.Inject
-import models.{dataModels, EventType, SignupRequest}
+import models.{dataModels, Application, EventType, SignupRequest}
 import models.dataModels.{AnswerRow, ApplicationRow, UserRow}
 import modules.AppConfig
 import play.api.db.Database
@@ -65,10 +65,12 @@ class AnonymizedDataService @Inject() (
   }
 
   private def insertApplicationsAndAnswers()(implicit connection: Connection): Unit = {
-    val applications = applicationService.allOrThrow.map(_.anonymize)
-    val applicationsRows = applications.map(ApplicationRow.fromApplication)
-    val applicationQuery =
-      """INSERT INTO application (
+
+    def insertApplications(applications: List[Application]): (Int, Int) = {
+      val applicationsRows = applications.map(ApplicationRow.fromApplication)
+      val applicationsCount = applicationsRows.size
+      val applicationQuery =
+        """INSERT INTO application (
            id,
            creation_date,
            creator_user_name,
@@ -119,40 +121,40 @@ class AnonymizedDataService @Inject() (
            array[{invitedGroupIds}]::uuid[],
            {personalDataWiped}
          )"""
-    applicationsRows.foreach { row =>
-      val params = Seq[NamedParameter](
-        "id" -> row.id,
-        "creationDate" -> row.creationDate,
-        "creatorUserName" -> row.creatorUserName,
-        "creatorUserId" -> row.creatorUserId,
-        "creatorGroupId" -> row.creatorGroupId,
-        "creatorGroupName" -> row.creatorGroupName,
-        "userInfos" -> row.userInfos,
-        "invitedUsers" -> row.invitedUsers,
-        "area" -> row.area,
-        "irrelevant" -> row.irrelevant,
-        "internalId" -> row.internalId,
-        "closed" -> row.closed,
-        "usefulness" -> row.usefulness,
-        "closedDate" -> row.closedDate,
-        "expertInvited" -> row.expertInvited,
-        "hasSelectedSubject" -> row.hasSelectedSubject,
-        "category" -> row.category,
-        "mandatType" -> row.mandatType,
-        "mandatDate" -> row.mandatDate,
-        "seenByUserIds" -> row.seenByUsers,
-        "invitedGroupIds" -> row.invitedGroupIds,
-        "personalDataWiped" -> row.personalDataWiped,
-      )
-      SQL(applicationQuery).on(params: _*).execute()
-    }
-    logMessage(s"Table application : " + applicationsRows.size + " lignes")
+      applicationsRows.foreach { row =>
+        val params = Seq[NamedParameter](
+          "id" -> row.id,
+          "creationDate" -> row.creationDate,
+          "creatorUserName" -> row.creatorUserName,
+          "creatorUserId" -> row.creatorUserId,
+          "creatorGroupId" -> row.creatorGroupId,
+          "creatorGroupName" -> row.creatorGroupName,
+          "userInfos" -> row.userInfos,
+          "invitedUsers" -> row.invitedUsers,
+          "area" -> row.area,
+          "irrelevant" -> row.irrelevant,
+          "internalId" -> row.internalId,
+          "closed" -> row.closed,
+          "usefulness" -> row.usefulness,
+          "closedDate" -> row.closedDate,
+          "expertInvited" -> row.expertInvited,
+          "hasSelectedSubject" -> row.hasSelectedSubject,
+          "category" -> row.category,
+          "mandatType" -> row.mandatType,
+          "mandatDate" -> row.mandatDate,
+          "seenByUserIds" -> row.seenByUsers,
+          "invitedGroupIds" -> row.invitedGroupIds,
+          "personalDataWiped" -> row.personalDataWiped,
+        )
+        SQL(applicationQuery).on(params: _*).execute()
+      }
 
-    val answersRows = applications.flatMap(_.answers.zipWithIndex.map { case (answer, index) =>
-      AnswerRow.fromAnswer(answer, index + 1)
-    })
-    val answersQuery =
-      """
+      val answersRows = applications.flatMap(_.answers.zipWithIndex.map { case (answer, index) =>
+        AnswerRow.fromAnswer(answer, index + 1)
+      })
+      val answersCount = answersRows.size
+      val answersQuery =
+        """
         INSERT INTO answer (
           id,
           application_id,
@@ -182,24 +184,45 @@ class AnonymizedDataService @Inject() (
           {visibleByHelpers},
           {declareApplicationIsIrrelevant}
         )"""
-    answersRows.foreach { row =>
-      val params = Seq[NamedParameter](
-        "id" -> row.id,
-        "applicationId" -> row.applicationId,
-        "answerOrder" -> row.answerOrder,
-        "creationDate" -> row.creationDate,
-        "answerType" -> row.answerType,
-        "userInfos" -> row.userInfos,
-        "creatorUserId" -> row.creatorUserId,
-        "creatorUserName" -> row.creatorUserName,
-        "invitedUsers" -> row.invitedUsers,
-        "invitedGroupIds" -> row.invitedGroupIds,
-        "visibleByHelpers" -> row.visibleByHelpers,
-        "declareApplicationIsIrrelevant" -> row.declareApplicationIsIrrelevant
-      )
-      SQL(answersQuery).on(params: _*).execute()
+      answersRows.foreach { row =>
+        val params = Seq[NamedParameter](
+          "id" -> row.id,
+          "applicationId" -> row.applicationId,
+          "answerOrder" -> row.answerOrder,
+          "creationDate" -> row.creationDate,
+          "answerType" -> row.answerType,
+          "userInfos" -> row.userInfos,
+          "creatorUserId" -> row.creatorUserId,
+          "creatorUserName" -> row.creatorUserName,
+          "invitedUsers" -> row.invitedUsers,
+          "invitedGroupIds" -> row.invitedGroupIds,
+          "visibleByHelpers" -> row.visibleByHelpers,
+          "declareApplicationIsIrrelevant" -> row.declareApplicationIsIrrelevant
+        )
+        SQL(answersQuery).on(params: _*).execute()
+      }
+      (applicationsCount, answersCount)
     }
-    logMessage(s"Table answer : " + answersRows.size + " lignes")
+
+    val batchSize = 10000
+    applicationService.lastInternalIdOrThrow match {
+      case None => // Nothing to do, there are no application
+      case Some(lastInternalId) =>
+        val (applicationsCount, answersCount) =
+          (0 to lastInternalId).by(batchSize).foldLeft((0, 0)) {
+            case ((previousApplicationsCount, previousAnswersCount), firstIdToInsert) =>
+              val applications = applicationService
+                .byInternalIdBetweenOrThrow(firstIdToInsert, firstIdToInsert + batchSize)
+                .map(_.anonymize)
+              val (insertedApplications, insertedAnswers) = insertApplications(applications)
+              (
+                previousApplicationsCount + insertedApplications,
+                previousAnswersCount + insertedAnswers
+              )
+          }
+        logMessage(s"Table application : " + applicationsCount + " lignes")
+        logMessage(s"Table answer : " + answersCount + " lignes")
+    }
   }
 
   private def insertEvents(): Unit = {
