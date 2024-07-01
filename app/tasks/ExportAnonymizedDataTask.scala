@@ -2,7 +2,7 @@ package tasks
 
 import cats.effect.IO
 import cats.syntax.all._
-import helper.TasksHelpers
+import helper.{TasksHelpers, Time}
 import java.time.{Instant, ZoneOffset}
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
@@ -36,7 +36,7 @@ class ExportAnonymizedDataTask @Inject() (
   }.flatTap(duration =>
     logMessage(
       EventType.AnonymizedDataExportMessage,
-      s"Prochain export anonymisé de la BDD dans $duration"
+      s"Prochain export anonymisé de la BDD dans ${Time.readableDuration(duration)}"
     )
   )
 

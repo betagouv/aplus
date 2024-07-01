@@ -2,6 +2,7 @@ package services
 
 import anorm._
 import aplus.macros.Macros
+import cats.effect.IO
 import cats.syntax.all._
 import helper.StringHelper.StringListOps
 import java.sql.Connection
@@ -102,34 +103,38 @@ class ApplicationService @Inject() (
     row.map(_.toApplication(answersRows))
   }
 
-  def byId(id: UUID, userId: UUID, rights: UserRights): Future[Either[Error, Application]] =
-    Future {
-      db.withTransaction { implicit connection =>
-        val result = byId(id) match {
-          case Some(application) =>
-            val newSeen = SeenByUser.now(userId)
-            val seenByUsers = newSeen :: application.seenByUsers.filter(_.userId =!= userId)
-            setSeenByUsers(id, seenByUsers)
-          case None => empty[Application]
-        }
-        result match {
-          case None =>
-            val message = s"Tentative d'accès à une application inexistante: $id"
-            Error.EntityNotFound(EventType.ApplicationNotFound, message, none).asLeft[Application]
-          case Some(application) =>
-            if (Authorization.canSeeApplication(application)(rights)) {
-              if (Authorization.canSeePrivateDataOfApplication(application)(rights))
-                application.asRight[Error]
-              else application.anonymousApplication.asRight[Error]
-            } else {
-              val message = s"Tentative d'accès à une application non autorisé: $id"
-              Error
-                .Authorization(EventType.ApplicationUnauthorized, message, none)
-                .asLeft[Application]
-            }
-        }
+  private def byIdBlocking(id: UUID, userId: UUID, rights: UserRights): Either[Error, Application] =
+    db.withTransaction { implicit connection =>
+      val result = byId(id) match {
+        case Some(application) =>
+          val newSeen = SeenByUser.now(userId)
+          val seenByUsers = newSeen :: application.seenByUsers.filter(_.userId =!= userId)
+          setSeenByUsers(id, seenByUsers)
+        case None => empty[Application]
+      }
+      result match {
+        case None =>
+          val message = s"Tentative d'accès à une application inexistante: $id"
+          Error.EntityNotFound(EventType.ApplicationNotFound, message, none).asLeft[Application]
+        case Some(application) =>
+          if (Authorization.canSeeApplication(application)(rights)) {
+            if (Authorization.canSeePrivateDataOfApplication(application)(rights))
+              application.asRight[Error]
+            else application.anonymousApplication.asRight[Error]
+          } else {
+            val message = s"Tentative d'accès à une application non autorisé: $id"
+            Error
+              .Authorization(EventType.ApplicationUnauthorized, message, none)
+              .asLeft[Application]
+          }
       }
     }
+
+  def byId(id: UUID, userId: UUID, rights: UserRights): Future[Either[Error, Application]] =
+    Future(byIdBlocking(id, userId, rights))
+
+  def byIdIO(id: UUID, userId: UUID, rights: UserRights): IO[Either[Error, Application]] =
+    IO.blocking(byIdBlocking(id, userId, rights))
 
   def openAndOlderThan(numberOfDays: Int): List[Application] =
     db.withConnection { implicit connection =>

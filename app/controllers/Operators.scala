@@ -1,6 +1,7 @@
 package controllers
 
 import actions.RequestWithUserData
+import cats.effect.IO
 import cats.syntax.all._
 import constants.Constants
 import helper.BooleanHelper.not
@@ -146,30 +147,40 @@ object Operators {
     def applicationService: ApplicationService
     def eventService: EventService
 
+    private def applicationErrorResult(applicationId: UUID, error: Error): Result =
+      error match {
+        case _: Error.EntityNotFound | _: Error.RequirementFailed =>
+          NotFound("Nous n'avons pas trouvé cette demande")
+        case _: Error.Authorization | _: Error.Authentication =>
+          Unauthorized(
+            s"Vous n'avez pas les droits suffisants pour voir cette demande. " +
+              s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          )
+        case _: Error.Database | _: Error.SqlException | _: Error.UnexpectedServerResponse |
+            _: Error.Timeout | _: Error.MiscException =>
+          InternalServerError(
+            s"Une erreur s'est produite sur le serveur. " +
+              "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard. " +
+              s"Si cette erreur persiste, " +
+              s"vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+          )
+      }
+
     private def manageApplicationError(applicationId: UUID, error: Error)(implicit
         request: RequestWithUserData[_],
         ec: ExecutionContext
     ): Future[Result] = {
-      val result =
-        error match {
-          case _: Error.EntityNotFound | _: Error.RequirementFailed =>
-            NotFound("Nous n'avons pas trouvé cette demande")
-          case _: Error.Authorization | _: Error.Authentication =>
-            Unauthorized(
-              s"Vous n'avez pas les droits suffisants pour voir cette demande. " +
-                s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-            )
-          case _: Error.Database | _: Error.SqlException | _: Error.UnexpectedServerResponse |
-              _: Error.Timeout | _: Error.MiscException =>
-            InternalServerError(
-              s"Une erreur s'est produite sur le serveur. " +
-                "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard. " +
-                s"Si cette erreur persiste, " +
-                s"vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-            )
-        }
+      val result = applicationErrorResult(applicationId, error)
       eventService.logError(error)
       Future(result)
+    }
+
+    private def manageApplicationErrorIO(applicationId: UUID, error: Error)(implicit
+        request: RequestWithUserData[_]
+    ): IO[Result] = {
+      val result = applicationErrorResult(applicationId, error)
+      IO.blocking(eventService.logError(error))
+        .as(result)
     }
 
     def withApplication(
@@ -186,6 +197,24 @@ object Operators {
         .flatMap(
           _.fold(
             error => manageApplicationError(applicationId, error),
+            (application: Application) => payload(application)
+          )
+        )
+
+    def withApplicationIO(
+        applicationId: UUID
+    )(
+        payload: Application => IO[Result]
+    )(implicit request: RequestWithUserData[_]): IO[Result] =
+      applicationService
+        .byIdIO(
+          applicationId,
+          userId = request.currentUser.id,
+          rights = request.rights
+        )
+        .flatMap(
+          _.fold(
+            error => manageApplicationErrorIO(applicationId, error),
             (application: Application) => payload(application)
           )
         )

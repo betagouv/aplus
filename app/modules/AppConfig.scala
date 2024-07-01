@@ -1,7 +1,7 @@
 package modules
 
 import com.typesafe.config.{Config, ConfigFactory}
-import helper.UUIDHelper
+import helper.{Crypto, UUIDHelper}
 import java.nio.file.{Files, Path, Paths}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
@@ -40,13 +40,41 @@ class AppConfig @Inject() (configuration: Configuration) {
     dir
   }
 
-  // This is a feature that is temporary and should be activated
-  // for short period of time during migrations for smooth handling of files.
-  // Just remove the env variable FILES_SECOND_INSTANCE_HOST to deactivate.
-  val filesSecondInstanceHost: Option[String] =
-    configuration.getOptional[String]("app.filesSecondInstanceHost")
-
   val filesExpirationInDays: Int = configuration.get[Int]("app.filesExpirationInDays")
+
+  val filesOvhS3AccessKey: String = configuration.get[String]("app.filesOvhS3AccessKey")
+  val filesOvhS3SecretKey: String = configuration.get[String]("app.filesOvhS3SecretKey")
+  val filesOvhS3Endpoint: String = configuration.get[String]("app.filesOvhS3Endpoint")
+  val filesOvhS3Region: String = configuration.get[String]("app.filesOvhS3Region")
+  val filesOvhS3Bucket: String = configuration.get[String]("app.filesOvhS3Bucket")
+
+  val filesCurrentEncryptionKeyId: String =
+    configuration.get[String]("app.filesCurrentEncryptionKeyId")
+
+  /** Each key has an id, the id of the key used to encrypt a file is stored in the database as file
+    * metadata.
+    */
+  val filesEncryptionKeys: Map[String, Crypto.Key] =
+    configuration
+      .get[String]("app.filesEncryptionKeys")
+      .split(",")
+      .map(_.split(":") match {
+        case Array(id, key) => (id, Crypto.decodeKeyBase64(key))
+        case _ =>
+          throw new Exception(
+            "Invalid `app.filesEncryptionKeys` format, should be of the form 'keyid1:<key base64 encoded>,keyid2:<key base64 encoded>'"
+          )
+      })
+      .toMap
+
+  val filesCurrentEncryptionKey: Crypto.Key =
+    filesEncryptionKeys.get(filesCurrentEncryptionKeyId) match {
+      case None =>
+        throw new Exception(
+          s"Cannot find current file encryption key '$filesCurrentEncryptionKeyId'"
+        )
+      case Some(key) => key
+    }
 
   val topHeaderWarningMessage: Option[String] =
     configuration.getOptional[String]("app.topHeaderWarningMessage")

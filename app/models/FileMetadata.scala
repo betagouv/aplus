@@ -12,6 +12,7 @@ case class FileMetadata(
     filesize: Int,
     status: FileMetadata.Status,
     attached: FileMetadata.Attached,
+    encryptionKeyId: Option[String],
 )
 
 object FileMetadata {
