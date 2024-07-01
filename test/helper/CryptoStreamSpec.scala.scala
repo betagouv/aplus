@@ -158,7 +158,10 @@ class CryptoStreamSpec extends Specification with ScalaCheck with CatsEffect {
           .attempt
           .unsafeRunSync()
 
-        aad == otherAad ||
+        @SuppressWarnings(Array("scalafix:DisableSyntax.=="))
+        val aadsAreEqual = aad == otherAad
+
+        aadsAreEqual ||
         (
           result.isLeft &&
             result.left.toOption.get.isInstanceOf[javax.crypto.AEADBadTagException]
