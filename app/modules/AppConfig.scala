@@ -5,7 +5,7 @@ import helper.UUIDHelper
 import java.nio.file.{Files, Path, Paths}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import play.api.{ConfigLoader, Configuration}
 import scala.concurrent.duration._
 
 // Wraps `configuration: play.api.Configuration`.
@@ -121,5 +121,41 @@ class AppConfig @Inject() (configuration: Configuration) {
       .filterNot(_.isEmpty)
       .flatMap(UUIDHelper.fromString)
       .toSet
+
+  val featureAgentConnectEnabled: Boolean =
+    configuration.get[Boolean]("app.features.agentConnectEnabled")
+
+  def agentConnectConfig[A: ConfigLoader](key: String, defaultIfDisabled: => A): A =
+    configuration
+      .getOptional[A](key)
+      .getOrElse(
+        if (featureAgentConnectEnabled)
+          throw new Exception(s"Missing AgentConnect configuration key $key")
+        else defaultIfDisabled
+      )
+
+  val agentConnectIssuerUri: String =
+    agentConnectConfig[String]("app.agentConnect.issuerUri", "")
+
+  val agentConnectMinimumDurationBetweenDiscoveryCalls: FiniteDuration =
+    agentConnectConfig[Int](
+      "app.agentConnect.minimumDurationBetweenDiscoveryCallsInSeconds",
+      10
+    ).seconds
+
+  val agentConnectClientId: String =
+    agentConnectConfig[String]("app.agentConnect.clientId", "")
+
+  val agentConnectClientSecret: String =
+    agentConnectConfig[String]("app.agentConnect.clientSecret", "")
+
+  val agentConnectRedirectUri: String =
+    agentConnectConfig[String]("app.agentConnect.redirectUri", "")
+
+  val agentConnectPostLogoutRedirectUri: String =
+    agentConnectConfig[String]("app.agentConnect.postLogoutRedirectUri", "")
+
+  val agentConnectSigningAlgorithm: String =
+    agentConnectConfig[String]("app.agentConnect.signingAlgorithm", "")
 
 }

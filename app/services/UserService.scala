@@ -2,14 +2,17 @@ package services
 
 import anorm._
 import aplus.macros.Macros
+import cats.data.EitherT
 import cats.effect.IO
 import cats.syntax.all._
 import helper.{Hash, StringHelper, Time}
 import helper.StringHelper.StringOps
+import java.security.SecureRandom
 import java.sql.Connection
+import java.time.Instant
 import java.util.UUID
-import javax.inject.Inject
-import models.{Error, EventType, Organisation, User}
+import javax.inject.{Inject, Singleton}
+import models.{AgentConnectClaims, Error, EventType, Organisation, User, UserSession}
 import models.dataModels.UserRow
 import modules.AppConfig
 import org.postgresql.util.PSQLException
@@ -18,7 +21,7 @@ import scala.concurrent.Future
 import scala.util.Try
 import views.editMyGroups.UserInfos
 
-@javax.inject.Singleton
+@Singleton
 class UserService @Inject() (
     config: AppConfig,
     db: Database,
@@ -53,6 +56,35 @@ class UserService @Inject() (
     "managing_area_ids",
     "shared_account",
     "internal_support_comment"
+  )
+
+  private val qualifiedUserParser = anorm.Macro.parser[UserRow](
+    "user.id",
+    "user.key",
+    "user.first_name",
+    "user.last_name",
+    "user.name",
+    "user.qualite",
+    "user.email",
+    "user.helper",
+    "user.instructor",
+    "user.admin",
+    "user.areas",
+    "user.creation_date",
+    "user.commune_code",
+    "user.group_admin",
+    "user.disabled",
+    "user.expert",
+    "user.group_ids",
+    "user.cgu_acceptation_date",
+    "user.newsletter_acceptation_date",
+    "user.first_login_date",
+    "user.phone_number",
+    "user.observable_organisation_ids",
+    "user.managing_organisation_ids",
+    "user.managing_area_ids",
+    "user.shared_account",
+    "user.internal_support_comment"
   )
 
   private val fieldsInSelect: String = tableFields.mkString(", ")
@@ -603,5 +635,280 @@ class UserService @Inject() (
           )
         )
     )
+
+  //
+  // User Sessions
+  //
+
+  implicit val invitedUsersParser: Column[UserSession.LoginType] =
+    Column
+      .of[String]
+      .mapResult {
+        case "agent_connect" => UserSession.LoginType.AgentConnect.asRight
+        case unknownType =>
+          SqlMappingError(s"Cannot parse login_type $unknownType").asLeft
+      }
+
+  val (userSessionParser, userSessionTableFields) = Macros.parserWithFields[UserSession](
+    "id",
+    "user_id",
+    "creation_date",
+    "last_activity",
+    "login_type",
+    "expires_at",
+    "is_revoked",
+  )
+
+  private val qualifiedUserSessionParser = anorm.Macro.parser[UserSession](
+    "user_session.id",
+    "user_session.user_id",
+    "user_session.creation_date",
+    "user_session.last_activity",
+    "user_session.login_type",
+    "user_session.expires_at",
+    "user_session.is_revoked",
+  )
+
+  val userSessionFieldsInSelect: String = userSessionTableFields.mkString(", ")
+
+  // Double the recommended minimum 64 bits of entropy
+  private val SESSION_SIZE_BYTES = 16
+
+  private def generateNewSessionId: IO[String] = IO {
+    val bytes = Array.ofDim[Byte](SESSION_SIZE_BYTES)
+    new SecureRandom().nextBytes(bytes)
+    bytes.map("%02x".format(_)).mkString
+  }
+
+  private def userSessionFromAgentConnect(
+      userId: UUID,
+      expiresAt: Option[Instant]
+  ): IO[Either[Error, UserSession]] =
+    generateNewSessionId
+      .flatMap(sessionId =>
+        IO.realTimeInstant.flatMap(now =>
+          (expiresAt match {
+            case None            => AgentConnectService.calculateExpiresAt(now)
+            case Some(expiresAt) => IO.pure(expiresAt)
+          })
+            .map(expiresAt =>
+              UserSession(
+                id = sessionId,
+                userId = userId,
+                creationDate = now,
+                lastActivity = now,
+                loginType = UserSession.LoginType.AgentConnect,
+                expiresAt = expiresAt,
+                isRevoked = None,
+              )
+            )
+        )
+      )
+      .attempt
+      .map(
+        _.left.map(error =>
+          Error.SqlException(
+            EventType.UserSessionError,
+            s"Impossible de générer une nouvelle session pour l'utilisateur ${userId}",
+            error,
+            none
+          )
+        )
+      )
+
+  private def stringifyLoginType(loginType: UserSession.LoginType): String = loginType match {
+    case UserSession.LoginType.AgentConnect => "agent_connect"
+  }
+
+  private def saveUserSession(session: UserSession): IO[Either[Error, UserSession]] =
+    IO.blocking {
+      val _ = db.withConnection { implicit connection =>
+        SQL"""
+          INSERT INTO user_session (
+            id,
+            user_id,
+            creation_date,
+            last_activity,
+            login_type,
+            expires_at
+          ) VALUES(
+            ${session.id},
+            ${session.userId},
+            ${session.creationDate},
+            ${session.lastActivity},
+            ${stringifyLoginType(session.loginType)},
+            ${session.expiresAt}
+          )
+        """.executeUpdate()
+      }
+      session
+    }.attempt
+      .map(
+        _.left.map[Error](error =>
+          Error.SqlException(
+            EventType.UserSessionError,
+            s"Impossible de sauvegarder une session utilisateur $session",
+            error,
+            none
+          )
+        )
+      )
+
+  /** We store the session id as hexadecimals in the db because there is a unique mapping between
+    * bytes and hexadecimals. This is not true of base64 strings.
+    *
+    * OWASP Recommendations on session id length:
+    * https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html#session-id-length
+    */
+  def createNewUserSessionFromAgentConnect(
+      userId: UUID,
+      expiresAt: Option[Instant]
+  ): EitherT[IO, Error, UserSession] =
+    for {
+      session <- EitherT(userSessionFromAgentConnect(userId, expiresAt))
+      _ <- EitherT(saveUserSession(session))
+    } yield session
+
+  /** Intended to be used at each logged in call */
+  def userWithSessionLoggingActivity(
+      userId: UUID,
+      sessionId: Option[String]
+  ): IO[Either[Error, (Option[User], Option[UserSession])]] =
+    (sessionId match {
+      case None => IO.blocking(byId(userId)).map(user => (user, None))
+      case Some(sessionId) =>
+        IO.realTimeInstant.flatMap(now =>
+          IO.blocking {
+            db.withTransaction { implicit connection =>
+              SQL"""
+                UPDATE user_session
+                SET last_activity = ${now}
+                WHERE id = ${sessionId}
+              """.executeUpdate()
+
+              // This method is called at each action from a user,
+              // as an optimization, we get all the data in a single query
+              val fields =
+                tableFields.map(f => s"\"user\".$f").mkString(", ") + ", " +
+                  userSessionTableFields.map(f => s"user_session.$f").mkString(", ")
+              val result: Option[(Option[UserRow], Option[UserSession])] = SQL(s"""
+                SELECT $fields
+                FROM
+                  (SELECT * FROM "user" WHERE id = {userId}) AS "user"
+                LEFT JOIN
+                  (SELECT * FROM user_session WHERE id = {sessionId}) AS user_session
+                ON true
+              """)
+                .on("userId" -> userId.toString, "sessionId" -> sessionId)
+                .as(
+                  (qualifiedUserParser.? ~ qualifiedUserSessionParser.?)
+                    .map(SqlParser.flatten)
+                    .singleOpt
+                )
+              result match {
+                case None                 => (None, None)
+                case Some((row, session)) => (row.map(_.toUser), session)
+              }
+            }
+          }
+        )
+    }).attempt.map(
+      _.left.map(error =>
+        Error.SqlException(
+          EventType.UserSessionError,
+          s"Impossible de trouver l'utilisateur ${userId} avec la session ${sessionId}",
+          error,
+          none
+        )
+      )
+    )
+
+  //
+  // AgentConnect
+  //
+
+  val (agentConnectClaimsParser, agentConnectClaimsTableFields) =
+    Macros.parserWithFields[AgentConnectClaims](
+      "subject",
+      "email",
+      "given_name",
+      "usual_name",
+      "uid",
+      "siret",
+      "creation_date",
+      "last_auth_time",
+      "user_id",
+    )
+
+  val agentConnectClaimsFieldsInSelect: String =
+    agentConnectClaimsTableFields.mkString(", ")
+
+  def saveAgentConnectClaims(claims: AgentConnectClaims): IO[Either[Error, Unit]] =
+    IO.blocking {
+      val _ = db.withConnection { implicit connection =>
+        SQL"""
+          INSERT INTO agent_connect_claims (
+            subject,
+            email,
+            given_name,
+            usual_name,
+            uid,
+            siret,
+            creation_date,
+            last_auth_time,
+            user_id
+          ) VALUES(
+            ${claims.subject},
+            ${claims.email},
+            ${claims.givenName},
+            ${claims.usualName},
+            ${claims.uid},
+            ${claims.siret},
+            ${claims.creationDate},
+            ${claims.lastAuthTime},
+            ${claims.userId}
+          )
+          ON CONFLICT (subject) DO UPDATE SET
+            email = EXCLUDED.email,
+            given_name = EXCLUDED.given_name,
+            usual_name = EXCLUDED.usual_name,
+            uid = EXCLUDED.uid,
+            siret = EXCLUDED.siret,
+            last_auth_time = EXCLUDED.last_auth_time,
+            user_id = EXCLUDED.user_id
+        """.executeUpdate()
+      }
+    }.attempt
+      .map(
+        _.left.map(error =>
+          Error.SqlException(
+            EventType.AgentConnectClaimsSaveError,
+            s"Impossible de sauvegarder les claims AgentConnect [subject: ${claims.subject}]",
+            error,
+            none
+          )
+        )
+      )
+
+  def linkUserToAgentConnectClaims(userId: UUID, subject: String): IO[Either[Error, Unit]] =
+    IO.blocking {
+      val _ = db.withConnection { implicit connection =>
+        SQL"""
+          UPDATE agent_connect_claims
+          SET user_id = $userId::uuid
+          WHERE subject = $subject
+        """.executeUpdate()
+      }
+    }.attempt
+      .map(
+        _.left.map(error =>
+          Error.SqlException(
+            EventType.AgentConnectClaimsSaveError,
+            s"Impossible de lier l'utilisateur $userId au claims de subject $subject",
+            error,
+            none
+          )
+        )
+      )
 
 }
