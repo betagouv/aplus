@@ -442,7 +442,6 @@ case class GroupController @Inject() (
       groups <- groupsFuture
       users <- userService.byGroupIdsFuture(groups.map(_.id), includeDisabled = true)
       usersInfos <- computeUsersInfos(users.map(_.id))
-      applications <- applicationService.allForUserIds(users.map(_.id), none, false)
       lastActivityResult <- adminLastActivity(users.map(_.id), rights)
     } yield {
       lastActivityResult.fold(
