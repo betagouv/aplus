@@ -536,11 +536,11 @@ class UserService @Inject() (
       .both(invitations)
       .both(participations)
       .map { case ((creations, invitations), participations) =>
-        val empty = Map.empty[UUID, UserInfos]
-        val withCreations = creations.foldLeft(empty) { case (result, (id, count)) =>
-          result.updatedWith(id)(
-            _.fold(UserInfos(creations = count, 0, 0).some)(_.copy(creations = count).some)
-          )
+        val withCreations = creations.foldLeft(Map.empty[UUID, UserInfos]) {
+          case (result, (id, count)) =>
+            result.updatedWith(id)(
+              _.fold(UserInfos(creations = count, 0, 0).some)(_.copy(creations = count).some)
+            )
         }
         val withInvitations = invitations.foldLeft(withCreations) { case (result, (id, count)) =>
           result.updatedWith(id)(
