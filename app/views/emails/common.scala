@@ -256,17 +256,6 @@ object common {
       br,
       br,
       p(
-        "Comment avez-vous trouvé cet email ? ",
-        "Nous expérimentons. ",
-        "Pour nous aider, vous pouvez répondre à ce questionnaire : ",
-        a(
-          href := "https://startupdetat.typeform.com/to/PicUnQx4",
-          "https://startupdetat.typeform.com/to/PicUnQx4"
-        )
-      ),
-      br,
-      br,
-      p(
         i(
           "Si vous avez un problème ou besoin d’aide à propos de l’outil Administration+, contactez-nous sur ",
           a(
