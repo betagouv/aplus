@@ -2,6 +2,7 @@ package services
 
 import anorm._
 import aplus.macros.Macros
+import cats.effect.IO
 import cats.syntax.all._
 import helper.{Hash, StringHelper, Time}
 import helper.StringHelper.StringOps
@@ -15,6 +16,7 @@ import org.postgresql.util.PSQLException
 import play.api.db.Database
 import scala.concurrent.Future
 import scala.util.Try
+import views.editMyGroups.UserInfos
 
 @javax.inject.Singleton
 class UserService @Inject() (
@@ -478,6 +480,95 @@ class UserService @Inject() (
         WHERE id = $userId::uuid
       """.executeUpdate()
     }
+
+  /** Uses `= ANY` instead of `@>` in order to take advantage of indexes. */
+  def usersInfos(usersIds: List[UUID]): IO[Either[Error, Map[UUID, UserInfos]]] = {
+    val ids = usersIds.distinct
+
+    val creations = IO.blocking {
+      db.withConnection { implicit connection =>
+        SQL"""
+          SELECT creator_user_id, count(creator_user_id) AS count
+          FROM application
+          WHERE creator_user_id = ANY(array[$ids]::uuid[])
+          GROUP BY creator_user_id"""
+          .as((SqlParser.get[UUID]("creator_user_id") ~ SqlParser.get[Int]("count")).*)
+          .map(SqlParser.flatten)
+      }
+    }
+
+    val invitations = IO.blocking {
+      db.withConnection { implicit connection =>
+        SQL"""
+          SELECT user_id, count(user_id) AS count
+          FROM user_is_invited_on_application
+          WHERE user_id = ANY(array[$ids]::uuid[])
+          GROUP BY user_id"""
+          .as((SqlParser.get[UUID]("user_id") ~ SqlParser.get[Int]("count")).*)
+          .map(SqlParser.flatten)
+      }
+    }
+
+    val participations = IO.blocking {
+      db.withConnection { implicit connection =>
+        SQL"""
+          SELECT
+            answer.creator_user_id,
+            count(distinct application.id) AS count
+          FROM application, answer
+          WHERE
+            application.id = answer.application_id
+          AND
+            application.creator_user_id != answer.creator_user_id
+          AND
+            answer.creator_user_id = ANY(array[$ids]::uuid[])
+          AND
+            answer_type != 'inviteAsExpert'
+          AND
+            answer_type != 'inviteThroughGroupPermission'
+          GROUP BY answer.creator_user_id"""
+          .as((SqlParser.get[UUID]("creator_user_id") ~ SqlParser.get[Int]("count")).*)
+          .map(SqlParser.flatten)
+      }
+    }
+
+    creations
+      .both(invitations)
+      .both(participations)
+      .map { case ((creations, invitations), participations) =>
+        val empty = Map.empty[UUID, UserInfos]
+        val withCreations = creations.foldLeft(empty) { case (result, (id, count)) =>
+          result.updatedWith(id)(
+            _.fold(UserInfos(creations = count, 0, 0).some)(_.copy(creations = count).some)
+          )
+        }
+        val withInvitations = invitations.foldLeft(withCreations) { case (result, (id, count)) =>
+          result.updatedWith(id)(
+            _.fold(UserInfos(0, invitations = count, 0).some)(_.copy(invitations = count).some)
+          )
+        }
+        val withParticipations =
+          participations.foldLeft(withInvitations) { case (result, (id, count)) =>
+            result.updatedWith(id)(
+              _.fold(UserInfos(0, 0, participations = count).some)(
+                _.copy(participations = count).some
+              )
+            )
+          }
+        withParticipations
+      }
+      .attempt
+      .map(
+        _.left.map(error =>
+          Error.SqlException(
+            EventType.UsersQueryError,
+            s"Impossible de calculer l'activité des utilisateurs ${usersIds.mkString(",")}",
+            error,
+            none
+          )
+        )
+      )
+  }
 
   private def executeUserUpdate(
       errorMessage: String

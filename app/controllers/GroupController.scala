@@ -1,6 +1,7 @@
 package controllers
 
 import actions.{LoginAction, RequestWithUserData}
+import cats.effect.IO
 import cats.syntax.all._
 import constants.Constants
 import controllers.Operators._
@@ -9,7 +10,7 @@ import helper.PlayFormHelpers.formErrorsLog
 import helper.Time
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import models.{Application, Area, Authorization, Error, EventType, User, UserGroup}
+import models.{Area, Authorization, Error, EventType, User, UserGroup}
 import models.EventType.{
   AddGroupUnauthorized,
   AddUserGroupError,
@@ -36,19 +37,22 @@ import views.editMyGroups.UserInfos
 
 @Singleton
 case class GroupController @Inject() (
-    config: AppConfig,
     applicationService: ApplicationService,
-    loginAction: LoginAction,
-    groupService: UserGroupService,
+    config: AppConfig,
+    dependencies: ServicesDependencies,
     eventService: EventService,
+    groupService: UserGroupService,
+    loginAction: LoginAction,
+    userService: UserService,
     ws: WSClient,
-    userService: UserService
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with I18nSupport
     with Operators.Common
     with GroupOperators
     with UserOperators {
+
+  import dependencies.ioRuntime
 
   private val groupPageRedirectValue: String = "groupPage"
 
@@ -407,37 +411,16 @@ case class GroupController @Inject() (
     }
 
   private def computeUsersInfos(
-      applications: List[Application]
-  ): Map[UUID, UserInfos] = {
-    val result = scala.collection.mutable.HashMap.empty[UUID, UserInfos]
-    applications.foreach { application =>
-      result.updateWith(application.creatorUserId)(
-        _.map(_.incrementCreations)
-          .getOrElse(UserInfos(creations = 1, invitations = 0, participations = 0))
-          .some
+      usersIds: List[UUID]
+  )(implicit request: RequestWithUserData[_]): Future[Map[UUID, UserInfos]] = userService
+    .usersInfos(usersIds)
+    .flatMap(
+      _.fold(
+        error => IO.blocking(eventService.logError(error)).as(Map.empty[UUID, UserInfos]),
+        IO.pure
       )
-      application.invitedUsers.foreach { case (userId, _) =>
-        result.updateWith(userId)(
-          _.map(_.incrementInvitations)
-            .getOrElse(UserInfos(creations = 0, invitations = 1, participations = 0))
-            .some
-        )
-      }
-      application.userAnswers
-        .map(_.creatorUserID)
-        .toSet
-        .foreach((id: UUID) =>
-          if (id =!= application.creatorUserId) {
-            result.updateWith(id)(
-              _.map(_.incrementParticipations)
-                .getOrElse(UserInfos(creations = 0, invitations = 0, participations = 1))
-                .some
-            )
-          }
-        )
-    }
-    result.toMap
-  }
+    )
+    .unsafeToFuture()
 
   private def adminLastActivity(ids: List[UUID], rights: Authorization.UserRights) =
     if (Authorization.isAdmin(rights))
@@ -458,6 +441,7 @@ case class GroupController @Inject() (
     for {
       groups <- groupsFuture
       users <- userService.byGroupIdsFuture(groups.map(_.id), includeDisabled = true)
+      usersInfos <- computeUsersInfos(users.map(_.id))
       applications <- applicationService.allForUserIds(users.map(_.id), none, false)
       lastActivityResult <- adminLastActivity(users.map(_.id), rights)
     } yield {
@@ -467,7 +451,6 @@ case class GroupController @Inject() (
           InternalServerError(Constants.genericError500Message)
         },
         lastActivity => {
-          val usersInfos = computeUsersInfos(applications)
           eventService.log(EventType.EditMyGroupShowed, "Visualise la modification de ses groupes")
           Ok(
             views.editMyGroups
@@ -494,17 +477,14 @@ case class GroupController @Inject() (
     eventService.log(EditGroupShowed, s"Visualise la vue de modification du groupe")
     val isEmpty = groupService.isGroupEmpty(group.id)
     val lastActivityFuture = adminLastActivity(groupUsers.map(_.id), request.rights)
-    applicationService
-      .allForUserIds(groupUsers.map(_.id), none, false)
-      .zip(lastActivityFuture)
-      .map { case (applications, lastActivityResult) =>
-        lastActivityResult.fold(
-          error => {
-            eventService.logError(error)
-            InternalServerError(Constants.genericError500Message)
-          },
-          lastActivity => {
-            val usersInfos = computeUsersInfos(applications)
+    lastActivityFuture.flatMap(
+      _.fold(
+        error => {
+          eventService.logError(error)
+          Future.successful(InternalServerError(Constants.genericError500Message))
+        },
+        lastActivity => {
+          computeUsersInfos(groupUsers.map(_.id)).map(usersInfos =>
             Ok(
               views.html.editGroup(request.currentUser, request.rights)(
                 group,
@@ -519,9 +499,10 @@ case class GroupController @Inject() (
                     Keys.QueryParam.groupId + "=" + group.id.toString)
               )
             )
-          }
-        )
-      }
+          )
+        }
+      )
+    )
   }
 
 }
