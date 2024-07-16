@@ -1467,6 +1467,12 @@ case class ApplicationController @Inject() (
                 case (AnswerType.WrongInstructor, _) =>
                   buildAnswerMessage(WrongInstructorMessage, answerData.signature)
                 case (AnswerType.Custom, None) => buildAnswerMessage("", answerData.signature)
+                // None of the other cases are reachable here
+                // It might be good to express it as a different type
+                case (AnswerType.InviteByUser, _)   => buildAnswerMessage("", answerData.signature)
+                case (AnswerType.InviteAsExpert, _) => buildAnswerMessage("", answerData.signature)
+                case (AnswerType.InviteThroughGroupPermission, _) =>
+                  buildAnswerMessage("", answerData.signature)
               }
 
               val answer = Answer(
@@ -1592,7 +1598,7 @@ case class ApplicationController @Inject() (
                       UUID.randomUUID(),
                       applicationId,
                       Time.nowParis(),
-                      AnswerType.Custom,
+                      AnswerType.InviteByUser,
                       inviteData.message,
                       request.currentUser.id,
                       contextualizedUserName(
@@ -1654,7 +1660,7 @@ case class ApplicationController @Inject() (
               UUID.randomUUID(),
               applicationId,
               Time.nowParis(),
-              AnswerType.Custom,
+              AnswerType.InviteAsExpert,
               "J'ajoute un expert",
               request.currentUser.id,
               contextualizedUserName(
