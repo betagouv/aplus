@@ -7,7 +7,6 @@ import helper.{PlayFormHelpers, Time}
 import java.time.{Instant, ZonedDateTime}
 import java.util.UUID
 import models.Answer
-import models.Answer.AnswerType
 import models.Application.{MandatType, SeenByUser}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -16,20 +15,6 @@ import serializers.JsonFormats.mapUUIDFormat
 
 /** Only to serialize/deserialize in PG. */
 object dataModels {
-
-  object Answer {
-
-    object AnswerType {
-
-      implicit val answerTypeReads: Reads[AnswerType] =
-        implicitly[Reads[String]].map(models.Answer.AnswerType.fromString)
-
-      implicit val answerTypeWrites: Writes[AnswerType] =
-        implicitly[Writes[String]].contramap[AnswerType](_.name)
-
-    }
-
-  }
 
   object Application {
 

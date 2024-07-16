@@ -6,7 +6,7 @@ import helper.{Pseudonymizer, Time}
 import java.time.{Instant, ZonedDateTime}
 import java.time.temporal.ChronoUnit.MINUTES
 import java.util.UUID
-import models.Answer.AnswerType.ApplicationProcessed
+import models.Answer.AnswerType
 import models.Application.SeenByUser
 import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
 
@@ -87,10 +87,16 @@ case class Application(
     !answer.message.contains("rejoins la conversation automatiquement comme expert") &&
       !answer.message
         .contains("Les nouveaux instructeurs rejoignent automatiquement la demande") &&
-      !answer.message.contains("Les nouveaux instructeurs ont automatiquement accès à la demande")
+      !answer.message.contains(
+        "Les nouveaux instructeurs ont automatiquement accès à la demande"
+      ) &&
+      answer.answerType =!= AnswerType.InviteAsExpert &&
+      answer.answerType =!= AnswerType.InviteThroughGroupPermission
   )
 
-  private def isProcessed = userAnswers.lastOption.exists(_.answerType === ApplicationProcessed)
+  private def isProcessed =
+    userAnswers.lastOption.exists(_.answerType === AnswerType.ApplicationProcessed)
+
   private def isCreator(userId: UUID) = userId === creatorUserId
 
   def hasBeenDisplayedFor(userId: UUID): Boolean =

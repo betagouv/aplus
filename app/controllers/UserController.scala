@@ -566,11 +566,12 @@ case class UserController @Inject() (
             )
           )
           .toMap
+
         val answer = Answer(
           UUID.randomUUID(),
           application.id,
           Time.nowParis(),
-          Answer.AnswerType.Custom,
+          Answer.AnswerType.InviteThroughGroupPermission,
           "Les nouveaux instructeurs ont automatiquement accès à la demande.",
           userDoingTheAction.id,
           Application.invitedUserContextualizedName(
