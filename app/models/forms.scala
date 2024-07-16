@@ -179,8 +179,8 @@ package forms {
         mapping(
           "subject" -> nonEmptyText.verifying(maxLength(150)),
           "description" -> nonEmptyText,
-          "usagerPrenom" -> nonEmptyText.verifying(maxLength(30)),
-          "usagerNom" -> nonEmptyText.verifying(maxLength(30)),
+          "usagerPrenom" -> nonEmptyText.verifying(maxLength(200)),
+          "usagerNom" -> nonEmptyText.verifying(maxLength(200)),
           "usagerBirthDate" -> nonEmptyText.verifying(maxLength(30)),
           "usagerOptionalInfos" -> FormsPlusMap.map(text.verifying(maxLength(200))),
           "creatorGroupId" -> optional(uuid),
