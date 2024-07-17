@@ -104,7 +104,7 @@ libraryDependencies ++= Seq(
   "org.playframework" %% "play-json" % "3.0.4",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
-  "com.github.tototoshi" %% "scala-csv" % "1.4.1",
+  "com.github.tototoshi" %% "scala-csv" % "2.0.0",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.13.1",
   "org.typelevel" %% "cats-core" % "2.12.0",
