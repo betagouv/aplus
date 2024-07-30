@@ -1,5 +1,6 @@
 package views
 
+import controllers.routes.ApplicationController
 import models.{Area, Authorization, User}
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
@@ -17,6 +18,7 @@ object createApplication {
       currentUser,
       userRights,
       "Créer une demande",
+      ApplicationController.create.url,
       frag(content()),
     )
 
