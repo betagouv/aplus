@@ -116,6 +116,12 @@ object common {
                   ),
                   li(
                     a(
+                      href := HomeController.mentionsLegales.url,
+                      "Mentions légales"
+                    )
+                  ),
+                  li(
+                    a(
                       href := HomeController.declarationAccessibilite.url,
                       "Accessibilité : non conforme"
                     )

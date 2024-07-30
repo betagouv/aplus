@@ -24,14 +24,15 @@ object main {
       currentUser: User,
       currentUserRights: Authorization.UserRights,
       pageName: String,
+      pageLink: String,
       content: Frag,
       additionalHeadTags: Frag = frag(),
       additionalFooterTags: Frag = frag()
   )(implicit
       request: RequestHeader,
   ): Tag = dsfrLayout(
-    pageName,
-    breadcrumbs(pageName),
+    s"$pageName - Administration+",
+    breadcrumbsContainer(List((pageName, pageLink))),
     content,
     quickLinks = loggedInQuickLinks(currentUser),
     navBar = loggedInNavBar(currentUserRights),
@@ -61,12 +62,12 @@ object main {
   def publicLayout(
       pageName: String,
       content: Frag,
-      addBreadcrumbs: Boolean = true,
+      breadcrumbs: List[(String, String)] = Nil,
       additionalHeadTags: Frag = frag(),
       additionalFooterTags: Frag = frag()
   ): Tag = dsfrLayout(
     pageName,
-    if (addBreadcrumbs) breadcrumbs(pageName) else frag(),
+    breadcrumbsContainer(breadcrumbs),
     content,
     quickLinks = publicQuickLinks(),
     navBar = baseNavBar(frag()),
@@ -158,32 +159,39 @@ object main {
       )
     )
 
-  private def breadcrumbs(pageName: String): Tag =
-    div(cls := "fr-container")(
-      tags2.nav(cls := "fr-breadcrumb")(
-        div(cls := "fr-collapse")(
-          ol(cls := "fr-breadcrumb__list")(
-            li()(
-              a(
-                href := "/",
-                cls := "fr-breadcrumb__link"
-              )(
-                "Accueil"
-              )
-            ),
-            li()(
-              a(
-                href := "/",
-                attr("aria-current") := "page",
-                cls := "fr-breadcrumb__link"
-              )(
-                pageName
+  private def breadcrumbsContainer(pages: List[(String, String)]): Frag =
+    pages match {
+      case Nil => frag()
+      case pages =>
+        div(cls := "fr-container")(
+          tags2.nav(cls := "fr-breadcrumb")(
+            div(cls := "fr-collapse")(
+              ol(cls := "fr-breadcrumb__list")(
+                li()(
+                  a(
+                    href := "/",
+                    cls := "fr-breadcrumb__link"
+                  )(
+                    "Accueil"
+                  )
+                ),
+                frag(pages.zipWithIndex.map { case ((pageName, pageLink), i) =>
+                  val isCurrent = (i + 1) === pages.length
+                  li()(
+                    a(
+                      href := pageLink,
+                      if (isCurrent) (attr("aria-current") := "page") else frag(),
+                      cls := "fr-breadcrumb__link"
+                    )(
+                      pageName
+                    )
+                  )
+                })
               )
             )
           )
         )
-      )
-    )
+    }
 
   private val navBarResponsiveMenuModalId = "aplus-navbar-responsive-menu-modal"
   private val navBarResponsiveMenuModalButtonId = "aplus-navbar-responsive-menu-modal-button"
@@ -496,9 +504,7 @@ object main {
             ),
             li(cls := "fr-footer__bottom-item")(
               a(cls := "fr-footer__bottom-link")(
-                href := "https://docs.aplus.beta.gouv.fr/conditions-generales-dutilisation",
-                target := "_blank",
-                rel := "noopener",
+                href := HomeController.mentionsLegales.url,
                 "Mentions légales"
               )
             ),

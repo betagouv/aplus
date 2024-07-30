@@ -1,6 +1,6 @@
 package views
 
-import controllers.routes.{GroupController, UserController}
+import controllers.routes.{ApplicationController, GroupController, UserController}
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import models.{Authorization, User, UserGroup}
@@ -42,6 +42,7 @@ object dashboard {
       currentUser,
       currentUserRights,
       "Dashboard",
+      ApplicationController.dashboard.url,
       content(currentUser, currentUserRights, infos, config)
     )
 

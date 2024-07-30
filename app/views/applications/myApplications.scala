@@ -37,6 +37,7 @@ object myApplications {
       currentUser,
       currentUserRights,
       "Mes demandes",
+      ApplicationController.myApplications.url,
       frag(
         content(
           currentUser,

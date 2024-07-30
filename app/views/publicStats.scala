@@ -1,5 +1,6 @@
 package views
 
+import controllers.routes.ApplicationController
 import scalatags.Text.all._
 
 object publicStats {
@@ -8,7 +9,7 @@ object publicStats {
     views.main.publicLayout(
       "Statistiques - Administration+",
       mainContent,
-      addBreadcrumbs = false
+      breadcrumbs = ("Statistiques", ApplicationController.stats.url) :: Nil,
     )
 
   private val mainContent: Frag =
