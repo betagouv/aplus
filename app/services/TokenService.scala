@@ -5,7 +5,7 @@ import cats.syntax.all._
 import helper.Time
 import java.time.Instant
 import java.util.UUID
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import models.{Error, EventType, LoginToken}
 import play.api.UnexpectedException
 import play.api.db.Database
@@ -75,7 +75,7 @@ object TokenService {
 
 }
 
-@javax.inject.Singleton
+@Singleton
 class TokenService @Inject() (
     db: Database,
     dependencies: ServicesDependencies

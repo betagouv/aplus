@@ -111,6 +111,19 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-effect" % "3.5.4",
 )
 
+val jjwtVersion = "0.12.6"
+
+val jjwts = Seq(
+  "io.jsonwebtoken" % "jjwt-api",
+  "io.jsonwebtoken" % "jjwt-impl"
+).map(_ % jjwtVersion) ++ Seq(
+  ("io.jsonwebtoken" % "jjwt-jackson" % jjwtVersion).excludeAll(
+    ExclusionRule("com.fasterxml.jackson.core")
+  )
+)
+
+libraryDependencies ++= jjwts
+
 libraryDependencies ++= anormDependencies
 
 // UI

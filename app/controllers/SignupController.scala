@@ -2,6 +2,7 @@ package controllers
 
 import actions.{LoginAction, RequestWithUserData}
 import cats.data.EitherT
+import cats.effect.IO
 import cats.syntax.all._
 import constants.Constants
 import controllers.Operators.UserOperators
@@ -11,20 +12,29 @@ import helper.ScalatagsHelpers.writeableOf_Modifier
 import java.time.{Instant, ZonedDateTime}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import models.{Authorization, Error, EventType, SignupRequest, User}
+import models.{Authorization, Error, EventType, SignupRequest, User, UserSession}
 import models.forms.{AddSignupsFormData, SignupFormData}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.i18n.I18nSupport
-import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result}
+import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result, Session}
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 import serializers.Keys
-import services.{EventService, NotificationService, SignupService, UserGroupService, UserService}
+import services.{
+  EventService,
+  NotificationService,
+  ServicesDependencies,
+  SignupService,
+  UserGroupService,
+  UserService
+}
 
 @Singleton
 case class SignupController @Inject() (
     config: AppConfig,
+    dependencies: ServicesDependencies,
     eventService: EventService,
     groupService: UserGroupService,
     loginAction: LoginAction,
@@ -36,6 +46,8 @@ case class SignupController @Inject() (
     with I18nSupport
     with Operators.Common
     with UserOperators {
+
+  import dependencies.ioRuntime
 
   def signupForm: Action[AnyContent] =
     withSignupInSession { implicit request => signupRequest =>
@@ -120,21 +132,70 @@ case class SignupController @Inject() (
                       )
                   },
                   _ =>
-                    LoginAction.readUserRights(user).map { userRights =>
-                      eventService.log(
-                        EventType.SignupFormSuccessful,
-                        s"Utilisateur créé via le formulaire d'inscription ${signupRequest.id} " +
-                          s"(créateur de la préinscription : ${signupRequest.invitingUserId})",
-                        s"Utilisateur ${user.toLogString}".some,
-                        involvesUser = signupRequest.invitingUserId.some
-                      )(new RequestWithUserData(user, userRights, request))
-                      Redirect(routes.HomeController.welcome)
-                        .withSession(
-                          request.session - Keys.Session.signupId + (Keys.Session.userId -> user.id.toString)
-                        )
-                        .flashing(
-                          "success" -> "Votre compte est maintenant créé. Merci d’utiliser Administration+."
-                        )
+                    LoginAction.readUserRights(user).flatMap { userRights =>
+                      val agentConnectSubject =
+                        request.session.get(Keys.Session.signupAgentConnectSubject)
+
+                      val sessions: EitherT[IO, Error, (Session, Option[UserSession])] =
+                        agentConnectSubject match {
+                          case None =>
+                            EitherT.pure(
+                              (
+                                request.session - Keys.Session.signupId +
+                                  (Keys.Session.userId -> user.id.toString),
+                                none
+                              )
+                            )
+                          case Some(subject) =>
+                            val loginExpiresAt = request.session
+                              .get(Keys.Session.signupLoginExpiresAt)
+                              .flatMap(epoch => Try(Instant.ofEpochSecond(epoch.toLong)).toOption)
+                            for {
+                              _ <- EitherT(
+                                userService.linkUserToAgentConnectClaims(user.id, subject)
+                              )
+                              session <- userService
+                                .createNewUserSessionFromAgentConnect(user.id, loginExpiresAt)
+                            } yield (
+                              (
+                                request.session -
+                                  Keys.Session.signupId -
+                                  Keys.Session.signupAgentConnectSubject -
+                                  Keys.Session.signupLoginExpiresAt +
+                                  (Keys.Session.userId -> user.id.toString) +
+                                  (Keys.Session.sessionId -> session.id),
+                                session.some
+                              )
+                            )
+                        }
+
+                      (
+                        for {
+                          (playSession, userSession) <- sessions
+                          _ <- EitherT.right[Error](IO.blocking(userService.recordLogin(user.id)))
+                          _ <- EitherT.right[Error](
+                            IO.blocking(
+                              eventService.log(
+                                EventType.SignupFormSuccessful,
+                                s"Utilisateur créé via le formulaire d'inscription ${signupRequest.id} " +
+                                  s"(créateur de la préinscription : ${signupRequest.invitingUserId})",
+                                s"Utilisateur ${user.toLogString}".some,
+                                involvesUser = signupRequest.invitingUserId.some
+                              )(new RequestWithUserData(user, userRights, userSession, request))
+                            )
+                          )
+                        } yield Redirect(routes.HomeController.welcome)
+                          .withSession(playSession)
+                          .flashing(
+                            "success" -> "Votre compte est maintenant créé. Merci d’utiliser Administration+."
+                          )
+                      ).valueOrF(error =>
+                        IO.blocking(
+                          eventService.logError(error)(
+                            new RequestWithUserData(user, userRights, none, request)
+                          )
+                        ).as(InternalServerError(views.errors.public500(None)))
+                      ).unsafeToFuture()
                     }
                 )
               )
@@ -331,13 +392,15 @@ case class SignupController @Inject() (
                       case Some(existingUser) =>
                         // The user exists already, we exchange its signup session by a user session
                         // (this case happen if the signup session has not been purged after user creation)
-                        Future.successful(
-                          Redirect(routes.HomeController.welcome)
-                            .withSession(
-                              request.session - Keys.Session.userId - Keys.Session.signupId +
-                                (Keys.Session.userId -> existingUser.id.toString)
-                            )
-                        )
+                        IO.blocking(userService.recordLogin(existingUser.id))
+                          .as(
+                            Redirect(routes.HomeController.welcome)
+                              .withSession(
+                                request.session - Keys.Session.userId - Keys.Session.signupId +
+                                  (Keys.Session.userId -> existingUser.id.toString)
+                              )
+                          )
+                          .unsafeToFuture()
                     }
                 }
               )

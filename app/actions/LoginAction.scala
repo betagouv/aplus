@@ -3,31 +3,31 @@ package actions
 import cats.syntax.all._
 import constants.Constants
 import controllers.routes
-import helper.BooleanHelper.not
+import helper.ScalatagsHelpers.writeableOf_Modifier
 import helper.UUIDHelper
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import models.{Area, Authorization, EventType, LoginToken, User}
+import models.{Area, Authorization, EventType, LoginToken, User, UserSession}
 import models.EventType.{
   AuthByKey,
   AuthWithDifferentIp,
   ExpiredToken,
   LoginByKey,
   ToCGURedirected,
-  TryLoginByKey,
-  UserAccessDisabled
+  TryLoginByKey
 }
 import play.api.{Configuration, Logger}
 import play.api.mvc._
 import play.api.mvc.Results.{InternalServerError, TemporaryRedirect}
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
-import services.{EventService, SignupService, TokenService, UserService}
+import services.{EventService, ServicesDependencies, SignupService, TokenService, UserService}
 
 class RequestWithUserData[A](
     val currentUser: User,
     // Note: accessible here because we will need to make DB calls to create it (areas)
     val rights: Authorization.UserRights,
+    val userSession: Option[UserSession],
     request: Request[A]
 ) extends WrappedRequest[A](request)
 
@@ -45,48 +45,54 @@ object LoginAction {
 
 @Singleton
 class LoginAction @Inject() (
-    parser: BodyParsers.Default,
-    userService: UserService,
-    eventService: EventService,
-    tokenService: TokenService,
     configuration: Configuration,
-    signupService: SignupService
+    dependencies: ServicesDependencies,
+    eventService: EventService,
+    parser: BodyParsers.Default,
+    signupService: SignupService,
+    tokenService: TokenService,
+    userService: UserService,
 )(implicit ec: ExecutionContext)
     extends BaseLoginAction(
-      parser,
-      userService,
-      eventService,
-      tokenService,
       configuration,
+      dependencies,
+      eventService,
+      ec,
+      parser,
       signupService,
-      ec
+      tokenService,
+      userService,
     ) {
 
   def withPublicPage(publicPage: Result): BaseLoginAction =
     new BaseLoginAction(
-      parser,
-      userService,
-      eventService,
-      tokenService,
       configuration,
-      signupService,
+      dependencies,
+      eventService,
       ec,
+      parser,
+      signupService,
+      tokenService,
+      userService,
       publicPage.some
     )
 
 }
 
 class BaseLoginAction(
-    val parser: BodyParsers.Default,
-    userService: UserService,
-    eventService: EventService,
-    tokenService: TokenService,
     configuration: Configuration,
-    signupService: SignupService,
+    dependencies: ServicesDependencies,
+    eventService: EventService,
     implicit val executionContext: ExecutionContext,
+    val parser: BodyParsers.Default,
+    signupService: SignupService,
+    tokenService: TokenService,
+    userService: UserService,
     publicPage: Option[Result] = none,
 ) extends ActionBuilder[RequestWithUserData, AnyContent]
     with ActionRefiner[Request, RequestWithUserData] {
+
+  import dependencies.ioRuntime
 
   private val log = Logger(classOf[LoginAction])
 
@@ -114,6 +120,11 @@ class BaseLoginAction(
     val signupOpt = request.session.get(Keys.Session.signupId).flatMap(UUIDHelper.fromString)
     val tokenOpt = request.getQueryString(Keys.QueryParam.token)
 
+    val userBySession: Option[UUID] =
+      request.session
+        .get(Keys.Session.userId)
+        .flatMap(UUIDHelper.fromString)
+
     (userBySession, userByKey, tokenOpt, signupOpt) match {
       // Note: this case is deliberately put here for failing fast, if the token is invalid,
       //       we don't want to continue doing sensitive operations
@@ -124,7 +135,9 @@ class BaseLoginAction(
       //       Consequently, if there is no key, the user will see the case
       //       userNotLogged("Vous devez vous identifier pour accéder à cette page.")
       //       It is not clear this is a good thing and the code is definitely confusing.
-      case (Some(userSession), Some(userKey), None, None) if userSession.id === userKey.id =>
+      case (Some(userId), Some(userKey), None, None) if userId === userKey.id =>
+        // This essentially removes query parameters but keeps the session
+        // Next `GET url` will go to the case (Some(userId), None, _, _)
         Future(Left(TemporaryRedirect(Call(request.method, url).url)))
       case (_, Some(user), None, None) =>
         LoginAction.readUserRights(user).map { userRights =>
@@ -132,7 +145,7 @@ class BaseLoginAction(
             .flatMap(Area.fromId)
             .getOrElse(Area.all.head)
           implicit val requestWithUserData =
-            new RequestWithUserData(user, userRights, request)
+            new RequestWithUserData(user, userRights, none, request)
           if (areasWithLoginByKey.contains(area.id) && !user.admin) {
             // areasWithLoginByKey is an insecure setting for demo usage
             eventService.log(
@@ -155,22 +168,51 @@ class BaseLoginAction(
             )
           }
         }
-      case (Some(user), None, None, None) if not(user.disabled) =>
-        manageUserLogged(user)
-      case (Some(user), None, None, None) if user.disabled =>
-        LoginAction.readUserRights(user).map { userRights =>
-          implicit val requestWithUserData =
-            new RequestWithUserData(user, userRights, request)
-          eventService.log(
-            UserAccessDisabled,
-            s"Utilisateur désactivé essaye d'accéder à une page",
-            s"Path ${request.path}".some
+      case (Some(userId), None, None, None) =>
+        val sessionId = request.session.get(Keys.Session.sessionId)
+        userService
+          .userWithSessionLoggingActivity(userId, sessionId)
+          .unsafeToFuture()
+          .flatMap(
+            _.fold(
+              e => {
+                eventService.logErrorNoUser(e)
+                Future.successful(InternalServerError(views.errors.public500(None)).asLeft)
+              },
+              {
+                case (None, _) =>
+                  eventService.logSystem(
+                    EventType.LoggedInUserAccountDeleted,
+                    s"Utilisateur connecté mais le compte n'existe pas",
+                    s"Path ${request.path}".some
+                  )
+                  Future(
+                    userNotLogged(
+                      s"Votre compte a été supprimé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème."
+                    )
+                  )
+                case (Some(user), userSession) =>
+                  if (user.disabled) {
+                    LoginAction.readUserRights(user).map { userRights =>
+                      implicit val requestWithUserData =
+                        new RequestWithUserData(user, userRights, userSession, request)
+                      eventService.log(
+                        EventType.UserAccessDisabled,
+                        s"Utilisateur désactivé essaye d'accéder à une page",
+                        s"Path ${request.path}".some
+                      )
+                      userNotLogged(
+                        s"Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème."
+                      )
+                    }
+                  } else {
+                    manageUserLogged(user, userSession)
+                  }
+              }
+            )
           )
-          userNotLogged(
-            s"Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème."
-          )
-        }
       case (_, _, _, Some(signupId)) =>
+        // the exchange between signupId and userId is logged by EventType.SignupFormSuccessful
         manageSignup(signupId)
       case _ =>
         if (routes.HomeController.index.url.contains(path)) {
@@ -256,9 +298,12 @@ class BaseLoginAction(
     }
   }
 
-  private def manageUserLogged[A](user: User)(implicit request: Request[A]) =
+  private def manageUserLogged[A](user: User, userSession: Option[UserSession])(implicit
+      request: Request[A]
+  ) =
     LoginAction.readUserRights(user).map { userRights =>
-      implicit val requestWithUserData = new RequestWithUserData(user, userRights, request)
+      implicit val requestWithUserData =
+        new RequestWithUserData(user, userRights, userSession, request)
       if (user.cguAcceptationDate.nonEmpty || request.path.contains("cgu")) {
         Right(requestWithUserData)
       } else {
@@ -275,7 +320,7 @@ class BaseLoginAction(
       ToCGURedirected,
       s"Redirection vers le formulaire d'inscription (préinscription $signupId)"
     )
-    // Not an infinite redirect because `signupForm` does not uses `LoginAction`
+    // Not an infinite redirect because `signupForm` does not use `LoginAction`
     Future(
       Left(
         TemporaryRedirect(routes.SignupController.signupForm.url)
@@ -300,7 +345,7 @@ class BaseLoginAction(
         LoginAction.readUserRights(user).map { userRights =>
           // hack: we need RequestWithUserData to call the logger
           implicit val requestWithUserData =
-            new RequestWithUserData(user, userRights, request)
+            new RequestWithUserData(user, userRights, none, request)
 
           if (token.ipAddress =!= request.remoteAddress) {
             eventService.log(
@@ -415,11 +460,5 @@ class BaseLoginAction(
 
   private def userByKey[A](implicit request: Request[A]): Option[User] =
     request.getQueryString(Keys.QueryParam.key).flatMap(userService.byKey)
-
-  private def userBySession[A](implicit request: Request[A]): Option[User] =
-    request.session
-      .get(Keys.Session.userId)
-      .flatMap(UUIDHelper.fromString)
-      .flatMap(id => userService.byId(id, true))
 
 }

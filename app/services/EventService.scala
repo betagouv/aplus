@@ -6,7 +6,7 @@ import aplus.macros.Macros
 import cats.syntax.all._
 import java.time.{Instant, LocalDate}
 import java.util.UUID
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import models.{Area, Error, Event, EventType, User}
 import play.api.Logger
 import play.api.db.Database
@@ -14,7 +14,7 @@ import play.api.mvc.Request
 import scala.concurrent.Future
 import scala.util.Try
 
-@javax.inject.Singleton
+@Singleton
 class EventService @Inject() (db: Database, dependencies: ServicesDependencies) {
   import dependencies.databaseExecutionContext
 
@@ -49,10 +49,12 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
     register(event.level)(
       request.currentUser,
       request.remoteAddress,
-      event.code,
-      // Note: here we should have gone through the router, so
-      //       request.path is supposed to be valid
-      s"$descriptionSanitized. ${request.method} ${request.path}",
+      event.code, {
+        val session = request.userSession.map(session => " " + session.id).getOrElse("")
+        // Note: here we should have gone through the router, so
+        //       request.path is supposed to be valid
+        s"$descriptionSanitized.$session ${request.method} ${request.path}"
+      },
       additionalUnsafeData,
       applicationId,
       involvesUser,
