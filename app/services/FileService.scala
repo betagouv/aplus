@@ -192,7 +192,7 @@ class FileService @Inject() (
         IO.blocking {
           eventService.logSystem(
             EventType.FileAvailable,
-            s"Upload du fichier ${metadata.id} terminé avec etag $etag."
+            s"Upload du fichier ${metadata.id} terminé avec etag $etag"
           )
         }
       )
@@ -483,7 +483,8 @@ class FileService @Inject() (
               filesize,
               status,
               application_id,
-              answer_id
+              answer_id,
+              encryption_key_id
             ) VALUES (
               ${row.id}::uuid,
               ${row.uploadDate},
@@ -491,7 +492,8 @@ class FileService @Inject() (
               ${row.filesize},
               ${row.status},
               ${row.applicationId}::uuid,
-              ${row.answerId}::uuid
+              ${row.answerId}::uuid,
+              ${row.encryptionKeyId}
             )""".executeUpdate()
         }
       }.toEither.left
