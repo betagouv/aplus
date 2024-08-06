@@ -65,7 +65,7 @@ class AutoAddExpertTask @Inject() (
           UUID.randomUUID(),
           application.id,
           Time.nowParis(),
-          AnswerType.Custom,
+          AnswerType.InviteAsExpert,
           s"Je rejoins la conversation automatiquement comme expert(e) car le dernier message a plus de $days jours",
           expert.id,
           expert.nameWithQualite,

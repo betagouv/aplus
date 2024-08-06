@@ -1,6 +1,7 @@
 package views
 
 import constants.Constants
+import controllers.routes.HomeController
 import scalatags.Text.all._
 import scalatags.Text.tags2
 
@@ -10,7 +11,7 @@ object accessibility {
     views.main.publicLayout(
       "Accessibilité - Administration+",
       div(
-        h1("Déclaration d’accessibilité"),
+        h1(cls := "fr-mb-6w")("Déclaration d’accessibilité"),
         p("Établie le 11 mars 2024."),
         p(
           "L’agence nationale de la cohésion des territoires s’engage à rendre son service accessible, conformément à l’article 47 de la loi n° 2005-102 du 11 février 2005."
@@ -113,7 +114,7 @@ object accessibility {
           "."
         )
       ),
-      addBreadcrumbs = false
+      breadcrumbs = ("Accessibilité", HomeController.declarationAccessibilite.url) :: Nil,
     )
 
 }

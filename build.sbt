@@ -103,10 +103,10 @@ val fs2Version = "3.10.2"
 libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.7.3",
   "org.playframework" %% "play-mailer" % "10.0.0",
-  "org.playframework" %% "play-json" % "3.0.3",
+  "org.playframework" %% "play-json" % "3.0.4",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
-  "com.github.tototoshi" %% "scala-csv" % "1.3.10",
+  "com.github.tototoshi" %% "scala-csv" % "2.0.0",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.13.1",
   "org.typelevel" %% "cats-core" % "2.12.0",
@@ -128,7 +128,7 @@ libraryDependencies ++= Seq(
 )
 
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "7.10.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "7.12.1"
 
 // Test
 libraryDependencies ++= Seq(
