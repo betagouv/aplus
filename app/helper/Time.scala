@@ -4,6 +4,7 @@ import cats.Order
 import java.time.{Instant, LocalDate, ZoneId, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import scala.concurrent.duration.FiniteDuration
 
 object Time {
 
@@ -41,6 +42,15 @@ object Time {
 
   val dateWithHourFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("dd/MM/YYYY H'h'", Locale.FRANCE)
+
+  def readableDuration(duration: FiniteDuration): String = {
+    val millis = duration.toMillis
+    val hours = millis / 3600000
+    val minutes = (millis % 3600000) / 60000
+    val seconds = (millis % 60000) / 1000
+    val remainingMillis = millis % 1000
+    f"$hours%02dh:$minutes%02dm:$seconds%02ds.$remainingMillis%03d"
+  }
 
   implicit final val zonedDateTimeInstance: Order[ZonedDateTime] =
     new Order[ZonedDateTime] {

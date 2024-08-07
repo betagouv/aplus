@@ -12,6 +12,8 @@ scalafixAll -r OrganizeImports
 scalafmtAll
 ```
 
+Les règles scalafix sont à vérifier avec `scalafixAll --check`.
+
 
 ## Organisation du code
 
