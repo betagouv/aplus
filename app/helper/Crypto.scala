@@ -143,7 +143,7 @@ object Crypto {
     import cats.effect.IO
     import fs2.{Chunk, Pipe, Stream}
 
-    /** The implementation tries to reduce copies at a minimum. */
+    /** The implementation tries to reduce copies to a minimum. */
     def encrypt(aad: String, key: Key): Pipe[IO, Byte, Byte] =
       in =>
         Stream.eval(IO(Crypto.encryptCipher(aad, key))).flatMap { case (cipher, nonce) =>
