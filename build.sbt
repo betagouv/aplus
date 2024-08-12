@@ -128,7 +128,7 @@ libraryDependencies ++= Seq(
 )
 
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "7.12.1"
+libraryDependencies += "io.sentry" % "sentry-logback" % "7.13.0"
 
 // Test
 libraryDependencies ++= Seq(
