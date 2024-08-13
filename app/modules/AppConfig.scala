@@ -18,6 +18,9 @@ class AppConfig @Inject() (configuration: Configuration) {
   val tokenExpirationInMinutes: Int =
     configuration.get[Int]("app.tokenExpirationInMinutes")
 
+  val magicLinkSessionDurationInSeconds: Long =
+    configuration.get[Long]("app.magicLinkSessionDurationInSeconds")
+
   val featureMandatSms: Boolean = configuration.get[Boolean]("app.features.smsMandat")
 
   val useLiveSmsApi: Boolean = configuration
@@ -79,7 +82,7 @@ class AppConfig @Inject() (configuration: Configuration) {
   val topHeaderWarningMessage: Option[String] =
     configuration.getOptional[String]("app.topHeaderWarningMessage")
 
-  val areasWithLoginByKey: List[UUID] = configuration
+  val insecureAreasWithLoginByKey: List[UUID] = configuration
     .get[String]("app.areasWithLoginByKey")
     .split(",")
     .flatMap(UUIDHelper.fromString)
