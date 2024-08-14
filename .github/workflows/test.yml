@@ -44,13 +44,13 @@ jobs:
       run: "sbt coverage test"
       env:
         GECKO_DRIVER: /usr/bin/geckodriver
-        FILES_OVH_S3_ACCESS_KEY: ${{ vars.FILES_OVH_S3_ACCESS_KEY }}
-        FILES_OVH_S3_SECRET_KEY: ${{ vars.FILES_OVH_S3_SECRET_KEY }}
-        FILES_OVH_S3_ENDPOINT: ${{ vars.FILES_OVH_S3_ENDPOINT }}
-        FILES_OVH_S3_REGION: ${{ vars.FILES_OVH_S3_REGION }}
-        FILES_OVH_S3_BUCKET: ${{ vars.FILES_OVH_S3_BUCKET }}
-        FILES_CURRENT_ENCRYPTION_KEY_ID: ${{ vars.FILES_CURRENT_ENCRYPTION_KEY_ID }}
-        FILES_ENCRYPTION_KEYS: ${{ vars.FILES_ENCRYPTION_KEYS }}
+        FILES_OVH_S3_ACCESS_KEY: ${{ secrets.FILES_OVH_S3_ACCESS_KEY }}
+        FILES_OVH_S3_SECRET_KEY: ${{ secrets.FILES_OVH_S3_SECRET_KEY }}
+        FILES_OVH_S3_ENDPOINT: ${{ secrets.FILES_OVH_S3_ENDPOINT }}
+        FILES_OVH_S3_REGION: ${{ secrets.FILES_OVH_S3_REGION }}
+        FILES_OVH_S3_BUCKET: ${{ secrets.FILES_OVH_S3_BUCKET }}
+        FILES_CURRENT_ENCRYPTION_KEY_ID: ${{ secrets.FILES_CURRENT_ENCRYPTION_KEY_ID }}
+        FILES_ENCRYPTION_KEYS: ${{ secrets.FILES_ENCRYPTION_KEYS }}
 
     - name: Generate coverage report
       run: "sbt coverageReport"
