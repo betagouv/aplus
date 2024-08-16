@@ -225,7 +225,7 @@ class BaseLoginAction(
             userSession <- userService
               .createNewUserSession(
                 user.id,
-                UserSession.LoginType.MagicLink,
+                UserSession.LoginType.InsecureDemoKey,
                 loginExpiresAt,
                 request.remoteAddress,
               )

@@ -644,7 +644,8 @@ class UserService @Inject() (
     Column
       .of[String]
       .mapResult {
-        case "magic_link" => UserSession.LoginType.MagicLink.asRight
+        case "magic_link"        => UserSession.LoginType.MagicLink.asRight
+        case "insecure_demo_key" => UserSession.LoginType.InsecureDemoKey.asRight
         case unknownType =>
           SqlMappingError(s"Cannot parse login_type $unknownType").asLeft
       }
@@ -714,7 +715,8 @@ class UserService @Inject() (
       )
 
   private def stringifyLoginType(loginType: UserSession.LoginType): String = loginType match {
-    case UserSession.LoginType.MagicLink => "magic_link"
+    case UserSession.LoginType.MagicLink       => "magic_link"
+    case UserSession.LoginType.InsecureDemoKey => "insecure_demo_key"
   }
 
   private def saveUserSession(session: UserSession): IO[Either[Error, UserSession]] =
