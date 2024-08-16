@@ -139,7 +139,8 @@ case class SignupController @Inject() (
                             .createNewUserSession(
                               user.id,
                               UserSession.LoginType.MagicLink,
-                              loginExpiresAt
+                              loginExpiresAt,
+                              request.remoteAddress,
                             )
                           _ <- EitherT
                             .right[Error](IO.blocking(userService.recordLogin(user.id)))
@@ -393,7 +394,8 @@ case class SignupController @Inject() (
                                 .createNewUserSession(
                                   existingUser.id,
                                   UserSession.LoginType.MagicLink,
-                                  loginExpiresAt
+                                  loginExpiresAt,
+                                  request.remoteAddress,
                                 )
                               _ <- EitherT
                                 .right[Error](IO.blocking(userService.recordLogin(existingUser.id)))

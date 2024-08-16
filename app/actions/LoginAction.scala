@@ -226,7 +226,8 @@ class BaseLoginAction(
               .createNewUserSession(
                 user.id,
                 UserSession.LoginType.MagicLink,
-                loginExpiresAt
+                loginExpiresAt,
+                request.remoteAddress,
               )
             _ <- EitherT
               .right[Error](IO.blocking(userService.recordLogin(user.id)))
@@ -396,7 +397,8 @@ class BaseLoginAction(
                   .createNewUserSession(
                     user.id,
                     UserSession.LoginType.MagicLink,
-                    loginExpiresAt
+                    loginExpiresAt,
+                    request.remoteAddress,
                   )
                 _ <- EitherT
                   .right[Error](IO.blocking(userService.recordLogin(user.id)))

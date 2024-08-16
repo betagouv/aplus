@@ -17,6 +17,7 @@ case class UserSession(
     id: String,
     userId: UUID,
     creationDate: Instant,
+    creationIpAddress: String,
     lastActivity: Instant,
     loginType: UserSession.LoginType,
     expiresAt: Instant,

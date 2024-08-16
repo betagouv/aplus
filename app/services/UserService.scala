@@ -649,10 +649,11 @@ class UserService @Inject() (
           SqlMappingError(s"Cannot parse login_type $unknownType").asLeft
       }
 
-  val (userSessionParser, userSessionTableFields) = Macros.parserWithFields[UserSession](
+  private val userSessionTableFields = List(
     "id",
     "user_id",
     "creation_date",
+    "creation_ip_address",
     "last_activity",
     "login_type",
     "expires_at",
@@ -663,13 +664,12 @@ class UserService @Inject() (
     "user_session.id",
     "user_session.user_id",
     "user_session.creation_date",
+    "creation_ip_address_text",
     "user_session.last_activity",
     "user_session.login_type",
     "user_session.expires_at",
     "user_session.revoked_at",
   )
-
-  val userSessionFieldsInSelect: String = userSessionTableFields.mkString(", ")
 
   // Double the recommended minimum 64 bits of entropy
   private val SESSION_SIZE_BYTES = 16
@@ -683,7 +683,8 @@ class UserService @Inject() (
   private def generateNewUserSession(
       userId: UUID,
       loginType: UserSession.LoginType,
-      expiresAt: Instant
+      expiresAt: Instant,
+      ipAddress: String
   ): IO[Either[Error, UserSession]] =
     generateNewSessionId
       .flatMap(sessionId =>
@@ -692,6 +693,7 @@ class UserService @Inject() (
             id = sessionId,
             userId = userId,
             creationDate = now,
+            creationIpAddress = ipAddress,
             lastActivity = now,
             loginType = loginType,
             expiresAt = expiresAt,
@@ -723,6 +725,7 @@ class UserService @Inject() (
             id,
             user_id,
             creation_date,
+            creation_ip_address,
             last_activity,
             login_type,
             expires_at
@@ -730,6 +733,7 @@ class UserService @Inject() (
             ${session.id},
             ${session.userId}::uuid,
             ${session.creationDate},
+            ${session.creationIpAddress}::inet,
             ${session.lastActivity},
             ${stringifyLoginType(session.loginType)},
             ${session.expiresAt}
@@ -758,10 +762,11 @@ class UserService @Inject() (
   def createNewUserSession(
       userId: UUID,
       loginType: UserSession.LoginType,
-      expiresAt: Instant
+      expiresAt: Instant,
+      ipAddress: String
   ): EitherT[IO, Error, UserSession] =
     for {
-      session <- EitherT(generateNewUserSession(userId, loginType, expiresAt))
+      session <- EitherT(generateNewUserSession(userId, loginType, expiresAt, ipAddress))
       _ <- EitherT(saveUserSession(session))
     } yield session
 
@@ -788,7 +793,9 @@ class UserService @Inject() (
                 tableFields.map(f => s"\"user\".$f").mkString(", ") + ", " +
                   userSessionTableFields.map(f => s"user_session.$f").mkString(", ")
               val result: Option[(Option[UserRow], Option[UserSession])] = SQL(s"""
-                SELECT $fields
+                SELECT
+                  $fields,
+                  host(user_session.creation_ip_address)::text AS creation_ip_address_text
                 FROM
                   (SELECT * FROM "user" WHERE id = {userId}::uuid) AS "user"
                 LEFT JOIN
