@@ -1,7 +1,7 @@
 --- !Ups
 
 CREATE TABLE user_session(
-  id text NOT NULL,
+  id text PRIMARY KEY,
   user_id uuid NOT NULL,
   creation_date timestamptz NOT NULL,
   creation_ip_address inet NOT NULL,

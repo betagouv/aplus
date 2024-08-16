@@ -789,7 +789,7 @@ class UserService @Inject() (
                 WHERE id = ${sessionId}
               """.executeUpdate()
 
-              // This method is called at each action from a user,
+              // This method is called during each user action, therefore,
               // as an optimization, we get all the data in a single query
               val fields =
                 tableFields.map(f => s"\"user\".$f").mkString(", ") + ", " +
