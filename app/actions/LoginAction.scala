@@ -406,7 +406,7 @@ class BaseLoginAction(
                   IO.blocking(
                     eventService.log(
                       EventType.AuthByKey,
-                      "Identification par token"
+                      s"Identification par token (expiration : $loginExpiresAt)"
                     )(
                       new RequestWithUserData(user, userRights, userSession.some, request)
                     )
