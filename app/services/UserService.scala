@@ -2,14 +2,17 @@ package services
 
 import anorm._
 import aplus.macros.Macros
+import cats.data.EitherT
 import cats.effect.IO
 import cats.syntax.all._
 import helper.{Hash, StringHelper, Time}
 import helper.StringHelper.StringOps
+import java.security.SecureRandom
 import java.sql.Connection
+import java.time.Instant
 import java.util.UUID
-import javax.inject.Inject
-import models.{Error, EventType, Organisation, User}
+import javax.inject.{Inject, Singleton}
+import models.{Error, EventType, Organisation, User, UserSession}
 import models.dataModels.UserRow
 import modules.AppConfig
 import org.postgresql.util.PSQLException
@@ -18,7 +21,7 @@ import scala.concurrent.Future
 import scala.util.Try
 import views.editMyGroups.UserInfos
 
-@javax.inject.Singleton
+@Singleton
 class UserService @Inject() (
     config: AppConfig,
     db: Database,
@@ -53,6 +56,35 @@ class UserService @Inject() (
     "managing_area_ids",
     "shared_account",
     "internal_support_comment"
+  )
+
+  private val qualifiedUserParser = anorm.Macro.parser[UserRow](
+    "user.id",
+    "user.key",
+    "user.first_name",
+    "user.last_name",
+    "user.name",
+    "user.qualite",
+    "user.email",
+    "user.helper",
+    "user.instructor",
+    "user.admin",
+    "user.areas",
+    "user.creation_date",
+    "user.commune_code",
+    "user.group_admin",
+    "user.disabled",
+    "user.expert",
+    "user.group_ids",
+    "user.cgu_acceptation_date",
+    "user.newsletter_acceptation_date",
+    "user.first_login_date",
+    "user.phone_number",
+    "user.observable_organisation_ids",
+    "user.managing_organisation_ids",
+    "user.managing_area_ids",
+    "user.shared_account",
+    "user.internal_support_comment"
   )
 
   private val fieldsInSelect: String = tableFields.mkString(", ")
@@ -600,6 +632,222 @@ class UserService @Inject() (
             errorMessage,
             error,
             none
+          )
+        )
+    )
+
+  //
+  // User Sessions
+  //
+
+  implicit val invitedUsersParser: Column[UserSession.LoginType] =
+    Column
+      .of[String]
+      .mapResult {
+        case "magic_link"        => UserSession.LoginType.MagicLink.asRight
+        case "insecure_demo_key" => UserSession.LoginType.InsecureDemoKey.asRight
+        case unknownType =>
+          SqlMappingError(s"Cannot parse login_type $unknownType").asLeft
+      }
+
+  private val userSessionTableFields = List(
+    "id",
+    "user_id",
+    "creation_date",
+    "creation_ip_address",
+    "last_activity",
+    "login_type",
+    "expires_at",
+    "revoked_at",
+  )
+
+  private val qualifiedUserSessionParser = anorm.Macro.parser[UserSession](
+    "user_session.id",
+    "user_session.user_id",
+    "user_session.creation_date",
+    "creation_ip_address_text",
+    "user_session.last_activity",
+    "user_session.login_type",
+    "user_session.expires_at",
+    "user_session.revoked_at",
+  )
+
+  // Double the recommended minimum 64 bits of entropy
+  private val SESSION_SIZE_BYTES = 16
+
+  private def generateNewSessionId: IO[String] = IO {
+    val bytes = Array.ofDim[Byte](SESSION_SIZE_BYTES)
+    new SecureRandom().nextBytes(bytes)
+    bytes.map("%02x".format(_)).mkString
+  }
+
+  private def generateNewUserSession(
+      userId: UUID,
+      loginType: UserSession.LoginType,
+      expiresAt: Instant,
+      ipAddress: String
+  ): IO[Either[Error, UserSession]] =
+    generateNewSessionId
+      .flatMap(sessionId =>
+        IO.realTimeInstant.map(now =>
+          UserSession(
+            id = sessionId,
+            userId = userId,
+            creationDate = now,
+            creationIpAddress = ipAddress,
+            lastActivity = now,
+            loginType = loginType,
+            expiresAt = expiresAt,
+            revokedAt = None,
+          )
+        )
+      )
+      .attempt
+      .map(
+        _.left.map(error =>
+          Error.SqlException(
+            EventType.UserSessionError,
+            s"Impossible de générer une nouvelle session pour l'utilisateur ${userId} ($loginType)",
+            error,
+            none
+          )
+        )
+      )
+
+  private def stringifyLoginType(loginType: UserSession.LoginType): String = loginType match {
+    case UserSession.LoginType.MagicLink       => "magic_link"
+    case UserSession.LoginType.InsecureDemoKey => "insecure_demo_key"
+  }
+
+  private def saveUserSession(session: UserSession): IO[Either[Error, UserSession]] =
+    IO.blocking {
+      val _ = db.withConnection { implicit connection =>
+        SQL"""
+          INSERT INTO user_session (
+            id,
+            user_id,
+            creation_date,
+            creation_ip_address,
+            last_activity,
+            login_type,
+            expires_at
+          ) VALUES (
+            ${session.id},
+            ${session.userId}::uuid,
+            ${session.creationDate},
+            ${session.creationIpAddress}::inet,
+            ${session.lastActivity},
+            ${stringifyLoginType(session.loginType)},
+            ${session.expiresAt}
+          )
+        """.executeUpdate()
+      }
+      session
+    }.attempt
+      .map(
+        _.left.map[Error](error =>
+          Error.SqlException(
+            EventType.UserSessionError,
+            s"Impossible de sauvegarder une session utilisateur $session",
+            error,
+            none
+          )
+        )
+      )
+
+  /** We store the session id as hexadecimals in the db because there is a unique mapping between
+    * bytes and hexadecimals. This is not true of base64 strings.
+    *
+    * OWASP Recommendations on session id length:
+    * https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html#session-id-length
+    */
+  def createNewUserSession(
+      userId: UUID,
+      loginType: UserSession.LoginType,
+      expiresAt: Instant,
+      ipAddress: String
+  ): EitherT[IO, Error, UserSession] =
+    for {
+      session <- EitherT(generateNewUserSession(userId, loginType, expiresAt, ipAddress))
+      _ <- EitherT(saveUserSession(session))
+    } yield session
+
+  /** Intended to be used at each logged in call */
+  def userWithSessionLoggingActivity(
+      userId: UUID,
+      sessionId: Option[String]
+  ): IO[Either[Error, (Option[User], Option[UserSession])]] =
+    (sessionId match {
+      case None => IO.blocking(byId(userId)).map(user => (user, None))
+      case Some(sessionId) =>
+        IO.realTimeInstant.flatMap(now =>
+          IO.blocking {
+            db.withTransaction { implicit connection =>
+              SQL"""
+                UPDATE user_session
+                SET last_activity = ${now}
+                WHERE id = ${sessionId}
+              """.executeUpdate()
+
+              // This method is called during each user action, therefore,
+              // as an optimization, we get all the data in a single query
+              val fields =
+                tableFields.map(f => s"\"user\".$f").mkString(", ") + ", " +
+                  userSessionTableFields.map(f => s"user_session.$f").mkString(", ")
+              val result: Option[(Option[UserRow], Option[UserSession])] = SQL(s"""
+                SELECT
+                  $fields,
+                  host(user_session.creation_ip_address)::text AS creation_ip_address_text
+                FROM
+                  (SELECT * FROM "user" WHERE id = {userId}::uuid) AS "user"
+                LEFT JOIN
+                  (SELECT * FROM user_session WHERE id = {sessionId}) AS user_session
+                ON true
+              """)
+                .on("userId" -> userId.toString, "sessionId" -> sessionId)
+                .as(
+                  (qualifiedUserParser.? ~ qualifiedUserSessionParser.?)
+                    .map(SqlParser.flatten)
+                    .singleOpt
+                )
+              result match {
+                case None                 => (None, None)
+                case Some((row, session)) => (row.map(_.toUser), session)
+              }
+            }
+          }
+        )
+    }).attempt.map(
+      _.left.map(error =>
+        Error.SqlException(
+          EventType.UserSessionError,
+          s"Impossible de trouver l'utilisateur ${userId} avec la session ${sessionId}",
+          error,
+          none
+        )
+      )
+    )
+
+  def revokeUserSession(sessionId: String): IO[Either[Error, Unit]] =
+    IO.realTimeInstant.flatMap(now =>
+      IO.blocking {
+        val _ = db.withConnection { implicit connection =>
+          SQL"""
+            UPDATE user_session
+            SET revoked_at = ${now}
+            WHERE id = ${sessionId}
+              AND revoked_at is NULL
+          """.executeUpdate()
+        }
+      }.attempt
+        .map(
+          _.left.map[Error](error =>
+            Error.SqlException(
+              EventType.UserSessionError,
+              s"Impossible de revoquer la session utilisateur $sessionId",
+              error,
+              none
+            )
           )
         )
     )

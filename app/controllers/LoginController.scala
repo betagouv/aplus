@@ -1,7 +1,9 @@
 package controllers
 
 import actions.{LoginAction, RequestWithUserData}
+import cats.effect.IO
 import cats.syntax.all._
+import helper.ScalatagsHelpers.writeableOf_Modifier
 import helper.Time
 import javax.inject.{Inject, Singleton}
 import models.{Authorization, EventType, LoginToken, User}
@@ -11,12 +13,20 @@ import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Action, AnyContent, InjectedController, Request}
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
-import services.{EventService, NotificationService, SignupService, TokenService, UserService}
+import services.{
+  EventService,
+  NotificationService,
+  ServicesDependencies,
+  SignupService,
+  TokenService,
+  UserService
+}
 import views.home.LoginPanel
 
 @Singleton
 class LoginController @Inject() (
     val config: AppConfig,
+    dependencies: ServicesDependencies,
     userService: UserService,
     notificationService: NotificationService,
     tokenService: TokenService,
@@ -25,6 +35,8 @@ class LoginController @Inject() (
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with Operators.Common {
+
+  import dependencies.ioRuntime
 
   /** Security Note: when the email is in the query "?email=xxx", we do not check the CSRF token
     * because the API is used externally.
@@ -80,8 +92,9 @@ class LoginController @Inject() (
                   val loginToken =
                     LoginToken
                       .forUserId(user.id, config.tokenExpirationInMinutes, request.remoteAddress)
+                  // userSession = none since there are no session around
                   val requestWithUserData =
-                    new RequestWithUserData(user, userRights, request)
+                    new RequestWithUserData(user, userRights, none, request)
                   loginHappyPath(loginToken, user.email, requestWithUserData.some)
                 }
             }
@@ -208,8 +221,24 @@ class LoginController @Inject() (
     }
 
   def disconnect: Action[AnyContent] =
-    Action {
-      Redirect(routes.LoginController.login).withNewSession
+    Action.async { implicit request =>
+      def result = Redirect(routes.LoginController.login).withNewSession
+      request.session.get(Keys.Session.sessionId) match {
+        case None => Future.successful(result)
+        case Some(sessionId) =>
+          userService
+            .revokeUserSession(sessionId)
+            .flatMap(
+              _.fold(
+                e =>
+                  IO.blocking(eventService.logErrorNoUser(e))
+                    .as(InternalServerError(views.errors.public500(None))),
+                _ => IO.pure(result)
+              )
+            )
+            .unsafeToFuture()
+      }
+
     }
 
 }
