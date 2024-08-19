@@ -44,6 +44,13 @@ jobs:
       run: "sbt coverage test"
       env:
         GECKO_DRIVER: /usr/bin/geckodriver
+        FILES_OVH_S3_ACCESS_KEY: unused
+        FILES_OVH_S3_SECRET_KEY: unused
+        FILES_OVH_S3_ENDPOINT: https://unused.example.com
+        FILES_OVH_S3_REGION: unused
+        FILES_OVH_S3_BUCKET: unused
+        FILES_CURRENT_ENCRYPTION_KEY_ID: unused-key
+        FILES_ENCRYPTION_KEYS: "unused-key:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 
     - name: Generate coverage report
       run: "sbt coverageReport"

@@ -18,7 +18,7 @@ import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.i18n.I18nSupport
-import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result, Session}
+import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 import serializers.Keys
@@ -50,7 +50,7 @@ case class SignupController @Inject() (
   import dependencies.ioRuntime
 
   def signupForm: Action[AnyContent] =
-    withSignupInSession { implicit request => signupRequest =>
+    withSignupInSession { implicit request => (signupRequest, _) =>
       eventService.logSystem(
         EventType.SignupFormShowed,
         s"Visualisation de la page d'inscription ${signupRequest.id}"
@@ -61,7 +61,7 @@ case class SignupController @Inject() (
     }
 
   def createSignup: Action[AnyContent] =
-    withSignupInSession { implicit request => signupRequest =>
+    withSignupInSession { implicit request => (signupRequest, loginExpiresAt) =>
       SignupFormData.form
         .bindFromRequest()
         .fold(
@@ -133,46 +133,18 @@ case class SignupController @Inject() (
                   },
                   _ =>
                     LoginAction.readUserRights(user).flatMap { userRights =>
-                      val agentConnectSubject =
-                        request.session.get(Keys.Session.signupAgentConnectSubject)
-
-                      val sessions: EitherT[IO, Error, (Session, Option[UserSession])] =
-                        agentConnectSubject match {
-                          case None =>
-                            EitherT.pure(
-                              (
-                                request.session - Keys.Session.signupId +
-                                  (Keys.Session.userId -> user.id.toString),
-                                none
-                              )
-                            )
-                          case Some(subject) =>
-                            val loginExpiresAt = request.session
-                              .get(Keys.Session.signupLoginExpiresAt)
-                              .flatMap(epoch => Try(Instant.ofEpochSecond(epoch.toLong)).toOption)
-                            for {
-                              _ <- EitherT(
-                                userService.linkUserToAgentConnectClaims(user.id, subject)
-                              )
-                              session <- userService
-                                .createNewUserSessionFromAgentConnect(user.id, loginExpiresAt)
-                            } yield (
-                              (
-                                request.session -
-                                  Keys.Session.signupId -
-                                  Keys.Session.signupAgentConnectSubject -
-                                  Keys.Session.signupLoginExpiresAt +
-                                  (Keys.Session.userId -> user.id.toString) +
-                                  (Keys.Session.sessionId -> session.id),
-                                session.some
-                              )
-                            )
-                        }
-
                       (
                         for {
-                          (playSession, userSession) <- sessions
-                          _ <- EitherT.right[Error](IO.blocking(userService.recordLogin(user.id)))
+                          loginType <- maybeLinkUserToAgentConnectClaims(user.id, request)
+                          userSession <- userService
+                            .createNewUserSession(
+                              user.id,
+                              loginType,
+                              loginExpiresAt,
+                              request.remoteAddress,
+                            )
+                          _ <- EitherT
+                            .right[Error](IO.blocking(userService.recordLogin(user.id)))
                           _ <- EitherT.right[Error](
                             IO.blocking(
                               eventService.log(
@@ -181,11 +153,17 @@ case class SignupController @Inject() (
                                   s"(créateur de la préinscription : ${signupRequest.invitingUserId})",
                                 s"Utilisateur ${user.toLogString}".some,
                                 involvesUser = signupRequest.invitingUserId.some
-                              )(new RequestWithUserData(user, userRights, userSession, request))
+                              )(
+                                new RequestWithUserData(user, userRights, userSession.some, request)
+                              )
                             )
                           )
                         } yield Redirect(routes.HomeController.welcome)
-                          .withSession(playSession)
+                          .removingFromSession(LoginAction.signupSessionKeys: _*)
+                          .addingToSession(
+                            Keys.Session.userId -> user.id.toString,
+                            Keys.Session.sessionId -> userSession.id,
+                          )
                           .flashing(
                             "success" -> "Votre compte est maintenant créé. Merci d’utiliser Administration+."
                           )
@@ -346,65 +324,115 @@ case class SignupController @Inject() (
         )
       )
 
+  private def maybeLinkUserToAgentConnectClaims(
+      userId: UUID,
+      request: Request[_]
+  ): EitherT[IO, Error, UserSession.LoginType] =
+    request.session.get(Keys.Session.signupAgentConnectSubject) match {
+      case None => EitherT.rightT[IO, Error](UserSession.LoginType.MagicLink)
+      case Some(subject) =>
+        EitherT(
+          userService.linkUserToAgentConnectClaims(userId, subject)
+        ).map(_ => UserSession.LoginType.AgentConnect)
+    }
+
   /** Note: parameter is curried to easily mark `Request` as implicit. */
   private def withSignupInSession(
-      action: Request[_] => SignupRequest => Future[Result]
+      action: Request[_] => (SignupRequest, Instant) => Future[Result]
   ): Action[AnyContent] =
     Action.async { implicit request =>
       val signupOpt = request.session.get(Keys.Session.signupId).flatMap(UUIDHelper.fromString)
+
+      val loginExpiresAtOpt = request.session
+        .get(Keys.Session.signupLoginExpiresAt)
+        .flatMap(epoch => Try(Instant.ofEpochSecond(epoch.toLong)).toOption)
+
       signupOpt match {
         case None =>
           val message = "Merci de vous connecter pour accéder à cette page."
           Future.successful(
             Redirect(routes.LoginController.login)
               .flashing("error" -> message)
-              .withSession(request.session - Keys.Session.signupId)
+              .removingFromSession(LoginAction.signupSessionKeys: _*)
           )
         case Some(signupId) =>
-          signupService
-            .byId(signupId)
-            .flatMap(
-              _.fold(
-                e => {
-                  eventService.logErrorNoUser(e)
-                  Future.successful(
-                    Redirect(routes.LoginController.login)
-                      .flashing("error" -> Constants.error500FlashMessage)
-                      .withSession(request.session - Keys.Session.signupId)
-                  )
-                },
-                {
-                  case None =>
-                    eventService.logSystem(
-                      EventType.MissingSignup,
-                      s"Tentative d'inscription avec l'id $signupId en session, mais n'existant pas en BDD"
-                    )
-                    val message = "Une erreur interne est survenue. " +
-                      "Si celle-ci persiste, vous pouvez contacter le support Administration+."
-                    Future.successful(
-                      Redirect(routes.LoginController.login)
-                        .flashing("error" -> message)
-                        .withSession(request.session - Keys.Session.signupId)
-                    )
-                  case Some(signupRequest) =>
-                    userService.byEmailFuture(signupRequest.email).flatMap {
-                      case None               => action(request)(signupRequest)
-                      case Some(existingUser) =>
-                        // The user exists already, we exchange its signup session by a user session
-                        // (this case happen if the signup session has not been purged after user creation)
-                        IO.blocking(userService.recordLogin(existingUser.id))
-                          .as(
-                            Redirect(routes.HomeController.welcome)
-                              .withSession(
-                                request.session - Keys.Session.userId - Keys.Session.signupId +
-                                  (Keys.Session.userId -> existingUser.id.toString)
+          // TODO: we allow loginExpiresAtOpt === None as legacy, it should be removed
+          val loginExpiresAt = loginExpiresAtOpt.getOrElse(
+            Instant.now().plusSeconds(config.magicLinkSessionDurationInSeconds)
+          )
+          val isExpired = Instant.now().isAfter(loginExpiresAt)
+          if (isExpired) {
+            eventService.logSystem(
+              EventType.SignupLoginExpired,
+              s"Session de la préinscription $signupId expirée (expiration : $loginExpiresAt)"
+            )
+            val message = "Votre session a expiré. Veuillez vous reconnecter. "
+            Future.successful(
+              Redirect(routes.LoginController.login)
+                .flashing("error" -> message)
+                .removingFromSession(LoginAction.signupSessionKeys: _*)
+            )
+          } else {
+            signupService
+              .byId(signupId)
+              .flatMap(
+                _.fold(
+                  e => {
+                    eventService.logErrorNoUser(e)
+                    // TODO (accessibility): we want the logged in error page here
+                    Future.successful(InternalServerError(views.errors.public500(None)))
+                  },
+                  {
+                    case None =>
+                      eventService.logSystem(
+                        EventType.MissingSignup,
+                        s"Tentative d'inscription avec l'id $signupId en session, mais n'existant pas en BDD"
+                      )
+                      val message = "Une erreur interne est survenue. " +
+                        "Si celle-ci persiste, vous pouvez contacter le support Administration+."
+                      Future.successful(
+                        Redirect(routes.LoginController.login)
+                          .flashing("error" -> message)
+                          .removingFromSession(LoginAction.signupSessionKeys: _*)
+                      )
+                    case Some(signupRequest) =>
+                      userService.byEmailFuture(signupRequest.email).flatMap {
+                        case None               => action(request)(signupRequest, loginExpiresAt)
+                        case Some(existingUser) =>
+                          // The user exists already, we exchange its signup session by a user session
+                          // (this case happen if the signup session has not been purged after user creation)
+                          (
+                            for {
+                              loginType <- maybeLinkUserToAgentConnectClaims(
+                                existingUser.id,
+                                request
+                              )
+                              userSession <- userService
+                                .createNewUserSession(
+                                  existingUser.id,
+                                  loginType,
+                                  loginExpiresAt,
+                                  request.remoteAddress,
+                                )
+                              _ <- EitherT
+                                .right[Error](IO.blocking(userService.recordLogin(existingUser.id)))
+                            } yield Redirect(routes.HomeController.welcome)
+                              .removingFromSession(LoginAction.signupSessionKeys: _*)
+                              .addingToSession(
+                                Keys.Session.userId -> existingUser.id.toString,
+                                Keys.Session.sessionId -> userSession.id,
                               )
                           )
-                          .unsafeToFuture()
-                    }
-                }
+                            .valueOrF(error =>
+                              IO.blocking(eventService.logErrorNoUser(error))
+                                .as(InternalServerError(views.errors.public500(None)))
+                            )
+                            .unsafeToFuture()
+                      }
+                  }
+                )
               )
-            )
+          }
       }
     }
 

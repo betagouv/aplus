@@ -15,7 +15,7 @@
                         @area.name
                         @if(user.admin) { /
                             @area.id /
-                            @if(mainInfos.config.areasWithLoginByKey.contains[UUID](area.id)) {
+                            @if(mainInfos.config.insecureAreasWithLoginByKey.contains[UUID](area.id)) {
                                 <i class="material-icons">warning</i> Login par clé possible<i class="material-icons">warning</i> /
                             }
                             <a href="@routes.ApplicationController.applicationsAdmin?areaId=@area.id" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--raised">

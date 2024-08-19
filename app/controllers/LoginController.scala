@@ -9,13 +9,23 @@ import helper.ScalatagsHelpers.writeableOf_Modifier
 import helper.Time
 import java.time.Instant
 import javax.inject.{Inject, Singleton}
-import models.{AgentConnectClaims, Authorization, Error, EventType, LoginToken, SignupRequest, User}
+import models.{
+  AgentConnectClaims,
+  Authorization,
+  Error,
+  EventType,
+  LoginToken,
+  SignupRequest,
+  User,
+  UserSession
+}
 import models.EventType.{GenerateToken, UnknownEmail}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
+import scala.util.Try
 import serializers.Keys
 import services.{
   AgentConnectService,
@@ -98,6 +108,7 @@ class LoginController @Inject() (
                   val loginToken =
                     LoginToken
                       .forUserId(user.id, config.tokenExpirationInMinutes, request.remoteAddress)
+                  // userSession = none since there are no session around
                   val requestWithUserData =
                     new RequestWithUserData(user, userRights, none, request)
                   loginHappyPath(loginToken, user.email, requestWithUserData.some)
@@ -328,9 +339,23 @@ class LoginController @Inject() (
               )
           )
         } else {
+          val expiresAtIO = IO.realTimeInstant.flatMap(now =>
+            request.session
+              .get(Keys.Session.signupLoginExpiresAt)
+              .flatMap(epoch => Try(Instant.ofEpochSecond(epoch.toLong)).toOption) match {
+              case None            => AgentConnectService.calculateExpiresAt(now)
+              case Some(expiresAt) => IO.pure(expiresAt)
+            }
+          )
           for {
+            expiresAt <- EitherT.right[Error](expiresAtIO)
             _ <- EitherT.right[Error](IO.blocking(userService.recordLogin(user.id)))
-            session <- userService.createNewUserSessionFromAgentConnect(user.id, none)
+            session <- userService.createNewUserSession(
+              user.id,
+              UserSession.LoginType.AgentConnect,
+              expiresAt,
+              request.remoteAddress
+            )
             _ <- EitherT.right[Error] {
               val requestWithUserData =
                 new RequestWithUserData(user, userRights, session.some, request)
@@ -402,8 +427,24 @@ class LoginController @Inject() (
   }
 
   def disconnect: Action[AnyContent] =
-    Action {
-      Redirect(routes.LoginController.login).withNewSession
+    Action.async { implicit request =>
+      def result = Redirect(routes.LoginController.login).withNewSession
+      request.session.get(Keys.Session.sessionId) match {
+        case None => Future.successful(result)
+        case Some(sessionId) =>
+          userService
+            .revokeUserSession(sessionId)
+            .flatMap(
+              _.fold(
+                e =>
+                  IO.blocking(eventService.logErrorNoUser(e))
+                    .as(InternalServerError(views.errors.public500(None))),
+                _ => IO.pure(result)
+              )
+            )
+            .unsafeToFuture()
+      }
+
     }
 
   private val agentConnectErrorTitleFlashKey = "agentConnectErrorTitle"

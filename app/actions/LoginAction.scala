@@ -1,22 +1,19 @@
 package actions
 
+import cats.data.EitherT
+import cats.effect.IO
 import cats.syntax.all._
 import constants.Constants
 import controllers.routes
 import helper.ScalatagsHelpers.writeableOf_Modifier
 import helper.UUIDHelper
+import java.time.Instant
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import models.{Area, Authorization, EventType, LoginToken, User, UserSession}
-import models.EventType.{
-  AuthByKey,
-  AuthWithDifferentIp,
-  ExpiredToken,
-  LoginByKey,
-  ToCGURedirected,
-  TryLoginByKey
-}
-import play.api.{Configuration, Logger}
+import models.{Area, Authorization, Error, EventType, LoginToken, User, UserSession}
+import models.EventType.{AuthWithDifferentIp, ExpiredToken, ToCGURedirected, TryLoginByKey}
+import modules.AppConfig
+import play.api.Logger
 import play.api.mvc._
 import play.api.mvc.Results.{InternalServerError, TemporaryRedirect}
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,13 +36,20 @@ object LoginAction {
       Authorization.readUserRights(user)
     )
 
+  def signupSessionKeys: List[String] =
+    List(
+      Keys.Session.signupId,
+      Keys.Session.signupLoginExpiresAt,
+      Keys.Session.signupAgentConnectSubject
+    )
+
 }
 
 //TODO : this class is complicated. Maybe we can split the logic.
 
 @Singleton
 class LoginAction @Inject() (
-    configuration: Configuration,
+    config: AppConfig,
     dependencies: ServicesDependencies,
     eventService: EventService,
     parser: BodyParsers.Default,
@@ -54,7 +58,7 @@ class LoginAction @Inject() (
     userService: UserService,
 )(implicit ec: ExecutionContext)
     extends BaseLoginAction(
-      configuration,
+      config,
       dependencies,
       eventService,
       ec,
@@ -66,7 +70,7 @@ class LoginAction @Inject() (
 
   def withPublicPage(publicPage: Result): BaseLoginAction =
     new BaseLoginAction(
-      configuration,
+      config,
       dependencies,
       eventService,
       ec,
@@ -80,7 +84,7 @@ class LoginAction @Inject() (
 }
 
 class BaseLoginAction(
-    configuration: Configuration,
+    config: AppConfig,
     dependencies: ServicesDependencies,
     eventService: EventService,
     implicit val executionContext: ExecutionContext,
@@ -95,14 +99,6 @@ class BaseLoginAction(
   import dependencies.ioRuntime
 
   private val log = Logger(classOf[LoginAction])
-
-  private lazy val areasWithLoginByKey = configuration.underlying
-    .getString("app.areasWithLoginByKey")
-    .split(",")
-    .flatMap(UUIDHelper.fromString)
-
-  private lazy val tokenExpirationInMinutes =
-    configuration.underlying.getInt("app.tokenExpirationInMinutes")
 
   private def queryToString(qs: Map[String, Seq[String]]) = {
     val queryString =
@@ -125,6 +121,9 @@ class BaseLoginAction(
         .get(Keys.Session.userId)
         .flatMap(UUIDHelper.fromString)
 
+    val userByKey: Option[User] =
+      request.getQueryString(Keys.QueryParam.key).flatMap(userService.byKey)
+
     (userBySession, userByKey, tokenOpt, signupOpt) match {
       // Note: this case is deliberately put here for failing fast, if the token is invalid,
       //       we don't want to continue doing sensitive operations
@@ -140,34 +139,7 @@ class BaseLoginAction(
         // Next `GET url` will go to the case (Some(userId), None, _, _)
         Future(Left(TemporaryRedirect(Call(request.method, url).url)))
       case (_, Some(user), None, None) =>
-        LoginAction.readUserRights(user).map { userRights =>
-          val area = user.areas.headOption
-            .flatMap(Area.fromId)
-            .getOrElse(Area.all.head)
-          implicit val requestWithUserData =
-            new RequestWithUserData(user, userRights, none, request)
-          if (areasWithLoginByKey.contains(area.id) && !user.admin) {
-            // areasWithLoginByKey is an insecure setting for demo usage
-            eventService.log(
-              LoginByKey,
-              "Connexion par clé réussie (seulement pour la demo / " +
-                "CE LOG NE DOIT PAS APPARAITRE EN PROD !!! Si c'est le cas, " +
-                "il faut vider la variable d'environnement correspondant à areasWithLoginByKey)"
-            )
-            Left(
-              TemporaryRedirect(Call(request.method, url).url)
-                .withSession(
-                  request.session - Keys.Session.userId + (Keys.Session.userId -> user.id.toString)
-                )
-            )
-          } else {
-            eventService.log(TryLoginByKey, "Clé dans l'url, redirige vers la page de connexion")
-            Left(
-              TemporaryRedirect(routes.LoginController.login.url)
-                .flashing("email" -> user.email, "path" -> path)
-            )
-          }
-        }
+        tryInsecureAuthByKey(user, url, path).map(_.asLeft)
       case (Some(userId), None, None, None) =>
         val sessionId = request.session.get(Keys.Session.sessionId)
         userService
@@ -206,13 +178,21 @@ class BaseLoginAction(
                       )
                     }
                   } else {
-                    manageUserLogged(user, userSession)
+                    // The None case is legacy to avoid disconnecting everybody
+                    val sessionIsValid = userSession.map(_.isValid(Instant.now())).getOrElse(true)
+                    if (sessionIsValid) {
+                      manageUserLogged(user, userSession)
+                    } else {
+                      Future.successful(
+                        userNotLogged("Votre session a expiré. Veuillez vous reconnecter.")
+                      )
+                    }
                   }
               }
             )
           )
       case (_, _, _, Some(signupId)) =>
-        // the exchange between signupId and userId is logged by EventType.SignupFormSuccessful
+        // Note: the exchange between signupId and userId is logged by EventType.SignupFormSuccessful
         manageSignup(signupId)
       case _ =>
         if (routes.HomeController.index.url.contains(path)) {
@@ -230,6 +210,66 @@ class BaseLoginAction(
         }
     }
   }
+
+  private def tryInsecureAuthByKey[A](
+      user: User,
+      redirectUrl: String,
+      redirectPath: String
+  )(implicit request: Request[A]): Future[Result] =
+    LoginAction.readUserRights(user).flatMap { userRights =>
+      val area = user.areas.headOption
+        .flatMap(Area.fromId)
+        .getOrElse(Area.all.head)
+      if (config.insecureAreasWithLoginByKey.contains(area.id) && !user.admin) {
+        // areasWithLoginByKey is an insecure setting for demo usage
+        val loginExpiresAt =
+          Instant.now().plusSeconds(config.magicLinkSessionDurationInSeconds)
+        (
+          for {
+            userSession <- userService
+              .createNewUserSession(
+                user.id,
+                UserSession.LoginType.InsecureDemoKey,
+                loginExpiresAt,
+                request.remoteAddress,
+              )
+            _ <- EitherT
+              .right[Error](IO.blocking(userService.recordLogin(user.id)))
+            _ <- EitherT.right[Error](
+              IO.blocking(
+                eventService.log(
+                  EventType.LoginByKey,
+                  "Connexion par clé réussie (seulement pour la demo / " +
+                    "CE LOG NE DOIT PAS APPARAITRE EN PROD !!! Si c'est le cas, " +
+                    "il faut vider la variable d'environnement correspondant à areasWithLoginByKey)"
+                )(
+                  new RequestWithUserData(user, userRights, userSession.some, request)
+                )
+              )
+            )
+          } yield TemporaryRedirect(Call(request.method, redirectUrl).url)
+            .removingFromSession(LoginAction.signupSessionKeys: _*)
+            .addingToSession(
+              Keys.Session.userId -> user.id.toString,
+              Keys.Session.sessionId -> userSession.id,
+            )
+        ).valueOrF(error =>
+          IO.blocking(
+            eventService.logError(error)(
+              new RequestWithUserData(user, userRights, none, request)
+            )
+          ).as(InternalServerError(views.errors.public500(None)))
+        ).unsafeToFuture()
+      } else {
+        eventService.log(TryLoginByKey, "Clé dans l'url, redirige vers la page de connexion")(
+          new RequestWithUserData(user, userRights, none, request)
+        )
+        Future.successful(
+          TemporaryRedirect(routes.LoginController.login.url)
+            .flashing("email" -> user.email, "path" -> redirectPath)
+        )
+      }
+    }
 
   private def tryAuthByToken[A](
       rawToken: String
@@ -342,35 +382,63 @@ class BaseLoginAction(
         )
         Future(userNotLogged("Une erreur s'est produite, votre utilisateur n'existe plus"))
       case Some(user) =>
-        LoginAction.readUserRights(user).map { userRights =>
-          // hack: we need RequestWithUserData to call the logger
-          implicit val requestWithUserData =
-            new RequestWithUserData(user, userRights, none, request)
-
+        LoginAction.readUserRights(user).flatMap { userRights =>
           if (token.ipAddress =!= request.remoteAddress) {
             eventService.log(
               AuthWithDifferentIp,
               s"Utilisateur $userId à une adresse ip différente pour l'essai de connexion"
-            )
+            )(new RequestWithUserData(user, userRights, none, request))
           }
+
           if (token.isActive) {
-            userService.recordLogin(user.id)
             val url = request.path + queryToString(
               request.queryString - Keys.QueryParam.key - Keys.QueryParam.token
             )
-            eventService.log(AuthByKey, s"Identification par token")
-            Left(
-              TemporaryRedirect(Call(request.method, url).url)
-                .withSession(
-                  request.session - Keys.Session.userId - Keys.Session.signupId +
-                    (Keys.Session.userId -> user.id.toString)
+            val loginExpiresAt = Instant.now().plusSeconds(config.magicLinkSessionDurationInSeconds)
+            (
+              for {
+                userSession <- userService
+                  .createNewUserSession(
+                    user.id,
+                    UserSession.LoginType.MagicLink,
+                    loginExpiresAt,
+                    request.remoteAddress,
+                  )
+                _ <- EitherT
+                  .right[Error](IO.blocking(userService.recordLogin(user.id)))
+                _ <- EitherT.right[Error](
+                  IO.blocking(
+                    eventService.log(
+                      EventType.AuthByKey,
+                      s"Identification par token (expiration : $loginExpiresAt)"
+                    )(
+                      new RequestWithUserData(user, userRights, userSession.some, request)
+                    )
+                  )
                 )
-            )
+              } yield TemporaryRedirect(Call(request.method, url).url)
+                .removingFromSession(LoginAction.signupSessionKeys: _*)
+                .addingToSession(
+                  Keys.Session.userId -> user.id.toString,
+                  Keys.Session.sessionId -> userSession.id,
+                )
+            ).valueOrF(error =>
+              IO.blocking(
+                eventService.logError(error)(
+                  new RequestWithUserData(user, userRights, none, request)
+                )
+              ).as(InternalServerError(views.errors.public500(None)))
+            ).unsafeToFuture()
+              .map(_.asLeft)
           } else {
-            eventService.log(ExpiredToken, s"Token expiré pour $userId")
-            redirectToHomeWithEmailSendbackButton(
-              user.email,
-              s"Votre lien de connexion a expiré, il est valable $tokenExpirationInMinutes minutes à réception."
+            eventService.log(ExpiredToken, s"Token expiré pour $userId")(
+              new RequestWithUserData(user, userRights, none, request)
+            )
+            Future(
+              redirectToHomeWithEmailSendbackButton(
+                user.email,
+                s"Votre lien de connexion a expiré, il est valable ${config.tokenExpirationInMinutes} minutes à réception."
+              )
             )
           }
         }
@@ -403,14 +471,17 @@ class BaseLoginAction(
                 val url = request.path + queryToString(
                   request.queryString - Keys.QueryParam.key - Keys.QueryParam.token
                 )
+                val loginExpiresAt =
+                  Instant.now().plusSeconds(config.magicLinkSessionDurationInSeconds)
                 eventService.logSystem(
                   EventType.AuthBySignupToken,
-                  s"Identification par token avec la préinscription ${signupRequest.id}"
+                  s"Identification par token avec la préinscription ${signupRequest.id} (expiration : $loginExpiresAt)"
                 )
                 Left(
                   TemporaryRedirect(Call(request.method, url).url)
-                    .withSession(
-                      request.session - Keys.Session.signupId + (Keys.Session.signupId -> signupRequest.id.toString)
+                    .addingToSession(
+                      Keys.Session.signupId -> signupRequest.id.toString,
+                      Keys.Session.signupLoginExpiresAt -> loginExpiresAt.getEpochSecond.toString,
                     )
                 )
               } else {
@@ -420,7 +491,7 @@ class BaseLoginAction(
                 )
                 redirectToHomeWithEmailSendbackButton(
                   signupRequest.email,
-                  s"Votre lien de connexion a expiré, il est valable $tokenExpirationInMinutes minutes à réception."
+                  s"Votre lien de connexion a expiré, il est valable ${config.tokenExpirationInMinutes} minutes à réception."
                 )
               }
           }
@@ -430,7 +501,9 @@ class BaseLoginAction(
   private def userNotLogged[A](message: String)(implicit request: Request[A]) =
     Left(
       TemporaryRedirect(routes.LoginController.login.url)
-        .withSession(request.session - Keys.Session.userId - Keys.Session.signupId)
+        .removingFromSession(
+          (Keys.Session.userId :: Keys.Session.sessionId :: LoginAction.signupSessionKeys): _*
+        )
         .flashing("error" -> message)
     )
 
@@ -439,14 +512,18 @@ class BaseLoginAction(
   ) =
     Left(
       TemporaryRedirect(routes.HomeController.index.url)
-        .withSession(request.session - Keys.Session.userId - Keys.Session.signupId)
+        .removingFromSession(
+          (Keys.Session.userId :: Keys.Session.sessionId :: LoginAction.signupSessionKeys): _*
+        )
         .flashing("email" -> email, "error" -> message)
     )
 
   private def userNotLoggedOnLoginPage[A](implicit request: Request[A]) =
     Left(
       TemporaryRedirect(routes.HomeController.index.url)
-        .withSession(request.session - Keys.Session.userId)
+        .removingFromSession(
+          (Keys.Session.userId :: Keys.Session.sessionId :: LoginAction.signupSessionKeys): _*
+        )
     )
 
   // Note: Instead of a blank page with a message, sending back to the home page
@@ -457,8 +534,5 @@ class BaseLoginAction(
         "Celle-ci est possiblement temporaire, " +
         "nous vous invitons à réessayer plus tard."
     )
-
-  private def userByKey[A](implicit request: Request[A]): Option[User] =
-    request.getQueryString(Keys.QueryParam.key).flatMap(userService.byKey)
 
 }

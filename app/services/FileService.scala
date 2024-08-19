@@ -3,126 +3,262 @@ package services
 import anorm._
 import aplus.macros.Macros
 import cats.data.EitherT
+import cats.effect.IO
 import cats.syntax.all._
+import eu.timepit.refined.types.string.NonEmptyString
+import fs2.Stream
+import fs2.aws.s3.S3
+import fs2.aws.s3.models.Models.{BucketName, FileKey}
+import fs2.io.file.{Files => FsFiles, Path => FsPath}
+import helper.Crypto
 import helper.StringHelper.normalizeNFKC
-import java.nio.file.{Files, Path, Paths}
+import io.laserdisc.pure.s3.tagless.{Interpreter => S3Interpreter}
+import java.net.URI
+import java.nio.file.{Files, Path => NioPath, Paths}
 import java.time.{Instant, ZonedDateTime}
+import java.time.temporal.ChronoUnit.DAYS
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models.{Error, EventType, FileMetadata, User}
 import models.dataModels.FileMetadataRow
 import modules.AppConfig
-import org.apache.pekko.Done
-import org.apache.pekko.actor.ActorSystem
-import org.apache.pekko.stream.scaladsl._
+import org.apache.pekko.stream.scaladsl.Source
+import org.reactivestreams.FlowAdapters
 import play.api.db.Database
-import play.api.libs.concurrent.{ActorSystemProvider, MaterializerProvider}
+import play.api.inject.ApplicationLifecycle
 import play.api.mvc.Request
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
+import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3AsyncClient
+import software.amazon.awssdk.services.s3.model.{HeadObjectRequest, NoSuchKeyException}
 
 @Singleton
 class FileService @Inject() (
     config: AppConfig,
     db: Database,
+    dependencies: ServicesDependencies,
     eventService: EventService,
-    materializer: MaterializerProvider,
+    lifecycle: ApplicationLifecycle,
     notificationsService: NotificationService,
-    system: ActorSystemProvider
 )(implicit ec: ExecutionContext) {
-  implicit val actorSystem: ActorSystem = system.get
+
+  import dependencies.ioRuntime
+
+  private val credentials: AwsBasicCredentials = AwsBasicCredentials.create(
+    config.filesOvhS3AccessKey,
+    config.filesOvhS3SecretKey
+  )
+
+  private def fileAAD(fileId: UUID): String = s"File_$fileId"
+
+  private val ovhS3Client = S3AsyncClient
+    .builder()
+    .credentialsProvider(StaticCredentialsProvider.create(credentials))
+    .endpointOverride(URI.create(config.filesOvhS3Endpoint))
+    .region(Region.of(config.filesOvhS3Region))
+    .build()
+
+  lifecycle.addStopHook { () =>
+    Future(ovhS3Client.close())
+  }
+
+  private val bucket = BucketName(NonEmptyString.unsafeFrom(config.filesOvhS3Bucket))
+  private def s3fileName(fileId: UUID) = FileKey(NonEmptyString.unsafeFrom(s"$fileId"))
+
+  def ovhS3 = S3.create(S3Interpreter[IO].create(ovhS3Client))
 
   // Play is supposed to give us temporary files here
   def saveFiles(
-      pathsWithFilenames: List[(Path, String)],
+      pathsWithFilenames: List[(NioPath, String)],
       document: FileMetadata.Attached,
       uploader: User
   )(implicit
       request: Request[_]
   ): Future[Either[Error, List[FileMetadata]]] = {
-    val result: EitherT[Future, Error, List[(Path, FileMetadata)]] = pathsWithFilenames.traverse {
-      case (path, filename) =>
+    val result: EitherT[Future, Error, List[(NioPath, FileMetadata)]] =
+      pathsWithFilenames.traverse { case (path, filename) =>
         val metadata = FileMetadata(
           id = UUID.randomUUID(),
           uploadDate = Instant.now(),
           filename = normalizeNFKC(filename),
-          filesize = path.toFile.length().toInt,
+          // Note that Play does it that way: https://github.com/playframework/playframework/blob/fbe1c146e17ad3a0dc58d65ffd30c6640602f33d/core/play/src/main/scala/play/api/mvc/Results.scala#L651
+          filesize = Files.size(path).toInt,
           status = FileMetadata.Status.Scanning,
           attached = document,
+          encryptionKeyId = config.filesCurrentEncryptionKeyId.some,
         )
         EitherT(insertMetadata(metadata)).map(_ => (path, metadata))
-    }
+      }
 
     // Scan in background, only on success, and sequentially
     result.value.foreach {
       case Right(metadataList) =>
-        scanFilesBackground(metadataList, uploader)
+        handleUploadedFilesAndDeleteFromFs(
+          metadataList.map { case (path, metadata) => (FsPath.fromNioPath(path), metadata) },
+          uploader
+        ).unsafeRunAndForget()
       case _ =>
     }
 
     result.map(_.map { case (_, metadata) => metadata }).value
   }
 
-  def fileMetadata(fileId: UUID): Future[Either[Error, Option[(Path, FileMetadata)]]] =
+  def fileMetadata(fileId: UUID): IO[Either[Error, Option[(NioPath, FileMetadata)]]] =
     byId(fileId).map(
       _.map(_.map(metadata => (Paths.get(s"${config.filesPath}/$fileId"), metadata)))
     )
 
-  private def scanFilesBackground(metadataList: List[(Path, FileMetadata)], uploader: User)(implicit
+  /** This is the "official" way to check https://stackoverflow.com/a/56038360
+    *
+    * The AWS library throws software.amazon.awssdk.services.s3.model.NoSuchKeyException when the
+    * file does not exist.
+    *
+    * See also https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html
+    */
+  def fileExistsOnS3(fileId: UUID): IO[Either[Error, Boolean]] =
+    S3Interpreter[IO]
+      .create(ovhS3Client)
+      .headObject(
+        HeadObjectRequest
+          .builder()
+          .bucket(bucket.value.value)
+          .key(s3fileName(fileId).value.value)
+          .build()
+      )
+      .map(_ => true)
+      .recover { case _: NoSuchKeyException => false }
+      .attempt
+      .map(
+        _.left.map(e =>
+          Error.MiscException(
+            EventType.FileError,
+            s"Impossible de vérifier si le fichier $fileId existe",
+            e,
+            none
+          )
+        )
+      )
+
+  /** Array[Byte] is used here in order to have the least amount of copy. Play uses akka ByteString
+    * which is a wrapper around Array[Byte]. We cannot do a 0-copy implementation due to fs2-io not
+    * allowing mutable access. This def is written in a way that it does only 1 copy of the data.
+    *
+    * `.unsafeToPublisher()` is used instead of `.toPublisherResource` because Play cannot handle
+    * Resource and using it would have the publisher closed before play begins streaming.
+    *
+    * See also `.toPublisher` in
+    * https://www.javadoc.io/doc/co.fs2/fs2-docs_2.13/3.10.2/fs2/interop/flow/index.html
+    *
+    * S3 wrapper
+    * https://github.com/laserdisc-io/fs2-aws/blob/main/pure-aws/pure-s3-tagless/src/main/scala/io/laserdisc/pure/s3/tagless/Interpreter.scala
+    * S3 implementation
+    * https://github.com/laserdisc-io/fs2-aws/blob/main/fs2-aws-s3/src/main/scala/fs2/aws/s3/S3.scala
+    */
+  def fileStream(file: FileMetadata): Either[Error, Source[Array[Byte], _]] =
+    file.encryptionKeyId
+      .flatMap(config.filesEncryptionKeys.get)
+      .toRight(
+        Error.EntityNotFound(
+          EventType.FileMetadataError,
+          s"Clé de chiffrement non trouvée pour le fichier ${file.id}, " +
+            s"la clé ${file.encryptionKeyId} n'est pas dans l'environnement",
+          none
+        )
+      )
+      .map(decryptionKey =>
+        Source
+          .fromPublisher(
+            FlowAdapters.toPublisher(
+              ovhS3
+                .readFile(bucket, s3fileName(file.id))
+                .through(Crypto.stream.decrypt(fileAAD(file.id), decryptionKey))
+                .chunks
+                .map(_.toArray) // Copies each chunk into an Array
+                .unsafeToPublisher()
+            )
+          )
+      )
+
+  private def uploadFile(path: FsPath, metadata: FileMetadata, uploader: User)(implicit
       request: Request[_]
-  ): Future[Done] =
-    // sequential => parallelism = 1
-    Source
-      .fromIterator(() => metadataList.iterator)
-      .mapAsync(1) { case (path, metadata) =>
-        val scanResult: Future[Either[Error, Unit]] = {
-          // TODO: rewrite this with cats-effect
-          // if (config.clamAvIsEnabled) {
-          // } else {
+  ): Stream[IO, Unit] =
+    FsFiles[IO]
+      .readAll(path)
+      .through(Crypto.stream.encrypt(fileAAD(metadata.id), config.filesCurrentEncryptionKey))
+      .through(ovhS3.uploadFile(bucket, s3fileName(metadata.id)))
+      .evalMap(etag =>
+        IO.blocking {
           eventService.logSystem(
             EventType.FileAvailable,
-            s"Le fichier ${metadata.id} est disponible. ClamAV est désactivé. " +
-              "Aucun scan n'a été effectué"
+            s"Upload du fichier ${metadata.id} terminé avec etag $etag"
           )
-          val fileDestination = Paths.get(s"${config.filesPath}/${metadata.id}")
-          Files.copy(path, fileDestination)
-          Files.deleteIfExists(path)
-          updateStatus(metadata.id, FileMetadata.Status.Available)
         }
+      )
+      .evalMap(_ => updateStatus(metadata.id, FileMetadata.Status.Available))
+      // Any error in updateStatus, we try to put the status to error and log everything we can
+      .evalMap(
+        _.fold(
+          error =>
+            IO.blocking(eventService.logErrorNoUser(error)) >>
+              updateStatus(metadata.id, FileMetadata.Status.Error).flatMap(
+                _.fold(e => IO.blocking(eventService.logErrorNoUser(e)), _ => IO.pure(()))
+              ),
+          _ => IO.pure(())
+        )
+      )
+      // Log residual errors and if there are any, try to set file status to Error
+      .attempt
+      .evalMap(
+        _.fold(
+          error =>
+            IO.blocking(
+              eventService.logSystem(
+                EventType.FileScanError,
+                s"Erreur lors de l'upload ou la recherche de virus dans le fichier ${metadata.id}",
+                underlyingException = Some(error)
+              )
+            ) >>
+              updateStatus(metadata.id, FileMetadata.Status.Error).flatMap(
+                _.fold(e => IO.blocking(eventService.logErrorNoUser(e)), Function.const(IO.unit))
+              ) >>
+              IO.blocking(
+                notificationsService
+                  .fileUploadStatus(metadata.attached, FileMetadata.Status.Error, uploader)
+              ),
+          _ => IO.pure(())
+        )
+      )
 
-        scanResult
-          .map {
-            case Right(_) => ()
-            case Left(error) =>
-              eventService.logErrorNoUser(error)
-              Files.deleteIfExists(path)
-              val status = FileMetadata.Status.Error
-              updateStatus(metadata.id, status)
-                .foreach(_.left.foreach(e => eventService.logErrorNoUser(e)))
-          }
-          .recover { case error =>
+  /** Will also delete the files */
+  private def handleUploadedFilesAndDeleteFromFs(
+      metadataList: List[(FsPath, FileMetadata)],
+      uploader: User
+  )(implicit
+      request: Request[_]
+  ): IO[Unit] =
+    Stream
+      .bracket(IO.pure(metadataList)) { metadataList =>
+        // Whatever happens, we want the files to be deleted from the filesystem
+        metadataList.traverse { case (path, _) => FsFiles[IO].deleteIfExists(path) }.void
+      }
+      .flatMap(metadataList => Stream.emits(metadataList))
+      .flatMap { case (path, metadata) => uploadFile(path, metadata, uploader) }
+      .handleErrorWith(error =>
+        Stream.eval(
+          IO.blocking(
             eventService.logSystem(
               EventType.FileScanError,
-              s"Erreur lors de la recherche de virus dans le fichier ${metadata.id}",
+              s"Erreur imprévue (bug) durant la recherche de virus dans les fichiers " +
+                metadataList.map { case (_, metadata) => metadata.id },
               underlyingException = Some(error)
             )
-            Files.deleteIfExists(path)
-            val status = FileMetadata.Status.Error
-            updateStatus(metadata.id, status)
-              .foreach(_.left.foreach(e => eventService.logErrorNoUser(e)))
-            notificationsService.fileUploadStatus(metadata.attached, status, uploader)
-          }
-      }
-      .run()
-      .recover { case error =>
-        eventService.logSystem(
-          EventType.FileScanError,
-          s"Erreur imprévue (bug) durant la recherche de virus dans les fichiers " +
-            metadataList.map { case (_, metadata) => metadata.id },
-          underlyingException = Some(error)
+          )
         )
-        Done
-      }
+      )
+      .compile
+      .drain
 
   private val (fileMetadataRowParser, tableFields) = Macros.parserWithFields[FileMetadataRow](
     "id",
@@ -131,50 +267,52 @@ class FileService @Inject() (
     "filesize",
     "status",
     "application_id",
-    "answer_id"
+    "answer_id",
+    "encryption_key_id",
   )
 
   private val fieldsInSelect: String = tableFields.mkString(", ")
 
-  private def byId(fileId: UUID): Future[Either[Error, Option[FileMetadata]]] =
-    Future(
-      Try(
-        db.withConnection { implicit connection =>
-          SQL(s"""SELECT $fieldsInSelect FROM file_metadata WHERE id = {fileId}::uuid""")
-            .on("fileId" -> fileId)
-            .as(fileMetadataRowParser.singleOpt)
-        }
-      ).toEither.left
-        .map(e =>
-          Error.SqlException(
-            EventType.FileMetadataError,
-            s"Impossible de chercher la metadata de fichier $fileId",
-            e,
-            none
+  private def byId(fileId: UUID): IO[Either[Error, Option[FileMetadata]]] =
+    IO.blocking(
+      db.withConnection { implicit connection =>
+        SQL(s"""SELECT $fieldsInSelect FROM file_metadata WHERE id = {fileId}::uuid""")
+          .on("fileId" -> fileId)
+          .as(fileMetadataRowParser.singleOpt)
+      }
+    ).attempt
+      .map(
+        _.left
+          .map(e =>
+            Error.SqlException(
+              EventType.FileMetadataError,
+              s"Impossible de chercher la metadata de fichier $fileId",
+              e,
+              none
+            )
           )
-        )
-        .flatMap {
-          case None => none.asRight
-          case Some(row) =>
-            row.toFileMetadata match {
-              case None =>
-                Error
-                  .Database(
-                    EventType.FileMetadataError,
-                    s"Ligne invalide en BDD pour la metadata de fichier ${row.id} [" +
-                      s"upload_date ${row.uploadDate}" +
-                      s"filesize ${row.filesize}" +
-                      s"status ${row.status}" +
-                      s"application_id ${row.applicationId}" +
-                      s"answer_id ${row.answerId}" +
-                      "]",
-                    none
-                  )
-                  .asLeft
-              case Some(metadata) => metadata.some.asRight
-            }
-        }
-    )
+          .flatMap {
+            case None => none.asRight
+            case Some(row) =>
+              row.toFileMetadata match {
+                case None =>
+                  Error
+                    .Database(
+                      EventType.FileMetadataError,
+                      s"Ligne invalide en BDD pour la metadata de fichier ${row.id} [" +
+                        s"upload_date ${row.uploadDate}" +
+                        s"filesize ${row.filesize}" +
+                        s"status ${row.status}" +
+                        s"application_id ${row.applicationId}" +
+                        s"answer_id ${row.answerId}" +
+                        "]",
+                      none
+                    )
+                    .asLeft
+                case Some(metadata) => metadata.some.asRight
+              }
+          }
+      )
 
   def byApplicationId(applicationId: UUID): Future[Either[Error, List[FileMetadata]]] =
     Future(
@@ -223,41 +361,69 @@ class FileService @Inject() (
       SQL(s"""SELECT $fieldsInSelect FROM file_metadata""").as(fileMetadataRowParser.*)
     }
 
-  def deleteBefore(beforeDate: Instant): Future[Unit] = {
-    def logException(exception: Throwable) =
-      eventService.logNoRequest(
-        EventType.FileDeletionError,
-        s"Erreur lors de la suppression d'un fichier",
-        underlyingException = exception.some
-      )
+  def deleteExpiredFiles(): IO[Either[Error, Unit]] =
+    IO.realTimeInstant
+      .flatMap { now =>
+        val beforeDate = now.minus(config.filesExpirationInDays.toLong + 1, DAYS)
+        IO.blocking(
+          eventService.logNoRequest(
+            EventType.FilesDeletion,
+            s"Début de la suppression des fichiers avant $beforeDate"
+          )
+        ) >>
+          deleteBefore(beforeDate).both(legacyDeleteExpiredFiles).map { case (result, _) => result }
+      }
 
+  private def deleteBefore(beforeDate: Instant): IO[Either[Error, Unit]] =
     before(beforeDate)
-      .map(
+      .flatMap(
         _.fold(
-          e => eventService.logErrorNoRequest(e),
+          e => IO.pure(e.asLeft),
           files => {
-            Source
-              .fromIterator(() => files.iterator)
-              .mapAsync(1) { metadata =>
-                val path = Paths.get(s"${config.filesPath}/${metadata.id}")
-                Files.deleteIfExists(path)
-                updateStatus(metadata.id, FileMetadata.Status.Expired)
-                  .map(_.fold(e => eventService.logErrorNoRequest(e), identity))
-              }
-              .recover(logException _)
-              .runWith(Sink.ignore)
-              .foreach(_ =>
-                eventService.logNoRequest(
-                  EventType.FilesDeletion,
-                  s"Fin de la suppression des fichiers avant $beforeDate"
+            Stream
+              .emits(files)
+              .evalMap { metadata =>
+                val delete = ovhS3.delete(bucket, s3fileName(metadata.id))
+                val deleteLegacy =
+                  FsFiles[IO].deleteIfExists(FsPath(config.filesPath) / metadata.id.toString)
+                val deletion = delete.both(deleteLegacy) >>
+                  updateStatus(metadata.id, FileMetadata.Status.Expired).flatMap(
+                    _.fold(
+                      e => IO.blocking(eventService.logErrorNoRequest(e)),
+                      Function.const(IO.unit)
+                    )
+                  )
+                deletion.recoverWith(e =>
+                  IO.blocking(
+                    eventService.logNoRequest(
+                      EventType.FileDeletionError,
+                      s"Erreur lors de la suppression d'un fichier",
+                      underlyingException = e.some
+                    )
+                  )
                 )
-              )
+              }
+              .compile
+              .drain
+              .map(_.asRight)
           },
         )
       )
-      .recover { case error =>
-        logException(error)
-      }
+
+  private def legacyDeleteExpiredFiles = IO {
+    val dir = new java.io.File(config.filesPath)
+    if (dir.exists() && dir.isDirectory) {
+      val fileToDelete = dir
+        .listFiles()
+        .filter(_.isFile)
+        .filter { file =>
+          val instant = Files.getLastModifiedTime(file.toPath).toInstant
+          instant
+            .plus(config.filesExpirationInDays.toLong + 1, DAYS)
+            .isBefore(Instant.now())
+        }
+      fileToDelete.foreach(_.delete())
+    }
   }
 
   def wipeFilenames(retentionInMonths: Long): Future[Either[Error, Int]] =
@@ -283,25 +449,26 @@ class FileService @Inject() (
         )
     )
 
-  private def before(beforeDate: Instant): Future[Either[Error, List[FileMetadata]]] =
-    Future(
-      Try(
-        db.withConnection { implicit connection =>
-          SQL(s"""SELECT $fieldsInSelect FROM file_metadata WHERE upload_date < {beforeDate}""")
-            .on("beforeDate" -> beforeDate)
-            .as(fileMetadataRowParser.*)
-        }
-      ).toEither.left
-        .map(e =>
-          Error.SqlException(
-            EventType.FileMetadataError,
-            s"Impossible de chercher les fichiers de avant $beforeDate",
-            e,
-            none
+  private def before(beforeDate: Instant): IO[Either[Error, List[FileMetadata]]] =
+    IO.blocking(
+      db.withConnection { implicit connection =>
+        SQL(s"""SELECT $fieldsInSelect FROM file_metadata WHERE upload_date < {beforeDate}""")
+          .on("beforeDate" -> beforeDate)
+          .as(fileMetadataRowParser.*)
+      }
+    ).attempt
+      .map(
+        _.left
+          .map(e =>
+            Error.SqlException(
+              EventType.FileMetadataError,
+              s"Impossible de chercher les fichiers de avant $beforeDate",
+              e,
+              none
+            )
           )
-        )
-        .map(_.flatMap(_.toFileMetadata))
-    )
+          .map(_.flatMap(_.toFileMetadata))
+      )
 
   private def insertMetadata(metadata: FileMetadata): Future[Either[Error, Unit]] =
     Future(
@@ -316,7 +483,8 @@ class FileService @Inject() (
               filesize,
               status,
               application_id,
-              answer_id
+              answer_id,
+              encryption_key_id
             ) VALUES (
               ${row.id}::uuid,
               ${row.uploadDate},
@@ -324,7 +492,8 @@ class FileService @Inject() (
               ${row.filesize},
               ${row.status},
               ${row.applicationId}::uuid,
-              ${row.answerId}::uuid
+              ${row.answerId}::uuid,
+              ${row.encryptionKeyId}
             )""".executeUpdate()
         }
       }.toEither.left
@@ -354,38 +523,39 @@ class FileService @Inject() (
         }
     )
 
-  private def updateStatus(id: UUID, status: FileMetadata.Status): Future[Either[Error, Unit]] =
-    Future(
-      Try {
-        val rawStatus = FileMetadataRow.statusFromFileMetadata(status)
-        db.withConnection { implicit connection =>
-          SQL"""
+  private def updateStatus(id: UUID, status: FileMetadata.Status): IO[Either[Error, Unit]] =
+    IO.blocking {
+      val rawStatus = FileMetadataRow.statusFromFileMetadata(status)
+      db.withConnection { implicit connection =>
+        SQL"""
             UPDATE file_metadata
             SET status = $rawStatus
             WHERE id = $id::uuid
             """.executeUpdate()
-        }
-      }.toEither.left
-        .map(e =>
-          Error.SqlException(
-            EventType.FileMetadataError,
-            s"Impossible de mettre le status $status sur la metadata de fichier $id",
-            e,
-            none
+      }
+    }.attempt
+      .map(
+        _.left
+          .map(e =>
+            Error.SqlException(
+              EventType.FileMetadataError,
+              s"Impossible de mettre le status $status sur la metadata de fichier $id",
+              e,
+              none
+            )
           )
-        )
-        .flatMap { numOfRows =>
-          if (numOfRows === 1) ().asRight
-          else
-            Error
-              .Database(
-                EventType.FileMetadataError,
-                s"Nombre incorrect de lignes modifiées ($numOfRows) " +
-                  s"lors de la mise à jour du status $status de la metadata $id",
-                none
-              )
-              .asLeft
-        }
-    )
+          .flatMap { numOfRows =>
+            if (numOfRows === 1) ().asRight
+            else
+              Error
+                .Database(
+                  EventType.FileMetadataError,
+                  s"Nombre incorrect de lignes modifiées ($numOfRows) " +
+                    s"lors de la mise à jour du status $status de la metadata $id",
+                  none
+                )
+                .asLeft
+          }
+      )
 
 }

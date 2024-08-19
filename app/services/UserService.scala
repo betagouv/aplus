@@ -644,32 +644,34 @@ class UserService @Inject() (
     Column
       .of[String]
       .mapResult {
-        case "agent_connect" => UserSession.LoginType.AgentConnect.asRight
+        case "agent_connect"     => UserSession.LoginType.AgentConnect.asRight
+        case "insecure_demo_key" => UserSession.LoginType.InsecureDemoKey.asRight
+        case "magic_link"        => UserSession.LoginType.MagicLink.asRight
         case unknownType =>
           SqlMappingError(s"Cannot parse login_type $unknownType").asLeft
       }
 
-  val (userSessionParser, userSessionTableFields) = Macros.parserWithFields[UserSession](
+  private val userSessionTableFields = List(
     "id",
     "user_id",
     "creation_date",
+    "creation_ip_address",
     "last_activity",
     "login_type",
     "expires_at",
-    "is_revoked",
+    "revoked_at",
   )
 
   private val qualifiedUserSessionParser = anorm.Macro.parser[UserSession](
     "user_session.id",
     "user_session.user_id",
     "user_session.creation_date",
+    "creation_ip_address_text",
     "user_session.last_activity",
     "user_session.login_type",
     "user_session.expires_at",
-    "user_session.is_revoked",
+    "user_session.revoked_at",
   )
-
-  val userSessionFieldsInSelect: String = userSessionTableFields.mkString(", ")
 
   // Double the recommended minimum 64 bits of entropy
   private val SESSION_SIZE_BYTES = 16
@@ -680,28 +682,25 @@ class UserService @Inject() (
     bytes.map("%02x".format(_)).mkString
   }
 
-  private def userSessionFromAgentConnect(
+  private def generateNewUserSession(
       userId: UUID,
-      expiresAt: Option[Instant]
+      loginType: UserSession.LoginType,
+      expiresAt: Instant,
+      ipAddress: String
   ): IO[Either[Error, UserSession]] =
     generateNewSessionId
       .flatMap(sessionId =>
-        IO.realTimeInstant.flatMap(now =>
-          (expiresAt match {
-            case None            => AgentConnectService.calculateExpiresAt(now)
-            case Some(expiresAt) => IO.pure(expiresAt)
-          })
-            .map(expiresAt =>
-              UserSession(
-                id = sessionId,
-                userId = userId,
-                creationDate = now,
-                lastActivity = now,
-                loginType = UserSession.LoginType.AgentConnect,
-                expiresAt = expiresAt,
-                isRevoked = None,
-              )
-            )
+        IO.realTimeInstant.map(now =>
+          UserSession(
+            id = sessionId,
+            userId = userId,
+            creationDate = now,
+            creationIpAddress = ipAddress,
+            lastActivity = now,
+            loginType = loginType,
+            expiresAt = expiresAt,
+            revokedAt = None,
+          )
         )
       )
       .attempt
@@ -709,7 +708,7 @@ class UserService @Inject() (
         _.left.map(error =>
           Error.SqlException(
             EventType.UserSessionError,
-            s"Impossible de générer une nouvelle session pour l'utilisateur ${userId}",
+            s"Impossible de générer une nouvelle session pour l'utilisateur ${userId} ($loginType)",
             error,
             none
           )
@@ -717,7 +716,9 @@ class UserService @Inject() (
       )
 
   private def stringifyLoginType(loginType: UserSession.LoginType): String = loginType match {
-    case UserSession.LoginType.AgentConnect => "agent_connect"
+    case UserSession.LoginType.AgentConnect    => "agent_connect"
+    case UserSession.LoginType.InsecureDemoKey => "insecure_demo_key"
+    case UserSession.LoginType.MagicLink       => "magic_link"
   }
 
   private def saveUserSession(session: UserSession): IO[Either[Error, UserSession]] =
@@ -728,13 +729,15 @@ class UserService @Inject() (
             id,
             user_id,
             creation_date,
+            creation_ip_address,
             last_activity,
             login_type,
             expires_at
-          ) VALUES(
+          ) VALUES (
             ${session.id},
-            ${session.userId},
+            ${session.userId}::uuid,
             ${session.creationDate},
+            ${session.creationIpAddress}::inet,
             ${session.lastActivity},
             ${stringifyLoginType(session.loginType)},
             ${session.expiresAt}
@@ -760,12 +763,14 @@ class UserService @Inject() (
     * OWASP Recommendations on session id length:
     * https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html#session-id-length
     */
-  def createNewUserSessionFromAgentConnect(
+  def createNewUserSession(
       userId: UUID,
-      expiresAt: Option[Instant]
+      loginType: UserSession.LoginType,
+      expiresAt: Instant,
+      ipAddress: String
   ): EitherT[IO, Error, UserSession] =
     for {
-      session <- EitherT(userSessionFromAgentConnect(userId, expiresAt))
+      session <- EitherT(generateNewUserSession(userId, loginType, expiresAt, ipAddress))
       _ <- EitherT(saveUserSession(session))
     } yield session
 
@@ -786,15 +791,17 @@ class UserService @Inject() (
                 WHERE id = ${sessionId}
               """.executeUpdate()
 
-              // This method is called at each action from a user,
+              // This method is called during each user action, therefore,
               // as an optimization, we get all the data in a single query
               val fields =
                 tableFields.map(f => s"\"user\".$f").mkString(", ") + ", " +
                   userSessionTableFields.map(f => s"user_session.$f").mkString(", ")
               val result: Option[(Option[UserRow], Option[UserSession])] = SQL(s"""
-                SELECT $fields
+                SELECT
+                  $fields,
+                  host(user_session.creation_ip_address)::text AS creation_ip_address_text
                 FROM
-                  (SELECT * FROM "user" WHERE id = {userId}) AS "user"
+                  (SELECT * FROM "user" WHERE id = {userId}::uuid) AS "user"
                 LEFT JOIN
                   (SELECT * FROM user_session WHERE id = {sessionId}) AS user_session
                 ON true
@@ -821,6 +828,30 @@ class UserService @Inject() (
           none
         )
       )
+    )
+
+  def revokeUserSession(sessionId: String): IO[Either[Error, Unit]] =
+    IO.realTimeInstant.flatMap(now =>
+      IO.blocking {
+        val _ = db.withConnection { implicit connection =>
+          SQL"""
+            UPDATE user_session
+            SET revoked_at = ${now}
+            WHERE id = ${sessionId}
+              AND revoked_at is NULL
+          """.executeUpdate()
+        }
+      }.attempt
+        .map(
+          _.left.map[Error](error =>
+            Error.SqlException(
+              EventType.UserSessionError,
+              s"Impossible de revoquer la session utilisateur $sessionId",
+              error,
+              none
+            )
+          )
+        )
     )
 
   //

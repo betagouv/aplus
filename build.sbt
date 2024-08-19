@@ -73,6 +73,7 @@ scalacOptions ++= Seq(
   "-Wconf:cat=unused&src=twirl/.*:s",
   "-Wvalue-discard",
   "-Xsource:3",
+  "-Wconf:msg=method are copied from the case class constructor under Scala 3:s",
 )
 
 // https://typelevel.org/cats-effect/docs/getting-started
@@ -95,8 +96,9 @@ libraryDependencies ++= Seq(
 
 pipelineStages := Seq(digest, gzip)
 
-libraryDependencies += specs2 % Test
 libraryDependencies += guice
+
+val fs2Version = "3.10.2"
 
 libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.7.3",
@@ -109,6 +111,9 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" %% "scalatags" % "0.13.1",
   "org.typelevel" %% "cats-core" % "2.12.0",
   "org.typelevel" %% "cats-effect" % "3.5.4",
+  "co.fs2" %% "fs2-core" % fs2Version,
+  "co.fs2" %% "fs2-io" % fs2Version,
+  "io.laserdisc" %% "fs2-aws-s3" % "6.1.3",
 )
 
 val jjwtVersion = "0.12.6"
@@ -136,7 +141,15 @@ libraryDependencies ++= Seq(
 )
 
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "7.12.1"
+libraryDependencies += "io.sentry" % "sentry-logback" % "7.14.0"
+
+// Test
+libraryDependencies ++= Seq(
+  specs2 % Test, // Play Plugin
+  "org.specs2" %% "specs2-scalacheck" % "4.20.8" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.18.0" % Test,
+  "org.typelevel" %% "cats-effect-testing-specs2" % "1.5.0" % Test,
+)
 
 // Overrides
 dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"

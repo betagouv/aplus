@@ -9,6 +9,8 @@ object UserSession {
 
   object LoginType {
     case object AgentConnect extends LoginType
+    case object InsecureDemoKey extends LoginType
+    case object MagicLink extends LoginType
   }
 
 }
@@ -17,8 +19,14 @@ case class UserSession(
     id: String,
     userId: UUID,
     creationDate: Instant,
+    creationIpAddress: String,
     lastActivity: Instant,
     loginType: UserSession.LoginType,
     expiresAt: Instant,
-    isRevoked: Option[Boolean],
-)
+    revokedAt: Option[Instant],
+) {
+
+  def isValid(now: Instant): Boolean =
+    now.isBefore(expiresAt) && revokedAt.map(revokedAt => now.isBefore(revokedAt)).getOrElse(true)
+
+}

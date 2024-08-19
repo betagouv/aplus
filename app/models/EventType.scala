@@ -188,6 +188,7 @@ object EventType {
   object InvalidToken extends Warn
   object TokenError extends Error
   object MissingSignup extends Warn
+  object SignupLoginExpired extends Info
   object AuthByKey extends Info // Incorrectly named (this is an auth by token)
   object AuthWithDifferentIp extends Warn
   object LoginByKey extends Info
@@ -204,6 +205,7 @@ object EventType {
   object FileAvailable extends Info
   object FileQuarantined extends Warn
   object FileScanError extends Error
+  object FileError extends Error
   object FilesDeletion extends Info
   object FileDeletionError extends Error
 
