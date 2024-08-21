@@ -69,6 +69,7 @@ import services.{
 }
 import views.applications.myApplications.MyApplicationInfos
 import views.dashboard.DashboardInfos
+import views.helpers.forms.flashSuccessRawHtmlKey
 
 /** This controller creates an `Action` to handle HTTP requests to the application's home page.
   */
@@ -415,7 +416,11 @@ case class ApplicationController @Inject() (
                         removeSharedAccountUserSignature(request.session)
                       )(signature => saveSharedAccountUserSignature(request.session, signature))
                     )
-                    .flashing(success -> "Votre demande a bien été envoyée")
+                    .flashing(
+                      flashSuccessRawHtmlKey -> views.application
+                        .applicationSentSuccessMessage(applicationId)
+                        .toString
+                    )
                 } else {
                   eventService.log(
                     EventType.ApplicationCreationError,
