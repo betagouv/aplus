@@ -1,36 +1,12 @@
 @import _root_.helper.Time
-@import _root_.helper.MDLForms._
+@import _root_.helper.forms.MDLForms._
 @import _root_.helper.BooleanHelper.not
 @import cats.implicits.catsSyntaxEq
 @import models.Answer.AnswerType
+@import models.Authorization
 @import serializers.Keys
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, selectedArea: Area, userSignature: Option[String], attachments: List[FileMetadata])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
-
-@organisationIcon(creatorUserName: String) = {
-    @Map("A+" -> "aplus",
-         "Pôle Emploi".toUpperCase() -> "pe",
-         "MSA" -> "msa",
-         "CPAM" -> "cpam",
-         "CRAM" -> "cpam",
-         "CNAM" -> "cpam",
-         "CAF" -> "caf",
-         "CNAF" -> "caf",
-         "CNAV" -> "cnav",
-         "CARSAT" -> "cnav",
-         "DGFIP" -> "dgfip",
-         "DDFIP" -> "dgfip",
-         "DRFIP" -> "dgfip",
-         "Défenseur des droits".toUpperCase() -> "ddd"
-    ).find(a => creatorUserName.toUpperCase.contains(a._1)) match {
-        case Some((_,icon)) => {
-            <img class="mdl-list__item-avatar" src="@routes.Assets.versioned("images/admin/"+icon+"-icon.png")">
-        }
-        case None => {
-            <i class="material-icons mdl-list__item-avatar">person</i>
-        }
-    }
-}
+@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, selectedArea: Area, userSignature: Option[String], attachments: List[FileMetadata], usersOrganisations: Map[java.util.UUID, List[Organisation.Id]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 
 @main(currentUser, currentUserRights, modals = toHtml(views.application.closeApplicationModal(application.id)))(s"Demande de ${application.creatorUserName} - ${Area.fromId(application.area).get.name}")  {
@@ -186,12 +162,15 @@ dialog {
 </style>
 }{
 
-        @if(application.canBeClosedBy(currentUser) && not(application.closed)) {
+  @toHtml(views.application.answerFormError(answerToAgentsForm))
+
+
+        @if(Authorization.canCloseApplication(application)(currentUserRights) && not(application.closed)) {
             <button id="archive-button-1" class="mdl-cell mdl-cell--3-col mdl-cell--9-offset-desktop mdl-cell--12-col-phone mdl-button mdl-button--raised mdl-button--primary mdl-js-button do-not-print">
                 Archiver l’échange
             </button>
         }
-        @if(application.canBeOpenedBy(currentUser) && application.closed) {
+        @if(Authorization.canOpenApplication(application)(currentUserRights) && application.closed) {
           @toHtml(views.application.reopenButton(application.id))
         }
         <div class="mdl-card mdl-cell mdl-cell--8-col mdl-cell--12-col-phone">
@@ -254,7 +233,7 @@ dialog {
                 Créée par
                 <div class="mdl-list__item">
                     <div class="mdl-list__item-primary-content">
-                        @organisationIcon(application.creatorUserName)
+                        @toHtml(views.application.organisationIcon(application.creatorUserId, application.creatorUserName, usersOrganisations))
                         <span>
                           @application.creatorUserName
                           @if(Authorization.isAdmin(currentUserRights)) {
@@ -271,7 +250,7 @@ dialog {
                 @for((userId, userName) <- application.invitedUsers) {
                     <div class="mdl-list__item">
                         <div class="mdl-list__item-primary-content">
-                            @organisationIcon(userName)
+                            @toHtml(views.application.organisationIcon(userId, userName, usersOrganisations))
                             <span>
                               @userName
                               @if(Authorization.isAdmin(currentUserRights)) {
@@ -301,67 +280,9 @@ dialog {
             </div>
         </div>
 
-        @for(answer <- application.answers){
-            @if(answer.invitedUsers) {
-                <div class="mdl-cell mdl-cell--12-col vertical-align--middle" style="text-align: center; color: #000000d6; font-size: 14px; font-weight: 600; line-height: 16px;">
-                    <i class="icon material-icons icon--light">people</i> @answer.creatorUserName a invité @answer.invitedUsers.values.mkString(", ") - <span id="date-inviteds-@answer.id" class="vertical-align--middle">
-                    <span class="application__age"> Il y a @answer.ageString (@Time.formatPatternFr(answer.creationDate, "dd MMM YYYY - HH:mm"))</span>
-                     </span>
-                </div>
-            }
-            @if(currentUser.instructor || currentUser.admin || currentUser.groupAdmin || answer.visibleByHelpers || answer.creatorUserID == currentUser.id) {
-                @toHtml(views.application.answerFilesLinks(attachments, answer, application, currentUser, currentUserRights, mainInfos.config))
+        @toHtml(views.application.answerThread(application, attachments, currentUser, currentUserRights, usersOrganisations, mainInfos.config))
 
-                @if(answer.message.nonEmpty) {
-                    <div class="mdl-card mdl-cell mdl-cell--10-col mdl-cell--12-col-phone @if(answer.creatorUserID == currentUser.id){ mdl-cell--2-offset mdl-cell--0-offset-phone } answer" id="answer-@answer.id">
-                        <div class="answer-card mdl-card__supporting-text mdl-card--border @if(!answer.visibleByHelpers) { mdl-color--grey-50 }" >
-                            @if(!answer.visibleByHelpers) {
-                                <div id="reserved-@answer.id" class="vertical-align--middle">Réponse réservée aux instructeurs
-                                    <i class="icon material-icons icon--light">info</i>
-                                </div>
-                                <div class="mdl-tooltip" for="reserved-@answer.id">
-                                     L’aidant ne voit pas ce message
-                                 </div>
-                            }
-                            <div class="mdl-list">
-                                <div class="mdl-list__item">
-                                    <div class="mdl-list__item-primary-content">
-                                        @organisationIcon(answer.creatorUserName)
-                                        <span class="single--font-weight-600">@answer.creatorUserName</span>@if(currentUser.admin){ <span class="do-not-print mdl-color-text--red single--font-weight-bold"> <a href="@routes.UserController.editUser(answer.creatorUserID)"> Voir fiche utilisateur</a></span>}
-                                        <span class="mdl-list__item-sub-title"></span>
-                                    </div>
-                                    <div class="mdl-list__item-secondary-content">
-                                        <div id="date-@answer.id" class="vertical-align--middle">
-                                            <span class="application__age">Il y a @answer.ageString (@Time.formatPatternFr(answer.creationDate, "dd MMM YYYY - HH:mm"))</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
-                            @if(answer.declareApplicationHasIrrelevant) {
-                                <div class="info-box info-box--orange do-not-print">@answer.creatorUserName a indiqué qu’<b>il existe une procédure standard que vous pouvez utiliser pour cette demande</b>, vous aurez plus de détails dans sa réponse.</div>
-                            }
-                            @if(answer.userInfos.getOrElse(Map()).nonEmpty) {
-                                <ul>
-                                    @for((key, value) <- answer.userInfos.getOrElse(Map())) {
-                                        <li>@key: <b>@value</b></li>
-                                    }
-                                </ul>
-                            }
-                            <p class="answer__message">@answer.message</p>
-                            @if(answer.answerType === AnswerType.ApplicationProcessed && application.creatorUserId == currentUser.id && not(application.closed) && answer.creatorUserID != currentUser.id) {
-                                <div class="info-box do-not-print">
-                                    Cette demande a bien été traitée. Je vous invite à archiver l’échange en cliquant sur le bouton ci-dessous&nbsp;:<br><br>
-                                    <button id="archive-button-2" class="mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect">
-                                        Archiver l’échange
-                                    </button> <br><br>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
-            }
-        }
 
     @flash.get("answer-error").map { error =>
         <div class="mdl-cell mdl-cell--12-col" id="answer-error">
@@ -386,7 +307,7 @@ dialog {
 
             <span class="single--flex-grow-1"></span>
 
-            @if(application.canBeClosedBy(currentUser) && not(application.closed)) {
+            @if(Authorization.canCloseApplication(application)(currentUserRights) && not(application.closed)) {
                 <div>
                     <button id="archive-button-3" class="mdl-button mdl-button--raised mdl-button--primary mdl-button--multiline-text mdl-js-button do-not-print">
                         Archiver l’échange
@@ -420,16 +341,16 @@ dialog {
                 <div class="mdl-cell mdl-cell--12-col mdl-grid">
                     <h5 class="mdl-cell mdl-cell--12-col">Votre réponse :</h5>
 
+                      @toHtml(views.application.noAnswerError(answerToAgentsForm))
+
                         @if(currentUser.instructor) {
-                            <div class="mdl-card mdl-cell mdl-cell--12-col">
+                            <div class="mdl-cell mdl-cell--12-col single--display-flex single--flex-direction-column">
                                 <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" id="option-1-label" for="option-1">
                                     <input type="radio" id="option-1" class="mdl-radio__button" name="answer_type" value="workInProgress">
                                     <span class="mdl-radio__label">Je m’en occupe</span>
                                 </label>
-                                <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" id="option-2-label" for="option-2">
-                                    <input type="radio" id="option-2" class="mdl-radio__button" name="answer_type" value="applicationProcessed">
-                                    <span class="mdl-radio__label">J’ai traité la demande</span>
-                                </label>
+
+
                                 <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" id="option-3-label" for="option-3">
                                     <input type="radio" id="option-3" class="mdl-radio__button" name="answer_type" value="wrongInstructor">
                                     <span class="mdl-radio__label">Je ne suis pas le bon interlocuteur</span>
@@ -505,8 +426,13 @@ dialog {
                                     </div>
 
                                 }
+
+
+                                @toHtml(views.application.applicationProcessedCheckbox(currentUser))
+
+
                                 <div class="mdl-cell mdl-cell--12-col">
-                                    <button id="review-validation" class="mdl-button mdl-button--primary mdl-js-button mdl-button--raised mdl-button--colored onsubmit-disable" disabled>
+                                    <button class="mdl-button mdl-button--primary mdl-js-button mdl-button--raised mdl-button--colored onsubmit-disable">
                                         Répondre
                                     </button>
                                 </div>

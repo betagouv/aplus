@@ -1,30 +1,32 @@
 package tasks
 
-import java.util.UUID
-
-import akka.actor._
 import cats.syntax.all._
 import helper.Time
+import java.time.ZonedDateTime
+import java.util.UUID
 import javax.inject.Inject
-import models.Answer.AnswerType
 import models._
-import play.api.Configuration
-import services._
-
-import scala.concurrent.duration._
+import models.Answer.AnswerType
+import modules.AppConfig
+import org.apache.pekko.actor._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
+import services.{ApplicationService, EventService, NotificationService, UserService}
 
 class AutoAddExpertTask @Inject() (
     actorSystem: ActorSystem,
     applicationService: ApplicationService,
-    configuration: Configuration,
+    config: AppConfig,
     eventService: EventService,
     notificationService: NotificationService,
     userService: UserService
 )(implicit executionContext: ExecutionContext) {
   val startAtHour = 8
-  val now = java.time.ZonedDateTime.now()
-  val startDate = now.toLocalDate.atStartOfDay(now.getZone).plusDays(1).withHour(startAtHour)
+  val now: ZonedDateTime = java.time.ZonedDateTime.now()
+
+  val startDate: ZonedDateTime =
+    now.toLocalDate.atStartOfDay(now.getZone).plusDays(1).withHour(startAtHour)
+
   val initialDelay: FiniteDuration = java.time.Duration.between(now, startDate).getSeconds.seconds
 
   // https://github.com/akka/akka/blob/v2.6.4/akka-actor/src/main/scala/akka/actor/Scheduler.scala#L403
@@ -35,16 +37,20 @@ class AutoAddExpertTask @Inject() (
   val dayWithoutAgentAnswer = 5
   val daySinceLastAgentAnswer = 15
 
-  def inviteExpertsInApplication() =
-    if (configuration.get[Boolean]("app.features.autoAddExpert")) {
+  def inviteExpertsInApplication(): Unit =
+    if (config.featureAutoAddExpert) {
       applicationService.openAndOlderThan(dayWithoutAgentAnswer).foreach { application =>
-        application.answers.filter(_.creatorUserID =!= application.creatorUserId).lastOption match {
-          case None => // No answer for someone else the creator
-            inviteExpert(application, dayWithoutAgentAnswer)
-          case Some(answer)
-              if answer.ageInDays > daySinceLastAgentAnswer => // The last answer is older than X days
-            inviteExpert(application, daySinceLastAgentAnswer)
-          case _ =>
+        if (application.status =!= Application.Status.Processed) {
+          application.answers
+            .filter(_.creatorUserID =!= application.creatorUserId)
+            .lastOption match {
+            case None => // No answer for someone else the creator
+              inviteExpert(application, dayWithoutAgentAnswer)
+            case Some(answer)
+                if answer.ageInDays > daySinceLastAgentAnswer => // The last answer is older than X days
+              inviteExpert(application, daySinceLastAgentAnswer)
+            case _ =>
+          }
         }
       }
     }
@@ -59,7 +65,7 @@ class AutoAddExpertTask @Inject() (
           UUID.randomUUID(),
           application.id,
           Time.nowParis(),
-          AnswerType.Custom,
+          AnswerType.InviteAsExpert,
           s"Je rejoins la conversation automatiquement comme expert(e) car le dernier message a plus de $days jours",
           expert.id,
           expert.nameWithQualite,

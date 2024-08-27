@@ -1,19 +1,18 @@
 package services
 
-import akka.stream.scaladsl.{RestartSource, Sink, Source}
-import akka.stream.{Materializer, RestartSettings}
 import cats.data.NonEmptyList
 import cats.syntax.all._
 import helper.MiscHelpers
 import javax.inject.{Inject, Singleton}
 import models.EmailPriority
 import modules.AppConfig
+import org.apache.pekko.stream.{Materializer, RestartSettings}
+import org.apache.pekko.stream.scaladsl.{RestartSource, Sink, Source}
 import play.api.Logger
 import play.api.libs.concurrent.MaterializerProvider
 import play.api.libs.mailer.{Email, SMTPConfiguration, SMTPMailer}
-import com.typesafe.config.{Config, ConfigFactory}
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.javaapi.CollectionConverters.asScala
 import scala.util.Try
 

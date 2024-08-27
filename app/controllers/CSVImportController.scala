@@ -1,14 +1,15 @@
 package controllers
 
-import java.time.ZonedDateTime
-import java.util.UUID
-
 import actions.LoginAction
 import cats.syntax.all._
 import controllers.Operators.{GroupOperators, UserOperators}
+import helper.PlayFormHelpers.{inOption, normalizedOptionalText, normalizedText}
 import helper.StringHelper._
 import helper.Time
+import java.time.ZonedDateTime
+import java.util.UUID
 import javax.inject.Inject
+import models.{Area, Organisation, User, UserGroup}
 import models.EventType.{
   CSVImportFormError,
   CsvImportInputEmpty,
@@ -21,27 +22,22 @@ import models.EventType.{
   UserGroupCreated,
   UsersImported
 }
-import models.formModels.{
-  inOption,
-  normalizedOptionalText,
-  normalizedText,
+import models.forms.{
   CSVRawLinesFormData,
   CSVReviewUserFormData,
   CSVUserFormData,
   CSVUserGroupFormData
 }
-import models.{Area, Organisation, User, UserGroup}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
+import play.api.data.{Form, Mapping}
 import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
-import play.api.data.{Form, Mapping}
 import play.api.mvc.{Action, AnyContent, InjectedController}
-import serializers.{Keys, UserAndGroupCsvSerializer}
+import scala.concurrent.{ExecutionContext, Future}
+import serializers.UserAndGroupCsvSerializer
 import serializers.UserAndGroupCsvSerializer.UserGroupBlock
 import services.{EventService, NotificationService, UserGroupService, UserService}
-
-import scala.concurrent.{ExecutionContext, Future}
 
 case class CSVImportController @Inject() (
     config: AppConfig,
@@ -57,20 +53,15 @@ case class CSVImportController @Inject() (
     with UserOperators
     with GroupOperators {
 
-  private val csvImportContentForm: Form[CSVRawLinesFormData] = Form(
-    mapping(
-      "csv-lines" -> nonEmptyText,
-      "area-default-ids" -> list(uuid),
-      "separator" -> char
-        .verifying("Séparateur incorrect", value => value === ';' || value === ',')
-    )(CSVRawLinesFormData.apply)(CSVRawLinesFormData.unapply)
-  )
-
   def importUsersFromCSV: Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(ImportUserUnauthorized, "Accès non autorisé pour importer les utilisateurs") { () =>
         Future(
-          Ok(views.html.importUsersCSV(request.currentUser, request.rights)(csvImportContentForm))
+          Ok(
+            views.html.importUsersCSV(request.currentUser, request.rights)(
+              CSVRawLinesFormData.contentForm
+            )
+          )
         )
       }
     }
@@ -238,7 +229,7 @@ case class CSVImportController @Inject() (
         ImportGroupUnauthorized,
         "Accès non autorisé pour importer les utilisateurs"
       ) { () =>
-        csvImportContentForm
+        CSVRawLinesFormData.contentForm
           .bindFromRequest()
           .fold(
             { csvImportContentFormWithError =>
@@ -261,9 +252,9 @@ case class CSVImportController @Inject() (
                   csvImportData.csvLines
                 )
                 .fold(
-                  { error: String =>
+                  { (error: String) =>
                     val csvImportContentFormWithError =
-                      csvImportContentForm.fill(csvImportData).withGlobalError(error)
+                      CSVRawLinesFormData.contentForm.fill(csvImportData).withGlobalError(error)
                     eventService
                       .log(CSVImportFormError, "Erreur de formulaire Importation")
                     Future(
@@ -338,8 +329,11 @@ case class CSVImportController @Inject() (
           groupIds = groupId :: Nil,
           cguAcceptationDate = None,
           newsletterAcceptationDate = None,
+          firstLoginDate = none,
           phoneNumber = userData.user.phoneNumber,
           observableOrganisationIds = Nil,
+          managingOrganisationIds = Nil,
+          managingAreaIds = Nil,
           sharedAccount = userData.user.name.nonEmpty,
           internalSupportComment = None,
           passwordActivated = false,
@@ -368,7 +362,7 @@ case class CSVImportController @Inject() (
                 )
               )
             },
-            { userGroupDataForm: List[CSVUserGroupFormData] =>
+            { (userGroupDataForm: List[CSVUserGroupFormData]) =>
               val augmentedUserGroupInformation: List[CSVUserGroupFormData] =
                 augmentUserGroupsInformation(userGroupDataForm)
 
@@ -380,7 +374,7 @@ case class CSVImportController @Inject() (
               groupService
                 .add(groupsToInsert)
                 .fold(
-                  { error: String =>
+                  { (error: String) =>
                     eventService.log(
                       ImportUserError,
                       "Impossible d'importer les groupes",
@@ -424,7 +418,7 @@ case class CSVImportController @Inject() (
                     userService
                       .add(usersToInsert)
                       .fold(
-                        { error: String =>
+                        { (error: String) =>
                           eventService.log(
                             ImportUserError,
                             "Impossible d'importer les utilisateurs",

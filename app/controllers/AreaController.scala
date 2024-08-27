@@ -1,22 +1,14 @@
 package controllers
 
 import actions.LoginAction
-import cats.syntax.all._
-import constants.Constants
 import controllers.Operators.UserOperators
 import javax.inject.{Inject, Singleton}
-import models.EventType.{
-  AllAreaUnauthorized,
-  AreaChanged,
-  ChangeAreaUnauthorized,
-  DeploymentDashboardUnauthorized
-}
 import models._
+import models.EventType.{AllAreaUnauthorized, DeploymentDashboardUnauthorized}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
-import play.api.mvc.InjectedController
+import play.api.mvc.{Action, AnyContent, InjectedController}
 import scala.concurrent.{ExecutionContext, Future}
-import serializers.Keys
 import services.{EventService, UserGroupService, UserService}
 
 @Singleton
@@ -31,7 +23,7 @@ case class AreaController @Inject() (
     with Operators.Common
     with UserOperators {
 
-  def all =
+  def all: Action[AnyContent] =
     loginAction.async { implicit request =>
       if (!request.currentUser.admin && !request.currentUser.groupAdmin) {
         eventService.log(
@@ -51,7 +43,7 @@ case class AreaController @Inject() (
       }
     }
 
-  def deploymentDashboard =
+  def deploymentDashboard: Action[AnyContent] =
     loginAction.async { implicit request =>
       asUserWithAuthorization(Authorization.isAdminOrObserver)(
         DeploymentDashboardUnauthorized,
@@ -61,7 +53,7 @@ case class AreaController @Inject() (
       }
     }
 
-  def franceServiceDeploymentDashboard =
+  def franceServiceDeploymentDashboard: Action[AnyContent] =
     loginAction.async { implicit request =>
       asUserWithAuthorization(Authorization.isAdminOrObserver)(
         DeploymentDashboardUnauthorized,
@@ -73,7 +65,7 @@ case class AreaController @Inject() (
       }
     }
 
-  def franceServices =
+  def franceServices: Action[AnyContent] =
     loginAction.async { implicit request =>
       asUserWithAuthorization(Authorization.isAdminOrObserver)(
         DeploymentDashboardUnauthorized,

@@ -1,12 +1,6 @@
 import dialogPolyfill from "dialog-polyfill";
 import "dialog-polyfill/dist/dialog-polyfill.css";
 
-// Not in dom.d.ts anymore
-// https://github.com/microsoft/TypeScript-DOM-lib-generator/issues/1029
-export interface HTMLDialogElement extends HTMLElement {
-  close: () => void
-  showModal: () => void
-}
 
 
 export function addDialogButtonsClickListeners(

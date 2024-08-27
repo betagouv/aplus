@@ -4,18 +4,17 @@ import cats.syntax.all._
 import helper.{Hash, Time, UUIDHelper}
 import java.time.ZonedDateTime
 import models.{Area, LoginToken, User}
+import org.junit.runner._
 import org.specs2.mutable._
 import org.specs2.runner._
-import org.junit.runner._
-import play.api.test._
-import play.api.test.Helpers._
-import services.{TokenService, UserService}
 import org.specs2.specification.BeforeAfterAll
+import play.api.test._
+import services.{TokenService, UserService}
 
 @RunWith(classOf[JUnitRunner])
 class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfterAll {
 
-  val existingUser = User(
+  val existingUser: User = User(
     UUIDHelper.namedFrom("julien.test"),
     Hash.sha256(s"julien.test"),
     "FirstName".some,
@@ -29,8 +28,12 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
     Area.all.map(_.id),
     ZonedDateTime.parse("2017-11-01T00:00+01:00"),
     "75056",
+    firstLoginDate = None,
     groupAdmin = true,
     disabled = false,
+    observableOrganisationIds = Nil,
+    managingOrganisationIds = Nil,
+    managingAreaIds = Nil,
     internalSupportComment = None,
     passwordActivated = false,
   )
@@ -95,9 +98,11 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
       app = applicationWithBrowser
     ) {
       val tokenService = app.injector.instanceOf[TokenService]
+
       val loginToken = LoginToken
         .forUserId(existingUser.id, 5, "127.0.0.1")
         .copy(expirationDate = Time.nowParis().minusMinutes(5))
+
       tokenService.create(loginToken)
 
       val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
@@ -115,6 +120,7 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+
       val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
         .absoluteURL(false, s"localhost:$port")
 

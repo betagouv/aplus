@@ -11,12 +11,19 @@ import models.{Area, Authorization, Error, EventType, Organisation, User, UserGr
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
 import scala.concurrent.{ExecutionContext, Future}
-import serializers.Keys
 import serializers.ApiModel._
-import services.{EventService, OrganisationService, UserGroupService, UserService}
+import serializers.Keys
+import services.{
+  AnonymizedDataService,
+  EventService,
+  OrganisationService,
+  UserGroupService,
+  UserService
+}
 
 @Singleton
 case class ApiController @Inject() (
+    anonymizedDataService: AnonymizedDataService,
     loginAction: LoginAction,
     eventService: EventService,
     organisationService: OrganisationService,
@@ -74,7 +81,7 @@ case class ApiController @Inject() (
           .validate[FranceServices.NewMatricules]
           .fold(
             errors => {
-              val errorMessage = helper.PlayFormHelper.prettifyJsonFormInvalidErrors(errors)
+              val errorMessage = helper.PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)
               eventService.log(EventType.FSMatriculeInvalidData, s"$errorMessage")
               Future.successful(BadRequest(Json.toJson(ApiError(errorMessage))))
             },
@@ -219,7 +226,7 @@ case class ApiController @Inject() (
           .validate[FranceServices.Update]
           .fold(
             errors => {
-              val errorMessage = helper.PlayFormHelper.prettifyJsonFormInvalidErrors(errors)
+              val errorMessage = helper.PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)
               eventService.log(EventType.FSMatriculeInvalidData, s"$errorMessage")
               Future.successful(BadRequest(Json.toJson(ApiError(errorMessage))))
             },
@@ -334,7 +341,7 @@ case class ApiController @Inject() (
         EventType.DeploymentDashboardUnauthorized,
         "Accès non autorisé au dashboard de déploiement"
       ) { () =>
-        val userGroups = userGroupService.allGroups.filter(group =>
+        val userGroups = userGroupService.allOrThrow.filter(group =>
           group.organisation
             .orElse(Organisation.deductedFromName(group.name))
             .exists(_.id === Organisation.franceServicesId)
@@ -425,7 +432,7 @@ case class ApiController @Inject() (
         EventType.DeploymentDashboardUnauthorized,
         "Accès non autorisé au dashboard de déploiement"
       ) { () =>
-        val userGroups = userGroupService.allGroups
+        val userGroups = userGroupService.allOrThrow
         userService.allNoNameNoEmail.map { users =>
           def usersIn(area: Area, organisationSet: Set[Organisation]): List[User] =
             for {
@@ -454,7 +461,11 @@ case class ApiController @Inject() (
               for {
                 organisations <- organisationSets
                 users = usersIn(area, organisations)
-                userSum = users.count(_.instructor)
+                userSum = users
+                  .filter(user => user.instructor && !user.disabled)
+                  .map(_.id)
+                  .distinct
+                  .size
               } yield (organisations, userSum)
             ).toMap
 
@@ -490,6 +501,21 @@ case class ApiController @Inject() (
           )
           Ok(Json.toJson(data))
         }
+      }
+    }
+
+  def refreshAnonymizedDatabase: Action[AnyContent] =
+    loginAction.async { implicit request =>
+      asUserWithAuthorization(Authorization.isAdmin)(
+        EventType.AnonymizedDataExportError,
+        "Accès non autorisé à l'export anonymisé par API de la BDD"
+      ) { () =>
+        anonymizedDataService.transferData()
+        eventService.log(
+          EventType.AnonymizedDataExportMessage,
+          "Export anonymisé par API de la BDD terminé"
+        )
+        Future.successful(Ok(Json.obj()))
       }
     }
 

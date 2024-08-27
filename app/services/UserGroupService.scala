@@ -1,14 +1,13 @@
 package services
 
-import java.sql.ResultSet
-import java.util.UUID
-
 import anorm._
 import aplus.macros.Macros
 import cats.syntax.all._
 import helper.{StringHelper, Time, UUIDHelper}
+import java.sql.ResultSet
+import java.util.UUID
 import javax.inject.Inject
-import models.{Error, EventType, FranceService, Organisation, UserGroup}
+import models.{Error, EventType, FranceService, Organisation, User, UserGroup}
 import org.postgresql.util.PSQLException
 import play.api.db.Database
 import scala.concurrent.Future
@@ -137,20 +136,15 @@ class UserGroupService @Inject() (
           internal_support_comment = ${group.internalSupportComment}
           WHERE id = ${group.id}::uuid
        """.executeUpdate() === 1
-    // TODO: insee_code = array[${group.inseeCode}]::character varying(5)[], have been remove temporary
+      // TODO: insee_code = array[${group.inseeCode}]::character varying(5)[], have been remove temporary
     }
 
-  def allGroups: List[UserGroup] =
+  def allOrThrow: List[UserGroup] =
     db.withConnection { implicit connection =>
       SQL(s"SELECT $fieldsInSelect FROM user_group").as(simpleUserGroup.*)
     }
 
-  def all: Future[List[UserGroup]] =
-    Future {
-      db.withConnection { implicit connection =>
-        SQL(s"SELECT $fieldsInSelect FROM user_group").as(simpleUserGroup.*)
-      }
-    }
+  def all: Future[List[UserGroup]] = Future(allOrThrow)
 
   def byIds(groupIds: List[UUID]): List[UserGroup] =
     db.withConnection { implicit connection =>
@@ -163,16 +157,7 @@ class UserGroupService @Inject() (
     }
 
   def byIdsFuture(groupIds: List[UUID]): Future[List[UserGroup]] =
-    Future {
-      db.withConnection { implicit connection =>
-        val ids = groupIds.distinct
-        SQL(s"""SELECT $fieldsInSelect
-                FROM user_group
-                WHERE ARRAY[{ids}]::uuid[] @> ARRAY[id]::uuid[]""")
-          .on("ids" -> ids)
-          .as(simpleUserGroup.*)
-      }
-    }
+    Future(byIds(groupIds))
 
   def groupById(groupId: UUID): Option[UserGroup] =
     db.withConnection { implicit connection =>
@@ -180,6 +165,9 @@ class UserGroupService @Inject() (
         .on("groupId" -> groupId)
         .as(simpleUserGroup.singleOpt)
     }
+
+  def groupByIdFuture(groupId: UUID): Future[Option[UserGroup]] =
+    Future(groupById(groupId))
 
   def groupByName(groupName: String): Option[UserGroup] =
     db.withConnection { implicit connection =>
@@ -199,7 +187,7 @@ class UserGroupService @Inject() (
         SQL"""SELECT COUNT(id) as cardinality FROM "user" WHERE group_ids @> ARRAY[$groupId]::uuid[]"""
           .executeQuery()
           .resultSet
-          .apply[Int]({ rs: ResultSet =>
+          .apply[Int]({ (rs: ResultSet) =>
             rs.next()
             rs.getInt("cardinality")
           })
@@ -239,6 +227,35 @@ class UserGroupService @Inject() (
           .as(simpleUserGroup.*)
       }
     }
+
+  def byAreasAndOrganisationIds(
+      areaIds: List[UUID],
+      organisationIds: List[Organisation.Id]
+  ): Future[List[UserGroup]] =
+    Future {
+      db.withConnection { implicit connection =>
+        val organisationIdStrings = organisationIds.map(_.id)
+        SQL(s"""SELECT $fieldsInSelect
+                FROM "user_group"
+                WHERE ARRAY[{areaIds}]::uuid[] && area_ids
+                AND ARRAY[{organisationIds}]::varchar[] @> ARRAY[organisation]""")
+          .on("areaIds" -> areaIds, "organisationIds" -> organisationIdStrings)
+          .as(simpleUserGroup.*)
+      }
+    }
+
+  def allForAreaManager(user: User): Future[List[UserGroup]] =
+    byAreasAndOrganisationIds(user.managingAreaIds, user.managingOrganisationIds)
+      .flatMap { areaGroups =>
+        val areaGroupIds = areaGroups.map(_.id).toSet
+        val userGroupIds = user.groupIds.toSet
+        val missingGroupIds = userGroupIds.diff(areaGroupIds)
+        if (missingGroupIds.isEmpty)
+          Future.successful(areaGroups)
+        else
+          byIdsFuture(missingGroupIds.toList)
+            .map(missingGroups => missingGroups ::: areaGroups)
+      }
 
   def search(searchQuery: String, limit: Int): Future[Either[Error, List[UserGroup]]] =
     Future(
@@ -280,6 +297,12 @@ class UserGroupService @Inject() (
   )
 
   private val fsFieldsInSelect: String = fsTableFields.mkString(", ")
+
+  def franceServiceRowsOrThrow: List[FranceService] =
+    db.withConnection { implicit connection =>
+      SQL(s"""SELECT $fsFieldsInSelect FROM france_service""")
+        .as(fsParser.*)
+    }
 
   def franceServices: Future[Either[Error, List[(Option[FranceService], Option[UserGroup])]]] =
     Future(

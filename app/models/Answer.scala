@@ -1,10 +1,9 @@
 package models
 
-import java.time.ZonedDateTime
-import java.util.UUID
-
 import cats.kernel.Eq
 import cats.syntax.all._
+import java.time.ZonedDateTime
+import java.util.UUID
 import models.Answer.AnswerType
 
 /** To cast `creationDate` to a valid PG type, use `regexp_replace(creation_date, '\[.*\]',
@@ -52,11 +51,26 @@ object Answer {
       override val name = "wrongInstructor"
     }
 
+    final case object InviteByUser extends AnswerType {
+      override val name = "inviteByUser"
+    }
+
+    final case object InviteAsExpert extends AnswerType {
+      override val name = "inviteAsExpert"
+    }
+
+    final case object InviteThroughGroupPermission extends AnswerType {
+      override val name = "inviteThroughGroupPermission"
+    }
+
     def fromString(value: String): AnswerType = value match {
-      case WorkInProgress.name       => WorkInProgress
-      case ApplicationProcessed.name => ApplicationProcessed
-      case WrongInstructor.name      => WrongInstructor
-      case _                         => Custom
+      case WorkInProgress.name               => WorkInProgress
+      case ApplicationProcessed.name         => ApplicationProcessed
+      case WrongInstructor.name              => WrongInstructor
+      case InviteByUser.name                 => InviteByUser
+      case InviteAsExpert.name               => InviteAsExpert
+      case InviteThroughGroupPermission.name => InviteThroughGroupPermission
+      case _                                 => Custom
     }
 
   }

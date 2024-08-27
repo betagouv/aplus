@@ -1,6 +1,5 @@
 package views.emails
 
-import cats.syntax.all._
 import constants.Constants
 import helper.Time
 import java.time.{ZoneId, ZonedDateTime}
@@ -104,6 +103,17 @@ object common {
         br,
         " ",
         "Equipe Administration+"
+      )
+    ) ::: commonEmailFooter
+
+  val mandatV2Subject = "[A+] Mandat créé"
+
+  def mandatV2Body(absoluteUrl: String): List[Modifier] =
+    List[Modifier](
+      span(
+        "Vous avez généré un nouveau mandat. ",
+        "Il est accessible, après connexion, sur Administration+ en cliquant sur ce lien : ",
+        a(href := absoluteUrl, absoluteUrl)
       )
     ) ::: commonEmailFooter
 
@@ -275,17 +285,6 @@ object common {
               s"Demande du ${Time.formatPatternFr(application.creationDate, datePattern)}"
             )
           )
-        )
-      ),
-      br,
-      br,
-      p(
-        "Comment avez-vous trouvé cet email ? ",
-        "Nous expérimentons. ",
-        "Pour nous aider, vous pouvez répondre à ce questionnaire : ",
-        a(
-          href := "https://startupdetat.typeform.com/to/PicUnQx4",
-          "https://startupdetat.typeform.com/to/PicUnQx4"
         )
       ),
       br,

@@ -1,10 +1,13 @@
-const showClosedApplicationsToggleId = "show-closed-toggle";
-
-const button = document.getElementById(showClosedApplicationsToggleId);
-
-if (button) {
-  button.addEventListener('click', () => {
-    document.getElementById("show-closed-applications")?.classList.add("invisible");
-    document.getElementById("closed-applications")?.classList.remove("invisible");
-  });
-}
+document.querySelectorAll<HTMLInputElement>(".trigger-group-filter").forEach((checkbox) => {
+  const checkedUrl = checkbox.dataset['onCheckedUrl'];
+  const uncheckedUrl = checkbox.dataset['onUncheckedUrl'];
+  if (checkedUrl && uncheckedUrl) {
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) {
+        window.location.href = checkedUrl;
+      } else {
+        window.location.href = uncheckedUrl;
+      }
+    });
+  }
+});

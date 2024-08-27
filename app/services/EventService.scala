@@ -1,14 +1,12 @@
 package services
 
-import java.time.{Instant, LocalDate}
-import java.util.UUID
-
 import actions.RequestWithUserData
 import anorm._
 import aplus.macros.Macros
 import cats.syntax.all._
-import helper.Time
-import javax.inject.Inject
+import java.time.{Instant, LocalDate}
+import java.util.UUID
+import javax.inject.{Inject, Singleton}
 import models.{Area, Error, Event, EventType, User}
 import play.api.Logger
 import play.api.db.Database
@@ -16,7 +14,7 @@ import play.api.mvc.Request
 import scala.concurrent.Future
 import scala.util.Try
 
-@javax.inject.Singleton
+@Singleton
 class EventService @Inject() (db: Database, dependencies: ServicesDependencies) {
   import dependencies.databaseExecutionContext
 
@@ -48,14 +46,16 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       involvesUser: Option[UUID] = None,
       /** If the warn/error has an exception as cause. */
       underlyingException: Option[Throwable] = None
-  )(implicit request: RequestWithUserData[_]) =
+  )(implicit request: RequestWithUserData[_]): Unit =
     register(event.level)(
       request.currentUser,
       request.remoteAddress,
-      event.code,
-      // Note: here we should have gone through the router, so
-      //       request.path is supposed to be valid
-      s"$descriptionSanitized. ${request.method} ${request.path}",
+      event.code, {
+        val session = request.userSession.map(session => " " + session.id).getOrElse("")
+        // Note: here we should have gone through the router, so
+        //       request.path is supposed to be valid
+        s"$descriptionSanitized.$session ${request.method} ${request.path}"
+      },
       additionalUnsafeData,
       applicationId,
       involvesUser,
@@ -66,7 +66,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       error: models.Error,
       applicationId: Option[UUID] = None,
       involvesUser: Option[UUID] = None
-  )(implicit request: RequestWithUserData[_]) =
+  )(implicit request: RequestWithUserData[_]): Unit =
     log(
       event = error.eventType,
       descriptionSanitized = error.description,
@@ -81,7 +81,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       error: models.Error,
       applicationId: Option[UUID] = None,
       involvesUser: Option[UUID] = None
-  )(implicit request: Request[_]) =
+  )(implicit request: Request[_]): Unit =
     logSystem(
       event = error.eventType,
       descriptionSanitized = error.description,
@@ -91,9 +91,20 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       underlyingException = error.underlyingException
     )
 
-  val info = register("INFO") _
-  val warn = register("WARN") _
-  val error = register("ERROR") _
+  type Log = (
+      User,
+      String,
+      String,
+      String,
+      Option[String],
+      Option[UUID],
+      Option[UUID],
+      Option[Throwable]
+  ) => Unit
+
+  val info: Log = register("INFO") _
+  val warn: Log = register("WARN") _
+  val error: Log = register("ERROR") _
 
   /** When there are no logged in user */
   def logSystem(
@@ -120,7 +131,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       error: models.Error,
       applicationId: Option[UUID] = None,
       involvesUser: Option[UUID] = None
-  ) = logNoRequest(
+  ): Unit = logNoRequest(
     error.eventType,
     error.description,
     error.unsafeData,
@@ -137,7 +148,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       applicationId: Option[UUID] = None,
       involvesUser: Option[UUID] = None,
       underlyingException: Option[Throwable] = None
-  ) =
+  ): Unit =
     register(event.level)(
       currentUser = User.systemUser,
       "0.0.0.0",
@@ -208,6 +219,18 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
             ${event.ipAddress}::inet
           )
       """.executeUpdate() === 1
+    }
+
+  def beforeOrThrow(beforeExcluded: Instant, limit: Int): List[Event] =
+    db.withConnection { implicit connection =>
+      SQL(s"""SELECT $fieldsInSelect, host(ip_address)::TEXT AS ip_address
+              FROM "event"
+              WHERE creation_date < {beforeExcluded}
+              ORDER BY creation_date DESC
+              LIMIT {limit}
+              """)
+        .on("beforeExcluded" -> beforeExcluded, "limit" -> limit)
+        .as(simpleEvent.*)
     }
 
   def all(limit: Int, fromUserId: Option[UUID], date: Option[LocalDate]): Future[List[Event]] =

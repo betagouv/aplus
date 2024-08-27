@@ -1,23 +1,28 @@
 package controllers
 
-import java.util.UUID
-
 import actions.LoginAction
 import cats.data.EitherT
 import cats.syntax.all._
 import constants.Constants
 import controllers.Operators.UserOperators
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import models.mandat.{Mandat, SmsMandatInitiation}
-import models.{Error, EventType, Sms}
+import models.{Error, EventType, Mandat, Sms, UserGroup}
+import models.jsonApiModels.mandat._
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.libs.json.{JsError, JsString, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, InjectedController, PlayBodyParsers}
-import serializers.JsonFormats._
-import services._
-
 import scala.concurrent.{ExecutionContext, Future}
+import services.{
+  EventService,
+  MandatService,
+  NotificationService,
+  OrganisationService,
+  SmsService,
+  UserGroupService,
+  UserService
+}
 
 @Singleton
 case class MandatController @Inject() (
@@ -35,6 +40,42 @@ case class MandatController @Inject() (
     extends InjectedController
     with Operators.Common
     with UserOperators {
+
+  def generateNewMandat: Action[JsValue] = loginAction(parse.json).async { implicit request =>
+    request.body
+      .validate[MandatGeneration]
+      .fold(
+        errors => {
+          val errorMessage = helper.PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)
+          eventService.log(EventType.MandatGenerationFormValidationError, s"$errorMessage")
+          Future.successful(
+            BadRequest(
+              Json.obj("message" -> JsString(errorMessage), "errors" -> JsError.toJson(errors))
+            )
+          )
+        },
+        entity => {
+          mandatService
+            .createMandatV2(entity, request.currentUser)
+            .map(
+              _.fold(
+                error => {
+                  eventService.logError(error)
+                  mandatJsonInternalServerError(error)
+                },
+                mandat => {
+                  eventService.log(
+                    EventType.MandatGenerated,
+                    s"Le mandat ${mandat.id.underlying} (version ${mandat.version}) a été créé."
+                  )
+                  notificationsService.mandatV2Generated(mandat.id, request.currentUser)
+                  Ok(Json.toJson(mandat))
+                }
+              )
+            )
+        }
+      )
+  }
 
   /** To have a somewhat consistent process:
     *   - a SMS can fail for various reasons, even after having received a 2xx response from the api
@@ -56,7 +97,7 @@ case class MandatController @Inject() (
       .validate[SmsMandatInitiation]
       .fold(
         errors => {
-          val errorMessage = helper.PlayFormHelper.prettifyJsonFormInvalidErrors(errors)
+          val errorMessage = helper.PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)
           eventService.log(EventType.MandatInitiationBySmsFormValidationError, s"$errorMessage")
           Future(
             BadRequest(
@@ -177,33 +218,54 @@ case class MandatController @Inject() (
   def mandat(rawId: UUID): Action[AnyContent] = loginAction.async { implicit request =>
     mandatService
       .byId(Mandat.Id(rawId), request.rights)
-      .map(
+      .flatMap(
         _.fold(
           error => {
             eventService.logError(error)
-            error match {
-              case _: Error.EntityNotFound | _: Error.RequirementFailed =>
-                NotFound("Nous n'avons pas trouvé ce mandat.")
-              case _: Error.Authorization | _: Error.Authentication =>
-                Unauthorized(
-                  s"Vous n'avez pas les droits suffisants pour voir ce mandat. " +
-                    s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-                )
-              case _: Error.Database | _: Error.SqlException |
-                  _: Error.UnexpectedServerResponse | _: Error.Timeout | _: Error.MiscException =>
-                InternalServerError(
-                  s"Une erreur s'est produite sur le serveur. " +
-                    "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard. " +
-                    s"Si cette erreur persiste, " +
-                    s"vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-                )
-            }
+            Future.successful(
+              error match {
+                case _: Error.EntityNotFound | _: Error.RequirementFailed =>
+                  NotFound(views.mandat.mandatDoesNotExist(request.currentUser, request.rights))
+                case _: Error.Authorization | _: Error.Authentication =>
+                  Unauthorized(
+                    s"Vous n'avez pas les droits suffisants pour voir ce mandat. " +
+                      s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+                  )
+                case _: Error.Database | _: Error.SqlException |
+                    _: Error.UnexpectedServerResponse | _: Error.Timeout | _: Error.MiscException =>
+                  InternalServerError(
+                    s"Une erreur s'est produite sur le serveur. " +
+                      "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard. " +
+                      s"Si cette erreur persiste, " +
+                      s"vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+                  )
+              }
+            )
           },
-          mandat => {
-            eventService.log(EventType.MandatShowed, s"Mandat $rawId consulté")
-            Ok(views.html.showMandat(request.currentUser, request.rights)(mandat))
-              .withHeaders(CACHE_CONTROL -> "no-store")
-          }
+          mandat =>
+            mandat.groupId
+              .fold[Future[Option[UserGroup]]](Future.successful(none))(id =>
+                userGroupService.groupByIdFuture(id)
+              )
+              .map { groupOpt =>
+                eventService.log(
+                  EventType.MandatShowed,
+                  s"Mandat $rawId consulté (version ${mandat.version})"
+                )
+                val page = mandat.version match {
+                  case 1 =>
+                    views.mandat.pageV1(request.currentUser, request.rights, mandat)
+                  case 2 =>
+                    views.mandat.pageV2(request.currentUser, request.rights, mandat, groupOpt)
+                  case _ =>
+                    eventService.log(
+                      EventType.MandatError,
+                      s"Version ${mandat.version} incorrect du mandat ${mandat.id}"
+                    )
+                    views.mandat.pageV2(request.currentUser, request.rights, mandat, groupOpt)
+                }
+                Ok(page).withHeaders(CACHE_CONTROL -> "no-store")
+              }
         )
       )
   }

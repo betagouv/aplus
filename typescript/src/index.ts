@@ -20,6 +20,8 @@ import 'unorm';
 // Proxy (needed by tabulator)
 import 'proxy-polyfill';
 
+import 'material-icons/iconfont/material-icons.css'
+
 // Our scripts
 import "./admin";
 import "./application";
@@ -34,10 +36,12 @@ import "./editUser";
 import "./formExitAlert";
 import "./franceServices";
 import "./magicLinkAntiConsumption";
+import "./mandat";
 import "./mdl-extensions";
 import "./myApplications";
 import "./notificationBanner";
 import "./searchInput";
+import "./searchInputLegacy";
 import "./showApplication";
 import "./signup";
 import "./slimselect";

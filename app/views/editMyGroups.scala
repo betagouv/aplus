@@ -2,21 +2,27 @@ package views
 
 import cats.syntax.all._
 import controllers.routes.{GroupController, UserController}
-import helpers.forms.CSRFInput
 import helper.Time
 import helper.TwirlImports.toHtml
 import java.time.Instant
 import java.util.UUID
-import models.{Application, Authorization, User, UserGroup}
-import models.formModels.AddUserToGroupFormData
+import models.{Area, Authorization, User, UserGroup}
+import models.forms.AddUserToGroupFormData
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.i18n.MessagesProvider
 import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
+import views.helpers.forms.CSRFInput
 
 object editMyGroups {
+
+  case class UserInfos(creations: Int, invitations: Int, participations: Int) {
+    def incrementCreations: UserInfos = copy(creations = creations + 1)
+    def incrementInvitations: UserInfos = copy(invitations = invitations + 1)
+    def incrementParticipations: UserInfos = copy(participations = participations + 1)
+  }
 
   def page(
       currentUser: User,
@@ -24,7 +30,7 @@ object editMyGroups {
       addUserForm: Form[AddUserToGroupFormData],
       userGroups: List[UserGroup],
       users: List[User],
-      applications: List[Application],
+      usersInfos: Map[UUID, UserInfos],
       lastActivity: Map[UUID, Instant],
       addRedirectQueryParam: String => String
   )(implicit
@@ -34,13 +40,17 @@ object editMyGroups {
       webJarsUtil: WebJarsUtil,
       mainInfos: MainInfos
   ): Html = {
-    // Precompute here to speedup page rendering
-    val (creationsCount, invitationsCount, participationsCount) = creationsAndInvitationsCounts(
-      applications
-    )
     val groupsWithTheirUsers: List[(UserGroup, List[User])] =
       for {
-        userGroup <- userGroups.sortBy(_.name)
+        userGroup <- userGroups.sortBy(group =>
+          (
+            // Demo groups last
+            group.areaIds.contains[UUID](Area.demo.id),
+            // Own groups first
+            !currentUser.groupIds.contains[UUID](group.id),
+            group.name
+          )
+        )
         groupUsers = users.filter(_.groupIds.contains(userGroup.id))
       } yield (userGroup, groupUsers)
     val dialogs =
@@ -56,9 +66,7 @@ object editMyGroups {
       } yield groupBlock(
         group,
         users,
-        creationsCount,
-        invitationsCount,
-        participationsCount,
+        usersInfos,
         lastActivity,
         addUserForm,
         addRedirectQueryParam,
@@ -73,35 +81,10 @@ object editMyGroups {
     )(Nil)
   }
 
-  def creationsAndInvitationsCounts(
-      applications: List[Application]
-  ): (Map[UUID, Int], Map[UUID, Int], Map[UUID, Int]) = {
-    val userCreations = scala.collection.mutable.HashMap.empty[UUID, Int]
-    val userInvitations = scala.collection.mutable.HashMap.empty[UUID, Int]
-    val userParticipations = scala.collection.mutable.HashMap.empty[UUID, Int]
-    applications.foreach { application =>
-      userCreations.updateWith(application.creatorUserId)(_.map(_ + 1).getOrElse(1).some)
-      application.invitedUsers.foreach { case (userId, _) =>
-        userInvitations.updateWith(userId)(_.map(_ + 1).getOrElse(1).some)
-      }
-      application.answers
-        .map(_.creatorUserID)
-        .toSet
-        .foreach((id: UUID) =>
-          if (id =!= application.creatorUserId) {
-            userParticipations.updateWith(id)(_.map(_ + 1).getOrElse(1).some)
-          }
-        )
-    }
-    (userCreations.toMap, userInvitations.toMap, userParticipations.toMap)
-  }
-
   def groupBlock(
       group: UserGroup,
       users: List[User],
-      applicationCreationsCount: Map[UUID, Int],
-      applicationInvitationsCount: Map[UUID, Int],
-      applicationParticipationsCount: Map[UUID, Int],
+      usersInfos: Map[UUID, UserInfos],
       lastActivity: Map[UUID, Instant],
       addUserForm: Form[AddUserToGroupFormData],
       addRedirectQueryParam: String => String,
@@ -133,10 +116,8 @@ object editMyGroups {
           .map(user =>
             userLine(
               user,
-              group.id,
-              applicationCreationsCount,
-              applicationInvitationsCount,
-              applicationParticipationsCount,
+              group,
+              usersInfos,
               lastActivity,
               addRedirectQueryParam,
               currentUser,
@@ -144,6 +125,17 @@ object editMyGroups {
             )
           )
       ),
+      users
+        .collect { case user if user.disabled => () }
+        .size
+        .some
+        .filter(_ > 0)
+        .map(_ =>
+          div(
+            cls := "disabled-users-toggle",
+            "Voir les membres désactivés"
+          )
+        ),
       (
         if (Authorization.canEditGroup(group)(currentUserRights)) {
           div(
@@ -245,17 +237,15 @@ object editMyGroups {
 
   def userLine(
       user: User,
-      groupId: UUID,
-      applicationCreationsCount: Map[UUID, Int],
-      applicationInvitationsCount: Map[UUID, Int],
-      applicationParticipationsCount: Map[UUID, Int],
+      group: UserGroup,
+      usersInfos: Map[UUID, UserInfos],
       lastActivity: Map[UUID, Instant],
       addRedirectQueryParam: String => String,
       currentUser: User,
       currentUserRights: Authorization.UserRights
   )(implicit request: RequestHeader): Tag =
     tr(
-      cls := "no-hover td--clear-border",
+      cls := "no-hover td--clear-border" + (if (user.disabled) " user-is-disabled hidden" else ""),
       td(
         cls := "mdl-data-table__cell--non-numeric" +
           (if (user.disabled) " text--strikethrough mdl-color-text--grey-600" else ""),
@@ -306,14 +296,14 @@ object editMyGroups {
       td(
         cls := "mdl-data-table__cell--non-numeric mdl-data-table__cell--content-size",
         userStatsCell(
-          applicationCreationsCount.getOrElse(user.id, 0),
-          applicationInvitationsCount.getOrElse(user.id, 0),
-          applicationParticipationsCount.getOrElse(user.id, 0)
+          usersInfos.get(user.id).map(_.creations).getOrElse(0),
+          usersInfos.get(user.id).map(_.invitations).getOrElse(0),
+          usersInfos.get(user.id).map(_.participations).getOrElse(0)
         )
       ),
       td(
         cls := "remove-link-panel",
-        lineActionButton(user, groupId, addRedirectQueryParam, currentUser, currentUserRights)
+        lineActionButton(user, group, addRedirectQueryParam, currentUser, currentUserRights)
       )
     )
 
@@ -370,16 +360,16 @@ object editMyGroups {
 
   private def lineActionButton(
       user: User,
-      groupId: UUID,
+      group: UserGroup,
       addRedirectQueryParam: String => String,
       currentUser: User,
       currentUserRights: Authorization.UserRights
   )(implicit request: RequestHeader): Modifier =
     if (user.id =!= currentUser.id) {
-      if (user.disabled && Authorization.canEnableOtherUser(user)(currentUserRights))
+      if (user.disabled && Authorization.canEnableOtherUser(user, group :: Nil)(currentUserRights))
         form(
-          action := addRedirectQueryParam(GroupController.enableUser(user.id).path),
-          method := GroupController.enableUser(user.id).method,
+          action := addRedirectQueryParam(GroupController.enableUser(user.id, group.id).path),
+          method := GroupController.enableUser(user.id, group.id).method,
           CSRFInput,
           button(
             `type` := "submit",
@@ -389,11 +379,11 @@ object editMyGroups {
         )
       else if (
         user.groupIds.toSet.size === 1 &&
-        Authorization.canAddOrRemoveOtherUser(groupId)(currentUserRights)
+        Authorization.canAddOrRemoveOtherUser(group)(currentUserRights)
       )
         form(
-          action := addRedirectQueryParam(GroupController.removeFromGroup(user.id, groupId).path),
-          method := GroupController.removeFromGroup(user.id, groupId).method,
+          action := addRedirectQueryParam(GroupController.removeFromGroup(user.id, group.id).path),
+          method := GroupController.removeFromGroup(user.id, group.id).method,
           CSRFInput,
           button(
             `type` := "submit",
@@ -403,12 +393,12 @@ object editMyGroups {
         )
       else if (
         user.groupIds.toSet.size > 1 &&
-        Authorization.canAddOrRemoveOtherUser(groupId)(currentUserRights)
+        Authorization.canAddOrRemoveOtherUser(group)(currentUserRights)
       )
         button(
           cls := "remove-link remove-user-from-group-button",
           data("user-id") := user.id.toString,
-          data("group-id") := groupId.toString,
+          data("group-id") := group.id.toString,
           "Retirer du groupe"
         )
       else

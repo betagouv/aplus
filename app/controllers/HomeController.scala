@@ -1,12 +1,14 @@
 package controllers
 
-import javax.inject.{Inject, Singleton}
 import actions.LoginAction
-import org.webjars.play.WebJarsUtil
+import helper.ScalatagsHelpers.writeableOf_Modifier
+import javax.inject.{Inject, Singleton}
 import modules.AppConfig
+import org.webjars.play.WebJarsUtil
 import play.api.Logger
-import play.api.mvc._
 import play.api.db.Database
+import play.api.i18n.I18nSupport
+import play.api.mvc._
 import serializers.Keys
 import views.home.LoginPanel
 
@@ -16,10 +18,10 @@ import views.home.LoginPanel
 class HomeController @Inject() (
     val config: AppConfig,
     loginAction: LoginAction,
-    db: Database
+    db: Database,
 )(implicit webJarsUtil: WebJarsUtil)
     extends InjectedController
-    with play.api.i18n.I18nSupport
+    with I18nSupport
     with Operators.Common {
 
   private val log = Logger(classOf[HomeController])
@@ -72,6 +74,22 @@ class HomeController @Inject() (
   def welcome: Action[AnyContent] =
     loginAction { implicit request =>
       Ok(views.html.welcome(request.currentUser, request.rights))
+    }
+
+  def declarationAccessibilite: Action[AnyContent] =
+    Action {
+      Ok(views.accessibility.declaration())
+    }
+
+  def mentionsLegales: Action[AnyContent] =
+    Action {
+      Ok(views.legal.information())
+    }
+
+  def wellKnownSecurityTxt: Action[AnyContent] =
+    Action {
+      // This is a String, so Play should send back Content-Type: text/plain; charset=UTF-8
+      Ok(views.wellKnown.securityTxt())
     }
 
 }

@@ -1,18 +1,15 @@
-import type { HTMLDialogElement } from "./dialog";
 import dialogPolyfill from "dialog-polyfill";
 import "dialog-polyfill/dist/dialog-polyfill.css";
 
-const reviewValidationButton = <HTMLButtonElement | null>document.getElementById('review-validation');
 const customAnswerInput = <HTMLInputElement | null>document.getElementById('custom-answer');
-const nonInstructorAnswerInput = <HTMLInputElement | null>document.getElementById('non-instructor-answer');
 const dialog = <HTMLDialogElement | null>document.querySelector('#dialog-terminate');
 const archiveButton1 = document.getElementById('archive-button-1');
 const archiveButton2 = document.getElementById('archive-button-2');
 const archiveButton3 = document.getElementById('archive-button-3');
 const quickAnswer1Button = document.getElementById('option-1');
-const quickAnswer2Button = document.getElementById('option-2');
 const quickAnswer3Button = document.getElementById('option-3');
 const quickAnswer4Button = document.getElementById('option-4');
+const applicationProcessedCheckbox = document.getElementById('application-processed-checkbox');
 const closeDialogQuitButton = document.getElementById('close-dialog-quit');
 
 
@@ -30,46 +27,35 @@ const showDialog = () => {
 }
 
 const enableButtonAndDisableCustomAnswer = () => {
-  if (reviewValidationButton) {
-    reviewValidationButton.disabled = false;
+  if (applicationProcessedCheckbox) {
+    applicationProcessedCheckbox.classList.add("hidden");
   }
   if (customAnswerInput) {
     customAnswerInput.value = "";
     customAnswerInput.disabled = true;
     customAnswerInput.style.background = 'lightgrey';
+    customAnswerInput.classList.add("hidden");
   }
 }
 
-const disableButtonAndEnableCustomAnswer = () => {
-  if (reviewValidationButton) {
-    reviewValidationButton.disabled = true;
+const onCustomAnswerClick = () => {
+  if (applicationProcessedCheckbox) {
+    applicationProcessedCheckbox.classList.remove("hidden");
   }
   if (customAnswerInput) {
     customAnswerInput.disabled = false;
     customAnswerInput.style.background = 'white';
+    customAnswerInput.classList.remove("hidden");
   }
 }
 
 quickAnswer1Button?.addEventListener('click', enableButtonAndDisableCustomAnswer);
-quickAnswer2Button?.addEventListener('click', enableButtonAndDisableCustomAnswer);
 quickAnswer3Button?.addEventListener('click', enableButtonAndDisableCustomAnswer);
-quickAnswer4Button?.addEventListener('click', disableButtonAndEnableCustomAnswer);
+quickAnswer4Button?.addEventListener('click', onCustomAnswerClick);
 closeDialogQuitButton?.addEventListener('click', closeDialog);
 archiveButton1?.addEventListener('click', showDialog);
 archiveButton2?.addEventListener('click', showDialog);
 archiveButton3?.addEventListener('click', showDialog);
-
-if (customAnswerInput && reviewValidationButton) {
-  customAnswerInput.addEventListener("keyup", () => {
-    reviewValidationButton.disabled = customAnswerInput.value === '';
-  });
-}
-
-if (nonInstructorAnswerInput && reviewValidationButton) {
-  nonInstructorAnswerInput.addEventListener("keyup", () => {
-    reviewValidationButton.disabled = nonInstructorAnswerInput.value === '';
-  });
-}
 
 
 

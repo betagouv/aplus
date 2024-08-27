@@ -6,6 +6,11 @@
 GET         /                                                                                controllers.HomeController.index
 GET         /aide                                                                            controllers.HomeController.help
 GET         /bienvenue                                                                       controllers.HomeController.welcome
+GET         /accessibilite                                                                   controllers.HomeController.declarationAccessibilite
+GET         /mentions-legales                                                                controllers.HomeController.mentionsLegales
+GET         /.well-known/security.txt                                                        controllers.HomeController.wellKnownSecurityTxt
+GET         /dashboard                                                                       controllers.ApplicationController.dashboard
+GET         /as/:userId/dashboard                                                            controllers.ApplicationController.dashboardAs(userId: java.util.UUID)
 
 
 # Application
@@ -19,29 +24,28 @@ GET         /toutes-les-demandes/:id                                            
 POST        /toutes-les-demandes/:applicationId/inviter_des_utilisateurs                     controllers.ApplicationController.invite(applicationId: java.util.UUID)
 POST        /toutes-les-demandes/:applicationId/inviter_des_experts                          controllers.ApplicationController.inviteExpert(applicationId: java.util.UUID)
 POST        /toutes-les-demandes/:applicationId/messages                                     controllers.ApplicationController.answer(applicationId: java.util.UUID)
+POST        /toutes-les-demandes/:applicationId/messages/resolution-par-l-operateur          controllers.ApplicationController.answerApplicationHasBeenProcessed(applicationId: java.util.UUID)
 POST        /toutes-les-demandes/:applicationId/terminer                                     controllers.ApplicationController.terminate(applicationId: java.util.UUID)
 POST        /toutes-les-demandes/:applicationId/reopen                                       controllers.ApplicationController.reopen(applicationId: java.util.UUID)
 
 GET         /demandes/metadonnees                                                            controllers.ApplicationController.applicationsAdmin
+GET         /demandes/:applicationId/territoire/:areaId/groupes-invitables                   controllers.ApplicationController.applicationInvitableGroups(applicationId: java.util.UUID, areaId: java.util.UUID)
 
 GET         /fichiers/:fileId                                                                controllers.ApplicationController.file(fileId: java.util.UUID)
 
 
 # Mandat
 GET         /mandats/:id                                                                     controllers.MandatController.mandat(id: java.util.UUID)
+POST        /mandats/generation                                                              controllers.MandatController.generateNewMandat
 POST        /mandats/sms                                                                     controllers.MandatController.beginMandatSms
 +nocsrf
 POST        /mandats/sms/webhook                                                             controllers.MandatController.webhookSmsReceived
 
 
 # Stats
-+ nocsp
 GET         /stats                                                                           controllers.ApplicationController.stats
-+ nocsp
 GET         /as/:userId/stats                                                                controllers.ApplicationController.statsAs(userId: java.util.UUID)
-+ nocsp
 POST        /stats                                                                           controllers.ApplicationController.stats
-+ nocsp
 POST        /as/:userId/stats                                                                controllers.ApplicationController.statsAs(userId: java.util.UUID)
 
 
@@ -71,7 +75,7 @@ POST        /me                                                                 
 GET         /utilisateurs                                                                    controllers.UserController.home
 GET         /utilisateurs/:userId                                                            controllers.UserController.editUser(userId: java.util.UUID)
 POST        /utilisateurs/:userId                                                            controllers.UserController.editUserPost(userId: java.util.UUID)
-POST        /utilisateurs/:userId/reactivation                                               controllers.GroupController.enableUser(userId: java.util.UUID)
+POST        /utilisateurs/:userId/reactivation/groupes/:groupId                              controllers.GroupController.enableUser(userId: java.util.UUID, groupId: java.util.UUID)
 POST        /utilisateurs/:userId/suppression                                                controllers.UserController.deleteUnusedUserById(userId: java.util.UUID)
 POST        /utilisateurs/:userId/activation-mot-de-passe                                    controllers.UserController.activateUserPassword(userId: java.util.UUID)
 
@@ -111,7 +115,6 @@ GET         /territoires/deploiement                                            
 GET         /territoires/deploiement/france-service                                          controllers.AreaController.franceServiceDeploymentDashboard
 GET         /territoires/deploiement/france-services                                         controllers.AreaController.franceServices
 GET         /territoires/:areaId/utilisateurs                                                controllers.UserController.all(areaId: java.util.UUID)
-GET         /territoires/:areaId/utilisateurs.csv                                            controllers.UserController.allCSV(areaId: java.util.UUID)
 
 # Check
 GET         /status                                                                          controllers.HomeController.status
@@ -126,6 +129,8 @@ POST        /api/deploiement/france-services/:matricule/delete                  
 GET         /api/deploiement/operateurs                                                      controllers.ApiController.deploymentData
 GET         /api/search                                                                      controllers.UserController.search
 GET         /api/applications/metadata                                                       controllers.ApplicationController.applicationsMetadata
++nocsrf
+POST        /api/anonymized-database/refresh                                                 controllers.ApiController.refreshAnonymizedDatabase
 
 # Javascript resource
 GET         /jsRoutes                                                                        controllers.JavascriptController.javascriptRoutes

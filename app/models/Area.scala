@@ -1,11 +1,10 @@
 package models
 
-import java.util.UUID
-
 import cats.Eq
 import cats.syntax.all._
 import helper.StringHelper.CanonizeString
 import helper.UUIDHelper
+import java.util.UUID
 
 case class Area(id: UUID, name: String, inseeCode: String) {
   override def toString: String = s"$name ($inseeCode)"
@@ -32,8 +31,9 @@ object Area {
 
   val ain: Area = Area("Ain", "Ain", "01")
   val calvados: Area = Area("calvados", "Calvados", "14")
+  val demo: Area = Area("exemple", "Demo", "-1")
 
-  val all = List(
+  val allExcludingDemo: List[Area] = List(
     ain,
     Area("Aisne", "Aisne", "02"),
     Area("Allier", "Allier", "03"),
@@ -135,12 +135,13 @@ object Area {
     Area("Vosges", "Vosges", "88"),
     Area("Yonne", "Yonne", "89"),
     Area("Yvelines", "Yvelines", "78"),
-    Area("exemple", "Demo", "-1")
   )
 
-  val allArea = Area(UUIDHelper.namedFrom("all"), "tous les territoires", "0")
+  val all: List[Area] = allExcludingDemo ::: List(demo)
 
-  val notApplicable = Area("notApplicable", "NotApplicable", "-1")
+  val allArea: Area = Area(UUIDHelper.namedFrom("all"), "tous les territoires", "0")
+
+  val notApplicable: Area = Area("notApplicable", "NotApplicable", "-1")
 
   private lazy val inseeCodeToAreaMap: Map[String, Area] =
     all.map(area => (area.inseeCode, area)).toMap

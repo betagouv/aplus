@@ -1,4 +1,7 @@
+/* global jsRoutes */
+import { Option } from "slim-select/dist/data";
 import { findAncestor } from "./helpers";
+import SlimSelect from "slim-select";
 
 const createApplicationFormId = 'create-application-form';
 const invitedGroupsCheckboxClass = 'application-form-invited-groups-checkbox';
@@ -11,24 +14,114 @@ const removeCategoryFilterClass = 'aplus-application-form-remove-category-filter
 
 const inputPrenomId = "usagerPrenom";
 const inputNomId = "usagerNom";
-const inputBirthDateId = "usagerBirthDate";
-const mandatTypeSmsRadioId = "mandatType_sms";
-
-const mandatSmsPhoneInputName = "mandat-sms-phone";
-const mandatSmsSendButtonId = "mandat-sms-send-button";
-const mandatSmsSuccessId = "mandat-sms-success";
-const mandatSmsValidationFailedId = "mandat-sms-validation-failed";
-const mandatSmsErrorServerId = "mandat-sms-error-server";
-const mandatSmsErrorBrowserId = "mandat-sms-error-browser";
-const linkedMandatInputId = "linkedMandat";
+const inputBirthdateId = "usagerBirthDate";
 
 
+const query = new URLSearchParams(window.location.search)
 
-interface SmsMandatFormData {
-  prenom: string;
-  nom: string;
-  birthDate: string;
-  phoneNumber: string;
+const selectedFilters = query.getAll('filtre-groupe');
+
+const ssSelector = document.querySelector("#application-slimselect")
+
+if (ssSelector) {
+
+  const ss = new SlimSelect({
+    select: ssSelector,
+    selectByGroup: true,
+    closeOnSelect: false,
+    searchPlaceholder: "Rechercher un groupe",
+    placeholder: "Selectionner un ou plusieurs groupes",
+    onChange: (info) => {
+      updateFilters(info, query);
+    },
+  });
+  ss.setSelected(selectedFilters)
+
+  /*Array.from(document.querySelectorAll(".use-slimselect-in-message")).forEach(function (select) {
+      new SlimSelect({ select, selectByGroup: true, closeOnSelect: false });
+    });*/
+
+  document.getElementById("structureIdSelect")?.addEventListener('change', function (event) {
+    const target = <HTMLSelectElement>event.target;
+    if (target.value === "null") return;
+
+    const applicationId = target.dataset['applicationId']
+    if (!applicationId) return;
+
+    fetch(`/demandes/${applicationId}/territoire/${target.value}/groupes-invitables`).then(data => {
+      data.json().then((groups) => {
+        const container = document.getElementById("checkboxes-groups-container")
+        if (!container) return;
+        container.innerHTML = "";
+        const div = document.createElement("div");
+        div.innerHTML = "";
+        div.classList.add("fr-checkbox-group");
+        div.classList.add("aplus-checkbox-highlight")
+
+        if (groups.groups.length === 0) {
+          div.innerHTML = "Il n’y a aucune organisation pour ce territoire."
+        }
+        container?.appendChild(div);
+
+        groups.groups.forEach((group: any) => {
+          const input = document.createElement("input");
+          input.type = "checkbox";
+          input.name = "invitedGroups";
+          input.value = group.id;
+          input.id = `invitedGroups-${group.id}`;
+          input.classList.add("fr-checkbox-input");
+          const label = document.createElement("label");
+          label.classList.add("aplus-bold");
+          label.classList.add("fr-label");
+          label.htmlFor = `invitedGroups-${group.id}`;
+          label.innerText = group.name;
+          div.appendChild(input);
+          div.appendChild(label);
+
+
+        });
+      });
+    });
+  });
+
+}
+
+function updateFilters(info: Option | Option[], query: URLSearchParams) {
+  const selected = Array.isArray(info) ? info.map(i => i.value) : [info.value];
+  const urlFilters = query.getAll('filtre-groupe');
+
+  // If all filters are already selected, do nothing to prevent infinite loop
+  if (
+    urlFilters.length === selected.length &&
+    urlFilters.every((item) => selected.find((value) => value === item))
+  ) {
+    return;
+  };
+
+  query.delete('filtre-groupe');
+
+  selected.forEach((value) => {
+    if (!value) return;
+    query.append('filtre-groupe', value);
+  });
+
+  window.location.search = query.toString();
+}
+
+// Maps to the scala class
+interface MandatGeneration {
+  usagerPrenom: string;
+  usagerNom: string;
+  usagerBirthdate: string;
+  creatorGroupId: string | null;
+}
+
+interface MandatFormData {
+  prenom: string | null;
+  nom: string | null;
+  birthdate: string | null;
+  creatorGroup: { id: string, name: string } | null;
+  isValid: boolean;
 }
 
 // models.mandat.Mandat
@@ -179,7 +272,6 @@ function applyCategoryFilters() {
         }
       }
     });
-  console.log("Selected organisations: ", selectedCategories);
 
   // Show / Hide Checkboxes
   document.querySelectorAll<HTMLInputElement>('.' + invitedGroupsCheckboxClass)
@@ -276,7 +368,7 @@ function setupInvitedGroups() {
       element.addEventListener('click', (event) => {
         const input = <HTMLInputElement>event.target;
         const groupId = input.value;
-        const infosDiv = document.getElementById(`invite-${ groupId }-additional-infos`);
+        const infosDiv = document.getElementById(`invite-${groupId}-additional-infos`);
         if (input.checked) {
           infosDiv && infosDiv.classList.remove('invisible');
           const groupName = input.dataset['groupName'];
@@ -290,160 +382,302 @@ function setupInvitedGroups() {
 
 
 
-//
-// SMS Mandat Card
-//
-
-function setupMandatSmsForm() {
+function setupMandatForm() {
   const inputPrenom = <HTMLInputElement>document.getElementById(inputPrenomId);
   const inputNom = <HTMLInputElement>document.getElementById(inputNomId);
-  const inputBirthDate = <HTMLInputElement>document.getElementById(inputBirthDateId);
-  const inputPhoneNumber = <HTMLInputElement>document.getElementById(mandatSmsPhoneInputName);
+  const inputBirthdate = <HTMLInputElement>document.getElementById(inputBirthdateId);
 
-  const sendButton = <HTMLButtonElement | null>document.getElementById(mandatSmsSendButtonId);
-  const successMessage = document.getElementById(mandatSmsSuccessId);
-  const validationFailedMessage = document.getElementById(mandatSmsValidationFailedId);
-  const serverErrorMessage = document.getElementById(mandatSmsErrorServerId);
-  const browserErrorMessage = document.getElementById(mandatSmsErrorBrowserId);
-  const linkedMandatInput = <HTMLInputElement>document.getElementById(linkedMandatInputId);
-  const mandatTypeSmsRadio = document.getElementById(mandatTypeSmsRadioId);
+  // Single group only
+  const inputCreatorGroupId = <HTMLInputElement>document
+    .getElementById("aplus-application-form-creator-group-id");
+  const inputCreatorGroupName = <HTMLInputElement>document
+    .getElementById("aplus-application-form-creator-group-name");
+
+  // Multi-group only
+  const selectCreatorGroup = <HTMLSelectElement | null>document
+    .getElementById("aplus-application-form-creator-group");
+
+  const successLink = document.getElementById("mandat-generation-link");
+  const validationFailedMessage = document.getElementById("mandat-generation-validation-failed");
+  const serverErrorMessage = document.getElementById("mandat-generation-error-server");
+  const browserErrorMessage = document.getElementById("mandat-generation-error-browser");
+  const hasChangedErrorMessage = document.getElementById("mandat-generation-form-has-changed");
+  const linkedMandatInput = <HTMLInputElement>document.getElementById("linked-mandat");
+
+  const mandatGenerationOption = <HTMLInputElement>document.getElementById("mandat-option-generate");
+  const mandatGenerationBox = <HTMLElement>document.getElementById("mandat-generation-box");
+
+  let ajaxRequestIsRunning: boolean = false;
+  let lastMandatGenerationData: { form: MandatGeneration, mandat: Mandat } | null = null;
 
 
-  // Returns null|string
-  function validateNonEmptyInput(input: HTMLInputElement) {
+
+  function resetMandatMessages() {
+    successLink?.classList.add("hidden");
+    validationFailedMessage?.classList.add("hidden");
+    serverErrorMessage?.classList.add("hidden");
+    browserErrorMessage?.classList.add("hidden");
+    hasChangedErrorMessage?.classList.add("hidden");
+  }
+
+  function mandatFormDataHasNotChanged(formData: MandatFormData): boolean {
+    if (lastMandatGenerationData) {
+      let sameCreatorGroupId: boolean;
+      if (formData.creatorGroup) {
+        sameCreatorGroupId = lastMandatGenerationData.form.creatorGroupId === formData.creatorGroup.id;
+      } else {
+        sameCreatorGroupId = lastMandatGenerationData.form.creatorGroupId == null;
+      }
+      let hasNotChanged: boolean = false;
+      if (formData.prenom && formData.nom && formData.birthdate) {
+        hasNotChanged = formData.prenom === lastMandatGenerationData.form.usagerPrenom &&
+          formData.nom === lastMandatGenerationData.form.usagerNom &&
+          formData.birthdate === lastMandatGenerationData.form.usagerBirthdate &&
+          sameCreatorGroupId;
+      }
+      return hasNotChanged;
+    } else {
+      return false;
+    }
+  }
+
+  function mandatPageUrl(mandat: Mandat): string {
+    return jsRoutes.controllers.MandatController.mandat(mandat.id).url + "#impression-automatique";
+  }
+
+  function readNonEmptyInput(input: HTMLInputElement, showError: boolean): string | null {
     const data = input.value;
     const parent = <HTMLElement>input.parentNode;
     if (data) {
       parent.classList.remove("is-invalid");
       return data;
     } else {
-      parent.classList.add("is-invalid");
+      if (showError) {
+        parent.classList.add("is-invalid");
+      }
       return null;
     }
   }
 
-  function validatePhoneNumber(input: HTMLInputElement) {
-    const data = input.value.replace(/\s/g, '');
-    const parent = <HTMLElement>inputPhoneNumber.parentNode;
-    if (/^\d{10}$/.test(data)) {
-      parent.classList.remove("is-invalid");
-      return data;
-    } else {
-      parent.classList.add("is-invalid");
-      return null;
+  function readCreatorGroup(): { id: string, name: string } | null {
+    if (selectCreatorGroup) {
+      const selectedOption = selectCreatorGroup.options[selectCreatorGroup.selectedIndex];
+      if (selectedOption) {
+        return {
+          id: selectCreatorGroup.value,
+          name: selectedOption.text,
+        };
+      }
     }
-  }
-
-  function validateForm(): { isValid: boolean, data: SmsMandatFormData | null } {
-    const prenom = validateNonEmptyInput(inputPrenom);
-    const nom = validateNonEmptyInput(inputNom);
-    const birthDate = validateNonEmptyInput(inputBirthDate);
-    const phoneNumber = validatePhoneNumber(inputPhoneNumber);
-    if ((prenom != null) && (nom != null) && (birthDate != null) && (phoneNumber != null)) {
+    if (inputCreatorGroupId && inputCreatorGroupName) {
       return {
-        isValid: true,
-        data: {
-          prenom: prenom,
-          nom: nom,
-          birthDate: birthDate,
-          phoneNumber: phoneNumber
-        }
+        id: inputCreatorGroupId.value,
+        name: inputCreatorGroupName.value,
       };
-    } else {
-      return {
-        isValid: false,
-        data: null,
+    }
+    return null;
+  }
+
+  function readMandatForm(showError: boolean): MandatFormData {
+    const prenom = readNonEmptyInput(inputPrenom, showError);
+    const nom = readNonEmptyInput(inputNom, showError);
+    const birthdate = readNonEmptyInput(inputBirthdate, showError);
+    const creatorGroup = readCreatorGroup();
+
+    const isValid = (prenom != null) && (nom != null) && (birthdate != null);
+
+    return {
+      prenom,
+      nom,
+      birthdate,
+      creatorGroup,
+      isValid,
+    };
+  }
+
+  function showMandatFieldValues(formData: MandatFormData) {
+    const setDataText = (el: HTMLElement | null, data: string | null, showError: boolean) => {
+      if (el) {
+        if (data) {
+          el.classList.remove("aplus-color-text--error");
+          el.classList.add("single--font-weight-bold");
+          el.innerText = data;
+        } else {
+          el.classList.remove("single--font-weight-bold");
+          if (showError) {
+            el.classList.add("aplus-color-text--error");
+            el.innerText = "(invalide)";
+          } else {
+            el.innerText = "(aucune)";
+          }
+        }
+      }
+    }
+    const prenomEl = document.getElementById("mandat-form-data-prenom");
+    const nomEl = document.getElementById("mandat-form-data-nom");
+    const birthdateEl = document.getElementById("mandat-form-data-birthdate");
+    const creatorGroupEl = document.getElementById("mandat-form-data-creator-group");
+
+    setDataText(prenomEl, formData.prenom, true);
+    setDataText(nomEl, formData.nom, true);
+    setDataText(birthdateEl, formData.birthdate, true);
+    setDataText(creatorGroupEl, formData.creatorGroup ? formData.creatorGroup.name : null, false);
+
+    const button = <HTMLElement | null>document.getElementById("mandat-generate-button");
+    if (button) {
+      if (formData.isValid) {
+        button.classList.remove("mdl-button--disabled");
+        button.addEventListener("click", mandatGenerationAction);
+        const hasChanged = !mandatFormDataHasNotChanged(readMandatForm(false));
+        if (hasChanged && lastMandatGenerationData != null) {
+          successLink?.classList.add("hidden");
+          hasChangedErrorMessage?.classList.remove("hidden");
+        }
+      } else {
+        button.classList.add("mdl-button--disabled");
+        button.removeEventListener("click", mandatGenerationAction);
       }
     }
   }
 
-  function sendForm(
-    data: SmsMandatFormData,
-    callbackSuccess: (mandat: Mandat) => void,
-    callbackServerError: () => void,
-    callbackBrowserError: () => void
-  ) {
-    try {
-      const xhr = new XMLHttpRequest();
-      xhr.onreadystatechange = function() {
-        if (xhr.readyState == XMLHttpRequest.DONE) {   // XMLHttpRequest.DONE == 4
-          try {
-            if (Math.floor(xhr.status / 100) === 2) {
-              callbackSuccess(<Mandat>JSON.parse(xhr.responseText));
-            } else {
-              callbackServerError();
-            }
-          } catch (error) {
-            console.error(error);
-            callbackBrowserError();
-          }
+  // Listen to changes in the form in order to update the mandat
+  function setupFormListeners() {
+    const creationUrl: string = jsRoutes.controllers.ApplicationController.create().url;
+    // Avoid being on the wrong page containing the inputs
+    if (document.location.href.includes(creationUrl)) {
+      [inputPrenom, inputNom, inputBirthdate].forEach((input) => {
+        input.addEventListener("change", () => {
+          let form = readMandatForm(false);
+          showMandatFieldValues(form);
+        });
+      });
+      // Multigroup case
+      if (selectCreatorGroup) {
+        selectCreatorGroup.addEventListener("change", () => {
+          let form = readMandatForm(false);
+          showMandatFieldValues(form);
+        });
+      }
+    }
+  }
+
+  function setupMandatTypeRadioListeners() {
+    const setupMandatBox = () => {
+      let form;
+      if (mandatGenerationOption.checked) {
+        form = readMandatForm(true);
+        mandatGenerationBox.classList.remove("hidden");
+      } else {
+        form = readMandatForm(false);
+        mandatGenerationBox.classList.add("hidden");
+      }
+      showMandatFieldValues(form);
+    }
+    if (mandatGenerationOption) {
+
+      // Initial state
+      setupMandatBox();
+
+      // Listeners
+      Array.from(document.querySelectorAll("input[name=mandatGenerationType]"))
+        .forEach((element) => {
+          // Radios can be triggered by click or keyboard
+          element.addEventListener("change", setupMandatBox);
+        });
+    }
+  }
+
+  function mandatGenerationAction(event: Event) {
+    event.preventDefault();
+
+    if (ajaxRequestIsRunning) {
+      return;
+    }
+
+    resetMandatMessages();
+
+    const formData = readMandatForm(true);
+    if (formData.isValid && formData.prenom && formData.nom && formData.birthdate) {
+
+      if (mandatFormDataHasNotChanged(formData)) {
+        if (lastMandatGenerationData) {
+          successLink?.classList.remove("hidden");
+          const mandatUrl = mandatPageUrl(lastMandatGenerationData.mandat);
+          window.open(mandatUrl, "_blank");
+          return;
         }
+      }
+
+      const url: string = jsRoutes.controllers.MandatController.generateNewMandat().url;
+      const payload: MandatGeneration = {
+        usagerPrenom: formData.prenom,
+        usagerNom: formData.nom,
+        usagerBirthdate: formData.birthdate,
+        creatorGroupId: formData.creatorGroup ? formData.creatorGroup.id : null,
       };
-      xhr.open("POST", "/mandats/sms", true);
-      xhr.setRequestHeader("Content-Type", "application/json");
+
       // Play recommends putting the CSRF token, even for AJAX request
       // and cites browser plugins as culprits
       // https://www.playframework.com/documentation/2.8.x/ScalaCsrf#Plays-CSRF-protection
       const tokenInput = <HTMLInputElement>document.querySelector("input[name=csrfToken]");
       const token = tokenInput.value;
-      xhr.setRequestHeader("Csrf-Token", token);
-      xhr.send(JSON.stringify(data));
-    } catch (error) {
-      console.error(error);
-      callbackBrowserError();
-    }
-  }
 
-  if (sendButton) {
-    sendButton.onclick = function(event) {
-      event.preventDefault();
-      if (successMessage == null ||
-        validationFailedMessage == null ||
-        serverErrorMessage == null ||
-        browserErrorMessage == null) { return; }
-      successMessage.classList.add("hidden");
-      validationFailedMessage.classList.add("hidden");
-      serverErrorMessage.classList.add("hidden");
-      browserErrorMessage.classList.add("hidden");
-      const formData = validateForm();
-      if (formData.isValid && formData.data != null) {
-        sendButton.disabled = true;
-        sendForm(
-          formData.data,
-          // Success
-          function(mandat: Mandat) {
-            const link = successMessage.querySelector("a");
-            if (link) {
-              link.href = "/mandats/" + mandat.id;
-            }
-            linkedMandatInput.value = mandat.id;
-            successMessage.classList.remove("hidden");
-            // Note: mandatTypeSmsRadio.checked = true does not show the radio as checked
-            mandatTypeSmsRadio?.click();
-          },
+      ajaxRequestIsRunning = true;
+      fetch(url, {
+        method: "POST",
+        cache: "no-cache",
+        headers: {
+          "Content-Type": "application/json",
+          "Csrf-Token": token,
+        },
+        body: JSON.stringify(payload),
+      }).then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
           // Server error (= logged by Sentry)
-          function() {
-            // Wait 30s
-            setTimeout(function() { sendButton.disabled = false; }, 30000);
-            serverErrorMessage.classList.remove("hidden");
-          },
-          // Browser error (= not logged by Sentry)
-          function() {
-            // Wait 30s
-            setTimeout(function() { sendButton.disabled = false; }, 30000);
-            browserErrorMessage.classList.remove("hidden");
+          serverErrorMessage?.classList.remove("hidden");
+          ajaxRequestIsRunning = false;
+          return null;
+        }
+      }).then((mandat: Mandat) => {
+        if (mandat) {
+          ajaxRequestIsRunning = false;
+          lastMandatGenerationData = { form: payload, mandat };
+          const mandatUrl: string = mandatPageUrl(mandat);
+
+          successLink?.classList.remove("hidden");
+          const link = successLink?.querySelector("a");
+          if (link) {
+            link.href = mandatUrl;
           }
-        );
-      } else {
-        validationFailedMessage.classList.remove("hidden");
-      }
+          if (linkedMandatInput) {
+            linkedMandatInput.value = mandat.id;
+          }
+
+          window.open(mandatUrl, "_blank");
+        }
+      }).catch((e) => {
+        // Browser error (= not logged by Sentry)
+        console.error(e);
+        browserErrorMessage?.classList.remove("hidden");
+        ajaxRequestIsRunning = false;
+      });
+
+    } else {
+      validationFailedMessage?.classList.remove("hidden");
     }
   }
-}
 
+
+
+  setupFormListeners();
+  setupMandatTypeRadioListeners();
+
+}
 
 
 
 setupDynamicUsagerInfosButtons();
 setupInvitedGroups();
-setupMandatSmsForm();
+setupMandatForm();

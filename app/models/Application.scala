@@ -1,24 +1,29 @@
 package models
 
-import cats.syntax.all._
 import cats.{Eq, Show}
-import models.Answer.AnswerType.ApplicationProcessed
+import cats.syntax.all._
+import helper.{Pseudonymizer, Time}
+import java.time.{Instant, ZonedDateTime}
+import java.time.temporal.ChronoUnit.MINUTES
+import java.util.UUID
+import models.Answer.AnswerType
 import models.Application.SeenByUser
 import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
-
-import java.time.temporal.ChronoUnit.MINUTES
-import java.time.{Instant, ZonedDateTime}
-import java.util.UUID
 
 case class Application(
     id: UUID,
     creationDate: ZonedDateTime,
     creatorUserName: String,
     creatorUserId: UUID,
+    creatorGroupId: Option[UUID],
+    // Name of the group "at the time of application creation"
+    creatorGroupName: Option[String],
     subject: String,
     description: String,
     // TODO: rename `userInfos` => `usagerInfos`
     userInfos: Map[String, String],
+    // Contains all the invited users at creation and in all answers
+    // (except the last one, as long as it has not been saved)
     invitedUsers: Map[UUID, String],
     area: UUID,
     irrelevant: Boolean,
@@ -37,27 +42,28 @@ case class Application(
     personalDataWiped: Boolean = false,
 ) extends AgeModel {
 
-  // Legacy case, can be removed once data has been cleaned up.
-  val isWithoutInvitedGroupIdsLegacyCase: Boolean =
-    invitedGroupIdsAtCreation.isEmpty
-
   val invitedGroups: Set[UUID] =
     (invitedGroupIdsAtCreation ::: answers.flatMap(_.invitedGroupIds)).toSet
 
-  val seenByUserIds = seenByUsers.map(_.userId)
-  val seenByUsersMap = seenByUsers.map { case SeenByUser(userId, date) => (userId, date) }.toMap
+  val seenByUserIds: List[UUID] = seenByUsers.map(_.userId)
 
-  def newAnswersFor(userId: UUID) = {
+  val seenByUsersMap: Map[UUID, Instant] = seenByUsers.map { case SeenByUser(userId, date) =>
+    (userId, date)
+  }.toMap
+
+  def newAnswersFor(userId: UUID): List[Answer] = {
     val maybeSeenLastDate = seenByUsers.find(_.userId === userId).map(_.lastSeenDate)
     maybeSeenLastDate
       .map(seenLastDate => answers.filter(_.creationDate.toInstant.isAfter(seenLastDate)))
       .getOrElse(answers)
   }
 
-  lazy val searchData = {
+  lazy val searchData: String = {
     val stripChars = "\"<>'"
     val areaName: String = Area.fromId(area).map(_.name).orEmpty
     val creatorName: String = creatorUserName.filterNot(stripChars contains _)
+    val creatorGroupNameAtCreation: String =
+      creatorGroupName.map(_.filterNot(stripChars contains _)).orEmpty
     val userInfosStripped: String =
       userInfos.values.map(_.filterNot(stripChars contains _)).mkString(" ")
     val subjectStripped: String = subject.filterNot(stripChars contains _)
@@ -69,6 +75,7 @@ case class Application(
 
     areaName + " " +
       creatorName + " " +
+      creatorGroupNameAtCreation + " " +
       userInfosStripped + " " +
       subjectStripped + " " +
       descriptionStripped + " " +
@@ -76,10 +83,23 @@ case class Application(
       answersStripped
   }
 
-  private def isProcessed = answers.lastOption.exists(_.answerType === ApplicationProcessed)
+  def userAnswers: List[Answer] = answers.filter(answer =>
+    !answer.message.contains("rejoins la conversation automatiquement comme expert") &&
+      !answer.message
+        .contains("Les nouveaux instructeurs rejoignent automatiquement la demande") &&
+      !answer.message.contains(
+        "Les nouveaux instructeurs ont automatiquement accès à la demande"
+      ) &&
+      answer.answerType =!= AnswerType.InviteAsExpert &&
+      answer.answerType =!= AnswerType.InviteThroughGroupPermission
+  )
+
+  private def isProcessed =
+    userAnswers.lastOption.exists(_.answerType === AnswerType.ApplicationProcessed)
+
   private def isCreator(userId: UUID) = userId === creatorUserId
 
-  def hasBeenDisplayedFor(userId: UUID) =
+  def hasBeenDisplayedFor(userId: UUID): Boolean =
     isCreator(userId) || seenByUserIds.contains[UUID](userId)
 
   def longStatus(user: User): Application.Status = {
@@ -112,12 +132,9 @@ case class Application(
   def invitedUsers(users: List[User]): List[User] =
     invitedUsers.keys.flatMap(userId => users.find(_.id === userId)).toList
 
-  def creatorUserQualite(users: List[User]): Option[String] =
-    users.find(_.id === creatorUserId).map(_.qualite)
+  def allUserInfos: Map[String, String] = userInfos ++ answers.flatMap(_.userInfos.getOrElse(Map()))
 
-  def allUserInfos = userInfos ++ answers.flatMap(_.userInfos.getOrElse(Map()))
-
-  lazy val anonymousApplication = {
+  lazy val anonymousApplication: Application = {
     val newUsersInfo = userInfos.map { case (key, value) => key -> s"**$key (${value.length})**" }
     val newAnswers = answers.map { answer =>
       answer.copy(
@@ -147,27 +164,12 @@ case class Application(
   // (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
   //  creatorUserId === user.id
 
-  def canHaveAgentsInvitedBy(user: User) =
+  def canHaveAgentsInvitedBy(user: User): Boolean =
     (user.instructor && invitedUsers.keys.toList.contains(user.id)) ||
       (user.expert && invitedUsers.keys.toList.contains(user.id) && !closed)
 
-  def canBeClosedBy(user: User) =
-    (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
-      creatorUserId === user.id || user.admin
-
-  def canBeOpenedBy(user: User) =
-    (user.expert && invitedUsers.keys.toList.contains(user.id)) ||
-      creatorUserId === user.id || user.admin
-
 // TODO: remove
-  def haveUserInvitedOn(user: User) = invitedUsers.keys.toList.contains(user.id)
-
-  // Stats
-  lazy val estimatedClosedDate = (closedDate, closed) match {
-    case (Some(date), _) => Some(date)
-    case (_, true)       => Some(answers.lastOption.map(_.creationDate).getOrElse(creationDate))
-    case _               => None
-  }
+  def haveUserInvitedOn(user: User): Boolean = invitedUsers.keys.toList.contains(user.id)
 
   lazy val resolutionTimeInMinutes: Option[Int] = if (closed) {
     val lastDate = answers.lastOption.map(_.creationDate).orElse(closedDate).getOrElse(creationDate)
@@ -176,10 +178,88 @@ case class Application(
     None
   }
 
-  lazy val firstAgentAnswerDate = answers.find(_.id =!= creatorUserId).map(_.creationDate)
+  lazy val firstAgentAnswerDate: Option[ZonedDateTime] =
+    answers.find(_.id =!= creatorUserId).map(_.creationDate)
 
   lazy val firstAnswerTimeInMinutes: Option[Int] = firstAgentAnswerDate.map { firstAnswerDate =>
     MINUTES.between(creationDate, firstAnswerDate).toInt
+  }
+
+  def withWipedPersonalData: Application = {
+    val wipedUsagerInfos: Map[String, String] =
+      userInfos.map { case (key, _) => (key, "") }
+    val wipedAnswers: List[Answer] = answers.map(answer =>
+      answer.copy(
+        message = "",
+        userInfos = answer.userInfos.map(_.map { case (key, _) => (key, "") }),
+      )
+    )
+    copy(
+      subject = "",
+      description = "",
+      userInfos = wipedUsagerInfos,
+      answers = wipedAnswers,
+    )
+  }
+
+  def anonymize: Application = {
+    val wiped = withWipedPersonalData
+    val zone = creationDate.getZone
+    val anonCreationDate = creationDate.toLocalDate.atStartOfDay(zone).withHour(10)
+    val anonMandatDate = mandatDate.map(_ => anonCreationDate.format(Time.dateWithHourFormatter))
+    val anonClosedDate = closedDate.map(date => date.toLocalDate.atStartOfDay(zone).withHour(14))
+    val pseudoCreatorName = new Pseudonymizer(creatorUserId).fullName
+    val pseudoInvitedUsers = invitedUsers.map { case (id, _) =>
+      (id, new Pseudonymizer(id).fullName)
+    }
+    val anonSeenByUsers = seenByUsers.map { case SeenByUser(id, date) =>
+      SeenByUser(id, date.atZone(zone).toLocalDate.atStartOfDay(zone).withHour(12).toInstant)
+    }
+    val anonAnswers = wiped.answers.map(answer =>
+      Answer(
+        id = answer.id,
+        applicationId = answer.applicationId,
+        creationDate = answer.creationDate.toLocalDate.atStartOfDay(zone).withHour(12),
+        answerType = answer.answerType,
+        message = answer.message,
+        creatorUserID = answer.creatorUserID,
+        creatorUserName = new Pseudonymizer(answer.creatorUserID).fullName,
+        invitedUsers = answer.invitedUsers.map { case (id, _) =>
+          (id, new Pseudonymizer(id).fullName)
+        },
+        visibleByHelpers = answer.visibleByHelpers,
+        declareApplicationHasIrrelevant = answer.declareApplicationHasIrrelevant,
+        userInfos = answer.userInfos,
+        invitedGroupIds = answer.invitedGroupIds,
+      )
+    )
+    Application(
+      id = id,
+      creationDate = anonCreationDate,
+      creatorUserName = pseudoCreatorName,
+      creatorUserId = wiped.creatorUserId,
+      creatorGroupId = wiped.creatorGroupId,
+      creatorGroupName = wiped.creatorGroupName,
+      subject = wiped.subject,
+      description = wiped.description,
+      userInfos = wiped.userInfos,
+      invitedUsers = pseudoInvitedUsers,
+      area = wiped.area,
+      irrelevant = wiped.irrelevant,
+      answers = anonAnswers,
+      internalId = wiped.internalId,
+      closed = wiped.closed,
+      seenByUsers = anonSeenByUsers,
+      usefulness = wiped.usefulness,
+      closedDate = anonClosedDate,
+      expertInvited = wiped.expertInvited,
+      hasSelectedSubject = wiped.hasSelectedSubject,
+      category = wiped.category,
+      mandatType = wiped.mandatType,
+      mandatDate = anonMandatDate,
+      invitedGroupIdsAtCreation = wiped.invitedGroupIdsAtCreation,
+      personalDataWiped = wiped.personalDataWiped,
+    )
   }
 
 }
@@ -193,7 +273,7 @@ object Application {
     @SuppressWarnings(Array("scalafix:DisableSyntax.=="))
     implicit val Eq: Eq[Status] = (x: Status, y: Status) => x == y
 
-    implicit val Show = new Show[Status] {
+    implicit val Show: Show[Status] = new Show[Status] {
 
       override def show(status: Status) = status match {
         case Archived   => "Archivée"
@@ -217,7 +297,7 @@ object Application {
   final case class SeenByUser(userId: UUID, lastSeenDate: Instant)
 
   object SeenByUser {
-    def now(userId: UUID) = SeenByUser(userId, Instant.now())
+    def now(userId: UUID): SeenByUser = SeenByUser(userId, Instant.now())
   }
 
   def filesAvailabilityLeftInDays(filesExpirationInDays: Int)(
@@ -255,5 +335,59 @@ object Application {
     UserApplicationNumberKey,
     UserBirthnameKey,
   )
+
+  def invitedUserContextualizedName(
+      user: User,
+      userGroups: List[UserGroup],
+      currentAreaId: Option[UUID],
+      creatorGroupId: Option[UUID]
+  ): String = {
+    val defaultContexts: List[String] = currentAreaId
+      .fold(userGroups)(areaId => userGroups.filter(_.areaIds.contains[UUID](areaId)))
+      .flatMap { (userGroup: UserGroup) =>
+        if (user.instructor) {
+          for {
+            areaInseeCode <- userGroup.areaIds.flatMap(Area.fromId).map(_.inseeCode).headOption
+            organisation <- userGroup.organisation
+          } yield {
+            s"(${organisation.name} - $areaInseeCode)"
+          }
+        } else {
+          List(s"(${userGroup.name})")
+        }
+      }
+      .distinct
+
+    val creatorGroup = creatorGroupId.flatMap(id => userGroups.find(_.id === id))
+    val isInCreatorGroup: Boolean =
+      creatorGroupId.map(id => user.groupIds.contains[UUID](id)).getOrElse(false)
+
+    val contexts: List[String] =
+      if (isInCreatorGroup)
+        creatorGroup.fold(defaultContexts) { group =>
+          val creatorGroupIsInApplicationArea: Boolean =
+            currentAreaId.map(areaId => group.areaIds.contains[UUID](areaId)).getOrElse(true)
+          val name: String =
+            if (creatorGroupIsInApplicationArea)
+              group.name
+            else
+              group.areaIds
+                .flatMap(Area.fromId)
+                .map(_.inseeCode)
+                .headOption
+                .fold(group.name)(code =>
+                  if (group.name.contains(code)) group.name else s"${group.name} - $code"
+                )
+          s"($name)" :: Nil
+        }
+      else
+        defaultContexts
+
+    val capitalizedUserName = user.name.split(' ').map(_.capitalize).mkString(" ")
+    if (contexts.isEmpty)
+      s"$capitalizedUserName ( ${user.qualite} )"
+    else
+      s"$capitalizedUserName ${contexts.mkString(",")}"
+  }
 
 }

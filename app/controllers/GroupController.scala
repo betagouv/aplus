@@ -1,31 +1,19 @@
 package controllers
 
-import java.time.{ZoneId, ZonedDateTime}
-import java.util.UUID
-
 import actions.{LoginAction, RequestWithUserData}
+import cats.effect.IO
 import cats.syntax.all._
 import constants.Constants
-import Operators._
-import helper.PlayFormHelper.formErrorsLog
-import javax.inject.{Inject, Singleton}
-import models.{Area, Authorization, Error, EventType, Organisation, User, UserGroup}
-import models.formModels.{normalizedOptionalText, normalizedText, AddUserToGroupFormData}
-import org.webjars.play.WebJarsUtil
-import play.api.data.Form
-import play.api.data.Forms.{email, ignored, list, mapping, of, optional, text, uuid}
-import play.api.data.validation.Constraints.maxLength
-import play.api.i18n.I18nSupport
-import play.api.mvc.{Action, AnyContent, Call, InjectedController, RequestHeader, Result}
-import play.libs.ws.WSClient
-import services._
+import controllers.Operators._
 import helper.BooleanHelper.not
+import helper.PlayFormHelpers.formErrorsLog
 import helper.Time
-import helper.StringHelper.commonStringInputNormalization
+import java.util.UUID
+import javax.inject.{Inject, Singleton}
+import models.{Area, Authorization, Error, EventType, User, UserGroup}
 import models.EventType.{
   AddGroupUnauthorized,
   AddUserGroupError,
-  AddUserToGroupUnauthorized,
   EditGroupShowed,
   EditGroupUnauthorized,
   EditUserGroupError,
@@ -35,25 +23,36 @@ import models.EventType.{
   UserGroupDeletionUnauthorized,
   UserGroupEdited
 }
+import models.forms.{AddGroupFormData, AddUserToGroupFormData}
 import modules.AppConfig
+import org.webjars.play.WebJarsUtil
+import play.api.data.Form
+import play.api.i18n.I18nSupport
+import play.api.mvc.{Action, AnyContent, Call, InjectedController, RequestHeader, Result}
+import play.libs.ws.WSClient
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
+import services._
+import views.editMyGroups.UserInfos
 
 @Singleton
 case class GroupController @Inject() (
-    config: AppConfig,
     applicationService: ApplicationService,
-    loginAction: LoginAction,
-    groupService: UserGroupService,
+    config: AppConfig,
+    dependencies: ServicesDependencies,
     eventService: EventService,
+    groupService: UserGroupService,
+    loginAction: LoginAction,
+    userService: UserService,
     ws: WSClient,
-    userService: UserService
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
     extends InjectedController
     with I18nSupport
     with Operators.Common
     with GroupOperators
     with UserOperators {
+
+  import dependencies.ioRuntime
 
   private val groupPageRedirectValue: String = "groupPage"
 
@@ -68,8 +67,8 @@ case class GroupController @Inject() (
         (false, routes.GroupController.showEditMyGroups)
     }
 
-  def addToGroup(groupId: UUID) =
-    addOrRemoveUserAction(groupId) { implicit request =>
+  def addToGroup(groupId: UUID): Action[AnyContent] =
+    addOrRemoveUserAction(groupId) { implicit request => group =>
       val (originIsGroupPage, redirectPage) = groupModificationOriginPage
       AddUserToGroupFormData.form
         .bindFromRequest()
@@ -125,7 +124,7 @@ case class GroupController @Inject() (
         )
     }
 
-  def enableUser(userId: UUID) =
+  def enableUser(userId: UUID, groupId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       val (_, redirectPage) = groupModificationOriginPage
       withUser(
@@ -139,35 +138,37 @@ case class GroupController @Inject() (
           )
           .some
       ) { otherUser =>
-        asUserWithAuthorization(Authorization.canEnableOtherUser(otherUser))(
-          EventType.EditUserUnauthorized,
-          s"L'utilisateur n'est pas autorisé à réactiver l'utilisateur $userId"
-        ) { () =>
-          userService
-            .enable(userId)
-            .map(
-              _.fold(
-                error => {
-                  eventService.logError(error)
-                  Redirect(redirectPage).flashing("error" -> Constants.error500FlashMessage)
-                },
-                _ => {
-                  eventService.log(
-                    EventType.UserEdited,
-                    s"Utilisateur $userId réactivé",
-                    involvesUser = userId.some
-                  )
-                  Redirect(redirectPage)
-                    .flashing("success" -> "L’utilisateur a bien été réactivé.")
-                }
+        groupService.byIdsFuture(otherUser.groupIds).flatMap { otherUserGroups =>
+          asUserWithAuthorization(Authorization.canEnableOtherUser(otherUser, otherUserGroups))(
+            EventType.EditUserUnauthorized,
+            s"L'utilisateur n'est pas autorisé à réactiver l'utilisateur $userId"
+          ) { () =>
+            userService
+              .enable(userId, groupId)
+              .map(
+                _.fold(
+                  error => {
+                    eventService.logError(error)
+                    Redirect(redirectPage).flashing("error" -> Constants.error500FlashMessage)
+                  },
+                  _ => {
+                    eventService.log(
+                      EventType.UserEdited,
+                      s"Utilisateur $userId réactivé (groupe $groupId)",
+                      involvesUser = userId.some
+                    )
+                    Redirect(redirectPage)
+                      .flashing("success" -> "L’utilisateur a bien été réactivé.")
+                  }
+                )
               )
-            )
+          }
         }
       }
     }
 
-  def removeFromGroup(userId: UUID, groupId: UUID) =
-    addOrRemoveUserAction(groupId) { implicit request =>
+  def removeFromGroup(userId: UUID, groupId: UUID): Action[AnyContent] =
+    addOrRemoveUserAction(groupId) { implicit request => group =>
       val (_, redirectPage) = groupModificationOriginPage
       withUser(
         userId,
@@ -224,7 +225,7 @@ case class GroupController @Inject() (
 
   def showEditMyGroupsAs(otherUserId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withUser(otherUserId) { otherUser: User =>
+      withUser(otherUserId) { (otherUser: User) =>
         asUserWithAuthorization(Authorization.canSeeOtherUserNonPrivateViews(otherUser))(
           EventType.MasqueradeUnauthorized,
           s"Accès non autorisé pour voir la page mes groupes de $otherUserId",
@@ -239,7 +240,7 @@ case class GroupController @Inject() (
 
   def deleteUnusedGroupById(groupId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withGroup(groupId) { group: UserGroup =>
+      withGroup(groupId) { (group: UserGroup) =>
         asAdminOfGroupZone(group)(
           GroupDeletionUnauthorized,
           s"Droits insuffisants pour la suppression du groupe $groupId"
@@ -271,7 +272,7 @@ case class GroupController @Inject() (
 
   def editGroup(id: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withGroup(id) { group: UserGroup =>
+      withGroup(id) { (group: UserGroup) =>
         asUserWithAuthorization(Authorization.canEditGroup(group))(
           EditGroupUnauthorized,
           s"Tentative d'accès non autorisé à l'edition du groupe ${group.id}",
@@ -285,7 +286,8 @@ case class GroupController @Inject() (
   def addGroup: Action[AnyContent] =
     loginAction.async { implicit request =>
       asAdmin(AddGroupUnauthorized, s"Accès non autorisé pour ajouter un groupe") { () =>
-        addGroupForm(Time.timeZoneParis)
+        AddGroupFormData
+          .form(Time.timeZoneParis, request.currentUser)
           .bindFromRequest()
           .fold(
             formWithErrors => {
@@ -304,7 +306,7 @@ case class GroupController @Inject() (
               groupService
                 .add(group)
                 .fold(
-                  { error: String =>
+                  { (error: String) =>
                     eventService
                       .log(
                         AddUserGroupError,
@@ -334,13 +336,14 @@ case class GroupController @Inject() (
 
   def editGroupPost(groupId: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
-      withGroup(groupId) { currentGroup: UserGroup =>
+      withGroup(groupId) { (currentGroup: UserGroup) =>
         asUserWithAuthorization(Authorization.canEditGroup(currentGroup))(
           EditGroupUnauthorized,
           s"Tentative d'édition non autorisée du groupe ${currentGroup.id}",
           Unauthorized("Vous ne pouvez pas éditer ce groupe : êtes-vous dans la bonne zone ?").some
         ) { () =>
-          addGroupForm(Time.timeZoneParis)
+          AddGroupFormData
+            .form(Time.timeZoneParis, request.currentUser)
             .bindFromRequest()
             .fold(
               formWithErrors => {
@@ -355,7 +358,13 @@ case class GroupController @Inject() (
                 )
               },
               group => {
-                val newGroup = group.copy(id = groupId)
+                // Only admins can change areas
+                val groupAreaIds =
+                  if (Authorization.isAdmin(request.rights))
+                    group.areaIds
+                  else
+                    currentGroup.areaIds
+                val newGroup = group.copy(id = groupId, areaIds = groupAreaIds)
                 if (groupService.edit(newGroup)) {
                   eventService.log(
                     UserGroupEdited,
@@ -388,16 +397,30 @@ case class GroupController @Inject() (
 
   private def addOrRemoveUserAction(
       groupId: UUID
-  )(inner: RequestWithUserData[_] => Future[Result]): Action[AnyContent] =
+  )(inner: RequestWithUserData[_] => UserGroup => Future[Result]): Action[AnyContent] =
     loginAction.async { implicit request =>
-      asUserWithAuthorization(Authorization.canAddOrRemoveOtherUser(groupId))(
-        EventType.EditGroupUnauthorized,
-        s"L'utilisateur n'est pas autorisé à éditer le groupe $groupId",
-        Redirect(routes.GroupController.showEditMyGroups)
-          .flashing("error" -> "Vous n’avez pas le droit de modifier ce groupe")
-          .some
-      )(() => inner(request))
+      withGroup(groupId) { group =>
+        asUserWithAuthorization(Authorization.canAddOrRemoveOtherUser(group))(
+          EventType.EditGroupUnauthorized,
+          s"L'utilisateur n'est pas autorisé à éditer le groupe $groupId",
+          Redirect(routes.GroupController.showEditMyGroups)
+            .flashing("error" -> "Vous n’avez pas le droit de modifier ce groupe")
+            .some
+        )(() => inner(request)(group))
+      }
     }
+
+  private def computeUsersInfos(
+      usersIds: List[UUID]
+  )(implicit request: RequestWithUserData[_]): Future[Map[UUID, UserInfos]] = userService
+    .usersInfos(usersIds)
+    .flatMap(
+      _.fold(
+        error => IO.blocking(eventService.logError(error)).as(Map.empty[UUID, UserInfos]),
+        IO.pure
+      )
+    )
+    .unsafeToFuture()
 
   private def adminLastActivity(ids: List[UUID], rights: Authorization.UserRights) =
     if (Authorization.isAdmin(rights))
@@ -409,11 +432,16 @@ case class GroupController @Inject() (
       user: User,
       rights: Authorization.UserRights,
       addUserForm: Form[AddUserToGroupFormData]
-  )(implicit request: RequestWithUserData[_]): Future[Result] =
+  )(implicit request: RequestWithUserData[_]): Future[Result] = {
+    val groupsFuture =
+      if (Authorization.isAreaManager(rights))
+        groupService.allForAreaManager(user)
+      else
+        groupService.byIdsFuture(user.groupIds)
     for {
-      groups <- groupService.byIdsFuture(user.groupIds)
+      groups <- groupsFuture
       users <- userService.byGroupIdsFuture(groups.map(_.id), includeDisabled = true)
-      applications <- applicationService.allForUserIds(users.map(_.id), none)
+      usersInfos <- computeUsersInfos(users.map(_.id))
       lastActivityResult <- adminLastActivity(users.map(_.id), rights)
     } yield {
       lastActivityResult.fold(
@@ -431,7 +459,7 @@ case class GroupController @Inject() (
                 addUserForm,
                 groups,
                 users,
-                applications,
+                usersInfos,
                 lastActivity.toMap,
                 identity
               )
@@ -439,6 +467,7 @@ case class GroupController @Inject() (
         }
       )
     }
+  }
 
   private def editGroupPage(group: UserGroup, addUserForm: Form[AddUserToGroupFormData])(implicit
       request: RequestWithUserData[_]
@@ -447,22 +476,20 @@ case class GroupController @Inject() (
     eventService.log(EditGroupShowed, s"Visualise la vue de modification du groupe")
     val isEmpty = groupService.isGroupEmpty(group.id)
     val lastActivityFuture = adminLastActivity(groupUsers.map(_.id), request.rights)
-    applicationService
-      .allForUserIds(groupUsers.map(_.id), none)
-      .zip(lastActivityFuture)
-      .map { case (applications, lastActivityResult) =>
-        lastActivityResult.fold(
-          error => {
-            eventService.logError(error)
-            InternalServerError(Constants.genericError500Message)
-          },
-          lastActivity =>
+    lastActivityFuture.flatMap(
+      _.fold(
+        error => {
+          eventService.logError(error)
+          Future.successful(InternalServerError(Constants.genericError500Message))
+        },
+        lastActivity => {
+          computeUsersInfos(groupUsers.map(_.id)).map(usersInfos =>
             Ok(
               views.html.editGroup(request.currentUser, request.rights)(
                 group,
                 groupUsers,
                 isEmpty,
-                applications,
+                usersInfos,
                 lastActivity.toMap,
                 addUserForm,
                 url =>
@@ -471,29 +498,10 @@ case class GroupController @Inject() (
                     Keys.QueryParam.groupId + "=" + group.id.toString)
               )
             )
-        )
-      }
-  }
-
-  private def addGroupForm[A](timeZone: ZoneId)(implicit request: RequestWithUserData[A]) =
-    Form(
-      mapping(
-        "id" -> ignored(UUID.randomUUID()),
-        "name" -> normalizedText.verifying(maxLength(UserGroup.nameMaxLength)),
-        "description" -> normalizedOptionalText,
-        "insee-code" -> list(text),
-        "creationDate" -> ignored(ZonedDateTime.now(timeZone)),
-        "area-ids" -> list(uuid)
-          .verifying(
-            "Vous devez sélectionner les territoires sur lequel vous êtes admin",
-            areaIds => areaIds.forall(request.currentUser.areas.contains[UUID])
           )
-          .verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
-        "organisation" -> optional(of[Organisation.Id]),
-        "email" -> optional(email),
-        "publicNote" -> normalizedOptionalText,
-        "internalSupportComment" -> normalizedOptionalText
-      )(UserGroup.apply)(UserGroup.unapply)
+        }
+      )
     )
+  }
 
 }

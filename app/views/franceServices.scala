@@ -1,13 +1,12 @@
 package views
 
-import cats.syntax.all._
-import helpers.forms.CSRFInput
 import helper.TwirlImports.toHtml
 import models.{Authorization, User}
 import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
+import views.helpers.forms.CSRFInput
 
 object franceServices {
 

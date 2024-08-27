@@ -1,18 +1,19 @@
 @import models._
-@import _root_.helper.MDLForms._
+@import _root_.helper.forms.MDLForms._
 
-@(user: User, currentUserRights: Authorization.UserRights, cguForm: Form[models.formModels.ValidateSubscriptionForm])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider, mainInfos: MainInfos)
+@(user: User, currentUserRights: Authorization.UserRights, cguForm: Form[models.forms.ValidateSubscriptionForm])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, messagesProvider: MessagesProvider, mainInfos: MainInfos)
 
     @main(user, currentUserRights)("Conditions générales d’utilisation") {
     } {
-        <div class="mdl-data-table mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
-            <h3 class="mdl-cell mdl-cell--12-col single--padding-left-48px">Confirmation de votre inscription</h3>
+        <div class="mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
             @if(user.cguAcceptationDate.nonEmpty) {
-                <p class="single--padding-left-48px single--margin-left-8px">Vous avez déjà validé vos informations professionnelles</p>
+                <p class="single--padding-left-48px single--margin-left-8px single--padding-top-16px">Vous avez déjà validé vos informations professionnelles</p>
             }
             @if(user.cguAcceptationDate.isEmpty) {
                 @if(!user.sharedAccount) {
-                    <p class="single--padding-left-48px single--margin-left-8px">Veuillez saisir ou corriger vos informations professionnelles :</p>
+                    <h3 class="mdl-cell mdl-cell--12-col single--padding-left-48px">Veuillez saisir ou corriger vos informations professionnelles</h3>
+                } else {
+                    <h3 class="mdl-cell mdl-cell--12-col single--padding-left-48px">Veuillez valider les CGU</h3>
                 }
                 @helper.form(action = routes.UserController.validateAccount, args = "class" -> "mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing") {
                     @helper.CSRF.formField

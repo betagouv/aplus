@@ -1,34 +1,37 @@
 package controllers
 
 import actions.{LoginAction, RequestWithUserData}
+import cats.effect.IO
 import cats.syntax.all._
-import helper.{StringHelper, Time}
-import helper.PlayFormHelper.formErrorsLog
+import helper.PlayFormHelpers.formErrorsLog
 import helper.ScalatagsHelpers.writeableOf_Modifier
-import java.time.{Instant, ZoneId}
+import helper.Time
+import java.time.Instant
 import javax.inject.{Inject, Singleton}
-import models.EventType.{GenerateToken, UnknownEmail}
 import models.{Authorization, EventType, LoginToken, User}
-import models.formModels.{PasswordChange, PasswordCredentials}
+import models.forms.{PasswordChange, PasswordCredentials}
+import models.EventType.{GenerateToken, UnknownEmail}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result}
+import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
 import services.{
   EventService,
   NotificationService,
   PasswordService,
+  ServicesDependencies,
   SignupService,
   TokenService,
   UserService
 }
 import views.home.LoginPanel
-import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class LoginController @Inject() (
     val config: AppConfig,
+    dependencies: ServicesDependencies,
     userService: UserService,
     notificationService: NotificationService,
     tokenService: TokenService,
@@ -40,60 +43,58 @@ class LoginController @Inject() (
     with I18nSupport
     with Operators.Common {
 
+  import dependencies.ioRuntime
+
   /** Security Note: when the email is in the query "?email=xxx", we do not check the CSRF token
     * because the API is used externally.
     */
   def login: Action[AnyContent] =
     Action.async { implicit request =>
       val emailFromRequestOrQueryParamOrFlash: Option[String] = request.body.asFormUrlEncoded
-        .flatMap(_.get("email").flatMap(_.headOption.map(_.trim)))
+        .flatMap(_.get("email").flatMap(_.headOption))
         .orElse(request.getQueryString(Keys.QueryParam.email))
         .orElse(request.flash.get("email"))
+        .map(_.trim)
       emailFromRequestOrQueryParamOrFlash.fold {
         Future.successful(Ok(views.html.home.page(LoginPanel.ConnectionForm)))
       } { email =>
-        userService
-          .byEmail(email)
-          .fold {
-            signupService
-              .byEmail(email)
-              .map(
-                _.fold(
-                  e => {
-                    eventService.logErrorNoUser(e)
-                    val message = "Une erreur interne est survenue. " +
-                      "Celle-ci étant possiblement temporaire, " +
-                      "nous vous invitons à réessayer plus tard."
-                    Redirect(routes.LoginController.login)
-                      .flashing("error" -> message, "email-value" -> email)
-                  },
-                  {
-                    case None =>
-                      eventService
-                        .logSystem(
-                          UnknownEmail,
-                          s"Aucun compte actif à cette adresse mail",
-                          s"Email '$email'".some
-                        )
-                      val message =
-                        """Aucun compte actif n’est associé à cette adresse e-mail.
-                          |Merci de vérifier qu’il s’agit bien de votre adresse professionnelle et nominative.""".stripMargin
+        if (email.isEmpty) {
+          Future.successful(emailIsEmpty)
+        } else {
+          userService
+            .byEmail(email, includeDisabled = true)
+            .fold {
+              signupService
+                .byEmail(email)
+                .map(
+                  _.fold(
+                    e => {
+                      eventService.logErrorNoUser(e)
+                      val message = "Une erreur interne est survenue. " +
+                        "Celle-ci étant possiblement temporaire, " +
+                        "nous vous invitons à réessayer plus tard."
                       Redirect(routes.LoginController.login)
                         .flashing("error" -> message, "email-value" -> email)
-                    case Some(signup) =>
-                      val loginToken =
-                        LoginToken
-                          .forSignupId(
-                            signup.id,
-                            config.tokenExpirationInMinutes,
-                            request.remoteAddress
-                          )
-                      magicLinkAuth(loginToken, signup.email, None)
-                  }
+                    },
+                    {
+                      case None =>
+                        accountDoesNotExist(email)
+                      case Some(signup) =>
+                        val loginToken =
+                          LoginToken
+                            .forSignupId(
+                              signup.id,
+                              config.tokenExpirationInMinutes,
+                              request.remoteAddress
+                            )
+                        magicLinkAuth(loginToken, signup.email, None)
+                    }
+                  )
                 )
-              )
-          } { user: User =>
-            if (user.passwordActivated && request.getQueryString("nopassword").isEmpty)
+            } { (user: User) =>
+              if (user.disabled)
+                Future(accountDoesNotExist(email))
+              else if (user.passwordActivated && request.getQueryString("nopassword").isEmpty)
               // 303 is supposed to be the correct code after POST
               // Just random knowledge here, since Play `Redirect` is 303 by default
               Future.successful(
@@ -101,19 +102,39 @@ class LoginController @Inject() (
                   SeeOther(routes.LoginController.passwordPage.url)
                 )
               )
-            else
-              LoginAction.readUserRights(user).map { userRights =>
-                val loginToken =
-                  LoginToken
-                    .forUserId(user.id, config.tokenExpirationInMinutes, request.remoteAddress)
-                val requestWithUserData =
-                  new RequestWithUserData(user, userRights, request)
-                // either password page or magic link
-                magicLinkAuth(loginToken, user.email, requestWithUserData.some)
-              }
-          }
+                LoginAction.readUserRights(user).map { userRights =>
+                  val loginToken =
+                    LoginToken
+                      .forUserId(user.id, config.tokenExpirationInMinutes, request.remoteAddress)
+                  // userSession = none since there are no session around
+                  val requestWithUserData =
+                    new RequestWithUserData(user, userRights, none, request)
+                  magicLinkAuth(loginToken, user.email, requestWithUserData.some)
+                }
+            }
+        }
       }
     }
+
+  private def emailIsEmpty = {
+    val message = "Veuillez saisir votre adresse professionnelle"
+    Redirect(routes.LoginController.login)
+      .flashing("error" -> message)
+  }
+
+  private def accountDoesNotExist(email: String)(implicit request: Request[AnyContent]) = {
+    eventService
+      .logSystem(
+        UnknownEmail,
+        s"Aucun compte actif à cette adresse mail",
+        s"Email '$email'".some
+      )
+    val message =
+      """Aucun compte actif n’est associé à cette adresse e-mail.
+        |Merci de vérifier qu’il s’agit bien de votre adresse professionnelle et nominative.""".stripMargin
+    Redirect(routes.LoginController.login)
+      .flashing("error" -> message, "email-value" -> email)
+  }
 
   private def magicLinkAuth(
       token: LoginToken,
@@ -127,15 +148,17 @@ class LoginController @Inject() (
     // observer => /stats
     val path: String = {
       val tmpPath = request.flash.get("path").getOrElse(routes.HomeController.index.url)
-      val shouldChangeObserverPath: Boolean =
+      val isHome = tmpPath === routes.HomeController.index.url
+      val shouldChangePathToStats: Boolean =
         requestWithUserData
           .map(data =>
-            Authorization.isObserver(data.rights) &&
+            (Authorization.isObserver(data.rights) ||
+              Authorization.isAreaManager(data.rights)) &&
               data.currentUser.cguAcceptationDate.nonEmpty &&
-              (tmpPath === routes.HomeController.index.url)
+              isHome
           )
           .getOrElse(false)
-      if (shouldChangeObserverPath) {
+      if (shouldChangePathToStats) {
         routes.ApplicationController.stats.url
       } else {
         tmpPath
@@ -263,7 +286,7 @@ class LoginController @Inject() (
                   },
                   user =>
                     LoginAction.readUserRights(user).map { userRights =>
-                      val requestWithUserData = new RequestWithUserData(user, userRights, request)
+                      val requestWithUserData = new RequestWithUserData(user, userRights, none, request) // TODO
                       eventService.log(
                         EventType.PasswordVerificationSuccessful,
                         s"Identification par mot de passe"
@@ -462,8 +485,24 @@ class LoginController @Inject() (
     }
 
   def disconnect: Action[AnyContent] =
-    Action {
-      Redirect(routes.LoginController.login).withNewSession
+    Action.async { implicit request =>
+      def result = Redirect(routes.LoginController.login).withNewSession
+      request.session.get(Keys.Session.sessionId) match {
+        case None => Future.successful(result)
+        case Some(sessionId) =>
+          userService
+            .revokeUserSession(sessionId)
+            .flatMap(
+              _.fold(
+                e =>
+                  IO.blocking(eventService.logErrorNoUser(e))
+                    .as(InternalServerError(views.errors.public500(None))),
+                _ => IO.pure(result)
+              )
+            )
+            .unsafeToFuture()
+      }
+
     }
 
   private def addingPasswordEmailToSession(

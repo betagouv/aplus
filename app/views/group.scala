@@ -1,10 +1,10 @@
 package views
 
 import controllers.routes.GroupController
-import helpers.forms.CSRFInput
 import models.UserGroup
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
+import views.helpers.forms.CSRFInput
 
 object group {
 

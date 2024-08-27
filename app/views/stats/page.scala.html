@@ -1,38 +1,37 @@
 @import java.time.LocalDate
 @import java.util.UUID
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(formUrl: Call, result: Html, groupsThatCanBeFilteredBy: List[UserGroup], selectedAreaIds: List[UUID], selectedOrganisationIds: List[Organisation.Id], selectedGroupIds: List[UUID], creationMinDate: LocalDate, creationMaxDate: LocalDate)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(formUrl: Call, result: Html, form: views.internalStats.SelectionForm)(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, request: RequestHeader, mainInfos: MainInfos)
 
 @main(currentUser, currentUserRights)(s"Stats")  {
-    @webJarsUtil.locate("Chart.bundle.min.js").script()
 }{
     <div class="mdl-cell mdl-cell--12-col">
         @helper.form(formUrl, "method" -> "post") {
             Département :
             <select id="area-selector" name="areas[]">
-                <option @if(selectedAreaIds.isEmpty) { selected } value>Tous les départements</option>
-                @for(area <- Area.all) {
-                    <option value="@area.id" @if(selectedAreaIds.contains(area.id)) { selected }>@area</option>
+                <option @if(form.selectedAreaIds.isEmpty) { selected } value>Tous les départements</option>
+                @for(area <- form.areasThatCanBeFilteredBy) {
+                    <option value="@area.id" @if(form.selectedAreaIds.contains(area.id)) { selected }>@area</option>
                 }
             </select>
-            @if(currentUser.admin || currentUser.observableOrganisationIds.nonEmpty) {
+            @if(form.canFilterByOrganisation) {
                 <select id="organisation-selector" name="organisations[]">
-                    <option @if(selectedOrganisationIds.isEmpty){ selected } value >Tous les organismes</option>
-                    @for(organisation <- if(currentUser.admin){ Organisation.all } else { currentUser.observableOrganisationIds.flatMap(Organisation.byId) }) {
-                        <option value="@organisation.id.id" @if(selectedOrganisationIds.contains(organisation.id)){ selected } >@organisation.name</option>
+                    <option @if(form.selectedOrganisationIds.isEmpty){ selected } value >Tous les organismes</option>
+                    @for(organisation <- form.organisationsThatCanBeFilteredBy) {
+                        <option value="@organisation.id.id" @if(form.selectedOrganisationIds.contains(organisation.id)){ selected } >@organisation.name</option>
                     }
                 </select>
             }
                 <select id="groups-selector" name="groups[]">
-                    <option @if(selectedGroupIds.isEmpty){ selected } value>Tous les groupes du département</option>
-                    @for(group <- groupsThatCanBeFilteredBy) {
-                        <option value="@group.id" @if(selectedGroupIds.contains(group.id)){ selected }>@group.name</option>
+                    <option @if(form.selectedGroupIds.isEmpty){ selected } value>Tous les groupes du département</option>
+                    @for(group <- form.groupsThatCanBeFilteredBy) {
+                        <option value="@group.id" @if(form.selectedGroupIds.contains(group.id)){ selected }>@group.name</option>
                     }
                 </select>
 
             <br>
-            Création des demandes entre le : <input name="creationMinDate" value="@creationMinDate" type="date">
-            et le : <input name="creationMaxDate" value="@creationMaxDate" type="date">
+            Création des demandes entre le : <input name="creationMinDate" value="@form.creationMinDate" type="date">
+            et le : <input name="creationMaxDate" value="@form.creationMaxDate" type="date">
             <button>Filtrer</button>
         }
     </div>

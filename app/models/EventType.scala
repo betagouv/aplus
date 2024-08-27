@@ -9,7 +9,7 @@ import helper.StringHelper
   * (wherever the best information to log is known).
   */
 trait EventType {
-  val code = StringHelper.camelToUnderscoresUpperCase(this.getClass.getSimpleName)
+  val code: String = StringHelper.camelToUnderscoresUpperCase(this.getClass.getSimpleName)
   val level: String
 }
 
@@ -47,8 +47,6 @@ object EventType {
   object AllAsShowed extends Info
   object AllAsUnauthorized extends Warn
   object AllCSVShowed extends Info
-  object AllUserCSVUnauthorized extends Warn
-  object AllUserCsvShowed extends Info
   object AllUserIncorrectSetup extends Info
   object AllUserUnauthorized extends Warn
   object ApplicationCreated extends Info
@@ -88,6 +86,8 @@ object EventType {
   object MandatInitiationBySmsWarn extends Warn
   object MandatInitiationBySmsDone extends Info
   object MandatBySmsResponseSaved extends Info
+  object MandatGenerationFormValidationError extends Warn
+  object MandatGenerated extends Info
   object MandatShowed extends Info
   object MandatError extends Error
   object MandatNotFound extends Error
@@ -157,11 +157,19 @@ object EventType {
   object WipeDataComplete extends Info
   object WipeDataError extends Error
 
+  object AnonymizedDataExportMessage extends Info
+  object AnonymizedDataExportError extends Error
+
+  object ViewsRefreshMessage extends Info
+  object ViewsRefreshError extends Error
+
   object MasqueradeUnauthorized extends Warn
 
   object SearchUsersDone extends Info
   object SearchUsersNotAuthorized extends Warn
   object SearchUsersError extends Error
+
+  object UsersQueryError extends Error
 
   // Signups
   object SignupFormShowed extends Info
@@ -178,12 +186,16 @@ object EventType {
   object GenerateToken extends Info
   object ExpiredToken extends Warn
   object TokenDoubleUsage extends Warn
+  object InvalidToken extends Warn
   object TokenError extends Error
   object MissingSignup extends Warn
+  object SignupLoginExpired extends Info
   object AuthByKey extends Info // Incorrectly named (this is an auth by token)
   object AuthWithDifferentIp extends Warn
   object LoginByKey extends Info
   object AuthBySignupToken extends Info
+  object LoggedInUserAccountDeleted extends Warn
+  object UserSessionError extends Error
   object PasswordPageShowed extends Info
   object PasswordVerificationSuccessful extends Info
   object PasswordFormValidationError extends Warn
@@ -206,6 +218,7 @@ object EventType {
   object FileAvailable extends Info
   object FileQuarantined extends Warn
   object FileScanError extends Error
+  object FileError extends Error
   object FilesDeletion extends Info
   object FileDeletionError extends Error
 

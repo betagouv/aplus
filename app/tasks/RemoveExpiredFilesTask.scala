@@ -1,57 +1,55 @@
 package tasks
 
-import java.nio.file.Files
-import java.io.File
-import java.time.Instant
-import java.time.temporal.ChronoUnit.DAYS
-
-import akka.actor.ActorSystem
+import cats.effect.IO
+import helper.{TasksHelpers, Time}
+import java.time.{Instant, ZoneOffset}
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import models.EventType
-import play.api.Configuration
-import services.{EventService, FileService}
-
+import modules.AppConfig
+import play.api.inject.ApplicationLifecycle
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext
+import services.{EventService, FileService, ServicesDependencies}
 
 class RemoveExpiredFilesTask @Inject() (
-    actorSystem: ActorSystem,
-    configuration: Configuration,
-    eventService: EventService,
+    config: AppConfig,
+    dependencies: ServicesDependencies,
+    val eventService: EventService,
     fileService: FileService,
-)(implicit executionContext: ExecutionContext) {
-  private val filesPath = configuration.underlying.getString("app.filesPath")
+    lifecycle: ApplicationLifecycle,
+) extends TasksHelpers {
 
-  private val filesExpirationInDays: Int =
-    configuration.underlying.getString("app.filesExpirationInDays").toInt
+  import dependencies.ioRuntime
 
-  val startAtHour = 5
-  val now = java.time.ZonedDateTime.now() // Machine Time
-  val startDate = now.toLocalDate.atStartOfDay(now.getZone).plusDays(1).withHour(startAtHour)
-  val initialDelay = java.time.Duration.between(now, startDate).getSeconds.seconds
-
-  actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = 24.hours)(
-    new Runnable { override def run(): Unit = removeExpiredFiles() }
+  def durationUntilNextTick(now: Instant): IO[FiniteDuration] = IO {
+    val nextInstant = now
+      .atZone(ZoneOffset.UTC)
+      .toLocalDate
+      .atStartOfDay(ZoneOffset.UTC)
+      .plusDays(1)
+      .withHour(5)
+      .toInstant
+    now.until(nextInstant, ChronoUnit.MILLIS).millis
+  }.flatTap(duration =>
+    logMessage(
+      EventType.FilesDeletion,
+      s"Prochaine suppression des fichiers expirés dans ${Time.readableDuration(duration)}"
+    )
   )
 
-  def removeExpiredFiles(): Unit = {
-    val beforeDate = Instant.now().minus(filesExpirationInDays.toLong + 1, DAYS)
-    eventService.logNoRequest(
+  val cancelCallback: () => Future[Unit] = repeatWithDelay(durationUntilNextTick)(
+    loggingResult(
+      fileService.deleteExpiredFiles(),
       EventType.FilesDeletion,
-      s"Début de la suppression des fichiers avant $beforeDate"
+      "Fin de la suppression des fichiers expirés",
+      EventType.FileDeletionError,
+      "Erreur lors de la suppression des fichiers expirés",
     )
-    val dir = new File(filesPath)
-    if (dir.exists() && dir.isDirectory) {
-      val fileToDelete = dir
-        .listFiles()
-        .filter(_.isFile)
-        .filter { file =>
-          val instant = Files.getLastModifiedTime(file.toPath).toInstant
-          instant.plus(filesExpirationInDays.toLong + 1, DAYS).isBefore(Instant.now())
-        }
-      fileToDelete.foreach(_.delete())
-    }
-    val _ = fileService.deleteBefore(beforeDate)
+  ).unsafeRunCancelable()
+
+  lifecycle.addStopHook { () =>
+    cancelCallback()
   }
 
 }

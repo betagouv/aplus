@@ -7,7 +7,6 @@ import org.junit.runner._
 import org.specs2.matcher.MatchResult
 import org.specs2.mutable._
 import org.specs2.runner._
-import play.api.test.Helpers._
 import play.api.test._
 import services._
 
@@ -140,7 +139,11 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = List(instructorGroup.id),
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None,
       passwordActivated = false,
     )
@@ -161,7 +164,11 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = Nil,
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None,
       passwordActivated = false,
     )
@@ -182,7 +189,11 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = List(helperGroup.id),
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None,
       passwordActivated = false,
     )
@@ -203,7 +214,11 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = List(helperGroup.id),
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None,
       passwordActivated = false,
     )
@@ -224,7 +239,11 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = List(helperGroup.id),
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None,
       passwordActivated = false,
     )
@@ -245,7 +264,11 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = List(helperGroup.id),
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None,
       passwordActivated = false,
     )
@@ -266,7 +289,11 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       groupAdmin = false,
       disabled = false,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = List(helperGroup.id),
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None,
       passwordActivated = false,
     )
@@ -290,6 +317,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       creationDate = Time.nowParis(),
       creatorUserName = helperUser.nameWithQualite,
       creatorUserId = helperUser.id,
+      creatorGroupId = None,
+      creatorGroupName = None,
       subject = s"Sujet de la demande $number",
       description = s"John a un problème $number",
       userInfos = Map("Prénom" -> "John", "Nom de famille" -> "Doe", "Date de naissance" -> "1988"),

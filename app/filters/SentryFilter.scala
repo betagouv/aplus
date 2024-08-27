@@ -1,23 +1,23 @@
 package filters
 
-import akka.stream.Materializer
 import cats.syntax.all._
 import io.sentry.{ITransaction, Sentry, SpanStatus}
 import javax.inject.Inject
+import org.apache.pekko.stream.Materializer
 import play.api.mvc.{Filter, RequestHeader, Result}
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
 
 class SentryFilter @Inject() (implicit val mat: Materializer, ec: ExecutionContext) extends Filter {
 
-  val urisBlacklist = List(
+  val urisBlacklist: List[String] = List(
     "/favicon.ico",
     "/assets/",
     "/webjars/",
     "/jsRoutes"
   )
 
-  val queryParamsWhitelist = List(
+  val queryParamsWhitelist: List[String] = List(
     Keys.QueryParam.vue,
     Keys.QueryParam.uniquementFs,
     Keys.QueryParam.numOfMonthsDisplayed

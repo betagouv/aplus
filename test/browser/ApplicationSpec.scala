@@ -6,7 +6,6 @@ import models.{Area, LoginToken, User, UserGroup}
 import org.junit.runner._
 import org.specs2.mutable._
 import org.specs2.runner._
-import play.api.test.Helpers._
 import play.api.test._
 import services.{ApplicationService, TokenService, UserGroupService, UserService}
 
@@ -25,6 +24,7 @@ class ApplicationSpec extends Specification with BaseSpec {
 
       val number = scala.util.Random.nextInt()
       val area = Area.all.head.id
+
       val instructorGroup = UserGroup(
         id = UUIDHelper.randomUUID,
         name = s"Group $number",
@@ -35,7 +35,9 @@ class ApplicationSpec extends Specification with BaseSpec {
         publicNote = None,
         internalSupportComment = None
       )
+
       groupService.add(instructorGroup)
+
       val instructorUser = User(
         UUIDHelper.randomUUID,
         "key",
@@ -53,10 +55,15 @@ class ApplicationSpec extends Specification with BaseSpec {
         groupAdmin = false,
         disabled = false,
         cguAcceptationDate = Some(Time.nowParis()),
+        firstLoginDate = None,
         groupIds = List(instructorGroup.id),
+        observableOrganisationIds = Nil,
+        managingOrganisationIds = Nil,
+        managingAreaIds = Nil,
         internalSupportComment = None,
         passwordActivated = false,
       )
+
       val helperUser = User(
         UUIDHelper.randomUUID,
         "key",
@@ -74,9 +81,14 @@ class ApplicationSpec extends Specification with BaseSpec {
         groupAdmin = false,
         disabled = false,
         cguAcceptationDate = Some(Time.nowParis()),
+        firstLoginDate = None,
+        observableOrganisationIds = Nil,
+        managingOrganisationIds = Nil,
+        managingAreaIds = Nil,
         internalSupportComment = None,
         passwordActivated = false,
       )
+
       userService.add(List(instructorUser, helperUser))
       userService.validateCGU(helperUser.id)
 
@@ -99,6 +111,7 @@ class ApplicationSpec extends Specification with BaseSpec {
       // Submit an application
       val createApplicationURL =
         controllers.routes.ApplicationController.create.absoluteURL(false, s"localhost:$port")
+
       browser.goTo(createApplicationURL)
 
       val subject = s"Sujet de la demande $number"
@@ -127,7 +140,7 @@ class ApplicationSpec extends Specification with BaseSpec {
       browser.waitUntil(browser.el("input[name='validate']").selected)
 
       // Radio
-      browser.el("label[for='mandatType_paper']").click()
+      browser.el("label[for='mandat-option-already']").click()
       browser.el("input[name='mandatDate']").fill().withText(java.time.ZonedDateTime.now().toString)
 
       browser.el("form").submit()

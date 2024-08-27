@@ -1,7 +1,6 @@
 package controllers
 
 import java.util.UUID
-import models.EventType
 import play.api.mvc.Call
 import scala.util.Try
 import scala.util.matching.Regex

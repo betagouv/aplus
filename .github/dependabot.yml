@@ -4,6 +4,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      babel-dependencies:
+        patterns:
+          - "@babel/*"
     open-pull-requests-limit: 20
 
   - package-ecosystem: "github-actions"

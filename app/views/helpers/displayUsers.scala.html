@@ -1,6 +1,6 @@
 @(currentUser: User, currentUserRights: Authorization.UserRights)(users: Seq[User])
 
-    <table class="mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp pem-table mdl-color--white" style="white-space: normal;">
+    <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp mdl-color--white" style="white-space: normal;">
         <thead>
             <tr>
                 <th class="mdl-data-table__cell--non-numeric"></th>
@@ -20,7 +20,7 @@
             </tr>
         </thead>
         <tbody>
-        @for((user, index) <- users.sortBy(_.name).zipWithIndex) {
+        @for((user, index) <- users.sortBy(_.name).filterNot(_.disabled).zipWithIndex) {
             <tr>
             <td class="mdl-data-table__cell--non-numeric">
                 @if(Authorization.canEditOtherUser(user)(currentUserRights)) {

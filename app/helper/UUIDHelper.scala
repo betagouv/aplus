@@ -1,10 +1,12 @@
 package helper
 
-object UUIDHelper {
-  def randomUUID = java.util.UUID.randomUUID
-  def namedFrom(name: String) = java.util.UUID.nameUUIDFromBytes(name.getBytes())
+import java.util.UUID
 
-  def fromString(string: String) =
-    scala.util.control.Exception.allCatch.opt(java.util.UUID.fromString(string))
+object UUIDHelper {
+  def randomUUID = UUID.randomUUID
+  def namedFrom(name: String): UUID = UUID.nameUUIDFromBytes(name.getBytes())
+
+  def fromString(string: String): Option[UUID] =
+    scala.util.control.Exception.allCatch.opt(UUID.fromString(string))
 
 }

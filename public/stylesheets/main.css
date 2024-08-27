@@ -252,13 +252,20 @@ html, body {
         overflow: visible !important;
     }
 
-    .mdl-grid, .mdl-card, .mdl-card__title {
-        display: block !important;
-
-    }
-
     .do-not-print {
         display: none !important;
+    }
+
+    .mandat-print-wrapper h4 {
+      margin-top: 0px;
+    }
+
+    .mandat-print-wrapper ul {
+      margin-top: 0px;
+    }
+
+    .mandat-print-wrapper p,ul,li {
+      font-size: 12px;
     }
 }
 
@@ -595,12 +602,6 @@ a {
     min-height: calc(100% - 120px);
 }
 
-.usefulness__icon {
-    width: 20px;
-    height: 20px;
-    vertical-align: middle;
-}
-
 .chart-container {
     position: relative;
     margin: auto;
@@ -620,6 +621,17 @@ a {
     padding: 16px 28px;
     margin: 16px;
     text-align: center;
+}
+
+.disabled-users-toggle {
+    cursor: pointer;
+    padding: 4px;
+    text-decoration: underline;
+    text-align: center;
+}
+
+.disabled-users-toggle:hover {
+    background: #f3f4f6;
 }
 
 
@@ -650,8 +662,8 @@ a {
     margin-top: 24px;
 }
 
-.single--margin-top-30px {
-    margin-top: 30px;
+.single--margin-top-40px {
+    margin-top: 40px;
 }
 
 .single--margin-bottom--8px {
@@ -660,6 +672,10 @@ a {
 
 .single--margin-bottom--24px {
     margin-bottom: -24px;
+}
+
+.single--margin-bottom-0px {
+    margin-bottom: 0px;
 }
 
 .single--margin-bottom-8px {
@@ -682,6 +698,10 @@ a {
     margin-bottom: 40px;
 }
 
+.single--margin-bottom-60px {
+    margin-bottom: 60px;
+}
+
 .single--margin-right-8px {
     margin-right: 8px;
 }
@@ -698,6 +718,10 @@ a {
     margin-right: 24px;
 }
 
+.single--margin-right-32px {
+    margin-right: 32px;
+}
+
 .single--margin-left-2px {
     margin-left: 2px;
 }
@@ -708,6 +732,10 @@ a {
 
 .single--margin-left-24px {
     margin-left: 24px;
+}
+
+.single--margin-left-32px {
+    margin-left: 32px;
 }
 
 .single--margin-0px {
@@ -733,6 +761,10 @@ a {
 
 .single--padding-8px {
     padding: 8px;
+}
+
+.single--padding-4px {
+    padding: 4px;
 }
 
 .single--padding-top-8px {
@@ -761,6 +793,10 @@ a {
 
 .single--padding-left-48px {
     padding-left: 48px;
+}
+
+.single--padding-right-16px {
+    padding-right: 16px;
 }
 
 .single--max-width-160px {
@@ -803,8 +839,20 @@ a {
     width: 100%;
 }
 
+.single--width-20px {
+    width: 20px;
+}
+
 .single--width-48px {
     width: 48px;
+}
+
+.single--width-300px {
+    width: 300px;
+}
+
+.single--width-400px {
+    width: 400px;
 }
 
 .single--width-max-content {
@@ -879,6 +927,17 @@ a {
     justify-content: flex-end;
 }
 
+.single--align-self-center {
+    -ms-flex-item-align: center;
+    -ms-grid-row-align: center;
+    align-self: center;
+}
+
+.single--align-self-flex-end {
+    -ms-flex-item-align: end;
+    align-self: flex-end;
+}
+
 .single--flex-wrap-wrap {
     -ms-flex-wrap: wrap;
     flex-wrap: wrap;
@@ -891,12 +950,20 @@ a {
     flex-direction: column;
 }
 
+.single--white-space-normal {
+    white-space: normal;
+}
+
 .single--white-space-nowrap {
     white-space: nowrap;
 }
 
 .single--cursor-pointer {
     cursor: pointer;
+}
+
+.single--text-decoration-none {
+    text-decoration: none;
 }
 
 .single--text-decoration-underline {
@@ -911,12 +978,20 @@ a {
     list-style-type: none;
 }
 
+.single--font-weight-500 {
+    font-weight: 500;
+}
+
 .single--font-weight-600 {
     font-weight: 600;
 }
 
 .single--font-weight-bold {
     font-weight: bold;
+}
+
+.single--line-height-22px {
+    line-height: 22px !important;
 }
 
 .single--line-height-24px {
@@ -937,6 +1012,10 @@ a {
 
 .single--pointer-events-all {
     pointer-events: all;
+}
+
+.single--border-bottom-2px {
+    border-bottom: 2px solid;
 }
 
 
@@ -962,6 +1041,10 @@ Colors
     color: #00234d !important;
 }
 
+.aplus-color-text--error {
+    color: #d50000;
+}
+
 /* from --blue: #0053b3;
  * https://github.com/etalab/template.data.gouv.fr/blob/master/src/css/base/theme.css#L5
  *
@@ -985,6 +1068,10 @@ Typographie
 
 .typography--text-align-center {
     text-align: center;
+}
+
+.typography--text-align-center-important {
+    text-align: center !important;
 }
 
 /*************

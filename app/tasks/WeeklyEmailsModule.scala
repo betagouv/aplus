@@ -1,6 +1,5 @@
 package tasks
 
-import play.api.inject.SimpleModule
-import play.api.inject._
+import play.api.inject.{bind, SimpleModule}
 
 class WeeklyEmailsModule extends SimpleModule(bind[WeeklyEmailsTask].toSelf.eagerly())

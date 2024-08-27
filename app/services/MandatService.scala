@@ -1,19 +1,18 @@
 package services
 
 import anorm._
+import anorm.postgresql.{jsValueColumn, jsValueToStatement}
 import aplus.macros.Macros
 import cats.syntax.all._
-import helper.{PlayFormHelper, Time}
-import java.time.ZonedDateTime
+import helper.{PlayFormHelpers, Time}
 import java.util.UUID
 import javax.inject.Inject
+import models.{Authorization, Error, EventType, Mandat, Sms, User}
 import models.Authorization.UserRights
 import models.dataModels.SmsFormats._
-import models.mandat.{Mandat, SmsMandatInitiation}
-import models.{Authorization, Error, EventType, Sms, User}
+import models.jsonApiModels.mandat.{MandatGeneration, SmsMandatInitiation}
 import play.api.db.Database
 import play.api.libs.json.{JsValue, Json}
-
 import scala.concurrent.Future
 import scala.util.Try
 
@@ -29,32 +28,35 @@ class MandatService @Inject() (
     dependencies: ServicesDependencies
 ) {
   import dependencies.databaseExecutionContext
-  import serializers.Anorm._
 
-  implicit val mandatIdAnormParser: anorm.Column[Mandat.Id] =
-    implicitly[anorm.Column[UUID]].map(Mandat.Id.apply)
+  implicit val mandatIdAnormParser: Column[Mandat.Id] =
+    Column.of[UUID].map(Mandat.Id.apply)
 
-  implicit val smsListParser: anorm.Column[List[Sms]] =
-    implicitly[anorm.Column[JsValue]].mapResult(
-      _.validate[List[Sms]].asEither.left.map(errors =>
-        SqlMappingError(
-          s"Cannot parse JSON as List[Sms]: ${PlayFormHelper.prettifyJsonFormInvalidErrors(errors)}"
+  implicit val smsListParser: Column[List[Sms]] =
+    Column
+      .of[JsValue]
+      .mapResult(
+        _.validate[List[Sms]].asEither.left.map(errors =>
+          SqlMappingError(
+            s"Cannot parse JSON as List[Sms]: ${PlayFormHelpers.prettifyJsonFormInvalidErrors(errors)}"
+          )
         )
       )
-    )
 
   private val (mandatRowParser, tableFields) = Macros.parserWithFields[Mandat](
     "id",
+    "version",
     "user_id",
     "creation_date",
     "application_id",
+    "group_id",
     "usager_prenom",
     "usager_nom",
     "usager_birth_date",
     "usager_phone_local",
     "sms_thread",
     "sms_thread_closed",
-    "personal_data_wiped"
+    "personal_data_wiped",
   )
 
   private val fieldsInSelect: String = tableFields.mkString(", ")
@@ -118,28 +120,65 @@ class MandatService @Inject() (
       initiation: SmsMandatInitiation,
       user: User
   ): Future[Either[Error, Mandat]] =
+    createNewMandat(
+      user.id,
+      1,
+      initiation.usagerPrenom,
+      initiation.usagerNom,
+      initiation.usagerBirthDate,
+      initiation.usagerPhoneLocal.some,
+      none,
+    )
+
+  def createMandatV2(
+      request: MandatGeneration,
+      user: User
+  ): Future[Either[Error, Mandat]] =
+    createNewMandat(
+      user.id,
+      2,
+      request.usagerPrenom,
+      request.usagerNom,
+      request.usagerBirthdate,
+      none,
+      request.creatorGroupId,
+    )
+
+  private def createNewMandat(
+      userId: UUID,
+      version: Int,
+      usagerPrenom: String,
+      usagerNom: String,
+      usagerBirthdate: String,
+      usagerPhoneLocal: Option[String],
+      creatorGroupId: Option[UUID],
+  ): Future[Either[Error, Mandat]] =
     Future {
       Try {
-        val id = UUID.randomUUID
+        val id = UUID.randomUUID()
         val now = Time.nowParis()
         db.withTransaction { implicit connection =>
           SQL"""
           INSERT INTO mandat (
             id,
+            version,
             user_id,
             creation_date,
             usager_prenom,
             usager_nom,
             usager_birth_date,
-            usager_phone_local
+            usager_phone_local,
+            group_id
           ) VALUES (
             $id::uuid,
-            ${user.id}::uuid,
+            $version,
+            ${userId}::uuid,
             $now,
-            ${initiation.usagerPrenom},
-            ${initiation.usagerNom},
-            ${initiation.usagerBirthDate},
-            ${initiation.usagerPhoneLocal}
+            ${usagerPrenom},
+            ${usagerNom},
+            ${usagerBirthdate},
+            ${usagerPhoneLocal},
+            ${creatorGroupId}::uuid
           )
         """.executeInsert(SqlParser.scalar[UUID].singleOpt)
 
@@ -152,7 +191,7 @@ class MandatService @Inject() (
       }.toEither.left.map { error =>
         Error.SqlException(
           EventType.MandatError,
-          s"Impossible de créer un mandat par l'utilisateur ${user.id}",
+          s"Impossible de créer un mandat par l'utilisateur ${userId}",
           error,
           none
         )
@@ -228,6 +267,7 @@ class MandatService @Inject() (
               s"""SELECT $fieldsInSelect
                   FROM mandat
                   WHERE usager_phone_local = {localPhone}
+                  AND version = 1
                   AND sms_thread_closed = false
                """
             ).on("localPhone" -> localPhone)
@@ -248,6 +288,7 @@ class MandatService @Inject() (
                     SET sms_thread = sms_thread || $smsJson::jsonb,
                         sms_thread_closed = true
                     WHERE usager_phone_local = $localPhone
+                    AND version = 1
                     AND sms_thread_closed = false
                  """
                 .executeUpdate()
@@ -267,6 +308,12 @@ class MandatService @Inject() (
         .flatten
     )
 
+  def allOrThrow: List[Mandat] =
+    db.withConnection { implicit connection =>
+      SQL(s"""SELECT $fieldsInSelect FROM mandat""").as(mandatRowParser.*)
+    }
+
+  /*
   def wipePersonalData(retentionInMonths: Long): Future[Either[Error, List[Mandat]]] =
     Future(
       Try {
@@ -288,18 +335,7 @@ class MandatService @Inject() (
         }
         mandats.flatMap { mandat =>
           db.withConnection { implicit connection =>
-            val wipedSms: List[Sms] = mandat.smsThread.map {
-              case sms: Sms.Outgoing =>
-                sms.copy(
-                  recipient = Sms.PhoneNumber("+330" + "0" * 8),
-                  body = ""
-                )
-              case sms: Sms.Incoming =>
-                sms.copy(
-                  originator = Sms.PhoneNumber("+330" + "0" * 8),
-                  body = ""
-                )
-            }
+            val wiped = mandat.withWipedPersonalData
             SQL(s"""UPDATE mandat
                     SET
                       usager_prenom = '',
@@ -312,7 +348,7 @@ class MandatService @Inject() (
                     RETURNING $fieldsInSelect;""")
               .on(
                 "id" -> mandat.id.underlying,
-                "smsThread" -> Json.toJson(wipedSms)
+                "smsThread" -> Json.toJson(wiped.smsThread)
               )
               .as(mandatRowParser.singleOpt)
           }
@@ -327,5 +363,6 @@ class MandatService @Inject() (
           )
         )
     )
+   */
 
 }

@@ -4,7 +4,7 @@ import cats.syntax.all._
 import constants.Constants
 import controllers.routes.{Assets, HomeController, LoginController}
 import helpers.forms.CSRFInput
-import models.formModels.{PasswordChange, PasswordCredentials}
+import models.forms.{PasswordChange, PasswordCredentials}
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.i18n.MessagesProvider

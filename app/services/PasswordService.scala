@@ -1,6 +1,6 @@
 package services
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import anorm._
 import aplus.macros.Macros
 import cats.data.EitherT
@@ -8,7 +8,7 @@ import cats.syntax.all._
 import helper.{MiscHelpers, PasswordHasher}
 import java.time.Instant
 import java.util.UUID
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import models.{Error, EventType, User}
 import models.dataModels.{PasswordRecoveryTokenRow, PasswordRow}
 import modules.AppConfig
@@ -17,7 +17,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Try
 
-@javax.inject.Singleton
+@Singleton
 class PasswordService @Inject() (
     actorSystem: ActorSystem,
     config: AppConfig,
@@ -250,7 +250,7 @@ class PasswordService @Inject() (
   /** Uses a timeout in parallel to render time attack more difficult
     */
   def verifyPassword(email: String, password: Array[Char]): Future[Either[Error, User]] = {
-    val sleep = akka.pattern.after(5.seconds)(Future.successful(()))(actorSystem)
+    val sleep = org.apache.pekko.pattern.after(5.seconds)(Future.successful(()))(actorSystem)
     val verification: EitherT[Future, Error, User] = EitherT(
       withDbConnection(
         EventType.PasswordVerificationError,

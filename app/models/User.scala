@@ -1,13 +1,12 @@
 package models
 
-import java.time.{ZoneId, ZonedDateTime}
-import java.util.UUID
-
 import cats.syntax.all._
 import constants.Constants
-import helper.{Hash, Time, UUIDHelper}
-import helper.Time.zonedDateTimeInstance
-import helper.StringHelper.withQuotes
+import helper.{Hash, Pseudonymizer, Time, UUIDHelper}
+import helper.StringHelper.{capitalizeName, commonStringInputNormalization, withQuotes}
+import helper.Time.{instantInstance, zonedDateTimeInstance}
+import java.time.{Instant, ZoneId, ZonedDateTime}
+import java.util.UUID
 
 case class User(
     id: UUID,
@@ -35,23 +34,22 @@ case class User(
     groupIds: List[UUID] = Nil,
     cguAcceptationDate: Option[ZonedDateTime] = None,
     newsletterAcceptationDate: Option[ZonedDateTime] = None,
+    firstLoginDate: Option[Instant],
     phoneNumber: Option[String] = None,
     // If this field is non empty, then the User
     // is considered to be an observer:
     // * can see stats+deployment of all areas,
     // * can see all users,
     // * can see one user but not edit it
-    observableOrganisationIds: List[Organisation.Id] = Nil,
+    observableOrganisationIds: List[Organisation.Id],
+    managingOrganisationIds: List[Organisation.Id],
+    managingAreaIds: List[UUID],
     sharedAccount: Boolean = false,
     // This is a comment only visible by the admins
     internalSupportComment: Option[String],
     passwordActivated: Boolean
 ) extends AgeModel {
-  def nameWithQualite = s"$name ( $qualite )"
-
-  // TODO: put this in Authorization
-  def canSeeUsersInArea(areaId: UUID): Boolean =
-    (areaId === Area.allArea.id || areas.contains(areaId)) && (admin || groupAdmin)
+  def nameWithQualite: String = s"$name ( $qualite )"
 
   // Note: we want to have in DB the actual time zone
   val timeZone: ZoneId = _root_.helper.Time.timeZoneParis
@@ -61,7 +59,7 @@ case class User(
       lastName: Option[String],
       qualite: Option[String],
       phoneNumber: Option[String]
-  ) =
+  ): User =
     copy(
       firstName = firstName,
       lastName = lastName,
@@ -101,8 +99,13 @@ case class User(
   lazy val newsletterAcceptationDateLog: String =
     newsletterAcceptationDate.map(Time.adminsFormatter.format).getOrElse("<vide>")
 
+  lazy val firstLoginDateLog: String =
+    firstLoginDate.map(Time.formatForAdmins).getOrElse("<vide>")
+
   lazy val phoneNumberLog: String = phoneNumber.map(withQuotes).getOrElse("<vide>")
   lazy val observableOrganisationIdsLog: String = observableOrganisationIds.map(_.id).mkString(", ")
+  lazy val managingOrganisationIdsLog: String = managingOrganisationIds.map(_.id).mkString(", ")
+  lazy val managingAreaIdsLog: String = managingAreaIds.mkString(", ")
   lazy val sharedAccountLog: String = sharedAccount.toString
 
   lazy val internalSupportCommentLog: String =
@@ -128,7 +131,10 @@ case class User(
       ("Territoires", areasLog),
       ("Date CGU", cguAcceptationDateLog),
       ("Newsletter", newsletterAcceptationDateLog),
+      ("Première connexion", firstLoginDateLog),
       ("Observation des organismes", observableOrganisationIdsLog),
+      ("Responsable des organismes", managingOrganisationIdsLog),
+      ("Responsable des territoires", managingAreaIdsLog),
       ("Information Support", internalSupportCommentLog),
     ).map { case (fieldName, value) => s"$fieldName : $value" }.mkString(" | ") + "]"
 
@@ -168,10 +174,28 @@ case class User(
         other.newsletterAcceptationDateLog
       ),
       (
+        "Première connexion",
+        firstLoginDate =!= other.firstLoginDate,
+        firstLoginDateLog,
+        other.firstLoginDateLog
+      ),
+      (
         "Observation des organismes",
         observableOrganisationIds =!= other.observableOrganisationIds,
         observableOrganisationIdsLog,
         other.observableOrganisationIdsLog
+      ),
+      (
+        "Responsable des organismes",
+        managingOrganisationIds =!= other.managingOrganisationIds,
+        managingOrganisationIdsLog,
+        other.managingOrganisationIdsLog
+      ),
+      (
+        "Responsable des territoires",
+        managingAreaIds =!= other.managingAreaIds,
+        managingAreaIdsLog,
+        other.managingAreaIdsLog
       ),
       (
         "Information Support",
@@ -183,11 +207,46 @@ case class User(
     "[" + diffs.mkString(" | ") + "]"
   }
 
+  def pseudonymize: User = {
+    val pseudo = new Pseudonymizer(id)
+    val pseudoEmail = pseudo.emailKeepingDomain(email)
+    val pseudoPhone = phoneNumber.map(_.trim).filter(_.nonEmpty).map(n => n.take(4) + "0000")
+    User(
+      id = id,
+      key = "",
+      firstName = pseudo.firstName.some,
+      lastName = pseudo.lastName.some,
+      name = pseudo.fullName,
+      qualite = qualite,
+      email = pseudoEmail,
+      helper = helper,
+      instructor = instructor,
+      admin = admin,
+      areas = areas,
+      creationDate = creationDate,
+      communeCode = communeCode,
+      groupAdmin = groupAdmin,
+      disabled = disabled,
+      expert = expert,
+      groupIds = groupIds,
+      cguAcceptationDate = cguAcceptationDate,
+      newsletterAcceptationDate = newsletterAcceptationDate,
+      firstLoginDate = firstLoginDate,
+      phoneNumber = pseudoPhone,
+      observableOrganisationIds = observableOrganisationIds,
+      managingOrganisationIds = managingOrganisationIds,
+      managingAreaIds = managingAreaIds,
+      sharedAccount = sharedAccount,
+      internalSupportComment = none,
+      passwordActivated = passwordActivated,
+    )
+  }
+
 }
 
 object User {
 
-  val systemUser = User(
+  val systemUser: User = User(
     UUIDHelper.namedFrom("system"),
     Hash.sha256(s"system"),
     Option.empty[String],
@@ -203,9 +262,19 @@ object User {
     "75056",
     groupAdmin = false,
     disabled = true,
+    firstLoginDate = none,
+    observableOrganisationIds = Nil,
+    managingOrganisationIds = Nil,
+    managingAreaIds = Nil,
     internalSupportComment = None,
     passwordActivated = false,
   )
+
+  def standardName(firstName: String, lastName: String): String = {
+    val normalizedFirstName = commonStringInputNormalization(firstName)
+    val normalizedLastName = commonStringInputNormalization(lastName)
+    s"${normalizedLastName.toUpperCase} ${capitalizeName(normalizedFirstName)}"
+  }
 
   // DB field size is varchar(200) - UTF8 if correctly configured
   // No chars outside BMP plane should be a safe assumption here...

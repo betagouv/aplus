@@ -1,7 +1,5 @@
 package services
 
-import akka.stream.scaladsl.{Sink, Source}
-import akka.stream.{ActorAttributes, Materializer, Supervision}
 import cats.syntax.all._
 import constants.Constants
 import controllers.routes
@@ -10,7 +8,8 @@ import java.time.{Instant, ZoneId}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models._
-import models.mandat.Mandat
+import org.apache.pekko.stream.{ActorAttributes, Materializer, Supervision}
+import org.apache.pekko.stream.scaladsl.{Sink, Source}
 import play.api.libs.concurrent.MaterializerProvider
 import play.api.libs.mailer.Email
 import play.api.mvc.Request
@@ -81,34 +80,28 @@ class NotificationService @Inject() (
   }
 
   // Note: application does not contain answer at this point
-  def newAnswer(application: Application, answer: Answer) = {
+  def newAnswer(application: Application, answer: Answer): Unit = {
     // Retrieve data
     val userIds = (application.invitedUsers ++ answer.invitedUsers).keys
     val users = userService.byIds(userIds.toList)
-    val (allGroups, alreadyPresentGroupIds): (List[UserGroup], Set[UUID]) =
-      // This legacy case can be removed once data has been fixed
-      if (application.isWithoutInvitedGroupIdsLegacyCase) {
-        (
-          groupService
-            .byIds(users.flatMap(_.groupIds))
-            .filter(_.email.nonEmpty)
-            .filter(_.areaIds.contains(application.area)),
-          users.filter(user => application.invitedUsers.contains(user.id)).flatMap(_.groupIds).toSet
-        )
-      } else {
-        val allGroupIds = application.invitedGroups.union(answer.invitedGroupIds.toSet)
-        (
-          groupService
-            .byIds(allGroupIds.toList)
-            .filter(_.email.nonEmpty),
-          application.invitedGroups
-        )
-      }
+    val (allGroups, alreadyPresentGroupIds): (List[UserGroup], Set[UUID]) = {
+      val allGroupIds = application.invitedGroups.union(answer.invitedGroupIds.toSet)
+      (
+        groupService
+          .byIds(allGroupIds.toList)
+          .filter(_.email.nonEmpty),
+        application.invitedGroups
+      )
+    }
 
     // Send emails to users
     users
       .flatMap { user =>
         if (user.id === answer.creatorUserID) {
+          None
+        } else if (
+          !Authorization.canSeeAnswer(answer, application)(Authorization.readUserRights(user))
+        ) {
           None
         } else if (answer.invitedUsers.contains(user.id)) {
           Some(generateInvitationEmail(application, Some(answer))(user))
@@ -118,13 +111,17 @@ class NotificationService @Inject() (
       }
       .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
 
+    val usersEmails: Set[String] = users.map(_.email).toSet
+
     // Send emails to groups
     allGroups
       .collect {
-        case group if alreadyPresentGroupIds.contains(group.id) =>
-          generateNotificationBALEmail(application, answer.some, users)(group)
-        case group if !alreadyPresentGroupIds.contains(group.id) =>
-          generateNotificationBALEmail(application, Option.empty[Answer], users)(group)
+        case group @ UserGroup(id, _, _, _, _, _, _, Some(email), _, _)
+            if !usersEmails.contains(email) =>
+          if (alreadyPresentGroupIds.contains(id))
+            generateNotificationBALEmail(application, answer.some, users)(group)
+          else
+            generateNotificationBALEmail(application, Option.empty[Answer], users)(group)
       }
       .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
 
@@ -165,7 +162,7 @@ class NotificationService @Inject() (
       userTimeZone: ZoneId,
       loginToken: LoginToken,
       pathToRedirectTo: String
-  ) = {
+  ): Option[String] = {
     val absoluteUrl: String =
       routes.LoginController.magicLinkAntiConsumptionPage.absoluteURL(https, host)
     val bodyInner = common.magicLinkBody(
@@ -221,6 +218,20 @@ class NotificationService @Inject() (
       bodyHtml = Some(common.renderEmail(bodyInner))
     )
     emailsService.sendBlocking(email, EmailPriority.Urgent)
+  }
+
+  def mandatV2Generated(mandatId: Mandat.Id, user: User): Option[String] = {
+    val absoluteUrl: String =
+      routes.MandatController.mandat(mandatId.underlying).absoluteURL(https, host)
+    val bodyInner = common.mandatV2Body(absoluteUrl)
+    val email = Email(
+      subject = common.mandatV2Subject,
+      from = from,
+      replyTo = replyTo,
+      to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
+      bodyHtml = Some(common.renderEmail(bodyInner))
+    )
+    emailsService.sendBlocking(email, EmailPriority.Normal)
   }
 
   def mandatSmsSent(mandatId: Mandat.Id, user: User): Option[String] = {
@@ -371,7 +382,7 @@ class NotificationService @Inject() (
       .withAttributes(ActorAttributes.supervisionStrategy(Supervision.resumingDecider))
       // Count
       .runWith(Sink.fold(0)((acc, _) => acc + 1))
-      .map { count: Int =>
+      .map { (count: Int) =>
         eventService.info(
           User.systemUser,
           "0.0.0.0",

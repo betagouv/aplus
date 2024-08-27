@@ -1,7 +1,7 @@
 #
 # Builder image for the TS pipeline
 #
-FROM node:14-buster AS tsbuilder
+FROM node:20-bookworm AS tsbuilder
 COPY package.json /var/www/aplus/package.json
 COPY typescript /var/www/aplus/typescript/
 WORKDIR /var/www/aplus/
@@ -13,7 +13,7 @@ RUN npm run build
 # Builder image for the Scala app
 # based on https://github.com/hseeberger/scala-sbt
 #
-FROM eclipse-temurin:11-jdk AS scalabuilder
+FROM eclipse-temurin:17-jdk AS scalabuilder
 
 # We need nodejs to run in a reasonable amount of time sbt-web
 # see step `Optimizing JavaScript with RequireJS`
@@ -53,7 +53,7 @@ RUN sbt clean stage
 # Final Image
 #
 #
-FROM eclipse-temurin:11-jre
+FROM eclipse-temurin:17-jre
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends libargon2-1 \

@@ -1,6 +1,6 @@
-@import _root_.helper.MDLForms._
+@import _root_.helper.forms.MDLForms._
 @import models._
-@import models.formModels.EditProfileFormData
+@import models.forms.EditProfileFormData
 
 @(currentUser: User, currentUserRights: Authorization.UserRights)(form: Form[EditProfileFormData], email: String, groups: List[UserGroup])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 

@@ -3,7 +3,6 @@ package browser
 import org.junit.runner._
 import org.specs2.mutable._
 import org.specs2.runner._
-import play.api.test.Helpers._
 import play.api.test._
 
 @RunWith(classOf[JUnitRunner])
@@ -25,6 +24,7 @@ class HomeSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+
       val loginURL =
         controllers.routes.HomeController.status.absoluteURL(false, s"localhost:$port")
 

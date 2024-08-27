@@ -20,7 +20,7 @@ lazy val root = (project in file("."))
 
 inThisBuild(
   List(
-    scalaVersion := "2.13.9",
+    scalaVersion := "2.13.14",
     semanticdbEnabled := true, // enable SemanticDB
     semanticdbVersion := scalafixSemanticdb.revision // use Scalafix compatible version
   )
@@ -63,61 +63,112 @@ scalacOptions ++= Seq(
   "-Woctal-literal",
   // "-Wself-implicit", // Warns about too much useful constructs
   // Note: -Wunused:imports cannot work with twirl
-  // "-Wunused:imports",
+  "-Wunused:imports",
   "-Wunused:patvars",
   "-Wunused:privates",
   "-Wunused:locals",
   // "-Wunused:explicits", TODO: lot of warnings, enable later
   "-Wunused:implicits",
-  "-Wvalue-discard"
+  "-Wconf:cat=unused&src=routes/.*:s",
+  "-Wconf:cat=unused&src=twirl/.*:s",
+  "-Wvalue-discard",
+  "-Xsource:3",
+  "-Wconf:msg=method are copied from the case class constructor under Scala 3:s",
 )
 
-lazy val anormDependency = "org.playframework.anorm" %% "anorm" % "2.6.10"
+// https://typelevel.org/cats-effect/docs/getting-started
+addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+
+val anormVersion = "2.7.0"
+
+lazy val anormDependency = "org.playframework.anorm" %% "anorm" % anormVersion
+
+lazy val anormDependencies = Seq(
+  anormDependency,
+  "org.playframework.anorm" %% "anorm-postgres" % anormVersion,
+)
 
 libraryDependencies ++= Seq(
   ws,
   jdbc,
   evolutions,
-  ehcache
 )
 
 pipelineStages := Seq(digest, gzip)
 
-libraryDependencies += specs2 % Test
 libraryDependencies += guice
 
+val fs2Version = "3.10.2"
+
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.5.0",
-  anormDependency,
-  "com.typesafe.play" %% "play-mailer" % "8.0.1",
+  "org.postgresql" % "postgresql" % "42.7.4",
+  "org.playframework" %% "play-mailer" % "10.0.0",
+  "org.playframework" %% "play-json" % "3.0.4",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2",
-  // Note: we force snakeyaml version here because moultingyaml is not updated
-  "org.yaml" % "snakeyaml" % "1.32",
-  "com.github.tototoshi" %% "scala-csv" % "1.3.10",
+  "com.github.tototoshi" %% "scala-csv" % "2.0.0",
   ws,
-  "com.lihaoyi" %% "scalatags" % "0.11.1",
-  "org.typelevel" %% "cats-core" % "2.8.0",
-  // To ensure that the version of jackson that do not have
-  // known security vulnerabilities is used
-  // It is also compatible with play-json
-  // https://github.com/playframework/play-json/blob/main/build.sbt#L34
-  "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.4",
+  "com.lihaoyi" %% "scalatags" % "0.13.1",
+  "org.typelevel" %% "cats-core" % "2.12.0",
+  "org.typelevel" %% "cats-effect" % "3.5.4",
+  "co.fs2" %% "fs2-core" % fs2Version,
+  "co.fs2" %% "fs2-io" % fs2Version,
+  "io.laserdisc" %% "fs2-aws-s3" % "6.1.3",
   // Needs the C library to be installed
   "de.mkammerer" % "argon2-jvm-nolibs" % "2.11",
 )
 
+libraryDependencies ++= anormDependencies
+
 // UI
 libraryDependencies ++= Seq(
-  "org.webjars" %% "webjars-play" % "2.8.13",
+  "org.webjars" %% "webjars-play" % "3.0.1",
   "org.webjars.bower" % "material-design-lite" % "1.3.0",
   "org.webjars" % "material-design-icons" % "4.0.0",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
-  "org.webjars" % "chartjs" % "2.9.4",
-  "org.webjars" % "font-awesome" % "6.1.2",
+  "org.webjars" % "font-awesome" % "6.5.2",
 )
+
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "6.4.2"
+libraryDependencies += "io.sentry" % "sentry-logback" % "7.14.0"
+
+// Test
+libraryDependencies ++= Seq(
+  specs2 % Test, // Play Plugin
+  "org.specs2" %% "specs2-scalacheck" % "4.20.8" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.18.0" % Test,
+  "org.typelevel" %% "cats-effect-testing-specs2" % "1.5.0" % Test,
+)
+
+// Overrides
+dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
+
+// Note: we force snakeyaml version here because moultingyaml is not updated
+dependencyOverrides += "org.yaml" % "snakeyaml" % "1.33"
+
+// Jackson CVE fix
+// https://github.com/playframework/playframework/discussions/11222
+val jacksonVersion = "2.14.3"
+val jacksonDatabindVersion = "2.14.3"
+
+val jacksonOverrides = Seq(
+  "com.fasterxml.jackson.core" % "jackson-core",
+  "com.fasterxml.jackson.core" % "jackson-annotations",
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8",
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310"
+).map(_ % jacksonVersion)
+
+val jacksonDatabindOverrides = Seq(
+  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonDatabindVersion
+)
+
+val akkaSerializationJacksonOverrides = Seq(
+  "com.fasterxml.jackson.dataformat" % "jackson-dataformat-cbor",
+  "com.fasterxml.jackson.module" % "jackson-module-parameter-names",
+  "com.fasterxml.jackson.module" %% "jackson-module-scala",
+).map(_ % jacksonVersion)
+
+libraryDependencies ++= jacksonDatabindOverrides ++ jacksonOverrides ++ akkaSerializationJacksonOverrides
 
 // Adds additional packages into Twirl
 TwirlKeys.templateImports += "constants.Constants"
@@ -175,6 +226,7 @@ def NpmWatch(base: File) = {
   import scala.sys.process.Process
 
   object NpmWatch {
+
     def apply(base: File): PlayRunHook = {
 
       object NpmProcess extends PlayRunHook {
@@ -196,6 +248,7 @@ def NpmWatch(base: File) = {
 
       NpmProcess
     }
+
   }
 
   NpmWatch(base)

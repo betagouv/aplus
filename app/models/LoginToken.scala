@@ -1,10 +1,8 @@
 package models
 
+import helper.Time
 import java.time.ZonedDateTime
 import java.util.UUID
-
-import helper.Time
-
 import scala.util.Random
 
 case class LoginToken(
@@ -14,7 +12,7 @@ case class LoginToken(
     expirationDate: ZonedDateTime,
     ipAddress: String
 ) {
-  lazy val isActive = expirationDate.isAfter(Time.nowParis())
+  lazy val isActive: Boolean = expirationDate.isAfter(Time.nowParis())
 }
 
 object LoginToken {
@@ -26,7 +24,7 @@ object LoginToken {
     case class Signup(signupId: UUID) extends Origin
   }
 
-  def forSignupId(signupId: UUID, expirationInMinutes: Int, ipAddress: String) =
+  def forSignupId(signupId: UUID, expirationInMinutes: Int, ipAddress: String): LoginToken =
     LoginToken(
       Random.alphanumeric.take(20).mkString,
       Origin.Signup(signupId),
@@ -35,7 +33,7 @@ object LoginToken {
       ipAddress
     )
 
-  def forUserId(userId: UUID, expirationInMinutes: Int, ipAddress: String) =
+  def forUserId(userId: UUID, expirationInMinutes: Int, ipAddress: String): LoginToken =
     LoginToken(
       Random.alphanumeric.take(20).mkString,
       Origin.User(userId),
@@ -43,5 +41,10 @@ object LoginToken {
       Time.nowParis().plusMinutes(expirationInMinutes.toLong),
       ipAddress
     )
+
+  private val tokenIsValidRegex = "^[a-zA-Z0-9]{20}$".r
+
+  def isValid(rawToken: String): Boolean =
+    tokenIsValidRegex.matches(rawToken)
 
 }

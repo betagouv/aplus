@@ -1,10 +1,10 @@
 package views
 
 import controllers.routes.UserController
-import helpers.forms.CSRFInput
 import models.User
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
+import views.helpers.forms.CSRFInput
 
 object user {
 

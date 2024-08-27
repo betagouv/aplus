@@ -6,16 +6,16 @@
 @main(user, currentUserRights)(s"Gestion des territoires"){
 
 }{
-    <div class="mdl-cell mdl-cell--12-col pem-container mdl-grid">
+    <div class="mdl-cell mdl-cell--12-col mdl-grid">
         @for(area <- Area.all.filter(area => user.areas.contains[UUID](area.id))) {
-        <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table pem-table mdl-shadow--2dp" style="white-space: normal;">
+        <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table mdl-shadow--2dp" style="white-space: normal;">
             <thead>
                 <tr>
                     <th class="mdl-data-table__cell--non-numeric">
                         @area.name
                         @if(user.admin) { /
                             @area.id /
-                            @if(mainInfos.config.areasWithLoginByKey.contains[UUID](area.id)) {
+                            @if(mainInfos.config.insecureAreasWithLoginByKey.contains[UUID](area.id)) {
                                 <i class="material-icons">warning</i> Login par clé possible<i class="material-icons">warning</i> /
                             }
                             <a href="@routes.ApplicationController.applicationsAdmin?areaId=@area.id" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--raised">

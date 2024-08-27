@@ -45,7 +45,7 @@ object Error {
       underlying: Throwable,
       unsafeData: Option[String]
   ) extends Error {
-    override val underlyingException = Some(underlying)
+    override val underlyingException: Option[Throwable] = Some(underlying)
   }
 
   case class UnexpectedServerResponse(
@@ -55,7 +55,7 @@ object Error {
       underlying: Throwable,
       unsafeData: Option[String]
   ) extends Error {
-    override val underlyingException = Some(underlying)
+    override val underlyingException: Option[Throwable] = Some(underlying)
   }
 
   case class Timeout(
@@ -64,7 +64,7 @@ object Error {
       underlying: Throwable,
       unsafeData: Option[String]
   ) extends Error {
-    override val underlyingException = Some(underlying)
+    override val underlyingException: Option[Throwable] = Some(underlying)
   }
 
   case class MiscException(
@@ -73,7 +73,7 @@ object Error {
       underlying: Throwable,
       unsafeData: Option[String]
   ) extends Error {
-    override val underlyingException = Some(underlying)
+    override val underlyingException: Option[Throwable] = Some(underlying)
   }
 
 }

@@ -12,6 +12,7 @@ case class FileMetadata(
     filesize: Int,
     status: FileMetadata.Status,
     attached: FileMetadata.Attached,
+    encryptionKeyId: Option[String],
 )
 
 object FileMetadata {
@@ -41,7 +42,7 @@ object FileMetadata {
     case class Application(id: UUID) extends Attached {
       val isApplication = true
       val isAnswer = false
-      val answerIdOpt = none
+      val answerIdOpt = none[UUID]
     }
 
     case class Answer(applicationId: UUID, answerId: UUID) extends Attached {

@@ -7,7 +7,6 @@ import models.{Application, Area, LoginToken, User, UserGroup}
 import org.junit.runner._
 import org.specs2.mutable._
 import org.specs2.runner._
-import play.api.test.Helpers._
 import play.api.test._
 import services.{ApplicationService, TokenService, UserGroupService, UserService}
 
@@ -65,7 +64,11 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       disabled = false,
       expert = isExpert,
       cguAcceptationDate = Some(Time.nowParis()),
+      firstLoginDate = None,
       groupIds = groups.map(_.id),
+      observableOrganisationIds = Nil,
+      managingOrganisationIds = Nil,
+      managingAreaIds = Nil,
       internalSupportComment = None,
       passwordActivated = false,
     )
@@ -86,6 +89,8 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       creationDate = Time.nowParis(),
       creatorUserName = user.nameWithQualite,
       creatorUserId = user.id,
+      creatorGroupId = None,
+      creatorGroupName = None,
       subject = s"Sujet de la demande (aidant ${user.name})",
       description = s"John a un problème (aidant ${user.name})",
       userInfos = Map("Prénom" -> "John", "Nom de famille" -> "Doe", "Date de naissance" -> "1988"),
