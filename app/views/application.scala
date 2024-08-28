@@ -23,6 +23,16 @@ import views.helpers.forms.CSRFInput
 
 object application {
 
+  def applicationSentSuccessMessage(applicationId: UUID): Tag =
+    span(
+      "Votre demande a bien été envoyée. Vous pouvez la consulter ",
+      a(href := ApplicationController.show(applicationId).url, "en cliquant ici"),
+      ". Celle-ci n’est plus modifiable, cependant il vous est toujours possible d’envoyer un message pour apporter une précision ou corriger une erreur. ",
+      "Pour créer une nouvelle demande, vous pouvez ",
+      a(href := ApplicationController.create.url, "cliquer sur ce lien"),
+      " ou cliquer sur le bouton « Créer une demande »."
+    )
+
   def applicationFilesLinks(
       files: List[FileMetadata],
       application: Application,
