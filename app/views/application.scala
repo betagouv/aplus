@@ -346,12 +346,16 @@ object application {
                   application.creatorUserId === currentUser.id &&
                   !application.closed &&
                   (answer.creatorUserID =!= currentUser.id)
+              val showGenericApplicationProcessed =
+                answer.answerType === Answer.AnswerType.ApplicationProcessed &&
+                  !showArchiveButton
               val messageHasInfos =
                 // Note: always true for admins "** Message de 0 caractères **"
                 answer.message.nonEmpty ||
                   answer.declareApplicationHasIrrelevant ||
                   answer.userInfos.getOrElse(Map.empty).nonEmpty ||
-                  showArchiveButton
+                  showArchiveButton ||
+                  showGenericApplicationProcessed
               frag(
                 answerFilesLinks(
                   attachments,
@@ -475,7 +479,16 @@ object application {
                               br,
                               br
                             )
-                          )
+                          ),
+                        showGenericApplicationProcessed.some
+                          .filter(identity)
+                          .map(_ =>
+                            div(
+                              cls := "info-box",
+                              answer.creatorUserName,
+                              " a indiqué avoir traité la demande.",
+                            )
+                          ),
                       )
                     )
                   )
