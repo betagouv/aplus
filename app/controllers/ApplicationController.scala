@@ -1801,8 +1801,9 @@ case class ApplicationController @Inject() (
                     applicationId = application.id.some
                   )
                 val successMessage =
-                  s"""|La demande "${application.subject}" a bien été archivée. 
-                    |Bravo et merci pour la résolution de cette demande !""".stripMargin
+                  s"""La demande "${application.subject}" a bien été archivée. """ +
+                  "Bravo et merci pour la résolution de cette demande ! " +
+                  "Cette demande sera encore consultable un mois à partir de maintenant dans la colonne « Archivées »"
                 Future(
                   Redirect(routes.ApplicationController.myApplications)
                     .flashing(success -> successMessage)
