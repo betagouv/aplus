@@ -13,24 +13,27 @@ class HomeSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
-      val homeUrl = controllers.routes.HomeController.index.absoluteURL(false, s"localhost:$port")
+      override def running() = {
+        val homeUrl = controllers.routes.HomeController.index.absoluteURL(false, s"localhost:$port")
 
-      browser.goTo(homeUrl)
+        browser.goTo(homeUrl)
 
-      browser.url must endWith(controllers.routes.HomeController.index.url.substring(1))
+        browser.url must endWith(controllers.routes.HomeController.index.url.substring(1))
+      }
     }
 
     "Status up" in new WithBrowser(
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      override def running() = {
+        val loginURL =
+          controllers.routes.HomeController.status.absoluteURL(false, s"localhost:$port")
 
-      val loginURL =
-        controllers.routes.HomeController.status.absoluteURL(false, s"localhost:$port")
+        browser.goTo(loginURL)
 
-      browser.goTo(loginURL)
-
-      browser.pageSource must contain("OK")
+        browser.pageSource must contain("OK")
+      }
     }
   }
 }

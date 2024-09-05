@@ -21,7 +21,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
-      applicationAccessTest(app, browser, port, "instructor-test", shouldExpectAnError = false)
+      override def running() =
+        applicationAccessTest(app, browser, port, "instructor-test", shouldExpectAnError = false)
     }
   }
 
@@ -30,13 +31,14 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
-      applicationAccessTest(
-        app,
-        browser,
-        port,
-        "instructor-test-unrelated",
-        shouldExpectAnError = true
-      )
+      override def running() =
+        applicationAccessTest(
+          app,
+          browser,
+          port,
+          "instructor-test-unrelated",
+          shouldExpectAnError = true
+        )
     }
   }
 
@@ -45,7 +47,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
-      applicationAccessTest(app, browser, port, "helper-test", shouldExpectAnError = false)
+      override def running() =
+        applicationAccessTest(app, browser, port, "helper-test", shouldExpectAnError = false)
     }
   }
 
@@ -54,7 +57,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
-      applicationAccessTest(app, browser, port, "helper-test-friend", shouldExpectAnError = false)
+      override def running() =
+        applicationAccessTest(app, browser, port, "helper-test-friend", shouldExpectAnError = false)
     }
   }
 
@@ -63,7 +67,14 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
-      applicationAccessTest(app, browser, port, "helper-test-unrelated", shouldExpectAnError = true)
+      override def running() =
+        applicationAccessTest(
+          app,
+          browser,
+          port,
+          "helper-test-unrelated",
+          shouldExpectAnError = true
+        )
     }
   }
 
@@ -72,7 +83,14 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
-      applicationAccessTest(app, browser, port, "expert-test-unrelated", shouldExpectAnError = true)
+      override def running() =
+        applicationAccessTest(
+          app,
+          browser,
+          port,
+          "expert-test-unrelated",
+          shouldExpectAnError = true
+        )
     }
   }
 
@@ -81,7 +99,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
-      applicationAccessTest(app, browser, port, "helper-test-manager", shouldExpectAnError = true)
+      override def running() =
+        applicationAccessTest(app, browser, port, "helper-test-manager", shouldExpectAnError = true)
     }
   }
 
