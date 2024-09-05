@@ -9,6 +9,7 @@ import org.specs2.mutable._
 import org.specs2.runner._
 import org.specs2.specification.BeforeAfterAll
 import play.api.test._
+import scala.annotation.nowarn
 import services.{TokenService, UserService}
 
 @RunWith(classOf[JUnitRunner])
@@ -54,6 +55,7 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
       override def running() =
         "email" | "result" |
           "julien.dauphant.test" + "@beta.gouv.fr" ! "Consultez vos e-mails" |
@@ -76,6 +78,7 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
       override def running() = {
         val tokenService = app.injector.instanceOf[TokenService]
         val loginToken = LoginToken.forUserId(existingUser.id, 5, "127.0.0.1")
@@ -99,6 +102,7 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
       override def running() = {
         val tokenService = app.injector.instanceOf[TokenService]
 
@@ -124,6 +128,7 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
       override def running() = {
         val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
           .absoluteURL(false, s"localhost:$port")

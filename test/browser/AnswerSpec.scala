@@ -8,6 +8,7 @@ import org.junit.runner._
 import org.specs2.mutable._
 import org.specs2.runner._
 import play.api.test._
+import scala.annotation.nowarn
 import services.{ApplicationService, TokenService, UserGroupService, UserService}
 
 @RunWith(classOf[JUnitRunner])
@@ -111,6 +112,7 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
       override def running() = {
         "userCodeName" |
           "instructor-test" |

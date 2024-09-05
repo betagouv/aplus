@@ -8,6 +8,7 @@ import org.specs2.matcher.MatchResult
 import org.specs2.mutable._
 import org.specs2.runner._
 import play.api.test._
+import scala.annotation.nowarn
 import services._
 
 /** Tests are broken as unit instead of using tables to allow the CI to pass those tests (doesn't
@@ -21,6 +22,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
       override def running() =
         applicationAccessTest(app, browser, port, "instructor-test", shouldExpectAnError = false)
     }
@@ -31,6 +33,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
       override def running() =
         applicationAccessTest(
           app,
@@ -47,6 +50,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
       override def running() =
         applicationAccessTest(app, browser, port, "helper-test", shouldExpectAnError = false)
     }
@@ -57,6 +61,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
       override def running() =
         applicationAccessTest(app, browser, port, "helper-test-friend", shouldExpectAnError = false)
     }
@@ -67,6 +72,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
       override def running() =
         applicationAccessTest(
           app,
@@ -83,6 +89,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
       override def running() =
         applicationAccessTest(
           app,
@@ -99,6 +106,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
       override def running() =
         applicationAccessTest(app, browser, port, "helper-test-manager", shouldExpectAnError = true)
     }

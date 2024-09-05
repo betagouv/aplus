@@ -7,6 +7,7 @@ import org.junit.runner._
 import org.specs2.mutable._
 import org.specs2.runner._
 import play.api.test._
+import scala.annotation.nowarn
 import services.{ApplicationService, TokenService, UserGroupService, UserService}
 
 @RunWith(classOf[JUnitRunner])
@@ -17,6 +18,7 @@ class ApplicationSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
       override def running() = {
         val tokenService = app.injector.instanceOf[TokenService]
         val userService = app.injector.instanceOf[UserService]

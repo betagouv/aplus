@@ -4,6 +4,7 @@ import org.junit.runner._
 import org.specs2.mutable._
 import org.specs2.runner._
 import play.api.test._
+import scala.annotation.nowarn
 
 @RunWith(classOf[JUnitRunner])
 class HomeSpec extends Specification with BaseSpec {
@@ -13,6 +14,7 @@ class HomeSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
       override def running() = {
         val homeUrl = controllers.routes.HomeController.index.absoluteURL(false, s"localhost:$port")
 
@@ -26,6 +28,7 @@ class HomeSpec extends Specification with BaseSpec {
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
       override def running() = {
         val loginURL =
           controllers.routes.HomeController.status.absoluteURL(false, s"localhost:$port")
