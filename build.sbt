@@ -43,7 +43,7 @@ scalacOptions ++= Seq(
   // TODO:  3.3.4 should have the src filter
   // https://github.com/scala/scala3/pull/21087/files
   // https://github.com/playframework/playframework/issues/6302
-    // "-Wunused:imports", // gives non useful warns due to twirl
+  // "-Wunused:imports", // gives non useful warns due to twirl
   "-Wunused:privates",
   "-Wunused:locals",
   // "-Wunused:explicits", // TODO: lot of warnings, enable later
