@@ -28,7 +28,15 @@ import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.i18n.I18nSupport
-import play.api.mvc.{Action, AnyContent, Call, InjectedController, RequestHeader, Result}
+import play.api.mvc.{
+  Action,
+  AnyContent,
+  BaseController,
+  Call,
+  ControllerComponents,
+  RequestHeader,
+  Result
+}
 import play.libs.ws.WSClient
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
@@ -39,6 +47,7 @@ import views.editMyGroups.UserInfos
 case class GroupController @Inject() (
     applicationService: ApplicationService,
     config: AppConfig,
+    val controllerComponents: ControllerComponents,
     dependencies: ServicesDependencies,
     eventService: EventService,
     groupService: UserGroupService,
@@ -46,7 +55,7 @@ case class GroupController @Inject() (
     userService: UserService,
     ws: WSClient,
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
-    extends InjectedController
+    extends BaseController
     with I18nSupport
     with Operators.Common
     with GroupOperators
@@ -253,7 +262,7 @@ case class GroupController @Inject() (
             )
             Future(Unauthorized("Le groupe est utilisé."))
           } else {
-            groupService.deleteById(groupId)
+            val _ = groupService.deleteById(groupId)
             eventService.log(
               UserGroupDeleted,
               "Groupe supprimé",

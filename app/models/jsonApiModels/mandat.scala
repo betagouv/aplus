@@ -1,6 +1,7 @@
 package models.jsonApiModels
 
 import constants.Constants
+import helper.MiscHelpers.toTuple
 import helper.StringHelper
 import java.util.UUID
 import models.{Error, Mandat}
@@ -61,7 +62,7 @@ object mandat {
       .and((JsPath \ "birthDate").format[String](birthdateValidator))
       .and((JsPath \ "phoneNumber").format[String](phoneValidator))(
         SmsMandatInitiation.apply,
-        unlift(SmsMandatInitiation.unapply)
+        toTuple
       )
 
   /** Normalize and validate all fields for security. */

@@ -18,7 +18,7 @@ import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.i18n.I18nSupport
-import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result}
+import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents, Request, Result}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 import serializers.Keys
@@ -34,6 +34,7 @@ import services.{
 @Singleton
 case class SignupController @Inject() (
     config: AppConfig,
+    val controllerComponents: ControllerComponents,
     dependencies: ServicesDependencies,
     eventService: EventService,
     groupService: UserGroupService,
@@ -42,7 +43,7 @@ case class SignupController @Inject() (
     signupService: SignupService,
     userService: UserService,
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
-    extends InjectedController
+    extends BaseController
     with I18nSupport
     with Operators.Common
     with UserOperators {

@@ -1,7 +1,6 @@
 package helper
 
 import cats.data.NonEmptyList
-import cats.syntax.all._
 import helper.MiscHelpers.chooseByFrequency
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
@@ -13,6 +12,8 @@ class MiscHelpersSpec extends Specification {
 
   "chooseByFrequency should" >> {
     "pick elements with probability equal to their weight / sum(weights)" >> {
+      import cats.syntax.all.catsSyntaxEq
+
       val elements = NonEmptyList.of(
         (1.0, "el1"),
         (3.0, "el2")

@@ -159,6 +159,8 @@ object messageThread {
                     ),
                   )
                 )
+              } else {
+                frag()
               },
               hr(cls := "aplus-hr-in-card--top-margin"),
               div(cls := "aplus-spacer fr_card__container")(
@@ -180,6 +182,8 @@ object messageThread {
               )
             )
           )
+        } else {
+          frag()
         }
       ),
       inviteForm.modal(application, currentUser)
@@ -239,6 +243,8 @@ object messageThread {
           )
         } else
           s"${metadata.filename}"
+      } else {
+        frag()
       }
 
     div(

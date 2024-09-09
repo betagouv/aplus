@@ -7,19 +7,20 @@ import models._
 import models.EventType.{AllAreaUnauthorized, DeploymentDashboardUnauthorized}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
-import play.api.mvc.{Action, AnyContent, InjectedController}
+import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents}
 import scala.concurrent.{ExecutionContext, Future}
 import services.{EventService, UserGroupService, UserService}
 
 @Singleton
 case class AreaController @Inject() (
     config: AppConfig,
+    val controllerComponents: ControllerComponents,
     loginAction: LoginAction,
     eventService: EventService,
     userService: UserService,
     userGroupService: UserGroupService,
 )(implicit ec: ExecutionContext, val webJarsUtil: WebJarsUtil)
-    extends InjectedController
+    extends BaseController
     with Operators.Common
     with UserOperators {
 

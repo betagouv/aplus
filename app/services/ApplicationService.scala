@@ -394,7 +394,7 @@ class ApplicationService @Inject() (
       """.as(SqlParser.scalar[Int].singleOpt)
       val answerOrder: Int = lastOrder.map(_ + 1).getOrElse(1)
       val answerRow = AnswerRow.fromAnswer(answer, answerOrder)
-      SQL"""
+      val _ = SQL"""
         INSERT INTO answer (
           id,
           application_id,

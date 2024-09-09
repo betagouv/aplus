@@ -10,7 +10,7 @@ import models.{Authorization, EventType, LoginToken, User}
 import models.EventType.{GenerateToken, UnknownEmail}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
-import play.api.mvc.{Action, AnyContent, InjectedController, Request}
+import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents, Request}
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
 import services.{
@@ -26,6 +26,7 @@ import views.home.LoginPanel
 @Singleton
 class LoginController @Inject() (
     val config: AppConfig,
+    val controllerComponents: ControllerComponents,
     dependencies: ServicesDependencies,
     userService: UserService,
     notificationService: NotificationService,
@@ -33,7 +34,7 @@ class LoginController @Inject() (
     eventService: EventService,
     signupService: SignupService
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
-    extends InjectedController
+    extends BaseController
     with Operators.Common {
 
   import dependencies.ioRuntime
@@ -129,7 +130,7 @@ class LoginController @Inject() (
   )(implicit request: Request[AnyContent]) = {
     // Note: we have a small race condition here
     //       this should be OK almost always
-    tokenService.create(token)
+    val _ = tokenService.create(token)
     // Here we want to redirect some users to more useful pages:
     // observer => /stats
     val path: String = {
