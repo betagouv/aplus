@@ -105,7 +105,7 @@ libraryDependencies += "io.sentry" % "sentry-logback" % "7.14.0"
 // Test
 libraryDependencies ++= Seq(
   specs2 % Test, // Play Plugin
-  "org.specs2" %% "specs2-scalacheck" % "4.20.8" % Test,
+  "org.specs2" %% "specs2-scalacheck" % "5.5.3" % Test,
   "org.scalacheck" %% "scalacheck" % "1.18.0" % Test,
   "org.typelevel" %% "cats-effect-testing-specs2" % "1.5.0" % Test,
 )
