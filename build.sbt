@@ -70,7 +70,7 @@ pipelineStages := Seq(digest, gzip)
 
 libraryDependencies += guice
 
-val fs2Version = "3.10.2"
+val fs2Version = "3.11.0"
 
 libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.7.4",
