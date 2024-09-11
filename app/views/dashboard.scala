@@ -97,7 +97,9 @@ object dashboard {
                       "Validation de compte"
                     )
                   )
-                ),
+                )
+              else
+                frag(),
               if (infos.groupInfos.nonEmpty)
                 (
                   table(cls := "fr-table fr-table--striped fr-table--compact")(

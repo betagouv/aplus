@@ -100,7 +100,7 @@ object main {
       additionalHeadTags: Frag,
       additionalFooterTags: Frag
   ): Tag =
-    html(lang := "fr", attr("data-fr-scheme") := "system")(
+    scalatags.Text.all.html(lang := "fr", attr("data-fr-scheme") := "system")(
       head(
         meta(charset := "utf-8"),
         meta(name := "format-detection", attr("content") := "telephone=no"),

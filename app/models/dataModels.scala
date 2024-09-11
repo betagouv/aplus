@@ -4,6 +4,7 @@ import anorm.{Column, SqlMappingError, ToStatement}
 import anorm.postgresql.{jsValueColumn, jsValueToStatement}
 import cats.syntax.all._
 import helper.{PlayFormHelpers, Time}
+import helper.MiscHelpers.toTuple
 import java.time.{Instant, ZonedDateTime}
 import java.util.UUID
 import models.Answer
@@ -46,7 +47,7 @@ object dataModels {
 
       implicit val seenByUserWrites: Writes[SeenByUser] = (__ \ "user_id")
         .write[UUID]
-        .and((__ \ "last_seen_date").write[Instant])(unlift(models.Application.SeenByUser.unapply))
+        .and((__ \ "last_seen_date").write[Instant])(toTuple[SeenByUser])
 
     }
 
@@ -224,14 +225,14 @@ object dataModels {
         .format[Sms.ApiId]
         .and((JsPath \ "creationDate").format[ZonedDateTime])
         .and((JsPath \ "recipient").format[Sms.PhoneNumber])
-        .and((JsPath \ "body").format[String])(Sms.Outgoing.apply, unlift(Sms.Outgoing.unapply))
+        .and((JsPath \ "body").format[String])(Sms.Outgoing.apply, toTuple)
 
     private val smsIncomingFormat: Format[Sms.Incoming] =
       (JsPath \ "apiId")
         .format[Sms.ApiId]
         .and((JsPath \ "creationDate").format[ZonedDateTime])
         .and((JsPath \ "originator").format[Sms.PhoneNumber])
-        .and((JsPath \ "body").format[String])(Sms.Incoming.apply, unlift(Sms.Incoming.unapply))
+        .and((JsPath \ "body").format[String])(Sms.Incoming.apply, toTuple)
 
     implicit val smsApiReads: Reads[Sms] =
       (JsPath \ "tag").read[String].flatMap {

@@ -37,4 +37,17 @@ object MiscHelpers {
     randomElement.getOrElse(elements.last._2)
   }
 
+  /** This method replace .unapply usage in Play forms and json formats which want the Scala 2
+    * syntax. This is due to Scala 3 .unapply behaving differently from Scala 2.
+    */
+  def toTupleOpt[P <: Product](p: P)(using
+      m: scala.deriving.Mirror.ProductOf[P]
+  ): Option[m.MirroredElemTypes] =
+    Some(Tuple.fromProductTyped(p))
+
+  def toTuple[P <: Product](p: P)(using
+      m: scala.deriving.Mirror.ProductOf[P]
+  ): m.MirroredElemTypes =
+    Tuple.fromProductTyped(p)
+
 }

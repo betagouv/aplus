@@ -44,7 +44,16 @@ import play.api.data._
 import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
-import play.api.mvc.{Action, AnyContent, Call, InjectedController, RequestHeader, Result, Session}
+import play.api.mvc.{
+  Action,
+  AnyContent,
+  BaseController,
+  Call,
+  ControllerComponents,
+  RequestHeader,
+  Result,
+  Session
+}
 import play.twirl.api.Html
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -69,6 +78,7 @@ import services.{
 }
 import views.applications.myApplications.MyApplicationInfos
 import views.dashboard.DashboardInfos
+import views.helpers.forms.flashSuccessRawHtmlKey
 
 /** This controller creates an `Action` to handle HTTP requests to the application's home page.
   */
@@ -77,6 +87,7 @@ case class ApplicationController @Inject() (
     applicationService: ApplicationService,
     businessDaysService: BusinessDaysService,
     config: AppConfig,
+    val controllerComponents: ControllerComponents,
     dependencies: ServicesDependencies,
     eventService: EventService,
     fileService: FileService,
@@ -88,7 +99,7 @@ case class ApplicationController @Inject() (
     userService: UserService,
     ws: WSClient,
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
-    extends InjectedController
+    extends BaseController
     with I18nSupport
     with Operators.Common
     with Operators.ApplicationOperators
@@ -415,7 +426,11 @@ case class ApplicationController @Inject() (
                         removeSharedAccountUserSignature(request.session)
                       )(signature => saveSharedAccountUserSignature(request.session, signature))
                     )
-                    .flashing(success -> "Votre demande a bien été envoyée")
+                    .flashing(
+                      flashSuccessRawHtmlKey -> views.application
+                        .applicationSentSuccessMessage(applicationId)
+                        .toString
+                    )
                 } else {
                   eventService.log(
                     EventType.ApplicationCreationError,
@@ -616,7 +631,8 @@ case class ApplicationController @Inject() (
               views.applications.myApplicationsLegacy
                 .page(user, userRights, filteredByStatus.map(_.application), userGroups, infos)
             )
-        ).withHeaders(CACHE_CONTROL -> "no-store")
+        )
+        .withHeaders(CACHE_CONTROL -> "no-store")
     }
 
   private def applicationBoardInfos(
@@ -1125,7 +1141,8 @@ case class ApplicationController @Inject() (
          }
        }
        coworkers.combine(instructorsCoworkers)
-     }).map(
+     })
+    .map(
       _.filterNot(user =>
         user.id === request.currentUser.id || application.invitedUsers.contains(user.id)
       )
@@ -1796,8 +1813,9 @@ case class ApplicationController @Inject() (
                     applicationId = application.id.some
                   )
                 val successMessage =
-                  s"""|La demande "${application.subject}" a bien été archivée. 
-                    |Bravo et merci pour la résolution de cette demande !""".stripMargin
+                  s"""La demande « ${application.subject} » a bien été archivée. """ +
+                    "Bravo et merci pour la résolution de cette demande ! " +
+                    "Cette demande sera encore consultable un mois à partir de maintenant dans la colonne « Archivées »"
                 Future(
                   Redirect(routes.ApplicationController.myApplications)
                     .flashing(success -> successMessage)

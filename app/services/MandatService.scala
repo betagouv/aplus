@@ -158,7 +158,7 @@ class MandatService @Inject() (
         val id = UUID.randomUUID()
         val now = Time.nowParis()
         db.withTransaction { implicit connection =>
-          SQL"""
+          val _ = SQL"""
           INSERT INTO mandat (
             id,
             version,
@@ -237,8 +237,8 @@ class MandatService @Inject() (
     Future(
       Try(
         db.withConnection { implicit connection =>
-          val smsJson: JsValue = Json.toJson(sms)
-          SQL"""UPDATE mandat
+          val smsJson = Json.toJson(sms)
+          val _ = SQL"""UPDATE mandat
             SET sms_thread = sms_thread || $smsJson::jsonb
             WHERE id = ${id.underlying}::uuid
          """
@@ -284,7 +284,7 @@ class MandatService @Inject() (
               )
             case Some(mandat) =>
               val smsJson = Json.toJson(sms: Sms)
-              SQL"""UPDATE mandat
+              val _ = SQL"""UPDATE mandat
                     SET sms_thread = sms_thread || $smsJson::jsonb,
                         sms_thread_closed = true
                     WHERE usager_phone_local = $localPhone

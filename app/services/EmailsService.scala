@@ -111,7 +111,7 @@ class EmailsService @Inject() (
       val host = pickers match {
         case None =>
           val finalEmail = emailWithText.copy(headers = email.headers ++ defaultHeaders)
-          defaultSMTP.send(finalEmail)
+          val _ = defaultSMTP.send(finalEmail)
           defaultSMTPConfig.host
         case Some(pickers) =>
           val picker = priority match {
@@ -120,7 +120,7 @@ class EmailsService @Inject() (
           }
           val smtp = picker.choose()
           val finalEmail = emailWithText.copy(headers = email.headers ++ smtp.extraHeaders)
-          smtp.mailer.send(finalEmail)
+          val _ = smtp.mailer.send(finalEmail)
           smtp.config.host
       }
       log.info(s"Email sent to ${email.to.mkString(", ")} via $host")

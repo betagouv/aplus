@@ -3,6 +3,7 @@ package controllers
 import actions.LoginAction
 import cats.syntax.all._
 import controllers.Operators.{GroupOperators, UserOperators}
+import helper.MiscHelpers.toTupleOpt
 import helper.PlayFormHelpers.{inOption, normalizedOptionalText, normalizedText}
 import helper.StringHelper._
 import helper.Time
@@ -33,7 +34,8 @@ import org.webjars.play.WebJarsUtil
 import play.api.data.{Form, Mapping}
 import play.api.data.Forms._
 import play.api.data.validation.Constraints.{maxLength, nonEmpty}
-import play.api.mvc.{Action, AnyContent, InjectedController}
+import play.api.i18n.I18nSupport
+import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents}
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.UserAndGroupCsvSerializer
 import serializers.UserAndGroupCsvSerializer.UserGroupBlock
@@ -41,14 +43,15 @@ import services.{EventService, NotificationService, UserGroupService, UserServic
 
 case class CSVImportController @Inject() (
     config: AppConfig,
+    val controllerComponents: ControllerComponents,
     loginAction: LoginAction,
     userService: UserService,
     groupService: UserGroupService,
     notificationsService: NotificationService,
     eventService: EventService
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
-    extends InjectedController
-    with play.api.i18n.I18nSupport
+    extends BaseController
+    with I18nSupport
     with Operators.Common
     with UserOperators
     with GroupOperators {
@@ -171,7 +174,7 @@ case class CSVImportController @Inject() (
       "instructor" -> boolean,
       "groupAdmin" -> boolean,
       "phoneNumber" -> normalizedOptionalText
-    )(CSVReviewUserFormData.apply)(CSVReviewUserFormData.unapply)
+    )(CSVReviewUserFormData.apply)(toTupleOpt)
 
   private def groupImportMapping(date: ZonedDateTime): Mapping[UserGroup] =
     mapping(
@@ -195,7 +198,7 @@ case class CSVImportController @Inject() (
       "email" -> optional(email),
       "publicNote" -> ignored(Option.empty[String]),
       "internalSupportComment" -> ignored(Option.empty[String])
-    )(UserGroup.apply)(UserGroup.unapply)
+    )(UserGroup.apply)(toTupleOpt)
 
   private def importUsersAfterReviewForm(date: ZonedDateTime): Form[List[CSVUserGroupFormData]] =
     Form(
@@ -210,12 +213,12 @@ case class CSVImportController @Inject() (
                 "alreadyExists" -> boolean,
                 "alreadyExistingUser" -> ignored(Option.empty[User]),
                 "isInMoreThanOneGroup" -> optional(boolean)
-              )(CSVUserFormData.apply)(CSVUserFormData.unapply)
+              )(CSVUserFormData.apply)(toTupleOpt)
             ),
             "alreadyExistsOrAllUsersAlreadyExist" -> boolean,
             "doNotInsert" -> boolean,
             "alreadyExistingGroup" -> ignored(Option.empty[UserGroup])
-          )(CSVUserGroupFormData.apply)(CSVUserGroupFormData.unapply)
+          )(CSVUserGroupFormData.apply)(toTupleOpt)
         )
       )
     )
@@ -438,7 +441,7 @@ case class CSVImportController @Inject() (
                         },
                         { _ =>
                           usersToInsert.foreach { user =>
-                            notificationsService.newUser(user)
+                            val _ = notificationsService.newUser(user)
                             eventService.log(
                               UserCreated,
                               "Utilisateur ajouté",

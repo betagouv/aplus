@@ -350,7 +350,8 @@ class AgentConnectService @Inject() (
     for {
       now <- EitherT.right(IO.realTimeInstant)
       provider <- providerConfigurationRequest
-      (jwkSet, keyLocator) <- jwksRequest(provider.jwksUri)
+      jwks <- jwksRequest(provider.jwksUri)
+      (jwkSet, keyLocator) = jwks
     } yield DiscoveryMetadata(
       fetchTime = now,
       provider = provider,

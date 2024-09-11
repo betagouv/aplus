@@ -9,6 +9,7 @@ import org.specs2.mutable._
 import org.specs2.runner._
 import org.specs2.specification.BeforeAfterAll
 import play.api.test._
+import scala.annotation.nowarn
 import services.{TokenService, UserService}
 
 @RunWith(classOf[JUnitRunner])
@@ -54,41 +55,46 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
-      "email" | "result" |
-        "julien.dauphant.test" + "@beta.gouv.fr" ! "Consultez vos e-mails" |
-        "wrong@beta.gouv.fr" ! "Aucun compte actif n’est associé à cette adresse e-mail." |
-        "simon.pineau" + "@beta.gouv.fr" ! "Aucun compte actif n’est associé à cette adresse e-mail." |> {
-          (email, expected) =>
-            val loginURL =
-              controllers.routes.LoginController.login.absoluteURL(false, s"localhost:$port")
-            browser.goTo(loginURL)
-            browser.el("input[name='email']").fill().withText(email)
-            browser.el("form").submit()
+      @nowarn("msg=discarded non-Unit value")
+      override def running() =
+        "email" | "result" |
+          "julien.dauphant.test" + "@beta.gouv.fr" ! "Consultez vos e-mails" |
+          "wrong@beta.gouv.fr" ! "Aucun compte actif n’est associé à cette adresse e-mail." |
+          "simon.pineau" + "@beta.gouv.fr" ! "Aucun compte actif n’est associé à cette adresse e-mail." |> {
+            (email, expected) =>
+              val loginURL =
+                controllers.routes.LoginController.login.absoluteURL(false, s"localhost:$port")
+              browser.goTo(loginURL)
+              browser.el("input[name='email']").fill().withText(email)
+              browser.el("form").submit()
 
-            eventually {
-              browser.pageSource must contain(expected)
-            }
-        }
+              eventually {
+                browser.pageSource must contain(expected)
+              }
+          }
     }
 
     "Use token with success" in new WithBrowser(
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
-      val tokenService = app.injector.instanceOf[TokenService]
-      val loginToken = LoginToken.forUserId(existingUser.id, 5, "127.0.0.1")
+      @nowarn("msg=discarded non-Unit value")
+      override def running() = {
+        val tokenService = app.injector.instanceOf[TokenService]
+        val loginToken = LoginToken.forUserId(existingUser.id, 5, "127.0.0.1")
 
-      tokenService.create(loginToken)
+        tokenService.create(loginToken)
 
-      val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
-        .absoluteURL(false, s"localhost:$port")
+        val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
+          .absoluteURL(false, s"localhost:$port")
 
-      browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
+        browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
 
-      eventually {
-        browser.url must endWith(
-          controllers.routes.ApplicationController.myApplications.url.substring(1)
-        )
+        eventually {
+          browser.url must endWith(
+            controllers.routes.ApplicationController.myApplications.url.substring(1)
+          )
+        }
       }
     }
 
@@ -96,22 +102,25 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
-      val tokenService = app.injector.instanceOf[TokenService]
+      @nowarn("msg=discarded non-Unit value")
+      override def running() = {
+        val tokenService = app.injector.instanceOf[TokenService]
 
-      val loginToken = LoginToken
-        .forUserId(existingUser.id, 5, "127.0.0.1")
-        .copy(expirationDate = Time.nowParis().minusMinutes(5))
+        val loginToken = LoginToken
+          .forUserId(existingUser.id, 5, "127.0.0.1")
+          .copy(expirationDate = Time.nowParis().minusMinutes(5))
 
-      tokenService.create(loginToken)
+        tokenService.create(loginToken)
 
-      val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
-        .absoluteURL(false, s"localhost:$port")
+        val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
+          .absoluteURL(false, s"localhost:$port")
 
-      browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
+        browser.goTo(s"$loginURL?token=${loginToken.token}&path=/")
 
-      eventually {
-        browser.url must endWith(controllers.routes.HomeController.index.url.substring(1))
-        browser.pageSource must contain("Votre lien de connexion a expiré, il est valable")
+        eventually {
+          browser.url must endWith(controllers.routes.HomeController.index.url.substring(1))
+          browser.pageSource must contain("Votre lien de connexion a expiré, il est valable")
+        }
       }
     }
 
@@ -119,17 +128,19 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
       webDriver = webDriver,
       app = applicationWithBrowser
     ) {
+      @nowarn("msg=discarded non-Unit value")
+      override def running() = {
+        val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
+          .absoluteURL(false, s"localhost:$port")
 
-      val loginURL = controllers.routes.LoginController.magicLinkAntiConsumptionPage
-        .absoluteURL(false, s"localhost:$port")
+        browser.goTo(s"$loginURL?token=90798798789798&path=/")
 
-      browser.goTo(s"$loginURL?token=90798798789798&path=/")
-
-      eventually {
-        browser.url must endWith(controllers.routes.LoginController.login.url.substring(1))
-        browser.pageSource must contain(
-          "Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé."
-        )
+        eventually {
+          browser.url must endWith(controllers.routes.LoginController.login.url.substring(1))
+          browser.pageSource must contain(
+            "Le lien que vous avez utilisé n'est plus valide, il a déjà été utilisé."
+          )
+        }
       }
     }
 
