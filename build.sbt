@@ -102,10 +102,14 @@ libraryDependencies ++= Seq(
 // Crash
 libraryDependencies += "io.sentry" % "sentry-logback" % "7.14.0"
 
+// Sync with Play and scala-steward pin
+// https://github.com/playframework/playframework/blob/4c2d76095c2f6a5cab7be3e8f6017c4a4dd2a99f/project/Dependencies.scala#L20
+val specs2Version = "4.20.8"
+
 // Test
 libraryDependencies ++= Seq(
   specs2 % Test, // Play Plugin
-  "org.specs2" %% "specs2-scalacheck" % "4.20.8" % Test,
+  "org.specs2" %% "specs2-scalacheck" % specs2Version % Test,
   "org.scalacheck" %% "scalacheck" % "1.18.0" % Test,
   "org.typelevel" %% "cats-effect-testing-specs2" % "1.5.0" % Test,
 )
@@ -116,8 +120,7 @@ dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
 // Note: we force snakeyaml version here because moultingyaml is not updated
 dependencyOverrides += "org.yaml" % "snakeyaml" % "1.33"
 
-// Jackson CVE fix
-// https://github.com/playframework/playframework/discussions/11222
+// Sync with scala-steward pin
 val jacksonVersion = "2.14.3"
 val jacksonDatabindVersion = "2.14.3"
 
