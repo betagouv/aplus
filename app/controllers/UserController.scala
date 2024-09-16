@@ -54,7 +54,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, Call, InjectedController, Result}
+import play.api.mvc.{Action, AnyContent, BaseController, Call, ControllerComponents, Result}
 import play.filters.csrf.CSRF
 import play.filters.csrf.CSRF.Token
 import scala.concurrent.{ExecutionContext, Future}
@@ -74,6 +74,7 @@ import services.{
 case class UserController @Inject() (
     applicationService: ApplicationService,
     config: AppConfig,
+    val controllerComponents: ControllerComponents,
     eventService: EventService,
     groupService: UserGroupService,
     loginAction: LoginAction,
@@ -81,7 +82,7 @@ case class UserController @Inject() (
     passwordService: PasswordService,
     userService: UserService,
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
-    extends InjectedController
+    extends BaseController
     with I18nSupport
     with Operators.Common
     with UserOperators
@@ -420,7 +421,7 @@ case class UserController @Inject() (
               )
               Unauthorized("User is not unused.")
             } else {
-              userService.deleteById(userId)
+              val _ = userService.deleteById(userId)
               val flashMessage = s"Utilisateur $userId / ${user.email} supprimé"
               eventService.log(
                 UserDeleted,
@@ -859,7 +860,7 @@ case class UserController @Inject() (
             )
           )
     updated.map { _ =>
-      userService.validateCGU(user.id)
+      val _ = userService.validateCGU(user.id)
       // Safe, in theory
       userService.byId(user.id).head
     }
@@ -959,7 +960,7 @@ case class UserController @Inject() (
           },
           { newsletter =>
             if (newsletter) {
-              userService.acceptNewsletter(request.currentUser.id)
+              val _ = userService.acceptNewsletter(request.currentUser.id)
             }
             eventService.log(NewsletterSubscribed, "Newletter subscribed")
             Redirect(routes.HomeController.welcome)

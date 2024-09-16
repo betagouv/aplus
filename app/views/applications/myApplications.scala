@@ -152,7 +152,9 @@ object myApplications {
                 h3(cls := "fr-alert__title")("Attention"),
                 p(s"Il y a ${filters.lateCount} dossier souffrants dans vos groupes")
               )
-            ),
+            )
+          else
+            frag(),
           div(
             Authorization
               .canCreateApplication(currentUserRights)
@@ -234,6 +236,8 @@ object myApplications {
                                   s"Demande urgente"
                                 ),
                               )
+                            } else {
+                              frag()
                             },
                             span(cls := "aplus-text-small")(
                               Time
@@ -256,6 +260,8 @@ object myApplications {
                                   s"Il reste moins de 24h pour traiter la demande"
                                 )
                               )
+                            } else {
+                              frag()
                             }
                           )
                         )
@@ -310,6 +316,8 @@ object myApplications {
                               s"à ${application.invitedGroups(0).name}"
                             )
                           )
+                        } else {
+                          frag()
                         }
                       ),
                       div(cls := "aplus-between")(

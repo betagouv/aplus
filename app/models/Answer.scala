@@ -35,31 +35,31 @@ object Answer {
     @SuppressWarnings(Array("scalafix:DisableSyntax.=="))
     implicit val AnswerTypeEq: Eq[AnswerType] = (x: AnswerType, y: AnswerType) => x == y
 
-    final case object Custom extends AnswerType {
+    case object Custom extends AnswerType {
       override val name = "custom"
     }
 
-    final case object WorkInProgress extends AnswerType {
+    case object WorkInProgress extends AnswerType {
       override val name = "workInProgress"
     }
 
-    final case object ApplicationProcessed extends AnswerType {
+    case object ApplicationProcessed extends AnswerType {
       override val name = "applicationProcessed"
     }
 
-    final case object WrongInstructor extends AnswerType {
+    case object WrongInstructor extends AnswerType {
       override val name = "wrongInstructor"
     }
 
-    final case object InviteByUser extends AnswerType {
+    case object InviteByUser extends AnswerType {
       override val name = "inviteByUser"
     }
 
-    final case object InviteAsExpert extends AnswerType {
+    case object InviteAsExpert extends AnswerType {
       override val name = "inviteAsExpert"
     }
 
-    final case object InviteThroughGroupPermission extends AnswerType {
+    case object InviteThroughGroupPermission extends AnswerType {
       override val name = "inviteThroughGroupPermission"
     }
 

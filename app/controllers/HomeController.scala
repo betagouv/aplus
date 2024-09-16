@@ -8,7 +8,7 @@ import org.webjars.play.WebJarsUtil
 import play.api.Logger
 import play.api.db.Database
 import play.api.i18n.I18nSupport
-import play.api.mvc._
+import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents}
 import serializers.Keys
 import views.home.LoginPanel
 
@@ -17,10 +17,11 @@ import views.home.LoginPanel
 @Singleton
 class HomeController @Inject() (
     val config: AppConfig,
+    val controllerComponents: ControllerComponents,
     loginAction: LoginAction,
     db: Database,
 )(implicit webJarsUtil: WebJarsUtil)
-    extends InjectedController
+    extends BaseController
     with I18nSupport
     with Operators.Common {
 

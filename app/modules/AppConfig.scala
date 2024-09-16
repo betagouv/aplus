@@ -41,7 +41,7 @@ class AppConfig @Inject() (configuration: Configuration) {
   val filesDirectory: Path = {
     val dir = Paths.get(filesPath)
     if (!Files.isDirectory(dir)) {
-      Files.createDirectories(dir)
+      val _ = Files.createDirectories(dir)
     }
     dir
   }

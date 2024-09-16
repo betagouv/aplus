@@ -20,64 +20,36 @@ lazy val root = (project in file("."))
 
 inThisBuild(
   List(
-    scalaVersion := "2.13.14",
+    scalaVersion := "3.3.3",
+    // The following setting are for scalafix
     semanticdbEnabled := true, // enable SemanticDB
     semanticdbVersion := scalafixSemanticdb.revision // use Scalafix compatible version
   )
 )
 
-// https://docs.scala-lang.org/overviews/compiler-options/index.html
+// Options ref https://docs.scala-lang.org/scala3/guides/migration/options-intro.html
+// Note: the Play sbt plugin adds some options
+// https://github.com/playframework/playframework/blob/4c2d76095c2f6a5cab7be3e8f6017c4a4dd2a99f/dev-mode/sbt-plugin/src/main/scala/play/sbt/PlaySettings.scala#L89
 scalacOptions ++= Seq(
   "-feature",
-  "-deprecation",
-  "-unchecked",
-  "-Xlint:adapted-args",
-  "-Xlint:nullary-unit",
-  "-Xlint:inaccessible",
-  "-Xlint:infer-any",
-  "-Xlint:missing-interpolator",
-  "-Xlint:doc-detached",
-  "-Xlint:private-shadow",
-  "-Xlint:type-parameter-shadow",
-  "-Xlint:poly-implicit-overload",
-  "-Xlint:option-implicit",
-  "-Xlint:delayedinit-select",
-  "-Xlint:package-object-classes",
-  "-Xlint:stars-align",
-  "-Xlint:constant",
-  // Note: -Xlint:unused cannot work with twirl
-  // "-Xlint:unused",
-  "-Xlint:nonlocal-return",
-  "-Xlint:implicit-not-found",
-  "-Xlint:serial",
-  "-Xlint:valpattern",
-  "-Xlint:eta-zero",
-  "-Xlint:eta-sam",
-  "-Xlint:deprecation",
+  // "-deprecation", // Added by Play
+  // "-unchecked", // Added by Play
   // Sets warnings as errors on the CI
   if (insideCI.value) "-Wconf:any:error" else "-Wconf:any:warning",
-  "-Wdead-code",
-  "-Wextra-implicit",
-  "-Wmacros:before",
-  "-Wnumeric-widen",
-  "-Woctal-literal",
-  // "-Wself-implicit", // Warns about too much useful constructs
-  // Note: -Wunused:imports cannot work with twirl
-  "-Wunused:imports",
-  "-Wunused:patvars",
+  // Recommended for cats-effect
+  // https://typelevel.org/cats-effect/docs/getting-started
+  // "-Wnonunit-statement", // TODO: the route warnings needs to be silenced
+  // Note: To show all possible warns, use "-W"
+  // TODO:  3.3.4 should have the src filter
+  // https://github.com/scala/scala3/pull/21087/files
+  // https://github.com/playframework/playframework/issues/6302
+  // "-Wunused:imports", // gives non useful warns due to twirl
   "-Wunused:privates",
   "-Wunused:locals",
-  // "-Wunused:explicits", TODO: lot of warnings, enable later
+  // "-Wunused:explicits", // TODO: lot of warnings, enable later
   "-Wunused:implicits",
-  "-Wconf:cat=unused&src=routes/.*:s",
-  "-Wconf:cat=unused&src=twirl/.*:s",
   "-Wvalue-discard",
-  "-Xsource:3",
-  "-Wconf:msg=method are copied from the case class constructor under Scala 3:s",
 )
-
-// https://typelevel.org/cats-effect/docs/getting-started
-addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
 val anormVersion = "2.7.0"
 
@@ -98,14 +70,14 @@ pipelineStages := Seq(digest, gzip)
 
 libraryDependencies += guice
 
-val fs2Version = "3.10.2"
+val fs2Version = "3.11.0"
 
 libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.7.4",
   "org.playframework" %% "play-mailer" % "10.0.0",
   "org.playframework" %% "play-json" % "3.0.4",
   "com.sun.mail" % "javax.mail" % "1.6.2",
-  "net.jcazevedo" %% "moultingyaml" % "0.4.2",
+  "net.jcazevedo" %% "moultingyaml" % "0.4.2" cross CrossVersion.for3Use2_13,
   "com.github.tototoshi" %% "scala-csv" % "2.0.0",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.13.1",
@@ -132,10 +104,14 @@ libraryDependencies ++= Seq(
 // Crash
 libraryDependencies += "io.sentry" % "sentry-logback" % "7.14.0"
 
+// Sync with Play and scala-steward pin
+// https://github.com/playframework/playframework/blob/4c2d76095c2f6a5cab7be3e8f6017c4a4dd2a99f/project/Dependencies.scala#L20
+val specs2Version = "4.20.8"
+
 // Test
 libraryDependencies ++= Seq(
   specs2 % Test, // Play Plugin
-  "org.specs2" %% "specs2-scalacheck" % "4.20.8" % Test,
+  "org.specs2" %% "specs2-scalacheck" % specs2Version % Test,
   "org.scalacheck" %% "scalacheck" % "1.18.0" % Test,
   "org.typelevel" %% "cats-effect-testing-specs2" % "1.5.0" % Test,
 )
@@ -146,8 +122,7 @@ dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
 // Note: we force snakeyaml version here because moultingyaml is not updated
 dependencyOverrides += "org.yaml" % "snakeyaml" % "1.33"
 
-// Jackson CVE fix
-// https://github.com/playframework/playframework/discussions/11222
+// Sync with scala-steward pin
 val jacksonVersion = "2.14.3"
 val jacksonDatabindVersion = "2.14.3"
 
@@ -187,13 +162,10 @@ ThisBuild / libraryDependencySchemes ++= Seq(
 //              Macros             //
 /////////////////////////////////////
 
-lazy val scalaReflect = Def.setting("org.scala-lang" % "scala-reflect" % scalaVersion.value)
-
 lazy val macrosProject = (project in file("macros"))
   .settings(
     libraryDependencies ++= Seq(
       anormDependency,
-      scalaReflect.value
     )
   )
 

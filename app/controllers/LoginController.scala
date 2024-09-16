@@ -14,7 +14,8 @@ import models.EventType.{GenerateToken, UnknownEmail}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.i18n.I18nSupport
-import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result}
+//import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result}
+import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents, Request, Result}
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
 import services.{
@@ -31,6 +32,7 @@ import views.home.LoginPanel
 @Singleton
 class LoginController @Inject() (
     val config: AppConfig,
+    val controllerComponents: ControllerComponents,
     dependencies: ServicesDependencies,
     userService: UserService,
     notificationService: NotificationService,
@@ -39,7 +41,7 @@ class LoginController @Inject() (
     passwordService: PasswordService,
     signupService: SignupService,
 )(implicit ec: ExecutionContext, webJarsUtil: WebJarsUtil)
-    extends InjectedController
+    extends BaseController
     with I18nSupport
     with Operators.Common {
 
@@ -95,22 +97,22 @@ class LoginController @Inject() (
               if (user.disabled)
                 Future(accountDoesNotExist(email))
               else if (user.passwordActivated && request.getQueryString("nopassword").isEmpty)
-              // 303 is supposed to be the correct code after POST
-              // Just random knowledge here, since Play `Redirect` is 303 by default
-              Future.successful(
-                addingPasswordEmailToSession(user.email.some)(
-                  SeeOther(routes.LoginController.passwordPage.url)
+                // 303 is supposed to be the correct code after POST
+                // Just random knowledge here, since Play `Redirect` is 303 by default
+                Future.successful(
+                  addingPasswordEmailToSession(user.email.some)(
+                    SeeOther(routes.LoginController.passwordPage.url)
+                  )
                 )
-              )
-                LoginAction.readUserRights(user).map { userRights =>
-                  val loginToken =
-                    LoginToken
-                      .forUserId(user.id, config.tokenExpirationInMinutes, request.remoteAddress)
-                  // userSession = none since there are no session around
-                  val requestWithUserData =
-                    new RequestWithUserData(user, userRights, none, request)
-                  magicLinkAuth(loginToken, user.email, requestWithUserData.some)
-                }
+              LoginAction.readUserRights(user).map { userRights =>
+                val loginToken =
+                  LoginToken
+                    .forUserId(user.id, config.tokenExpirationInMinutes, request.remoteAddress)
+                // userSession = none since there are no session around
+                val requestWithUserData =
+                  new RequestWithUserData(user, userRights, none, request)
+                magicLinkAuth(loginToken, user.email, requestWithUserData.some)
+              }
             }
         }
       }
@@ -143,7 +145,7 @@ class LoginController @Inject() (
   )(implicit request: Request[AnyContent]): Result = {
     // Note: we have a small race condition here
     //       this should be OK almost always
-    tokenService.create(token)
+    val _ = tokenService.create(token)
     // Here we want to redirect some users to more useful pages:
     // observer => /stats
     val path: String = {
@@ -286,7 +288,8 @@ class LoginController @Inject() (
                   },
                   user =>
                     LoginAction.readUserRights(user).map { userRights =>
-                      val requestWithUserData = new RequestWithUserData(user, userRights, none, request) // TODO
+                      val requestWithUserData =
+                        new RequestWithUserData(user, userRights, none, request) // TODO
                       eventService.log(
                         EventType.PasswordVerificationSuccessful,
                         s"Identification par mot de passe"

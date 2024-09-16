@@ -793,7 +793,7 @@ class UserService @Inject() (
         IO.realTimeInstant.flatMap(now =>
           IO.blocking {
             db.withTransaction { implicit connection =>
-              SQL"""
+              val _ = SQL"""
                 UPDATE user_session
                 SET last_activity = ${now}
                 WHERE id = ${sessionId}

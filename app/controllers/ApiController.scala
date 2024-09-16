@@ -9,7 +9,7 @@ import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models.{Area, Authorization, Error, EventType, Organisation, User, UserGroup}
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc._
+import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents, Result}
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.ApiModel._
 import serializers.Keys
@@ -24,13 +24,14 @@ import services.{
 @Singleton
 case class ApiController @Inject() (
     anonymizedDataService: AnonymizedDataService,
+    val controllerComponents: ControllerComponents,
     loginAction: LoginAction,
     eventService: EventService,
     organisationService: OrganisationService,
     userService: UserService,
     userGroupService: UserGroupService
 )(implicit val ec: ExecutionContext)
-    extends InjectedController
+    extends BaseController
     with UserOperators {
   import OrganisationService.FranceServiceInstance
 

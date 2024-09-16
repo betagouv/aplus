@@ -12,7 +12,7 @@ import models.jsonApiModels.mandat._
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.libs.json.{JsError, JsString, JsValue, Json}
-import play.api.mvc.{Action, AnyContent, InjectedController, PlayBodyParsers}
+import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents, PlayBodyParsers}
 import scala.concurrent.{ExecutionContext, Future}
 import services.{
   EventService,
@@ -28,6 +28,7 @@ import services.{
 case class MandatController @Inject() (
     bodyParsers: PlayBodyParsers,
     config: AppConfig,
+    val controllerComponents: ControllerComponents,
     eventService: EventService,
     loginAction: LoginAction,
     mandatService: MandatService,
@@ -37,7 +38,7 @@ case class MandatController @Inject() (
     userGroupService: UserGroupService,
     userService: UserService
 )(implicit val ec: ExecutionContext, webJarsUtil: WebJarsUtil)
-    extends InjectedController
+    extends BaseController
     with Operators.Common
     with UserOperators {
 
@@ -68,7 +69,7 @@ case class MandatController @Inject() (
                     EventType.MandatGenerated,
                     s"Le mandat ${mandat.id.underlying} (version ${mandat.version}) a été créé."
                   )
-                  notificationsService.mandatV2Generated(mandat.id, request.currentUser)
+                  val _ = notificationsService.mandatV2Generated(mandat.id, request.currentUser)
                   Ok(Json.toJson(mandat))
                 }
               )
@@ -132,7 +133,7 @@ case class MandatController @Inject() (
                     s"Le mandat par SMS ${mandat.id.underlying} a été créé. " +
                       s"Le SMS de demande ${sms.apiId.underlying} a été envoyé"
                   )
-                  notificationsService.mandatSmsSent(mandat.id, request.currentUser)
+                  val _ = notificationsService.mandatSmsSent(mandat.id, request.currentUser)
                   Ok(Json.toJson(mandat))
                 }
               )

@@ -188,7 +188,7 @@ class EventService @Inject() (db: Database, dependencies: ServicesDependencies) 
       involvesUser,
       remoteAddress
     )
-    addEvent(event)
+    val _ = addEvent(event)
 
     val message = s"${currentUser.name}/$descriptionSanitized [$eventId]"
     level match {

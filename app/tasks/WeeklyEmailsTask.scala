@@ -31,13 +31,14 @@ class WeeklyEmailsTask @Inject() (
   // (hourly for demo / weekly for prod)
   val delay: FiniteDuration = 1.hour
 
-  actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = delay)(() =>
-    checkIfItIsTimeToSendThenSendEmails()
-  )
+  val _ =
+    actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = delay)(() =>
+      checkIfItIsTimeToSendThenSendEmails()
+    )
 
   def checkIfItIsTimeToSendThenSendEmails(): Unit =
     if (checkIfItIsTimeToAct()) {
-      notificationService.weeklyEmails()
+      val _ = notificationService.weeklyEmails()
       ()
     }
 

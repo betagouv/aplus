@@ -30,9 +30,10 @@ class AutoAddExpertTask @Inject() (
   val initialDelay: FiniteDuration = java.time.Duration.between(now, startDate).getSeconds.seconds
 
   // https://github.com/akka/akka/blob/v2.6.4/akka-actor/src/main/scala/akka/actor/Scheduler.scala#L403
-  actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = 24.hours)(() =>
-    inviteExpertsInApplication()
-  )
+  val _ =
+    actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = 24.hours)(
+      () => inviteExpertsInApplication()
+    )
 
   val dayWithoutAgentAnswer = 5
   val daySinceLastAgentAnswer = 15
@@ -45,10 +46,10 @@ class AutoAddExpertTask @Inject() (
             .filter(_.creatorUserID =!= application.creatorUserId)
             .lastOption match {
             case None => // No answer for someone else the creator
-              inviteExpert(application, dayWithoutAgentAnswer)
+              val _ = inviteExpert(application, dayWithoutAgentAnswer)
             case Some(answer)
                 if answer.ageInDays > daySinceLastAgentAnswer => // The last answer is older than X days
-              inviteExpert(application, daySinceLastAgentAnswer)
+              val _ = inviteExpert(application, daySinceLastAgentAnswer)
             case _ =>
           }
         }

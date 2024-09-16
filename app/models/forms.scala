@@ -2,6 +2,7 @@ package models
 
 import cats.syntax.all._
 import constants.Constants
+import helper.MiscHelpers.toTupleOpt
 import helper.PlayFormHelpers.{inOption, normalizedOptionalText, normalizedText, passwordText}
 import helper.forms.FormsPlusMap
 import java.time.{LocalDate, ZoneId, ZonedDateTime}
@@ -25,7 +26,7 @@ package forms {
       mapping(
         "email" -> normalizedText.verifying(maxLength(User.emailMaxLength)),
         "password" -> passwordText,
-      )(PasswordCredentials.apply)(PasswordCredentials.unapply)
+      )(PasswordCredentials.apply)(toTupleOpt)
     )
 
   }
@@ -39,7 +40,7 @@ package forms {
         "token" -> text.transform[String](_.take(100), identity),
         "new-password" -> passwordText,
         "password-confirmation" -> passwordText,
-      )(PasswordChange.apply)(PasswordChange.unapply)
+      )(PasswordChange.apply)(toTupleOpt)
         .verifying(
           "Les deux mots de passe doivent correspondre",
           form => form.newPassword === form.passwordConfirmation
@@ -76,7 +77,7 @@ package forms {
           Keys.Signup.organisationId -> normalizedText.verifying(nonEmpty),
           Keys.Signup.groupId -> uuid,
           "cguChecked" -> boolean
-        )(SignupFormData.apply)(SignupFormData.unapply)
+        )(SignupFormData.apply)(toTupleOpt)
           .verifying(
             "Le prénom est requis pour un compte nominatif",
             form =>
@@ -112,7 +113,7 @@ package forms {
         mapping(
           "emails" -> text,
           "dryRun" -> boolean,
-        )(AddSignupsFormData.apply)(AddSignupsFormData.unapply)
+        )(AddSignupsFormData.apply)(toTupleOpt)
       )
 
   }
@@ -125,7 +126,7 @@ package forms {
       Form(
         mapping(
           "email" -> normalizedText
-        )(AddUserToGroupFormData.apply)(AddUserToGroupFormData.unapply)
+        )(AddUserToGroupFormData.apply)((o) => Some(o.email))
       )
 
   }
@@ -152,7 +153,7 @@ package forms {
           "email" -> optional(email),
           "publicNote" -> normalizedOptionalText,
           "internalSupportComment" -> normalizedOptionalText
-        )(UserGroup.apply)(UserGroup.unapply)
+        )(UserGroup.apply)(toTupleOpt)
       )
 
   }
@@ -173,7 +174,7 @@ package forms {
           "lastName" -> normalizedText.verifying(maxLength(100), nonEmpty),
           "qualite" -> normalizedText.verifying(maxLength(100), nonEmpty),
           "phone-number" -> normalizedOptionalText
-        )(EditProfileFormData.apply)(EditProfileFormData.unapply)
+        )(EditProfileFormData.apply)(toTupleOpt)
       )
 
   }
@@ -228,7 +229,7 @@ package forms {
           "mandatGenerationType" -> text,
           "mandatDate" -> nonEmptyText,
           "linkedMandat" -> optional(uuid)
-        )(ApplicationFormData.apply)(ApplicationFormData.unapply)
+        )(ApplicationFormData.apply)(toTupleOpt)
       )
 
   }
@@ -293,7 +294,7 @@ package forms {
               nonEmptyText.transform[Option[String]](Some.apply, _.orEmpty)
             else ignored(Option.empty[String])
           )
-        )(AnswerFormData.apply)(AnswerFormData.unapply)
+        )(AnswerFormData.apply)(toTupleOpt)
           .verifying(
             "La formulaire doit comporter une réponse.",
             form =>
@@ -323,7 +324,7 @@ package forms {
         "users" -> list(uuid),
         "groups" -> list(uuid),
         "privateToHelpers" -> boolean
-      )(InvitationFormData.apply)(InvitationFormData.unapply)
+      )(InvitationFormData.apply)(toTupleOpt)
     )
 
   }
@@ -351,14 +352,14 @@ package forms {
       "groupAdmin" -> boolean,
       "phoneNumber" -> normalizedOptionalText,
       Keys.User.sharedAccount -> boolean,
-    )(AddUserFormData.apply)(AddUserFormData.unapply)
+    )(AddUserFormData.apply)(toTupleOpt)
 
     val addUsersForm: Form[AddUsersFormData] =
       Form(
         mapping(
           "users" -> list(formMapping),
           "confirmInstructors" -> boolean,
-        )(AddUsersFormData.apply)(AddUsersFormData.unapply)
+        )(AddUsersFormData.apply)(toTupleOpt)
       )
 
   }
@@ -434,7 +435,7 @@ package forms {
           "managingAreaIds" -> list(uuid),
           Keys.User.sharedAccount -> boolean,
           "internalSupportComment" -> normalizedOptionalText
-        )(EditUserFormData.apply)(EditUserFormData.unapply)
+        )(EditUserFormData.apply)(toTupleOpt)
       )
 
   }
@@ -497,7 +498,7 @@ package forms {
         "area-default-ids" -> list(uuid),
         "separator" -> char
           .verifying("Séparateur incorrect", value => value === ';' || value === ',')
-      )(CSVRawLinesFormData.apply)(CSVRawLinesFormData.unapply)
+      )(CSVRawLinesFormData.apply)(toTupleOpt)
     )
 
   }
@@ -537,7 +538,7 @@ package forms {
         "lastName" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
         "qualite" -> normalizedOptionalText.verifying(inOption(maxLength(100))),
         "phoneNumber" -> normalizedOptionalText.verifying(inOption(phoneNumberConstraint))
-      )(ValidateSubscriptionForm.apply)(ValidateSubscriptionForm.unapply)
+      )(ValidateSubscriptionForm.apply)(toTupleOpt)
         .verifying(
           "Le prénom est requis",
           form => if (!user.sharedAccount) form.firstName.map(_.trim).exists(_.nonEmpty) else true

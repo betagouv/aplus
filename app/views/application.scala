@@ -23,6 +23,16 @@ import views.helpers.forms.CSRFInput
 
 object application {
 
+  def applicationSentSuccessMessage(applicationId: UUID): Tag =
+    span(
+      "Votre demande a bien été envoyée. Vous pouvez la consulter ",
+      a(href := ApplicationController.show(applicationId).url, "en cliquant ici"),
+      ". Celle-ci n’est plus modifiable, cependant il vous est toujours possible d’envoyer un message pour apporter une précision ou corriger une erreur. ",
+      "Pour créer une nouvelle demande, vous pouvez ",
+      a(href := ApplicationController.create.url, "cliquer sur ce lien"),
+      " ou cliquer sur le bouton « Créer une demande »."
+    )
+
   def applicationFilesLinks(
       files: List[FileMetadata],
       application: Application,
@@ -336,12 +346,16 @@ object application {
                   application.creatorUserId === currentUser.id &&
                   !application.closed &&
                   (answer.creatorUserID =!= currentUser.id)
+              val showGenericApplicationProcessed =
+                answer.answerType === Answer.AnswerType.ApplicationProcessed &&
+                  !showArchiveButton
               val messageHasInfos =
                 // Note: always true for admins "** Message de 0 caractères **"
                 answer.message.nonEmpty ||
                   answer.declareApplicationHasIrrelevant ||
                   answer.userInfos.getOrElse(Map.empty).nonEmpty ||
-                  showArchiveButton
+                  showArchiveButton ||
+                  showGenericApplicationProcessed
               frag(
                 answerFilesLinks(
                   attachments,
@@ -465,7 +479,16 @@ object application {
                               br,
                               br
                             )
-                          )
+                          ),
+                        showGenericApplicationProcessed.some
+                          .filter(identity)
+                          .map(_ =>
+                            div(
+                              cls := "info-box",
+                              answer.creatorUserName,
+                              " a indiqué avoir traité la demande.",
+                            )
+                          ),
                       )
                     )
                   )
