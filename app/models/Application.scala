@@ -84,12 +84,7 @@ case class Application(
   }
 
   def userAnswers: List[Answer] = answers.filter(answer =>
-    !answer.message.contains("rejoins la conversation automatiquement comme expert") &&
-      !answer.message
-        .contains("Les nouveaux instructeurs rejoignent automatiquement la demande") &&
-      !answer.message.contains(
-        "Les nouveaux instructeurs ont automatiquement accès à la demande"
-      ) &&
+    answer.answerType =!= AnswerType.InviteByUser &&
       answer.answerType =!= AnswerType.InviteAsExpert &&
       answer.answerType =!= AnswerType.InviteThroughGroupPermission
   )
