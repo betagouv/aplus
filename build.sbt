@@ -48,6 +48,7 @@ scalacOptions ++= Seq(
   "-Wunused:locals",
   // "-Wunused:explicits", // TODO: lot of warnings, enable later
   "-Wunused:implicits",
+  "-Wunused:nowarn",
   "-Wvalue-discard",
 )
 

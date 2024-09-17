@@ -54,7 +54,7 @@ class PasswordService @Inject() (
     MiscHelpers.secureRandom.alphanumeric.take(30).mkString
 
   // TODO: rate limit the recovery emails
-  def sendRecoverEmail(email: String, ipAddress: String): Future[Either[Error, Unit]] =
+  def sendRecoverEmail(email: String, ipAddress: String): Future[Either[Error, Instant]] =
     userService
       .byEmailEither(email, includeDisabled = true)
       .flatMap(
@@ -135,6 +135,7 @@ class PasswordService @Inject() (
                         token.token,
                         token.expirationDate
                       )
+                      token.expirationDate
                     case nonExpiredTokens =>
                       val lastToken = nonExpiredTokens.sortBy(_.creationDate).reverse.head
                       if (lastToken.creationDate.plusSeconds(30).isBefore(Instant.now())) {
@@ -146,6 +147,7 @@ class PasswordService @Inject() (
                           lastToken.expirationDate
                         )
                       }
+                      lastToken.expirationDate
                   }
                 }
               else

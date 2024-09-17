@@ -9,12 +9,11 @@ import helper.Time
 import java.time.Instant
 import javax.inject.{Inject, Singleton}
 import models.{Authorization, EventType, LoginToken, User}
-import models.forms.{PasswordChange, PasswordCredentials}
+import models.forms.{PasswordChange, PasswordCredentials, PasswordRecovery}
 import models.EventType.{GenerateToken, UnknownEmail}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.i18n.I18nSupport
-//import play.api.mvc.{Action, AnyContent, InjectedController, Request, Result}
 import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents, Request, Result}
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
@@ -252,6 +251,10 @@ class LoginController @Inject() (
 
   def tryLoginByPassword: Action[AnyContent] =
     Action.async { implicit request =>
+      val errorTitle =
+        "Erreur : Vos identifiant et mot de passe ne correspondent pas, merci de réessayer."
+      val errorMessage =
+        "Cette erreur peut être due à une adresse électronique ou un mot de passe invalide, ou alors un compte inexistant ou désactivé."
       PasswordCredentials.form
         .bindFromRequest()
         .fold(
@@ -264,7 +267,10 @@ class LoginController @Inject() (
             )
             Future.successful(
               addingPasswordEmailToSession(email)(
-                BadRequest(views.password.loginPage(formWithErrors))
+                BadRequest(
+                  views.password
+                    .loginPage(formWithErrors, errorMessage = (errorTitle, errorMessage).some)
+                )
               )
             )
           },
@@ -282,7 +288,10 @@ class LoginController @Inject() (
                       "Connexion impossible : mot de passe invalide, compte inexistant ou désactivé"
                     Future.successful(
                       addingPasswordEmailToSession(credentials.email.some)(
-                        BadRequest(views.password.loginPage(form, errorMessage = message.some))
+                        BadRequest(
+                          views.password
+                            .loginPage(form, errorMessage = (errorTitle, errorMessage).some)
+                        )
                       )
                     )
                   },
@@ -304,9 +313,14 @@ class LoginController @Inject() (
         )
     }
 
-  def sendPasswordRecoveryEmail: Action[AnyContent] =
+  def passwordReinitializationEmailPage: Action[AnyContent] =
+    Action { implicit request =>
+      Ok(views.password.reinitializationEmailPage(PasswordRecovery.form))
+    }
+
+  def passwordReinitializationEmail: Action[AnyContent] =
     Action.async { implicit request =>
-      PasswordCredentials.form
+      PasswordRecovery.form
         .bindFromRequest()
         .data
         .get("email")
@@ -316,45 +330,61 @@ class LoginController @Inject() (
           Future.successful(
             BadRequest(
               views.password
-                .loginPage(
-                  PasswordCredentials.form,
-                  errorMessage = "Merci d’indiquer votre email dans le champ Email".some
+                .reinitializationEmailPage(
+                  PasswordRecovery.form,
+                  errorMessage = (
+                    "Erreur : l’adresse électronique ne peut pas être vide.",
+                    "Merci de renseigner votre adresse électronique."
+                  ).some
                 )
             )
           )
         case Some(email) =>
-          val formWithoutPassword = PasswordCredentials.form.fill(PasswordCredentials(email, ""))
           passwordService
             .sendRecoverEmail(email, request.remoteAddress)
             .map(
               _.fold(
                 e => {
                   eventService.logErrorNoUser(e)
-                  val message = "Votre email n’existe pas dans Administration+ ou est désactivé, " +
-                    "ou n’est pas autorisé à être accédé par mot de passe " +
-                    "(veuillez utiliser le bouton d’envoi de lien magique)"
+                  val title =
+                    "Erreur : impossible de réinitialiser le mot de passe de ce compte."
+                  val description =
+                    "Il se peut que votre adresse électronique n’existe pas dans Administration+ " +
+                      "ou soit désactivée : veuillez demander à votre responsable de structure " +
+                      "la création ou la mise à jour du compte. " +
+                      "Il est aussi possible que vous ne soyez pas autorisé à vous connecter par mot de passe : " +
+                      "veuillez utiliser le bouton d’envoi de lien magique."
+                  val form = PasswordRecovery.form.fill(PasswordRecovery(email))
                   BadRequest(
-                    views.password.loginPage(formWithoutPassword, errorMessage = message.some)
+                    views.password
+                      .reinitializationEmailPage(form, errorMessage = (title, description).some)
                   )
                     .withSession(request.session - Keys.Session.passwordEmail)
                 },
-                _ => {
+                expiration => {
                   eventService.logSystem(
                     EventType.PasswordTokenSent,
                     "Lien de changement de mot de passe envoyé",
                     email.some
                   )
+
+                  val expirationDate = expiration.atZone(Time.timeZoneParis)
+                  val description =
+                    "Un lien d’accès au formulaire de réinitialisation de mot de passe, " +
+                      "valide jusqu’à " +
+                      expirationDate.format(Time.hourAndMinutesFormatter) +
+                      " (UTC" + expirationDate.getOffset + ")" +
+                      ", a été envoyé sur votre adresse électronique."
                   // Note: we add the email here, in case the user takes too much time
                   // to use their token
                   addingPasswordEmailToSession(email.some)(
                     Ok(
-                      views.password.loginPage(
-                        formWithoutPassword,
-                        successMessage =
-                          ("Un lien d’accès au formulaire de changement de mot de passe " +
-                            "(valide " +
-                            config.passwordRecoveryTokenExpirationInMinutes +
-                            " minutes) vient de vous être envoyé par email.").some
+                      views.password.reinitializationEmailPage(
+                        PasswordRecovery.form,
+                        successMessage = (
+                          "Succès de l’envoi.",
+                          description
+                        ).some
                       )
                     )
                   )
@@ -364,7 +394,7 @@ class LoginController @Inject() (
       }
     }
 
-  def changePasswordPage: Action[AnyContent] =
+  def passwordReinitializationPage: Action[AnyContent] =
     Action.async { implicit request =>
       request.getQueryString("token") match {
         case None =>
@@ -373,7 +403,9 @@ class LoginController @Inject() (
             "Accès à la page de changement de mot de passe sans token",
             none
           )
-          Future.successful(BadRequest(views.password.recoveryPage(none, PasswordChange.form)))
+          Future.successful(
+            BadRequest(views.password.reinitializationPage(none, PasswordChange.form))
+          )
         case Some(token) =>
           passwordService
             .verifyPasswordRecoveryToken(token)
@@ -381,13 +413,17 @@ class LoginController @Inject() (
               _.fold(
                 e => {
                   eventService.logErrorNoUser(e)
-                  val message = "Une erreur interne est survenue. " +
-                    "Celle-ci étant possiblement temporaire, " +
-                    "nous vous invitons à réessayer plus tard."
+                  val title = "Erreur interne"
+                  val description =
+                    "Une erreur interne est survenue. Celle-ci étant possiblement temporaire, nous vous invitons à réessayer plus tard."
                   // Removes passwords from form (on purpose)
                   val form = PasswordChange.form.fill(PasswordChange(token, "", ""))
                   InternalServerError(
-                    views.password.recoveryPage(token.some, form, errorMessage = message.some)
+                    views.password.reinitializationPage(
+                      token.some,
+                      form,
+                      errorMessage = (title, description).some
+                    )
                   )
                 },
                 {
@@ -397,10 +433,15 @@ class LoginController @Inject() (
                       s"Token de changement de mot de passe non trouvé en base de données",
                       token.take(100).some
                     )
-                    val message = "Le lien n’est plus valide, veuillez en générer un autre."
+                    val title = "Lien de changement de mot de passe invalide."
+                    val description = "Le lien n’est plus valide, veuillez en générer un autre."
                     BadRequest(
                       views.password
-                        .recoveryPage(none, PasswordChange.form, errorMessage = message.some)
+                        .reinitializationPage(
+                          none,
+                          PasswordChange.form,
+                          errorMessage = (title, description).some
+                        )
                     )
                   case Some(row) =>
                     if (row.expirationDate.isBefore(Instant.now())) {
@@ -411,10 +452,15 @@ class LoginController @Inject() (
                           s"utilisé ${row.used}]",
                         none
                       )
-                      val message = s"Le lien a expiré, veuillez en générer un autre."
+                      val title = "Lien de changement de mot de passe expiré."
+                      val description = s"Le lien a expiré, veuillez en générer un autre."
                       BadRequest(
                         views.password
-                          .recoveryPage(none, PasswordChange.form, errorMessage = message.some)
+                          .reinitializationPage(
+                            none,
+                            PasswordChange.form,
+                            errorMessage = (title, description).some
+                          )
                       )
                     } else if (row.used) {
                       eventService.logSystem(
@@ -424,10 +470,15 @@ class LoginController @Inject() (
                           s"utilisé ${row.used}]",
                         none
                       )
-                      val message = s"Le lien a déjà été utilisé, veuillez en générer un autre."
+                      val title = "Lien de changement de mot de passe déjà utilisé."
+                      val description = s"Le lien a déjà été utilisé, veuillez en générer un autre."
                       BadRequest(
                         views.password
-                          .recoveryPage(none, PasswordChange.form, errorMessage = message.some)
+                          .reinitializationPage(
+                            none,
+                            PasswordChange.form,
+                            errorMessage = (title, description).some
+                          )
                       )
                     } else {
                       eventService.logSystem(
@@ -435,7 +486,7 @@ class LoginController @Inject() (
                         "Visualise le formulaire de changement de mot de passe",
                       )
                       val form = PasswordChange.form.fill(PasswordChange(token, "", ""))
-                      Ok(views.password.recoveryPage(token.some, form))
+                      Ok(views.password.reinitializationPage(token.some, form))
                     }
                 }
               )
@@ -443,7 +494,7 @@ class LoginController @Inject() (
       }
     }
 
-  def changePassword: Action[AnyContent] =
+  def passwordReinitialization: Action[AnyContent] =
     Action.async { implicit request =>
       PasswordChange.form
         .bindFromRequest()
@@ -455,7 +506,9 @@ class LoginController @Inject() (
               none
             )
             Future.successful(
-              BadRequest(views.password.recoveryPage(formWithErrors("token").value, formWithErrors))
+              BadRequest(
+                views.password.reinitializationPage(formWithErrors("token").value, formWithErrors)
+              )
             )
           },
           newCredentials =>

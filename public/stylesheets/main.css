@@ -15,11 +15,6 @@ html, body {
     height: 50px;
 }
 
-.logo-standalone {
-    width: 125px;
-    height: 100px;
-}
-
 .demo-layout .mdl-layout__header .mdl-layout__drawer-button {
     color: rgba(0, 0, 0, 0.54);
 }
@@ -690,10 +685,6 @@ a {
     margin-bottom: 24px;
 }
 
-.single--margin-bottom-32px {
-    margin-bottom: 32px;
-}
-
 .single--margin-bottom-40px {
     margin-bottom: 40px;
 }
@@ -750,10 +741,6 @@ a {
     margin: 8px;
 }
 
-.single--margin-16px {
-    margin: 16px;
-}
-
 
 .single--padding-0px {
     padding: 0px;
@@ -807,14 +794,6 @@ a {
     max-width: 184px;
 }
 
-.single--max-width-400px {
-    max-width: 400px;
-}
-
-.single--max-width-450px {
-    max-width: 450px;
-}
-
 .single--max-width-800px {
     max-width: 800px;
 }
@@ -825,10 +804,6 @@ a {
 
 .single--height-auto {
     height: auto !important;
-}
-
-.single--height-100pc {
-    height: 100%;
 }
 
 .single--width-unset {
@@ -919,12 +894,6 @@ a {
     -webkit-box-pack: center;
     -ms-flex-pack: center;
     justify-content: center;
-}
-
-.single--justify-content-flex-end {
-    -webkit-box-pack: end;
-    -ms-flex-pack: end;
-    justify-content: flex-end;
 }
 
 .single--align-self-center {
@@ -1185,17 +1154,6 @@ Tabs
     color: #555555;
     text-decoration: underline;
     cursor: pointer;
-}
-
-.button-as-link {
-    background: none !important;
-    border: none;
-    padding: 0 !important;
-    text-decoration: underline;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: black;
 }
 
 .group-container {

@@ -218,30 +218,4 @@ object forms {
         .map(_ => span(cls := "mdl-textfield__error", field.errors.map(_.format).mkString(", ")))
     )
 
-  /**   - Label above the input
-    *   - Simple input without animation
-    */
-  def simpleInput(inputLabel: String, field: Field, inputType: String = "text")(implicit
-      messages: MessagesProvider
-  ): Tag =
-    div(
-      cls := "mdl-textfield mdl-js-textfield single--width-100pc" +
-        (if (field.hasErrors) " is-invalid" else ""),
-      label(
-        cls := "aplus-textfield__label",
-        `for` := field.id,
-        inputLabel
-      ),
-      input(
-        cls := "mdl-textfield__input aplus-textfield__input aplus-textfield__input--large",
-        `type` := inputType,
-        id := field.id,
-        name := field.name,
-        field.value.map(value := _),
-      ),
-      field.hasErrors.some
-        .filter(identity)
-        .map(_ => span(cls := "mdl-textfield__error", field.errors.map(_.format).mkString(", ")))
-    )
-
 }

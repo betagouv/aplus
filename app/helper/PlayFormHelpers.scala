@@ -23,7 +23,7 @@ object PlayFormHelpers {
   val passwordText: Mapping[String] =
     text
       .transform[String](StringHelper.normalizeNFKC, _ => "")
-      .verifying(minLength(8))
+      .verifying(minLength(12))
       .verifying(maxLength(1000))
       .verifying(
         "Le mot de passe ne peut pas commencer ou terminer par une espace " +

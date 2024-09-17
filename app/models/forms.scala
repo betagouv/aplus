@@ -31,6 +31,18 @@ package forms {
 
   }
 
+  case class PasswordRecovery(email: String)
+
+  object PasswordRecovery {
+
+    val form = Form(
+      mapping(
+        "email" -> normalizedText.verifying(maxLength(User.emailMaxLength)),
+      )(PasswordRecovery.apply)(_.email.some)
+    )
+
+  }
+
   case class PasswordChange(token: String, newPassword: String, passwordConfirmation: String)
 
   object PasswordChange {

@@ -61,9 +61,10 @@ GET         /login                                                              
 POST        /login                                                                           controllers.LoginController.login
 GET         /connexion/mot-de-passe                                                          controllers.LoginController.passwordPage
 POST        /connexion/mot-de-passe                                                          controllers.LoginController.tryLoginByPassword
-POST        /connexion/mot-de-passe/recuperation                                             controllers.LoginController.sendPasswordRecoveryEmail
-GET         /connexion/mot-de-passe/changement                                               controllers.LoginController.changePasswordPage
-POST        /connexion/mot-de-passe/changement                                               controllers.LoginController.changePassword
+GET         /connexion/mot-de-passe/email-de-reinitialisation                                controllers.LoginController.passwordReinitializationEmailPage
+POST        /connexion/mot-de-passe/email-de-reinitialisation                                controllers.LoginController.passwordReinitializationEmail
+GET         /connexion/mot-de-passe/reinitialisation                                         controllers.LoginController.passwordReinitializationPage
+POST        /connexion/mot-de-passe/reinitialisation                                         controllers.LoginController.passwordReinitialization
 GET         /login/disconnect                                                                controllers.LoginController.disconnect
 GET         /validation-connexion                                                            controllers.LoginController.magicLinkAntiConsumptionPage
 

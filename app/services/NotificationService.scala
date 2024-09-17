@@ -196,7 +196,7 @@ class NotificationService @Inject() (
       expirationDate: Instant,
   ) = {
     val absoluteUrlPath: String =
-      routes.LoginController.changePasswordPage.absoluteURL(https, host)
+      routes.LoginController.passwordReinitializationPage.absoluteURL(https, host)
     val url = absoluteUrlPath + s"?token=${token}"
     val name = userName.some.map(_.trim).filter(_.nonEmpty)
     val expiration = expirationDate.atZone(userTimeZone)

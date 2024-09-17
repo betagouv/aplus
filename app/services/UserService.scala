@@ -556,7 +556,7 @@ class UserService @Inject() (
         WHERE id = $userId::uuid
       """.executeUpdate()
     }
-  
+
   /** Uses `= ANY` instead of `@>` in order to take advantage of indexes. */
   def usersInfos(usersIds: List[UUID]): IO[Either[Error, Map[UUID, UserInfos]]] = {
     val ids = usersIds.distinct
