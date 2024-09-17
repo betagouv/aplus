@@ -81,55 +81,58 @@ class NotificationService @Inject() (
 
   // Note: application does not contain answer at this point
   def newAnswer(application: Application, answer: Answer): Unit = {
-    // Retrieve data
-    val userIds = (application.invitedUsers ++ answer.invitedUsers).keys
-    val users = userService.byIds(userIds.toList)
-    val (allGroups, alreadyPresentGroupIds): (List[UserGroup], Set[UUID]) = {
-      val allGroupIds = application.invitedGroups.union(answer.invitedGroupIds.toSet)
-      (
-        groupService
-          .byIds(allGroupIds.toList)
-          .filter(_.email.nonEmpty),
-        application.invitedGroups
-      )
-    }
+    val shouldNotify = answer.answerType =!= Answer.AnswerType.InviteThroughGroupPermission
+    if shouldNotify then {
+      // Retrieve data
+      val userIds = (application.invitedUsers ++ answer.invitedUsers).keys
+      val users = userService.byIds(userIds.toList)
+      val (allGroups, alreadyPresentGroupIds): (List[UserGroup], Set[UUID]) = {
+        val allGroupIds = application.invitedGroups.union(answer.invitedGroupIds.toSet)
+        (
+          groupService
+            .byIds(allGroupIds.toList)
+            .filter(_.email.nonEmpty),
+          application.invitedGroups
+        )
+      }
 
-    // Send emails to users
-    users
-      .flatMap { user =>
-        if (user.id === answer.creatorUserID) {
-          None
-        } else if (
-          !Authorization.canSeeAnswer(answer, application)(Authorization.readUserRights(user))
-        ) {
-          None
-        } else if (answer.invitedUsers.contains(user.id)) {
-          Some(generateInvitationEmail(application, Some(answer))(user))
-        } else {
-          Some(generateAnswerEmail(application, answer)(user))
+      // Send emails to users
+      users
+        .flatMap { user =>
+          if (user.id === answer.creatorUserID) {
+            None
+          } else if (
+            !Authorization.canSeeAnswer(answer, application)(Authorization.readUserRights(user))
+          ) {
+            None
+          } else if (answer.invitedUsers.contains(user.id)) {
+            Some(generateInvitationEmail(application, Some(answer))(user))
+          } else {
+            Some(generateAnswerEmail(application, answer)(user))
+          }
         }
-      }
-      .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
-
-    val usersEmails: Set[String] = users.map(_.email).toSet
-
-    // Send emails to groups
-    allGroups
-      .collect {
-        case group @ UserGroup(id, _, _, _, _, _, _, Some(email), _, _)
-            if !usersEmails.contains(email) =>
-          if (alreadyPresentGroupIds.contains(id))
-            generateNotificationBALEmail(application, answer.some, users)(group)
-          else
-            generateNotificationBALEmail(application, Option.empty[Answer], users)(group)
-      }
-      .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
-
-    if (answer.visibleByHelpers && answer.creatorUserID =!= application.creatorUserId) {
-      userService
-        .byId(application.creatorUserId)
-        .map(generateAnswerEmail(application, answer))
         .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+
+      val usersEmails: Set[String] = users.map(_.email).toSet
+
+      // Send emails to groups
+      allGroups
+        .collect {
+          case group @ UserGroup(id, _, _, _, _, _, _, Some(email), _, _)
+              if !usersEmails.contains(email) =>
+            if (alreadyPresentGroupIds.contains(id))
+              generateNotificationBALEmail(application, answer.some, users)(group)
+            else
+              generateNotificationBALEmail(application, Option.empty[Answer], users)(group)
+        }
+        .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+
+      if (answer.visibleByHelpers && answer.creatorUserID =!= application.creatorUserId) {
+        userService
+          .byId(application.creatorUserId)
+          .map(generateAnswerEmail(application, answer))
+          .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+      }
     }
   }
 
