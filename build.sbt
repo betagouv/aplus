@@ -43,12 +43,14 @@ scalacOptions ++= Seq(
   "-Wconf:src=routes/.*&msg=unused value:s",
   //   - second one is due to -Wunused:imports with twirl
   "-Wconf:src=twirl/.*&msg=unused import:s",
+  // Silence specs2 warnings from -Wnonunit-statement
+  "-Wconf:src=aplus/test/.*&msg=unused value:s",
   // Sets warnings as errors on the CI
   if (insideCI.value) "-Wconf:any:error" else "-Wconf:any:warning",
   // Recommended for cats-effect
   // https://typelevel.org/cats-effect/docs/getting-started
-  "-Wnonunit-statement", // TODO: the route warnings needs to be silenced
-  "-Wunused:imports", // gives non useful warns due to twirl
+  "-Wnonunit-statement",
+  "-Wunused:imports",
   "-Wunused:privates",
   "-Wunused:locals",
   // "-Wunused:explicits", // TODO: lot of warnings, enable later
