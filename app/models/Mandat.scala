@@ -3,7 +3,6 @@ package models
 import cats.syntax.all._
 import java.time.ZonedDateTime
 import java.util.UUID
-import models.Sms
 
 object Mandat {
   case class Id(underlying: UUID)

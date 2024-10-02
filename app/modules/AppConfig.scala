@@ -85,6 +85,9 @@ class AppConfig @Inject() (configuration: Configuration) {
   val topHeaderWarningMessage: Option[String] =
     configuration.getOptional[String]("app.topHeaderWarningMessage")
 
+  val topHeaderPublicPagesAlertMessageHtml: Option[String] =
+    configuration.getOptional[String]("app.topHeaderPublicPagesAlertMessageHtml")
+
   val insecureAreasWithLoginByKey: List[UUID] = configuration
     .get[String]("app.areasWithLoginByKey")
     .split(",")

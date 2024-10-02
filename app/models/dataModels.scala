@@ -7,7 +7,6 @@ import helper.{PlayFormHelpers, Time}
 import helper.MiscHelpers.toTuple
 import java.time.{Instant, ZonedDateTime}
 import java.util.UUID
-import models.Answer
 import models.Application.{MandatType, SeenByUser}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -222,7 +221,7 @@ object dataModels {
   }
 
   object SmsFormats {
-    import models.Sms
+
     implicit val smsIdReads: Reads[Sms.ApiId] = implicitly[Reads[String]].map(Sms.ApiId.apply)
 
     implicit val smsIdWrites: Writes[Sms.ApiId] =

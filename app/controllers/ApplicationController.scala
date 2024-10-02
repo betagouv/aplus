@@ -1243,10 +1243,18 @@ case class ApplicationController @Inject() (
   def show(id: UUID): Action[AnyContent] =
     loginAction.async { implicit request =>
       withApplication(id) { application =>
+        val openedTab = request.flash
+          .get("opened-tab")
+          .orElse(
+            request
+              .getQueryString("onglet")
+              .map(value => if (value === "invitation") "invite" else "answer")
+          )
+          .getOrElse("answer")
         showApplication(
           application,
           AnswerFormData.form(request.currentUser, false),
-          openedTab = request.flash.get("opened-tab").getOrElse("answer"),
+          openedTab = openedTab,
         ) { html =>
           eventService.log(
             EventType.ApplicationShowed,
@@ -1447,7 +1455,7 @@ case class ApplicationController @Inject() (
             Redirect(
               routes.ApplicationController.show(applicationId).withFragment("answer-error")
             )
-              .flashing("answer-error" -> message, "opened-tab" -> "anwser")
+              .flashing("answer-error" -> message, "opened-tab" -> "answer")
           )
         } { files =>
           val form =

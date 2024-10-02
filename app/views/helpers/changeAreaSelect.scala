@@ -8,12 +8,22 @@ import serializers.Keys
 
 object changeAreaSelect {
 
-  def apply(currentArea: Area, selectableAreas: List[Area], redirectUrlPath: Call): Tag =
+  def apply(
+      currentArea: Area,
+      selectableAreas: List[Area],
+      redirectUrlPath: Call,
+      query: (String, String)*
+  ): Tag = {
+    val queryString = {
+      val qs = query.map { case (key, value) => s"$key=$value" }.mkString("&")
+      if (qs.isEmpty) "" else (qs + "&")
+    }
+    val redirectUrlPrefix = s"$redirectUrlPath?$queryString${Keys.QueryParam.areaId}=";
     select(
       id := "changeAreaSelect",
       name := "area",
       data("current-area") := currentArea.id.toString,
-      data("redirect-url-prefix") := s"$redirectUrlPath?${Keys.QueryParam.areaId}=",
+      data("redirect-url-prefix") := redirectUrlPrefix,
       selectableAreas.map(area =>
         scalatags.Text.tags.option(
           value := area.id.toString,
@@ -22,5 +32,6 @@ object changeAreaSelect {
         )
       )
     )
+  }
 
 }
