@@ -103,15 +103,16 @@ class LoginController @Inject() (
                     SeeOther(routes.LoginController.passwordPage.url)
                   )
                 )
-              LoginAction.readUserRights(user).map { userRights =>
-                val loginToken =
-                  LoginToken
-                    .forUserId(user.id, config.tokenExpirationInMinutes, request.remoteAddress)
-                // userSession = none since there are no session around
-                val requestWithUserData =
-                  new RequestWithUserData(user, userRights, none, request)
-                magicLinkAuth(loginToken, user.email, requestWithUserData.some)
-              }
+              else
+                LoginAction.readUserRights(user).map { userRights =>
+                  val loginToken =
+                    LoginToken
+                      .forUserId(user.id, config.tokenExpirationInMinutes, request.remoteAddress)
+                  // userSession = none since there are no session around
+                  val requestWithUserData =
+                    new RequestWithUserData(user, userRights, none, request)
+                  magicLinkAuth(loginToken, user.email, requestWithUserData.some)
+                }
             }
         }
       }
@@ -284,8 +285,6 @@ class LoginController @Inject() (
                     // Note: we remove the password on purpose here
                     val form =
                       PasswordCredentials.form.fill(PasswordCredentials(credentials.email, ""))
-                    val message =
-                      "Connexion impossible : mot de passe invalide, compte inexistant ou désactivé"
                     Future.successful(
                       addingPasswordEmailToSession(credentials.email.some)(
                         BadRequest(

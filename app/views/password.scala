@@ -1,16 +1,13 @@
 package views
 
 import cats.syntax.all._
-import constants.Constants
-import controllers.routes.{Assets, HomeController, LoginController}
+import controllers.routes.{HomeController, LoginController}
 import helpers.forms.CSRFInput
 import models.forms.{PasswordChange, PasswordCredentials, PasswordRecovery}
-import org.webjars.play.WebJarsUtil
 import play.api.data.Form
 import play.api.i18n.MessagesProvider
-import play.api.mvc.{Flash, RequestHeader}
+import play.api.mvc.RequestHeader
 import scalatags.Text.all._
-import scalatags.Text.tags2
 
 object password {
 
@@ -28,7 +25,7 @@ object password {
           p(cls := "fr-hr-or")("ou"),
           div(
             a(
-              href := "/",
+              href := HomeController.index.url,
               "Revenir à la page d’accueil pour se connecter avec un lien à usage unique."
             )
           )

@@ -1,6 +1,5 @@
 package services
 
-import anorm._
 import cats.syntax.all._
 import java.sql.Connection
 import models.{Error, EventType}

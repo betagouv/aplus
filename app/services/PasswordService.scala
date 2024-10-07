@@ -15,7 +15,6 @@ import modules.AppConfig
 import play.api.db.Database
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.Try
 
 @Singleton
 class PasswordService @Inject() (
@@ -111,7 +110,7 @@ class PasswordService @Inject() (
                         ipAddress = ipAddress,
                         used = false,
                       )
-                      SQL"""
+                      val _ = SQL"""
                         INSERT INTO password_recovery_token (
                           token,
                           user_id,
@@ -171,7 +170,6 @@ class PasswordService @Inject() (
       EventType.PasswordTokenError,
       "Impossible de vérifier le token de changement de mot de passe",
     ) { implicit connection =>
-      import anorm.SqlParser._
       SQL(
         s"""SELECT $passwordRecoveryTokenFieldsInSelect,
                    host(ip_address)::TEXT AS ip_address
@@ -190,7 +188,6 @@ class PasswordService @Inject() (
       EventType.PasswordTokenError,
       "Impossible de changer le mot de passe",
     ) { implicit connection =>
-      import anorm.SqlParser._
       val userInfos = SQL(
         s"""SELECT "user".id, "user".email
             FROM password_recovery_token, "user"
@@ -201,7 +198,7 @@ class PasswordService @Inject() (
             AND NOT "user".disabled"""
       )
         .on("token" -> token.take(100))
-        .as((get[UUID]("id") ~ get[String]("email")).singleOpt)
+        .as((SqlParser.get[UUID]("id") ~ SqlParser.get[String]("email")).singleOpt)
       userInfos match {
         case Some(userId ~ userEmail) =>
           PasswordHasher
@@ -218,7 +215,7 @@ class PasswordService @Inject() (
                   .asLeft,
               hash => {
                 val now = Instant.now()
-                SQL"""INSERT INTO password (
+                val _ = SQL"""INSERT INTO password (
                         user_id,
                         password_hash,
                         last_update
@@ -230,7 +227,7 @@ class PasswordService @Inject() (
                       ON CONFLICT (user_id)
                       DO UPDATE SET password_hash = ${hash}, last_update = ${now}
                    """.executeUpdate()
-                SQL"""UPDATE password_recovery_token
+                val _ = SQL"""UPDATE password_recovery_token
                       SET used = true
                       WHERE token = ${token}
                    """.executeUpdate()
