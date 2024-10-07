@@ -138,7 +138,7 @@ object password {
           reinitializationEmailBlock(form, successMessage, errorMessage),
           div(
             a(
-              href := "/",
+              href := HomeController.index.url,
               "Revenir à la page d’accueil pour se connecter avec un lien à usage unique."
             )
           ),
@@ -238,7 +238,7 @@ object password {
           reinitializationBlock(validToken, passwordChangeForm, successMessage, errorMessage),
           div(
             a(
-              href := "/",
+              href := HomeController.index.url,
               "Revenir à la page d’accueil pour se connecter avec un lien à usage unique."
             )
           ),
