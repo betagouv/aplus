@@ -59,6 +59,12 @@ POST        /utilisateurs/inscriptions/add-emails                               
 # Login
 GET         /login                                                                           controllers.LoginController.login
 POST        /login                                                                           controllers.LoginController.login
+GET         /connexion/mot-de-passe                                                          controllers.LoginController.passwordPage
+POST        /connexion/mot-de-passe                                                          controllers.LoginController.tryLoginByPassword
+GET         /connexion/mot-de-passe/email-de-reinitialisation                                controllers.LoginController.passwordReinitializationEmailPage
+POST        /connexion/mot-de-passe/email-de-reinitialisation                                controllers.LoginController.passwordReinitializationEmail
+GET         /connexion/mot-de-passe/reinitialisation                                         controllers.LoginController.passwordReinitializationPage
+POST        /connexion/mot-de-passe/reinitialisation                                         controllers.LoginController.passwordReinitialization
 GET         /login/disconnect                                                                controllers.LoginController.disconnect
 GET         /validation-connexion                                                            controllers.LoginController.magicLinkAntiConsumptionPage
 
@@ -72,6 +78,7 @@ GET         /utilisateurs/:userId                                               
 POST        /utilisateurs/:userId                                                            controllers.UserController.editUserPost(userId: java.util.UUID)
 POST        /utilisateurs/:userId/reactivation/groupes/:groupId                              controllers.GroupController.enableUser(userId: java.util.UUID, groupId: java.util.UUID)
 POST        /utilisateurs/:userId/suppression                                                controllers.UserController.deleteUnusedUserById(userId: java.util.UUID)
+POST        /utilisateurs/:userId/activation-mot-de-passe                                    controllers.UserController.activateUserPassword(userId: java.util.UUID)
 
 
 # Importation

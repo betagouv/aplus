@@ -47,6 +47,7 @@ case class User(
     sharedAccount: Boolean = false,
     // This is a comment only visible by the admins
     internalSupportComment: Option[String],
+    passwordActivated: Boolean
 ) extends AgeModel {
   def nameWithQualite: String = s"$name ( $qualite )"
 
@@ -237,6 +238,7 @@ case class User(
       managingAreaIds = managingAreaIds,
       sharedAccount = sharedAccount,
       internalSupportComment = none,
+      passwordActivated = passwordActivated,
     )
   }
 
@@ -264,7 +266,8 @@ object User {
     observableOrganisationIds = Nil,
     managingOrganisationIds = Nil,
     managingAreaIds = Nil,
-    internalSupportComment = None
+    internalSupportComment = None,
+    passwordActivated = false,
   )
 
   def standardName(firstName: String, lastName: String): String = {
@@ -272,5 +275,9 @@ object User {
     val normalizedLastName = commonStringInputNormalization(lastName)
     s"${normalizedLastName.toUpperCase} ${capitalizeName(normalizedFirstName)}"
   }
+
+  // DB field size is varchar(200) - UTF8 if correctly configured
+  // No chars outside BMP plane should be a safe assumption here...
+  val emailMaxLength = 200
 
 }

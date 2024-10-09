@@ -108,7 +108,8 @@ case class SignupController @Inject() (
               managingOrganisationIds = Nil,
               managingAreaIds = Nil,
               sharedAccount = form.sharedAccount,
-              internalSupportComment = None
+              internalSupportComment = None,
+              passwordActivated = false,
             )
             userService
               .addFuture(user :: Nil)

@@ -207,6 +207,7 @@ object ApiModel {
         disabled = user.disabledRoleName.nonEmpty,
         sharedAccount = user.sharedAccount,
         cgu = user.cguAcceptationDate.nonEmpty,
+        passwordActivated = user.passwordActivated,
         permissions = Permissions(
           helper = user.helperRoleName.nonEmpty,
           instructor = user.instructorRoleName.nonEmpty,
@@ -239,6 +240,7 @@ object ApiModel {
       disabled: Boolean,
       sharedAccount: Boolean,
       cgu: Boolean,
+      passwordActivated: Boolean,
       // This case class is a workaround for the 22 fields tuple limit in play-json
       permissions: UserInfos.Permissions,
   )

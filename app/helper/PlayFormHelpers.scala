@@ -1,9 +1,11 @@
 package helper
 
+import cats.syntax.all._
 import helper.StringHelper.commonStringInputNormalization
 import play.api.data.{Form, FormError, Mapping}
 import play.api.data.Forms.{optional, text}
 import play.api.data.validation.{Constraint, Valid}
+import play.api.data.validation.Constraints.{maxLength, minLength}
 import play.api.i18n.MessagesProvider
 import play.api.libs.json.{JsPath, JsonValidationError}
 
@@ -17,6 +19,17 @@ object PlayFormHelpers {
       _.map(commonStringInputNormalization).filter(_.nonEmpty),
       _.map(commonStringInputNormalization).filter(_.nonEmpty)
     )
+
+  val passwordText: Mapping[String] =
+    text
+      .transform[String](StringHelper.normalizeNFKC, _ => "")
+      .verifying(minLength(12))
+      .verifying(maxLength(1000))
+      .verifying(
+        "Le mot de passe ne peut pas commencer ou terminer par une espace " +
+          "(Cependant, les espaces sont autorisés à l’intérieur du mot de passe).",
+        password => password.trim === password
+      )
 
   def inOption[T](constraint: Constraint[T]): Constraint[Option[T]] =
     Constraint[Option[T]](constraint.name, constraint.args) {
