@@ -33,6 +33,7 @@ object Keys {
     val signupId: String = "signupId"
     val sessionId: String = "sessionId"
     val signupLoginExpiresAt: String = "signupLoginExpiresAt"
+    val signupAgentConnectSubject: String = "signupAgentConnectSubject"
   }
 
   // Important note: do not forget to check the `SentryFilter` whitelist

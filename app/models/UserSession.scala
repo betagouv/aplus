@@ -8,8 +8,9 @@ object UserSession {
   sealed abstract trait LoginType
 
   object LoginType {
-    case object MagicLink extends LoginType
+    case object AgentConnect extends LoginType
     case object InsecureDemoKey extends LoginType
+    case object MagicLink extends LoginType
   }
 
 }

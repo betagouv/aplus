@@ -12,7 +12,7 @@ import java.sql.Connection
 import java.time.Instant
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import models.{Error, EventType, Organisation, User, UserSession}
+import models.{AgentConnectClaims, Error, EventType, Organisation, User, UserSession}
 import models.dataModels.UserRow
 import modules.AppConfig
 import org.postgresql.util.PSQLException
@@ -644,8 +644,9 @@ class UserService @Inject() (
     Column
       .of[String]
       .mapResult {
-        case "magic_link"        => UserSession.LoginType.MagicLink.asRight
+        case "agent_connect"     => UserSession.LoginType.AgentConnect.asRight
         case "insecure_demo_key" => UserSession.LoginType.InsecureDemoKey.asRight
+        case "magic_link"        => UserSession.LoginType.MagicLink.asRight
         case unknownType =>
           SqlMappingError(s"Cannot parse login_type $unknownType").asLeft
       }
@@ -715,8 +716,9 @@ class UserService @Inject() (
       )
 
   private def stringifyLoginType(loginType: UserSession.LoginType): String = loginType match {
-    case UserSession.LoginType.MagicLink       => "magic_link"
+    case UserSession.LoginType.AgentConnect    => "agent_connect"
     case UserSession.LoginType.InsecureDemoKey => "insecure_demo_key"
+    case UserSession.LoginType.MagicLink       => "magic_link"
   }
 
   private def saveUserSession(session: UserSession): IO[Either[Error, UserSession]] =
@@ -851,5 +853,93 @@ class UserService @Inject() (
           )
         )
     )
+
+  //
+  // AgentConnect
+  //
+
+  val (agentConnectClaimsParser, agentConnectClaimsTableFields) =
+    Macros.parserWithFields[AgentConnectClaims](
+      "subject",
+      "email",
+      "given_name",
+      "usual_name",
+      "uid",
+      "siret",
+      "creation_date",
+      "last_auth_time",
+      "user_id",
+    )
+
+  val agentConnectClaimsFieldsInSelect: String =
+    agentConnectClaimsTableFields.mkString(", ")
+
+  def saveAgentConnectClaims(claims: AgentConnectClaims): IO[Either[Error, Unit]] =
+    IO.blocking {
+      val _ = db.withConnection { implicit connection =>
+        SQL"""
+          INSERT INTO agent_connect_claims (
+            subject,
+            email,
+            given_name,
+            usual_name,
+            uid,
+            siret,
+            creation_date,
+            last_auth_time,
+            user_id
+          ) VALUES(
+            ${claims.subject},
+            ${claims.email},
+            ${claims.givenName},
+            ${claims.usualName},
+            ${claims.uid},
+            ${claims.siret},
+            ${claims.creationDate},
+            ${claims.lastAuthTime},
+            ${claims.userId}
+          )
+          ON CONFLICT (subject) DO UPDATE SET
+            email = EXCLUDED.email,
+            given_name = EXCLUDED.given_name,
+            usual_name = EXCLUDED.usual_name,
+            uid = EXCLUDED.uid,
+            siret = EXCLUDED.siret,
+            last_auth_time = EXCLUDED.last_auth_time,
+            user_id = EXCLUDED.user_id
+        """.executeUpdate()
+      }
+    }.attempt
+      .map(
+        _.left.map(error =>
+          Error.SqlException(
+            EventType.AgentConnectClaimsSaveError,
+            s"Impossible de sauvegarder les claims AgentConnect [subject: ${claims.subject}]",
+            error,
+            none
+          )
+        )
+      )
+
+  def linkUserToAgentConnectClaims(userId: UUID, subject: String): IO[Either[Error, Unit]] =
+    IO.blocking {
+      val _ = db.withConnection { implicit connection =>
+        SQL"""
+          UPDATE agent_connect_claims
+          SET user_id = $userId::uuid
+          WHERE subject = $subject
+        """.executeUpdate()
+      }
+    }.attempt
+      .map(
+        _.left.map(error =>
+          Error.SqlException(
+            EventType.AgentConnectClaimsSaveError,
+            s"Impossible de lier l'utilisateur $userId au claims de subject $subject",
+            error,
+            none
+          )
+        )
+      )
 
 }

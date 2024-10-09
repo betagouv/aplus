@@ -114,7 +114,6 @@ object EventType {
   object ReopenUnauthorized extends Warn
   object TerminateUnauthorized extends Warn
   object ToCGURedirected extends Info
-  object UserAccessDisabled extends Info
   object UserCreated extends Info
   object UserDeleted extends Info
   object UserEdited extends Info
@@ -194,6 +193,7 @@ object EventType {
   object AuthWithDifferentIp extends Warn
   object LoginByKey extends Info
   object AuthBySignupToken extends Info
+  object UserAccessDisabled extends Info
   object LoggedInUserAccountDeleted extends Warn
   object UserSessionError extends Error
 
@@ -214,6 +214,16 @@ object EventType {
   object FSMatriculeInvalidData extends Warn
   object FSMatriculeError extends Error
   object FSMatriculeChanged extends Info
+
+  // AgentConnect
+  object AgentConnectSecurityWarning extends Warn
+  object AgentConnectError extends Error
+  object AgentConnectUpdateProviderConfiguration extends Info
+  object AgentConnectUserLoginSuccessful extends Info
+  object AgentConnectSignupLoginSuccessful extends Info
+  object AgentConnectLoginDeactivatedUser extends Error
+  object AgentConnectUnknownEmail extends Warn
+  object AgentConnectClaimsSaveError extends Error
 
   val unauthenticatedEvents: List[EventType] = List(
     GenerateToken,

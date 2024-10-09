@@ -136,10 +136,11 @@ case class SignupController @Inject() (
                     LoginAction.readUserRights(user).flatMap { userRights =>
                       (
                         for {
+                          loginType <- maybeLinkUserToAgentConnectClaims(user.id, request)
                           userSession <- userService
                             .createNewUserSession(
                               user.id,
-                              UserSession.LoginType.MagicLink,
+                              loginType,
                               loginExpiresAt,
                               request.remoteAddress,
                             )
@@ -324,6 +325,18 @@ case class SignupController @Inject() (
         )
       )
 
+  private def maybeLinkUserToAgentConnectClaims(
+      userId: UUID,
+      request: Request[_]
+  ): EitherT[IO, Error, UserSession.LoginType] =
+    request.session.get(Keys.Session.signupAgentConnectSubject) match {
+      case None => EitherT.rightT[IO, Error](UserSession.LoginType.MagicLink)
+      case Some(subject) =>
+        EitherT(
+          userService.linkUserToAgentConnectClaims(userId, subject)
+        ).map(_ => UserSession.LoginType.AgentConnect)
+    }
+
   /** Note: parameter is curried to easily mark `Request` as implicit. */
   private def withSignupInSession(
       action: Request[_] => (SignupRequest, Instant) => Future[Result]
@@ -391,10 +404,14 @@ case class SignupController @Inject() (
                           // (this case happen if the signup session has not been purged after user creation)
                           (
                             for {
+                              loginType <- maybeLinkUserToAgentConnectClaims(
+                                existingUser.id,
+                                request
+                              )
                               userSession <- userService
                                 .createNewUserSession(
                                   existingUser.id,
-                                  UserSession.LoginType.MagicLink,
+                                  loginType,
                                   loginExpiresAt,
                                   request.remoteAddress,
                                 )
