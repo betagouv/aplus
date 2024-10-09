@@ -4,7 +4,7 @@ import cats.syntax.all._
 import constants.Constants
 import controllers.routes
 import helper.EmailHelper.quoteEmailPhrase
-import java.time.ZoneId
+import java.time.{Instant, ZoneId}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models._
@@ -70,9 +70,18 @@ class NotificationService @Inject() (
       .byIds(application.invitedGroupIdsAtCreation)
       .filter(_.email.nonEmpty)
 
-    users
-      .map(generateInvitationEmail(application))
-      .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+    eventService.lastActivity(users.map(_.id)).foreach { lastActivityResult =>
+      val lastActivity: Map[UUID, Instant] = lastActivityResult.getOrElse(Nil).toMap
+      users
+        .filter(user =>
+          lastActivity
+            .get(user.id)
+            .map(_.isAfter(Instant.now().minusSeconds(365 * 24 * 60 * 60)))
+            .getOrElse(false)
+        )
+        .map(generateInvitationEmail(application))
+        .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+    }
 
     groups
       .map(generateNotificationBALEmail(application, None, users))
@@ -97,23 +106,32 @@ class NotificationService @Inject() (
       }
 
       // Send emails to users
-      users
-        .flatMap { user =>
-          if (user.id === answer.creatorUserID) {
-            None
-          } else if (
-            !Authorization.canSeeAnswer(answer, application)(Authorization.readUserRights(user))
-          ) {
-            None
-          } else if (!user.instructor) { // Temporary case
-            None
-          } else if (answer.invitedUsers.contains(user.id)) {
-            Some(generateInvitationEmail(application, Some(answer))(user))
-          } else {
-            Some(generateAnswerEmail(application, answer)(user))
+      eventService.lastActivity(users.map(_.id)).foreach { lastActivityResult =>
+        val lastActivity: Map[UUID, Instant] = lastActivityResult.getOrElse(Nil).toMap
+        users
+          .filter(user =>
+            lastActivity
+              .get(user.id)
+              .map(_.isAfter(Instant.now().minusSeconds(365 * 24 * 60 * 60)))
+              .getOrElse(false)
+          )
+          .flatMap { user =>
+            if (user.id === answer.creatorUserID) {
+              None
+            } else if (
+              !Authorization.canSeeAnswer(answer, application)(Authorization.readUserRights(user))
+            ) {
+              None
+            } else if (!user.instructor) { // Temporary case
+              None
+            } else if (answer.invitedUsers.contains(user.id)) {
+              Some(generateInvitationEmail(application, Some(answer))(user))
+            } else {
+              Some(generateAnswerEmail(application, answer)(user))
+            }
           }
-        }
-        .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+          .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+      }
 
       val usersEmails: Set[String] = users.map(_.email).toSet
 
@@ -130,10 +148,12 @@ class NotificationService @Inject() (
         .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
 
       if (answer.visibleByHelpers && answer.creatorUserID =!= application.creatorUserId) {
+        /* This is a temporary comment
         userService
           .byId(application.creatorUserId)
           .map(generateAnswerEmail(application, answer))
           .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+         */
       }
     }
   }
