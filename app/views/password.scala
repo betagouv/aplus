@@ -2,12 +2,12 @@ package views
 
 import cats.syntax.all._
 import controllers.routes.{HomeController, LoginController}
-import helpers.forms.CSRFInput
 import models.forms.{PasswordChange, PasswordCredentials, PasswordRecovery}
 import play.api.data.Form
 import play.api.i18n.MessagesProvider
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
+import views.helpers.forms.CSRFInput
 
 object password {
 

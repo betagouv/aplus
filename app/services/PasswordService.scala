@@ -1,6 +1,5 @@
 package services
 
-import org.apache.pekko.actor.ActorSystem
 import anorm._
 import aplus.macros.Macros
 import cats.data.EitherT
@@ -12,6 +11,7 @@ import javax.inject.{Inject, Singleton}
 import models.{Error, EventType, User}
 import models.dataModels.{PasswordRecoveryTokenRow, PasswordRow}
 import modules.AppConfig
+import org.apache.pekko.actor.ActorSystem
 import play.api.db.Database
 import scala.concurrent.Future
 import scala.concurrent.duration._

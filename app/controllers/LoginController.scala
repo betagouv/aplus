@@ -1,6 +1,7 @@
 package controllers
 
 import actions.{LoginAction, RequestWithUserData}
+import cats.data.EitherT
 import cats.effect.IO
 import cats.syntax.all._
 import helper.PlayFormHelpers.formErrorsLog
@@ -8,9 +9,9 @@ import helper.ScalatagsHelpers.writeableOf_Modifier
 import helper.Time
 import java.time.Instant
 import javax.inject.{Inject, Singleton}
-import models.{Authorization, EventType, LoginToken, User}
-import models.forms.{PasswordChange, PasswordCredentials, PasswordRecovery}
+import models.{Authorization, Error, EventType, LoginToken, User, UserSession}
 import models.EventType.{GenerateToken, UnknownEmail}
+import models.forms.{PasswordChange, PasswordCredentials, PasswordRecovery}
 import modules.AppConfig
 import org.webjars.play.WebJarsUtil
 import play.api.i18n.I18nSupport
@@ -295,17 +296,43 @@ class LoginController @Inject() (
                     )
                   },
                   user =>
-                    LoginAction.readUserRights(user).map { userRights =>
-                      val requestWithUserData =
-                        new RequestWithUserData(user, userRights, none, request) // TODO
-                      eventService.log(
-                        EventType.PasswordVerificationSuccessful,
-                        s"Identification par mot de passe"
-                      )(requestWithUserData)
-                      Redirect(routes.ApplicationController.myApplications)
-                        .withSession(
-                          request.session - Keys.Session.passwordEmail + (Keys.Session.userId -> user.id.toString)
-                        )
+                    LoginAction.readUserRights(user).flatMap { userRights =>
+                      (
+                        for {
+                          expiresAt <- EitherT.right[Error](
+                            IO.realTimeInstant
+                              .map(_.plusSeconds(config.passwordSessionDurationInSeconds))
+                          )
+                          _ <- EitherT.right[Error](IO.blocking(userService.recordLogin(user.id)))
+                          userSession <- userService.createNewUserSession(
+                            user.id,
+                            UserSession.LoginType.Password,
+                            expiresAt,
+                            request.remoteAddress
+                          )
+                          _ <- EitherT.right[Error](
+                            IO.blocking(
+                              eventService.log(
+                                EventType.PasswordVerificationSuccessful,
+                                s"Identification par mot de passe"
+                              )(
+                                new RequestWithUserData(user, userRights, userSession.some, request)
+                              )
+                            )
+                          )
+                        } yield Redirect(routes.ApplicationController.myApplications)
+                          .removingFromSession(Keys.Session.passwordEmail)
+                          .addingToSession(
+                            Keys.Session.userId -> user.id.toString,
+                            Keys.Session.sessionId -> userSession.id,
+                          )
+                      ).valueOrF(error =>
+                        IO.blocking(
+                          eventService.logError(error)(
+                            new RequestWithUserData(user, userRights, none, request)
+                          )
+                        ).as(InternalServerError(views.errors.public500(None)))
+                      ).unsafeToFuture()
                     }
                 )
               )
