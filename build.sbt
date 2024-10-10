@@ -123,7 +123,7 @@ libraryDependencies ++= Seq(
 )
 
 // Overrides
-dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
+dependencyOverrides += "org.apache.commons" % "commons-text" % "1.12.0"
 
 // Note: we force snakeyaml version here because moultingyaml is not updated
 dependencyOverrides += "org.yaml" % "snakeyaml" % "1.33"
