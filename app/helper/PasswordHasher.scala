@@ -27,7 +27,7 @@ object PasswordHasher {
   }
 
   def verifyAndWipe(password: Array[Char], hash: String): Try[Boolean] = Try {
-    val argon2 = Argon2Factory.create()
+    val argon2 = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id)
     try {
       argon2.verify(hash, password)
     } finally {

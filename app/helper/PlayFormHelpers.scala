@@ -20,6 +20,9 @@ object PlayFormHelpers {
       _.map(commonStringInputNormalization).filter(_.nonEmpty)
     )
 
+  val commonPasswords: Set[String] =
+    scala.io.Source.fromFile("data/french_passwords_top20000.txt").getLines().map(_.trim).toSet
+
   val passwordText: Mapping[String] =
     text
       .transform[String](StringHelper.normalizeNFKC, _ => "")
@@ -29,6 +32,11 @@ object PlayFormHelpers {
         "Le mot de passe ne peut pas commencer ou terminer par une espace " +
           "(Cependant, les espaces sont autorisés à l’intérieur du mot de passe).",
         password => password.trim === password
+      )
+      .verifying(
+        "Le mot de passe fait partie d’une liste de mots de passe fréquemment utilisés, " +
+          "il est donc facile à deviner et n’assure pas la sécurité du compte.",
+        password => !commonPasswords.contains(password)
       )
 
   def inOption[T](constraint: Constraint[T]): Constraint[Option[T]] =
