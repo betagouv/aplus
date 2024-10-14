@@ -105,8 +105,6 @@ class NotificationService @Inject() (
             !Authorization.canSeeAnswer(answer, application)(Authorization.readUserRights(user))
           ) {
             None
-          } else if (!user.instructor) { // Temporary case
-            None
           } else if (answer.invitedUsers.contains(user.id)) {
             Some(generateInvitationEmail(application, Some(answer))(user))
           } else {
