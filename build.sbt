@@ -126,7 +126,7 @@ libraryDependencies ++= Seq(
 dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
 
 // Note: we force snakeyaml version here because moultingyaml is not updated
-dependencyOverrides += "org.yaml" % "snakeyaml" % "1.33"
+dependencyOverrides += "org.yaml" % "snakeyaml" % "2.3"
 
 // Sync with scala-steward pin
 val jacksonVersion = "2.14.3"
