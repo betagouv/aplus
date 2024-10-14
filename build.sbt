@@ -82,7 +82,7 @@ val fs2Version = "3.11.0"
 
 libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.7.4",
-  "org.playframework" %% "play-mailer" % "10.0.0",
+  "org.playframework" %% "play-mailer" % "10.0.1",
   "org.playframework" %% "play-json" % "3.0.4",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "net.jcazevedo" %% "moultingyaml" % "0.4.2" cross CrossVersion.for3Use2_13,
