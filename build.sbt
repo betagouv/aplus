@@ -85,7 +85,6 @@ libraryDependencies ++= Seq(
   "org.playframework" %% "play-mailer" % "10.0.1",
   "org.playframework" %% "play-json" % "3.0.4",
   "com.sun.mail" % "javax.mail" % "1.6.2",
-  "net.jcazevedo" %% "moultingyaml" % "0.4.2" cross CrossVersion.for3Use2_13,
   "com.github.tototoshi" %% "scala-csv" % "2.0.0",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.13.1",
@@ -121,12 +120,6 @@ libraryDependencies ++= Seq(
   "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
   "org.typelevel" %% "cats-effect-testing-specs2" % "1.5.0" % Test,
 )
-
-// Overrides
-dependencyOverrides += "org.apache.commons" % "commons-text" % "1.10.0"
-
-// Note: we force snakeyaml version here because moultingyaml is not updated
-dependencyOverrides += "org.yaml" % "snakeyaml" % "1.33"
 
 // Sync with scala-steward pin
 val jacksonVersion = "2.14.3"
