@@ -96,14 +96,6 @@ class LoginController @Inject() (
             } { (user: User) =>
               if (user.disabled)
                 Future(accountDoesNotExist(email))
-              else if (user.passwordActivated && request.getQueryString("nopassword").isEmpty)
-                // 303 is supposed to be the correct code after POST
-                // Just random knowledge here, since Play `Redirect` is 303 by default
-                Future.successful(
-                  addingPasswordEmailToSession(user.email.some)(
-                    SeeOther(routes.LoginController.passwordPage.url)
-                  )
-                )
               else
                 LoginAction.readUserRights(user).map { userRights =>
                   val loginToken =
