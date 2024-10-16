@@ -76,3 +76,8 @@ http://localhost:9000
 - Pour lancer le serveur sans docker `sbt run` (Vous pouvez regarder les variables d'environnement indispensables dans le `docker-compose.yml` et la liste des variables dans le `application.conf`)
 
 - Les commandes pour le frontend sont dans `package.json` : `npm run watch` (dev), `npm run clean` (supprime ce qui a été installé par `npm install`), `npm run build` (bundle prod) -->
+
+
+## Attribution
+
+Le projet inclut le fichier `data/french_passwords_top20000.txt` sous licence [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)  provenant du dépôt [tarraschk/richelieu](https://github.com/tarraschk/richelieu).

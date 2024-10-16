@@ -52,7 +52,6 @@ class PasswordService @Inject() (
   private def generateRandomToken(): String =
     MiscHelpers.secureRandom.alphanumeric.take(30).mkString
 
-  // TODO: rate limit the recovery emails
   def sendRecoverEmail(email: String, ipAddress: String): Future[Either[Error, Instant]] =
     userService
       .byEmailEither(email, includeDisabled = true)
@@ -137,6 +136,7 @@ class PasswordService @Inject() (
                       token.expirationDate
                     case nonExpiredTokens =>
                       val lastToken = nonExpiredTokens.sortBy(_.creationDate).reverse.head
+                      // This rate-limits the recovery emails at 1 per 30 seconds
                       if (lastToken.creationDate.plusSeconds(30).isBefore(Instant.now())) {
                         val _ = notificationService.newPasswordRecoveryLinkEmail(
                           user.name,
@@ -218,10 +218,12 @@ class PasswordService @Inject() (
                 val _ = SQL"""INSERT INTO password (
                         user_id,
                         password_hash,
+                        creation_date,
                         last_update
                       ) VALUES (
                         ${userId}::uuid,
                         ${hash},
+                        ${now},
                         ${now}
                       )
                       ON CONFLICT (user_id)

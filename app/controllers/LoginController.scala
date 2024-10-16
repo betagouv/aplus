@@ -333,7 +333,11 @@ class LoginController @Inject() (
 
   def passwordReinitializationEmailPage: Action[AnyContent] =
     Action { implicit request =>
-      Ok(views.password.reinitializationEmailPage(PasswordRecovery.form))
+      val form = request.session.get(Keys.Session.passwordEmail) match {
+        case None        => PasswordRecovery.form
+        case Some(email) => PasswordRecovery.form.fill(PasswordRecovery(email))
+      }
+      Ok(views.password.reinitializationEmailPage(form))
     }
 
   def passwordReinitializationEmail: Action[AnyContent] =
@@ -377,7 +381,7 @@ class LoginController @Inject() (
                     views.password
                       .reinitializationEmailPage(form, errorMessage = (title, description).some)
                   )
-                    .withSession(request.session - Keys.Session.passwordEmail)
+                    .removingFromSession(Keys.Session.passwordEmail)
                 },
                 expiration => {
                   eventService.logSystem(

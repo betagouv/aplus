@@ -3,14 +3,15 @@
 CREATE TABLE password (
   user_id uuid PRIMARY KEY,
   password_hash varchar(10000) NOT NULL,
-  last_update timestamp NOT NULL
+  creation_date timestamptz NOT NULL,
+  last_update timestamptz NOT NULL
 );
 
 CREATE TABLE password_recovery_token (
   token varchar(100) NOT NULL PRIMARY KEY,
   user_id uuid NOT NULL,
-  creation_date timestamp NOT NULL,
-  expiration_date timestamp NOT NULL,
+  creation_date timestamptz NOT NULL,
+  expiration_date timestamptz NOT NULL,
   ip_address inet NOT NULL,
   used boolean DEFAULT false NOT NULL
 );
