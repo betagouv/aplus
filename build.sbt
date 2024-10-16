@@ -111,7 +111,7 @@ libraryDependencies += "io.sentry" % "sentry-logback" % "7.15.0"
 
 // Sync with Play and scala-steward pin
 // https://github.com/playframework/playframework/blob/4c2d76095c2f6a5cab7be3e8f6017c4a4dd2a99f/project/Dependencies.scala#L20
-val specs2Version = "4.20.8"
+val specs2Version = "4.20.9"
 
 // Test
 libraryDependencies ++= Seq(
