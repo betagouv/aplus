@@ -55,6 +55,10 @@ RUN sbt clean stage
 #
 FROM eclipse-temurin:17-jre
 
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends libargon2-1 \
+    && rm -rf /var/lib/apt/lists/*
+
 ENV PLAY_APP_NAME aplus
 ENV PLAY_APP_DIR /var/www/$PLAY_APP_NAME
 ENV HOME $PLAY_APP_DIR

@@ -485,12 +485,6 @@
     margin-top: 2rem;
 }
 
-.fr-fieldset {
-    display: block !important;
-    border: 1px solid #ccc !important;
-    padding: 0 1rem 1rem 1rem !important;
-}
-
 .aplus-fieldset .fr-label {
     width: 75%;
 }

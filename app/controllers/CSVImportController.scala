@@ -339,6 +339,7 @@ case class CSVImportController @Inject() (
           managingAreaIds = Nil,
           sharedAccount = userData.user.name.nonEmpty,
           internalSupportComment = None,
+          passwordActivated = false,
         )
       )
     }

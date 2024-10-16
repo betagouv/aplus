@@ -10,6 +10,7 @@ object UserSession {
   object LoginType {
     case object MagicLink extends LoginType
     case object InsecureDemoKey extends LoginType
+    case object Password extends LoginType
   }
 
 }
