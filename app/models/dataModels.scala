@@ -19,6 +19,7 @@ object dataModels {
   case class PasswordRow(
       userId: UUID,
       passwordHash: String,
+      creationDate: Instant,
       lastUpdate: Instant,
   )
 

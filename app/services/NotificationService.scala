@@ -203,14 +203,14 @@ class NotificationService @Inject() (
     val url = absoluteUrlPath + s"?token=${token}"
     val name = userName.some.map(_.trim).filter(_.nonEmpty)
     val expiration = expirationDate.atZone(userTimeZone)
-    val bodyInner = common.recoverPasswordBody(
+    val bodyInner = common.passwordReinitializationBody(
       name,
       userTimeZone,
       url,
       expiration
     )
     val email = Email(
-      subject = common.recoverPasswordSubject,
+      subject = common.passwordReinitializationSubject,
       from = from,
       replyTo = replyTo,
       to = List(

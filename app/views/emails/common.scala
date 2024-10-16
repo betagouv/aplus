@@ -72,9 +72,9 @@ object common {
     ) ::: commonEmailFooter
   }
 
-  val recoverPasswordSubject = "Réinitialisation du mot de passe Administration+"
+  val passwordReinitializationSubject = "Réinitialisation du mot de passe Administration+"
 
-  def recoverPasswordBody(
+  def passwordReinitializationBody(
       userName: Option[String],
       userTimeZone: ZoneId,
       absoluteUrl: String,

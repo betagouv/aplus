@@ -30,6 +30,7 @@ class PasswordService @Inject() (
   private val (passwordRow, passwordTableFields) = Macros.parserWithFields[PasswordRow](
     "user_id",
     "password_hash",
+    "creation_date",
     "last_update",
   )
 
