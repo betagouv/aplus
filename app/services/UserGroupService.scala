@@ -3,7 +3,7 @@ package services
 import anorm._
 import aplus.macros.Macros
 import cats.syntax.all._
-import helper.{StringHelper, Time, UUIDHelper}
+import helper.{Time, UUIDHelper}
 import java.sql.ResultSet
 import java.util.UUID
 import javax.inject.Inject
