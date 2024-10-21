@@ -21,6 +21,20 @@ import scala.concurrent.Future
 import scala.util.Try
 import views.editMyGroups.UserInfos
 
+object UserService {
+
+  def toStarTsquery(searchQuery: String): String =
+    StringHelper
+      .commonStringInputNormalization(searchQuery)
+      .replace(' ', '+')
+      .replace('(', '+')
+      .replace(')', '+')
+      .replace(':', '+')
+      .replace('@', '+') // emails are considered single tokens
+      .replace('.', '+') + ":*"
+
+}
+
 @Singleton
 class UserService @Inject() (
     config: AppConfig,
@@ -283,12 +297,7 @@ class UserService @Inject() (
     Future(
       Try(
         db.withConnection { implicit connection =>
-          val query =
-            StringHelper
-              .commonStringInputNormalization(searchQuery)
-              .replace(' ', '+')
-              .replace('@', '+') // emails are considered single tokens
-              .replace('.', '+') + ":*"
+          val query = UserService.toStarTsquery(searchQuery)
           SQL(s"""SELECT $fieldsInSelect
                   FROM "user"
                   WHERE (
