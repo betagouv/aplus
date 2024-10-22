@@ -44,8 +44,8 @@ class PasswordService @Inject() (
       "used",
     )
 
-  private val passwordFieldsInSelect: String =
-    passwordTableFields.mkString(", ")
+  private val qualifiedPasswordFieldsInSelect: String =
+    passwordTableFields.map(field => s"password.$field").mkString(", ")
 
   private val passwordRecoveryTokenFieldsInSelect: String =
     passwordRecoveryTokenTableFields.mkString(", ")
@@ -259,7 +259,7 @@ class PasswordService @Inject() (
         "Impossible de vérifier le mot de passe",
       ) { implicit connection =>
         SQL(
-          s"""SELECT $passwordFieldsInSelect
+          s"""SELECT $qualifiedPasswordFieldsInSelect
               FROM "user", password
               WHERE "user".id = password.user_id
               AND email = {email}
