@@ -79,6 +79,4 @@ http://localhost:9000
 
 ## Attribution
 
-Le projet inclut le fichier `data/french_passwords_top20000.txt` sous licence 
-[Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/) 
-provenant du dépôt [tarraschk/richelieu](https://github.com/tarraschk/richelieu).
+Le projet inclut le fichier `data/french_passwords_top20000.txt` sous licence [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/) provenant du dépôt [tarraschk/richelieu](https://github.com/tarraschk/richelieu).
