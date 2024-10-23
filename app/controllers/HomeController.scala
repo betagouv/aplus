@@ -87,6 +87,11 @@ class HomeController @Inject() (
       Ok(views.legal.information())
     }
 
+  def privacy: Action[AnyContent] =
+    Action {
+      Ok(views.legal.privacy())
+    }
+
   def wellKnownSecurityTxt: Action[AnyContent] =
     Action {
       // This is a String, so Play should send back Content-Type: text/plain; charset=UTF-8
