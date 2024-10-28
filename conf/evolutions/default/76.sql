@@ -21,6 +21,7 @@ CREATE INDEX password_recovery_token_user_id_idx ON password_recovery_token (use
 CREATE VIEW password_metadata AS
 SELECT
   user_id,
+  creation_date,
   last_update
 FROM password;
 
