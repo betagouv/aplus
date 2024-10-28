@@ -56,6 +56,7 @@ scalacOptions ++= Seq(
   "-Wunused:locals",
   // "-Wunused:explicits", // TODO: lot of warnings, enable later
   "-Wunused:implicits",
+  "-Wunused:nowarn",
   "-Wvalue-discard",
 )
 
@@ -93,6 +94,8 @@ libraryDependencies ++= Seq(
   "co.fs2" %% "fs2-core" % fs2Version,
   "co.fs2" %% "fs2-io" % fs2Version,
   "io.laserdisc" %% "fs2-aws-s3" % "6.1.3",
+  // Needs the C library to be installed
+  "de.mkammerer" % "argon2-jvm-nolibs" % "2.11",
 )
 
 libraryDependencies ++= anormDependencies

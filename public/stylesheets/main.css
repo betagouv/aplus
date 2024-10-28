@@ -631,6 +631,8 @@ a {
 
 
 /** List of classes with only 1 property (prefixed by `single--`) **/
+/** Using Autoprefixer for legacy **/
+
 .single--margin-top--8px {
     margin-top: -8px;
 }
@@ -739,6 +741,10 @@ a {
     margin: 4px;
 }
 
+.single--margin-8px {
+    margin: 8px;
+}
+
 .single--margin-16px {
     margin: 16px;
 }
@@ -746,6 +752,10 @@ a {
 
 .single--padding-0px {
     padding: 0px;
+}
+
+.single--padding-8px {
+    padding: 8px;
 }
 
 .single--padding-4px {
@@ -800,17 +810,6 @@ a {
     max-width: 960px;
 }
 
-.single--align-items-center-important {
-    /* !important to work with the legacy order of .css :D */
-    align-items: center !important;
-}
-
-.single--justify-content-center {
-    -webkit-justify-content: center;
-    -ms-flex-pack: center;
-    justify-content: center;
-}
-
 .single--height-auto {
     height: auto !important;
 }
@@ -840,13 +839,9 @@ a {
 }
 
 .single--width-max-content {
+    width: -webkit-max-content;
+    width: -moz-max-content;
     width: max-content;
-}
-
-.single--flex-grow-1 {
-    -webkit-box-flex: 1;
-    -ms-flex-positive: 1;
-    flex-grow: 1;
 }
 
 .single--font-size-12px {
@@ -879,15 +874,34 @@ a {
     display: flex;
 }
 
+.single--flex-grow-1 {
+    -webkit-box-flex: 1;
+    -ms-flex-positive: 1;
+    flex-grow: 1;
+}
+
+.single--align-content-flex-start {
+    -ms-flex-line-pack: start;
+    align-content: flex-start;
+}
+
 .single--align-items-center {
     -webkit-box-align: center;
     -ms-flex-align: center;
     align-items: center;
 }
 
-.single--align-content-flex-start {
-    -ms-flex-line-pack: start;
-    align-content: flex-start;
+.single--align-items-center-important {
+    /* !important to work with the legacy order of .css :D */
+    -webkit-box-align: center !important;
+    -ms-flex-align: center !important;
+    align-items: center !important;
+}
+
+.single--justify-content-center {
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
 }
 
 .single--align-self-center {
@@ -907,7 +921,10 @@ a {
 }
 
 .single--flex-direction-column {
-  flex-direction: column;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
 }
 
 .single--white-space-normal {

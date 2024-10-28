@@ -35,7 +35,8 @@ class LoginSpec extends Specification with Tables with BaseSpec with BeforeAfter
     observableOrganisationIds = Nil,
     managingOrganisationIds = Nil,
     managingAreaIds = Nil,
-    internalSupportComment = None
+    internalSupportComment = None,
+    passwordActivated = false,
   )
 
   def beforeAll(): Unit = {

@@ -4,7 +4,7 @@ import cats.syntax.all._
 import constants.Constants
 import controllers.routes
 import helper.EmailHelper.quoteEmailPhrase
-import java.time.ZoneId
+import java.time.{Instant, ZoneId}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models._
@@ -183,6 +183,38 @@ class NotificationService @Inject() (
       to = List(
         userName
           .filter(_.nonEmpty)
+          .map(name => s"${quoteEmailPhrase(name)} <$userEmail>")
+          .getOrElse(userEmail)
+      ),
+      bodyHtml = Some(common.renderEmail(bodyInner))
+    )
+    emailsService.sendBlocking(email, EmailPriority.Urgent)
+  }
+
+  def newPasswordRecoveryLinkEmail(
+      userName: String,
+      userEmail: String,
+      userTimeZone: ZoneId,
+      token: String,
+      expirationDate: Instant,
+  ) = {
+    val absoluteUrlPath: String =
+      routes.LoginController.passwordReinitializationPage.absoluteURL(https, host)
+    val url = absoluteUrlPath + s"?token=${token}"
+    val name = userName.some.map(_.trim).filter(_.nonEmpty)
+    val expiration = expirationDate.atZone(userTimeZone)
+    val bodyInner = common.passwordReinitializationBody(
+      name,
+      userTimeZone,
+      url,
+      expiration
+    )
+    val email = Email(
+      subject = common.passwordReinitializationSubject,
+      from = from,
+      replyTo = replyTo,
+      to = List(
+        name
           .map(name => s"${quoteEmailPhrase(name)} <$userEmail>")
           .getOrElse(userEmail)
       ),

@@ -21,6 +21,12 @@ class AppConfig @Inject() (configuration: Configuration) {
   val magicLinkSessionDurationInSeconds: Long =
     configuration.get[Long]("app.magicLinkSessionDurationInSeconds")
 
+  val passwordSessionDurationInSeconds: Long =
+    configuration.get[Long]("app.passwordSessionDurationInSeconds")
+
+  val passwordRecoveryTokenExpirationInMinutes: Int =
+    configuration.get[Int]("app.passwordRecoveryTokenExpirationInMinutes")
+
   val featureMandatSms: Boolean = configuration.get[Boolean]("app.features.smsMandat")
 
   val useLiveSmsApi: Boolean = configuration

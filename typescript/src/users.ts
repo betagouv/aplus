@@ -248,6 +248,16 @@ if (window.document.getElementById(usersTableId)) {
       width: 80,
     },
     {
+      title: "MDP",
+      field: "passwordActivated",
+      formatter: "tickCross",
+      headerFilter: "tickCross",
+      headerFilterParams: { tristate: true },
+      headerVertical: verticalHeader,
+      bottomCalc: "count",
+      width: 80,
+    },
+    {
       title: "CGU",
       field: "cgu",
       formatter: "tickCross",

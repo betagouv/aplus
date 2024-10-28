@@ -1,6 +1,7 @@
 package helper
 
 import cats.data.NonEmptyList
+import java.security.SecureRandom
 import scala.util.Random
 
 object MiscHelpers {
@@ -36,6 +37,8 @@ object MiscHelpers {
     // .getOrElse here is for rare case of float arithmetics that would not sum to 1.0
     randomElement.getOrElse(elements.last._2)
   }
+
+  def secureRandom = new Random(SecureRandom.getInstanceStrong())
 
   /** This method replace .unapply usage in Play forms and json formats which want the Scala 2
     * syntax. This is due to Scala 3 .unapply behaving differently from Scala 2.

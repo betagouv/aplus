@@ -3,7 +3,7 @@ package models
 import cats.syntax.all._
 import constants.Constants
 import helper.MiscHelpers.toTupleOpt
-import helper.PlayFormHelpers.{inOption, normalizedOptionalText, normalizedText}
+import helper.PlayFormHelpers.{inOption, normalizedOptionalText, normalizedText, passwordText}
 import helper.forms.FormsPlusMap
 import java.time.{LocalDate, ZoneId, ZonedDateTime}
 import java.util.UUID
@@ -17,6 +17,49 @@ import scala.util.matching.Regex
 import serializers.Keys
 
 package forms {
+
+  case class PasswordCredentials(email: String, password: String)
+
+  object PasswordCredentials {
+
+    val form = Form(
+      mapping(
+        "email" -> normalizedText.verifying(maxLength(User.emailMaxLength)),
+        "password" -> passwordText,
+      )(PasswordCredentials.apply)(toTupleOpt)
+    )
+
+  }
+
+  case class PasswordRecovery(email: String)
+
+  object PasswordRecovery {
+
+    val form = Form(
+      mapping(
+        "email" -> normalizedText.verifying(maxLength(User.emailMaxLength)),
+      )(PasswordRecovery.apply)(_.email.some)
+    )
+
+  }
+
+  case class PasswordChange(token: String, newPassword: String, passwordConfirmation: String)
+
+  object PasswordChange {
+
+    val form = Form(
+      mapping(
+        "token" -> text.transform[String](_.take(100), identity),
+        "new-password" -> passwordText,
+        "password-confirmation" -> passwordText,
+      )(PasswordChange.apply)(toTupleOpt)
+        .verifying(
+          "Les deux mots de passe doivent correspondre",
+          form => form.newPassword === form.passwordConfirmation
+        )
+    )
+
+  }
 
   final case class SignupFormData(
       firstName: Option[String],
@@ -316,7 +359,7 @@ package forms {
           }
         ),
       "qualite" -> default(normalizedText.verifying(maxLength(100)), ""),
-      "email" -> email.verifying(maxLength(200), nonEmpty),
+      "email" -> email.verifying(maxLength(User.emailMaxLength), nonEmpty),
       "instructor" -> boolean,
       "groupAdmin" -> boolean,
       "phoneNumber" -> normalizedOptionalText,
@@ -390,7 +433,7 @@ package forms {
               }
             ),
           "qualite" -> normalizedText.verifying(maxLength(100)),
-          "email" -> email.verifying(maxLength(200), nonEmpty),
+          "email" -> email.verifying(maxLength(User.emailMaxLength), nonEmpty),
           "helper" -> boolean,
           "instructor" -> boolean,
           "areas" -> list(uuid)
