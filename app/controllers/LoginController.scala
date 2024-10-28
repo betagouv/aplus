@@ -300,7 +300,8 @@ class LoginController @Inject() (
                             user.id,
                             UserSession.LoginType.Password,
                             expiresAt,
-                            request.remoteAddress
+                            request.remoteAddress,
+                            request.headers.get(USER_AGENT),
                           )
                           _ <- EitherT.right[Error](
                             IO.blocking(

@@ -143,6 +143,7 @@ case class SignupController @Inject() (
                               UserSession.LoginType.MagicLink,
                               loginExpiresAt,
                               request.remoteAddress,
+                              request.headers.get(USER_AGENT),
                             )
                           _ <- EitherT
                             .right[Error](IO.blocking(userService.recordLogin(user.id)))
@@ -398,6 +399,7 @@ case class SignupController @Inject() (
                                   UserSession.LoginType.MagicLink,
                                   loginExpiresAt,
                                   request.remoteAddress,
+                                  request.headers.get(USER_AGENT),
                                 )
                               _ <- EitherT
                                 .right[Error](IO.blocking(userService.recordLogin(existingUser.id)))

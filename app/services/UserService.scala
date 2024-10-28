@@ -679,6 +679,7 @@ class UserService @Inject() (
     "login_type",
     "expires_at",
     "revoked_at",
+    "user_agent",
   )
 
   private val qualifiedUserSessionParser = anorm.Macro.parser[UserSession](
@@ -690,6 +691,7 @@ class UserService @Inject() (
     "user_session.login_type",
     "user_session.expires_at",
     "user_session.revoked_at",
+    "user_session.user_agent",
   )
 
   // Double the recommended minimum 64 bits of entropy
@@ -705,7 +707,8 @@ class UserService @Inject() (
       userId: UUID,
       loginType: UserSession.LoginType,
       expiresAt: Instant,
-      ipAddress: String
+      ipAddress: String,
+      userAgent: Option[String],
   ): IO[Either[Error, UserSession]] =
     generateNewSessionId
       .flatMap(sessionId =>
@@ -718,7 +721,8 @@ class UserService @Inject() (
             lastActivity = now,
             loginType = loginType,
             expiresAt = expiresAt,
-            revokedAt = None,
+            revokedAt = none,
+            userAgent = userAgent,
           )
         )
       )
@@ -743,6 +747,7 @@ class UserService @Inject() (
   private def saveUserSession(session: UserSession): IO[Either[Error, UserSession]] =
     IO.blocking {
       val _ = db.withConnection { implicit connection =>
+        val userAgent = session.userAgent.map(_.take(2048))
         SQL"""
           INSERT INTO user_session (
             id,
@@ -751,7 +756,8 @@ class UserService @Inject() (
             creation_ip_address,
             last_activity,
             login_type,
-            expires_at
+            expires_at,
+            user_agent
           ) VALUES (
             ${session.id},
             ${session.userId}::uuid,
@@ -759,7 +765,8 @@ class UserService @Inject() (
             ${session.creationIpAddress}::inet,
             ${session.lastActivity},
             ${stringifyLoginType(session.loginType)},
-            ${session.expiresAt}
+            ${session.expiresAt},
+            $userAgent
           )
         """.executeUpdate()
       }
@@ -786,10 +793,11 @@ class UserService @Inject() (
       userId: UUID,
       loginType: UserSession.LoginType,
       expiresAt: Instant,
-      ipAddress: String
+      ipAddress: String,
+      userAgent: Option[String],
   ): EitherT[IO, Error, UserSession] =
     for {
-      session <- EitherT(generateNewUserSession(userId, loginType, expiresAt, ipAddress))
+      session <- EitherT(generateNewUserSession(userId, loginType, expiresAt, ipAddress, userAgent))
       _ <- EitherT(saveUserSession(session))
     } yield session
 
