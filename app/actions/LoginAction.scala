@@ -14,6 +14,7 @@ import models.{Area, Authorization, Error, EventType, LoginToken, User, UserSess
 import models.EventType.{AuthWithDifferentIp, ExpiredToken, ToCGURedirected, TryLoginByKey}
 import modules.AppConfig
 import play.api.Logger
+import play.api.http.HeaderNames.USER_AGENT
 import play.api.mvc._
 import play.api.mvc.Results.{InternalServerError, TemporaryRedirect}
 import scala.concurrent.{ExecutionContext, Future}
@@ -232,6 +233,7 @@ class BaseLoginAction(
                 UserSession.LoginType.InsecureDemoKey,
                 loginExpiresAt,
                 request.remoteAddress,
+                request.headers.get(USER_AGENT),
               )
             _ <- EitherT
               .right[Error](IO.blocking(userService.recordLogin(user.id)))
@@ -403,6 +405,7 @@ class BaseLoginAction(
                     UserSession.LoginType.MagicLink,
                     loginExpiresAt,
                     request.remoteAddress,
+                    request.headers.get(USER_AGENT),
                   )
                 _ <- EitherT
                   .right[Error](IO.blocking(userService.recordLogin(user.id)))

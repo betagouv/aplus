@@ -55,22 +55,47 @@ object Organisation {
   def byId(id: Id): Option[Organisation] = byIdMap.get(id)
 
   val association: Organisation = Organisation("Association", "Association")
+  val bdf: Organisation = Organisation("BDF", "Banque de France")
   val cafId: Id = Organisation.Id("CAF")
   val caf: Organisation = Organisation(cafId, "CAF", "Caisse d’allocations familiales")
   val carsatId: Id = Organisation.Id("CARSAT")
+
+  val carsat: Organisation =
+    Organisation(carsatId, "CARSAT", "Caisse d'assurance retraite et de la santé au travail")
+
+  val ccas: Organisation = Organisation("CCAS", "Centre communal d'action sociale")
   val cpamId: Id = Organisation.Id("CPAM")
   val cpam: Organisation = Organisation(cpamId, "CPAM", "Caisse primaire d'assurance maladie")
   val cnavId: Id = Organisation.Id("CNAV")
+  val cnav: Organisation = Organisation(cnavId, "CNAV", "Caisse nationale d'assurance vieillesse")
   val cnamId: Id = Organisation.Id("CNAM")
   val cramId: Id = Organisation.Id("CRAM")
+  val cram: Organisation = Organisation(cramId, "CRAM", "Caisse régionale d'assurance maladie")
   val ddfipId: Id = Organisation.Id("DDFIP")
+
+  val ddfip: Organisation = Organisation(
+    ddfipId,
+    "DDFIP",
+    "Direction départementale des Finances publiques"
+  )
+
+  val departement: Organisation = Organisation("Département", "Conseil départemental")
   val drfipId: Id = Organisation.Id("DRFIP")
+
+  val drfip: Organisation =
+    Organisation(drfipId, "DRFIP", "Direction régionale des Finances publiques")
+
   val franceServicesId: Id = Organisation.Id("MFS")
   val franceServices: Organisation = Organisation(franceServicesId, "FS", "France Services")
+  val mairie: Organisation = Organisation("Mairie", "Mairie")
+  val mdph: Organisation = Organisation("MDPH", "Maison départementale des personnes handicapées")
+  val missionLocale: Organisation = Organisation("Mission locale", "Mission locale")
   val msaId: Id = Organisation.Id("MSA")
+  val msa: Organisation = Organisation(msaId, "MSA", "Mutualité sociale agricole")
   val msap: Organisation = Organisation("MSAP", "Maison de services au public")
   val hopital: Organisation = Organisation("Hôpital", "Hôpital")
   val poleEmploiId: Id = Organisation.Id("Pôle emploi")
+  val poleEmploi: Organisation = Organisation(poleEmploiId, "Pôle emploi", "Pôle emploi")
   val prefId: Id = Organisation.Id("Préf")
   val pref: Organisation = Organisation(prefId, "Préf", "Préfecture")
   val sousPrefId: Id = Organisation.Id("Sous-Préf")
@@ -87,33 +112,29 @@ object Organisation {
     Organisation("ANAH", "Agence nationale de l'habitat"),
     Organisation("ANTS", "Agence nationale des titres sécurisés"),
     association,
-    Organisation("BDF", "Banque de France"),
+    bdf,
     caf, // Département
-    Organisation(carsatId, "CARSAT", "Caisse d'assurance retraite et de la santé au travail"),
-    Organisation("CCAS", "Centre communal d'action sociale"), // Ville
+    carsat,
+    ccas, // Ville
     Organisation("CDAD", "Conseils départementaux d'accès au droit"), // Département
     Organisation("Chèque énergie", "Chèque énergie"),
-    Organisation(cnavId, "CNAV", "Caisse nationale d'assurance vieillesse"), // Département
+    cnav, // Département
     cpam, // Département
     Organisation(cnamId, "CNAM", "Caisse nationale d'assurance maladie"),
-    Organisation(cramId, "CRAM", "Caisse régionale d'assurance maladie"), // Région
-    Organisation(
-      ddfipId,
-      "DDFIP",
-      "Direction départementale des Finances publiques"
-    ), // Département
-    Organisation("Département", "Conseil départemental"),
-    Organisation(drfipId, "DRFIP", "Direction régionale des Finances publiques"), // Région
+    cram, // Région
+    ddfip, // Département
+    departement,
+    drfip, // Région
     hopital, // Ville
     Organisation("OFPRA", "Office français de protection des réfugiés et apatrides"), // Nationale
     Organisation("La Poste", "La Poste"),
-    Organisation("Mairie", "Mairie"), // Ville
-    Organisation("MDPH", "Maison départementale des personnes handicapées"),
+    mairie, // Ville
+    mdph,
     franceServices,
-    Organisation("Mission locale", "Mission locale"), // Ville
-    Organisation(msaId, "MSA", "Mutualité sociale agricole"),
+    missionLocale, // Ville
+    msa,
     msap, // Ville
-    Organisation(poleEmploiId, "Pôle emploi", "Pôle emploi"),
+    poleEmploi,
     pref, // Département
     sousPref,
     Organisation(

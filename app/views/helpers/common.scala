@@ -47,18 +47,8 @@ object common {
         )
       )
 
-  def topHeaderConnected(implicit mainInfos: MainInfos): Frag = {
-    val headerLines = List[Option[Frag]](
-      optionalDemoVersionHeader,
-      mainInfos.config.topHeaderWarningMessage.map(message =>
-        div(
-          cls := "mdl-layout__header-row mdl-color--deep-purple-400 mdl-color-text--white",
-          message
-        )
-      )
-    ).flatten
-
-    headerLines match {
+  private def displayHeader(headerLines: Option[Frag]*): Frag =
+    headerLines.flatten match {
       case Nil => frag()
       case lines =>
         div(
@@ -66,7 +56,28 @@ object common {
           frag(lines)
         )
     }
-  }
+
+  def topHeaderMainPage(implicit mainInfos: MainInfos): Frag =
+    displayHeader(
+      optionalDemoVersionHeader,
+      mainInfos.config.topHeaderPublicPagesAlertMessageHtml.map(htmlMessage =>
+        div(
+          cls := "mdl-layout__header-row mdl-color--red-A700 mdl-color-text--white single--height-auto single--padding-top-8px single--padding-bottom-8px",
+          raw(htmlMessage)
+        )
+      )
+    )
+
+  def topHeaderConnected(implicit mainInfos: MainInfos): Frag =
+    displayHeader(
+      optionalDemoVersionHeader,
+      mainInfos.config.topHeaderWarningMessage.map(message =>
+        div(
+          cls := "mdl-layout__header-row mdl-color--deep-purple-400 mdl-color-text--white",
+          message
+        )
+      )
+    )
 
   def loggedInPage(title: String, userEmail: String, inner: Frag)(implicit
       webJarsUtil: WebJarsUtil,

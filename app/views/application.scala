@@ -551,7 +551,12 @@ object application {
       div(
         "Territoire concerné : ",
         views.helpers
-          .changeAreaSelect(selectedArea, Area.all, ApplicationController.show(application.id))
+          .changeAreaSelect(
+            selectedArea,
+            Area.all,
+            ApplicationController.show(application.id),
+            "onglet" -> "invitation"
+          )
       ),
       views.helpers.forms.CSRFInput,
       groupsWithUsersThatCanBeInvited.nonEmpty.some

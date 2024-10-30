@@ -196,6 +196,19 @@ object EventType {
   object UserAccessDisabled extends Info
   object LoggedInUserAccountDeleted extends Warn
   object UserSessionError extends Error
+  object PasswordPageShowed extends Info
+  object PasswordVerificationSuccessful extends Info
+  object PasswordFormValidationError extends Warn
+  object PasswordVerificationError extends Error
+  object PasswordIncorrect extends Warn
+
+  object PasswordTokenEmpty extends Warn
+  object PasswordTokenSent extends Info
+  object PasswordTokenError extends Error
+  object PasswordTokenIncorrect extends Warn
+  object PasswordChangeShowed extends Info
+  object PasswordChangeFormValidationError extends Warn
+  object PasswordChanged extends Info
 
   // Files
   object FileNotFound extends Error

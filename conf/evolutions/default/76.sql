@@ -1,23 +1,53 @@
---- !Ups
+-- !Ups
 
-CREATE TABLE agent_connect_claims(
-  subject text NOT NULL,
-  email text NOT NULL,
-  given_name text,
-  usual_name text,
-  uid text,
-  siret text,
+CREATE TABLE password (
+  user_id uuid PRIMARY KEY,
+  password_hash varchar(10000) NOT NULL,
   creation_date timestamptz NOT NULL,
-  last_auth_time timestamptz,
-  -- a user can be linked to multiple claims
-  user_id uuid
+  last_update timestamptz NOT NULL
 );
 
-CREATE UNIQUE INDEX agent_connect_claims_subject_unique_idx ON agent_connect_claims (subject);
-CREATE INDEX agent_connect_claims_lower_email_idx ON agent_connect_claims (lower(email));
+CREATE TABLE password_recovery_token (
+  token varchar(100) NOT NULL PRIMARY KEY,
+  user_id uuid NOT NULL,
+  creation_date timestamptz NOT NULL,
+  expiration_date timestamptz NOT NULL,
+  ip_address inet NOT NULL,
+  used boolean DEFAULT false NOT NULL
+);
+
+CREATE INDEX password_recovery_token_user_id_idx ON password_recovery_token (user_id);
+
+CREATE VIEW password_metadata AS
+SELECT
+  user_id,
+  creation_date,
+  last_update
+FROM password;
+
+CREATE VIEW password_recovery_token_metadata AS
+SELECT
+  user_id,
+  creation_date,
+  expiration_date,
+  ip_address,
+  used
+FROM password_recovery_token;
 
 
 
---- !Downs
+ALTER TABLE "user" ADD password_activated boolean DEFAULT false NOT NULL;
 
-DROP TABLE agent_connect_claims;
+
+
+-- !Downs
+
+ALTER TABLE "user" DROP password_activated;
+
+DROP VIEW password_recovery_token_metadata;
+DROP VIEW password_metadata;
+
+DROP INDEX password_recovery_token_user_id_idx;
+
+DROP TABLE password_recovery_token;
+DROP TABLE password;

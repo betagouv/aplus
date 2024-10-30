@@ -3,7 +3,7 @@ package services
 import anorm._
 import aplus.macros.Macros
 import cats.syntax.all._
-import helper.{StringHelper, Time, UUIDHelper}
+import helper.{Time, UUIDHelper}
 import java.sql.ResultSet
 import java.util.UUID
 import javax.inject.Inject
@@ -261,12 +261,7 @@ class UserGroupService @Inject() (
     Future(
       Try(
         db.withConnection { implicit connection =>
-          val query =
-            StringHelper
-              .commonStringInputNormalization(searchQuery)
-              .replace(' ', '+')
-              .replace('@', '+')
-              .replace('.', '+') + ":*"
+          val query = UserService.toStarTsquery(searchQuery)
           SQL(s"""SELECT $fieldsInSelect
                   FROM "user_group"
                   WHERE (

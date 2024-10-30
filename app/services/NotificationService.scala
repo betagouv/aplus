@@ -4,7 +4,7 @@ import cats.syntax.all._
 import constants.Constants
 import controllers.routes
 import helper.EmailHelper.quoteEmailPhrase
-import java.time.ZoneId
+import java.time.{Instant, ZoneId}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models._
@@ -81,55 +81,58 @@ class NotificationService @Inject() (
 
   // Note: application does not contain answer at this point
   def newAnswer(application: Application, answer: Answer): Unit = {
-    // Retrieve data
-    val userIds = (application.invitedUsers ++ answer.invitedUsers).keys
-    val users = userService.byIds(userIds.toList)
-    val (allGroups, alreadyPresentGroupIds): (List[UserGroup], Set[UUID]) = {
-      val allGroupIds = application.invitedGroups.union(answer.invitedGroupIds.toSet)
-      (
-        groupService
-          .byIds(allGroupIds.toList)
-          .filter(_.email.nonEmpty),
-        application.invitedGroups
-      )
-    }
+    val shouldNotify = answer.answerType =!= Answer.AnswerType.InviteThroughGroupPermission
+    if shouldNotify then {
+      // Retrieve data
+      val userIds = (application.invitedUsers ++ answer.invitedUsers).keys
+      val users = userService.byIds(userIds.toList)
+      val (allGroups, alreadyPresentGroupIds): (List[UserGroup], Set[UUID]) = {
+        val allGroupIds = application.invitedGroups.union(answer.invitedGroupIds.toSet)
+        (
+          groupService
+            .byIds(allGroupIds.toList)
+            .filter(_.email.nonEmpty),
+          application.invitedGroups
+        )
+      }
 
-    // Send emails to users
-    users
-      .flatMap { user =>
-        if (user.id === answer.creatorUserID) {
-          None
-        } else if (
-          !Authorization.canSeeAnswer(answer, application)(Authorization.readUserRights(user))
-        ) {
-          None
-        } else if (answer.invitedUsers.contains(user.id)) {
-          Some(generateInvitationEmail(application, Some(answer))(user))
-        } else {
-          Some(generateAnswerEmail(application, answer)(user))
+      // Send emails to users
+      users
+        .flatMap { user =>
+          if (user.id === answer.creatorUserID) {
+            None
+          } else if (
+            !Authorization.canSeeAnswer(answer, application)(Authorization.readUserRights(user))
+          ) {
+            None
+          } else if (answer.invitedUsers.contains(user.id)) {
+            Some(generateInvitationEmail(application, Some(answer))(user))
+          } else {
+            Some(generateAnswerEmail(application, answer)(user))
+          }
         }
-      }
-      .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
-
-    val usersEmails: Set[String] = users.map(_.email).toSet
-
-    // Send emails to groups
-    allGroups
-      .collect {
-        case group @ UserGroup(id, _, _, _, _, _, _, Some(email), _, _)
-            if !usersEmails.contains(email) =>
-          if (alreadyPresentGroupIds.contains(id))
-            generateNotificationBALEmail(application, answer.some, users)(group)
-          else
-            generateNotificationBALEmail(application, Option.empty[Answer], users)(group)
-      }
-      .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
-
-    if (answer.visibleByHelpers && answer.creatorUserID =!= application.creatorUserId) {
-      userService
-        .byId(application.creatorUserId)
-        .map(generateAnswerEmail(application, answer))
         .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+
+      val usersEmails: Set[String] = users.map(_.email).toSet
+
+      // Send emails to groups
+      allGroups
+        .collect {
+          case group @ UserGroup(id, _, _, _, _, _, _, Some(email), _, _)
+              if !usersEmails.contains(email) =>
+            if (alreadyPresentGroupIds.contains(id))
+              generateNotificationBALEmail(application, answer.some, users)(group)
+            else
+              generateNotificationBALEmail(application, Option.empty[Answer], users)(group)
+        }
+        .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+
+      if (answer.visibleByHelpers && answer.creatorUserID =!= application.creatorUserId) {
+        userService
+          .byId(application.creatorUserId)
+          .map(generateAnswerEmail(application, answer))
+          .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+      }
     }
   }
 
@@ -180,6 +183,38 @@ class NotificationService @Inject() (
       to = List(
         userName
           .filter(_.nonEmpty)
+          .map(name => s"${quoteEmailPhrase(name)} <$userEmail>")
+          .getOrElse(userEmail)
+      ),
+      bodyHtml = Some(common.renderEmail(bodyInner))
+    )
+    emailsService.sendBlocking(email, EmailPriority.Urgent)
+  }
+
+  def newPasswordRecoveryLinkEmail(
+      userName: String,
+      userEmail: String,
+      userTimeZone: ZoneId,
+      token: String,
+      expirationDate: Instant,
+  ) = {
+    val absoluteUrlPath: String =
+      routes.LoginController.passwordReinitializationPage.absoluteURL(https, host)
+    val url = absoluteUrlPath + s"?token=${token}"
+    val name = userName.some.map(_.trim).filter(_.nonEmpty)
+    val expiration = expirationDate.atZone(userTimeZone)
+    val bodyInner = common.passwordReinitializationBody(
+      name,
+      userTimeZone,
+      url,
+      expiration
+    )
+    val email = Email(
+      subject = common.passwordReinitializationSubject,
+      from = from,
+      replyTo = replyTo,
+      to = List(
+        name
           .map(name => s"${quoteEmailPhrase(name)} <$userEmail>")
           .getOrElse(userEmail)
       ),

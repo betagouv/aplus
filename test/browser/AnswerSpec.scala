@@ -70,7 +70,8 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       observableOrganisationIds = Nil,
       managingOrganisationIds = Nil,
       managingAreaIds = Nil,
-      internalSupportComment = None
+      internalSupportComment = None,
+      passwordActivated = false,
     )
     val result = userService.add(List(user))
     result.isRight must beTrue

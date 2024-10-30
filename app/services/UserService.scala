@@ -21,12 +21,26 @@ import scala.concurrent.Future
 import scala.util.Try
 import views.editMyGroups.UserInfos
 
+object UserService {
+
+  def toStarTsquery(searchQuery: String): String =
+    StringHelper
+      .commonStringInputNormalization(searchQuery)
+      .replace(' ', '+')
+      .replace('(', '+')
+      .replace(')', '+')
+      .replace(':', '+')
+      .replace('@', '+') // emails are considered single tokens
+      .replace('.', '+') + ":*"
+
+}
+
 @Singleton
 class UserService @Inject() (
     config: AppConfig,
-    db: Database,
-    dependencies: ServicesDependencies
-) {
+    val db: Database,
+    val dependencies: ServicesDependencies
+) extends SqlHelpers {
   import dependencies.databaseExecutionContext
 
   private val (simpleUser, tableFields) = Macros.parserWithFields[UserRow](
@@ -55,7 +69,8 @@ class UserService @Inject() (
     "managing_organisation_ids",
     "managing_area_ids",
     "shared_account",
-    "internal_support_comment"
+    "internal_support_comment",
+    "password_activated"
   )
 
   private val qualifiedUserParser = anorm.Macro.parser[UserRow](
@@ -84,7 +99,8 @@ class UserService @Inject() (
     "user.managing_organisation_ids",
     "user.managing_area_ids",
     "user.shared_account",
-    "user.internal_support_comment"
+    "user.internal_support_comment",
+    "user.password_activated"
   )
 
   private val fieldsInSelect: String = tableFields.mkString(", ")
@@ -183,8 +199,8 @@ class UserService @Inject() (
         .as(simpleUser.singleOpt)
     }.map(_.toUser)
 
-  def byEmail(email: String, includeDisabled: Boolean = false): Option[User] =
-    db.withConnection { implicit connection =>
+  private def userByEmail(email: String, includeDisabled: Boolean): Connection => Option[User] = {
+    implicit connection =>
       val disabledSQL: String = if (includeDisabled) {
         ""
       } else {
@@ -196,11 +212,26 @@ class UserService @Inject() (
               $disabledSQL""")
         .on("email" -> email.toLowerCase)
         .as(simpleUser.singleOpt)
-    }.map(_.toUser)
+        .map(_.toUser)
+  }
+
+  def byEmail(email: String, includeDisabled: Boolean = false): Option[User] =
+    db.withConnection(userByEmail(email, includeDisabled))
 
   def byEmailFuture(email: String, includeDisabled: Boolean = false): Future[Option[User]] = Future(
     byEmail(email, includeDisabled)
   )
+
+  def byEmailEither(
+      email: String,
+      includeDisabled: Boolean = false
+  ): Future[Either[Error, Option[User]]] =
+    withDbConnection(
+      EventType.UserNotFound,
+      "Impossible de trouver l'utilisateur par email " +
+        s"(recherche dans les utilisateurs désactivés : $includeDisabled)",
+      email.some
+    )(userByEmail(email, includeDisabled))
 
   def byEmails(emails: List[String]): List[User] = {
     val lowerCaseEmails = emails.map(_.toLowerCase).distinct
@@ -283,12 +314,7 @@ class UserService @Inject() (
     Future(
       Try(
         db.withConnection { implicit connection =>
-          val query =
-            StringHelper
-              .commonStringInputNormalization(searchQuery)
-              .replace(' ', '+')
-              .replace('@', '+') // emails are considered single tokens
-              .replace('.', '+') + ":*"
+          val query = UserService.toStarTsquery(searchQuery)
           SQL(s"""SELECT $fieldsInSelect
                   FROM "user"
                   WHERE (
@@ -464,10 +490,11 @@ class UserService @Inject() (
     }
 
   def removeFromGroup(userId: UUID, groupId: UUID): Future[Either[Error, Unit]] =
-    executeUserUpdate(
+    withDbConnection(
+      EventType.EditUserError,
       s"Impossible d'ajouter l'utilisateur $userId au groupe $groupId"
     ) { implicit connection =>
-      SQL"""
+      val _ = SQL"""
         UPDATE "user" SET
           group_ids = array_remove(group_ids, $groupId::uuid)
         WHERE id = $userId::uuid
@@ -475,7 +502,8 @@ class UserService @Inject() (
     }
 
   def enable(userId: UUID, groupId: UUID): Future[Either[Error, Unit]] =
-    executeUserUpdateTransaction(
+    withDbTransaction(
+      EventType.EditUserError,
       s"Impossible de réactiver l'utilisateur $userId"
     ) { implicit connection =>
       val user =
@@ -487,14 +515,14 @@ class UserService @Inject() (
       if (user.groupIds.contains[UUID](groupId) && user.groupIds.size === 2) {
         // When there are 2 groups, most people actually want to reactivate in one group
         val newGroupIds = groupId :: Nil
-        SQL"""
+        val _ = SQL"""
           UPDATE "user" SET
             disabled = false,
             group_ids = array[${newGroupIds}]::uuid[]
           WHERE id = $userId::uuid
         """.executeUpdate()
       } else {
-        SQL"""
+        val _ = SQL"""
           UPDATE "user" SET
             disabled = false
           WHERE id = $userId::uuid
@@ -503,12 +531,37 @@ class UserService @Inject() (
     }
 
   def disable(userId: UUID): Future[Either[Error, Unit]] =
-    executeUserUpdate(
+    withDbConnection(
+      EventType.EditUserError,
       s"Impossible de désactiver l'utilisateur $userId"
     ) { implicit connection =>
-      SQL"""
+      val _ = SQL"""
         UPDATE "user" SET
           disabled = true
+        WHERE id = $userId::uuid
+      """.executeUpdate()
+    }
+
+  def activatePassword(userId: UUID): Future[Either[Error, Unit]] =
+    withDbConnection(
+      EventType.EditUserError,
+      s"Impossible d'activer le mot de passe de l'utilisateur $userId"
+    ) { implicit connection =>
+      val _ = SQL"""
+        UPDATE "user" SET
+          password_activated = true
+        WHERE id = $userId::uuid
+      """.executeUpdate()
+    }
+
+  def deactivatePassword(userId: UUID): Future[Either[Error, Unit]] =
+    withDbConnection(
+      EventType.EditUserError,
+      s"Impossible de désactiver le mot de passe de l'utilisateur $userId",
+    ) { implicit connection =>
+      val _ = SQL"""
+        UPDATE "user" SET
+          password_activated = false
         WHERE id = $userId::uuid
       """.executeUpdate()
     }
@@ -602,40 +655,6 @@ class UserService @Inject() (
       )
   }
 
-  private def executeUserUpdate(
-      errorMessage: String
-  )(inner: Connection => _): Future[Either[Error, Unit]] =
-    Future(
-      Try(db.withConnection(inner)).toEither
-        .map(_ => ())
-        .left
-        .map(error =>
-          Error.SqlException(
-            EventType.EditUserError,
-            errorMessage,
-            error,
-            none
-          )
-        )
-    )
-
-  private def executeUserUpdateTransaction(
-      errorMessage: String
-  )(inner: Connection => _): Future[Either[Error, Unit]] =
-    Future(
-      Try(db.withTransaction(inner)).toEither
-        .map(_ => ())
-        .left
-        .map(error =>
-          Error.SqlException(
-            EventType.EditUserError,
-            errorMessage,
-            error,
-            none
-          )
-        )
-    )
-
   //
   // User Sessions
   //
@@ -647,6 +666,7 @@ class UserService @Inject() (
         case "agent_connect"     => UserSession.LoginType.AgentConnect.asRight
         case "insecure_demo_key" => UserSession.LoginType.InsecureDemoKey.asRight
         case "magic_link"        => UserSession.LoginType.MagicLink.asRight
+        case "password"          => UserSession.LoginType.Password.asRight
         case unknownType =>
           SqlMappingError(s"Cannot parse login_type $unknownType").asLeft
       }
@@ -660,6 +680,7 @@ class UserService @Inject() (
     "login_type",
     "expires_at",
     "revoked_at",
+    "user_agent",
   )
 
   private val qualifiedUserSessionParser = anorm.Macro.parser[UserSession](
@@ -671,6 +692,7 @@ class UserService @Inject() (
     "user_session.login_type",
     "user_session.expires_at",
     "user_session.revoked_at",
+    "user_session.user_agent",
   )
 
   // Double the recommended minimum 64 bits of entropy
@@ -686,7 +708,8 @@ class UserService @Inject() (
       userId: UUID,
       loginType: UserSession.LoginType,
       expiresAt: Instant,
-      ipAddress: String
+      ipAddress: String,
+      userAgent: Option[String],
   ): IO[Either[Error, UserSession]] =
     generateNewSessionId
       .flatMap(sessionId =>
@@ -699,7 +722,8 @@ class UserService @Inject() (
             lastActivity = now,
             loginType = loginType,
             expiresAt = expiresAt,
-            revokedAt = None,
+            revokedAt = none,
+            userAgent = userAgent,
           )
         )
       )
@@ -719,11 +743,13 @@ class UserService @Inject() (
     case UserSession.LoginType.AgentConnect    => "agent_connect"
     case UserSession.LoginType.InsecureDemoKey => "insecure_demo_key"
     case UserSession.LoginType.MagicLink       => "magic_link"
+    case UserSession.LoginType.Password        => "password"
   }
 
   private def saveUserSession(session: UserSession): IO[Either[Error, UserSession]] =
     IO.blocking {
       val _ = db.withConnection { implicit connection =>
+        val userAgent = session.userAgent.map(_.take(2048))
         SQL"""
           INSERT INTO user_session (
             id,
@@ -732,7 +758,8 @@ class UserService @Inject() (
             creation_ip_address,
             last_activity,
             login_type,
-            expires_at
+            expires_at,
+            user_agent
           ) VALUES (
             ${session.id},
             ${session.userId}::uuid,
@@ -740,7 +767,8 @@ class UserService @Inject() (
             ${session.creationIpAddress}::inet,
             ${session.lastActivity},
             ${stringifyLoginType(session.loginType)},
-            ${session.expiresAt}
+            ${session.expiresAt},
+            $userAgent
           )
         """.executeUpdate()
       }
@@ -767,10 +795,11 @@ class UserService @Inject() (
       userId: UUID,
       loginType: UserSession.LoginType,
       expiresAt: Instant,
-      ipAddress: String
+      ipAddress: String,
+      userAgent: Option[String],
   ): EitherT[IO, Error, UserSession] =
     for {
-      session <- EitherT(generateNewUserSession(userId, loginType, expiresAt, ipAddress))
+      session <- EitherT(generateNewUserSession(userId, loginType, expiresAt, ipAddress, userAgent))
       _ <- EitherT(saveUserSession(session))
     } yield session
 

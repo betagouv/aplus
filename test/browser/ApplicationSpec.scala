@@ -63,7 +63,8 @@ class ApplicationSpec extends Specification with BaseSpec {
           observableOrganisationIds = Nil,
           managingOrganisationIds = Nil,
           managingAreaIds = Nil,
-          internalSupportComment = None
+          internalSupportComment = None,
+          passwordActivated = false,
         )
 
         val helperUser = User(
@@ -87,7 +88,8 @@ class ApplicationSpec extends Specification with BaseSpec {
           observableOrganisationIds = Nil,
           managingOrganisationIds = Nil,
           managingAreaIds = Nil,
-          internalSupportComment = None
+          internalSupportComment = None,
+          passwordActivated = false,
         )
 
         userService.add(List(instructorUser, helperUser))

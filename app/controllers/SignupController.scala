@@ -108,7 +108,8 @@ case class SignupController @Inject() (
               managingOrganisationIds = Nil,
               managingAreaIds = Nil,
               sharedAccount = form.sharedAccount,
-              internalSupportComment = None
+              internalSupportComment = None,
+              passwordActivated = false,
             )
             userService
               .addFuture(user :: Nil)
@@ -143,6 +144,7 @@ case class SignupController @Inject() (
                               loginType,
                               loginExpiresAt,
                               request.remoteAddress,
+                              request.headers.get(USER_AGENT),
                             )
                           _ <- EitherT
                             .right[Error](IO.blocking(userService.recordLogin(user.id)))
@@ -414,6 +416,7 @@ case class SignupController @Inject() (
                                   loginType,
                                   loginExpiresAt,
                                   request.remoteAddress,
+                                  request.headers.get(USER_AGENT),
                                 )
                               _ <- EitherT
                                 .right[Error](IO.blocking(userService.recordLogin(existingUser.id)))

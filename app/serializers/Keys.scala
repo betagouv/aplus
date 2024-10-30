@@ -34,6 +34,7 @@ object Keys {
     val sessionId: String = "sessionId"
     val signupLoginExpiresAt: String = "signupLoginExpiresAt"
     val signupAgentConnectSubject: String = "signupAgentConnectSubject"
+    val passwordEmail: String = "passwordEmail"
   }
 
   // Important note: do not forget to check the `SentryFilter` whitelist

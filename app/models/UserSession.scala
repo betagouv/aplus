@@ -11,6 +11,7 @@ object UserSession {
     case object AgentConnect extends LoginType
     case object InsecureDemoKey extends LoginType
     case object MagicLink extends LoginType
+    case object Password extends LoginType
   }
 
 }
@@ -24,6 +25,7 @@ case class UserSession(
     loginType: UserSession.LoginType,
     expiresAt: Instant,
     revokedAt: Option[Instant],
+    userAgent: Option[String],
 ) {
 
   def isValid(now: Instant): Boolean =

@@ -41,7 +41,7 @@ object common {
       br,
       br,
       p(
-        "Vous pouvez maintenant accéder au service Administration+ en cliquant sur le lien suivant :",
+        "Vous pouvez maintenant accéder au service Administration+ en cliquant sur le lien suivant : ",
         br,
         a(href := raw(url).render, raw(url)),
         br,
@@ -62,6 +62,17 @@ object common {
         ".",
         br,
         br,
+        "Un bug récent peut provoquer un double clic sur notre lien de connexion, ce qui invalide le jeton de connexion unique.",
+        br,
+        "Si vous rencontrez ce problème, veuillez essayer l’une des solutions suivantes :",
+        br,
+        "- Copiez-collez le lien directement dans la barre d’adresse de votre navigateur.",
+        br,
+        "- Faites un clic droit sur le lien et sélectionnez « Ouvrir dans un nouvel onglet ».",
+        br,
+        "- Utilisez CTRL + Clic sur le lien pour le même résultat.",
+        br,
+        br,
         "Si vous avez des questions ou vous rencontrez un problème, ",
         "n’hésitez pas à nous contacter sur ",
         a(href := s"mailto:${Constants.supportEmail}", Constants.supportEmail),
@@ -71,6 +82,40 @@ object common {
       )
     ) ::: commonEmailFooter
   }
+
+  val passwordReinitializationSubject = "Réinitialisation du mot de passe Administration+"
+
+  def passwordReinitializationBody(
+      userName: Option[String],
+      userTimeZone: ZoneId,
+      absoluteUrl: String,
+      expirationDate: ZonedDateTime,
+  ): List[Modifier] =
+    List[Modifier](
+      s"${userName.filter(_.nonEmpty).map(n => s"Bonjour $n,").getOrElse("Bonjour,")}",
+      br,
+      br,
+      p(
+        "Une demande de réinitialisation de mot de passe a été faite pour " +
+          "votre compte Administration+. Pour terminer la procédure, " +
+          "veuillez cliquer sur le lien suivant : ",
+        br,
+        a(href := raw(absoluteUrl).render, raw(absoluteUrl)),
+        br,
+        br,
+        " ",
+        "Ce lien est valide jusqu’à ",
+        b(expirationDate.format(Time.hourAndMinutesFormatter)),
+        ".",
+        br,
+        br,
+        "Si vous n’avez pas effectué de demande de réinitialisation de mot de passe, ",
+        "vous pouvez ignorer cet email.",
+        br,
+        " ",
+        "Equipe Administration+"
+      )
+    ) ::: commonEmailFooter
 
   val mandatV2Subject = "[A+] Mandat créé"
 
