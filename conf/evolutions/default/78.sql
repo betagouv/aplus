@@ -1,6 +1,6 @@
 --- !Ups
 
-CREATE TABLE agent_connect_claims(
+CREATE TABLE pro_connect_claims(
   subject text NOT NULL,
   email text NOT NULL,
   given_name text,
@@ -13,11 +13,11 @@ CREATE TABLE agent_connect_claims(
   user_id uuid
 );
 
-CREATE UNIQUE INDEX agent_connect_claims_subject_unique_idx ON agent_connect_claims (subject);
-CREATE INDEX agent_connect_claims_lower_email_idx ON agent_connect_claims (lower(email));
+CREATE UNIQUE INDEX pro_connect_claims_subject_unique_idx ON pro_connect_claims (subject);
+CREATE INDEX pro_connect_claims_lower_email_idx ON pro_connect_claims (lower(email));
 
 
 
 --- !Downs
 
-DROP TABLE agent_connect_claims;
+DROP TABLE pro_connect_claims;

@@ -68,8 +68,8 @@ POST        /connexion/mot-de-passe/reinitialisation                            
 GET         /login/disconnect                                                                controllers.LoginController.disconnect
 GET         /validation-connexion                                                            controllers.LoginController.magicLinkAntiConsumptionPage
 GET         /connexion                                                                       controllers.LoginController.loginPage
-GET         /connexion/redirection-vers-agent-connect                                        controllers.LoginController.agentConnectLoginRedirection
-GET         /agentconnect/login                                                              controllers.LoginController.agentConnectAuthenticationResponseCallback
+GET         /connexion/redirection-vers-pro-connect                                          controllers.LoginController.proConnectLoginRedirection
+GET         /agentconnect/login                                                              controllers.LoginController.proConnectAuthenticationResponseCallback
 
 
 # Users

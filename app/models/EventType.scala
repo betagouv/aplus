@@ -228,15 +228,15 @@ object EventType {
   object FSMatriculeError extends Error
   object FSMatriculeChanged extends Info
 
-  // AgentConnect
-  object AgentConnectSecurityWarning extends Warn
-  object AgentConnectError extends Error
-  object AgentConnectUpdateProviderConfiguration extends Info
-  object AgentConnectUserLoginSuccessful extends Info
-  object AgentConnectSignupLoginSuccessful extends Info
-  object AgentConnectLoginDeactivatedUser extends Error
-  object AgentConnectUnknownEmail extends Warn
-  object AgentConnectClaimsSaveError extends Error
+  // ProConnect
+  object ProConnectSecurityWarning extends Warn
+  object ProConnectError extends Error
+  object ProConnectUpdateProviderConfiguration extends Info
+  object ProConnectUserLoginSuccessful extends Info
+  object ProConnectSignupLoginSuccessful extends Info
+  object ProConnectLoginDeactivatedUser extends Error
+  object ProConnectUnknownEmail extends Warn
+  object ProConnectClaimsSaveError extends Error
 
   val unauthenticatedEvents: List[EventType] = List(
     GenerateToken,

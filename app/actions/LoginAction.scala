@@ -41,7 +41,7 @@ object LoginAction {
     List(
       Keys.Session.signupId,
       Keys.Session.signupLoginExpiresAt,
-      Keys.Session.signupAgentConnectSubject
+      Keys.Session.signupProConnectSubject
     )
 
 }

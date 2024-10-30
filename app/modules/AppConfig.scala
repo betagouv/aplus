@@ -162,40 +162,40 @@ class AppConfig @Inject() (configuration: Configuration) {
       .flatMap(UUIDHelper.fromString)
       .toSet
 
-  val featureAgentConnectEnabled: Boolean =
-    configuration.get[Boolean]("app.features.agentConnectEnabled")
+  val featureProConnectEnabled: Boolean =
+    configuration.get[Boolean]("app.features.proConnectEnabled")
 
-  def agentConnectConfig[A: ConfigLoader](key: String, defaultIfDisabled: => A): A =
+  def proConnectConfig[A: ConfigLoader](key: String, defaultIfDisabled: => A): A =
     configuration
       .getOptional[A](key)
       .getOrElse(
-        if (featureAgentConnectEnabled)
-          throw new Exception(s"Missing AgentConnect configuration key $key")
+        if (featureProConnectEnabled)
+          throw new Exception(s"Missing ProConnect configuration key $key")
         else defaultIfDisabled
       )
 
-  val agentConnectIssuerUri: String =
-    agentConnectConfig[String]("app.agentConnect.issuerUri", "")
+  val proConnectIssuerUri: String =
+    proConnectConfig[String]("app.proConnect.issuerUri", "")
 
-  val agentConnectMinimumDurationBetweenDiscoveryCalls: FiniteDuration =
-    agentConnectConfig[Int](
-      "app.agentConnect.minimumDurationBetweenDiscoveryCallsInSeconds",
+  val proConnectMinimumDurationBetweenDiscoveryCalls: FiniteDuration =
+    proConnectConfig[Int](
+      "app.proConnect.minimumDurationBetweenDiscoveryCallsInSeconds",
       10
     ).seconds
 
-  val agentConnectClientId: String =
-    agentConnectConfig[String]("app.agentConnect.clientId", "")
+  val proConnectClientId: String =
+    proConnectConfig[String]("app.proConnect.clientId", "")
 
-  val agentConnectClientSecret: String =
-    agentConnectConfig[String]("app.agentConnect.clientSecret", "")
+  val proConnectClientSecret: String =
+    proConnectConfig[String]("app.proConnect.clientSecret", "")
 
-  val agentConnectRedirectUri: String =
-    agentConnectConfig[String]("app.agentConnect.redirectUri", "")
+  val proConnectRedirectUri: String =
+    proConnectConfig[String]("app.proConnect.redirectUri", "")
 
-  val agentConnectPostLogoutRedirectUri: String =
-    agentConnectConfig[String]("app.agentConnect.postLogoutRedirectUri", "")
+  val proConnectPostLogoutRedirectUri: String =
+    proConnectConfig[String]("app.proConnect.postLogoutRedirectUri", "")
 
-  val agentConnectSigningAlgorithm: String =
-    agentConnectConfig[String]("app.agentConnect.signingAlgorithm", "")
+  val proConnectSigningAlgorithm: String =
+    proConnectConfig[String]("app.proConnect.signingAlgorithm", "")
 
 }

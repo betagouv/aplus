@@ -29,7 +29,7 @@ import play.api.libs.ws.WSClient
 import play.api.mvc.{Request, RequestHeader, Result}
 import scala.jdk.CollectionConverters._
 
-object AgentConnectService {
+object ProConnectService {
 
   implicit val config: JsonConfiguration = JsonConfiguration(JsonNaming.SnakeCase)
 
@@ -180,7 +180,7 @@ object AgentConnectService {
   case class UnknownKidInJwtHeader(message: String) extends Exception(message)
 
   /** Spec:
-    *   - https://github.com/numerique-gouv/agentconnect-documentation/blob/main/doc_fs/implementation_technique.md#35-authentification-de-lutilisateur
+    *   - https://github.com/numerique-gouv/proconnect-documentation/blob/main/doc_fs/implementation_technique.md#35-authentification-de-lutilisateur
     *   - la session Agent Connect a une durée de 12 heures et se termine dans tous les cas à la fin
     *     de la journée (minuit)
     */
@@ -196,14 +196,14 @@ object AgentConnectService {
 }
 
 @Singleton
-class AgentConnectService @Inject() (
+class ProConnectService @Inject() (
     config: AppConfig,
     db: Database,
     dependencies: ServicesDependencies,
     eventService: EventService,
     ws: WSClient,
 ) {
-  import AgentConnectService._
+  import ProConnectService._
 
   import dependencies.ioRuntime
 
@@ -235,7 +235,7 @@ class AgentConnectService @Inject() (
           case Right(metadata)
               if Duration
                 .between(metadata.fetchTime, now)
-                .toMillis < config.agentConnectMinimumDurationBetweenDiscoveryCalls.toMillis =>
+                .toMillis < config.proConnectMinimumDurationBetweenDiscoveryCalls.toMillis =>
             IO.pure(
               Error
                 .NotEnoughElapsedTimeBetweenDiscoveryCalls(
@@ -247,8 +247,8 @@ class AgentConnectService @Inject() (
           case _ =>
             (IO.blocking(
               eventService.logNoRequest(
-                EventType.AgentConnectUpdateProviderConfiguration,
-                "Tentative de mise à jour de la provider configuration AgentConnect"
+                EventType.ProConnectUpdateProviderConfiguration,
+                "Tentative de mise à jour de la provider configuration ProConnect"
               )
             ) >> fetchDiscoveryMetadata.value)
               .flatMap(
@@ -273,7 +273,7 @@ class AgentConnectService @Inject() (
         // Spec: If the Issuer value contains a path component, any terminating / MUST be removed before appending /.well-known/openid-configuration
         IO.pure(
           ws.url(
-            config.agentConnectIssuerUri.stripSuffix("/") + "/.well-known/openid-configuration"
+            config.proConnectIssuerUri.stripSuffix("/") + "/.well-known/openid-configuration"
           ).get()
         )
       ).attempt
@@ -293,14 +293,14 @@ class AgentConnectService @Inject() (
               // TODO: check endpoints are https://
               // Spec: The issuer value returned MUST be identical to the Issuer URL that was used as the prefix to /.well-known/openid-configuration to retrieve the configuration information.
               // See also "OpenID Connect Discovery 7.2.  Impersonation Attacks  https://openid.net/specs/openid-connect-discovery-1_0.html#Impersonation"
-              if (metadata.issuer === config.agentConnectIssuerUri)
+              if (metadata.issuer === config.proConnectIssuerUri)
                 // Spec: Communication with the Token Endpoint MUST utilize TLS.
                 // OpenID Connect 3.1.3. Token Endpoint  https://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
                 metadata.asRight
               else
                 Error
                   .ProviderConfigurationInvalidIssuer(
-                    wantedIssuer = config.agentConnectIssuerUri,
+                    wantedIssuer = config.proConnectIssuerUri,
                     providedIssuer = metadata.issuer
                   )
                   .asLeft
@@ -372,9 +372,9 @@ class AgentConnectService @Inject() (
     */
   val STATE_SIZE_BYTES = 24
 
-  val sessionStateKey = "agent-connect_state"
-  val sessionNonceKey = "agent-connect_nonce"
-  val sessionIdTokenKey = "agent-connect_idtoken"
+  val sessionStateKey = "pro-connect_state"
+  val sessionNonceKey = "pro-connect_nonce"
+  val sessionIdTokenKey = "pro-connect_idtoken"
 
   def resetSessionKeys(result: Result)(implicit request: RequestHeader): Result =
     result.removingFromSession(sessionStateKey, sessionNonceKey)
@@ -383,7 +383,7 @@ class AgentConnectService @Inject() (
     *     https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest OpenID Connect
     *   - OpenID Connect 15.5.2. Nonce Implementation Notes
     *     https://openid.net/specs/openid-connect-core-1_0.html#NonceNotes
-    *   - https://github.com/numerique-gouv/agentconnect-documentation/blob/main/doc_fs/implementation_technique.md#2-faire-pointer-le-bouton-ac-vers-le-authorization_endpoint
+    *   - https://github.com/numerique-gouv/proconnect-documentation/blob/main/doc_fs/implementation_technique.md#2-faire-pointer-le-bouton-proconnect-vers-le-authorization_endpoint
     */
   def authenticationRequestUrl: EitherT[IO, Error, (String, (Result, RequestHeader) => Result)] =
     discoveryMetadata.subflatMap { metadata =>
@@ -401,7 +401,7 @@ class AgentConnectService @Inject() (
               "email" -> Json.obj("essential" -> true),
               "siret" -> JsNull,
             )
-            // ID token claims: https://github.com/numerique-gouv/agentconnect-documentation/blob/main/doc_fs/scope-claims.md#les-donn%C3%A9es-sur-lauthentification
+            // ID token claims: https://github.com/numerique-gouv/proconnect-documentation/blob/main/doc_fs/scope-claims.md#les-donn%C3%A9es-sur-lauthentification
           )
         )
 
@@ -413,8 +413,8 @@ class AgentConnectService @Inject() (
             // Multiple scope values MAY be used by creating a space-delimited, case-sensitive list of ASCII scope values.
             "scope" -> "openid given_name usual_name email siret",
             "response_type" -> "code",
-            "client_id" -> config.agentConnectClientId,
-            "redirect_uri" -> config.agentConnectRedirectUri,
+            "client_id" -> config.proConnectClientId,
+            "redirect_uri" -> config.proConnectRedirectUri,
             "state" -> state,
 
             // 2. OpenID Connect parameters
@@ -436,10 +436,10 @@ class AgentConnectService @Inject() (
       }
     }
 
-  /** https://github.com/numerique-gouv/agentconnect-documentation/blob/main/doc_fs/implementation_technique.md#34-stockage-du-id_token
+  /** https://github.com/numerique-gouv/proconnect-documentation/blob/main/doc_fs/implementation_technique.md#34-stockage-du-id_token
     *
     * Stocker le id_token dans la session du navigateur. Cette valeur sera utilisée plus tard, lors
-    * de la déconnexion auprès du serveur AgentConnect.
+    * de la déconnexion auprès du serveur ProConnect.
     */
   def handleAuthenticationResponse(
       request: Request[_]
@@ -529,7 +529,7 @@ class AgentConnectService @Inject() (
   }
 
   /** Relevant docs:
-    *   - https://github.com/numerique-gouv/agentconnect-documentation/blob/main/doc_fs/implementation_technique.md#32-g%C3%A9n%C3%A9ration-du-token
+    *   - https://github.com/numerique-gouv/proconnect-documentation/blob/main/doc_fs/implementation_technique.md#32-g%C3%A9n%C3%A9ration-du-token
     *   - OpenID Connect 3.1.3. Token Endpoint
     *     https://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
     *   - RFC6749 3.2. Token Endpoint https://www.rfc-editor.org/rfc/rfc6749.html#section-3.2
@@ -553,9 +553,9 @@ class AgentConnectService @Inject() (
                 Map(
                   "grant_type" -> "authorization_code",
                   "code" -> code.code,
-                  "redirect_uri" -> config.agentConnectRedirectUri,
-                  "client_id" -> config.agentConnectClientId,
-                  "client_secret" -> config.agentConnectClientSecret,
+                  "redirect_uri" -> config.proConnectRedirectUri,
+                  "client_id" -> config.proConnectClientId,
+                  "client_secret" -> config.proConnectClientSecret,
                 )
               )
           )
@@ -607,7 +607,7 @@ class AgentConnectService @Inject() (
           // Spec: The Issuer Identifier for the OpenID Provider (which is typically obtained during Discovery) MUST exactly match the value of the iss (issuer) Claim.
           .requireIssuer(metadata.provider.issuer)
           // Spec: The Client MUST validate that the aud (audience) Claim contains its client_id value registered at the Issuer identified by the iss (issuer) Claim as an audience. The aud (audience) Claim MAY contain an array with more than one element. The ID Token MUST be rejected if the ID Token does not list the Client as a valid audience, or if it contains additional audiences not trusted by the Client.
-          .requireAudience(config.agentConnectClientId)
+          .requireAudience(config.proConnectClientId)
           // Note: jjwt validates "exp" by default
           // - https://github.com/jwtk/jjwt/blob/5812f63a76084914c5b653025bd3b84048389223/impl/src/main/java/io/jsonwebtoken/impl/DefaultJwtParser.java#L677
           // - https://github.com/jwtk/jjwt/blob/5812f63a76084914c5b653025bd3b84048389223/impl/src/main/java/io/jsonwebtoken/impl/DefaultClaims.java#L48
@@ -661,7 +661,7 @@ class AgentConnectService @Inject() (
                     .requireSubject(idTokenSubjectClaim)
                     // Spec: If signed, the UserInfo Response MUST contain the Claims iss (issuer) and aud (audience) as members. The iss value MUST be the OP's Issuer Identifier URL. The aud value MUST be or include the RP's Client ID value.
                     .requireIssuer(metadata.provider.issuer)
-                    .requireAudience(config.agentConnectClientId)
+                    .requireAudience(config.proConnectClientId)
                 ).subflatMap { signedToken =>
                   Either.catchNonFatal(
                     (
@@ -789,7 +789,7 @@ class AgentConnectService @Inject() (
       .subflatMap { jws =>
         val algorithm: Option[String] =
           Option(jws.getHeader).flatMap(header => Option(header.getAlgorithm))
-        if (algorithm === Some(config.agentConnectSigningAlgorithm))
+        if (algorithm === Some(config.proConnectSigningAlgorithm))
           jws.asRight
         else
           Error.InvalidJwsAlgorithm(algorithm).asLeft

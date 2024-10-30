@@ -137,7 +137,7 @@ case class SignupController @Inject() (
                     LoginAction.readUserRights(user).flatMap { userRights =>
                       (
                         for {
-                          loginType <- maybeLinkUserToAgentConnectClaims(user.id, request)
+                          loginType <- maybeLinkUserToProConnectClaims(user.id, request)
                           userSession <- userService
                             .createNewUserSession(
                               user.id,
@@ -327,16 +327,16 @@ case class SignupController @Inject() (
         )
       )
 
-  private def maybeLinkUserToAgentConnectClaims(
+  private def maybeLinkUserToProConnectClaims(
       userId: UUID,
       request: Request[_]
   ): EitherT[IO, Error, UserSession.LoginType] =
-    request.session.get(Keys.Session.signupAgentConnectSubject) match {
+    request.session.get(Keys.Session.signupProConnectSubject) match {
       case None => EitherT.rightT[IO, Error](UserSession.LoginType.MagicLink)
       case Some(subject) =>
         EitherT(
-          userService.linkUserToAgentConnectClaims(userId, subject)
-        ).map(_ => UserSession.LoginType.AgentConnect)
+          userService.linkUserToProConnectClaims(userId, subject)
+        ).map(_ => UserSession.LoginType.ProConnect)
     }
 
   /** Note: parameter is curried to easily mark `Request` as implicit. */
@@ -406,7 +406,7 @@ case class SignupController @Inject() (
                           // (this case happen if the signup session has not been purged after user creation)
                           (
                             for {
-                              loginType <- maybeLinkUserToAgentConnectClaims(
+                              loginType <- maybeLinkUserToProConnectClaims(
                                 existingUser.id,
                                 request
                               )
