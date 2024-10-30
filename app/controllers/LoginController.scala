@@ -363,7 +363,8 @@ class LoginController @Inject() (
               user.id,
               UserSession.LoginType.AgentConnect,
               expiresAt,
-              request.remoteAddress
+              request.remoteAddress,
+              request.headers.get(USER_AGENT),
             )
             _ <- EitherT.right[Error] {
               val requestWithUserData =
