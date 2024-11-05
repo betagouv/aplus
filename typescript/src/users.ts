@@ -305,6 +305,14 @@ if (window.document.getElementById(usersTableId)) {
       width: 200,
     },
     {
+      title: "Organismes observés",
+      field: "permissions.observableOrganisations",
+      sorter: "string",
+      headerFilter: "input",
+      width: 200,
+      accessorDownload: joinWithCommaDownload,
+    },
+    {
       title: "Organismes en charge",
       field: "permissions.managingOrganisations",
       sorter: "string",
