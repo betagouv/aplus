@@ -510,10 +510,8 @@ object main {
             ),
             li(cls := "fr-footer__bottom-item")(
               a(cls := "fr-footer__bottom-link")(
-                href := "https://docs.aplus.beta.gouv.fr/conditions-generales-dutilisation",
-                target := "_blank",
-                rel := "noopener",
-                "Données personnelles et gestion des cookies"
+                href := HomeController.privacy.url,
+                "Politique de confidentialité"
               )
             ),
             li(cls := "fr-footer__bottom-item")(
