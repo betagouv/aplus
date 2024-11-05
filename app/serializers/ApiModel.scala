@@ -159,6 +159,7 @@ object ApiModel {
         groupAdmin: Boolean,
         admin: Boolean,
         expert: Boolean,
+        observableOrganisations: List[String],
         managingOrganisations: List[String],
         managingAreas: List[String],
     )
@@ -214,6 +215,8 @@ object ApiModel {
           groupAdmin = user.groupAdminRoleName.nonEmpty,
           admin = user.adminRoleName.nonEmpty,
           expert = user.expert,
+          observableOrganisations =
+            user.observableOrganisationIds.flatMap(Organisation.byId).map(_.shortName).sorted,
           managingOrganisations =
             user.managingOrganisationIds.flatMap(Organisation.byId).map(_.shortName).sorted,
           managingAreas = user.managingAreaIds.flatMap(Area.fromId).map(_.toString).sorted,
