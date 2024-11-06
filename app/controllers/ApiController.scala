@@ -343,9 +343,7 @@ case class ApiController @Inject() (
         "Accès non autorisé au dashboard de déploiement"
       ) { () =>
         val userGroups = userGroupService.allOrThrow.filter(group =>
-          group.organisation
-            .orElse(Organisation.deductedFromName(group.name))
-            .exists(_.id === Organisation.franceServicesId)
+          group.organisation.exists(_.id === Organisation.franceServicesId)
         )
         val franceServiceInstances = organisationService.franceServiceInfos.instances
         val doNotMatchTheseEmails =
@@ -439,11 +437,7 @@ case class ApiController @Inject() (
             for {
               group <- userGroups.filter(group =>
                 group.areaIds.contains[UUID](area.id)
-                  && organisationSet.exists(
-                    group.organisation
-                      .orElse(Organisation.deductedFromName(group.name))
-                      .contains[Organisation]
-                  )
+                  && organisationSet.exists(group.organisation.contains[Organisation])
               )
               user <- users if user.groupIds.contains[UUID](group.id)
             } yield user

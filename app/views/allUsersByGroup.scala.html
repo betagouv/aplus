@@ -93,11 +93,10 @@
               </a>
             }
             @userGroup.areaIds.flatMap(Area.fromId).map(_.name).sorted.mkString(", ") /
-            <b>@userGroup.name</b> / @(userGroup.organisation, Organisation.deductedFromName(userGroup.name)) match {
-              case (Some(organisation), _) => {
+            <b>@userGroup.name</b> / @userGroup.organisation match {
+              case Some(organisation) => {
                 @organisation.shortName / }
-              case (_, Some(organisation)) => { @organisation.shortName / }
-              case _ => {}
+              case None => {}
             } INSEE : @userGroup.inseeCode  <br>
             <span class="text--font-size-medium">@userGroup.description</span>
           }{
