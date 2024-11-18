@@ -9,7 +9,7 @@ const CopyPlugin = require("copy-webpack-plugin");
 module.exports = {
   target: 'es5',
   entry: {
-    index: path.join(__dirname, '../src/index.ts')
+    index: path.join(__dirname, '../src/index.ts'),
   },
   output: {
     path: path.join(__dirname, '../../public/generated-js'),
@@ -62,6 +62,7 @@ module.exports = {
         { context: "../node_modules/@gouvfr/dsfr/dist", from: "utility/utility.min.css*" },
         { context: "../node_modules/@gouvfr/dsfr/dist", from: "dsfr/dsfr.module.min.js*" },
         { context: "../node_modules/@gouvfr/dsfr/dist", from: "dsfr/dsfr.nomodule.min.js*" },
+        { context: "../node_modules/@gouvfr", from: "dsfr-chart/Charts/dsfr-chart*" },
         { from: "../node_modules/@gouvfr/dsfr/dist/fonts", to: "fonts" },
         { from: "../node_modules/@gouvfr/dsfr/dist/icons", to: "icons" },
       ],

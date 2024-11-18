@@ -126,6 +126,7 @@ object ApiModel {
     case class AreaData(
         areaId: String,
         areaName: String,
+        areaCode: String,
         numOfInstructorByOrganisationSet: Map[String, Int],
         numOfOrganisationSetWithOneInstructor: Int
     )

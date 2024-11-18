@@ -67,6 +67,7 @@ import serializers.Keys
 import services.{
   ApplicationService,
   BusinessDaysService,
+  DataService,
   EventService,
   FileService,
   MandatService,
@@ -88,6 +89,7 @@ case class ApplicationController @Inject() (
     businessDaysService: BusinessDaysService,
     config: AppConfig,
     val controllerComponents: ControllerComponents,
+    dataService: DataService,
     dependencies: ServicesDependencies,
     eventService: EventService,
     fileService: FileService,
@@ -872,7 +874,11 @@ case class ApplicationController @Inject() (
       }
     }
 
-  val statsAction: BaseLoginAction = loginAction.withPublicPage(Ok(views.publicStats.page))
+  val statsAction: BaseLoginAction = loginAction.withPublicPage(
+    dataService
+      .operateursDeploymentData(DataService.organisationSetFranceService, Area.allExcludingDemo)
+      .map(deploymentData => Ok(views.publicStats.page(deploymentData)))
+  )
 
   def stats: Action[AnyContent] =
     statsAction.async { implicit request =>

@@ -7,7 +7,7 @@ import helper.StringHelper
 import java.time.ZonedDateTime
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import models.{Area, Authorization, Error, EventType, Organisation, User, UserGroup}
+import models.{Area, Authorization, Error, EventType, Organisation, UserGroup}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents, Result}
 import scala.concurrent.{ExecutionContext, Future}
@@ -15,8 +15,10 @@ import serializers.ApiModel._
 import serializers.Keys
 import services.{
   AnonymizedDataService,
+  DataService,
   EventService,
   OrganisationService,
+  ServicesDependencies,
   UserGroupService,
   UserService
 }
@@ -25,15 +27,19 @@ import services.{
 case class ApiController @Inject() (
     anonymizedDataService: AnonymizedDataService,
     val controllerComponents: ControllerComponents,
-    loginAction: LoginAction,
+    dataService: DataService,
+    dependencies: ServicesDependencies,
     eventService: EventService,
+    loginAction: LoginAction,
     organisationService: OrganisationService,
+    userGroupService: UserGroupService,
     userService: UserService,
-    userGroupService: UserGroupService
 )(implicit val ec: ExecutionContext)
     extends BaseController
     with UserOperators {
   import OrganisationService.FranceServiceInstance
+
+  import dependencies.ioRuntime
 
   def franceServices: Action[AnyContent] =
     loginAction.async { implicit request =>
@@ -396,112 +402,25 @@ case class ApiController @Inject() (
       }
     }
 
-  private val organisationSetAll: List[Set[Organisation]] = {
-    val groups: List[Set[Organisation]] = List(
-      Set("DDFIP", "DRFIP"),
-      Set("CPAM", "CRAM", "CNAM"),
-      Set("CARSAT", "CNAV")
-    ).map(_.flatMap(id => Organisation.byId(Organisation.Id(id))))
-    val groupedSet: Set[Organisation.Id] = groups.flatMap(_.map(_.id)).toSet
-    val nonGrouped: List[Organisation] =
-      Organisation.organismesOperateurs.filterNot(org => groupedSet.contains(org.id))
-    groups ::: nonGrouped.map(Set(_))
-  }
-
-  private val organisationSetFranceService: List[Set[Organisation]] = (
-    List(
-      Set("DDFIP", "DRFIP"),
-      Set("CPAM", "CRAM", "CNAM"),
-      Set("CARSAT", "CNAV"),
-      Set("ANTS", "Préf")
-    ) :::
-      List(
-        "CAF",
-        "CDAD",
-        "La Poste",
-        "MSA",
-        "Pôle emploi"
-      ).map(Set(_))
-  ).map(_.flatMap(id => Organisation.byId(Organisation.Id(id))))
-
-  private def organisationSetId(organisations: Set[Organisation]): String =
-    organisations.map(_.id.toString).mkString
-
   def deploymentData: Action[AnyContent] =
     loginAction.async { implicit request =>
       asUserWithAuthorization(Authorization.isAdminOrObserver)(
         EventType.DeploymentDashboardUnauthorized,
         "Accès non autorisé au dashboard de déploiement"
       ) { () =>
-        val userGroups = userGroupService.allOrThrow
-        userService.allNoNameNoEmail.map { users =>
-          def usersIn(area: Area, organisationSet: Set[Organisation]): List[User] =
-            for {
-              group <- userGroups.filter(group =>
-                group.areaIds.contains[UUID](area.id)
-                  && organisationSet.exists(
-                    group.organisation
-                      .orElse(Organisation.deductedFromName(group.name))
-                      .contains[Organisation]
-                  )
-              )
-              user <- users if user.groupIds.contains[UUID](group.id)
-            } yield user
-
-          val organisationSets: List[Set[Organisation]] =
-            if (request.getQueryString(Keys.QueryParam.uniquementFs).getOrElse("oui") === "oui") {
-              organisationSetFranceService
-            } else {
-              organisationSetAll
-            }
-
-          val areasData = for {
-            area <- request.currentUser.areas.flatMap(Area.fromId).filterNot(_.name === "Demo")
-          } yield {
-            val numOfInstructors: Map[Set[Organisation], Int] = (
-              for {
-                organisations <- organisationSets
-                users = usersIn(area, organisations)
-                userSum = users
-                  .filter(user => user.instructor && !user.disabled)
-                  .map(_.id)
-                  .distinct
-                  .size
-              } yield (organisations, userSum)
-            ).toMap
-
-            DeploymentData.AreaData(
-              areaId = area.id.toString,
-              areaName = area.toString,
-              numOfInstructorByOrganisationSet = numOfInstructors.map {
-                case (organisations, count) => (organisationSetId(organisations), count)
-              },
-              numOfOrganisationSetWithOneInstructor = numOfInstructors
-                .count { case (_, numOfInstructors) => numOfInstructors > 0 }
-            )
+        val organisationSets: List[Set[Organisation]] =
+          if (request.getQueryString(Keys.QueryParam.uniquementFs).getOrElse("oui") === "oui") {
+            DataService.organisationSetFranceService
+          } else {
+            DataService.organisationSetAll
           }
-
-          val numOfAreasWithOneInstructorByOrganisationSet =
-            organisationSets.map { organisations =>
-              val id = organisationSetId(organisations)
-              val count =
-                areasData.count(data => data.numOfInstructorByOrganisationSet.getOrElse(id, 0) > 0)
-              (id, count)
-            }.toMap
-
-          val data = DeploymentData(
-            organisationSets = organisationSets.map(organisations =>
-              DeploymentData.OrganisationSet(
-                id = organisationSetId(organisations),
-                organisations = organisations
-              )
-            ),
-            areasData = areasData,
-            numOfAreasWithOneInstructorByOrganisationSet =
-              numOfAreasWithOneInstructorByOrganisationSet
-          )
-          Ok(Json.toJson(data))
-        }
+        val areas = request.currentUser.areas.flatMap(Area.fromId).filterNot(_.name === "Demo")
+        dataService
+          .operateursDeploymentData(organisationSets, areas)
+          .map { data =>
+            Ok(Json.toJson(data))
+          }
+          .unsafeToFuture()
       }
     }
 
