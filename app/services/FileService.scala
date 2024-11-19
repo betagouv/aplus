@@ -14,7 +14,7 @@ import helper.Crypto
 import helper.StringHelper.normalizeNFKC
 import io.laserdisc.pure.s3.tagless.{Interpreter => S3Interpreter}
 import java.net.URI
-import java.nio.file.{Files, Path => NioPath, Paths}
+import java.nio.file.{Files, Path => NioPath}
 import java.time.{Instant, ZonedDateTime}
 import java.time.temporal.ChronoUnit.DAYS
 import java.util.UUID
@@ -104,11 +104,6 @@ class FileService @Inject() (
 
     result.map(_.map { case (_, metadata) => metadata }).value
   }
-
-  def fileMetadata(fileId: UUID): IO[Either[Error, Option[(NioPath, FileMetadata)]]] =
-    byId(fileId).map(
-      _.map(_.map(metadata => (Paths.get(s"${config.filesPath}/$fileId"), metadata)))
-    )
 
   /** This is the "official" way to check https://stackoverflow.com/a/56038360
     *
@@ -273,7 +268,7 @@ class FileService @Inject() (
 
   private val fieldsInSelect: String = tableFields.mkString(", ")
 
-  private def byId(fileId: UUID): IO[Either[Error, Option[FileMetadata]]] =
+  def fileMetadata(fileId: UUID): IO[Either[Error, Option[FileMetadata]]] =
     IO.blocking(
       db.withConnection { implicit connection =>
         SQL(s"""SELECT $fieldsInSelect FROM file_metadata WHERE id = {fileId}::uuid""")
@@ -371,7 +366,7 @@ class FileService @Inject() (
             s"Début de la suppression des fichiers avant $beforeDate"
           )
         ) >>
-          deleteBefore(beforeDate).both(legacyDeleteExpiredFiles).map { case (result, _) => result }
+          deleteBefore(beforeDate)
       }
 
   private def deleteBefore(beforeDate: Instant): IO[Either[Error, Unit]] =
@@ -383,10 +378,7 @@ class FileService @Inject() (
             Stream
               .emits(files)
               .evalMap { metadata =>
-                val delete = ovhS3.delete(bucket, s3fileName(metadata.id))
-                val deleteLegacy =
-                  FsFiles[IO].deleteIfExists(FsPath(config.filesPath) / metadata.id.toString)
-                val deletion = delete.both(deleteLegacy) >>
+                val deletion = ovhS3.delete(bucket, s3fileName(metadata.id)) >>
                   updateStatus(metadata.id, FileMetadata.Status.Expired).flatMap(
                     _.fold(
                       e => IO.blocking(eventService.logErrorNoRequest(e)),
@@ -409,22 +401,6 @@ class FileService @Inject() (
           },
         )
       )
-
-  private def legacyDeleteExpiredFiles = IO {
-    val dir = new java.io.File(config.filesPath)
-    if (dir.exists() && dir.isDirectory) {
-      val fileToDelete = dir
-        .listFiles()
-        .filter(_.isFile)
-        .filter { file =>
-          val instant = Files.getLastModifiedTime(file.toPath).toInstant
-          instant
-            .plus(config.filesExpirationInDays.toLong + 1, DAYS)
-            .isBefore(Instant.now())
-        }
-      fileToDelete.foreach(_.delete())
-    }
-  }
 
   def wipeFilenames(retentionInMonths: Long): Future[Either[Error, Int]] =
     Future(
