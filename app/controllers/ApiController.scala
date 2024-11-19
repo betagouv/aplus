@@ -349,9 +349,7 @@ case class ApiController @Inject() (
         "Accès non autorisé au dashboard de déploiement"
       ) { () =>
         val userGroups = userGroupService.allOrThrow.filter(group =>
-          group.organisation
-            .orElse(Organisation.deductedFromName(group.name))
-            .exists(_.id === Organisation.franceServicesId)
+          group.organisation.exists(_.id === Organisation.franceServicesId)
         )
         val franceServiceInstances = organisationService.franceServiceInfos.instances
         val doNotMatchTheseEmails =

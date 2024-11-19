@@ -57,11 +57,7 @@ class DataService @Inject() (
           for {
             group <- userGroups.filter(group =>
               group.areaIds.contains[UUID](area.id)
-                && organisationSet.exists(
-                  group.organisation
-                    .orElse(Organisation.deductedFromName(group.name))
-                    .contains[Organisation]
-                )
+                && organisationSet.exists(group.organisation.contains[Organisation])
             )
             user <- users if user.groupIds.contains[UUID](group.id)
           } yield user
