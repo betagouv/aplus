@@ -1,6 +1,8 @@
 package views
 
 import controllers.routes.{ApplicationController, Assets}
+import helper.Time
+import java.time.LocalDate
 import play.api.libs.json.Json
 import scalatags.Text.all._
 import scalatags.Text.tags2
@@ -151,6 +153,7 @@ object publicStats {
           "name"
         ) := "Nombre d’organismes ayant au moins un agent habilité à répondre aux demandes",
         attr("color") := "blue-ecume",
+        attr("date") := Time.formatPatternFr(LocalDate.now(), "dd/MM/YYYY"),
       )
     )
   }
