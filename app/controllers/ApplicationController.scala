@@ -12,7 +12,7 @@ import helper.PlayFormHelpers.formErrorsLog
 import helper.ScalatagsHelpers.writeableOf_Modifier
 import helper.StringHelper.NonEmptyTrimmedString
 import helper.TwirlImports.toHtml
-import java.nio.file.{Files, Path}
+import java.nio.file.Path
 import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
@@ -1282,7 +1282,7 @@ case class ApplicationController @Inject() (
                 IO.blocking(
                   eventService.log(EventType.FileNotFound, s"Le fichier $fileId n'existe pas")
                 ).as(NotFound("Nous n'avons pas trouvé ce fichier"))
-              case Some((path, metadata)) =>
+              case Some(metadata) =>
                 val applicationId = metadata.attached match {
                   case FileMetadata.Attached.Application(id)          => id
                   case FileMetadata.Attached.Answer(applicationId, _) => applicationId
@@ -1328,7 +1328,7 @@ case class ApplicationController @Inject() (
                             applicationId = applicationId.some
                           )
                         ) >>
-                          sendFile(path, metadata)
+                          sendFile(metadata)
                       case FileMetadata.Status.Expired =>
                         IO.blocking(
                           eventService.log(
@@ -1380,9 +1380,9 @@ case class ApplicationController @Inject() (
         .unsafeToFuture()
     }
 
-  private def sendFile(localPath: Path, metadata: FileMetadata)(implicit
-      request: RequestWithUserData[_]
-  ): IO[Result] = {
+  private def sendFile(
+      metadata: FileMetadata
+  )(implicit request: RequestWithUserData[_]): IO[Result] = {
     val fileResult = (fileExists: Boolean) =>
       IO(
         if (fileExists)
@@ -1398,14 +1398,6 @@ case class ApplicationController @Inject() (
                 fileName = Some(metadata.filename)
               ).withHeaders(CACHE_CONTROL -> "no-store")
             )
-        else if (Files.exists(localPath))
-          // TODO: this branch is legacy and should be removed
-          Ok.sendPath(
-            localPath,
-            `inline` = false,
-            fileName = (_: Path) => Some(metadata.filename)
-          ).withHeaders(CACHE_CONTROL -> "no-store")
-            .asRight
         else
           NotFound("Nous n'avons pas trouvé ce fichier").asRight
       )
