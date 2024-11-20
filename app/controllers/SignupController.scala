@@ -56,9 +56,9 @@ case class SignupController @Inject() (
         EventType.SignupFormShowed,
         s"Visualisation de la page d'inscription ${signupRequest.id}"
       )
-      groupService.all.map(groups =>
-        Ok(views.signup.page(signupRequest, SignupFormData.form, groups))
-      )
+      groupService.all
+        .map(groups => Ok(views.signup.page(signupRequest, SignupFormData.form, groups)))
+        .unsafeToFuture()
     }
 
   def createSignup: Action[AnyContent] =
@@ -73,6 +73,7 @@ case class SignupController @Inject() (
             )
             groupService.all
               .map(groups => BadRequest(views.signup.page(signupRequest, formWithError, groups)))
+              .unsafeToFuture()
           },
           form => {
             // `SignupFormData` is supposed to validate that boolean,
@@ -132,6 +133,7 @@ case class SignupController @Inject() (
                       .map(groups =>
                         InternalServerError(views.signup.page(signupRequest, formWithError, groups))
                       )
+                      .unsafeToFuture()
                   },
                   _ =>
                     LoginAction.readUserRights(user).flatMap { userRights =>

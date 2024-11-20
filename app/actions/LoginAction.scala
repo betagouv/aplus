@@ -65,7 +65,7 @@ class LoginAction @Inject() (
       userService,
     ) {
 
-  def withPublicPage(publicPage: Result): BaseLoginAction =
+  def withPublicPage(publicPage: IO[Result]): BaseLoginAction =
     new BaseLoginAction(
       config,
       dependencies,
@@ -89,7 +89,7 @@ class BaseLoginAction(
     signupService: SignupService,
     tokenService: TokenService,
     userService: UserService,
-    publicPage: Option[Result] = none,
+    publicPage: Option[IO[Result]] = none,
 ) extends ActionBuilder[RequestWithUserData, AnyContent]
     with ActionRefiner[Request, RequestWithUserData] {
 
@@ -202,7 +202,7 @@ class BaseLoginAction(
               log.warn(s"Accès à la page ${request.path} non autorisé")
               Future(userNotLogged("Vous devez vous identifier pour accéder à cette page."))
             case Some(page) =>
-              Future.successful(page.asLeft)
+              page.map(_.asLeft).unsafeToFuture()
           }
         }
     }

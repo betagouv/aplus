@@ -105,8 +105,8 @@ class UserService @Inject() (
 
   private val fieldsInSelect: String = tableFields.mkString(", ")
 
-  def allNoNameNoEmail: Future[List[User]] =
-    Future {
+  def allNoNameNoEmail: IO[List[User]] =
+    IO.blocking {
       db.withConnection { implicit connection =>
         SQL(s"""SELECT $fieldsInSelect, '' as name, '' as email, '' as qualite FROM "user"""")
           .as(simpleUser.*)
