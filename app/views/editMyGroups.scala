@@ -102,7 +102,7 @@ object editMyGroups {
           } else {
             group.name
           },
-          span(cls := "text--font-size-medium", group.description)
+          span(cls := "text--font-size-medium single--margin-left-8px", group.description)
         )
       ),
       table(
