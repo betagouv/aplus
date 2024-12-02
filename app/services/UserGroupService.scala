@@ -2,6 +2,7 @@ package services
 
 import anorm._
 import aplus.macros.Macros
+import cats.effect.IO
 import cats.syntax.all._
 import helper.{Time, UUIDHelper}
 import java.sql.ResultSet
@@ -144,7 +145,7 @@ class UserGroupService @Inject() (
       SQL(s"SELECT $fieldsInSelect FROM user_group").as(simpleUserGroup.*)
     }
 
-  def all: Future[List[UserGroup]] = Future(allOrThrow)
+  def all: IO[List[UserGroup]] = IO.blocking(allOrThrow)
 
   def byIds(groupIds: List[UUID]): List[UserGroup] =
     db.withConnection { implicit connection =>

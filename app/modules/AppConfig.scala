@@ -2,7 +2,6 @@ package modules
 
 import com.typesafe.config.{Config, ConfigFactory}
 import helper.{Crypto, UUIDHelper}
-import java.nio.file.{Files, Path, Paths}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import play.api.{ConfigLoader, Configuration}
@@ -38,16 +37,6 @@ class AppConfig @Inject() (configuration: Configuration) {
 
   val featureAutoAddExpert: Boolean =
     configuration.get[Boolean]("app.features.autoAddExpert")
-
-  val filesPath: String = configuration.get[String]("app.filesPath")
-
-  val filesDirectory: Path = {
-    val dir = Paths.get(filesPath)
-    if (!Files.isDirectory(dir)) {
-      val _ = Files.createDirectories(dir)
-    }
-    dir
-  }
 
   val filesExpirationInDays: Int = configuration.get[Int]("app.filesExpirationInDays")
 

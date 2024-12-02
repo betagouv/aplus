@@ -1,18 +1,34 @@
 package views
 
-import controllers.routes.ApplicationController
+import controllers.routes.{ApplicationController, Assets}
+import helper.Time
+import java.time.LocalDate
+import play.api.libs.json.Json
 import scalatags.Text.all._
+import scalatags.Text.tags2
+import serializers.ApiModel.DeploymentData
 
 object publicStats {
 
-  def page: Tag =
+  def page(deploymentData: DeploymentData): Tag =
     views.main.publicLayout(
       "Statistiques - Administration+",
-      mainContent,
+      mainContent(deploymentData),
       breadcrumbs = ("Statistiques", ApplicationController.stats.url) :: Nil,
+      additionalHeadTags = frag(
+        link(
+          rel := "stylesheet",
+          href := Assets.versioned("generated-js/dsfr-chart/Charts/dsfr-chart.css").url
+        )
+      ),
+      additionalFooterTags = frag(
+        script(
+          src := Assets.versioned("generated-js/dsfr-chart/Charts/dsfr-chart.umd.js").url
+        ),
+      ),
     )
 
-  private val mainContent: Frag =
+  private def mainContent(deploymentData: DeploymentData): Frag =
     frag(
       div(
         cls := "fr-container fr-my-6w",
@@ -91,7 +107,108 @@ object publicStats {
             )
           )
         ),
+        div(
+          cls := "fr-grid-row fr-grid-row--gutters",
+          deployment(deploymentData)
+        ),
       )
     )
+
+  def deployment(deploymentData: DeploymentData): Frag =
+    div(
+      cls := "fr-col-12",
+      h2("Déploiement territorial"),
+      div(cls := "fr-mb-4w")(
+        deploymentMap(deploymentData),
+      ),
+      tags2.section(cls := "fr-accordion")(
+        h3(cls := "fr-accordion__title")(
+          button(
+            cls := "fr-accordion__btn",
+            aria.expanded := "false",
+            aria.controls := "deployment-table-accordion"
+          )("Chiffres de la couverture territoriale sous forme de tableau")
+        ),
+        div(cls := "fr-collapse", id := "deployment-table-accordion")(
+          deploymentTable(deploymentData)
+        )
+      ),
+    )
+
+  def deploymentMap(deploymentData: DeploymentData): Frag = {
+    val totalCount = deploymentData.organisationSets.length
+    val data = Json.stringify(
+      Json.obj(
+        deploymentData.areasData.map(area =>
+          area.areaCode -> area.numOfOrganisationSetWithOneInstructor
+        ): _*
+      )
+    )
+    div(cls := "part_container")(
+      tag("map-chart")(
+        id := "deploiment-map-chart",
+        attr("data") := data,
+        attr("valuenat") := totalCount,
+        attr(
+          "name"
+        ) := "Nombre d’organismes ayant au moins un agent habilité à répondre aux demandes",
+        attr("color") := "blue-ecume",
+        attr("date") := Time.formatPatternFr(LocalDate.now(), "dd/MM/YYYY"),
+      )
+    )
+  }
+
+  def deploymentTable(deploymentData: DeploymentData): Frag = {
+    val tableHeader = "Département" :: "Couverture" :: deploymentData.organisationSets.map(
+      _.organisations.map(_.shortName).mkString(" / ")
+    )
+
+    val tableRows: List[List[Tag]] = deploymentData.areasData.map(area =>
+      th(attr("scope") := "row")(area.areaName) ::
+        td(cls := "fr-cell--right")(
+          area.numOfOrganisationSetWithOneInstructor.toString + " / " + deploymentData.organisationSets.length
+        ) ::
+        deploymentData.organisationSets.map(orgSet =>
+          td(cls := "fr-cell--right")(
+            area.numOfInstructorByOrganisationSet.get(orgSet.id).map(_.toString).getOrElse("N/A")
+          )
+        )
+    )
+
+    div(cls := "fr-table fr-table--bordered")(
+      div(cls := "fr-table__wrapper")(
+        div(cls := "fr-table__container")(
+          div(cls := "fr-table__content")(
+            table(
+              caption(
+                "Couverture territoriale",
+                div(cls := "fr-table__caption__desc")(
+                  "La colonne de couverture indique le nombre d’organismes ayant au moins un agent habilité à répondre aux demandes sur Administration+. Les autres colonnes indiquent le nombre d’agents par organisme."
+                )
+              ),
+              thead(
+                tr(
+                  frag(
+                    tableHeader.map(header =>
+                      th(attr("scope") := "col", cls := "fr-cell--multiline")(header)
+                    )
+                  )
+                )
+              ),
+              tbody(
+                frag(
+                  tableRows.map(row =>
+                    tr(
+                      frag(row)
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  }
 
 }

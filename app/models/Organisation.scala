@@ -157,15 +157,4 @@ object Organisation {
       subjects: Seq[Subject]
   )
 
-  def deductedFromName(name: String): Option[Organisation] = {
-    val lowerCaseName = name.toLowerCase().stripSpecialChars
-    // Hack: `.reverse` the orgs so we can match first MSAP before MSA and
-    // Sous-Préf before Préf
-    all.reverse
-      .find { organisation =>
-        lowerCaseName.contains(organisation.shortName.toLowerCase().stripSpecialChars) ||
-        lowerCaseName.contains(organisation.name.toLowerCase().stripSpecialChars)
-      }
-  }
-
 }

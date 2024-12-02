@@ -125,22 +125,6 @@
     border: 1px solid #d3d3e5;
 }
 
-.fr-table {
-    border-collapse: collapse;
-}
-
-.fr-table tr {
-    border-bottom: 1px solid #333;
-}
-
-.fr-table tr td:first-of-type{
-    font-weight: bold;
-}
-
-.fr-table tbody tr, .fr-table thead {
-    background: #fff !important;
-}
-
 .aplus-half-col {
     flex: 50%;
 }

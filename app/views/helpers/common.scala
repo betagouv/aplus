@@ -133,6 +133,12 @@ object common {
                   ),
                   li(
                     a(
+                      href := HomeController.privacy.url,
+                      "Politique de confidentialité"
+                    )
+                  ),
+                  li(
+                    a(
                       href := HomeController.declarationAccessibilite.url,
                       "Accessibilité : non conforme"
                     )

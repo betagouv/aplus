@@ -264,11 +264,22 @@ object UserAndGroupCsvSerializer {
       }
     }
 
+    def organisationFromNameHeuristic(name: String): Option[Organisation] = {
+      val lowerCaseName = name.toLowerCase().stripSpecialChars
+      // Hack: `.reverse` the orgs so we can match first MSAP before MSA and
+      // Sous-Préf before Préf
+      Organisation.all.reverse
+        .find { organisation =>
+          lowerCaseName.contains(organisation.shortName.toLowerCase().stripSpecialChars) ||
+          lowerCaseName.contains(organisation.name.toLowerCase().stripSpecialChars)
+        }
+    }
+
     def matchOrganisationId: CSVMap = {
       val optionOrganisation = csvMap
         .get(GROUP_ORGANISATION.key)
         .orElse(csvMap.get(GROUP_NAME.key))
-        .flatMap(Organisation.deductedFromName)
+        .flatMap(organisationFromNameHeuristic)
       optionOrganisation match {
         case Some(organisation) =>
           csvMap + (GROUP_ORGANISATION.key -> organisation.id.id)
