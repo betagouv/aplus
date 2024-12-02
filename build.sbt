@@ -90,7 +90,7 @@ libraryDependencies ++= Seq(
   ws,
   "com.lihaoyi" %% "scalatags" % "0.13.1",
   "org.typelevel" %% "cats-core" % "2.12.0",
-  "org.typelevel" %% "cats-effect" % "3.5.6",
+  "org.typelevel" %% "cats-effect" % "3.5.7",
   "co.fs2" %% "fs2-core" % fs2Version,
   "co.fs2" %% "fs2-io" % fs2Version,
   "io.laserdisc" %% "fs2-aws-s3" % "6.1.3",
