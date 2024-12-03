@@ -60,7 +60,7 @@ scalacOptions ++= Seq(
   "-Wvalue-discard",
 )
 
-val anormVersion = "2.7.0" // TODO: on update, remove the warnings silencers
+val anormVersion = "2.8.1" // TODO: on update, remove the warnings silencers
 
 lazy val anormDependency = "org.playframework.anorm" %% "anorm" % anormVersion
 
