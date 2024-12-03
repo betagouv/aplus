@@ -1122,7 +1122,7 @@ case class ApplicationController @Inject() (
   private def usersWhoCanBeInvitedOn(application: Application, currentAreaId: UUID)(implicit
       request: RequestWithUserData[_]
   ): Future[List[User]] =
-    (if (request.currentUser.expert) {
+    (if (request.currentUser.expert || request.currentUser.admin) {
        val creator = userService.byId(application.creatorUserId, includeDisabled = true)
        val creatorGroups: Set[UUID] = creator.toList.flatMap(_.groupIds).toSet
        userGroupService.byArea(currentAreaId).map { groupsOfArea =>
