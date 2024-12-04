@@ -4,7 +4,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import helper.{Crypto, UUIDHelper}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import play.api.{ConfigLoader, Configuration}
 import scala.concurrent.duration._
 
 // Wraps `configuration: play.api.Configuration`.
@@ -150,5 +150,41 @@ class AppConfig @Inject() (configuration: Configuration) {
       .filterNot(_.isEmpty)
       .flatMap(UUIDHelper.fromString)
       .toSet
+
+  val featureProConnectEnabled: Boolean =
+    configuration.get[Boolean]("app.features.proConnectEnabled")
+
+  def proConnectConfig[A: ConfigLoader](key: String, defaultIfDisabled: => A): A =
+    configuration
+      .getOptional[A](key)
+      .getOrElse(
+        if (featureProConnectEnabled)
+          throw new Exception(s"Missing ProConnect configuration key $key")
+        else defaultIfDisabled
+      )
+
+  val proConnectIssuerUri: String =
+    proConnectConfig[String]("app.proConnect.issuerUri", "")
+
+  val proConnectMinimumDurationBetweenDiscoveryCalls: FiniteDuration =
+    proConnectConfig[Int](
+      "app.proConnect.minimumDurationBetweenDiscoveryCallsInSeconds",
+      10
+    ).seconds
+
+  val proConnectClientId: String =
+    proConnectConfig[String]("app.proConnect.clientId", "")
+
+  val proConnectClientSecret: String =
+    proConnectConfig[String]("app.proConnect.clientSecret", "")
+
+  val proConnectRedirectUri: String =
+    proConnectConfig[String]("app.proConnect.redirectUri", "")
+
+  val proConnectPostLogoutRedirectUri: String =
+    proConnectConfig[String]("app.proConnect.postLogoutRedirectUri", "")
+
+  val proConnectSigningAlgorithm: String =
+    proConnectConfig[String]("app.proConnect.signingAlgorithm", "")
 
 }
