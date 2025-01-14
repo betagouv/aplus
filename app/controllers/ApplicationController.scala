@@ -925,9 +925,8 @@ case class ApplicationController @Inject() (
       if (Authorization.isAdmin(rights))
         queryOrganisationIds
       else if (Authorization.isAreaManager(rights))
-        queryOrganisationIds.filter(id =>
-          user.managingOrganisationIds.contains[Organisation.Id](id)
-        )
+        queryOrganisationIds
+          .filter(id => user.managingOrganisationIds.contains[Organisation.Id](id))
       else
         queryOrganisationIds.filter(id => Authorization.canObserveOrganisation(id)(rights))
 

@@ -252,9 +252,9 @@ object UserAndGroupCsvSerializer {
     def includeAreasNameInGroupName(): CSVMap = {
       val optionalAreaNames: Option[List[String]] = csvMap
         .get(UserAndGroupCsvSerializer.GROUP_AREAS_IDS.key)
-        .map({ (ids: String) =>
+        .map((ids: String) =>
           ids.split(",").flatMap(UUIDHelper.fromString).flatMap(Area.fromId).toList.map(_.name)
-        })
+        )
       optionalAreaNames -> csvMap.get(UserAndGroupCsvSerializer.GROUP_NAME.key) match {
         case (Some(areaNames), Some(initialGroupName))
             if !initialGroupName.contains(s" ${areaNames.mkString("/")}") =>
@@ -291,9 +291,9 @@ object UserAndGroupCsvSerializer {
     def fromCsvFieldNameToHtmlFieldName: CSVMap =
       csvMap
         .get(UserAndGroupCsvSerializer.GROUP_AREAS_IDS.key)
-        .fold({
+        .fold(
           csvMap
-        })({ areasValue =>
+        ) { areasValue =>
           val newTuples: Array[(String, String)] = areasValue
             .split(",")
             .zipWithIndex
@@ -301,7 +301,7 @@ object UserAndGroupCsvSerializer {
               s"${GROUP_AREAS_IDS.key}[$index]" -> areaUuid
             }
           (csvMap - GROUP_AREAS_IDS.key) ++ newTuples
-        })
+        }
 
     def trimValues(): CSVMap = csvMap.view.mapValues(_.trim).toMap
 
