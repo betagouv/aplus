@@ -90,7 +90,7 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-effect" % "3.5.7",
   "co.fs2" %% "fs2-core" % fs2Version,
   "co.fs2" %% "fs2-io" % fs2Version,
-  "io.laserdisc" %% "fs2-aws-s3" % "6.1.3",
+  "io.laserdisc" %% "fs2-aws-s3" % "6.2.0",
   // Needs the C library to be installed
   "de.mkammerer" % "argon2-jvm-nolibs" % "2.11",
 )
