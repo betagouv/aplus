@@ -29,6 +29,7 @@ class DbMaintenanceService @Inject() (
       database.withTransaction { implicit connection =>
         val _ = SQL("""REFRESH MATERIALIZED VIEW application_metadata""").execute()
         val _ = SQL("""REFRESH MATERIALIZED VIEW application_seen_by_user""").execute()
+        val _ = SQL("""REFRESH MATERIALIZED VIEW user_event_metrics""").execute()
         val _ = SQL("""REFRESH MATERIALIZED VIEW user_group_is_in_area""").execute()
         val _ = SQL("""REFRESH MATERIALIZED VIEW user_group_is_invited_on_application""").execute()
         val _ = SQL("""REFRESH MATERIALIZED VIEW user_is_in_user_group""").execute()
