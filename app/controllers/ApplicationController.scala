@@ -141,12 +141,17 @@ case class ApplicationController @Inject() (
       )
     }
 
+  /** Groups with instructors available to the current user */
+
   private def fetchGroupsWithInstructors(
       areaId: UUID,
       currentUser: User,
-      rights: Authorization.UserRights
+      rights: Authorization.UserRights,
+      currentUserGroups: List[UserGroup]
   ): Future[(List[UserGroup], List[User], List[User])] = {
-    val groupsOfAreaFuture = userGroupService.byArea(areaId)
+    val hasFranceServicesAccess = currentUserGroups.exists(_.isInFranceServicesNetwork)
+    val groupsOfAreaFuture =
+      userGroupService.byArea(areaId, excludeFranceServicesNetwork = !hasFranceServicesAccess)
     groupsOfAreaFuture.map { groupsOfArea =>
       val visibleGroups = filterVisibleGroups(areaId, currentUser, rights)(groupsOfArea)
       val usersInThoseGroups = userService.byGroupIds(visibleGroups.map(_.id))
@@ -199,21 +204,25 @@ case class ApplicationController @Inject() (
         userGroupService
           .byIdsFuture(request.currentUser.groupIds)
           .flatMap(userGroups =>
-            fetchGroupsWithInstructors(currentArea.id, request.currentUser, request.rights).map {
-              case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
-                val categories = organisationService.categories
-                Ok(
-                  views.html.createApplication(request.currentUser, request.rights, currentArea)(
-                    userGroups,
-                    instructorsOfGroups,
-                    groupsOfAreaWithInstructor,
-                    coworkers,
-                    readSharedAccountUserSignature(request.session),
-                    canCreatePhoneMandat = currentArea === Area.calvados,
-                    categories,
-                    ApplicationFormData.form(request.currentUser)
-                  )
+            fetchGroupsWithInstructors(
+              currentArea.id,
+              request.currentUser,
+              request.rights,
+              userGroups
+            ).map { case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
+              val categories = organisationService.categories
+              Ok(
+                views.html.createApplication(request.currentUser, request.rights, currentArea)(
+                  userGroups,
+                  instructorsOfGroups,
+                  groupsOfAreaWithInstructor,
+                  coworkers,
+                  readSharedAccountUserSignature(request.session),
+                  canCreatePhoneMandat = currentArea === Area.calvados,
+                  categories,
+                  ApplicationFormData.form(request.currentUser)
                 )
+              )
             }
           )
       )
@@ -275,25 +284,29 @@ case class ApplicationController @Inject() (
         userGroupService
           .byIdsFuture(request.currentUser.groupIds)
           .flatMap(userGroups =>
-            fetchGroupsWithInstructors(currentArea.id, request.currentUser, request.rights).map {
-              case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
-                val message =
-                  "Erreur lors de l'envoi de fichiers. Cette erreur est possiblement temporaire."
-                BadRequest(
-                  views.html
-                    .createApplication(request.currentUser, request.rights, currentArea)(
-                      userGroups,
-                      instructorsOfGroups,
-                      groupsOfAreaWithInstructor,
-                      coworkers,
-                      None,
-                      canCreatePhoneMandat = currentArea === Area.calvados,
-                      organisationService.categories,
-                      form,
-                      Nil,
-                    )
-                )
-                  .flashing("application-error" -> message)
+            fetchGroupsWithInstructors(
+              currentArea.id,
+              request.currentUser,
+              request.rights,
+              userGroups
+            ).map { case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
+              val message =
+                "Erreur lors de l'envoi de fichiers. Cette erreur est possiblement temporaire."
+              BadRequest(
+                views.html
+                  .createApplication(request.currentUser, request.rights, currentArea)(
+                    userGroups,
+                    instructorsOfGroups,
+                    groupsOfAreaWithInstructor,
+                    coworkers,
+                    None,
+                    canCreatePhoneMandat = currentArea === Area.calvados,
+                    organisationService.categories,
+                    form,
+                    Nil,
+                  )
+              )
+                .flashing("application-error" -> message)
             }
           )
       } { files =>
@@ -303,7 +316,12 @@ case class ApplicationController @Inject() (
             userGroupService
               .byIdsFuture(request.currentUser.groupIds)
               .flatMap(userGroups =>
-                fetchGroupsWithInstructors(currentArea.id, request.currentUser, request.rights)
+                fetchGroupsWithInstructors(
+                  currentArea.id,
+                  request.currentUser,
+                  request.rights,
+                  userGroups
+                )
                   .map { case (groupsOfAreaWithInstructor, instructorsOfGroups, coworkers) =>
                     eventService.log(
                       EventType.ApplicationCreationInvalid,
@@ -358,6 +376,8 @@ case class ApplicationController @Inject() (
                         if infoName.trim.nonEmpty && infoValue.trim.nonEmpty =>
                       infoName.trim -> infoValue.trim
                   }
+
+                val isInFranceServicesNetwork = creatorGroup.exists(_.isInFranceServicesNetwork)
                 val application = Application(
                   applicationId,
                   Time.nowParis(),
@@ -380,7 +400,8 @@ case class ApplicationController @Inject() (
                   category = applicationData.category,
                   mandatType = Application.MandatType.Paper.some,
                   mandatDate = Some(applicationData.mandatDate),
-                  invitedGroupIdsAtCreation = applicationData.groups
+                  invitedGroupIdsAtCreation = applicationData.groups,
+                  isInFranceServicesNetwork = isInFranceServicesNetwork,
                 )
                 if (applicationService.createApplication(application)) {
                   notificationsService.newApplication(application)
@@ -1120,33 +1141,41 @@ case class ApplicationController @Inject() (
 
   private def usersWhoCanBeInvitedOn(application: Application, currentAreaId: UUID)(implicit
       request: RequestWithUserData[_]
-  ): Future[List[User]] =
-    (if (request.currentUser.expert || request.currentUser.admin) {
-       val creator = userService.byId(application.creatorUserId, includeDisabled = true)
-       val creatorGroups: Set[UUID] = creator.toList.flatMap(_.groupIds).toSet
-       userGroupService.byArea(currentAreaId).map { groupsOfArea =>
-         userService
-           .byGroupIds(groupsOfArea.map(_.id))
-           .filter(user => user.instructor || user.groupIds.toSet.intersect(creatorGroups).nonEmpty)
-       }
-     } else {
-       // 1. coworkers
-       val coworkers = Future(userService.byGroupIds(request.currentUser.groupIds))
-       // 2. coworkers of instructors that are already on the application
-       //    these will mostly be the ones that have been added as users after
-       //    the application has been sent.
-       val instructorsCoworkers = {
-         val invitedUsers: List[User] =
-           userService.byIds(application.invitedUsers.keys.toList, includeDisabled = true)
-         val groupsOfInvitedUsers: Set[UUID] = invitedUsers.flatMap(_.groupIds).toSet
-         userGroupService.byArea(application.area).map { groupsOfArea =>
-           val invitedGroups: Set[UUID] =
-             groupsOfInvitedUsers.intersect(groupsOfArea.map(_.id).toSet)
-           userService.byGroupIds(invitedGroups.toList).filter(_.instructor)
-         }
-       }
-       coworkers.combine(instructorsCoworkers)
-     })
+  ): Future[List[User]] = {
+    val excludeFranceServicesNetwork = !application.isInFranceServicesNetwork
+    if (request.currentUser.expert || request.currentUser.admin) {
+      val creator = userService.byId(application.creatorUserId, includeDisabled = true)
+      val creatorGroups: Set[UUID] = creator.toList.flatMap(_.groupIds).toSet
+      userGroupService
+        .byArea(currentAreaId, excludeFranceServicesNetwork = excludeFranceServicesNetwork)
+        .map { groupsOfArea =>
+          userService
+            .byGroupIds(groupsOfArea.map(_.id))
+            .filter(user =>
+              user.instructor || user.groupIds.toSet.intersect(creatorGroups).nonEmpty
+            )
+        }
+    } else {
+      // 1. coworkers
+      val coworkers = Future(userService.byGroupIds(request.currentUser.groupIds))
+      // 2. coworkers of instructors that are already on the application
+      //    these will mostly be the ones that have been added as users after
+      //    the application has been sent.
+      val instructorsCoworkers = {
+        val invitedUsers: List[User] =
+          userService.byIds(application.invitedUsers.keys.toList, includeDisabled = true)
+        val groupsOfInvitedUsers: Set[UUID] = invitedUsers.flatMap(_.groupIds).toSet
+        userGroupService
+          .byArea(application.area, excludeFranceServicesNetwork = excludeFranceServicesNetwork)
+          .map { groupsOfArea =>
+            val invitedGroups: Set[UUID] =
+              groupsOfInvitedUsers.intersect(groupsOfArea.map(_.id).toSet)
+            userService.byGroupIds(invitedGroups.toList).filter(_.instructor)
+          }
+      }
+      coworkers.combine(instructorsCoworkers)
+    }
+  }
     .map(
       _.filterNot(user =>
         user.id === request.currentUser.id || application.invitedUsers.contains(user.id)
@@ -1162,19 +1191,22 @@ case class ApplicationController @Inject() (
       userService.byIds(application.invitedUsers.keys.toList, includeDisabled = true)
     // Groups already present on the Application
     val groupsOfInvitedUsers: Set[UUID] = invitedUsers.flatMap(_.groupIds).toSet
-    userGroupService.byArea(forAreaId).map { groupsOfArea =>
-      val groupsThatAreNotInvited =
-        groupsOfArea.filterNot(group => groupsOfInvitedUsers.contains(group.id))
-      val groupIdsWithInstructors: Set[UUID] =
-        userService
-          .byGroupIds(groupsThatAreNotInvited.map(_.id))
-          .filter(_.instructor)
-          .flatMap(_.groupIds)
-          .toSet
-      val groupsThatAreNotInvitedWithInstructor =
-        groupsThatAreNotInvited.filter(user => groupIdsWithInstructors.contains(user.id))
-      groupsThatAreNotInvitedWithInstructor.sortBy(_.name)
-    }
+    val excludeFranceServicesNetwork = !application.isInFranceServicesNetwork
+    userGroupService
+      .byArea(forAreaId, excludeFranceServicesNetwork = excludeFranceServicesNetwork)
+      .map { groupsOfArea =>
+        val groupsThatAreNotInvited =
+          groupsOfArea.filterNot(group => groupsOfInvitedUsers.contains(group.id))
+        val groupIdsWithInstructors: Set[UUID] =
+          userService
+            .byGroupIds(groupsThatAreNotInvited.map(_.id))
+            .filter(_.instructor)
+            .flatMap(_.groupIds)
+            .toSet
+        val groupsThatAreNotInvitedWithInstructor =
+          groupsThatAreNotInvited.filter(user => groupIdsWithInstructors.contains(user.id))
+        groupsThatAreNotInvitedWithInstructor.sortBy(_.name)
+      }
   }
 
   def applicationInvitableGroups(applicationId: UUID, areaId: UUID): Action[AnyContent] =
@@ -1206,41 +1238,44 @@ case class ApplicationController @Inject() (
         application.answers.map(_.creatorUserID)
     usersWhoCanBeInvitedOn(application, selectedAreaId).flatMap { usersWhoCanBeInvited =>
       groupsWhichCanBeInvited(selectedAreaId, application).flatMap { invitableGroups =>
-        val filesF = EitherT(fileService.byApplicationId(application.id))
-        val organisationsF = EitherT(userService.usersOrganisations(applicationUsers))
-        (for {
-          files <- filesF
-          organisations <- organisationsF
-        } yield (files, organisations)).value
-          .map(
-            _.fold(
-              error => {
-                eventService.logError(error)
-                InternalServerError(Constants.genericError500Message)
-              },
-              { case (files, organisations) =>
-                val groups = userGroupService
-                  .byIds(usersWhoCanBeInvited.flatMap(_.groupIds))
-                  .filter(_.areaIds.contains[UUID](selectedAreaId))
-                val groupsWithUsersThatCanBeInvited = groups.map { group =>
-                  group -> usersWhoCanBeInvited.filter(_.groupIds.contains[UUID](group.id))
+        userGroupService.byIdsFuture(request.currentUser.groupIds).flatMap { userGroups =>
+          val filesF = EitherT(fileService.byApplicationId(application.id))
+          val organisationsF = EitherT(userService.usersOrganisations(applicationUsers))
+          (for {
+            files <- filesF
+            organisations <- organisationsF
+          } yield (files, organisations)).value
+            .map(
+              _.fold(
+                error => {
+                  eventService.logError(error)
+                  InternalServerError(Constants.genericError500Message)
+                },
+                { case (files, organisations) =>
+                  val groups = userGroupService
+                    .byIds(usersWhoCanBeInvited.flatMap(_.groupIds))
+                    .filter(_.areaIds.contains[UUID](selectedAreaId))
+                  val groupsWithUsersThatCanBeInvited = groups.map { group =>
+                    group -> usersWhoCanBeInvited.filter(_.groupIds.contains[UUID](group.id))
+                  }
+                  toResult(
+                    views.html.showApplication(request.currentUser, request.rights)(
+                      userGroups,
+                      groupsWithUsersThatCanBeInvited,
+                      invitableGroups,
+                      application,
+                      form,
+                      openedTab,
+                      selectedArea,
+                      readSharedAccountUserSignature(request.session),
+                      files,
+                      organisations
+                    )
+                  ).withHeaders(CACHE_CONTROL -> "no-store")
                 }
-                toResult(
-                  views.html.showApplication(request.currentUser, request.rights)(
-                    groupsWithUsersThatCanBeInvited,
-                    invitableGroups,
-                    application,
-                    form,
-                    openedTab,
-                    selectedArea,
-                    readSharedAccountUserSignature(request.session),
-                    files,
-                    organisations
-                  )
-                ).withHeaders(CACHE_CONTROL -> "no-store")
-              }
+              )
             )
-          )
+        }
       }
     }
   }

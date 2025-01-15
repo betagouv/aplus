@@ -184,6 +184,12 @@ if (window.document.getElementById(applicationsTableId)) {
       maxWidth: 300,
     },
     {
+      title: "Réseau",
+      field: "network",
+      headerFilter: "input",
+      maxWidth: 90,
+    },
+    {
       title: "Invités",
       field: "stats.numberOfInvitedUsers",
       hozAlign: "right",

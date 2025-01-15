@@ -262,6 +262,7 @@ object ApiModel {
         areas = group.areaIds.flatMap(Area.fromId).map(_.toString),
         organisation = group.organisation.map(_.shortName),
         email = group.email,
+        isInFranceServicesNetwork = group.isInFranceServicesNetwork,
         publicNote = group.publicNote
       )
 
@@ -275,6 +276,7 @@ object ApiModel {
       areas: List[String],
       organisation: Option[String],
       email: Option[String],
+      isInFranceServicesNetwork: Boolean,
       publicNote: Option[String],
   )
 
@@ -331,6 +333,7 @@ object ApiModel {
       closedDay: Option[String],
       status: String,
       currentUserCanSeeAnonymousApplication: Boolean,
+      network: String,
       groups: ApplicationMetadata.Groups,
       stats: ApplicationMetadata.Stats,
   )
@@ -394,7 +397,7 @@ object ApiModel {
       ApplicationMetadata(
         id = application.id,
         creationDateFormatted = Time.formatForAdmins(application.creationDate.toInstant),
-        creationDay = Time.formatPatternFr(application.creationDate, "YYY-MM-dd"),
+        creationDay = Time.formatPatternFr(application.creationDate, "yyyy-MM-dd"),
         creatorUserName = application.creatorUserName,
         creatorUserId = application.creatorUserId,
         areaName = areaName,
@@ -405,11 +408,12 @@ object ApiModel {
         closedDateFormatted =
           application.closedDate.map(date => Time.formatForAdmins(date.toInstant)),
         closedDay = application.closedDate.map(date =>
-          Time.formatPatternFr(application.creationDate, "YYY-MM-dd")
+          Time.formatPatternFr(application.creationDate, "yyyy-MM-dd")
         ),
         status = application.status.show,
         currentUserCanSeeAnonymousApplication =
           Authorization.canSeeApplication(application)(rights),
+        network = if (application.isInFranceServicesNetwork) "FS" else "Général",
         groups = ApplicationMetadata.Groups(
           creatorUserGroupsNames = creatorUserGroupsNames,
           creatorGroupName = creatorGroupName,

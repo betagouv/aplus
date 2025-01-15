@@ -96,13 +96,22 @@ object editMyGroups {
       id := s"group-${group.id}",
       div(
         div(
-          cls := "header",
-          if (Authorization.canEditGroup(group)(currentUserRights)) {
-            a(href := GroupController.editGroup(group.id).url, group.name)
-          } else {
-            group.name
-          },
-          span(cls := "text--font-size-medium single--margin-left-8px", group.description)
+          cls := "header single--display-flex",
+          div(cls := "single--flex-grow-1")(
+            if (Authorization.canEditGroup(group)(currentUserRights)) {
+              a(href := GroupController.editGroup(group.id).url, group.name)
+            } else {
+              group.name
+            },
+            span(cls := "text--font-size-medium single--margin-left-8px", group.description)
+          ),
+          div(cls := "single--margin-right-24px text--font-size-medium")(
+            if (group.isInFranceServicesNetwork) {
+              "Réseau France Services"
+            } else {
+              ""
+            }
+          )
         )
       ),
       table(
