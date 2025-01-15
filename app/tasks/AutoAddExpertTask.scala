@@ -47,8 +47,7 @@ class AutoAddExpertTask @Inject() (
             .lastOption match {
             case None => // No answer for someone else the creator
               val _ = inviteExpert(application, dayWithoutAgentAnswer)
-            case Some(answer)
-                if answer.ageInDays > daySinceLastAgentAnswer => // The last answer is older than X days
+            case Some(answer) if answer.ageInDays > daySinceLastAgentAnswer => // The last answer is older than X days
               val _ = inviteExpert(application, daySinceLastAgentAnswer)
             case _ =>
           }
