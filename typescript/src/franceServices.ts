@@ -278,9 +278,9 @@ if (window.document.getElementById(tableId)) {
       let newMatricules: NewMatricule[] = [];
       if (data) {
         newMatricules = data.map((line) => {
-          let groupId = line.groupId.toString();
-          if (groupId.length === 0) {
-            groupId = null;
+          let groupId: string | null = null;
+          if (line.groupId) {
+            groupId = line.groupId.toString();
           }
           let update: NewMatricule = {
             matricule: parseInt(line.matricule),
