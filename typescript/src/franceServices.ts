@@ -610,7 +610,7 @@ if (window.document.getElementById(tableId)) {
   };
 
   const addTableAreaCodeCol: ColumnDefinition = {
-    title: 'Code INSEE',
+    title: 'Code Département',
     field: 'areaCode',
     headerFilter: 'input',
     editor: 'input',
