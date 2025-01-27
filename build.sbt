@@ -86,7 +86,7 @@ libraryDependencies ++= Seq(
   "com.github.tototoshi" %% "scala-csv" % "2.0.0",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.13.1",
-  "org.typelevel" %% "cats-core" % "2.12.0",
+  "org.typelevel" %% "cats-core" % "2.13.0",
   "org.typelevel" %% "cats-effect" % "3.5.7",
   "co.fs2" %% "fs2-core" % fs2Version,
   "co.fs2" %% "fs2-io" % fs2Version,
