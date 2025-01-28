@@ -99,6 +99,21 @@ object addGroup {
               )
           )
         ),
+        div(
+          cls := "single--width-max-content single--margin-top-16px single--margin-bottom-16px",
+          label(
+            cls := "mdl-checkbox mdl-js-checkbox",
+            input(
+              `type` := "checkbox",
+              id := "isInFranceServicesNetwork",
+              name := "isInFranceServicesNetwork",
+              value := "true",
+              checked := "checked",
+              cls := "mdl-checkbox__input"
+            ),
+            span(cls := "mdl-checkbox__label", "Ce groupe est restreint au réseau France Services"),
+          )
+        ),
         button(
           cls := "mdl-button mdl-js-button mdl-button--raised",
           `type` := "submit",

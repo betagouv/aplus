@@ -49,6 +49,7 @@ class ApplicationService @Inject() (
       "mandat_type",
       "mandat_date",
       "invited_group_ids",
+      "is_in_france_services_network",
       "personal_data_wiped",
     )
 
@@ -358,7 +359,8 @@ class ApplicationService @Inject() (
             category,
             mandat_type,
             mandat_date,
-            invited_group_ids
+            invited_group_ids,
+            is_in_france_services_network
           ) VALUES (
             ${row.id}::uuid,
             ${row.creationDate},
@@ -375,7 +377,8 @@ class ApplicationService @Inject() (
             ${row.category},
             ${row.mandatType},
             ${row.mandatDate},
-            array[${row.invitedGroupIds}]::uuid[]
+            array[${row.invitedGroupIds}]::uuid[],
+            ${row.isInFranceServicesNetwork}
           )
       """.executeUpdate() === 1
     }

@@ -118,7 +118,7 @@ class NotificationService @Inject() (
       // Send emails to groups
       allGroups
         .collect {
-          case group @ UserGroup(id, _, _, _, _, _, _, Some(email), _, _)
+          case group @ UserGroup(id, _, _, _, _, _, _, Some(email), _, _, _)
               if !usersEmails.contains(email) =>
             if (alreadyPresentGroupIds.contains(id))
               generateNotificationBALEmail(application, answer.some, users)(group)

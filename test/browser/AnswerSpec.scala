@@ -23,6 +23,7 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       inseeCode = List("0"),
       creationDate = Time.nowParis(),
       areaIds = area :: Nil,
+      isInFranceServicesNetwork = true,
       publicNote = None,
       internalSupportComment = None
     )
@@ -101,7 +102,8 @@ class AnswerSpec extends Specification with Tables with BaseSpec {
       expertInvited = true,
       mandatType = Some(Application.MandatType.Paper),
       mandatDate = Some(java.time.ZonedDateTime.now().toString),
-      invitedGroupIdsAtCreation = List(group.id)
+      invitedGroupIdsAtCreation = List(group.id),
+      isInFranceServicesNetwork = group.isInFranceServicesNetwork,
     )
     val result = applicationService.createApplication(application)
     result must beTrue

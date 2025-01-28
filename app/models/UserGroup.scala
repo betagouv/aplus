@@ -20,6 +20,7 @@ case class UserGroup(
     areaIds: List[UUID],
     organisationId: Option[Organisation.Id] = None,
     email: Option[String] = None,
+    isInFranceServicesNetwork: Boolean,
     // This is a note displayed to users trying to select this group
     publicNote: Option[String],
     // This is a comment only visible by the admins

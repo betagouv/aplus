@@ -140,6 +140,7 @@ case class ApiController @Inject() (
                         .toList,
                       organisationId = Organisation.franceServicesId.some,
                       email = newLine.email.map(StringHelper.commonStringInputNormalization),
+                      isInFranceServicesNetwork = true,
                       publicNote = none,
                       internalSupportComment = newLine.internalSupportComment
                         .map(StringHelper.commonStringInputNormalization),

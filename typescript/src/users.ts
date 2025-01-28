@@ -54,6 +54,7 @@ interface UserGroupInfos {
   areas: Array<string>;
   organisation: string | null,
   email: string | null;
+  isInFranceServicesNetwork: boolean;
   publicNote: string | null;
 }
 
@@ -355,6 +356,16 @@ if (window.document.getElementById(usersTableId)) {
       field: "areas",
       headerFilter: "input",
       width: 200,
+    },
+    {
+      title: "FS",
+      field: "isInFranceServicesNetwork",
+      formatter: "tickCross",
+      headerFilter: "tickCross",
+      headerFilterParams: { tristate: true },
+      headerVertical: verticalHeader,
+      bottomCalc: "count",
+      width: 40,
     },
     {
       title: "Description",

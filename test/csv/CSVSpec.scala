@@ -72,6 +72,7 @@ class CSVSpec extends Specification {
         areaIds = List(Area.fromId(UUIDHelper.namedFrom("ardennes"))).flatten.map(_.id),
         organisationId = None,
         email = Some("sip.laon@dgfip.finances.gouv.fr"),
+        isInFranceServicesNetwork = true,
         publicNote = None,
         internalSupportComment = None
       )
