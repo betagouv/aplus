@@ -1,5 +1,6 @@
 {
   "name": "aplus",
+  "stack": "scalingo-20",
   "env": {
     "STAGING_DATABASE_URL": {
       "required": true
@@ -47,14 +48,8 @@
     }
   },
   "addons": [
-    "heroku-postgresql"
-  ],
-  "buildpacks": [
     {
-      "url": "heroku/nodejs"
-    },
-    {
-      "url": "heroku/scala"
+      "plan": "postgresql:postgresql-sandbox"
     }
   ]
 }
