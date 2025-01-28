@@ -44,7 +44,8 @@
   },
   "formation": {
     "web": {
-      "quantity": 1
+      "amount": 1,
+      "size": "S"
     }
   },
   "addons": [
