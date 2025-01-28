@@ -101,7 +101,7 @@ object Organisation {
   val msap: Organisation = Organisation("MSAP", "Maison de services au public")
   val hopital: Organisation = Organisation("Hôpital", "Hôpital")
   val poleEmploiId: Id = Organisation.Id("Pôle emploi")
-  val poleEmploi: Organisation = Organisation(poleEmploiId, "Pôle emploi", "Pôle emploi")
+  val poleEmploi: Organisation = Organisation(poleEmploiId, "France Travail", "France Travail")
   val prefId: Id = Organisation.Id("Préf")
   val pref: Organisation = Organisation(prefId, "Préf", "Préfecture")
   val sousPrefId: Id = Organisation.Id("Sous-Préf")
