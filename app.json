@@ -2,7 +2,7 @@
   "name": "aplus",
   "stack": "scalingo-20",
   "env": {
-    "APP_DOMAIN": {
+    "APP_HOST": {
       "generator": "template",
       "template": "%APP%.osc-fr1.scalingo.io"
     },
