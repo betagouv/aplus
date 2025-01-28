@@ -1,60 +1,24 @@
 {
   "name": "aplus",
+  "stack": "scalingo-20",
   "env": {
-    "STAGING_DATABASE_URL": {
-      "required": true
-    },
-    "APP_DOMAIN": {
-      "required": true
-    },
-    "APP_HTTPS": {
-      "required": true
+    "APP_HOST": {
+      "generator": "template",
+      "template": "%APP%.osc-fr1.scalingo.io"
     },
     "APPLICATION_SECRET": {
-      "required": true
-    },
-    "EVOLUTIONS_AUTOAPPLY": {
-      "required": true
-    },
-    "MAIL_HOST": {
-      "required": true
-    },
-    "MAIL_PASSWORD": {
-      "required": true
-    },
-    "MAIL_PORT": {
-      "required": true
-    },
-    "MAIL_USER": {
-      "required": true
-    },
-    "SENTRY_DSN": {
-      "required": true
-    },
-    "AREAS_WITH_LOGIN_BY_KEY": {
-      "required": true
-    },
-    "AREAS_WITH_ATTACHEMENTS": {
-      "required": true
-    },
-    "FILES_PATH": {
-      "required": true
+      "generator": "secret"
     }
   },
   "formation": {
     "web": {
-      "quantity": 1
+      "amount": 1,
+      "size": "S"
     }
   },
   "addons": [
-    "heroku-postgresql"
-  ],
-  "buildpacks": [
     {
-      "url": "heroku/nodejs"
-    },
-    {
-      "url": "heroku/scala"
+      "plan": "postgresql:postgresql-sandbox"
     }
   ]
 }
