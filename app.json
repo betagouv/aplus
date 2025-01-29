@@ -8,6 +8,9 @@
     },
     "APPLICATION_SECRET": {
       "generator": "secret"
+    },
+    "IS_REVIEW_APP": {
+      "value": "true"
     }
   },
   "formation": {
