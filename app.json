@@ -1,7 +1,6 @@
 {
   "name": "aplus",
   "stack": "scalingo-20",
-  "copy_parent_database_urls": true,
   "env": {
     "APP_HOST": {
       "generator": "template",
@@ -12,9 +11,6 @@
     },
     "IS_REVIEW_APP": {
       "value": "true"
-    },
-    "APPLICATION_URL": {
-      "generator": "url"
     }
   },
   "formation": {
