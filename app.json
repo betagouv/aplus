@@ -23,5 +23,8 @@
     {
       "plan": "postgresql:postgresql-sandbox"
     }
-  ]
+  ],
+  "scripts": {
+    "first-deploy": "bash scripts/copy-scalingo-review-app-db.sh"
+  }
 }
