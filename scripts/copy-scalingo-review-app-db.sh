@@ -3,7 +3,7 @@
 echo "Running Scalingo review app DB copy script"
 
 if [ "$IS_REVIEW_APP" = "true" ]; then
-  dbclient-fetcher pgsql
+  dbclient-fetcher pgsql 15
 
   echo "Copying review app db"
 
