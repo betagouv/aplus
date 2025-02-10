@@ -549,7 +549,10 @@ object application {
         readonly := true,
         value := selectedArea.id.toString
       ),
-      if (currentUser.admin || userGroups.exists(group => group.isInFranceServicesNetwork)) {
+      if (
+        currentUser.admin || Authorization
+          .hasAccessToFranceServicesNetwork(userGroups)(currentUserRights)
+      ) {
         div(
           "Territoire concerné : ",
           views.helpers

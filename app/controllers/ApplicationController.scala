@@ -149,7 +149,8 @@ case class ApplicationController @Inject() (
       rights: Authorization.UserRights,
       currentUserGroups: List[UserGroup]
   ): Future[(List[UserGroup], List[User], List[User])] = {
-    val hasFranceServicesAccess = currentUserGroups.exists(_.isInFranceServicesNetwork)
+    val hasFranceServicesAccess =
+      Authorization.hasAccessToFranceServicesNetwork(currentUserGroups)(rights)
     val groupsOfAreaFuture =
       userGroupService.byArea(areaId, excludeFranceServicesNetwork = !hasFranceServicesAccess)
     groupsOfAreaFuture.map { groupsOfArea =>
@@ -377,7 +378,8 @@ case class ApplicationController @Inject() (
                       infoName.trim -> infoValue.trim
                   }
 
-                val isInFranceServicesNetwork = creatorGroup.exists(_.isInFranceServicesNetwork)
+                val isInFranceServicesNetwork = Authorization
+                  .hasAccessToFranceServicesNetwork(creatorGroup.toList)(request.rights)
                 val application = Application(
                   applicationId,
                   Time.nowParis(),

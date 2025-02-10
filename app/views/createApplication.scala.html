@@ -32,7 +32,7 @@
                 Les champs marqués d’un <span class="mdl-color-text--red-500">*</span> sont obligatoires
             </div>
 
-            @if(userGroups.exists(group => group.isInFranceServicesNetwork)) {
+            @if(Authorization.hasAccessToFranceServicesNetwork(userGroups)(currentUserRights)) {
             @if(mainInfos.config.featureCanSendApplicationsAnywhere) {
               <h5 class="title--addline">Territoire concerné</h5>
               <div>
