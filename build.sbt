@@ -86,7 +86,7 @@ libraryDependencies ++= Seq(
   "com.github.tototoshi" %% "scala-csv" % "2.0.0",
   ws,
   "com.lihaoyi" %% "scalatags" % "0.13.1",
-  "org.typelevel" %% "cats-core" % "2.12.0",
+  "org.typelevel" %% "cats-core" % "2.13.0",
   "org.typelevel" %% "cats-effect" % "3.5.7",
   "co.fs2" %% "fs2-core" % fs2Version,
   "co.fs2" %% "fs2-io" % fs2Version,
@@ -107,7 +107,7 @@ libraryDependencies ++= Seq(
 )
 
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "7.20.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "7.20.1"
 
 // Sync with Play and scala-steward pin
 // https://github.com/playframework/playframework/blob/4c2d76095c2f6a5cab7be3e8f6017c4a4dd2a99f/project/Dependencies.scala#L20

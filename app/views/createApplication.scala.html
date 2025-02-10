@@ -154,16 +154,15 @@
 
                     @helper.input(applicationForm("mandatDate"),
                                   "class" -> " single--padding-top-8px") { (id, name, value, args) =>
+                    @defining(if(value.isEmpty) { java.time.ZonedDateTime.now().format(_root_.helper.Time.dateWithHourFormatter) } else { value }) { nonEmptyValue =>
                     <input class="mdl-textfield__input"
                            type="text"
                            name="@name"
                            id="@id"
-                           value="@value"
+                           value="@nonEmptyValue"
                            @toHtmlArgs(args)>
 
-                    <span class="mdl-color-text--grey-600 single--font-size-14px">
-                      ex. : @{java.time.ZonedDateTime.now().format(_root_.helper.Time.dateWithHourFormatter)}
-                    </span>
+                    }
                     }
 
                         </div>
