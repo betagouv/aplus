@@ -25,6 +25,6 @@
     }
   ],
   "scripts": {
-    "first-deploy": "bash scripts/copy-scalingo-review-app-db.sh"
+    "postdeploy": "bash scripts/copy-scalingo-review-app-db.sh"
   }
 }
