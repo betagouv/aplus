@@ -420,7 +420,10 @@ object Authorization {
         not(isExpert(rights)) &&
         (
           (isInstructor(rights) && isInvitedOn(application)(rights)) ||
-            (isHelper(rights) && isApplicationCreator(application)(rights))
+            (isHelper(rights) && (
+              isApplicationCreator(application)(rights) ||
+                isInApplicationCreatorGroup(application)(rights)
+            ))
         )
 
   def fileCanBeShown(filesExpirationInDays: Int)(
