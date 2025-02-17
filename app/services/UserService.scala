@@ -881,4 +881,27 @@ class UserService @Inject() (
         )
     )
 
+  def revokeActiveUserSessions(userId: UUID): IO[Either[Error, Int]] =
+    IO.blocking {
+      db.withConnection { implicit connection =>
+        SQL"""
+          UPDATE user_session
+          SET revoked_at = now()
+          WHERE user_id = ${userId}::uuid
+          AND expires_at > now()
+          AND revoked_at is NULL
+        """.executeUpdate()
+      }
+    }.attempt
+      .map(
+        _.left.map[Error](error =>
+          Error.SqlException(
+            EventType.UserSessionError,
+            s"Impossible de revoquer les sessions actives de l'utilisateur $userId",
+            error,
+            none
+          )
+        )
+      )
+
 }
