@@ -712,7 +712,8 @@ case class ApplicationController @Inject() (
       val applicationsByStatus =
         openFilteredByGroups.groupBy(application => application.longStatus(user))
       val newApplications: List[Application] =
-        applicationsByStatus.get(Application.Status.New).getOrElse(Nil)
+        applicationsByStatus.get(Application.Status.New).getOrElse(Nil) :::
+          applicationsByStatus.get(Application.Status.Sent).getOrElse(Nil)
       val newApplicationsCount = newApplications.length
       val processingApplications: List[Application] =
         applicationsByStatus.get(Application.Status.Processing).getOrElse(Nil)

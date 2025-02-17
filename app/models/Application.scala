@@ -98,29 +98,26 @@ case class Application(
     isCreator(userId) || seenByUserIds.contains[UUID](userId)
 
   def longStatus(user: User): Application.Status = {
-    def answeredByOtherThan = answers.exists(_.creatorUserID =!= user.id)
-    lazy val seenByInvitedUser = seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty
+    def answeredByOtherThan = userAnswers.exists(_.creatorUserID =!= user.id)
 
     closed match {
-      case true                                             => Archived
-      case false if isProcessed && isCreator(user.id)       => ToArchive
-      case false if isProcessed                             => Processed
-      case false if answeredByOtherThan | seenByInvitedUser => Processing
-      case false if isCreator(user.id)                      => Sent
-      case false                                            => New
+      case true                                       => Archived
+      case false if isProcessed && isCreator(user.id) => ToArchive
+      case false if isProcessed                       => Processed
+      case false if answeredByOtherThan               => Processing
+      case false if isCreator(user.id)                => Sent
+      case false                                      => New
     }
   }
 
   def status: Application.Status = {
-    lazy val answeredByCreator = answers.exists(_.creatorUserID === creatorUserId)
-    lazy val viewedByAtLeastOneInvitedUser =
-      seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty
+    lazy val answeredByNonCreator = userAnswers.exists(_.creatorUserID =!= creatorUserId)
 
     closed match {
-      case true                                                       => Archived
-      case false if isProcessed                                       => Processed
-      case false if answeredByCreator | viewedByAtLeastOneInvitedUser => Processing
-      case _                                                          => New
+      case true                          => Archived
+      case false if isProcessed          => Processed
+      case false if answeredByNonCreator => Processing
+      case _                             => New
     }
   }
 
