@@ -135,6 +135,7 @@ case class CSVImportController @Inject() (
           areaIds = group.group.areaIds,
           organisationId = group.group.organisationId,
           email = group.group.email,
+          isInFranceServicesNetwork = true,
           publicNote = None,
           internalSupportComment = None
         ),
@@ -196,6 +197,7 @@ case class CSVImportController @Inject() (
         _.exists(Organisation.isValidId)
       ),
       "email" -> optional(email),
+      "isInFranceServicesNetwork" -> ignored(true),
       "publicNote" -> ignored(Option.empty[String]),
       "internalSupportComment" -> ignored(Option.empty[String])
     )(UserGroup.apply)(toTupleOpt)

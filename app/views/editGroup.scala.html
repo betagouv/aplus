@@ -90,6 +90,13 @@
             </div>
 
 
+            <div class="mdl-cell mdl-cell--12-col single--margin-top-16px">
+                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="isInFranceServicesNetwork">
+                    <input type="checkbox" id="isInFranceServicesNetwork" name="isInFranceServicesNetwork" value="true" @if(userGroup.isInFranceServicesNetwork) { checked } @if(!currentUser.admin) { disabled } class="mdl-checkbox__input">
+                    <span class="mdl-checkbox__label">Ce groupe est restreint au réseau France Services</span>
+                </label>
+            </div>
+
             @if(Authorization.canEditSupportMessages(currentUserRights)) {
 
               <div class="mdl-cell mdl-cell--12-col  mdl-textfield mdl-js-textfield mdl-textfield--floating-label">

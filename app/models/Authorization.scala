@@ -208,6 +208,9 @@ object Authorization {
   def canSeeStats: Check =
     atLeastOneIsAuthorized(isAdmin, isAreaManager, isManager, isObserver)
 
+  def hasAccessToFranceServicesNetwork(userGroups: List[UserGroup]): Check =
+    _ => userGroups.isEmpty || userGroups.exists(_.isInFranceServicesNetwork)
+
   //
   // Authorizations concerning User/UserGroup
   //

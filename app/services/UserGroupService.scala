@@ -31,6 +31,7 @@ class UserGroupService @Inject() (
     "area_ids",
     "organisation",
     "email",
+    "is_in_france_services_network",
     "public_note",
     "internal_support_comment"
   )
@@ -46,17 +47,30 @@ class UserGroupService @Inject() (
         groups.foldRight(true) { (group, success) =>
           success &&
           SQL"""
-      INSERT INTO user_group(id, name, description, insee_code, creation_date, create_by_user_id, area_ids, organisation, email) VALUES (
-         ${group.id}::uuid,
-         ${group.name},
-         ${group.description},
-         array[${group.inseeCode}]::character varying(5)[],
-         ${group.creationDate},
-         ${UUIDHelper.namedFrom("deprecated")}::uuid,
-         array[${group.areaIds}]::uuid[],
-         ${group.organisationId.map(_.id)},
-         ${group.email})
-      """.executeUpdate() === 1
+            INSERT INTO user_group(
+              id,
+              name,
+              description,
+              insee_code,
+              creation_date,
+              create_by_user_id,
+              area_ids,
+              organisation,
+              email,
+              is_in_france_services_network
+            ) VALUES (
+              ${group.id}::uuid,
+              ${group.name},
+              ${group.description},
+              array[${group.inseeCode}]::character varying(5)[],
+              ${group.creationDate},
+              ${UUIDHelper.namedFrom("deprecated")}::uuid,
+              array[${group.areaIds}]::uuid[],
+              ${group.organisationId.map(_.id)},
+              ${group.email},
+              ${group.isInFranceServicesNetwork}
+            )
+          """.executeUpdate() === 1
         }
       }
       if (result)
@@ -89,7 +103,8 @@ class UserGroupService @Inject() (
                   create_by_user_id,
                   area_ids,
                   organisation,
-                  email
+                  email,
+                  is_in_france_services_network
                 ) VALUES (
                   ${group.id}::uuid,
                   ${group.name},
@@ -99,8 +114,9 @@ class UserGroupService @Inject() (
                   ${UUIDHelper.namedFrom("deprecated")}::uuid,
                   array[${group.areaIds}]::uuid[],
                   ${group.organisationId.map(_.id)},
-                  ${group.email})
-             """.executeUpdate()
+                  ${group.email},
+                  ${group.isInFranceServicesNetwork}
+                )""".executeUpdate()
           ().asRight
         }
       ).toEither.left.map {
@@ -133,6 +149,7 @@ class UserGroupService @Inject() (
           organisation = ${group.organisationId.map(_.id)},
           area_ids = array[${group.areaIds}]::uuid[],
           email = ${group.email},
+          is_in_france_services_network = ${group.isInFranceServicesNetwork},
           public_note = ${group.publicNote},
           internal_support_comment = ${group.internalSupportComment}
           WHERE id = ${group.id}::uuid
@@ -195,14 +212,23 @@ class UserGroupService @Inject() (
       cardinality === 0
     }
 
-  def byArea(areaId: UUID): Future[List[UserGroup]] =
+  def byArea(areaId: UUID, excludeFranceServicesNetwork: Boolean = false): Future[List[UserGroup]] =
     Future {
       db.withConnection { implicit connection =>
-        SQL(s"""SELECT $fieldsInSelect
-                FROM "user_group"
-                WHERE area_ids @> ARRAY[{areaId}]::uuid[]""")
-          .on("areaId" -> areaId)
-          .as(simpleUserGroup.*)
+        if (excludeFranceServicesNetwork) {
+          SQL(s"""SELECT $fieldsInSelect
+                  FROM "user_group"
+                  WHERE area_ids @> ARRAY[{areaId}]::uuid[]
+                  AND is_in_france_services_network = false""")
+            .on("areaId" -> areaId)
+            .as(simpleUserGroup.*)
+        } else {
+          SQL(s"""SELECT $fieldsInSelect
+                  FROM "user_group"
+                  WHERE area_ids @> ARRAY[{areaId}]::uuid[]""")
+            .on("areaId" -> areaId)
+            .as(simpleUserGroup.*)
+        }
       }
     }
 
