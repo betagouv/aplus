@@ -10,6 +10,7 @@ import javax.inject.{Inject, Singleton}
 import models._
 import org.apache.pekko.stream.{ActorAttributes, Materializer, Supervision}
 import org.apache.pekko.stream.scaladsl.{Sink, Source}
+import play.api.Configuration
 import play.api.libs.concurrent.MaterializerProvider
 import play.api.libs.mailer.Email
 import play.api.mvc.Request
@@ -20,13 +21,16 @@ import views.emails.{common, WeeklyEmailInfos}
 @Singleton
 class NotificationService @Inject() (
     applicationService: ApplicationService,
-    configuration: play.api.Configuration,
+    configuration: Configuration,
+    dependencies: ServicesDependencies,
     emailsService: EmailsService,
     eventService: EventService,
     groupService: UserGroupService,
     materializerProvider: MaterializerProvider,
     userService: UserService
 )(implicit executionContext: ExecutionContext) {
+
+  import dependencies.ioRuntime
 
   implicit val materializer: Materializer = materializerProvider.get
 
@@ -72,11 +76,15 @@ class NotificationService @Inject() (
 
     users
       .map(generateInvitationEmail(application))
-      .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+      .foreach(email =>
+        emailsService.sendNonBlocking(email, EmailPriority.Normal).unsafeRunAndForget()
+      )
 
     groups
       .map(generateNotificationBALEmail(application, None, users))
-      .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+      .foreach(email =>
+        emailsService.sendNonBlocking(email, EmailPriority.Normal).unsafeRunAndForget()
+      )
   }
 
   // Note: application does not contain answer at this point
@@ -111,7 +119,9 @@ class NotificationService @Inject() (
             Some(generateAnswerEmail(application, answer)(user))
           }
         }
-        .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+        .foreach(email =>
+          emailsService.sendNonBlocking(email, EmailPriority.Normal).unsafeRunAndForget()
+        )
 
       val usersEmails: Set[String] = users.map(_.email).toSet
 
@@ -125,22 +135,27 @@ class NotificationService @Inject() (
             else
               generateNotificationBALEmail(application, Option.empty[Answer], users)(group)
         }
-        .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+        .foreach(email =>
+          emailsService.sendNonBlocking(email, EmailPriority.Normal).unsafeRunAndForget()
+        )
 
       if (answer.visibleByHelpers && answer.creatorUserID =!= application.creatorUserId) {
         userService
           .byId(application.creatorUserId)
           .map(generateAnswerEmail(application, answer))
-          .foreach(email => emailsService.sendBlocking(email, EmailPriority.Normal))
+          .foreach(email =>
+            emailsService.sendNonBlocking(email, EmailPriority.Normal).unsafeRunAndForget()
+          )
       }
     }
   }
 
   def newUser(newUser: User): Option[String] =
-    emailsService.sendBlocking(
-      generateWelcomeEmail(newUser.name.some, newUser.email),
-      EmailPriority.Normal
-    )
+    emailsService
+      .sendBlocking(
+        generateWelcomeEmail(newUser.name.some, newUser.email),
+        EmailPriority.Normal
+      )
 
   def newSignup(signup: SignupRequest)(implicit request: Request[_]): Option[String] =
     Try(emailsService.sendBlocking(generateWelcomeEmail(none, signup.email), EmailPriority.Normal))
@@ -285,7 +300,7 @@ class NotificationService @Inject() (
           to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
           bodyHtml = Some(common.renderEmail(common.fileQuarantinedBody(absoluteUrl)))
         )
-        val _ = emailsService.sendBlocking(email, EmailPriority.Normal)
+        val _ = emailsService.sendNonBlocking(email, EmailPriority.Normal).unsafeRunAndForget()
       case FileMetadata.Status.Error =>
         val email = Email(
           subject = common.fileErrorSubject,
@@ -294,7 +309,7 @@ class NotificationService @Inject() (
           to = List(s"${quoteEmailPhrase(user.name)} <${user.email}>"),
           bodyHtml = Some(common.renderEmail(common.fileErrorBody(absoluteUrl)))
         )
-        val _ = emailsService.sendBlocking(email, EmailPriority.Normal)
+        val _ = emailsService.sendNonBlocking(email, EmailPriority.Normal).unsafeRunAndForget()
       case _ =>
     }
   }
@@ -411,7 +426,7 @@ class NotificationService @Inject() (
       to = List(s"${quoteEmailPhrase(infos.user.name)} <${infos.user.email}>"),
       bodyHtml = Some(common.renderEmail(bodyInner))
     )
-    emailsService.sendNonBlocking(email, EmailPriority.Normal)
+    emailsService.sendNonBlocking(email, EmailPriority.Normal).unsafeToFuture()
   }
 
   private def fetchWeeklyEmailInfos(user: User): Future[WeeklyEmailInfos] =
