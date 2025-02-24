@@ -1,7 +1,6 @@
 const deleteElementClass = "onclick-delete-element";
 const checkAllClass = "onclick-check-all";
 const uncheckAllClass = "onclick-uncheck-all";
-const disableOnSubmitClass = "onsubmit-disable";
 const changeLocationClass = "onclick-change-location";
 const printButtonClass = "onclick-print";
 
@@ -43,9 +42,11 @@ document.querySelectorAll<HTMLElement>("." + uncheckAllClass).forEach((button) =
   }
 });
 
-document.querySelectorAll<HTMLButtonElement>("." + disableOnSubmitClass).forEach((button) => {
-  button.addEventListener("submit", () => {
-    button.disabled = true;
+document.querySelectorAll<HTMLFormElement>("form").forEach((form) => {
+  form.querySelectorAll<HTMLInputElement>(".js-on-submit-disabled").forEach((button) => {
+    form.addEventListener("submit", () => {
+      button.disabled = true;
+    });
   });
 });
 
