@@ -97,29 +97,25 @@ case class Application(
   def hasBeenDisplayedFor(userId: UUID): Boolean =
     isCreator(userId) || seenByUserIds.contains[UUID](userId)
 
-  def longStatus(user: User): Application.Status = {
-    def answeredByOtherThan = userAnswers.exists(_.creatorUserID =!= user.id)
+  lazy val answeredByNonCreator = userAnswers.exists(_.creatorUserID =!= creatorUserId)
 
+  def longStatus(user: User): Application.Status =
     closed match {
       case true                                       => Archived
       case false if isProcessed && isCreator(user.id) => ToArchive
       case false if isProcessed                       => Processed
-      case false if answeredByOtherThan               => Processing
+      case false if answeredByNonCreator              => Processing
       case false if isCreator(user.id)                => Sent
       case false                                      => New
     }
-  }
 
-  def status: Application.Status = {
-    lazy val answeredByNonCreator = userAnswers.exists(_.creatorUserID =!= creatorUserId)
-
+  def status: Application.Status =
     closed match {
       case true                          => Archived
       case false if isProcessed          => Processed
       case false if answeredByNonCreator => Processing
       case _                             => New
     }
-  }
 
   def invitedUsers(users: List[User]): List[User] =
     invitedUsers.keys.flatMap(userId => users.find(_.id === userId)).toList
