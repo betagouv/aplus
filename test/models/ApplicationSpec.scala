@@ -214,8 +214,10 @@ class ApplicationSpec extends Specification {
       application.status must equalTo(Processing)
     }
 
-    "'nouvelle' if there is no answer with the same creator as the application" >> {
+    "'nouvelle' if there is no answer from someone who is not the creator" >> {
       val closed = false
+
+      val creatorUserId = UUID.randomUUID()
 
       val answers = List(
         Answer(
@@ -224,7 +226,7 @@ class ApplicationSpec extends Specification {
           ZonedDateTime.now(),
           AnswerType.Custom,
           "message",
-          UUID.randomUUID(),
+          creatorUserId,
           "createUserName",
           Map.empty[UUID, String],
           visibleByHelpers = false,
@@ -238,7 +240,7 @@ class ApplicationSpec extends Specification {
           ZonedDateTime.now(),
           AnswerType.Custom,
           "message",
-          UUID.randomUUID(),
+          creatorUserId,
           "createUserName",
           Map.empty[UUID, String],
           visibleByHelpers = false,
@@ -254,7 +256,7 @@ class ApplicationSpec extends Specification {
         id = UUID.randomUUID(),
         creationDate = ZonedDateTime.now(),
         creatorUserName = "Mathieu",
-        creatorUserId = UUID.randomUUID(),
+        creatorUserId = creatorUserId,
         creatorGroupId = None,
         creatorGroupName = None,
         subject = "Sujet",
