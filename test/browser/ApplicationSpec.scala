@@ -35,6 +35,7 @@ class ApplicationSpec extends Specification with BaseSpec {
           inseeCode = List("0"),
           creationDate = Time.nowParis(),
           areaIds = area :: Nil,
+          isInFranceServicesNetwork = false,
           publicNote = None,
           internalSupportComment = None
         )

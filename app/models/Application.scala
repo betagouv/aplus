@@ -39,6 +39,7 @@ case class Application(
     mandatType: Option[Application.MandatType],
     mandatDate: Option[String],
     invitedGroupIdsAtCreation: List[UUID],
+    isInFranceServicesNetwork: Boolean,
     personalDataWiped: Boolean = false,
 ) extends AgeModel {
 
@@ -246,6 +247,7 @@ case class Application(
       mandatType = wiped.mandatType,
       mandatDate = anonMandatDate,
       invitedGroupIdsAtCreation = wiped.invitedGroupIdsAtCreation,
+      isInFranceServicesNetwork = wiped.isInFranceServicesNetwork,
       personalDataWiped = wiped.personalDataWiped,
     )
   }

@@ -60,7 +60,8 @@ class AuthorizationSpec extends Specification {
             irrelevant = false,
             mandatType = Option.empty[MandatType],
             mandatDate = Option.empty[String],
-            invitedGroupIdsAtCreation = List.empty[UUID]
+            invitedGroupIdsAtCreation = List.empty[UUID],
+            isInFranceServicesNetwork = true,
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
@@ -95,7 +96,8 @@ class AuthorizationSpec extends Specification {
             irrelevant = false,
             mandatType = Option.empty[MandatType],
             mandatDate = Option.empty[String],
-            invitedGroupIdsAtCreation = List.empty[UUID]
+            invitedGroupIdsAtCreation = List.empty[UUID],
+            isInFranceServicesNetwork = true,
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
@@ -128,7 +130,8 @@ class AuthorizationSpec extends Specification {
             irrelevant = false,
             mandatType = Option.empty[MandatType],
             mandatDate = Option.empty[String],
-            invitedGroupIdsAtCreation = List.empty[UUID]
+            invitedGroupIdsAtCreation = List.empty[UUID],
+            isInFranceServicesNetwork = true,
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
@@ -166,7 +169,8 @@ class AuthorizationSpec extends Specification {
             irrelevant = false,
             mandatType = Option.empty[MandatType],
             mandatDate = Option.empty[String],
-            invitedGroupIdsAtCreation = List.empty[UUID]
+            invitedGroupIdsAtCreation = List.empty[UUID],
+            isInFranceServicesNetwork = true,
           )
 
           val metadata = FileMetadata.Attached.Answer(application.id, answer.id)
@@ -201,7 +205,8 @@ class AuthorizationSpec extends Specification {
             irrelevant = false,
             mandatType = Option.empty[MandatType],
             mandatDate = Option.empty[String],
-            invitedGroupIdsAtCreation = List.empty[UUID]
+            invitedGroupIdsAtCreation = List.empty[UUID],
+            isInFranceServicesNetwork = true,
           )
 
           val metadata = FileMetadata.Attached.Answer(application.id, answer.id)
@@ -243,7 +248,8 @@ class AuthorizationSpec extends Specification {
             irrelevant = false,
             mandatType = Option.empty[MandatType],
             mandatDate = Option.empty[String],
-            invitedGroupIdsAtCreation = List.empty[UUID]
+            invitedGroupIdsAtCreation = List.empty[UUID],
+            isInFranceServicesNetwork = true,
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
@@ -278,7 +284,8 @@ class AuthorizationSpec extends Specification {
             irrelevant = false,
             mandatType = Option.empty[MandatType],
             mandatDate = Option.empty[String],
-            invitedGroupIdsAtCreation = List.empty[UUID]
+            invitedGroupIdsAtCreation = List.empty[UUID],
+            isInFranceServicesNetwork = true,
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
@@ -311,7 +318,8 @@ class AuthorizationSpec extends Specification {
             irrelevant = false,
             mandatType = Option.empty[MandatType],
             mandatDate = Option.empty[String],
-            invitedGroupIdsAtCreation = List.empty[UUID]
+            invitedGroupIdsAtCreation = List.empty[UUID],
+            isInFranceServicesNetwork = true,
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
@@ -349,7 +357,8 @@ class AuthorizationSpec extends Specification {
             irrelevant = false,
             mandatType = Option.empty[MandatType],
             mandatDate = Option.empty[String],
-            invitedGroupIdsAtCreation = List.empty[UUID]
+            invitedGroupIdsAtCreation = List.empty[UUID],
+            isInFranceServicesNetwork = true,
           )
 
           val metadata = FileMetadata.Attached.Answer(application.id, answer.id)
@@ -384,7 +393,8 @@ class AuthorizationSpec extends Specification {
             irrelevant = false,
             mandatType = Option.empty[MandatType],
             mandatDate = Option.empty[String],
-            invitedGroupIdsAtCreation = List.empty[UUID]
+            invitedGroupIdsAtCreation = List.empty[UUID],
+            isInFranceServicesNetwork = true,
           )
 
           val metadata = FileMetadata.Attached.Answer(application.id, answer.id)

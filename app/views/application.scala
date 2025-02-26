@@ -533,6 +533,7 @@ object application {
   def inviteForm(
       currentUser: User,
       currentUserRights: Authorization.UserRights,
+      userGroups: List[UserGroup],
       groupsWithUsersThatCanBeInvited: List[(UserGroup, List[User])],
       groupsThatCanBeInvited: List[UserGroup],
       application: Application,
@@ -548,16 +549,23 @@ object application {
         readonly := true,
         value := selectedArea.id.toString
       ),
-      div(
-        "Territoire concerné : ",
-        views.helpers
-          .changeAreaSelect(
-            selectedArea,
-            Area.all,
-            ApplicationController.show(application.id),
-            "onglet" -> "invitation"
-          )
-      ),
+      if (
+        currentUser.admin || Authorization
+          .hasAccessToFranceServicesNetwork(userGroups)(currentUserRights)
+      ) {
+        div(
+          "Territoire concerné : ",
+          views.helpers
+            .changeAreaSelect(
+              selectedArea,
+              Area.all,
+              ApplicationController.show(application.id),
+              "onglet" -> "invitation"
+            )
+        )
+      } else {
+        ()
+      },
       views.helpers.forms.CSRFInput,
       groupsWithUsersThatCanBeInvited.nonEmpty.some
         .filter(identity)

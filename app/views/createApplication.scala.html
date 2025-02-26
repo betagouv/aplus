@@ -32,6 +32,7 @@
                 Les champs marqués d’un <span class="mdl-color-text--red-500">*</span> sont obligatoires
             </div>
 
+            @if(Authorization.hasAccessToFranceServicesNetwork(userGroups)(currentUserRights)) {
             @if(mainInfos.config.featureCanSendApplicationsAnywhere) {
               <h5 class="title--addline">Territoire concerné</h5>
               <div>
@@ -44,12 +45,17 @@
                 @toHtml(views.helpers.changeAreaSelect(currentArea, currentUser.areas.flatMap(Area.fromId), routes.ApplicationController.create))
               </div>
             }
+            }
 
             @helper.form(action = routes.ApplicationController.createPost, "enctype" -> "multipart/form-data", "id" -> "create-application-form", "class" -> "aplus-protected-form") {
                 @helper.CSRF.formField
                     <input type="hidden" name="application-id" readonly value="@applicationForm("application-id").value.getOrElse(java.util.UUID.randomUUID)">
 
                     <input type="hidden" name="@{Keys.Application.areaId}" readonly value="@{currentArea.id}">
+
+                    @if(organisationGroups.isEmpty) {
+                        Il n’existe pas de groupes répondant à des demandes dans ce territoire.
+                    }
 
                     @toHtml(views.helpers.applications.creatorGroup(applicationForm, userGroups))
 

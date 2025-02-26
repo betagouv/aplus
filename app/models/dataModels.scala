@@ -300,6 +300,7 @@ object dataModels {
           application.mandatType.map(dataModels.Application.MandatType.dataModelSerialization),
         mandatDate = application.mandatDate,
         invitedGroupIds = application.invitedGroupIdsAtCreation,
+        isInFranceServicesNetwork = application.isInFranceServicesNetwork,
         personalDataWiped = application.personalDataWiped
       )
 
@@ -329,6 +330,7 @@ object dataModels {
       mandatType: Option[String],
       mandatDate: Option[String],
       invitedGroupIds: List[UUID],
+      isInFranceServicesNetwork: Boolean,
       personalDataWiped: Boolean,
   ) {
 
@@ -360,6 +362,7 @@ object dataModels {
         mandatType = mandatType.flatMap(Application.MandatType.dataModelDeserialization),
         mandatDate = mandatDate,
         invitedGroupIdsAtCreation = invitedGroupIds,
+        isInFranceServicesNetwork = isInFranceServicesNetwork,
         personalDataWiped = personalDataWiped,
       )
     }

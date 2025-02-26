@@ -53,7 +53,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.newAnswersFor(userId) must equalTo(answers)
@@ -88,7 +89,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.newAnswersFor(userId) must equalTo(List(answer2))
@@ -123,7 +125,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.newAnswersFor(userId) must equalTo(List.empty[Answer])
@@ -150,7 +153,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.status must equalTo(Archived)
@@ -208,7 +212,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.status must equalTo(Processing)
@@ -267,7 +272,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.status must equalTo(New)
@@ -292,7 +298,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.hasBeenDisplayedFor(userId) must beTrue
@@ -316,7 +323,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.hasBeenDisplayedFor(userId) must beTrue
@@ -340,7 +348,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.hasBeenDisplayedFor(userId) must beFalse

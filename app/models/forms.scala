@@ -163,6 +163,7 @@ package forms {
             .verifying("Vous devez sélectionner au moins 1 territoire", _.nonEmpty),
           "organisation" -> optional(of[Organisation.Id]),
           "email" -> optional(email),
+          "isInFranceServicesNetwork" -> default(boolean, false),
           "publicNote" -> normalizedOptionalText,
           "internalSupportComment" -> normalizedOptionalText
         )(UserGroup.apply)(toTupleOpt)
