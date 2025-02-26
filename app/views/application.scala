@@ -665,7 +665,7 @@ object application {
       br,
       button(
         id := "application-complete",
-        cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col",
+        cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-cell mdl-cell--12-col js-on-submit-disabled",
         "Inviter"
       )
     )
