@@ -17,6 +17,8 @@
 
   @toHtml(views.group.deleteGroupModal(userGroup))
 
+  @toHtml(views.group.removeAllUsersFromGroupModal(userGroup))
+
 }
 
 
@@ -117,7 +119,13 @@
                         Editer le groupe
                     </button>
                     <br>
+                    <br>
+                    <button class="mdl-button mdl-js-button mdl-button--raised" id="dialog-remove-all-users-from-group-show" type="button">
+                        Enlever tous les utilisateurs de ce groupe
+                    </button>
+
                     @if(isEmpty) {
+                        <br>
                         <button class="mdl-button mdl-js-button mdl-button--raised" id="dialog-delete-group-show" type="button">
                             Supprimer le groupe
                         </button>

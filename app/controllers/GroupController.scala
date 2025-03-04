@@ -227,6 +227,60 @@ case class GroupController @Inject() (
       }
     }
 
+  def removeAllUsersFromGroup(groupId: UUID): Action[AnyContent] = loginAction.async {
+    implicit request =>
+      userService.byGroupIdsFuture(List(groupId), includeDisabled = true).flatMap { users =>
+        users
+          .map { user =>
+            val deactivation: Future[Either[Error, Unit]] =
+              if user.groupIds.toSet.size <= 1 then
+                userService
+                  .disable(user.id)
+                  .map(_.map { _ =>
+                    eventService.log(
+                      EventType.UserEdited,
+                      s"Utilisateur ${user.id} désactivé",
+                      involvesUser = user.id.some
+                    )
+                  })
+              else Future.successful(Right(()))
+            val result: Future[Either[Error, Unit]] = deactivation.flatMap {
+              case Left(error) =>
+                Future.successful(Left(error))
+              case Right(_) =>
+                userService
+                  .removeFromGroup(user.id, groupId)
+                  .map(_.map { _ =>
+                    eventService.log(
+                      EventType.UserGroupEdited,
+                      s"Utilisateur ${user.id} retiré du groupe $groupId",
+                      involvesUser = user.id.some
+                    )
+                  })
+            }
+            result
+          }
+          .sequence
+          .map { results =>
+            val errors = results.collect { case Left(error) => error }
+            for error <- errors do eventService.logError(error)
+            if errors.isEmpty then
+              eventService.log(
+                UserGroupEdited,
+                s"Tous les utilisateurs ont été retirés du groupe $groupId",
+                s"Groupe ${groupId}".some
+              )
+              Redirect(routes.GroupController.editGroup(groupId))
+            else
+              Redirect(routes.GroupController.editGroup(groupId))
+                .flashing(
+                  "error" -> "Une erreur est survenue lors de la suppression des utilisateurs"
+                )
+          }
+
+      }
+  }
+
   def showEditMyGroups: Action[AnyContent] =
     loginAction.async { implicit request =>
       editMyGroupsPage(request.currentUser, request.rights, AddUserToGroupFormData.form)
