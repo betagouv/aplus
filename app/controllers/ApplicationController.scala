@@ -534,6 +534,105 @@ case class ApplicationController @Inject() (
       }
     }
 
+  private def computeFirstInstructorAnswerInHours(
+      application: Application,
+      idToUser: Map[UUID, User]
+  ): Option[Int] = {
+    val firstInstructorAnswerDate = application.userAnswers
+      .find(answer =>
+        answer.creatorUserID =!= application.creatorUserId &&
+          idToUser.get(answer.creatorUserID).exists(_.instructor)
+      )
+      .map(_.creationDate)
+    firstInstructorAnswerDate.map(date =>
+      businessDaysService.businessHoursBetween(application.creationDate, date)
+    )
+  }
+
+  private def computeResolutionTimeInHours(
+      application: Application,
+  ): Option[Int] =
+    if application.closed then
+      val lastDate = application.userAnswers.lastOption
+        .map(_.creationDate)
+        .orElse(application.closedDate)
+        .getOrElse(application.creationDate)
+      Some(businessDaysService.businessHoursBetween(application.creationDate, lastDate))
+    else None
+
+  // Groups needed: creator groups + invited groups at creation + invited groups on answers
+  private def computeApplicationMetadata(
+      application: Application,
+      rights: Authorization.UserRights,
+      idToUser: Map[UUID, User],
+      idToGroup: Map[UUID, UserGroup]
+  ): ApplicationMetadata = {
+    val areaName = Area.fromId(application.area).map(_.name).getOrElse("Sans territoire")
+    val pertinence = if (!application.irrelevant) "Oui" else "Non"
+    val creatorUser = idToUser.get(application.creatorUserId)
+    val creatorUserGroupsNames = creatorUser.toList
+      .flatMap(_.groupIds)
+      .distinct
+      .flatMap(idToGroup.get)
+      .map(_.name)
+      .mkString(",")
+    val creatorGroupName =
+      application.creatorGroupId.toList.flatMap(idToGroup.get).map(_.name).mkString(",")
+    val groupNamesInvitedAtCreation = application.invitedGroupIdsAtCreation.distinct
+      .flatMap(idToGroup.get)
+      .map(_.name)
+      .mkString(",")
+    val groupNamesInvitedOnAnswers = application.answers
+      .flatMap(_.invitedGroupIds)
+      .distinct
+      .flatMap(idToGroup.get)
+      .map(_.name)
+      .mkString(",")
+    val firstInstructorAnswerInHours = computeFirstInstructorAnswerInHours(application, idToUser)
+    val resolutionTimeInHours = computeResolutionTimeInHours(application)
+    ApplicationMetadata(
+      id = application.id,
+      creationDateFormatted = Time.formatForAdmins(application.creationDate.toInstant),
+      creationDay = Time.formatPatternFr(application.creationDate, "yyyy-MM-dd"),
+      creatorUserName = application.creatorUserName,
+      creatorUserId = application.creatorUserId,
+      areaName = areaName,
+      pertinence = pertinence,
+      internalId = application.internalId,
+      closed = application.closed,
+      usefulness = application.usefulness.getOrElse(""),
+      closedDateFormatted =
+        application.closedDate.map(date => Time.formatForAdmins(date.toInstant)),
+      closedDay = application.closedDate.map(date =>
+        Time.formatPatternFr(application.creationDate, "yyyy-MM-dd")
+      ),
+      status = application.status.show,
+      currentUserCanSeeAnonymousApplication = Authorization.canSeeApplication(application)(rights),
+      network = if (application.isInFranceServicesNetwork) "FS" else "Général",
+      groups = ApplicationMetadata.Groups(
+        creatorUserGroupsNames = creatorUserGroupsNames,
+        creatorGroupName = creatorGroupName,
+        groupNamesInvitedAtCreation = groupNamesInvitedAtCreation,
+        groupNamesInvitedOnAnswers = groupNamesInvitedOnAnswers,
+      ),
+      stats = ApplicationMetadata.Stats(
+        numberOfInvitedUsers = application.invitedUsers.size,
+        numberOfMessages = application.answers.length + 1,
+        numberOfAnswers = application.answers.count(_.creatorUserID =!= application.creatorUserId),
+        firstAnswerTimeInHours = firstInstructorAnswerInHours.map(_.toString).getOrElse(""),
+        resolutionTimeInHours = resolutionTimeInHours.map(_.toString).getOrElse(""),
+        firstAnswerTimeInDays = firstInstructorAnswerInHours
+          .map(_.toDouble / 24.0)
+          .map(days => f"$days%.2f".reverse.dropWhile(_ === '0').reverse.stripSuffix("."))
+          .getOrElse(""),
+        resolutionTimeInDays = resolutionTimeInHours
+          .map(_.toDouble / 24.0)
+          .map(days => f"$days%.2f".reverse.dropWhile(_ === '0').reverse.stripSuffix("."))
+          .getOrElse("")
+      )
+    )
+  }
+
   def applicationsMetadata: Action[AnyContent] =
     loginAction.async { implicit request =>
       asUserWithAuthorization(Authorization.canSeeApplicationsMetadata)(
@@ -554,8 +653,15 @@ case class ApplicationController @Inject() (
               s"[territoire ${areaOpt.map(_.name).getOrElse("tous")} ; " +
               s"taille : ${applications.size}]"
           )
-          val userIds: List[UUID] = (applications.flatMap(_.invitedUsers.keys) ++
-            applications.map(_.creatorUserId)).toList.distinct
+          val userIds: List[UUID] = (
+            applications.flatMap(_.invitedUsers.keys) ++
+              applications.map(_.creatorUserId) ++
+              applications.flatMap(application =>
+                application.answers.flatMap(answer =>
+                  answer.creatorUserID :: answer.invitedUsers.keys.toList
+                )
+              )
+          ).toList.distinct
           val users = userService.byIds(userIds, includeDisabled = true)
           val groupIds =
             (users.flatMap(_.groupIds) ::: applications.flatMap(application =>
@@ -567,7 +673,7 @@ case class ApplicationController @Inject() (
           val idToUser = users.map(user => (user.id, user)).toMap
           val idToGroup = groups.map(group => (group.id, group)).toMap
           val metadata = applications.map(application =>
-            ApplicationMetadata.fromApplication(
+            computeApplicationMetadata(
               application,
               request.rights,
               idToUser,
@@ -1069,13 +1175,22 @@ case class ApplicationController @Inject() (
     }
 
   private def applicationsToCSV(applications: List[Application]): String = {
-    val usersId = applications.flatMap(_.invitedUsers.keys) ++ applications.map(_.creatorUserId)
+    val usersId = (
+      applications.flatMap(_.invitedUsers.keys) ++
+        applications.map(_.creatorUserId) ++
+        applications.flatMap(application =>
+          application.answers.flatMap(answer =>
+            answer.creatorUserID :: answer.invitedUsers.keys.toList
+          )
+        )
+    ).toList.distinct
     val users = userService.byIds(usersId, includeDisabled = true)
     val userGroupIds = users.flatMap(_.groupIds)
     val groups = userGroupService.byIds(userGroupIds)
+    val idToUser = users.map(user => (user.id, user)).toMap
 
     def applicationToCSV(application: Application): String = {
-      val creatorUser = users.find(_.id === application.creatorUserId)
+      val creatorUser = idToUser.get(application.creatorUserId)
       val invitedUsers =
         users.filter(user => application.invitedUsers.keys.toList.contains[UUID](user.id))
       val creatorUserGroupNames = creatorUser.toList
@@ -1089,6 +1204,8 @@ case class ApplicationController @Inject() (
         .flatMap(groupId => groups.filter(_.id === groupId))
         .map(_.name)
         .mkString(",")
+      val firstInstructorAnswerInHours = computeFirstInstructorAnswerInHours(application, idToUser)
+      val resolutionTimeInHours = computeResolutionTimeInHours(application)
 
       List[String](
         application.id.toString,
@@ -1101,8 +1218,8 @@ case class ApplicationController @Inject() (
         application.closedDate.map(date => Time.formatPatternFr(date, "YYY-MM-dd")).getOrElse(""),
         if (not(application.irrelevant)) "Oui" else "Non",
         application.usefulness.getOrElse("?"),
-        application.firstAnswerTimeInMinutes.map(_.toString).getOrElse(""),
-        application.resolutionTimeInMinutes.map(_.toString).getOrElse("")
+        firstInstructorAnswerInHours.map(_.toString).getOrElse(""),
+        resolutionTimeInHours.map(_.toString).getOrElse("")
       ).map(escape)
         .mkString(";")
     }
@@ -1117,8 +1234,8 @@ case class ApplicationController @Inject() (
       "Date de clôture",
       "Pertinente",
       "Utile",
-      "Délais de première réponse (Minutes)",
-      "Délais de clôture (Minutes)"
+      "Délais de première réponse (heures)",
+      "Délais de clôture (heures)"
     ).mkString(";")
 
     (List(headers) ++ applications.map(applicationToCSV)).mkString("\n")

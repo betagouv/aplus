@@ -4,7 +4,6 @@ import cats.{Eq, Show}
 import cats.syntax.all._
 import helper.{Pseudonymizer, Time}
 import java.time.{Instant, ZonedDateTime}
-import java.time.temporal.ChronoUnit.MINUTES
 import java.util.UUID
 import models.Answer.AnswerType
 import models.Application.SeenByUser
@@ -159,20 +158,6 @@ case class Application(
 
 // TODO: remove
   def haveUserInvitedOn(user: User): Boolean = invitedUsers.keys.toList.contains(user.id)
-
-  lazy val resolutionTimeInMinutes: Option[Int] = if (closed) {
-    val lastDate = answers.lastOption.map(_.creationDate).orElse(closedDate).getOrElse(creationDate)
-    Some(MINUTES.between(creationDate, lastDate).toInt)
-  } else {
-    None
-  }
-
-  lazy val firstAgentAnswerDate: Option[ZonedDateTime] =
-    answers.find(_.id =!= creatorUserId).map(_.creationDate)
-
-  lazy val firstAnswerTimeInMinutes: Option[Int] = firstAgentAnswerDate.map { firstAnswerDate =>
-    MINUTES.between(creationDate, firstAnswerDate).toInt
-  }
 
   def withWipedPersonalData: Application = {
     val wipedUsagerInfos: Map[String, String] =

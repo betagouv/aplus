@@ -1,10 +1,9 @@
 package serializers
 
 import cats.syntax.all._
-import helper.Time
 import java.time.Instant
 import java.util.UUID
-import models.{Application, Area, Authorization, Organisation, User, UserGroup}
+import models.{Area, Authorization, Organisation, User, UserGroup}
 import play.api.libs.json._
 
 object ApiModel {
@@ -344,8 +343,8 @@ object ApiModel {
         numberOfInvitedUsers: Int,
         numberOfMessages: Int,
         numberOfAnswers: Int,
-        firstAnswerTimeInMinutes: String,
-        resolutionTimeInMinutes: String,
+        firstAnswerTimeInHours: String,
+        resolutionTimeInHours: String,
         firstAnswerTimeInDays: String,
         resolutionTimeInDays: String,
     )
@@ -365,81 +364,6 @@ object ApiModel {
 
     implicit val applicationMetadataWrites: Writes[ApplicationMetadata] =
       Json.writes[ApplicationMetadata]
-
-    // Groups needed: creator groups + invited groups at creation + invited groups on answers
-    def fromApplication(
-        application: Application,
-        rights: Authorization.UserRights,
-        idToUser: Map[UUID, User],
-        idToGroup: Map[UUID, UserGroup]
-    ): ApplicationMetadata = {
-      val areaName = Area.fromId(application.area).map(_.name).getOrElse("Sans territoire")
-      val pertinence = if (!application.irrelevant) "Oui" else "Non"
-      val creatorUser = idToUser.get(application.creatorUserId)
-      val creatorUserGroupsNames = creatorUser.toList
-        .flatMap(_.groupIds)
-        .distinct
-        .flatMap(idToGroup.get)
-        .map(_.name)
-        .mkString(",")
-      val creatorGroupName =
-        application.creatorGroupId.toList.flatMap(idToGroup.get).map(_.name).mkString(",")
-      val groupNamesInvitedAtCreation = application.invitedGroupIdsAtCreation.distinct
-        .flatMap(idToGroup.get)
-        .map(_.name)
-        .mkString(",")
-      val groupNamesInvitedOnAnswers = application.answers
-        .flatMap(_.invitedGroupIds)
-        .distinct
-        .flatMap(idToGroup.get)
-        .map(_.name)
-        .mkString(",")
-      ApplicationMetadata(
-        id = application.id,
-        creationDateFormatted = Time.formatForAdmins(application.creationDate.toInstant),
-        creationDay = Time.formatPatternFr(application.creationDate, "yyyy-MM-dd"),
-        creatorUserName = application.creatorUserName,
-        creatorUserId = application.creatorUserId,
-        areaName = areaName,
-        pertinence = pertinence,
-        internalId = application.internalId,
-        closed = application.closed,
-        usefulness = application.usefulness.getOrElse(""),
-        closedDateFormatted =
-          application.closedDate.map(date => Time.formatForAdmins(date.toInstant)),
-        closedDay = application.closedDate.map(date =>
-          Time.formatPatternFr(application.creationDate, "yyyy-MM-dd")
-        ),
-        status = application.status.show,
-        currentUserCanSeeAnonymousApplication =
-          Authorization.canSeeApplication(application)(rights),
-        network = if (application.isInFranceServicesNetwork) "FS" else "Général",
-        groups = ApplicationMetadata.Groups(
-          creatorUserGroupsNames = creatorUserGroupsNames,
-          creatorGroupName = creatorGroupName,
-          groupNamesInvitedAtCreation = groupNamesInvitedAtCreation,
-          groupNamesInvitedOnAnswers = groupNamesInvitedOnAnswers,
-        ),
-        stats = ApplicationMetadata.Stats(
-          numberOfInvitedUsers = application.invitedUsers.size,
-          numberOfMessages = application.answers.length + 1,
-          numberOfAnswers =
-            application.answers.count(_.creatorUserID =!= application.creatorUserId),
-          firstAnswerTimeInMinutes =
-            application.firstAnswerTimeInMinutes.map(_.toString).getOrElse(""),
-          resolutionTimeInMinutes =
-            application.resolutionTimeInMinutes.map(_.toString).getOrElse(""),
-          firstAnswerTimeInDays = application.firstAnswerTimeInMinutes
-            .map(_.toDouble / (60.0 * 24.0))
-            .map(days => f"$days%.2f".reverse.dropWhile(_ === '0').reverse.stripSuffix("."))
-            .getOrElse(""),
-          resolutionTimeInDays = application.resolutionTimeInMinutes
-            .map(_.toDouble / (60.0 * 24.0))
-            .map(days => f"$days%.2f".reverse.dropWhile(_ === '0').reverse.stripSuffix("."))
-            .getOrElse("")
-        )
-      )
-    }
 
   }
 

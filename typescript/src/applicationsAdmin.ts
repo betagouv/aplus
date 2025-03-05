@@ -273,8 +273,8 @@ if (window.document.getElementById(applicationsTableId)) {
       bottomCalc: "avg",
     },
     {
-      title: "Délais de première réponse (Minutes)",
-      field: "stats.firstAnswerTimeInMinutes",
+      title: "Délais de première réponse (heures)",
+      field: "stats.firstAnswerTimeInHours",
       hozAlign: "right",
       headerFilter: "input",
       sorter: "number",
@@ -283,8 +283,8 @@ if (window.document.getElementById(applicationsTableId)) {
       download: true
     },
     {
-      title: "Délais de clôture (Minutes)",
-      field: "stats.resolutionTimeInMinutes",
+      title: "Délais de clôture (heures)",
+      field: "stats.resolutionTimeInHours",
       hozAlign: "right",
       headerFilter: "input",
       sorter: "number",
