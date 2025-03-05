@@ -92,7 +92,7 @@ libraryDependencies ++= Seq(
   "co.fs2" %% "fs2-io" % fs2Version,
   "io.laserdisc" %% "fs2-aws-s3" % "6.2.0",
   // Needs the C library to be installed
-  "de.mkammerer" % "argon2-jvm-nolibs" % "2.11",
+  "de.mkammerer" % "argon2-jvm-nolibs" % "2.12",
 )
 
 libraryDependencies ++= anormDependencies
