@@ -52,11 +52,21 @@ case class Application(
     (userId, date)
   }.toMap
 
-  def newAnswersFor(userId: UUID): List[Answer] = {
+  def newAnswersFor(userId: UUID, isInstructor: Boolean): List[Answer] = {
     val maybeSeenLastDate = seenByUsers.find(_.userId === userId).map(_.lastSeenDate)
-    maybeSeenLastDate
-      .map(seenLastDate => answers.filter(_.creationDate.toInstant.isAfter(seenLastDate)))
-      .getOrElse(answers)
+
+    if isInstructor then
+      maybeSeenLastDate
+        .map(seenLastDate => answers.filter(_.creationDate.toInstant.isAfter(seenLastDate)))
+        .getOrElse(answers)
+    else
+      maybeSeenLastDate
+        .map(seenLastDate =>
+          answers.filter(answer =>
+            answer.creationDate.toInstant.isAfter(seenLastDate) && answer.visibleByHelpers
+          )
+        )
+        .getOrElse(answers)
   }
 
   lazy val searchData: String = {

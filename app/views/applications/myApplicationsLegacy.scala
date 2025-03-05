@@ -365,11 +365,13 @@ object myApplicationsLegacy {
     )
 
   private def activityCol(currentUser: User, application: Application): Tag = {
+    val newAnswersList =
+      application.newAnswersFor(currentUser.id, currentUser.instructor)
     val newAnswers: Frag =
-      if (application.newAnswersFor(currentUser.id).length > 0 && !application.closed)
+      if (newAnswersList.length > 0 && !application.closed)
         frag(
           " ",
-          span(cls := "mdl-color--pink-500 badge", application.newAnswersFor(currentUser.id).length)
+          span(cls := "mdl-color--pink-500 badge", newAnswersList.length)
         )
       else frag()
     td(
