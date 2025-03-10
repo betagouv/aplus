@@ -15,7 +15,7 @@
     "material-icons": "^1.13.12",
     "proxy-polyfill": "0.3.2",
     "slim-select": "1.27.1",
-    "tabulator-tables": "5.5.0",
+    "tabulator-tables": "6.3.1",
     "ts-polyfill": "3.8.2",
     "unfetch": "5.0.0",
     "unorm": "1.6.0",
@@ -24,7 +24,7 @@
   "devDependencies": {
     "@babel/core": "7.26.9",
     "@babel/preset-env": "7.26.9",
-    "@types/tabulator-tables": "5.4.8",
+    "@types/tabulator-tables": "6.2.4",
     "babel-loader": "10.0.0",
     "copy-webpack-plugin": "13.0.0",
     "css-loader": "7.1.2",
