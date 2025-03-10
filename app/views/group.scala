@@ -37,4 +37,33 @@ object group {
       )
     )
 
+  def removeAllUsersFromGroupModal(emptyGroup: UserGroup)(implicit request: RequestHeader): Tag =
+    tag("dialog")(
+      id := "dialog-remove-all-users-from-group",
+      cls := "mdl-dialog dialog--50percent-width",
+      h4(
+        cls := "mdl-dialog__title",
+        "Enlever tous les utilisateurs de ce groupe désactivera les comptes sans autre groupe, êtes-vous sûr de vouloir continuer ?"
+      ),
+      form(
+        action := GroupController.removeAllUsersFromGroup(emptyGroup.id).path,
+        method := GroupController.removeAllUsersFromGroup(emptyGroup.id).method,
+        CSRFInput,
+        div(
+          cls := "mdl-dialog__actions",
+          button(
+            `type` := "submit",
+            cls := "mdl-button mdl-button--raised mdl-button--colored",
+            "Enlever"
+          ),
+          button(
+            id := "dialog-remove-all-users-from-group-cancel",
+            `type` := "button",
+            cls := "mdl-button mdl-button--raised",
+            "Annuler"
+          )
+        )
+      )
+    )
+
 }

@@ -14,6 +14,12 @@ function setupDeleteGroupModal() {
     dialogDeleteGroupButtonCancelId
   );
 
+  addDialogButtonsClickListenersByIds(
+    "dialog-remove-all-users-from-group",
+    "dialog-remove-all-users-from-group-show",
+    "dialog-remove-all-users-from-group-cancel"
+  );
+
 }
 
 
