@@ -57,7 +57,7 @@ class ApplicationSpec extends Specification {
         isInFranceServicesNetwork = true,
       )
 
-      application.newAnswersFor(userId) must equalTo(answers)
+      application.newAnswersFor(userId, false) must equalTo(answers)
     }
 
     "compute only new answers as 'new' for a user with seenByUser" >> {
@@ -93,7 +93,7 @@ class ApplicationSpec extends Specification {
         isInFranceServicesNetwork = true,
       )
 
-      application.newAnswersFor(userId) must equalTo(List(answer2))
+      application.newAnswersFor(userId, false) must equalTo(List(answer2))
     }
 
     "compute none of the answers as 'new' for a user with a visit after all answers" >> {
@@ -129,7 +129,7 @@ class ApplicationSpec extends Specification {
         isInFranceServicesNetwork = true,
       )
 
-      application.newAnswersFor(userId) must equalTo(List.empty[Answer])
+      application.newAnswersFor(userId, false) must equalTo(List.empty[Answer])
     }
 
   }
