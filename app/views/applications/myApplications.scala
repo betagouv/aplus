@@ -273,7 +273,9 @@ object myApplications {
                           cls := "aplus-new-messages",
                           attr("aria-describedby") := s"tooltip-new-${application.application.id}"
                         )(
-                          application.application.newAnswersFor(currentUser.id).length
+                          application.application
+                            .newAnswersFor(currentUser.id, currentUser.instructor)
+                            .length
                         ),
                         span(
                           cls := "fr-tooltip fr-placement",
@@ -281,7 +283,7 @@ object myApplications {
                           attr("role") := "tooltip",
                           attr("aria-hidden") := "true"
                         )(
-                          s"Vous avez ${application.application.newAnswersFor(currentUser.id).length} nouveaux messages"
+                          s"Vous avez ${application.application.newAnswersFor(currentUser.id, currentUser.instructor).length} nouveaux messages"
                         ),
                       ),
                       div(cls := "fr-grid-row aplus-text-small fr_card__container")(
