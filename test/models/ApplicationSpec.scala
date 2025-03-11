@@ -53,7 +53,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.newAnswersFor(userId) must equalTo(answers)
@@ -88,7 +89,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.newAnswersFor(userId) must equalTo(List(answer2))
@@ -123,7 +125,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.newAnswersFor(userId) must equalTo(List.empty[Answer])
@@ -150,7 +153,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.status must equalTo(Archived)
@@ -208,14 +212,17 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.status must equalTo(Processing)
     }
 
-    "'nouvelle' if there is no answer with the same creator as the application" >> {
+    "'nouvelle' if there is no answer from someone who is not the creator" >> {
       val closed = false
+
+      val creatorUserId = UUID.randomUUID()
 
       val answers = List(
         Answer(
@@ -224,7 +231,7 @@ class ApplicationSpec extends Specification {
           ZonedDateTime.now(),
           AnswerType.Custom,
           "message",
-          UUID.randomUUID(),
+          creatorUserId,
           "createUserName",
           Map.empty[UUID, String],
           visibleByHelpers = false,
@@ -238,7 +245,7 @@ class ApplicationSpec extends Specification {
           ZonedDateTime.now(),
           AnswerType.Custom,
           "message",
-          UUID.randomUUID(),
+          creatorUserId,
           "createUserName",
           Map.empty[UUID, String],
           visibleByHelpers = false,
@@ -254,7 +261,7 @@ class ApplicationSpec extends Specification {
         id = UUID.randomUUID(),
         creationDate = ZonedDateTime.now(),
         creatorUserName = "Mathieu",
-        creatorUserId = UUID.randomUUID(),
+        creatorUserId = creatorUserId,
         creatorGroupId = None,
         creatorGroupName = None,
         subject = "Sujet",
@@ -265,7 +272,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.status must equalTo(New)
@@ -290,7 +298,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.hasBeenDisplayedFor(userId) must beTrue
@@ -314,7 +323,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.hasBeenDisplayedFor(userId) must beTrue
@@ -338,7 +348,8 @@ class ApplicationSpec extends Specification {
         irrelevant = false,
         mandatType = Option.empty[MandatType],
         mandatDate = Option.empty[String],
-        invitedGroupIdsAtCreation = List.empty[UUID]
+        invitedGroupIdsAtCreation = List.empty[UUID],
+        isInFranceServicesNetwork = true,
       )
 
       application.hasBeenDisplayedFor(userId) must beFalse

@@ -6,15 +6,15 @@ import helper.MiscHelpers
 import javax.inject.{Inject, Singleton}
 import models.EmailPriority
 import modules.AppConfig
-import org.apache.pekko.stream.{Materializer, RestartSettings}
-import org.apache.pekko.stream.scaladsl.{RestartSource, Sink, Source}
+import org.apache.pekko.stream.Materializer
 import play.api.Logger
 import play.api.libs.concurrent.MaterializerProvider
 import play.api.libs.mailer.{Email, SMTPConfiguration, SMTPMailer}
-import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.jdk.javaapi.CollectionConverters.asScala
 import scala.util.Try
+import cats.effect.IO
+import scala.util.Random
 
 object EmailsService {
 
@@ -127,28 +127,28 @@ class EmailsService @Inject() (
       host.some
     }
 
-  // Non blocking, will apply a backoff if the `Future` is `Failed`
-  // (ie if `mailerClient.send` throws)
-  //
-  // Doc for the exponential backoff
-  // https://doc.akka.io/docs/akka/current/stream/stream-error.html#delayed-restarts-with-a-backoff-operator
-  //
-  // Note: we might want to use a queue as the inner source, and enqueue emails in it.
-  def sendNonBlocking(email: Email, priority: EmailPriority): Future[Option[String]] =
-    RestartSource
-      .onFailuresWithBackoff(
-        RestartSettings(
-          minBackoff = 10.seconds,
-          maxBackoff = 40.seconds,
-          randomFactor = 0.2
-        )
-          .withMaxRestarts(count = 3, within = 10.seconds)
-      ) { () =>
-        Source.future {
-          // `sendBlocking` is executed on the `dependencies.mailerExecutionContext` thread pool
-          Future(sendBlocking(email, priority))(dependencies.mailerExecutionContext)
+  def sendNonBlocking(email: Email, priority: EmailPriority): IO[Option[String]] = {
+    def addJitter(delay: FiniteDuration, randomFactor: Double): FiniteDuration = {
+      val jitter = 1.0 + (Random.nextDouble() * randomFactor * 2 - randomFactor)
+      FiniteDuration((delay.toMillis * jitter).toLong, MILLISECONDS)
+    }
+
+    def attemptSend(attemptNumber: Int, delay: FiniteDuration): IO[Option[String]] =
+      IO.blocking(sendBlocking(email, priority))
+        .handleErrorWith { error =>
+          if (attemptNumber >= 3) {
+            IO.raiseError(error)
+          } else {
+            val jitteredDelay = addJitter(delay, randomFactor = 0.2)
+            log.error(
+              s"Failed to send email to ${email.to.mkString(", ")} (attempt ${attemptNumber + 1})",
+              error
+            )
+            IO.sleep(jitteredDelay) >> attemptSend(attemptNumber + 1, delay * 2)
+          }
         }
-      }
-      .runWith(Sink.last)
+
+    attemptSend(attemptNumber = 0, delay = 10.seconds)
+  }
 
 }

@@ -39,6 +39,7 @@ case class Application(
     mandatType: Option[Application.MandatType],
     mandatDate: Option[String],
     invitedGroupIdsAtCreation: List[UUID],
+    isInFranceServicesNetwork: Boolean,
     personalDataWiped: Boolean = false,
 ) extends AgeModel {
 
@@ -97,32 +98,25 @@ case class Application(
   def hasBeenDisplayedFor(userId: UUID): Boolean =
     isCreator(userId) || seenByUserIds.contains[UUID](userId)
 
-  def longStatus(user: User): Application.Status = {
-    def answeredByOtherThan = answers.exists(_.creatorUserID =!= user.id)
-    lazy val seenByInvitedUser = seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty
+  lazy val answeredByNonCreator = userAnswers.exists(_.creatorUserID =!= creatorUserId)
 
+  def longStatus(user: User): Application.Status =
     closed match {
-      case true                                             => Archived
-      case false if isProcessed && isCreator(user.id)       => ToArchive
-      case false if isProcessed                             => Processed
-      case false if answeredByOtherThan | seenByInvitedUser => Processing
-      case false if isCreator(user.id)                      => Sent
-      case false                                            => New
+      case true                                       => Archived
+      case false if isProcessed && isCreator(user.id) => ToArchive
+      case false if isProcessed                       => Processed
+      case false if answeredByNonCreator              => Processing
+      case false if isCreator(user.id)                => Sent
+      case false                                      => New
     }
-  }
 
-  def status: Application.Status = {
-    lazy val answeredByCreator = answers.exists(_.creatorUserID === creatorUserId)
-    lazy val viewedByAtLeastOneInvitedUser =
-      seenByUserIds.intersect(invitedUsers.keys.toList).nonEmpty
-
+  def status: Application.Status =
     closed match {
-      case true                                                       => Archived
-      case false if isProcessed                                       => Processed
-      case false if answeredByCreator | viewedByAtLeastOneInvitedUser => Processing
-      case _                                                          => New
+      case true                          => Archived
+      case false if isProcessed          => Processed
+      case false if answeredByNonCreator => Processing
+      case _                             => New
     }
-  }
 
   def invitedUsers(users: List[User]): List[User] =
     invitedUsers.keys.flatMap(userId => users.find(_.id === userId)).toList
@@ -253,6 +247,7 @@ case class Application(
       mandatType = wiped.mandatType,
       mandatDate = anonMandatDate,
       invitedGroupIdsAtCreation = wiped.invitedGroupIdsAtCreation,
+      isInFranceServicesNetwork = wiped.isInFranceServicesNetwork,
       personalDataWiped = wiped.personalDataWiped,
     )
   }

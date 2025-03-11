@@ -208,6 +208,9 @@ object Authorization {
   def canSeeStats: Check =
     atLeastOneIsAuthorized(isAdmin, isAreaManager, isManager, isObserver)
 
+  def hasAccessToFranceServicesNetwork(userGroups: List[UserGroup]): Check =
+    _ => userGroups.isEmpty || userGroups.exists(_.isInFranceServicesNetwork)
+
   //
   // Authorizations concerning User/UserGroup
   //
@@ -420,7 +423,10 @@ object Authorization {
         not(isExpert(rights)) &&
         (
           (isInstructor(rights) && isInvitedOn(application)(rights)) ||
-            (isHelper(rights) && isApplicationCreator(application)(rights))
+            (isHelper(rights) && (
+              isApplicationCreator(application)(rights) ||
+                isInApplicationCreatorGroup(application)(rights)
+            ))
         )
 
   def fileCanBeShown(filesExpirationInDays: Int)(

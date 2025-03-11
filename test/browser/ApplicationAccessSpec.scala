@@ -133,6 +133,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       inseeCode = List("0"),
       creationDate = Time.nowParis(),
       areaIds = area :: Nil,
+      isInFranceServicesNetwork = true,
       publicNote = None,
       internalSupportComment = None
     )
@@ -144,6 +145,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       inseeCode = List("0"),
       creationDate = Time.nowParis(),
       areaIds = area :: Nil,
+      isInFranceServicesNetwork = true,
       publicNote = None,
       internalSupportComment = None
     )
@@ -357,7 +359,8 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
       irrelevant = false,
       mandatType = Some(Application.MandatType.Paper),
       mandatDate = Some(java.time.ZonedDateTime.now().toString),
-      invitedGroupIdsAtCreation = List(instructorGroup.id)
+      invitedGroupIdsAtCreation = List(instructorGroup.id),
+      isInFranceServicesNetwork = true,
     )
     applicationService.createApplication(application)
 

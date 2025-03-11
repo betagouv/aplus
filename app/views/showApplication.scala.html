@@ -6,7 +6,7 @@
 @import models.Authorization
 @import serializers.Keys
 
-@(currentUser: User, currentUserRights: Authorization.UserRights)(groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, selectedArea: Area, userSignature: Option[String], attachments: List[FileMetadata], usersOrganisations: Map[java.util.UUID, List[Organisation.Id]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
+@(currentUser: User, currentUserRights: Authorization.UserRights)(userGroups: List[UserGroup], groupsWithUsersThatCanBeInvited: List[(UserGroup,List[User])], groupsThatCanBeInvited: List[UserGroup], application: Application, answerToAgentsForm: Form[_], openedTab: String, selectedArea: Area, userSignature: Option[String], attachments: List[FileMetadata], usersOrganisations: Map[java.util.UUID, List[Organisation.Id]])(implicit webJarsUtil: org.webjars.play.WebJarsUtil, flash: Flash, messagesProvider: MessagesProvider, request: RequestHeader, mainInfos: MainInfos)
 
 
 @main(currentUser, currentUserRights, modals = toHtml(views.application.closeApplicationModal(application.id)))(s"Demande de ${application.creatorUserName} - ${Area.fromId(application.area).get.name}")  {
@@ -192,8 +192,8 @@ dialog {
             }
             <div class="mdl-card__supporting-text mdl-card--border vertical-align--middle">
                 <i class="material-icons icon--light">chat_bubble</i> <span class="application__anwsers"><b>@application.answers.length</b> messages </span> |
-                <span class="application__age">Créée il y a @application.ageString (@Time.formatPatternFr(application.creationDate, "dd MMM YYYY - HH:mm")) </span> |
-                    @for(area <- Area.fromId(application.area)){ @area.name}
+                <span class="application__age">Créée il y a @application.ageString (@Time.formatPatternFr(application.creationDate, "dd MMM yyyy - HH:mm")) </span> |
+                    @for(area <- Area.fromId(application.area)){ @area.name} @if(application.isInFranceServicesNetwork) { | Réseau France Services }
             </div>
             <div class="mdl-card__supporting-text mdl-card--border">
                 <div class="info-box">
@@ -202,7 +202,7 @@ dialog {
                     }
                     @for(answer <- application.answers) {
                         @for((key, value) <- answer.userInfos.getOrElse(Map())) {
-                            @key: <b>@value</b> (ajouté le @Time.formatPatternFr(answer.creationDate, "E dd MMM YYYY"))</br>
+                            @key: <b>@value</b> (ajouté le @Time.formatPatternFr(answer.creationDate, "E dd MMM yyyy"))</br>
                         }
                     }
                 </div>
@@ -270,7 +270,7 @@ dialog {
                                     <i class="material-icons">remove_red_eye</i>
                                 </div>
                                 <div class="mdl-tooltip" for="seen-@userId">
-                                    Consultée par l’utilisateur (@Time.formatPatternFr(date.atZone(currentUser.timeZone), "dd MMM YYYY - HH:mm"))
+                                    Consultée par l’utilisateur (@Time.formatPatternFr(date.atZone(currentUser.timeZone), "dd MMM yyyy - HH:mm"))
                                 </div>
                               }
                             }
@@ -432,7 +432,7 @@ dialog {
 
 
                                 <div class="mdl-cell mdl-cell--12-col">
-                                    <button class="mdl-button mdl-button--primary mdl-js-button mdl-button--raised mdl-button--colored onsubmit-disable">
+                                    <button class="mdl-button mdl-button--primary mdl-js-button mdl-button--raised mdl-button--colored js-on-submit-disabled">
                                         Répondre
                                     </button>
                                 </div>
@@ -442,7 +442,7 @@ dialog {
 
 
         <div class="mdl-tabs__panel @if(openedTab =="invite"){ is-active }" id="invite">
-          @toHtml(views.application.inviteForm(currentUser, currentUserRights, groupsWithUsersThatCanBeInvited, groupsThatCanBeInvited, application, selectedArea))
+          @toHtml(views.application.inviteForm(currentUser, currentUserRights, userGroups, groupsWithUsersThatCanBeInvited, groupsThatCanBeInvited, application, selectedArea))
         </div>
 
                 </div>

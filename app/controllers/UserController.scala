@@ -7,6 +7,7 @@ import constants.Constants
 import controllers.Operators.{GroupOperators, UserOperators}
 import helper.{Time, UUIDHelper}
 import helper.BooleanHelper.not
+import helper.ScalatagsHelpers.writeableOf_Modifier
 import helper.StringHelper.{capitalizeName, commonStringInputNormalization}
 import java.time.LocalDate
 import java.util.UUID
@@ -66,6 +67,7 @@ import services.{
   EventService,
   NotificationService,
   PasswordService,
+  ServicesDependencies,
   UserGroupService,
   UserService
 }
@@ -75,6 +77,7 @@ case class UserController @Inject() (
     applicationService: ApplicationService,
     config: AppConfig,
     val controllerComponents: ControllerComponents,
+    dependencies: ServicesDependencies,
     eventService: EventService,
     groupService: UserGroupService,
     loginAction: LoginAction,
@@ -87,6 +90,8 @@ case class UserController @Inject() (
     with Operators.Common
     with UserOperators
     with GroupOperators {
+
+  import dependencies.ioRuntime
 
   def showEditProfile: Action[AnyContent] =
     loginAction.async { implicit request =>
@@ -527,11 +532,11 @@ case class UserController @Inject() (
                     )
                   Future(Unauthorized("Vous n'avez pas le droit de faire ça"))
                 } else {
-                  val cguDate =
+                  val (cguDate, mustRevokeSessions) =
                     if (oldUser.email === updatedUserData.email)
-                      oldUser.cguAcceptationDate
+                      (oldUser.cguAcceptationDate, false)
                     else
-                      none
+                      (none, true)
                   val userToUpdate = oldUser.copy(
                     firstName = updatedUserData.firstName,
                     lastName = updatedUserData.lastName,
@@ -553,35 +558,49 @@ case class UserController @Inject() (
                     sharedAccount = updatedUserData.sharedAccount,
                     internalSupportComment = updatedUserData.internalSupportComment
                   )
-                  userService.update(userToUpdate).map { updateHasBeenDone =>
-                    if (updateHasBeenDone) {
-                      eventService
-                        .log(
-                          UserEdited,
-                          s"Utilisateur $userId modifié",
-                          s"Utilisateur ${oldUser.toDiffLogString(userToUpdate)}".some,
-                          involvesUser = Some(userToUpdate.id)
-                        )
-                      Redirect(routes.UserController.editUser(userId))
-                        .flashing("success" -> "Utilisateur modifié")
-                    } else {
-                      val form = EditUserFormData.form
-                        .fill(updatedUserData)
-                        .withGlobalError(
-                          s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)"
-                        )
-                      val groups = groupService.allOrThrow
-                      eventService.log(
-                        EditUserError,
-                        s"Impossible de modifier l'utilisateur $userId dans la BDD",
-                        s"Utilisateur ${oldUser.toDiffLogString(userToUpdate)}".some,
-                        involvesUser = Some(oldUser.id)
-                      )
-                      InternalServerError(
-                        views.html
-                          .editUser(request.currentUser, request.rights)(form, oldUser, groups)
-                      )
-                    }
+                  val sessionsRevokedFuture: Future[Either[Error, Int]] =
+                    if (mustRevokeSessions)
+                      userService.revokeActiveUserSessions(userId).unsafeToFuture()
+                    else Future.successful(Right(0))
+                  sessionsRevokedFuture.flatMap {
+                    case Left(error) =>
+                      eventService.logError(error)
+                      Future.successful(InternalServerError(views.errors.public500(None)))
+                    case Right(sessionsRevoked) =>
+                      userService.update(userToUpdate).map { updateHasBeenDone =>
+                        if (updateHasBeenDone) {
+                          eventService
+                            .log(
+                              UserEdited,
+                              s"Utilisateur $userId modifié" +
+                                (if (mustRevokeSessions)
+                                   s" ($sessionsRevoked sessions revoquées)"
+                                 else
+                                   ""),
+                              s"Utilisateur ${oldUser.toDiffLogString(userToUpdate)}".some,
+                              involvesUser = Some(userToUpdate.id)
+                            )
+                          Redirect(routes.UserController.editUser(userId))
+                            .flashing("success" -> "Utilisateur modifié")
+                        } else {
+                          val form = EditUserFormData.form
+                            .fill(updatedUserData)
+                            .withGlobalError(
+                              s"Impossible de mettre à jour l'utilisateur $userId (Erreur interne)"
+                            )
+                          val groups = groupService.allOrThrow
+                          eventService.log(
+                            EditUserError,
+                            s"Impossible de modifier l'utilisateur $userId dans la BDD",
+                            s"Utilisateur ${oldUser.toDiffLogString(userToUpdate)}".some,
+                            involvesUser = Some(oldUser.id)
+                          )
+                          InternalServerError(
+                            views.html
+                              .editUser(request.currentUser, request.rights)(form, oldUser, groups)
+                          )
+                        }
+                      }
                   }
                 }
               }

@@ -147,73 +147,71 @@ case class MandatController @Inject() (
     * Also, this is a webhook, only the returned status code is useful
     */
   // TODO: What if usager send an incorrect response the first time? close sms_thread only after some time has passed?
-  def webhookSmsReceived: Action[String] = Action(bodyParsers.tolerantText).async {
-    implicit request =>
-      smsService
-        .smsReceivedCallback(request)
-        .flatMap(
-          _.fold(
-            error => {
-              eventService.logSystem(
-                error.eventType,
-                error.description,
-                error.unsafeData,
-                underlyingException = error.underlyingException
-              )
-              Future(InternalServerError)
-            },
-            sms =>
-              mandatService
-                .addSmsResponse(sms)
-                .flatMap(
-                  _.fold(
-                    error => {
-                      eventService.logSystem(
-                        error.eventType,
-                        error.description,
-                        error.unsafeData,
-                        underlyingException = error.underlyingException
-                      )
-                      if (error.eventType === EventType.MandatNotFound)
-                        Future(Ok)
-                      else
-                        Future(InternalServerError)
-                    },
-                    mandatId =>
-                      mandatService
-                        .byIdAnonymous(mandatId)
-                        .map(
-                          _.fold(
-                            error => {
-                              eventService.logSystem(
-                                error.eventType,
-                                (s"Après ajout de la réponse par SMS ${sms.apiId.underlying}. " +
-                                  error.description),
-                                error.unsafeData,
-                                underlyingException = error.underlyingException
-                              )
-                              Ok
-                            },
-                            mandat => {
-                              eventService.logSystem(
-                                EventType.MandatBySmsResponseSaved,
-                                s"Le mandat par SMS ${mandat.id.underlying} a reçu la réponse " +
-                                  s"${sms.apiId.underlying}"
-                              )
+  def webhookSmsReceived
+      : Action[String] = Action(bodyParsers.tolerantText).async { implicit request =>
+    smsService
+      .smsReceivedCallback(request)
+      .flatMap(
+        _.fold(
+          error => {
+            eventService.logSystem(
+              error.eventType,
+              error.description,
+              error.unsafeData,
+              underlyingException = error.underlyingException
+            )
+            Future(InternalServerError)
+          },
+          sms =>
+            mandatService
+              .addSmsResponse(sms)
+              .flatMap(
+                _.fold(
+                  error => {
+                    eventService.logSystem(
+                      error.eventType,
+                      error.description,
+                      error.unsafeData,
+                      underlyingException = error.underlyingException
+                    )
+                    if (error.eventType === EventType.MandatNotFound)
+                      Future(Ok)
+                    else
+                      Future(InternalServerError)
+                  },
+                  mandatId =>
+                    mandatService
+                      .byIdAnonymous(mandatId)
+                      .map(
+                        _.fold(
+                          error => {
+                            eventService.logSystem(
+                              error.eventType,
+                              (s"Après ajout de la réponse par SMS ${sms.apiId.underlying}. " +
+                                error.description),
+                              error.unsafeData,
+                              underlyingException = error.underlyingException
+                            )
+                            Ok
+                          },
+                          mandat => {
+                            eventService.logSystem(
+                              EventType.MandatBySmsResponseSaved,
+                              s"Le mandat par SMS ${mandat.id.underlying} a reçu la réponse " +
+                                s"${sms.apiId.underlying}"
+                            )
 
-                              userService
-                                .byId(mandat.userId)
-                                .foreach(user =>
-                                  notificationsService.mandatSmsClosed(mandatId, user)
-                                )
-                              Ok
-                            }
-                          )
+                            userService
+                              .byId(mandat.userId)
+                              .foreach(user => notificationsService.mandatSmsClosed(mandatId, user))
+                            Ok
+                          }
                         )
-                  )
+                      )
                 )
-          )
+              )
         )
+      )
   }
 
   def mandat(rawId: UUID): Action[AnyContent] = loginAction.async { implicit request =>
@@ -232,8 +230,8 @@ case class MandatController @Inject() (
                     s"Vous n'avez pas les droits suffisants pour voir ce mandat. " +
                       s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
                   )
-                case _: Error.Database | _: Error.SqlException |
-                    _: Error.UnexpectedServerResponse | _: Error.Timeout | _: Error.MiscException =>
+                case _: Error.Database | _: Error.SqlException | _: Error.UnexpectedServerResponse |
+                    _: Error.Timeout | _: Error.MiscException =>
                   InternalServerError(
                     s"Une erreur s'est produite sur le serveur. " +
                       "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard. " +

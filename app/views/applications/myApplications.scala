@@ -206,7 +206,7 @@ object myApplications {
         div(cls := "fr-col fr-col-4 aplus-my-application--message-list")(
           applications
             .sortBy(_.application.closed)
-            .map(application => {
+            .map { application =>
               frag(
                 div(cls := "fr-card")(
                   a(
@@ -342,7 +342,7 @@ object myApplications {
                   )
                 )
               )
-            })
+            }
         ),
         div(cls := "fr-col fr-col-8", id := "application-message-container")(
           selectedApplication.fold[Tag](

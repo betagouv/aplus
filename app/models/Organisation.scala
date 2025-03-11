@@ -80,6 +80,12 @@ object Organisation {
   )
 
   val departement: Organisation = Organisation("Département", "Conseil départemental")
+
+  val dilaId: Id = Organisation.Id("DILA")
+
+  val dila: Organisation =
+    Organisation(dilaId, "DILA", "Direction de l’information légale et administrative")
+
   val drfipId: Id = Organisation.Id("DRFIP")
 
   val drfip: Organisation =
@@ -95,7 +101,7 @@ object Organisation {
   val msap: Organisation = Organisation("MSAP", "Maison de services au public")
   val hopital: Organisation = Organisation("Hôpital", "Hôpital")
   val poleEmploiId: Id = Organisation.Id("Pôle emploi")
-  val poleEmploi: Organisation = Organisation(poleEmploiId, "Pôle emploi", "Pôle emploi")
+  val poleEmploi: Organisation = Organisation(poleEmploiId, "France Travail", "France Travail")
   val prefId: Id = Organisation.Id("Préf")
   val pref: Organisation = Organisation(prefId, "Préf", "Préfecture")
   val sousPrefId: Id = Organisation.Id("Sous-Préf")
@@ -124,6 +130,7 @@ object Organisation {
     cram, // Région
     ddfip, // Département
     departement,
+    dila,
     drfip, // Région
     hopital, // Ville
     Organisation("OFPRA", "Office français de protection des réfugiés et apatrides"), // Nationale
@@ -143,7 +150,7 @@ object Organisation {
     )
   )
 
-  val organismesAidants: List[Organisation] = List(association, franceServices, msap, hopital)
+  val organismesAidants: List[Organisation] = List(association, dila, franceServices, msap, hopital)
 
   val organismesOperateurs: List[Organisation] =
     all.filter(!organismesAidants.contains[Organisation](_))

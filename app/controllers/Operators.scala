@@ -45,11 +45,11 @@ object Operators {
     )(implicit request: RequestWithUserData[_], ec: ExecutionContext): Future[Result] =
       groupService
         .groupById(groupId)
-        .fold({
+        .fold {
           eventService
             .log(UserGroupNotFound, "Tentative d'accès à un groupe inexistant")
           Future(NotFound("Groupe inexistant."))
-        })({ (group: UserGroup) => payload(group) })
+        }((group: UserGroup) => payload(group))
 
     def asAdminOfGroupZone(group: UserGroup)(errorEventType: EventType, errorMessage: => String)(
         payload: () => Future[Result]
@@ -87,7 +87,7 @@ object Operators {
     )(implicit request: RequestWithUserData[_]): Future[Result] =
       userService
         .byId(userId, includeDisabled)
-        .fold({
+        .fold {
           eventService.log(
             UserNotFound,
             errorMessage.getOrElse(s"Tentative d'accès à un utilisateur inexistant ($userId)"),
@@ -96,7 +96,7 @@ object Operators {
           Future.successful(
             errorResult.getOrElse(NotFound(s"L'utilisateur n'existe pas."))
           )
-        })({ (user: User) => payload(user) })
+        }((user: User) => payload(user))
 
     def asUserWithAuthorization(authorizationCheck: Authorization.Check)(
         errorEventType: EventType,

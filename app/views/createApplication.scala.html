@@ -32,6 +32,7 @@
                 Les champs marqués d’un <span class="mdl-color-text--red-500">*</span> sont obligatoires
             </div>
 
+            @if(Authorization.hasAccessToFranceServicesNetwork(userGroups)(currentUserRights)) {
             @if(mainInfos.config.featureCanSendApplicationsAnywhere) {
               <h5 class="title--addline">Territoire concerné</h5>
               <div>
@@ -44,12 +45,17 @@
                 @toHtml(views.helpers.changeAreaSelect(currentArea, currentUser.areas.flatMap(Area.fromId), routes.ApplicationController.create))
               </div>
             }
+            }
 
             @helper.form(action = routes.ApplicationController.createPost, "enctype" -> "multipart/form-data", "id" -> "create-application-form", "class" -> "aplus-protected-form") {
                 @helper.CSRF.formField
                     <input type="hidden" name="application-id" readonly value="@applicationForm("application-id").value.getOrElse(java.util.UUID.randomUUID)">
 
                     <input type="hidden" name="@{Keys.Application.areaId}" readonly value="@{currentArea.id}">
+
+                    @if(organisationGroups.isEmpty) {
+                        Il n’existe pas de groupes répondant à des demandes dans ce territoire.
+                    }
 
                     @toHtml(views.helpers.applications.creatorGroup(applicationForm, userGroups))
 
@@ -148,16 +154,15 @@
 
                     @helper.input(applicationForm("mandatDate"),
                                   "class" -> " single--padding-top-8px") { (id, name, value, args) =>
+                    @defining(if(value.isEmpty) { java.time.ZonedDateTime.now().format(_root_.helper.Time.dateWithHourFormatter) } else { value }) { nonEmptyValue =>
                     <input class="mdl-textfield__input"
                            type="text"
                            name="@name"
                            id="@id"
-                           value="@value"
+                           value="@nonEmptyValue"
                            @toHtmlArgs(args)>
 
-                    <span class="mdl-color-text--grey-600 single--font-size-14px">
-                      ex. : @{java.time.ZonedDateTime.now().format(_root_.helper.Time.dateWithHourFormatter)}
-                    </span>
+                    }
                     }
 
                         </div>
@@ -247,7 +252,7 @@
                     @* Use a <input type="submit"> because there is another <button> *@
                         <input type="submit"
                                id="review-validation"
-                               class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
+                               class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored js-on-submit-disabled"
                                value="Envoyer ma demande"
                                disabled>
 
