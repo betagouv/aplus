@@ -38,7 +38,11 @@ object LoginAction {
     )
 
   def signupSessionKeys: List[String] =
-    List(Keys.Session.signupId, Keys.Session.signupLoginExpiresAt)
+    List(
+      Keys.Session.signupId,
+      Keys.Session.signupLoginExpiresAt,
+      Keys.Session.signupProConnectSubject
+    )
 
 }
 

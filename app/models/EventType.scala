@@ -114,7 +114,6 @@ object EventType {
   object ReopenUnauthorized extends Warn
   object TerminateUnauthorized extends Warn
   object ToCGURedirected extends Info
-  object UserAccessDisabled extends Info
   object UserCreated extends Info
   object UserDeleted extends Info
   object UserEdited extends Info
@@ -194,6 +193,7 @@ object EventType {
   object AuthWithDifferentIp extends Warn
   object LoginByKey extends Info
   object AuthBySignupToken extends Info
+  object UserAccessDisabled extends Info
   object LoggedInUserAccountDeleted extends Warn
   object UserSessionError extends Error
   object PasswordPageShowed extends Info
@@ -227,6 +227,16 @@ object EventType {
   object FSMatriculeInvalidData extends Warn
   object FSMatriculeError extends Error
   object FSMatriculeChanged extends Info
+
+  // ProConnect
+  object ProConnectSecurityWarning extends Warn
+  object ProConnectError extends Error
+  object ProConnectUpdateProviderConfiguration extends Info
+  object ProConnectUserLoginSuccessful extends Info
+  object ProConnectSignupLoginSuccessful extends Info
+  object ProConnectLoginDeactivatedUser extends Error
+  object ProConnectUnknownEmail extends Warn
+  object ProConnectClaimsSaveError extends Error
 
   val unauthenticatedEvents: List[EventType] = List(
     GenerateToken,
