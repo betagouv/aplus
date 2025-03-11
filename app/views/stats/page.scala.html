@@ -26,6 +26,14 @@
                     }
                 </select>
 
+            @if(form.hasNetworkFilters) {
+                <select id="is-in-france-services-network-selector" name="reseau">
+                    <option value="tous" @if(form.isInFranceServicesNetwork.isEmpty){ selected }>Tous les réseaux</option>
+                    <option value="france-services" @if(form.isInFranceServicesNetwork.contains(true)){ selected }>Réseau France Services</option>
+                    <option value="general" @if(form.isInFranceServicesNetwork.contains(false)){ selected }>Réseau Général</option>
+                </select>
+            }
+
             <br>
             Création des demandes entre le : <input name="creationMinDate" value="@form.creationMinDate" type="date">
             et le : <input name="creationMaxDate" value="@form.creationMaxDate" type="date">

@@ -16,7 +16,8 @@ object internalStats {
       areaIds: List[UUID],
       organisationIds: List[Organisation.Id],
       creatorGroupIds: List[UUID],
-      invitedGroupIds: List[UUID]
+      invitedGroupIds: List[UUID],
+      isInFranceServicesNetwork: Option[Boolean]
   )
 
   case class SelectionForm(
@@ -28,13 +29,15 @@ object internalStats {
       creationMaxDate: LocalDate,
       selectedAreaIds: List[UUID],
       selectedOrganisationIds: List[Organisation.Id],
-      selectedGroupIds: List[UUID]
+      selectedGroupIds: List[UUID],
+      hasNetworkFilters: Boolean,
+      isInFranceServicesNetwork: Option[Boolean],
   )
 
   def charts(filters: Filters, config: AppConfig): Frag = {
     // https://www.metabase.com/docs/latest/questions/sharing/public-links#appearance-parameters
     val appearance = "#bordered=false" +
-      "&hide_parameters=start_date,end_date,area_id,organisation_id,creator_user_group_id,invited_user_group_id"
+      "&hide_parameters=start_date,end_date,area_id,organisation_id,creator_user_group_id,invited_user_group_id,is_in_france_services_network"
     val startDate = s"start_date=${filters.startDate.toString}"
     val endDate = s"end_date=${filters.endDate.toString}"
     val areas =
@@ -49,9 +52,15 @@ object internalStats {
     val invitedGroups =
       if (filters.invitedGroupIds.isEmpty) ""
       else "&" + filters.invitedGroupIds.map(id => s"invited_user_group_id=$id").mkString("&")
+    val isInFranceServicesNetwork =
+      filters.isInFranceServicesNetwork match {
+        case None        => ""
+        case Some(true)  => "&is_in_france_services_network=true"
+        case Some(false) => "&is_in_france_services_network=false"
+      }
     val metabaseFilters =
       startDate + "&" + endDate + areas + organisations + creatorGroups + invitedGroups +
-        appearance
+        isInFranceServicesNetwork + appearance
 
     def metabaseIframe(url: String) =
       iframe(
