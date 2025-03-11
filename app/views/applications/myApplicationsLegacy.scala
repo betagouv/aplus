@@ -237,7 +237,7 @@ object myApplicationsLegacy {
     )
   }
 
-  private def statusTag(application: Application, user: User): Tag = {
+  def statusTag(application: Application, user: User): Tag = {
     val status = application.longStatus(user)
     val classes: String = status match {
       case Processing =>
