@@ -89,13 +89,19 @@
                 }
             </div>
 
-
+            @if(Authorization.isAdmin(currentUserRights)) {
             <div class="mdl-cell mdl-cell--12-col single--margin-top-16px">
                 <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="isInFranceServicesNetwork">
-                    <input type="checkbox" id="isInFranceServicesNetwork" name="isInFranceServicesNetwork" value="true" @if(userGroup.isInFranceServicesNetwork) { checked } @if(!currentUser.admin) { disabled } class="mdl-checkbox__input">
+                    <input type="checkbox" id="isInFranceServicesNetwork" name="isInFranceServicesNetwork" value="true" @if(userGroup.isInFranceServicesNetwork) { checked } class="mdl-checkbox__input">
                     <span class="mdl-checkbox__label">Ce groupe est restreint au réseau France Services</span>
                 </label>
             </div>
+            } else {
+              <input type="hidden"
+                     name="isInFranceServicesNetwork"
+                     id="isInFranceServicesNetwork"
+                     value="@userGroup.isInFranceServicesNetwork">
+            }
 
             @if(Authorization.canEditSupportMessages(currentUserRights)) {
 
