@@ -12,7 +12,7 @@ import java.sql.Connection
 import java.time.Instant
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import models.{Error, EventType, Organisation, User, UserSession}
+import models.{Error, EventType, Organisation, ProConnectClaims, User, UserSession}
 import models.dataModels.UserRow
 import modules.AppConfig
 import org.postgresql.util.PSQLException
@@ -663,8 +663,9 @@ class UserService @Inject() (
     Column
       .of[String]
       .mapResult {
-        case "magic_link"        => UserSession.LoginType.MagicLink.asRight
+        case "pro_connect"       => UserSession.LoginType.ProConnect.asRight
         case "insecure_demo_key" => UserSession.LoginType.InsecureDemoKey.asRight
+        case "magic_link"        => UserSession.LoginType.MagicLink.asRight
         case "password"          => UserSession.LoginType.Password.asRight
         case unknownType =>
           SqlMappingError(s"Cannot parse login_type $unknownType").asLeft
@@ -739,8 +740,9 @@ class UserService @Inject() (
       )
 
   private def stringifyLoginType(loginType: UserSession.LoginType): String = loginType match {
-    case UserSession.LoginType.MagicLink       => "magic_link"
+    case UserSession.LoginType.ProConnect      => "pro_connect"
     case UserSession.LoginType.InsecureDemoKey => "insecure_demo_key"
+    case UserSession.LoginType.MagicLink       => "magic_link"
     case UserSession.LoginType.Password        => "password"
   }
 
@@ -898,6 +900,94 @@ class UserService @Inject() (
           Error.SqlException(
             EventType.UserSessionError,
             s"Impossible de revoquer les sessions actives de l'utilisateur $userId",
+            error,
+            none
+          )
+        )
+      )
+
+  //
+  // ProConnect
+  //
+
+  val (proConnectClaimsParser, proConnectClaimsTableFields) =
+    Macros.parserWithFields[ProConnectClaims](
+      "subject",
+      "email",
+      "given_name",
+      "usual_name",
+      "uid",
+      "siret",
+      "creation_date",
+      "last_auth_time",
+      "user_id",
+    )
+
+  val proConnectClaimsFieldsInSelect: String =
+    proConnectClaimsTableFields.mkString(", ")
+
+  def saveProConnectClaims(claims: ProConnectClaims): IO[Either[Error, Unit]] =
+    IO.blocking {
+      val _ = db.withConnection { implicit connection =>
+        SQL"""
+          INSERT INTO pro_connect_claims (
+            subject,
+            email,
+            given_name,
+            usual_name,
+            uid,
+            siret,
+            creation_date,
+            last_auth_time,
+            user_id
+          ) VALUES(
+            ${claims.subject},
+            ${claims.email},
+            ${claims.givenName},
+            ${claims.usualName},
+            ${claims.uid},
+            ${claims.siret},
+            ${claims.creationDate},
+            ${claims.lastAuthTime},
+            ${claims.userId}
+          )
+          ON CONFLICT (subject) DO UPDATE SET
+            email = EXCLUDED.email,
+            given_name = EXCLUDED.given_name,
+            usual_name = EXCLUDED.usual_name,
+            uid = EXCLUDED.uid,
+            siret = EXCLUDED.siret,
+            last_auth_time = EXCLUDED.last_auth_time,
+            user_id = EXCLUDED.user_id
+        """.executeUpdate()
+      }
+    }.attempt
+      .map(
+        _.left.map(error =>
+          Error.SqlException(
+            EventType.ProConnectClaimsSaveError,
+            s"Impossible de sauvegarder les claims ProConnect [subject: ${claims.subject}]",
+            error,
+            none
+          )
+        )
+      )
+
+  def linkUserToProConnectClaims(userId: UUID, subject: String): IO[Either[Error, Unit]] =
+    IO.blocking {
+      val _ = db.withConnection { implicit connection =>
+        SQL"""
+          UPDATE pro_connect_claims
+          SET user_id = $userId::uuid
+          WHERE subject = $subject
+        """.executeUpdate()
+      }
+    }.attempt
+      .map(
+        _.left.map(error =>
+          Error.SqlException(
+            EventType.ProConnectClaimsSaveError,
+            s"Impossible de lier l'utilisateur $userId au claims de subject $subject",
             error,
             none
           )
