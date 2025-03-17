@@ -99,6 +99,7 @@ POST        /groups/:groupId                                                    
 GET         /groups/:groupId/users                                                           controllers.UserController.add(groupId: java.util.UUID)
 POST        /groups/:groupId/users                                                           controllers.UserController.addPost(groupId: java.util.UUID)
 POST        /groups/:groupId/suppression                                                     controllers.GroupController.deleteUnusedGroupById(groupId: java.util.UUID)
+POST        /groups/:groupId/enlever-tous-les-utilisateurs                                   controllers.GroupController.removeAllUsersFromGroup(groupId: java.util.UUID)
 
 # Events
 GET         /events                                                                          controllers.UserController.allEvents
