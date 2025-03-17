@@ -34,6 +34,7 @@ case class UserGroup(
   lazy val emailLog: String = email.map(withQuotes).getOrElse("<vide>")
   lazy val organisationLog: String = organisationId.map(_.id).getOrElse("<vide>")
   lazy val areaIdsLog: String = areaIds.mkString(", ")
+  lazy val isInFranceServicesNetworkLog: String = isInFranceServicesNetwork.toString
   lazy val publicNoteLog: String = publicNote.map(withQuotes).getOrElse("<vide>")
 
   lazy val internalSupportCommentLog: String =
@@ -47,6 +48,7 @@ case class UserGroup(
       ("BAL", emailLog),
       ("Organisme", organisationLog),
       ("Territoires", areaIdsLog),
+      ("Réseau France Services", isInFranceServicesNetworkLog),
       ("Notice", publicNoteLog),
       ("Information Support", internalSupportCommentLog),
     ).map { case (fieldName, value) => s"$fieldName : $value" }.mkString(" | ") + "]"
@@ -64,6 +66,12 @@ case class UserGroup(
         other.organisationLog
       ),
       ("Territoires", areaIds =!= other.areaIds, areaIdsLog, other.areaIdsLog),
+      (
+        "Réseau France Services",
+        isInFranceServicesNetwork =!= other.isInFranceServicesNetwork,
+        isInFranceServicesNetworkLog,
+        other.isInFranceServicesNetworkLog
+      ),
       ("Notice", publicNote =!= other.publicNote, publicNoteLog, other.publicNoteLog),
       (
         "Information Support",
