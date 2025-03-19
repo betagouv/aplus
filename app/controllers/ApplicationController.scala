@@ -939,6 +939,7 @@ case class ApplicationController @Inject() (
             organisationIds = Nil,
             creatorGroupIds = Nil,
             invitedGroupIds = Nil,
+            isInFranceServicesNetwork = None,
           )
         else {
           val (creatorGroupIds, invitedGroupIds) = divideStatsGroups(userGroups)
@@ -948,7 +949,8 @@ case class ApplicationController @Inject() (
             areaIds = Nil,
             organisationIds = Nil,
             creatorGroupIds = creatorGroupIds,
-            invitedGroupIds = invitedGroupIds
+            invitedGroupIds = invitedGroupIds,
+            isInFranceServicesNetwork = None,
           )
         }
 
@@ -1051,6 +1053,12 @@ case class ApplicationController @Inject() (
     val (areaIds, queryOrganisationIds, queryGroupIds, creationMinDate, creationMaxDate) =
       StatsFormData.form.bindFromRequest().value.get
 
+    val isInFranceServicesNetwork = request.getQueryString("reseau") match {
+      case Some("france-services") => Some(true)
+      case Some("general")         => Some(false)
+      case _                       => None
+    }
+
     val organisationIds =
       if (Authorization.isAdmin(rights))
         queryOrganisationIds
@@ -1059,6 +1067,8 @@ case class ApplicationController @Inject() (
           .filter(id => user.managingOrganisationIds.contains[Organisation.Id](id))
       else
         queryOrganisationIds.filter(id => Authorization.canObserveOrganisation(id)(rights))
+
+    val userGroupsFuture = userGroupService.byIdsFuture(user.groupIds)
 
     // Note: admins can request stats on groups, but they are excluded
     // from filters for performance reasons
@@ -1073,72 +1083,89 @@ case class ApplicationController @Inject() (
         userGroupService.byIdsFuture(user.groupIds)
       }
 
-    groupsThatCanBeFilteredByFuture.flatMap { groupsThatCanBeFilteredBy =>
-      val selectedGroupIds =
-        if (organisationIds.nonEmpty) Nil
-        else
-          queryGroupIds.intersect(groupsThatCanBeFilteredBy.map(_.id))
+    groupsThatCanBeFilteredByFuture.zip(userGroupsFuture).flatMap {
+      case (groupsThatCanBeFilteredBy, userGroups) =>
 
-      val areasThatCanBeFilteredBy =
-        if (Authorization.isAdmin(rights))
-          Area.all
-        else
-          Area.allExcludingDemo
-
-      val (canFilterByOrganisation, organisationsThatCanBeFilteredBy) =
-        if (Authorization.isAdmin(rights))
-          (true, Organisation.all)
-        else if (Authorization.isObserver(rights))
-          (true, user.observableOrganisationIds.flatMap(Organisation.byId))
-        else if (Authorization.isAreaManager(rights))
-          (true, user.managingOrganisationIds.flatMap(Organisation.byId))
-        else
-          (false, Nil)
-
-      val form = views.internalStats.SelectionForm(
-        canFilterByOrganisation = canFilterByOrganisation,
-        areasThatCanBeFilteredBy = areasThatCanBeFilteredBy,
-        organisationsThatCanBeFilteredBy = organisationsThatCanBeFilteredBy,
-        groupsThatCanBeFilteredBy = groupsThatCanBeFilteredBy,
-        creationMinDate = creationMinDate,
-        creationMaxDate = creationMaxDate,
-        selectedAreaIds = areaIds,
-        selectedOrganisationIds = organisationIds,
-        selectedGroupIds = selectedGroupIds
-      )
-
-      val charts: Future[Html] = {
-        val validQueryGroups =
-          groupsThatCanBeFilteredBy.filter(group => selectedGroupIds.contains[UUID](group.id))
-        val (creatorGroupIds, invitedGroupIds) = divideStatsGroups(validQueryGroups)
-
-        Future.successful(
-          views.internalStats.charts(
-            views.internalStats.Filters(
-              startDate = creationMinDate,
-              endDate = creationMaxDate,
-              areaIds,
-              organisationIds,
-              creatorGroupIds,
-              invitedGroupIds,
-            ),
-            config
+        val hasNetworkFilters = {
+          val isInOperateurGroup = userGroups.exists(group =>
+            group.organisationId
+              .map(id => Organisation.organismesOperateurs.map(_.id).contains[Organisation.Id](id))
+              .getOrElse(false)
           )
-        )
-      }
+          val validCase1 = isInOperateurGroup && userGroups.exists(!_.isInFranceServicesNetwork)
+          val validCase2 = !isInOperateurGroup && userGroups.exists(_.isInFranceServicesNetwork)
 
-      charts
-        .map { html =>
-          eventService.log(
-            EventType.StatsShowed,
-            "Visualise les stats [Territoires '" + areaIds.mkString(",") +
-              "' ; Organismes '" + queryOrganisationIds.mkString(",") +
-              "' ; Groupes '" + queryGroupIds.mkString(",") +
-              "' ; Date début '" + creationMinDate +
-              "' ; Date fin '" + creationMaxDate + "']"
-          )
-          Ok(views.html.stats.page(user, rights)(formUrl, html, form))
+          user.admin || validCase1 || validCase2
         }
+
+        val selectedGroupIds =
+          if (organisationIds.nonEmpty) Nil
+          else
+            queryGroupIds.intersect(groupsThatCanBeFilteredBy.map(_.id))
+
+        val areasThatCanBeFilteredBy =
+          if (Authorization.isAdmin(rights))
+            Area.all
+          else
+            Area.allExcludingDemo
+
+        val (canFilterByOrganisation, organisationsThatCanBeFilteredBy) =
+          if (Authorization.isAdmin(rights))
+            (true, Organisation.all)
+          else if (Authorization.isObserver(rights))
+            (true, user.observableOrganisationIds.flatMap(Organisation.byId))
+          else if (Authorization.isAreaManager(rights))
+            (true, user.managingOrganisationIds.flatMap(Organisation.byId))
+          else
+            (false, Nil)
+
+        val form = views.internalStats.SelectionForm(
+          canFilterByOrganisation = canFilterByOrganisation,
+          areasThatCanBeFilteredBy = areasThatCanBeFilteredBy,
+          organisationsThatCanBeFilteredBy = organisationsThatCanBeFilteredBy,
+          groupsThatCanBeFilteredBy = groupsThatCanBeFilteredBy,
+          creationMinDate = creationMinDate,
+          creationMaxDate = creationMaxDate,
+          selectedAreaIds = areaIds,
+          selectedOrganisationIds = organisationIds,
+          selectedGroupIds = selectedGroupIds,
+          hasNetworkFilters = hasNetworkFilters,
+          isInFranceServicesNetwork = isInFranceServicesNetwork,
+        )
+
+        val charts: Future[Html] = {
+          val validQueryGroups =
+            groupsThatCanBeFilteredBy.filter(group => selectedGroupIds.contains[UUID](group.id))
+          val (creatorGroupIds, invitedGroupIds) = divideStatsGroups(validQueryGroups)
+
+          Future.successful(
+            views.internalStats.charts(
+              views.internalStats.Filters(
+                startDate = creationMinDate,
+                endDate = creationMaxDate,
+                areaIds,
+                organisationIds,
+                creatorGroupIds,
+                invitedGroupIds,
+                isInFranceServicesNetwork,
+              ),
+              config
+            )
+          )
+        }
+
+        charts
+          .map { html =>
+            eventService.log(
+              EventType.StatsShowed,
+              "Visualise les stats [Territoires '" + areaIds.mkString(",") +
+                "' ; Organismes '" + queryOrganisationIds.mkString(",") +
+                "' ; Groupes '" + queryGroupIds.mkString(",") +
+                "' ; Date début '" + creationMinDate +
+                "' ; Date fin '" + creationMaxDate + "']"
+            )
+            Ok(views.html.stats.page(user, rights)(formUrl, html, form))
+          }
     }
   }
 
