@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: metabase-db
+  labels:
+    app: metabase
+spec:
+  clusterIP: None
+  ports:
+  - port: 5432
+  selector:
+    app: metabase
+    tier: postgres
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: metabase-db-pvc
+  labels:
+    app: metabase
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 7Gi
+  storageClassName: csi-cinder-classic
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: metabase-db-statefulset
+  labels:
+    app: metabase
+spec:
+  selector:
+    matchLabels:
+      app: metabase
+      tier: postgres
+  serviceName: metabase-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: metabase
+        tier: postgres
+    spec:
+      containers:
+        - name: metabase-postgres-database
+          image: postgres:11
+          volumeMounts:
+            - name: metabase-db-pv
+              mountPath: /var/lib/postgresql/data
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: metabase-db-postgres-secret
+                  key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+      volumes:
+        - name: metabase-db-pv
+          persistentVolumeClaim:
+            claimName: metabase-db-pvc
