@@ -191,6 +191,7 @@ dialog {
                 </div>
             }
             <div class="mdl-card__supporting-text mdl-card--border vertical-align--middle">
+                @toHtml(views.applications.myApplicationsLegacy.statusTag(application, currentUser)) |
                 <i class="material-icons icon--light">chat_bubble</i> <span class="application__anwsers"><b>@application.answers.length</b> messages </span> |
                 <span class="application__age">Créée il y a @application.ageString (@Time.formatPatternFr(application.creationDate, "dd MMM yyyy - HH:mm")) </span> |
                     @for(area <- Area.fromId(application.area)){ @area.name} @if(application.isInFranceServicesNetwork) { | Réseau France Services }
