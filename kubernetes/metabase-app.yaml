@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: metabase-app
+  labels:
+    app: metabase
+spec:
+  # Note: this is the default type = ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+  selector:     # Should be a Pod selector
+    app: metabase
+    tier: frontend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metabase-app-deployment
+  labels:
+    app: metabase
+spec:
+  replicas: 1
+  selector:       # Should match .spec.template
+    matchLabels:
+      app: metabase
+      tier: frontend
+  strategy:
+    type: Recreate  # here RollingUpdate is not well handled by app sql queries
+  template:
+    metadata:
+      labels:
+        app: metabase
+        tier: frontend
+    spec:
+      containers:
+      - image: metabase/metabase:v0.40.5
+        name: metabase-app
+        env:
+        - name: MB_DB_CONNECTION_URI
+          valueFrom:
+            secretKeyRef:
+              name: metabase-app-secret
+              key: MB_DB_CONNECTION_URI
+        ports:
+        - containerPort: 3000
