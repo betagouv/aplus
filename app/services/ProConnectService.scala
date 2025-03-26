@@ -393,7 +393,7 @@ class ProConnectService @Inject() (
       } yield {
 
         // OpenID Connect 5.5.  Requesting Claims using the "claims" Request Parameter  https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter
-        val claims = Json.stringify(
+        /*val claims = Json.stringify(
           Json.obj(
             "userinfo" -> Json.obj(
               "given_name" -> JsNull,
@@ -403,7 +403,7 @@ class ProConnectService @Inject() (
             )
             // ID token claims: https://github.com/numerique-gouv/proconnect-documentation/blob/main/doc_fs/scope-claims.md#les-donn%C3%A9es-sur-lauthentification
           )
-        )
+        )*/
 
         val uri = Uri(metadata.provider.authorizationEndpoint).withQuery(
           Uri.Query(
