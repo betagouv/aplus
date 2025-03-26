@@ -424,7 +424,7 @@ class ProConnectService @Inject() (
             "prompt" -> "login",
             "acr_values" -> "eidas1",
             // OpenID Connect 5.5.  Requesting Claims using the "claims" Request Parameter  https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter
-            "claims" -> claims,
+            // "claims" -> claims,
           )
         )
 
