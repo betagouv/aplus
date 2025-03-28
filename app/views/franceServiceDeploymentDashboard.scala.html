@@ -3,9 +3,11 @@
 @main(currentUser, currentUserRights, maxWidth = false)(s"Tableau de déploiement France Services") {
 }{
     <h5 class="title--addline">Tableau de déploiement France Services</h5>
+    @if(Authorization.canSeeOrEditMatricules(currentUserRights)) {
       <a class="mdl-button mdl-button--raised"
          href="@routes.AreaController.franceServices"
          >Matricules</a>
+    }
     <div id="aplus-admin-deployment-france-service-total" class="mdl-cell mdl-cell--12-col"></div>
     <div id="aplus-admin-deployment-france-service-table" class="mdl-cell mdl-cell--12-col"></div>
     <div class="mdl-cell mdl-cell--12-col">

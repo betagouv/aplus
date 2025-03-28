@@ -1006,6 +1006,13 @@ case class ApplicationController @Inject() (
       }
     }
 
+  val deployment: Action[AnyContent] = Action.async {
+    dataService
+      .operateursDeploymentData(DataService.organisationSetFranceService, Area.allExcludingDemo)
+      .map(deploymentData => Ok(views.publicStats.deploymentPage(deploymentData)))
+      .unsafeToFuture()
+  }
+
   val statsAction: BaseLoginAction = loginAction.withPublicPage(
     dataService
       .operateursDeploymentData(DataService.organisationSetFranceService, Area.allExcludingDemo)

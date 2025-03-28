@@ -43,7 +43,7 @@ case class ApiController @Inject() (
 
   def franceServices: Action[AnyContent] =
     loginAction.async { implicit request =>
-      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+      asUserWithAuthorization(Authorization.canSeeOrEditMatricules)(
         EventType.FSApiAccessUnauthorized,
         "Accès non autorisé à l'API de liste des France Services"
       ) { () =>
@@ -80,7 +80,7 @@ case class ApiController @Inject() (
 
   def addFranceServices: Action[JsValue] =
     loginAction[JsValue](parse.json).async { implicit request: RequestWithUserData[JsValue] =>
-      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+      asUserWithAuthorization(Authorization.canSeeOrEditMatricules)(
         EventType.FSApiAccessUnauthorized,
         "Accès non autorisé à l'API d'ajout de France Services"
       ) { () =>
@@ -226,7 +226,7 @@ case class ApiController @Inject() (
 
   def updateFranceService: Action[JsValue] =
     loginAction[JsValue](parse.json).async { implicit request: RequestWithUserData[JsValue] =>
-      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+      asUserWithAuthorization(Authorization.canSeeOrEditMatricules)(
         EventType.FSApiAccessUnauthorized,
         "Accès non autorisé à l'API de mise à jour des France Services"
       ) { () =>
@@ -278,7 +278,7 @@ case class ApiController @Inject() (
 
   def deleteFranceService(matricule: Int): Action[AnyContent] =
     loginAction.async { implicit request =>
-      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+      asUserWithAuthorization(Authorization.canSeeOrEditMatricules)(
         EventType.FSApiAccessUnauthorized,
         "Accès non autorisé à l'API de suppression des France Services"
       ) { () =>
@@ -345,7 +345,7 @@ case class ApiController @Inject() (
 
   def franceServiceDeployment: Action[AnyContent] =
     loginAction.async { implicit request =>
-      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+      asUserWithAuthorization(Authorization.canSeeDeployment)(
         EventType.DeploymentDashboardUnauthorized,
         "Accès non autorisé au dashboard de déploiement"
       ) { () =>
@@ -403,7 +403,7 @@ case class ApiController @Inject() (
 
   def deploymentData: Action[AnyContent] =
     loginAction.async { implicit request =>
-      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+      asUserWithAuthorization(Authorization.canSeeDeployment)(
         EventType.DeploymentDashboardUnauthorized,
         "Accès non autorisé au dashboard de déploiement"
       ) { () =>

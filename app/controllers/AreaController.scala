@@ -46,7 +46,7 @@ case class AreaController @Inject() (
 
   def deploymentDashboard: Action[AnyContent] =
     loginAction.async { implicit request =>
-      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+      asUserWithAuthorization(Authorization.canSeeDeployment)(
         DeploymentDashboardUnauthorized,
         "Accès non autorisé au dashboard de déploiement"
       ) { () =>
@@ -56,7 +56,7 @@ case class AreaController @Inject() (
 
   def franceServiceDeploymentDashboard: Action[AnyContent] =
     loginAction.async { implicit request =>
-      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+      asUserWithAuthorization(Authorization.canSeeDeployment)(
         DeploymentDashboardUnauthorized,
         "Accès non autorisé au dashboard de déploiement"
       ) { () =>
@@ -68,7 +68,7 @@ case class AreaController @Inject() (
 
   def franceServices: Action[AnyContent] =
     loginAction.async { implicit request =>
-      asUserWithAuthorization(Authorization.isAdminOrObserver)(
+      asUserWithAuthorization(Authorization.canSeeOrEditMatricules)(
         DeploymentDashboardUnauthorized,
         "Accès non autorisé aux France Services"
       ) { () =>

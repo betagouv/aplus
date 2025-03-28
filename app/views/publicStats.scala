@@ -28,6 +28,39 @@ object publicStats {
       ),
     )
 
+  def deploymentPage(deploymentData: DeploymentData): Tag =
+    views.main.publicLayout(
+      "Déploiement territorial - Administration+",
+      frag(
+        div(
+          cls := "fr-container fr-my-6w",
+          h1("Déploiement territorial")
+        ),
+        div(
+          cls := "fr-container fr-my-6w",
+          div(
+            cls := "fr-grid-row fr-grid-row--gutters",
+            deployment(deploymentData, addTitle = false)
+          ),
+        )
+      ),
+      breadcrumbs = ("Statistiques", ApplicationController.stats.url) :: (
+        "Déploiement territorial",
+        ApplicationController.deployment.url
+      ) :: Nil,
+      additionalHeadTags = frag(
+        link(
+          rel := "stylesheet",
+          href := Assets.versioned("generated-js/dsfr-chart/Charts/dsfr-chart.css").url
+        )
+      ),
+      additionalFooterTags = frag(
+        script(
+          src := Assets.versioned("generated-js/dsfr-chart/Charts/dsfr-chart.umd.js").url
+        ),
+      ),
+    )
+
   private def mainContent(deploymentData: DeploymentData): Frag =
     frag(
       div(
@@ -114,10 +147,10 @@ object publicStats {
       )
     )
 
-  def deployment(deploymentData: DeploymentData): Frag =
+  def deployment(deploymentData: DeploymentData, addTitle: Boolean = true): Frag =
     div(
       cls := "fr-col-12",
-      h2("Déploiement territorial"),
+      if (addTitle) h2("Déploiement territorial") else frag(),
       div(cls := "fr-mb-4w")(
         deploymentMap(deploymentData),
       ),

@@ -205,6 +205,12 @@ object Authorization {
       case _ => false
     }
 
+  def canSeeDeployment: Check =
+    atLeastOneIsAuthorized(isAdmin, isAreaManager, isObserver)
+
+  def canSeeOrEditMatricules: Check =
+    isAdmin
+
   def canSeeStats: Check =
     atLeastOneIsAuthorized(isAdmin, isAreaManager, isManager, isObserver)
 
@@ -229,7 +235,10 @@ object Authorization {
     )
 
   def canEditOtherUser(editedUser: User): Check =
-    isAdminOfOneOfAreas(editedUser.areas.toSet)
+    atLeastOneIsAuthorized(
+      isAdmin,
+      isAdminOfOneOfAreas(editedUser.areas.toSet),
+    )
 
   def canAddOrRemoveOtherUser(group: UserGroup): Check =
     atLeastOneIsAuthorized(isAdmin, isAreaManagerOfGroup(group), isInGroup(group.id))
