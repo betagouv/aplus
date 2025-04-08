@@ -48,7 +48,7 @@ GET         /stats                                                              
 GET         /as/:userId/stats                                                                controllers.ApplicationController.statsAs(userId: java.util.UUID)
 POST        /stats                                                                           controllers.ApplicationController.stats
 POST        /as/:userId/stats                                                                controllers.ApplicationController.statsAs(userId: java.util.UUID)
-
+GET         /deploiement                                                                     controllers.ApplicationController.deployment
 
 # Signup
 GET         /inscription                                                                     controllers.SignupController.signupForm

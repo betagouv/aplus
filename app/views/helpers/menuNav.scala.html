@@ -41,7 +41,7 @@
         </a>
     }
 
-    @if(Authorization.isAdminOrObserver(currentUserRights)) {
+    @if(Authorization.canSeeDeployment(currentUserRights)) {
         <a @linkAttrs(routes.AreaController.deploymentDashboard)>
             <i class="material-icons" role="presentation">track_changes</i>Déploiement
         </a>
