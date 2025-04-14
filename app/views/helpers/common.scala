@@ -113,9 +113,7 @@ object common {
                   li(a(href := HomeController.help.url, "Aide")),
                   li(
                     a(
-                      href := "https://docs.aplus.beta.gouv.fr/conditions-generales-dutilisation",
-                      target := "_blank",
-                      rel := "noopener noreferrer",
+                      href := HomeController.cgu.url,
                       "CGU"
                     )
                   ),

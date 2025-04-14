@@ -2,7 +2,7 @@ package views
 
 import cats.syntax.all._
 import constants.Constants
-import controllers.routes.SignupController
+import controllers.routes.{HomeController, SignupController}
 import helper.UUIDHelper
 import java.util.UUID
 import models.{Area, Organisation, SignupRequest, UserGroup}
@@ -267,9 +267,7 @@ object signup {
             cls := "mdl-checkbox__label",
             "J’atteste avoir pris connaissance des ",
             a(
-              href := "https://docs.aplus.beta.gouv.fr/conditions-generales-dutilisation",
-              target := "_blank",
-              rel := "noopener noreferrer",
+              href := HomeController.cgu.url,
               "conditions générales d’utilisation"
             ),
             " et je m’engage à les respecter. ",

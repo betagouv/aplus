@@ -9,6 +9,7 @@ GET         /bienvenue                                                          
 GET         /accessibilite                                                                   controllers.HomeController.declarationAccessibilite
 GET         /mentions-legales                                                                controllers.HomeController.mentionsLegales
 GET         /politique-de-confidentialite                                                    controllers.HomeController.privacy
+GET         /conditions-generales-d-utilisation                                              controllers.HomeController.cgu
 GET         /.well-known/security.txt                                                        controllers.HomeController.wellKnownSecurityTxt
 GET         /dashboard                                                                       controllers.ApplicationController.dashboard
 GET         /as/:userId/dashboard                                                            controllers.ApplicationController.dashboardAs(userId: java.util.UUID)
