@@ -516,9 +516,7 @@ object main {
             ),
             li(cls := "fr-footer__bottom-item")(
               a(cls := "fr-footer__bottom-link")(
-                href := "https://docs.aplus.beta.gouv.fr/conditions-generales-dutilisation",
-                target := "_blank",
-                rel := "noopener",
+                href := HomeController.cgu.url,
                 "Conditions générales d’utilisation"
               )
             ),
