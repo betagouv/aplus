@@ -6,7 +6,7 @@
 <div class="mdl-grid mdl-grid--no-spacing">
     <div @if(isCreationForm) { class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet" }>
     @repeatMap(form("usagerOptionalInfos"), form) {  (infoField, info) =>
-        <div>@if(info.capitalize == UserSocialSecurityNumberKey) { @UserSocialSecurityNumberKey } else { info.capitalize (facultatif) }
+        <div>@if(info.capitalize == UserSocialSecurityNumberKey) { @UserSocialSecurityNumberKey } else { @info.capitalize (facultatif) }
             <br>
             @usersInformationsInput(infoField, info)
         </div>
