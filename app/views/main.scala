@@ -548,7 +548,8 @@ object main {
               li(
                 a(
                   cls := "fr-footer__top-link",
-                  href := HomeController.help.url
+                  rel := "noopener noreferrer",
+                  href := "https://docs.aplus.beta.gouv.fr"
                 )("Aide")
               ),
               li(
