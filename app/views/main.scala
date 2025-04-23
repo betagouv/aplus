@@ -289,10 +289,10 @@ object main {
         ul(cls := "fr-btns-group")(
           li(
             a(
-              href := "https://docs.aplus.beta.gouv.fr/faq",
+              href := "https://docs.aplus.beta.gouv.fr",
               cls := "fr-btn",
               target := "_blank",
-              rel := "noopener",
+              rel := "noopener noreferrer",
               "FAQ"
             )
           ),
