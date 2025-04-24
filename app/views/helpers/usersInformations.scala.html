@@ -4,7 +4,7 @@
 <div class="mdl-grid mdl-grid--no-spacing">
     <div @if(isCreationForm) { class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet" }>
     @repeatMap(form("usagerOptionalInfos"), form) {  (infoField, info) =>
-        <div>@info.capitalize (facultatif)
+        <div class="js-optional-application-field">@info.capitalize (facultatif)
             <br>
             @usersInformationsInput(infoField, info)
         </div>
