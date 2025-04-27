@@ -1,0 +1,134 @@
+# This is only for development machines, it is not used on servers deployments.
+version: '3.9'
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: aplus
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_EXTENSIONS: unaccent
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      
+  web:
+    build: .
+    command: ./bin/aplus
+    depends_on:
+      - db
+    environment:
+      ANON_DATABASE_EVOLUTIONS_AUTOAPPLY: false
+      ANON_DATABASE_EVOLUTIONS_AUTOAPPLY_DOWNS: false
+      ANON_DATABASE_MAX_POOL_SIZE: "2"
+      ANON_DATABASE_URL: "postgres://aplus:mysecretpassword@db/aplus"
+      APP_ANONYMIZED_EXPORT_ENABLED: "false"
+      APP_CLAMAV_ENABLED: "false"
+      APP_CLAMAV_HOST: "192.168.64.6"
+      APP_CLAMAV_PORT: 3310
+      APP_CLAMAV_TIMEOUT_SECS: "10"
+      APP_FIELDS_ENCRYPTION_KEY_ROTATION_ENCRYPT_IF_PLAINTEXT: "true"
+      APP_FIELDS_ENCRYPTION_KEY_ROTATION_EXECUTE: "true"
+      APP_GROUPS_WITH_DSFR: ""
+      APP_HOST: localhost:9000
+      APP_HTTPS: "false"
+      APP_MAGIC_LINK_SESSION_DURATION_IN_SECONDS: "2592000"
+      APP_MAILER_PICKERS_CONFIG: '{"urgent":[{"weight":1,"smtpConfig":{"host":"urg1","port":1111,"mock":true}},{"weight":5,"smtpConfig":{"host":"urg2","port":1111,"mock":true}}],"normal":[{"weight":1,"smtpConfig":{"host":"normal1","port":1111,"mock":true},"extraHeaders":{"X-MJ-MonitoringCategory":"aplus","X-Mailjet-TrackClick":"0","X-MAILJET-TRACKOPEN":"0"}},{"weight":3,"smtpConfig":{"host":"normal2","port":1111,"mock":true},"extraHeaders":{"TEST-HEADER":"toto"}}]}'
+      APP_PASSWORD_SESSION_DURATION_IN_SECONDS: "2592000"
+      APP_STATISTICS_BOTTOM_CHARTS_URLS: ""
+      APP_STATISTICS_NUMBER_OF_APPLICATIONS_BY_USEFULNESS_URL: "https://statistiques.aplus.beta.gouv.fr/public/question/49a801fe-2514-42d4-b061-7ef02079a11a"
+      APP_STATISTICS_NUMBER_OF_NEW_APPLICATIONS_URL: "https://statistiques.aplus.beta.gouv.fr/public/question/67a509e0-6d45-487c-ad82-9a460952f34d"
+      APP_STATISTICS_PERCENT_OF_APPLICATIONS_BY_STATUS_URL: "https://statistiques.aplus.beta.gouv.fr/public/question/c6c5abc2-d300-48f2-848b-4298fbe6ed72"
+      APP_STATISTICS_PERCENT_OF_RELEVANT_APPLICATIONS_URL: "https://statistiques.aplus.beta.gouv.fr/public/question/3df29354-399d-405a-a27f-17c194a0deb3"
+      APP_STATISTICS_TIME_TO_PROCESS_APPLICATIONS_URL: "https://statistiques.aplus.beta.gouv.fr/public/question/d25cd8a1-b561-4945-86c6-eed7d6e6e93c"
+      APPLICATION_SECRET: "Q5VruXEZ?Z9m_aq[eFE_BUE`0I>9;Tsw4Bj/O;RM/nu/BpPjT2Te1kDy6^ng1:_2"
+      AREAS_WITH_LOGIN_BY_KEY: ""
+      DATABASE_DRIVER: "org.postgresql.Driver"
+      DATABASE_MAX_POOL_SIZE: "10"
+      DATABASE_URL: postgres://aplus:mysecretpassword@db/aplus
+      EMAILS_FROM: ""
+      EVOLUTIONS_AUTOAPPLY: true
+      EVOLUTIONS_AUTOAPPLY_DOWNS: false
+      FEATURE_AUTO_ADD_EXPERT: "true"
+      FEATURE_SEND_APPLICATIONS_ANYWHERE: "true"
+      FEATURE_SMS_MANDAT: "true"
+      FEATURE_WEEKLY_EMAILS: "true"
+      FILES_CURRENT_ENCRYPTION_KEY_ID: "idkey1"
+      FILES_ENCRYPTION_KEYS: "idkey1:zCNLgkZauiZ072v8ocC6pNZpwtwx/L4Sk9eRPQm2WA8="
+      FILES_EXPIRATION_IN_DAYS: 30
+      FILES_OVH_S3_ACCESS_KEY: "minioadmin"
+      FILES_OVH_S3_BUCKET: "mybucket"
+      FILES_OVH_S3_ENDPOINT: "http://minio:9090"
+      FILES_OVH_S3_REGION: "us-east-1"
+      FILES_OVH_S3_SECRET_KEY: "minioadmin"
+      FILES_PATH: files
+      GECKO_DRIVER: "/Users/alex/backups/work/beta/aplus/gecko/geckodriver"
+      GROUPS_WHICH_CANNOT_HAVE_INSTRUCTORS: "a6d51009-9d0d-42ef-92ae-e8f06d1ffecd"
+      JAVA_HOME: "`/usr/libexec/java_home -v 17`"
+      MAIL_HOST: "mailhog"
+      MAIL_MOCK: "false"
+      MAIL_PASSWORD: ""
+      MAIL_PORT: 1025
+      MAIL_SSL: false
+      MAIL_TLS: false
+      MAIL_USER: ""
+      NOTIFICATION_EMAIL_BLACKLIST: ""
+      OVH_APPLICATION_KEY: ""
+      OVH_APPLICATION_SECRET: ""
+      OVH_CONSUMER_KEY: ""
+      OVH_SERVICE_NAME: ""
+      PASSWORD_RECOVERY_TOKEN_EXPIRATION_IN_MINUTES: "100"
+      PERSONAL_DATA_RETENTION_IN_MONTHS: "26"
+      SENTRY_DSN: ""
+      SENTRY_TRACES_SAMPLE_RATE: "1.0"
+      SMS_USE_LIVE_API: "false"
+      TOKEN_EXPIRATION_IN_MINUTES: "1"
+      TOP_HEADER_PUBLIC_PAGES_ALERT_MESSAGE_HTML: ""
+      TOP_HEADER_WARNING_MESSAGE: ""
+      WEEKLY_EMAILS_DAY_OF_WEEK: "wednesday"
+      WEEKLY_EMAILS_DEBUG_SEND_HOURLY_DANGEROUS: "true"
+      WEEKLY_EMAILS_HOUR_OF_DAY: "10"
+      WEEKLY_EMAILS_MAX_NUMBER: "5"
+
+    ports:
+      - "9000:9000"
+
+  admin-db:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user@domain.com
+      PGADMIN_DEFAULT_PASSWORD: SuperSecret
+    depends_on:
+      - db
+    ports:
+      - "8080:80"
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9091:9001"  # Console web
+      - "9090:9000"  # API
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
+      # Création automatique du bucket au démarrage
+      MINIO_BUCKET_NAME: mybucket
+      MINIO_BUCKET_POLICY: public
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+  mailhog:
+    platform: linux/amd64
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025" # SMTP server
+      - "8025:8025" # Interface web
+    networks:
+      - default
+
+# Ajout de la définition des volumes à la fin du fichier
+volumes:
+  postgres_data:
+  minio_data:
