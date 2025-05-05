@@ -151,8 +151,8 @@ function manageInvitedGroupInfos(checkedOrganisations: Array<string>) {
     }
   }
 
-  const mustHaveCaf = checkedOrganisations.some(org => /CN?AF/i.test(org));
-  const mustHaveNir = checkedOrganisations.some(org => /(CPAM|MSA|CNAV)/i.test(org));
+  const mustHaveCaf = checkedOrganisations.some(org => /CAF/i.test(org));
+  const mustHaveNir = checkedOrganisations.some(org => /(CAF|CARSAT|CPAM|MSA|CNAV)/i.test(org));
 
   const existingInfosInputs = Array.from(document.querySelectorAll<HTMLInputElement>("input[name^='usagerOptionalInfos[']"));
 
