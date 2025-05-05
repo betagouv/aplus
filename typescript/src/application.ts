@@ -48,7 +48,7 @@ if (ssSelector) {
     const applicationId = target.dataset['applicationId']
     if (!applicationId) return;
 
-    fetch(`/demandes/${applicationId}/territoire/${target.value}/groupes-invitables`).then(data => {
+    fetch(`/demandes/${ applicationId }/territoire/${ target.value }/groupes-invitables`).then(data => {
       data.json().then((groups) => {
         const container = document.getElementById("checkboxes-groups-container")
         if (!container) return;
@@ -68,12 +68,12 @@ if (ssSelector) {
           input.type = "checkbox";
           input.name = "invitedGroups";
           input.value = group.id;
-          input.id = `invitedGroups-${group.id}`;
+          input.id = `invitedGroups-${ group.id }`;
           input.classList.add("fr-checkbox-input");
           const label = document.createElement("label");
           label.classList.add("aplus-bold");
           label.classList.add("fr-label");
-          label.htmlFor = `invitedGroups-${group.id}`;
+          label.htmlFor = `invitedGroups-${ group.id }`;
           label.innerText = group.name;
           div.appendChild(input);
           div.appendChild(label);
@@ -130,29 +130,34 @@ interface Mandat {
 }
 
 
-function addInvitedGroupInfos(groupName: string) {
-  function checkDoesNotExist(name: string) {
-    const existingInfos: NodeListOf<HTMLInputElement> =
-      document.querySelectorAll("input[name^='usagerOptionalInfos[']");
-    const alreadyHasInput = Array.from(existingInfos)
-      .some((infoInput) => infoInput.name.includes(name));
-    return !alreadyHasInput;
-  }
+function manageInvitedGroupInfos(checkedOrganisations: Array<string>) {
+  function manageField(fieldName: string, mustHave: boolean, existingInfosInputs: Array<HTMLInputElement>) {
+    const existingInfos = existingInfosInputs.map((input) => input.name);
 
-  // CAF / CNAF => Identifiant CAF
-  // CPAM / MSA / CNAV => Numéro de sécurité sociale
-  if (/CN?AF(\s|$)/i.test(groupName)) {
-    const name = "Identifiant CAF";
-    if (checkDoesNotExist(name)) {
-      addOptionalInfoRow(name, "");
-    }
-  } else if (/(CPAM|MSA|CNAV)(\s|$)/i.test(groupName)) {
-    const name = "Numéro de sécurité sociale";
-    if (checkDoesNotExist(name)) {
-      addOptionalInfoRow(name, "");
+    if (mustHave) {
+      const existing = existingInfos.some(info => info.includes(fieldName));
+      if (!existing) {
+        addOptionalInfoRow(fieldName, "");
+      }
+    } else {
+      existingInfosInputs.forEach(input => {
+        if (input.name.includes(fieldName)) {
+          const topDiv = findAncestor(input, (el) => el.classList.contains("js-optional-application-field"));
+          if (topDiv) {
+            topDiv.remove();
+          }
+        }
+      });
     }
   }
 
+  const mustHaveCaf = checkedOrganisations.some(org => /CN?AF/i.test(org));
+  const mustHaveNir = checkedOrganisations.some(org => /(CPAM|MSA|CNAV)/i.test(org));
+
+  const existingInfosInputs = Array.from(document.querySelectorAll<HTMLInputElement>("input[name^='usagerOptionalInfos[']"));
+
+  manageField("Identifiant CAF", mustHaveCaf, existingInfosInputs);
+  manageField("Numéro de sécurité sociale", mustHaveNir, existingInfosInputs);
 }
 
 
@@ -198,6 +203,8 @@ function addOptionalInfoRow(infoName: string, infoValue: string) {
          <span class="single--cursor-pointer single--text-decoration-underline single--margin-left-2px">Retirer</span> \
      </div> \
   </div>';
+  newNode.classList.add('js-optional-application-field');
+
 
   const otherDiv = document.getElementById("other-div");
   if (otherDiv == null) { return; }
@@ -368,13 +375,27 @@ function setupInvitedGroups() {
     .querySelectorAll('.' + invitedGroupsCheckboxClass)
     .forEach((element) =>
       element.addEventListener('click', (event) => {
+        let checkedOrganisations: Array<string> = [];
+        document.querySelectorAll<HTMLInputElement>('.' + invitedGroupsCheckboxClass).forEach((input) => {
+          if (input.checked) {
+            const organisationId = input.dataset['organisationId'];
+            if (organisationId) {
+              if (!checkedOrganisations.includes(organisationId)) {
+                checkedOrganisations.push(organisationId);
+              }
+            }
+          }
+        });
+
+
         const input = <HTMLInputElement>event.target;
         const groupId = input.value;
-        const infosDiv = document.getElementById(`invite-${groupId}-additional-infos`);
+        const infosDiv = document.getElementById(`invite-${ groupId }-additional-infos`);
+
+        manageInvitedGroupInfos(checkedOrganisations);
+
         if (input.checked) {
           infosDiv && infosDiv.classList.remove('invisible');
-          const groupName = input.dataset['groupName'];
-          groupName && addInvitedGroupInfos(groupName);
         } else {
           infosDiv && infosDiv.classList.add('invisible');
         }
