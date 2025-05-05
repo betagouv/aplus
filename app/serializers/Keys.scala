@@ -33,6 +33,7 @@ object Keys {
     val signupId: String = "signupId"
     val sessionId: String = "sessionId"
     val signupLoginExpiresAt: String = "signupLoginExpiresAt"
+    val signupProConnectSubject: String = "signupProConnectSubject"
     val passwordEmail: String = "passwordEmail"
   }
 
