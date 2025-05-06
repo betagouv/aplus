@@ -9,7 +9,7 @@ object contact {
   def page(): Tag =
     views.main.publicLayout(
       "Contact - Administration+",
-      div(
+      div(cls := "fr-mb-15w")(
         h1(cls := "fr-mb-6w")("Comment pouvons-nous vous aider ?"),
         div(cls := "fr-callout")(
           h2(cls := "fr-callout__title")("Vous avez besoin de renseignements ?"),
@@ -62,30 +62,38 @@ object contact {
           accordion(
             "aplus-accordion-question-1",
             "Je n’arrive pas à me connecter, pouvez-vous m’aider ?",
-            p(
-              "Si vous utilisez Internet Explorer, ",
-              a(
-                href := "https://docs.aplus.beta.gouv.fr/faq/questions-frequentes-pour-tous-les-profils/pourquoi-ne-plus-utiliser-le-navigateur-internet-explorer-de-microsoft",
-                target := "_blank",
-                rel := "noopener noreferrer"
-              )("changez de navigateur"),
-              ". Nous recommandons Firefox ou Chrome. Configurez l'un de ces 2 navigateurs comme navigateur par défaut pour plus de praticité.",
-              "Si vous ne recevez pas d’e-mail après avoir vu l’écran « Consultez vos e-mails » : consultez votre dossier de spams. Si après 10 à 15 minutes vous n'avez toujours pas reçu l’e-mail, ",
-              a(
-                href := "https://docs.aplus.beta.gouv.fr/contacter-lequipe",
-                target := "_blank",
-                rel := "noopener noreferrer"
-              )("contactez notre équipe de support"),
-              ".",
-              "Le lien magique de connexion qui vous est envoyé par mail expire au bout de 30 minutes. Vérifiez que vous n’avez pas appuyé sur un lien déjà expiré.",
-              "Si votre e-mail n’est pas reconnu durant votre connexion, essayez avec votre adresse nominative (du type prenom.nom@votre-structure.fr), si le problème persiste, ",
-              a(
-                href := "https://docs.aplus.beta.gouv.fr/contacter-lequipe",
-                target := "_blank",
-                rel := "noopener noreferrer"
-              )("contactez notre équipe de support"),
-              "."
-            )
+            ul(
+              li(
+                "Si vous utilisez Internet Explorer, ",
+                a(
+                  href := "https://docs.aplus.beta.gouv.fr/faq/questions-frequentes-pour-tous-les-profils/pourquoi-ne-plus-utiliser-le-navigateur-internet-explorer-de-microsoft",
+                  target := "_blank",
+                  rel := "noopener noreferrer"
+                )("changez de navigateur"),
+                ". Nous recommandons Firefox ou Chrome. Configurez l’un de ces 2 navigateurs comme navigateur par défaut pour plus de praticité.",
+              ),
+              li(
+                "Si vous ne recevez pas d’e-mail après avoir vu l’écran « Consultez vos e-mails » : consultez votre dossier de spams. Si après 10 à 15 minutes vous n'avez toujours pas reçu l’e-mail, ",
+                a(
+                  href := "https://docs.aplus.beta.gouv.fr/contacter-lequipe",
+                  target := "_blank",
+                  rel := "noopener noreferrer"
+                )("contactez notre équipe de support"),
+                ".",
+              ),
+              li(
+                "Le lien magique de connexion qui vous est envoyé par mail expire au bout de 30 minutes. Vérifiez que vous n’avez pas appuyé sur un lien déjà expiré.",
+              ),
+              li(
+                "Si votre e-mail n’est pas reconnu durant votre connexion, essayez avec votre adresse nominative (du type prenom.nom@votre-structure.fr), si le problème persiste, ",
+                a(
+                  href := "https://docs.aplus.beta.gouv.fr/contacter-lequipe",
+                  target := "_blank",
+                  rel := "noopener noreferrer"
+                )("contactez notre équipe de support"),
+                "."
+              )
+            ),
           ),
           accordion(
             "aplus-accordion-question-2",
