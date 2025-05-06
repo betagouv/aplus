@@ -293,7 +293,7 @@ object main {
               cls := "fr-btn",
               target := "_blank",
               rel := "noopener noreferrer",
-              "FAQ"
+              "Aide"
             )
           ),
           li(

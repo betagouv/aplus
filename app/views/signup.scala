@@ -220,7 +220,7 @@ object signup {
           cls := " mdl-color-text--red-A700",
           "Votre choix d’opter pour un compte partagé entre agents vous impose de rester vigilant sur ",
           a(
-            href := "https://docs.aplus.beta.gouv.fr/faq/peut-on-partager-un-compte-sur-administration+",
+            href := "https://docs.aplus.beta.gouv.fr/faq/questions-frequentes-pour-tous-les-profils/peut-on-partager-un-compte-sur-administration+",
             target := "_blank",
             rel := "noopener noreferrer",
             "ce point de nos conditions générales d’utilisation."
