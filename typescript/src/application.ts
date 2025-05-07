@@ -151,8 +151,8 @@ function manageInvitedGroupInfos(checkedOrganisations: Array<string>) {
     }
   }
 
-  const mustHaveCaf = checkedOrganisations.some(org => /CN?AF/i.test(org));
-  const mustHaveNir = checkedOrganisations.some(org => /(CPAM|MSA|CNAV)/i.test(org));
+  const mustHaveCaf = checkedOrganisations.some(org => /CAF/i.test(org));
+  const mustHaveNir = checkedOrganisations.some(org => /(CAF|CARSAT|CPAM|MSA|CNAV)/i.test(org));
 
   const existingInfosInputs = Array.from(document.querySelectorAll<HTMLInputElement>("input[name^='usagerOptionalInfos[']"));
 
@@ -187,9 +187,11 @@ function newTypeSelected() {
 
 
 function addOptionalInfoRow(infoName: string, infoValue: string) {
+  const isNir = infoName.toLowerCase() === "numéro de sécurité sociale";
+  const optionalLabel = isNir ? "" : " (facultatif)";
   const newNode = document.createElement("div");
   newNode.innerHTML = '<div class="single--display-flex single--align-items-center">' +
-    '<div class="single--margin-right-24px single--font-size-14px">' + infoName + ' (facultatif)</div> \
+    '<div class="single--margin-right-24px single--font-size-14px">' + infoName + optionalLabel + '</div> \
      <div class="mdl-textfield mdl-js-textfield mdl-textfield--no-label single--margin-right-24px"> \
          <input class="mdl-textfield__input mdl-color--white" type="text" id="sample1" name="usagerOptionalInfos['+ infoName + ']" value="' + infoValue + '"> \
          <label class="mdl-textfield__label info__label" for="sample1">Saisir '+ infoName + ' de l’usager ici</label> \

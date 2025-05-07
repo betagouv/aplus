@@ -91,7 +91,10 @@
                         Sujet de la demande <span class="mdl-color-text--red-500">*</span>
                     </h5>
 
-                    <div class="single--display-flex single--align-items-center single--flex-wrap-wrap single--margin-top--16px">
+                    <p>Merci de réserver ce champ au sujet du problème du citoyen, et ne pas y renseigner d’informations personnelles identifiantes (nom + prénom, numéro de sécurité sociale, numéro d’identification fiscale…) ni d’informations sensibles.<br>
+                    Pour ces informations, préférez l’utilisation des champs prévus à cet effet.</p>
+
+                    <div class="single--display-flex single--align-items-center single--flex-wrap-wrap">
                         <div>
                     @helper.input(applicationForm("subject"),
                                   "label" -> "Saisir le sujet de votre demande...",
@@ -181,7 +184,11 @@
                         Description du problème <span class="mdl-color-text--red-500">*</span>
                     </h5>
 
-                    <div class="single--margin-top--16px">
+                    <p>Merci de réserver ce champ à la description du problème du citoyen, et ne pas y renseigner d’informations personnelles identifiantes (nom + prénom, numéro de sécurité sociale, numéro d’identification fiscale…) ni d’informations sensibles.
+                    <br>
+                        Pour ces informations, préférez l’utilisation des champs prévus à cet effet.</p>
+
+                    <div>
                         @helper.input(applicationForm("description"), "class" -> "mdl-textfield--floating-label mdl-textfield--large", "label" -> "Rédigez une description rapide du problème ...") { (id, name, value, args) =>
                             <textarea class="mdl-textfield__input textfield__input--no-height-constraint" type="text" rows= "5" name="@name" id="@id" @toHtmlArgs(args)>@value</textarea>
                         }<br>
