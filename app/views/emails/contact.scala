@@ -179,7 +179,7 @@ object contact {
               )(
                 "dans notre aide en ligne"
               ),
-              " contactez-nous par e-mail à l’adresse ",
+              ", contactez-nous par e-mail à l’adresse ",
               a(
                 href := s"mailto:${Constants.supportEmail}",
               )(
