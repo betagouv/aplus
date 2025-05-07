@@ -303,4 +303,228 @@ object legal {
       breadcrumbs = ("Politique de confidentialité", HomeController.privacy.url) :: Nil,
     )
 
+  def cgu(): Tag =
+    views.main.publicLayout(
+      "Conditions générales d’utilisation - Administration+",
+      div(
+        h1(cls := "fr-mb-6w")("Conditions générales d’utilisation"),
+        p(
+          "Du service public numérique « Administration+ » pour résoudre les blocages administratifs complexes et/ou urgents"
+        ),
+        p(
+          "Les présentes conditions générales d’utilisation visent à réguler les interactions entre les utilisateurs de la plateforme Administration+."
+        ),
+        p("Conditions générales d’utilisation à partir du 1er octobre 2020"),
+        h2("1. Le service Administration+"),
+        h3("1.1. Objet du service"),
+        p(
+          "Mettre en relation des agents publics ou chargés d’une mission de service public via l’utilisation d’une plateforme numérique pour :"
+        ),
+        ul(
+          li("résoudre des blocages administratifs complexes et/ou urgents des usagers ;"),
+          li(
+            "garantir l’accessibilité du service public aux personnes en situation de vulnérabilité ou d’urgence ;"
+          ),
+          li("participer à la lutte contre le non-recours aux droits ;"),
+          li("faciliter les interactions entre les acteurs publics d’un territoire.")
+        ),
+        h3("1.2 L’usage du service"),
+        p(
+          "L’usage du service est réservé aux cas de blocages administratifs complexes et d’urgence sociale."
+        ),
+        h3("1.3 L’utilisation du service"),
+        p(
+          "L’utilisation du service repose sur une communauté d’utilisateurs habilités par leurs organismes respectifs."
+        ),
+        p("La « communauté Administration+ » repose sur 5 catégories de personnes :"),
+        h4("1.3.1 Les aidants Administration+"),
+        p(
+          "Ce sont les agents en contact direct avec les usagers. Ils qualifient et reformulent les requêtes au nom de l’usager pour les soumettre à la communauté."
+        ),
+        p(
+          "Il s’agit notamment des agents d’accueil France Services, des travailleurs sociaux publics, des délégués du Défenseur des droits et des élus des collectivités."
+        ),
+        h4("1.3.2 Les instructeurs Administration+ (opérateurs des administrations partenaires)"),
+        p(
+          "Ce sont les agents publics ou chargés d’une mission de service public, en poste dans des organismes de sécurité sociale ou des administrations déconcentrées de l’État ou des administrations décentralisées."
+        ),
+        p(
+          "Ils ont pour mission de rechercher une réponse à une situation de blocage administratif complexe ou à une urgence sociale lorsqu’ils sont saisis par un aidant Administration+."
+        ),
+        p(
+          "À noter : Ces opérateurs peuvent également initier une demande d’aide pour un usager sur la plateforme en recourant à la communauté Administration+."
+        ),
+        h4("1.3.3 Les responsables de groupe(s)"),
+        p(
+          "Ce sont des agents publics ou chargés d’une mission de service public désignés par leur direction pour gérer l’utilisation d’Administration+ dans leur organisme."
+        ),
+        p("Un responsable de groupe :"),
+        ul(
+          li(
+            "crée et désactive les comptes des utilisateurs en cas de changement de poste ou à leur demande."
+          ),
+          li(
+            "s’assure du bon suivi des demandes (délais de réponses et clôture des demandes après réponses)."
+          ),
+          li("accède à des outils statistiques pour mesurer la performance de son organisme.")
+        ),
+        p(
+          "À noter : Il n’a pas accès au contenu des demandes instruites par les aidants ou les agents instructeurs de son organisme."
+        ),
+        h4("1.3.4 Les administrateurs"),
+        p("Ce sont les membres de l’équipe Administration+ qui :"),
+        ul(
+          li("s’assurent du bon fonctionnement de l’outil,"),
+          li("répondent aux interrogations des utilisateurs,"),
+          li(
+            "jouent un rôle de coordinateur entre les aidants Administration+ et les instructeurs Administration+."
+          )
+        ),
+        p(
+          "À noter : Ils n’ont pas accès au contenu des demandes conformément au Règlement général sur la protection des données (RGPD)."
+        ),
+        p(
+          "Seuls 3 membres de l’équipe, en leur qualité « d’experts », peuvent être invités par tout membre de la communauté sur une demande. Ils sont également automatiquement saisis lorsque le délai de réponse est dépassé (cf. paragraphe 3.1). Ils n’ont pas accès aux fichiers téléversés sur la demande."
+        ),
+        h4("1.3.5 Les observateurs"),
+        p(
+          "Ce sont les pilotes et coordonnateurs d’administrations partenaires qui associent Administration+ à leur expérimentation :"
+        ),
+        ul(
+          li(
+            "La direction interministérielle de la transformation publique (DITP) pour ses programmes carte blanche et service-public +."
+          ),
+          li(
+            "L’agence nationale de cohésion des territoires (ANCT) et la caisse des dépôts et consignation à travers la banque des territoires pour le programme France services."
+          ),
+          li(
+            "Les coordonnateurs en préfecture, chargés de mission à la politique de la ville ou au développement du territoire, les coordonnateurs nationaux d’organismes et d’administrations centrales ou décentralisées."
+          )
+        ),
+        h3("1.4 Fonctionnement général du service"),
+        h4("1.4.1 La création de compte"),
+        ul(
+          li(
+            "L’habilitation des utilisateurs est de la responsabilité de l’administration à laquelle ils appartiennent conformément à l’article ",
+            a(
+              href := "https://www.legifrance.gouv.fr/affichTexte.do?cidTexte=JORFTEXT000038029589&categorieLien=id",
+              target := "_blank",
+              rel := "noopener noreferrer"
+            )("R-114-9-6"),
+            " du code des relations du public avec l’administration (CRPA)."
+          ),
+          li(
+            "Les administrations sont responsables de la traçabilité des actions de leurs agents conformément aux dispositions générales de la Commission nationale de l’informatique et des libertés (CNIL)."
+          ),
+          li(
+            "Le compte Administration+ d’un utilisateur est créé par un responsable de groupe ou un administrateur."
+          ),
+          li(
+            "Les partenaires peuvent renseigner une adresse e-mail nominative ou partagée pour l’utilisation d’Administration+."
+          )
+        ),
+        h4("1.4.2 La connexion"),
+        p("La connexion au compte Administration+ se fait avec l’adresse mail professionnelle."),
+        p(
+          "Dans le cas de l’utilisation d’une adresse e-mail partagée, toute réponse de l’utilisateur dans le cadre de l’échange devra mentionner son identité (prénom, nom) et le service auquel il appartient conformément au CRPA."
+        ),
+        p(
+          "Exemples : Kevin Dupont - assistant social hôpital X ; Nadia Nguyen - référente finances publiques, service des impôts des particuliers."
+        ),
+        p(
+          "Le lien de connexion est unique et valide 30 minutes. Il ne doit en aucun cas être transmis à un tiers."
+        ),
+        h4("1.4.3. La déconnexion"),
+        p(
+          "L’utilisateur d’Administration+ est invité à se déconnecter lorsqu’il a fini d’utiliser la plateforme. Cette déconnexion est impérative s’il s’est connecté depuis un poste de travail ou tout autre appareil partagé, pour éviter une connexion automatique par un tiers."
+        ),
+        h4("1.4.4 La désactivation de compte"),
+        p(
+          "Lorsqu’un utilisateur quitte ses fonctions, il incombe au responsable de groupe de désactiver son compte Administration+ et d’en informer l’équipe sur ",
+          a(href := "mailto:contact@aplus.beta.gouv.fr", "contact@aplus.beta.gouv.fr"),
+          "."
+        ),
+        h4("1.4.5 Ajout de fichiers à la demande"),
+        p(
+          "Tous les fichiers téléversés sur la demande sont supprimés dans un délai de 15 jours. Pour des raisons de sécurité, les fichiers n’ont pas de copie de sauvegarde et ne peuvent pas être restaurés en cas de panne du service."
+        ),
+        h2("2. Droits et devoirs des aidants Administration+"),
+        h3("2.1 Cas d’utilisation de l’outil par l’aidant"),
+        p(
+          "Administration+ est un canal d’information complémentaire des outils professionnels existants. Il apporte une réponse de dernier recours dans les situations d’urgence sociale ou lorsque tous les dispositifs habituels connus de l’aidant Administration+ ont été épuisés (guichet, mail, téléphone, sites professionnels…)."
+        ),
+        h3("2.2 Consentement de l’usager"),
+        p(
+          "L’aidant Administration+ s’engage à informer et recueillir le consentement de l’usager pour l’utilisation de l’outil « d’Administration+ »."
+        ),
+        p(
+          "L’aidant a l’obligation de faire signer un mandat à l’usager l’autorisant à instruire son cas par voie électronique. Le mandat est conservé le temps de la résolution de la demande. Il peut également être révoqué sur la demande de l’usager."
+        ),
+        p(
+          "L’aidant transmet l’information de manière simple, claire, compréhensible et aisément accessible, comme prévu dans les dispositions de l’",
+          a(
+            href := "https://www.cnil.fr/fr/reglement-europeen-protection-donnees/chapitre3#Article12",
+            target := "_blank",
+            rel := "noopener noreferrer"
+          )("article 12 du RGPD"),
+          "."
+        ),
+        h3("2.3 Clôture de la demande"),
+        p(
+          "L’aidant Administration+ s’engage à clore la demande lorsqu’une solution a été apportée. La fermeture d’une demande entraîne une suppression des données personnelles de la plateforme sous 90 jours. Administration+ ne fournit pas un service d’archivage."
+        ),
+        p(
+          "Au moment de la clôture, l’aidant Administration+ renseigne l’utilité de la réponse apportée par l’instructeur Administration+ pour l’usager en cliquant sur un de ces 3 émoticônes : 😐 ☹ 😊."
+        ),
+        h2("3. Droits et devoirs des instructeurs Administration+"),
+        h3("3.1 Délais de réponse"),
+        p(
+          "Administration+ est un dispositif pour trouver une solution à un problème inextricable et/ou urgent."
+        ),
+        p(
+          "L’instructeur Administration+ s’engage à répondre rapidement dans les jours suivant la création de la demande par l’aidant."
+        ),
+        p("Nous constatons généralement un délai de réponse de 4 jours."),
+        h3("3.2 Cas d’une réponse non pertinente"),
+        p(
+          "L’outil intègre un bouton « Cette demande dispose d’une procédure standard que l’aidant aurait pu utiliser » pour réguler le flux de demandes entrant. L’instructeur Administration+ s’engage toutefois à indiquer brièvement la procédure standard existante s’il la connaît."
+        ),
+        p(
+          "À noter : Le « silence gardé » pendant plus de 2 mois par certaines administrations sur une demande ou une démarche vaut accord, sauf exceptions. Pour certaines demandes, l’acceptation peut être acquise après un délai différent. Dans d’autres cas, le « silence gardé » sur une demande vaut refus. Voir le code des relations entre le public et l’administration : ",
+          a(
+            href := "https://www.legifrance.gouv.fr/affichCode.do?idSectionTA=LEGISCTA000031367609&cidTexte=LEGITEXT000031366350",
+            target := "_blank",
+            rel := "noopener noreferrer"
+          )("article L231-1 à D231-3"),
+          "."
+        ),
+        h2("4. Acceptation - manquement - modification des CGU"),
+        h3("4.1 Acceptation"),
+        p("L’utilisation de l’outil vaut acceptation de ces conditions générales d’utilisation."),
+        h3("4.2 Manquement"),
+        p(
+          "4.2.1 Si je constate une utilisation abusive du service ou des messages contraires à la loi, je le signale sur ",
+          a(href := "mailto:contact@aplus.beta.gouv.fr", "contact@aplus.beta.gouv.fr"),
+          "."
+        ),
+        p(
+          "4.2.2 En cas de non-respect des conditions générales d’utilisation, les administrateurs se réservent le droit d’exclure l’utilisateur du service et de lui notifier."
+        ),
+        h3("4.3 Modifications"),
+        p(
+          "Les présentes conditions générales d’utilisation peuvent être modifiées. Toutes modifications seront notifiées aux utilisateurs"
+        ),
+        h2("5. Responsabilité"),
+        h3("5.1"),
+        p(
+          "La direction interministérielle du numérique (DINUM) ne saurait engager sa responsabilité en cas d’usage frauduleux de l’outil par un utilisateur."
+        ),
+        h3("5.2"),
+        p(
+          "Tout détournement de l’usage de la plateforme (point 1.1) ou manquement aux règles concernant la protection des données personnelles des usagers sera passible de poursuites pénales."
+        )
+      ),
+      breadcrumbs = ("Conditions générales d’utilisation", HomeController.cgu.url) :: Nil,
+    )
+
 }

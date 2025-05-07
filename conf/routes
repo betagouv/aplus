@@ -9,6 +9,8 @@ GET         /bienvenue                                                          
 GET         /accessibilite                                                                   controllers.HomeController.declarationAccessibilite
 GET         /mentions-legales                                                                controllers.HomeController.mentionsLegales
 GET         /politique-de-confidentialite                                                    controllers.HomeController.privacy
+GET         /conditions-generales-d-utilisation                                              controllers.HomeController.cgu
+GET         /contact                                                                         controllers.HomeController.contact
 GET         /.well-known/security.txt                                                        controllers.HomeController.wellKnownSecurityTxt
 GET         /dashboard                                                                       controllers.ApplicationController.dashboard
 GET         /as/:userId/dashboard                                                            controllers.ApplicationController.dashboardAs(userId: java.util.UUID)
@@ -48,7 +50,7 @@ GET         /stats                                                              
 GET         /as/:userId/stats                                                                controllers.ApplicationController.statsAs(userId: java.util.UUID)
 POST        /stats                                                                           controllers.ApplicationController.stats
 POST        /as/:userId/stats                                                                controllers.ApplicationController.statsAs(userId: java.util.UUID)
-
+GET         /deploiement                                                                     controllers.ApplicationController.deployment
 
 # Signup
 GET         /inscription                                                                     controllers.SignupController.signupForm

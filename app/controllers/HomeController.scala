@@ -87,9 +87,19 @@ class HomeController @Inject() (
       Ok(views.legal.information())
     }
 
+  def cgu: Action[AnyContent] =
+    Action {
+      Ok(views.legal.cgu())
+    }
+
   def privacy: Action[AnyContent] =
     Action {
       Ok(views.legal.privacy())
+    }
+
+  def contact: Action[AnyContent] =
+    Action {
+      Ok(views.contact.page())
     }
 
   def wellKnownSecurityTxt: Action[AnyContent] =

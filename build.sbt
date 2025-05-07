@@ -77,7 +77,7 @@ pipelineStages := Seq(digest, gzip)
 
 libraryDependencies += guice
 
-val fs2Version = "3.11.0"
+val fs2Version = "3.12.0"
 
 libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.7.5",
@@ -88,7 +88,7 @@ libraryDependencies ++= Seq(
   ws,
   "com.lihaoyi" %% "scalatags" % "0.13.1",
   "org.typelevel" %% "cats-core" % "2.13.0",
-  "org.typelevel" %% "cats-effect" % "3.5.7",
+  "org.typelevel" %% "cats-effect" % "3.6.1",
   "co.fs2" %% "fs2-core" % fs2Version,
   "co.fs2" %% "fs2-io" % fs2Version,
   "io.laserdisc" %% "fs2-aws-s3" % "6.2.0",
@@ -108,7 +108,7 @@ libraryDependencies ++= Seq(
 )
 
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "8.5.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "8.8.0"
 
 // Sync with Play and scala-steward pin
 // https://github.com/playframework/playframework/blob/4c2d76095c2f6a5cab7be3e8f6017c4a4dd2a99f/project/Dependencies.scala#L20
