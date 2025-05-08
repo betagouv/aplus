@@ -1,6 +1,7 @@
 package controllers
 
 import actions.LoginAction
+import cats.syntax.all._
 import helper.ScalatagsHelpers.writeableOf_Modifier
 import javax.inject.{Inject, Singleton}
 import modules.AppConfig
@@ -8,7 +9,9 @@ import org.webjars.play.WebJarsUtil
 import play.api.Logger
 import play.api.db.Database
 import play.api.i18n.I18nSupport
+import play.api.http.HeaderNames.CONTENT_SECURITY_POLICY
 import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents}
+import play.filters.csp.{CSPConfig, CSPDirective}
 import serializers.Keys
 import views.home.LoginPanel
 
@@ -18,8 +21,9 @@ import views.home.LoginPanel
 class HomeController @Inject() (
     val config: AppConfig,
     val controllerComponents: ControllerComponents,
-    loginAction: LoginAction,
+    cspConfig: CSPConfig,
     db: Database,
+    loginAction: LoginAction,
 )(implicit webJarsUtil: WebJarsUtil)
     extends BaseController
     with I18nSupport
@@ -97,10 +101,40 @@ class HomeController @Inject() (
       Ok(views.legal.privacy())
     }
 
-  def contact: Action[AnyContent] =
-    Action {
-      Ok(views.contact.page())
+  val contactCSPConfig = {
+    val modifiedDirectives: Seq[CSPDirective] = config.zammadChatDomain match {
+      case None => cspConfig.directives
+      case Some(zammadChatDomain) =>
+        cspConfig.directives.map {
+          case CSPDirective(name, value) if name === "script-src" =>
+            val newValue = s"$value https://$zammadChatDomain"
+            CSPDirective(name, newValue)
+          case CSPDirective(name, value) if name === "style-src" =>
+            val newValue = s"$value data: https://$zammadChatDomain"
+            CSPDirective(name, newValue)
+          case CSPDirective(name, value) if name === "connect-src" =>
+            val newValue = s"$value wss://$zammadChatDomain"
+            CSPDirective(name, newValue)
+          case csp: CSPDirective =>
+            csp
+        }
     }
+
+    cspConfig.copy(directives = modifiedDirectives)
+  }
+
+  /** From
+    * https://github.com/playframework/playframework/blob/b6ab62433ba5d63737a913d549a8b58c7fefa6cd/web/play-filters-helpers/src/main/scala/play/filters/csp/CSPProcessor.scala#L80
+    */
+  val contactCSPHeaderValue = contactCSPConfig.directives
+    .map(d => s"${d.name} ${d.value}")
+    .mkString("; ")
+
+  def contact: Action[AnyContent] = Action {
+    Ok(views.contact.page(config)).withHeaders(
+      CONTENT_SECURITY_POLICY -> contactCSPHeaderValue
+    )
+  }
 
   def wellKnownSecurityTxt: Action[AnyContent] =
     Action {

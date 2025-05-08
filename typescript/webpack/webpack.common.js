@@ -58,6 +58,8 @@ module.exports = {
         { from: "../node_modules/slim-select/dist/slimselect.min.css" },
         // The xlsx dependency is huge, we only serve it on the pages that use it
         { from: "../node_modules/xlsx/dist/xlsx.full.min.js" },
+        // jquery is only needed for the zammad chat
+        { from: "../node_modules/jquery/dist/jquery.min.js" },
         { context: "../node_modules/@gouvfr/dsfr/dist", from: "dsfr/dsfr.min.css*" },
         { context: "../node_modules/@gouvfr/dsfr/dist", from: "utility/utility.min.css*" },
         { context: "../node_modules/@gouvfr/dsfr/dist", from: "dsfr/dsfr.module.min.js*" },
