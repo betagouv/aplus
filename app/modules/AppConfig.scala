@@ -151,4 +151,7 @@ class AppConfig @Inject() (configuration: Configuration) {
       .flatMap(UUIDHelper.fromString)
       .toSet
 
+  val zammadChatDomain: Option[String] =
+    configuration.getOptional[String]("app.zammadChatDomain")
+
 }

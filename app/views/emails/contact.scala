@@ -1,12 +1,14 @@
 package views
 
 import constants.Constants
+import controllers.routes.HomeController
+import modules.AppConfig
 import scalatags.Text.all._
 import scalatags.Text.tags2
 
 object contact {
 
-  def page(): Tag =
+  def page(config: AppConfig): Tag =
     views.main.publicLayout(
       "Contact - Administration+",
       div(cls := "fr-mb-15w")(
@@ -191,7 +193,20 @@ object contact {
             )
           )
         )
-      )
+      ),
+      breadcrumbs = ("Contact", HomeController.contact.url) :: Nil,
+      additionalFooterTags = config.zammadChatDomain match {
+        case None => frag()
+        case Some(zammadChatDomain) =>
+          frag(
+            views.helpers.head.publicScript("generated-js/jquery.min.js"),
+            script(
+              `type` := "application/javascript",
+              src := s"https://$zammadChatDomain/assets/chat/chat.min.js"
+            ),
+            views.helpers.head.publicScript("javascripts/zammad.js"),
+          )
+      }
     )
 
   private def accordion(collapseId: String, title: String, content: Tag): Tag =

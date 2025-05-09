@@ -10,6 +10,8 @@ GET         /accessibilite                                                      
 GET         /mentions-legales                                                                controllers.HomeController.mentionsLegales
 GET         /politique-de-confidentialite                                                    controllers.HomeController.privacy
 GET         /conditions-generales-d-utilisation                                              controllers.HomeController.cgu
+# The default CSP filter is disabled here in order to use a different one
++ nocsp
 GET         /contact                                                                         controllers.HomeController.contact
 GET         /.well-known/security.txt                                                        controllers.HomeController.wellKnownSecurityTxt
 GET         /dashboard                                                                       controllers.ApplicationController.dashboard
