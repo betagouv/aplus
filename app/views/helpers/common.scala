@@ -110,12 +110,15 @@ object common {
                 ),
                 ul(
                   cls := "mdl-mega-footer--link-list",
-                  li(a(href := HomeController.help.url, "Aide")),
                   li(
                     a(
-                      href := HomeController.cgu.url,
-                      "CGU"
+                      rel := "noopener noreferrer",
+                      href := "https://docs.aplus.beta.gouv.fr",
+                      "Aide"
                     )
+                  ),
+                  li(
+                    a(href := HomeController.cgu.url, "CGU")
                   ),
                   li(
                     a(

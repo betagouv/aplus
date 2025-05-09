@@ -329,7 +329,7 @@ object common {
         br,
         "- Le navigateur Internet Explorer peut rencontrer des difficultés à accéder au site. Microsoft conseille depuis février 2019 de ne plus utiliser son navigateur historique qui n’est plus mis à jour depuis la sortie de Edge en 2015 et ne supporte donc plus les standards actuels du Web. ",
         a(
-          href := "https://docs.aplus.beta.gouv.fr/faq/pourquoi-ne-plus-utiliser-le-navigateur-internet-explorer-de-microsoft",
+          href := "https://docs.aplus.beta.gouv.fr/faq/questions-frequentes-pour-tous-les-profils/pourquoi-ne-plus-utiliser-le-navigateur-internet-explorer-de-microsoft",
           "Pour en savoir plus"
         )
       )
@@ -351,7 +351,7 @@ object common {
         " ",
         "- Le navigateur Internet Explorer peut rencontrer des difficultés à accéder au site. Microsoft conseille depuis février 2019 de ne plus utiliser son navigateur historique qui n’est plus mis à jour depuis la sortie de Edge en 2015 et ne supporte donc plus les standards actuels du Web. ",
         a(
-          href := "https://docs.aplus.beta.gouv.fr/faq/pourquoi-ne-plus-utiliser-le-navigateur-internet-explorer-de-microsoft",
+          href := "https://docs.aplus.beta.gouv.fr/faq/questions-frequentes-pour-tous-les-profils/pourquoi-ne-plus-utiliser-le-navigateur-internet-explorer-de-microsoft",
           " ",
           "Pour en savoir plus"
         )

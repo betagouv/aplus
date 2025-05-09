@@ -289,11 +289,11 @@ object main {
         ul(cls := "fr-btns-group")(
           li(
             a(
-              href := "https://docs.aplus.beta.gouv.fr/faq",
+              href := "https://docs.aplus.beta.gouv.fr",
               cls := "fr-btn",
               target := "_blank",
-              rel := "noopener",
-              "FAQ"
+              rel := "noopener noreferrer",
+              "Aide"
             )
           ),
           li(
@@ -548,7 +548,8 @@ object main {
               li(
                 a(
                   cls := "fr-footer__top-link",
-                  href := HomeController.help.url
+                  rel := "noopener noreferrer",
+                  href := "https://docs.aplus.beta.gouv.fr"
                 )("Aide")
               ),
               li(

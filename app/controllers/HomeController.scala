@@ -72,8 +72,8 @@ class HomeController @Inject() (
     }
 
   def help: Action[AnyContent] =
-    loginAction { implicit request =>
-      Ok(views.html.help(request.currentUser, request.rights))
+    Action {
+      PermanentRedirect("https://docs.aplus.beta.gouv.fr")
     }
 
   def welcome: Action[AnyContent] =
