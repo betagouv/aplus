@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.27.1",
-    "@babel/preset-env": "7.27.1",
+    "@babel/preset-env": "7.27.2",
     "@types/tabulator-tables": "5.4.8",
     "babel-loader": "10.0.0",
     "copy-webpack-plugin": "13.0.0",
