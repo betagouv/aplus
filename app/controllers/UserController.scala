@@ -565,7 +565,7 @@ case class UserController @Inject() (
                   sessionsRevokedFuture.flatMap {
                     case Left(error) =>
                       eventService.logError(error)
-                      Future.successful(InternalServerError(views.errors.public500(None)))
+                      Future.successful(InternalServerError(views.errors.public500WithCode(None)))
                     case Right(sessionsRevoked) =>
                       userService.update(userToUpdate).map { updateHasBeenDone =>
                         if (updateHasBeenDone) {

@@ -3,7 +3,6 @@ package controllers
 import actions.RequestWithUserData
 import cats.effect.IO
 import cats.syntax.all._
-import constants.Constants
 import helper.BooleanHelper.not
 import helper.ScalatagsHelpers.writeableOf_Modifier
 import java.util.UUID
@@ -11,7 +10,7 @@ import models.{Application, Authorization, Error, EventType, User, UserGroup}
 import models.EventType._
 import modules.AppConfig
 import play.api.mvc.{RequestHeader, Result, Results}
-import play.api.mvc.Results.{InternalServerError, NotFound, Unauthorized}
+import play.api.mvc.Results.{Forbidden, InternalServerError, NotFound}
 import scala.concurrent.{ExecutionContext, Future}
 import services.{ApplicationService, EventService, UserGroupService, UserService}
 import views.MainInfos
@@ -152,18 +151,10 @@ object Operators {
         case _: Error.EntityNotFound | _: Error.RequirementFailed =>
           NotFound("Nous n'avons pas trouvé cette demande")
         case _: Error.Authorization | _: Error.Authentication =>
-          Unauthorized(
-            s"Vous n'avez pas les droits suffisants pour voir cette demande. " +
-              s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-          )
+          Forbidden(views.errors.public403())
         case _: Error.Database | _: Error.SqlException | _: Error.UnexpectedServerResponse |
             _: Error.Timeout | _: Error.MiscException =>
-          InternalServerError(
-            s"Une erreur s'est produite sur le serveur. " +
-              "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard. " +
-              s"Si cette erreur persiste, " +
-              s"vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-          )
+          InternalServerError(views.errors.public500WithCode(None))
       }
 
     private def manageApplicationError(applicationId: UUID, error: Error)(implicit

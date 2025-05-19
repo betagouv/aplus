@@ -1,7 +1,6 @@
 package views.helpers
 
 import cats.syntax.all._
-import constants.Constants
 import controllers.routes.{ApplicationController, Assets, HomeController}
 import org.webjars.play.WebJarsUtil
 import play.api.Logger
@@ -14,6 +13,9 @@ import views.MainInfos
 object common {
 
   private val logger = Logger("views")
+
+  def contactLink(text: String): Frag =
+    a(href := HomeController.contact.url)(text)
 
   /** See
     * https://github.com/webjars/webjars-play/blob/v2.8.0-1/src/main/scala/org/webjars/play/WebJarsUtil.scala#L35
@@ -223,13 +225,11 @@ object common {
               "Besoin d’aide ?"
             ),
             br,
-            "Contactez-nous :",
-            br,
             br,
             a(
-              href := s"mailto:${Constants.supportEmail}",
+              href := HomeController.contact.url,
               cls := "mdl-color-text--cyan-600",
-              Constants.supportEmail
+              "Contactez l’équipe A+."
             ),
             br
           )

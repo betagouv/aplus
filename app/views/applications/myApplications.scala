@@ -1,7 +1,6 @@
 package views.applications
 
 import cats.syntax.all._
-import constants.Constants
 import controllers.routes.ApplicationController
 import helper.Time
 import models.{Answer, Application, Authorization, FileMetadata, User, UserGroup}
@@ -10,6 +9,7 @@ import modules.AppConfig
 import play.api.mvc.RequestHeader
 import scalatags.Text.all._
 import views.helpers.applications.statusTag
+import views.helpers.common.contactLink
 
 object myApplications {
   val TODOflag = false
@@ -116,8 +116,8 @@ object myApplications {
             br,
             br,
             i(
-              "Un doute sur la nature du blocage ? Posez-nous la question par mail : ",
-              a(href := "mailto:@Constants.supportEmail?subject=Question", Constants.supportEmail),
+              "Un doute sur la nature du blocage ? Vous pouvez ",
+              contactLink("contacter l’équipe A+"),
               "."
             )
           )

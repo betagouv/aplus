@@ -1,7 +1,6 @@
 package views.helpers
 
 import cats.syntax.all._
-import constants.Constants
 import helper.MiscHelpers.intersperseList
 import models.{Application, Organisation, User, UserGroup}
 import models.Application.Status.{Archived, New, Processed, Processing, Sent, ToArchive}
@@ -9,6 +8,7 @@ import models.forms.ApplicationFormData
 import play.api.data.{Form, FormError}
 import play.api.i18n.Messages
 import scalatags.Text.all._
+import views.helpers.common.contactLink
 import views.helpers.forms.selectInput
 
 object applications {
@@ -423,9 +423,9 @@ object applications {
                 cls := "notification notification--error",
                 span(
                   "Une erreur est survenue sur le serveur Administration+. ",
-                  "Si l’erreur persiste vous pouvez contacter l’équipe A+ : ",
-                  a(href := s"mailto:${Constants.supportEmail}", Constants.supportEmail),
-                  " (merci de fournir la date et l’heure à laquelle est survenue l’erreur)."
+                  "Si l’erreur persiste vous pouvez ",
+                  contactLink("contacter l’équipe A+"),
+                  ". Merci de fournir la date et l’heure à laquelle est survenue l’erreur."
                 )
               )
             ),
@@ -436,8 +436,8 @@ object applications {
                 cls := "notification notification--error",
                 span(
                   "Une erreur est survenue dans votre navigateur. ",
-                  "Si l’erreur persiste vous pouvez contacter l’équipe A+ : ",
-                  a(href := s"mailto:${Constants.supportEmail}", Constants.supportEmail)
+                  "Si l’erreur persiste vous pouvez ",
+                  contactLink("contacter l’équipe A+"),
                 )
               )
             ),

@@ -1,10 +1,10 @@
 package views.emails
 
-import constants.Constants
 import helper.Time
 import java.time.{ZoneId, ZonedDateTime}
 import models._
 import scalatags.Text.all._
+import views.helpers.common.contactLink
 
 object common {
 
@@ -74,8 +74,8 @@ object common {
         br,
         br,
         "Si vous avez des questions ou vous rencontrez un problème, ",
-        "n’hésitez pas à nous contacter sur ",
-        a(href := s"mailto:${Constants.supportEmail}", Constants.supportEmail),
+        "n’hésitez pas à ",
+        contactLink("contacter l’équipe A+"),
         br,
         " ",
         "Equipe Administration+"
@@ -302,11 +302,8 @@ object common {
       br,
       p(
         i(
-          "Si vous avez un problème ou besoin d’aide à propos de l’outil Administration+, contactez-nous sur ",
-          a(
-            href := s"mailto:${Constants.supportEmail}",
-            s"${Constants.supportEmail}"
-          )
+          "Si vous avez un problème ou besoin d’aide à propos de l’outil, ",
+          contactLink("contactez l’équipe A+"),
         )
       )
     )
@@ -321,11 +318,8 @@ object common {
       i(
         "- Vous pouvez transférer la demande à un autre utilisateur dans l’outil Administration+ en ouvrant le lien ci-dessus",
         br,
-        "- Si vous avez un problème ou besoin d’aide à propos de l’outil Administration+, contactez-nous sur ",
-        a(
-          href := s"mailto:${Constants.supportEmail}",
-          s"${Constants.supportEmail}"
-        ),
+        "- Si vous avez un problème ou besoin d’aide à propos de l’outil, ",
+        contactLink("contactez l’équipe A+"),
         br,
         "- Le navigateur Internet Explorer peut rencontrer des difficultés à accéder au site. Microsoft conseille depuis février 2019 de ne plus utiliser son navigateur historique qui n’est plus mis à jour depuis la sortie de Edge en 2015 et ne supporte donc plus les standards actuels du Web. ",
         a(
@@ -342,11 +336,8 @@ object common {
       b("Ne transférez pas cet email et n’y répondez pas directement."),
       br,
       i(
-        "- Si vous avez un problème ou besoin d’aide à propos de l’outil Administration+, contactez-nous sur ",
-        a(
-          href := s"mailto:${Constants.supportEmail}",
-          s"${Constants.supportEmail}"
-        ),
+        "- Si vous avez un problème ou besoin d’aide à propos de l’outil, ",
+        contactLink("contactez l’équipe A+"),
         br,
         " ",
         "- Le navigateur Internet Explorer peut rencontrer des difficultés à accéder au site. Microsoft conseille depuis février 2019 de ne plus utiliser son navigateur historique qui n’est plus mis à jour depuis la sortie de Edge en 2015 et ne supporte donc plus les standards actuels du Web. ",

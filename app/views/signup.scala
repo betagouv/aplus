@@ -1,7 +1,6 @@
 package views
 
 import cats.syntax.all._
-import constants.Constants
 import controllers.routes.{HomeController, SignupController}
 import helper.UUIDHelper
 import java.util.UUID
@@ -16,6 +15,7 @@ import scala.util.Try
 import scalatags.Text.all._
 import serializers.ApiModel.SelectableGroup
 import serializers.Keys
+import views.helpers.common.contactLink
 import views.helpers.forms.{displayFormGlobalErrors, selectInput, textInput, CSRFInput}
 
 object signup {
@@ -64,8 +64,8 @@ object signup {
           groupSelect(signupForm, groups),
           p(
             "Vous ne trouvez pas votre structure ? ",
-            "Vous pouvez contacter l’équipe Administration+ par email à ",
-            a(href := s"mailto:${Constants.supportEmail}", Constants.supportEmail)
+            "Vous pouvez ",
+            contactLink("contacter l’équipe Administration+"),
           ),
           h4("Votre compte"),
           sharedAccountRadio(signupForm),

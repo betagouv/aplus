@@ -288,7 +288,7 @@ dialog {
     @flash.get("answer-error").map { error =>
         <div class="mdl-cell mdl-cell--12-col" id="answer-error">
             <div class="notification notification--error"><b>@error</b><br>
-                Si l’erreur persiste vous pouvez contacter l’équipe A+ : <a href="mailto:@Constants.supportEmail?subject=@error">@Constants.supportEmail</a>
+                Si l’erreur persiste vous pouvez <a href="@routes.HomeController.contact">contacter l’équipe A+</a>.
             </div>
         </div>
     }

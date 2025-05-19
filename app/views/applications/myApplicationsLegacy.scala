@@ -1,7 +1,6 @@
 package views.applications
 
 import cats.syntax.all._
-import constants.Constants
 import controllers.routes.ApplicationController
 import helper.Time
 import helper.TwirlImports.toHtml
@@ -13,6 +12,7 @@ import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
 import views.MainInfos
+import views.helpers.common.contactLink
 
 object myApplicationsLegacy {
 
@@ -75,8 +75,8 @@ object myApplicationsLegacy {
             br,
             br,
             i(
-              "Un doute sur la nature du blocage ? Posez-nous la question par mail : ",
-              a(href := "mailto:@Constants.supportEmail?subject=Question", Constants.supportEmail),
+              "Un doute sur la nature du blocage ? Vous pouvez ",
+              contactLink("contacter l’équipe A+"),
               "."
             )
           )

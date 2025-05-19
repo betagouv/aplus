@@ -1,7 +1,6 @@
 package views
 
 import cats.syntax.all._
-import constants.Constants
 import controllers.routes.{
   ApplicationController,
   AreaController,
@@ -566,10 +565,8 @@ object main {
               li(
                 a(
                   cls := "fr-footer__top-link",
-                  href := s"mailto:${Constants.supportEmail}",
-                  aria.label := s"Email de contact - ${Constants.supportEmail}",
-                  title := s"Email de contact - ${Constants.supportEmail}",
-                )(Constants.supportEmail)
+                  href := HomeController.contact.url,
+                )("Contacter l’équipe A+")
               ),
             )
           ),
