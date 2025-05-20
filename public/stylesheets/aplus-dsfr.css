@@ -493,3 +493,7 @@
     font-size: .75rem;
     color: #666;
 }
+
+.aplus-text--blue {
+    color: var(--text-action-high-blue-france);
+}
