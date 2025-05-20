@@ -388,7 +388,7 @@ class ApplicationAccessSpec extends Specification with BaseSpec {
 
     if (shouldExpectAnError) {
       browser.pageSource must contain(
-        "Vous n'avez pas les droits suffisants pour voir cette demande."
+        "Il semblerait que vous ayez tenté d’accéder à une partie sécurisée du site pour laquelle vous ne disposez pas des autorisations nécessaires."
       )
       browser.pageSource must not contain application.subject
       browser.pageSource must not contain application.description
