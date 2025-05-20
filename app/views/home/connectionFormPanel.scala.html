@@ -15,6 +15,9 @@
         @flash.get("error").map { message =>
         <div class="notification notification--error mdl-typography--text-prewrap" >@message</div>
         }
+        @flash.get("error-raw-html").map { message =>
+        <div class="notification notification--error mdl-typography--text-prewrap" ><div class="single--display-inline-important">@Html(message)</div></div>
+        }
         <input
             class="aplus-textfield__input aplus-textfield__input--large"
             minlength="1"

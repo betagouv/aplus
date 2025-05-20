@@ -324,7 +324,7 @@ class LoginController @Inject() (
                           eventService.logError(error)(
                             new RequestWithUserData(user, userRights, none, request)
                           )
-                        ).as(InternalServerError(views.errors.public500(None)))
+                        ).as(InternalServerError(views.errors.public500WithCode(None)))
                       ).unsafeToFuture()
                     }
                 )
@@ -575,7 +575,7 @@ class LoginController @Inject() (
               _.fold(
                 e =>
                   IO.blocking(eventService.logErrorNoUser(e))
-                    .as(InternalServerError(views.errors.public500(None))),
+                    .as(InternalServerError(views.errors.public500WithCode(None))),
                 _ => IO.pure(result)
               )
             )

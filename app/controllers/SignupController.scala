@@ -176,7 +176,7 @@ case class SignupController @Inject() (
                           eventService.logError(error)(
                             new RequestWithUserData(user, userRights, none, request)
                           )
-                        ).as(InternalServerError(views.errors.public500(None)))
+                        ).as(InternalServerError(views.errors.public500WithCode(None)))
                       ).unsafeToFuture()
                     }
                 )
@@ -372,7 +372,7 @@ case class SignupController @Inject() (
                   e => {
                     eventService.logErrorNoUser(e)
                     // TODO (accessibility): we want the logged in error page here
-                    Future.successful(InternalServerError(views.errors.public500(None)))
+                    Future.successful(InternalServerError(views.errors.public500WithCode(None)))
                   },
                   {
                     case None =>
@@ -414,7 +414,7 @@ case class SignupController @Inject() (
                           )
                             .valueOrF(error =>
                               IO.blocking(eventService.logErrorNoUser(error))
-                                .as(InternalServerError(views.errors.public500(None)))
+                                .as(InternalServerError(views.errors.public500WithCode(None)))
                             )
                             .unsafeToFuture()
                       }

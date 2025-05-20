@@ -1,11 +1,11 @@
 package views.helpers
 
 import cats.syntax.all._
-import constants.Constants
 import play.api.data.{Field, Form}
 import play.api.i18n.MessagesProvider
 import play.api.mvc.{Flash, RequestHeader}
 import scalatags.Text.all._
+import views.helpers.common.contactLink
 
 // Note: Play's implementation of Twirl import is here:
 // https://github.com/playframework/playframework/tree/2.8.7/core/play/src/main/scala/views/helper
@@ -36,8 +36,9 @@ object forms {
           frag(
             div(b(error)),
             div(
-              "Si l’erreur persiste vous pouvez contacter l’équipe A+ : ",
-              a(href := s"mailto:${Constants.supportEmail}?subject=$error", Constants.supportEmail)
+              "Si l’erreur persiste vous pouvez ",
+              contactLink("contacter l’équipe A+"),
+              ".",
             )
           )
         )

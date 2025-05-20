@@ -3,8 +3,8 @@ package controllers
 import actions.LoginAction
 import cats.data.EitherT
 import cats.syntax.all._
-import constants.Constants
 import controllers.Operators.UserOperators
+import helper.ScalatagsHelpers.writeableOf_Modifier
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models.{Error, EventType, Mandat, Sms, UserGroup}
@@ -14,6 +14,7 @@ import org.webjars.play.WebJarsUtil
 import play.api.libs.json.{JsError, JsString, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents, PlayBodyParsers}
 import scala.concurrent.{ExecutionContext, Future}
+import scalatags.Text.all._
 import services.{
   EventService,
   MandatService,
@@ -23,6 +24,7 @@ import services.{
   UserGroupService,
   UserService
 }
+import views.helpers.common.contactLink
 
 @Singleton
 case class MandatController @Inject() (
@@ -226,18 +228,18 @@ case class MandatController @Inject() (
                 case _: Error.EntityNotFound | _: Error.RequirementFailed =>
                   NotFound(views.mandat.mandatDoesNotExist(request.currentUser, request.rights))
                 case _: Error.Authorization | _: Error.Authentication =>
-                  Unauthorized(
-                    s"Vous n'avez pas les droits suffisants pour voir ce mandat. " +
-                      s"Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+                  Forbidden(
+                    views.errors.public403(
+                      frag(
+                        "Vous n’avez pas les droits suffisants pour voir ce mandat. ",
+                        contactLink("Vous pouvez contacter l’équipe A+"),
+                        " si nécessaire."
+                      )
+                    )
                   )
                 case _: Error.Database | _: Error.SqlException | _: Error.UnexpectedServerResponse |
                     _: Error.Timeout | _: Error.MiscException =>
-                  InternalServerError(
-                    s"Une erreur s'est produite sur le serveur. " +
-                      "Celle-ci semble être temporaire. Nous vous invitons à réessayer plus tard. " +
-                      s"Si cette erreur persiste, " +
-                      s"vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
-                  )
+                  InternalServerError(views.errors.public500WithCode(None))
               }
             )
           },

@@ -57,6 +57,7 @@ import play.api.mvc.{
 import play.twirl.api.Html
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
+import scalatags.Text.all._
 import serializers.ApiModel.{
   ApplicationMetadata,
   ApplicationMetadataResult,
@@ -79,6 +80,7 @@ import services.{
 }
 import views.applications.myApplications.MyApplicationInfos
 import views.dashboard.DashboardInfos
+import views.helpers.common.contactLink
 import views.helpers.forms.flashSuccessRawHtmlKey
 
 /** This controller creates an `Action` to handle HTTP requests to the application's home page.
@@ -1546,8 +1548,14 @@ case class ApplicationController @Inject() (
                         applicationId = application.id.some
                       )
                     ).as(
-                      Unauthorized(
-                        s"Vous n'avez pas les droits suffisants pour voir les fichiers sur cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+                      Forbidden(
+                        views.errors.public403(
+                          frag(
+                            "Vous n’avez pas les droits suffisants pour voir les fichiers sur cette demande. Vous pouvez ",
+                            contactLink("contacter l’équipe A+"),
+                            " si nécessaire."
+                          )
+                        )
                       )
                     )
 
@@ -1933,8 +1941,14 @@ case class ApplicationController @Inject() (
             applicationId = application.id.some
           )
           Future(
-            Unauthorized(
-              s"Vous n'avez pas les droits suffisants pour inviter des agents à cette demande. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+            Forbidden(
+              views.errors.public403(
+                frag(
+                  "Vous n’avez pas les droits suffisants pour inviter des agents à cette demande. Vous pouvez ",
+                  contactLink("contacter l’équipe A+"),
+                  " si nécessaire."
+                )
+              )
             )
           )
         }
@@ -1985,7 +1999,13 @@ case class ApplicationController @Inject() (
               )
             Future(
               InternalServerError(
-                s"L'utilité de la demande n'est pas présente, il s'agit sûrement d'une erreur. Vous pouvez contacter l'équipe A+ : ${Constants.supportEmail}"
+                views.errors.public500(
+                  frag(
+                    "L’utilité de la demande n’est pas présente, il s’agit sûrement d’une erreur. Vous pouvez ",
+                    contactLink("contacter l’équipe A+"),
+                    " si nécessaire."
+                  )
+                )
               )
             )
           },

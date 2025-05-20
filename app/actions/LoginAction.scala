@@ -3,7 +3,6 @@ package actions
 import cats.data.EitherT
 import cats.effect.IO
 import cats.syntax.all._
-import constants.Constants
 import controllers.routes
 import helper.ScalatagsHelpers.writeableOf_Modifier
 import helper.UUIDHelper
@@ -17,6 +16,7 @@ import play.api.Logger
 import play.api.http.HeaderNames.USER_AGENT
 import play.api.mvc._
 import play.api.mvc.Results.{InternalServerError, TemporaryRedirect}
+import routes.HomeController
 import scala.concurrent.{ExecutionContext, Future}
 import serializers.Keys
 import services.{EventService, ServicesDependencies, SignupService, TokenService, UserService}
@@ -146,7 +146,7 @@ class BaseLoginAction(
             _.fold(
               e => {
                 eventService.logErrorNoUser(e)
-                Future.successful(InternalServerError(views.errors.public500(None)).asLeft)
+                Future.successful(InternalServerError(views.errors.public500WithCode(None)).asLeft)
               },
               {
                 case (None, _) =>
@@ -157,7 +157,7 @@ class BaseLoginAction(
                   )
                   Future(
                     userNotLogged(
-                      s"Votre compte a été supprimé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème."
+                      s"""Votre compte a été supprimé. Contactez votre référent ou <a href="${HomeController.contact.url}">l’équipe d’Administration+</a> en cas de problème."""
                     )
                   )
                 case (Some(user), userSession) =>
@@ -171,7 +171,7 @@ class BaseLoginAction(
                         s"Path ${request.path}".some
                       )
                       userNotLogged(
-                        s"Votre compte a été désactivé. Contactez votre référent ou l'équipe d'Administration+ sur ${Constants.supportEmail} en cas de problème."
+                        s"""Votre compte a été désactivé. Contactez votre référent ou <a href="${HomeController.contact.url}">l’équipe d’Administration+</a> en cas de problème."""
                       )
                     }
                   } else {
@@ -256,7 +256,7 @@ class BaseLoginAction(
             eventService.logError(error)(
               new RequestWithUserData(user, userRights, none, request)
             )
-          ).as(InternalServerError(views.errors.public500(None)))
+          ).as(InternalServerError(views.errors.public500WithCode(None)))
         ).unsafeToFuture()
       } else {
         eventService.log(TryLoginByKey, "Clé dans l'url, redirige vers la page de connexion")(
@@ -426,7 +426,7 @@ class BaseLoginAction(
                 eventService.logError(error)(
                   new RequestWithUserData(user, userRights, none, request)
                 )
-              ).as(InternalServerError(views.errors.public500(None)))
+              ).as(InternalServerError(views.errors.public500WithCode(None)))
             ).unsafeToFuture()
               .map(_.asLeft)
           } else {
@@ -503,7 +503,7 @@ class BaseLoginAction(
         .removingFromSession(
           (Keys.Session.userId :: Keys.Session.sessionId :: LoginAction.signupSessionKeys): _*
         )
-        .flashing("error" -> message)
+        .flashing("error-raw-html" -> message)
     )
 
   private def redirectToHomeWithEmailSendbackButton[A](email: String, message: String)(implicit

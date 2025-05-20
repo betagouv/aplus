@@ -1,7 +1,6 @@
 package views
 
 import cats.syntax.all._
-import constants.Constants
 import controllers.routes.{ApplicationController, Assets}
 import helper.Time
 import helper.TwirlImports.toHtml
@@ -10,6 +9,7 @@ import org.webjars.play.WebJarsUtil
 import play.api.mvc.{Flash, RequestHeader}
 import play.twirl.api.Html
 import scalatags.Text.all._
+import views.helpers.common.contactLink
 
 object mandat {
 
@@ -62,8 +62,8 @@ object mandat {
             "Aucun mandat n’existe sur cette page. ",
             "Si vous avez cliqué sur un lien, ce lien n’est pas valide, ",
             "et il s’agit d’une erreur. ",
-            "Vous pouvez rapporter cette erreur à l’équipe Administration+ ",
-            a(href := s"mailto:${Constants.supportEmail}", Constants.supportEmail),
+            "Vous pouvez ",
+            contactLink("rapporter cette erreur à l’équipe A+"),
             ". ",
             "Un mandat générique peut être ",
             a(

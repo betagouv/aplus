@@ -54,7 +54,7 @@ class ErrorHandler @Inject() (
       if (isTransient)
         ServiceUnavailable(views.errors.public503())
       else
-        InternalServerError(views.errors.public500(Some(exception.id)))
+        InternalServerError(views.errors.public500WithCode(Some(exception.id)))
     result
   }
 
