@@ -117,6 +117,43 @@ object common {
       )
     ) ::: commonEmailFooter
 
+  val userInactivityReminderSubject = "[A+] Votre compte Administration+ est inactif"
+
+  def userInactivityReminderBody(
+      userName: Option[String],
+      url: String,
+      numberOfMonths: Int
+  ): List[Modifier] =
+    List[Modifier](
+      s"${userName.filter(_.nonEmpty).map(n => s"Bonjour $n,").getOrElse("Bonjour,")}",
+      br,
+      br,
+      p(
+        s"Votre compte sur la plateforme Administration+ est inactif depuis plus de $numberOfMonths mois.",
+        br,
+        br,
+        "Il est possible que certaines demandes en cours soient encore associées à votre profil.",
+        br,
+        "Si vous souhaitez les consulter ou continuer à utiliser la plateforme, nous vous invitons à vous reconnecter dans les 30 prochains jours, à l’adresse suivante : ",
+        br,
+        br,
+        a(href := url, url),
+        " ",
+        br,
+        br,
+        "Cette nouvelle connexion est nécessaire pour éviter la suppression automatique de votre compte.",
+        br,
+        br,
+        "Si vous ne prévoyez plus d’utiliser Administration+, vous pouvez simplement nous transmettre l’adresse e-mail de votre remplaçant, afin de garantir la continuité du suivi des dossiers.",
+        br,
+        br,
+        "Nous restons à votre disposition pour toute question,",
+        br,
+        br,
+        "L’équipe Administration+"
+      )
+    ) ::: commonEmailFooter
+
   val mandatV2Subject = "[A+] Mandat créé"
 
   def mandatV2Body(absoluteUrl: String): List[Modifier] =
