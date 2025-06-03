@@ -132,6 +132,7 @@ object Organisation {
     departement,
     dila,
     drfip, // Région
+    Organisation("France Rénov'", "France Rénov'"),
     hopital, // Ville
     Organisation("OFPRA", "Office français de protection des réfugiés et apatrides"), // Nationale
     Organisation("La Poste", "La Poste"),
