@@ -154,13 +154,22 @@ class AppConfig @Inject() (configuration: Configuration) {
   val zammadChatDomain: Option[String] =
     configuration.getOptional[String]("app.zammadChatDomain")
 
-  val userInactivityReminder1DelayInDays: Int =
-    configuration.get[Int]("app.userInactivityReminder1DelayInDays")
+  val userInactivityCronMinute: Int =
+    configuration.get[Int]("app.userInactivityCronMinute")
 
-  val userInactivityReminder2AdditionalDelayInDays: Int =
-    configuration.get[Int]("app.userInactivityReminder2AdditionalDelayInDays")
+  val userInactivityCronHour: Int =
+    configuration.get[Int]("app.userInactivityCronHour")
 
-  val userInactivityDeactivationAdditionalDelayInDays: Int =
-    configuration.get[Int]("app.userInactivityDeactivationAdditionalDelayInDays")
+  val userInactivityCronAdditionalDays: Int =
+    configuration.get[Int]("app.userInactivityCronAdditionalDays")
+
+  val userInactivityReminder1DelayInMinutes: Int =
+    configuration.get[Int]("app.userInactivityReminder1DelayInMinutes")
+
+  val userInactivityReminder2AdditionalDelayInMinutes: Int =
+    configuration.get[Int]("app.userInactivityReminder2AdditionalDelayInMinutes")
+
+  val userInactivityDeactivationAdditionalDelayInMinutes: Int =
+    configuration.get[Int]("app.userInactivityDeactivationAdditionalDelayInMinutes")
 
 }

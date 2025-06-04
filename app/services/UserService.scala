@@ -665,9 +665,7 @@ class UserService @Inject() (
       .mapResult {
         case "inactivity_reminder_1" => UserInactivityEvent.EventType.InactivityReminder1.asRight
         case "inactivity_reminder_2" => UserInactivityEvent.EventType.InactivityReminder2.asRight
-        case "inactivity_reminder_before_deactivation" =>
-          UserInactivityEvent.EventType.InactivityReminderBeforeDeactivation.asRight
-        case "deactivation" => UserInactivityEvent.EventType.Deactivation.asRight
+        case "deactivation"          => UserInactivityEvent.EventType.Deactivation.asRight
         case unknownType =>
           SqlMappingError(s"Cannot parse user_inactivity_history event_type $unknownType").asLeft
       }
@@ -688,9 +686,7 @@ class UserService @Inject() (
     eventType match {
       case UserInactivityEvent.EventType.InactivityReminder1 => "inactivity_reminder_1"
       case UserInactivityEvent.EventType.InactivityReminder2 => "inactivity_reminder_2"
-      case UserInactivityEvent.EventType.InactivityReminderBeforeDeactivation =>
-        "inactivity_reminder_before_deactivation"
-      case UserInactivityEvent.EventType.Deactivation => "deactivation"
+      case UserInactivityEvent.EventType.Deactivation        => "deactivation"
     }
 
   def recordUserInactivityEvent(event: UserInactivityEvent): IO[Either[Error, Unit]] =

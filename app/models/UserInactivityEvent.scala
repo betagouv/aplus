@@ -23,7 +23,6 @@ object UserInactivityEvent {
 
     case object InactivityReminder1 extends EventType
     case object InactivityReminder2 extends EventType
-    case object InactivityReminderBeforeDeactivation extends EventType
     case object Deactivation extends EventType
 
   }
