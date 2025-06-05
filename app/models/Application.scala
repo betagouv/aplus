@@ -307,6 +307,7 @@ object Application {
   val UserBirthdayKey = "Date de naissance"
   val UserSocialSecurityNumberKey = "Numéro de sécurité sociale"
   val UserCafNumberKey = "Identifiant CAF"
+  val UserNIFKey = "Numéro fiscal"
   val UserAddressKey = "Adresse postale"
   val UserPhoneNumberKey = "Numéro de téléphone"
   val UserApplicationNumberKey = "Numéro de dossier"
