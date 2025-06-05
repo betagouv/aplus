@@ -1,5 +1,6 @@
 package views.emails
 
+import constants.Constants
 import helper.Time
 import java.time.{ZoneId, ZonedDateTime}
 import models._
@@ -114,6 +115,82 @@ object common {
         br,
         " ",
         "Equipe Administration+"
+      )
+    ) ::: commonEmailFooter
+
+  val userInactivityReminderSubject = "[A+] Votre compte Administration+ est inactif"
+
+  def userInactivityReminderBody(
+      userName: Option[String],
+      url: String,
+      numberOfMonths: Int
+  ): List[Modifier] =
+    List[Modifier](
+      s"${userName.filter(_.nonEmpty).map(n => s"Bonjour $n,").getOrElse("Bonjour,")}",
+      br,
+      br,
+      p(
+        s"Votre compte sur la plateforme Administration+ est inactif depuis plus de $numberOfMonths mois.",
+        br,
+        br,
+        "Il est possible que certaines demandes en cours soient encore associées à votre profil.",
+        br,
+        "Si vous souhaitez les consulter ou continuer à utiliser la plateforme, nous vous invitons à vous reconnecter dans les 30 prochains jours, à l’adresse suivante : ",
+        br,
+        br,
+        a(href := url, url),
+        " ",
+        br,
+        br,
+        "Cette nouvelle connexion est nécessaire pour éviter la suppression automatique de votre compte.",
+        br,
+        br,
+        "Si vous ne prévoyez plus d’utiliser Administration+, vous pouvez simplement nous transmettre l’adresse e-mail de votre remplaçant, afin de garantir la continuité du suivi des dossiers.",
+        br,
+        br,
+        "Nous restons à votre disposition pour toute question,",
+        br,
+        br,
+        "L’équipe Administration+"
+      )
+    ) ::: commonEmailFooter
+
+  val userInactivityDeactivationSubject = "[A+] Suppression de votre compte Administration+"
+
+  def userInactivityDeactivationBody(
+      userName: Option[String],
+  ): List[Modifier] =
+    List[Modifier](
+      s"${userName.filter(_.nonEmpty).map(n => s"Bonjour $n,").getOrElse("Bonjour,")}",
+      br,
+      br,
+      p(
+        "Votre compte a été supprimé de la base d’utilisateurs d’Administration+.",
+        br,
+        br,
+        "Il n’est désormais plus possible de recevoir ou de formuler de demandes via la plateforme.",
+        br,
+        br,
+        "🔄 En cas d’erreur, tout membre de votre équipe peut réactiver votre compte à tout moment depuis la page ",
+        a(
+          href := "https://docs.aplus.beta.gouv.fr/guides-et-tutoriels/responsable-de-groupe",
+          "« Mes groupes »"
+        ),
+        ". ",
+        br,
+        br,
+        "👤 Si vous connaissez votre remplaçant, n’hésitez pas à nous transmettre ses coordonnées afin que nous puissions lui créer un compte. Le responsable de votre groupe peut également effectuer cette démarche depuis la même page.",
+        br,
+        br,
+        "Si vous avez la moindre question, n’hésitez pas à nous contacter via l’adresse ",
+        a(href := s"mailto:${Constants.supportEmail}", Constants.supportEmail),
+        ". ",
+        br,
+        br,
+        "Bien cordialement,",
+        br,
+        br,
+        "L’équipe Administration+"
       )
     ) ::: commonEmailFooter
 
