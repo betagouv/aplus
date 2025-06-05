@@ -2,7 +2,6 @@ package tasks
 
 import cats.data.EitherT
 import cats.effect.IO
-import cats.implicits._
 import cats.kernel.Eq
 import cats.syntax.all._
 import helper.{TasksHelpers, Time}
@@ -137,15 +136,19 @@ class UserInactivityTask @Inject() (
                     case Left(error) =>
                       IO.pure(Left(error))
                     case Right(_) =>
-                      userService.recordUserInactivityEvent(
-                        UserInactivityEvent(
-                          id = UUID.randomUUID(),
-                          userId = user.id,
-                          eventType = UserInactivityEvent.EventType.Deactivation,
-                          eventDate = now,
-                          lastActivityReferenceDate = lastActivity
+                      IO.blocking(
+                        notificationService.userInactivityDeactivation(user.name, user.email)
+                      ).flatMap { _ =>
+                        userService.recordUserInactivityEvent(
+                          UserInactivityEvent(
+                            id = UUID.randomUUID(),
+                            userId = user.id,
+                            eventType = UserInactivityEvent.EventType.Deactivation,
+                            eventDate = now,
+                            lastActivityReferenceDate = lastActivity
+                          )
                         )
-                      )
+                      }
                   }
                 } else {
                   // Note: this case happens between second reminder and deactivation

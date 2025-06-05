@@ -1,5 +1,6 @@
 package views.emails
 
+import constants.Constants
 import helper.Time
 import java.time.{ZoneId, ZonedDateTime}
 import models._
@@ -148,6 +149,45 @@ object common {
         br,
         br,
         "Nous restons à votre disposition pour toute question,",
+        br,
+        br,
+        "L’équipe Administration+"
+      )
+    ) ::: commonEmailFooter
+
+  val userInactivityDeactivationSubject = "[A+] Suppression de votre compte Administration+"
+
+  def userInactivityDeactivationBody(
+      userName: Option[String],
+  ): List[Modifier] =
+    List[Modifier](
+      s"${userName.filter(_.nonEmpty).map(n => s"Bonjour $n,").getOrElse("Bonjour,")}",
+      br,
+      br,
+      p(
+        "Votre compte a été supprimé de la base d’utilisateurs d’Administration+.",
+        br,
+        br,
+        "Il n’est désormais plus possible de recevoir ou de formuler de demandes via la plateforme.",
+        br,
+        br,
+        "🔄 En cas d’erreur, tout membre de votre équipe peut réactiver votre compte à tout moment depuis la page ",
+        a(
+          href := "https://docs.aplus.beta.gouv.fr/guides-et-tutoriels/responsable-de-groupe",
+          "« Mes groupes »"
+        ),
+        ". ",
+        br,
+        br,
+        "👤 Si vous connaissez votre remplaçant, n’hésitez pas à nous transmettre ses coordonnées afin que nous puissions lui créer un compte. Le responsable de votre groupe peut également effectuer cette démarche depuis la même page.",
+        br,
+        br,
+        "Si vous avez la moindre question, n’hésitez pas à nous contacter via l’adresse ",
+        a(href := s"mailto:${Constants.supportEmail}", Constants.supportEmail),
+        ". ",
+        br,
+        br,
+        "Bien cordialement,",
         br,
         br,
         "L’équipe Administration+"

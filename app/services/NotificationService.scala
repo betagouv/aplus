@@ -268,6 +268,23 @@ class NotificationService @Inject() (
     emailsService.sendBlocking(email, EmailPriority.Normal)
   }
 
+  def userInactivityDeactivation(userName: String, userEmail: String): Option[String] = {
+    val name = userName.some.map(_.trim).filter(_.nonEmpty)
+    val bodyInner = common.userInactivityDeactivationBody(name)
+    val email = Email(
+      subject = common.userInactivityDeactivationSubject,
+      from = from,
+      replyTo = replyTo,
+      to = List(
+        name
+          .map(name => s"${quoteEmailPhrase(name)} <$userEmail>")
+          .getOrElse(userEmail)
+      ),
+      bodyHtml = Some(common.renderEmail(bodyInner))
+    )
+    emailsService.sendBlocking(email, EmailPriority.Normal)
+  }
+
   def mandatV2Generated(mandatId: Mandat.Id, user: User): Option[String] = {
     val absoluteUrl: String =
       routes.MandatController.mandat(mandatId.underlying).absoluteURL(https, host)
