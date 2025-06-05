@@ -93,6 +93,8 @@ object Organisation {
 
   val franceServicesId: Id = Organisation.Id("MFS")
   val franceServices: Organisation = Organisation(franceServicesId, "FS", "France Services")
+  val laPosteId: Id = Organisation.Id("La Poste")
+  val laPoste: Organisation = Organisation(laPosteId, "La Poste", "La Poste")
   val mairie: Organisation = Organisation("Mairie", "Mairie")
   val mdph: Organisation = Organisation("MDPH", "Maison départementale des personnes handicapées")
   val missionLocale: Organisation = Organisation("Mission locale", "Mission locale")
@@ -135,7 +137,7 @@ object Organisation {
     Organisation("France Rénov'", "France Rénov'"),
     hopital, // Ville
     Organisation("OFPRA", "Office français de protection des réfugiés et apatrides"), // Nationale
-    Organisation("La Poste", "La Poste"),
+    laPoste,
     mairie, // Ville
     mdph,
     franceServices,

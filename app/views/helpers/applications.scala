@@ -228,6 +228,14 @@ object applications {
                   " ci-dessous."
                 )
               )
+            } else if (organisation.map(_.id).filter(_ === Organisation.laPosteId).nonEmpty) {
+              publicNoteBox(
+                frag(
+                  "Sur A+, La Poste répond aux demandes pour déclarer un changement d’adresse, informer sur la réexpédition d’un courrier ou l’identité numérique, créer un coffre-fort numérique La Poste.",
+                  br,
+                  "Pour les autres questions, veuillez orienter vers les services clients."
+                )
+              )
             } else if (
               organisation
                 .find(entity =>
