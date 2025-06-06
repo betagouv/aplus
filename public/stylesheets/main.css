@@ -1216,3 +1216,22 @@ Tabs
   position: relative;
   z-index: 1;
 }
+
+.aplus-header-notice {
+    background-color: #ececfe;
+    color: #4161c1;
+    height: auto;
+    min-height: 64px;
+}
+
+.aplus-header-notice > * {
+    width: 100%;
+}
+
+.aplus-header-notice p {
+    margin: 0;
+}
+
+.aplus-header-notice a {
+    color: #4161c1;
+}

@@ -75,8 +75,14 @@ object common {
       optionalDemoVersionHeader,
       mainInfos.config.topHeaderWarningMessage.map(message =>
         div(
-          cls := "mdl-layout__header-row mdl-color--deep-purple-400 mdl-color-text--white",
+          cls := "mdl-layout__header-row mdl-color--red-A700 mdl-color-text--white",
           message
+        )
+      ),
+      mainInfos.config.topHeaderConnectedPagesNoticeMessageHtml.map(htmlMessage =>
+        div(
+          cls := "mdl-layout__header-row aplus-header-notice ",
+          raw(htmlMessage)
         )
       )
     )
