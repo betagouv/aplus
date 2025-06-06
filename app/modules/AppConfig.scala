@@ -77,6 +77,9 @@ class AppConfig @Inject() (configuration: Configuration) {
   val topHeaderWarningMessage: Option[String] =
     configuration.getOptional[String]("app.topHeaderWarningMessage")
 
+  val topHeaderConnectedPagesNoticeMessageHtml: Option[String] =
+    configuration.getOptional[String]("app.topHeaderConnectedPagesNoticeMessageHtml")
+
   val topHeaderPublicPagesAlertMessageHtml: Option[String] =
     configuration.getOptional[String]("app.topHeaderPublicPagesAlertMessageHtml")
 
