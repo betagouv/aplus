@@ -155,7 +155,7 @@ class TokenService @Inject() (
               .as(simpleLoginToken.singleOpt)
           // To be sure the token is used only once, we remove it from the database
           tokenOpt match {
-            case None => none
+            case None      => none
             case Some(row) =>
               val deletion =
                 SQL"""DELETE FROM login_token WHERE token = $rawToken""".executeUpdate()

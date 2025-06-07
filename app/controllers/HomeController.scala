@@ -103,7 +103,7 @@ class HomeController @Inject() (
 
   val contactCSPConfig = {
     val modifiedDirectives: Seq[CSPDirective] = config.zammadChatDomain match {
-      case None => cspConfig.directives
+      case None                   => cspConfig.directives
       case Some(zammadChatDomain) =>
         cspConfig.directives.map {
           case CSPDirective(name, value) if name === "script-src" =>

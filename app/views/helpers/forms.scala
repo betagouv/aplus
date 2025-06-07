@@ -30,7 +30,7 @@ object forms {
 
   def flashError(implicit flash: Flash): Frag =
     flash.get(flashErrorKey) match {
-      case None => ()
+      case None        => ()
       case Some(error) =>
         flashErrorOuter(
           frag(
@@ -66,7 +66,7 @@ object forms {
 
   def flashSuccess(implicit flash: Flash): Frag =
     flash.get(flashSuccessKey) match {
-      case None => ()
+      case None          => ()
       case Some(message) =>
         flashSuccessOuter(
           frag(

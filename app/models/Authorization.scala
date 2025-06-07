@@ -394,7 +394,7 @@ object Authorization {
   ): Check =
     rights =>
       application.answers.find(_.id === answerId) match {
-        case None => false
+        case None         => false
         case Some(answer) =>
           val hasNotExpired =
             Answer.filesAvailabilityLeftInDays(filesExpirationInDays)(answer).nonEmpty

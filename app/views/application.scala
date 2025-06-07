@@ -120,7 +120,7 @@ object application {
       case Scanning    => "Scan par un antivirus en cours"
       case Quarantined => "Fichier supprimé par l’antivirus"
       case Expired     => "Fichier expiré et supprimé"
-      case Error =>
+      case Error       =>
         "Une erreur est survenue lors de l’envoi du fichier, celui-ci n’est pas disponible"
     }
     div(
