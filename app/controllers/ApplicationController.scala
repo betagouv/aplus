@@ -812,7 +812,7 @@ case class ApplicationController @Inject() (
           .toMap
 
       val filteredByGroups = selectedGroupsFilter match {
-        case None => allApplications
+        case None                  => allApplications
         case Some(filteringGroups) =>
           allApplications.filter { application =>
             application.creatorGroupId.map(filteringGroups.contains).getOrElse(false) ||

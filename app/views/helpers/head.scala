@@ -61,14 +61,14 @@ object head {
 
   def gitHeadCommit: Frag =
     constants.BuildInfo.gitHeadCommit match {
-      case None => ()
+      case None         => ()
       case Some(commit) =>
         meta(attr("property") := "build-git-version", content := commit)
     }
 
   def gitHeadCommitDate: Frag =
     constants.BuildInfo.gitHeadCommitDate match {
-      case None => ()
+      case None       => ()
       case Some(date) =>
         meta(attr("property") := "build-git-date", content := date)
     }
