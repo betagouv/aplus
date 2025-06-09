@@ -1,24 +1,36 @@
 package tasks
 
+import cats.syntax.all._
 import java.time.{Duration, ZonedDateTime}
 import javax.inject.Inject
-import models.EventType
+import models.{Error, EventType}
+import models.dataModels.ApplicationRow
 import org.apache.pekko.actor.ActorSystem
 import play.api.Configuration
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
-import services.{ApplicationService, EventService, FileService, MandatService, SmsService}
+import services.{
+  ApplicationService,
+  EventService,
+  FileService,
+  MandatService,
+  ServicesDependencies,
+  SmsService
+}
 
 class WipeOldDataTask @Inject() (
     actorSystem: ActorSystem,
     applicationService: ApplicationService,
     configuration: Configuration,
+    dependencies: ServicesDependencies,
     eventService: EventService,
     fileService: FileService,
     mandatService: MandatService,
     smsService: SmsService
 )(implicit executionContext: ExecutionContext) {
+
+  import dependencies.ioRuntime
 
   private val retentionInMonthsOpt: Option[Long] =
     configuration.getOptional[Long]("app.personalDataRetentionInMonths")
@@ -39,8 +51,7 @@ class WipeOldDataTask @Inject() (
     )
 
   def wipeOldData(retentionInMonths: Long): Unit =
-    applicationService
-      .wipePersonalData(retentionInMonths)
+    wipePersonalData(retentionInMonths)
       .onComplete {
         case Success(Right(wiped)) =>
           val numWiped = wiped.length
@@ -87,6 +98,24 @@ class WipeOldDataTask @Inject() (
           )
       }
    */
+
+  def wipePersonalData(retentionInMonths: Long): Future[Either[Error, List[ApplicationRow]]] = {
+    val applications = applicationService.applicationsThatShouldBeWipedBlocking(retentionInMonths)
+    val files = fileService.queryByApplicationsIdsBlocking(applications.map(_.id))
+    val filesIds = files.map(_.id)
+    val filesDeletionResult = fileService.deleteByIds(filesIds).unsafeToFuture()
+    filesDeletionResult.map {
+      case Left(error) =>
+        error.asLeft[List[ApplicationRow]]
+      case Right(_) =>
+        applications
+          .flatMap { application =>
+            val _ = fileService.wipeFilenamesByIdsBlocking(filesIds)
+            applicationService.wipeApplicationPersonalDataBlocking(application)
+          }
+          .asRight[Error]
+    }
+  }
 
   private def logSuccess(description: String) =
     eventService.logNoRequest(EventType.WipeDataComplete, description)

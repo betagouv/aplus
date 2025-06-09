@@ -15,7 +15,6 @@ import helper.StringHelper.normalizeNFKC
 import io.laserdisc.pure.s3.tagless.{Interpreter => S3Interpreter}
 import java.net.URI
 import java.nio.file.{Files, Path => NioPath}
-import java.sql.Connection
 import java.time.Instant
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
@@ -309,19 +308,19 @@ class FileService @Inject() (
           }
       )
 
-  def queryByApplicationsIdsBlocking(
-      applicationIds: List[UUID]
-  )(implicit connection: Connection): List[FileMetadata] =
-    SQL(
-      s"""
+  def queryByApplicationsIdsBlocking(applicationIds: List[UUID]): List[FileMetadata] =
+    db.withConnection { implicit connection =>
+      SQL(
+        s"""
         SELECT $fieldsInSelect
         FROM file_metadata
         WHERE application_id = ANY(array[{applicationIds}::uuid[]))
       """
-    )
-      .on("applicationIds" -> applicationIds)
-      .as(fileMetadataRowParser.*)
-      .flatMap(_.toFileMetadata)
+      )
+        .on("applicationIds" -> applicationIds)
+        .as(fileMetadataRowParser.*)
+        .flatMap(_.toFileMetadata)
+    }
 
   def byApplicationId(applicationId: UUID): Future[Either[Error, List[FileMetadata]]] =
     Future(
@@ -399,10 +398,12 @@ class FileService @Inject() (
       .drain
       .map(_.asRight)
 
-  def wipeFilenamesByIdsBlocking(fileIds: List[UUID])(implicit connection: Connection): Int =
-    SQL"""UPDATE file_metadata
-          SET filename = 'fichier-non-existant'
-          WHERE id = ANY(array[{fileIds}::uuid[]))""".executeUpdate()
+  def wipeFilenamesByIdsBlocking(fileIds: List[UUID]): Int =
+    db.withConnection { implicit connection =>
+      SQL"""UPDATE file_metadata
+            SET filename = 'fichier-non-existant'
+            WHERE id = ANY(array[{fileIds}::uuid[]))""".executeUpdate()
+    }
 
   private def insertMetadata(metadata: FileMetadata): Future[Either[Error, Unit]] =
     Future(

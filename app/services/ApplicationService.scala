@@ -9,7 +9,7 @@ import java.sql.Connection
 import java.time.ZonedDateTime
 import java.util.UUID
 import javax.inject.Inject
-import models.{dataModels, Answer, Application, Authorization, Error, EventType, FileMetadata}
+import models.{dataModels, Answer, Application, Authorization, Error, EventType}
 import models.Application.SeenByUser
 import models.Authorization.UserRights
 import models.dataModels.{AnswerRow, ApplicationRow, InvitedUsers, UserInfos}
@@ -21,10 +21,8 @@ import scala.concurrent.Future
 class ApplicationService @Inject() (
     db: Database,
     dependencies: ServicesDependencies,
-    fileService: FileService,
 ) {
   import dependencies.databaseExecutionContext
-  import dependencies.ioRuntime
 
   private val (simpleApplication, applicationTableFields) =
     Macros.parserWithFields[ApplicationRow](
@@ -480,82 +478,58 @@ class ApplicationService @Inject() (
       }
     }
 
-  def wipePersonalData(retentionInMonths: Long): Future[Either[Error, List[ApplicationRow]]] = {
-    val applicationsWithFiles: Future[(List[Application], List[FileMetadata])] = Future {
-      val before = ZonedDateTime.now().minusMonths(retentionInMonths)
-      db.withConnection { implicit connection =>
-        val rows = SQL(s"""
-          SELECT $fieldsInApplicationSelect
-          FROM application
-          WHERE personal_data_wiped = false
-          AND closed_date < {before}
-        """)
-          .on("before" -> before)
-          .as(simpleApplication.*)
-        val answersRows = answersForApplications(rows)
-        val applications = rows.map(_.toApplication(answersRows))
-
-        val applicationsIds = applications.map(_.id)
-        val files = fileService.queryByApplicationsIdsBlocking(applicationsIds)
-        (applications, files)
-      }
-    }
-
-    // Delete files
-    applicationsWithFiles.flatMap { case (applications, files) =>
-      val filesIds = files.map(_.id)
-      val filesDeletionResult = fileService.deleteByIds(filesIds).unsafeToFuture()
-
-      filesDeletionResult.map {
-        case Left(error) =>
-          error.asLeft[List[ApplicationRow]]
-        case Right(_) =>
-          applications
-            .flatMap { application =>
-              db.withConnection { implicit connection =>
-                // Wipe filenames
-                val _ = fileService.wipeFilenamesByIdsBlocking(filesIds)
-
-                // Wipe data
-                val wiped = application.withWipedPersonalData
-                wiped.answers.zipWithIndex.foreach { case (answer, index) =>
-                  val answerOrder = index + 1
-                  SQL(s"""
-                      UPDATE answer
-                      SET
-                        message = '',
-                        user_infos = {usagerInfos}::jsonb
-                      WHERE
-                        application_id = {applicationId}::uuid
-                        AND answer_order = {answerOrder}
-                    """)
-                    .on(
-                      "applicationId" -> application.id,
-                      "answerOrder" -> answerOrder,
-                      "usagerInfos" -> UserInfos(answer.userInfos.getOrElse(Map.empty)),
-                    )
-                }
-                SQL(s"""
-                    UPDATE application
-                    SET
-                      subject = '',
-                      description = '',
-                      user_infos = {usagerInfos}::jsonb,
-                      personal_data_wiped = true
-                    WHERE id = {id}::uuid
-                    RETURNING $fieldsInApplicationSelect
-                  """)
-                  .on(
-                    "id" -> application.id,
-                    "usagerInfos" -> UserInfos(wiped.userInfos),
-                  )
-                  .as(simpleApplication.singleOpt)
-              }
-            }
-            .asRight[Error]
-      }
+  def applicationsThatShouldBeWipedBlocking(retentionInMonths: Long): List[Application] = {
+    val before = ZonedDateTime.now().minusMonths(retentionInMonths)
+    db.withConnection { implicit connection =>
+      val rows = SQL(s"""
+        SELECT $fieldsInApplicationSelect
+        FROM application
+        WHERE personal_data_wiped = false
+        AND closed_date < {before}
+      """)
+        .on("before" -> before)
+        .as(simpleApplication.*)
+      val answersRows = answersForApplications(rows)
+      rows.map(_.toApplication(answersRows))
     }
   }
+
+  def wipeApplicationPersonalDataBlocking(application: Application): Option[ApplicationRow] =
+    db.withConnection { implicit connection =>
+      val wiped = application.withWipedPersonalData
+      wiped.answers.zipWithIndex.foreach { case (answer, index) =>
+        val answerOrder = index + 1
+        SQL(s"""
+            UPDATE answer
+            SET
+              message = '',
+              user_infos = {usagerInfos}::jsonb
+            WHERE
+              application_id = {applicationId}::uuid
+              AND answer_order = {answerOrder}
+          """)
+          .on(
+            "applicationId" -> application.id,
+            "answerOrder" -> answerOrder,
+            "usagerInfos" -> UserInfos(answer.userInfos.getOrElse(Map.empty)),
+          )
+      }
+      SQL(s"""
+          UPDATE application
+          SET
+            subject = '',
+            description = '',
+            user_infos = {usagerInfos}::jsonb,
+            personal_data_wiped = true
+          WHERE id = {id}::uuid
+          RETURNING $fieldsInApplicationSelect
+        """)
+        .on(
+          "id" -> application.id,
+          "usagerInfos" -> UserInfos(wiped.userInfos),
+        )
+        .as(simpleApplication.singleOpt)
+    }
 
   private def answersForApplications(
       rows: List[ApplicationRow]
