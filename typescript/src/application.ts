@@ -153,11 +153,13 @@ function manageInvitedGroupInfos(checkedOrganisations: Array<string>) {
 
   const mustHaveCaf = checkedOrganisations.some(org => /CAF/i.test(org));
   const mustHaveNir = checkedOrganisations.some(org => /(CAF|CARSAT|CPAM|MSA|CNAV)/i.test(org));
+  const mustHaveNif = checkedOrganisations.some(org => /(DDFIP|DRFIP)/i.test(org));
 
   const existingInfosInputs = Array.from(document.querySelectorAll<HTMLInputElement>("input[name^='usagerOptionalInfos[']"));
 
   manageField("Identifiant CAF", mustHaveCaf, existingInfosInputs);
   manageField("Numéro de sécurité sociale", mustHaveNir, existingInfosInputs);
+  manageField("Numéro fiscal", mustHaveNif, existingInfosInputs);
 }
 
 
@@ -188,7 +190,8 @@ function newTypeSelected() {
 
 function addOptionalInfoRow(infoName: string, infoValue: string) {
   const isNir = infoName.toLowerCase() === "numéro de sécurité sociale";
-  const optionalLabel = isNir ? "" : " (facultatif)";
+  const isNif = infoName.toLowerCase() === "numéro fiscal";
+  const optionalLabel = isNir || isNif ? "" : " (facultatif)";
   const newNode = document.createElement("div");
   newNode.innerHTML = '<div class="single--display-flex single--align-items-center">' +
     '<div class="single--margin-right-24px single--font-size-14px">' + infoName + optionalLabel + '</div> \
