@@ -15,8 +15,8 @@ import helper.StringHelper.normalizeNFKC
 import io.laserdisc.pure.s3.tagless.{Interpreter => S3Interpreter}
 import java.net.URI
 import java.nio.file.{Files, Path => NioPath}
-import java.time.{Instant, ZonedDateTime}
-import java.time.temporal.ChronoUnit.DAYS
+import java.sql.Connection
+import java.time.Instant
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import models.{Error, EventType, FileMetadata, User}
@@ -309,15 +309,34 @@ class FileService @Inject() (
           }
       )
 
+  def queryByApplicationsIdsBlocking(
+      applicationIds: List[UUID]
+  )(implicit connection: Connection): List[FileMetadata] =
+    SQL(
+      s"""
+        SELECT $fieldsInSelect
+        FROM file_metadata
+        WHERE application_id = ANY(array[{applicationIds}::uuid[]))
+      """
+    )
+      .on("applicationIds" -> applicationIds)
+      .as(fileMetadataRowParser.*)
+      .flatMap(_.toFileMetadata)
+
   def byApplicationId(applicationId: UUID): Future[Either[Error, List[FileMetadata]]] =
     Future(
       Try(
         db.withConnection { implicit connection =>
           SQL(
-            s"""SELECT $fieldsInSelect FROM file_metadata WHERE application_id = {applicationId}::uuid"""
+            s"""
+              SELECT $fieldsInSelect
+              FROM file_metadata
+              WHERE application_id = {applicationId}::uuid
+            """
           )
             .on("applicationId" -> applicationId)
             .as(fileMetadataRowParser.*)
+            .flatMap(_.toFileMetadata)
         }
       ).toEither.left
         .map(e =>
@@ -328,7 +347,6 @@ class FileService @Inject() (
             none
           )
         )
-        .map(_.flatMap(_.toFileMetadata))
     )
 
   def byAnswerId(answerId: UUID): Future[Either[Error, List[FileMetadata]]] =
@@ -356,95 +374,35 @@ class FileService @Inject() (
       SQL(s"""SELECT $fieldsInSelect FROM file_metadata""").as(fileMetadataRowParser.*)
     }
 
-  def deleteExpiredFiles(): IO[Either[Error, Unit]] =
-    IO.realTimeInstant
-      .flatMap { now =>
-        val beforeDate = now.minus(config.filesExpirationInDays.toLong + 1, DAYS)
-        IO.blocking(
-          eventService.logNoRequest(
-            EventType.FilesDeletion,
-            s"Début de la suppression des fichiers avant $beforeDate"
-          )
-        ) >>
-          deleteBefore(beforeDate)
-      }
-
-  private def deleteBefore(beforeDate: Instant): IO[Either[Error, Unit]] =
-    before(beforeDate)
-      .flatMap(
-        _.fold(
-          e => IO.pure(e.asLeft),
-          files => {
-            Stream
-              .emits(files)
-              .evalMap { metadata =>
-                val deletion = ovhS3.delete(bucket, s3fileName(metadata.id)) >>
-                  updateStatus(metadata.id, FileMetadata.Status.Expired).flatMap(
-                    _.fold(
-                      e => IO.blocking(eventService.logErrorNoRequest(e)),
-                      Function.const(IO.unit)
-                    )
-                  )
-                deletion.recoverWith(e =>
-                  IO.blocking(
-                    eventService.logNoRequest(
-                      EventType.FileDeletionError,
-                      s"Erreur lors de la suppression d'un fichier",
-                      underlyingException = e.some
-                    )
-                  )
-                )
-              }
-              .compile
-              .drain
-              .map(_.asRight)
-          },
-        )
-      )
-
-  def wipeFilenames(retentionInMonths: Long): Future[Either[Error, Int]] =
-    Future(
-      Try(
-        db.withConnection { implicit connection =>
-          val before = ZonedDateTime.now().minusMonths(retentionInMonths)
-          SQL(s"""UPDATE file_metadata
-                  SET filename = 'fichier-non-existant'
-                  WHERE upload_date < {before}
-                  AND filename != 'fichier-non-existant'""")
-            .on("before" -> before)
-            .executeUpdate()
-        }
-      ).toEither.left
-        .map(e =>
-          Error.SqlException(
-            EventType.FileMetadataError,
-            s"Impossible de supprimer les noms de fichiers",
-            e,
-            none
-          )
-        )
-    )
-
-  private def before(beforeDate: Instant): IO[Either[Error, List[FileMetadata]]] =
-    IO.blocking(
-      db.withConnection { implicit connection =>
-        SQL(s"""SELECT $fieldsInSelect FROM file_metadata WHERE upload_date < {beforeDate}""")
-          .on("beforeDate" -> beforeDate)
-          .as(fileMetadataRowParser.*)
-      }
-    ).attempt
-      .map(
-        _.left
-          .map(e =>
-            Error.SqlException(
-              EventType.FileMetadataError,
-              s"Impossible de chercher les fichiers de avant $beforeDate",
-              e,
-              none
+  def deleteByIds(fileIds: List[UUID]): IO[Either[Error, Unit]] =
+    Stream
+      .emits(fileIds)
+      .evalMap { fileId =>
+        val deletion = ovhS3.delete(bucket, s3fileName(fileId)) >>
+          updateStatus(fileId, FileMetadata.Status.Expired).flatMap(
+            _.fold(
+              e => IO.blocking(eventService.logErrorNoRequest(e)),
+              Function.const(IO.unit)
             )
           )
-          .map(_.flatMap(_.toFileMetadata))
-      )
+        deletion.recoverWith(e =>
+          IO.blocking(
+            eventService.logNoRequest(
+              EventType.FileDeletionError,
+              s"Erreur lors de la suppression d'un fichier",
+              underlyingException = e.some
+            )
+          )
+        )
+      }
+      .compile
+      .drain
+      .map(_.asRight)
+
+  def wipeFilenamesByIdsBlocking(fileIds: List[UUID])(implicit connection: Connection): Int =
+    SQL"""UPDATE file_metadata
+          SET filename = 'fichier-non-existant'
+          WHERE id = ANY(array[{fileIds}::uuid[]))""".executeUpdate()
 
   private def insertMetadata(metadata: FileMetadata): Future[Either[Error, Unit]] =
     Future(

@@ -9,7 +9,7 @@ import java.sql.Connection
 import java.time.ZonedDateTime
 import java.util.UUID
 import javax.inject.Inject
-import models.{dataModels, Answer, Application, Authorization, Error, EventType}
+import models.{dataModels, Answer, Application, Authorization, Error, EventType, FileMetadata}
 import models.Application.SeenByUser
 import models.Authorization.UserRights
 import models.dataModels.{AnswerRow, ApplicationRow, InvitedUsers, UserInfos}
@@ -20,9 +20,11 @@ import scala.concurrent.Future
 @javax.inject.Singleton
 class ApplicationService @Inject() (
     db: Database,
-    dependencies: ServicesDependencies
+    dependencies: ServicesDependencies,
+    fileService: FileService,
 ) {
   import dependencies.databaseExecutionContext
+  import dependencies.ioRuntime
 
   private val (simpleApplication, applicationTableFields) =
     Macros.parserWithFields[ApplicationRow](
@@ -478,10 +480,10 @@ class ApplicationService @Inject() (
       }
     }
 
-  def wipePersonalData(retentionInMonths: Long): Future[List[ApplicationRow]] =
-    Future {
+  def wipePersonalData(retentionInMonths: Long): Future[Either[Error, List[ApplicationRow]]] = {
+    val applicationsWithFiles: Future[(List[Application], List[FileMetadata])] = Future {
       val before = ZonedDateTime.now().minusMonths(retentionInMonths)
-      val applications = db.withConnection { implicit connection =>
+      db.withConnection { implicit connection =>
         val rows = SQL(s"""
           SELECT $fieldsInApplicationSelect
           FROM application
@@ -491,46 +493,69 @@ class ApplicationService @Inject() (
           .on("before" -> before)
           .as(simpleApplication.*)
         val answersRows = answersForApplications(rows)
-        rows.map(_.toApplication(answersRows))
-      }
-      applications.flatMap { application =>
-        db.withConnection { implicit connection =>
-          val wiped = application.withWipedPersonalData
-          wiped.answers.zipWithIndex.foreach { case (answer, index) =>
-            val answerOrder = index + 1
-            SQL(s"""
-              UPDATE answer
-              SET
-                message = '',
-                user_infos = {usagerInfos}::jsonb
-              WHERE
-                application_id = {applicationId}::uuid
-                AND answer_order = {answerOrder}
-            """)
-              .on(
-                "applicationId" -> application.id,
-                "answerOrder" -> answerOrder,
-                "usagerInfos" -> UserInfos(answer.userInfos.getOrElse(Map.empty)),
-              )
-          }
-          SQL(s"""
-            UPDATE application
-            SET
-              subject = '',
-              description = '',
-              user_infos = {usagerInfos}::jsonb,
-              personal_data_wiped = true
-            WHERE id = {id}::uuid
-            RETURNING $fieldsInApplicationSelect
-          """)
-            .on(
-              "id" -> application.id,
-              "usagerInfos" -> UserInfos(wiped.userInfos),
-            )
-            .as(simpleApplication.singleOpt)
-        }
+        val applications = rows.map(_.toApplication(answersRows))
+
+        val applicationsIds = applications.map(_.id)
+        val files = fileService.queryByApplicationsIdsBlocking(applicationsIds)
+        (applications, files)
       }
     }
+
+    // Delete files
+    applicationsWithFiles.flatMap { case (applications, files) =>
+      val filesIds = files.map(_.id)
+      val filesDeletionResult = fileService.deleteByIds(filesIds).unsafeToFuture()
+
+      filesDeletionResult.map {
+        case Left(error) =>
+          error.asLeft[List[ApplicationRow]]
+        case Right(_) =>
+          applications
+            .flatMap { application =>
+              db.withConnection { implicit connection =>
+                // Wipe filenames
+                val _ = fileService.wipeFilenamesByIdsBlocking(filesIds)
+
+                // Wipe data
+                val wiped = application.withWipedPersonalData
+                wiped.answers.zipWithIndex.foreach { case (answer, index) =>
+                  val answerOrder = index + 1
+                  SQL(s"""
+                      UPDATE answer
+                      SET
+                        message = '',
+                        user_infos = {usagerInfos}::jsonb
+                      WHERE
+                        application_id = {applicationId}::uuid
+                        AND answer_order = {answerOrder}
+                    """)
+                    .on(
+                      "applicationId" -> application.id,
+                      "answerOrder" -> answerOrder,
+                      "usagerInfos" -> UserInfos(answer.userInfos.getOrElse(Map.empty)),
+                    )
+                }
+                SQL(s"""
+                    UPDATE application
+                    SET
+                      subject = '',
+                      description = '',
+                      user_infos = {usagerInfos}::jsonb,
+                      personal_data_wiped = true
+                    WHERE id = {id}::uuid
+                    RETURNING $fieldsInApplicationSelect
+                  """)
+                  .on(
+                    "id" -> application.id,
+                    "usagerInfos" -> UserInfos(wiped.userInfos),
+                  )
+                  .as(simpleApplication.singleOpt)
+              }
+            }
+            .asRight[Error]
+      }
+    }
+  }
 
   private def answersForApplications(
       rows: List[ApplicationRow]

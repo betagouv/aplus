@@ -38,11 +38,11 @@ class WipeOldDataTask @Inject() (
       }
     )
 
-  def wipeOldData(retentionInMonths: Long): Unit = {
+  def wipeOldData(retentionInMonths: Long): Unit =
     applicationService
       .wipePersonalData(retentionInMonths)
       .onComplete {
-        case Success(wiped) =>
+        case Success(Right(wiped)) =>
           val numWiped = wiped.length
           val wipedIds = wiped.map(_.id).mkString(", ")
           logSuccess(
@@ -52,6 +52,8 @@ class WipeOldDataTask @Inject() (
             else
               s"Aucunes données personnelles à supprimer dans les demandes"
           )
+        case Success(Left(error)) =>
+          eventService.logErrorNoRequest(error)
         case Failure(error) =>
           logError(
             "Impossible de supprimer les informations personnelles des demandes",
@@ -59,16 +61,6 @@ class WipeOldDataTask @Inject() (
             Some(error)
           )
       }
-
-    fileService
-      .wipeFilenames(retentionInMonths)
-      .foreach(
-        _.fold(
-          error => eventService.logErrorNoRequest(error),
-          numOfRows => logSuccess(s"Suppression de $numOfRows noms de fichiers")
-        )
-      )
-  }
 
   // Not wiping these data, pending legal validation
   /*
