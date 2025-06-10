@@ -538,7 +538,7 @@ package forms {
     val phoneNumberConstraint: Constraint[String] =
       Constraint[String]("constraint.invalidFormat") {
         case PhoneNumber(prefix, _, _, _, _) if isValidPhoneNumberPrefix(prefix) => Valid
-        case PhoneNumber(_, _, _, _, _) =>
+        case PhoneNumber(_, _, _, _, _)                                          =>
           Invalid(ValidationError("Préfixe de numéro de téléphone invalide"))
         case _ => Invalid(ValidationError("Le format doit être XX XX XX XX XX"))
       }

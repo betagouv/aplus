@@ -206,7 +206,7 @@ class AnonymizedDataService @Inject() (
 
     val batchSize = 10000
     applicationService.lastInternalIdOrThrow match {
-      case None => // Nothing to do, there are no application
+      case None                 => // Nothing to do, there are no application
       case Some(lastInternalId) =>
         val (applicationsCount, answersCount) =
           (0 to lastInternalId).by(batchSize).foldLeft((0, 0)) {
@@ -282,9 +282,9 @@ class AnonymizedDataService @Inject() (
     def insertRecursive(before: Instant, after: Option[Instant], totalRows: Int): Int =
       after match {
         case Some(afterDate) if afterDate.isAfter(before) => totalRows
-        case _ =>
+        case _                                            =>
           insertBatch(before) match {
-            case None => totalRows
+            case None                         => totalRows
             case Some((rowsNumber, lastDate)) =>
               insertRecursive(lastDate, after, totalRows + rowsNumber)
           }

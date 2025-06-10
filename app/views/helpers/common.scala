@@ -51,7 +51,7 @@ object common {
 
   private def displayHeader(headerLines: Option[Frag]*): Frag =
     headerLines.flatten match {
-      case Nil => frag()
+      case Nil   => frag()
       case lines =>
         div(
           cls := "mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100",
