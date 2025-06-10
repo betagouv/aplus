@@ -666,7 +666,7 @@ class UserService @Inject() (
         case "magic_link"        => UserSession.LoginType.MagicLink.asRight
         case "insecure_demo_key" => UserSession.LoginType.InsecureDemoKey.asRight
         case "password"          => UserSession.LoginType.Password.asRight
-        case unknownType =>
+        case unknownType         =>
           SqlMappingError(s"Cannot parse login_type $unknownType").asLeft
       }
 
@@ -807,7 +807,7 @@ class UserService @Inject() (
       sessionId: Option[String]
   ): IO[Either[Error, (Option[User], Option[UserSession])]] =
     (sessionId match {
-      case None => IO.blocking(byId(userId)).map(user => (user, None))
+      case None            => IO.blocking(byId(userId)).map(user => (user, None))
       case Some(sessionId) =>
         IO.realTimeInstant.flatMap(now =>
           IO.blocking {

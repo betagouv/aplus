@@ -319,7 +319,7 @@ class BaseLoginAction(
                 unknownTokenResponse
               case Some(token) =>
                 token.origin match {
-                  case LoginToken.Origin.User(userId) => manageTokenWithUserId(token, userId)
+                  case LoginToken.Origin.User(userId)     => manageTokenWithUserId(token, userId)
                   case LoginToken.Origin.Signup(signupId) =>
                     manageTokenWithSignupId(token, signupId)
                 }

@@ -160,7 +160,7 @@ object main {
 
   private def breadcrumbsContainer(pages: List[(String, String)]): Frag =
     pages match {
-      case Nil => frag()
+      case Nil   => frag()
       case pages =>
         div(cls := "fr-container")(
           tags2.nav(cls := "fr-breadcrumb")(
