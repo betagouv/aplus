@@ -133,6 +133,9 @@ object EventType {
   object ViewUserUnauthorized extends Warn
   object WeeklyEmailsSent extends Info
 
+  object UserInactivityCheck extends Info
+  object UserInactivityError extends Error
+
   // Applications
   object AnswerCreated extends Info
   object AnswerFormError extends Warn
