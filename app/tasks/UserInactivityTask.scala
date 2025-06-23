@@ -28,7 +28,9 @@ class UserInactivityTask @Inject() (
   import dependencies.ioRuntime
 
   @SuppressWarnings(Array("scalafix:DisableSyntax.=="))
-  implicit val LocalDateEqInstance: Eq[LocalDate] = (x: LocalDate, y: LocalDate) => x == y
+  implicit val localDateEqInstance: Eq[LocalDate] = (x: LocalDate, y: LocalDate) => x == y
+
+  val featureIsEnabled = config.featureUserInactivityEmails
 
   val cronMinute = config.userInactivityCronMinute
   val cronHour = config.userInactivityCronHour
@@ -162,7 +164,7 @@ class UserInactivityTask @Inject() (
 
   val cancelCallback: () => Future[Unit] = repeatWithDelay(durationUntilNextTick)(
     loggingResult(
-      checkUsersInactivity(),
+      checkUsersInactivity().flatMap(result => IO.sleep(1.minute).map(_ => result)),
       EventType.UserInactivityCheck,
       "Vérification des utilisateurs inactifs exécutée",
       EventType.UserInactivityError,
@@ -170,8 +172,9 @@ class UserInactivityTask @Inject() (
     )
   ).unsafeRunCancelable()
 
-  lifecycle.addStopHook { () =>
-    cancelCallback()
-  }
+  if featureIsEnabled then
+    lifecycle.addStopHook { () =>
+      cancelCallback()
+    }
 
 }

@@ -154,6 +154,9 @@ class AppConfig @Inject() (configuration: Configuration) {
   val zammadChatDomain: Option[String] =
     configuration.getOptional[String]("app.zammadChatDomain")
 
+  val featureUserInactivityEmails: Boolean =
+    configuration.get[Boolean]("app.features.userInactivityEmails")
+
   val userInactivityCronMinute: Int =
     configuration.get[Int]("app.userInactivityCronMinute")
 
