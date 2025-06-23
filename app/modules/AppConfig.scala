@@ -58,7 +58,7 @@ class AppConfig @Inject() (configuration: Configuration) {
       .split(",")
       .map(_.split(":") match {
         case Array(id, key) => (id, Crypto.decodeKeyBase64(key))
-        case _ =>
+        case _              =>
           throw new Exception(
             "Invalid `app.filesEncryptionKeys` format, should be of the form 'keyid1:<key base64 encoded>,keyid2:<key base64 encoded>'"
           )

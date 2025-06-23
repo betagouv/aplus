@@ -45,7 +45,7 @@ object signupAdmin {
   ): Frag = {
     val errors = (existingSignups, existingUsers, miscErrors) match {
       case (Nil, Nil, Nil) => none
-      case _ =>
+      case _               =>
         helpers.forms.flashErrorOuter(errorMessage(existingSignups, existingUsers, miscErrors)).some
     }
     val successes =
@@ -66,7 +66,7 @@ object signupAdmin {
     div(
       cls := "single--display-flex single--width-100pc single--flex-wrap-wrap",
       miscErrors match {
-        case Nil => ()
+        case Nil    => ()
         case errors =>
           div(
             cls := "single--display-flex single--margin-bottom-16px single--width-100pc single--flex-wrap-wrap",
@@ -103,7 +103,7 @@ object signupAdmin {
           )
       },
       existingSignups match {
-        case Nil => ()
+        case Nil     => ()
         case signups =>
           div(
             cls := "single--display-flex single--margin-bottom-16px single--width-100pc single--flex-wrap-wrap",
@@ -122,7 +122,7 @@ object signupAdmin {
           )
       },
       existingUsers match {
-        case Nil => ()
+        case Nil   => ()
         case users =>
           div(
             cls := "single--display-flex single--margin-bottom-16px single--width-100pc single--flex-wrap-wrap",

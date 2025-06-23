@@ -287,7 +287,7 @@ class FileService @Inject() (
             )
           )
           .flatMap {
-            case None => none.asRight
+            case None      => none.asRight
             case Some(row) =>
               row.toFileMetadata match {
                 case None =>
