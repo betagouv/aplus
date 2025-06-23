@@ -51,7 +51,7 @@ object common {
 
   private def displayHeader(headerLines: Option[Frag]*): Frag =
     headerLines.flatten match {
-      case Nil => frag()
+      case Nil   => frag()
       case lines =>
         div(
           cls := "mdl-layout__header mdl-color-text--grey-500 do-not-print mdl-color--grey-100",
@@ -75,8 +75,14 @@ object common {
       optionalDemoVersionHeader,
       mainInfos.config.topHeaderWarningMessage.map(message =>
         div(
-          cls := "mdl-layout__header-row mdl-color--deep-purple-400 mdl-color-text--white",
+          cls := "mdl-layout__header-row mdl-color--red-A700 mdl-color-text--white",
           message
+        )
+      ),
+      mainInfos.config.topHeaderConnectedPagesNoticeMessageHtml.map(htmlMessage =>
+        div(
+          cls := "mdl-layout__header-row aplus-header-notice ",
+          raw(htmlMessage)
         )
       )
     )

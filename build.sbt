@@ -20,7 +20,7 @@ lazy val root = (project in file("."))
 
 inThisBuild(
   List(
-    scalaVersion := "3.3.5",
+    scalaVersion := "3.3.6",
     // The following setting are for scalafix
     semanticdbEnabled := true, // enable SemanticDB
     semanticdbVersion := scalafixSemanticdb.revision // use Scalafix compatible version
@@ -80,7 +80,7 @@ libraryDependencies += guice
 val fs2Version = "3.12.0"
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.7.5",
+  "org.postgresql" % "postgresql" % "42.7.6",
   "org.playframework" %% "play-mailer" % "10.1.0",
   "org.playframework" %% "play-json" % "3.0.4",
   "com.sun.mail" % "javax.mail" % "1.6.2",

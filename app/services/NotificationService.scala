@@ -481,7 +481,7 @@ class NotificationService @Inject() (
     applicationService.allOpenAndCreatedByUserIdAnonymous(user.id).map { opened =>
       val applicationsThatShouldBeClosed = opened.filter(application =>
         application.answers.lastOption match {
-          case None => false
+          case None             => false
           case Some(lastAnswer) =>
             if (lastAnswer.creatorUserID === user.id) {
               false

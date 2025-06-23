@@ -58,7 +58,7 @@ class AppConfig @Inject() (configuration: Configuration) {
       .split(",")
       .map(_.split(":") match {
         case Array(id, key) => (id, Crypto.decodeKeyBase64(key))
-        case _ =>
+        case _              =>
           throw new Exception(
             "Invalid `app.filesEncryptionKeys` format, should be of the form 'keyid1:<key base64 encoded>,keyid2:<key base64 encoded>'"
           )
@@ -76,6 +76,9 @@ class AppConfig @Inject() (configuration: Configuration) {
 
   val topHeaderWarningMessage: Option[String] =
     configuration.getOptional[String]("app.topHeaderWarningMessage")
+
+  val topHeaderConnectedPagesNoticeMessageHtml: Option[String] =
+    configuration.getOptional[String]("app.topHeaderConnectedPagesNoticeMessageHtml")
 
   val topHeaderPublicPagesAlertMessageHtml: Option[String] =
     configuration.getOptional[String]("app.topHeaderPublicPagesAlertMessageHtml")
