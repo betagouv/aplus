@@ -666,7 +666,7 @@ class UserService @Inject() (
         case "inactivity_reminder_1" => UserInactivityEvent.EventType.InactivityReminder1.asRight
         case "inactivity_reminder_2" => UserInactivityEvent.EventType.InactivityReminder2.asRight
         case "deactivation"          => UserInactivityEvent.EventType.Deactivation.asRight
-        case unknownType =>
+        case unknownType             =>
           SqlMappingError(s"Cannot parse user_inactivity_history event_type $unknownType").asLeft
       }
 
