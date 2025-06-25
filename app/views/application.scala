@@ -39,19 +39,14 @@ object application {
       currentUser: User,
       currentUserRights: Authorization.UserRights,
       config: AppConfig,
-  ): Frag = {
-    val daysRemaining =
-      Application.filesAvailabilityLeftInDays(config.filesExpirationInDays)(application)
+  ): Frag =
     frag(
       files
         .filter(_.attached.isApplication)
         .map(file =>
           fileLink(
-            Authorization.fileCanBeShown(config.filesExpirationInDays)(file.attached, application)(
-              currentUserRights
-            ),
+            Authorization.fileCanBeShown(file.attached, application)(currentUserRights),
             file,
-            daysRemaining,
             application.creatorUserName,
             "",
             file.status,
@@ -59,7 +54,6 @@ object application {
           )
         )
     )
-  }
 
   def answerFilesLinks(
       files: List[FileMetadata],
@@ -68,18 +62,14 @@ object application {
       currentUser: User,
       currentUserRights: Authorization.UserRights,
       config: AppConfig,
-  ): Frag = {
-    val daysRemaining = Answer.filesAvailabilityLeftInDays(config.filesExpirationInDays)(answer)
+  ): Frag =
     frag(
       files
         .filter(_.attached.answerIdOpt === answer.id.some)
         .map(file =>
           fileLink(
-            Authorization.fileCanBeShown(config.filesExpirationInDays)(file.attached, application)(
-              currentUserRights
-            ),
+            Authorization.fileCanBeShown(file.attached, application)(currentUserRights),
             file,
-            daysRemaining,
             answer.creatorUserName,
             "mdl-cell mdl-cell--12-col typography--text-align-center",
             file.status,
@@ -87,12 +77,10 @@ object application {
           )
         )
     )
-  }
 
   def fileLink(
       isAuthorized: Boolean,
       metadata: FileMetadata,
-      daysRemaining: Option[Int],
       uploaderName: String,
       additionalClasses: String,
       status: FileMetadata.Status,
@@ -112,25 +100,19 @@ object application {
         "un fichier"
 
     val statusMessage: Frag = status match {
-      case Available =>
-        daysRemaining match {
-          case None                   => "Fichier expiré et supprimé"
-          case Some(expirationInDays) => s"Suppression du fichier dans $expirationInDays jours"
-        }
-      case Scanning    => "Scan par un antivirus en cours"
-      case Quarantined => "Fichier supprimé par l’antivirus"
-      case Expired     => "Fichier expiré et supprimé"
+      case Available   => ""
+      case Scanning    => "(Scan par un antivirus en cours)"
+      case Quarantined => "(Fichier supprimé par l’antivirus)"
+      case Expired     => "(Fichier expiré et supprimé)"
       case Error       =>
-        "Une erreur est survenue lors de l’envoi du fichier, celui-ci n’est pas disponible"
+        "(Une erreur est survenue lors de l’envoi du fichier, celui-ci n’est pas disponible)"
     }
     div(
       cls := "vertical-align--middle mdl-color-text--black single--font-size-14px single--font-weight-600 single--margin-top-8px" + additionalClasses,
       i(cls := "icon material-icons icon--light", "attach_file"),
       s" $uploaderName a ajouté ",
       link,
-      " ( ",
       statusMessage,
-      " ) "
     )
   }
 

@@ -38,8 +38,6 @@ class AppConfig @Inject() (configuration: Configuration) {
   val featureAutoAddExpert: Boolean =
     configuration.get[Boolean]("app.features.autoAddExpert")
 
-  val filesExpirationInDays: Int = configuration.get[Int]("app.filesExpirationInDays")
-
   val filesOvhS3AccessKey: String = configuration.get[String]("app.filesOvhS3AccessKey")
   val filesOvhS3SecretKey: String = configuration.get[String]("app.filesOvhS3SecretKey")
   val filesOvhS3Endpoint: String = configuration.get[String]("app.filesOvhS3Endpoint")

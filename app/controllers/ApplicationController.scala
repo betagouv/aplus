@@ -1480,10 +1480,7 @@ case class ApplicationController @Inject() (
                 withApplicationIO(applicationId) { (application: Application) =>
                   val isAuthorized =
                     Authorization
-                      .fileCanBeShown(config.filesExpirationInDays)(
-                        metadata.attached,
-                        application
-                      )(request.rights)
+                      .fileCanBeShown(metadata.attached, application)(request.rights)
                   if (isAuthorized) {
                     metadata.status match {
                       case FileMetadata.Status.Scanning =>

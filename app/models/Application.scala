@@ -285,11 +285,6 @@ object Application {
     def now(userId: UUID): SeenByUser = SeenByUser(userId, Instant.now())
   }
 
-  def filesAvailabilityLeftInDays(filesExpirationInDays: Int)(
-      application: Application
-  ): Option[Int] =
-    application.ageInDays.some.map(filesExpirationInDays - _).filter(_ >= 0)
-
   sealed trait MandatType
 
   object MandatType {
