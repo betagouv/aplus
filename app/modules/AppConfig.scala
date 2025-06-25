@@ -58,7 +58,7 @@ class AppConfig @Inject() (configuration: Configuration) {
       .split(",")
       .map(_.split(":") match {
         case Array(id, key) => (id, Crypto.decodeKeyBase64(key))
-        case _ =>
+        case _              =>
           throw new Exception(
             "Invalid `app.filesEncryptionKeys` format, should be of the form 'keyid1:<key base64 encoded>,keyid2:<key base64 encoded>'"
           )
@@ -156,5 +156,26 @@ class AppConfig @Inject() (configuration: Configuration) {
 
   val zammadChatDomain: Option[String] =
     configuration.getOptional[String]("app.zammadChatDomain")
+
+  val featureUserInactivityEmails: Boolean =
+    configuration.get[Boolean]("app.features.userInactivityEmails")
+
+  val userInactivityCronMinute: Int =
+    configuration.get[Int]("app.userInactivityCronMinute")
+
+  val userInactivityCronHour: Int =
+    configuration.get[Int]("app.userInactivityCronHour")
+
+  val userInactivityCronAdditionalDays: Int =
+    configuration.get[Int]("app.userInactivityCronAdditionalDays")
+
+  val userInactivityReminder1DelayInMinutes: Int =
+    configuration.get[Int]("app.userInactivityReminder1DelayInMinutes")
+
+  val userInactivityReminder2AdditionalDelayInMinutes: Int =
+    configuration.get[Int]("app.userInactivityReminder2AdditionalDelayInMinutes")
+
+  val userInactivityDeactivationAdditionalDelayInMinutes: Int =
+    configuration.get[Int]("app.userInactivityDeactivationAdditionalDelayInMinutes")
 
 }

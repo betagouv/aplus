@@ -334,7 +334,10 @@ object myApplicationsLegacy {
             .map(caf => s" (Num. CAF: $caf)"),
           application.userInfos
             .get(Application.UserSocialSecurityNumberKey)
-            .map(nir => s" (NIR: $nir)")
+            .map(nir => s" (NIR: $nir)"),
+          application.userInfos
+            .get(Application.UserNIFKey)
+            .map(nir => s" (NIF: $nir)"),
         ),
         br,
         span(cls := "application__subject single--pointer-events-all", application.subject)

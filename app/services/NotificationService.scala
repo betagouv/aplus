@@ -238,6 +238,53 @@ class NotificationService @Inject() (
     emailsService.sendBlocking(email, EmailPriority.Urgent)
   }
 
+  def userInactivityReminder1(userName: String, userEmail: String): Option[String] =
+    userInactivityReminder(userName, userEmail, 4)
+
+  def userInactivityReminder2(userName: String, userEmail: String): Option[String] =
+    userInactivityReminder(userName, userEmail, 5)
+
+  private def userInactivityReminder(
+      userName: String,
+      userEmail: String,
+      numberOfMonths: Int
+  ): Option[String] = {
+    val url: String =
+      routes.LoginController.login.absoluteURL(https, host)
+    val name = userName.some.map(_.trim).filter(_.nonEmpty)
+
+    val bodyInner = common.userInactivityReminderBody(name, url, numberOfMonths)
+    val email = Email(
+      subject = common.userInactivityReminderSubject,
+      from = from,
+      replyTo = replyTo,
+      to = List(
+        name
+          .map(name => s"${quoteEmailPhrase(name)} <$userEmail>")
+          .getOrElse(userEmail)
+      ),
+      bodyHtml = Some(common.renderEmail(bodyInner))
+    )
+    emailsService.sendBlocking(email, EmailPriority.Normal)
+  }
+
+  def userInactivityDeactivation(userName: String, userEmail: String): Option[String] = {
+    val name = userName.some.map(_.trim).filter(_.nonEmpty)
+    val bodyInner = common.userInactivityDeactivationBody(name)
+    val email = Email(
+      subject = common.userInactivityDeactivationSubject,
+      from = from,
+      replyTo = replyTo,
+      to = List(
+        name
+          .map(name => s"${quoteEmailPhrase(name)} <$userEmail>")
+          .getOrElse(userEmail)
+      ),
+      bodyHtml = Some(common.renderEmail(bodyInner))
+    )
+    emailsService.sendBlocking(email, EmailPriority.Normal)
+  }
+
   def mandatV2Generated(mandatId: Mandat.Id, user: User): Option[String] = {
     val absoluteUrl: String =
       routes.MandatController.mandat(mandatId.underlying).absoluteURL(https, host)
@@ -434,7 +481,7 @@ class NotificationService @Inject() (
     applicationService.allOpenAndCreatedByUserIdAnonymous(user.id).map { opened =>
       val applicationsThatShouldBeClosed = opened.filter(application =>
         application.answers.lastOption match {
-          case None => false
+          case None             => false
           case Some(lastAnswer) =>
             if (lastAnswer.creatorUserID === user.id) {
               false

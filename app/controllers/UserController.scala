@@ -761,7 +761,7 @@ case class UserController @Inject() (
         val errorMessage =
           EmailErrorPattern.findFirstIn(ex.getServerErrorMessage.toString) match {
             case Some(email) => s"Un utilisateur avec l'adresse $email existe déjà."
-            case _ =>
+            case _           =>
               "Erreur d'insertion dans la base de donnée : contacter l'administrateur."
           }
         val form = AddUserFormData.addUsersForm

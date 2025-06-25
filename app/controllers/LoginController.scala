@@ -567,7 +567,7 @@ class LoginController @Inject() (
     Action.async { implicit request =>
       def result = Redirect(routes.LoginController.login).withNewSession
       request.session.get(Keys.Session.sessionId) match {
-        case None => Future.successful(result)
+        case None            => Future.successful(result)
         case Some(sessionId) =>
           userService
             .revokeUserSession(sessionId)

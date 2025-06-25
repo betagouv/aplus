@@ -12,7 +12,7 @@ import java.sql.Connection
 import java.time.Instant
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import models.{Error, EventType, Organisation, User, UserSession}
+import models.{Error, EventType, Organisation, User, UserInactivityEvent, UserSession}
 import models.dataModels.UserRow
 import modules.AppConfig
 import org.postgresql.util.PSQLException
@@ -656,6 +656,119 @@ class UserService @Inject() (
   }
 
   //
+  // Inactivity
+  //
+
+  implicit val userInactivityEventTypeParser: Column[UserInactivityEvent.EventType] =
+    Column
+      .of[String]
+      .mapResult {
+        case "inactivity_reminder_1" => UserInactivityEvent.EventType.InactivityReminder1.asRight
+        case "inactivity_reminder_2" => UserInactivityEvent.EventType.InactivityReminder2.asRight
+        case "deactivation"          => UserInactivityEvent.EventType.Deactivation.asRight
+        case unknownType             =>
+          SqlMappingError(s"Cannot parse user_inactivity_history event_type $unknownType").asLeft
+      }
+
+  private val (userInactivityEventParser, userInactivityHistoryTableFields) =
+    Macros.parserWithFields[UserInactivityEvent](
+      "id",
+      "user_id",
+      "event_type",
+      "event_date",
+      "last_activity_reference_date",
+    )
+
+  private val userInactivityHistoryFieldsInSelect: String =
+    userInactivityHistoryTableFields.mkString(", ")
+
+  private def stringifyUserInactivityEventType(eventType: UserInactivityEvent.EventType): String =
+    eventType match {
+      case UserInactivityEvent.EventType.InactivityReminder1 => "inactivity_reminder_1"
+      case UserInactivityEvent.EventType.InactivityReminder2 => "inactivity_reminder_2"
+      case UserInactivityEvent.EventType.Deactivation        => "deactivation"
+    }
+
+  def recordUserInactivityEvent(event: UserInactivityEvent): IO[Either[Error, Unit]] =
+    IO.blocking {
+      val _ = db.withConnection { implicit connection =>
+        SQL"""
+          INSERT INTO user_inactivity_history (
+            id,
+            user_id,
+            event_type,
+            event_date,
+            last_activity_reference_date
+          ) VALUES (
+            ${event.id}::uuid,
+            ${event.userId}::uuid,
+            ${stringifyUserInactivityEventType(event.eventType)},
+            ${event.eventDate},
+            ${event.lastActivityReferenceDate}
+          )
+        """.executeUpdate()
+      }
+    }.attempt
+      .map(
+        _.left.map[Error](error =>
+          Error.SqlException(
+            EventType.UserInactivityError,
+            s"Impossible de sauvegarder l'événement d'inactivité de l'utilisateur ${event.userId} ($event)",
+            error,
+            none
+          )
+        )
+      )
+
+  def userInactivityHistory(userId: UUID): IO[Either[Error, List[UserInactivityEvent]]] =
+    IO.blocking {
+      db.withConnection { implicit connection =>
+        SQL(s"""
+          SELECT $userInactivityHistoryFieldsInSelect
+          FROM user_inactivity_history
+          WHERE user_id = {userId}::uuid
+        """).on("userId" -> userId).as(userInactivityEventParser.*)
+      }
+    }.attempt
+      .map(
+        _.left.map[Error](error =>
+          Error.SqlException(
+            EventType.UserInactivityError,
+            s"Impossible de récupérer l'historique d'inactivité de l'utilisateur ${userId}",
+            error,
+            none
+          )
+        )
+      )
+
+  def usersWithLastActivityBefore(
+      beforeInstant: Instant
+  ): IO[Either[Error, List[(User, Instant)]]] =
+    IO.blocking {
+      db.withConnection { implicit connection =>
+        SQL(s"""
+          SELECT $fieldsInSelect, last_activity
+          FROM "user"
+          INNER JOIN user_event_metrics ON "user".id = user_event_metrics.user_id
+          WHERE user_event_metrics.last_activity <= {beforeInstant}
+          AND "user".disabled = false
+        """)
+          .on("beforeInstant" -> beforeInstant)
+          .as((simpleUser.map(_.toUser) ~ SqlParser.get[Instant]("last_activity")).*)
+      }.map { case user ~ lastActivity => (user, lastActivity) }
+    }.attempt
+      .map(
+        _.left.map[Error](error =>
+          Error.SqlException(
+            EventType.UserInactivityError,
+            s"Impossible de récupérer les utilisateurs inactifs avant ${beforeInstant}",
+            error,
+            none
+          )
+        )
+      )
+
+  //
   // User Sessions
   //
 
@@ -666,7 +779,7 @@ class UserService @Inject() (
         case "magic_link"        => UserSession.LoginType.MagicLink.asRight
         case "insecure_demo_key" => UserSession.LoginType.InsecureDemoKey.asRight
         case "password"          => UserSession.LoginType.Password.asRight
-        case unknownType =>
+        case unknownType         =>
           SqlMappingError(s"Cannot parse login_type $unknownType").asLeft
       }
 
@@ -807,7 +920,7 @@ class UserService @Inject() (
       sessionId: Option[String]
   ): IO[Either[Error, (Option[User], Option[UserSession])]] =
     (sessionId match {
-      case None => IO.blocking(byId(userId)).map(user => (user, None))
+      case None            => IO.blocking(byId(userId)).map(user => (user, None))
       case Some(sessionId) =>
         IO.realTimeInstant.flatMap(now =>
           IO.blocking {

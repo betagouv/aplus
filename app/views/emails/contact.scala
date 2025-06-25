@@ -220,7 +220,7 @@ object contact {
       ),
       breadcrumbs = ("Contact", HomeController.contact.url) :: Nil,
       additionalFooterTags = config.zammadChatDomain match {
-        case None => frag()
+        case None                   => frag()
         case Some(zammadChatDomain) =>
           frag(
             views.helpers.head.publicScript("generated-js/jquery.min.js"),
