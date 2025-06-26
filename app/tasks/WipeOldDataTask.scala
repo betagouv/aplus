@@ -5,8 +5,8 @@ import java.time.{Duration, ZonedDateTime}
 import javax.inject.Inject
 import models.{Error, EventType}
 import models.dataModels.ApplicationRow
+import modules.AppConfig
 import org.apache.pekko.actor.ActorSystem
-import play.api.Configuration
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -22,7 +22,7 @@ import services.{
 class WipeOldDataTask @Inject() (
     actorSystem: ActorSystem,
     applicationService: ApplicationService,
-    configuration: Configuration,
+    config: AppConfig,
     dependencies: ServicesDependencies,
     eventService: EventService,
     fileService: FileService,
@@ -31,9 +31,6 @@ class WipeOldDataTask @Inject() (
 )(implicit executionContext: ExecutionContext) {
 
   import dependencies.ioRuntime
-
-  private val retentionInMonthsOpt: Option[Long] =
-    configuration.getOptional[Long]("app.personalDataRetentionInMonths")
 
   val startAtHour = 4
   val now: ZonedDateTime = ZonedDateTime.now() // Machine Time
@@ -46,7 +43,7 @@ class WipeOldDataTask @Inject() (
   val _ =
     actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = initialDelay, delay = 24.hours)(
       new Runnable {
-        override def run(): Unit = retentionInMonthsOpt.foreach(retention => wipeOldData(retention))
+        override def run(): Unit = wipeOldData(config.dataRetentionInMonths)
       }
     )
 
