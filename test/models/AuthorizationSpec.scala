@@ -34,12 +34,10 @@ class AuthorizationSpec extends Specification {
     "for an helper" >> {
       "for an application file" >> {
 
-        "true for a not expired date" >> {
+        "true for an open application" >> {
           val applicationId = randomUUID()
           val userId = randomUUID()
           val rights = UserRights(Set(HasUserId(userId), Helper))
-          val fileExpirationDate = 10
-          val overrun: Long = -3
 
           val answers = List.empty[Answer]
 
@@ -47,7 +45,7 @@ class AuthorizationSpec extends Specification {
             id = applicationId,
             answers = answers,
             seenByUsers = List.empty[SeenByUser],
-            creationDate = now().minusDays(fileExpirationDate + overrun),
+            creationDate = now().minusDays(30),
             creatorUserName = "Mathieu",
             creatorUserId = userId,
             creatorGroupId = None,
@@ -65,51 +63,14 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(metadata, application)(
             rights
           ) should beTrue
-        }
-
-        "false for an expired date" >> {
-          val applicationId = randomUUID()
-          val userId = randomUUID()
-          val rights = UserRights(Set(HasUserId(userId), Helper))
-          val fileExpirationDate = 10
-          val overrun: Long = 10
-
-          val answers = List.empty[Answer]
-
-          val application = Application(
-            id = applicationId,
-            answers = answers,
-            seenByUsers = List.empty[SeenByUser],
-            creationDate = now().minusDays(fileExpirationDate + overrun),
-            creatorUserName = "Mathieu",
-            creatorUserId = userId,
-            creatorGroupId = None,
-            creatorGroupName = None,
-            subject = "Sujet",
-            description = "Description",
-            userInfos = Map.empty[String, String],
-            invitedUsers = Map.empty[UUID, String],
-            area = randomUUID(),
-            irrelevant = false,
-            mandatType = Option.empty[MandatType],
-            mandatDate = Option.empty[String],
-            invitedGroupIdsAtCreation = List.empty[UUID],
-            isInFranceServicesNetwork = true,
-          )
-
-          val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
-            rights
-          ) should beFalse
         }
 
         "false if i'm not the creator" >> {
           val applicationId = randomUUID()
           val rights = UserRights(Set(Helper))
-          val fileExpirationDate = 10
 
           val answers = List.empty[Answer]
 
@@ -135,7 +96,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(metadata, application)(
             rights
           ) should beFalse
         }
@@ -143,14 +104,12 @@ class AuthorizationSpec extends Specification {
 
       "for an answer file" >> {
 
-        "true for a not expired date" >> {
+        "true for an open application" >> {
           val applicationId = randomUUID()
           val userId = randomUUID()
           val rights = UserRights(Set(HasUserId(userId), Helper))
-          val fileExpirationDate = 10
-          val overrun: Long = -3
 
-          val answer = createAnswer(applicationId, now().minusDays(fileExpirationDate + overrun))
+          val answer = createAnswer(applicationId, now().minusDays(30))
 
           val application = Application(
             id = applicationId,
@@ -174,45 +133,9 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Answer(application.id, answer.id)
-          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(metadata, application)(
             rights
           ) should beTrue
-        }
-
-        "false for an expired date" >> {
-          val applicationId = randomUUID()
-          val userId = randomUUID()
-          val rights = UserRights(Set(HasUserId(userId), Helper))
-          val fileExpirationDate = 10
-          val overrun: Long = 2
-
-          val answer = createAnswer(applicationId, now().minusDays(fileExpirationDate + overrun))
-
-          val application = Application(
-            id = applicationId,
-            answers = List(answer),
-            seenByUsers = List.empty[SeenByUser],
-            creationDate = now(),
-            creatorUserName = "Mathieu",
-            creatorUserId = userId,
-            creatorGroupId = None,
-            creatorGroupName = None,
-            subject = "Sujet",
-            description = "Description",
-            userInfos = Map.empty[String, String],
-            invitedUsers = Map.empty[UUID, String],
-            area = randomUUID(),
-            irrelevant = false,
-            mandatType = Option.empty[MandatType],
-            mandatDate = Option.empty[String],
-            invitedGroupIdsAtCreation = List.empty[UUID],
-            isInFranceServicesNetwork = true,
-          )
-
-          val metadata = FileMetadata.Attached.Answer(application.id, answer.id)
-          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
-            rights
-          ) should beFalse
         }
 
       }
@@ -222,12 +145,10 @@ class AuthorizationSpec extends Specification {
     "for an instructor" >> {
       "for an application file" >> {
 
-        "true for a not expired date" >> {
+        "true for an open application" >> {
           val applicationId = randomUUID()
           val userId = randomUUID()
           val rights = UserRights(Set(HasUserId(userId), InstructorOfGroups(Set.empty[UUID])))
-          val fileExpirationDate = 10
-          val overrun: Long = -3
 
           val answers = List.empty[Answer]
 
@@ -235,7 +156,7 @@ class AuthorizationSpec extends Specification {
             id = applicationId,
             answers = answers,
             seenByUsers = List.empty[SeenByUser],
-            creationDate = now().minusDays(fileExpirationDate + overrun),
+            creationDate = now().minusDays(30),
             creatorUserName = "Mathieu",
             creatorUserId = UUID.randomUUID(),
             creatorGroupId = None,
@@ -253,51 +174,14 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(metadata, application)(
             rights
           ) should beTrue
-        }
-
-        "false for an expired date" >> {
-          val applicationId = randomUUID()
-          val userId = randomUUID()
-          val rights = UserRights(Set(HasUserId(userId), InstructorOfGroups(Set.empty[UUID])))
-          val fileExpirationDate = 10
-          val overrun: Long = 10
-
-          val answers = List.empty[Answer]
-
-          val application = Application(
-            id = applicationId,
-            answers = answers,
-            seenByUsers = List.empty[SeenByUser],
-            creationDate = now().minusDays(fileExpirationDate + overrun),
-            creatorUserName = "Mathieu",
-            creatorUserId = UUID.randomUUID(),
-            creatorGroupId = None,
-            creatorGroupName = None,
-            subject = "Sujet",
-            description = "Description",
-            userInfos = Map.empty[String, String],
-            invitedUsers = Map(userId -> ""),
-            area = randomUUID(),
-            irrelevant = false,
-            mandatType = Option.empty[MandatType],
-            mandatDate = Option.empty[String],
-            invitedGroupIdsAtCreation = List.empty[UUID],
-            isInFranceServicesNetwork = true,
-          )
-
-          val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
-            rights
-          ) should beFalse
         }
 
         "false if i'm not invited on the application" >> {
           val applicationId = randomUUID()
           val rights = UserRights(Set(InstructorOfGroups(Set.empty[UUID])))
-          val fileExpirationDate = 10
 
           val answers = List.empty[Answer]
 
@@ -323,7 +207,7 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Application(application.id)
-          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(metadata, application)(
             rights
           ) should beFalse
         }
@@ -331,14 +215,12 @@ class AuthorizationSpec extends Specification {
 
       "for an answer file" >> {
 
-        "true for a not expired date" >> {
+        "true for an open application" >> {
           val applicationId = randomUUID()
           val userId = randomUUID()
           val rights = UserRights(Set(HasUserId(userId), InstructorOfGroups(Set.empty[UUID])))
-          val fileExpirationDate = 10
-          val overrun: Long = -3
 
-          val answer = createAnswer(applicationId, now().minusDays(fileExpirationDate + overrun))
+          val answer = createAnswer(applicationId, now().minusDays(30))
 
           val application = Application(
             id = applicationId,
@@ -362,45 +244,9 @@ class AuthorizationSpec extends Specification {
           )
 
           val metadata = FileMetadata.Attached.Answer(application.id, answer.id)
-          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
+          Authorization.fileCanBeShown(metadata, application)(
             rights
           ) should beTrue
-        }
-
-        "false for an expired date" >> {
-          val applicationId = randomUUID()
-          val userId = randomUUID()
-          val rights = UserRights(Set(HasUserId(userId), InstructorOfGroups(Set.empty[UUID])))
-          val fileExpirationDate = 10
-          val overrun: Long = 2
-
-          val answer = createAnswer(applicationId, now().minusDays(fileExpirationDate + overrun))
-
-          val application = Application(
-            id = applicationId,
-            answers = List(answer),
-            seenByUsers = List.empty[SeenByUser],
-            creationDate = now(),
-            creatorUserName = "Mathieu",
-            creatorUserId = UUID.randomUUID(),
-            creatorGroupId = None,
-            creatorGroupName = None,
-            subject = "Sujet",
-            description = "Description",
-            userInfos = Map.empty[String, String],
-            invitedUsers = Map(userId -> ""),
-            area = randomUUID(),
-            irrelevant = false,
-            mandatType = Option.empty[MandatType],
-            mandatDate = Option.empty[String],
-            invitedGroupIdsAtCreation = List.empty[UUID],
-            isInFranceServicesNetwork = true,
-          )
-
-          val metadata = FileMetadata.Attached.Answer(application.id, answer.id)
-          Authorization.fileCanBeShown(fileExpirationDate)(metadata, application)(
-            rights
-          ) should beFalse
         }
 
       }
