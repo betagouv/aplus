@@ -388,7 +388,7 @@ object Authorization {
   def canOpenApplication(application: Application): Check =
     canCloseApplication(application)
 
-  private def answerFileCanBeShown(filesExpirationInDays: Int)(
+  private def answerFileCanBeShown(
       application: Application,
       answerId: UUID
   ): Check =
@@ -396,14 +396,11 @@ object Authorization {
       application.answers.find(_.id === answerId) match {
         case None         => false
         case Some(answer) =>
-          val hasNotExpired =
-            Answer.filesAvailabilityLeftInDays(filesExpirationInDays)(answer).nonEmpty
           val isCreatorHelper =
             isApplicationCreator(application)(rights) ||
               isInApplicationCreatorGroup(application)(rights)
           val validCase1 =
-            hasNotExpired &&
-              isHelper(rights) &&
+            isHelper(rights) &&
               answer.visibleByHelpers &&
               isCreatorHelper
 
@@ -417,19 +414,17 @@ object Authorization {
               case _ => false
             }
           val validCase2 =
-            hasNotExpired &&
-              isInstructor(rights) &&
+            isInstructor(rights) &&
               (isInvitedOn(application)(rights) || isInvitedInPreviousAnswer)
 
           validCase1 || validCase2
       }
 
-  private def applicationFileCanBeShown(filesExpirationInDays: Int)(
+  private def applicationFileCanBeShown(
       application: Application
   ): Check =
     rights =>
-      Application.filesAvailabilityLeftInDays(filesExpirationInDays)(application).nonEmpty &&
-        not(isExpert(rights)) &&
+      not(isExpert(rights)) &&
         (
           (isInstructor(rights) && isInvitedOn(application)(rights)) ||
             (isHelper(rights) && (
@@ -438,15 +433,15 @@ object Authorization {
             ))
         )
 
-  def fileCanBeShown(filesExpirationInDays: Int)(
+  def fileCanBeShown(
       metadata: FileMetadata.Attached,
       application: Application,
   ): Check =
     metadata match {
       case FileMetadata.Attached.Application(_) =>
-        applicationFileCanBeShown(filesExpirationInDays)(application)
+        applicationFileCanBeShown(application)
       case FileMetadata.Attached.Answer(_, answerId) =>
-        answerFileCanBeShown(filesExpirationInDays)(application, answerId)
+        answerFileCanBeShown(application, answerId)
     }
 
 }

@@ -1,24 +1,36 @@
 package tasks
 
+import cats.syntax.all._
 import java.time.{Duration, ZonedDateTime}
 import javax.inject.Inject
-import models.EventType
+import models.{Error, EventType}
+import models.dataModels.ApplicationRow
 import org.apache.pekko.actor.ActorSystem
 import play.api.Configuration
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
-import services.{ApplicationService, EventService, FileService, MandatService, SmsService}
+import services.{
+  ApplicationService,
+  EventService,
+  FileService,
+  MandatService,
+  ServicesDependencies,
+  SmsService
+}
 
 class WipeOldDataTask @Inject() (
     actorSystem: ActorSystem,
     applicationService: ApplicationService,
     configuration: Configuration,
+    dependencies: ServicesDependencies,
     eventService: EventService,
     fileService: FileService,
     mandatService: MandatService,
     smsService: SmsService
 )(implicit executionContext: ExecutionContext) {
+
+  import dependencies.ioRuntime
 
   private val retentionInMonthsOpt: Option[Long] =
     configuration.getOptional[Long]("app.personalDataRetentionInMonths")
@@ -38,11 +50,10 @@ class WipeOldDataTask @Inject() (
       }
     )
 
-  def wipeOldData(retentionInMonths: Long): Unit = {
-    applicationService
-      .wipePersonalData(retentionInMonths)
+  def wipeOldData(retentionInMonths: Long): Unit =
+    wipePersonalData(retentionInMonths)
       .onComplete {
-        case Success(wiped) =>
+        case Success(Right(wiped)) =>
           val numWiped = wiped.length
           val wipedIds = wiped.map(_.id).mkString(", ")
           logSuccess(
@@ -52,6 +63,8 @@ class WipeOldDataTask @Inject() (
             else
               s"Aucunes données personnelles à supprimer dans les demandes"
           )
+        case Success(Left(error)) =>
+          eventService.logErrorNoRequest(error)
         case Failure(error) =>
           logError(
             "Impossible de supprimer les informations personnelles des demandes",
@@ -59,16 +72,6 @@ class WipeOldDataTask @Inject() (
             Some(error)
           )
       }
-
-    fileService
-      .wipeFilenames(retentionInMonths)
-      .foreach(
-        _.fold(
-          error => eventService.logErrorNoRequest(error),
-          numOfRows => logSuccess(s"Suppression de $numOfRows noms de fichiers")
-        )
-      )
-  }
 
   // Not wiping these data, pending legal validation
   /*
@@ -95,6 +98,24 @@ class WipeOldDataTask @Inject() (
           )
       }
    */
+
+  def wipePersonalData(retentionInMonths: Long): Future[Either[Error, List[ApplicationRow]]] = {
+    val applications = applicationService.applicationsThatShouldBeWipedBlocking(retentionInMonths)
+    val files = fileService.queryByApplicationsIdsBlocking(applications.map(_.id))
+    val filesIds = files.map(_.id)
+    val filesDeletionResult = fileService.deleteByIds(filesIds).unsafeToFuture()
+    filesDeletionResult.map {
+      case Left(error) =>
+        error.asLeft[List[ApplicationRow]]
+      case Right(_) =>
+        applications
+          .flatMap { application =>
+            val _ = fileService.wipeFilenamesByIdsBlocking(filesIds)
+            applicationService.wipeApplicationPersonalDataBlocking(application)
+          }
+          .asRight[Error]
+    }
+  }
 
   private def logSuccess(description: String) =
     eventService.logNoRequest(EventType.WipeDataComplete, description)

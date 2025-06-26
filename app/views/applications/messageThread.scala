@@ -196,18 +196,14 @@ object messageThread {
       currentUser: User,
       currentUserRights: Authorization.UserRights,
       config: AppConfig,
-  ): Frag = {
-    val daysRemaining = Answer.filesAvailabilityLeftInDays(config.filesExpirationInDays)(answer)
+  ): Frag =
     frag(
       files
         .filter(_.attached.answerIdOpt === Option.apply(answer.id))
         .map(file =>
           fileLink(
-            Authorization.fileCanBeShown(config.filesExpirationInDays)(file.attached, application)(
-              currentUserRights
-            ),
+            Authorization.fileCanBeShown(file.attached, application)(currentUserRights),
             file,
-            daysRemaining,
             answer.creatorUserName,
             "mdl-cell mdl-cell--12-col typography--text-align-center",
             file.status,
@@ -215,12 +211,10 @@ object messageThread {
           )
         )
     )
-  }
 
   def fileLink(
       isAuthorized: Boolean,
       metadata: FileMetadata,
-      daysRemaining: Option[Int],
       uploaderName: String,
       additionalClasses: String,
       status: FileMetadata.Status,

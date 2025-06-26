@@ -75,7 +75,4 @@ object Answer {
 
   }
 
-  def filesAvailabilityLeftInDays(filesExpirationInDays: Int)(answer: Answer): Option[Int] =
-    answer.ageInDays.some.map(filesExpirationInDays - _).filter(_ >= 0)
-
 }

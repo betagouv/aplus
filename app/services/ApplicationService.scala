@@ -20,7 +20,7 @@ import scala.concurrent.Future
 @javax.inject.Singleton
 class ApplicationService @Inject() (
     db: Database,
-    dependencies: ServicesDependencies
+    dependencies: ServicesDependencies,
 ) {
   import dependencies.databaseExecutionContext
 
@@ -478,58 +478,57 @@ class ApplicationService @Inject() (
       }
     }
 
-  def wipePersonalData(retentionInMonths: Long): Future[List[ApplicationRow]] =
-    Future {
-      val before = ZonedDateTime.now().minusMonths(retentionInMonths)
-      val applications = db.withConnection { implicit connection =>
-        val rows = SQL(s"""
-          SELECT $fieldsInApplicationSelect
-          FROM application
-          WHERE personal_data_wiped = false
-          AND closed_date < {before}
-        """)
-          .on("before" -> before)
-          .as(simpleApplication.*)
-        val answersRows = answersForApplications(rows)
-        rows.map(_.toApplication(answersRows))
-      }
-      applications.flatMap { application =>
-        db.withConnection { implicit connection =>
-          val wiped = application.withWipedPersonalData
-          wiped.answers.zipWithIndex.foreach { case (answer, index) =>
-            val answerOrder = index + 1
-            SQL(s"""
-              UPDATE answer
-              SET
-                message = '',
-                user_infos = {usagerInfos}::jsonb
-              WHERE
-                application_id = {applicationId}::uuid
-                AND answer_order = {answerOrder}
-            """)
-              .on(
-                "applicationId" -> application.id,
-                "answerOrder" -> answerOrder,
-                "usagerInfos" -> UserInfos(answer.userInfos.getOrElse(Map.empty)),
-              )
-          }
-          SQL(s"""
-            UPDATE application
+  def applicationsThatShouldBeWipedBlocking(retentionInMonths: Long): List[Application] = {
+    val before = ZonedDateTime.now().minusMonths(retentionInMonths)
+    db.withConnection { implicit connection =>
+      val rows = SQL(s"""
+        SELECT $fieldsInApplicationSelect
+        FROM application
+        WHERE personal_data_wiped = false
+        AND closed_date < {before}
+      """)
+        .on("before" -> before)
+        .as(simpleApplication.*)
+      val answersRows = answersForApplications(rows)
+      rows.map(_.toApplication(answersRows))
+    }
+  }
+
+  def wipeApplicationPersonalDataBlocking(application: Application): Option[ApplicationRow] =
+    db.withConnection { implicit connection =>
+      val wiped = application.withWipedPersonalData
+      wiped.answers.zipWithIndex.foreach { case (answer, index) =>
+        val answerOrder = index + 1
+        SQL(s"""
+            UPDATE answer
             SET
-              subject = '',
-              description = '',
-              user_infos = {usagerInfos}::jsonb,
-              personal_data_wiped = true
-            WHERE id = {id}::uuid
-            RETURNING $fieldsInApplicationSelect
+              message = '',
+              user_infos = {usagerInfos}::jsonb
+            WHERE
+              application_id = {applicationId}::uuid
+              AND answer_order = {answerOrder}
           """)
-            .on(
-              "id" -> application.id,
-              "usagerInfos" -> UserInfos(wiped.userInfos),
-            )
-            .as(simpleApplication.singleOpt)
-        }
+          .on(
+            "applicationId" -> application.id,
+            "answerOrder" -> answerOrder,
+            "usagerInfos" -> UserInfos(answer.userInfos.getOrElse(Map.empty)),
+          )
       }
+      SQL(s"""
+          UPDATE application
+          SET
+            subject = '',
+            description = '',
+            user_infos = {usagerInfos}::jsonb,
+            personal_data_wiped = true
+          WHERE id = {id}::uuid
+          RETURNING $fieldsInApplicationSelect
+        """)
+        .on(
+          "id" -> application.id,
+          "usagerInfos" -> UserInfos(wiped.userInfos),
+        )
+        .as(simpleApplication.singleOpt)
     }
 
   private def answersForApplications(
