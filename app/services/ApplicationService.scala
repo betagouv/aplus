@@ -13,12 +13,14 @@ import models.{dataModels, Answer, Application, Authorization, Error, EventType}
 import models.Application.SeenByUser
 import models.Authorization.UserRights
 import models.dataModels.{AnswerRow, ApplicationRow, InvitedUsers, UserInfos}
+import modules.AppConfig
 import play.api.db.Database
 import scala.Option.empty
 import scala.concurrent.Future
 
 @javax.inject.Singleton
 class ApplicationService @Inject() (
+    config: AppConfig,
     db: Database,
     dependencies: ServicesDependencies,
 ) {
@@ -158,16 +160,18 @@ class ApplicationService @Inject() (
       referenceDate: ZonedDateTime
   ): List[Application] =
     db.withConnection { implicit connection =>
+      val dataRetentionInMonths = config.dataRetentionInMonths
+      val lastDateToKeep = referenceDate.minusMonths(dataRetentionInMonths)
       val rows = SQL(s"""
         SELECT $fieldsInApplicationSelect
         FROM application
         WHERE
           (creator_user_id = {userId}::uuid OR invited_users ?? {userId})
         AND
-          (closed = FALSE OR DATE_PART('day', {referenceDate} - closed_date) < 30)
+          (closed = FALSE OR {lastDateToKeep} < closed_date)
         ORDER BY creation_date DESC
       """)
-        .on("userId" -> userId, "referenceDate" -> referenceDate)
+        .on("userId" -> userId, "lastDateToKeep" -> lastDateToKeep)
         .as(simpleApplication.*)
       val answersRows = answersForApplications(rows)
       val applications = rows.map(_.toApplication(answersRows))
