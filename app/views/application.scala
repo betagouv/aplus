@@ -25,7 +25,7 @@ object application {
 
   def applicationSentSuccessMessage(applicationId: UUID): Tag =
     span(
-      "Votre demande a bien été envoyée. Vous pouvez la consulter ",
+      "Votre demande a bien été créée. Vous pouvez la consulter ",
       a(href := ApplicationController.show(applicationId).url, "en cliquant ici"),
       ". Celle-ci n’est plus modifiable, cependant il vous est toujours possible d’envoyer un message pour apporter une précision ou corriger une erreur. ",
       "Pour créer une nouvelle demande, vous pouvez ",
@@ -220,7 +220,7 @@ object application {
             )
           ),
           br,
-          b("Vous devez sélectionner une réponse pour archiver la demande.")
+          b("Vous devez sélectionner une réponse pour fermer la demande.")
         ),
         div(
           cls := "mdl-dialog__actions",
@@ -235,7 +235,7 @@ object application {
             `type` := "submit",
             disabled := "disabled",
             cls := "mdl-button mdl-button--raised mdl-button--colored",
-            "Archiver"
+            "Fermer"
           )
         )
       )
@@ -450,13 +450,13 @@ object application {
                           .map(_ =>
                             div(
                               cls := "info-box do-not-print",
-                              "Cette demande a bien été traitée. Je vous invite à archiver l’échange en cliquant sur le bouton ci-dessous :",
+                              "Cette demande a bien été traitée. Je vous invite à fermer l’échange en cliquant sur le bouton ci-dessous :",
                               br,
                               br,
                               button(
                                 id := "archive-button-2",
                                 cls := "mdl-button mdl-js-button mdl-button--raised mdl-button--primary mdl-js-ripple-effect",
-                                "Archiver l’échange"
+                                "Fermer l’échange"
                               ),
                               br,
                               br
