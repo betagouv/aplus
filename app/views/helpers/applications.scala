@@ -26,7 +26,7 @@ object applications {
           )
         case Archived =>
           div(cls := "fr-tag fr-tag--sm  aplus-tag--archived")(
-            "archivé"
+            "fermé"
           )
         case New =>
           div(cls := "fr-tag fr-tag--sm aplus-tag--new")(
@@ -34,7 +34,7 @@ object applications {
           )
         case Sent =>
           div(cls := "fr-tag fr-tag--sm aplus-tag--sent")(
-            "envoyé"
+            "en attente de réponse"
           )
       }
     )

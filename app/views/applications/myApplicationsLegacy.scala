@@ -231,7 +231,7 @@ object myApplicationsLegacy {
         if (currentUser.instructor)
           s"Traitées (${infos.filteredByGroupsClosedCount}) "
         else
-          s"Archivées (${infos.filteredByGroupsClosedCount}) ",
+          s"Fermées (${infos.filteredByGroupsClosedCount}) ",
         filters.withStatusArchived.toUrl,
       ),
     )

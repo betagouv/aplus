@@ -167,7 +167,7 @@ dialog {
 
         @if(Authorization.canCloseApplication(application)(currentUserRights) && not(application.closed)) {
             <button id="archive-button-1" class="mdl-cell mdl-cell--3-col mdl-cell--9-offset-desktop mdl-cell--12-col-phone mdl-button mdl-button--raised mdl-button--primary mdl-js-button do-not-print">
-                Archiver l’échange
+                Fermer l’échange
             </button>
         }
         @if(Authorization.canOpenApplication(application)(currentUserRights) && application.closed) {
@@ -311,7 +311,7 @@ dialog {
             @if(Authorization.canCloseApplication(application)(currentUserRights) && not(application.closed)) {
                 <div>
                     <button id="archive-button-3" class="mdl-button mdl-button--raised mdl-button--primary mdl-button--multiline-text mdl-js-button do-not-print">
-                        Archiver l’échange
+                        Fermer l’échange
                     </button>
                 </div>
             }

@@ -465,7 +465,7 @@ case class ApplicationController @Inject() (
                     applicationId = application.id.some
                   )
                   InternalServerError(
-                    "Erreur Interne: Votre demande n'a pas pu être envoyée. Merci de réessayer ou de contacter l'administrateur"
+                    "Erreur Interne: Votre demande n'a pas pu être créée. Merci de réessayer ou de contacter l'administrateur"
                   )
                 }
               }
@@ -1744,7 +1744,7 @@ case class ApplicationController @Inject() (
                         signature => saveSharedAccountUserSignature(request.session, signature)
                       )
                     )
-                    .flashing(success -> "Votre réponse a bien été envoyée")
+                    .flashing(success -> "Votre réponse a bien été créée")
                 )
               } else {
                 eventService.log(
@@ -1752,7 +1752,7 @@ case class ApplicationController @Inject() (
                   s"La réponse ${answer.id} n'a pas été créée sur la demande $applicationId : problème BDD",
                   applicationId = application.id.some
                 )
-                Future(InternalServerError("Votre réponse n'a pas pu être envoyée"))
+                Future(InternalServerError("Votre réponse n'a pas pu être créée"))
               }
             }
           )
@@ -2020,13 +2020,13 @@ case class ApplicationController @Inject() (
                 eventService
                   .log(
                     EventType.TerminateCompleted,
-                    s"La demande $applicationId est archivée",
+                    s"La demande $applicationId est fermée",
                     applicationId = application.id.some
                   )
                 val successMessage =
-                  s"""La demande « ${application.subject} » a bien été archivée. """ +
+                  s"""La demande « ${application.subject} » a bien été fermée. """ +
                     "Bravo et merci pour la résolution de cette demande ! " +
-                    "Cette demande sera encore consultable un mois à partir de maintenant dans la colonne « Archivées »"
+                    "Cette demande sera encore consultable un mois à partir de maintenant dans la colonne « Fermées »"
                 Future(
                   Redirect(routes.ApplicationController.myApplications)
                     .flashing(success -> successMessage)
@@ -2034,12 +2034,12 @@ case class ApplicationController @Inject() (
               } else {
                 eventService.log(
                   EventType.TerminateError,
-                  s"La demande $applicationId n'a pas pu être archivée en BDD",
+                  s"La demande $applicationId n'a pas pu être fermée en BDD",
                   applicationId = application.id.some
                 )
                 Future(
                   InternalServerError(
-                    "Erreur interne: l'application n'a pas pu être indiquée comme archivée"
+                    "Erreur interne: la demande n'a pas pu être fermée"
                   )
                 )
               }
@@ -2050,7 +2050,7 @@ case class ApplicationController @Inject() (
                 applicationId = application.id.some
               )
               Future(
-                Unauthorized("Seul le créateur de la demande ou un expert peut archiver la demande")
+                Unauthorized("Seul le créateur de la demande ou un expert peut fermer la demande")
               )
             }
           }
