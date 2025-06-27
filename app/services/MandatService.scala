@@ -5,6 +5,7 @@ import anorm.postgresql.{jsValueColumn, jsValueToStatement}
 import aplus.macros.Macros
 import cats.syntax.all._
 import helper.{PlayFormHelpers, Time}
+import java.time.ZonedDateTime
 import java.util.UUID
 import javax.inject.Inject
 import models.{Authorization, Error, EventType, Mandat, Sms, User}
@@ -313,7 +314,6 @@ class MandatService @Inject() (
       SQL(s"""SELECT $fieldsInSelect FROM mandat""").as(mandatRowParser.*)
     }
 
-  /*
   def wipePersonalData(retentionInMonths: Long): Future[Either[Error, List[Mandat]]] =
     Future(
       Try {
@@ -363,6 +363,5 @@ class MandatService @Inject() (
           )
         )
     )
-   */
 
 }
