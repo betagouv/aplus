@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aplus-config
+data:
+  APP_HOST: aplus.beta.gouv.fr
+  FEATURE_AUTO_ADD_EXPERT: "true"
+  FEATURE_WEEKLY_EMAILS: "true"
+  PERSONAL_DATA_RETENTION_IN_MONTHS: "3"
