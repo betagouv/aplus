@@ -108,7 +108,7 @@ libraryDependencies ++= Seq(
 )
 
 // Crash
-libraryDependencies += "io.sentry" % "sentry-logback" % "8.14.0"
+libraryDependencies += "io.sentry" % "sentry-logback" % "8.17.0"
 
 // Sync with Play and scala-steward pin
 // https://github.com/playframework/playframework/blob/4c2d76095c2f6a5cab7be3e8f6017c4a4dd2a99f/project/Dependencies.scala#L20
