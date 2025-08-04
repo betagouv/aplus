@@ -47,7 +47,7 @@ class WipeOldDataTask @Inject() (
       }
     )
 
-  def wipeOldData(retentionInMonths: Long): Unit =
+  def wipeOldData(retentionInMonths: Long): Unit = {
     wipePersonalData(retentionInMonths)
       .onComplete {
         case Success(Right(wiped)) =>
@@ -70,8 +70,6 @@ class WipeOldDataTask @Inject() (
           )
       }
 
-  // Not wiping these data, pending legal validation
-  /*
     mandatService
       .wipePersonalData(retentionInMonths)
       .onComplete {
@@ -94,7 +92,7 @@ class WipeOldDataTask @Inject() (
             Some(error)
           )
       }
-   */
+  }
 
   def wipePersonalData(retentionInMonths: Long): Future[Either[Error, List[ApplicationRow]]] = {
     val applications = applicationService.applicationsThatShouldBeWipedBlocking(retentionInMonths)
