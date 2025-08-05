@@ -59,8 +59,15 @@ object EventType {
   object ApplicationShowed extends Info
   object ApplicationUnauthorized extends Warn
   object AreaChanged extends Info
+
+  // Old version
   object CGUShowed extends Info
   object CGUValidated extends Info
+
+  // Version 20250801
+  object CGUShowedV20250801 extends Info
+  object CGUValidatedV20250801 extends Info
+
   object CGUValidationError extends Error
   object CGUInvalidRedirect extends Warn
   object ChangeAreaUnauthorized extends Warn
