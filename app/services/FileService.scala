@@ -314,7 +314,7 @@ class FileService @Inject() (
         s"""
         SELECT $fieldsInSelect
         FROM file_metadata
-        WHERE application_id = ANY(array[{applicationIds}::uuid[]))
+        WHERE application_id = ANY(array[{applicationIds}]::uuid[])
       """
       )
         .on("applicationIds" -> applicationIds)

@@ -32,11 +32,14 @@ class WipeOldDataTask @Inject() (
 
   import dependencies.ioRuntime
 
-  val startAtHour = 4
   val now: ZonedDateTime = ZonedDateTime.now() // Machine Time
 
   val startDate: ZonedDateTime =
-    now.toLocalDate.atStartOfDay(now.getZone).plusDays(1).withHour(startAtHour)
+    now.toLocalDate
+      .atStartOfDay(now.getZone)
+      .plusDays(config.wipeOldDataCronAdditionalDays)
+      .withHour(config.wipeOldDataCronHour)
+      .withMinute(config.wipeOldDataCronMinute)
 
   val initialDelay: FiniteDuration = Duration.between(now, startDate).getSeconds.seconds
 
@@ -95,20 +98,25 @@ class WipeOldDataTask @Inject() (
   }
 
   def wipePersonalData(retentionInMonths: Long): Future[Either[Error, List[ApplicationRow]]] = {
-    val applications = applicationService.applicationsThatShouldBeWipedBlocking(retentionInMonths)
-    val files = fileService.queryByApplicationsIdsBlocking(applications.map(_.id))
-    val filesIds = files.map(_.id)
-    val filesDeletionResult = fileService.deleteByIds(filesIds).unsafeToFuture()
-    filesDeletionResult.map {
-      case Left(error) =>
-        error.asLeft[List[ApplicationRow]]
-      case Right(_) =>
-        applications
-          .flatMap { application =>
-            val _ = fileService.wipeFilenamesByIdsBlocking(filesIds)
-            applicationService.wipeApplicationPersonalDataBlocking(application)
-          }
-          .asRight[Error]
+    val dataFuture = Future {
+      val applications = applicationService.applicationsThatShouldBeWipedBlocking(retentionInMonths)
+      val files = fileService.queryByApplicationsIdsBlocking(applications.map(_.id))
+      val filesIds = files.map(_.id)
+      (applications, filesIds)
+    }
+    dataFuture.flatMap { case (applications, filesIds) =>
+      val filesDeletionResult = fileService.deleteByIds(filesIds).unsafeToFuture()
+      filesDeletionResult.map {
+        case Left(error) =>
+          error.asLeft[List[ApplicationRow]]
+        case Right(_) =>
+          applications
+            .flatMap { application =>
+              val _ = fileService.wipeFilenamesByIdsBlocking(filesIds)
+              applicationService.wipeApplicationPersonalDataBlocking(application)
+            }
+            .asRight[Error]
+      }
     }
   }
 

@@ -26,6 +26,13 @@ class AppConfig @Inject() (configuration: Configuration) {
   val passwordRecoveryTokenExpirationInMinutes: Int =
     configuration.get[Int]("app.passwordRecoveryTokenExpirationInMinutes")
 
+  val wipeOldDataCronMinute: Int = configuration.get[Int]("app.wipeOldDataCronMinute")
+
+  val wipeOldDataCronHour: Int = configuration.get[Int]("app.wipeOldDataCronHour")
+
+  val wipeOldDataCronAdditionalDays: Int =
+    configuration.get[Int]("app.wipeOldDataCronAdditionalDays")
+
   val dataRetentionInMonths: Int = configuration.get[Int]("app.personalDataRetentionInMonths")
 
   val featureMandatSms: Boolean = configuration.get[Boolean]("app.features.smsMandat")
