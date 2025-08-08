@@ -308,220 +308,199 @@ object legal {
       "Conditions générales d’utilisation - Administration+",
       div(
         h1(cls := "fr-mb-6w")("Conditions générales d’utilisation"),
+        p("En vigueur à partir du 01/08/2025"),
+        h2("Article 1 - Champ d’application"),
         p(
-          "Du service public numérique « Administration+ » pour résoudre les blocages administratifs complexes et/ou urgents"
+          "Les présentes conditions générales d’utilisation (ci-après « CGU ») précisent le cadre juridique d’Administration+ (ci-après le « Produit numérique ») et définissent les conditions d’accès et d’utilisation des Services par l’Utilisateur."
         ),
         p(
-          "Les présentes conditions générales d’utilisation visent à réguler les interactions entre les utilisateurs de la plateforme Administration+."
+          "L’annexe relative à l’accord sur le traitement des données, au sens de l’article 28-3 du RGPD, fait partie intégrante des présentes CGU."
         ),
-        p("Conditions générales d’utilisation à partir du 1er octobre 2020"),
-        h2("1. Le service Administration+"),
-        h3("1.1. Objet du service"),
+        h2("Article 2 - Objet du Produit numérique"),
         p(
-          "Mettre en relation des agents publics ou chargés d’une mission de service public via l’utilisation d’une plateforme numérique pour :"
+          "Administration+ est un produit numérique développé au sein de l’Agence nationale de la cohésion des territoires (ANCT) dans le but de mettre en relation des aidants professionnels mandatés dans le cadre de leur fonction (ci-après « Aidant ») par des usagers avec des agents publics habilités (ci-après « Instructeur ») pour résoudre des blocages administratifs complexes et/ou urgents d’usagers."
+        ),
+        h2("Article 3 - Définitions"),
+        p(
+          "“Administration” désigne tout personne morale chargée d’une mission de service public administratif conformément à l’article L. 100-3 du code des relations entre le public et l’administration (CRPA) qui emploie des Aidants et Instructeurs."
+        ),
+        p(
+          "“Administrateur” désigne toute personne physique, membre de l’équipe du Produit numérique qui s’assure du bon fonctionnement de l’outil et de la parfaite mise en relation entre l’Aidant et l’Instructeur."
+        ),
+        p(
+          "“Aidant” désigne toute personne physique, agent public habilité par son Administration qui a conclu un mandat écrit généré par le Produit numérique avec l’usager accompagné (par le biais de son Administration ou via le Produit numérique) et qualifie/reformule ses requêtes auprès de l’Instructeur."
+        ),
+        p(
+          "“Éditeur” désigne la personne morale qui met à la disposition du public le Produit numérique, à savoir l’ANCT."
+        ),
+        p(
+          "“Instructeur” désigne toute personne physique, agent public habilité par son Administration qui est saisi et mandaté par écrit par un Aidant pour débloquer rapidement une situation administrative complexe et/ou urgente."
+        ),
+        p(
+          "“Produit numérique” désigne le service numérique qui permet aux agents publics de résoudre les problématiques administratives complexes et/ou urgentes des usagers."
+        ),
+        p(
+          "“Responsable de groupe” désigne toute personne physique, agent public habilité par son Administration chargé de gérer l’utilisation du Produit numérique dans son ou ses établissements et sur son territoire."
+        ),
+        p(
+          "“Services” désigne les fonctionnalités proposées par le Produit numérique pour répondre à ses finalités"
+        ),
+        p(
+          "“Utilisateur” désigne toute personne physique, agent public habilité, qui s’inscrit sur le Produit numérique."
+        ),
+        h2("Article 4 - Fonctionnalités"),
+        h3("4.1 Inscription sur le Produit numérique"),
+        p(
+          "Chaque Administration désigne un Responsable de groupe primaire dont elle communique le nom et les coordonnées à l’Administrateur du produit. Sur cette base, l’administrateur crée un compte pour ce Responsable de groupe primaire. C’est ensuite au Responsable de groupe primaire, une fois son compte créé, de créer les comptes de son groupe, c’est-à-dire des utilisateurs de son administration. Il peut également désigner des Responsables de groupe qui eux-mêmes pourront créer des comptes d’Utilisateur pour leur groupe."
+        ),
+        p(
+          "Les responsables, primaire ou non, auront également la responsabilité de supprimer les comptes de leur groupe."
+        ),
+        h3("4.2 Connexion au compte sur le Produit numérique"),
+        p(
+          "Pour se connecter à son compte, l’Utilisateur renseigne son adresse courriel professionnelle sur le Produit numérique et reçoit un lien de connexion. Il peut aussi se connecter en renseignant un identifiant et un mot de passe."
+        ),
+        p(
+          "Le lien de connexion est unique et valide pendant une durée de trente (30) minutes."
+        ),
+        h3("4.3 Rôles de l’Utilisateur"),
+        p(
+          "L’Utilisateur est soit :"
         ),
         ul(
-          li("résoudre des blocages administratifs complexes et/ou urgents des usagers ;"),
           li(
-            "garantir l’accessibilité du service public aux personnes en situation de vulnérabilité ou d’urgence ;"
-          ),
-          li("participer à la lutte contre le non-recours aux droits ;"),
-          li("faciliter les interactions entre les acteurs publics d’un territoire.")
-        ),
-        h3("1.2 L’usage du service"),
-        p(
-          "L’usage du service est réservé aux cas de blocages administratifs complexes et d’urgence sociale."
-        ),
-        h3("1.3 L’utilisation du service"),
-        p(
-          "L’utilisation du service repose sur une communauté d’utilisateurs habilités par leurs organismes respectifs."
-        ),
-        p("La « communauté Administration+ » repose sur 5 catégories de personnes :"),
-        h4("1.3.1 Les aidants Administration+"),
-        p(
-          "Ce sont les agents en contact direct avec les usagers. Ils qualifient et reformulent les requêtes au nom de l’usager pour les soumettre à la communauté."
-        ),
-        p(
-          "Il s’agit notamment des agents d’accueil France Services, des travailleurs sociaux publics, des délégués du Défenseur des droits et des élus des collectivités."
-        ),
-        h4("1.3.2 Les instructeurs Administration+ (opérateurs des administrations partenaires)"),
-        p(
-          "Ce sont les agents publics ou chargés d’une mission de service public, en poste dans des organismes de sécurité sociale ou des administrations déconcentrées de l’État ou des administrations décentralisées."
-        ),
-        p(
-          "Ils ont pour mission de rechercher une réponse à une situation de blocage administratif complexe ou à une urgence sociale lorsqu’ils sont saisis par un aidant Administration+."
-        ),
-        p(
-          "À noter : Ces opérateurs peuvent également initier une demande d’aide pour un usager sur la plateforme en recourant à la communauté Administration+."
-        ),
-        h4("1.3.3 Les responsables de groupe(s)"),
-        p(
-          "Ce sont des agents publics ou chargés d’une mission de service public désignés par leur direction pour gérer l’utilisation d’Administration+ dans leur organisme."
-        ),
-        p("Un responsable de groupe :"),
-        ul(
-          li(
-            "crée et désactive les comptes des utilisateurs en cas de changement de poste ou à leur demande."
+            b("Un Aidant"),
+            " qui est en contact direct avec les usagers, pour qualifier et reformuler les requêtes avant de les soumettre à l’Instructeur dans le cas où leur intervention peut permettre une résolution. L’Aidant a, au préalable, conclu un mandat écrit avec l’usager généré par le Produit numérique ;"
           ),
           li(
-            "s’assure du bon suivi des demandes (délais de réponses et clôture des demandes après réponses)."
+            b("Un Instructeur"),
+            " qui soit a été saisi par un Aidant pour répondre à un problème administratif urgent et/ou complexe, ou soit qui invite ou est invité par un autre Instructeur sur une demande. Les instructeurs apportent une réponse une directe aux usagers à travers les canaux de communication personnalisés qu’ils utilisent d’ordinaire. Ils peuvent également apporter une réponse à l’Aidant si nécessaire ;"
           ),
-          li("accède à des outils statistiques pour mesurer la performance de son organisme.")
-        ),
-        p(
-          "À noter : Il n’a pas accès au contenu des demandes instruites par les aidants ou les agents instructeurs de son organisme."
-        ),
-        h4("1.3.4 Les administrateurs"),
-        p("Ce sont les membres de l’équipe Administration+ qui :"),
-        ul(
-          li("s’assurent du bon fonctionnement de l’outil,"),
-          li("répondent aux interrogations des utilisateurs,"),
           li(
-            "jouent un rôle de coordinateur entre les aidants Administration+ et les instructeurs Administration+."
+            b("Un Responsable de groupe primaire"),
+            " désigné par son Administration qui est le premier responsable d’un groupe. Ce responsable peut nommer d’autres responsables au sein de son groupe, créer des comptes et retirer des comptes du groupe."
+          ),
+          li(
+            b("Un Responsable"),
+            " de groupe qui gère également l’utilisation du Produit numérique au sein de son Administration (création et désactivation des comptes utilisateurs, suivi des demandes, délai de réponse, clôture des demandes après réponse). Par principe, il n’a pas accès au contenu des demandes instruites par l’Aidant ou l’Instructeur de son organisme sauf s’il bénéficie du rôle d’Instructeur ou qu’il a été invité par un Aidant ou un autre Instructeur sur la demande ;"
+          ),
+          li(
+            b("Un Administrateur"),
+            " qui s’assure du bon fonctionnement du Produit numérique, assiste les Utilisateurs en cas de problématique technique ou fonctionnelle et atteste de la parfaite mise en relation entre l’Aidant et l’Instructeur. L’Administrateur n’a pas accès aux contenus des demandes des usagers et aux fichiers téléversés, sauf invitation par un Utilisateur sur une demande de modération pour permettre le bon fonctionnement du produit"
+          ),
+        ),
+        div(cls := "fr-table")(
+          div(cls := "fr-table__wrapper")(
+            div(cls := "fr-table__container")(
+              div(cls := "fr-table__content")(
+                table(
+                  thead(
+                    tr(
+                      th(attr("scope") := "col")("Étape"),
+                      th(attr("scope") := "col")("Acteurs concernés"),
+                      th(attr("scope") := "col")("Accès aux données"),
+                      th(attr("scope") := "col")("Durée"),
+                      th(attr("scope") := "col")("Commentaire"),
+                    )
+                  ),
+                  tbody(
+                    tr(
+                      td("Phase 1 : Ouverture demande"),
+                      td("Aidant, Instructeur"),
+                      td("Accès complet aux données et fichiers en pièce jointe"),
+                      td("Jusqu'à fermeture"),
+                      td("Phase active de traitement de la demande")
+                    ),
+                    tr(
+                      td("Phase 2 : Fermeture de la demande"),
+                      td("Aidant, Instructeur"),
+                      td("Accès complet aux données (sans pièces jointes)"),
+                      td("6 mois après la fermeture de la demande"),
+                      td("L'aidant ferme la demande, un délai de 6 mois s'ouvre")
+                    ),
+                    tr(
+                      td("Phase 3 : Anonymisation des données citoyens"),
+                      td("Administrateurs uniquement"),
+                      td(
+                        "Accès aux médatonnées uniquement (suppression des données personnelles des citoyens)"
+                      ),
+                      td("2 mois après suppressions des données de la demande"),
+                      td(
+                        "Pour restauration technique en cas de problème technique sur la Plateforme pour un usage statistique"
+                      )
+                    ),
+                    tr(
+                      td("Phase 4 : Suppression définitive"),
+                      td("Tous les utilisateurs"),
+                      td("Toutes les données sont supprimées définitivement"),
+                      td("Définitif"),
+                      td("Pas de retour en arrière possible")
+                    ),
+                  )
+                )
+              )
+            )
           )
         ),
+        h3("4.4 Collecte de données hautement personnelles par certaines Administrations"),
         p(
-          "À noter : Ils n’ont pas accès au contenu des demandes conformément au Règlement général sur la protection des données (RGPD)."
-        ),
-        p(
-          "Seuls 3 membres de l’équipe, en leur qualité « d’experts », peuvent être invités par tout membre de la communauté sur une demande. Ils sont également automatiquement saisis lorsque le délai de réponse est dépassé (cf. paragraphe 3.1). Ils n’ont pas accès aux fichiers téléversés sur la demande."
-        ),
-        h4("1.3.5 Les observateurs"),
-        p(
-          "Ce sont les pilotes et coordonnateurs d’administrations partenaires qui associent Administration+ à leur expérimentation :"
-        ),
-        ul(
-          li(
-            "La direction interministérielle de la transformation publique (DITP) pour ses programmes carte blanche et service-public +."
-          ),
-          li(
-            "L’agence nationale de cohésion des territoires (ANCT) et la caisse des dépôts et consignation à travers la banque des territoires pour le programme France services."
-          ),
-          li(
-            "Les coordonnateurs en préfecture, chargés de mission à la politique de la ville ou au développement du territoire, les coordonnateurs nationaux d’organismes et d’administrations centrales ou décentralisées."
-          )
-        ),
-        h3("1.4 Fonctionnement général du service"),
-        h4("1.4.1 La création de compte"),
-        ul(
-          li(
-            "L’habilitation des utilisateurs est de la responsabilité de l’administration à laquelle ils appartiennent conformément à l’article ",
-            a(
-              href := "https://www.legifrance.gouv.fr/affichTexte.do?cidTexte=JORFTEXT000038029589&categorieLien=id",
-              target := "_blank",
-              rel := "noopener noreferrer"
-            )("R-114-9-6"),
-            " du code des relations du public avec l’administration (CRPA)."
-          ),
-          li(
-            "Les administrations sont responsables de la traçabilité des actions de leurs agents conformément aux dispositions générales de la Commission nationale de l’informatique et des libertés (CNIL)."
-          ),
-          li(
-            "Le compte Administration+ d’un utilisateur est créé par un responsable de groupe ou un administrateur."
-          ),
-          li(
-            "Les partenaires peuvent renseigner une adresse e-mail nominative ou partagée pour l’utilisation d’Administration+."
-          )
-        ),
-        h4("1.4.2 La connexion"),
-        p("La connexion au compte Administration+ se fait avec l’adresse mail professionnelle."),
-        p(
-          "Dans le cas de l’utilisation d’une adresse e-mail partagée, toute réponse de l’utilisateur dans le cadre de l’échange devra mentionner son identité (prénom, nom) et le service auquel il appartient conformément au CRPA."
+          "Seules certaines Administrations habilitées, eu égard à leurs missions et compétences peuvent renseigner certaines informations notamment le numéro fiscal de référence, l’identifiant Caisse d’Allocation Familiale (CAF) et Mutuelle Sociale Agricole (MSA) sur le Produit numérique. Les champs permettant de les renseigner ne sont visibles que pour ces Administrations habilitées."
         ),
         p(
-          "Exemples : Kevin Dupont - assistant social hôpital X ; Nadia Nguyen - référente finances publiques, service des impôts des particuliers."
+          "Les Administrations mentionnées par le décret n° 2019-341 du 19 avril 2019 peuvent renseigner le numéro d’inscription au répertoire (NIR) sur le Produit numérique."
         ),
         p(
-          "Le lien de connexion est unique et valide 30 minutes. Il ne doit en aucun cas être transmis à un tiers."
+          "Dans ce cadre, l’ANCT agit en qualité de sous-traitant, conformément au RGPD et à l’accord sur le traitement des données en annexe des présentes CGU."
         ),
-        h4("1.4.3. La déconnexion"),
+        h2("Article 5 - Responsabilités"),
+        h3("5.1 L’Éditeur du Produit numérique"),
         p(
-          "L’utilisateur d’Administration+ est invité à se déconnecter lorsqu’il a fini d’utiliser la plateforme. Cette déconnexion est impérative s’il s’est connecté depuis un poste de travail ou tout autre appareil partagé, pour éviter une connexion automatique par un tiers."
-        ),
-        h4("1.4.4 La désactivation de compte"),
-        p(
-          "Lorsqu’un utilisateur quitte ses fonctions, il incombe au responsable de groupe de désactiver son compte Administration+ et d’en informer l’équipe sur ",
-          a(href := "mailto:contact@aplus.beta.gouv.fr", "contact@aplus.beta.gouv.fr"),
-          "."
-        ),
-        h4("1.4.5 Ajout de fichiers à la demande"),
-        p(
-          "Tous les fichiers téléversés sur la demande sont supprimés dans un délai de 15 jours. Pour des raisons de sécurité, les fichiers n’ont pas de copie de sauvegarde et ne peuvent pas être restaurés en cas de panne du service."
-        ),
-        h2("2. Droits et devoirs des aidants Administration+"),
-        h3("2.1 Cas d’utilisation de l’outil par l’aidant"),
-        p(
-          "Administration+ est un canal d’information complémentaire des outils professionnels existants. Il apporte une réponse de dernier recours dans les situations d’urgence sociale ou lorsque tous les dispositifs habituels connus de l’aidant Administration+ ont été épuisés (guichet, mail, téléphone, sites professionnels…)."
-        ),
-        h3("2.2 Consentement de l’usager"),
-        p(
-          "L’aidant Administration+ s’engage à informer et recueillir le consentement de l’usager pour l’utilisation de l’outil « d’Administration+ »."
+          "Les sources des informations diffusées sur le Produit numérique sont réputées fiables mais l’Éditeur ne garantit pas qu’elle soit exempte de défauts, d’erreurs ou d’omissions."
         ),
         p(
-          "L’aidant a l’obligation de faire signer un mandat à l’usager l’autorisant à instruire son cas par voie électronique. Le mandat est conservé le temps de la résolution de la demande. Il peut également être révoqué sur la demande de l’usager."
+          "L’Éditeur s’engage à la sécurisation du Produit numérique, notamment en prenant toutes les mesures nécessaires permettant de garantir la sécurité et la confidentialité des informations fournies. Il ne saurait être tenu responsable de tout contenu publié par l’Utilisateur sur le Produit numérique, notamment des fausses informations renseignées par ce dernier."
         ),
         p(
-          "L’aidant transmet l’information de manière simple, claire, compréhensible et aisément accessible, comme prévu dans les dispositions de l’",
-          a(
-            href := "https://www.cnil.fr/fr/reglement-europeen-protection-donnees/chapitre3#Article12",
-            target := "_blank",
-            rel := "noopener noreferrer"
-          )("article 12 du RGPD"),
-          "."
-        ),
-        h3("2.3 Clôture de la demande"),
-        p(
-          "L’aidant Administration+ s’engage à clore la demande lorsqu’une solution a été apportée. La fermeture d’une demande entraîne une suppression des données personnelles de la plateforme sous 90 jours. Administration+ ne fournit pas un service d’archivage."
+          "L’Éditeur fournit les moyens nécessaires et raisonnables pour assurer un accès continu au Produit numérique. Il se réserve le droit de faire évoluer, de modifier ou de suspendre, sans préavis, le Produit numérique pour des raisons de maintenance ou pour tout autre motif jugé nécessaire."
         ),
         p(
-          "Au moment de la clôture, l’aidant Administration+ renseigne l’utilité de la réponse apportée par l’instructeur Administration+ pour l’usager en cliquant sur un de ces 3 émoticônes : 😐 ☹ 😊."
-        ),
-        h2("3. Droits et devoirs des instructeurs Administration+"),
-        h3("3.1 Délais de réponse"),
-        p(
-          "Administration+ est un dispositif pour trouver une solution à un problème inextricable et/ou urgent."
+          "En aucun cas, l’Éditeur n’est responsable de l’habilitation d’un Utilisateur, celle-ci relève uniquement de la responsabilité de l’Administration dont il fait partie."
         ),
         p(
-          "L’instructeur Administration+ s’engage à répondre rapidement dans les jours suivant la création de la demande par l’aidant."
+          "En cas de manquement à une ou plusieurs des stipulations des présentes CGU, l’Éditeur se réserve le droit de suspendre ou de supprimer le compte de l’Utilisateur responsable."
         ),
-        p("Nous constatons généralement un délai de réponse de 4 jours."),
-        h3("3.2 Cas d’une réponse non pertinente"),
+        h3("5.2 L’Utilisateur"),
         p(
-          "L’outil intègre un bouton « Cette demande dispose d’une procédure standard que l’aidant aurait pu utiliser » pour réguler le flux de demandes entrant. L’instructeur Administration+ s’engage toutefois à indiquer brièvement la procédure standard existante s’il la connaît."
-        ),
-        p(
-          "À noter : Le « silence gardé » pendant plus de 2 mois par certaines administrations sur une demande ou une démarche vaut accord, sauf exceptions. Pour certaines demandes, l’acceptation peut être acquise après un délai différent. Dans d’autres cas, le « silence gardé » sur une demande vaut refus. Voir le code des relations entre le public et l’administration : ",
-          a(
-            href := "https://www.legifrance.gouv.fr/affichCode.do?idSectionTA=LEGISCTA000031367609&cidTexte=LEGITEXT000031366350",
-            target := "_blank",
-            rel := "noopener noreferrer"
-          )("article L231-1 à D231-3"),
-          "."
-        ),
-        h2("4. Acceptation - manquement - modification des CGU"),
-        h3("4.1 Acceptation"),
-        p("L’utilisation de l’outil vaut acceptation de ces conditions générales d’utilisation."),
-        h3("4.2 Manquement"),
-        p(
-          "4.2.1 Si je constate une utilisation abusive du service ou des messages contraires à la loi, je le signale sur ",
-          a(href := "mailto:contact@aplus.beta.gouv.fr", "contact@aplus.beta.gouv.fr"),
-          "."
+          "L’Utilisateur s’assure de garder son lien de connexion, son identifiant et mot de passe secrets. Toute divulgation du lien, quelle que soit sa forme, est strictement interdite. Il assume les risques liés à l’utilisation de son adresse courriel."
         ),
         p(
-          "4.2.2 En cas de non-respect des conditions générales d’utilisation, les administrateurs se réservent le droit d’exclure l’utilisateur du service et de lui notifier."
+          "Lors de la création d’un compte sur le Produit Numérique, le Responsable de groupe s’assure que la personne dont le compte est créé est bien habilitée par son Administration à répondre aux demandes de blocage administratif par le biais du Produit numérique. Lors de la première connexion, ce nouvel utilisateur devra accepter les CGU."
         ),
-        h3("4.3 Modifications"),
         p(
-          "Les présentes conditions générales d’utilisation peuvent être modifiées. Toutes modifications seront notifiées aux utilisateurs"
+          "Toute information transmise par l’Utilisateur est de sa seule responsabilité. Il est rappelé que toute personne procédant à une fausse déclaration pour elle-même ou pour autrui s’expose notamment aux sanctions prévues à l’article 441-1 du code pénal, prévoyant des peines pouvant aller jusqu’à trois ans d’emprisonnement et 45 000 euros d’amende."
         ),
-        h2("5. Responsabilité"),
-        h3("5.1"),
         p(
-          "La direction interministérielle du numérique (DINUM) ne saurait engager sa responsabilité en cas d’usage frauduleux de l’outil par un utilisateur."
+          "L’Utilisateur s’engage formellement par les présentes CGU à ne pas mettre en ligne de contenus ou informations contraires aux dispositions légales et réglementaires en vigueur. Il veille également à ne pas communiquer de données sensibles ou de secrets protégés par la loi, et à ne pas publier de contenus illicites notamment dans les zones de champs libres."
         ),
-        h3("5.2"),
         p(
-          "Tout détournement de l’usage de la plateforme (point 1.1) ou manquement aux règles concernant la protection des données personnelles des usagers sera passible de poursuites pénales."
+          "L’Aidant certifie avoir recueilli l’autorisation de l’usager pour le traitement de sa demande par un Instructeur sur le Produit numérique. Il s’engage également à clôturer la demande lorsque l’Instructeur indique qu’elle est résolue."
+        ),
+        p(
+          "Le Responsable de groupe s’engage à désactiver le compte de tout Aidant ou Instructeur qui quitte ses fonctions. Si un compte Utilisateur est inactif pendant plus de 6 mois, son compte sera désactivé par l’Administrateur et le Responsable de groupe devra contacter l’Administrateur pour le faire réactiver."
+        ),
+        h2("Article 6 - Mise à jour des CGU"),
+        p(
+          "Les termes des présentes CGU peuvent être amendés à tout moment, en fonction des modifications apportées au Produit numérique, de l’évolution de la législation ou pour tout autre motif jugé nécessaire."
+        ),
+        p(
+          "Chaque modification donne lieu à une nouvelle version qui doit être acceptée par l’Utilisateur selon les modalités prévues par le Produit numérique."
+        ),
+        h2("Article 7 - Loi applicable et juridiction compétente"),
+        p(
+          "Les présentes CGU sont soumises à la loi française. En cas de litige, l’Éditeur et l’Administration s’engagent à coopérer avec diligence et bonne foi en vue de parvenir à une solution amiable, par voie de transaction, de médiation et de conciliation."
+        ),
+        p(
+          "Toutefois, si aucun accord n’est trouvé dans un délai de deux mois pour toute contestation ou litige relatif aux CGU, la juridiction compétente est le tribunal administratif de Paris."
         )
       ),
       breadcrumbs = ("Conditions générales d’utilisation", HomeController.cgu.url) :: Nil,
