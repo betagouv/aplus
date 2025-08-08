@@ -30,6 +30,7 @@ class AnonymizedDataService @Inject() (
     eventService: EventService,
     fileService: FileService,
     mandatService: MandatService,
+    passwordService: PasswordService,
     signupService: SignupService,
     userGroupService: UserGroupService,
     userService: UserService,
@@ -45,6 +46,7 @@ class AnonymizedDataService @Inject() (
       insertFileMetadata()(anonConn)
       insertFranceServices()(anonConn)
       insertMandats()(anonConn)
+      insertPasswords()(anonConn)
       insertSignupRequests()(anonConn)
       insertUsers()(anonConn)
       insertUserGroups()(anonConn)
@@ -59,6 +61,7 @@ class AnonymizedDataService @Inject() (
     val _ = SQL("""DELETE FROM file_metadata""").execute()
     val _ = SQL("""DELETE FROM france_service""").execute()
     val _ = SQL("""DELETE FROM mandat""").execute()
+    val _ = SQL("""DELETE FROM password""").execute()
     val _ = SQL("""DELETE FROM signup_request""").execute()
     val _ = SQL("""DELETE FROM "user"""").execute()
     val _ = SQL("""DELETE FROM user_group""").execute()
@@ -419,6 +422,31 @@ class AnonymizedDataService @Inject() (
       SQL(query).on(params: _*).execute()
     }
     logMessage(s"Table mandat : " + rows.size + " lignes")
+  }
+
+  private def insertPasswords()(implicit connection: Connection): Unit = {
+    val rows = passwordService.allOrThrow
+    val query =
+      """INSERT INTO password (
+           user_id,
+           password_hash,
+           creation_date,
+           last_update
+         ) VALUES (
+           {userId}::uuid,
+           '',
+           {creationDate},
+           {lastUpdate}
+         )"""
+    rows.foreach { row =>
+      val params = Seq[NamedParameter](
+        "userId" -> row.userId,
+        "creationDate" -> row.creationDate,
+        "lastUpdate" -> row.lastUpdate,
+      )
+      SQL(query).on(params: _*).execute()
+    }
+    logMessage(s"Table password : " + rows.size + " lignes")
   }
 
   private def insertSignupRequests()(implicit connection: Connection): Unit = {
