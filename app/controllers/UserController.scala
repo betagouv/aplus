@@ -946,7 +946,7 @@ case class UserController @Inject() (
                     s"CGU validées par l'utilisateur ${request.currentUser.id}",
                     s"Utilisateur ${request.currentUser.toDiffLogString(updatedUser)}".some
                   )
-                  Redirect(routes.HomeController.welcome)
+                  Redirect(routes.ApplicationController.myApplications)
                     .flashing("success" -> "Merci d’avoir accepté les CGU")
                 }
             case ValidateSubscriptionForm(Some(uncheckedRedirect), false, _, _, _, _)
@@ -954,7 +954,7 @@ case class UserController @Inject() (
               val redirect = validateRedirect(uncheckedRedirect)
               Future(Redirect(Call("GET", redirect)))
             case ValidateSubscriptionForm(_, false, _, _, _, _) =>
-              Future(Redirect(routes.HomeController.welcome))
+              Future(Redirect(routes.ApplicationController.myApplications))
           }
         )
     }
