@@ -15,8 +15,8 @@ import javax.inject.{Inject, Singleton}
 import models.{Answer, Application, Area, Authorization, Error, EventType, User, UserGroup}
 import models.EventType.{
   AddUserError,
-  CGUShowed,
-  CGUValidated,
+  CGUShowedV20250801,
+  CGUValidatedV20250801,
   CGUValidationError,
   DeleteUserUnauthorized,
   EditUserError,
@@ -837,7 +837,7 @@ case class UserController @Inject() (
 
   def showValidateAccount: Action[AnyContent] =
     loginAction { implicit request =>
-      eventService.log(CGUShowed, "CGU visualisées")
+      eventService.log(CGUShowedV20250801, "CGU visualisées")
       val user = request.currentUser
       Ok(
         views.html.validateAccount(
@@ -926,7 +926,7 @@ case class UserController @Inject() (
               )
                 .map { updatedUser =>
                   eventService.log(
-                    CGUValidated,
+                    CGUValidatedV20250801,
                     s"CGU validées par l'utilisateur ${request.currentUser.id}",
                     s"Utilisateur ${request.currentUser.toDiffLogString(updatedUser)}".some
                   )
@@ -942,11 +942,11 @@ case class UserController @Inject() (
               )
                 .map { updatedUser =>
                   eventService.log(
-                    CGUValidated,
+                    CGUValidatedV20250801,
                     s"CGU validées par l'utilisateur ${request.currentUser.id}",
                     s"Utilisateur ${request.currentUser.toDiffLogString(updatedUser)}".some
                   )
-                  Redirect(routes.HomeController.welcome)
+                  Redirect(routes.ApplicationController.myApplications)
                     .flashing("success" -> "Merci d’avoir accepté les CGU")
                 }
             case ValidateSubscriptionForm(Some(uncheckedRedirect), false, _, _, _, _)
@@ -954,7 +954,7 @@ case class UserController @Inject() (
               val redirect = validateRedirect(uncheckedRedirect)
               Future(Redirect(Call("GET", redirect)))
             case ValidateSubscriptionForm(_, false, _, _, _, _) =>
-              Future(Redirect(routes.HomeController.welcome))
+              Future(Redirect(routes.ApplicationController.myApplications))
           }
         )
     }
