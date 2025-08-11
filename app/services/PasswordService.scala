@@ -53,6 +53,11 @@ class PasswordService @Inject() (
   private def generateRandomToken(): String =
     MiscHelpers.secureRandom.alphanumeric.take(30).mkString
 
+  def allOrThrow: List[PasswordRow] =
+    db.withConnection(implicit connection =>
+      SQL(s"""SELECT $qualifiedPasswordFieldsInSelect FROM password""").as(passwordRow.*)
+    )
+
   def sendRecoverEmail(email: String, ipAddress: String): Future[Either[Error, Instant]] =
     userService
       .byEmailEither(email, includeDisabled = true)
