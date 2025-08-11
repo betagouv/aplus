@@ -76,7 +76,7 @@ class AutoAddExpertTask @Inject() (
           invitedGroupIds = List.empty[UUID]
         )
         if (applicationService.addAnswer(application.id, answer, expertInvited = true) === 1) {
-          notificationService.newAnswer(application, answer)
+          notificationService.newAnswer(application, answer, expert)
           eventService.info(
             User.systemUser,
             "0.0.0.0",

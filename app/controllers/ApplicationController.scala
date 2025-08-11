@@ -408,7 +408,7 @@ case class ApplicationController @Inject() (
                   isInFranceServicesNetwork = isInFranceServicesNetwork,
                 )
                 if (applicationService.createApplication(application)) {
-                  notificationsService.newApplication(application)
+                  notificationsService.newApplication(application, request.currentUser)
                   eventService.log(
                     EventType.ApplicationCreated,
                     s"La demande ${application.id} a été créée",
@@ -1734,7 +1734,7 @@ case class ApplicationController @Inject() (
                   s"La réponse ${answer.id} a été créée sur la demande $applicationId",
                   applicationId = application.id.some
                 )
-                notificationsService.newAnswer(application, answer)
+                notificationsService.newAnswer(application, answer, request.currentUser)
                 Future(
                   Redirect(
                     s"${routes.ApplicationController.show(applicationId)}#answer-${answer.id}"
@@ -1845,7 +1845,7 @@ case class ApplicationController @Inject() (
                     )
 
                     if (applicationService.addAnswer(applicationId, answer) === 1) {
-                      notificationsService.newAnswer(application, answer)
+                      notificationsService.newAnswer(application, answer, request.currentUser)
                       eventService.log(
                         EventType.AgentsAdded,
                         s"L'ajout d'utilisateur (réponse ${answer.id}) a été créé sur la demande $applicationId",
@@ -1906,7 +1906,7 @@ case class ApplicationController @Inject() (
               invitedGroupIds = List.empty[UUID]
             )
             if (applicationService.addAnswer(applicationId, answer, expertInvited = true) === 1) {
-              notificationsService.newAnswer(application, answer)
+              notificationsService.newAnswer(application, answer, request.currentUser)
               eventService.log(
                 EventType.AddExpertCreated,
                 s"La réponse ${answer.id} a été créée sur la demande $applicationId",

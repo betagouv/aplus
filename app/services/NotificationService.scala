@@ -67,14 +67,20 @@ class NotificationService @Inject() (
 
   private val replyTo = List(s"Administration+ <${Constants.supportEmail}>")
 
-  def newApplication(application: Application): Unit = {
+  def newApplication(application: Application, creator: User): Unit = {
     val userIds = (application.invitedUsers).keys
     val users = userService.byIds(userIds.toList)
     val groups = groupService
       .byIds(application.invitedGroupIdsAtCreation)
       .filter(_.email.nonEmpty)
+    val creatorGroupIds = creator.groupIds.toSet
 
     users
+      // Remove coworkers
+      .filter { user =>
+        val isCoWorker = user.groupIds.toSet.intersect(creatorGroupIds).nonEmpty
+        !isCoWorker
+      }
       .map(generateInvitationEmail(application))
       .foreach(email =>
         emailsService.sendNonBlocking(email, EmailPriority.Normal).unsafeRunAndForget()
@@ -88,7 +94,7 @@ class NotificationService @Inject() (
   }
 
   // Note: application does not contain answer at this point
-  def newAnswer(application: Application, answer: Answer): Unit = {
+  def newAnswer(application: Application, answer: Answer, creator: User): Unit = {
     val shouldNotify = answer.answerType =!= Answer.AnswerType.InviteThroughGroupPermission
     if shouldNotify then {
       // Retrieve data
@@ -103,6 +109,7 @@ class NotificationService @Inject() (
           application.invitedGroups
         )
       }
+      val creatorGroupIds = creator.groupIds.toSet
 
       // Send emails to users
       users
@@ -116,7 +123,12 @@ class NotificationService @Inject() (
           } else if (answer.invitedUsers.contains(user.id)) {
             Some(generateInvitationEmail(application, Some(answer))(user))
           } else {
-            Some(generateAnswerEmail(application, answer)(user))
+            val isCoWorker = user.groupIds.toSet.intersect(creatorGroupIds).nonEmpty
+            if (isCoWorker) {
+              None
+            } else {
+              Some(generateAnswerEmail(application, answer)(user))
+            }
           }
         }
         .foreach(email =>
