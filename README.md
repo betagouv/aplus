@@ -12,14 +12,7 @@
 
 ## Commandes
 
-### ⚙️ Pré-requis ⚙️
-
--   Java
--   Docker
--   SBT
--   L'extension VSCode metals pour scala (non obligatoire mais conseillée !)
-
-### 🗝️ Installer le projet clés en main 🗝️
+### 🚀 Déployer le projet en local avec docker compose 🚀
 
 Cloner le projet :
 
@@ -28,54 +21,29 @@ git clone https://github.com/betagouv/aplus
 cd aplus
 ```
 
-Pour lancer le projet aller dans le dossier `develop/aplus` puis lancer une base de donnée PostgreSQL avec docker-compose :
+Docker compose démarre les services suivants: 
+
+- web : Play server pour la web app A+ - <http://localhost:9000>
+- db : postgresql (database) - access with `docker compose run db psql -hdb -Uaplus -W`
+- mailhog : mailhog pour les emails - <http://localhost:8025>
+- minio : object storage s3 - <http://localhost:9091> (minioadmin / minioadmin)
 
 ```shell
-cd develop/aplus
-docker-compose up db
-```
-
-Se connecter à la base de données avec Docker (pour connaître le nom du container, exécuter la commande `docker ps`):
-
-`docker exec -it <NOM_DU_CONTAINER_DE_LA_BD> psql -U aplus`
-
-Dans la console PSQL lancer la commande `\d` pour vérifier si des relations existent. Si aucune relation n'existe lancer la commande suivante puis quitter la console PSQL:
-
-```shell
-CREATE EXTENSION IF NOT EXISTS "unaccent";
-\q
+# Start the database, mailhog and minio services in detached mode (background)
+docker compose up -d db mailhog minio
+# Start the web service
+docker compose up web
 ```
 
 Ajouter un dump de la base de données à votre projet. Pour cela prendre contact avec l'équipe **Administration+** qui vous enverra le fichier correspondant (*contact@aplus.beta.gouv.fr* ou directement sur Mattermost). Ajouter le fichier à la racine du projet puis lancer la commande suivante (des erreurs apparaîtront, ne les prenez pas en compte !):
 
-`docker exec -i <NOM_DU_CONTAINER_DE_LA_BD> pg_restore -U aplus -d aplus < <NOM_FICHIER_DUMP>`
-
-Copier run.sh.example dans run.sh :
-
-`cp run.sh.example run.sh`
-
-Lancer le projet :
 
 ```shell
-npm install
-chmod +x run.sh
-./run.sh
-run
+# Restaurer la base de données avec le dump
+docker compose exec -T db bash -c 'PGPASSWORD=mysecretpassword pg_restore -h localhost -U aplus -d aplus' < [path_to_dump]/dump.pgsql
 ```
 
 ✨ Enjoy ✨ (si vous tombez sur l'erreur *"database 'default' needs evolution"*, cliquez sur *"apply this script now"*) !
-
-http://localhost:9000
-
-<!-- - Lancer une base de donnée PostgreSQL avec docker-compose :
-`docker-compose up db`
-
-- Lancer un serveur Play de dev avec docker-compose :
-  `docker-compose up web`
-
-- Pour lancer le serveur sans docker `sbt run` (Vous pouvez regarder les variables d'environnement indispensables dans le `docker-compose.yml` et la liste des variables dans le `application.conf`)
-
-- Les commandes pour le frontend sont dans `package.json` : `npm run watch` (dev), `npm run clean` (supprime ce qui a été installé par `npm install`), `npm run build` (bundle prod) -->
 
 ## Attribution
 
