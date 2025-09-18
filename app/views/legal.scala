@@ -77,19 +77,18 @@ object legal {
       breadcrumbs = ("Mentions légales", HomeController.mentionsLegales.url) :: Nil,
     )
 
-  // v4
   def privacy(): Tag =
     views.main.publicLayout(
       "Politique de confidentialité - Administration+",
       div(
         h1(cls := "fr-mb-6w")("Administration+ – Politique de confidentialité"),
-        p("Dernière mise à jour le 29/10/2024"),
+        p("Dernière mise à jour le 07/08/2025"),
         h2("Qui sommes-nous ?"),
         p(
           "Administration+ est un service public numérique développé au sein de l’Incubateur des territoires de l’Agence Nationale de la Cohésion des Territoires (ANCT). Il s’agit d’une plateforme qui met en relation des aidants professionnels avec des agents d’organismes publics pour régler rapidement des blocages administratifs complexes et urgents des usagers.",
         ),
         p(
-          "Le responsable de traitement est l’ANCT, représentée par Monsieur Stanislas Bourron, Directeur général de l’Agence."
+          "Le responsable de traitement est l’ANCT, représentée son.sa Directeur.ice général.e de l’Agence."
         ),
         h2("Pourquoi traitons-nous des données à caractère personnel ?"),
         p(
@@ -101,19 +100,19 @@ object legal {
         h2("Quelles sont les données à caractère personnel que nous traitons ?"),
         ul(
           li(
-            b("Données relatives à l’agent public"),
+            b("Données relatives à l’utilisateur"),
             " : nom, prénom, numéro de téléphone, adresse e-mail, messages échangés ;"
           ),
           li(
             b("Données relatives à l’usager"),
-            " : nom, prénom, adresse e-mail, numéro de téléphone, adresse postale, date de naissance, champs libres, messages échangés, pièces jointes, données fiscales (en lien avec la DGFIP) ;"
+            " : nom, prénom, adresse e-mail, numéro de téléphone, adresse postale, date de naissance, champs libres, messages échangés, pièces jointes, données identifiantes (cf. CGU)"
           ),
           li(b("Données relatives à la traçabilité"), " : logs et adresse IP ;"),
           li(b("Données relatives à la lettre d’information"), " : nom, prénom, adresse e-mail."),
         ),
         h2("Qu’est-ce qui nous autorise à traiter des données à caractère personnel ?"),
         p(
-          "Le traitement est nécessaire à l’exécution d’une mission d’intérêt public ou relevant de l’exercice de l’autorité publique dont est investie l’ANCT en tant que responsable de traitement, au sens de l’article 6-1 e) du RGPD."
+          "Le traitement est nécessaire à l’exécution d’une mission d’intérêt public ou relevant de l’exercice de l’autorité publique dont est investie l’ANCT en tant que responsable de traitement vis à vis des données relatives aux utilisateurs de la plateforme, au sens de l’article 6-1 e) du RGPD."
         ),
         p(
           "Cette mission d’intérêt public se traduit en pratique notamment par l’article L. 1231-2 du code général des collectivités territoriales (CGCT)."
@@ -140,7 +139,7 @@ object legal {
                     tr(
                       td("Données relatives à l’usager"),
                       td(
-                        "3 mois à partir du dernier contact (les pièces jointes sont supprimées au bout de 15 jours)"
+                        "6 mois à partir du dernier contact"
                       )
                     ),
                     tr(
@@ -192,9 +191,11 @@ object legal {
             "Les membres habilités de l’équipe d’Administration+ (administrateurs, développeurs notamment) ont accès à vos données, dans le cadre de leurs missions ;"
           ),
           li(
-            "Les organismes publics et privés : CNAV, CNAM, CAF, CDAD, CRAMIF, Assurance Maladie, MSA, ASP, ministère des Finances, France Travail, ministère de l’Intérieur (préfectures) ;"
+            "Les organismes publics et privés ayant un rôle d’aidant professionnel : Établissements France Services, CCAS"
           ),
-          li("La DILA dans le cadre de l’expérimentation « Place des Citoyens »."),
+          li(
+            "Les organismes publics et privés ayant un rôle d’opérateur de service public : CNAV, CNAM, CAF, CDAD, CRAMIF, Assurance Maladie, MSA, ministère des Finances, France Travail, URSSAF, ministère de l’Intérieur (préfectures)"
+          ),
         ),
         h2("Qui nous aide à traiter vos données ?"),
         p(
