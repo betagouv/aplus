@@ -584,6 +584,7 @@ class AnonymizedDataService @Inject() (
            area_ids,
            organisation,
            email,
+           is_in_france_services_network,
            public_note
          ) VALUES (
            {id}::uuid,
@@ -595,6 +596,7 @@ class AnonymizedDataService @Inject() (
            array[{areaIds}]::uuid[],
            {organisationId},
            {email},
+           {isInFranceServicesNetwork},
            {publicNote}
          )"""
     rows.foreach { row =>
@@ -608,6 +610,7 @@ class AnonymizedDataService @Inject() (
         "areaIds" -> row.areaIds,
         "organisationId" -> row.organisationId.map(_.id),
         "email" -> row.email,
+        "isInFranceServicesNetwork" -> row.isInFranceServicesNetwork,
         "publicNote" -> row.publicNote,
       )
       SQL(query).on(params: _*).execute()
