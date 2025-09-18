@@ -131,35 +131,55 @@ class UserInactivityTask @Inject() (
                   IO.pure(Right(()))
                 }
               case Some(reminder2) =>
-                val mustDeactivate = reminder2.eventDate
-                  .isBefore(now.minus(deactivationAdditionalDelayInMinutes, ChronoUnit.MINUTES))
-                if (mustDeactivate) {
-                  IO.fromFuture(IO(userService.disable(user.id))).flatMap {
-                    case Left(error) =>
-                      IO.pure(Left(error))
-                    case Right(_) =>
-                      IO.blocking(
-                        notificationService.userInactivityDeactivation(user.name, user.email)
-                      ).flatMap { _ =>
-                        userService.recordUserInactivityEvent(
-                          UserInactivityEvent(
-                            id = UUID.randomUUID(),
-                            userId = user.id,
-                            eventType = UserInactivityEvent.EventType.Deactivation,
-                            eventDate = now,
-                            lastActivityReferenceDate = lastActivity
-                          )
-                        )
-                      }
-                  }
-                } else {
-                  // Note: this case happens between second reminder and deactivation
-                  IO.pure(Right(()))
+                val deactivationEvent = relevantEvents
+                  .filter(event => event.eventType === UserInactivityEvent.EventType.Deactivation)
+                  .sortBy(_.eventDate)
+                  .lastOption
+                deactivationEvent match {
+                  case None =>
+                    val mustDeactivate = reminder2.eventDate
+                      .isBefore(now.minus(deactivationAdditionalDelayInMinutes, ChronoUnit.MINUTES))
+                    if (mustDeactivate) {
+                      deactivateUser(user, now, lastActivity)
+                    } else {
+                      // Note: this case happens between second reminder and deactivation
+                      IO.pure(Right(()))
+                    }
+                  case Some(lastDeactivation) =>
+                    // This case happens when the user has been reactivated
+                    val mustDeactivateAgain = lastDeactivation.eventDate
+                      .isBefore(now.minus(deactivationAdditionalDelayInMinutes, ChronoUnit.MINUTES))
+                    if (mustDeactivateAgain) {
+                      deactivateUser(user, now, lastActivity)
+                    } else {
+                      // Note: this case happens when the user has been reactivated again but not enough time has passed to deactivate again
+                      IO.pure(Right(()))
+                    }
                 }
             }
         }
 
       }
+    }
+
+  def deactivateUser(user: User, now: Instant, lastActivity: Instant): IO[Either[Error, Unit]] =
+    IO.fromFuture(IO(userService.disable(user.id))).flatMap {
+      case Left(error) =>
+        IO.pure(Left(error))
+      case Right(_) =>
+        IO.blocking(
+          notificationService.userInactivityDeactivation(user.name, user.email)
+        ).flatMap { _ =>
+          userService.recordUserInactivityEvent(
+            UserInactivityEvent(
+              id = UUID.randomUUID(),
+              userId = user.id,
+              eventType = UserInactivityEvent.EventType.Deactivation,
+              eventDate = now,
+              lastActivityReferenceDate = lastActivity
+            )
+          )
+        }
     }
 
   val cancelCallback: () => Future[Unit] = repeatWithDelay(durationUntilNextTick)(
