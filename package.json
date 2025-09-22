@@ -9,7 +9,7 @@
     "clean": "rimraf public/generated-js"
   },
   "dependencies": {
-    "@gouvfr/dsfr": "1.12.1",
+    "@gouvfr/dsfr": "1.14.2",
     "@gouvfr/dsfr-chart": "1.0.0",
     "dialog-polyfill": "0.5.6",
     "jquery": "3.7.1",
