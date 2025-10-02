@@ -1,4 +1,4 @@
-@(userEmail: String, tokenExpirationInMinutes: Int)
+@(userEmail: String, tokenExpirationInMinutes: Int, https: Boolean, host: String)
 
 <!DOCTYPE html>
 <html>
@@ -109,7 +109,7 @@ border: 1px solid #eaeaea; padding: 15px; font-size: 14px"
         <span style="font-weight: bold; font-size: 18px"
           >Une question, un problème technique ?
           <br>
-          <a href="@routes.HomeController.contact">Contactez l’équipe A+</a>
+          <a href="@routes.HomeController.contact.absoluteURL(https, host)">Contactez l’équipe A+</a>
         <br /><br />
         Toute l’équipe est à votre disposition pour répondre à vos questions,
         alors n’hésitez pas !<br />

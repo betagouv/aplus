@@ -391,7 +391,9 @@ class NotificationService @Inject() (
         )
     }
     val bodyHtml =
-      views.html.emails.notificationBAL(application, answerOption, group, users, url).toString()
+      views.html.emails
+        .notificationBAL(application, answerOption, group, users, url, https, host)
+        .toString()
     Email(
       subject = subject,
       from = from,
@@ -402,7 +404,8 @@ class NotificationService @Inject() (
   }
 
   private def generateWelcomeEmail(userName: Option[String], userEmail: String): Email = {
-    val bodyHtml = views.html.emails.welcome(userEmail, tokenExpirationInMinutes).toString
+    val bodyHtml =
+      views.html.emails.welcome(userEmail, tokenExpirationInMinutes, https, host).toString
     Email(
       subject = "[A+] Bienvenue sur Administration+",
       from = from,

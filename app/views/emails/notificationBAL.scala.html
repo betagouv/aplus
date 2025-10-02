@@ -1,4 +1,4 @@
-@(application: Application, answer: Option[Answer] = None, group: UserGroup, users: List[User], url: String)
+@(application: Application, answer: Option[Answer] = None, group: UserGroup, users: List[User], url: String, https: Boolean, host: String)
 
 Bonjour l’équipe @group.name, <br>
 <br>
@@ -12,7 +12,7 @@ Cliquez ici pour accéder à la@if(answer.isEmpty){ demande } else { réponse }:
 <a href="@url">@url</a><br>
 <br>
 Vous n’avez pas d’accès à Administration+ ?<br>
-<a href="@routes.HomeController.contact">Contactez l’équipe A+</a>.<br>
+<a href="@routes.HomeController.contact.absoluteURL(https, host)">Contactez l’équipe A+</a>.<br>
 <br>
 Bonne journée,<br>
 L’équipe Administration+<br>
