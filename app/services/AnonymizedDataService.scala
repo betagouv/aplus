@@ -97,6 +97,7 @@ class AnonymizedDataService @Inject() (
            mandat_date,
            seen_by_user_ids,
            invited_group_ids,
+           is_in_france_services_network,
            personal_data_wiped
          ) VALUES (
            {id}::uuid,
@@ -122,6 +123,7 @@ class AnonymizedDataService @Inject() (
            {mandatDate},
            {seenByUserIds}::jsonb,
            array[{invitedGroupIds}]::uuid[],
+           {isInFranceServicesNetwork},
            {personalDataWiped}
          )"""
       applicationsRows.foreach { row =>
@@ -147,6 +149,7 @@ class AnonymizedDataService @Inject() (
           "mandatDate" -> row.mandatDate,
           "seenByUserIds" -> row.seenByUsers,
           "invitedGroupIds" -> row.invitedGroupIds,
+          "isInFranceServicesNetwork" -> row.isInFranceServicesNetwork,
           "personalDataWiped" -> row.personalDataWiped,
         )
         SQL(applicationQuery).on(params: _*).execute()
