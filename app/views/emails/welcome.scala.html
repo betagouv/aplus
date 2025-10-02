@@ -1,4 +1,4 @@
-@(userEmail: String, tokenExpirationInMinutes: Int)
+@(userEmail: String, tokenExpirationInMinutes: Int, https: Boolean, host: String)
 
 <!DOCTYPE html>
 <html>
@@ -82,9 +82,9 @@ border: 1px solid #eaeaea; padding: 15px; font-size: 14px"
           Comment utiliser Administration+ ?
         </h3>
 
-        Pour vous familiariser en toute autonomie avec l’outil, des vidéos (webinaires) sont à votre disposition dans le menu de gauche de la <a href="https://docs.aplus.beta.gouv.fr/guides-et-tutoriels/responsable-de-groupe/ajouter-un-utilisateur">documentation d’Administration+</a><br />
+        Pour vous familiariser en toute autonomie avec l’outil, de nombreux contenus (tutoriels, vidéos) sont à votre disposition dans la <a href="https://docs.aplus.beta.gouv.fr">documentation d’Administration+</a><br />
         <br />
-        Lancez-vous sans attendre grâce à la vidéo "<a href="https://docs.aplus.beta.gouv.fr/videos#administration-demarrage-rapide">Administration+ : Démarrage rapide</a>" !<br />
+        Lancez-vous sans attendre grâce aux vidéos destinées aux <a href="https://www.youtube.com/watch?v=aI_rFgiG0pg">nouveaux aidants</a> et aux <a href="https://www.youtube.com/watch?v=PrTkxqCVZko">nouveaux instructeurs</a> !<br />
         <br />
         
         <h3
@@ -93,7 +93,7 @@ border: 1px solid #eaeaea; padding: 15px; font-size: 14px"
           Comment inviter mes collègues sur Administration+ ?
         </h3>
 
-        Tout membre Administration+ peut inviter un autre membre à rejoindre son groupe. Seul un responsable de groupe peut créer de nouveaux comptes Administration+ en suivant <a href="https://docs.aplus.beta.gouv.fr/tutoriels/ajouter-un-utilisateur">cette procédure simple</a>.<br />
+        Tout membre Administration+ peut inviter un autre membre existant à rejoindre son groupe. En revanche, seul un responsable de groupe peut <a href="https://docs.aplus.beta.gouv.fr/guides-et-tutoriels/responsable-de-groupe/ajouter-un-utilisateur">créer de nouveaux comptes Administration+</a>.<br />
         <br />
         Vous pouvez identifier votre (vos) responsable(s) à solliciter pour une création de compte via l'onglet "Mes groupes" dans le menu de gauche.<br />
         
@@ -109,20 +109,11 @@ border: 1px solid #eaeaea; padding: 15px; font-size: 14px"
         <span style="font-weight: bold; font-size: 18px"
           >Une question, un problème technique ?
           <br>
-          <a href="@routes.HomeController.contact">Contactez l’équipe A+</a>
+          <a href="@routes.HomeController.contact.absoluteURL(https, host)">Contactez l’équipe A+</a>
         <br /><br />
         Toute l’équipe est à votre disposition pour répondre à vos questions,
-        alors n’hésitez pas !
+        alors n’hésitez pas !<br />
 
-        <h3
-          style="font-size: 28px; font-weight: normal; margin: 30px 0px 20px 0px line-height:32px;"
-        >
-          Comment me tenir au courant des nouveautés ?
-        </h3>
-
-        Si vous le souhaitez vous recevrez régulièrement la newsletter
-        d’Administration+ qui vous informera des dernières mises à jour et
-        nouveautés du service.<br />
         <br />
         Bien cordialement,<br />
         L’équipe Administration+
