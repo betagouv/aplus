@@ -119,7 +119,7 @@ libraryDependencies ++= Seq(
   specs2 % Test, // Play Plugin
   "org.specs2" %% "specs2-scalacheck" % specs2Version % Test,
   "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
-  "org.typelevel" %% "cats-effect-testing-specs2" % "1.6.0" % Test,
+  "org.typelevel" %% "cats-effect-testing-specs2" % "1.7.0" % Test,
 )
 
 // Sync with scala-steward pin
