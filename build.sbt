@@ -82,7 +82,7 @@ val fs2Version = "3.12.0"
 libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.7.8",
   "org.playframework" %% "play-mailer" % "10.1.0",
-  "org.playframework" %% "play-json" % "3.0.4",
+  "org.playframework" %% "play-json" % "3.0.5",
   "com.sun.mail" % "javax.mail" % "1.6.2",
   "com.github.tototoshi" %% "scala-csv" % "2.0.0",
   ws,
