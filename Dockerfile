@@ -13,7 +13,7 @@ RUN npm run build
 # Builder image for the Scala app
 # based on https://github.com/hseeberger/scala-sbt
 #
-FROM eclipse-temurin:17-jdk AS scalabuilder
+FROM eclipse-temurin:25-jdk AS scalabuilder
 
 # We need nodejs to run in a reasonable amount of time sbt-web
 # see step `Optimizing JavaScript with RequireJS`
@@ -53,7 +53,7 @@ RUN sbt clean stage
 # Final Image
 #
 #
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:25-jre
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends libargon2-1 \
