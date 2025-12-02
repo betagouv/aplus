@@ -1343,16 +1343,12 @@ case class ApplicationController @Inject() (
       forAreaId: UUID,
       application: Application
   ): Future[List[UserGroup]] = {
-    val invitedUsers: List[User] =
-      userService.byIds(application.invitedUsers.keys.toList, includeDisabled = true)
-    // Groups already present on the Application
-    val groupsOfInvitedUsers: Set[UUID] = invitedUsers.flatMap(_.groupIds).toSet
     val excludeFranceServicesNetwork = !application.isInFranceServicesNetwork
     userGroupService
       .byArea(forAreaId, excludeFranceServicesNetwork = excludeFranceServicesNetwork)
       .map { groupsOfArea =>
         val groupsThatAreNotInvited =
-          groupsOfArea.filterNot(group => groupsOfInvitedUsers.contains(group.id))
+          groupsOfArea.filterNot(group => application.invitedGroups.contains(group.id))
         val groupIdsWithInstructors: Set[UUID] =
           userService
             .byGroupIds(groupsThatAreNotInvited.map(_.id))
