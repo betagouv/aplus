@@ -141,6 +141,7 @@ object EventType {
   object WeeklyEmailsSent extends Info
 
   object UserInactivityCheck extends Info
+  object UserInactivityDeactivation extends Info
   object UserInactivityError extends Error
 
   // Applications
