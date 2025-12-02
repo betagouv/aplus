@@ -162,7 +162,14 @@ class UserInactivityTask @Inject() (
       }
     }
 
-  def deactivateUser(user: User, now: Instant, lastActivity: Instant): IO[Either[Error, Unit]] =
+  def deactivateUser(user: User, now: Instant, lastActivity: Instant): IO[Either[Error, Unit]] = {
+    val event = UserInactivityEvent(
+      id = UUID.randomUUID(),
+      userId = user.id,
+      eventType = UserInactivityEvent.EventType.Deactivation,
+      eventDate = now,
+      lastActivityReferenceDate = lastActivity
+    )
     IO.fromFuture(IO(userService.disable(user.id))).flatMap {
       case Left(error) =>
         IO.pure(Left(error))
@@ -170,17 +177,22 @@ class UserInactivityTask @Inject() (
         IO.blocking(
           notificationService.userInactivityDeactivation(user.name, user.email)
         ).flatMap { _ =>
-          userService.recordUserInactivityEvent(
-            UserInactivityEvent(
-              id = UUID.randomUUID(),
-              userId = user.id,
-              eventType = UserInactivityEvent.EventType.Deactivation,
-              eventDate = now,
-              lastActivityReferenceDate = lastActivity
-            )
-          )
+          userService.recordUserInactivityEvent(event).flatTap {
+            case Right(_) =>
+              IO.blocking(
+                eventService.logNoRequest(
+                  EventType.UserInactivityDeactivation,
+                  s"Désactivation de l'utilisateur ${user.id} par inactivité / précédent rappel: $lastActivity",
+                  involvesUser = user.id.some
+                )
+              ).attempt
+                .void
+            case Left(_) =>
+              IO.unit
+          }
         }
     }
+  }
 
   val cancelCallback: () => Future[Unit] = repeatWithDelay(durationUntilNextTick)(
     loggingResult(
