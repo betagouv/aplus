@@ -8,7 +8,7 @@ addSbtPlugin("com.github.sbt" % "sbt-digest" % "2.1.0")
 addSbtPlugin("com.github.sbt" % "sbt-gzip" % "2.0.0")
 
 // Scalafmt
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.4")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.6")
 
 // Git to get the current git commit
 addSbtPlugin("com.github.sbt" % "sbt-git" % "2.1.0")
