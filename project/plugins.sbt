@@ -16,7 +16,7 @@ addSbtPlugin("com.github.sbt" % "sbt-git" % "2.1.0")
 // Makes available sbt commands results to project scala code
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.13.1")
 
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.3")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.5")
 
 // See https://github.com/sbt/sbt/issues/6997
 ThisBuild / libraryDependencySchemes ++= Seq(
