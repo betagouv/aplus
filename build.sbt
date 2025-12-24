@@ -100,7 +100,7 @@ libraryDependencies ++= anormDependencies
 
 // UI
 libraryDependencies ++= Seq(
-  "org.webjars" %% "webjars-play" % "3.0.2",
+  "org.webjars" %% "webjars-play" % "3.0.10",
   "org.webjars.bower" % "material-design-lite" % "1.3.0",
   "org.webjars" % "material-design-icons" % "4.0.0",
   "org.webjars.npm" % "roboto-fontface" % "0.10.0",
