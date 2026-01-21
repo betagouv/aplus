@@ -27,7 +27,7 @@
     "@babel/preset-env": "7.27.1",
     "@types/tabulator-tables": "5.4.8",
     "babel-loader": "10.0.0",
-    "copy-webpack-plugin": "13.0.0",
+    "copy-webpack-plugin": "13.0.1",
     "css-loader": "7.1.2",
     "mini-css-extract-plugin": "2.9.2",
     "rimraf": "6.0.1",
