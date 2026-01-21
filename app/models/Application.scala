@@ -261,11 +261,11 @@ object Application {
     implicit val Show: Show[Status] = new Show[Status] {
 
       override def show(status: Status) = status match {
-        case Archived   => "Archivée"
-        case ToArchive  => "À archiver"
+        case Archived   => "Fermée"
+        case ToArchive  => "À fermer"
         case Processed  => "Traitée"
         case Processing => "En cours"
-        case Sent       => "Envoyée"
+        case Sent       => "En attente de réponse"
         case New        => "Nouvelle"
       }
 

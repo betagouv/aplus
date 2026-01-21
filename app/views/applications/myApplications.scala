@@ -426,7 +426,7 @@ object myApplications {
         ),
       filterLink(
         filters.isArchived,
-        s"A archiver (${infos.filteredByGroupsClosedCount}) ",
+        s"A fermer (${infos.filteredByGroupsClosedCount}) ",
         filters.withStatusArchived.toUrl,
       ),
       div(cls := "fr-fieldset__element fr-fieldset__element--inline aplus-filter-header--item")(

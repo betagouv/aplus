@@ -362,8 +362,8 @@ object common {
         else "demandes qui ont reçu une réponse il y a ",
         s"plus de $daySinceLastAgentAnswerForApplicationsThatShouldBeClosed jours. ",
         "Si votre échange est terminé, n’hésitez pas à ",
-        if (infos.applicationsThatShouldBeClosed.size <= 1) "l’archiver, " else "les archiver, ",
-        """en appuyant sur le bouton « Archiver l’échange »."""
+        if (infos.applicationsThatShouldBeClosed.size <= 1) "le fermer, " else "les fermer, ",
+        """en appuyant sur le bouton « Fermer l’échange »."""
       ),
       ul(
         infos.applicationsThatShouldBeClosed.map(application =>
