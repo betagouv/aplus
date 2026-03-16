@@ -58,7 +58,7 @@ scalacOptions ++= Seq(
   "-Wconf:src=aplus/test/.*&msg=unused value:s",
 )
 
-val anormVersion = "2.8.1"
+val anormVersion = "2.11.0"
 
 lazy val anormDependency = "org.playframework.anorm" %% "anorm" % anormVersion
 
