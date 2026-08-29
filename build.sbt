@@ -118,7 +118,7 @@ val specs2Version = "4.21.0"
 libraryDependencies ++= Seq(
   specs2 % Test, // Play Plugin
   "org.specs2" %% "specs2-scalacheck" % specs2Version % Test,
-  "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.20.0" % Test,
   "org.typelevel" %% "cats-effect-testing-specs2" % "1.6.0" % Test,
 )
 
